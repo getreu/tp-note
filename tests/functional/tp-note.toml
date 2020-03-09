@@ -1,0 +1,127 @@
+note_extension = 'md'
+tmpl_new_content = '''
+---
+title:      {{ dirname | json_encode() }}
+subtitle:   {{ 'Note' | json_encode() }}
+author:     {{ username | json_encode() }}
+date:       {{ now() | date(format="%B %e, %Y") | json_encode() }}
+lang:       {{ lang | json_encode() }}
+revision:   {{ '1.0' | json_encode() }}
+---
+
+
+'''
+tmpl_new_filename = '''{{ now() | date(format="%Y%m%d") }}-{{ title__alphapath }}{% if subtitle__path != '' %}--{% endif %}{{ subtitle__path ~  '.' ~ note_extension__path }}'''
+tmpl_clipboard_content = '''
+---
+{% if clipboard_linkname !='' %}title:      {{ clipboard_linkname | json_encode }}
+subtitle:   {{ 'URL' | json_encode() }}
+{% else %}title:      {{ clipboard | json_encode }}
+subtitle:   {{ 'Note' | json_encode() }}
+{% endif %}author:     {{ username | json_encode() }}
+date:       {{ now() | date(format="%B %e, %Y") | json_encode() }}
+lang:       {{ lang | json_encode() }}
+revision:   {{ '1.0' | json_encode() }}
+---
+
+{% if clipboard_linkname !='' %}{{ clipboard }}
+{% endif %}
+'''
+tmpl_clipboard_filename = '''{{ now() | date(format="%Y%m%d") }}-{{ title__alphapath }}{% if subtitle__path != '' %}--{% endif %}{{ subtitle__path ~  '.' ~ note_extension__path }}'''
+tmpl_annotate_content = '''
+---
+title:      {{ sort_tag ~ file_stem | json_encode() }}
+subtitle:   {{ 'Note' | json_encode() }}
+author:     {{ username | json_encode() }}
+date:       {{ now() | date(format="%B %e, %Y") | json_encode() }}
+lang:       {{ lang | json_encode() }}
+revision:   {{ '1.0' | json_encode() }}
+---
+
+[{{ sort_tag ~ file_stem ~ '.' ~ extension }}]({{ sort_tag ~ file_stem ~ '.' ~ extension }})
+
+'''
+tmpl_annotate_filename = '''{{ title__alphapath }}{% if subtitle__path != '' %}--{% endif %}{{ subtitle__path ~  '.' ~ note_extension__path }}'''
+tmpl_sync_filename = '''{{ sort_tag__path }}{% if sort_tag__path != '' %}-{% endif %}{{ title__alphapath }}{% if subtitle__path != '' %}--{% endif %}{{ subtitle__path ~  '.' ~ note_extension__path }}'''
+editor_args = [
+    ['typora'],
+    [
+    'code',
+    '-w',
+],
+    [
+    'atom',
+    '-w',
+],
+    ['retext'],
+    ['geany'],
+    [
+    'gedit',
+    '-w',
+],
+    ['mousepad'],
+    ['leafpad'],
+    [
+    'nvim-qt',
+    '--nofork',
+],
+    [
+    'gvim',
+    '--nofork',
+],
+    ['nano'],
+    ['nvim'],
+    ['vim'],
+    ['vi'],
+]
+viewer_args = [
+    ['typora'],
+    [
+    'code',
+    '-w',
+],
+    [
+    'atom',
+    '-w',
+],
+    ['retext'],
+    [
+    'geany',
+    '-r',
+],
+    [
+    'gedit',
+    '-w',
+],
+    ['mousepad'],
+    ['leafpad'],
+    [
+    'nvim-qt',
+    '--nofork',
+    '-R',
+],
+    [
+    'gvim',
+    '--nofork',
+    '-R',
+],
+    [
+    'nvim',
+    '-R',
+],
+    ['nano'],
+    [
+    'nvim',
+    '-R',
+],
+    [
+    'vim',
+    '-R',
+],
+    [
+    'vi',
+    '-R',
+],
+]
+enable_read_clipboard = true
+enable_empty_clipboard = true

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+rm -r ./build
+
+./make--README  
+./make--tp-note--manpage
+./make--tp-note--manual
+./make--rustdoc-link
+

@@ -1,0 +1,47 @@
+#!/bin/sh
+# Author: Jens Getreu
+
+pack () {
+    #set -x
+    InPath="$1"
+    InFile="${InPath##*/}"
+    InBase="${InFile%.*}"
+    InDir="${InPath%/*}"
+    if [ "$InDir" = "$InPath" ] ; then
+        InDir="."
+    fi
+
+    OutPath="$2"
+    OutFile="${OutPath##*/}"
+    OutBase="${OutFile%.*}"
+    OutDir="${OutPath%/*}"
+    if [ "$OutDir" = "$OutPath" ] ; then
+        OutDir="."
+    fi
+
+
+    # process
+
+    ZipFile="$OutBase.zip"
+
+    mkdir -p "$OutDir"
+
+    zip -r "$OutDir/$ZipFile" "$InPath"
+
+}
+
+
+### Main
+# usage: 
+# pack FILE [FILE]
+# pack reports ./package/report.zip
+
+#if [[ -n "${2/[ ]*\n/}" ]] ; then
+#        OutPath="$2"
+#else
+#        OutPath="${1%.*}.html" # $2 is empty
+#fi
+#pack "$1" "$OutPath"
+
+pack "../doc/build/" "../doc/build/dist/tp-note.zip" 
+

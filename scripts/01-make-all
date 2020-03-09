@@ -1,0 +1,10 @@
+#/bin/sh
+
+./10-clear-all-builds
+./11-test
+./12-make-targets
+./13-make-cross-compile
+./14-make-doc
+./15-build-packages
+./16-clean-targets-keep-binaries
+./17-make-dist

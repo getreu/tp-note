@@ -1,0 +1,51 @@
+#!/bin/bash
+# Author: Jens Getreu
+
+
+# sudo apt install pandoc 
+
+# parse args
+
+render () {
+    #set -x
+    InPath="$1"
+    InFile="${InPath##*/}"
+    InBase="${InFile%.*}"
+    InDir="${InPath%/*}"
+    if [ "$InDir" = "$InPath" ] ; then
+        InDir="."
+    fi
+
+    OutPath="$2"
+    OutFile="${OutPath##*/}"
+    OutBase="${OutFile%.*}"
+    OutDir="${OutPath%/*}"
+    if [ "$OutDir" = "$OutPath" ] ; then
+        OutDir="."
+    fi
+
+
+    # process
+
+    ManFile="$OutBase.1"
+
+    mkdir -p "$OutDir"
+
+    pandoc -s -t man -o "$OutDir/$ManFile" "$InPath"
+
+    gzip -f "$OutDir/$ManFile"
+}
+
+
+### Main
+# usage: 
+# render FILE [FILE]
+# render report.md ./rendition/report.1
+
+if [[ -n "${2/[ ]*\n/}" ]] ; then
+        OutPath="$2"
+else
+        OutPath="${1%.*}.html" # $2 is empty
+fi
+render "$1" "$OutPath" 
+

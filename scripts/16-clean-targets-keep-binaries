@@ -1,0 +1,16 @@
+#!/bin/sh
+#set -x
+cd ..
+find target -mindepth 2 -not -path "*/release/tp-note" \
+                        -not -path "*/release/tp-note.exe" \
+                        -not -path "*/debian" \
+                        -not -path "*/debian/tp-note*.deb" \
+                        -not -path "*/release/*.md" \
+                        -not -path "*/release" \
+                        -not -path "target/doc*"  \
+                        -exec rm -r {} \;
+
+rm -r target/debug
+rm -r target/release
+rm -r target/rls
+rm target/.rustc_info.json

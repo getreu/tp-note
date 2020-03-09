@@ -1,0 +1,21 @@
+note_extension = 'md'
+tmpl_new_content = '''
+﻿---
+title:      {{ dirname | json_encode() }}
+subtitle:   {{ 'Note' | json_encode() }}
+author:     {{ username | json_encode() }}
+lang:       {{ lang | json_encode() }}
+revision:   {{ '1.1' | json_encode() }}
+...
+
+'''
+tmpl_new_filename = '''{{ '20200302-' ~ title__alphapath ~ '--' ~ subtitle__path ~ '.' ~ note_extension__path }}'''
+tmpl_clipboard_content = ""
+tmpl_clipboard_filename = ""
+tmpl_annotate_content = ""
+tmpl_annotate_filename = ""
+tmpl_sync_filename = '''{{ sort_tag__path }}{% if sort_tag__path != '' %}-{% endif %}{{ title__alphapath }}{% if subtitle__path != '' %}--{% endif %}{{ subtitle__path ~  '.' ~ note_extension__path }}'''
+editor_args = [['sed','-i','s/functional/1replaced/', '20200302-functional--Note.md']]
+viewer_args = [['echo']]
+enable_read_clipboard = false
+enable_empty_clipboard = false

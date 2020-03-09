@@ -1,0 +1,6 @@
+#!/bin/sh
+
+cargo rustdoc  -p tp-note -- --document-private-items 
+
+cd ../doc
+./make--all

@@ -1,0 +1,10 @@
+---
+title:      "ab:cd\"ef"
+subtitle:   "URL"
+author:     "myuser"
+lang:       "en_US.UTF-8"
+revision:   "1.0"
+---
+
+[ab:cd"ef](https://getreu.net)
+

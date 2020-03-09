@@ -1,0 +1,7 @@
+#!/bin/sh
+
+rustup update
+cargo update
+
+rm -r ../target
+rm -r ../doc/build

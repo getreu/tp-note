@@ -1,0 +1,138 @@
+#!/bin/sh
+
+PWD="$(pwd)"
+
+# Pepare toml
+TP_NOTE_TEST_TOML="$PWD/tp-note-test.toml"
+grep -v -e ^date:  "$PWD/tp-note.toml" > "$TP_NOTE_TEST_TOML"
+
+
+## Test 1: Synchronize meta data and filename
+INPUT_FILENAME="$PWD/123-abc--edf.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: "xxx"
+subtitle: "yyy"
+...
+EOF
+
+echo -n "" | xclip -selection clipboard
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/123-xxx--yyy.md"
+
+if diff "$OUTPUT_FILENAME"  "$PWD/test1-synchronize-expected-output" 
+then
+    echo Commandline test 1 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 1 failed.
+    exit 1 
+fi
+
+
+## Test 2: Create a new note
+
+echo -n "" | xclip -selection clipboard
+LOGNAME=myuser LANG=en_US.UTF-8 cargo run -- --batch \
+    --config "$TP_NOTE_TEST_TOML" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-functional--Note.md"
+
+if diff "$OUTPUT_FILENAME" "$PWD/test2-new-expected-output"
+then
+    echo Commandline test 2 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 2 failed.
+    exit 1
+fi
+
+
+## Test 3: Create a new note, then edit title
+
+echo -n "" | xclip -selection clipboard
+LOGNAME=myuser LANG=en_US.UTF-8 cargo run -- \
+    --config "$PWD/test3-new-simulate-edit-config.toml"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/20200302-'1replaced--Note.md"
+
+if diff "$OUTPUT_FILENAME" "$PWD/test3-new-simulate-edit-expected-output"
+then
+    echo Commandline test 3 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 3 failed.
+    exit 1
+fi
+
+
+
+
+## Test 4: Create a new note, based on a markdown link supplied by clipboard
+
+echo -n '[ab:cd"ef](https://getreu.net)' | xclip -selection clipboard
+LOGNAME=myuser LANG=en_US.UTF-8 cargo run -- --batch \
+    --config  "$TP_NOTE_TEST_TOML" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-ab_cd ef--URL.md"
+
+if diff "$OUTPUT_FILENAME" "$PWD/test4-clipboard-expected-output"
+then
+    echo Commandline test 4 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 4 failed.
+    exit 1 
+fi
+
+
+## Test 5: Create a new note, based on a string supplied by clipboard
+
+echo -n 'Good morning' | xclip -selection clipboard
+LOGNAME=myuser LANG=en_US.UTF-8 cargo run -- --batch \
+    --config  "$TP_NOTE_TEST_TOML"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-Good morning--Note.md"
+
+if diff "$OUTPUT_FILENAME" "$PWD/test5-clipboard-expected-output"
+then
+    echo Commandline test 5 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 5 failed.
+    exit 1 
+fi
+
+
+
+
+## Test 6: Create a new note annotating some existing file
+INPUT_FILENAME="$PWD/test6-annotate-input-dummy.pdf"
+
+# Input file can be empty
+:>"$INPUT_FILENAME"
+
+echo -n "" | xclip -selection clipboard
+LOGNAME=myuser LANG=en_US.UTF-8 cargo run -- --batch \
+    --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/test6-annotate-input-dummy--Note.md"
+
+if diff "$OUTPUT_FILENAME" "$PWD/test6-annotate-expected-output"
+then
+echo Commandline test 6 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 6 failed. 
+    exit 1
+fi
+
+
+# Tidy up
+rm "$TP_NOTE_TEST_TOML"
+
+exit 0

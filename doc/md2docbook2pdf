@@ -1,0 +1,81 @@
+#!/bin/bash
+# Author: Jens Getreu
+
+# apt install pandoc asciidoctor-fopub
+FOPUB_PATH="/usr/local/java-deployment/asciidoctor-fopub/bin/"
+
+render () {
+    ### parse args
+
+    #set -x
+    InPath="$1"
+    InFile="${InPath##*/}"
+    InBase="${InFile%.*}"
+    InDir="${InPath%/*}"
+    if [ "$InDir" = "$InPath" ] ; then
+        InDir="."
+    fi
+
+    OutPath="$2"
+    OutFile="${OutPath##*/}"
+    OutBase="${OutFile%.*}"
+    OutDir="${OutPath%/*}"
+    if [ "$OutDir" = "$OutPath" ] ; then
+        OutDir="."
+    fi
+
+
+    ### Prepare
+
+    XmlPath="$OutDir/$OutBase.xml"
+    PdfPath="$OutDir/$OutBase.pdf"
+    TemplatePath="$OutDir/template.db"
+
+    mkdir -p "$OutDir"
+
+
+    ### Make docbook-template
+    # quoting EOF means parameter substitution turned off
+    cat << "EOF" > "$TemplatePath"
+<?xml version="1.0" encoding="utf-8" ?>
+<?asciidoc-toc?>
+<?asciidoc-numbered?>
+EOF
+
+
+
+    # Strip off first line of the docbook5 default template and append it
+    pandoc -D docbook5 | tail -n +2 >> "$TemplatePath"
+
+
+    ### Generate XML
+
+    # unfortunately the chain does not honor --number-section yet
+    pandoc --template "$TemplatePath" -s -t docbook5 -o "$XmlPath" "$InPath"
+
+    # this is only needed for html and xml output
+    cp -r  "$InDir/images/" "$OutDir"
+
+
+    ### Generate PDF
+    "$FOPUB_PATH/fopub" -H  "$XmlPath" && \
+        rm  "$XmlPath" && \
+        rm  "$TemplatePath" && \
+        rm  -f -r "$OutDir/images/" 
+
+}
+
+
+
+### Main
+# usage: 
+# render FILE [FILE]
+# render report.md ./rendition/report.pdf
+
+if [[ -n "${2/[ ]*\n/}" ]] ; then
+        OutPath="$2"
+else
+        OutPath="${1%.*}.pdf" # $2 is empty
+fi
+render "$1" "$OutPath" 
+

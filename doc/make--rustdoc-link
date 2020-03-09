@@ -1,0 +1,11 @@
+#!/bin/sh
+
+mkdir --parents ./build/html
+mkdir --parents ./build/html/_downloads
+mkdir --parents ./build/man/man1
+
+cd  ./build/html/_downloads
+ln -sf ../../../../target/* .
+ln -sf ../../../build/man/man1/tp-note.1.gz .
+
+

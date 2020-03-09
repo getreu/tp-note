@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Unit testing
+
+if cargo test
+then
+  echo Cargo test succeeded.
+else
+  ( echo Cargo test failed. && exit 1 )
+fi
+
+
+# Functional tests
+
+cd ../tests/functional/
+./run-tests
+

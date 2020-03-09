@@ -1,0 +1,72 @@
+#!/bin/bash
+# Author: Jens Getreu
+
+# apt install pandoc docbook-xsl-ns xsltproc
+
+
+render () {
+    ### parse args
+
+    #set -x
+    InPath="$1"
+    InFile="${InPath##*/}"
+    InBase="${InFile%.*}"
+    InDir="${InPath%/*}"
+    if [ "$InDir" = "$InPath" ] ; then
+        InDir="."
+    fi
+
+    OutPath="$2"
+    OutFile="${OutPath##*/}"
+    OutBase="${OutFile%.*}"
+    OutDir="${OutPath%/*}"
+    if [ "$OutDir" = "$OutPath" ] ; then
+        OutDir="."
+    fi
+
+
+    ### Prepare
+
+    XmlPath="$OutDir/$OutBase.xml"
+    HtmlPath="$OutDir/$OutBase.html"
+    TemplatePath="$OutDir/template.db"
+    mkdir -p "$OutDir"
+
+
+    ### Generate XML
+
+    # unfortunately the chain does not honor --number-section yet
+    pandoc -s -t docbook5 -o "$XmlPath" "$InPath"
+
+    # this is only needed for html output
+    cp -r  "$InDir/images/" "$OutDir"
+    cp "$InDir/docutils_basic.css" "$OutDir"
+
+    ### Generate HTML 
+
+    # Xsltproc also take parameters e.g. --stringparam use.extensions 0\
+    #  Schema 1.79.1 does not render figure references correctly:
+    #     /usr/share/xml/docbook/stylesheet/docbook-xsl-ns/html/docbook.xsl\
+    #  Use snapshot with UTF-8 in docbook.xsl instead
+    xsltproc --stringparam html.stylesheet docutils_basic.css --output "$HtmlPath" \
+            /usr/local/share/xml/dokbook/stylesheet/docbook-xsl-snapshot/html/docbook.xsl\
+           "$XmlPath" && \
+        rm  "$XmlPath"   
+}
+
+   #/usr/local/share/xml/dokbook/stylesheet/docbook-xsl-1.79.2/html/docbook.xsl\
+
+
+### Main
+# usage: 
+# render FILE [FILE]
+# render report.md ./rendition/report.html
+
+if [[ -n "${2/[ ]*\n/}" ]] ; then
+        OutPath="$2"
+else
+        OutPath="${1%.*}.html" # $2 is empty
+fi
+render "$1" "$OutPath"
+
+
