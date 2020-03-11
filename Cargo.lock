@@ -45,39 +45,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1ba68f4276a778591e36a0c348a269888f3a177c8d2054969389e3b59611ff5"
 
 [[package]]
-name = "arrayref"
-version = "0.3.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4c527152e37cf757a3f78aae5a06fbeefdb07ccc535c980a3208ee3060dd544"
-
-[[package]]
-name = "arrayvec"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cff77d8686867eceff3105329d4698d96c2391c176d5d03adc90c7389162b5b8"
-
-[[package]]
 name = "autocfg"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8aac770f1885fd7e387acedd76065302551364496e46b3dd00860b2f8359b9d"
-
-[[package]]
-name = "base64"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b41b7ea54a0c9d92199de89e20e58d49f02f8e699814ef3fdf266f6f748d15c7"
-
-[[package]]
-name = "blake2b_simd"
-version = "0.5.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8fb2d74254a3a0b5cac33ac9f8ed0e44aa50378d9dbb2e5d83bd21ed1dc2c8a"
-dependencies = [
- "arrayref",
- "arrayvec",
- "constant_time_eq",
-]
 
 [[package]]
 name = "block"
@@ -178,19 +149,14 @@ dependencies = [
 
 [[package]]
 name = "confy"
-version = "0.3.2-alpha.1"
-source = "git+https://github.com/getreu/confy#5a58388fa9b8bcd790a62c2a9db5abdcbe9fb467"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b1400cd0dae7f27d2c7ced9492e1398d2e2df614570092a4936c73b416dedea"
 dependencies = [
  "directories",
  "serde",
  "toml",
 ]
-
-[[package]]
-name = "constant_time_eq"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 
 [[package]]
 name = "crossbeam-channel"
@@ -230,23 +196,10 @@ dependencies = [
 
 [[package]]
 name = "directories"
-version = "2.0.2"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "551a778172a450d7fc12e629ca3b0428d00f6afa9a43da1b630d54604e97371c"
+checksum = "fc2561db021b6f1321d0f16b67ed28ce843ef4610dfaa432e3ffa2e8a3050ebf"
 dependencies = [
- "cfg-if",
- "dirs-sys",
-]
-
-[[package]]
-name = "dirs-sys"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afa0b23de8fd801745c471deffa6e12d248f962c9fd4b4c33787b055599bde7b"
-dependencies = [
- "cfg-if",
- "libc",
- "redox_users",
  "winapi",
 ]
 
@@ -599,17 +552,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2439c63f3f6139d1b57529d16bc3b8bb855230c8efcc5d3a896c8bea7c3b1e84"
 
 [[package]]
-name = "redox_users"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09b23093265f8d200fa7b4c2c76297f47e681c655f6f1285a8780d6a022f7431"
-dependencies = [
- "getrandom",
- "redox_syscall",
- "rust-argon2",
-]
-
-[[package]]
 name = "regex"
 version = "1.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -626,18 +568,6 @@ name = "regex-syntax"
 version = "0.6.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1132f845907680735a84409c3bebc64d1364a5683ffbce899550cd09d5eaefc1"
-
-[[package]]
-name = "rust-argon2"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bc8af4bda8e1ff4932523b94d3dd20ee30a87232323eda55903ffd71d2fb017"
-dependencies = [
- "base64",
- "blake2b_simd",
- "constant_time_eq",
- "crossbeam-utils",
-]
 
 [[package]]
 name = "rustversion"
@@ -818,9 +748,9 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.5.6"
+version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffc92d160b1eef40665be3a05630d003936a3bc7da7421277846c2613e92c71a"
+checksum = "758664fc71a3a69038656bee8b6be6477d2a6c315a6b81f7081f591bffa4111f"
 dependencies = [
  "serde",
 ]
