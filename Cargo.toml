@@ -6,7 +6,11 @@ edition = "2018"
 readme = "README.md"
 description = "fast note-takingg with templates and filename synchronization"
 license = "MIT/Apache-2.0"
-categories = ["command-line-utilities"]
+categories = ["command-line-utilities", "template-engine", "text-processing"]
+documentation = "https://blog.getreu.net/projects/tp-note/tp-note--manpage.html"
+homepage = "https://blog.getreu.net/projects/tp-note/"
+repository = "https://github.com/getreu/tp-note"
+
 
 [package.metadata.deb]
 maintainer = "Jens Getreu, <getreu@web.de>"
