@@ -176,7 +176,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
 ];
 #[cfg(not(target_os = "linux"))]
 const EDITOR_ARGS: &[&[&str]] = &[
-    &[&"start", &"/B", &"C:\\Program Files\\Typora\\Typora.exe"],
+    &[&"C:\\Program Files\\Typora\\Typora.exe"],
     &[
         "C:\\Program Files\\Notepad++\\notepad++.exe",
         "-nosession",
@@ -208,7 +208,7 @@ const VIEWER_ARGS: &[&[&str]] = &[
 ];
 #[cfg(not(target_os = "linux"))]
 const VIEWER_ARGS: &[&[&str]] = &[
-    &[&"start", &"/B", &"C:\\Program Files\\Typora\\Typora.exe"],
+    &[&"C:\\Program Files\\Typora\\Typora.exe"],
     &[
         "C:\\Program Files\\Notepad++\\notepad++.exe",
         "-nosession",
