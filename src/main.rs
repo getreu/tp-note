@@ -253,10 +253,12 @@ pub fn print_message(msg: &str) -> Result<i32, Error> {
     use std::ptr::null_mut;
     use winapi::um::winuser::{MessageBoxW, MB_OK};
     let wide_msg: Vec<u16> = OsStr::new(msg).encode_wide().chain(once(0)).collect();
-    let wide_title: Vec<u16> = OsStr::new(MESSAGE_ALERT_WINDOW_TITLE)
-        .encode_wide()
-        .chain(once(0))
-        .collect();
+    let title = format!(
+        "{} ({})",
+        MESSAGE_ALERT_WINDOW_TITLE,
+        VERSION.unwrap_or("unknown")
+    );
+    let wide_title: Vec<u16> = OsStr::new(&title).encode_wide().chain(once(0)).collect();
     let ret = unsafe { MessageBoxW(null_mut(), wide_msg.as_ptr(), wide_title.as_ptr(), MB_OK) };
     if ret == 0 {
         Err(Error::last_os_error())
@@ -266,7 +268,12 @@ pub fn print_message(msg: &str) -> Result<i32, Error> {
 }
 #[cfg(not(windows))]
 pub fn print_message(msg: &str) -> Result<(), Error> {
-    println!("{}\n\n{}", MESSAGE_ALERT_WINDOW_TITLE, msg);
+    println!(
+        "{} ({})\n\n{}",
+        MESSAGE_ALERT_WINDOW_TITLE,
+        VERSION.unwrap_or("unknown"),
+        msg
+    );
     Ok(())
 }
 
