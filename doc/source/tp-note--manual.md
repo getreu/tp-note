@@ -132,7 +132,7 @@ lang:       "en_GB.UTF-8"
 revision:   "1.0"
 ---
 
-[Rustacean Station](https://rustacean-station.org/
+[Rustacean Station](https://rustacean-station.org/)
 ```
 
 ![Annotate](images/workflow3-5.png){width="13cm"}
@@ -200,7 +200,7 @@ started quickly.
 
   Download the
   [tp-note executable for Windows](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe) [^4]
-  and place it on your desktop. 
+  and place it on your desktop.
 
 * **Linux**
 
@@ -342,18 +342,22 @@ The following works for me with Windows-version `10.0.18362`.
 2. Open the *notepad* editor and paste the following registry-key into
    it.
 
-     Windows Registry Editor Version 5.00
+        Windows Registry Editor Version 5.00
 
-     [HKEY_CLASSES_ROOT\Directory\Background\shell\Tp-Note]
+        [HKEY_CLASSES_ROOT\Directory\Background\shell\Tp-Note]
 
-     [HKEY_CLASSES_ROOT\Directory\Background\shell\Tp-Note\command]
-     @="\"C:\\Program Files\\tp-note\\tp-note\""
+        [HKEY_CLASSES_ROOT\Directory\Background\shell\Tp-Note\command]
+        @="\"C:\\Program Files\\tp-note\\tp-note\""
 
-     [HKEY_CLASSES_ROOT\*\OpenWithList\tp-note.exe]
-     @=""
+        [HKEY_CLASSES_ROOT\*\OpenWithList\tp-note.exe]
+        @=""
 
-3. Save the file under the name `tp-note.reg` and choose *utf-16le*
-   as encoding.
+3. Save the file as: 
+
+   * File name: `tp-note.reg`
+   * Save as type: `All files`
+   * Encoding:  `UTF-16 LE`
+
 
 4. Double-click on `tp-note.reg` and confirm several times.
 
