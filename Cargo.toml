@@ -4,7 +4,7 @@ version = "0.9.5"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
-description = "fast note-takingg with templates and filename synchronization"
+description = "fast note-taking with templates and filename synchronization"
 license = "MIT/Apache-2.0"
 categories = ["command-line-utilities", "template-engine", "text-processing"]
 documentation = "https://blog.getreu.net/projects/tp-note/tp-note--manpage.html"
@@ -19,9 +19,9 @@ depends = "$auto"
 extended-description = '''
 tp-note is a note-taking-tool and a template system, that consistently
 synchronizes the note’s meta-data with its filename. tp-note collects various
-information about its environment and the clipboard and stores them in
+information about its environment and the clipboard, and stores them in
 variables. New notes are created by filling these variables in predefined and
-customizable “Tera”-templates. In case the postional command-line-parameter
+customizable “Tera”-templates. In case the positional command-line-parameter
 “<path>” points to an existing “tp-note”-file, the note’s meta-data is analysed
 and, if necessary, its filename is modified. For all other file types, tp-note
 creates a new note that annotates the file “<path>” points to. If “<path>” is a

@@ -27,7 +27,7 @@ and customizable _Tera_-templates. In case '`<path>`' points to an existing
 filename is modified. For all other file types, _tp-note_ creates a new note
 that annotates the file '`<path>`' points to. If '`<path>`' is a directory (or,
 when omitted the current working directory), a new note is created in that
-directory. After creation, _tp-note_ launches an external editor of your
+directory. After creation, _tp-note_ launches an external text editor of your
 choice. Although the note's structure follows '`pandoc`'-conventions, it is not
 tied to any specific markup language.
 
@@ -52,8 +52,9 @@ content is a hyperlink in markdown format, the hyperlink's name is stored in
 '`{{ clipboard_linkname }}`', and its url in '`{{ clipboard_linkurl }}`'. The
 new note is then created with the '`tmpl_clipboard_content`' and the
 '`tmpl_clipboard_filename`' templates.  Finally, the newly created file is
-opened with an external editor. When the editor closes, _tp-note_ synchronizes
-with the template '`tmpl_sync_filename`' the note's meta-data and its filename.
+opened with an external text editor. When the text editor closes, _tp-note_
+synchronizes with the template '`tmpl_sync_filename`' the note's meta-data and
+its filename.
 
 > Note: this operation mode also empties the clipboard (configurable feature).
 
@@ -126,13 +127,13 @@ revision: "1.0"
 
 ## New note with empty clipboard
 
-In case the clipboard is empty while starting, another set of templates is
-used to create the new note: '`tmpl_new_content`' and '`tmpl_new_filename`'.
-By default, the new note's title is the parent's directory name. The newly
-created file is then opened with an external editor, allowing to change the
-proposed title and to add other content. When the editor closes, _tp-note_
-synchronizes the note's meta-data and its filename. This operation is
-performed with the '`tmpl_sync_filename`' template.
+In case the clipboard is empty while starting, another set of templates is used
+to create the new note: '`tmpl_new_content`' and '`tmpl_new_filename`'.  By
+default, the new note's title is the parent's directory name. The newly created
+file is then opened with an external text editor, allowing to change the
+proposed title and to add other content. When the text editor closes, _tp-note_
+synchronizes the note's meta-data and its filename. This operation is performed
+with the '`tmpl_sync_filename`' template.
 
 
 Example: the clipboard is empty and `<path>` is a directory (or empty):
@@ -171,7 +172,7 @@ When '`<path>`' points to a file whose extension is other than '`.md`', a new
 note is created with a similar filename and a reference to the original file
 copied into the note. The logic of this is implemented in the templates:
 '`tmpl_annotate_content`' and '`tmpl_annotate_filename`'. Once the file is
-created, it is opened with an external editor. After editing the file, it
+created, it is opened with an external text editor. After editing the file, it
 will be - if necessary - renamed to be in sync with the note's meta-data.
 
 Example:
@@ -202,9 +203,9 @@ revision:   "1.1"
 
 ## Editing notes
 
-If not invoked with '`--batch`', _tp-note_ launches an external editor after
-creating a new note. This also happens when '`<path>`' points to an existing
-'`.md`'-file.
+If not invoked with '`--batch`', _tp-note_ launches an external text editor
+after creating a new note. This also happens when '`<path>`' points to an
+existing '`.md`'-file.
 
 Example: edit the note from the previous example:
 
@@ -216,11 +217,11 @@ Example: edit the note from the previous example:
 
 ## Automatic filename synchronization before and after editing
 
-Before launching the editor and after closing it, _tp-note_ synchronizes the
-filename with the note's metadata. When the user changes the metadata of a
-note, _tp-note_ will replicate that change in the note's filename. As a
-result, *all your note's filenames always correspond to their metadata*,
-which allows you to find your notes back quickly.
+Before launching the text editor and after closing it, _tp-note_ synchronizes
+the filename with the note's metadata. When the user changes the metadata of a
+note, _tp-note_ will replicate that change in the note's filename. As a result,
+*all your note's filenames always correspond to their metadata*, which allows
+you to find your notes back quickly.
 
 Example:
 
@@ -228,10 +229,10 @@ Example:
 > tp-note "20200306-Favorite Readings--Note.md"
 ```
 
-_tp-note_ opens the file in an editor. Now the note-taker decides to update
-the title in the note's YAML metadata section from
-'`title: "Favorite Readings"`' to '`title: "Introduction to bookkeeping"`'.
-After closing the editor the filename is automatically updated to:
+_tp-note_ opens the file in an text editor. Now the note-taker decides to update
+the title in the note's YAML metadata section from '`title: "Favorite
+Readings"`' to '`title: "Introduction to bookkeeping"`'.  After closing the text
+editor the filename is automatically updated to:
 
     "20200306-Introduction to bookkeeping--Note.md"
 
@@ -246,7 +247,7 @@ mechanism never does. (See below for more details about filename synchronization
 **-b**, **\--batch**
 
 ;   Create a new file or rename the file to stay synchronized
-    with its meta-data, but does not launch the external editor.
+    with its meta-data, but does not launch the external text editor.
 
 **-c** *CF*, **\--config**=*CF*
 
@@ -261,7 +262,7 @@ mechanism never does. (See below for more details about filename synchronization
 
 **-v**, **\--view**
 
-:   Launch the external editor in read-only-mode if possible.
+:   Launch the external text editor, if possible, in read-only-mode.
 
 **-V**, **\--version**
 
@@ -308,7 +309,7 @@ The filename has 4 parts:
     {{ sort-tag }}-{{ title }}--{{ subtitle }}.{{ extension }}
 
 A so called _sort-tag_ is a numerical prefix at the beginning of the
-filename. It is used to order files and notes in the filesystem. Besides
+filename. It is used to order files and notes in the file system. Besides
 numerical digits, a _sort-tag_ can be any combination of
 `0123456789-_`[^sort-tag] and is usually used as
 
@@ -351,7 +352,7 @@ author:     "getreu"
 date:       "March  6, 2020"
 lang:       "en_GB.UTF-8"
 revision:   "1.1"
-...
+---
 ```
 
 As "`-My file.md`" is not equal to "`-'1. The Beginning--Note.md`",
@@ -387,6 +388,7 @@ _tp-note_ distinguishes two template types: content-templates '`tmpl_*_content`'
 used to create the note's content (front-matter and body) and filename-templates
 '`tmpl_*_filename`' used to calculate the note's filename.
 
+
 ## Content-template conventions
 
 Strings in content-templates are JSON encoded. Therefor all variable used in
@@ -394,19 +396,20 @@ this template must pass an additional '`json_encode()`'-filter. For
 example, the variable '`{{ dirname }}`' must be written as
 '`{{ dirname | json_encode() }}`' instead.
 
+
 ## Filename-template convention
 
 The same applies to filename-template-variables: in this context we must
-guarantee, that the variable contains only filesystem friendly characters.
+guarantee, that the variable contains only file system friendly characters.
 For this purpose _tp-note_ provides all variables in 3 different flavours:
 
 * The original variable '`<var>`', e.g. '`title`'. No filter is applied.
 
-* A filesystem friendly version '`<var>__path`', e.g. '`title__path`'.
+* A file system friendly version '`<var>__path`', e.g. '`title__path`'.
   (Note the double underscore '`_`'). In this variant forbidden characters like
   '`?`' are omitted or replaced by '`_`' or space.
 
-* Another filesystem friendly version '`<var>__alphapath`' similar to the above,
+* Another file system friendly version '`<var>__alphapath`' similar to the above,
   with one exception: when a string starts with a number character '`0`-`9`' the
   string is prepended with `'`.
   For example: "`1. The Show Begins`" becomes "`'1. The Show Begins`".
@@ -414,20 +417,28 @@ For this purpose _tp-note_ provides all variables in 3 different flavours:
 In filename-templates only variables, whose name end with '`*__path`' or
 '`*__alphapath`' should be used.
 
-## Choose your own external editor
+
+## Register your own external text editor for usage with Tp-Note
 
 The Tera-template variables '`editor_args`' and '`viewer_args`' define a list of
-external editors to be launched for editing. '`viewer_args`' is used
-when _tp-note_ is invoked with '`--view`' in viewer mode.
+external text editors to be launched for editing. '`viewer_args`' is used when
+_tp-note_ is invoked with '`--view`' in viewer mode.  The list contains
+well-known text editor names and its command-line arguments.  _tp-note_ tries to
+launch every text editor from the beginning of the list until it finds an
+installed text editor.
 
-The list contains well-known editor names and its command-line arguments.
-_tp-note_ tries to launch every editor from the beginning of the list until
-it finds an installed editor.
+To use your own text editor, just place it at the top of the list. To make this
+work properly, make sure, that your text editor does not fork! You can check
+this when you launch the text editor from the command-line: if the prompt
+returns immediately, then it forks the process. In contrast, it is Ok when the
+prompt only comes back them moment the text editor is closed. Many text editors
+provide an option not to fork: for example the _VScode_-editor can be launched
+with the '`--wait`' option and `vim` with `vim --nofork`. However, _tp-note_
+also works with forking text editors. The only drawback is, that _tp-note_ can
+not synchronize the filename with the note's metadata when the user has finished
+editing. This will then only happen the next time he opens the note with
+_tp-note_.
 
-To use your own editor, just place it at the top of the list. To work
-properly make sure, that your editor does not fork! Many editors provide an
-option not to fork: for example the '`code`'-editor can be launched with the
-'`--wait`' option.
 
 ## Change the markup language
 

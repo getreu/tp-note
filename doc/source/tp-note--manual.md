@@ -78,7 +78,7 @@ right-click on some empty white space.
 >
 > Before and after launching the editor _tp-note_ renames the file to be in
 > sync with the note's metadata (i.e. title and subtitle).
-> For more details see [Document title - filename sync](#)
+> For more details see [Document title - filename sync]
 
 
 ## Taking notes about a file
@@ -154,7 +154,7 @@ The filename has 4 parts:
     {{ sort-tag }}-{{ title }}--{{ subtitle }}.{{ extension }}
 
 A so called _sort-tag_ is a numerical prefix at the beginning of the
-filename. It is used to order files and notes in the filesystem. Besides
+filename. It is used to order files and notes in the file system. Besides
 numerical digits, a _sort-tag_ can be any combination of
 `0123456789-_`[^sort-tag] and is usually used as:
 
@@ -204,11 +204,13 @@ started quickly.
 
 * **Linux**
 
-  Download the _tp-note_-binary for Linux and place ist on your desktop.
+  Download the _tp-note_-binary for Linux and place it on your Desktop:
 
-     > cd ~/Desktop
-     > wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note
-     > chmod 755 tp-note
+  ``` sh
+  > cd ~/Desktop
+  > wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note
+  > chmod 755 tp-note
+  ```
 
 A new _tp-note_-icon appears on your desktop.
 
@@ -219,10 +221,11 @@ To create a new note, either double-click on the _tp-note_-icon, or drag a
 folder or file and drop it on the _to-note_-icon. This opens an editor with
 your new note.
 
-For more comfort I recommend integrating _tp-note_ into the file-manager's
-context menu. See section [Integration with file manager](#) for more
-details. There you also will find a list of compatible Markdown-editors, if
-you wish to use one.
+For more comfort, I recommend integrating _tp-note_ into the file-manager's
+context menu. See section [Integration with file manager] for more details.
+There you also will find a list of tested Markdown-editors, if you wish to use
+one. _tp-note_ works with every Unicode text editor and Markdown-editor (see
+section [Optional customization] and man-page for more details).
 
 _tp-note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
 [Pandoc](https://pandoc.org/) and then printed.
@@ -273,10 +276,10 @@ _tp-note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
   Please refer to _tp-note_'s man-page to learn how to change its
   templates in the configuration file.
 
-* Your preferred editor is not *ReText*? Change it![^1]
+* Your preferred text editor is not *ReText*? Change it![^1]
 
   Note-taking with _tp-note_ is more fun with a good markup (Markdown)
-  editor, although any Unicode editor will do (even Notepad >=
+  text editor, although any Unicode text editor will do (even Notepad >=
   Windows 10-update 1903). _tp-note_ it preconfigured to work with:
   
   - [Typora — a markdown editor, markdown reader.](https://typora.io/)
@@ -285,12 +288,12 @@ _tp-note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
 
   - _VS-Code_, _Atom_ ...
 
-  Please refer to _tp-note_'s man-page to learn to register your
-  editor in _tp-note-'s configuration file.
+  Please refer to _tp-note_'s man-page to learn to register your text
+  editor in _tp-note_'s configuration file.
 
 * You prefer working in a desktop environment instead of working on a shell?
 
-  Read [Integration with file manager](#).
+  Read [Integration with file manager].
 
 
 
@@ -311,7 +314,15 @@ To simplify the configuration we first place the binary _tp-note_
 in our `$PATH`:
 
 ```sh
-> sudo cp tp-note /use/local/bin
+> cd /usr/local/bin
+> sudo wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note
+> sudo chmod 755 tp-note
+```
+
+_Debian_ and _Ubuntu_ user can also download a binary package from [debian/tp-note] and install it with:
+
+``` sh
+> sudo dpkg -i tp-note_X.X.X_amd64.deb
 ```
 
 Most file-manager allow extending the context menu. As an example, the
@@ -328,6 +339,8 @@ In *Thunar*'s menu go to:
 
 ![Thunar's custom action configuration with tp-note](images/custom_actions2.png){width="10cm"}
 
+[debian/tp-note]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/
+
 ```{=docbook}
 <?dbfo-need height="4cm" ?>
 ```
@@ -339,7 +352,7 @@ The following works for me with Windows-version `10.0.18362`.
 1. Make the directory `C:\Windows\tp-note\` and move `tp-note.exe`
    into it.
 
-2. Open the *notepad* editor and paste the following registry-key into
+2. Open the *notepad* text editor and paste the following registry-key into
    it.
 
         Windows Registry Editor Version 5.00
@@ -362,11 +375,12 @@ The following works for me with Windows-version `10.0.18362`.
 4. Double-click on `tp-note.reg` and confirm several times.
 
 
-[^1]: _tp-note_ is preconfigured to work with many well-known external editors:
-e.g.: `code`, `atom`, `retext`, `geany`, `gedit`, `mousepad`, `leafpad`,
-`nvim-qt`, and `gvim` under Linux and `notpad++` and `notepad` under Windows.
-To register your own editor, please consult the man-page. For best user
-experience, I recommend an editor with internal markup previewer.
+[^1]: _tp-note_ is preconfigured to work with many well-known external text
+editors: e.g.: `code`, `atom`, `retext`, `geany`, `gedit`, `mousepad`,
+`leafpad`, `nvim-qt`, and `gvim` under Linux and `notpad++` and `notepad`
+under Windows.  To register your own text editor, please consult the man-page.
+For best user experience, I recommend text editors with internal markup
+previewer.
 
 [^2]: For a personalized setup read _tp-note_'s man-page.
 
