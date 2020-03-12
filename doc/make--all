@@ -2,7 +2,7 @@
 
 rm -r ./build
 
-./make--README  
+./make--index 
 ./make--tp-note--manpage
 ./make--tp-note--manual
 ./make--rustdoc-link

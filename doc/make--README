@@ -1,8 +1,0 @@
-#!/bin/sh
-
-mkdir --parents ./build/html
-mkdir --parents ./build/html/_downloads
-mkdir --parents ./build/man/man1
-
-./md2docbook2html ./source/README.md ./build/html/index.html
-

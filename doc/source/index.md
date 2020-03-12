@@ -15,19 +15,19 @@ User documentation
 
 * User manual
 
-  [tp-note user manual - html](https://blog.getreu.net/projects/tp-note/tp-note--manual.html)\
-  [tp-note user manual - pdf](https://blog.getreu.net/_downloads/tp-note--manual.pdf)
+  [tp-note user manual - html](/projects/tp-note/tp-note--manual.html)\
+  [tp-note user manual - pdf](/_downloads/tp-note--manual.pdf)
 
 * Unix man-page
 
-  [tp-note manual page - html](https://blog.getreu.net/projects/tp-note/tp-note--manpage.html)\
-  [tp-note manual page - pdf](https://blog.getreu.net/_downloads/tp-note--manpage.pdf)
+  [tp-note manual page - html](/projects/tp-note/tp-note--manpage.html)\
+  [tp-note manual page - pdf](/_downloads/tp-note--manpage.pdf)
 
-* [Blogposts about Tp-Note](https://blog.getreu.net/tags/tp-note/)
+* [Blogposts about Tp-Note](/tags/tp-note/)
 
 Developer documentation
 
-* [API documentation](https://blog.getreu.net/projects/tp-note/_downloads/doc/tp_note/)
+* [API documentation](/projects/tp-note/_downloads/doc/tp_note/)
 
 
 ## Source code
@@ -45,23 +45,23 @@ Repository
 
   - Executable for Windows
 
-    [x86_64-pc-windows-gnu/release/tp-note.exe](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe)
+    [x86_64-pc-windows-gnu/release/tp-note.exe](/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe)
 
   - Binary for Linux
 
-    [x86_64-unknown-linux-gnu/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
+    [x86_64-unknown-linux-gnu/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
 
   - Package for Debian and Ubuntu
 
-    [x86_64-unknown-linux-gnu/debian/tp-note_0.9.5_amd64.deb](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_0.9.5_amd64.deb)
+    [x86_64-unknown-linux-gnu/debian/tp-note_0.9.5_amd64.deb](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_0.9.5_amd64.deb)
 
 * Installable Unix man-page
 
-  - [tp-note.1.gz](https://blog.getreu.net/projects/tp-note/_downloads/tp-note.1.gz)
+  - [tp-note.1.gz](/projects/tp-note/_downloads/tp-note.1.gz)
 
 * Zifile with all builds and documentation bundled together
 
-  - [tp-note all](https://blog.getreu.net/_downloads/tp-note.zip)
+  - [tp-note all](/_downloads/tp-note.zip)
 
 
 ## Building and installing
