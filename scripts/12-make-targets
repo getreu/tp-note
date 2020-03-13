@@ -10,3 +10,6 @@ rustup target add x86_64-unknown-linux-musl
 cargo build --target x86_64-unknown-linux-gnu  --release
 strip -s ../target/x86_64-unknown-linux-gnu/release/tp-note
 
+cargo build --target x86_64-unknown-linux-musl --release
+strip -s ../target/x86_64-unknown-linux-musl/release/stringsext
+

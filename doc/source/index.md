@@ -49,7 +49,8 @@ Repository
 
   - Binary for Linux
 
-    [x86_64-unknown-linux-gnu/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
+    [x86_64-unknown-linux-gnu/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note) \
+    [x86_64-unknown-linux-musl/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note)
 
   - Package for Debian and Ubuntu
 
@@ -59,7 +60,7 @@ Repository
 
   - [tp-note.1.gz](/projects/tp-note/_downloads/tp-note.1.gz)
 
-* Zifile with all builds and documentation bundled together
+* Zipfile with all binaries and documentation
 
   - [tp-note all](/_downloads/tp-note.zip)
 
