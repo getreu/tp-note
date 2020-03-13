@@ -409,10 +409,10 @@ For this purpose _tp-note_ provides all variables in 3 different flavours:
   (Note the double underscore '`_`'). In this variant forbidden characters like
   '`?`' are omitted or replaced by '`_`' or space.
 
-* Another file system friendly version '`<var>__alphapath`' similar to the above,
-  with one exception: when a string starts with a number character '`0`-`9`' the
-  string is prepended with `'`.
-  For example: "`1. The Show Begins`" becomes "`'1. The Show Begins`".
+* Another file system friendly version '`<var>__alphapath`' similar to the
+  above, with one exception: when a string starts with a number character
+  '`0`-`9`' the string is prepended with `'`.  For example:
+  "`1 The Show Begins`" becomes "`'1 The Show Begins`".
 
 In filename-templates only variables, whose name end with '`*__path`' or
 '`*__alphapath`' should be used.
