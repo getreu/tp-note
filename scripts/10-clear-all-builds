@@ -1,6 +1,7 @@
 #!/bin/sh
 
 rustup update
+cargo upgrade
 cargo update
 
 rm -r ../target
