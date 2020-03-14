@@ -254,7 +254,7 @@ pub fn print_message(msg: &str) -> Result<i32, Error> {
     use winapi::um::winuser::{MessageBoxW, MB_OK};
     let wide_msg: Vec<u16> = OsStr::new(msg).encode_wide().chain(once(0)).collect();
     let title = format!(
-        "{} ({})",
+        "{} (v{})",
         MESSAGE_ALERT_WINDOW_TITLE,
         VERSION.unwrap_or("unknown")
     );
@@ -269,7 +269,7 @@ pub fn print_message(msg: &str) -> Result<i32, Error> {
 #[cfg(not(windows))]
 pub fn print_message(msg: &str) -> Result<(), Error> {
     println!(
-        "{} ({})\n\n{}",
+        "{} (v{})\n\n{}",
         MESSAGE_ALERT_WINDOW_TITLE,
         VERSION.unwrap_or("unknown"),
         msg
