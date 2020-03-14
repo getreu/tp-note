@@ -228,7 +228,10 @@ const ENABLE_READ_CLIPBOARD: bool = true;
 const ENABLE_EMPTY_CLIPBOARD: bool = true;
 
 /// Limit the size of clipboard data `tp-note` accepts.
-const CLIPBOARD_LEN_MAX: usize = 512;
+/// As the clipboard data will be copied in title by template,
+/// we better limit the length here, than having the Os complain about
+/// too long filenames. Anyway, titles and filenames should not be so long.
+const CLIPBOARD_LEN_MAX: usize = 255;
 
 #[derive(FromArgs, Debug)]
 /// `tp-note` is a note-taking-tool and a template system, that consistently
@@ -345,7 +348,9 @@ lazy_static! {
                 let ctx = &mut ctx.unwrap();
                 let s = ctx.get_contents().ok();
                 if s.is_some() && &s.as_ref().unwrap().len() > &CLIPBOARD_LEN_MAX {
-                    print_message(&format!("Warning: clipboard content size exceeded (>{} bytes). Ignored.", CLIPBOARD_LEN_MAX)).unwrap();
+                    print_message(&format!(
+                        "Warning: clipboard content ignored because its size \
+                        exceeds {} bytes.", CLIPBOARD_LEN_MAX)).unwrap();
                     return None;
                 }
                 s
