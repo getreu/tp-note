@@ -1,5 +1,5 @@
 #![windows_subsystem = "windows"]
-//! _tp-note_ is a note-taking-tool and a template system, that consistently
+//! _Tp-Note_ is a note-taking-tool and a template system, that consistently
 //! synchronizes the note's meta-data with its filename. `tp-note` collects
 //! various information about its environment and the clipboard and stores them
 //! in variables. New notes are created by filling these variables in predefined

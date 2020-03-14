@@ -1,66 +1,65 @@
 ---
-title: tp-note - fast note-taking with templates and filename synchronization
+title: Tp-Note - fast note-taking with templates and filename synchronization
 ---
 
-_tp-note_ is a note-taking-tool and a template system, that consistently
-synchronizes the note's meta-data with its filename. _tp-note_ collects
+_Tp-Note_ is a note-taking-tool and a template system, that consistently
+synchronizes the note's meta-data with its filename. _Tp-Note_ collects
 various information about its environment and the clipboard and stores them
 in variables. New notes are created by filling these variables in predefined
 and customizable _Tera_-templates.
 
+Read more in [Tp-Note's user manual](https://blog.getreu.net/projects/tp-note/tp-note--manual.html).
 
 ## Documentation
 
-User documentation
+User documentation:
 
-* User manual
+* User manual:
 
-  [tp-note user manual - html](https://blog.getreu.net/projects/tp-note/tp-note--manual.html)\
-  [tp-note user manual - pdf](https://blog.getreu.net/_downloads/tp-note--manual.pdf)
+  [Tp-Note user manual - html](https://blog.getreu.net/projects/tp-note/tp-note--manual.html)\
+  [Tp-Note user manual - pdf](https://blog.getreu.net/_downloads/tp-note--manual.pdf)
 
-* Unix man-page
+* Unix man-page:
 
-  [tp-note manual page - html](https://blog.getreu.net/projects/tp-note/tp-note--manpage.html)\
-  [tp-note manual page - pdf](https://blog.getreu.net/_downloads/tp-note--manpage.pdf)
+  [Tp-Note manual page - html](https://blog.getreu.net/projects/tp-note/tp-note--manpage.html)\
+  [Tp-Note manual page - pdf](https://blog.getreu.net/_downloads/tp-note--manpage.pdf)
 
 * [Blogposts about Tp-Note](https://blog.getreu.net/tags/tp-note/)
 
-Developer documentation
+Developer documentation:
 
 * [API documentation](https://blog.getreu.net/projects/tp-note/_downloads/doc/tp_note/)
 
 
 ## Source code
 
-Repository
+Repository:
 
-* [tp-note on Github](https://github.com/getreu/tp-note)
-
-* [tp-note on Gitlab](https://gitlab.com/getreu/tp-note)
+* [Tp-Note on Github](https://github.com/getreu/tp-note)
 
 
 ## Distribution
 
-* Binaries and packages
+* Binaries and packages:
 
-  - Executable for Windows
+  - Executable for Windows:
 
     [x86_64-pc-windows-gnu/release/tp-note.exe](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe)
 
-  - Binary for Linux
+  - Binary for Linux:
 
     [x86_64-unknown-linux-gnu/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note) \
     [x86_64-unknown-linux-musl/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note)
 
-  - Package for Debian and Ubuntu
+  - Package for Debian and Ubuntu:
 
-    [x86_64-unknown-linux-gnu/debian/tp-note_0.9.5_amd64.deb](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_0.9.5_amd64.deb)
+    [x86_64-unknown-linux-gnu/debian/tp-note_1.0.0_amd64.deb](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.0.0_amd64.deb)
 
-* Installable Unix man-page
+* Installable Unix man-page:
 
   - [tp-note.1.gz](https://blog.getreu.net/projects/tp-note/_downloads/tp-note.1.gz)
 
-* Zipfile with all binaries and documentation
+* Zipfile with all binaries and documentation:
 
   - [tp-note all](https://blog.getreu.net/_downloads/tp-note.zip)
 
@@ -71,9 +70,10 @@ Repository
 
        curl https://sh.rustup.rs -sSf | sh
 
-   The fastest way
+   The fast-track procedure:
 
        cargo install tp-note
+       sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
    It it works for you you are done. Otherwise continue the next step.
 
@@ -81,7 +81,7 @@ Repository
 
        git clone git@github.com:getreu/tp-note.git
 
-3. Build
+3. Build:
 
    Enter the *tp-note* directory where the file `Cargo.toml`
    resides:
@@ -94,7 +94,7 @@ Repository
        cargo build --release
        ./doc/make--all
 
-4. Install
+4. Install:
 
    a.  Linux:
 
@@ -105,27 +105,28 @@ Repository
            sudo cp man/tp-note.1.gz /usr/local/man/man1/
            sudo dpkg-reconfigure man-db   # e.g. Debian, Ubuntu
 
-   b.  Windows
+   b.  Windows:
 
        Copy the binary `target/release/tp-note.exe` on your desktop.
 
    See the user manual for a detailed installation description.
 
-
-
+This project follows [Semantic Versioning](https://semver.org/).
 
 
 
 ## About
 
-Author
+Author:
 
 * Jens Getreu
 
-Copyright
+Copyright:
 
 * Apache 2 licence or MIT licence
 
-Build status
+<!--
+Build status:
 
 * ![status](https://travis-ci.org/getreu/tp-note.svg?branch=master)  
+-->
