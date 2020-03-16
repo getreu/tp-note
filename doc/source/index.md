@@ -16,12 +16,14 @@ User documentation:
 
 * User manual:
 
-  [Tp-Note user manual - html](/projects/tp-note/tp-note--manual.html)\
+  [Tp-Note user manual - html](/projects/tp-note/tp-note--manual.html)
+
   [Tp-Note user manual - pdf](/_downloads/tp-note--manual.pdf)
 
 * Unix man-page:
 
-  [Tp-Note manual page - html](/projects/tp-note/tp-note--manpage.html)\
+  [Tp-Note manual page - html](/projects/tp-note/tp-note--manpage.html)
+
   [Tp-Note manual page - pdf](/_downloads/tp-note--manpage.pdf)
 
 * [Blogposts about Tp-Note](/tags/tp-note/)
@@ -48,7 +50,8 @@ Repository:
 
   - Binary for Linux:
 
-    [x86_64-unknown-linux-gnu/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note) \
+    [x86_64-unknown-linux-gnu/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
+
     [x86_64-unknown-linux-musl/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note)
 
   - Package for Debian and Ubuntu:

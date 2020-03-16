@@ -16,12 +16,14 @@ User documentation:
 
 * User manual:
 
-  [Tp-Note user manual - html](https://blog.getreu.net/projects/tp-note/tp-note--manual.html)\
+  [Tp-Note user manual - html](https://blog.getreu.net/projects/tp-note/tp-note--manual.html)
+
   [Tp-Note user manual - pdf](https://blog.getreu.net/_downloads/tp-note--manual.pdf)
 
 * Unix man-page:
 
-  [Tp-Note manual page - html](https://blog.getreu.net/projects/tp-note/tp-note--manpage.html)\
+  [Tp-Note manual page - html](https://blog.getreu.net/projects/tp-note/tp-note--manpage.html)
+
   [Tp-Note manual page - pdf](https://blog.getreu.net/_downloads/tp-note--manpage.pdf)
 
 * [Blogposts about Tp-Note](https://blog.getreu.net/tags/tp-note/)
@@ -48,7 +50,8 @@ Repository:
 
   - Binary for Linux:
 
-    [x86_64-unknown-linux-gnu/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note) \
+    [x86_64-unknown-linux-gnu/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
+
     [x86_64-unknown-linux-musl/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note)
 
   - Package for Debian and Ubuntu:

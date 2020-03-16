@@ -32,16 +32,15 @@ The documentation of this project is dived into tow parts:
 
 * User manual
 
-  [tp-note user manual - html](https://blog.getreu.net/projects/tp-note/tp-note--manual.html)\
+  [tp-note user manual - html](https://blog.getreu.net/projects/tp-note/tp-note--manual.html)
+
   [tp-note user manual - pdf](https://blog.getreu.net/_downloads/tp-note--manual.pdf)
 
 * Unix man-page (more technical)
 
-  [tp-note manual page - html](https://blog.getreu.net/projects/tp-note/tp-note--manpage.html)\
+  [tp-note manual page - html](https://blog.getreu.net/projects/tp-note/tp-note--manpage.html)
+
   [tp-note manual page - pdf](https://blog.getreu.net/_downloads/tp-note--manpage.pdf)
-* User-manual: [user-manual-pdf] (this document ), also available as [pdf]
-
-
 
 
 # How students take notes
