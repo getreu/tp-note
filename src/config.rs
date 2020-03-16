@@ -227,11 +227,12 @@ const ENABLE_READ_CLIPBOARD: bool = true;
 /// Default value.
 const ENABLE_EMPTY_CLIPBOARD: bool = true;
 
-/// Limit the size of clipboard data `tp-note` accepts.
-/// As the clipboard data will be copied in title by template,
-/// we better limit the length here, than having the Os complain about
-/// too long filenames. Anyway, titles and filenames should not be so long.
-const CLIPBOARD_LEN_MAX: usize = 255;
+/// Limit the size of clipboard data `tp-note` accepts.  As the clipboard data will be copied in
+/// title by template, we better limit the length here, than having the Os complain about too long
+/// filenames. Anyway, titles and filenames should not be so long.  [http - What is the maximum
+/// length of a URL in different browsers? - Stack
+/// Overflow](https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers)
+const CLIPBOARD_LEN_MAX: usize = 2048;
 
 #[derive(FromArgs, Debug)]
 /// `tp-note` is a note-taking-tool and a template system, that consistently
