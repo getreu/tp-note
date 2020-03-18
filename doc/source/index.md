@@ -68,7 +68,7 @@ Repository:
 
   - Package for Debian and Ubuntu:
 
-    [x86_64-unknown-linux-gnu/debian/tp-note_1.0.0_amd64.deb](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.0.0_amd64.deb)
+    [x86_64-unknown-linux-gnu/debian/tp-note_1.1.0_amd64.deb](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.1.0_amd64.deb)
 
 * Installable Unix man-page:
 
