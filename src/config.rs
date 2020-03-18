@@ -54,7 +54,7 @@ const TMPL_NEW_CONTENT: &str = "\
 title:      {{ dirname | json_encode() }}
 subtitle:   {{ 'Note' | json_encode() }}
 author:     {{ username | json_encode() }}
-date:       {{ now() | date(format=\"%B %e, %Y\") | json_encode() }}
+date:       {{ now() | date(format=\"%Y-%m-%d\") | json_encode() }}
 lang:       {{ lang | json_encode() }}
 revision:   {{ '1.0' | json_encode() }}
 ---
@@ -93,7 +93,7 @@ subtitle:   {{ 'URL' | json_encode() }}
 {% else %}title:      {{ clipboard | json_encode }}
 subtitle:   {{ 'Note' | json_encode() }}
 {% endif %}author:     {{ username | json_encode() }}
-date:       {{ now() | date(format=\"%B %e, %Y\") | json_encode() }}
+date:       {{ now() | date(format=\"%Y-%m-%d\") | json_encode() }}
 lang:       {{ lang | json_encode() }}
 revision:   {{ '1.0' | json_encode() }}
 ---
@@ -131,7 +131,7 @@ const TMPL_ANNOTATE_CONTENT: &str = "\
 title:      {{ sort_tag ~ file_stem | json_encode() }}
 subtitle:   {{ 'Note' | json_encode() }}
 author:     {{ username | json_encode() }}
-date:       {{ now() | date(format=\"%B %e, %Y\") | json_encode() }}
+date:       {{ now() | date(format=\"%Y-%m-%d\") | json_encode() }}
 lang:       {{ lang | json_encode() }}
 revision:   {{ '1.0' | json_encode() }}
 ---
@@ -157,7 +157,7 @@ const TMPL_ANNOTATE_FILENAME: &str = "\
 /// Default command-line argument list when launching external editor.
 /// The editor list is executed item by item until an editor is found.
 /// Can be changed in config file.
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 const EDITOR_ARGS: &[&[&str]] = &[
     &[&"typora"],
     &[&"code", &"-w"],
@@ -174,7 +174,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
     &[&"vim"],
     &[&"vi"],
 ];
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_family = "windows")]
 const EDITOR_ARGS: &[&[&str]] = &[
     &[&"C:\\Program Files\\Typora\\Typora.exe"],
     &[
@@ -184,11 +184,17 @@ const EDITOR_ARGS: &[&[&str]] = &[
     ],
     &[&"C:\\Windows\\notepad.exe"],
 ];
+// Some info about lauching programs on iOS:
+//[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
+#[cfg(target_os = "ios")]
+const EDITOR_ARGS: &[&[&str]] = &[
+    &[&"/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
+];
 
 /// Default command-line argument list when launching external viewer
 /// with `--view`. Can be changed in config file.
 /// The viewer list is executed item by item until an editor is found.
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 const VIEWER_ARGS: &[&[&str]] = &[
     &[&"typora"],
     &[&"code", &"-w"],
@@ -206,7 +212,7 @@ const VIEWER_ARGS: &[&[&str]] = &[
     &[&"vim", &"-R"],
     &[&"vi", &"-R"],
 ];
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_family = "windows")]
 const VIEWER_ARGS: &[&[&str]] = &[
     &[&"C:\\Program Files\\Typora\\Typora.exe"],
     &[
@@ -216,6 +222,12 @@ const VIEWER_ARGS: &[&[&str]] = &[
         "-ro",
     ],
     &[&"C:\\Windows\\notepad.exe"],
+];
+// Some info about lauching programs on iOS:
+//[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
+#[cfg(target_os = "ios")]
+const VIEWER_ARGS: &[&[&str]] = &[
+    &[&"/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
 ];
 
 /// By default clipboard support is enabled, can be disabled
