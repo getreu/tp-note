@@ -42,7 +42,19 @@ Repository:
 
 ## Distribution
 
-* Binaries and packages:
+* Binaries for last release (Linux, Windows, iOS)
+
+    1. Open: [Releases · getreu/tp-note](https://github.com/getreu/tp-note/releases)
+
+    2. Open the latest release.
+
+    3. Open *assets*.
+
+    4. Download the packed executable for your operating system.
+
+    5. Installation: see below.
+
+* Binaries and packages (usually built from lastest commit):
 
   - Executable for Windows:
 
