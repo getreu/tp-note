@@ -28,14 +28,12 @@ stages:
           - script: |
               curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUSTUP_TOOLCHAIN
               echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
-              sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev
             displayName: Install rust
-            condition: eq( variables['Agent.OS'], 'Linux' )
+            condition: ne( variables['Agent.OS'], 'Windows_NT' )
           - script: |
-              curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUSTUP_TOOLCHAIN
-              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
-            displayName: Install rust
-            condition: eq( variables['Agent.OS'], 'Darwin' )
+              sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev
+            condition: eq( variables['Agent.OS'], 'Linux' )
+            displayName: Install build dependencies 
           - script: |
                 curl -sSf -o rustup-init.exe https://win.rustup.rs
                 rustup-init.exe -y --default-toolchain %RUSTUP_TOOLCHAIN% --default-host x86_64-pc-windows-msvc
@@ -73,14 +71,12 @@ stages:
           - script: |
               curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUSTUP_TOOLCHAIN
               echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
-              sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev
             displayName: Install rust
-            condition: eq( variables['Agent.OS'], 'Linux' )
+            condition: ne( variables['Agent.OS'], 'Windows_NT' )
           - script: |
-              curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUSTUP_TOOLCHAIN
-              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
-            displayName: Install rust
-            condition: eq( variables['Agent.OS'], 'Darwin' )
+              sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev
+            condition: eq( variables['Agent.OS'], 'Linux' )
+            displayName: Install build dependencies 
           - script: |
               set CARGO_HOME=%USERPROFILE%\.cargo
               curl -sSf -o rustup-init.exe https://win.rustup.rs
@@ -100,7 +96,10 @@ stages:
               cargo build --release --target %TARGET%
             condition: eq( variables['Agent.OS'], 'Windows_NT' )
             displayName: Build on Windows
-
+          - script: |
+              strip "$(Build.SourcesDirectory)/target/$(TARGET)/release/tp-note"
+            condition: eq( variables['Agent.OS'], 'Linux' )
+            displayName: Strip debug symbols
           - task: CopyFiles@2
             displayName: Copy assets
             condition: ne( variables['Agent.OS'], 'Windows_NT' )
