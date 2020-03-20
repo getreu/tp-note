@@ -187,9 +187,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
 // Some info about lauching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(target_os = "ios")]
-const EDITOR_ARGS: &[&[&str]] = &[
-    &[&"/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
-];
+const EDITOR_ARGS: &[&[&str]] = &[&[&"/Applications/TextEdit.app/Contents/MacOS/TextEdit"]];
 
 /// Default command-line argument list when launching external viewer
 /// with `--view`. Can be changed in config file.
@@ -226,9 +224,7 @@ const VIEWER_ARGS: &[&[&str]] = &[
 // Some info about lauching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(target_os = "ios")]
-const VIEWER_ARGS: &[&[&str]] = &[
-    &[&"/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
-];
+const VIEWER_ARGS: &[&[&str]] = &[&[&"/Applications/TextEdit.app/Contents/MacOS/TextEdit"]];
 
 /// By default clipboard support is enabled, can be disabled
 /// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
@@ -318,11 +314,11 @@ impl ::std::default::Default for Cfg {
             tmpl_sync_filename: TMPL_SYNC_FILENAME.to_string(),
             editor_args: EDITOR_ARGS
                 .iter()
-                .map(|i| i.iter().map(|a| a.to_string()).collect())
+                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
             viewer_args: VIEWER_ARGS
                 .iter()
-                .map(|i| i.iter().map(|a| a.to_string()).collect())
+                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
             enable_read_clipboard: ENABLE_READ_CLIPBOARD,
             enable_empty_clipboard: ENABLE_EMPTY_CLIPBOARD,
@@ -360,7 +356,7 @@ lazy_static! {
             if ctx.is_some() {
                 let ctx = &mut ctx.unwrap();
                 let s = ctx.get_contents().ok();
-                if s.is_some() && &s.as_ref().unwrap().len() > &CLIPBOARD_LEN_MAX {
+                if s.is_some() && s.as_ref().unwrap().len() > CLIPBOARD_LEN_MAX {
                     print_message(&format!(
                         "Warning: clipboard content ignored because its size \
                         exceeds {} bytes.", CLIPBOARD_LEN_MAX)).unwrap();
@@ -421,8 +417,8 @@ impl Hyperlink {
         };
 
         Ok(Hyperlink {
-            name: linkname.to_string(),
-            url: linkurl.to_string(),
+            name: linkname,
+            url: linkurl,
         })
     }
 }

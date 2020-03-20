@@ -61,14 +61,14 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
             println!("File renamed to {:?}", new_fqfn);
             Ok(new_fqfn)
         } else {
-            return Err(anyhow!(format!(
+            Err(anyhow!(format!(
                 "Application error: can not rename file to {:?}\n\
                         (file exists already).\n\
                         Note: at this stage filename and YAML metadata are not in sync!\n\
                         Change `title`/`subtitle` in YAML front matter of file: {:?}
                         ",
                 new_fqfn, path
-            )));
+            )))
         }
     } else {
         Ok(path.to_path_buf())
@@ -219,11 +219,8 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
         let child = Command::new(&executable_list[i])
             .args(&args_list[i])
             .spawn();
-        if child.is_ok() {
-            let ecode = child
-                .unwrap()
-                .wait()
-                .context("failed to wait on editor to close")?;
+        if let Ok(mut child) = child {
+            let ecode = child.wait().context("failed to wait on editor to close")?;
 
             if !ecode.success() {
                 return Err(anyhow!("editor did not terminate gracefully"));
@@ -317,8 +314,7 @@ fn run() -> Result<(), anyhow::Error> {
     // Delete clipboard
     if CFG.enable_read_clipboard && CFG.enable_empty_clipboard {
         let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
-        if ctx.is_some() {
-            let ctx = &mut ctx.unwrap();
+        if let Some(mut ctx) = ctx {
             ctx.set_contents("".to_owned()).unwrap();
         };
     };

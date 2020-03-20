@@ -120,7 +120,7 @@ impl Note {
         let fqpn = if path.is_dir() {
             path
         } else {
-            path.parent().unwrap_or(Path::new("./"))
+            path.parent().unwrap_or_else(|| Path::new("./"))
         };
         context.insert("path", &fqpn.to_str().unwrap_or_default());
 
@@ -182,7 +182,8 @@ impl Note {
         context.insert("note_extension", CFG.note_extension.as_str());
 
         // search for UNIX or Windows user-names
-        let author = env::var("LOGNAME").unwrap_or(env::var("USERNAME").unwrap_or_default());
+        let author =
+            env::var("LOGNAME").unwrap_or_else(|_| env::var("USERNAME").unwrap_or_default());
         context.insert("username", &author);
 
         // register locale if available
@@ -233,7 +234,7 @@ impl Note {
 
         let fm_end = content[fm_start..]
             .find("---\n")
-            .unwrap_or(content[fm_start..].find("...\n").unwrap_or(0))
+            .unwrap_or_else(|| content[fm_start..].find("...\n").unwrap_or(0))
             + fm_start;
 
         if fm_start >= fm_end {
