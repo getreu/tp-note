@@ -347,7 +347,7 @@ lazy_static! {
             .unwrap()
         ).unwrap_or_else(|e| {
             print_message(&format!("Application error: \
-                unable to load/write config file: {}", e)).unwrap();
+                unable to load/write config file: {}", e));
             process::exit(1)
         });
 }
@@ -363,7 +363,7 @@ lazy_static! {
                 if s.is_some() && s.as_ref().unwrap().len() > CLIPBOARD_LEN_MAX {
                     print_message(&format!(
                         "Warning: clipboard content ignored because its size \
-                        exceeds {} bytes.", CLIPBOARD_LEN_MAX)).unwrap();
+                        exceeds {} bytes.", CLIPBOARD_LEN_MAX));
                     return None;
                 }
                 s

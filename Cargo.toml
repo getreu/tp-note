@@ -49,13 +49,11 @@ time = "0.2.9"
 confy = "0.4.0"
 clap = "2.33.0"
 structopt = "0.3.12"
+msgbox = "0.4.0"
 
 # On Linux you need the x11 library, install it with something like:
 #    sudo apt-get install xorg-dev
 clipboard = "0.5.0"
-
-[target.'cfg(windows)'.dependencies]
-winapi = { version = "0.3.8", features = ["winuser"] }
 
 [dependencies.tera]
 version = "1.1.0"

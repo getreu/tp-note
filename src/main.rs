@@ -17,8 +17,7 @@ mod content;
 mod context;
 mod note;
 
-#[cfg(windows)]
-extern crate winapi;
+extern crate msgbox;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
@@ -26,10 +25,10 @@ use crate::note::Note;
 use anyhow::{anyhow, Context};
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
+use msgbox::IconType;
 use std::env;
 use std::fs;
 use std::fs::OpenOptions;
-use std::io::Error;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
@@ -241,37 +240,30 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-/// Open OS-specific MessageBox,
-#[cfg(windows)]
-pub fn print_message(msg: &str) -> Result<i32, Error> {
-    use std::ffi::OsStr;
-    use std::iter::once;
-    use std::os::windows::ffi::OsStrExt;
-    use std::ptr::null_mut;
-    use winapi::um::winuser::{MessageBoxW, MB_OK};
-    let wide_msg: Vec<u16> = OsStr::new(msg).encode_wide().chain(once(0)).collect();
+pub fn print_message(msg: &str) {
     let title = format!(
         "{} (v{})",
         MESSAGE_ALERT_WINDOW_TITLE,
         VERSION.unwrap_or("unknown")
     );
-    let wide_title: Vec<u16> = OsStr::new(&title).encode_wide().chain(once(0)).collect();
-    let ret = unsafe { MessageBoxW(null_mut(), wide_msg.as_ptr(), wide_title.as_ptr(), MB_OK) };
-    if ret == 0 {
-        Err(Error::last_os_error())
-    } else {
-        Ok(ret)
-    }
+    // Print the same message also to console in case
+    // the window does not pop up due to missing
+    // libraries.
+    print_message_console(msg);
+    // Popup window.
+    msgbox::create(&title, msg, IconType::Info);
 }
-#[cfg(not(windows))]
-pub fn print_message(msg: &str) -> Result<(), Error> {
-    println!(
-        "{} (v{})\n\n{}",
+
+pub fn print_message_console(msg: &str) {
+    let title = format!(
+        "{} (v{})",
         MESSAGE_ALERT_WINDOW_TITLE,
-        VERSION.unwrap_or("unknown"),
-        msg
+        VERSION.unwrap_or("unknown")
     );
-    Ok(())
+    // Print the same message also to console in case
+    // the window does not pop up due to missing
+    // libraries.
+    eprintln!("{}\n\n{}", title, msg);
 }
 
 /// High level application algorithm:
@@ -333,13 +325,11 @@ fn main() -> Result<(), anyhow::Error> {
         }
 
         if ARGS.batch {
-            eprintln!(
-                "{}\n\n\
-                Error while executing: {}\n\
-                ---\n\
-               {:?}\n---",
-                MESSAGE_ALERT_WINDOW_TITLE, args_str, e
-            );
+            print_message_console(&format!(
+                "Error while executing: {}\n---\n\
+                    {:?}\n---",
+                args_str, e
+            ));
         } else {
             // Unwrap path argument.
             let no_path = PathBuf::new();
@@ -351,14 +341,14 @@ fn main() -> Result<(), anyhow::Error> {
                     {:?}\n---\nPlease correct error.\n\
                      Trying to start editor without synchronization...",
                     args_str, e
-                ))?;
+                ));
                 launch_editor(path)?;
             } else {
                 print_message(&format!(
                     "Error while executing: {}\n---\n\
                     {:?}\n---\nPlease correct error.",
                     args_str, e
-                ))?;
+                ));
             }
         }
         process::exit(1);
