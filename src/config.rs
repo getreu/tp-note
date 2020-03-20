@@ -3,11 +3,11 @@
 
 extern crate clipboard;
 use anyhow::anyhow;
-use argh::FromArgs;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::process;
+use structopt::StructOpt;
 
 use crate::print_message;
 use clipboard::ClipboardContext;
@@ -242,7 +242,11 @@ const ENABLE_EMPTY_CLIPBOARD: bool = true;
 /// Overflow](https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers)
 const CLIPBOARD_LEN_MAX: usize = 2048;
 
-#[derive(FromArgs, Debug)]
+#[derive(Debug, PartialEq, StructOpt)]
+#[structopt(
+    name = "Tp-Note",
+    about = "Fast note taking with templates and filename synchronization."
+)]
 /// `tp-note` is a note-taking-tool and a template system, that consistently
 /// synchronizes the note's meta-data with its filename. `tp-note` collects
 /// various information about its environment and the clipboard and stores them
@@ -256,29 +260,29 @@ const CLIPBOARD_LEN_MAX: usize = 2048;
 /// choice. Although the note's structure follows `pandoc`-conventions, it is not
 /// tied to any specific markup language.
 pub struct Args {
-    /// batch made do not launch editor or viewer
-    #[argh(switch, short = 'b')]
+    /// Batch made: does not launch editor or viewer
+    #[structopt(long, short = "b")]
     pub batch: bool,
-    /// load alternative config file from <config>
-    #[argh(option, short = 'c')]
+    /// Loads alternative configuration file
+    #[structopt(long, short = "c")]
     pub config: Option<String>,
-    /// debug: show templates and its variables
-    #[argh(switch, short = 'd')]
+    /// Debug: shows templates and its variables
+    #[structopt(long, short = "d")]
     pub debug: bool,
-    /// launch editor in read-only mode
-    #[argh(switch, short = 'v')]
+    /// Launches editor in read-only mode
+    #[structopt(long, short = "v")]
     pub view: bool,
-    /// path to file or dir to annotate
-    #[argh(positional)]
+    /// <dir> as new note location or <file> to annotate
+    #[structopt(name = "PATH", parse(from_os_str))]
     pub path: Option<PathBuf>,
-    /// print version and exit
-    #[argh(switch, short = 'V')]
+    /// Prints version and exit
+    #[structopt(long, short = "V")]
     pub version: bool,
 }
 
 lazy_static! {
 /// Structure to hold the parsed command-line arguments.
-pub static ref ARGS : Args = argh::from_env();
+pub static ref ARGS : Args = Args::from_args();
 }
 
 /// Configuration data, deserialized from the configuration-file.
