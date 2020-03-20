@@ -1,0 +1,53 @@
+#!/bin/bash
+
+### This follows instructions in
+### "Let's cross-compile examples from rust-sdl2 project from Ubuntu to 
+### Windows x86_64 [source].
+
+set -x
+
+cat ~/.cargo/config|grep "target.x86_64-pc-windows-gnu"
+if [ $? -ne 0 ]
+then
+    cat << EOF >> ~/.cargo/config
+[target.x86_64-pc-windows-gnu]
+linker = "x86_64-w64-mingw32-gcc"
+ar = "x86_64-w64-mingw32-gcc-ar"
+EOF
+fi
+
+
+sudo apt install gcc-mingw-w64-x86-64 -y
+# use rustup to add target https://github.com/rust-lang/rustup.rs#cross-compilation
+rustup target add x86_64-pc-windows-gnu
+
+# Based on instructions from https://github.com/AngryLawyer/rust-sdl2/
+
+# First we need sdl2 libs
+# links to packages https://www.libsdl.org/download-2.0.php
+
+sudo apt-get install libsdl2-dev -y
+curl -s https://www.libsdl.org/release/SDL2-devel-2.0.10-mingw.tar.gz | tar xvz -C /tmp
+
+# Prepare files for building
+
+mkdir -p ~/tmp/projects
+pushd ~/tmp/projects
+git clone https://github.com/Rust-SDL2/rust-sdl2
+cd rust-sdl2
+cp -r /tmp/SDL2-2.0.10/x86_64-w64-mingw32/lib/* ~/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-pc-windows-gnu/lib/
+cp /tmp/SDL2-2.0.10/x86_64-w64-mingw32/bin/SDL2.dll .
+popd
+
+
+## Prevent [compiler error] `undefined reference to__onexitend`
+pushd ~/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-pc-windows-gnu/lib/
+mv crt2.o crt2.o.bak
+cp /usr/x86_64-w64-mingw32/lib/crt2.o ./
+popd
+
+cargo build --target=x86_64-pc-windows-gnu --release
+
+
+### [source]: https://stackoverflow.com/questions/31492799/cross-compile-a-rust-application-from-linux-to-windows
+### [compiler error]: https://stackoverflow.com/questions/56602101/i-cant-get-cross-compiling-from-ubuntu-to-windows-working
