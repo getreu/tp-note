@@ -2,16 +2,17 @@
 //! the command-line parameters. It also reads the clipboard.
 
 extern crate clipboard;
+use crate::MESSAGE_ALERT_WINDOW_TITLE;
+use crate::VERSION;
 use anyhow::anyhow;
+use clipboard::ClipboardContext;
+use clipboard::ClipboardProvider;
 use lazy_static::lazy_static;
+use msgbox::IconType;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::process;
 use structopt::StructOpt;
-
-use crate::print_message;
-use clipboard::ClipboardContext;
-use clipboard::ClipboardProvider;
 
 /// Name of this executable (without ".exe" extension on Windows).
 const CURRENT_EXE: &str = "tp-note";
@@ -425,6 +426,34 @@ impl Hyperlink {
             url: linkurl,
         })
     }
+}
+
+/// Pops up a message box and prints `msg`.
+pub fn print_message(msg: &str) {
+    let title = format!(
+        "{} (v{})",
+        MESSAGE_ALERT_WINDOW_TITLE,
+        VERSION.unwrap_or("unknown")
+    );
+    // Print the same message also to console in case
+    // the window does not pop up due to missing
+    // libraries.
+    print_message_console(msg);
+    // Popup window.
+    msgbox::create(&title, msg, IconType::Info);
+}
+
+/// Prints `msg` on console.
+pub fn print_message_console(msg: &str) {
+    let title = format!(
+        "{} (v{})",
+        MESSAGE_ALERT_WINDOW_TITLE,
+        VERSION.unwrap_or("unknown")
+    );
+    // Print the same message also to console in case
+    // the window does not pop up due to missing
+    // libraries.
+    eprintln!("{}\n\n{}", title, msg);
 }
 
 #[cfg(test)]

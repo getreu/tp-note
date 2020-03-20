@@ -18,6 +18,8 @@ mod context;
 mod note;
 
 extern crate msgbox;
+use crate::config::print_message;
+use crate::config::print_message_console;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
@@ -25,7 +27,6 @@ use crate::note::Note;
 use anyhow::{anyhow, Context};
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
-use msgbox::IconType;
 use std::env;
 use std::fs;
 use std::fs::OpenOptions;
@@ -252,32 +253,6 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     };
 
     Ok(())
-}
-
-pub fn print_message(msg: &str) {
-    let title = format!(
-        "{} (v{})",
-        MESSAGE_ALERT_WINDOW_TITLE,
-        VERSION.unwrap_or("unknown")
-    );
-    // Print the same message also to console in case
-    // the window does not pop up due to missing
-    // libraries.
-    print_message_console(msg);
-    // Popup window.
-    msgbox::create(&title, msg, IconType::Info);
-}
-
-pub fn print_message_console(msg: &str) {
-    let title = format!(
-        "{} (v{})",
-        MESSAGE_ALERT_WINDOW_TITLE,
-        VERSION.unwrap_or("unknown")
-    );
-    // Print the same message also to console in case
-    // the window does not pop up due to missing
-    // libraries.
-    eprintln!("{}\n\n{}", title, msg);
 }
 
 /// High level application algorithm:
