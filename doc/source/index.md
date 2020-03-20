@@ -63,9 +63,9 @@ Repository:
   - Binary for Linux:
 
     [x86_64-unknown-linux-gnu/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
-
+    <!--
     [x86_64-unknown-linux-musl/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note)
-
+    -->
   - Package for Debian and Ubuntu:
 
     [x86_64-unknown-linux-gnu/debian/tp-note_1.2.0_amd64.deb](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.2.0_amd64.deb)
