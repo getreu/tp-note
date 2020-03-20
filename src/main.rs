@@ -61,7 +61,7 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
             Ok(new_fqfn)
         } else {
             Err(anyhow!(format!(
-                "Application error: can not rename file to {:?}\n\
+                "can not rename file to {:?}\n\
                         (file exists already).\n\
                         Note: at this stage filename and YAML metadata are not in sync!\n\
                         Change `title`/`subtitle` in YAML front matter of file: {:?}
@@ -119,8 +119,15 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
                     .with_context(|| format!("can not write file {:?}", new_fqfn))?
             }
             Err(e) => {
-                println!("Can not open file for writing: {}", e);
-                println!("Instead, try to read existing: {:?}", new_fqfn);
+                if Path::new(&new_fqfn).exists() {
+                    println!("Can not open file for writing: {}", e);
+                    println!("Instead, try to read existing: {:?}", new_fqfn);
+                } else {
+                    return Err(anyhow!(format!(
+                        "Can not write file: {:?}\n{}",
+                        new_fqfn, e
+                    )));
+                }
             }
         }
 
@@ -163,8 +170,15 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
                         .with_context(|| format!("can not write file {:?}", new_fqfn))?
                 }
                 Err(e) => {
-                    println!("Can not open file for writing: {}", e);
-                    println!("Instead, try to read existing: {:?}", new_fqfn);
+                    if Path::new(&new_fqfn).exists() {
+                        println!("Can not open file for writing: {}", e);
+                        println!("Instead, try to read existing: {:?}", new_fqfn);
+                    } else {
+                        return Err(anyhow!(format!(
+                            "Can not write file: {:?}\n{}",
+                            new_fqfn, e
+                        )));
+                    }
                 }
             }
 
