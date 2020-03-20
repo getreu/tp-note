@@ -63,12 +63,12 @@ Repository:
   - Binary for Linux:
 
     [x86_64-unknown-linux-gnu/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
-
+    <!--
     [x86_64-unknown-linux-musl/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note)
-
+    -->
   - Package for Debian and Ubuntu:
 
-    [x86_64-unknown-linux-gnu/debian/tp-note_1.1.0_amd64.deb](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.1.0_amd64.deb)
+    [x86_64-unknown-linux-gnu/debian/tp-note_1.2.0_amd64.deb](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.2.0_amd64.deb)
 
 * Installable Unix man-page:
 
