@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.2.0"
+version = "1.2.1"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
@@ -54,6 +54,7 @@ msgbox = "0.4.0"
 # On Linux you need the x11 library, install it with something like:
 #    sudo apt-get install xorg-dev
 clipboard = "0.5.0"
+sanitize-filename-reader-friendly = "0.9.2"
 
 [dependencies.tera]
 version = "1.1.0"
