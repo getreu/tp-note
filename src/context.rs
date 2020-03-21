@@ -1,4 +1,6 @@
 //! Stores `tp-note`'s environment.
+extern crate sanitize_filename_reader_friendly;
+use crate::context::sanitize_filename_reader_friendly::sanitize;
 use std::ops::Deref;
 use std::path::PathBuf;
 
@@ -26,7 +28,7 @@ impl ContextWrapper {
     /// are generated and also inserted:
     /// 1. `<key-name>__path`:
     ///     the string value is sanitized for filename usage (see
-    ///     `sanitize_path()` below).
+    ///     `sanitize_filename()` below).
     /// 2. `<key-name>__alphapath`:
     ///     If the sanitized string starts with a number digit
     ///     (`0`-`9`), the character `'` is prepended.
@@ -38,7 +40,7 @@ impl ContextWrapper {
         // This is for use in the filename template.
         let mut key_path = key.to_string();
         key_path.push_str("__path");
-        let val_path = Self::sanitize_path(val);
+        let val_path = sanitize(val);
         self.ct.insert(&key_path, &val_path);
 
         // We also register a `<key>-path-alpha` version, where <val> is
@@ -53,83 +55,6 @@ impl ContextWrapper {
         }
         self.ct.insert(&key_path_alpha, &val_path_alpha);
     }
-
-    /// Filters filesystem critical characters:
-    ///
-    /// * Exclude NTFS critical characters:       `<>:"\\/|?*`
-    /// [source](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.aspx)
-    /// * Exclude restricted in fat32:            `+,;=[]`
-    /// [source](https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words)
-    /// * These are considered unsafe in URLs:    `<>#%{}|\^~[]` `
-    /// [source](https://perishablepress.com/stop-using-unsafe-characters-in-urls/)
-    fn sanitize_path(s: &str) -> String {
-        // proceed line by line
-        s.lines()
-            .map(|l| {
-                let mut s = l
-                    .chars()
-                    // tab -> space
-                    .map(|c| if c.is_whitespace() { ' ' } else { c })
-                    // Delete control characters.
-                    .filter(|c| !c.is_control())
-                    // Replaces:  :\\/|?~,;=    ->    _
-                    .map(|c| {
-                        if c == ':'
-                            || c == '\\'
-                            || c == '/'
-                            || c == '|'
-                            || c == '?'
-                            || c == '~'
-                            || c == ','
-                            || c == ';'
-                            || c == '='
-                        {
-                            '_'
-                        } else {
-                            c
-                        }
-                    })
-                    // Exclude NTFS critical characters:       <>:"\\/|?*
-                    // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.aspx
-                    // Exclude restricted in fat32:            +,;=[]
-                    // https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
-                    // These are considered unsafe in URLs:    <>#%{}|\^~[]`
-                    // https://perishablepress.com/stop-using-unsafe-characters-in-urls/
-                    .map(|c| {
-                        if c == ':'
-                            || c == '<'
-                            || c == '>'
-                            || c == ':'
-                            || c == '"'
-                            || c == '*'
-                            || c == '#'
-                            || c == '%'
-                            || c == '{'
-                            || c == '}'
-                            || c == '^'
-                            || c == '['
-                            || c == ']'
-                            || c == '+'
-                            || c == '`'
-                        {
-                            ' '
-                        } else {
-                            c
-                        }
-                    })
-                    .collect::<String>()
-                    // trim beginning and end of line
-                    .trim_matches(|c: char| c.is_whitespace() || c == '_' || c == '-')
-                    .to_string();
-                // Line sperarator
-                s.push('-');
-                s
-            })
-            .collect::<String>()
-            // trim again beginning and end of the whole string
-            .trim_matches(|c: char| c.is_whitespace() || c == '_' || c == '-')
-            .to_string()
-    }
 }
 
 /// Auto-dereference for convenient access to `tera::Content`.
@@ -138,43 +63,5 @@ impl Deref for ContextWrapper {
 
     fn deref(&self) -> &Self::Target {
         &self.ct
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::ContextWrapper;
-    #[test]
-    fn test_sanitize_path() {
-        // test filter 1
-        assert_eq!(
-            ContextWrapper::sanitize_path("\tabc efg"),
-            "abc efg".to_string()
-        );
-        // test filter 2
-        assert_eq!(
-            ContextWrapper::sanitize_path("abc\u{0019}efg"),
-            "abcefg".to_string()
-        );
-        // test filter 3
-        assert_eq!(
-            ContextWrapper::sanitize_path("abc:\\/|?~,;=efg"),
-            "abc_________efg".to_string()
-        );
-        // test filter4
-        assert_eq!(
-            ContextWrapper::sanitize_path("abc<>\"*<>#%{}^[]+[]`efg"),
-            "abc                 efg".to_string()
-        );
-        // test replace Unix newline
-        assert_eq!(
-            ContextWrapper::sanitize_path("-_\ta?b?c \t >_-\n   efg"),
-            "a_b_c-efg".to_string()
-        );
-        // test replace Window newline
-        assert_eq!(
-            ContextWrapper::sanitize_path("abc\r\nefg"),
-            "abc-efg".to_string()
-        );
     }
 }
