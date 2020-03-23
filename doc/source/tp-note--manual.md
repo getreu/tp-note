@@ -176,11 +176,14 @@ lang:       "en_GB.UTF-8"
 revision:   "1.0"
 ---
 
-Winston kept his back turned to the telescreen. It was safer, though, as he well knew, even a back can be revealing. A kilometre away the Ministry of Truth, his place of work, towered vast and white above the grimy landscape...
+Winston kept his back turned to the telescreen. It was safer, though, as he well
+knew, even a back can be revealing. A kilometre away the Ministry of Truth, his
+place of work, towered vast and white above the grimy landscape...
 ```
 
-In this example we copied only text. *Tp-Note* suggest the first sentence as title. This can be changed before saving as illustrated above. Here we just save and observe the
-file on the disk.
+In this example we copied only text. *Tp-Note* suggests the first sentence as
+title. This can be changed before saving as illustrated above. Here we just save
+and observe the file on the disk.
 
 ![The new note file on disk after closing the editor](images/workflow4-4.png){width="9cm"}
 
