@@ -111,9 +111,12 @@ revision:   "1.0"
 
 ![Copy a link in markdown format](images/workflow3-2.png){width="14cm"}
 
-To copy a link in markdown format a browser addon is needed. I am using the
-addons *Copy as markdown* and *Copy selection as markdown* available for
-Firefox.
+To copy a link in markdown format a browser addon is needed. I recommend the
+addons [Copy as Markdown] and [Copy Selection as Markdown] available
+for Firefox.
+
+[Copy as Markdown]: https://addons.mozilla.org/en-GB/firefox/search/?q=copy%20as%20markdown
+[Copy Selection as Markdown]: https://addons.mozilla.org/en-GB/firefox/addon/copy-selection-as-markdown/?src=search
 
 ![Right-click on or in the new note's destination folder and start tp-note](images/workflow3-3.png){width="11cm"}
 
@@ -133,6 +136,13 @@ revision:   "1.0"
 
 [Rustacean Station](https://rustacean-station.org/)
 ```
+
+In this example we copied only one Markdown-link "Rustacean Station".
+Furthermore, *Tp-Note* allows you also to insert a list of Markdown links in a
+template. For example with [Copy as Markdown] you could copy a link list of all
+open tabs. In this case, _Tp-Note_ would retain only the name of the first link
+as document title, whereas the whole link-list would appear in the body of the
+note.
 
 ![Annotate](images/workflow3-5.png){width="13cm"}
 
@@ -355,12 +365,12 @@ The following works for me with Windows-version `10.0.18362`.
    it.
 
         Windows Registry Editor Version 5.00
-
+        
         [HKEY_CLASSES_ROOT\Directory\Background\shell\Tp-Note]
-
+        
         [HKEY_CLASSES_ROOT\Directory\Background\shell\Tp-Note\command]
         @="\"C:\\Program Files\\tp-note\\tp-note\""
-
+        
         [HKEY_CLASSES_ROOT\*\OpenWithList\tp-note.exe]
         @=""
 

@@ -42,7 +42,7 @@ Repository:
 
 ## Distribution
 
-* Binaries for last release (Linux, Windows, iOS)
+* Binaries for latest release (Linux, Windows, iOS)
 
     1. Open: [Releases · getreu/tp-note](https://github.com/getreu/tp-note/releases)
 
@@ -54,7 +54,7 @@ Repository:
 
     5. Installation: see below.
 
-* Binaries and packages (usually built from lastest commit):
+* Binaries and packages (usually built from latest commit):
 
   - Executable for Windows:
 
@@ -90,7 +90,7 @@ Repository:
        cargo install tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-   It it works for you you are done. Otherwise continue the next step.
+   If it works for you, you are done. Otherwise continue the next step.
 
 2. Download [tp-note](#tp-note):
 
