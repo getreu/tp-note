@@ -20,6 +20,13 @@ const CURRENT_EXE: &str = "tp-note";
 /// File extension of `to-note` files.
 const NOTE_EXTENSION: &str = "md";
 
+/// Maximum length of a note's filename in bytes. If a filename-template produces
+/// a longer string, it will be truncated.
+#[cfg(not(test))]
+pub const NOTE_FILENAME_LEN_MAX: usize = 250;
+#[cfg(test)]
+pub const NOTE_FILENAME_LEN_MAX: usize = 10;
+
 /// Default filename-template to test if the filename of an existing note file on
 /// disk, is corresponds to the note's meta data stored in its front matter. If
 /// it is not the case, the note's filename will be renamed.
@@ -91,7 +98,7 @@ const TMPL_CLIPBOARD_CONTENT: &str = "\
 ---
 {% if clipboard_linkname !='' %}title:      {{ clipboard_linkname | json_encode }}
 subtitle:   {{ 'URL' | json_encode() }}
-{% else %}title:      {{ clipboard | json_encode }}
+{% else %}title:      {{ clipboard_heading | json_encode }}
 subtitle:   {{ 'Note' | json_encode() }}
 {% endif %}author:     {{ username | json_encode() }}
 date:       {{ now() | date(format=\"%Y-%m-%d\") | json_encode() }}
@@ -99,8 +106,8 @@ lang:       {{ lang | json_encode() }}
 revision:   {{ '1.0' | json_encode() }}
 ---
 
-{% if clipboard_linkname !='' %}{{ clipboard }}
-{% endif %}
+{{ clipboard }}
+
 ";
 
 /// Default filename template used when the clipboard contains a string.
@@ -236,12 +243,17 @@ const ENABLE_READ_CLIPBOARD: bool = true;
 /// Default value.
 const ENABLE_EMPTY_CLIPBOARD: bool = true;
 
-/// Limit the size of clipboard data `tp-note` accepts.  As the clipboard data will be copied in
-/// title by template, we better limit the length here, than having the Os complain about too long
-/// filenames. Anyway, titles and filenames should not be so long.  [http - What is the maximum
-/// length of a URL in different browsers? - Stack
-/// Overflow](https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers)
-const CLIPBOARD_LEN_MAX: usize = 2048;
+/// Limit the size of clipboard data `tp-note` accepts as input.
+const CLIPBOARD_LEN_MAX: usize = 0x8000;
+
+/// Defines the maximum length of the template variables `{{ clipboard_truncated }}` and `{{
+/// clipboard_linkname }}` which are usually used to in the note's front matter as title.  The
+/// title should not be too long, because it will end up as part of the file-name when the note is
+/// saved to disk. Filenames of some operating systems are limited to 255 bytes.
+#[cfg(not(test))]
+const CLIPBOARD_TRUNCATED_LEN_MAX: usize = 200;
+#[cfg(test)]
+const CLIPBOARD_TRUNCATED_LEN_MAX: usize = 10;
 
 #[derive(Debug, PartialEq, StructOpt)]
 #[structopt(
@@ -355,7 +367,7 @@ lazy_static! {
 
 lazy_static! {
     /// Reads the clipboard and empties it.
-    pub static ref CLIPBOARD: Option<String> = {
+    pub static ref CLIPBOARD: Clipboard = {
         if CFG.enable_read_clipboard {
             let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
             if ctx.is_some() {
@@ -365,16 +377,136 @@ lazy_static! {
                     print_message(&format!(
                         "Warning: clipboard content ignored because its size \
                         exceeds {} bytes.", CLIPBOARD_LEN_MAX));
-                    return None;
+                    return Clipboard::default();
                 }
-                s
+                Clipboard::new(&s.unwrap()) // TODO
             } else {
-                None
+                Clipboard::default()
             }
         } else {
-            None
+            Clipboard::default()
         }
     };
+
+}
+
+#[derive(Debug, PartialEq)]
+/// Represents the clipboard content.
+pub struct Clipboard {
+    /// Raw content sting.
+    pub content: String,
+    /// Shortened content string (max CLIPBOARD_SHORT_LEN_MAX).
+    pub content_truncated: String,
+    /// First sentence (all characters until the first period)
+    /// or all characters until the first empty line.
+    /// If none is found take the whole `content_truncated`.
+    pub content_heading: String,
+    /// Namepart of the Markdown link. Empty if none.
+    pub linkname: String,
+    /// URL part of the Markdown link. Empty if none.
+    pub linkurl: String,
+}
+
+impl Clipboard {
+    pub fn new(content: &str) -> Self {
+        let content: String = content.to_string();
+
+        // Limit the size of `clipboard_truncated`
+        let mut content_truncated = String::new();
+        for i in (0..CLIPBOARD_TRUNCATED_LEN_MAX).rev() {
+            if let Some(s) = content.get(..i) {
+                content_truncated = s.to_string();
+                break;
+            }
+        }
+
+        // Find the first heading, can finish with `. `, `.\n` or `.\r\n` on Windows.
+        let mut index = content_truncated.len();
+
+        if let Some(i) = content_truncated.find(". ") {
+            if i < index {
+                index = i;
+            }
+        }
+        if let Some(i) = content_truncated.find(".\n") {
+            if i < index {
+                index = i;
+            }
+        }
+        if let Some(i) = content_truncated.find(".\r\n") {
+            if i < index {
+                index = i;
+            }
+        }
+        if let Some(i) = content_truncated.find('!') {
+            if i < index {
+                index = i;
+            }
+        }
+        if let Some(i) = content_truncated.find('?') {
+            if i < index {
+                index = i;
+            }
+        }
+        if let Some(i) = content_truncated.find("\n\n") {
+            if i < index {
+                index = i;
+            }
+        }
+        if let Some(i) = content_truncated.find("\r\n\r\n") {
+            if i < index {
+                index = i;
+            }
+        }
+        let content_heading = content_truncated[0..index].to_string();
+
+        // parse clipboard
+        let hyperlink = match Hyperlink::new(&content) {
+            Ok(s) => Some(s),
+            Err(e) => {
+                if ARGS.debug {
+                    eprintln!("Note: clipboard does not contain a markdown link: {}", e);
+                }
+                None
+            }
+        };
+
+        let mut linkname = String::new();
+        let mut linkurl = String::new();
+        // if there is a hyperlink in clipboard?
+        if let Some(hyperlink) = hyperlink {
+            linkname = hyperlink.name.to_owned();
+            linkurl = hyperlink.url.to_owned();
+        };
+
+        // Limit the size of `linkname`
+        for i in (0..CLIPBOARD_TRUNCATED_LEN_MAX).rev() {
+            if let Some(s) = linkname.get(..i) {
+                linkname = s.to_string();
+                break;
+            }
+        }
+
+        Self {
+            content,
+            content_truncated,
+            content_heading,
+            linkname,
+            linkurl,
+        }
+    }
+}
+
+impl ::std::default::Default for Clipboard {
+    fn default() -> Self {
+        Self {
+            content: "".to_string(),
+            content_truncated: "".to_string(),
+            content_heading: "".to_string(),
+            linkname: "".to_string(),
+            linkurl: "".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -458,15 +590,94 @@ pub fn print_message_console(msg: &str) {
 
 #[cfg(test)]
 mod tests {
+    use super::Clipboard;
     use super::Hyperlink;
+
+    #[test]
+    fn test_clipboard() {
+        // Test Markdown link in clipboard.
+        let input = "[Jens Getreu's blog](https://blog.getreu.net)";
+        let output = Clipboard::new(input);
+        // This string is shortened.
+        assert_eq!("Jens Getr", output.linkname);
+        assert_eq!("https://blog.getreu.net", output.linkurl);
+        assert_eq!(
+            "[Jens Getreu's blog](https://blog.getreu.net)",
+            output.content
+        );
+
+        //
+        // Test non-link string in clipboard.
+        let input = "Tp-Note helps you to quickly get\
+            started writing notes.";
+        let output = Clipboard::new(input);
+
+        assert_eq!("", output.linkname);
+        assert_eq!("", output.linkurl);
+        assert_eq!(
+            "Tp-Note helps you to quickly get\
+            started writing notes.",
+            output.content
+        );
+        // This string is shortened.
+        assert_eq!("Tp-Note h", output.content_truncated);
+
+        //
+        // Test find heading.
+        let input = "N.ote. It helps. Get quickly\
+            started writing notes.";
+        let output = Clipboard::new(input);
+
+        assert_eq!("", output.linkname);
+        assert_eq!("", output.linkurl);
+        assert_eq!(
+            "N.ote. It helps. Get quickly\
+            started writing notes.",
+            output.content
+        );
+        // This string is shortened.
+        assert_eq!("N.ote", output.content_heading);
+
+        //
+        // Test find first sentence.
+        let input = "N.ote.\nIt helps. Get quickly\
+            started writing notes.";
+        let output = Clipboard::new(input);
+        // This string is shortened.
+        assert_eq!("N.ote", output.content_heading);
+
+        //
+        // Test find first sentence (Windows)
+        let input = "N.ote.\r\nIt helps. Get quickly\
+            started writing notes.";
+        let output = Clipboard::new(input);
+        // This string is shortened.
+        assert_eq!("N.ote", output.content_heading);
+
+        //
+        // Test find heading
+        let input = "N.ote\n\nIt helps. Get quickly\
+            started writing notes.";
+        let output = Clipboard::new(input);
+        // This string is shortened.
+        assert_eq!("N.ote", output.content_heading);
+
+        //
+        // Test find heading (Windows)
+        let input = "N.ote\r\n\r\nIt helps. Get quickly\
+            started writing notes.";
+        let output = Clipboard::new(input);
+        // This string is shortened.
+        assert_eq!("N.ote", output.content_heading);
+    }
 
     #[test]
     fn test_parse_hyperlink() {
         // Regular link
-        let input = "[Homepage](https://getreu.net)";
+        let input = "[Homepage](https://blog.getreu.net)";
         let expected_output = Hyperlink {
             name: "Homepage".to_string(),
-            url: "https://getreu.net".to_string(),
+            url: "https://blog.getreu.net".to_string(),
         };
 
         let output = Hyperlink::new(input);

@@ -81,7 +81,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
     if path.is_dir() {
-        let (n, new_fqfn) = if CLIPBOARD.is_none() || CLIPBOARD.as_ref().unwrap().is_empty() {
+        let (n, new_fqfn) = if CLIPBOARD.content.is_empty() {
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
             let n = Note::new(&path, &CFG.tmpl_new_content)
                 .context("`can not parse `tmpl_new_content` in config file")?;
@@ -101,7 +101,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             println!(
                 "Applying templates `tmpl_clipboard_content`, `tmpl_clipboard_filename` \
                 and clipboard string: \"{}\"",
-                CLIPBOARD.as_ref().unwrap()
+                CLIPBOARD.content_truncated
             );
             (n, new_fqfn)
         };

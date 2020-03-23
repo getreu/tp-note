@@ -151,6 +151,43 @@ note.
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
 ```
+## Copy a page from a book
+
+
+![Copy some chapters](images/workflow4-1.png){width="14cm"}
+
+![Right-click on or in the new note's destination folder and start tp-note](images/workflow4-2.png){width="11cm"}
+
+![The new unmodified note created by template](images/workflow4-3.png){width="13cm"}
+
+```{=docbook}
+<?dbfo-need height="4cm" ?>
+```
+
+The source code of the note shows the completed template:
+
+```yaml
+---
+title:      "Winston kept his back turned to the telescreen"
+subtitle:   "Note"
+author:     "getreu"
+date:       "2020-03-23"
+lang:       "en_GB.UTF-8"
+revision:   "1.0"
+---
+
+Winston kept his back turned to the telescreen. It was safer, though, as he well knew, even a back can be revealing. A kilometre away the Ministry of Truth, his place of work, towered vast and white above the grimy landscape...
+```
+
+In this example we copied only text. *Tp-Note* suggest the first sentence as title. This can be changed before saving as illustrated above. Here we just save and observe the
+file on the disk.
+
+![The new note file on disk after closing the editor](images/workflow4-4.png){width="9cm"}
+
+```{=docbook}
+<?dbfo-need height="6cm" ?>
+```
+
 
 # How it works: Organize your files and notes with sort-tags
 

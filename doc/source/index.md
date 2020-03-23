@@ -79,6 +79,27 @@ Repository:
   - [tp-note all](/_downloads/tp-note.zip)
 
 
+## Upgrading
+
+When you install a new version of _Tp-Note_, please delete the old configuration
+file, that is automatically written in
+
+* Linux: `~/.config/tp-note/tp-note.toml`
+
+* Windows:`C:\Users\<LOGIN>\AppData\Roaming\tp-note\config\tp-note.toml>`
+
+The reason is, that the structure of the configuration file might change from
+version to version.  For example, new configuration variables might be added:
+When _Tp-Note_ starts, it reads the old configuration and will complain about a
+malformed structure. I recommend deleting the old configuration file, even when
+there is no error message: new template-variables might activate new features,
+that will only be available, when _Tp-Note_ starts with a fresh default
+template.
+
+There is no need to say, that in case you modified the configuration file,
+you should backup it before deleting.
+
+
 ## Building and installing
 
 1. Install *Rust* with [rustup](https://www.rustup.rs/):

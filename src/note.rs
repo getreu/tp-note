@@ -7,10 +7,10 @@ extern crate chrono;
 extern crate tera;
 extern crate time;
 
-use crate::config::Hyperlink;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
+use crate::config::NOTE_FILENAME_LEN_MAX;
 use crate::content::Content;
 use crate::context::ContextWrapper;
 use anyhow::{anyhow, Context, Result};
@@ -147,32 +147,14 @@ impl Note {
         };
         context.insert("file_stem", &file_stem);
 
-        let clipboard: String = CLIPBOARD.as_ref().unwrap_or(&String::default()).to_string();
-        context.insert("clipboard", &clipboard);
+        // Register input from clipboard.
+        context.insert("clipboard", &CLIPBOARD.content);
+        context.insert("clipboard_truncated", &CLIPBOARD.content_truncated);
+        context.insert("clipboard_heading", &CLIPBOARD.content_heading);
+        context.insert("clipboard_linkname", &CLIPBOARD.linkname);
+        context.insert("clipboard_linkurl", &CLIPBOARD.linkurl);
 
-        // parse clipboard
-        let hyperlink = match Hyperlink::new(&clipboard) {
-            Ok(s) => Some(s),
-            Err(e) => {
-                if ARGS.debug {
-                    eprintln!("Note: clipboard does not contain a markdown link: {}", e);
-                }
-                None
-            }
-        };
-
-        // register clipboard
-        context.insert("clipboard", &clipboard);
-        // if there is a hyperlink register it too
-        if hyperlink.is_some() {
-            context.insert("clipboard_linkname", &(&hyperlink).as_ref().unwrap().name);
-            context.insert("clipboard_linkurl", &(&hyperlink).as_ref().unwrap().url);
-        } else {
-            context.insert("clipboard_linkname", &"");
-            context.insert("clipboard_linkurl", &"");
-        };
-
-        // extension of the path given on command-line
+        // Extension of the path given on command-line.
         context.insert(
             "extension",
             &path
@@ -222,7 +204,49 @@ impl Note {
                 .trim(),
         );
 
-        Ok(Path::new(&fqfn).to_path_buf())
+        Ok(Self::shorten_filename(Path::new(&fqfn)))
+    }
+
+    /// Shortens the stem of a filename so that
+    /// `file_stem.len()+file_extension.len() <= NOTE_FILENAME_LEN_MAX`
+    fn shorten_filename(fqfn: &Path) -> PathBuf {
+        let mut parent = if let Some(p) = fqfn.parent() {
+            p.to_path_buf()
+        } else {
+            PathBuf::new()
+        };
+        // Determine length of file-extension.
+        let mut note_extension_len = 0;
+        let mut note_extension = "";
+        if let Some(ext) = &fqfn.extension() {
+            if let Some(ext) = ext.to_str() {
+                note_extension_len = ext.len();
+                note_extension = ext;
+            }
+        };
+
+        // Limit length of file-stem.
+        let mut note_stem_short = String::new();
+        if let Some(note_stem) = &fqfn.file_stem() {
+            if let Some(note_stem) = note_stem.to_str() {
+                // Limit the size of `fqfn`
+                for i in (0..NOTE_FILENAME_LEN_MAX - note_extension_len).rev() {
+                    if let Some(s) = note_stem.get(..i) {
+                        note_stem_short = s.to_string();
+                        break;
+                    }
+                }
+            }
+        };
+
+        // Assemble.
+        let mut note_filename = note_stem_short;
+        note_filename.push('.');
+        note_filename.push_str(note_extension);
+
+        // Add to parent.
+        parent.push(Path::new(&note_filename).to_path_buf());
+        parent
     }
 
     /// Helper function deserializing the front-matter of an `.md`-file.
@@ -289,13 +313,19 @@ mod tests {
     use super::Note;
 
     #[test]
-    fn test_from_existing_note() {
-        // TODO add test
-    }
+    fn test_shorten_filename() {
+        use std::ffi::OsString;
+        use std::path::Path;
 
-    #[test]
-    fn test_new_note() {
-        // TODO add test
+        // Test short filename.
+        let input = Path::new("long directory name/abc.ext");
+        let output = Note::shorten_filename(input);
+        assert_eq!(OsString::from("long directory name/abc.ext"), output);
+
+        // Test long filename.
+        let input = Path::new("long directory name/long filename.ext");
+        let output = Note::shorten_filename(input);
+        assert_eq!(OsString::from("long directory name/long f.ext"), output);
     }
 
     #[test]
