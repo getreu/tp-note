@@ -17,6 +17,8 @@ use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::env;
+use std::fs::OpenOptions;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use tera::Tera;
 
@@ -245,6 +247,39 @@ impl Note {
 
         let fm: FrontMatter = serde_yaml::from_str(&content[fm_start..fm_end])?;
         Ok(fm)
+    }
+
+    /// Writes the note to disk with `new_fqfn`-filename.
+    /// TODO:
+    /// When the OS returns an error, we try again the TMP_FALLBACK_FILENAME.
+    /// If this succeeds, we return the fallback filename, otherwise
+    /// we give up.
+    pub fn write_to_disk(&self, new_fqfn: &Path) -> Result<PathBuf, anyhow::Error> {
+        // Write new note on disk.
+        let outfile = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&new_fqfn);
+        match outfile {
+            Ok(mut outfile) => {
+                println!("Creating file: {:?}", new_fqfn);
+                write!(outfile, "{}", &self.content.to_osstring())
+                    .with_context(|| format!("can not write new file {:?}", new_fqfn))?
+            }
+            Err(e) => {
+                if Path::new(&new_fqfn).exists() {
+                    println!("can not create new file, file exists: {}", e);
+                    println!("Instead, try to read existing: {:?}", new_fqfn);
+                } else {
+                    return Err(anyhow!(format!(
+                        "can not write file: {:?}\n{}",
+                        new_fqfn, e
+                    )));
+                }
+            }
+        }
+
+        Ok(new_fqfn.to_owned())
     }
 }
 

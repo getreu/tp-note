@@ -29,8 +29,6 @@ use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use std::env;
 use std::fs;
-use std::fs::OpenOptions;
-use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process;
@@ -109,30 +107,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
         };
 
         // Write new note on disk.
-        let outfile = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&new_fqfn);
-        match outfile {
-            Ok(mut outfile) => {
-                println!("Creating file: {:?}", new_fqfn);
-                write!(outfile, "{}", n.content.to_osstring())
-                    .with_context(|| format!("can not write file {:?}", new_fqfn))?
-            }
-            Err(e) => {
-                if Path::new(&new_fqfn).exists() {
-                    println!("Can not open file for writing: {}", e);
-                    println!("Instead, try to read existing: {:?}", new_fqfn);
-                } else {
-                    return Err(anyhow!(format!(
-                        "Can not write file: {:?}\n{}",
-                        new_fqfn, e
-                    )));
-                }
-            }
-        }
-
-        Ok(new_fqfn)
+        n.write_to_disk(&new_fqfn)
     } else {
         // Is `path` a tp-note file (`.md`) or a foreign file?
         if path
@@ -159,31 +134,8 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
 
             let new_fqfn = n.render_filename(&CFG.tmpl_annotate_filename)?;
 
-            // Write file to disk.
-            let outfile = OpenOptions::new()
-                .write(true)
-                .create_new(true)
-                .open(&new_fqfn);
-            match outfile {
-                Ok(mut outfile) => {
-                    println!("Creating file: {:?}", new_fqfn);
-                    write!(outfile, "{}", n.content.to_osstring())
-                        .with_context(|| format!("can not write file {:?}", new_fqfn))?
-                }
-                Err(e) => {
-                    if Path::new(&new_fqfn).exists() {
-                        println!("Can not open file for writing: {}", e);
-                        println!("Instead, try to read existing: {:?}", new_fqfn);
-                    } else {
-                        return Err(anyhow!(format!(
-                            "Can not write file: {:?}\n{}",
-                            new_fqfn, e
-                        )));
-                    }
-                }
-            }
-
-            Ok(new_fqfn)
+            // Write new note on disk.
+            n.write_to_disk(&new_fqfn)
         }
     }
 }
