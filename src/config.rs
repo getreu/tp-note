@@ -543,9 +543,17 @@ impl Hyperlink {
             return Err(anyhow!(format!("no `](` in \"{}\"", input)));
         };
         let url_start = name_end + 2;
+        let mut bracket_counter = 1;
         let url_end = input[url_start..]
-            .find(')')
-            .ok_or_else(|| anyhow!(format!("no `)` in \"{}\"", input)))?
+            .find(|c: char| {
+                if c == '(' {
+                    bracket_counter += 1;
+                } else if c == ')' {
+                    bracket_counter -= 1;
+                };
+                bracket_counter == 0
+            })
+            .ok_or_else(|| anyhow!(format!("no closing `)` in \"{}\"", input)))?
             + url_start;
 
         Ok(Hyperlink {
@@ -673,6 +681,15 @@ mod tests {
         let expected_output = Hyperlink {
             name: "Homepage".to_string(),
             url: "https://blog.getreu.net".to_string(),
+        };
+        let output = Hyperlink::new(input);
+        assert_eq!(expected_output, output.unwrap());
+
+        // URL with ()
+        let input = "xxx[Homepage](https://blog.getreu.net/(main))";
+        let expected_output = Hyperlink {
+            name: "Homepage".to_string(),
+            url: "https://blog.getreu.net/(main)".to_string(),
         };
         let output = Hyperlink::new(input);
         assert_eq!(expected_output, output.unwrap());
