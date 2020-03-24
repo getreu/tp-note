@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.3.0 | Tp-Note documentation
+% TP-NOTE(1) Version 1.3.1 | Tp-Note documentation
 
 <!--
 Date: 2020-03-08
@@ -8,7 +8,7 @@ Date: 2020-03-14:
 Version 1.0.0
 
 Date: 2020-03-18:
-Version 1.3.0
+Version 1.3.1
 -->
 
 # NAME
