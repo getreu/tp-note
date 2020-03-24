@@ -252,7 +252,7 @@ mechanism never does. (See below for more details about filename synchronization
 
 **-b**, **\--batch**
 
-;   Create a new file or rename the file to stay synchronized
+:   Create a new file or rename the file to stay synchronized
     with its meta-data, but does not launch the external text editor.
 
 **-c** *CF*, **\--config**=*CF*
