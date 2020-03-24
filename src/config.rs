@@ -519,43 +519,38 @@ pub struct Hyperlink {
 impl Hyperlink {
     /// Parse a markdown formatted hyperlink and stores the result in `Self`.
     pub fn new(input: &str) -> Result<Hyperlink, anyhow::Error> {
-        let mut linkname = String::new();
-        let mut linkurl = String::new();
+        // parse input_linkname
+        let name_start = input
+            .find('[')
+            .ok_or_else(|| anyhow!(format!("no `[` in \"{}\"", input)))?
+            + 1;
 
-        if !input.is_empty() {
-            // parse input_linkname
-            let input_linkname_start = input
-                .find('[')
-                .ok_or_else(|| anyhow!(format!("no `[` in \"{}\"", input)))?;
-            let input_linkname_end = input
-                .find(']')
-                .ok_or_else(|| anyhow!(format!("no `]` in \"{}\"", input)))?;
-            if input_linkname_start < input_linkname_end {
-                linkname = input[input_linkname_start + 1..input_linkname_end].to_string();
-            // dbg!(input_linkname);
-            } else {
-                return Err(anyhow!(format!("no `[...]` in \"{}\"", input)));
-            };
+        let mut bracket_counter = 1;
+        let name_end = input[name_start..]
+            .find(|c: char| {
+                if c == '[' {
+                    bracket_counter += 1;
+                } else if c == ']' {
+                    bracket_counter -= 1;
+                };
+                bracket_counter == 0
+            })
+            .ok_or_else(|| anyhow!(format!("no closing`]` in \"{}\"", input)))?
+            + name_start;
 
-            // parse input_linkurl
-            let input = &input[input_linkname_end + 1..];
-            let input_linkurl_start = input
-                .find('(')
-                .ok_or_else(|| anyhow!(format!("no `(` in \"{}\"", input)))?;
-            let input_linkurl_end = input
-                .find(')')
-                .ok_or_else(|| anyhow!(format!("no `)` in \"{}\"", input)))?;
-            if input_linkurl_start < input_linkurl_end {
-                linkurl = input[input_linkurl_start + 1..input_linkurl_end].to_string();
-            // dbg!(input_linkurl);
-            } else {
-                return Err(anyhow!(format!("no `(...)` in \"{}\"", input)));
-            }
+        // parse input_linkurl
+        if input[name_end + 1..].chars().next().unwrap_or('x') != '(' {
+            return Err(anyhow!(format!("no `](` in \"{}\"", input)));
         };
+        let url_start = name_end + 2;
+        let url_end = input[url_start..]
+            .find(')')
+            .ok_or_else(|| anyhow!(format!("no `)` in \"{}\"", input)))?
+            + url_start;
 
         Ok(Hyperlink {
-            name: linkname,
-            url: linkurl,
+            name: input[name_start..name_end].to_string(),
+            url: input[url_start..url_end].to_string(),
         })
     }
 }
@@ -674,32 +669,44 @@ mod tests {
     #[test]
     fn test_parse_hyperlink() {
         // Regular link
-        let input = "[Homepage](https://blog.getreu.net)";
+        let input = "xxx[Homepage](https://blog.getreu.net)";
         let expected_output = Hyperlink {
             name: "Homepage".to_string(),
             url: "https://blog.getreu.net".to_string(),
         };
-
         let output = Hyperlink::new(input);
-
         assert_eq!(expected_output, output.unwrap());
 
+        //
         // link with () in name
         let input = "[Homepage (my first)](https://getreu.net)";
         let expected_output = Hyperlink {
             name: "Homepage (my first)".to_string(),
             url: "https://getreu.net".to_string(),
         };
-
         let output = Hyperlink::new(input);
-
         assert_eq!(expected_output, output.unwrap());
 
+        //
+        // link with [] in name
+        let input = "[Homepage [my first]](https://getreu.net)";
+        let expected_output = Hyperlink {
+            name: "Homepage [my first]".to_string(),
+            url: "https://getreu.net".to_string(),
+        };
+        let output = Hyperlink::new(input);
+        assert_eq!(expected_output, output.unwrap());
+
+        //
+        // link with [ in name
+        let input = "[Homepage [my first](https://getreu.net)";
+        let output = Hyperlink::new(input);
+        assert!(output.is_err());
+
+        //
         // link with only []
         let input = "[Homepage (my first)]";
-
         let output = Hyperlink::new(input);
-
         assert!(output.is_err());
     }
 }
