@@ -50,9 +50,11 @@ impl ContextWrapper {
         key_path_alpha.push_str("__alphapath");
         let mut val_path_alpha = val_path.to_string();
         let first_char = val.chars().next();
-        if first_char.is_some() && (first_char.unwrap().is_numeric()) {
-            val_path_alpha.insert(0, '\'');
-        }
+        if let Some(c) = first_char {
+            if c.is_numeric() {
+                val_path_alpha.insert(0, '\'');
+            }
+        };
         self.ct.insert(&key_path_alpha, &val_path_alpha);
     }
 }

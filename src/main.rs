@@ -226,7 +226,11 @@ fn run() -> Result<(), anyhow::Error> {
         p.canonicalize().with_context(|| {
             format!(
                 "invalid <path>: `{}`",
-                &ARGS.path.as_ref().unwrap().display()
+                &ARGS
+                    .path
+                    .as_ref()
+                    .unwrap_or(&PathBuf::from("unknown"))
+                    .display()
             )
         })?
     } else {
@@ -248,7 +252,7 @@ fn run() -> Result<(), anyhow::Error> {
     if CFG.enable_read_clipboard && CFG.enable_empty_clipboard {
         let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
         if let Some(mut ctx) = ctx {
-            ctx.set_contents("".to_owned()).unwrap();
+            ctx.set_contents("".to_owned()).unwrap_or_default();
         };
     };
 

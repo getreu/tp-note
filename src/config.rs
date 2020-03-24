@@ -349,15 +349,15 @@ lazy_static! {
     /// with "--config".
     pub static ref CFG: Cfg =
         confy::load::<Cfg>(PathBuf::from(
-            if ARGS.config.is_none() {
-                CURRENT_EXE
+            if let Some(c) = &ARGS.config {
+                c
             } else {
-                &ARGS.config.as_ref().unwrap()
+                CURRENT_EXE
             })
             // strip extension, ".toml" is added by `confy.load()`
             .with_extension("")
             .to_str()
-            .unwrap()
+            .unwrap_or_default()
         ).unwrap_or_else(|e| {
             print_message(&format!("Application error: \
                 unable to load/write config file: {}", e));
@@ -371,15 +371,17 @@ lazy_static! {
         if CFG.enable_read_clipboard {
             let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
             if ctx.is_some() {
-                let ctx = &mut ctx.unwrap();
+                let ctx = &mut ctx.unwrap(); // This is ok since `is_some()`
                 let s = ctx.get_contents().ok();
-                if s.is_some() && s.as_ref().unwrap().len() > CLIPBOARD_LEN_MAX {
-                    print_message(&format!(
-                        "Warning: clipboard content ignored because its size \
-                        exceeds {} bytes.", CLIPBOARD_LEN_MAX));
-                    return Clipboard::default();
-                }
-                Clipboard::new(&s.unwrap()) // TODO
+                if let Some(s) = &s {
+                    if s.len() > CLIPBOARD_LEN_MAX {
+                        print_message(&format!(
+                            "Warning: clipboard content ignored because its size \
+                            exceeds {} bytes.", CLIPBOARD_LEN_MAX));
+                        return Clipboard::default();
+                    }
+                };
+                Clipboard::new(&s.unwrap_or_default())
             } else {
                 Clipboard::default()
             }
