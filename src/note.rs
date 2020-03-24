@@ -274,10 +274,6 @@ impl Note {
     }
 
     /// Writes the note to disk with `new_fqfn`-filename.
-    /// TODO:
-    /// When the OS returns an error, we try again the TMP_FALLBACK_FILENAME.
-    /// If this succeeds, we return the fallback filename, otherwise
-    /// we give up.
     pub fn write_to_disk(&self, new_fqfn: &Path) -> Result<PathBuf, anyhow::Error> {
         // Write new note on disk.
         let outfile = OpenOptions::new()
