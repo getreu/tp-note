@@ -108,6 +108,7 @@ you should backup it before deleting.
 
    The fast-track procedure:
 
+       sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
        cargo install tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
@@ -127,6 +128,7 @@ you should backup it before deleting.
 
    Then execute:
 
+       sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
        cargo build --release
        ./doc/make--all
 
