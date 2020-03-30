@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.3.2 | Tp-Note documentation
+% TP-NOTE(1) Version 1.4.0 | Tp-Note documentation
 
 <!--
 Date: 2020-03-08
@@ -8,7 +8,7 @@ Date: 2020-03-14:
 Version 1.0.0
 
 Date: 2020-03-18:
-Version 1.3.2
+Version 1.4.0
 -->
 
 # NAME
@@ -420,11 +420,11 @@ In addition, _Tp-Note_ defines the following variables:
 * '`{{ extension }}`': the filename extension of the existing note
   on disk,
 
-* '`{{ note_extension }}`': the default extension for new notes,
-  (which can be changed in the configuration file).
+* '`{{ note_extension }}`': the default extension for new notes
+  (which can be changed in the configuration file),
 
 * '`{{ username }}`': the content of the first non-empty environment
-  variable: `LOGNAME`, `USER` or `USERNAME`,
+  variable: `LOGNAME`, `USER` or `USERNAME`.
 
 
 ## Content-template conventions

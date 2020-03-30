@@ -140,7 +140,7 @@ stages:
               assets: '$(Build.ArtifactStagingDirectory)/tp-note-$(Build.SourceBranchName)-$(TARGET).tar.gz'
               title: '$(Build.SourceBranchName)'
               assetUploadMode: 'replace'
-              addChangeLog: true
+              addChangeLog: false
           - task: GithubRelease@0
             condition: eq( variables['Agent.OS'], 'Windows_NT' )
             inputs:
@@ -153,4 +153,4 @@ stages:
               assets: '$(Build.ArtifactStagingDirectory)/tp-note-$(Build.SourceBranchName)-$(TARGET).zip'
               title: '$(Build.SourceBranchName)'
               assetUploadMode: 'replace'
-              addChangeLog: true
+              addChangeLog: false
