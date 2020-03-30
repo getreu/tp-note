@@ -12,7 +12,7 @@ use crate::config::CFG;
 use crate::config::CLIPBOARD;
 use crate::config::NOTE_FILENAME_LEN_MAX;
 use crate::content::Content;
-use crate::context::ContextWrapper;
+use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
@@ -169,19 +169,11 @@ impl Note {
         );
         context.insert("note_extension", CFG.note_extension.as_str());
 
-        // search for UNIX or Windows user-names
-        let author =
-            env::var("LOGNAME").unwrap_or_else(|_| env::var("USERNAME").unwrap_or_default());
+        // search for UNIX, Windows and MacOS user-names
+        let author = env::var("LOGNAME").unwrap_or_else(|_| {
+            env::var("USERNAME").unwrap_or_else(|_| env::var("USER").unwrap_or_default())
+        });
         context.insert("username", &author);
-
-        // register locale if available
-        let lang = env::var("LANG").unwrap_or_default();
-        context.insert("lang", &lang);
-
-        // register all environment variables for usage in template
-        for (key, value) in env::vars() {
-            context.insert(&key, &value);
-        }
 
         context.fqpn = fqpn.to_path_buf();
 

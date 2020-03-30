@@ -14,7 +14,6 @@
 
 mod config;
 mod content;
-mod context;
 mod filter;
 mod note;
 
