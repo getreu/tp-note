@@ -389,60 +389,100 @@ directory. The variable '`{{ clipboard }}`' contains the content of the
 clipboard. To learn more about variables, launch _Tp-Note_ with the '`--debug`'
 option and observe what information it captures from its environment.
 
-_Tp-Note_ distinguishes two template types: content-templates '`tmpl_*_content`'
-used to create the note's content (front-matter and body) and filename-templates
-'`tmpl_*_filename`' used to calculate the note's filename.
+## Template variables
+
+All [Tera template variables and functions](https://tera.netlify.com/docs/#templates)
+can be used within _Tp-Note_. For example '`{{ get_env(name='LANG') }}'`
+gives you access to the '`LANG`' environment variable.
+
+In addition, _Tp-Note_ defines the following variables:
+
+* '`{{ sort_tag }}`': the sort-tag of the current note, e.g. '`01-23-`'
+  or '`20191022-`',
+
+* '`{{ dirname }}`': the parent directory's name,
+
+* '`{{ file_stem }}`': the note's filename without extension,
+
+* '`{{ clipboard }}`': all the text from the clipboard,
+
+* '`{{ clipboard_truncated }}`': the first 200 bytes from the clipboard,
+
+* '`{{ clipboard_heading }}`': the clipboard's content  until end of the first
+  sentence, or the first newline.
+
+* '`{{ clipboard_linkname }}`': the name of the first Markdown
+  formatted link in the clipboard,
+
+* '`{{ clipboard_linkurl }}`': the URL of the first Markdown
+  formatted link in the clipboard,
+
+* '`{{ extension }}`': the filename extension of the existing note
+  on disk,
+
+* '`{{ note_extension }}`': the default extension for new notes,
+  (which can be changed in the configuration file).
+
+* '`{{ username }}`': the content of the first non-empty environment
+  variable: `LOGNAME`, `USER` or `USERNAME`,
 
 
 ## Content-template conventions
 
-Strings in content-templates are JSON encoded. Therefor all variable used in
-this template must pass an additional '`json_encode()`'-filter. For
-example, the variable '`{{ dirname }}`' must be written as
-'`{{ dirname | json_encode() }}`' instead.
+_Tp-Note_ distinguishes two template types: content-templates '`tmpl_*_content`'
+used to create the note's content (front-matter and body) and filename-templates
+'`tmpl_*_filename`' used to calculate the note's filename.
+
+Strings in the YAML front matter of content-templates are JSON encoded.
+Therefor all variables used in the front matter must pass an additional
+'`json_encode()`'-filter. For example, the variable '`{{ dirname }}`'
+becomes '`{{ dirname | json_encode() }}`' or just
+'`{{ dirname | json_encode }}`'.
 
 
 ## Filename-template convention
 
 The same applies to filename-template-variables: in this context we must
 guarantee, that the variable contains only file system friendly characters.
-For this purpose _Tp-Note_ provides all variables in 3 different flavours:
+For this purpose _Tp-Note_ provides the additional Tera filters '`path`' and
+'`path(alpha=true)`'.
 
-* The original variable '`<var>`', e.g. '`title`'. No filter is applied.
+* The '`path()`' filter transforms a string in a filesystem friendly from. This
+  is done by replacing forbidden characters like '`?`' and '`\\`'  with '`_`'
+  or space. This filter can be used with any variables, but is most useful with
+  filename-templates, e.g. '`{{ subtitle | path }}`'.
 
-* A file system friendly version '`<var>__path`', e.g. '`title__path`'.
-  (Note the double underscore '`_`'). In this variant forbidden characters like
-  '`?`' are omitted or replaced by '`_`' or space.
+* '`path(alpha=true)`' is similar to the above, with one exception: when a string
+  starts with a digit '`0`-`9`', the whole string is prepended with `'`.
+  For example: "`1 The Show Begins`" becomes "`'1 The Show Begins`".
+  This filter should always be applied to the first variable assembling the new
+  filename, e.g. '`{{ title | path(alpha=true )}`'. The way it is always
+  possible to distinguish sort-tags and filenames.
 
-* Another file system friendly version '`<var>__alphapath`' similar to the
-  above, with one exception: when a string starts with a number character
-  '`0`-`9`' the string is prepended with `'`.  For example:
-  "`1 The Show Begins`" becomes "`'1 The Show Begins`".
-
-In filename-templates only variables, whose name end with '`*__path`' or
-'`*__alphapath`' should be used.
+In filename-templates all variables must pass either the '`path`' or
+the '`path(alpha=true)`' filter!
 
 
 ## Register your own external text editor for usage with Tp-Note
 
-The Tera-template variables '`editor_args`' and '`viewer_args`' define a list of
-external text editors to be launched for editing. '`viewer_args`' is used when
-_Tp-Note_ is invoked with '`--view`' in viewer mode.  The list contains
-well-known text editor names and its command-line arguments.  _Tp-Note_ tries to
-launch every text editor from the beginning of the list until it finds an
-installed text editor.
+The configuration file variables '`editor_args`' and '`viewer_args`' define a
+list of external text editors to be launched for editing. '`viewer_args`' is
+used when _Tp-Note_ is invoked with '`--view`' in viewer mode.  The list
+contains well-known text editor names and its command-line arguments.
+_Tp-Note_ tries to launch every text editor from the beginning of the list
+until it finds an installed text editor.
 
-To use your own text editor, just place it at the top of the list. To make this
-work properly, make sure, that your text editor does not fork! You can check
-this when you launch the text editor from the command-line: if the prompt
-returns immediately, then it forks the process. In contrast, it is Ok when the
-prompt only comes back them moment the text editor is closed. Many text editors
-provide an option not to fork: for example the _VScode_-editor can be launched
-with the '`--wait`' option and `vim` with `vim --nofork`. However, _Tp-Note_
-also works with forking text editors. The only drawback is, that _Tp-Note_ can
-not synchronize the filename with the note's metadata when the user has finished
-editing. This will then only happen the next time he opens the note with
-_Tp-Note_.
+In order to  use your own text editor, just place it at the top of the list. To
+make this work properly, make sure, that your text editor does not fork! You
+can check this when you launch the text editor from the command-line: if the
+prompt returns immediately, then it forks the process. In contrast, it is Ok
+when the prompt only comes back at the moment when the text editor is closed.
+Many text editors provide an option not to fork: for example the
+_VScode_-editor can be launched with the '`--wait`' option and `vim` with `vim
+--nofork`. However, _Tp-Note_ also works with forking text editors. Then , the
+only drawback is, that _Tp-Note_ can not synchronize the filename with the
+note's metadata when the user has finished editing. It will still happen, but
+only when the user opens the note again with _Tp-Note_.
 
 
 ## Change the markup language
