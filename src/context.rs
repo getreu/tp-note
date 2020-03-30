@@ -1,6 +1,6 @@
 //! Stores `tp-note`'s environment.
 extern crate sanitize_filename_reader_friendly;
-use crate::context::sanitize_filename_reader_friendly::sanitize;
+use sanitize_filename_reader_friendly::sanitize;
 use std::ops::Deref;
 use std::path::PathBuf;
 

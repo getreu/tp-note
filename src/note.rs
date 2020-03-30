@@ -13,6 +13,7 @@ use crate::config::CLIPBOARD;
 use crate::config::NOTE_FILENAME_LEN_MAX;
 use crate::content::Content;
 use crate::context::ContextWrapper;
+use crate::filter::TERA;
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::default::Default;
@@ -76,11 +77,14 @@ impl Note {
         // there is no front matter yet to capture
         let mut context = Self::capture_environment(&path)?;
 
-        let content = Content::new(
-            Tera::one_off(template, &context, false)
+        let content = Content::new({
+            let mut tera = Tera::default();
+            tera.extend(&TERA).unwrap();
+
+            tera.render_str(template, &context)
                 .with_context(|| format!("failed to render template:\n`{}`", template))?
-                .as_str(),
-        );
+                .as_str()
+        });
 
         // deserialize the rendered result
         let fm = Note::deserialize_note(&content)?;
@@ -198,11 +202,14 @@ impl Note {
 
         // render template
         let mut fqfn = self.context.fqpn.to_owned();
-        fqfn.push(
-            Tera::one_off(template, &self.context, false)
+        fqfn.push({
+            let mut tera = Tera::default();
+            tera.extend(&TERA).unwrap();
+
+            tera.render_str(template, &self.context)
                 .with_context(|| format!("failed to render template:\n`{}`", template))?
-                .trim(),
-        );
+                .trim()
+        });
 
         Ok(Self::shorten_filename(Path::new(&fqfn)))
     }
