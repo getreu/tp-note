@@ -2,6 +2,13 @@
 title: Tp-Note - fast note-taking with templates and filename synchronization
 ---
 
+[![Cargo](https://img.shields.io/crates/v/tp-note.svg)](
+https://crates.io/crates/tp-note)
+[![Documentation](https://docs.rs/tp-note/badge.svg)](
+https://docs.rs/tp-note)
+[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](
+https://github.com/getreu/tp-note)
+
 _Tp-Note_ is a note-taking-tool and a template system, that consistently
 synchronizes the note's meta-data with its filename. _Tp-Note_ collects
 various information about its environment and the clipboard and stores them
@@ -9,6 +16,7 @@ in variables. New notes are created by filling these variables in predefined
 and customizable _Tera_-templates.
 
 Read more in [Tp-Note's user manual](https://blog.getreu.net/projects/tp-note/tp-note--manual.html).
+
 
 ## Documentation
 
@@ -102,52 +110,17 @@ you should backup it before deleting.
 
 ## Building and installing
 
-1. Install *Rust* with [rustup](https://www.rustup.rs/):
+1. [Install Rust](https://www.rust-lang.org/tools/install), e.g.
 
        curl https://sh.rustup.rs -sSf | sh
 
-   The fast-track procedure:
+2. Download, compile and install _Tp-Note_:
 
        sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
        cargo install tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-   If it works for you, you are done. Otherwise continue the next step.
-
-2. Download [tp-note](#tp-note):
-
-       git clone git@github.com:getreu/tp-note.git
-
-3. Build:
-
-   Enter the *tp-note* directory where the file `Cargo.toml`
-   resides:
-
-       cd tp-note
-
-
-   Then execute:
-
-       sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
-       cargo build --release
-       ./doc/make--all
-
-4. Install:
-
-   a.  Linux:
-
-           # install binary
-           sudo cp target/release/tp-note /usr/local/bin/
-
-           # install man-page
-           sudo cp man/tp-note.1.gz /usr/local/man/man1/
-           sudo dpkg-reconfigure man-db   # e.g. Debian, Ubuntu
-
-   b.  Windows:
-
-       Copy the binary `target/release/tp-note.exe` on your desktop.
-
-   See the user manual for a detailed installation description.
+   See also the user manual for a detailed installation description.
 
 This project follows [Semantic Versioning](https://semver.org/).
 

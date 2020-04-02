@@ -447,17 +447,18 @@ guarantee, that the variable contains only file system friendly characters.
 For this purpose _Tp-Note_ provides the additional Tera filters '`path`' and
 '`path(alpha=true)`'.
 
-* The '`path()`' filter transforms a string in a filesystem friendly from. This
+* The '`path()`' filter transforms a string in a file system friendly from. This
   is done by replacing forbidden characters like '`?`' and '`\\`'  with '`_`'
   or space. This filter can be used with any variables, but is most useful with
-  filename-templates, e.g. '`{{ subtitle | path }}`'.
+  filename-templates. For example, take a look at the '`tmpl_sync_filename`' 
+  template: it starts with '`{{ sort_tag | path }}`'.
 
 * '`path(alpha=true)`' is similar to the above, with one exception: when a string
   starts with a digit '`0`-`9`', the whole string is prepended with `'`.
   For example: "`1 The Show Begins`" becomes "`'1 The Show Begins`".
   This filter should always be applied to the first variable assembling the new
   filename, e.g. '`{{ title | path(alpha=true )}`'. The way it is always
-  possible to distinguish sort-tags and filenames.
+  possible to distinguish the sort-tag and the actual filenames.
 
 In filename-templates all variables must pass either the '`path`' or
 the '`path(alpha=true)`' filter!
