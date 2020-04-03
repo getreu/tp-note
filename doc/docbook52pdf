@@ -1,0 +1,111 @@
+#!/bin/bash
+# Author: Jens Getreu
+
+# apt install pandoc docbook5-xml docbook-xsl-ns xsltproc fop xmlto libxml2-utils xmlstarlet
+
+
+render () {
+    ### parse args
+
+    #set -x
+    InPath="$1"
+    InFile="${InPath##*/}"
+    InFileExt="${InPath##*.}"
+    InBase="${InFile%.*}"
+    InDir="${InPath%/*}"
+    if [ "$InDir" = "$InPath" ] ; then
+        InDir="."
+    fi
+
+    OutPath="$2"
+    OutFile="${OutPath##*/}"
+    OutBase="${OutFile%.*}"
+    OutDir="${OutPath%/*}"
+    if [ "$OutDir" = "$OutPath" ] ; then
+        OutDir="."
+    fi
+
+
+    ### Prepare
+    XmlFile="$OutBase.xml"
+    XmlPath="$OutDir/$XmlFile"
+    FoFile="$OutBase.fo"
+    FoPath="$OutDir/$FoFile"
+    PdfFile="$OutBase.pdf"
+    PdfPath="$OutDir/$PdfFile"
+    XslPath="$(realpath $InDir/docbook-xsl/fo-pdf.xsl)"
+    mkdir -p "$OutDir"
+
+
+    ### Generate XML
+
+    # unfortunately the chain does not honor --number-section yet
+    if [ $InFileExt == 'xml' ]
+    then
+        cp "$InPath" "$OutDir"
+    else
+        if ! pandoc -s -t docbook5 -o "$XmlPath" "$InPath"
+        then
+            echo Fatal error: Pandoc failed: \"$InPath\"
+            exit 1
+        fi
+    fi
+
+    # Workaround bug 
+    # [Docbook5 Writer: produces invalid output when author is given · 
+    # Issue #6244 · jgm/pandoc](https://github.com/jgm/pandoc/issues/6244)
+
+    if grep -q '<author>' "$XmlPath" &&  ! grep -q '<personname>' "$XmlPath"
+    then
+        echo change
+        sed -i 's/<author>/<author><personname>/g' "$XmlPath"
+        sed -i 's/<\/author>/<\/personname><\/author>/g' "$XmlPath"
+    fi
+
+
+    ### Validate
+
+    if ! xmlstarlet val --err \
+        --xsd /usr/share/xml/docbook/schema/xsd/5.0/docbook.xsd \
+        "$XmlPath"
+        then
+            echo Fatal error: docbook file \"$XmlFile\" is not valid.
+            exit 1
+        fi
+
+
+
+    ### Generate .pdf 
+    # xsltproc also take parameters e.g. --stringparam use.extensions 0\
+
+    cp -r  "$InDir/images/" "$OutDir"
+
+    cd "$OutDir"
+
+    xsltproc --output "$FoFile" \
+           "$XslPath"\
+           "$XmlFile" && \
+        fop -fo "$FoFile" -pdf "$PdfFile"
+        rm  "$XmlFile" && \
+        rm  -r "images" && \
+        rm  "$FoFile"  
+}
+
+
+
+### Main
+# usage: 
+# render FILE [FILE]
+# render report.md ./rendition/report.pdf
+
+if [[ -n "${2/[ ]*\n/}" ]] ; then
+        OutPath="$2"
+else
+        OutPath="${1%.*}.pdf" # $2 is empty
+fi
+render "$1" "$OutPath" 
+
+
+
+
+
