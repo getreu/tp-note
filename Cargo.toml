@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.4.0"
+version = "1.4.1"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
@@ -42,7 +42,7 @@ assets = [
 serde = { version = "1.0.105", features = ["derive"] }
 serde_yaml = "0.8.11"
 serde_json = "1.0.50"
-anyhow = "1.0.27"
+anyhow = "1.0.28"
 lazy_static = "1.4.0"
 chrono = "0.4.11"
 time = "0.2.9"

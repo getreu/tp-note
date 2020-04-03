@@ -50,7 +50,8 @@ Repository:
 
 ## Distribution
 
-* Binaries for latest release (Linux, Windows, iOS)
+* Binaries for Ubuntu-Linux 18.04, Windows, MacOS (see below for 
+  Debian binaries)
 
     1. Open: [Releases · getreu/tp-note](https://github.com/getreu/tp-note/releases)
 
@@ -68,13 +69,13 @@ Repository:
 
     [x86_64-pc-windows-gnu/release/tp-note.exe](/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe)
 
-  - Binary for Linux:
+  - Binary for Debian 10 Buster:
 
     [x86_64-unknown-linux-gnu/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
     <!--
     [x86_64-unknown-linux-musl/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note)
     -->
-  - Package for Debian and Ubuntu:
+  - Package for Debian 10 Buster:
 
     [x86_64-unknown-linux-gnu/debian/tp-note_1.3.2_amd64.deb](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.3.2_amd64.deb)
 
