@@ -17,7 +17,7 @@ stages:
               imageName: 'macOS-10.15'
               rustup_toolchain: stable
             linux-stable:
-              imageName: 'ubuntu-18.04'
+              imageName: 'debian-10'
               rustup_toolchain: stable
         pool:
           vmImage: $(imageName)
@@ -71,6 +71,7 @@ stages:
             displayName: Install rust
             condition: ne( variables['Agent.OS'], 'Windows_NT' )
           - script: |
+              cargo install cargo-deb         
               sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
             condition: eq( variables['Agent.OS'], 'Linux' )
             displayName: Install build dependencies 
@@ -82,21 +83,34 @@ stages:
               echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
             displayName: Windows install rust
             condition: eq( variables['Agent.OS'], 'Windows_NT' )
-
           - script: |
               rustup target add $TARGET
               cargo build --release --target $TARGET
+              strip '$(Build.SourcesDirectory)/target/$(TARGET)/release/tp-note'
             condition: ne( variables['Agent.OS'], 'Windows_NT' )
             displayName: Build
+          - script: |
+              sudo apt-get install pandoc docbook5-xml docbook-xsl-ns xsltproc fop xmlto libxml2-utils xmlstarlet
+              cd '$(Build.SourcesDirectory)/doc/'
+              './make--all'
+            condition: eq( variables['Agent.OS'], 'Linux' )
+            displayName: Build documentation
+          - script: |
+              cargo deb --target $TARGET
+            condition: eq( variables['Agent.OS'], 'Linux' )
+            displayName: Build deb package
           - script: |
               rustup target add %TARGET%
               cargo build --release --target %TARGET%
             condition: eq( variables['Agent.OS'], 'Windows_NT' )
             displayName: Build on Windows
-          - script: |
-              strip "$(Build.SourcesDirectory)/target/$(TARGET)/release/tp-note"
+          - task: CopyFiles@2
+            displayName: Copy documentation assets
             condition: eq( variables['Agent.OS'], 'Linux' )
-            displayName: Strip debug symbols
+            inputs:
+              sourceFolder: '$(Build.SourcesDirectory)/doc/build/pdf'
+              contents: '*.pdf'
+              targetFolder: '$(Build.ArtifactStagingDirectory)/'
           - task: CopyFiles@2
             displayName: Copy assets
             condition: ne( variables['Agent.OS'], 'Windows_NT' )
@@ -104,6 +118,13 @@ stages:
               sourceFolder: '$(Build.SourcesDirectory)/target/$(TARGET)/release'
               contents: tp-note
               targetFolder: '$(Build.BinariesDirectory)/'
+          - task: CopyFiles@2
+            displayName: Copy deb package
+            condition: eq( variables['Agent.OS'], 'Linux' )
+            inputs:
+              sourceFolder: '$(Build.SourcesDirectory)/target/$(TARGET)/debian'
+              contents: '*.deb'
+              targetFolder: '$(Build.ArtifactStagingDirectory)/'
           - task: CopyFiles@2
             displayName: Copy assets on Windows
             condition: eq( variables['Agent.OS'], 'Windows_NT' )
@@ -129,7 +150,20 @@ stages:
               archiveFile: '$(Build.ArtifactStagingDirectory)/tp-note-$(Build.SourceBranchName)-$(TARGET).zip'
 
           - task: GithubRelease@0
-            condition: ne( variables['Agent.OS'], 'Windows_NT' )
+            condition: eq( variables['Agent.OS'], 'Linux' )
+            inputs:
+              gitHubConnection: 'github.com_getreu'
+              repositoryName: 'getreu/tp-note'
+              action: 'edit'
+              target: '$(build.sourceVersion)'
+              tagSource: 'manual'
+              tag: '$(Build.SourceBranchName)'
+              assets: '$(Build.ArtifactStagingDirectory)/*'
+              title: '$(Build.SourceBranchName)'
+              assetUploadMode: 'replace'
+              addChangeLog: false
+          - task: GithubRelease@0
+            condition: eq( variables['Agent.OS'], 'Darwin' )
             inputs:
               gitHubConnection: 'github.com_getreu'
               repositoryName: 'getreu/tp-note'

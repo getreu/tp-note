@@ -49,12 +49,11 @@ render () {
     #     /usr/share/xml/docbook/stylesheet/docbook-xsl-ns/html/docbook.xsl\
     #  Use snapshot with UTF-8 in docbook.xsl instead
     xsltproc --stringparam html.stylesheet docutils_basic.css --output "$HtmlPath" \
-            /usr/local/share/xml/dokbook/stylesheet/docbook-xsl-snapshot/html/docbook.xsl\
+        /usr/share/xml/docbook/stylesheet/docbook-xsl-ns/html/docbook.xsl \
            "$XmlPath" && \
-        rm  "$XmlPath"   
+    rm  "$XmlPath"
 }
 
-   #/usr/local/share/xml/dokbook/stylesheet/docbook-xsl-1.79.2/html/docbook.xsl\
 
 
 ### Main
