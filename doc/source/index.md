@@ -53,7 +53,7 @@ Repository:
 * Binaries for Ubuntu-Linux 18.04, Windows, MacOS (see below for 
   Debian binaries)
 
-    1. Open: [Releases · getreu/tp-note](https://github.com/getreu/tp-note/releases)
+    1. Open: [Releases - getreu/tp-note](https://github.com/getreu/tp-note/releases)
 
     2. Open the latest release.
 

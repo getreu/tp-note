@@ -150,7 +150,7 @@
     <xsl:attribute name="background-color"><xsl:value-of select="$code.background-color"/></xsl:attribute>
     <xsl:attribute name="padding">
       <xsl:choose>
-        <xsl:when test="$code.background-color != 'transparent'">.3em .25em .1em .25em</xsl:when>
+        <xsl:when test="$code.background-color != 'transparent'">0em 0em .1em .25em</xsl:when>
         <xsl:otherwise>0</xsl:otherwise>
       </xsl:choose>
     </xsl:attribute>
@@ -244,7 +244,7 @@
       </xsl:choose>
     </xsl:attribute>
     -->
-    <xsl:attribute name="padding">1em .5em .75em .5em</xsl:attribute>
+    <xsl:attribute name="padding">0em 0em .75em .5em</xsl:attribute>
     <!-- make sure block it aligns with block title -->
     <xsl:attribute name="margin-left"><xsl:value-of select="$title.margin.left"/></xsl:attribute>
   </xsl:attribute-set>
