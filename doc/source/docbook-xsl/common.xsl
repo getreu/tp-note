@@ -152,16 +152,8 @@
   <xsl:param name="tablecolumns.extension">0</xsl:param>
 
   <xsl:param name="generate.toc">
-    <xsl:choose>
-      <xsl:when test="/processing-instruction('asciidoc-toc')">
 article toc,title
 book    toc,title,figure,table,example,equation
-      </xsl:when>
-      <xsl:otherwise>
-article nop
-book    nop
-      </xsl:otherwise>
-    </xsl:choose>
   </xsl:param>
 
   <!-- Format xref: Example:
