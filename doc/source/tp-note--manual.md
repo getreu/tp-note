@@ -337,7 +337,7 @@ _Tp-Note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
 
   - _VS-Code_, _Atom_ ...
 
-  Please refer to _Tp-Note_'s man-page to learn to register your text
+  Please refer to _Tp-Note_'s man-page to learn how to register your text
   editor in _Tp-Note_'s configuration file.
 
 * You prefer working in a desktop environment instead of working on a shell?
