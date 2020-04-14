@@ -9,6 +9,9 @@ Version 1.0.0
 
 Date: 2020-03-18:
 Version 1.4.1
+
+Date: 2020-04-14:
+Version 1.4.1
 -->
 
 # NAME
@@ -261,8 +264,11 @@ mechanism never does. (See below for more details about filename synchronization
 
 **-d**, **\--debug**
 
-: Print additional log-messages on console. On Windows, the output must be
-  redirected into a file to see it, e.g. open the command-prompt and type:
+: Print additional log-messages on console. It shows the available template
+  variables, the templates used and the rendered result of the substitution.
+  This option particularly useful for debugging new templates. On Windows, the
+  output must be redirected into a file to see it. To do so open the
+  command-prompt and type:
 
     tp-note.exe -d >debug.txt 2>&1
 

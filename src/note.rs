@@ -86,15 +86,20 @@ impl Note {
                 .as_str()
         });
 
+        if ARGS.debug {
+            eprintln!(
+                "*** Debug: Available substitution variables for context template:\n{:#?}\n",
+                *context
+            );
+            eprintln!("*** Debug: Applying content template:\n{}\n", template);
+            eprintln!("*** Debug: Rendered content template:\n{}\n\n", *content);
+        };
+
         // deserialize the rendered result
         let fm = Note::deserialize_note(&content)?;
 
         context.insert("title", &fm.title);
         context.insert("subtitle", &fm.subtitle);
-
-        if ARGS.debug {
-            eprintln!("*** Content template used:\n{}\n\n", template);
-        };
 
         // return result
         Ok(Self {
@@ -185,12 +190,12 @@ impl Note {
     /// its front matter.
     pub fn render_filename(&self, template: &str) -> Result<PathBuf> {
         if ARGS.debug {
-            eprintln!("*** Filename template used:\n{}\n\n", template);
             eprintln!(
-                "*** Substitution variables for filename template:\n{:#?}",
-                &self.context
+                "*** Debug: Available substitution variables for filename template:\n{:#?}\n",
+                *self.context
             );
-        }
+            eprintln!("*** Debug: Applying filename template:\n{}\n\n", template);
+        };
 
         // render template
         let mut fqfn = self.context.fqpn.to_owned();
@@ -199,6 +204,12 @@ impl Note {
             tera.extend(&TERA).unwrap();
 
             tera.render_str(template, &self.context)
+                .map(|filename| {
+                    if ARGS.debug {
+                        eprintln!("*** Debug: Rendered filename template:\n{:?}\n\n", filename);
+                    };
+                    filename
+                })
                 .with_context(|| format!("failed to render template:\n`{}`", template))?
                 .trim()
         });
