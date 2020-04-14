@@ -65,9 +65,9 @@ right-click on some empty white space.
 
 ![The new unmodified note created by template on disk](images/workflow1-2.png){width="12cm"}
 
-![The new unmodified note created by template](images/workflow1-3.png){width="16cm"}
+![The new unmodified note created by template](images/workflow1-3.png){width="13cm"}
 
-![Change the title](images/workflow1-4.png){width="16cm"}
+![Change the title](images/workflow1-4.png){width="13cm"}
 
 ![Add some text](images/workflow1-5.png){width="13cm"}
 
@@ -156,7 +156,7 @@ note.
 
 ![Copy some chapters](images/workflow4-1.png){width="14cm"}
 
-![Right-click on or in the new note's destination folder and start tp-note](images/workflow4-2.png){width="11cm"}
+![Right-click on or in the new note's destination folder and start tp-note](images/workflow4-2.png){width="9cm"}
 
 ![The new unmodified note created by template](images/workflow4-3.png){width="13cm"}
 
