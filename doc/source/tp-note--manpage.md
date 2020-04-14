@@ -11,7 +11,7 @@ Date: 2020-03-18:
 Version 1.4.1
 
 Date: 2020-04-14:
-Version 1.4.1
+Version 1.4.2
 -->
 
 # NAME

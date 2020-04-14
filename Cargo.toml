@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.4.1"
+version = "1.4.2"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
@@ -39,16 +39,16 @@ assets = [
 ]
 
 [dependencies]
-serde = { version = "1.0.105", features = ["derive"] }
+serde = { version = "1.0.106", features = ["derive"] }
 serde_yaml = "0.8.11"
-serde_json = "1.0.50"
+serde_json = "1.0.51"
 anyhow = "1.0.28"
 lazy_static = "1.4.0"
 chrono = "0.4.11"
 time = "0.2.9"
 confy = "0.4.0"
 clap = "2.33.0"
-structopt = "0.3.12"
+structopt = "0.3.13"
 msgbox = "0.4.0"
 
 # On Linux you need the x11 library, install it with something like:
