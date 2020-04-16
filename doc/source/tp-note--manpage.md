@@ -432,6 +432,11 @@ In addition, _Tp-Note_ defines the following variables:
 * '`{{ username }}`': the content of the first non-empty environment
   variable: `LOGNAME`, `USER` or `USERNAME`.
 
+* '`{{ title }}`': the title as indicated in the YAML front matter of the 
+  note (only available in filename-templates).
+
+* '`{{ subtitle }}`': the subtitle as indicated in the YAML front matter of
+  the note (only available in filename-templates).
 
 ## Content-template conventions
 
@@ -463,8 +468,8 @@ For this purpose _Tp-Note_ provides the additional Tera filters '`path`' and
   starts with a digit '`0`-`9`', the whole string is prepended with `'`.
   For example: "`1 The Show Begins`" becomes "`'1 The Show Begins`".
   This filter should always be applied to the first variable assembling the new
-  filename, e.g. '`{{ title | path(alpha=true )}`'. The way it is always
-  possible to distinguish the sort-tag and the actual filenames.
+  filename, e.g. '`{{ title | path(alpha=true )}`'. This way, it is always
+  possible to distinguish the sort-tag from the actual filenames.
 
 In filename-templates all variables must pass either the '`path`' or
 the '`path(alpha=true)`' filter!
