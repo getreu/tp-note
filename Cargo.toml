@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.4.2"
+version = "1.4.3"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
