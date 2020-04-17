@@ -345,7 +345,6 @@ _Tp-Note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
   Read [Integration with file manager].
 
 
-
 # Integration with file manager
 
 This section shows how to integrate _Tp-Note_ in the context menu of your
@@ -356,43 +355,10 @@ path to the selected icon.
 
 ![Tp-note in the context-menu (right-click menu)](images/workflow2-1.png){width="12cm"}
 
-
-## Linux file manager configuration
-
-To simplify the configuration we first place the binary _Tp-Note_
-in our `$PATH`:
-
-```sh
-> cd /usr/local/bin
-> sudo wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note
-> sudo chmod 755 tp-note
-```
-
-_Debian_ and _Ubuntu_ user can also download a binary package from [debian/tp-note] and install it with:
-
-``` sh
-> sudo dpkg -i tp-note_X.X.X_amd64.deb
-```
-
-Most file-manager allow extending the context menu. As an example, the
-following images show the configuration of the *Thunar*-file-manger.
-In *Thunar*'s menu go to:
-
-    Edit -> Configure custom actions...
-
-![Thunar's custom action configuration](images/custom_actions1.png){width="10cm"}
-
-![Edit custom action](images/edit_action.png){width="10cm"}
-
-![Appearance Condition](images/appearance-condition.png){width="10cm"}
-
-![Thunar's custom action configuration with tp-note](images/custom_actions2.png){width="10cm"}
-
-[debian/tp-note]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/
-
 ```{=docbook}
-<?dbfo-need height="4cm" ?>
+<?dbfo-need height="6cm" ?>
 ```
+
 
 ## Windows file explorer configuration
 
@@ -422,6 +388,111 @@ The following works for me with Windows-version `10.0.18362`.
 
 
 4. Double-click on `tp-note.reg` and confirm several times.
+
+
+
+
+## Linux file manager configuration
+
+To simplify the configuration we first place the binary _Tp-Note_
+in our `$PATH`:
+
+```sh
+> cd /usr/local/bin
+> sudo wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note
+> sudo chmod 755 tp-note
+```
+
+_Debian_ and _Ubuntu_ user can also download a binary package from [debian/tp-note] and install it with:
+
+``` sh
+> sudo dpkg -i tp-note_X.X.X_amd64.deb
+```
+
+
+### Configure Thunar's custom actions
+
+Most file-manager allow extending the context menu. As an example, the
+following images show the configuration of the *Thunar*-file-manger.
+In *Thunar*'s menu go to:
+
+    Edit -> Configure custom actions...
+
+![Thunar's custom action configuration](images/custom_actions1.png){width="10cm"}
+
+![Edit custom action](images/edit_action.png){width="10cm"}
+
+![Appearance Condition](images/appearance-condition.png){width="10cm"}
+
+![Thunar's custom action configuration with tp-note](images/custom_actions2.png){width="10cm"}
+
+[debian/tp-note]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/
+
+```{=docbook}
+<?dbfo-need height="4cm" ?>
+```
+
+
+### Configure Thunar's custom actions system-wide
+
+Alternatively, instead of manually adding custom actions for each user, you can
+do this system-wide:
+
+    sudo nano /etc/xdg/Thunar/uca.xml
+
+Search for `</actions>` and replace it with:
+
+```xml
+<action>
+        <icon>accessories-text-editor</icon>
+        <name>Tp-Note</name>
+        <command>tp-note %f</command>
+        <description>Tp-Note</description>
+        <patterns>*</patterns>
+        <directories/>
+        <audio-files/>
+        <image-files/>
+        <other-files/>
+        <text-files/>
+        <video-files/>
+</action>
+</actions>
+```
+
+The change becomes effective only after the user deletes his own configuration
+file in `~/.config/Thunar/uca.xml`.
+
+```{=docbook}
+<?dbfo-need height="8cm" ?>
+```
+
+
+### Configure Pcmanfm's custom actions system-wide
+
+_Pcmanfm_ is the default file-manager _Lubuntu_ and in _Raspbian_ on the 
+Raspberry Pi.
+
+Create the configuration file:
+
+    sudo nano /usr/local/share/file-manager/actions/tp-note.desktop
+
+with the following content:
+
+```
+[Desktop Entry]
+Type=Action
+Name[en]=Tp-Note
+Tooltip=Tp-Note
+Icon=package-x-generic
+Profiles=profile-zero;
+
+[X-Action-Profile profile-zero]
+Name[en]=Default profile
+Exec=tp-note %f
+```
+
+The above creates the custom context-menu _Tp-Note_.
+
 
 
 [^1]: _Tp-Note_ is preconfigured to work with many well-known external text
