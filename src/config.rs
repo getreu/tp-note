@@ -170,7 +170,7 @@ const TMPL_ANNOTATE_FILENAME: &str = "\
 #[cfg(target_family = "unix")]
 const EDITOR_ARGS: &[&[&str]] = &[
     &[&"typora"],
-    &[&"code", &"-w"],
+    &[&"code", &"-w", &"-n"],
     &[&"atom", &"-w"],
     &[&"retext"],
     &[&"geany", &"-s", &"-i", &"-m"],
@@ -205,7 +205,7 @@ const EDITOR_ARGS: &[&[&str]] = &[&[&"/Applications/TextEdit.app/Contents/MacOS/
 #[cfg(target_family = "unix")]
 const VIEWER_ARGS: &[&[&str]] = &[
     &[&"typora"],
-    &[&"code", &"-w"],
+    &[&"code", &"-w", &"-n"],
     &[&"atom", &"-w"],
     &[&"retext"],
     &[&"geany", &"-r", &"-s", &"-i", &"-m"],
