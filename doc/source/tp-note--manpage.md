@@ -456,7 +456,7 @@ For this purpose _Tp-Note_ provides the additional Tera filters '`path`' and
   For example: "`1 The Show Begins`" becomes "`'1 The Show Begins`".
   This filter should always be applied to the first variable assembling the new
   filename, e.g. '`{{ title | path(alpha=true )}`'. This way, it is always
-  possible to distinguish the sort-tag from the actual filenames.
+  possible to distinguish the sort-tag from the actual filename.
 
 In filename-templates all variables must pass either the '`path`' or
 the '`path(alpha=true)`' filter!

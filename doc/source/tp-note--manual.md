@@ -491,7 +491,7 @@ Name[en]=Default profile
 Exec=tp-note %f
 ```
 
-The above creates the custom context-menu _Tp-Note_.
+The above creates the custom context-menu item _Tp-Note_.
 
 
 
