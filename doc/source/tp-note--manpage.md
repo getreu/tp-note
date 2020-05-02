@@ -390,8 +390,8 @@ gives you access to the '`LANG`' environment variable.
 
 In addition, _Tp-Note_ defines the following variables:
 
-* '`{{ sort_tag }}`': the sort-tag of the current note, e.g. '`01-23-`'
-  or '`20191022-`',
+* '`{{ sort_tag }}`': the sort-tag of the current note, e.g. '`01-23`'
+  or '`20191022`',
 
 * '`{{ dirname }}`': the parent directory's name,
 
