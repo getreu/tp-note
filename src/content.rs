@@ -27,12 +27,15 @@ impl Content {
     pub fn to_osstring(&self) -> String {
         // Replaces Windows newline + carriage return -> newline.
         #[cfg(target_family = "windows")]
-        let s = self.replace("\n", "\r\n");
+        let mut s = self.replace("\n", "\r\n");
+        #[cfg(target_family = "windows")]
+        s.insert(0, '\u{feff}');
+        
         // Under Unix no conversion is needed.
         #[cfg(not(target_family = "windows"))]
-        let s = self.s.to_string();
-        // Add BOM (TODO: when Typora honors it.)
-        // s.insert(0, '\u{feff}');
+        let mut s = "\u{feff}".to_string(); 
+        #[cfg(not(target_family = "windows"))]
+        s.push_str(self);
         s
     }
 }
@@ -68,12 +71,8 @@ mod tests {
         let content = Content::new("first\r\nsecond\r\nthird");
         let s = content.to_osstring();
         #[cfg(target_family = "windows")]
-        // TODO: test BOM writing when Typora is ready
-        //assert_eq!(s.as_str(), "\u{feff}first\r\nsecond\r\nthird");
-        assert_eq!(s.as_str(), "first\r\nsecond\r\nthird");
+        assert_eq!(s.as_str(), "\u{feff}first\r\nsecond\r\nthird");
         #[cfg(not(target_family = "windows"))]
-        // TODO: test BOM writing when Typora is ready
-        //assert_eq!(s.as_str(), "\u{feff}first\nsecond\nthird");
-        assert_eq!(s.as_str(), "first\nsecond\nthird");
+        assert_eq!(s.as_str(), "\u{feff}first\nsecond\nthird");
     }
 }
