@@ -325,15 +325,18 @@ _Tp-Note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
   Please refer to _Tp-Note_'s man-page to learn how to change its
   templates in the configuration file.
 
-* Your preferred text editor is not *ReText*? Change it![^1]
+* Your preferred text editor is not *Notepad*? Change it![^1]
 
   Note-taking with _Tp-Note_ is more fun with a good markup (Markdown)
   text editor, although any Unicode text editor will do (even Notepad >=
   Windows 10-update 1903). _Tp-Note_ it preconfigured to work with:
   
   - [Typora — a markdown editor, markdown reader.](https://typora.io/)
+    Make sure that you have at least version 0.9.89 installed, as this version
+    contains a [bugfix](https://github.com/typora/typora-issues/issues/3348)
+    required to work properly with _Tp-Note_.
 
-  - [ReText: Simple but powerful editor for Markdown and reStructuredText](https://github.com/retext-project/retext)
+  - [ReText — Simple but powerful editor for Markdown and reStructuredText](https://github.com/retext-project/retext)
 
   - _VS-Code_, _Atom_ ...
 
