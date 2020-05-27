@@ -9,14 +9,23 @@ https://docs.rs/tp-note)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](
 https://github.com/getreu/tp-note)
 
-_Tp-Note_ is a note-taking-tool and a template system, that consistently
-synchronizes the note's meta-data with its filename. _Tp-Note_ collects
-various information about its environment and the clipboard and stores them
-in variables. New notes are created by filling these variables in predefined
-and customizable _Tera_-templates.
+_Tp-Note_ is a note-taking-tool and a template system - freely available for
+Windows, MacOS and Linux - that consistently synchronizes the note’s meta-data
+with its filename. _Tp-Note_ collects various information about its environment
+and the clipboard and stores them in variables. New notes are created by
+filling these variables in predefined and customizable _Tera_-templates.  _TP-Note's_
+default templates are written in Markdown and can be easily adapted to any
+other markup language if needed. By default _TP-Note_ launches the system
+file-editor (or any other of your choice, e.g. Typora) after creating a new note.
 
-Read more in [Tp-Note's user manual](/projects/tp-note/tp-note--manual.html).
+* Read more in [Tp-Note’s user manual](/projects/tp-note/tp-note--manual.html)
 
+* [Download Tp-Note](/projects/tp-note/index.html#distribution)
+
+* Project page: [Tp-Note - fast note-taking with templates and filename synchronization](/projects/tp-note/)
+
+
+---
 
 ## Documentation
 
