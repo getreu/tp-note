@@ -41,7 +41,7 @@ const AUTHOR: &str = "(c) Jens Getreu, 2020";
 /// Window title for error box.
 const MESSAGE_ALERT_WINDOW_TITLE: &str = "Tp-Note Application Error";
 
-/// Opens the note file `path` on disk and reads its YAML front matter.
+/// Open the note file `path` on disk and reads its YAML front matter.
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk and return
 /// the new filename.
@@ -141,7 +141,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
 }
 
 #[inline]
-/// Launches some external editor. The editor can be chosen through
+/// Launch some external editor. The editor can be chosen through
 /// `tp-note`'s configuration file.
 fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     // both lists have always the same number of items
@@ -259,7 +259,7 @@ fn run() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-/// Print error message is `run()` does not complete.
+/// Print some error message if `run()` does not complete.
 fn main() -> Result<(), anyhow::Error> {
     if let Err(e) = run() {
         // Remember the command-line-arguments.

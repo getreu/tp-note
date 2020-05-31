@@ -104,7 +104,7 @@ file, that is automatically written in
 
 * Linux: `~/.config/tp-note/tp-note.toml`
 
-* Windows:`C:\Users\<LOGIN>\AppData\Roaming\tp-note\config\tp-note.toml>`
+* Windows: `C:\Users\<LOGIN>\AppData\Roaming\tp-note\config\tp-note.toml`
 
 The reason is, that the structure of the configuration file might change from
 version to version.  For example, new configuration variables might be added:
