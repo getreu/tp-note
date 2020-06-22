@@ -32,15 +32,15 @@ The documentation of this project is dived into tow parts:
 
 * User manual
 
-  [tp-note user manual - html](https://blog.getreu.net/projects/tp-note/tp-note--manual.html)
+  [Tp-Note user manual - html](https://blog.getreu.net/projects/tp-note/tp-note--manual.html)
 
-  [tp-note user manual - pdf](https://blog.getreu.net/_downloads/tp-note--manual.pdf)
+  [Tp-Note user manual - pdf](https://blog.getreu.net/_downloads/tp-note--manual.pdf)
 
 * Unix man-page (more technical)
 
-  [tp-note manual page - html](https://blog.getreu.net/projects/tp-note/tp-note--manpage.html)
+  [Tp-Note manual page - html](https://blog.getreu.net/projects/tp-note/tp-note--manpage.html)
 
-  [tp-note manual page - pdf](https://blog.getreu.net/_downloads/tp-note--manpage.pdf)
+  [Tp-Note manual page - pdf](https://blog.getreu.net/_downloads/tp-note--manpage.pdf)
 
 
 # How students take notes
@@ -52,7 +52,8 @@ not listening.".
 This is certainly true. As far as I am concerned, I am not good at logistics.
 For me having all documents and notes in one little machine is a blessing.
 
-To illustrate how to work with _Tp-Note_ here my most common workflows.
+The following sections illustrate how to work with _Tp-Note_ with my most
+common workflows.
 
 
 
@@ -118,7 +119,7 @@ for Firefox.
 [Copy as Markdown]: https://addons.mozilla.org/en-GB/firefox/search/?q=copy%20as%20markdown
 [Copy Selection as Markdown]: https://addons.mozilla.org/en-GB/firefox/addon/copy-selection-as-markdown/?src=search
 
-![Right-click on or in the new note's destination folder and start tp-note](images/workflow3-3.png){width="11cm"}
+![Right-click on or in the new note's destination folder and start Tp-Note](images/workflow3-3.png){width="11cm"}
 
 ![The new unmodified note created by template](images/workflow3-4.png){width="13cm"}
 
@@ -156,7 +157,7 @@ note.
 
 ![Copy some chapters](images/workflow4-1.png){width="14cm"}
 
-![Right-click on or in the new note's destination folder and start tp-note](images/workflow4-2.png){width="9cm"}
+![Right-click on or in the new note's destination folder and start Tp-Note](images/workflow4-2.png){width="9cm"}
 
 ![The new unmodified note created by template](images/workflow4-3.png){width="13cm"}
 
@@ -190,6 +191,47 @@ and observe the file on the disk.
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
 ```
+
+## Best practise
+
+_Tp-Note's_ greatest advantage is it's flexibility. It easily integrates with
+your workflow.  As people work differently, there is no best usage either.
+Nevertheless, after having used _Tp-Note_ for some months now, here my personal
+preferences and configuration:
+
+* [Tp-Note](https://blog.getreu.net/projects/tp-note/)
+* Addon for Firefox: [Copy as
+  Markdown](https://addons.mozilla.org/en-GB/firefox/search/?q=copy%20as%20markdown)
+* Markdown editor : [Typora](https://typora.io/)
+* Integration with you file-manager as described below.
+
+My favorite Markdown editor at the moment is [Typora](https://typora.io/). I
+like its clean and simple interface helping me to concentrate on the content
+while writing.[^3] 
+
+When copying extracts from web-pages I often need to preserve the hyperlinks.
+For this the Firefox browser addon [Copy as Markdown] is very handy. It
+precedes the copied extract with a link to the origin of the webpage. When
+_TP-Note_ reads the clipboard, it uses to this links compose the filename on
+disk. Here a sample work flow:
+
+![A webpage to copy extracts from](images/workflow5-1.png){width=12cm}
+
+![“Copy Selection as Markdown”](images/workflow5-2.png){width="12cm"}
+
+![Right-click on or in the new note's destination folder and start
+Tp-Note](images/workflow5-3.png){width="11cm"}
+
+![The new unmodified note opened with
+Typora](images/workflow5-4.png){width="11cm"}
+
+![The new note file on disk after closing the
+editor](images/workflow5-5.png){width="9cm"}
+
+Note, no content or filename was edited manually in this example. _Tp-Note_
+takes care of interpreting the clipboard's content and generating the file on
+disk.
+
 
 
 # How it works: Organize your files and notes with sort-tags
@@ -427,7 +469,7 @@ In *Thunar*'s menu go to:
 
 ![Appearance Condition](images/appearance-condition.png){width="10cm"}
 
-![Thunar's custom action configuration with tp-note](images/custom_actions2.png){width="10cm"}
+![Thunar's custom action configuration with Tp-Note](images/custom_actions2.png){width="10cm"}
 
 [debian/tp-note]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/
 
@@ -506,6 +548,9 @@ For best user experience, I recommend text editors with internal markup
 previewer.
 
 [^2]: For a personalized setup read _Tp-Note_'s man-page.
+
+[^3]: Make sure to install a recent version of
+[Typora](https://typora.io/#download) (version >=0.9.89).
 
 [^4]: Versions for other operating systems and a Debian package are 
 [available here](https://blog.getreu.net/projects/tp-note/_downloads/).
