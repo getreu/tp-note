@@ -200,8 +200,7 @@ Nevertheless, after having used _Tp-Note_ for some months now, here my personal
 preferences and configuration:
 
 * [Tp-Note](https://blog.getreu.net/projects/tp-note/)
-* Addon for Firefox: [Copy as
-  Markdown](https://addons.mozilla.org/en-GB/firefox/search/?q=copy%20as%20markdown)
+* Addon for Firefox: [Copy Selection as Markdown]
 * Markdown editor : [Typora](https://typora.io/)
 * Integration with you file-manager as described below.
 
@@ -210,7 +209,7 @@ like its clean and simple interface helping me to concentrate on the content
 while writing.[^3] 
 
 When copying extracts from web-pages I often need to preserve the hyperlinks.
-For this the Firefox browser addon [Copy as Markdown] is very handy. It
+For this the Firefox browser addon [Copy Selection as Markdown] is very handy. It
 precedes the copied extract with a link to the origin of the webpage. When
 _TP-Note_ reads the clipboard, it uses to this links compose the filename on
 disk. Here a sample work flow:
@@ -232,6 +231,7 @@ Note, no content or filename was edited manually in this example. _Tp-Note_
 takes care of interpreting the clipboard's content and generating the file on
 disk.
 
+[Copy Selection as Markdown]: https://addons.mozilla.org/en-GB/firefox/addon/copy-selection-as-markdown/?src=search
 
 
 # How it works: Organize your files and notes with sort-tags
