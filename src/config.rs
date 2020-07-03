@@ -413,7 +413,7 @@ pub struct Clipboard {
 
 impl Clipboard {
     pub fn new(content: &str) -> Self {
-        let content: String = content.to_string();
+        let content: String = content.trim_start().to_string();
 
         // Limit the size of `clipboard_truncated`
         let mut content_truncated = String::new();
@@ -676,6 +676,14 @@ mod tests {
         let output = Clipboard::new(input);
         // This string is shortened.
         assert_eq!("N.ote", output.content_heading);
+
+        //
+        // Test trim whitespace 
+        let input = "\r\n\r\n  \tIt helps. Get quickly\
+            started writing notes.";
+        let output = Clipboard::new(input);
+        // This string is shortened.
+        assert_eq!("It helps.", output.content_heading);
     }
 
     #[test]
