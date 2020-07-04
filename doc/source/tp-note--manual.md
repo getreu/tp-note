@@ -186,7 +186,7 @@ In this example we copied only text. *Tp-Note* suggests the first sentence as
 title. This can be changed before saving as illustrated above. Here we just save
 and observe the file on the disk.
 
-![The new note file on disk after closing the editor](images/workflow4-4.png){width="9cm"}
+![The new note file on disk after closing the editor](images/workflow4-4.png){width="8cm"}
 
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
@@ -219,9 +219,9 @@ disk. Here a sample work flow:
 ![“Copy Selection as Markdown”](images/workflow5-2.png){width="12cm"}
 
 ![Right-click on or in the new note's destination folder and start
-Tp-Note](images/workflow5-3.png){width="11cm"}
+Tp-Note](images/workflow5-3.png){width="9cm"}
 
-![The new unmodified note opened with
+![The new template generated note opened with
 Typora](images/workflow5-4.png){width="11cm"}
 
 ![The new note file on disk after closing the
