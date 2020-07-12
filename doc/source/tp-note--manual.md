@@ -208,11 +208,13 @@ My favorite Markdown editor at the moment is [Typora](https://typora.io/). I
 like its clean and simple interface helping me to concentrate on the content
 while writing.[^3] 
 
-When copying extracts from web-pages I often need to preserve the hyperlinks.
-For this the Firefox browser addon [Copy Selection as Markdown] is very handy. It
-precedes the copied extract with a link to the origin of the webpage. When
-_TP-Note_ reads the clipboard, it uses to this links compose the filename on
-disk. Here a sample work flow:
+When copying extracts from a web-page I often need to preserve its hyperlinks.
+For this, the Firefox browser addon [Copy Selection as Markdown] is very handy.
+It precedes the copied extract with a hyperlink to the origin of the webpage.
+When _TP-Note_ reads the extract from the clipboard, it uses the first Markdown
+hyperlink it can find for composing the note's title and its filename on disk.
+This is why the webpage's name ends up automatically in the note's title and
+filename.  Here a sample work flow:
 
 ![A webpage to copy extracts from](images/workflow5-1.png){width=12cm}
 
