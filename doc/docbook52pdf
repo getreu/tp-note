@@ -82,7 +82,9 @@ render () {
 
     cd "$OutDir"
 
+    # Set `section.autolabel 0` if you do not want section numbers
     xsltproc --output "$FoFile" \
+	  --stringparam  section.autolabel 1 \
            "$XslPath"\
            "$XmlFile" && \
         fop -fo "$FoFile" -pdf "$PdfFile"
