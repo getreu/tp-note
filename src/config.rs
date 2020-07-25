@@ -33,13 +33,13 @@ pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 /// Can be modified through editing the configuration file.
 /// Useful variables in this context are:
 /// `{{ sort_tag | path }}`
-/// `{{ title| path }}`, `{{ subtitle| path }}`, `{{ note_extension | path }}`,
+/// `{{ title | path }}`, `{{ subtitle | path }}`, `{{ note_extension | path }}`,
 /// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
 /// `{{ sort_tag | path }}` must be the first in line here, then followed by a
 /// `{{ <var>| path(alpha) }}` variable.
-/// The first non-numerical variable must be the `{{ <var> | path(alpha) }}`
-/// variant.
+/// Note, that in this filename-template, all variables must be filtered
+/// by a `path` or `path(alpha=true)` filter.
 const TMPL_SYNC_FILENAME: &str = "\
 {{ sort_tag | path }}{% if sort_tag | path != '' %}-{% endif %}\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
@@ -51,12 +51,11 @@ const TMPL_SYNC_FILENAME: &str = "\
 /// The following variables are  defined:
 /// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
 /// `{{ sort_tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`,
-/// `{{ path }}`, `{{ separator }}`, `{{ year }}`, `{{ month }}`.
-/// `{{ day }}`.
+/// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
 /// When placed in YAML-front-matter, the filter `| json_encode` must be
-/// appended.
+/// appended to each variable.
 const TMPL_NEW_CONTENT: &str = "\
 ---
 title:      {{ dirname | json_encode }}
@@ -76,8 +75,10 @@ revision:   {{ '1.0' | json_encode }}
 /// `{{ title| path }}`, `{{ subtitle| path }}`, `{{ note_extension| path }}`,
 /// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
-/// The first non-numerical variable must be the `{{ <var>| path(alpha) }}`
+/// The first non-numerical variable must be some `{{ <var>| path(alpha) }}`
 /// variant.
+/// Note, that in this filename-template, all variables must be filtered
+/// by a `path` or `path(alpha=true)` filter.
 const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d') }}-\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
@@ -85,16 +86,18 @@ const TMPL_NEW_FILENAME: &str = "\
 ";
 
 /// Default template used, when the clipboard contains a string.
-/// When string represents a link in markdown format: [<link-name>](<link-url>),
-/// the first part is stored in `{{ clipboard-linkname }}`, the second part in
-/// `{{ clipboard-linkurl }}`.
+/// The clipboards content is in `{{ clipboard }}`, its truncated version
+/// in `{{ clipboard_heading }}`
+/// When the clipboard conains a hyper-link in markdown format: [<link-name>](<link-url>),
+/// its first part is stored in `{{ clipboard-linkname }}`, the second part in
+/// `{{ clipboard-linkurl }}`. 
 /// The following variables are defined:
 /// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
-/// `{{ path }}`, `{{ separator| path }}`.
+/// `{{ path }}`, `{{ sort_tag }}`, `{{ username }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
 /// When placed in YAML-front-matter, the filter `| json_encode` must be
-/// appended.
+/// appended to each variable.
 const TMPL_CLIPBOARD_CONTENT: &str = "\
 ---
 {% if clipboard_linkname !='' %}title:      {{ clipboard_linkname | json_encode }}
@@ -117,8 +120,10 @@ revision:   {{ '1.0' | json_encode }}
 /// `{{ year| path }}`, `{{ month| path }}`. `{{ day| path }}`.
 /// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
-/// The first non-numerical variable must be the `{{ <var>| path(alpha) }}`
+/// The first non-numerical variable must be some `{{ <var>| path(alpha) }}`
 /// variant.
+/// Note, that in this filename-template, all variables must be filtered
+/// by a `path` or `path(alpha=true)` filter.
 const TMPL_CLIPBOARD_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d') }}-\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
@@ -131,11 +136,11 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 /// The following variables are  defined:
 /// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
 /// `{{ sort_tag }}`, `{{ username }}`, `{{ lang }}`,
-/// `{{ path }}`, `{{ separator| path }}`.
+/// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
 /// When placed in YAML-front-matter, the filter `| json_encode` must be
-/// appended.
+/// appended to each variable.
 const TMPL_ANNOTATE_CONTENT: &str = "\
 ---
 title:      {{ sort_tag ~ file_stem | json_encode }}
@@ -159,6 +164,8 @@ revision:   {{ '1.0' | json_encode }}
 /// its value starts with a number, the string is prepended with `'`.
 /// The first non-numerical variable must be the `{{ <var>| path(alpha) }}`
 /// variant.
+/// Note, that in this filename-template, all variables must be filtered
+/// by a `path` or `path(alpha=true)` filter.
 const TMPL_ANNOTATE_FILENAME: &str = "\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
 {{ subtitle | path  }}.{{ note_extension | path }}\
