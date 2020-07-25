@@ -240,8 +240,9 @@ impl Note {
         if let Some(note_stem) = &fqfn.file_stem() {
             if let Some(note_stem) = note_stem.to_str() {
                 // Limit the size of `fqfn`
-                for i in (0..NOTE_FILENAME_LEN_MAX - note_extension_len).rev() {
-                    if let Some(s) = note_stem.get(..i) {
+                // `+1` reserves one byte for `.` before the extension.
+                for i in (0..NOTE_FILENAME_LEN_MAX-(note_extension_len+1)).rev() {
+                    if let Some(s) = note_stem.get(..=i) {
                         note_stem_short = s.to_string();
                         break;
                     }
