@@ -27,6 +27,7 @@ file-editor (or any other of your choice, e.g. Typora) after creating a new note
 
 ---
 
+
 ## Documentation
 
 User documentation:
@@ -50,6 +51,7 @@ Developer documentation:
 * [API documentation](https://blog.getreu.net/projects/tp-note/_downloads/doc/tp_note/)
 
 
+
 ## Source code
 
 Repository:
@@ -57,9 +59,24 @@ Repository:
 * [Tp-Note on Github](https://github.com/getreu/tp-note)
 
 
+
 ## Distribution
 
-* Binaries for Ubuntu-Linux 18.04, Windows, MacOS (see below for 
+### Tp-Note Microsoft Windows installer package
+
+* Installer package for Windows:
+
+  [tp-note-1.5.1-x86_64.msi](https://blog.getreu.net/projects/tp-note/_downloads/wix/tp-note-1.5.1-x86_64.msi)
+
+### Tp-Note Debian/Ubuntu installer package
+
+* Package compiled for Debian 10+ (Buster):
+
+  [x86_64-unknown-linux-gnu/debian/tp-note_1.5.1_amd64.deb](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.5.1_amd64.deb)
+
+### Various binaries for Windows, MacOS and Linux
+
+* Binaries for Ubuntu-Linux 18.04, Windows, MacOS:
   Debian binaries)
 
     1. Open: [Releases - getreu/tp-note](https://github.com/getreu/tp-note/releases)
@@ -72,21 +89,16 @@ Repository:
 
     5. Installation: see below.
 
-* Binaries and packages (usually built from latest commit):
-
-  - Executable for Windows:
+* Executable for Windows:
 
     [x86_64-pc-windows-gnu/release/tp-note.exe](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe)
 
-  - Binary for Debian 10 Buster:
+* Binary for Debian 10 Buster:
 
     [x86_64-unknown-linux-gnu/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
     <!--
     [x86_64-unknown-linux-musl/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note)
     -->
-  - Package for Debian 10 Buster:
-
-    [x86_64-unknown-linux-gnu/debian/tp-note_1.5.1_amd64.deb](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.5.1_amd64.deb)
 
 * Installable Unix man-page:
 
@@ -95,6 +107,17 @@ Repository:
 * Zipfile with all binaries and documentation:
 
   - [tp-note all](https://blog.getreu.net/_downloads/tp-note.zip)
+
+
+## Installation
+
+Depending on the availability of installer packages for your operating system,
+the installation process is more or less automated. For Windows users the fully
+automated installation package
+[tp-note-1.5.1-x86_64.msi](https://blog.getreu.net/projects/tp-note/_downloads/wix/tp-note-1.5.1-x86_64.msi)
+is available. Others may consult the
+[Installation](https://blog.getreu.net/projects/tp-note/tp-note--manual.html#installation)
+section in _Tp-Note_'s manual for more information.
 
 
 ## Upgrading
@@ -118,7 +141,11 @@ There is no need to say, that in case you modified the configuration file,
 you should backup it before deleting.
 
 
-## Building and installing
+## Building
+
+If the above precompiled binaries do not suite you, you can
+compile _Tp-Note_ yourself.
+
 
 1. [Install Rust](https://www.rust-lang.org/tools/install), e.g.
 

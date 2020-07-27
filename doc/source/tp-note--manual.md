@@ -152,8 +152,9 @@ note.
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
 ```
-## Copy a page from a book
 
+
+## Copy a page from a book
 
 ![Copy some chapters](images/workflow4-1.png){width="14cm"}
 
@@ -277,17 +278,35 @@ part of the *sort-tag* when they appear in first or last position.
 
 
 
-# Quickstart
+# Installation
 
-_Tp-Note_ can be easily configured for your personal preferences and
-needs[^2]. However, this section explains the basic standard setup to get you
-started quickly.
+Depending on the operating system, the installation process is more
+or less automated and can be divided up into two steps:
+
+1. Binary installation\
+   This step consists of downloading _Tp-Note_'s binary and copying it to your hard-disk.
+   See section [Distribution](https://blog.getreu.net/projects/tp-note/#distribution)
+   on _Tp-Note_'s [project page](https://blog.getreu.net/projects/tp-note/#distribution)
+   for a list of available packages and binaries.
+
+2. Optional integration with the filemananger.
+
+At the moment of this writing, an installer automating steps 1. and 2. is available for 
+Windows only. Packages for Debian Linux and Ubuntu help you with step 1. For other operating
+systems check section [Distribution](https://blog.getreu.net/projects/tp-note/#distribution)
+for precompiled binaries or 
+[build Tp-Note](https://blog.getreu.net/projects/tp-note/#building-and-installing)
+yourself.
+
 
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
 ```
 
-## Installation
+## Minimum setup without file-manager integration
+
+_Tp-Note_'s template engine can be tested and used without window manager integration. This
+section shows a minimum setup to get started quickly.
 
 * **Windows**
 
@@ -308,7 +327,7 @@ started quickly.
 A new _Tp-Note_-icon appears on your desktop.
 
 
-## Usage
+## Usage of the minimum setup
 
 To create a new note, either double-click on the _Tp-Note_-icon, or drag a
 folder or file and drop it on the _to-note_-icon. This opens an editor with
@@ -392,7 +411,7 @@ _Tp-Note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
   Read [Integration with file manager].
 
 
-# Integration with file manager
+# Optional integration with your file manager
 
 This section shows how to integrate _Tp-Note_ in the context menu of your
 file manager. The context menu appears, when you click right on a file icon,
@@ -406,10 +425,11 @@ path to the selected icon.
 <?dbfo-need height="6cm" ?>
 ```
 
-
 ## Windows file explorer configuration
 
-The following works for me with Windows-version `10.0.18362`.
+_Tp-Note_ is distributed with a Microsoft Windows Installler package
+`tp-note-x.x.x-x86_64.msi`, which automates the following key registration.
+Omit this section if you have installed _Tp-Note_ through this `.msi` package!
 
 1. Make the directory `C:\Windows\tp-note\` and move `tp-note.exe`
    into it.
@@ -450,7 +470,7 @@ in our `$PATH`:
 > sudo chmod 755 tp-note
 ```
 
-_Debian_ and _Ubuntu_ user can also download a binary package from [debian/tp-note] and install it with:
+_Debian_ and _Ubuntu_ user can also download [Debian/Ubuntu package] and install it with:
 
 ``` sh
 > sudo dpkg -i tp-note_X.X.X_amd64.deb
@@ -473,7 +493,8 @@ In *Thunar*'s menu go to:
 
 ![Thunar's custom action configuration with Tp-Note](images/custom_actions2.png){width="10cm"}
 
-[debian/tp-note]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/
+[Debian/Unbuntu package]: https://blog.getreu.net/projects/tp-note/#tp-note-debianubuntu-installer-package
+
 
 ```{=docbook}
 <?dbfo-need height="4cm" ?>
