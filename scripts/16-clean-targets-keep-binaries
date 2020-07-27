@@ -3,6 +3,7 @@
 cd ..
 find target -mindepth 2 -not -path "*/release/tp-note" \
                         -not -path "*/release/tp-note.exe" \
+                        -not -path "*/wix/tp-note*.msi" \
                         -not -path "*/debian" \
                         -not -path "*/debian/tp-note*.deb" \
                         -not -path "*/release/*.md" \
