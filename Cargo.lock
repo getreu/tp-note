@@ -1333,7 +1333,7 @@ dependencies = [
 
 [[package]]
 name = "tp-note"
-version = "1.5.1"
+version = "1.5.2"
 dependencies = [
  "anyhow",
  "chrono",
