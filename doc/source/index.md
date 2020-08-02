@@ -13,10 +13,11 @@ _Tp-Note_ is a note-taking-tool and a template system - freely available for
 Windows, MacOS and Linux - that consistently synchronizes the note’s meta-data
 with its filename. _Tp-Note_ collects various information about its environment
 and the clipboard and stores them in variables. New notes are created by
-filling these variables in predefined and customizable _Tera_-templates.  _TP-Note's_
-default templates are written in Markdown and can be easily adapted to any
-other markup language if needed. By default _TP-Note_ launches the system
-file-editor (or any other of your choice, e.g. Typora) after creating a new note.
+filling these variables in predefined and customizable _Tera_-templates.
+_TP-Note's_ default templates are written in Markdown and can be easily adapted
+to any other markup language if needed. By default _TP-Note_ launches the
+system file-editor (or any other of your choice, e.g. Typora) after creating a
+new note.
 
 * Read more in [Tp-Note’s user manual](/projects/tp-note/tp-note--manual.html)
 
@@ -59,7 +60,6 @@ Repository:
 * [Tp-Note on Github](https://github.com/getreu/tp-note)
 
 
-
 ## Distribution
 
 ### Tp-Note Microsoft Windows installer package
@@ -67,6 +67,13 @@ Repository:
 * Installer package for Windows:
 
   [tp-note-1.5.2-x86_64.msi](/projects/tp-note/_downloads/wix/tp-note-1.5.2-x86_64.msi)
+
+  As this early version of the Windows installer is not signed yet, Windows
+  will show the error message “Windows protected your PC”. As a work-around,
+  when you click on the link “More info”, a ”Run anyway” button will appear
+  allowing you to continue the installation process. In general, irrespective
+  of where a program comes from, I always recommend checking every installable
+  file with [VirusTotal](https://www.virustotal.com/gui/home/upload).
 
 ### Tp-Note Debian/Ubuntu installer package
 

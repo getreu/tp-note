@@ -431,7 +431,7 @@ _Tp-Note_ is distributed with a Microsoft Windows Installler package
 `tp-note-x.x.x-x86_64.msi`, which automates the following key registration.
 Omit this section if you have installed _Tp-Note_ through this `.msi` package!
 
-1. Make the directory `C:\Windows\tp-note\` and move `tp-note.exe`
+1. Make the directory `C:\Windows\tp-note\bin\` and move `tp-note.exe`
    into it.
 
 2. Open the *notepad* text editor and paste the following registry-key into
@@ -439,13 +439,22 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
 
         Windows Registry Editor Version 5.00
         
-        [HKEY_CLASSES_ROOT\Directory\Background\shell\Tp-Note]
-        
-        [HKEY_CLASSES_ROOT\Directory\Background\shell\Tp-Note\command]
-        @="\"C:\\Program Files\\tp-note\\tp-note\""
+        [HKEY_CLASSES_ROOT\Directory\Background\shell\New Tp-Note]
+ 
+        [HKEY_CLASSES_ROOT\Directory\Background\shell\New Tp-Note\command]
+        @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\""
         
         [HKEY_CLASSES_ROOT\*\OpenWithList\tp-note.exe]
         @=""
+ 
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\edit.tp-note.exe]
+        @="Edit Tp-Note"
+ 
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\edit.tp-note.exe\command]
+        @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"%1\""
+
+
+
 
 3. Save the file as: 
 
@@ -456,7 +465,11 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
 
 4. Double-click on `tp-note.reg` and confirm several times.
 
+5. Assign `tp-note` as default application for `.md`-files
 
+   ![Click-right on .md file to open file properties](images/Properties-Opens_with-Notepad.png)
+
+   ![Press "Change ..." and choose "tp-note"](images/Properties-Opens_with-tp-note.png)
 
 
 ## Linux file manager configuration
