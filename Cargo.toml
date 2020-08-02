@@ -10,6 +10,10 @@ categories = ["command-line-utilities", "template-engine", "text-processing"]
 documentation = "https://blog.getreu.net/projects/tp-note/tp-note--manpage.html"
 homepage = "https://blog.getreu.net/projects/tp-note/"
 repository = "https://github.com/getreu/tp-note"
+build =  "build.rs"
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1.11"
 
 
 [package.metadata.deb]
@@ -35,7 +39,8 @@ assets = [
     ["doc/build/pdf/tp-note--manpage.pdf", "usr/share/doc/tp-note/", "644"],
     ["doc/build/pdf/tp-note--manual.pdf", "usr/share/doc/tp-note/", "644"],
     ["doc/build/man/man1/tp-note.1.gz", "usr/share/man/man1/", "644"],
-    ["target/release/tp-note", "usr/bin/tp-note", "755"]
+    ["target/release/tp-note", "usr/bin/tp-note", "755"],
+    ["assets/tp-note.svg", "usr/share/pixmaps/", "644"]
 ]
 
 [dependencies]

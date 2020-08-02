@@ -4,6 +4,7 @@ target
 *.html
 *.1
 *.1.gz
+*.msi
 .vscode/
 tests/functional/output
 .idea
