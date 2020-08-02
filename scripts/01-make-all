@@ -4,6 +4,7 @@
 ./11-test
 ./12-make-targets
 ./13b-make-cross-compile
+./13d-symlink-win-installer
 ./14-make-doc
 ./15-build-packages
 ./16-clean-targets-keep-binaries
