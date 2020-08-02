@@ -94,28 +94,45 @@
                                 System='yes'/>
                         </Component>
 						
-                        <Component Id='binary0' Guid='*' Win64='$(var.Win64)'>
+                        <Component Id='binary0' Guid='A8243A93-6019-4637-8173-03869B47EDC2' Win64='$(var.Win64)'>
                             <File
                                 Id='exe0'
                                 Name='tp-note.exe'
                                 DiskId='1'
                                 Source='target\$(var.Profile)\tp-note.exe'
                                 KeyPath='yes'/>
-                        </Component>
 
-						<Component Id='RegistryEntries' Guid='*' Win64='$(var.Win64)'>
 							<RegistryKey Root='HKCR'
-										 Key='Directory\Background\shell\Tp-Note\command'
-								         Action='createAndRemoveOnUninstall'>
+										 Key='Directory\Background\shell\New Tp-Note\command'>
 								<RegistryValue Type='string' Value='C:\Program Files\tp-note\bin\tp-note.exe' />
 							</RegistryKey>
-
 							<RegistryKey Root='HKCR'
-										 Key='*\OpenWithList\tp-note.exe'
-								         Action='createAndRemoveOnUninstall'>
+										 Key='*\OpenWithList\tp-note.exe'>
 								<RegistryValue Type='string' Value=''/>
 							</RegistryKey>
 
+							<ProgId Id ="application.tp-note" Description="Tp-Note data files" Advertise="yes" Icon ="TpNoteLogo.ico">
+								<Extension Id ="md" ContentType="application/text">
+									<Verb Id ="open" Sequence='10' Command="open"  Argument="&quot;%1&quot;"/>
+								</Extension>
+							</ProgId>
+							<RegistryKey Root='HKCR' Key='.md'> 
+								<RegistryValue Value='tp-note.mdfile' Type='string' />
+							</RegistryKey>
+							<RegistryKey Root='HKCR' Key='tp-note.mdfile'>
+							    <RegistryValue Value='Tp-Note file' Type='string' />
+							 </RegistryKey>
+							<RegistryKey Root='HKCR' Key='tp-note.mdfile\DefaultIcon'>
+							    <RegistryValue Value='[APPLICATIONFOLDER]bin\tp-note.exe,1' Type ='string' />
+                            </RegistryKey>
+                            <RegistryKey Root="HKLM"
+										 Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\edit.tp-note.exe">
+								 <RegistryValue Value="Edit Tp-Note" Type="string" />
+							</RegistryKey>
+							<RegistryKey Root="HKLM" 
+										 Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\edit.tp-note.exe\command">
+       							 <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;%1&quot;" Type="string" />
+							</RegistryKey>
 						</Component>
                     </Directory>
                 </Directory>
@@ -139,7 +156,7 @@
             <!--<ComponentRef Id='License'/>-->
 
             <ComponentRef Id='binary0'/>
-			<ComponentRef Id="RegistryEntries" />
+
 
             <Feature
                 Id='Environment'
@@ -149,14 +166,7 @@
                 Absent='allow'>
                 <ComponentRef Id='Path'/>
             </Feature>
-			<Feature
-                Id='ContextMenu'
-                Title='Context Menu Entry'
-                Description='Add Tp-Note to file-manager context menu.'
-                Level='1'
-                Absent='allow'>
-				<ComponentRef Id='RegistryEntries'/>
-			</Feature>
+
 
 
         </Feature>
@@ -222,7 +232,7 @@
           The dialog BMP dimensions are 493 x 312 pixels.
         -->
         <!--<WixVariable Id='WixUIDialogBmp' Value='wix\Dialog.bmp'/>-->
-
+		<Icon Id="TpNoteLogo.ico" SourceFile='tp-note.ico'/>
     </Product>
 
 </Wix>
