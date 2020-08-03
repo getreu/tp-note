@@ -59,20 +59,20 @@ common workflows.
 
 ## Fast start note-taking (when the lecture starts)
 
-![The folder in which the new note will be created.](images/workflow1-1.png){width="12cm"}
+![The folder in which the new note will be created.](images/workflow1-1.png){width="10cm"}
 
 Alternatively you can open the folder you want to create a new note in and
 right-click on some empty white space.
 
-![The new unmodified note created by template on disk](images/workflow1-2.png){width="12cm"}
+![The new unmodified note created by template on disk](images/workflow1-2.png){width="10cm"}
 
-![The new unmodified note created by template](images/workflow1-3.png){width="13cm"}
+![The new unmodified note created by template](images/workflow1-3.png){width="11cm"}
 
-![Change the title](images/workflow1-4.png){width="13cm"}
+![Change the title](images/workflow1-4.png){width="11cm"}
 
-![Add some text](images/workflow1-5.png){width="13cm"}
+![Add some text](images/workflow1-5.png){width="11cm"}
 
-![The new note file on disk after closing the editor](images/workflow1-6.png){width="12cm"}
+![The new note file on disk after closing the editor](images/workflow1-6.png){width="10cm"}
 
 > **Note**
 >
@@ -83,9 +83,9 @@ right-click on some empty white space.
 
 ## Taking notes about a file
 
-![We want to take a note about a pdf](images/workflow2-1.png){width="11cm"}
+![We want to take a note about a pdf](images/workflow2-1.png){width="9cm"}
 
-![The new unmodified note created by template](images/workflow2-2.png){width="13cm"}
+![The new unmodified note created by template](images/workflow2-2.png){width="11cm"}
 
 The source-code of the note shows, that the link has a  target. The left-click, opens the `.odt` document.
 
@@ -102,15 +102,15 @@ revision:   "1.0"
 [03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt](03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt)
 ```
 
-![Annotate](images/workflow2-3.png){width="13cm"}
+![Annotate](images/workflow2-3.png){width="11cm"}
 
-![The new note file on disk after closing the editor](images/workflow2-4.png){width="12cm"}
+![The new note file on disk after closing the editor](images/workflow2-4.png){width="8cm"}
 
 
 ## Bookmark and comment a hyperlink
 
 
-![Copy a link in markdown format](images/workflow3-2.png){width="14cm"}
+![Copy a link in markdown format](images/workflow3-2.png){width="11cm"}
 
 To copy a link in markdown format a browser addon is needed. I recommend the
 addons [Copy as Markdown] and [Copy Selection as Markdown] available
@@ -119,9 +119,9 @@ for Firefox.
 [Copy as Markdown]: https://addons.mozilla.org/en-GB/firefox/search/?q=copy%20as%20markdown
 [Copy Selection as Markdown]: https://addons.mozilla.org/en-GB/firefox/addon/copy-selection-as-markdown/?src=search
 
-![Right-click on or in the new note's destination folder and start Tp-Note](images/workflow3-3.png){width="11cm"}
+![Right-click on or in the new note's destination folder and start Tp-Note](images/workflow3-3.png){width="9cm"}
 
-![The new unmodified note created by template](images/workflow3-4.png){width="13cm"}
+![The new unmodified note created by template](images/workflow3-4.png){width="9cm"}
 
 The source code of the note shows the link target:
 
@@ -145,9 +145,9 @@ open tabs. In this case, _Tp-Note_ would retain only the name of the first link
 as document title, whereas the whole link-list would appear in the body of the
 note.
 
-![Annotate](images/workflow3-5.png){width="13cm"}
+![Annotate](images/workflow3-5.png){width="11cm"}
 
-![The new note file on disk after closing the editor](images/workflow3-6.png){width="9cm"}
+![The new note file on disk after closing the editor](images/workflow3-6.png){width="7cm"}
 
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
@@ -156,11 +156,11 @@ note.
 
 ## Copy a page from a book
 
-![Copy some chapters](images/workflow4-1.png){width="14cm"}
+![Copy some chapters](images/workflow4-1.png){width="10cm"}
 
-![Right-click on or in the new note's destination folder and start Tp-Note](images/workflow4-2.png){width="9cm"}
+![Right-click on or in the new note's destination folder and start Tp-Note](images/workflow4-2.png){width="7cm"}
 
-![The new unmodified note created by template](images/workflow4-3.png){width="13cm"}
+![The new unmodified note created by template](images/workflow4-3.png){width="9cm"}
 
 ```{=docbook}
 <?dbfo-need height="4cm" ?>
@@ -187,7 +187,7 @@ In this example we copied only text. *Tp-Note* suggests the first sentence as
 title. This can be changed before saving as illustrated above. Here we just save
 and observe the file on the disk.
 
-![The new note file on disk after closing the editor](images/workflow4-4.png){width="8cm"}
+![The new note file on disk after closing the editor](images/workflow4-4.png){width="7cm"}
 
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
@@ -222,7 +222,7 @@ filename.  Here a sample work flow:
 ![“Copy Selection as Markdown”](images/workflow5-2.png){width="12cm"}
 
 ![Right-click on or in the new note's destination folder and start
-Tp-Note](images/workflow5-3.png){width="9cm"}
+Tp-Note](images/workflow5-3.png){width="8cm"}
 
 ![The new template generated note opened with
 Typora](images/workflow5-4.png){width="11cm"}
@@ -265,9 +265,9 @@ numerical digits, a _sort-tag_ can be any combination of
 
 The figures below illustrate organizing files with *sort-tags".
 
-![Folders with sequence number sort-tag](images/filing-system1.png){width="12cm"}
+![Folders with sequence number sort-tag](images/filing-system1.png){width="10cm"}
 
-![File with chronological sort-tag](images/filing-system2.png){width="8cm"}
+![File with chronological sort-tag](images/filing-system2.png){width="7cm"}
 
 When _Tp-Note_ creates a new note, it prepends automatically a *chronological
 sort-tag* of today. The `{{ title }}` part is usually derived from the parent
@@ -419,7 +419,7 @@ on a directory icon or on the white space in between (cf. figure below). In
 the following we will configure the file-manager to launch _Tp-Note_ with the
 path to the selected icon.
 
-![Tp-note in the context-menu (right-click menu)](images/workflow2-1.png){width="12cm"}
+![Tp-note in the context-menu (right-click menu)](images/workflow2-1.png){width="9cm"}
 
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
@@ -467,9 +467,9 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
 
 5. Assign `tp-note` as default application for `.md`-files
 
-   ![Click-right on .md file to open file properties](images/Properties-Opens_with-Notepad.png)
+   ![Click-right on .md file to open file properties](images/Properties-Opens_with-Notepad.png){width="8cm"}
 
-   ![Press "Change ..." and choose "tp-note"](images/Properties-Opens_with-tp-note.png)
+   ![Press "Change ..." and choose "tp-note"](images/Properties-Opens_with-tp-note.png){width="8cm"}
 
 
 ## Linux file manager configuration
@@ -498,13 +498,13 @@ In *Thunar*'s menu go to:
 
     Edit -> Configure custom actions...
 
-![Thunar's custom action configuration](images/custom_actions1.png){width="10cm"}
+![Thunar's custom action configuration](images/custom_actions1.png){width="8cm"}
 
-![Edit custom action](images/edit_action.png){width="10cm"}
+![Edit custom action](images/edit_action.png){width="8cm"}
 
-![Appearance Condition](images/appearance-condition.png){width="10cm"}
+![Appearance Condition](images/appearance-condition.png){width="8cm"}
 
-![Thunar's custom action configuration with Tp-Note](images/custom_actions2.png){width="10cm"}
+![Thunar's custom action configuration with Tp-Note](images/custom_actions2.png){width="8cm"}
 
 [Debian/Unbuntu package]: https://blog.getreu.net/projects/tp-note/#tp-note-debianubuntu-installer-package
 
