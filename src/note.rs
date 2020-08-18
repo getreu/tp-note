@@ -64,30 +64,9 @@ impl Note {
 
         context.insert("title", &fm.title);
         context.insert("subtitle", &fm.subtitle);
+
         if let Some(tag) = &fm.tag {
             if !tag.is_empty() {
-                // Check for leading or trailing `-` or `_`.
-                if tag.trim_matches('_').trim_matches('-') != tag {
-                    return Err(anyhow!(format!(
-                        "The content of the `tag` variable \"{}\" \
-                     must start and end with a numerical digit `0..9`.",
-                        tag
-                    )));
-                };
-                // Check for forbidden characters.
-                if tag
-                    .chars()
-                    .filter(|&c| !c.is_numeric() && c != '_' && c != '-')
-                    .count()
-                    > 0
-                {
-                    return Err(anyhow!(format!(
-                        "Forbidden character(s) in `tag` \"{}\" variable. \
-                     Only `0..9_-` are allowed.",
-                        tag
-                    )));
-                }
-
                 // Overwrites `tag` key inserted by `capture_environment.
                 context.insert("tag", tag);
             };
@@ -315,6 +294,34 @@ impl Note {
         }
 
         let fm: FrontMatter = serde_yaml::from_str(&content[fm_start..fm_end])?;
+
+        // `tag` has additional constrains to check.
+        if let Some(tag) = &fm.tag {
+            if !tag.is_empty() {
+                // Check for leading or trailing `-` or `_`.
+                if tag.trim_matches('_').trim_matches('-') != tag {
+                    return Err(anyhow!(format!(
+                        "The content of the `tag` variable \"{}\" \
+                     must start and end with a numerical digit `0..9`.",
+                        tag
+                    )));
+                };
+                // Check for forbidden characters.
+                if tag
+                    .chars()
+                    .filter(|&c| !c.is_numeric() && c != '_' && c != '-')
+                    .count()
+                    > 0
+                {
+                    return Err(anyhow!(format!(
+                        "Forbidden character(s) in `tag` \"{}\" variable. \
+                     Only `0..9_-` are allowed.",
+                        tag
+                    )));
+                }
+            };
+        };
+
         Ok(fm)
     }
 
@@ -380,6 +387,7 @@ mod tests {
         let expected_front_matter = FrontMatter {
             title: "The book".to_string(),
             subtitle: "you always wanted".to_string(),
+            tag: None,
         };
 
         assert_eq!(
@@ -398,6 +406,27 @@ mod tests {
         let expected_front_matter = FrontMatter {
             title: "The book".to_string(),
             subtitle: "you always wanted".to_string(),
+            tag: None,
+        };
+
+        assert_eq!(
+            expected_front_matter,
+            Note::deserialize_note(&input).unwrap()
+        );
+
+        // Front matter can optionally have a tag
+
+        let input = "--- # document start
+        title: \"The book\"
+        subtitle: you always wanted
+        author: It's me
+        tag: 20200420-21_22
+        ---\ncontent\nmore content";
+
+        let expected_front_matter = FrontMatter {
+            title: "The book".to_string(),
+            subtitle: "you always wanted".to_string(),
+            tag: Some("20200420-21_22".to_string()),
         };
 
         assert_eq!(
@@ -441,6 +470,28 @@ mod tests {
         title: The book
         subtitlxxx: you always wanted
         author: It's me
+        ...\ncontent\nmore content";
+
+        assert!(Note::deserialize_note(&input).is_err());
+
+        // Leading/trailing `_` or `-` in `tag`
+
+        let input = "--- # document start
+        title: The book
+        subtitle: you always wanted
+        author: It's me
+        tag:    -1234
+        ...\ncontent\nmore content";
+
+        assert!(Note::deserialize_note(&input).is_err());
+
+        // forbidden character `x` in `tag`.
+
+        let input = "--- # document start
+        title: The book
+        subtitle: you always wanted
+        author: It's me
+        tag:    123x4
         ...\ncontent\nmore content";
 
         assert!(Note::deserialize_note(&input).is_err());
