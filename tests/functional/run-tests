@@ -132,6 +132,34 @@ else
 fi
 
 
+
+## Test 7: Pin sort tag
+INPUT_FILENAME="$PWD/123-abc--edf.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: "xxx"
+subtitle: "yyy"
+tag: "111-"
+...
+EOF
+
+echo -n "" | xclip -selection clipboard
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/111-xxx--yyy.md"
+
+if diff "$OUTPUT_FILENAME"  "$PWD/test7-tag-expected-output" 
+then
+    echo Commandline test 7 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 7 failed.
+    exit 1 
+fi
+
+
+
 # Tidy up
 rm "$TP_NOTE_TEST_TOML"
 
