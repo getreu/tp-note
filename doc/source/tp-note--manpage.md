@@ -358,7 +358,7 @@ _Tp-Note_ will rename the file to "`20200306-'1. The Beginning--Note.md`".
 If the filename had been "`05_02-My file.md`", it would rename it to
 "`05_02-'1. The Beginning--Note.md`".
 
-Note: When the YAML front matter does not contain the optional `sort_tag`
+Note: When the YAML front matter does not contain the optional `tag`
 variable, _Tp-Note_ will never change a sort-tag. Nevertheless, it might
 change the rest of the filename!
 
@@ -368,7 +368,7 @@ is independent of the notes content. Nevertheless, in some cases you might want
 to have full control over the whole file name through note's YAML front matter.
 For example, for some reason, you have changed the document's date in the front
 matter and you want to change the chronological sort tag as well. In order to
-overwrite the note's sort-tag on disk, you can add the `sort_tag` variable to
+overwrite the note's sort-tag on disk, you can add the `tag` variable to
 its front matter:
 
 
@@ -378,7 +378,7 @@ title:      "1. The Beginning"
 subtitle:   "Note"
 author:     "getreu"
 date:       "March  7, 2020"
-sort_tag:   "20200307"
+tag:        "20200307"
 lang:       "en_GB.UTF-8"
 revision:   "1.1"
 ---
@@ -387,11 +387,11 @@ revision:   "1.1"
 When _Tp-Note_ synchronizes the note's metadata with its filename, it will also
 change the sort-tag from `20200306` to `20200307`.
 
-Note: When a `sort-tag` variable is defined in the note's YAML header, you
+Note: When a `tag` variable is defined in the note's YAML header, you
 should not adjust the sort-tag string in its file name by renaming the file by
 hand, as your change will be overwritten next time you open the note with
 _Tp-Note_. You can switch back to _Tp-Note_'s default behaviour any time by
-deleting the `sort_tag` line in the note's meta data.
+deleting the `tag` line in the note's meta data.
 
 
 
@@ -422,7 +422,7 @@ gives you access to the '`LANG`' environment variable.
 
 In addition, _Tp-Note_ defines the following variables:
 
-* '`{{ sort_tag }}`': the sort-tag of the current note, e.g. '`01-23`'
+* '`{{ tag }}`': the sort-tag of the current note, e.g. '`01-23`'
   or '`20191022`',
 
 * '`{{ dirname }}`': the parent directory's name,
@@ -481,7 +481,7 @@ For this purpose _Tp-Note_ provides the additional Tera filters '`path`' and
   is done by replacing forbidden characters like '`?`' and '`\\`'  with '`_`'
   or space. This filter can be used with any variables, but is most useful with
   filename-templates. For example, take a look at the '`tmpl_sync_filename`' 
-  template: it starts with '`{{ sort_tag | path }}`'.
+  template: it starts with '`{{ tag | path }}`'.
 
 * '`path(alpha=true)`' is similar to the above, with one exception: when a string
   starts with a digit '`0`-`9`', the whole string is prepended with `'`.

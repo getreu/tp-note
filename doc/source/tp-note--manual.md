@@ -245,7 +245,7 @@ Consider the following _Tp-Note_-file:
 
 The filename has 4 parts:
 
-    {{ sort-tag }}-{{ title }}--{{ subtitle }}.{{ extension }}
+    {{ tag }}-{{ title }}--{{ subtitle }}.{{ extension }}
 
 A so called _sort-tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides

@@ -30,7 +30,7 @@ revision:   {{ '1.0' | json_encode }}
 tmpl_clipboard_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ note_extension | path }}'''
 tmpl_annotate_content = '''
 ---
-title:      {{ sort_tag ~ file_stem | json_encode }}
+title:      {{ tag ~ file_stem | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -38,11 +38,11 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-[{{ sort_tag ~ file_stem ~ '.' ~ extension }}]({{ sort_tag ~ file_stem ~ '.' ~ extension }})
+[{{ tag ~ file_stem ~ '.' ~ extension }}]({{ tag ~ file_stem ~ '.' ~ extension }})
 
 '''
 tmpl_annotate_filename = '''{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ note_extension | path }}'''
-tmpl_sync_filename = '''{{ sort_tag | path }}{% if sort_tag | path != '' %}-{% endif %}{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ note_extension | path }}'''
+tmpl_sync_filename = '''{{ tag | path }}{% if tag | path != '' %}-{% endif %}{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ note_extension | path }}'''
 editor_args = [
     ['typora'],
     [

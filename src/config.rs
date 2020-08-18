@@ -32,16 +32,16 @@ pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 /// it is not the case, the note's filename will be renamed.
 /// Can be modified through editing the configuration file.
 /// Useful variables in this context are:
-/// `{{ sort_tag | path }}`
+/// `{{ tag | path }}`
 /// `{{ title | path }}`, `{{ subtitle | path }}`, `{{ note_extension | path }}`,
 /// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
-/// `{{ sort_tag | path }}` must be the first in line here, then followed by a
+/// `{{ tag | path }}` must be the first in line here, then followed by a
 /// `{{ <var>| path(alpha) }}` variable.
 /// Note, that in this filename-template, all variables must be filtered
 /// by a `path` or `path(alpha=true)` filter.
 const TMPL_SYNC_FILENAME: &str = "\
-{{ sort_tag | path }}{% if sort_tag | path != '' %}-{% endif %}\
+{{ tag | path }}{% if tag | path != '' %}-{% endif %}\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
 {{ subtitle | path  }}.{{ note_extension | path }}\
 ";
@@ -50,7 +50,7 @@ const TMPL_SYNC_FILENAME: &str = "\
 /// directory. Can be changed through editing the configuration file.
 /// The following variables are  defined:
 /// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
-/// `{{ sort_tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`,
+/// `{{ tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`,
 /// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
@@ -93,7 +93,7 @@ const TMPL_NEW_FILENAME: &str = "\
 /// `{{ clipboard-linkurl }}`.
 /// The following variables are defined:
 /// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
-/// `{{ path }}`, `{{ sort_tag }}`, `{{ username }}`.
+/// `{{ path }}`, `{{ tag }}`, `{{ username }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
 /// When placed in YAML-front-matter, the filter `| json_encode` must be
@@ -135,7 +135,7 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 /// the configuration file.
 /// The following variables are  defined:
 /// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
-/// `{{ sort_tag }}`, `{{ username }}`, `{{ lang }}`,
+/// `{{ tag }}`, `{{ username }}`, `{{ lang }}`,
 /// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
@@ -143,7 +143,7 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 /// appended to each variable.
 const TMPL_ANNOTATE_CONTENT: &str = "\
 ---
-title:      {{ sort_tag ~ file_stem | json_encode }}
+title:      {{ tag ~ file_stem | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -151,8 +151,8 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-[{{ sort_tag ~ file_stem ~ '.' ~ extension }}\
-]({{ sort_tag ~ file_stem ~ '.' ~ extension }})
+[{{ tag ~ file_stem ~ '.' ~ extension }}\
+]({{ tag ~ file_stem ~ '.' ~ extension }})
 
 ";
 

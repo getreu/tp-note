@@ -43,9 +43,9 @@ struct FrontMatter {
     title: String,
     /// The compulsory note's subtitle.
     subtitle: String,
-    /// Optional sort_tag variable. If not defined in front matter,
+    /// Optional tag variable. If not defined in front matter,
     /// the file name's sort tag is used (if any).
-    sort_tag: Option<String>,
+    tag: Option<String>,
 }
 
 use std::fs;
@@ -64,32 +64,32 @@ impl Note {
 
         context.insert("title", &fm.title);
         context.insert("subtitle", &fm.subtitle);
-        if let Some(sort_tag) = &fm.sort_tag {
-            if !sort_tag.is_empty() {
+        if let Some(tag) = &fm.tag {
+            if !tag.is_empty() {
                 // Check for leading or trailing `-` or `_`.
-                if sort_tag.trim_matches('_').trim_matches('-') != sort_tag {
+                if tag.trim_matches('_').trim_matches('-') != tag {
                     return Err(anyhow!(format!(
-                        "The content of the `sort_tag` variable \"{}\" \
+                        "The content of the `tag` variable \"{}\" \
                      must start and end with a numerical digit `0..9`.",
-                        sort_tag
+                        tag
                     )));
                 };
                 // Check for forbidden characters.
-                if sort_tag
+                if tag
                     .chars()
                     .filter(|&c| !c.is_numeric() && c != '_' && c != '-')
                     .count()
                     > 0
                 {
                     return Err(anyhow!(format!(
-                        "Forbidden character(s) in `sort_tag` \"{}\" variable. \
+                        "Forbidden character(s) in `tag` \"{}\" variable. \
                      Only `0..9_-` are allowed.",
-                        sort_tag
+                        tag
                     )));
                 }
 
-                // Overwrites `sort_tag` key inserted by `capture_environment.
-                context.insert("sort_tag", sort_tag);
+                // Overwrites `tag` key inserted by `capture_environment.
+                context.insert("tag", tag);
             };
         };
 
@@ -147,7 +147,7 @@ impl Note {
     fn capture_environment(path: &Path) -> Result<ContextWrapper> {
         let mut context = ContextWrapper::new();
 
-        let sort_tag: String = path
+        let tag: String = path
             .file_stem()
             .unwrap_or_default()
             .to_str()
@@ -158,7 +158,7 @@ impl Note {
             .trim_matches('_')
             .trim_matches('-')
             .to_string();
-        context.insert("sort_tag", &sort_tag);
+        context.insert("tag", &tag);
 
         // `fqpn` is a directory as fully qualified path, ending
         // by a separator.
