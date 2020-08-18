@@ -30,7 +30,7 @@ revision:   {{ '1.0' | json_encode }}
 tmpl_clipboard_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ note_extension | path }}'''
 tmpl_annotate_content = '''
 ---
-title:      {{ tag ~ file_stem | json_encode }}
+title:      {{ file_tag ~ file_stem | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -38,7 +38,7 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-[{{ tag ~ file_stem ~ '.' ~ extension }}]({{ tag ~ file_stem ~ '.' ~ extension }})
+[{{ file_tag ~ file_stem ~ '.' ~ extension }}]({{ file_tag ~ file_stem ~ '.' ~ extension }})
 
 '''
 tmpl_annotate_filename = '''{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ note_extension | path }}'''
@@ -48,13 +48,19 @@ editor_args = [
     [
     'code',
     '-w',
+    '-n',
 ],
     [
     'atom',
     '-w',
 ],
     ['retext'],
-    ['geany'],
+    [
+    'geany',
+    '-s',
+    '-i',
+    '-m',
+],
     [
     'gedit',
     '-w',
@@ -79,6 +85,7 @@ viewer_args = [
     [
     'code',
     '-w',
+    '-n',
 ],
     [
     'atom',
@@ -88,6 +95,9 @@ viewer_args = [
     [
     'geany',
     '-r',
+    '-s',
+    '-i',
+    '-m',
 ],
     [
     'gedit',
