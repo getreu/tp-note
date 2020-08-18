@@ -317,8 +317,8 @@ impl Note {
                     > 0
                 {
                     return Err(anyhow!(format!(
-                        "Forbidden character(s) in `tag` \"{}\" variable. \
-                     Only `0..9_-` are allowed.",
+                        "The `tag`-variable contains forbidden character(s): tag = \"{}\". \
+                        Only numbers, `-` and `_` are allowed here.",
                         tag
                     )));
                 }

@@ -261,6 +261,20 @@ fn run() -> Result<(), anyhow::Error> {
 
 /// Print some error message if `run()` does not complete.
 fn main() -> Result<(), anyhow::Error> {
+    let version = match VERSION {
+        Some(v) => v.to_string(),
+        None => String::new(),
+    };
+    if version != CFG.version {
+        print_message(&format!(
+            "Old, incompatible configuration file found:\n---\n\
+            version = \'{}\'\
+            \n---\nPlease backup and delete the old configuration file and start again.",
+            CFG.version
+        ));
+        process::exit(1);
+    };
+
     if let Err(e) = run() {
         // Remember the command-line-arguments.
         let mut args_str = String::new();

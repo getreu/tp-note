@@ -315,6 +315,7 @@ pub static ref ARGS : Args = Args::from_args();
 /// Configuration data, deserialized from the configuration-file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cfg {
+    pub version: String,
     pub note_extension: String,
     pub tmpl_new_content: String,
     pub tmpl_new_filename: String,
@@ -334,7 +335,13 @@ pub struct Cfg {
 /// configuration file on disk.
 impl ::std::default::Default for Cfg {
     fn default() -> Self {
+        let version = match VERSION {
+            Some(v) => v.to_string(),
+            None => "".to_string(),
+        };
+
         Cfg {
+            version,
             note_extension: NOTE_EXTENSION.to_string(),
             tmpl_new_content: TMPL_NEW_CONTENT.to_string(),
             tmpl_new_filename: TMPL_NEW_FILENAME.to_string(),
