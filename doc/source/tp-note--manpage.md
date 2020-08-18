@@ -358,7 +358,7 @@ _Tp-Note_ will rename the file to "`20200306-'1. The Beginning--Note.md`".
 If the filename had been "`05_02-My file.md`", it would rename it to
 "`05_02-'1. The Beginning--Note.md`".
 
-Note: When the YAML front matter does not contain the optional `tag`
+Note: When the YAML front matter does not contain the optional '`tag`'
 variable, _Tp-Note_ will never change a sort-tag. Nevertheless, it might
 change the rest of the filename!
 
@@ -368,7 +368,7 @@ is independent of the notes content. Nevertheless, in some cases you might want
 to have full control over the whole file name through note's YAML front matter.
 For example, for some reason, you have changed the document's date in the front
 matter and you want to change the chronological sort tag as well. In order to
-overwrite the note's sort-tag on disk, you can add the `tag` variable to
+overwrite the note's sort-tag on disk, you can add the '`tag`' variable to
 its front matter:
 
 
@@ -385,13 +385,13 @@ revision:   "1.1"
 ```
 
 When _Tp-Note_ synchronizes the note's metadata with its filename, it will also
-change the sort-tag from `20200306` to `20200307`.
+change the sort-tag from '`20200306`' to '`20200307`'.
 
 Note: When a `tag` variable is defined in the note's YAML header, you
 should not adjust the sort-tag string in its file name by renaming the file by
 hand, as your change will be overwritten next time you open the note with
 _Tp-Note_. You can switch back to _Tp-Note_'s default behaviour any time by
-deleting the `tag` line in the note's meta data.
+deleting the '`tag`' line in the note's meta data.
 
 
 
@@ -422,8 +422,15 @@ gives you access to the '`LANG`' environment variable.
 
 In addition, _Tp-Note_ defines the following variables:
 
-* '`{{ tag }}`': the sort-tag of the current note, e.g. '`01-23`'
-  or '`20191022`',
+* '`{{ file_tag }}`': the sort-tag of the current note, e.g. '`01-23_9`' or
+  '`20191022`' (first numerical string of the filename on disk), Useful in
+  content templates, that create new notes based on a path with a filename
+  (e.g. '`TMPL_ANNOTATE_CONTENT`').
+
+* '`{{ tag }}`': holds the value of the optional YAML header variable '`tag`'
+  (e.g. '`tag: "20200312"`'). If not defined there, it defaults to '`{{
+  file_tag }}`'. This variable is only available in the '`TMPL_SYNC_FILENAME`'
+  template!
 
 * '`{{ dirname }}`': the parent directory's name,
 

@@ -40,6 +40,7 @@ pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 /// `{{ <var>| path(alpha) }}` variable.
 /// Note, that in this filename-template, all variables must be filtered
 /// by a `path` or `path(alpha=true)` filter.
+/// This is the only template that uses the `tag` variable.
 const TMPL_SYNC_FILENAME: &str = "\
 {{ tag | path }}{% if tag | path != '' %}-{% endif %}\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
@@ -50,7 +51,7 @@ const TMPL_SYNC_FILENAME: &str = "\
 /// directory. Can be changed through editing the configuration file.
 /// The following variables are  defined:
 /// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
-/// `{{ tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`,
+/// `{{ file_tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`,
 /// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
@@ -93,7 +94,7 @@ const TMPL_NEW_FILENAME: &str = "\
 /// `{{ clipboard-linkurl }}`.
 /// The following variables are defined:
 /// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
-/// `{{ path }}`, `{{ tag }}`, `{{ username }}`.
+/// `{{ path }}`, `{{ file_tag }}`, `{{ username }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
 /// When placed in YAML-front-matter, the filter `| json_encode` must be
@@ -135,7 +136,7 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 /// the configuration file.
 /// The following variables are  defined:
 /// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
-/// `{{ tag }}`, `{{ username }}`, `{{ lang }}`,
+/// `{{ file_tag }}`, `{{ username }}`, `{{ lang }}`,
 /// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
