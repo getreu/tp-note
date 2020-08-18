@@ -143,7 +143,7 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 /// appended to each variable.
 const TMPL_ANNOTATE_CONTENT: &str = "\
 ---
-title:      {{ tag ~ file_stem | json_encode }}
+title:      {{ file_tag ~ file_stem | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -151,8 +151,8 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-[{{ tag ~ file_stem ~ '.' ~ extension }}\
-]({{ tag ~ file_stem ~ '.' ~ extension }})
+[{{ file_tag ~ file_stem ~ '.' ~ extension }}\
+]({{ file_tag ~ file_stem ~ '.' ~ extension }})
 
 ";
 

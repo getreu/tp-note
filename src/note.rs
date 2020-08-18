@@ -65,9 +65,20 @@ impl Note {
         context.insert("title", &fm.title);
         context.insert("subtitle", &fm.subtitle);
 
+        // Copy value of `file_tag` as default for `tag`.
+        if let Some(val) = context.get("file_tag") {
+            if let serde_json::Value::String(file_tag) = val {
+                let file_tag = file_tag.to_string();
+                context.insert("tag", &file_tag);
+            } else {
+                context.insert("tag", "");
+            }
+        }
+
+        // Read YAML header variable `tag` if any.
         if let Some(tag) = &fm.tag {
             if !tag.is_empty() {
-                // Overwrites `tag` key inserted by `capture_environment.
+                // Overwrites `tag` key copied above.
                 context.insert("tag", tag);
             };
         };
@@ -79,8 +90,10 @@ impl Note {
         })
     }
 
-    /// Constructor that creates a new note by filling in the template
-    /// `template`.
+    /// Constructor that creates a new note by filling in the content template `template`.  The
+    /// newly created file will never be saved with TMPL_SYNC_FILENAME.  As the latter is the only
+    /// filename template that is allowed to use the variable `tag`, we do not need to insert it
+    /// here.
     pub fn new(path: &Path, template: &str) -> Result<Self> {
         // render template
 
@@ -126,7 +139,7 @@ impl Note {
     fn capture_environment(path: &Path) -> Result<ContextWrapper> {
         let mut context = ContextWrapper::new();
 
-        let tag: String = path
+        let file_tag: String = path
             .file_stem()
             .unwrap_or_default()
             .to_str()
@@ -137,7 +150,8 @@ impl Note {
             .trim_matches('_')
             .trim_matches('-')
             .to_string();
-        context.insert("tag", &tag);
+        // Sort-tag that is deduced from filename on disk.
+        context.insert("file_tag", &file_tag);
 
         // `fqpn` is a directory as fully qualified path, ending
         // by a separator.
