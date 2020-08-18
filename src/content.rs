@@ -30,10 +30,10 @@ impl Content {
         let mut s = self.replace("\n", "\r\n");
         #[cfg(target_family = "windows")]
         s.insert(0, '\u{feff}');
-        
+
         // Under Unix no conversion is needed.
         #[cfg(not(target_family = "windows"))]
-        let mut s = "\u{feff}".to_string(); 
+        let mut s = "\u{feff}".to_string();
         #[cfg(not(target_family = "windows"))]
         s.push_str(self);
         s

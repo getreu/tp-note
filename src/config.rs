@@ -90,7 +90,7 @@ const TMPL_NEW_FILENAME: &str = "\
 /// in `{{ clipboard_heading }}`
 /// When the clipboard conains a hyper-link in markdown format: [<link-name>](<link-url>),
 /// its first part is stored in `{{ clipboard-linkname }}`, the second part in
-/// `{{ clipboard-linkurl }}`. 
+/// `{{ clipboard-linkurl }}`.
 /// The following variables are defined:
 /// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
 /// `{{ path }}`, `{{ sort_tag }}`, `{{ username }}`.
@@ -685,7 +685,7 @@ mod tests {
         assert_eq!("N.ote", output.content_heading);
 
         //
-        // Test trim whitespace 
+        // Test trim whitespace
         let input = "\r\n\r\n  \tIt helps. Get quickly\
             started writing notes.";
         let output = Clipboard::new(input);
