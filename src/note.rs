@@ -146,10 +146,7 @@ impl Note {
             .unwrap_or_default()
             .chars()
             .take_while(|&c| c.is_numeric() || c == '-' || c == '_')
-            .collect::<String>()
-            .trim_matches('_')
-            .trim_matches('-')
-            .to_string();
+            .collect::<String>();
         // Sort-tag that is deduced from filename on disk.
         context.insert("file_tag", &file_tag);
 
@@ -312,14 +309,6 @@ impl Note {
         // `tag` has additional constrains to check.
         if let Some(tag) = &fm.tag {
             if !tag.is_empty() {
-                // Check for leading or trailing `-` or `_`.
-                if tag.trim_matches('_').trim_matches('-') != tag {
-                    return Err(anyhow!(format!(
-                        "The content of the `tag` variable \"{}\" \
-                     must start and end with a numerical digit `0..9`.",
-                        tag
-                    )));
-                };
                 // Check for forbidden characters.
                 if tag
                     .chars()
