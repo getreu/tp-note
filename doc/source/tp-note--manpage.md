@@ -326,8 +326,8 @@ When _Tp-Note_ creates a new note, it prepends automatically a *chronological
 sort-tag* of today. The '`{{ title }}`' part is usually derived from the
 parent directory name omitting its own *sort-tag*.
 
-[^sort-tag]: The characters '`_`' and '`-`' are not considered to be
-part of the *sort-tag* when they appear in first or last position.
+[^sort-tag]: The characters '`_`' and '`-`' are considered to be
+part of the *sort-tag* when they appear in last position.
 
 A note's filename is in sync with its meta-data, when the following is true
 (slightly simplified, see the configuration file for the complete definition):
@@ -378,14 +378,14 @@ title:      "1. The Beginning"
 subtitle:   "Note"
 author:     "getreu"
 date:       "March  7, 2020"
-tag:        "20200307"
+tag:        "20200307-"
 lang:       "en_GB.UTF-8"
 revision:   "1.1"
 ---
 ```
 
 When _Tp-Note_ synchronizes the note's metadata with its filename, it will also
-change the sort-tag from '`20200306`' to '`20200307`'.
+change the sort-tag from '`20200306-`' to '`20200307-`'.
 
 Note: When a `tag` variable is defined in the note's YAML header, you
 should not adjust the sort-tag string in its file name by renaming the file by
@@ -422,13 +422,13 @@ gives you access to the '`LANG`' environment variable.
 
 In addition, _Tp-Note_ defines the following variables:
 
-* '`{{ file_tag }}`': the sort-tag of the current note, e.g. '`01-23_9`' or
-  '`20191022`' (first numerical string of the filename on disk), Useful in
+* '`{{ file_tag }}`': the sort-tag of the current note, e.g. '`01-23_9-`' or
+  '`20191022-`' (first numerical string of the filename on disk), Useful in
   content templates, that create new notes based on a path with a filename
   (e.g. '`TMPL_ANNOTATE_CONTENT`').
 
 * '`{{ tag }}`': holds the value of the optional YAML header variable '`tag`'
-  (e.g. '`tag: "20200312"`'). If not defined there, it defaults to '`{{
+  (e.g. '`tag: "20200312-"`'). If not defined there, it defaults to '`{{
   file_tag }}`'. This variable is only available in the '`TMPL_SYNC_FILENAME`'
   template!
 

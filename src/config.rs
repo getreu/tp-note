@@ -32,17 +32,20 @@ pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 /// it is not the case, the note's filename will be renamed.
 /// Can be modified through editing the configuration file.
 /// Useful variables in this context are:
-/// `{{ tag | path }}`
+/// `{{ tag }}`
 /// `{{ title | path }}`, `{{ subtitle | path }}`, `{{ note_extension | path }}`,
 /// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
-/// `{{ tag | path }}` must be the first in line here, then followed by a
+/// `{{ tag  }}` must be the first in line here, then followed by a
 /// `{{ <var>| path(alpha) }}` variable.
-/// Note, that in this filename-template, all variables must be filtered
-/// by a `path` or `path(alpha=true)` filter.
-/// This is the only template that uses the `tag` variable.
+/// Note, that in this filename-template, all variables (except `tag`) must be
+/// filtered by a `path` or `path(alpha=true)` filter.
+/// This is the only template that has access to the `{{ tag }}` variable.
+/// `{{ tag }}` contains the content of the YAML header variable `tag:` if
+/// it exists. Otherwise it defaults to `{{ file_tag }}`.
+
 const TMPL_SYNC_FILENAME: &str = "\
-{{ tag | path }}{% if tag | path != '' %}-{% endif %}\
+{{ tag }}\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
 {{ subtitle | path  }}.{{ note_extension | path }}\
 ";
@@ -123,8 +126,8 @@ revision:   {{ '1.0' | json_encode }}
 /// its value starts with a number, the string is prepended with `'`.
 /// The first non-numerical variable must be some `{{ <var>| path(alpha) }}`
 /// variant.
-/// Note, that in this filename-template, all variables must be filtered
-/// by a `path` or `path(alpha=true)` filter.
+/// Note, that in this filename-template, all variables (except `now`)
+/// must be filtered by a `path` or `path(alpha=true)` filter.
 const TMPL_CLIPBOARD_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d') }}-\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
@@ -144,7 +147,7 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 /// appended to each variable.
 const TMPL_ANNOTATE_CONTENT: &str = "\
 ---
-title:      {{ file_tag ~ file_stem | json_encode }}
+title:      {{ file_stem | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -165,9 +168,10 @@ revision:   {{ '1.0' | json_encode }}
 /// its value starts with a number, the string is prepended with `'`.
 /// The first non-numerical variable must be the `{{ <var>| path(alpha) }}`
 /// variant.
-/// Note, that in this filename-template, all variables must be filtered
-/// by a `path` or `path(alpha=true)` filter.
+/// Note, that in this filename-template, all variables (expect `file_tag`)
+/// must be filtered by a `path` or `path(alpha=true)` filter.
 const TMPL_ANNOTATE_FILENAME: &str = "\
+{{ file_tag }}\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
 {{ subtitle | path  }}.{{ note_extension | path }}\
 ";

@@ -44,16 +44,16 @@ assets = [
 ]
 
 [dependencies]
-serde = { version = "1.0.114", features = ["derive"] }
+serde = { version = "1.0.115", features = ["derive"] }
 serde_yaml = "0.8.13"
 serde_json = "1.0.57"
 anyhow = "1.0.32"
 lazy_static = "1.4.0"
-chrono = "0.4.13"
+chrono = "0.4.15"
 time = "0.2.16"
 confy = "0.4.0"
-clap = "2.33.1"
-structopt = "0.3.15"
+clap = "2.33.3"
+structopt = "0.3.16"
 msgbox = "0.5.0"
 
 # On Linux you need the x11 library, install it with something like:
@@ -62,5 +62,5 @@ clipboard = "0.5.0"
 sanitize-filename-reader-friendly = "0.9.2"
 
 [dependencies.tera]
-version = "1.4.0"
+version = "1.5.0"
 default-features = true 

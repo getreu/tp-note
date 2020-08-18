@@ -477,17 +477,6 @@ mod tests {
 
         assert!(Note::deserialize_note(&input).is_err());
 
-        // Leading/trailing `_` or `-` in `tag`
-
-        let input = "--- # document start
-        title: The book
-        subtitle: you always wanted
-        author: It's me
-        tag:    -1234
-        ...\ncontent\nmore content";
-
-        assert!(Note::deserialize_note(&input).is_err());
-
         // forbidden character `x` in `tag`.
 
         let input = "--- # document start
