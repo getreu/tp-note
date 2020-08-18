@@ -65,6 +65,27 @@ impl Note {
         context.insert("title", &fm.title);
         context.insert("subtitle", &fm.subtitle);
         if let Some(sort_tag) = &fm.sort_tag {
+            // Check for leading or trailing `-` or `_`.
+            if sort_tag.trim_matches('_').trim_matches('-') != sort_tag {
+                return Err(anyhow!(format!(
+                    "The content of the `sort_tag` variable \"{}\" \
+                     must start and end with a number `0..9`.",
+                    sort_tag
+                )));
+            };
+            // Check for forbidden characters.
+            if sort_tag
+                .chars()
+                .filter(|&c| !c.is_numeric() && c != '_' && c != '-')
+                .count()
+                > 0
+            {
+                return Err(anyhow!(format!(
+                    "Forbidden character(s) in `sort_tag` \"{}\" variable. \
+                     Only `0..9_-` are allowed.",
+                    sort_tag
+                )));
+            };
             // Overwrites `sort_tag` key inserted by `capture_environment.
             context.insert("sort_tag", sort_tag);
         };
@@ -130,7 +151,10 @@ impl Note {
             .unwrap_or_default()
             .chars()
             .take_while(|&c| c.is_numeric() || c == '-' || c == '_')
-            .collect::<String>();
+            .collect::<String>()
+            .trim_matches('_')
+            .trim_matches('-')
+            .to_string();
         context.insert("sort_tag", &sort_tag);
 
         // `fqpn` is a directory as fully qualified path, ending
