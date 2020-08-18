@@ -355,11 +355,43 @@ revision:   "1.1"
 
 As "`-My file.md`" is not equal to "`-'1. The Beginning--Note.md`",
 _Tp-Note_ will rename the file to "`20200306-'1. The Beginning--Note.md`".
-
 If the filename had been "`05_02-My file.md`", it would rename it to
 "`05_02-'1. The Beginning--Note.md`".
 
-Note: _Tp-Note_ never changes a sort-tag, but might changes the rest of the filename!
+Note: When the YAML front matter does not contain the optional `sort_tag`
+variable, _Tp-Note_ will never change a sort-tag. Nevertheless, it might
+change the rest of the filename!
+
+The reason why by default _Tp-Note_ does not change sort-tags is, that they
+define the order of files and notes in the file listing. In general this order
+is independent of the notes content. Nevertheless, in some cases you might want
+to have full control over the whole file name through note's YAML front matter.
+For example, for some reason, you have changed the document's date in the front
+matter and you want to change the chronological sort tag as well. In order to
+overwrite the note's sort-tag on disk, you can add the `sort_tag` variable to
+its front matter:
+
+
+``` yaml
+---
+title:      "1. The Beginning"
+subtitle:   "Note"
+author:     "getreu"
+date:       "March  7, 2020"
+sort_tag:   "20200307"
+lang:       "en_GB.UTF-8"
+revision:   "1.1"
+---
+```
+
+When _Tp-Note_ synchronizes the note's metadata with its filename, it will also
+change the sort-tag from `20200306` to `20200307`.
+
+Note: When a `sort-tag` variable is defined in the note's YAML header, you
+should not adjust the sort-tag string in its file name by renaming the file by
+hand, as your change will be overwritten next time you open the note with
+_Tp-Note_. You can switch back to _Tp-Note_'s default behaviour any time by
+deleting the `sort_tag` line in the note's meta data.
 
 
 
