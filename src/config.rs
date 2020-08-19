@@ -2,20 +2,26 @@
 //! the command-line parameters. It also reads the clipboard.
 
 extern crate clipboard;
+extern crate directories;
 use crate::MESSAGE_ALERT_WINDOW_TITLE;
 use crate::VERSION;
 use anyhow::anyhow;
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
+use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use msgbox::IconType;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use std::path::PathBuf;
 use std::process;
 use structopt::StructOpt;
 
 /// Name of this executable (without ".exe" extension on Windows).
 const CURRENT_EXE: &str = "tp-note";
+
+/// Crate `confy` version 0.4 uses this filename by default.
+const CONFIG_FILENAME: &str = "tp-note.toml";
 
 /// File extension of `to-note` files.
 const EXTENSION_DEFAULT: &str = "md";
@@ -368,22 +374,42 @@ lazy_static! {
     /// Reads and parses the configuration file "tp-note.toml". An alternative
     /// filename (optionally with absolute path) can be given on the command line
     /// with "--config".
-    pub static ref CFG: Cfg =
-        confy::load::<Cfg>(PathBuf::from(
-            if let Some(c) = &ARGS.config {
-                c
-            } else {
-                CURRENT_EXE
-            })
-            // strip extension, ".toml" is added by `confy.load()`
-            .with_extension("")
-            .to_str()
-            .unwrap_or_default()
+    pub static ref CFG: Cfg = confy::load::<Cfg>(PathBuf::from(
+        if let Some(c) = &ARGS.config {
+            c
+        } else {
+            CURRENT_EXE
+        })
+        // strip extension, ".toml" is added by `confy.load()`
+        .with_extension("")
+        .to_str()
+        .unwrap_or_default()
         ).unwrap_or_else(|e| {
-            print_message(&format!("Application error: \
-                unable to load/write config file: {}", e));
+            print_message(&format!(
+                "Application error: unable to load/write configuration file:\n---\n\
+                Configuration file path:\n\
+                \t{:?}\n\
+                Error:\n\
+                \t{}\n\
+                ---\nBackup and delete the configuration file to restart Tp-Note \n\
+                with its default configuration.", *CONFIG_PATH, e));
+            process::exit(1);
+        }
+    );
+}
+
+lazy_static! {
+/// This is where the `confy` crate stores the configuration file.
+    pub static ref CONFIG_PATH : PathBuf = {
+        let config = ProjectDirs::from("rs", "", CURRENT_EXE).unwrap_or_else(|| {
+            print_message("Application error: \
+                unable to get config directory.");
             process::exit(1)
         });
+        let mut config = PathBuf::from(config.config_dir());
+        config.push(Path::new(CONFIG_FILENAME));
+        config
+    };
 }
 
 lazy_static! {

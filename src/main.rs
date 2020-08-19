@@ -23,6 +23,7 @@ use crate::config::print_message_console;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
+use crate::config::CONFIG_PATH;
 use crate::note::Note;
 use anyhow::{anyhow, Context};
 use clipboard::ClipboardContext;
@@ -267,9 +268,15 @@ fn main() -> Result<(), anyhow::Error> {
     };
     if version != CFG.version {
         print_message(&format!(
-            "Old, incompatible configuration file found:\n---\n\
-            version = \'{}\'\
-            \n---\nPlease backup and delete the old configuration file and start again.",
+            "Application error: configuration file version mismatch:\n---\n\
+            Configuration file path:\n\
+            \t{:?}\n\
+            Tp-Note version: \'{}\'\n\
+            Configuration file version: \'{}\'\n\
+            ---\nBackup and delete the old config file to restart Tp-Note with \
+            its default values compatible with this version.",
+            *CONFIG_PATH,
+            VERSION.unwrap_or(""),
             CFG.version
         ));
         process::exit(1);
