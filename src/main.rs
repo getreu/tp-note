@@ -115,7 +115,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             .unwrap_or_default()
             .to_str()
             .unwrap_or_default()
-            == CFG.note_extension.as_str()
+            == CFG.extension_default.as_str()
         {
             // SYNCHRONIZE FILENAME
             // `path` points to an existing tp-note file.

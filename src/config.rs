@@ -18,7 +18,7 @@ use structopt::StructOpt;
 const CURRENT_EXE: &str = "tp-note";
 
 /// File extension of `to-note` files.
-const NOTE_EXTENSION: &str = "md";
+const EXTENSION_DEFAULT: &str = "md";
 
 /// Maximum length of a note's filename in bytes. If a filename-template produces
 /// a longer string, it will be truncated.
@@ -33,7 +33,7 @@ pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 /// Can be modified through editing the configuration file.
 /// Useful variables in this context are:
 /// `{{ tag }}`
-/// `{{ title | path }}`, `{{ subtitle | path }}`, `{{ note_extension | path }}`,
+/// `{{ title | path }}`, `{{ subtitle | path }}`, `{{ extension_default | path }}`,
 /// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
 /// `{{ tag  }}` must be the first in line here, then followed by a
@@ -47,13 +47,13 @@ pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 const TMPL_SYNC_FILENAME: &str = "\
 {{ tag }}\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
-{{ subtitle | path  }}.{{ note_extension | path }}\
+{{ subtitle | path  }}.{{ file_extension | path }}\
 ";
 
 /// Default content-template used when the command-line argument <path> is a
 /// directory. Can be changed through editing the configuration file.
 /// The following variables are  defined:
-/// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
+/// `{{ dirname }}`, `{{ file_stem }}`, `{{ file_extension }}`, `{{ extension_default }}`
 /// `{{ file_tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`,
 /// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.
@@ -76,7 +76,7 @@ revision:   {{ '1.0' | json_encode }}
 /// Default filename-template for a new note file on disk. It satisfies the
 /// sync criteria for note-meta data in front-matter and filename.
 /// Useful variables in this context are:
-/// `{{ title| path }}`, `{{ subtitle| path }}`, `{{ note_extension| path }}`,
+/// `{{ title| path }}`, `{{ subtitle| path }}`, `{{ extension_default| path }}`,
 /// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
 /// The first non-numerical variable must be some `{{ <var>| path(alpha) }}`
@@ -86,7 +86,7 @@ revision:   {{ '1.0' | json_encode }}
 const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d') }}-\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
-{{ subtitle | path  }}.{{ note_extension | path }}\
+{{ subtitle | path  }}.{{ extension_default | path }}\
 ";
 
 /// Default template used, when the clipboard contains a string.
@@ -96,7 +96,7 @@ const TMPL_NEW_FILENAME: &str = "\
 /// its first part is stored in `{{ clipboard-linkname }}`, the second part in
 /// `{{ clipboard-linkurl }}`.
 /// The following variables are defined:
-/// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
+/// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ extension_default }}`
 /// `{{ path }}`, `{{ file_tag }}`, `{{ username }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
@@ -120,7 +120,7 @@ revision:   {{ '1.0' | json_encode }}
 
 /// Default filename template used when the clipboard contains a string.
 /// Useful variables in this context are:
-/// `{{ title| path }}`, `{{ subtitle| path }}`, `{{ note_extension| path }}`,
+/// `{{ title| path }}`, `{{ subtitle| path }}`, `{{ extension_default| path }}`,
 /// `{{ year| path }}`, `{{ month| path }}`. `{{ day| path }}`.
 /// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
@@ -131,14 +131,14 @@ revision:   {{ '1.0' | json_encode }}
 const TMPL_CLIPBOARD_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d') }}-\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
-{{ subtitle | path  }}.{{ note_extension | path }}\
+{{ subtitle | path  }}.{{ extension_default | path }}\
 ";
 
 /// Default template used when the command-line <path> parameter points to
 /// an existing non-`.md`-file. Can be modified through editing
 /// the configuration file.
 /// The following variables are  defined:
-/// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ note-extension }}`
+/// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ extension_default }}`
 /// `{{ file_tag }}`, `{{ username }}`, `{{ lang }}`,
 /// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.
@@ -155,15 +155,15 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-[{{ file_tag ~ file_stem ~ '.' ~ extension }}\
-]({{ file_tag ~ file_stem ~ '.' ~ extension }})
+[{{ file_tag ~ file_stem ~ '.' ~ file_extension }}\
+]({{ file_tag ~ file_stem ~ '.' ~ file_extension }})
 
 ";
 
 /// Filename of a new note, that annotates an existing file on disk given in
 /// <path>.
 /// Useful variables are:
-/// `{{ title | path(alpha=true) }}`, `{{ subtitle | path }}`, `{{ note_extension | path }}`.
+/// `{{ title | path(alpha=true) }}`, `{{ subtitle | path }}`, `{{ extension_default | path }}`.
 /// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
 /// The first non-numerical variable must be the `{{ <var>| path(alpha) }}`
@@ -173,7 +173,7 @@ revision:   {{ '1.0' | json_encode }}
 const TMPL_ANNOTATE_FILENAME: &str = "\
 {{ file_tag }}\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
-{{ subtitle | path  }}.{{ note_extension | path }}\
+{{ subtitle | path  }}.{{ extension_default | path }}\
 ";
 
 /// Default command-line argument list when launching external editor.
@@ -316,7 +316,7 @@ pub static ref ARGS : Args = Args::from_args();
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cfg {
     pub version: String,
-    pub note_extension: String,
+    pub extension_default: String,
     pub tmpl_new_content: String,
     pub tmpl_new_filename: String,
     pub tmpl_clipboard_content: String,
@@ -342,7 +342,7 @@ impl ::std::default::Default for Cfg {
 
         Cfg {
             version,
-            note_extension: NOTE_EXTENSION.to_string(),
+            extension_default: EXTENSION_DEFAULT.to_string(),
             tmpl_new_content: TMPL_NEW_CONTENT.to_string(),
             tmpl_new_filename: TMPL_NEW_FILENAME.to_string(),
             tmpl_clipboard_content: TMPL_CLIPBOARD_CONTENT.to_string(),

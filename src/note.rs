@@ -187,16 +187,16 @@ impl Note {
         context.insert("clipboard_linkname", &CLIPBOARD.linkname);
         context.insert("clipboard_linkurl", &CLIPBOARD.linkurl);
 
-        // Extension of the path given on command-line.
+        // File-extension of the path given on command-line.
         context.insert(
-            "extension",
+            "file_extension",
             &path
                 .extension()
                 .unwrap_or_default()
                 .to_str()
                 .unwrap_or_default(),
         );
-        context.insert("note_extension", CFG.note_extension.as_str());
+        context.insert("extension_default", CFG.extension_default.as_str());
 
         // search for UNIX, Windows and MacOS user-names
         let author = env::var("LOGNAME").unwrap_or_else(|_| {
