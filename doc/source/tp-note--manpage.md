@@ -164,7 +164,7 @@ revision:   "1.0"
 
 ## New note based on a non-tp-note-file
 
-When '`<path>`' points to a file whose extension is other than '`.md`', a new
+When '`<path>`' points to a file whose file-extension is other than '`.md`', a new
 note is created with a similar filename and a reference to the original file
 copied into the note. The logic of this is implemented in the templates:
 '`tmpl_annotate_content`' and '`tmpl_annotate_filename`'. Once the file is
@@ -363,13 +363,13 @@ variable, _Tp-Note_ will never change a sort-tag. Nevertheless, it might
 change the rest of the filename!
 
 The reason why by default _Tp-Note_ does not change sort-tags is, that they
-define the order of files and notes in the file listing. In general this order
-is independent of the notes content. Nevertheless, in some cases you might want
-to have full control over the whole file name through note's YAML front matter.
-For example, for some reason, you have changed the document's date in the front
+define their order in the file listing. In general this order is independent of
+the notes content. Nevertheless, in some cases you might want to have full
+control over the whole file name through note's YAML front matter. For
+example, for some reason, you have changed the document's date in the front
 matter and you want to change the chronological sort tag as well. In order to
-overwrite the note's sort-tag on disk, you can add the '`tag`' variable to
-its front matter:
+overwrite the note's sort-tag on disk, you can add a '`tag`' variable to its
+front matter:
 
 
 ``` yaml
@@ -387,11 +387,11 @@ revision:   "1.1"
 When _Tp-Note_ synchronizes the note's metadata with its filename, it will also
 change the sort-tag from '`20200306-`' to '`20200307-`'.
 
-Note: When a `tag` variable is defined in the note's YAML header, you
-should not adjust the sort-tag string in its file name by renaming the file by
-hand, as your change will be overwritten next time you open the note with
-_Tp-Note_. You can switch back to _Tp-Note_'s default behaviour any time by
-deleting the '`tag`' line in the note's meta data.
+Note: When a `tag` variable is defined in the note's YAML header, you should
+not adjust the sort-tag string in its file name manually by renaming the file,
+as your change will be overwritten next time you open the note with _Tp-Note_.
+However, you can switch back to _Tp-Note_'s default behaviour any time by
+deleting the '`tag`' line in the note's metadata.
 
 
 
@@ -409,7 +409,7 @@ starting with '`tmpl_*`' are _Tera-Template_-strings (see:
 <https://tera.netlify.com/docs/#templates>).
 
 _Tp-Note_ captures and stores its environment in _Tera-variables_. For example,
-the variable '`{{ dirname }}`' is initialized with the document's parent
+the variable '`{{ file_dirname }}`' is initialized with the document's parent
 directory. The variable '`{{ clipboard }}`' contains the content of the
 clipboard. To learn more about variables, launch _Tp-Note_ with the '`--debug`'
 option and observe what information it captures from its environment.
@@ -422,26 +422,27 @@ gives you access to the '`LANG`' environment variable.
 
 In addition, _Tp-Note_ defines the following variables:
 
-* '`{{ file_tag }}`': the sort-tag of the current note, e.g. '`01-23_9-`' or
-  '`20191022-`' (first numerical string of the filename on disk), Useful in
-  content templates, that create new notes based on a path with a filename
-  (e.g. '`TMPL_ANNOTATE_CONTENT`').
+* '`{{ file_tag }}`': the sort-tag (numerical filename prefix) of the current
+  note on disk, e.g. '`01-23_9-`' or '`20191022-`'. Useful in content
+  templates, that create new notes based on a path with a filename (e.g.
+  '`TMPL_ANNOTATE_CONTENT`').
 
 * '`{{ tag }}`': holds the value of the optional YAML header variable '`tag`'
-  (e.g. '`tag: "20200312-"`'). If not defined there, it defaults to '`{{
-  file_tag }}`'. This variable is only available in the '`TMPL_SYNC_FILENAME`'
+  (e.g. '`tag: "20200312-"`'). If not defined there, it defaults to
+  '`{{ file_tag }}`'. This variable is only available in the
+  '`TMPL_SYNC_FILENAME`'
   template!
 
-* '`{{ dirname }}`': the parent directory's name,
+* '`{{ file_dirname }}`': the parent directory's name of the note on disk,
 
-* '`{{ file_stem }}`': the note's filename without extension,
+* '`{{ file_stem }}`': the note's filename without sort-tag and extension,
 
-* '`{{ clipboard }}`': all the text from the clipboard,
+* '`{{ clipboard }}`': the complete text content from the clipboard,
 
 * '`{{ clipboard_truncated }}`': the first 200 bytes from the clipboard,
 
 * '`{{ clipboard_heading }}`': the clipboard's content  until end of the first
-  sentence, or the first newline.
+  sentence ending, or the first newline.
 
 * '`{{ clipboard_linkname }}`': the name of the first Markdown
   formatted link in the clipboard,
@@ -449,11 +450,11 @@ In addition, _Tp-Note_ defines the following variables:
 * '`{{ clipboard_linkurl }}`': the URL of the first Markdown
   formatted link in the clipboard,
 
-* '`{{ extension }}`': the filename extension of the existing note
+* '`{{ file_extension }}`': the filename extension of the current note
   on disk,
 
-* '`{{ note_extension }}`': the default extension for new notes
-  (which can be changed in the configuration file),
+* '`{{ extension_default }}`': the default extension for new notes
+  (can be changed in the configuration file),
 
 * '`{{ username }}`': the content of the first non-empty environment
   variable: `LOGNAME`, `USER` or `USERNAME`.
@@ -472,9 +473,9 @@ used to create the note's content (front-matter and body) and filename-templates
 
 Strings in the YAML front matter of content-templates are JSON encoded.
 Therefor all variables used in the front matter must pass an additional
-'`json_encode()`'-filter. For example, the variable '`{{ dirname }}`'
-becomes '`{{ dirname | json_encode() }}`' or just
-'`{{ dirname | json_encode }}`'.
+'`json_encode()`'-filter. For example, the variable '`{{ file_dirname }}`'
+becomes '`{{ file_dirname | json_encode() }}`' or just
+'`{{ file_dirname | json_encode }}`'.
 
 
 ## Filename-template convention
@@ -529,8 +530,8 @@ _Tp-Note_ is markup language agnostic, however the default templates define
 _Markdown_ as default markup language. To change this, just edit the following
 2 templates:
 
-1. Change to variable '`note_extension='md'`' to e.g.
-   '`note_extension='rst'`'
+1. Change the variable '`extension_default='md'`' to e.g.
+   '`extension_default='rst'`'
 
 2. The last line in template '`tmpl_clipboard_content`' defines a hyperlink in
    Markdown format. Change the link format according to your markup language

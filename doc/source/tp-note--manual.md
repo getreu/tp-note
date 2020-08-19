@@ -289,13 +289,13 @@ or less automated and can be divided up into two steps:
    on _Tp-Note_'s [project page](https://blog.getreu.net/projects/tp-note/#distribution)
    for a list of available packages and binaries.
 
-2. Optional integration with the filemananger.
+2. Optional integration with your filemananger.
 
 At the moment of this writing, an installer automating steps 1. and 2. is available for 
 Windows only. Packages for Debian Linux and Ubuntu help you with step 1. For other operating
 systems check section [Distribution](https://blog.getreu.net/projects/tp-note/#distribution)
 for precompiled binaries or 
-[build Tp-Note](https://blog.getreu.net/projects/tp-note/#building-and-installing)
+[build Tp-Note](https://blog.getreu.net/projects/tp-note/#building)
 yourself.
 
 
@@ -306,7 +306,11 @@ yourself.
 ## Minimum setup without file-manager integration
 
 _Tp-Note_'s template engine can be tested and used without window manager integration. This
-section shows a minimum setup to get started quickly.
+section shows a minimum setup to get started quickly.[^inst]
+
+[^inst]: Please also consult the section
+  [Installation](https://blog.getreu.net/projects/tp-note/#installation) in the
+  projects Readme-document to learn how to install a complete setup.
 
 * **Windows**
 
@@ -349,7 +353,44 @@ _Tp-Note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
 
 ## Troubleshooting
 
-* **Windows**
+### Incompatible configuration files
+
+While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
+configuration file structure.  In order not to loose the changes you made in
+this file, the installer does not replace it automatically with the new
+version. Instead, you might see one of the following messages:
+
+    Application error: unable to load/write configuration file:
+    ---
+    Configuration file path:
+            "/home/getreu/.config/tp-note/tp-note.toml"
+    Error:
+            Bad TOML data: missing field `version` at line 1 column 1
+    ---
+    Backup and delete the configuration file to restart Tp-Note 
+    with its default configuration.
+
+or
+
+    Application error: configuration file version mismatch:
+    ---
+    Configuration file path:
+            "/home/getreu/.config/tp-note/tp-note.toml"
+    Tp-Note version: '1.4.4'
+    Configuration file version: '1.3.8'
+
+    ---
+    Backup and delete the old config file to restart Tp-Note with its default 
+    values compatible with this version.
+
+As the above error messages suggest, the solution is to backup and delete the
+old incompatible configuration file. Next time you start _Tp-Note_, a new
+version of this file will be installed at the same location.  Please consult
+the section [Upgrading](https://blog.getreu.net/projects/tp-note/#upgrading) in
+the project's Readme-document to locate _Tp-Note_'s configuration file
+depending on your operating system.
+
+### Debugging on Windows
 
   When you see only Chinese characters in notepad, update Windows to the
   latest version or install [Notepad++](https://notepad-plus-plus.org/).
@@ -365,7 +406,7 @@ _Tp-Note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
      This creates the file `debug.txt` on your desktop. Open the file
      and scroll to the end.
 
-* **Linux**
+### Debugging on Linux
 
   Display _Tp-Note_'s error messages:
 

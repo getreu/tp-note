@@ -122,30 +122,48 @@ Depending on the availability of installer packages for your operating system,
 the installation process is more or less automated. For Windows users the fully
 automated installation package
 [tp-note-1.5.3-x86_64.msi](https://blog.getreu.net/projects/tp-note/_downloads/wix/tp-note-1.5.3-x86_64.msi)
-is available. Others may consult the
-[Installation](https://blog.getreu.net/projects/tp-note/tp-note--manual.html#installation)
-section in _Tp-Note_'s manual for more information.
+is available. For more information, please consult the [Distribution section](#distribution)
+above and the [Installation
+section](https://blog.getreu.net/projects/tp-note/tp-note--manual.html#installation)
+in _Tp-Note_'s manual.
 
 
 ## Upgrading
 
-When you install a new version of _Tp-Note_, please delete the old configuration
-file, that is automatically written in
+While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
+configuration file structure. In order not to loose the changes you made in
+this file, the installer does not replace it automatically with a new version.
+Instead, you might see one of the following messages:
 
-* Linux: `~/.config/tp-note/tp-note.toml`
+    Application error: unable to load/write configuration file:
+    ---
+    Configuration file path:
+            "/home/getreu/.config/tp-note/tp-note.toml"
+    Error:
+            Bad TOML data: missing field `version` at line 1 column 1
+    ---
+    Backup and delete the configuration file to restart Tp-Note 
+    with its default configuration.
 
-* Windows: `C:\Users\<LOGIN>\AppData\Roaming\tp-note\config\tp-note.toml`
+or
 
-The reason is, that the structure of the configuration file might change from
-version to version.  For example, new configuration variables might be added:
-When _Tp-Note_ starts, it reads the old configuration and will complain about a
-malformed structure. I recommend deleting the old configuration file, even when
-there is no error message: new template-variables might activate new features,
-that will only be available, when _Tp-Note_ starts with a fresh default
-template.
+    Application error: configuration file version mismatch:
+    ---
+    Configuration file path:
+            "/home/getreu/.config/tp-note/tp-note.toml"
+    Tp-Note version: '1.4.2'
+    Configuration file version: '1.3.2'
+
+    ---
+    Backup and delete the old config file to restart Tp-Note with its default 
+    values compatible with this version.
+
+As the above error messages suggest, the solution is to backup and delete the
+old incompatible configuration file. Next time you start _Tp-Note_, a new
+version of this file will be installed at the same location.
 
 There is no need to say, that in case you modified the configuration file,
-you should backup it before deleting.
+you should backup before delete.
 
 
 ## Building
