@@ -2,7 +2,7 @@ version = '1.5.3'
 extension_default = 'md'
 tmpl_new_content = '''
 ---
-title:      {{ dirname | json_encode() }}
+title:      {{ file_dirname | json_encode() }}
 subtitle:   {{ 'Note' | json_encode() }}
 author:     {{ username | json_encode() }}
 lang:       {{ get_env(name='LANG', default='') | json_encode }}

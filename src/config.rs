@@ -53,7 +53,7 @@ const TMPL_SYNC_FILENAME: &str = "\
 /// Default content-template used when the command-line argument <path> is a
 /// directory. Can be changed through editing the configuration file.
 /// The following variables are  defined:
-/// `{{ dirname }}`, `{{ file_stem }}`, `{{ file_extension }}`, `{{ extension_default }}`
+/// `{{ file_dirname }}`, `{{ file_stem }}`, `{{ file_extension }}`, `{{ extension_default }}`
 /// `{{ file_tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`,
 /// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.
@@ -62,7 +62,7 @@ const TMPL_SYNC_FILENAME: &str = "\
 /// appended to each variable.
 const TMPL_NEW_CONTENT: &str = "\
 ---
-title:      {{ dirname | json_encode }}
+title:      {{ file_dirname | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -96,7 +96,7 @@ const TMPL_NEW_FILENAME: &str = "\
 /// its first part is stored in `{{ clipboard-linkname }}`, the second part in
 /// `{{ clipboard-linkurl }}`.
 /// The following variables are defined:
-/// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ extension_default }}`
+/// `{{ file_dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ extension_default }}`
 /// `{{ path }}`, `{{ file_tag }}`, `{{ username }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
@@ -138,7 +138,7 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 /// an existing non-`.md`-file. Can be modified through editing
 /// the configuration file.
 /// The following variables are  defined:
-/// `{{ dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ extension_default }}`
+/// `{{ file_dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ extension_default }}`
 /// `{{ file_tag }}`, `{{ username }}`, `{{ lang }}`,
 /// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.

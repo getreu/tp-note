@@ -160,13 +160,13 @@ impl Note {
         context.insert("path", &fqpn.to_str().unwrap_or_default());
 
         // Strip off the sort tag if there is any
-        let dirname = fqpn
+        let file_dirname = fqpn
             .file_name()
             .unwrap_or_default()
             .to_str()
             .unwrap_or_default()
             .trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_');
-        context.insert("dirname", &dirname);
+        context.insert("file_dirname", &file_dirname);
 
         // Strip off the sort tag if there is any.
         let file_stem = if path.is_dir() {

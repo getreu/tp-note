@@ -2,7 +2,7 @@ version = '1.5.3'
 extension_default = 'md'
 tmpl_new_content = '''
 ---
-title:      {{ dirname | json_encode }}
+title:      {{ file_dirname | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
