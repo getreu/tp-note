@@ -145,11 +145,11 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
 /// Launch some external editor. The editor can be chosen through
 /// `tp-note`'s configuration file.
 fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
-    // both lists have always the same number of items
+    // Both lists have always the same number of items.
     let mut args_list = Vec::new();
     let mut executable_list = Vec::new();
 
-    // prepare launch of editor/viewer
+    // Prepare launch of editor/viewer.
     if ARGS.view {
         for app in &CFG.viewer_args {
             executable_list.push(&app[0]);
@@ -178,7 +178,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
         }
     };
 
-    // launch editor/viewer
+    // Launch editor/viewer.
     println!("Opening file {:?}", path);
 
     let mut executable_found = false;
@@ -261,11 +261,15 @@ fn run() -> Result<(), anyhow::Error> {
 }
 
 /// Print some error message if `run()` does not complete.
+/// Exit prematurely if the configuration file version does
+/// not match the programm version.
 fn main() -> Result<(), anyhow::Error> {
+    // Determine the version number of this Tp-Note's binary.
     let version = match VERSION {
         Some(v) => v.to_string(),
         None => String::new(),
     };
+    // Compare it with the version number of the configuration file.
     if version != CFG.version {
         print_message(&format!(
             "Application error: configuration file version mismatch:\n---\n\
@@ -279,10 +283,12 @@ fn main() -> Result<(), anyhow::Error> {
             VERSION.unwrap_or(""),
             CFG.version
         ));
-        process::exit(1);
+        process::exit(5);
     };
 
+    // Run Tp-Note.
     if let Err(e) = run() {
+        // Something went wrong.
         // Remember the command-line-arguments.
         let mut args_str = String::new();
         for argument in env::args() {

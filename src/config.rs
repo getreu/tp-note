@@ -17,7 +17,7 @@ use std::path::PathBuf;
 use std::process;
 use structopt::StructOpt;
 
-/// Name of this executable (without ".exe" extension on Windows).
+/// Name of this executable (without the Windows ".exe" extension).
 const CURRENT_EXE: &str = "tp-note";
 
 /// Crate `confy` version 0.4 uses this filename by default.
@@ -98,7 +98,7 @@ const TMPL_NEW_FILENAME: &str = "\
 /// Default template used, when the clipboard contains a string.
 /// The clipboards content is in `{{ clipboard }}`, its truncated version
 /// in `{{ clipboard_heading }}`
-/// When the clipboard conains a hyper-link in markdown format: [<link-name>](<link-url>),
+/// When the clipboard contains a hyper-link in markdown format: [<link-name>](<link-url>),
 /// its first part is stored in `{{ clipboard-linkname }}`, the second part in
 /// `{{ clipboard-linkurl }}`.
 /// The following variables are defined:
@@ -308,7 +308,7 @@ pub struct Args {
     /// <dir> as new note location or <file> to annotate
     #[structopt(name = "PATH", parse(from_os_str))]
     pub path: Option<PathBuf>,
-    /// Prints version and exit
+    /// Prints version and exits
     #[structopt(long, short = "V")]
     pub version: bool,
 }
@@ -386,7 +386,7 @@ lazy_static! {
         .unwrap_or_default()
         ).unwrap_or_else(|e| {
             print_message(&format!(
-                "Application error: unable to load/write configuration file:\n---\n\
+                "Application error: unable to load/write the configuration file:\n---\n\
                 Configuration file path:\n\
                 \t{:?}\n\
                 Error:\n\
@@ -403,7 +403,7 @@ lazy_static! {
     pub static ref CONFIG_PATH : PathBuf = {
         let config = ProjectDirs::from("rs", "", CURRENT_EXE).unwrap_or_else(|| {
             print_message("Application error: \
-                unable to get config directory.");
+                unable to determine the configuration file directory.");
             process::exit(1)
         });
         let mut config = PathBuf::from(config.config_dir());
@@ -423,7 +423,7 @@ lazy_static! {
                 if let Some(s) = &s {
                     if s.len() > CLIPBOARD_LEN_MAX {
                         print_message(&format!(
-                            "Warning: clipboard content ignored because its size \
+                            "Warning: the clipboard content is discarded because its size \
                             exceeds {} bytes.", CLIPBOARD_LEN_MAX));
                         return Clipboard::default();
                     }
@@ -509,12 +509,12 @@ impl Clipboard {
         }
         let content_heading = content_truncated[0..index].to_string();
 
-        // parse clipboard
+        // Parse clipboard for markdown hyperlink.
         let hyperlink = match Hyperlink::new(&content) {
             Ok(s) => Some(s),
             Err(e) => {
                 if ARGS.debug {
-                    eprintln!("Note: clipboard does not contain a markdown link: {}", e);
+                    eprintln!("Note: the clipboard does not contain a markdown link: {}", e);
                 }
                 None
             }
@@ -522,13 +522,13 @@ impl Clipboard {
 
         let mut linkname = String::new();
         let mut linkurl = String::new();
-        // if there is a hyperlink in clipboard?
+        // If there is a hyperlink in clipboard, destructure.
         if let Some(hyperlink) = hyperlink {
             linkname = hyperlink.name.to_owned();
             linkurl = hyperlink.url.to_owned();
         };
 
-        // Limit the size of `linkname`
+        // Limit the size of `linkname`.
         for i in (0..CLIPBOARD_TRUNCATED_LEN_MAX).rev() {
             if let Some(s) = linkname.get(..i) {
                 linkname = s.to_string();
@@ -546,6 +546,7 @@ impl Clipboard {
     }
 }
 
+/// By default, the clipboard is empty.
 impl ::std::default::Default for Clipboard {
     fn default() -> Self {
         Self {

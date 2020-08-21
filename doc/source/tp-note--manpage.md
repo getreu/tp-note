@@ -489,7 +489,7 @@ For this purpose _Tp-Note_ provides the additional Tera filters '`path`' and
   is done by replacing forbidden characters like '`?`' and '`\\`'  with '`_`'
   or space. This filter can be used with any variables, but is most useful with
   filename-templates. For example, take a look at the '`tmpl_sync_filename`' 
-  template: it starts with '`{{ tag | path }}`'.
+  template where you find '`{{ subtitle | path }}`'.
 
 * '`path(alpha=true)`' is similar to the above, with one exception: when a string
   starts with a digit '`0`-`9`', the whole string is prepended with `'`.
@@ -498,8 +498,15 @@ For this purpose _Tp-Note_ provides the additional Tera filters '`path`' and
   filename, e.g. '`{{ title | path(alpha=true )}`'. This way, it is always
   possible to distinguish the sort-tag from the actual filename.
 
-In filename-templates all variables must pass either the '`path`' or
-the '`path(alpha=true)`' filter!
+In filename-templates most variables must pass either the '`path`' or the
+'`path(alpha=true)`' filter. Exception to this rule are the sort-tag variables
+'`{{ tag }}`' and '`{{ file_tag }}`'. As these are guaranteed to contain only
+the filesystem-friendly characters: '`0..9-_`', no additional filtering is
+required. In addition, a '`path`'-filter would needlessly restrict the value
+range of '`{{ tag }}`' and '`{{ file_tag }}`': a sort tag usually ends with a
+'`-`', a character that the '`path`'-filter screens out when it appears in
+leading or trailing position. For this reason no '`path`'-filter is allowed
+with '`{{ tag }}`' and '`{{ file_tag }}`'.
 
 
 ## Register your own external text editor for usage with Tp-Note

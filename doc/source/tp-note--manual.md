@@ -207,7 +207,7 @@ preferences and configuration:
 
 My favorite Markdown editor at the moment is [Typora](https://typora.io/). I
 like its clean and simple interface helping me to concentrate on the content
-while writing.[^3] 
+while writing.[^3]
 
 When copying extracts from a web-page I often need to preserve its hyperlinks.
 For this, the Firefox browser addon [Copy Selection as Markdown] is very handy.
@@ -291,10 +291,10 @@ or less automated and can be divided up into two steps:
 
 2. Optional integration with your filemananger.
 
-At the moment of this writing, an installer automating steps 1. and 2. is available for 
+At the moment of this writing, an installer automating steps 1. and 2. is available for
 Windows only. Packages for Debian Linux and Ubuntu help you with step 1. For other operating
 systems check section [Distribution](https://blog.getreu.net/projects/tp-note/#distribution)
-for precompiled binaries or 
+for precompiled binaries or
 [build Tp-Note](https://blog.getreu.net/projects/tp-note/#building)
 yourself.
 
@@ -367,7 +367,7 @@ version. Instead, you might see one of the following messages:
     Error:
             Bad TOML data: missing field `version` at line 1 column 1
     ---
-    Backup and delete the configuration file to restart Tp-Note 
+    Backup and delete the configuration file to restart Tp-Note
     with its default configuration.
 
 or
@@ -380,7 +380,7 @@ or
     Configuration file version: '1.3.8'
 
     ---
-    Backup and delete the old config file to restart Tp-Note with its default 
+    Backup and delete the old config file to restart Tp-Note with its default
     values compatible with this version.
 
 As the above error messages suggest, the solution is to backup and delete the
@@ -425,7 +425,7 @@ depending on your operating system.
 
 * Your preferred markup language is not *Markdown*, but *ReStructuredText*,
   *T2t*, *Textile*, *Wiki*, *Mediawiki* or *Asciidoc*? Change it!
-  
+
   Please refer to _Tp-Note_'s man-page to learn how to change its
   templates in the configuration file.
 
@@ -434,7 +434,7 @@ depending on your operating system.
   Note-taking with _Tp-Note_ is more fun with a good markup (Markdown)
   text editor, although any Unicode text editor will do (even Notepad >=
   Windows 10-update 1903). _Tp-Note_ it preconfigured to work with:
-  
+
   - [Typora — a markdown editor, markdown reader.](https://typora.io/)
     Make sure that you have at least version 0.9.89 installed, as this version
     contains a [bugfix](https://github.com/typora/typora-issues/issues/3348)
@@ -479,25 +479,25 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
    it.
 
         Windows Registry Editor Version 5.00
-        
+
         [HKEY_CLASSES_ROOT\Directory\Background\shell\New Tp-Note]
- 
+
         [HKEY_CLASSES_ROOT\Directory\Background\shell\New Tp-Note\command]
         @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\""
-        
+
         [HKEY_CLASSES_ROOT\*\OpenWithList\tp-note.exe]
         @=""
- 
+
         [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\edit.tp-note.exe]
         @="Edit Tp-Note"
- 
+
         [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\edit.tp-note.exe\command]
         @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"%1\""
 
 
 
 
-3. Save the file as: 
+3. Save the file as:
 
    * File name: `tp-note.reg`
    * Save as type: `All files`
@@ -591,7 +591,7 @@ file in `~/.config/Thunar/uca.xml`.
 
 ### Configure Pcmanfm's custom actions system-wide
 
-_Pcmanfm_ is the default file-manager _Lubuntu_ and in _Raspbian_ on the 
+_Pcmanfm_ is the default file-manager _Lubuntu_ and in _Raspbian_ on the
 Raspberry Pi.
 
 Create the configuration file:
@@ -629,6 +629,6 @@ previewer.
 [^3]: Make sure to install a recent version of
 [Typora](https://typora.io/#download) (version >=0.9.89).
 
-[^4]: Versions for other operating systems and a Debian package are 
+[^4]: Versions for other operating systems and a Debian package are
 [available here](https://blog.getreu.net/projects/tp-note/_downloads/).
 
