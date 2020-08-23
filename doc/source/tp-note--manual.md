@@ -376,12 +376,12 @@ or
     ---
     Configuration file path:
             "/home/getreu/.config/tp-note/tp-note.toml"
-    Tp-Note version: '1.4.4'
-    Configuration file version: '1.3.8'
-
+    Configuration file version: '1.5.2'
+    Tp-Note version: '1.5.4'
+    Minimum required configuration file version: '1.5.4'
     ---
-    Backup and delete the old config file to restart Tp-Note with its default
-    values compatible with this version.
+    Backup and delete the old config file to restart Tp-Note with
+    its default values compatible with this version.
 
 As the above error messages suggest, the solution is to backup and delete the
 old incompatible configuration file. Next time you start _Tp-Note_, a new

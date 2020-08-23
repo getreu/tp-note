@@ -18,6 +18,7 @@ mod filter;
 mod note;
 
 extern crate msgbox;
+extern crate semver;
 use crate::config::print_message;
 use crate::config::print_message_console;
 use crate::config::ARGS;
@@ -28,6 +29,7 @@ use crate::note::Note;
 use anyhow::{anyhow, Context};
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
+use semver::Version;
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -37,6 +39,29 @@ use std::process::Command;
 
 /// Use the version-number defined in `../Cargo.toml`.
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
+/// Set the minimum required config file version that is compatible with this Tp-Note version.
+///
+/// Examples how to use this constant. Choose one of the following:
+/// 1. Require some minimum version of the config file.
+///    Abort if not satisfied.
+///
+///    ```no_run
+///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.5.1");
+///    ```
+///
+/// 2. Require the config file to be of the same version as this binary. Abort if not satisfied.
+///
+///    ```no_run
+///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
+///    ```
+///
+/// 3. Disable minimum version check; all config file versions are allowed.
+///
+///    ```no_run
+///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
+///    ```
+///
+const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
 /// (c) Jens Getreu
 const AUTHOR: &str = "(c) Jens Getreu, 2020";
 /// Window title for error box.
@@ -264,26 +289,28 @@ fn run() -> Result<(), anyhow::Error> {
 /// Exit prematurely if the configuration file version does
 /// not match the programm version.
 fn main() -> Result<(), anyhow::Error> {
-    // Determine the version number of this Tp-Note's binary.
-    let version = match VERSION {
-        Some(v) => v.to_string(),
-        None => String::new(),
-    };
     // Compare it with the version number of the configuration file.
-    if version != CFG.version {
-        print_message(&format!(
-            "Application error: configuration file version mismatch:\n---\n\
-            Configuration file path:\n\
-            \t{:?}\n\
-            Tp-Note version: \'{}\'\n\
-            Configuration file version: \'{}\'\n\
-            ---\nBackup and delete the old config file to restart Tp-Note with \
-            its default values compatible with this version.",
-            *CONFIG_PATH,
-            VERSION.unwrap_or(""),
-            CFG.version
-        ));
-        process::exit(5);
+    if let Some(v) = VERSION {
+        if v != CFG.version
+            && Version::parse(&CFG.version)
+                < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"))
+        {
+            print_message(&format!(
+                "Application error: configuration file version mismatch:\n---\n\
+                Configuration file path:\n\
+                \t{:?}\n\
+                Configuration file version: \'{}\'\n\
+                Tp-Note version: \'{}\'\n\
+                Minimum required configuration file version: \'{}\'\n\
+                ---\nBackup and delete the old config file to restart Tp-Note with \
+                its default values compatible with this version.",
+                *CONFIG_PATH,
+                CFG.version,
+                VERSION.unwrap_or(""),
+                MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"),
+            ));
+            process::exit(5);
+        }
     };
 
     // Run Tp-Note.

@@ -386,7 +386,7 @@ lazy_static! {
         .unwrap_or_default()
         ).unwrap_or_else(|e| {
             print_message(&format!(
-                "Application error: unable to load/write the configuration file:\n---\n\
+                "Application error: unable to load, parse or write the configuration file:\n---\n\
                 Configuration file path:\n\
                 \t{:?}\n\
                 Error:\n\
@@ -514,7 +514,10 @@ impl Clipboard {
             Ok(s) => Some(s),
             Err(e) => {
                 if ARGS.debug {
-                    eprintln!("Note: the clipboard does not contain a markdown link: {}", e);
+                    eprintln!(
+                        "Note: the clipboard does not contain a markdown link: {}",
+                        e
+                    );
                 }
                 None
             }

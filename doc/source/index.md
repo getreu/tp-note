@@ -142,7 +142,7 @@ Instead, you might see one of the following messages:
     Error:
             Bad TOML data: missing field `version` at line 1 column 1
     ---
-    Backup and delete the configuration file to restart Tp-Note 
+    Backup and delete the configuration file to restart Tp-Note
     with its default configuration.
 
 or
@@ -151,12 +151,12 @@ or
     ---
     Configuration file path:
             "/home/getreu/.config/tp-note/tp-note.toml"
-    Tp-Note version: '1.4.2'
-    Configuration file version: '1.3.2'
-
+    Configuration file version: '1.5.2'
+    Tp-Note version: '1.5.4'
+    Minimum required configuration file version: '1.5.4'
     ---
-    Backup and delete the old config file to restart Tp-Note with its default 
-    values compatible with this version.
+    Backup and delete the old config file to restart Tp-Note with
+    its default values compatible with this version.
 
 As the above error messages suggest, the solution is to backup and delete the
 old incompatible configuration file. Next time you start _Tp-Note_, a new
@@ -201,5 +201,5 @@ Copyright:
 <!--
 Build status:
 
-* ![status](https://travis-ci.org/getreu/tp-note.svg?branch=master)  
+* ![status](https://travis-ci.org/getreu/tp-note.svg?branch=master)
 -->
