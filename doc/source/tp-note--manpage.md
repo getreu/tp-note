@@ -385,12 +385,12 @@ revision:   "1.1"
 ```
 
 When _Tp-Note_ synchronizes the note's metadata with its filename, it will also
-change the sort-tag from '`20200306-`' to '`20200307-`'. The resulting
-filename becomes "`20200307-'1. The Beginning--Note.md`".
+change the sort-tag from '`20200306-`' to '`20200307-`'. The resulting filename
+becomes "`20200307-'1. The Beginning--Note.md`".
 
-The same way it is possible to pin the sort tag of the note from within
-the note's meta-data, you can also change the file extension by adding
-the optional '`extension`' variable into the notes front matter:
+In the same way, it is possible to pin the sort tag of the note from within the
+note's meta-data, you can also change the file extension by adding the optional
+'`extension`' variable into the notes front matter:
 
 ``` yaml
 ---
@@ -499,7 +499,7 @@ used to create the note's content (front-matter and body) and filename-templates
 '`tmpl_*_filename`' used to calculate the note's filename.
 
 Strings in the YAML front matter of content-templates are JSON encoded.
-Therefor all variables used in the front matter must pass an additional
+Therefore, all variables used in the front matter must pass an additional
 '`json_encode()`'-filter. For example, the variable '`{{ file_dirname }}`'
 becomes '`{{ file_dirname | json_encode() }}`' or just
 '`{{ file_dirname | json_encode }}`'.
@@ -513,10 +513,10 @@ For this purpose _Tp-Note_ provides the additional Tera filters '`path`' and
 '`path(alpha=true)`'.
 
 * The '`path()`' filter transforms a string in a file system friendly from. This
-  is done by replacing forbidden characters like '`?`' and '`\\`'  with '`_`'
+  is done by replacing forbidden characters like '`?`' and '`\\`' with '`_`'
   or space. This filter can be used with any variables, but is most useful with
-  filename-templates. For example, take a look at the '`tmpl_sync_filename`'
-  template where you find '`{{ subtitle | path }}`'.
+  filename-templates. For example, in the '`tmpl_sync_filename`'
+  template, we find the expression '`{{ subtitle | path }}`'.
 
 * '`path(alpha=true)`' is similar to the above, with one exception: when a string
   starts with a digit '`0`-`9`', the whole string is prepended with `'`.
@@ -562,12 +562,15 @@ only when the user opens the note again with _Tp-Note_.
 
 _Tp-Note_ is markup language agnostic, however the default templates define
 _Markdown_ as default markup language. To change this, just edit the following
-2 templates:
+3 variables:
 
-1. Change the variable '`extension_default='md'`' to e.g.
-   '`extension_default='rst'`'
+1. Change the variable '`extension_default'`'. Example:
+   '`extension_default='rst'`'.
 
-2. The last line in template '`tmpl_clipboard_content`' defines a hyperlink in
+2. Change the variable '`note_file_extension`'. Example:
+   '`note_file_extensions = [ 'rst', 'rest', 'restructuredtext' ]`'.
+
+3. The last line in the template '`tmpl_clipboard_content`' defines a hyperlink in
    Markdown format. Change the link format according to your markup language
    convention.
 
