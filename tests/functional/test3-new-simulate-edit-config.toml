@@ -1,5 +1,12 @@
 version = '1.5.4'
 extension_default = 'md'
+note_file_extensions = [
+    'md',
+    'markdown',
+    'markdn',
+    'mdown',
+    'mdtxt',
+]
 tmpl_new_content = '''
 ---
 title:      {{ file_dirname | json_encode() }}
