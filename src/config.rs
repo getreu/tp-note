@@ -24,7 +24,7 @@ const CURRENT_EXE: &str = "tp-note";
 const CONFIG_FILENAME: &str = "tp-note.toml";
 
 /// File extension of `to-note` files.
-const EXTENSION_DEFAULT: &str = "md";
+pub const EXTENSION_DEFAULT: &str = "md";
 
 /// Maximum length of a note's filename in bytes. If a filename-template produces
 /// a longer string, it will be truncated.
@@ -53,7 +53,7 @@ pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 const TMPL_SYNC_FILENAME: &str = "\
 {{ tag }}\
 {{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
-{{ subtitle | path  }}.{{ file_extension | path }}\
+{{ subtitle | path  }}.{{ extension | path }}\
 ";
 
 /// Default content-template used when the command-line argument <path> is a

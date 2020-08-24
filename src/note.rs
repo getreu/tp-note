@@ -10,6 +10,7 @@ extern crate time;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
+use crate::config::EXTENSION_DEFAULT;
 use crate::config::NOTE_FILENAME_LEN_MAX;
 use crate::content::Content;
 use crate::filter::ContextWrapper;
@@ -43,9 +44,12 @@ struct FrontMatter {
     title: String,
     /// The compulsory note's subtitle.
     subtitle: String,
-    /// Optional tag variable. If not defined in front matter,
-    /// the file name's sort tag is used (if any).
+    /// Optional YAML header variable. If not defined in front matter,
+    /// the file name's sort tag `file_tag` is used (if any).
     tag: Option<String>,
+    /// Optional YAML header variable. If not defined in front matter,
+    /// the file name's extension `file_extension` is used.
+    extension: Option<String>,
 }
 
 use std::fs;
@@ -64,6 +68,24 @@ impl Note {
 
         context.insert("title", &fm.title);
         context.insert("subtitle", &fm.subtitle);
+
+        // Copy value of `file_extension` as default for `extension`.
+        if let Some(val) = context.get("file_extension") {
+            if let serde_json::Value::String(file_extension) = val {
+                let file_extension = file_extension.to_string();
+                context.insert("extension", &file_extension);
+            } else {
+                context.insert("extension", EXTENSION_DEFAULT);
+            }
+        }
+
+        // Read YAML header variable `tag` if any.
+        if let Some(extension) = &fm.extension {
+            if !extension.is_empty() {
+                // Overwrites `tag` key copied above.
+                context.insert("extension", extension);
+            };
+        };
 
         // Copy value of `file_tag` as default for `tag`.
         if let Some(val) = context.get("file_tag") {
@@ -196,6 +218,7 @@ impl Note {
                 .to_str()
                 .unwrap_or_default(),
         );
+        // Default extension for new notes as defined in the configuration file.
         context.insert("extension_default", CFG.extension_default.as_str());
 
         // search for UNIX, Windows and MacOS user-names

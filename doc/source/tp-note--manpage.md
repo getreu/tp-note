@@ -385,13 +385,35 @@ revision:   "1.1"
 ```
 
 When _Tp-Note_ synchronizes the note's metadata with its filename, it will also
-change the sort-tag from '`20200306-`' to '`20200307-`'.
+change the sort-tag from '`20200306-`' to '`20200307-`'. The resulting
+filename becomes "`20200307-'1. The Beginning--Note.md`".
 
-Note: When a `tag` variable is defined in the note's YAML header, you should
+The same way it is possible to pin the sort tag of the note from within
+the note's meta-data, you can also change the file extension by adding
+the optional '`extension`' variable into the notes front matter:
+
+``` yaml
+---
+title:      "1. The Beginning"
+subtitle:   "Note"
+author:     "getreu"
+date:       "March  7, 2020"
+tag:        "20200307-"
+extension:  "rst"
+lang:       "en_GB.UTF-8"
+revision:   "1.1"
+---
+```
+
+This will change the file extension from '`.md`' to '`.rst`. The resulting
+filename becomes "`20200307-'1. The Beginning--Note.rst`".
+
+Note: When a '`tag`' variable is defined in the note's YAML header, you should
 not adjust the sort-tag string in its file name manually by renaming the file,
 as your change will be overwritten next time you open the note with _Tp-Note_.
 However, you can switch back to _Tp-Note_'s default behaviour any time by
-deleting the '`tag`' line in the note's metadata.
+deleting the '`tag`' line in the note's metadata. The same applies to the
+'`extension`' variable.
 
 
 
@@ -453,13 +475,18 @@ In addition, _Tp-Note_ defines the following variables:
 * '`{{ file_extension }}`': the filename extension of the current note
   on disk,
 
+* '`{{ extension }}`': holds the value of the optional YAML header variable
+  '`extension`' (e.g. '`extension: "rst"`'). If not defined there, it
+  defaults to '`{{ file_extension }}`'. This variable is only available in the
+  '`TMPL_SYNC_FILENAME`' template!
+
 * '`{{ extension_default }}`': the default extension for new notes
   (can be changed in the configuration file),
 
 * '`{{ username }}`': the content of the first non-empty environment
   variable: `LOGNAME`, `USER` or `USERNAME`.
 
-* '`{{ title }}`': the title as indicated in the YAML front matter of the 
+* '`{{ title }}`': the title as indicated in the YAML front matter of the
   note (only available in filename-templates).
 
 * '`{{ subtitle }}`': the subtitle as indicated in the YAML front matter of
@@ -488,7 +515,7 @@ For this purpose _Tp-Note_ provides the additional Tera filters '`path`' and
 * The '`path()`' filter transforms a string in a file system friendly from. This
   is done by replacing forbidden characters like '`?`' and '`\\`'  with '`_`'
   or space. This filter can be used with any variables, but is most useful with
-  filename-templates. For example, take a look at the '`tmpl_sync_filename`' 
+  filename-templates. For example, take a look at the '`tmpl_sync_filename`'
   template where you find '`{{ subtitle | path }}`'.
 
 * '`path(alpha=true)`' is similar to the above, with one exception: when a string
