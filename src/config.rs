@@ -240,7 +240,6 @@ const VIEWER_ARGS: &[&[&str]] = &[
     &[&"leafpad"],
     &[&"nvim-qt", &"--nofork", &"-R"],
     &[&"gvim", &"--nofork", &"-R"],
-    &[&"nvim", &"-R"],
     &[&"nano"],
     &[&"nvim", &"-R"],
     &[&"vim", &"-R"],
