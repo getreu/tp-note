@@ -414,6 +414,7 @@ mod tests {
             title: "The book".to_string(),
             subtitle: "you always wanted".to_string(),
             tag: None,
+            extension: None,
         };
 
         assert_eq!(
@@ -433,6 +434,7 @@ mod tests {
             title: "The book".to_string(),
             subtitle: "you always wanted".to_string(),
             tag: None,
+            extension: None,
         };
 
         assert_eq!(
@@ -440,19 +442,21 @@ mod tests {
             Note::deserialize_note(&input).unwrap()
         );
 
-        // Front matter can optionally have a tag
+        // Front matter can optionally have a tag and an extension
 
         let input = "--- # document start
         title: \"The book\"
         subtitle: you always wanted
         author: It's me
         tag: 20200420-21_22
+        extension: rst
         ---\ncontent\nmore content";
 
         let expected_front_matter = FrontMatter {
             title: "The book".to_string(),
             subtitle: "you always wanted".to_string(),
             tag: Some("20200420-21_22".to_string()),
+            extension: Some("rst".to_string()),
         };
 
         assert_eq!(
