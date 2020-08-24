@@ -543,8 +543,8 @@ impl Clipboard {
         let mut linkurl = String::new();
         // If there is a hyperlink in clipboard, destructure.
         if let Some(hyperlink) = hyperlink {
-            linkname = hyperlink.name.to_owned();
-            linkurl = hyperlink.url.to_owned();
+            linkname = hyperlink.name;
+            linkurl = hyperlink.url;
         };
 
         // Limit the size of `linkname`.
