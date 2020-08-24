@@ -99,10 +99,8 @@ impl Note {
 
         // Read YAML header variable `tag` if any.
         if let Some(tag) = &fm.tag {
-            if !tag.is_empty() {
-                // Overwrites `tag` key copied above.
-                context.insert("tag", tag);
-            };
+            // Overwrites `tag` key copied above.
+            context.insert("tag", tag);
         };
 
         Ok(Self {

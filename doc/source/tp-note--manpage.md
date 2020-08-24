@@ -364,23 +364,22 @@ change the rest of the filename!
 
 The reason why by default _Tp-Note_ does not change sort-tags is, that they
 define their order in the file listing. In general this order is independent of
-the notes content. Nevertheless, in some cases you might want to have full
-control over the whole file name through note's YAML front matter. For
-example, for some reason, you have changed the document's date in the front
-matter and you want to change the chronological sort tag as well. In order to
-overwrite the note's sort-tag on disk, you can add a '`tag`' variable to its
-front matter:
+the notes content. The simplest way to organize the sort-tags of your files is
+by renaming them directly in your file-system. Nevertheless, in some cases you
+might want to have full control over the whole filename through the note's YAML
+front matter. For example, if — for some reason — you have changed the
+document's date in the front matter and you want to change the chronological
+sort tag in one go. In order to overwrite the note's sort-tag on disk, you can
+add a '`tag`' variable to its front matter:
 
 
 ``` yaml
 ---
 title:      "1. The Beginning"
-subtitle:   "Note"
-author:     "getreu"
+...
 date:       "March  7, 2020"
 tag:        "20200307-"
-lang:       "en_GB.UTF-8"
-revision:   "1.1"
+...
 ---
 ```
 
@@ -388,20 +387,28 @@ When _Tp-Note_ synchronizes the note's metadata with its filename, it will also
 change the sort-tag from '`20200306-`' to '`20200307-`'. The resulting filename
 becomes "`20200307-'1. The Beginning--Note.md`".
 
-In the same way, it is possible to pin the sort tag of the note from within the
-note's meta-data, you can also change the file extension by adding the optional
-'`extension`' variable into the notes front matter:
+The '`tag`' variable also becomes handy, when you want to create one single
+note without any sort-tag:
 
 ``` yaml
 ---
 title:      "1. The Beginning"
-subtitle:   "Note"
-author:     "getreu"
-date:       "March  7, 2020"
-tag:        "20200307-"
+...
+tag:        ""
+...
+---
+```
+
+In the same way, how it is possible to pin the sort-tag of the note from within
+the note's meta-data, you can also change the file extension by adding the
+optional '`extension`' variable into the note's front matter:
+
+``` yaml
+---
+title:      "1. The Beginning"
+...
 extension:  "rst"
-lang:       "en_GB.UTF-8"
-revision:   "1.1"
+...
 ---
 ```
 
