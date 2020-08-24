@@ -26,6 +26,14 @@ const CONFIG_FILENAME: &str = "tp-note.toml";
 /// File extension of `to-note` files.
 pub const EXTENSION_DEFAULT: &str = "md";
 
+/// List of file extensions Tp-Note recognizes as note-files and opens to read their YAML header.
+/// Files with other file extensions will not be opened by Tp-Note. Instead, a new note is created
+/// with the TMPL_ANNOTATE_CONTENT and TMPL_ANNOTATE_FILENAME templates. It is possible to add
+/// file extensions of other markup languages than Markdown here, as long as these files come with
+/// a valid YAML meta-data header.
+pub const NOTE_FILE_EXTENSIONS: &[&str] =
+    &[EXTENSION_DEFAULT, "markdown", "markdn", "mdown", "mdtxt"];
+
 /// Maximum length of a note's filename in bytes. If a filename-template produces
 /// a longer string, it will be truncated.
 #[cfg(not(test))]
@@ -323,6 +331,7 @@ pub static ref ARGS : Args = Args::from_args();
 pub struct Cfg {
     pub version: String,
     pub extension_default: String,
+    pub note_file_extensions: Vec<String>,
     pub tmpl_new_content: String,
     pub tmpl_new_filename: String,
     pub tmpl_clipboard_content: String,
@@ -349,6 +358,10 @@ impl ::std::default::Default for Cfg {
         Cfg {
             version,
             extension_default: EXTENSION_DEFAULT.to_string(),
+            note_file_extensions: NOTE_FILE_EXTENSIONS
+                .iter()
+                .map(|a| (*a).to_string())
+                .collect(),
             tmpl_new_content: TMPL_NEW_CONTENT.to_string(),
             tmpl_new_filename: TMPL_NEW_FILENAME.to_string(),
             tmpl_clipboard_content: TMPL_CLIPBOARD_CONTENT.to_string(),
@@ -386,11 +399,14 @@ lazy_static! {
         .unwrap_or_default()
         ).unwrap_or_else(|e| {
             print_message(&format!(
-                "Application error: unable to load, parse or write the configuration file:\n---\n\
+                "Application error: unable to load, parse or write the configuration file:\n\
+                ---\n\
                 Configuration file path:\n\
                 \t{:?}\n\
                 Error:\n\
                 \t{}\n\
+                Note: this error may occur after upgrading Tp-Note due to some incompatible\n\
+                configuration file changes.\n\
                 ---\nBackup and delete the configuration file to restart Tp-Note \n\
                 with its default configuration.", *CONFIG_PATH, e));
             process::exit(1);

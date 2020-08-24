@@ -135,14 +135,20 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
         // Write new note on disk.
         n.write_to_disk(&new_fqfn)
     } else {
-        // Is `path` a tp-note file (`.md`) or a foreign file?
-        if path
+        let file_extension = path
             .extension()
             .unwrap_or_default()
             .to_str()
-            .unwrap_or_default()
-            == CFG.extension_default.as_str()
-        {
+            .unwrap_or_default();
+        // Points `path` to tp-note file (`.md` or similar) or a foreign file?
+        let mut extension_is_known = false;
+        for e in &CFG.note_file_extensions {
+            if e == file_extension {
+                extension_is_known = true;
+                break;
+            }
+        }
+        if extension_is_known {
             // SYNCHRONIZE FILENAME
             // `path` points to an existing tp-note file.
             // Check if in sync with its filename:
