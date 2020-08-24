@@ -415,6 +415,10 @@ extension:  "rst"
 This will change the file extension from '`.md`' to '`.rst`. The resulting
 filename becomes "`20200307-'1. The Beginning--Note.rst`".
 
+Important: '`extension`' must be one of the registered file extensions
+listed in the '`note_file_extensions`' variable in Tp-Note's configuration
+file. If needed you can add more extensions there.
+
 Note: When a '`tag`' variable is defined in the note's YAML header, you should
 not adjust the sort-tag string in its file name manually by renaming the file,
 as your change will be overwritten next time you open the note with _Tp-Note_.

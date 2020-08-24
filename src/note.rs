@@ -125,7 +125,7 @@ impl Note {
             tera.extend(&TERA).unwrap();
 
             tera.render_str(template, &context)
-                .with_context(|| format!("failed to render template:\n`{}`", template))?
+                .with_context(|| format!("failed to render the template:\n`{}`", template))?
                 .as_str()
         });
 
@@ -255,7 +255,7 @@ impl Note {
                     };
                     filename
                 })
-                .with_context(|| format!("failed to render template:\n`{}`", template))?
+                .with_context(|| format!("failed to render the template:\n`{}`", template))?
                 .trim()
         });
 
@@ -344,6 +344,30 @@ impl Note {
                     )));
                 }
             };
+        };
+
+        // `extension` has also additional constrains to check.
+        if let Some(extension) = &fm.extension {
+            let mut extension_is_known = false;
+            for e in &CFG.note_file_extensions {
+                if e == extension {
+                    extension_is_known = true;
+                    break;
+                }
+            }
+            // Check for forbidden characters.
+            if !extension_is_known {
+                return Err(anyhow!(format!(
+                    "`extension=\"{}\"`, is not registered as a valid\n\
+                        Tp-Note-file in the `note_file_extensions` variable\n\
+                        in your configuration file:\n\
+                        \t{:?}\n\
+                        \n\
+                        Choose one of the above list or add more extensions to\n\
+                        `note_file_extensions` in your configuration file.",
+                    extension, &CFG.note_file_extensions
+                )));
+            }
         };
 
         Ok(fm)

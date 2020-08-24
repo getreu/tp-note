@@ -74,7 +74,7 @@ const MESSAGE_ALERT_WINDOW_TITLE: &str = "Tp-Note Application Error";
 fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
     // parse file again to check for synchronicity with filename
     let n = Note::from_existing_note(&path)
-        .context("failed to parse YAML front matter: can not synchronize filename!")?;
+        .context("failed to parse the note's metadata: can not synchronize the filename!")?;
 
     println!("Applying template `tmpl_sync_filename`.");
     let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename)?;
@@ -343,7 +343,7 @@ fn main() -> Result<(), anyhow::Error> {
             if path.is_file() {
                 print_message(&format!(
                     "Error while executing: {}\n---\n\
-                    {:?}\n---\nPlease correct error.\n\
+                    {:?}\n---\nPlease correct the error.\n\
                      Trying to start editor without synchronization...",
                     args_str, e
                 ));
@@ -351,7 +351,7 @@ fn main() -> Result<(), anyhow::Error> {
             } else {
                 print_message(&format!(
                     "Error while executing: {}\n---\n\
-                    {:?}\n---\nPlease correct error.",
+                    {:?}\n---\nPlease correct the error.",
                     args_str, e
                 ));
             }
