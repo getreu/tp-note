@@ -405,8 +405,9 @@ lazy_static! {
                 \t{:?}\n\
                 Error:\n\
                 \t{}\n\
-                Note: this error may occur after upgrading Tp-Note due to some incompatible\n\
-                configuration file changes.\n\
+                \n\
+                Note: this error may occur after upgrading Tp-Note due\n\
+                to some incompatible configuration file changes.\n\
                 ---\nBackup and delete the configuration file to restart Tp-Note \n\
                 with its default configuration.", *CONFIG_PATH, e));
             process::exit(1);

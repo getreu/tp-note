@@ -377,8 +377,8 @@ or
     Configuration file path:
             "/home/getreu/.config/tp-note/tp-note.toml"
     Configuration file version: '1.5.2'
-    Tp-Note version: '1.5.4'
-    Minimum required configuration file version: '1.5.4'
+    Tp-Note version: '1.5.3'
+    Minimum required configuration file version: '1.5.3'
     ---
     Backup and delete the old config file to restart Tp-Note with
     its default values compatible with this version.
