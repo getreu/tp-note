@@ -347,6 +347,7 @@ impl Note {
         };
 
         // `extension` has also additional constrains to check.
+        // Is `extension` listed in `CFG.note_file_extension`?
         if let Some(extension) = &fm.extension {
             let mut extension_is_known = false;
             for e in &CFG.note_file_extensions {
@@ -355,7 +356,6 @@ impl Note {
                     break;
                 }
             }
-            // Check for forbidden characters.
             if !extension_is_known {
                 return Err(anyhow!(format!(
                     "`extension=\"{}\"`, is not registered as a valid\n\
@@ -471,14 +471,14 @@ mod tests {
         subtitle: you always wanted
         author: It's me
         tag: 20200420-21_22
-        extension: rst
+        extension: md
         ---\ncontent\nmore content";
 
         let expected_front_matter = FrontMatter {
             title: "The book".to_string(),
             subtitle: "you always wanted".to_string(),
             tag: Some("20200420-21_22".to_string()),
-            extension: Some("rst".to_string()),
+            extension: Some("md".to_string()),
         };
 
         assert_eq!(
