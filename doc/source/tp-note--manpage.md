@@ -44,7 +44,7 @@ associated with one content-template and one filename-template.
 
 When '`<path>`' is a directory and the clipboard is not empty, the clipboard's
 content is stored in the variable '`{{ clipboard }}`'. In addition, if the
-content is a hyperlink in markdown format, the hyperlink's name is stored in
+content is a hyperlink in Markdown format, the hyperlink's name is stored in
 '`{{ clipboard_linkname }}`', and its url in '`{{ clipboard_linkurl }}`'. The
 new note is then created with the '`tmpl_clipboard_content`' and the
 '`tmpl_clipboard_filename`' templates.  Finally, the newly created file is
@@ -93,7 +93,7 @@ is possible to adapt the template in _Tp-Note_'s configuration file. Please
 note, that the filename is a simplified and sanitized concatenation of: date,
 title and subtitle.
 
-### The clipboard contains a markdown link
+### The clipboard contains a Markdown link
 
 Example: `<path>` is a directory, the clipboard is not empty and it contains
 the string: "`[The Rust Book](https://doc.rust-lang.org/book/)`".
@@ -162,7 +162,7 @@ revision:   "1.0"
 ---
 ```
 
-## New note based on a non-tp-note-file
+## New note based on a non Tp-Note file
 
 When '`<path>`' points to a file whose file-extension is other than '`.md`', a new
 note is created with a similar filename and a reference to the original file
@@ -275,7 +275,7 @@ A _Tp-Note_-note file is always UTF-8 encoded. As newline, either the Unix
 standard '`\n`' or the Windows standard '`\r\n`' is accepted. _Tp-Note_ writes
 out newlines according the operating system it runs on.
 
-_Tp-Note_ is designed to be compatible with '`Pandoc`'s and '`Rmarkdown`s
+_Tp-Note_ is designed to be compatible with '`Pandoc`'s and '`RMarkdown`s
 document structure as shown in the figure below.
 
 ``` yaml
@@ -290,7 +290,7 @@ and ends with '`...`' or '`---`'. Note that according to the YAML standard,
 string-literals are always encoded as JSON strings.
 
 There is no restriction about the markup language used in the note's text body.
-However, the default templates assume that markdown and the file extension
+However, the default templates assume that Markdown and the file extension
 '`.md`' is used. Both can be changed easily by adapting _Tp-Note_'s
 configuration file.
 
@@ -568,6 +568,68 @@ only drawback is, that _Tp-Note_ can not synchronize the filename with the
 note's metadata when the user has finished editing. It will still happen, but
 only when the user opens the note again with _Tp-Note_.
 
+## Register a Flatpak Markdown editor
+
+[Flathub for Linux] is a cross-platform application repository that works well
+with _Tp-Note_.  To showcase an example, we will add a _Tp-Note_ launcher for
+the _Mark Text_ Markdown file editor available as [Flatpak package]. Before
+installing, make sure that you have [setup Flatpack] correctly. Then install
+the application with:
+
+[Flathub for Linux]: https://www.flathub.org/home
+[Flatpak package]: https://www.flathub.org/apps/details/com.github.marktext.marktext
+[setup Flatpack]: https://flatpak.org/setup/
+
+    > sudo flatpak install flathub com.github.marktext.marktext
+
+To test, run _Mark Text_ from the command-line:
+
+    > flatpak run com.github.marktext.marktext
+
+The _Mark Text_ file editor should open.  Now edit the configuration file
+`tp-note.toml` and search for the '`editor_args`' variable, quoted shortened
+below:
+
+```toml
+editor_args = [
+    ['typora'],
+    [
+    'code',
+    '-w',
+    '-n',
+],
+#...
+]
+```
+
+The structure of this variable is a list of lists. Every item in the outer list
+corresponds to one command line to run a certain file editor, here _Typora_ and
+_VSCode_.  When launching, _Tp-Note_ searches through this list until it finds
+an installed application on the system. We will insert the _Mark Text_ editor
+at the first place in this list, by inserting '`['flatpak', 'run',
+'com.github.marktext.marktext'],`'
+:
+
+```toml
+editor_args = [
+    [
+    'flatpak',
+    'run',
+    'com.github.marktext.marktext',
+],
+    ['typora'],
+    [
+    'code',
+    '-w',
+    '-n',
+],,
+#...
+]
+```
+
+Save the modified configuration file.  Next time you launch _Tp-Note_, the
+_Apostrophe_-editor should open.
+
 
 ## Change the markup language
 
@@ -575,7 +637,7 @@ _Tp-Note_ is markup language agnostic, however the default templates define
 _Markdown_ as default markup language. To change this, just edit the following
 3 variables:
 
-1. Change the variable '`extension_default'`'. Example:
+1. Change the variable '`extension_default`'. Example:
    '`extension_default='rst'`'.
 
 2. Change the variable '`note_file_extension`'. Example:
