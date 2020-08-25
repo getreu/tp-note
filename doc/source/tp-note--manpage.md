@@ -547,7 +547,7 @@ leading or trailing position. For this reason no '`path`'-filter is allowed
 with '`{{ tag }}`' and '`{{ file_tag }}`'.
 
 
-## Register your own external text editor for usage with Tp-Note
+## Register your own external text editor
 
 The configuration file variables '`editor_args`' and '`viewer_args`' define a
 list of external text editors to be launched for editing. '`viewer_args`' is
@@ -585,8 +585,6 @@ the application with:
 To test, run _Mark Text_ from the command-line:
 
     > flatpak run com.github.marktext.marktext
-
-The _Mark Text_ file editor should open.  Now edit the configuration file
 `tp-note.toml` and search for the '`editor_args`' variable, quoted shortened
 below:
 
@@ -628,7 +626,7 @@ editor_args = [
 ```
 
 Save the modified configuration file.  Next time you launch _Tp-Note_, the
-_Apostrophe_-editor should open.
+_Mark Text_-editor should open.
 
 
 ## Change the markup language
