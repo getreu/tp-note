@@ -63,9 +63,6 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.5.5");
 /// (c) Jens Getreu
 const AUTHOR: &str = "(c) Jens Getreu, 2020";
-/// Window title for error box.
-const ALERT_DIALOG_TITLE: &str = "Tp-Note Application Error";
-
 /// Open the note file `path` on disk and reads its YAML front matter.
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk and return
@@ -73,7 +70,7 @@ const ALERT_DIALOG_TITLE: &str = "Tp-Note Application Error";
 fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
     // parse file again to check for synchronicity with filename
     let n = Note::from_existing_note(&path)
-        .context("failed to parse the note's metadata: can not synchronize the filename!")?;
+        .context("Failed to parse the note's metadata: can not synchronize the filename!")?;
 
     println!("Applying template `tmpl_sync_filename`.");
     let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename)?;
@@ -85,10 +82,10 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
             Ok(new_fqfn)
         } else {
             Err(anyhow!(format!(
-                "can not rename file to {:?}\n\
-                        (file exists already).\n\
-                        Note: at this stage filename and YAML metadata are not in sync!\n\
-                        Change `title`/`subtitle` in YAML front matter of file: {:?}
+                "Can not rename file to {:?}\n\
+                 (file exists already).\n\
+                 Note: at this stage filename and YAML metadata are not in sync!\n\
+                 Change `title`/`subtitle` in the metadata of file: {:?}
                         ",
                 new_fqfn, path
             )))
@@ -109,22 +106,22 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
         let (n, new_fqfn) = if CLIPBOARD.content.is_empty() {
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
             let n = Note::new(&path, &CFG.tmpl_new_content)
-                .context("`can not parse `tmpl_new_content` in config file")?;
+                .context("`Can not parse `tmpl_new_content` in config file.")?;
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_new_filename)
-                .context("`can not parse `tmpl_new_filename` in config file")?;
+                .context("`Can not parse `tmpl_new_filename` in config file.")?;
             println!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
 
             (n, new_fqfn)
         } else {
             // CREATE A NEW NOTE WITH `TMPL_CLIPBOARD_CONTENT` TEMPLATE
             let n = Note::new(&path, &CFG.tmpl_clipboard_content)
-                .context("`can not parse `tmpl_clipboard_content` in config file")?;
+                .context("`Can not parse `tmpl_clipboard_content` in config file.")?;
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_clipboard_filename)
-                .context("`can not parse `tmpl_clipboard_filename` in config file")?;
+                .context("`Can not parse `tmpl_clipboard_filename` in config file.")?;
             println!(
-                "Applying templates `tmpl_clipboard_content`, `tmpl_clipboard_filename` \
+                "Applying templates `tmpl_clipboard_content`, `tmpl_clipboard_filename` \n\
                 and clipboard string: \"{}\"",
                 CLIPBOARD.content_truncated
             );
@@ -158,7 +155,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             println!("Applying templates `tmpl_annotate_content` and `tmpl_annotate_filename`.");
             let n = Note::new(&path, &CFG.tmpl_annotate_content).with_context(|| {
                 format!(
-                    "`can not parse `tmpl_annotate_content` in config file: \n'''\n{}\n'''",
+                    "`Can not parse `tmpl_annotate_content` in config file: \n'''\n{}\n'''",
                     &CFG.tmpl_annotate_content
                 )
             })?;
@@ -189,7 +186,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
             }
             args.push(
                 path.to_str()
-                    .ok_or_else(|| anyhow!(format!("failed to convert argument {:?}", path)))?,
+                    .ok_or_else(|| anyhow!(format!("Failed to convert argument: {:?}", path)))?,
             );
             args_list.push(args);
         }
@@ -202,7 +199,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
             }
             args.push(
                 path.to_str()
-                    .ok_or_else(|| anyhow!(format!("failed to convert argument {:?}", path)))?,
+                    .ok_or_else(|| anyhow!(format!("Failed to convert argument: {:?}", path)))?,
             );
             args_list.push(args);
         }
@@ -217,7 +214,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
             .args(&args_list[i])
             .spawn();
         if let Ok(mut child) = child {
-            let ecode = child.wait().context("failed to wait on editor to close")?;
+            let ecode = child.wait().context("Failed to wait on editor to close.")?;
 
             if !ecode.success() {
                 return Err(anyhow!(format!(
@@ -251,23 +248,19 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
 
     if !executable_found {
         return Err(anyhow!(format!(
-            "None of the following external file editor applications can be\n\
-             found on your system:\n\
+            "None of the following external file editor\n\
+             applications can be found on your system:\n\
              \t{:?}\n\
              \n\
-             Register some already installed file editor in the variable `{}`\n\
-             in Tp-Note's configuration file:\n\
-             \t{:?}\n\
-             \n\
-             or install one of the above listed applications.
-            ",
+             Register some already installed file editor in the variable\n\
+             `{}` in Tp-Note's configuration file  or \n\
+             install one of the above listed applications.",
             &executable_list,
             if ARGS.view {
                 "viewer_args"
             } else {
                 "editor_args"
             },
-            *CONFIG_PATH,
         )));
     };
 
@@ -336,16 +329,14 @@ fn main() -> Result<(), anyhow::Error> {
             && Version::parse(&CFG.version)
                 < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"))
         {
-            AlertDialog::print_message(&format!(
-                "Application error: configuration file version mismatch:\n---\n\
-                Configuration file path:\n\
-                \t{:?}\n\
+            AlertDialog::print_error(&format!(
+                "ERROR: configuration file version mismatch:\n---\n\
                 Configuration file version: \'{}\'\n\
                 Tp-Note version: \'{}\'\n\
                 Minimum required configuration file version: \'{}\'\n\
-                ---\nBackup and delete the old config file to restart Tp-Note with \
-                its default values compatible with this version.",
-                *CONFIG_PATH,
+                \n\
+                Remedy: Backup and delete the old config file in \n\
+                order to restart Tp-Note with its default values.",
                 CFG.version,
                 VERSION.unwrap_or(""),
                 MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"),
@@ -357,18 +348,13 @@ fn main() -> Result<(), anyhow::Error> {
     // Run Tp-Note.
     if let Err(e) = run() {
         // Something went wrong.
-        // Remember the command-line-arguments.
-        let mut args_str = String::new();
-        for argument in env::args() {
-            args_str.push_str(argument.as_str());
-            args_str.push(' ');
-        }
 
         if ARGS.batch {
-            AlertDialog::print_message_console(&format!(
-                "Error while executing: {}\n---\n\
-                    {:?}\n---",
-                args_str, e
+            AlertDialog::print_error_console(&format!(
+                "ERROR:\n\
+                ---\n\
+                \t{:?}",
+                e
             ));
         } else {
             // Unwrap path argument.
@@ -376,18 +362,24 @@ fn main() -> Result<(), anyhow::Error> {
             let path: &Path = ARGS.path.as_ref().unwrap_or(&no_path);
 
             if path.is_file() {
-                AlertDialog::print_message(&format!(
-                    "Error while executing: {}\n---\n\
-                    {:?}\n---\nPlease correct the error.\n\
-                     Trying to start editor without synchronization...",
-                    args_str, e
+                AlertDialog::print_error(&format!(
+                    "ERROR:\n\
+                    ---\n\
+                    \t{:?}\n\
+                    \n\
+                    Please correct the error.
+                    Trying to start editor without synchronization...",
+                    e
                 ));
                 launch_editor(path)?;
             } else {
-                AlertDialog::print_message(&format!(
-                    "Error while executing: {}\n---\n\
-                    {:?}\n---\nPlease correct the error and start again.",
-                    args_str, e
+                AlertDialog::print_error(&format!(
+                    "ERROR:\n\
+                    ---\n\
+                    \t{:?}\n\
+                    \n\
+                    Please correct the error and start again.",
+                    e
                 ));
             }
         }

@@ -59,7 +59,7 @@ impl Note {
     pub fn from_existing_note(path: &Path) -> Result<Self> {
         let content = Content::new(
             fs::read_to_string(path)
-                .with_context(|| format!("failed to read `{}`", path.display()))?
+                .with_context(|| format!("Failed to read `{}`.", path.display()))?
                 .as_str(),
         );
         let fm = Self::deserialize_note(&content)?;
@@ -125,7 +125,7 @@ impl Note {
             tera.extend(&TERA).unwrap();
 
             tera.render_str(template, &context)
-                .with_context(|| format!("failed to render the template:\n`{}`", template))?
+                .with_context(|| format!("Failed to render the template:\n`{}`.", template))?
                 .as_str()
         });
 
@@ -255,7 +255,7 @@ impl Note {
                     };
                     filename
                 })
-                .with_context(|| format!("failed to render the template:\n`{}`", template))?
+                .with_context(|| format!("Failed to render the template:\n`{}`.", template))?
                 .trim()
         });
 
@@ -311,7 +311,7 @@ impl Note {
 
         let fm_start = content
             .find("---")
-            .context("no YAML front matter start line '---' found")?
+            .context("No YAML front matter start line '---' found.")?
             + 3;
 
         let fm_end = content[fm_start..]
@@ -321,7 +321,7 @@ impl Note {
 
         if fm_start >= fm_end {
             return Err(anyhow!(
-                "no YAML front matter end line `---` or `...` found"
+                "No YAML front matter end line `---` or `...` found."
             ));
         }
 
@@ -384,15 +384,15 @@ impl Note {
             Ok(mut outfile) => {
                 println!("Creating file: {:?}", new_fqfn);
                 write!(outfile, "{}", &self.content.to_osstring())
-                    .with_context(|| format!("can not write new file {:?}", new_fqfn))?
+                    .with_context(|| format!("Can not write new file {:?}", new_fqfn))?
             }
             Err(e) => {
                 if Path::new(&new_fqfn).exists() {
-                    println!("can not create new file, file exists: {}", e);
-                    println!("Instead, try to read existing: {:?}", new_fqfn);
+                    println!("Info: Can not create new file, file exists: {}", e);
+                    println!("Info: Instead, try to read existing: {:?}", new_fqfn);
                 } else {
                     return Err(anyhow!(format!(
-                        "can not write file: {:?}\n{}",
+                        "Can not write file: {:?}\n{}",
                         new_fqfn, e
                     )));
                 }

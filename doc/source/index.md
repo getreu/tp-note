@@ -135,28 +135,38 @@ configuration file structure. In order not to loose the changes you made in
 this file, the installer does not replace it automatically with a new version.
 Instead, you might see one of the following messages:
 
-    Application error: unable to load/write configuration file:
+    ERROR: unable to load, parse or write the configuration file
     ---
-    Configuration file path:
-            "/home/getreu/.config/tp-note/tp-note.toml"
-    Error:
             Bad TOML data: missing field `version` at line 1 column 1
-    ---
-    Backup and delete the configuration file to restart Tp-Note
+
+    Note: this error may occur after upgrading Tp-Note due
+    to some incompatible configuration file changes.
+
+    Remedy: backup and delete the configuration file to restart Tp-Note
     with its default configuration.
+    ---
+    Additional technical information:
+    Command line parameters:
+            target/debug/tp-note
+    Configuration file path:
+            "/home/getreu/.config/tp-note/tp-note.toml".
 
 or
 
-    Application error: configuration file version mismatch:
+    ERROR: configuration file version mismatch:
     ---
+    Configuration file version: '1.5.4'
+    Tp-Note version: '1.5.5'
+    Minimum required configuration file version: '1.5.5'
+
+    Remedy: backup and delete the old config file to restart Tp-Note
+    with its default values compatible with this version.
+    ---
+    Additional technical information:
+    Command line parameters:
+            target/debug/tp-note
     Configuration file path:
             "/home/getreu/.config/tp-note/tp-note.toml"
-    Configuration file version: '1.5.2'
-    Tp-Note version: '1.5.3'
-    Minimum required configuration file version: '1.5.3'
-    ---
-    Backup and delete the old config file to restart Tp-Note with
-    its default values compatible with this version.
 
 As the above error messages suggest, the solution is to backup and delete the
 old incompatible configuration file. Next time you start _Tp-Note_, a new

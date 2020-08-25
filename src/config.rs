@@ -396,18 +396,16 @@ lazy_static! {
         .to_str()
         .unwrap_or_default()
         ).unwrap_or_else(|e| {
-            AlertDialog::print_message(&format!(
-                "Application error: unable to load, parse or write the configuration file:\n\
+            AlertDialog::print_error(&format!(
+               "ERROR: unable to load, parse or write the configuration file\n\
                 ---\n\
-                Configuration file path:\n\
-                \t{:?}\n\
-                Error:\n\
                 \t{}\n\
                 \n\
                 Note: this error may occur after upgrading Tp-Note due\n\
                 to some incompatible configuration file changes.\n\
-                ---\nBackup and delete the configuration file to restart Tp-Note \n\
-                with its default configuration.", *CONFIG_PATH, e));
+                \n\
+                Remedy: backup and delete the configuration file in order\n\
+                to restart Tp-Note with its default configuration.", e));
             process::exit(1);
         }
     );
@@ -420,7 +418,7 @@ lazy_static! {
             PathBuf::from(c)
         } else {
             let config = ProjectDirs::from("rs", "", CURRENT_EXE).unwrap_or_else(|| {
-                AlertDialog::print_message("Application error: \
+                AlertDialog::print_error("ERROR:\n\
                     unable to determine the configuration file directory.");
                 process::exit(1)
             });
@@ -441,8 +439,8 @@ lazy_static! {
                 let s = ctx.get_contents().ok();
                 if let Some(s) = &s {
                     if s.len() > CLIPBOARD_LEN_MAX {
-                        AlertDialog::print_message(&format!(
-                            "Warning: the clipboard content is discarded because its size \
+                        AlertDialog::print(&format!(
+                            "WARNING: the clipboard content is discarded because its size \
                             exceeds {} bytes.", CLIPBOARD_LEN_MAX));
                         return Clipboard::default();
                     }
