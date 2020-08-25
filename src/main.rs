@@ -14,17 +14,16 @@
 
 mod config;
 mod content;
+mod error;
 mod filter;
 mod note;
 
-extern crate msgbox;
 extern crate semver;
-use crate::config::print_message;
-use crate::config::print_message_console;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
 use crate::config::CONFIG_PATH;
+use crate::error::AlertDialog;
 use crate::note::Note;
 use anyhow::{anyhow, Context};
 use clipboard::ClipboardContext;
@@ -65,7 +64,7 @@ const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.5.5");
 /// (c) Jens Getreu
 const AUTHOR: &str = "(c) Jens Getreu, 2020";
 /// Window title for error box.
-const MESSAGE_ALERT_WINDOW_TITLE: &str = "Tp-Note Application Error";
+const ALERT_DIALOG_TITLE: &str = "Tp-Note Application Error";
 
 /// Open the note file `path` on disk and reads its YAML front matter.
 /// Then calculate from the front matter how the filename should be to
@@ -337,7 +336,7 @@ fn main() -> Result<(), anyhow::Error> {
             && Version::parse(&CFG.version)
                 < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"))
         {
-            print_message(&format!(
+            AlertDialog::print_message(&format!(
                 "Application error: configuration file version mismatch:\n---\n\
                 Configuration file path:\n\
                 \t{:?}\n\
@@ -366,7 +365,7 @@ fn main() -> Result<(), anyhow::Error> {
         }
 
         if ARGS.batch {
-            print_message_console(&format!(
+            AlertDialog::print_message_console(&format!(
                 "Error while executing: {}\n---\n\
                     {:?}\n---",
                 args_str, e
@@ -377,7 +376,7 @@ fn main() -> Result<(), anyhow::Error> {
             let path: &Path = ARGS.path.as_ref().unwrap_or(&no_path);
 
             if path.is_file() {
-                print_message(&format!(
+                AlertDialog::print_message(&format!(
                     "Error while executing: {}\n---\n\
                     {:?}\n---\nPlease correct the error.\n\
                      Trying to start editor without synchronization...",
@@ -385,7 +384,7 @@ fn main() -> Result<(), anyhow::Error> {
                 ));
                 launch_editor(path)?;
             } else {
-                print_message(&format!(
+                AlertDialog::print_message(&format!(
                     "Error while executing: {}\n---\n\
                     {:?}\n---\nPlease correct the error and start again.",
                     args_str, e

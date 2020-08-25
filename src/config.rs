@@ -3,14 +3,13 @@
 
 extern crate clipboard;
 extern crate directories;
-use crate::MESSAGE_ALERT_WINDOW_TITLE;
+use crate::error::AlertDialog;
 use crate::VERSION;
 use anyhow::anyhow;
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
-use msgbox::IconType;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::path::PathBuf;
@@ -397,7 +396,7 @@ lazy_static! {
         .to_str()
         .unwrap_or_default()
         ).unwrap_or_else(|e| {
-            print_message(&format!(
+            AlertDialog::print_message(&format!(
                 "Application error: unable to load, parse or write the configuration file:\n\
                 ---\n\
                 Configuration file path:\n\
@@ -421,7 +420,7 @@ lazy_static! {
             PathBuf::from(c)
         } else {
             let config = ProjectDirs::from("rs", "", CURRENT_EXE).unwrap_or_else(|| {
-                print_message("Application error: \
+                AlertDialog::print_message("Application error: \
                     unable to determine the configuration file directory.");
                 process::exit(1)
             });
@@ -442,7 +441,7 @@ lazy_static! {
                 let s = ctx.get_contents().ok();
                 if let Some(s) = &s {
                     if s.len() > CLIPBOARD_LEN_MAX {
-                        print_message(&format!(
+                        AlertDialog::print_message(&format!(
                             "Warning: the clipboard content is discarded because its size \
                             exceeds {} bytes.", CLIPBOARD_LEN_MAX));
                         return Clipboard::default();
@@ -634,34 +633,6 @@ impl Hyperlink {
             url: input[url_start..url_end].to_string(),
         })
     }
-}
-
-/// Pops up a message box and prints `msg`.
-pub fn print_message(msg: &str) {
-    let title = format!(
-        "{} (v{})",
-        MESSAGE_ALERT_WINDOW_TITLE,
-        VERSION.unwrap_or("unknown")
-    );
-    // Print the same message also to console in case
-    // the window does not pop up due to missing
-    // libraries.
-    print_message_console(msg);
-    // Popup window.
-    msgbox::create(&title, msg, IconType::Info);
-}
-
-/// Prints `msg` on console.
-pub fn print_message_console(msg: &str) {
-    let title = format!(
-        "{} (v{})",
-        MESSAGE_ALERT_WINDOW_TITLE,
-        VERSION.unwrap_or("unknown")
-    );
-    // Print the same message also to console in case
-    // the window does not pop up due to missing
-    // libraries.
-    eprintln!("{}\n\n{}", title, msg);
 }
 
 #[cfg(test)]
