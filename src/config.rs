@@ -417,14 +417,18 @@ lazy_static! {
 lazy_static! {
 /// This is where the `confy` crate stores the configuration file.
     pub static ref CONFIG_PATH : PathBuf = {
-        let config = ProjectDirs::from("rs", "", CURRENT_EXE).unwrap_or_else(|| {
-            print_message("Application error: \
-                unable to determine the configuration file directory.");
-            process::exit(1)
-        });
-        let mut config = PathBuf::from(config.config_dir());
-        config.push(Path::new(CONFIG_FILENAME));
-        config
+        if let Some(c) = &ARGS.config {
+            PathBuf::from(c)
+        } else {
+            let config = ProjectDirs::from("rs", "", CURRENT_EXE).unwrap_or_else(|| {
+                print_message("Application error: \
+                    unable to determine the configuration file directory.");
+                process::exit(1)
+            });
+            let mut config = PathBuf::from(config.config_dir());
+            config.push(Path::new(CONFIG_FILENAME));
+            config
+        }
     };
 }
 

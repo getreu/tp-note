@@ -221,7 +221,28 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
             let ecode = child.wait().context("failed to wait on editor to close")?;
 
             if !ecode.success() {
-                return Err(anyhow!("editor did not terminate gracefully"));
+                return Err(anyhow!(format!(
+                    "The external file editor did not terminate gracefully:\n\
+                     \t{}\n\
+                     \n\
+                     Edit the variable `{}` in Tp-Note's configuration file:\n\
+                     \t{:?}\n\
+                     \n\
+                     and correct the following:\n\
+                     \t{:?}",
+                    ecode.to_string(),
+                    if ARGS.view {
+                        "viewer_args"
+                    } else {
+                        "editor_args"
+                    },
+                    *CONFIG_PATH,
+                    if ARGS.view {
+                        &CFG.viewer_args[i]
+                    } else {
+                        &CFG.editor_args[i]
+                    },
+                )));
             };
 
             executable_found = true;
@@ -231,8 +252,23 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
 
     if !executable_found {
         return Err(anyhow!(format!(
-            "No external editor application found in: {:?}",
-            &executable_list
+            "None of the following external file editor applications can be\n\
+             found on your system:\n\
+             \t{:?}\n\
+             \n\
+             Register some already installed file editor in the variable `{}`\n\
+             in Tp-Note's configuration file:\n\
+             \t{:?}\n\
+             \n\
+             or install one of the above listed applications.
+            ",
+            &executable_list,
+            if ARGS.view {
+                "viewer_args"
+            } else {
+                "editor_args"
+            },
+            *CONFIG_PATH,
         )));
     };
 
@@ -351,7 +387,7 @@ fn main() -> Result<(), anyhow::Error> {
             } else {
                 print_message(&format!(
                     "Error while executing: {}\n---\n\
-                    {:?}\n---\nPlease correct the error.",
+                    {:?}\n---\nPlease correct the error and start again.",
                     args_str, e
                 ));
             }
