@@ -115,13 +115,21 @@ const TMPL_NEW_FILENAME: &str = "\
 /// `{{ get_env(name=\"LOGNAME\") }}`
 /// When placed in YAML-front-matter, the filter `| json_encode` must be
 /// appended to each variable.
+/// Trick: the expression `{% if clipboard != clipboard_heading %}` detects
+/// if the clipboard content has more than one line of text.
 const TMPL_CLIPBOARD_CONTENT: &str = "\
 ---
-{% if clipboard_linkname !='' %}title:      {{ clipboard_linkname | json_encode }}
+{% if clipboard_linkname !='' %}\
+title:      {{ clipboard_linkname | json_encode }}
+{% else %}\
+title:      {{ clipboard_heading | json_encode }}
+{% endif %}\
+{% if clipboard_linkname !='' and clipboard_heading == clipboard %}\
 subtitle:   {{ 'URL' | json_encode }}
-{% else %}title:      {{ clipboard_heading | json_encode }}
+{% else %}\
 subtitle:   {{ 'Note' | json_encode }}
-{% endif %}author:     {{ username | json_encode }}
+{% endif %}\
+author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
@@ -158,19 +166,29 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 /// `{{ get_env(name=\"LOGNAME\") }}`
 /// When placed in YAML-front-matter, the filter `| json_encode` must be
 /// appended to each variable.
+/// Trick: the expression `{% if clipboard != clipboard_heading %}` detects
+/// if the clipboard content has more than one line of text.
 const TMPL_ANNOTATE_CONTENT: &str = "\
 ---
-title:      {{ file_stem | json_encode }}
+title:      {{ file_stem ~ '.' ~ file_extension | json_encode }}
+{% if clipboard_linkname !='' and clipboard_heading == clipboard %}\
+subtitle:   {{ 'URL' | json_encode }}
+{% else %}\
 subtitle:   {{ 'Note' | json_encode }}
+{% endif %}\
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-[{{ file_tag ~ file_stem ~ '.' ~ file_extension }}\
-]({{ file_tag ~ file_stem ~ '.' ~ file_extension }})
-
+[{{ file_tag ~ file_stem ~ '.' ~ file_extension }}]\
+({{ file_tag ~ file_stem ~ '.' ~ file_extension }})
+{% if clipboard != '' %}{% if clipboard != clipboard_heading %}
+---
+{% endif %}
+{{ clipboard }}
+{% endif %}
 ";
 
 /// Filename of a new note, that annotates an existing file on disk given in
