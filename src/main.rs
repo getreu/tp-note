@@ -153,13 +153,8 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             // ANNOTATE FILE: CREATE NEW NOTE WITH TMPL_ANNOTATE_CONTENT TEMPLATE
             // `path` points to a foreign file type that will be annotated.
             println!("Applying templates `tmpl_annotate_content` and `tmpl_annotate_filename`.");
-            let n = Note::new(&path, &CFG.tmpl_annotate_content).with_context(|| {
-                format!(
-                    "`Can not parse `tmpl_annotate_content` in config file: \n'''\n{}\n'''",
-                    &CFG.tmpl_annotate_content
-                )
-            })?;
-
+            let n = Note::new(&path, &CFG.tmpl_annotate_content)
+                .context("`Can not parse `tmpl_annotate_content` in config file.")?;
             let new_fqfn = n.render_filename(&CFG.tmpl_annotate_filename)?;
 
             // Write new note on disk.
