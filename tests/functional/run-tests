@@ -119,7 +119,7 @@ LOGNAME=myuser LANG=en_US.UTF-8 cargo run -- --batch \
     --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/test6-annotate-input-dummy--Note.md"
+OUTPUT_FILENAME="$PWD/test6-annotate-input-dummy.pdf--Note.md"
 
 if diff "$OUTPUT_FILENAME" "$PWD/test6-annotate-expected-output"
 then

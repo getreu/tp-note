@@ -23,9 +23,9 @@ tmpl_new_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ title | path(alpha
 tmpl_clipboard_content = '''
 ---
 {% if clipboard_linkname !='' %}title:      {{ clipboard_linkname | json_encode }}
-subtitle:   {{ 'URL' | json_encode }}
 {% else %}title:      {{ clipboard_heading | json_encode }}
-subtitle:   {{ 'Note' | json_encode }}
+{% endif %}{% if clipboard_linkname !='' and clipboard_heading == clipboard %}subtitle:   {{ 'URL' | json_encode }}
+{% else %}subtitle:   {{ 'Note' | json_encode }}
 {% endif %}author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ get_env(name='LANG', default='') | json_encode }}
@@ -38,16 +38,21 @@ revision:   {{ '1.0' | json_encode }}
 tmpl_clipboard_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ extension_default | path }}'''
 tmpl_annotate_content = '''
 ---
-title:      {{ file_stem | json_encode }}
-subtitle:   {{ 'Note' | json_encode }}
-author:     {{ username | json_encode }}
+title:      {{ file_stem ~ '.' ~ file_extension | json_encode }}
+{% if clipboard_linkname !='' and clipboard_heading == clipboard %}subtitle:   {{ 'URL' | json_encode }}
+{% else %}subtitle:   {{ 'Note' | json_encode }}
+{% endif %}author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
 [{{ file_tag ~ file_stem ~ '.' ~ file_extension }}]({{ file_tag ~ file_stem ~ '.' ~ file_extension }})
-
+{% if clipboard != '' %}{% if clipboard != clipboard_heading %}
+---
+{% endif %}
+{{ clipboard }}
+{% endif %}
 '''
 tmpl_annotate_filename = '''{{ file_tag }}{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ extension_default | path }}'''
 tmpl_sync_filename = '''{{ tag }}{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ extension | path }}'''
@@ -121,10 +126,6 @@ viewer_args = [
     [
     'gvim',
     '--nofork',
-    '-R',
-],
-    [
-    'nvim',
     '-R',
 ],
     ['nano'],
