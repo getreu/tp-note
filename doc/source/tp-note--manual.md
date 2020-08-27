@@ -85,13 +85,13 @@ right-click on some empty white space.
 
 ![We want to take a note about a pdf](images/workflow2-1.png){width="9cm"}
 
-![The new unmodified note created by template](images/workflow2-2.png){width="11cm"}
+![The new unmodified note created automatically](images/workflow2-2.png){width="11cm"}
 
-The source-code of the note shows, that the link has a  target. The left-click, opens the `.odt` document.
+The source-code of the note shows the link with its target. The left-click, opens the `.odt` document.
 
 ```yaml
 ---
-title:      "03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter"
+title:      "Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt"
 subtitle:   "Note"
 author:     "getreu"
 date:       "March 10, 2020"
@@ -107,12 +107,50 @@ revision:   "1.0"
 ![The new note file on disk after closing the editor](images/workflow2-4.png){width="8cm"}
 
 
+## Document the download location of a local file
+
+The approach is similar to what we have seen in the [previous chapter](#taking-notes-about-a-file):
+
+
+![Copy the location of the download page as Markdown](images/workflow6-1.png){width="9cm"}
+
+Note: for convenience I use in this example the Firefox browser addon [Copy
+Selection as Markdown] to copy the hyperlink. If this addon is not available,
+you can also copy the URL directly from the search bar.
+
+![Select the file to annotate and start Tp-Note](images/workflow6-2.png){width="8cm"}
+
+![The new unmodified note created automatically](images/workflow6-3.png){width="11cm"}
+
+The source-code of the note shows the links with their targets.
+
+```yaml
+---
+title:      "ascii-hangman.exe"
+subtitle:   "URL"
+author:     "getreu"
+date:       "2020-08-27"
+lang:       "en_GB.UTF-8"
+revision:   "1.0"
+---
+
+[ascii-hangman.exe](ascii-hangman.exe)
+
+[ASCII-Hangman - hangman game for children with ASCII-art rewarding](https://blog.getreu.net/projects/ascii-hangman/#distribution)
+
+```
+
+![The new note file on disk after closing the editor](images/workflow6-4.png){width="8cm"}
+
+
+
+
 ## Bookmark and comment a hyperlink
 
 
-![Copy a link in markdown format](images/workflow3-2.png){width="11cm"}
+![Copy a link in Markdown format](images/workflow3-2.png){width="11cm"}
 
-To copy a link in markdown format a browser addon is needed. I recommend the
+To copy a link in Markdown format a browser addon is needed. I recommend the
 addons [Copy as Markdown] and [Copy Selection as Markdown] available
 for Firefox.
 
@@ -121,7 +159,7 @@ for Firefox.
 
 ![Right-click on or in the new note's destination folder and start Tp-Note](images/workflow3-3.png){width="9cm"}
 
-![The new unmodified note created by template](images/workflow3-4.png){width="9cm"}
+![The new unmodified note created automatically](images/workflow3-4.png){width="9cm"}
 
 The source code of the note shows the link target:
 
@@ -160,7 +198,7 @@ note.
 
 ![Right-click on or in the new note's destination folder and start Tp-Note](images/workflow4-2.png){width="7cm"}
 
-![The new unmodified note created by template](images/workflow4-3.png){width="9cm"}
+![The new unmodified note created automatically](images/workflow4-3.png){width="9cm"}
 
 ```{=docbook}
 <?dbfo-need height="4cm" ?>
@@ -289,7 +327,7 @@ or less automated and can be divided up into two steps:
    on _Tp-Note_'s [project page](https://blog.getreu.net/projects/tp-note/#distribution)
    for a list of available packages and binaries.
 
-2. Optional integration with your filemananger.
+2. Optional integration with your file mananger.
 
 At the moment of this writing, an installer automating steps 1. and 2. is available for
 Windows only. Packages for Debian Linux and Ubuntu help you with step 1. For other operating
@@ -303,7 +341,7 @@ yourself.
 <?dbfo-need height="6cm" ?>
 ```
 
-## Minimum setup without file-manager integration
+## Minimum setup without file manager integration
 
 _Tp-Note_'s template engine can be tested and used without window manager integration. This
 section shows a minimum setup to get started quickly.[^inst]
@@ -363,19 +401,19 @@ version. Instead, you might see one of the following messages:
     ERROR: unable to load, parse or write the configuration file
     ---
     Bad TOML data: missing field `version` at line 1 column 1
-    
+
     Note: this error may occur after upgrading Tp-Note due
     to some incompatible configuration file changes.
-    
+
     Remedy: backup and delete the configuration file in order
     to restart Tp-Note with its default configuration.
     ---
     Additional technical details:
     *    Command line parameters:
-    tp-note 
+    tp-note
     *    Configuration file path:
     /home/getreu/.config/tp-note/tp-note.toml
-    
+
 or
 
     ERROR: configuration file version mismatch:
@@ -383,13 +421,13 @@ or
     Configuration file version: '1.5.2'
     Tp-Note version: '1.5.5'
     Minimum required configuration file version: '1.5.5'
-    
-    Remedy: Backup and delete the old config file in 
+
+    Remedy: Backup and delete the old config file in
     order to restart Tp-Note with its default values.
     ---
     Additional technical details:
     *    Command line parameters:
-    tp-note 
+    tp-note
     *    Configuration file path:
     /home/getreu/.config/tp-note/tp-note.toml
 
@@ -445,7 +483,7 @@ depending on your operating system.
   text editor, although any Unicode text editor will do (even Notepad >=
   Windows 10-update 1903). _Tp-Note_ it preconfigured to work with:
 
-  - [Typora — a markdown editor, markdown reader.](https://typora.io/)
+  - [Typora — a Markdown editor, Markdown reader.](https://typora.io/)
     Make sure that you have at least version 0.9.89 installed, as this version
     contains a [bugfix](https://github.com/typora/typora-issues/issues/3348)
     required to work properly with _Tp-Note_.
