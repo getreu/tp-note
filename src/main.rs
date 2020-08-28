@@ -318,26 +318,21 @@ fn run() -> Result<(), anyhow::Error> {
 /// Exit prematurely if the configuration file version does
 /// not match the programm version.
 fn main() -> Result<(), anyhow::Error> {
-    // Compare it with the version number of the configuration file.
-    if let Some(v) = VERSION {
-        if v != CFG.version
-            && Version::parse(&CFG.version)
-                < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"))
-        {
-            AlertDialog::print_error(&format!(
-                "ERROR: configuration file version mismatch:\n---\n\
+    // Is version number in the configuration file high enough?
+    if Version::parse(&CFG.version) < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0")) {
+        AlertDialog::print_error(&format!(
+            "ERROR: configuration file version mismatch:\n---\n\
                 Configuration file version: \'{}\'\n\
                 Tp-Note version: \'{}\'\n\
                 Minimum required configuration file version: \'{}\'\n\
                 \n\
                 Remedy: Backup and delete the old config file in \n\
                 order to restart Tp-Note with its default values.",
-                CFG.version,
-                VERSION.unwrap_or(""),
-                MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"),
-            ));
-            process::exit(5);
-        }
+            CFG.version,
+            VERSION.unwrap_or(""),
+            MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"),
+        ));
+        process::exit(5);
     };
 
     // Run Tp-Note.
