@@ -37,8 +37,9 @@ revision:   {{ '1.0' | json_encode }}
 '''
 tmpl_clipboard_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ extension_default | path }}'''
 tmpl_annotate_content = '''
+{% if file_extension == '' -%}{% set dot = '' -%}{% else %}{% set dot = '.' -%}{% endif -%}
 ---
-title:      {{ file_stem ~ '.' ~ file_extension | json_encode }}
+title:      {{ file_stem ~ dot ~ file_extension | json_encode }}
 {% if clipboard_linkname !='' and clipboard_heading == clipboard %}subtitle:   {{ 'URL' | json_encode }}
 {% else %}subtitle:   {{ 'Note' | json_encode }}
 {% endif %}author:     {{ username | json_encode }}
@@ -47,7 +48,7 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-[{{ file_tag ~ file_stem ~ '.' ~ file_extension }}]({{ file_tag ~ file_stem ~ '.' ~ file_extension }})
+[{{ file_tag ~ file_stem ~ dot ~ file_extension }}]({{ file_tag ~ file_stem ~ dot ~ file_extension }})
 {% if clipboard != '' %}{% if clipboard != clipboard_heading %}
 ---
 {% endif %}

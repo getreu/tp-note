@@ -169,8 +169,9 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 /// Trick: the expression `{% if clipboard != clipboard_heading %}` detects
 /// if the clipboard content has more than one line of text.
 const TMPL_ANNOTATE_CONTENT: &str = "\
+{% if file_extension == '' -%}{% set dot = '' -%}{% else %}{% set dot = '.' -%}{% endif -%}
 ---
-title:      {{ file_stem ~ '.' ~ file_extension | json_encode }}
+title:      {{ file_stem ~ dot ~ file_extension | json_encode }}
 {% if clipboard_linkname !='' and clipboard_heading == clipboard %}\
 subtitle:   {{ 'URL' | json_encode }}
 {% else %}\
@@ -182,8 +183,8 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-[{{ file_tag ~ file_stem ~ '.' ~ file_extension }}]\
-({{ file_tag ~ file_stem ~ '.' ~ file_extension }})
+[{{ file_tag ~ file_stem ~ dot ~ file_extension }}]\
+({{ file_tag ~ file_stem ~ dot ~ file_extension }})
 {% if clipboard != '' %}{% if clipboard != clipboard_heading %}
 ---
 {% endif %}
