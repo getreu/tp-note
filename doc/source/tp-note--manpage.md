@@ -250,8 +250,11 @@ synchronization).
 
 **-b**, **\--batch**
 
-:   Create a new file or rename the file to stay synchronized
-    with its meta-data, but does not launch the external text editor.
+:   Do not launch the external text editor or viewer. All other operations
+    are available and are executed in the same way.
+
+    _Tp-Note_ ignores the clipboard when run in batch mode with '`--batch`'.
+    Instead, it reads the '`TP_NOTE_CLIPBOARD`' environnement variable.
 
 **-c** *CF*, **\--config**=*CF*
 
@@ -654,6 +657,13 @@ _Markdown_ as default markup language. To change this, just edit the following
    convention.
 
 
+# ENVIRONNEMENT
+
+
+**TP_NOTE_CLIPBOARD**
+
+:   _Tp-Note_ ignores the clipboard when run in batch mode with '`--batch`'.
+    Instead, it reads the '`TP_NOTE_CLIPBOARD`' environnement variable.
 
 # RESOURCES
 
