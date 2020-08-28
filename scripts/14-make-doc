@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cargo rustdoc  -p tp-note -- --no-deps --document-private-items 
+cargo doc --no-deps --document-private-items --package tp-note --  
 
 cd ../doc
 ./make--all

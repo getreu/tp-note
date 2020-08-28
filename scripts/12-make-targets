@@ -13,6 +13,6 @@ rustup target add x86_64-unknown-linux-musl
 cargo build --target x86_64-unknown-linux-gnu  --release
 strip -s ../target/x86_64-unknown-linux-gnu/release/tp-note
 
-cargo build --target x86_64-unknown-linux-musl --release
+PKG_CONFIG_ALLOW_CROSS=1 cargo build --target x86_64-unknown-linux-musl --release
 strip -s ../target/x86_64-unknown-linux-musl/release/tp-note
 

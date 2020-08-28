@@ -37,7 +37,7 @@ User documentation:
 
   [Tp-Note's project page](https://blog.getreu.net/projects/tp-note/), which
   you are reading right now, lists where you can download _Tp-Note_ and gives
-  an overview of _Tp-Note_'s resources and documentation. 
+  an overview of _Tp-Note_'s resources and documentation.
 
 * User manual:
 
