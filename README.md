@@ -33,13 +33,25 @@ new note.
 
 User documentation:
 
+* Project page:
+
+  [Tp-Note's project page](https://blog.getreu.net/projects/tp-note/), which
+  you are reading right now, lists where you can download _Tp-Note_ and gives
+  an overview of _Tp-Note_'s resources and documentation. 
+
 * User manual:
+
+  The user manual showcases how to best use use _Tp-Note_ and how to integrate it
+  with you file manager.
 
   [Tp-Note user manual - html](https://blog.getreu.net/projects/tp-note/tp-note--manual.html)
 
   [Tp-Note user manual - pdf](https://blog.getreu.net/_downloads/tp-note--manual.pdf)
 
 * Unix man-page:
+
+  The Unix man-page is _Tp-Note_'s technical reference. Here you learn how to customize
+  _Tp-Note_'s templates and how to change its default settings.
 
   [Tp-Note manual page - html](https://blog.getreu.net/projects/tp-note/tp-note--manpage.html)
 
@@ -49,7 +61,14 @@ User documentation:
 
 Developer documentation:
 
-* [API documentation](https://blog.getreu.net/projects/tp-note/_downloads/doc/tp_note/)
+* API documentation
+
+  _Tp-Note_'s program code documentation targets mainly software developers.
+  The advanced user may consult the [Tp-Note's config module documentation](https://blog.getreu.net/projects/tp-note/_downloads/doc/tp_note/config/)
+  which explains the default templates and setting. Many of them can be
+  customized through _Tp-Note_'s configuration file.
+
+  [API documentation](https://blog.getreu.net/projects/tp-note/_downloads/doc/tp_note/)
 
 
 

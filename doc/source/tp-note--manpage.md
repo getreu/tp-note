@@ -164,12 +164,14 @@ revision:   "1.0"
 
 ## New note based on a non Tp-Note file
 
-When '`<path>`' points to a file whose file-extension is other than '`.md`', a new
-note is created with a similar filename and a reference to the original file
-copied into the note. The logic of this is implemented in the templates:
-'`tmpl_annotate_content`' and '`tmpl_annotate_filename`'. Once the file is
-created, it is opened with an external text editor. After editing the file, it
-will be - if necessary - renamed to be in sync with the note's meta-data.
+When '`<path>`' points to an existing file, whose file-extension is other than
+'`.md`', a new note is created with a similar filename and a reference to the
+original file is copied into the new note's body. If the clipboard contains
+some text, it is appended there also. The logic of this is implemented in the
+templates: '`tmpl_annotate_content`' and '`tmpl_annotate_filename`'. Once the
+file is created, it is opened with an external text editor. After editing the
+file, it will be - if necessary - renamed to be in sync with the note's
+meta-data.
 
 Example:
 
@@ -185,7 +187,7 @@ with the content:
 
 ``` yaml
 ---
-title:      "Classic Shell Scripting"
+title:      "Classic Shell Scripting.pdf"
 subtitle:   "Note"
 author:     "getreu"
 date:       "March  6, 2020"
@@ -196,6 +198,9 @@ revision:   "1.1"
 [Classic Shell Scripting.pdf](Classic Shell Scripting.pdf)
 ```
 
+The configuration file variable '`note_file_extensions`' lists all file
+extensions that _Tp-Note_ recognizes and opens as own file types. Others are
+treated as described above.
 
 ## Editing notes
 
@@ -225,16 +230,19 @@ Example:
 > tp-note "20200306-Favorite Readings--Note.md"
 ```
 
-_Tp-Note_ opens the file in an text editor. Now the note-taker decides to update
+The way how _Tp-Note_ synchronizes the note's metadata and filename is defined
+in the template '`tmpl_sync_filename`'.
+
+Once _Tp-Note_ opens the file in an text editor, the note-taker may decide updating
 the title in the note's YAML metadata section from '`title: "Favorite
 Readings"`' to '`title: "Introduction to bookkeeping"`'.  After closing the text
-editor the filename is automatically updated to:
+editor the filename is automatically updated too and looks like:
 
     "20200306-Introduction to bookkeeping--Note.md"
 
-
 Note: the sort-tag '`20200306`' has not changed. The filename synchronization
-mechanism never does. (See below for more details about filename synchronization).
+mechanism by default never does. (See below for more details about filename
+synchronization).
 
 
 

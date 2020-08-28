@@ -1,3 +1,4 @@
+//! Extends the built-in Tera filters.
 extern crate sanitize_filename_reader_friendly;
 use lazy_static::lazy_static;
 use sanitize_filename_reader_friendly::sanitize;
