@@ -118,12 +118,12 @@ Repository:
 
     [x86_64-pc-windows-gnu/release/tp-note.exe](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe)
 
-* Binary for Debian 10 Buster:
+* Universal Linux binary (compiled with Debian 10 Buster):
 
     [x86_64-unknown-linux-gnu/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
-    <!--
+
     [x86_64-unknown-linux-musl/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note)
-    -->
+
 
 * Installable Unix man-page:
 
