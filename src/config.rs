@@ -288,6 +288,10 @@ const ENABLE_READ_CLIPBOARD: bool = true;
 /// Default value.
 const ENABLE_EMPTY_CLIPBOARD: bool = true;
 
+/// In batch mode we ignore the clipboard, but read the environment variable
+/// `TP_NOTE_CLIPBOARD` instead.
+const CLIPBOARD_BATCH_MODE_ENV_VAR: &str = "TP_NOTE_CLIPBOARD";
+
 /// Limit the size of clipboard data `tp-note` accepts as input.
 const CLIPBOARD_LEN_MAX: usize = 0x8000;
 
@@ -451,25 +455,32 @@ lazy_static! {
 lazy_static! {
     /// Reads the clipboard and empties it.
     pub static ref CLIPBOARD: Clipboard = {
-        if CFG.enable_read_clipboard {
-            let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
-            if ctx.is_some() {
-                let ctx = &mut ctx.unwrap(); // This is ok since `is_some()`
-                let s = ctx.get_contents().ok();
-                if let Some(s) = &s {
-                    if s.len() > CLIPBOARD_LEN_MAX {
-                        AlertDialog::print(&format!(
-                            "WARNING: the clipboard content is discarded because its size \
-                            exceeds {} bytes.", CLIPBOARD_LEN_MAX));
-                        return Clipboard::default();
-                    }
-                };
-                Clipboard::new(&s.unwrap_or_default())
+        if ARGS.batch {
+            // In batch mode we ignore the clipboard, but read the
+            // some environment instead.
+            let s = std::env::var(CLIPBOARD_BATCH_MODE_ENV_VAR);
+            Clipboard::new(&s.unwrap_or_default())
+        } else {
+            if CFG.enable_read_clipboard {
+                let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
+                if ctx.is_some() {
+                    let ctx = &mut ctx.unwrap(); // This is ok since `is_some()`
+                    let s = ctx.get_contents().ok();
+                    if let Some(s) = &s {
+                        if s.len() > CLIPBOARD_LEN_MAX {
+                            AlertDialog::print(&format!(
+                                "WARNING: the clipboard content is discarded because its size \
+                                exceeds {} bytes.", CLIPBOARD_LEN_MAX));
+                            return Clipboard::default();
+                        }
+                    };
+                    Clipboard::new(&s.unwrap_or_default())
+                } else {
+                    Clipboard::default()
+                }
             } else {
                 Clipboard::default()
             }
-        } else {
-            Clipboard::default()
         }
     };
 
