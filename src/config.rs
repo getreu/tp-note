@@ -486,7 +486,7 @@ lazy_static! {
 
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 /// Represents the clipboard content.
 pub struct Clipboard {
     /// Raw content sting.
@@ -592,19 +592,6 @@ impl Clipboard {
             content_heading,
             linkname,
             linkurl,
-        }
-    }
-}
-
-/// By default, the clipboard is empty.
-impl ::std::default::Default for Clipboard {
-    fn default() -> Self {
-        Self {
-            content: "".to_string(),
-            content_truncated: "".to_string(),
-            content_heading: "".to_string(),
-            linkname: "".to_string(),
-            linkurl: "".to_string(),
         }
     }
 }
