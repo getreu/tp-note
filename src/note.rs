@@ -40,10 +40,10 @@ pub struct Note {
 #[derive(Debug, PartialEq, Serialize, Deserialize, Default)]
 /// Represents the front matter of the note.
 struct FrontMatter {
-    /// The compulsory note's title.
+    /// The note's compulsory title.
     title: String,
-    /// The compulsory note's subtitle.
-    subtitle: String,
+    /// The note's optional subtitle.
+    subtitle: Option<String>,
     /// Optional YAML header variable. If not defined in front matter,
     /// the file name's sort tag `file_tag` is used (if any).
     tag: Option<String>,
@@ -67,7 +67,7 @@ impl Note {
         let mut context = Self::capture_environment(&path)?;
 
         context.insert("title", &fm.title);
-        context.insert("subtitle", &fm.subtitle);
+        context.insert("subtitle", &fm.subtitle.as_ref().unwrap_or(&String::new()));
 
         // Copy value of `file_extension` as default for `extension`.
         if let Some(val) = context.get("file_extension") {
@@ -142,7 +142,7 @@ impl Note {
         let fm = Note::deserialize_note(&content)?;
 
         context.insert("title", &fm.title);
-        context.insert("subtitle", &fm.subtitle);
+        context.insert("subtitle", &fm.subtitle.as_ref().unwrap_or(&String::new()));
 
         // return result
         Ok(Self {
@@ -434,7 +434,7 @@ mod tests {
 
         let expected_front_matter = FrontMatter {
             title: "The book".to_string(),
-            subtitle: "you always wanted".to_string(),
+            subtitle: Some("you always wanted".to_string()),
             tag: None,
             extension: None,
         };
@@ -454,7 +454,7 @@ mod tests {
 
         let expected_front_matter = FrontMatter {
             title: "The book".to_string(),
-            subtitle: "you always wanted".to_string(),
+            subtitle: Some("you always wanted".to_string()),
             tag: None,
             extension: None,
         };
@@ -476,7 +476,7 @@ mod tests {
 
         let expected_front_matter = FrontMatter {
             title: "The book".to_string(),
-            subtitle: "you always wanted".to_string(),
+            subtitle: Some("you always wanted".to_string()),
             tag: Some("20200420-21_22".to_string()),
             extension: Some("md".to_string()),
         };
@@ -524,7 +524,17 @@ mod tests {
         author: It's me
         ...\ncontent\nmore content";
 
-        assert!(Note::deserialize_note(&input).is_err());
+        let expected_front_matter = FrontMatter {
+            title: "The book".to_string(),
+            subtitle: None,
+            tag: None,
+            extension: None,
+        };
+
+        assert_eq!(
+            expected_front_matter,
+            Note::deserialize_note(&input).unwrap()
+        );
 
         // forbidden character `x` in `tag`.
 

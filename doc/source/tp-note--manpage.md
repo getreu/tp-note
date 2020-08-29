@@ -514,6 +514,9 @@ In addition, _Tp-Note_ defines the following variables:
 * '`{{ subtitle }}`': the subtitle as indicated in the YAML front matter of
   the note (only available in filename-templates).
 
+It is guaranteed, that the above variables always exist, even if their data
+source is not available. In this case their content will be the empty string.
+
 ## Content-template conventions
 
 _Tp-Note_ distinguishes two template types: content-templates '`tmpl_*_content`'
