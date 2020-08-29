@@ -240,12 +240,12 @@ preferences and configuration:
 
 * [Tp-Note](https://blog.getreu.net/projects/tp-note/)
 * Addon for Firefox: [Copy Selection as Markdown]
-* Markdown editor : [Typora](https://typora.io/)
+* Markdown editor : [Mark Text](https://marktext.app/) or [Typora](https://typora.io/)
 * Integration with you file-manager as described below.
 
-My favorite Markdown editor at the moment is [Typora](https://typora.io/). I
-like its clean and simple interface helping me to concentrate on the content
-while writing.[^3]
+My favorite Markdown editors at the moment are [Mark Text](https://marktext.app/)
+and [Typora](https://typora.io/). I like their clean and simple interface
+helping me to stay focused on the content while writing.[^3]
 
 When copying extracts from a web-page I often need to preserve its hyperlinks.
 For this, the Firefox browser addon [Copy Selection as Markdown] is very handy.
@@ -483,6 +483,9 @@ depending on your operating system.
   text editor, although any Unicode text editor will do (even Notepad >=
   Windows 10-update 1903). _Tp-Note_ it preconfigured to work with:
 
+  - [Mark Text](https://marktext.app/) — a simple and elegant Markdown editor
+    focused on speed and usability.
+
   - [Typora — a Markdown editor, Markdown reader.](https://typora.io/)
     Make sure that you have at least version 0.9.89 installed, as this version
     contains a [bugfix](https://github.com/typora/typora-issues/issues/3348)
@@ -674,8 +677,8 @@ previewer.
 
 [^2]: For a personalized setup read _Tp-Note_'s man-page.
 
-[^3]: Make sure to install a recent version of
-[Typora](https://typora.io/#download) (version >=0.9.89).
+[^3]: If you use [Typora](https://typora.io/#download), make sure to install a
+  recent version (version >=0.9.89).
 
 [^4]: Versions for other operating systems and a Debian package are
 [available here](https://blog.getreu.net/projects/tp-note/_downloads/).
