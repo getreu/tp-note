@@ -85,7 +85,7 @@ Repository:
 
 * Installer package for Windows:
 
-  [tp-note-1.5.9-x86_64.msi](/projects/tp-note/_downloads/wix/tp-note-1.5.9-x86_64.msi)
+  [tp-note-1.5.10-x86_64.msi](/projects/tp-note/_downloads/wix/tp-note-1.5.10-x86_64.msi)
 
   As this early version of the Windows installer is not signed yet, Windows
   will show the error message “Windows protected your PC”. As a work-around,
@@ -98,7 +98,7 @@ Repository:
 
 * Package compiled for Debian 10+ (Buster):
 
-  [x86_64-unknown-linux-gnu/debian/tp-note_1.5.9_amd64.deb](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.5.9_amd64.deb)
+  [x86_64-unknown-linux-gnu/debian/tp-note_1.5.10_amd64.deb](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.5.10_amd64.deb)
 
 ### Various binaries for Windows, MacOS and Linux
 
@@ -139,7 +139,7 @@ Repository:
 Depending on the availability of installer packages for your operating system,
 the installation process is more or less automated. For Windows users the fully
 automated installation package
-[tp-note-1.5.9-x86_64.msi](/projects/tp-note/_downloads/wix/tp-note-1.5.9-x86_64.msi)
+[tp-note-1.5.10-x86_64.msi](/projects/tp-note/_downloads/wix/tp-note-1.5.10-x86_64.msi)
 is available. For more information, please consult the [Distribution section](#distribution)
 above and the [Installation
 section](/projects/tp-note/tp-note--manual.html#installation)
