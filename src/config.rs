@@ -213,6 +213,7 @@ const TMPL_ANNOTATE_FILENAME: &str = "\
 /// Can be changed in config file.
 #[cfg(target_family = "unix")]
 const EDITOR_ARGS: &[&[&str]] = &[
+    &[&"marktext", &"--new-window", &"--no-sandbox"],
     &[&"typora"],
     &[&"code", &"-w", &"-n"],
     &[&"atom", &"-w"],
@@ -230,24 +231,35 @@ const EDITOR_ARGS: &[&[&str]] = &[
 ];
 #[cfg(target_family = "windows")]
 const EDITOR_ARGS: &[&[&str]] = &[
+    &[
+        &"C:\\Program Files\\Mark Text\\Mark Text.exe",
+        &"--new-window",
+    ],
     &[&"C:\\Program Files\\Typora\\Typora.exe"],
     &[
-        "C:\\Program Files\\Notepad++\\notepad++.exe",
-        "-nosession",
-        "-multiInst",
+        &"C:\\Program Files\\Notepad++\\notepad++.exe",
+        &"-nosession",
+        &"-multiInst",
     ],
     &[&"C:\\Windows\\notepad.exe"],
 ];
 // Some info about lauching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(target_os = "ios")]
-const EDITOR_ARGS: &[&[&str]] = &[&[&"/Applications/TextEdit.app/Contents/MacOS/TextEdit"]];
+const EDITOR_ARGS: &[&[&str]] = &[
+    &[&"/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
+    &[
+        &"/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text",
+        &"--new-window",
+    ],
+];
 
 /// Default command-line argument list when launching external viewer
 /// with `--view`. Can be changed in config file.
 /// The viewer list is executed item by item until an editor is found.
 #[cfg(target_family = "unix")]
 const VIEWER_ARGS: &[&[&str]] = &[
+    &[&"marktext", &"--new-window", &"--no-sandbox"],
     &[&"typora"],
     &[&"code", &"-w", &"-n"],
     &[&"atom", &"-w"],
@@ -265,19 +277,26 @@ const VIEWER_ARGS: &[&[&str]] = &[
 ];
 #[cfg(target_family = "windows")]
 const VIEWER_ARGS: &[&[&str]] = &[
+    &[
+        &"C:\\Program Files\\Mark Text\\Mark Text.exe",
+        &"--new-window",
+    ],
     &[&"C:\\Program Files\\Typora\\Typora.exe"],
     &[
-        "C:\\Program Files\\Notepad++\\notepad++.exe",
-        "-nosession",
-        "-multiInst",
-        "-ro",
+        &"C:\\Program Files\\Notepad++\\notepad++.exe",
+        &"-nosession",
+        &"-multiInst",
+        &"-ro",
     ],
     &[&"C:\\Windows\\notepad.exe"],
 ];
 // Some info about lauching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(target_os = "ios")]
-const VIEWER_ARGS: &[&[&str]] = &[&[&"/Applications/TextEdit.app/Contents/MacOS/TextEdit"]];
+const VIEWER_ARGS: &[&[&str]] = &[
+    &[&"/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
+    &[&"/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text"],
+];
 
 /// By default clipboard support is enabled, can be disabled
 /// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
