@@ -213,44 +213,44 @@ const TMPL_ANNOTATE_FILENAME: &str = "\
 /// Can be changed in config file.
 #[cfg(target_family = "unix")]
 const EDITOR_ARGS: &[&[&str]] = &[
-    &[&"marktext", &"--new-window", &"--no-sandbox"],
-    &[&"typora"],
-    &[&"code", &"-w", &"-n"],
-    &[&"atom", &"-w"],
-    &[&"retext"],
-    &[&"geany", &"-s", &"-i", &"-m"],
-    &[&"gedit", &"-w"],
-    &[&"mousepad"],
-    &[&"leafpad"],
-    &[&"nvim-qt", &"--nofork"],
-    &[&"gvim", &"--nofork"],
-    &[&"nano"],
-    &[&"nvim"],
-    &[&"vim"],
-    &[&"vi"],
+    &["marktext", "--new-window", "--no-sandbox"],
+    &["typora"],
+    &["code", "-w", "-n"],
+    &["atom", "-w"],
+    &["retext"],
+    &["geany", "-s", "-i", "-m"],
+    &["gedit", "-w"],
+    &["mousepad"],
+    &["leafpad"],
+    &["nvim-qt", "--nofork"],
+    &["gvim", "--nofork"],
+    &["nano"],
+    &["nvim"],
+    &["vim"],
+    &["vi"],
 ];
 #[cfg(target_family = "windows")]
 const EDITOR_ARGS: &[&[&str]] = &[
     &[
-        &"C:\\Program Files\\Mark Text\\Mark Text.exe",
-        &"--new-window",
+        "C:\\Program Files\\Mark Text\\Mark Text.exe",
+        "--new-window",
     ],
-    &[&"C:\\Program Files\\Typora\\Typora.exe"],
+    &["C:\\Program Files\\Typora\\Typora.exe"],
     &[
-        &"C:\\Program Files\\Notepad++\\notepad++.exe",
-        &"-nosession",
-        &"-multiInst",
+        "C:\\Program Files\\Notepad++\\notepad++.exe",
+        "-nosession",
+        "-multiInst",
     ],
-    &[&"C:\\Windows\\notepad.exe"],
+    &["C:\\Windows\\notepad.exe"],
 ];
 // Some info about lauching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(target_os = "ios")]
 const EDITOR_ARGS: &[&[&str]] = &[
-    &[&"/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
+    &["/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
     &[
-        &"/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text",
-        &"--new-window",
+        "/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text",
+        "--new-window",
     ],
 ];
 
@@ -259,43 +259,43 @@ const EDITOR_ARGS: &[&[&str]] = &[
 /// The viewer list is executed item by item until an editor is found.
 #[cfg(target_family = "unix")]
 const VIEWER_ARGS: &[&[&str]] = &[
-    &[&"marktext", &"--new-window", &"--no-sandbox"],
-    &[&"typora"],
-    &[&"code", &"-w", &"-n"],
-    &[&"atom", &"-w"],
-    &[&"retext"],
-    &[&"geany", &"-r", &"-s", &"-i", &"-m"],
-    &[&"gedit", &"-w"],
-    &[&"mousepad"],
-    &[&"leafpad"],
-    &[&"nvim-qt", &"--nofork", &"-R"],
-    &[&"gvim", &"--nofork", &"-R"],
-    &[&"nano"],
-    &[&"nvim", &"-R"],
-    &[&"vim", &"-R"],
-    &[&"vi", &"-R"],
+    &["marktext", "--new-window", "--no-sandbox"],
+    &["typora"],
+    &["code", "-w", "-n"],
+    &["atom", "-w"],
+    &["retext"],
+    &["geany", "-r", "-s", "-i", "-m"],
+    &["gedit", "-w"],
+    &["mousepad"],
+    &["leafpad"],
+    &["nvim-qt", "--nofork", "-R"],
+    &["gvim", "--nofork", "-R"],
+    &["nano"],
+    &["nvim", "-R"],
+    &["vim", "-R"],
+    &["vi", "-R"],
 ];
 #[cfg(target_family = "windows")]
 const VIEWER_ARGS: &[&[&str]] = &[
     &[
-        &"C:\\Program Files\\Mark Text\\Mark Text.exe",
-        &"--new-window",
+        "C:\\Program Files\\Mark Text\\Mark Text.exe",
+        "--new-window",
     ],
-    &[&"C:\\Program Files\\Typora\\Typora.exe"],
+    &["C:\\Program Files\\Typora\\Typora.exe"],
     &[
-        &"C:\\Program Files\\Notepad++\\notepad++.exe",
-        &"-nosession",
-        &"-multiInst",
-        &"-ro",
+        "C:\\Program Files\\Notepad++\\notepad++.exe",
+        "-nosession",
+        "-multiInst",
+        "-ro",
     ],
-    &[&"C:\\Windows\\notepad.exe"],
+    &["C:\\Windows\\notepad.exe"],
 ];
 // Some info about lauching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(target_os = "ios")]
 const VIEWER_ARGS: &[&[&str]] = &[
-    &[&"/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
-    &[&"/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text"],
+    &["/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
+    &["/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text"],
 ];
 
 /// By default clipboard support is enabled, can be disabled
