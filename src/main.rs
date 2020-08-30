@@ -262,14 +262,14 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-/// High level application algorithm:
+/// Run Tp-Note and return the (modified) path to the (new) note file.
 /// 1. Create a new note by inserting `tp-note`'s environment in a template.
 /// 2. If the note to be created exists already, open it, read the YAML front
 ///    matter and synchronize the filename if necessary.
 /// 3. Open the new note in an external editor (configurable).
 /// 4. Read the front matter again and resynchronize the filename if necessary.
 #[inline]
-fn run() -> Result<(), anyhow::Error> {
+fn run() -> Result<PathBuf, anyhow::Error> {
     // process arg = `--version`
     if ARGS.version {
         println!("Version {}, {}", VERSION.unwrap_or("unknown"), AUTHOR);
@@ -292,13 +292,13 @@ fn run() -> Result<(), anyhow::Error> {
         env::current_dir()?
     };
 
-    let path = create_new_note_or_synchronize_filename(&path)?;
+    let mut path = create_new_note_or_synchronize_filename(&path)?;
 
     // In batch mode, we do not launch the editor.
     if !ARGS.batch {
         launch_editor(&path)?;
 
-        let _path = synchronize_filename(&path)?;
+        path = synchronize_filename(&path)?;
 
         // Delete clipboard
         if CFG.enable_read_clipboard && CFG.enable_empty_clipboard {
@@ -308,13 +308,13 @@ fn run() -> Result<(), anyhow::Error> {
             };
         };
     };
-    Ok(())
+    Ok(path)
 }
 
 /// Print some error message if `run()` does not complete.
 /// Exit prematurely if the configuration file version does
 /// not match the programm version.
-fn main() -> Result<(), anyhow::Error> {
+fn main() {
     // Is version number in the configuration file high enough?
     if Version::parse(&CFG.version) < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0")) {
         AlertDialog::print_error(&format!(
@@ -333,44 +333,48 @@ fn main() -> Result<(), anyhow::Error> {
     };
 
     // Run Tp-Note.
-    if let Err(e) = run() {
-        // Something went wrong.
+    match run() {
+        Err(e) => {
+            // Something went wrong.
 
-        if ARGS.batch {
-            AlertDialog::print_error_console(&format!(
-                "ERROR:\n\
+            if ARGS.batch {
+                AlertDialog::print_error_console(&format!(
+                    "ERROR:\n\
                 ---\n\
                 \t{:?}",
-                e
-            ));
-        } else {
-            // Unwrap path argument.
-            let no_path = PathBuf::new();
-            let path: &Path = ARGS.path.as_ref().unwrap_or(&no_path);
+                    e
+                ));
+            } else {
+                // Unwrap path argument.
+                let no_path = PathBuf::new();
+                let path: &Path = ARGS.path.as_ref().unwrap_or(&no_path);
 
-            if path.is_file() {
-                AlertDialog::print_error(&format!(
-                    "ERROR:\n\
+                if path.is_file() {
+                    AlertDialog::print_error(&format!(
+                        "ERROR:\n\
                     ---\n\
                     \t{:?}\n\
                     \n\
                     Please correct the error.
                     Trying to start editor without synchronization...",
-                    e
-                ));
-                launch_editor(path)?;
-            } else {
-                AlertDialog::print_error(&format!(
-                    "ERROR:\n\
+                        e
+                    ));
+                    let _ = launch_editor(path);
+                } else {
+                    AlertDialog::print_error(&format!(
+                        "ERROR:\n\
                     ---\n\
                     \t{:?}\n\
                     \n\
                     Please correct the error and start again.",
-                    e
-                ));
+                        e
+                    ));
+                }
             }
+            process::exit(1);
         }
-        process::exit(1);
+        Ok(path) => {
+            println!("{}", path.to_str().unwrap_or_default());
+        }
     };
-    Ok(())
 }
