@@ -294,23 +294,20 @@ fn run() -> Result<(), anyhow::Error> {
 
     let path = create_new_note_or_synchronize_filename(&path)?;
 
-    // In batch only mode we are done here.
-    if ARGS.batch {
-        return Ok(());
-    };
+    // In batch mode, we do not launch the editor.
+    if !ARGS.batch {
+        launch_editor(&path)?;
 
-    launch_editor(&path)?;
+        let _path = synchronize_filename(&path)?;
 
-    let _path = synchronize_filename(&path)?;
-
-    // Delete clipboard
-    if CFG.enable_read_clipboard && CFG.enable_empty_clipboard {
-        let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
-        if let Some(mut ctx) = ctx {
-            ctx.set_contents("".to_owned()).unwrap_or_default();
+        // Delete clipboard
+        if CFG.enable_read_clipboard && CFG.enable_empty_clipboard {
+            let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
+            if let Some(mut ctx) = ctx {
+                ctx.set_contents("".to_owned()).unwrap_or_default();
+            };
         };
     };
-
     Ok(())
 }
 
