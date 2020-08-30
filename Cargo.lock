@@ -204,9 +204,9 @@ dependencies = [
 
 [[package]]
 name = "chrono-tz"
-version = "0.5.2"
+version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65d96be7c3e993c9ee4356442db24ba364c924b6b8331866be6b6952bfe74b9d"
+checksum = "2554a3155fec064362507487171dcc4edc3df60cb10f3a1fb10ed8094822b120"
 dependencies = [
  "chrono",
  "parse-zoneinfo",
@@ -1339,7 +1339,7 @@ dependencies = [
 
 [[package]]
 name = "tp-note"
-version = "1.5.10"
+version = "1.5.11"
 dependencies = [
  "anyhow",
  "chrono",
