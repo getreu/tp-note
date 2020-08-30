@@ -25,6 +25,7 @@ pack () {
     ZipFile="$OutBase.zip"
 
     mkdir -p "$OutDir"
+    rm "$OutDir/$ZipFile"
 
     zip -r "$OutDir/$ZipFile" "$InPath"
 
@@ -43,5 +44,6 @@ pack () {
 #fi
 #pack "$1" "$OutPath"
 
-pack "../doc/build/" "../doc/build/dist/tp-note.zip" 
+cd "../doc/build"
+pack "." "./dist/tp-note.zip" 
 
