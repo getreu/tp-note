@@ -72,13 +72,13 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
     let n = Note::from_existing_note(&path)
         .context("Failed to parse the note's metadata: can not synchronize the filename!")?;
 
-    println!("Applying template `tmpl_sync_filename`.");
+    eprintln!("Applying template `tmpl_sync_filename`.");
     let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename)?;
     if path != new_fqfn {
         // rename file
         if !Path::new(&new_fqfn).exists() {
             fs::rename(&path, &new_fqfn)?;
-            println!("File renamed to {:?}", new_fqfn);
+            eprintln!("File renamed to {:?}", new_fqfn);
             Ok(new_fqfn)
         } else {
             Err(anyhow!(format!(
@@ -110,7 +110,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_new_filename)
                 .context("`Can not parse `tmpl_new_filename` in config file.")?;
-            println!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
+            eprintln!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
 
             (n, new_fqfn)
         } else {
@@ -120,7 +120,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_clipboard_filename)
                 .context("`Can not parse `tmpl_clipboard_filename` in config file.")?;
-            println!(
+            eprintln!(
                 "Applying templates `tmpl_clipboard_content`, `tmpl_clipboard_filename` \n\
                 and clipboard string: \"{}\"",
                 CLIPBOARD.content_truncated
@@ -152,7 +152,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
         } else {
             // ANNOTATE FILE: CREATE NEW NOTE WITH TMPL_ANNOTATE_CONTENT TEMPLATE
             // `path` points to a foreign file type that will be annotated.
-            println!("Applying templates `tmpl_annotate_content` and `tmpl_annotate_filename`.");
+            eprintln!("Applying templates `tmpl_annotate_content` and `tmpl_annotate_filename`.");
             let n = Note::new(&path, &CFG.tmpl_annotate_content)
                 .context("`Can not parse `tmpl_annotate_content` in config file.")?;
             let new_fqfn = n.render_filename(&CFG.tmpl_annotate_filename)?;
@@ -201,7 +201,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     };
 
     // Launch editor/viewer.
-    println!("Opening file {:?}", path);
+    eprintln!("Opening file {:?}", path);
 
     let mut executable_found = false;
     for i in 0..executable_list.len() {
