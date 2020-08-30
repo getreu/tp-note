@@ -28,8 +28,9 @@ choice. Although the note's structure follows '`pandoc`'-conventions, it is not
 tied to any specific markup language.
 
 After the user finished editing, _Tp-Note_ analyses eventual changes in the
-notes meta-data and renames, if necessary, the file, so that its meta-data
-and filename are in sync again.
+notes meta-data and renames, if necessary, the file, so that its meta-data and
+filename are in sync again. Finally, the resulting path is printed to
+'`stdout`', log and error messages are dumped to '`stderr`'.
 
 
 
@@ -660,13 +661,15 @@ _Markdown_ as default markup language. To change this, just edit the following
    convention.
 
 
-# ENVIRONNEMENT
 
+# ENVIRONNEMENT
 
 **TP_NOTE_CLIPBOARD**
 
 :   _Tp-Note_ ignores the clipboard when run in batch mode with '`--batch`'.
     Instead, it reads the '`TP_NOTE_CLIPBOARD`' environnement variable.
+
+
 
 # RESOURCES
 
