@@ -90,8 +90,8 @@ Repository:
   As this early version of the Windows installer is not signed yet, Windows
   will show the error message “Windows protected your PC”. As a work-around,
   when you click on the link “More info”, a ”Run anyway” button will appear
-  allowing you to continue the installation process. In general, irrespective
-  of where a program comes from, I always recommend checking every installable
+  allowing you to continue the installation process. In general, regardless
+  of where a program comes from, I recommend checking every installable
   file with [VirusTotal](https://www.virustotal.com/gui/home/upload).
 
 ### Tp-Note Debian/Ubuntu installer package

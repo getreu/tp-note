@@ -629,6 +629,7 @@ editor_args = [
     'flatpak',
     'run',
     'com.github.marktext.marktext',
+    '--new-window'
 ],
     ['typora'],
     [
