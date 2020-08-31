@@ -22,7 +22,6 @@ extern crate semver;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
-use crate::config::CONFIG_PATH;
 use crate::error::AlertDialog;
 use crate::note::Note;
 use anyhow::{anyhow, Context};
@@ -216,9 +215,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
                     "The external file editor did not terminate gracefully:\n\
                      \t{}\n\
                      \n\
-                     Edit the variable `{}` in Tp-Note's configuration file:\n\
-                     \t{:?}\n\
-                     \n\
+                     Edit the variable `{}` in Tp-Note's configuration file\n\
                      and correct the following:\n\
                      \t{:?}",
                     ecode.to_string(),
@@ -227,7 +224,6 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
                     } else {
                         "editor_args"
                     },
-                    *CONFIG_PATH,
                     if ARGS.view {
                         &CFG.viewer_args[i]
                     } else {
