@@ -213,7 +213,7 @@ const TMPL_ANNOTATE_FILENAME: &str = "\
 /// Can be changed in config file.
 #[cfg(target_family = "unix")]
 const EDITOR_ARGS: &[&[&str]] = &[
-    &["marktext", "--new-window", "--no-sandbox"],
+    &["marktext", "--no-sandbox"],
     &["typora"],
     &["code", "-w", "-n"],
     &["atom", "-w"],
@@ -250,7 +250,6 @@ const EDITOR_ARGS: &[&[&str]] = &[
     &["/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
     &[
         "/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text",
-        "--new-window",
     ],
 ];
 
@@ -259,7 +258,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
 /// The viewer list is executed item by item until an editor is found.
 #[cfg(target_family = "unix")]
 const VIEWER_ARGS: &[&[&str]] = &[
-    &["marktext", "--new-window", "--no-sandbox"],
+    &["marktext", "--no-sandbox"],
     &["typora"],
     &["code", "-w", "-n"],
     &["atom", "-w"],
@@ -279,7 +278,6 @@ const VIEWER_ARGS: &[&[&str]] = &[
 const VIEWER_ARGS: &[&[&str]] = &[
     &[
         "C:\\Program Files\\Mark Text\\Mark Text.exe",
-        "--new-window",
     ],
     &["C:\\Program Files\\Typora\\Typora.exe"],
     &[
