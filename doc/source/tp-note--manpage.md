@@ -569,7 +569,10 @@ list of external text editors to be launched for editing. '`viewer_args`' is
 used when _Tp-Note_ is invoked with '`--view`' in viewer mode.  The list
 contains well-known text editor names and its command-line arguments.
 _Tp-Note_ tries to launch every text editor from the beginning of the list
-until it finds an installed text editor.
+until it finds an installed text editor. When _Tp-Note_ is started on a Linux
+console, an alternative file editor list used: '`editor_console_args`' and
+'`viewer_console_args`'. Here you can register file editors that do not
+require a graphical environment, e.g. '`vim`' or '`nano`'.
 
 In order to  use your own text editor, just place it at the top of the list. To
 make this work properly, make sure, that your text editor does not fork! You
@@ -666,8 +669,13 @@ _Markdown_ as default markup language. To change this, just edit the following
 
 **TP_NOTE_CLIPBOARD**
 
-:   _Tp-Note_ ignores the clipboard when run in batch mode with '`--batch`'.
-    Instead, it reads the '`TP_NOTE_CLIPBOARD`' environnement variable.
+:   _Tp-Note_ ignores the clipboard when run in batch mode with '`--batch`' or
+    when it runs on a Linux console without graphical environment.  Instead,
+    it reads the '`TP_NOTE_CLIPBOARD`' environment variable and store its
+    content in the '`clipboard_*`' template variables, as if the data came from
+    the clipboard.  Unlike clipboard data, the content of the
+    '`TP_NOTE_CLIPBOARD`' environment variable is not consumed, meaning it is
+    not deleted after usage.
 
 
 
