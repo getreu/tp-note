@@ -303,7 +303,7 @@ fn run() -> Result<PathBuf, anyhow::Error> {
         path = synchronize_filename(&path)?;
 
         // Delete clipboard
-        if CFG.enable_read_clipboard && CFG.enable_empty_clipboard {
+        if CFG.enable_read_clipboard && CFG.enable_empty_clipboard && !*RUNS_ON_CONSOLE {
             let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
             if let Some(mut ctx) = ctx {
                 ctx.set_contents("".to_owned()).unwrap_or_default();

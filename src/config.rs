@@ -518,13 +518,7 @@ lazy_static! {
 lazy_static! {
     /// Reads the clipboard and empties it.
     pub static ref CLIPBOARD: Clipboard = {
-        if ARGS.batch {
-            // In batch mode we ignore the clipboard, but read the
-            // some environment instead.
-            let s = std::env::var(CLIPBOARD_BATCH_MODE_ENV_VAR);
-            Clipboard::new(&s.unwrap_or_default())
-        } else {
-            if CFG.enable_read_clipboard {
+            if CFG.enable_read_clipboard && !*RUNS_ON_CONSOLE && !ARGS.batch {
                 let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
                 if ctx.is_some() {
                     let ctx = &mut ctx.unwrap(); // This is ok since `is_some()`
@@ -542,9 +536,9 @@ lazy_static! {
                     Clipboard::default()
                 }
             } else {
-                Clipboard::default()
+                let s = std::env::var(CLIPBOARD_BATCH_MODE_ENV_VAR);
+                Clipboard::new(&s.unwrap_or_default())
             }
-        }
     };
 
 }
