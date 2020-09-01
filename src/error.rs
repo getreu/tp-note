@@ -3,6 +3,7 @@
 extern crate msgbox;
 
 use crate::config::CONFIG_PATH;
+use crate::config::RUNS_ON_CONSOLE;
 use crate::VERSION;
 use lazy_static::lazy_static;
 use msgbox::IconType;
@@ -31,11 +32,13 @@ impl AlertDialog {
         // libraries.
         Self::print_error_console(msg);
         // Popup window.
-        msgbox::create(
-            &*ALERT_DIALOG_TITLE_LINE,
-            &Self::format_error(msg),
-            IconType::Info,
-        );
+        if !*RUNS_ON_CONSOLE {
+            msgbox::create(
+                &*ALERT_DIALOG_TITLE_LINE,
+                &Self::format_error(msg),
+                IconType::Info,
+            );
+        }
     }
 
     /// Prints an error `msg` on console.
@@ -53,7 +56,9 @@ impl AlertDialog {
         // libraries.
         Self::print_console(msg);
         // Popup window.
-        msgbox::create(&*ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
+        if !*RUNS_ON_CONSOLE {
+            msgbox::create(&*ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
+        }
     }
 
     /// Prints `msg` on console.

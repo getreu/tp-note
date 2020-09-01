@@ -248,9 +248,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
 #[cfg(target_os = "ios")]
 const EDITOR_ARGS: &[&[&str]] = &[
     &["/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
-    &[
-        "/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text",
-    ],
+    &["/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text"],
 ];
 
 /// Default command-line argument list when launching external viewer
@@ -276,9 +274,7 @@ const VIEWER_ARGS: &[&[&str]] = &[
 ];
 #[cfg(target_family = "windows")]
 const VIEWER_ARGS: &[&[&str]] = &[
-    &[
-        "C:\\Program Files\\Mark Text\\Mark Text.exe",
-    ],
+    &["C:\\Program Files\\Mark Text\\Mark Text.exe"],
     &["C:\\Program Files\\Typora\\Typora.exe"],
     &[
         "C:\\Program Files\\Notepad++\\notepad++.exe",
@@ -419,6 +415,25 @@ impl ::std::default::Default for Cfg {
             enable_empty_clipboard: ENABLE_EMPTY_CLIPBOARD,
         }
     }
+}
+
+lazy_static! {
+    /// Do we run on a console?
+    pub static ref RUNS_ON_CONSOLE: bool = {
+        // On Linux popup window only if DISPLAY is set.
+        #[cfg(target_family = "unix")]
+        let display = std::env::var("DISPLAY")
+            // Map error to `None`.
+            .ok()
+            // A pattern mapping `Some("")` to `None`.
+            .and_then(|s: String| if s.is_empty() { None } else { Some(s) });
+
+        // In non-Linux there is always "Some" display.
+        #[cfg(not(target_family = "unix"))]
+        let display = Some(String::new());
+
+        display.is_none()
+    };
 }
 
 lazy_static! {
