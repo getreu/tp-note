@@ -224,10 +224,6 @@ const EDITOR_ARGS: &[&[&str]] = &[
     &["leafpad"],
     &["nvim-qt", "--nofork"],
     &["gvim", "--nofork"],
-    &["xterm", "-e", "nano"],
-    &["xterm", "-e", "nvim"],
-    &["xterm", "-e", "vim"],
-    &["xterm", "-e", "vi"],
 ];
 #[cfg(target_family = "windows")]
 const EDITOR_ARGS: &[&[&str]] = &[
@@ -267,10 +263,6 @@ const VIEWER_ARGS: &[&[&str]] = &[
     &["leafpad"],
     &["nvim-qt", "--nofork", "-R"],
     &["gvim", "--nofork", "-R"],
-    &["xterm", "-e", "nano"],
-    &["xterm", "-e", "nvim", "-R"],
-    &["xterm", "-e", "vim", "-R"],
-    &["xterm", "-e", "vi", "-R"],
 ];
 #[cfg(target_family = "windows")]
 const VIEWER_ARGS: &[&[&str]] = &[
@@ -291,6 +283,35 @@ const VIEWER_ARGS: &[&[&str]] = &[
     &["/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
     &["/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text"],
 ];
+
+/// Default command-line argument list when launching external editor.
+/// The editor list is executed item by item until an editor is found.
+/// Can be changed in config file.
+#[cfg(target_family = "unix")]
+const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nano"], &["nvim"], &["vim"], &["vi"]];
+#[cfg(target_family = "windows")]
+const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&[]];
+// Some info about lauching programs on iOS:
+//[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
+#[cfg(target_os = "ios")]
+const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nano"]];
+
+/// Default command-line argument list when launching external viewer
+/// with `--view`. Can be changed in config file.
+/// The viewer list is executed item by item until an editor is found.
+#[cfg(target_family = "unix")]
+const VIEWER_CONSOLE_ARGS: &[&[&str]] = &[
+    &["nano", "-v"],
+    &["nvim", "-R"],
+    &["vim", "-R"],
+    &["vi", "-R"],
+];
+#[cfg(target_family = "windows")]
+const VIEWER_CONSOLE_ARGS: &[&[&str]] = &[];
+// Some info about lauching programs on iOS:
+//[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
+#[cfg(target_os = "ios")]
+const VIEWER_CONSOLE_ARGS: &[&[&str]] = &[&["nano", "-v"]];
 
 /// By default clipboard support is enabled, can be disabled
 /// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
@@ -375,6 +396,8 @@ pub struct Cfg {
     pub tmpl_sync_filename: String,
     pub editor_args: Vec<Vec<String>>,
     pub viewer_args: Vec<Vec<String>>,
+    pub editor_console_args: Vec<Vec<String>>,
+    pub viewer_console_args: Vec<Vec<String>>,
     pub enable_read_clipboard: bool,
     pub enable_empty_clipboard: bool,
 }
@@ -408,6 +431,14 @@ impl ::std::default::Default for Cfg {
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
             viewer_args: VIEWER_ARGS
+                .iter()
+                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
+                .collect(),
+            editor_console_args: EDITOR_CONSOLE_ARGS
+                .iter()
+                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
+                .collect(),
+            viewer_console_args: VIEWER_CONSOLE_ARGS
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
