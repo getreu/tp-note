@@ -224,10 +224,10 @@ const EDITOR_ARGS: &[&[&str]] = &[
     &["leafpad"],
     &["nvim-qt", "--nofork"],
     &["gvim", "--nofork"],
-    &["nano"],
-    &["nvim"],
-    &["vim"],
-    &["vi"],
+    &["xterm", "-e", "nano"],
+    &["xterm", "-e", "nvim"],
+    &["xterm", "-e", "vim"],
+    &["xterm", "-e", "vi"],
 ];
 #[cfg(target_family = "windows")]
 const EDITOR_ARGS: &[&[&str]] = &[
@@ -269,10 +269,10 @@ const VIEWER_ARGS: &[&[&str]] = &[
     &["leafpad"],
     &["nvim-qt", "--nofork", "-R"],
     &["gvim", "--nofork", "-R"],
-    &["nano"],
-    &["nvim", "-R"],
-    &["vim", "-R"],
-    &["vi", "-R"],
+    &["xterm", "-e", "nano"],
+    &["xterm", "-e", "nvim", "-R"],
+    &["xterm", "-e", "vim", "-R"],
+    &["xterm", "-e", "vi", "-R"],
 ];
 #[cfg(target_family = "windows")]
 const VIEWER_ARGS: &[&[&str]] = &[
