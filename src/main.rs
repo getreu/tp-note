@@ -22,6 +22,7 @@ extern crate semver;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
+use crate::config::RUNS_ON_CONSOLE;
 use crate::error::AlertDialog;
 use crate::note::Note;
 use anyhow::{anyhow, Context};
@@ -170,34 +171,35 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     let mut args_list = Vec::new();
     let mut executable_list = Vec::new();
 
-    // Prepare launch of editor/viewer.
-    if ARGS.view {
-        for app in &CFG.viewer_args {
-            executable_list.push(&app[0]);
-            let mut args: Vec<&str> = Vec::new();
-            for s in app[1..].iter() {
-                args.push(s);
-            }
-            args.push(
-                path.to_str()
-                    .ok_or_else(|| anyhow!(format!("Failed to convert argument: {:?}", path)))?,
-            );
-            args_list.push(args);
+    // Choose the right parameter list.
+    let editor_args = if ARGS.view {
+        if *RUNS_ON_CONSOLE {
+            &CFG.viewer_console_args
+        } else {
+            &CFG.viewer_args
         }
     } else {
-        for app in &CFG.editor_args {
-            executable_list.push(&app[0]);
-            let mut args: Vec<&str> = Vec::new();
-            for s in app[1..].iter() {
-                args.push(s);
-            }
-            args.push(
-                path.to_str()
-                    .ok_or_else(|| anyhow!(format!("Failed to convert argument: {:?}", path)))?,
-            );
-            args_list.push(args);
+        if *RUNS_ON_CONSOLE {
+            &CFG.editor_console_args
+        } else {
+            &CFG.editor_args
         }
     };
+
+    // Prepare launch of editor/viewer.
+
+    for app in &*editor_args {
+        executable_list.push(&app[0]);
+        let mut args: Vec<&str> = Vec::new();
+        for s in app[1..].iter() {
+            args.push(s);
+        }
+        args.push(
+            path.to_str()
+                .ok_or_else(|| anyhow!(format!("Failed to convert argument: {:?}", path)))?,
+        );
+        args_list.push(args);
+    }
 
     // Launch editor/viewer.
     eprintln!("Opening file {:?}", path);
@@ -224,11 +226,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
                     } else {
                         "editor_args"
                     },
-                    if ARGS.view {
-                        &CFG.viewer_args[i]
-                    } else {
-                        &CFG.editor_args[i]
-                    },
+                    &*editor_args[i],
                 )));
             };
 
@@ -248,9 +246,17 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
              install one of the above listed applications.",
             &executable_list,
             if ARGS.view {
-                "viewer_args"
+                if *RUNS_ON_CONSOLE {
+                    "viewer_console_args"
+                } else {
+                    "viewer_args"
+                }
             } else {
-                "editor_args"
+                if *RUNS_ON_CONSOLE {
+                    "editor_console_args"
+                } else {
+                    "editor_args"
+                }
             },
         )));
     };
