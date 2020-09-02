@@ -1,16 +1,20 @@
 //! Collects `tp-note`'s configuration from a configuration file,
 //! the command-line parameters. It also reads the clipboard.
 
+extern crate atty;
 extern crate clipboard;
 extern crate directories;
 use crate::error::AlertDialog;
 use crate::VERSION;
 use anyhow::anyhow;
+use atty::{is, Stream};
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
+use std::io;
+use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process;
@@ -322,10 +326,6 @@ const ENABLE_READ_CLIPBOARD: bool = true;
 /// Default value.
 const ENABLE_EMPTY_CLIPBOARD: bool = true;
 
-/// In batch mode we ignore the clipboard, but read the environment variable
-/// `TP_NOTE_CLIPBOARD` instead.
-const CLIPBOARD_BATCH_MODE_ENV_VAR: &str = "TP_NOTE_CLIPBOARD";
-
 /// Limit the size of clipboard data `tp-note` accepts as input.
 const CLIPBOARD_LEN_MAX: usize = 0x8000;
 
@@ -518,29 +518,34 @@ lazy_static! {
 lazy_static! {
     /// Reads the clipboard and empties it.
     pub static ref CLIPBOARD: Clipboard = {
-            if CFG.enable_read_clipboard && !*RUNS_ON_CONSOLE && !ARGS.batch {
-                let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
-                if ctx.is_some() {
-                    let ctx = &mut ctx.unwrap(); // This is ok since `is_some()`
-                    let s = ctx.get_contents().ok();
-                    if let Some(s) = &s {
-                        if s.len() > CLIPBOARD_LEN_MAX {
-                            AlertDialog::print(&format!(
-                                "WARNING: the clipboard content is discarded because its size \
-                                exceeds {} bytes.", CLIPBOARD_LEN_MAX));
-                            return Clipboard::default();
-                        }
-                    };
-                    Clipboard::new(&s.unwrap_or_default())
-                } else {
-                    Clipboard::default()
-                }
-            } else {
-                let s = std::env::var(CLIPBOARD_BATCH_MODE_ENV_VAR);
-                Clipboard::new(&s.unwrap_or_default())
-            }
-    };
+        let mut buffer = String::new();
 
+        // Read stdin().
+        if !is(Stream::Stdin) {
+            let stdin = io::stdin();
+            let mut handle = stdin.lock();
+            let _ = handle.read_to_string(&mut buffer);
+        }
+
+        // Concatenate clipboard content.
+        if CFG.enable_read_clipboard && !*RUNS_ON_CONSOLE && !ARGS.batch {
+            let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
+            if ctx.is_some() {
+                let ctx = &mut ctx.unwrap(); // This is ok since `is_some()`
+                let s = ctx.get_contents().ok();
+                if let Some(s) = &s {
+                    if s.len() > CLIPBOARD_LEN_MAX {
+                        AlertDialog::print(&format!(
+                            "WARNING: the clipboard content is discarded because its size \
+                            exceeds {} bytes.", CLIPBOARD_LEN_MAX));
+                        return Clipboard::default();
+                    }
+                };
+                buffer.push_str(&s.unwrap_or_default());
+            }
+        };
+        Clipboard::new(&buffer)
+    };
 }
 
 #[derive(Debug, PartialEq, Default)]
