@@ -98,7 +98,7 @@ Repository:
 
 * Package compiled for Debian 10+ (Buster):
 
-  [x86_64-unknown-linux-gnu/debian/tp-note_1.5.10_amd64.deb](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.5.10_amd64.deb)
+  [x86_64-unknown-linux-gnu/debian/tp-note_1.5.11_amd64.deb](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.5.11_amd64.deb)
 
 ### Various binaries for Windows, MacOS and Linux
 
