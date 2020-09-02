@@ -31,10 +31,12 @@ use clipboard::ClipboardProvider;
 use semver::Version;
 use std::env;
 use std::fs;
+use std::fs::File;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process;
 use std::process::Command;
+use std::process::Stdio;
 
 /// Use the version-number defined in `../Cargo.toml`.
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
@@ -206,9 +208,25 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
 
     let mut executable_found = false;
     for i in 0..executable_list.len() {
+        // Connect `stdin` of child process to `/dev/tty`.
+        #[cfg(not(target_family = "windows"))]
+        let config = if *RUNS_ON_CONSOLE {
+            if let Ok(file) = File::open("/dev/tty") {
+                Stdio::from(file)
+            } else {
+                Stdio::null()
+            }
+        } else {
+            Stdio::null()
+        };
+        #[cfg(target_family = "windows")]
+        let config = Stdio::null();
+
         let child = Command::new(&executable_list[i])
             .args(&args_list[i])
+            .stdin(config)
             .spawn();
+
         if let Ok(mut child) = child {
             let ecode = child.wait().context("Failed to wait on editor to close.")?;
 
