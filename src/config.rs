@@ -544,7 +544,7 @@ lazy_static! {
                 buffer.push_str(&s.unwrap_or_default());
             }
         };
-        Clipboard::new(&buffer)
+        Clipboard::new(&buffer.trim())
     };
 }
 
