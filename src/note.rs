@@ -382,14 +382,18 @@ impl Note {
             .open(&new_fqfn);
         match outfile {
             Ok(mut outfile) => {
-                eprintln!("Creating file: {:?}", new_fqfn);
+                if ARGS.debug {
+                    eprintln!("Creating file: {:?}", new_fqfn);
+                };
                 write!(outfile, "{}", &self.content.to_osstring())
                     .with_context(|| format!("Can not write new file {:?}", new_fqfn))?
             }
             Err(e) => {
                 if Path::new(&new_fqfn).exists() {
-                    eprintln!("Info: Can not create new file, file exists: {}", e);
-                    eprintln!("Info: Instead, try to read existing: {:?}", new_fqfn);
+                    if ARGS.debug {
+                        eprintln!("Info: Can not create new file, file exists: {}", e);
+                        eprintln!("Info: Instead, try to read existing: {:?}", new_fqfn);
+                    };
                 } else {
                     return Err(anyhow!(format!(
                         "Can not write file: {:?}\n{}",

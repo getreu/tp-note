@@ -66,7 +66,7 @@ impl AlertDialog {
         // Print the same message also to console in case
         // the window does not pop up due to missing
         // libraries.
-        eprintln!("{}\n{}", &*ALERT_DIALOG_TITLE_LINE, msg);
+        println!("{}\n{}", &*ALERT_DIALOG_TITLE_LINE, msg);
     }
 
     /// Add a footer with additional debugging information, such as
