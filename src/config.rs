@@ -215,7 +215,7 @@ const TMPL_ANNOTATE_FILENAME: &str = "\
 /// Default command-line argument list when launching external editor.
 /// The editor list is executed item by item until an editor is found.
 /// Can be changed in config file.
-#[cfg(target_family = "unix")]
+#[cfg(all(target_family = "unix", not(target_vendor="apple")))]
 const EDITOR_ARGS: &[&[&str]] = &[
     &["marktext", "--no-sandbox"],
     &["typora"],
@@ -245,7 +245,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
 ];
 // Some info about lauching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
-#[cfg(target_os = "ios")]
+#[cfg(all(target_family = "unix", target_vendor="apple"))]
 const EDITOR_ARGS: &[&[&str]] = &[
     &["/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
     &["/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text"],
@@ -254,7 +254,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
 /// Default command-line argument list when launching external viewer
 /// with `--view`. Can be changed in config file.
 /// The viewer list is executed item by item until an editor is found.
-#[cfg(target_family = "unix")]
+#[cfg(all(target_family = "unix", not(target_vendor="apple")))]
 const VIEWER_ARGS: &[&[&str]] = &[
     &["marktext", "--no-sandbox"],
     &["typora"],
@@ -282,7 +282,7 @@ const VIEWER_ARGS: &[&[&str]] = &[
 ];
 // Some info about lauching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
-#[cfg(target_os = "ios")]
+#[cfg(all(target_family = "unix", target_vendor="apple"))]
 const VIEWER_ARGS: &[&[&str]] = &[
     &["/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
     &["/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text"],
@@ -291,19 +291,24 @@ const VIEWER_ARGS: &[&[&str]] = &[
 /// Default command-line argument list when launching external editor.
 /// The editor list is executed item by item until an editor is found.
 /// Can be changed in config file.
-#[cfg(target_family = "unix")]
+#[cfg(all(target_family = "unix", not(target_vendor="apple")))]
 const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nano"], &["nvim"], &["vim"], &["vi"]];
 #[cfg(target_family = "windows")]
 const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&[]];
 // Some info about lauching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
-#[cfg(target_os = "ios")]
-const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nano"]];
+#[cfg(all(target_family = "unix", target_vendor="apple"))]
+const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[
+    &["nano"],
+    &["nvim"],
+    &["vim"],
+    &["vi"],
+];
 
 /// Default command-line argument list when launching external viewer
 /// with `--view`. Can be changed in config file.
 /// The viewer list is executed item by item until an editor is found.
-#[cfg(target_family = "unix")]
+#[cfg(all(target_family = "unix", not(target_vendor="apple")))]
 const VIEWER_CONSOLE_ARGS: &[&[&str]] = &[
     &["nano", "-v"],
     &["nvim", "-R"],
@@ -314,8 +319,13 @@ const VIEWER_CONSOLE_ARGS: &[&[&str]] = &[
 const VIEWER_CONSOLE_ARGS: &[&[&str]] = &[];
 // Some info about lauching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
-#[cfg(target_os = "ios")]
-const VIEWER_CONSOLE_ARGS: &[&[&str]] = &[&["nano", "-v"]];
+#[cfg(all(target_family = "unix", target_vendor="apple"))]
+const VIEWER_CONSOLE_ARGS: &[&[&str]] = &[
+    &["nano", "-v"],
+    &["nvim", "-R"],
+    &["vim", "-R"],
+    &["vi", "-R"],
+];
 
 /// By default clipboard support is enabled, can be disabled
 /// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
