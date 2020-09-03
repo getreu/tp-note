@@ -60,7 +60,6 @@ tmpl_sync_filename = '''{{ tag }}{{ title | path(alpha=true) }}{% if subtitle | 
 editor_args = [
     [
     'marktext',
-    '--new-window',
     '--no-sandbox',
 ],
     ['typora'],
@@ -94,15 +93,10 @@ editor_args = [
     'gvim',
     '--nofork',
 ],
-    ['nano'],
-    ['nvim'],
-    ['vim'],
-    ['vi'],
 ]
 viewer_args = [
     [
     'marktext',
-    '--new-window',
     '--no-sandbox',
 ],
     ['typora'],
@@ -139,7 +133,18 @@ viewer_args = [
     '--nofork',
     '-R',
 ],
+]
+editor_console_args = [
     ['nano'],
+    ['nvim'],
+    ['vim'],
+    ['vi'],
+]
+viewer_console_args = [
+    [
+    'nano',
+    '-v',
+],
     [
     'nvim',
     '-R',
