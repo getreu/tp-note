@@ -55,10 +55,23 @@ its filename.
 
 > Note: this operation mode also empties the clipboard (configurable feature).
 
+**Clipboard simulation**
+
+When no mouse and clipboard is available, the clipboard feature can be
+simulated by feeding the clipboard data into `stdin`:
+
+```sh
+> echo "[The Rust Book](https://doc.rust-lang.org/book/)" | tp-note
+```
+
+_Tp-Note_ behaves here as if the clipboard contained the string:
+"`[The Rust Book](https://doc.rust-lang.org/book/)`".
+
+
 ### The clipboard contains a string
 
-Example: While launching _Tp-Note_ the clipboard contains the string: "`Who
-Moved My Cheese?`" and `<path>` is a directory.
+Example: While launching _Tp-Note_ the clipboard contains the string:
+"`Who Moved My Cheese?`" and `<path>` is a directory.
 
 ``` sh
 > tp-note "./03-Favorite Readings/"
@@ -94,6 +107,7 @@ is possible to adapt the template in _Tp-Note_'s configuration file. Please
 note, that the filename is a simplified and sanitized concatenation of: date,
 title and subtitle.
 
+
 ### The clipboard contains a Markdown link
 
 Example: `<path>` is a directory, the clipboard is not empty and it contains
@@ -105,9 +119,7 @@ the string: "`[The Rust Book](https://doc.rust-lang.org/book/)`".
 
 This creates the following document:
 
-
-    "./doc/Lecture 1/20200307-The Rust Book--Notes.md
-
+    ./doc/Lecture 1/20200307-The Rust Book--Notes.md
 
 ```yaml
 ---
@@ -122,6 +134,7 @@ revision: "1.0"
 [The Rust Book](https://doc.rust-lang.org/book/)
 ```
 
+
 ## New note with empty clipboard
 
 In case the clipboard is empty while starting, another set of templates is used
@@ -131,7 +144,6 @@ file is then opened with an external text editor, allowing to change the
 proposed title and to add other content. When the text editor closes, _Tp-Note_
 synchronizes the note's meta-data and its filename. This operation is performed
 with the '`tmpl_sync_filename`' template.
-
 
 Example: the clipboard is empty and `<path>` is a directory (or empty):
 
@@ -255,7 +267,8 @@ synchronization).
     are available and are executed in the same way.
 
     _Tp-Note_ ignores the clipboard when run in batch mode with '`--batch`'.
-    Instead, it reads the '`TP_NOTE_CLIPBOARD`' environnement variable.
+    Instead, if available, it reads the `stdin` stream as if the data came
+    from the clipboard.
 
 **-c** *CF*, **\--config**=*CF*
 
@@ -277,7 +290,8 @@ synchronization).
 
 **-V**, **\--version**
 
-:   Print _Tp-Note_'s version and exit.
+:   Print _Tp-Note_'s version and exit. When combined with '`--debug`',
+    additional technical details are printed.
 
 
 
@@ -662,20 +676,6 @@ _Markdown_ as default markup language. To change this, just edit the following
 3. The last line in the template '`tmpl_clipboard_content`' defines a hyperlink in
    Markdown format. Change the link format according to your markup language
    convention.
-
-
-
-# ENVIRONNEMENT
-
-**TP_NOTE_CLIPBOARD**
-
-:   _Tp-Note_ ignores the clipboard when run in batch mode with '`--batch`' or
-    when it runs on a Linux console without graphical environment.  Instead,
-    it reads the '`TP_NOTE_CLIPBOARD`' environment variable and store its
-    content in the '`clipboard_*`' template variables, as if the data came from
-    the clipboard.  Unlike clipboard data, the content of the
-    '`TP_NOTE_CLIPBOARD`' environment variable is not consumed, meaning it is
-    not deleted after usage.
 
 
 

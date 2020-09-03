@@ -275,6 +275,54 @@ disk.
 [Copy Selection as Markdown]: https://addons.mozilla.org/en-GB/firefox/addon/copy-selection-as-markdown/?src=search
 
 
+## Note taking for system administrators
+
+As _Tp-Note_ makes extensive use of the clipboard, it mainly targets desktop systems running
+a graphical environment. But also when working on the console _Tp-Note_ can be useful.
+Here some typical workflows:
+
+* Document a downloaded file:
+
+  Download the file
+  [i3-extensions.zip](http://blog.getreu.net/_downloads/i3-extensions.zip):
+
+  ```shell
+  wget "http://blog.getreu.net/_downloads/i3-extensions.zip"
+  ```
+
+  Document from where you downloaded the file:
+
+  ```shell
+  echo  "[download](http://blog.getreu.net/_downloads/i3-extensions.zip)" | tp-note i3-extensions.zip
+  ```
+
+  This creates the file `i3-extensions.zip--URL.md` with the
+  following content:
+
+  ```markdown
+  ---
+  title:      "i3-extensions.zip"
+  subtitle:   "URL"
+  author:     "getreu"
+  date:       "2020-09-03"
+  lang:       "en_GB.UTF-8"
+  revision:   "1.0"
+  ---
+
+  [i3-extensions.zip](i3-extensions.zip)
+
+  [download](http://blog.getreu.net/_downloads/i3-extensions.zip)
+  ```
+
+* Download a webpage, convert it to Markdown and insert the result
+  into a _Tp-Note_ file:
+
+  ```shell
+  wget 'https://blog.getreu.net' | pandoc -f html -t markdown | tp-note
+  ```
+
+
+
 # How it works: Organize your files and notes with sort-tags
 
 Consider the following _Tp-Note_-file:
@@ -544,9 +592,6 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
 
         [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\edit.tp-note.exe\command]
         @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"%1\""
-
-
-
 
 3. Save the file as:
 
