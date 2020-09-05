@@ -222,6 +222,37 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
 
     let mut executable_found = false;
     for i in 0..executable_list.len() {
+        if ARGS.debug {
+            eprint!("Trying to launch executable: {}", executable_list[i]);
+            for j in &args_list[i] {
+                eprint!(" \"{}\"", j);
+            }
+            eprintln!()
+        };
+
+        // Check if this is a `flatpak run <app>` command.
+        if executable_list[i].find("flatpak").is_some()
+            && args_list[i].len() == 3
+            && args_list[i][0] == "run"
+        {
+            // Check if the flatpak is installed on this system with `flatpak info <app>`.
+            if let Ok(ecode) = Command::new(executable_list[i])
+                .args(&["info", args_list[i][1]])
+                .stderr(Stdio::null())
+                .stdout(Stdio::null())
+                .status()
+            {
+                if !ecode.success() {
+                    // This is a flatpak command, but the application is not installed on this system.
+                    // Silently ignore this flatpak command.
+                    if ARGS.debug {
+                        eprintln!("Flatpak executable \"{}\" not found.", args_list[i][1]);
+                    }
+                    continue;
+                };
+            };
+        };
+
         // Connect `stdin` of child process to `/dev/tty`.
         #[cfg(not(target_family = "windows"))]
         let config = if *RUNS_ON_CONSOLE {
@@ -239,6 +270,8 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
         let child = Command::new(&executable_list[i])
             .args(&args_list[i])
             .stdin(config)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
             .spawn();
 
         if let Ok(mut child) = child {
@@ -264,6 +297,10 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
 
             executable_found = true;
             break;
+        } else {
+            if ARGS.debug {
+                eprintln!("Executable \"{}\" not found.", executable_list[i]);
+            }
         }
     }
 

@@ -59,6 +59,11 @@ tmpl_annotate_filename = '''{{ file_tag }}{{ title | path(alpha=true) }}{% if su
 tmpl_sync_filename = '''{{ tag }}{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ extension | path }}'''
 editor_args = [
     [
+    'flatpak',
+    'run',
+    'com.github.marktext.marktext',
+],
+    [
     'marktext',
     '--no-sandbox',
 ],
