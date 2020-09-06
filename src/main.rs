@@ -255,22 +255,22 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
 
         // Connect `stdin` of child process to `/dev/tty`.
         #[cfg(not(target_family = "windows"))]
-        let config = if *RUNS_ON_CONSOLE {
+        let (config_stdin, config_stdout) = if *RUNS_ON_CONSOLE {
             if let Ok(file) = File::open("/dev/tty") {
-                Stdio::from(file)
+                (Stdio::from(file), Stdio::inherit())
             } else {
-                Stdio::null()
+                (Stdio::null(), Stdio::null())
             }
         } else {
-            Stdio::null()
+                (Stdio::null(), Stdio::null())
         };
         #[cfg(target_family = "windows")]
-        let config = Stdio::null();
+        let (config_stdin, config_stdout) = (Stdio::null(), Stdio::null());
 
         let child = Command::new(&executable_list[i])
             .args(&args_list[i])
-            .stdin(config)
-            .stdout(Stdio::null())
+            .stdin(config_stdin)
+            .stdout(config_stdout)
             .stderr(Stdio::null())
             .spawn();
 
