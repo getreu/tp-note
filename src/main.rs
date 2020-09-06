@@ -63,7 +63,7 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
 ///    ```
 ///
-const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
+const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.6.1");
 /// (c) Jens Getreu
 const AUTHOR: &str = "(c) Jens Getreu, 2020";
 /// Open the note file `path` on disk and reads its YAML front matter.
@@ -262,7 +262,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
                 (Stdio::null(), Stdio::null())
             }
         } else {
-                (Stdio::null(), Stdio::null())
+            (Stdio::null(), Stdio::null())
         };
         #[cfg(target_family = "windows")]
         let (config_stdin, config_stdout) = (Stdio::null(), Stdio::null());
