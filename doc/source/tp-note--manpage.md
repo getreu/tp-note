@@ -32,6 +32,12 @@ notes meta-data and renames, if necessary, the file, so that its meta-data and
 filename are in sync again. Finally, the resulting path is printed to
 '`stdout`', log and error messages are dumped to '`stderr`'.
 
+This document is Tp-Note's technical refernece. More information
+can be found in [Tp-Note's user manual] and at [Tp-Note's project page].
+
+[Tp-Note's user manual]: https://blog.getreu.net/projects/tp-note/tp-note--manual.html
+[Tp-Note's project page]: https://blog.getreu.net/projects/tp-note/
+
 
 
 # OPERATION MODES

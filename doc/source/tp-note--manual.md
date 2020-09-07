@@ -318,7 +318,7 @@ Here some typical workflows:
   into a _Tp-Note_ file:
 
   ```shell
-  wget 'https://blog.getreu.net' | pandoc -f html -t markdown | tp-note
+  wget 'https://blog.getreu.net' | pandoc -f html -t markdown_strict | tp-note
   ```
 
 
@@ -522,7 +522,7 @@ depending on your operating system.
 * Your preferred markup language is not *Markdown*, but *ReStructuredText*,
   *T2t*, *Textile*, *Wiki*, *Mediawiki* or *Asciidoc*? Change it!
 
-  Please refer to _Tp-Note_'s man-page to learn how to change its
+  Please refer to [Tp-Note's man-page] to learn how to change its
   templates in the configuration file.
 
 * Your preferred text editor is not *Notepad*? Change it![^1]
@@ -543,13 +543,15 @@ depending on your operating system.
 
   - _VS-Code_, _Atom_ ...
 
-  Please refer to _Tp-Note_'s man-page to learn how to register your text
+  Please refer to [Tp-Note's man-page] to learn how to register your text
   editor in _Tp-Note_'s configuration file.
 
 * You prefer working in a desktop environment instead of working on a shell?
 
-  Read [Integration with file manager].
+  Read the following section [Optional integration with your file manager] to
+  learn how to configure your file manager's context menu to launch _Tp-Note_.
 
+[Tp-Note's man-page]: http://blog.getreu.net/projects/tp-note/tp-note--manpage.html#customization
 
 # Optional integration with your file manager
 
