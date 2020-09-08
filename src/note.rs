@@ -10,8 +10,8 @@ extern crate time;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
-use crate::config::EXTENSION_DEFAULT;
 use crate::config::NOTE_FILENAME_LEN_MAX;
+use crate::config::STDIN;
 use crate::content::Content;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
@@ -45,8 +45,8 @@ struct FrontMatter {
     /// The note's optional subtitle.
     subtitle: Option<String>,
     /// Optional YAML header variable. If not defined in front matter,
-    /// the file name's sort tag `file_tag` is used (if any).
-    tag: Option<String>,
+    /// the file name's sort tag `file | tag` is used (if any).
+    sort_tag: Option<String>,
     /// Optional YAML header variable. If not defined in front matter,
     /// the file name's extension `file_extension` is used.
     extension: Option<String>,
@@ -69,39 +69,14 @@ impl Note {
         context.insert("title", &fm.title);
         context.insert("subtitle", &fm.subtitle.as_ref().unwrap_or(&String::new()));
 
-        // Copy value of `file_extension` as default for `extension`.
-        if let Some(val) = context.get("file_extension") {
-            if let serde_json::Value::String(file_extension) = val {
-                let file_extension = file_extension.to_string();
-                context.insert("extension", &file_extension);
-            } else {
-                context.insert("extension", EXTENSION_DEFAULT);
-            }
-        }
+        // Read YAML header variable `extension` if any.
+        context.insert(
+            "extension",
+            &fm.extension.as_ref().unwrap_or(&String::new()),
+        );
 
         // Read YAML header variable `tag` if any.
-        if let Some(extension) = &fm.extension {
-            if !extension.is_empty() {
-                // Overwrites `tag` key copied above.
-                context.insert("extension", extension);
-            };
-        };
-
-        // Copy value of `file_tag` as default for `tag`.
-        if let Some(val) = context.get("file_tag") {
-            if let serde_json::Value::String(file_tag) = val {
-                let file_tag = file_tag.to_string();
-                context.insert("tag", &file_tag);
-            } else {
-                context.insert("tag", "");
-            }
-        }
-
-        // Read YAML header variable `tag` if any.
-        if let Some(tag) = &fm.tag {
-            // Overwrites `tag` key copied above.
-            context.insert("tag", tag);
-        };
+        context.insert("sort_tag", &fm.sort_tag.as_ref().unwrap_or(&String::new()));
 
         Ok(Self {
             front_matter: Some(fm),
@@ -159,16 +134,9 @@ impl Note {
     fn capture_environment(path: &Path) -> Result<ContextWrapper> {
         let mut context = ContextWrapper::new();
 
-        let file_tag: String = path
-            .file_stem()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default()
-            .chars()
-            .take_while(|&c| c.is_numeric() || c == '-' || c == '_')
-            .collect::<String>();
-        // Sort-tag that is deduced from filename on disk.
-        context.insert("file_tag", &file_tag);
+        // Register the canonicalized fully qualified file name.
+        let file = path.to_str().unwrap_or_default();
+        context.insert("file", &file);
 
         // `fqpn` is a directory as fully qualified path, ending
         // by a separator.
@@ -179,43 +147,12 @@ impl Note {
         };
         context.insert("path", &fqpn.to_str().unwrap_or_default());
 
-        // Strip off the sort tag if there is any
-        let file_dirname = fqpn
-            .file_name()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default()
-            .trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_');
-        context.insert("file_dirname", &file_dirname);
-
-        // Strip off the sort tag if there is any.
-        let file_stem = if path.is_dir() {
-            ""
-        } else {
-            path.file_stem()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default()
-                .trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_')
-        };
-        context.insert("file_stem", &file_stem);
-
         // Register input from clipboard.
-        context.insert("clipboard", &CLIPBOARD.content);
-        context.insert("clipboard_truncated", &CLIPBOARD.content_truncated);
-        context.insert("clipboard_heading", &CLIPBOARD.content_heading);
-        context.insert("clipboard_linkname", &CLIPBOARD.linkname);
-        context.insert("clipboard_linkurl", &CLIPBOARD.linkurl);
+        context.insert("clipboard", &CLIPBOARD);
 
-        // File-extension of the path given on command-line.
-        context.insert(
-            "file_extension",
-            &path
-                .extension()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default(),
-        );
+        // Register input from stdin.
+        context.insert("stdin", &STDIN);
+
         // Default extension for new notes as defined in the configuration file.
         context.insert("extension_default", CFG.extension_default.as_str());
 
@@ -328,10 +265,10 @@ impl Note {
         let fm: FrontMatter = serde_yaml::from_str(&content[fm_start..fm_end])?;
 
         // `tag` has additional constrains to check.
-        if let Some(tag) = &fm.tag {
-            if !tag.is_empty() {
+        if let Some(sort_tag) = &fm.sort_tag {
+            if !sort_tag.is_empty() {
                 // Check for forbidden characters.
-                if tag
+                if sort_tag
                     .chars()
                     .filter(|&c| !c.is_numeric() && c != '_' && c != '-')
                     .count()
@@ -340,7 +277,7 @@ impl Note {
                     return Err(anyhow!(format!(
                         "The `tag`-variable contains forbidden character(s): tag = \"{}\". \
                         Only numbers, `-` and `_` are allowed here.",
-                        tag
+                        sort_tag
                     )));
                 }
             };
@@ -439,7 +376,7 @@ mod tests {
         let expected_front_matter = FrontMatter {
             title: "The book".to_string(),
             subtitle: Some("you always wanted".to_string()),
-            tag: None,
+            sort_tag: None,
             extension: None,
         };
 
@@ -459,7 +396,7 @@ mod tests {
         let expected_front_matter = FrontMatter {
             title: "The book".to_string(),
             subtitle: Some("you always wanted".to_string()),
-            tag: None,
+            sort_tag: None,
             extension: None,
         };
 
@@ -474,14 +411,14 @@ mod tests {
         title: \"The book\"
         subtitle: you always wanted
         author: It's me
-        tag: 20200420-21_22
+        sort_tag: 20200420-21_22
         extension: md
         ---\ncontent\nmore content";
 
         let expected_front_matter = FrontMatter {
             title: "The book".to_string(),
             subtitle: Some("you always wanted".to_string()),
-            tag: Some("20200420-21_22".to_string()),
+            sort_tag: Some("20200420-21_22".to_string()),
             extension: Some("md".to_string()),
         };
 
@@ -531,7 +468,7 @@ mod tests {
         let expected_front_matter = FrontMatter {
             title: "The book".to_string(),
             subtitle: None,
-            tag: None,
+            sort_tag: None,
             extension: None,
         };
 
@@ -546,7 +483,7 @@ mod tests {
         title: The book
         subtitle: you always wanted
         author: It's me
-        tag:    123x4
+        sort_tag:    123x4
         ...\ncontent\nmore content";
 
         assert!(Note::deserialize_note(&input).is_err());

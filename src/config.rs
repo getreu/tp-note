@@ -50,28 +50,28 @@ pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 /// Can be modified through editing the configuration file.
 /// Useful variables in this context are:
 /// `{{ tag }}`
-/// `{{ title | path }}`, `{{ subtitle | path }}`, `{{ extension_default | path }}`,
-/// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
+/// `{{ title | sanit }}`, `{{ subtitle | sanit }}`, `{{ ext_default }}`,
+/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
 /// `{{ tag  }}` must be the first in line here, then followed by a
-/// `{{ <var>| path(alpha) }}` variable.
+/// `{{ <var>| sanit(alpha) }}` variable.
 /// Note, that in this filename-template, all variables (except `tag`) must be
-/// filtered by a `path` or `path(alpha=true)` filter.
+/// filtered by a `sanit` or `sanit(alpha=true)` filter.
 /// This is the only template that has access to the `{{ tag }}` variable.
-/// `{{ tag }}` contains the content of the YAML header variable `tag:` if
-/// it exists. Otherwise it defaults to `{{ file_tag }}`.
-
+/// `{{ tag }}` contains the content of the YAML header variable `sort_tag`.
 const TMPL_SYNC_FILENAME: &str = "\
-{{ tag }}\
-{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
-{{ subtitle | path  }}.{{ extension | path }}\
+{% if sort_tag == '' -%}{% set sort_tag = file | tag -%}{% endif -%}
+{% if extension == '' -%}{% set extension = file | ext -%}{% endif -%}
+{{ sort_tag }}\
+{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}\
+{{ subtitle | sanit  }}.{{ extension }}\
 ";
 
-/// Default content-template used when the command-line argument <path> is a
+/// Default content-template used when the command-line argument <sanit> is a
 /// directory. Can be changed through editing the configuration file.
 /// The following variables are  defined:
-/// `{{ file_dirname }}`, `{{ file_stem }}`, `{{ file_extension }}`, `{{ extension_default }}`
-/// `{{ file_tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`,
+/// `{{ sanit | stem }}`, `{{ file | stem }}`, `{{ file | ext }}`, `{{ extension_default }}`
+/// `{{ file | tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`,
 /// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
@@ -79,7 +79,7 @@ const TMPL_SYNC_FILENAME: &str = "\
 /// appended to each variable.
 const TMPL_NEW_CONTENT: &str = "\
 ---
-title:      {{ file_dirname | json_encode }}
+title:      {{ path | stem | cut | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -93,42 +93,42 @@ revision:   {{ '1.0' | json_encode }}
 /// Default filename-template for a new note file on disk. It satisfies the
 /// sync criteria for note-meta data in front-matter and filename.
 /// Useful variables in this context are:
-/// `{{ title| path }}`, `{{ subtitle| path }}`, `{{ extension_default| path }}`,
-/// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
+/// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}`,
+/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
-/// The first non-numerical variable must be some `{{ <var>| path(alpha) }}`
+/// The first non-numerical variable must be some `{{ <var>| sanit(alpha) }}`
 /// variant.
 /// Note, that in this filename-template, all variables must be filtered
-/// by a `path` or `path(alpha=true)` filter.
+/// by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d') }}-\
-{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
-{{ subtitle | path  }}.{{ extension_default | path }}\
+{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}\
+{{ subtitle | sanit  }}.{{ extension_default }}\
 ";
 
 /// Default template used, when the clipboard contains a string.
 /// The clipboards content is in `{{ clipboard }}`, its truncated version
-/// in `{{ clipboard_heading }}`
+/// in `{{ clipboard | heading }}`
 /// When the clipboard contains a hyper-link in markdown format: [<link-name>](<link-url>),
-/// its first part is stored in `{{ clipboard-linkname }}`, the second part in
-/// `{{ clipboard-linkurl }}`.
+/// its first part is stored in `{{ clipboard | linkname }}`, the second part in
+/// `{{ clipboard | linkurl }}`.
 /// The following variables are defined:
-/// `{{ file_dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ extension_default }}`
-/// `{{ path }}`, `{{ file_tag }}`, `{{ username }}`.
+/// `{{ file_dirname }}`, `{{ file | stem }}`, `{{ extension }}`, `{{ extension_default }}`
+/// `{{ path }}`, `{{ file | tag }}`, `{{ username }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
 /// When placed in YAML-front-matter, the filter `| json_encode` must be
 /// appended to each variable.
-/// Trick: the expression `{% if clipboard != clipboard_heading %}` detects
+/// Trick: the expression `{% if clipboard != clipboard | heading %}` detects
 /// if the clipboard content has more than one line of text.
 const TMPL_CLIPBOARD_CONTENT: &str = "\
 ---
-{% if clipboard_linkname !='' %}\
-title:      {{ clipboard_linkname | json_encode }}
+{% if stdin ~ clipboard | linkname !='' %}\
+title:      {{ stdin ~ clipboard | linkname | cut | json_encode }}
 {% else %}\
-title:      {{ clipboard_heading | json_encode }}
+title:      {{ stdin ~ clipboard | heading | cut | json_encode }}
 {% endif %}\
-{% if clipboard_linkname !='' and clipboard_heading == clipboard %}\
+{% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}\
 subtitle:   {{ 'URL' | json_encode }}
 {% else %}\
 subtitle:   {{ 'Note' | json_encode }}
@@ -139,44 +139,42 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-{{ clipboard }}
+{{ stdin ~ clipboard }}
 
 ";
 
-/// Default filename template used when the clipboard contains a string.
+/// Default filename template used when the stdin ~ clipboard contains a string.
 /// Useful variables in this context are:
-/// `{{ title| path }}`, `{{ subtitle| path }}`, `{{ extension_default| path }}`,
-/// `{{ year| path }}`, `{{ month| path }}`. `{{ day| path }}`.
-/// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
+/// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}`,
+/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
-/// The first non-numerical variable must be some `{{ <var>| path(alpha) }}`
+/// The first non-numerical variable must be some `{{ <var>| sanit(alpha) }}`
 /// variant.
 /// Note, that in this filename-template, all variables (except `now`)
-/// must be filtered by a `path` or `path(alpha=true)` filter.
+/// must be filtered by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_CLIPBOARD_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d') }}-\
-{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
-{{ subtitle | path  }}.{{ extension_default | path }}\
+{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}\
+{{ subtitle | sanit  }}.{{ extension_default }}\
 ";
 
 /// Default template used when the command-line <path> parameter points to
 /// an existing non-`.md`-file. Can be modified through editing
 /// the configuration file.
 /// The following variables are  defined:
-/// `{{ file_dirname }}`, `{{ file_stem }}`, `{{ extension }}`, `{{ extension_default }}`
-/// `{{ file_tag }}`, `{{ username }}`, `{{ lang }}`,
+/// `{{ file | dirname }}`, `{{ file | stem }}`, `{{ extension }}`, `{{ extension_default }}`
+/// `{{ file | tag }}`, `{{ username }}`, `{{ lang }}`,
 /// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
 /// When placed in YAML-front-matter, the filter `| json_encode` must be
 /// appended to each variable.
-/// Trick: the expression `{% if clipboard != clipboard_heading %}` detects
-/// if the clipboard content has more than one line of text.
+/// Trick: the expression `{% if stdin ~ clipboard != stdin ~ clipboard | heading %}` detects
+/// if the stdin ~ clipboard content has more than one line of text.
 const TMPL_ANNOTATE_CONTENT: &str = "\
-{% if file_extension == '' -%}{% set dot = '' -%}{% else %}{% set dot = '.' -%}{% endif -%}
 ---
-title:      {{ file_stem ~ dot ~ file_extension | json_encode }}
-{% if clipboard_linkname !='' and clipboard_heading == clipboard %}\
+title:      {% filter json_encode %}{{ file | stem }}{{ file | ext | prepend_dot }}{% endfilter %}
+{% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}\
 subtitle:   {{ 'URL' | json_encode }}
 {% else %}\
 subtitle:   {{ 'Note' | json_encode }}
@@ -187,29 +185,29 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-[{{ file_tag ~ file_stem ~ dot ~ file_extension }}]\
-({{ file_tag ~ file_stem ~ dot ~ file_extension }})
-{% if clipboard != '' %}{% if clipboard != clipboard_heading %}
+[{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}]\
+({{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }})
+{% if stdin ~ clipboard != '' %}{% if stdin ~ clipboard != stdin ~ clipboard | heading %}
 ---
 {% endif %}
-{{ clipboard }}
+{{ stdin ~ clipboard }}
 {% endif %}
 ";
 
 /// Filename of a new note, that annotates an existing file on disk given in
 /// <path>.
 /// Useful variables are:
-/// `{{ title | path(alpha=true) }}`, `{{ subtitle | path }}`, `{{ extension_default | path }}`.
-/// All variables also exist in a `{{ <var>| path(alpha) }}` variant: in case
+/// `{{ title | sanit(alpha=true) }}`, `{{ subtitle | sanit }}`, `{{ extension_default }}`.
+/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case
 /// its value starts with a number, the string is prepended with `'`.
-/// The first non-numerical variable must be the `{{ <var>| path(alpha) }}`
+/// The first non-numerical variable must be the `{{ <var>| sanit(alpha) }}`
 /// variant.
-/// Note, that in this filename-template, all variables (expect `file_tag`)
-/// must be filtered by a `path` or `path(alpha=true)` filter.
+/// Note, that in this filename-template, all variables (expect `file | tag`)
+/// must be filtered by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_ANNOTATE_FILENAME: &str = "\
-{{ file_tag }}\
-{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}\
-{{ subtitle | path  }}.{{ extension_default | path }}\
+{{ file | tag }}\
+{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}\
+{{ subtitle | sanit  }}.{{ extension_default }}\
 ";
 
 /// Default command-line argument list when launching external editor.
@@ -289,7 +287,9 @@ const VIEWER_ARGS: &[&[&str]] = &[
     &["/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text"],
 ];
 
-/// Default command-line argument list when launching external editor.
+/// Default command-line argument list when launching an external editor
+/// and no graphical environment is available (`DISPLAY=''`).
+/// This lists console file editors only.
 /// The editor list is executed item by item until an editor is found.
 /// Can be changed in config file.
 #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
@@ -297,7 +297,7 @@ const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nano"], &["nvim"], &["vim"], &["vi"
 #[cfg(target_family = "windows")]
 const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&[]];
 // Some info about lauching programs on iOS:
-//[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
+// [dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(all(target_family = "unix", target_vendor = "apple"))]
 const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nano"], &["nvim"], &["vim"], &["vi"]];
 
@@ -334,15 +334,6 @@ const ENABLE_EMPTY_CLIPBOARD: bool = true;
 
 /// Limit the size of clipboard data `tp-note` accepts as input.
 const CLIPBOARD_LEN_MAX: usize = 0x8000;
-
-/// Defines the maximum length of the template variables `{{ clipboard_truncated }}` and `{{
-/// clipboard_linkname }}` which are usually used to in the note's front matter as title.  The
-/// title should not be too long, because it will end up as part of the file-name when the note is
-/// saved to disk. Filenames of some operating systems are limited to 255 bytes.
-#[cfg(not(test))]
-const CLIPBOARD_TRUNCATED_LEN_MAX: usize = 200;
-#[cfg(test)]
-const CLIPBOARD_TRUNCATED_LEN_MAX: usize = 10;
 
 #[derive(Debug, PartialEq, StructOpt)]
 #[structopt(
@@ -522,8 +513,8 @@ lazy_static! {
 }
 
 lazy_static! {
-    /// Reads the clipboard and empties it.
-    pub static ref CLIPBOARD: Clipboard = {
+    /// Reads the input stream stdin if there is any.
+    pub static ref STDIN: String = {
         let mut buffer = String::new();
 
         // Read stdin().
@@ -532,6 +523,15 @@ lazy_static! {
             let mut handle = stdin.lock();
             let _ = handle.read_to_string(&mut buffer);
         }
+
+        buffer.trim().to_string()
+    };
+}
+
+lazy_static! {
+    /// Reads the clipboard and empties it.
+    pub static ref CLIPBOARD: String = {
+        let mut buffer = String::new();
 
         // Concatenate clipboard content.
         if CFG.enable_read_clipboard && !*RUNS_ON_CONSOLE && !ARGS.batch {
@@ -544,127 +544,17 @@ lazy_static! {
                         AlertDialog::print(&format!(
                             "WARNING: the clipboard content is discarded because its size \
                             exceeds {} bytes.", CLIPBOARD_LEN_MAX));
-                        return Clipboard::default();
+                        return String::new();
                     }
                 };
                 buffer.push_str(&s.unwrap_or_default());
             }
         };
-        Clipboard::new(&buffer.trim())
+        buffer.trim().to_string()
     };
 }
 
 #[derive(Debug, PartialEq, Default)]
-/// Represents the clipboard content.
-pub struct Clipboard {
-    /// Raw content sting.
-    pub content: String,
-    /// Shortened content string (max CLIPBOARD_SHORT_LEN_MAX).
-    pub content_truncated: String,
-    /// First sentence (all characters until the first period)
-    /// or all characters until the first empty line.
-    /// If none is found take the whole `content_truncated`.
-    pub content_heading: String,
-    /// Namepart of the Markdown link. Empty if none.
-    pub linkname: String,
-    /// URL part of the Markdown link. Empty if none.
-    pub linkurl: String,
-}
-
-impl Clipboard {
-    pub fn new(content: &str) -> Self {
-        let content: String = content.trim_start().to_string();
-
-        // Limit the size of `clipboard_truncated`
-        let mut content_truncated = String::new();
-        for i in (0..CLIPBOARD_TRUNCATED_LEN_MAX).rev() {
-            if let Some(s) = content.get(..i) {
-                content_truncated = s.to_string();
-                break;
-            }
-        }
-
-        // Find the first heading, can finish with `. `, `.\n` or `.\r\n` on Windows.
-        let mut index = content_truncated.len();
-
-        if let Some(i) = content_truncated.find(". ") {
-            if i < index {
-                index = i;
-            }
-        }
-        if let Some(i) = content_truncated.find(".\n") {
-            if i < index {
-                index = i;
-            }
-        }
-        if let Some(i) = content_truncated.find(".\r\n") {
-            if i < index {
-                index = i;
-            }
-        }
-        if let Some(i) = content_truncated.find('!') {
-            if i < index {
-                index = i;
-            }
-        }
-        if let Some(i) = content_truncated.find('?') {
-            if i < index {
-                index = i;
-            }
-        }
-        if let Some(i) = content_truncated.find("\n\n") {
-            if i < index {
-                index = i;
-            }
-        }
-        if let Some(i) = content_truncated.find("\r\n\r\n") {
-            if i < index {
-                index = i;
-            }
-        }
-        let content_heading = content_truncated[0..index].to_string();
-
-        // Parse clipboard for markdown hyperlink.
-        let hyperlink = match Hyperlink::new(&content) {
-            Ok(s) => Some(s),
-            Err(e) => {
-                if ARGS.debug {
-                    eprintln!(
-                        "Note: the clipboard does not contain a markdown link: {}",
-                        e
-                    );
-                }
-                None
-            }
-        };
-
-        let mut linkname = String::new();
-        let mut linkurl = String::new();
-        // If there is a hyperlink in clipboard, destructure.
-        if let Some(hyperlink) = hyperlink {
-            linkname = hyperlink.name;
-            linkurl = hyperlink.url;
-        };
-
-        // Limit the size of `linkname`.
-        for i in (0..CLIPBOARD_TRUNCATED_LEN_MAX).rev() {
-            if let Some(s) = linkname.get(..i) {
-                linkname = s.to_string();
-                break;
-            }
-        }
-
-        Self {
-            content,
-            content_truncated,
-            content_heading,
-            linkname,
-            linkurl,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq)]
 /// Represents a hyperlink.
 pub struct Hyperlink {
     pub name: String,
@@ -720,94 +610,7 @@ impl Hyperlink {
 
 #[cfg(test)]
 mod tests {
-    use super::Clipboard;
     use super::Hyperlink;
-
-    #[test]
-    fn test_clipboard() {
-        // Test Markdown link in clipboard.
-        let input = "[Jens Getreu's blog](https://blog.getreu.net)";
-        let output = Clipboard::new(input);
-        // This string is shortened.
-        assert_eq!("Jens Getr", output.linkname);
-        assert_eq!("https://blog.getreu.net", output.linkurl);
-        assert_eq!(
-            "[Jens Getreu's blog](https://blog.getreu.net)",
-            output.content
-        );
-
-        //
-        // Test non-link string in clipboard.
-        let input = "Tp-Note helps you to quickly get\
-            started writing notes.";
-        let output = Clipboard::new(input);
-
-        assert_eq!("", output.linkname);
-        assert_eq!("", output.linkurl);
-        assert_eq!(
-            "Tp-Note helps you to quickly get\
-            started writing notes.",
-            output.content
-        );
-        // This string is shortened.
-        assert_eq!("Tp-Note h", output.content_truncated);
-
-        //
-        // Test find heading.
-        let input = "N.ote. It helps. Get quickly\
-            started writing notes.";
-        let output = Clipboard::new(input);
-
-        assert_eq!("", output.linkname);
-        assert_eq!("", output.linkurl);
-        assert_eq!(
-            "N.ote. It helps. Get quickly\
-            started writing notes.",
-            output.content
-        );
-        // This string is shortened.
-        assert_eq!("N.ote", output.content_heading);
-
-        //
-        // Test find first sentence.
-        let input = "N.ote.\nIt helps. Get quickly\
-            started writing notes.";
-        let output = Clipboard::new(input);
-        // This string is shortened.
-        assert_eq!("N.ote", output.content_heading);
-
-        //
-        // Test find first sentence (Windows)
-        let input = "N.ote.\r\nIt helps. Get quickly\
-            started writing notes.";
-        let output = Clipboard::new(input);
-        // This string is shortened.
-        assert_eq!("N.ote", output.content_heading);
-
-        //
-        // Test find heading
-        let input = "N.ote\n\nIt helps. Get quickly\
-            started writing notes.";
-        let output = Clipboard::new(input);
-        // This string is shortened.
-        assert_eq!("N.ote", output.content_heading);
-
-        //
-        // Test find heading (Windows)
-        let input = "N.ote\r\n\r\nIt helps. Get quickly\
-            started writing notes.";
-        let output = Clipboard::new(input);
-        // This string is shortened.
-        assert_eq!("N.ote", output.content_heading);
-
-        //
-        // Test trim whitespace
-        let input = "\r\n\r\n  \tIt helps. Get quickly\
-            started writing notes.";
-        let output = Clipboard::new(input);
-        // This string is shortened.
-        assert_eq!("It helps.", output.content_heading);
-    }
 
     #[test]
     fn test_parse_hyperlink() {

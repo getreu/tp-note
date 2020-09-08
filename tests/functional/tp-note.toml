@@ -9,7 +9,7 @@ note_file_extensions = [
 ]
 tmpl_new_content = '''
 ---
-title:      {{ file_dirname | json_encode }}
+title:      {{ path | stem | cut | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -19,12 +19,12 @@ revision:   {{ '1.0' | json_encode }}
 
 
 '''
-tmpl_new_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ extension_default | path }}'''
+tmpl_new_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}{{ subtitle | sanit  }}.{{ extension_default }}'''
 tmpl_clipboard_content = '''
 ---
-{% if clipboard_linkname !='' %}title:      {{ clipboard_linkname | json_encode }}
-{% else %}title:      {{ clipboard_heading | json_encode }}
-{% endif %}{% if clipboard_linkname !='' and clipboard_heading == clipboard %}subtitle:   {{ 'URL' | json_encode }}
+{% if stdin ~ clipboard | linkname !='' %}title:      {{ stdin ~ clipboard | linkname | cut | json_encode }}
+{% else %}title:      {{ stdin ~ clipboard | heading | cut | json_encode }}
+{% endif %}{% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}subtitle:   {{ 'URL' | json_encode }}
 {% else %}subtitle:   {{ 'Note' | json_encode }}
 {% endif %}author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -32,15 +32,14 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-{{ clipboard }}
+{{ stdin ~ clipboard }}
 
 '''
-tmpl_clipboard_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ extension_default | path }}'''
+tmpl_clipboard_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}{{ subtitle | sanit  }}.{{ extension_default }}'''
 tmpl_annotate_content = '''
-{% if file_extension == '' -%}{% set dot = '' -%}{% else %}{% set dot = '.' -%}{% endif -%}
 ---
-title:      {{ file_stem ~ dot ~ file_extension | json_encode }}
-{% if clipboard_linkname !='' and clipboard_heading == clipboard %}subtitle:   {{ 'URL' | json_encode }}
+title:      {% filter json_encode %}{{ file | stem }}{{ file | ext | prepend_dot }}{% endfilter %}
+{% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}subtitle:   {{ 'URL' | json_encode }}
 {% else %}subtitle:   {{ 'Note' | json_encode }}
 {% endif %}author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -48,15 +47,18 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-[{{ file_tag ~ file_stem ~ dot ~ file_extension }}]({{ file_tag ~ file_stem ~ dot ~ file_extension }})
-{% if clipboard != '' %}{% if clipboard != clipboard_heading %}
+[{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}]({{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }})
+{% if stdin ~ clipboard != '' %}{% if stdin ~ clipboard != stdin ~ clipboard | heading %}
 ---
 {% endif %}
-{{ clipboard }}
+{{ stdin ~ clipboard }}
 {% endif %}
 '''
-tmpl_annotate_filename = '''{{ file_tag }}{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ extension_default | path }}'''
-tmpl_sync_filename = '''{{ tag }}{{ title | path(alpha=true) }}{% if subtitle | path != '' %}--{% endif %}{{ subtitle | path  }}.{{ extension | path }}'''
+tmpl_annotate_filename = '''{{ file | tag }}{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}{{ subtitle | sanit  }}.{{ extension_default }}'''
+tmpl_sync_filename = '''
+{% if sort_tag == '' -%}{% set sort_tag = file | tag -%}{% endif -%}
+{% if extension == '' -%}{% set extension = file | ext -%}{% endif -%}
+{{ sort_tag }}{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}{{ subtitle | sanit  }}.{{ extension }}'''
 editor_args = [
     [
     'flatpak',
