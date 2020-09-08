@@ -390,7 +390,7 @@ _Tp-Note_ will rename the file to "`20200306-'1. The Beginning--Note.md`".
 If the filename had been "`05_02-My file.md`", it would rename it to
 "`05_02-'1. The Beginning--Note.md`".
 
-Note: When the YAML front matter does not contain the optional '`tag`'
+Note: When the YAML front matter does not contain the optional '`sort_tag`'
 variable, _Tp-Note_ will never change a sort-tag. Nevertheless, it might
 change the rest of the filename!
 
@@ -402,7 +402,7 @@ might want to have full control over the whole filename through the note's YAML
 front matter. For example, if — for some reason — you have changed the
 document's date in the front matter and you want to change the chronological
 sort tag in one go. In order to overwrite the note's sort-tag on disk, you can
-add a '`tag`' variable to its front matter:
+add a '`sort_tag`' variable to its front matter:
 
 
 ``` yaml
@@ -410,7 +410,7 @@ add a '`tag`' variable to its front matter:
 title:      "1. The Beginning"
 ...
 date:       "March  7, 2020"
-tag:        "20200307-"
+sort_tag:   "20200307-"
 ...
 ---
 ```
@@ -419,14 +419,14 @@ When _Tp-Note_ synchronizes the note's metadata with its filename, it will also
 change the sort-tag from '`20200306-`' to '`20200307-`'. The resulting filename
 becomes "`20200307-'1. The Beginning--Note.md`".
 
-The '`tag`' variable also becomes handy, when you want to create one single
+The '`sort_tag`' variable also becomes handy, when you want to create one single
 note without any sort-tag:
 
 ``` yaml
 ---
 title:      "1. The Beginning"
 ...
-tag:        ""
+sort_tag:   ""
 ...
 ---
 ```
@@ -451,12 +451,12 @@ Important: '`extension`' must be one of the registered file extensions
 listed in the '`note_file_extensions`' variable in Tp-Note's configuration
 file. If needed you can add more extensions there.
 
-Note: When a '`tag`' variable is defined in the note's YAML header, you should
-not adjust the sort-tag string in its file name manually by renaming the file,
-as your change will be overwritten next time you open the note with _Tp-Note_.
-However, you can switch back to _Tp-Note_'s default behaviour any time by
-deleting the '`tag`' line in the note's metadata. The same applies to the
-'`extension`' variable.
+Note: When a '`sort_tag`' variable is defined in the note's YAML header, you
+should not adjust the sort-tag string in its file name manually by renaming the
+file, as your change will be overwritten next time you open the note with
+_Tp-Note_.  However, you can switch back to _Tp-Note_'s default behaviour any
+time by deleting the '`sort_tag`' line in the note's metadata. The same applies
+to the '`extension`' variable.
 
 
 
@@ -487,41 +487,21 @@ gives you access to the '`LANG`' environment variable.
 
 In addition, _Tp-Note_ defines the following variables:
 
-* '`{{ file_tag }}`': the sort-tag (numerical filename prefix) of the current
-  note on disk, e.g. '`01-23_9-`' or '`20191022-`'. Useful in content
-  templates, that create new notes based on a path with a filename (e.g.
-  '`TMPL_ANNOTATE_CONTENT`').
+* '`{{ file }}`': canonicalized fully qualified file name corresponding
+  to _Tp-Note_'s positional parameter '`<path>`'. If '`<path>`' points to a
+  directory the content of this variable is identical to '`{{ path }}`'.
 
-* '`{{ tag }}`': holds the value of the optional YAML header variable '`tag`'
-  (e.g. '`tag: "20200312-"`'). If not defined there, it defaults to
-  '`{{ file_tag }}`'. This variable is only available in the
-  '`TMPL_SYNC_FILENAME`'
-  template!
+* '`{{ path }}`': same as above but without filename and extension.
 
-* '`{{ file_dirname }}`': the parent directory's name of the note on disk,
-
-* '`{{ file_stem }}`': the note's filename without sort-tag and extension,
+* '`{{ sort_tag }}`': holds the value of the optional YAML header variable
+  '`sort_tag`' (e.g. '`sort_tag: "20200312-"`'). This variable is only
+  available in the '`TMPL_SYNC_FILENAME`' template!  Not to be confused with
+  the the filter '`tag()`' (see below).
 
 * '`{{ clipboard }}`': the complete text content from the clipboard,
 
-* '`{{ clipboard_truncated }}`': the first 200 bytes from the clipboard,
-
-* '`{{ clipboard_heading }}`': the clipboard's content  until end of the first
-  sentence ending, or the first newline.
-
-* '`{{ clipboard_linkname }}`': the name of the first Markdown
-  formatted link in the clipboard,
-
-* '`{{ clipboard_linkurl }}`': the URL of the first Markdown
-  formatted link in the clipboard,
-
-* '`{{ file_extension }}`': the filename extension of the current note
-  on disk,
-
-* '`{{ extension }}`': holds the value of the optional YAML header variable
-  '`extension`' (e.g. '`extension: "rst"`'). If not defined there, it
-  defaults to '`{{ file_extension }}`'. This variable is only available in the
-  '`TMPL_SYNC_FILENAME`' template!
+* '`{{ stdin }}`': the complete text content originating form the input stream
+  `/dev/stdin`. This stream can replace the clipboard when it is not available.
 
 * '`{{ extension_default }}`': the default extension for new notes
   (can be changed in the configuration file),
@@ -535,8 +515,58 @@ In addition, _Tp-Note_ defines the following variables:
 * '`{{ subtitle }}`': the subtitle as indicated in the YAML front matter of
   the note (only available in filename-templates).
 
+* '`{{ extension }}`': holds the value of the optional YAML header variable
+  '`extension`' (e.g. '`extension: "rst"`'). This variable is only available in
+  the '`TMPL_SYNC_FILENAME`' template!
+
+* '`{{ sort_tag }}`': The sort variable as defined in the YAML front matter of this
+  note. This variable is only available in the '`TMPL_SYNC_FILENAME`' template!
+
 It is guaranteed, that the above variables always exist, even if their data
 source is not available. In this case their content will be the empty string.
+
+
+## Template filters
+
+_Tp-Note_ defines some additional Tera template filters, e.g.: '`tag()`',
+'`stem()`', '`cut()`', '`heading()`', '`linkname()`', '`linkurl()`' and
+'`ext()`'.
+
+Sample usage:
+
+* '`{{ file | tag }}`': the sort-tag (numerical filename prefix) of the current
+  note on disk, e.g. '`01-23_9-`' or '`20191022-`'. Useful in content
+  templates, for example to create new notes based on a path with a filename (e.g.
+  '`TMPL_ANNOTATE_CONTENT`').
+
+* '`{{ path | stem }}`': the parent directory's name of the note on disk.
+
+* '`{{ file | stem }}`': the note's filename without sort-tag and extension.
+
+* '`{{ clipboard | cut }}`': the first 200 bytes from the clipboard.
+
+* '`{{ clipboard | heading }}`': the clipboard's content until end of the first
+  sentence ending, or the first newline.
+
+* '`{{ clipboard | linkname }}`': the name of the first Markdown formatted link
+  in the clipboard.
+
+* '`{{ clipboard | linkurl }}`': the URL of the first Markdown formatted link
+  in the clipboard.
+
+* '`{{ file | ext }}`': the filename extension of the current note on disk.
+
+* '`{{ username | json_encode }}`': the user-name Json-encoded. All YAML front matter
+  must be Json-encoded, so this filter should be the last in all lines of the
+  front matter section.
+
+* '`{{ subtitle | sanit }}`' the notes subtitle as defined in its front-matter,
+  sanitized in a fils system friendly form. Special characters are omitted or
+  replaced by '`-`' and '`_`'.
+
+* '`{{ title | sanit(alpha=true) }}`' the notes title as defined in its front-matter.
+  Same as above, but strings starting with a number are prepended by an apostrophe.
+
 
 ## Content-template conventions
 
@@ -546,40 +576,40 @@ used to create the note's content (front-matter and body) and filename-templates
 
 Strings in the YAML front matter of content-templates are JSON encoded.
 Therefore, all variables used in the front matter must pass an additional
-'`json_encode()`'-filter. For example, the variable '`{{ file_dirname }}`'
-becomes '`{{ file_dirname | json_encode() }}`' or just
-'`{{ file_dirname | json_encode }}`'.
+'`json_encode()`'-filter. For example, the variable '`{{ path | stem }}`'
+becomes '`{{ path | stem | json_encode() }}`' or just
+'`{{ path | stem | json_encode }}`'.
 
 
 ## Filename-template convention
 
 The same applies to filename-template-variables: in this context we must
 guarantee, that the variable contains only file system friendly characters.
-For this purpose _Tp-Note_ provides the additional Tera filters '`path`' and
-'`path(alpha=true)`'.
+For this purpose _Tp-Note_ provides the additional Tera filters '`sanit`' and
+'`sanit(alpha=true)`'.
 
-* The '`path()`' filter transforms a string in a file system friendly from. This
+* The '`sanit()`' filter transforms a string in a file system friendly from. This
   is done by replacing forbidden characters like '`?`' and '`\\`' with '`_`'
   or space. This filter can be used with any variables, but is most useful with
   filename-templates. For example, in the '`tmpl_sync_filename`'
-  template, we find the expression '`{{ subtitle | path }}`'.
+  template, we find the expression '`{{ subtitle | sanit }}`'.
 
-* '`path(alpha=true)`' is similar to the above, with one exception: when a string
+* '`sanit(alpha=true)`' is similar to the above, with one exception: when a string
   starts with a digit '`0`-`9`', the whole string is prepended with `'`.
   For example: "`1 The Show Begins`" becomes "`'1 The Show Begins`".
   This filter should always be applied to the first variable assembling the new
-  filename, e.g. '`{{ title | path(alpha=true )}`'. This way, it is always
+  filename, e.g. '`{{ title | sanit(alpha=true )}`'. This way, it is always
   possible to distinguish the sort-tag from the actual filename.
 
-In filename-templates most variables must pass either the '`path`' or the
-'`path(alpha=true)`' filter. Exception to this rule are the sort-tag variables
-'`{{ tag }}`' and '`{{ file_tag }}`'. As these are guaranteed to contain only
+In filename-templates most variables must pass either the '`sanit`' or the
+'`sanit(alpha=true)`' filter. Exception to this rule are the sort-tag variables
+'`{{ file | tag }}`' and '`{{ path | tag }}`'. As these are guaranteed to contain only
 the filesystem-friendly characters: '`0..9-_`', no additional filtering is
-required. In addition, a '`path`'-filter would needlessly restrict the value
-range of '`{{ tag }}`' and '`{{ file_tag }}`': a sort tag usually ends with a
-'`-`', a character that the '`path`'-filter screens out when it appears in
-leading or trailing position. For this reason no '`path`'-filter is allowed
-with '`{{ tag }}`' and '`{{ file_tag }}`'.
+required. In addition, a '`sanit()`'-filter would needlessly restrict the value
+range of '`{{ file | tag }}`' and '`{{ path | tag }}`': a sort tag usually ends with a
+'`-`', a character that the '`sanit`'-filter screens out when it appears in
+leading or trailing position. For this reason no '`sanit`'-filter is allowed
+with '`{{ file | tag }}`' and '`{{ path | tag }}`'.
 
 
 ## Register your own external text editor
