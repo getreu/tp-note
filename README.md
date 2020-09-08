@@ -85,7 +85,7 @@ Repository:
 
 * Installer package for Windows:
 
-  [tp-note-1.6.2-x86_64.msi](https://blog.getreu.net/projects/tp-note/_downloads/wix/tp-note-1.6.2-x86_64.msi)
+  [tp-note-1.6.3-x86_64.msi](https://blog.getreu.net/projects/tp-note/_downloads/wix/tp-note-1.6.3-x86_64.msi)
 
   As this early version of the Windows installer is not signed yet, Windows
   will show the error message “Windows protected your PC”. As a work-around,
@@ -139,7 +139,7 @@ Repository:
 Depending on the availability of installer packages for your operating system,
 the installation process is more or less automated. For Windows users the fully
 automated installation package
-[tp-note-1.6.2-x86_64.msi](https://blog.getreu.net/projects/tp-note/_downloads/wix/tp-note-1.6.2-x86_64.msi)
+[tp-note-1.6.3-x86_64.msi](https://blog.getreu.net/projects/tp-note/_downloads/wix/tp-note-1.6.3-x86_64.msi)
 is available. For more information, please consult the [Distribution section](#distribution)
 above and the [Installation
 section](https://blog.getreu.net/projects/tp-note/tp-note--manual.html#installation)
