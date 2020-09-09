@@ -3,7 +3,7 @@ title:  "Tp-Note: fast note taking with templates and filename synchronization"
 subtitle: "Organize your notes with your favourite editor and markup-language"
 author: "Jens Getreu"
 date:   "2020-03-08"
-version: "1.6.3"
+version: "1.6.4"
 ---
 
 Markup languages like *Markdown*, *ReStructuredText*, *asciidoc*, *textile*,
