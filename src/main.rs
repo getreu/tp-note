@@ -90,12 +90,13 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
             Ok(new_fqfn)
         } else {
             Err(anyhow!(format!(
-                "Can not rename file to {:?}\n\
-                 (file exists already).\n\
+                "File exists already: can not rename file to:\n\
+                 \t{:?}\n\
                  Note: at this stage filename and YAML metadata are not in sync!\n\
-                 Change `title`/`subtitle` in the metadata of file: {:?}
-                        ",
-                new_fqfn, path
+                 Change `title` or `subtitle` in the metadata of file:\n\
+                 \t{:?}",
+                new_fqfn.file_name().unwrap_or_default(),
+                path
             )))
         }
     } else {
@@ -425,7 +426,7 @@ fn main() {
                 AlertDialog::print_error_console(&format!(
                     "ERROR:\n\
                 ---\n\
-                \t{:?}",
+                {:?}",
                     e
                 ));
             } else {
@@ -437,7 +438,7 @@ fn main() {
                     AlertDialog::print_error(&format!(
                         "ERROR:\n\
                     ---\n\
-                    \t{:?}\n\
+                    {:?}\n\
                     \n\
                     Please correct the error.
                     Trying to start editor without synchronization...",
@@ -448,7 +449,7 @@ fn main() {
                     AlertDialog::print_error(&format!(
                         "ERROR:\n\
                     ---\n\
-                    \t{:?}\n\
+                    {:?}\n\
                     \n\
                     Please correct the error and start again.",
                         e
