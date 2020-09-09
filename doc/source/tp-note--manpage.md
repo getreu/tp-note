@@ -474,8 +474,8 @@ starting with '`tmpl_*`' are _Tera-Template_-strings (see:
 <https://tera.netlify.com/docs/#templates>).
 
 _Tp-Note_ captures and stores its environment in _Tera-variables_. For example,
-the variable '`{{ file_dirname }}`' is initialized with the document's parent
-directory. The variable '`{{ clipboard }}`' contains the content of the
+the variable '`{{ path }}`' is initialized with the note's target
+directory. The variable '`{{ clipboa§rd }}`' contains the content of the
 clipboard. To learn more about variables, launch _Tp-Note_ with the '`--debug`'
 option and observe what information it captures from its environment.
 
@@ -492,11 +492,6 @@ In addition, _Tp-Note_ defines the following variables:
   directory the content of this variable is identical to '`{{ path }}`'.
 
 * '`{{ path }}`': same as above but without filename and extension.
-
-* '`{{ sort_tag }}`': holds the value of the optional YAML header variable
-  '`sort_tag`' (e.g. '`sort_tag: "20200312-"`'). This variable is only
-  available in the '`TMPL_SYNC_FILENAME`' template!  Not to be confused with
-  the the filter '`tag()`' (see below).
 
 * '`{{ clipboard }}`': the complete text content from the clipboard,
 
@@ -517,13 +512,19 @@ In addition, _Tp-Note_ defines the following variables:
 
 * '`{{ extension }}`': holds the value of the optional YAML header variable
   '`extension`' (e.g. '`extension: "rst"`'). This variable is only available in
-  the '`TMPL_SYNC_FILENAME`' template!
+  the '`TMPL_SYNC_FILENAME`' template! Note, that '`{{ extension }}`' is
+  undefined, when the corresponding YAML header variable is not present in the
+  note's header.
 
-* '`{{ sort_tag }}`': The sort variable as defined in the YAML front matter of this
-  note. This variable is only available in the '`TMPL_SYNC_FILENAME`' template!
+* '`{{ sort_tag }}`': The sort variable as defined in the YAML front matter of
+  this note (e.g. '`sort_tag: "20200312-"`'). This variable is only available
+  in the '`TMPL_SYNC_FILENAME`' template!  Note, that '`{{ sort_tag }}`' is
+  undefined, when the corresponding YAML header variable is not present in the
+  note's header.
 
-It is guaranteed, that the above variables always exist, even if their data
-source is not available. In this case their content will be the empty string.
+Except for '`{{ extension }}`' and '`{{ sort_tag }}`' is guaranteed,
+that the above variables are always defined, even if their data
+source is not available. In this case their content is the empty string.
 
 
 ## Template filters
@@ -543,6 +544,9 @@ Sample usage:
 
 * '`{{ file | stem }}`': the note's filename without sort-tag and extension.
 
+* '`{{ file | ext | prepend_dot }}`': the note's filename extension with a
+  leading dot (period), e.g. '`.md`'.
+
 * '`{{ clipboard | cut }}`': the first 200 bytes from the clipboard.
 
 * '`{{ clipboard | heading }}`': the clipboard's content until end of the first
@@ -560,12 +564,13 @@ Sample usage:
   must be Json-encoded, so this filter should be the last in all lines of the
   front matter section.
 
-* '`{{ subtitle | sanit }}`' the notes subtitle as defined in its front-matter,
+* '`{{ subtitle | sanit }}`' the note's subtitle as defined in its front-matter,
   sanitized in a fils system friendly form. Special characters are omitted or
   replaced by '`-`' and '`_`'.
 
-* '`{{ title | sanit(alpha=true) }}`' the notes title as defined in its front-matter.
-  Same as above, but strings starting with a number are prepended by an apostrophe.
+* '`{{ title | sanit(alpha=true) }}`' the note's title as defined in its
+  front-matter.  Same as above, but strings starting with a number are
+  prepended by an apostrophe.
 
 
 ## Content-template conventions

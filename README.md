@@ -98,7 +98,7 @@ Repository:
 
 * Package compiled for Debian 10+ (Buster):
 
-  [x86_64-unknown-linux-gnu/debian/tp-note_1.6.2_amd64.deb](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.6.2_amd64.deb)
+  [x86_64-unknown-linux-gnu/debian/tp-note_1.6.3_amd64.deb](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.6.3_amd64.deb)
 
 ### Various binaries for Windows, MacOS and Linux
 
@@ -116,13 +116,17 @@ Repository:
 
 * Executable for Windows:
 
-    [x86_64-pc-windows-gnu/release/tp-note.exe](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe)
+    * [x86_64-pc-windows-gnu/release/tp-note.exe](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe)
 
 * Universal Linux binary (compiled with Debian 10 Buster):
 
-    [x86_64-unknown-linux-gnu/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
+    * [x86_64-unknown-linux-gnu/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
 
-    [x86_64-unknown-linux-musl/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note)
+    * The following "musl" version is well suited for headless systems, as it
+      does not require _GTK_ libraries to be installed.
+
+      [x86_64-unknown-linux-musl/release/tp-note](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note)
+
 
 
 * Installable Unix man-page:
