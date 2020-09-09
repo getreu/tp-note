@@ -48,7 +48,7 @@ struct FrontMatter {
     /// the file name's sort tag `file | tag` is used (if any).
     sort_tag: Option<String>,
     /// Optional YAML header variable. If not defined in front matter,
-    /// the file name's extension `file_extension` is used.
+    /// the file name's extension `file | extension` is used.
     extension: Option<String>,
 }
 
@@ -67,16 +67,19 @@ impl Note {
         let mut context = Self::capture_environment(&path)?;
 
         context.insert("title", &fm.title);
+
+        // Read YAML header variable `subtitle`, register an empty string if not defined.
         context.insert("subtitle", &fm.subtitle.as_ref().unwrap_or(&String::new()));
 
         // Read YAML header variable `extension` if any.
-        context.insert(
-            "extension",
-            &fm.extension.as_ref().unwrap_or(&String::new()),
-        );
+        if let Some(e) = &fm.extension {
+            context.insert("extension", e);
+        };
 
         // Read YAML header variable `tag` if any.
-        context.insert("sort_tag", &fm.sort_tag.as_ref().unwrap_or(&String::new()));
+        if let Some(st) = &fm.sort_tag {
+            context.insert("sort_tag", st);
+        };
 
         Ok(Self {
             front_matter: Some(fm),

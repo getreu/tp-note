@@ -44,29 +44,6 @@ pub const NOTE_FILENAME_LEN_MAX: usize = 250;
 #[cfg(test)]
 pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 
-/// Default filename-template to test, if the filename of an existing note file on
-/// disk, corresponds to the note's meta data stored in its front matter. If
-/// it is not the case, the note's filename will be renamed.
-/// Can be modified through editing the configuration file.
-/// Useful variables in this context are:
-/// `{{ tag }}`
-/// `{{ title | sanit }}`, `{{ subtitle | sanit }}`, `{{ ext_default }}`,
-/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case
-/// its value starts with a number, the string is prepended with `'`.
-/// `{{ tag  }}` must be the first in line here, then followed by a
-/// `{{ <var>| sanit(alpha) }}` variable.
-/// Note, that in this filename-template, all variables (except `tag`) must be
-/// filtered by a `sanit` or `sanit(alpha=true)` filter.
-/// This is the only template that has access to the `{{ tag }}` variable.
-/// `{{ tag }}` contains the content of the YAML header variable `sort_tag`.
-const TMPL_SYNC_FILENAME: &str = "\
-{% if sort_tag == '' -%}{% set sort_tag = file | tag -%}{% endif -%}
-{% if extension == '' -%}{% set extension = file | ext -%}{% endif -%}
-{{ sort_tag }}\
-{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}\
-{{ subtitle | sanit  }}.{{ extension }}\
-";
-
 /// Default content-template used when the command-line argument <sanit> is a
 /// directory. Can be changed through editing the configuration file.
 /// The following variables are  defined:
@@ -103,7 +80,7 @@ revision:   {{ '1.0' | json_encode }}
 const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d') }}-\
 {{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}\
-{{ subtitle | sanit  }}.{{ extension_default }}\
+{{ subtitle | sanit  }}{{ extension_default | prepend_dot }}\
 ";
 
 /// Default template used, when the clipboard contains a string.
@@ -155,7 +132,7 @@ revision:   {{ '1.0' | json_encode }}
 const TMPL_CLIPBOARD_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d') }}-\
 {{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}\
-{{ subtitle | sanit  }}.{{ extension_default }}\
+{{ subtitle | sanit  }}{{ extension_default | prepend_dot }}\
 ";
 
 /// Default template used when the command-line <path> parameter points to
@@ -205,9 +182,32 @@ revision:   {{ '1.0' | json_encode }}
 /// Note, that in this filename-template, all variables (expect `file | tag`)
 /// must be filtered by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_ANNOTATE_FILENAME: &str = "\
-{{ file | tag }}\
-{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}\
-{{ subtitle | sanit  }}.{{ extension_default }}\
+{{ file | tag }}{{ title | sanit(alpha=true) }}\
+{% if subtitle | sanit != '' %}--{% endif %}\
+{{ subtitle | sanit }}{{ extension_default | prepend_dot }}\
+";
+
+/// Default filename-template to test, if the filename of an existing note file on
+/// disk, corresponds to the note's meta data stored in its front matter. If
+/// it is not the case, the note's filename will be renamed.
+/// Can be modified through editing the configuration file.
+/// Useful variables in this context are:
+/// `{{ tag }}`
+/// `{{ title | sanit }}`, `{{ subtitle | sanit }}`, `{{ ext_default }}`,
+/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case
+/// its value starts with a number, the string is prepended with `'`.
+/// `{{ tag  }}` must be the first in line here, then followed by a
+/// `{{ <var>| sanit(alpha) }}` variable.
+/// Note, that in this filename-template, all variables (except `tag`) must be
+/// filtered by a `sanit` or `sanit(alpha=true)` filter.
+/// This is the only template that has access to the `{{ tag }}` variable.
+/// `{{ tag }}` contains the content of the YAML header variable `sort_tag`.
+const TMPL_SYNC_FILENAME: &str = "\
+{% if sort_tag is undefined -%}{% set sort_tag = file | tag -%}{% endif -%}
+{% if extension is undefined -%}{% set extension = file | ext -%}{% endif -%}
+{{ sort_tag }}{{ title | sanit(alpha=true) }}\
+{% if subtitle | sanit != '' %}--{% endif %}\
+{{ subtitle | sanit  }}{{ extension | prepend_dot }}\
 ";
 
 /// Default command-line argument list when launching external editor.
