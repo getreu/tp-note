@@ -19,7 +19,23 @@ revision:   {{ '1.0' | json_encode }}
 
 
 '''
-tmpl_new_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}{{ subtitle | sanit  }}{{ extension_default | prepend_dot }}'''
+tmpl_new_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}'''
+tmpl_copy_content = '''
+---
+title:      {{ fm_title | cut | json_encode }}
+subtitle:   {{ fm_subtitle | default(value='') | cut | json_encode }}
+author:     {{ fm_author | default(value=username) | json_encode }}
+date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
+lang:       {{ fm_lang | default(value = get_env(name='LANG', default='')) | json_encode }}
+revision:   {{ fm_revision | default(value = '1.0') | json_encode }}
+{% if fm_sort_tag %}sort_tag:   {{ fm_sort_tag | json_encode }}
+{% endif %}{% if fm_file_ext %}file_ext:   {{ fm_file_ext | json_encode }}
+{% endif %}---
+
+{{ stdin ~ clipboard }}
+
+'''
+tmpl_copy_filename = '''{{ fm_sort_tag | default(value = now() | date(format='%Y%m%d-')) }}{{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}{{ fm_subtitle | default(value='') | sanit  }}{{ fm_file_ext | default(value = extension_default ) | prepend_dot }}'''
 tmpl_clipboard_content = '''
 ---
 {% if stdin ~ clipboard | linkname !='' %}title:      {{ stdin ~ clipboard | linkname | cut | json_encode }}
@@ -35,7 +51,7 @@ revision:   {{ '1.0' | json_encode }}
 {{ stdin ~ clipboard }}
 
 '''
-tmpl_clipboard_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}{{ subtitle | sanit  }}{{ extension_default | prepend_dot }}'''
+tmpl_clipboard_filename = '''{{ now() | date(format='%Y%m%d-') }}{{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}'''
 tmpl_annotate_content = '''
 ---
 title:      {% filter json_encode %}{{ file | stem }}{{ file | ext | prepend_dot }}{% endfilter %}
@@ -54,13 +70,9 @@ revision:   {{ '1.0' | json_encode }}
 {{ stdin ~ clipboard }}
 {% endif %}
 '''
-tmpl_annotate_filename = '''{{ file | tag }}{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}{{ subtitle | sanit }}{{ extension_default | prepend_dot }}'''
-tmpl_sync_filename = '''
-{% if sort_tag is undefined -%}{% set sort_tag = file | tag -%}{% endif -%}
-{% if extension is undefined -%}{% set extension = file | ext -%}{% endif -%}
-{{ sort_tag }}{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}{{ subtitle | sanit  }}{{ extension | prepend_dot }}'''
+tmpl_annotate_filename = '''{{ file | tag }}{{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}{{ fm_subtitle | default(value='') | sanit }}{{ extension_default | prepend_dot }}'''
+tmpl_sync_filename = '''{{ fm_sort_tag | default(value = file | tag) }}{{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}{{ fm_subtitle | default(value='') | sanit  }}{{ fm_file_ext | default(value = file | ext) | prepend_dot }}'''
 editor_args = [
-    ['mousepad'],
     [
     'flatpak',
     'run',

@@ -6,6 +6,6 @@ target
 *.1.gz
 *.msi
 .vscode/
-tests/functional/output
+tests/functional/test_output/
 .idea
 doc/build/

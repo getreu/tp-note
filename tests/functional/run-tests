@@ -1,10 +1,15 @@
 #!/bin/sh
 
-PWD="$(pwd)"
+TESTOUTPUT="test_output"
+PWD="$(pwd)/$TESTOUTPUT"
+
+# Tidy up
+rm -r "$PWD"
+mkdir -p "$PWD"
 
 # Pepare toml
 TP_NOTE_TEST_TOML="$PWD/tp-note-tmp.toml"
-grep -v -e ^date:  "$PWD/tp-note.toml" > "$TP_NOTE_TEST_TOML"
+grep -v -e ^date:  "tp-note.toml" > "$TP_NOTE_TEST_TOML"
 
 
 ## Test 1: Synchronize meta data and filename
@@ -16,12 +21,13 @@ subtitle: "yyy"
 ...
 EOF
 
-cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME"  >/dev/null 2>&1
 
 OUTPUT_FILENAME="$PWD/123-xxx--yyy.md"
 
-if diff "$OUTPUT_FILENAME"  "$PWD/test1-synchronize-expected-output"
+if diff "$OUTPUT_FILENAME"  "test1-synchronize-expected-output"
 then
     echo Commandline test 1 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -34,12 +40,13 @@ fi
 
 ## Test 2: Create a new note
 
-LOGNAME=myuser LANG=en_US.UTF-8 cargo run -- --batch \
-    --config "$TP_NOTE_TEST_TOML" >/dev/null 2>&1
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch \
+    --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-functional--Note.md"
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note.md"
 
-if diff "$OUTPUT_FILENAME" "$PWD/test2-new-expected-output"
+if diff "$OUTPUT_FILENAME" "test2-new-expected-output"
 then
     echo Commandline test 2 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -58,14 +65,15 @@ INPUT_FILENAME="$PWD/test3-annotate+clipboard-input-dummy.pdf"
 :>"$INPUT_FILENAME"
 
 echo '[ab:cd"ef](https://getreu.net)' | \
-	LOGNAME=myuser LANG=en_US.UTF-8 cargo run -- --batch \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch \
 	    --config "$TP_NOTE_TEST_TOML" \
 	    "$INPUT_FILENAME" >/dev/null 2>&1
 
 # the + is not considered to be a secure char, therefor ommitted
 OUTPUT_FILENAME="$PWD/test3-annotate clipboard-input-dummy.pdf--URL.md"
 
-if diff "$OUTPUT_FILENAME" "$PWD/test3-annotate+clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "test3-annotate+clipboard-expected-output"
 then
 echo Commandline test 3 succeeded.
     rm "$INPUT_FILENAME"
@@ -85,12 +93,13 @@ fi
 # echo -n '[ab:cd"ef](https://getreu.net)' | xclip -selection clipboard
 
 echo '[ab:cd"ef](https://getreu.net)' | \
-	LOGNAME=myuser LANG=en_US.UTF-8 cargo run -- --batch \
-    		--config  "$TP_NOTE_TEST_TOML" >/dev/null 2>&1
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch \
+    		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
 OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-ab_cd ef--URL.md"
 
-if diff "$OUTPUT_FILENAME" "$PWD/test4-clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "test4-clipboard-expected-output"
 then
     echo Commandline test 4 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -106,12 +115,13 @@ fi
 #echo -n 'Good morning' | xclip -selection clipboard
 
 echo 'Good morning' | \
-	LOGNAME=myuser LANG=en_US.UTF-8 cargo run -- --batch \
-    		--config  "$TP_NOTE_TEST_TOML"  >/dev/null 2>&1
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch \
+    		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
 OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-Good morning--Note.md"
 
-if diff "$OUTPUT_FILENAME" "$PWD/test5-clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "test5-clipboard-expected-output"
 then
     echo Commandline test 5 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -129,13 +139,14 @@ INPUT_FILENAME="$PWD/test6-annotate-input-dummy.pdf"
 # Input file can be empty
 :>"$INPUT_FILENAME"
 
-LOGNAME=myuser LANG=en_US.UTF-8 cargo run -- --batch \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+    cargo run -- --batch \
     --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME" >/dev/null 2>&1
 
 OUTPUT_FILENAME="$PWD/test6-annotate-input-dummy.pdf--Note.md"
 
-if diff "$OUTPUT_FILENAME" "$PWD/test6-annotate-expected-output"
+if diff "$OUTPUT_FILENAME" "test6-annotate-expected-output"
 then
 echo Commandline test 6 succeeded.
     rm "$INPUT_FILENAME"
@@ -154,16 +165,17 @@ cat - > "$INPUT_FILENAME" <<'EOF'
 title: "xxx"
 subtitle: "yyy"
 sort_tag: "111-"
-extension: "mdtxt"
+file_ext: "mdtxt"
 ...
 EOF
 
+LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME"  >/dev/null 2>&1
 
 OUTPUT_FILENAME="$PWD/111-xxx--yyy.mdtxt"
 
-if diff "$OUTPUT_FILENAME"  "$PWD/test7-tag-expected-output"
+if diff "$OUTPUT_FILENAME"  "test7-tag-expected-output"
 then
     echo Commandline test 7 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -174,7 +186,37 @@ fi
 
 
 
-# Tidy up
-rm "$TP_NOTE_TEST_TOML"
+## Test 8: stream note content with front matter
+
+INPUT_DATA="---
+title: 'aaa'
+subtitle: 'bbb'
+date: '2020-01-02'
+lang: 'en'
+revision: '2.0'
+sort_tag: '222-'
+file_ext: 'mdtxt'
+...
+EOF
+"
+
+echo "$INPUT_DATA" | \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+    "$PWD"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/222-aaa--bbb.mdtxt"
+
+if diff "$OUTPUT_FILENAME"  "test8-stream-content-expected-output"
+then
+    echo Commandline test 8 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 8 failed.
+    exit 1
+fi
+
+
+
 
 exit 0
