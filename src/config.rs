@@ -4,6 +4,7 @@
 extern crate atty;
 extern crate clipboard;
 extern crate directories;
+use crate::content::Content;
 use crate::error::AlertDialog;
 use crate::VERSION;
 use anyhow::anyhow;
@@ -79,18 +80,69 @@ revision:   {{ '1.0' | json_encode }}
 /// by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d') }}-\
-{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}\
-{{ subtitle | sanit  }}{{ extension_default | prepend_dot }}\
+{{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
+{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
 ";
 
-/// Default template used, when the clipboard contains a string.
+/// Default template used, when the clipboard or the input stream `stdin` contains a string
+/// and one the them HAS a valid YAML front matter section.
+/// The clipboards body is in `{{ clipboard }}`, the header is in `{{ clipboard_header }}`.
+/// The stdin's body is in `{{ stdin }}`, the header is in `{{ stdin_header }}`.
+/// First the clipboard's header is read. When this is not successful, the `stdin`
+/// header is read. One of the headers must define the `title` variable, which is
+/// available in this script as `{{ fm_title }}`. Other interpreted variables are
+/// `{{ fm_subtitle }}`, `{{ fm_file_ext }}` and `{{ fm_sort_tag }}`. All others
+/// are ignored. `{{ fm_file_ext }}` and `{{ fm_sort_tag }}` are only defined when they
+/// appear in the input stream.
+/// When placed in YAML-front-matter, the filter `| json_encode` must be
+/// appended to each variable.
+const TMPL_COPY_CONTENT: &str = "\
+---
+title:      {{ fm_title | cut | json_encode }}
+subtitle:   {{ fm_subtitle | default(value='') | cut | json_encode }}
+author:     {{ fm_author | default(value=username) | json_encode }}
+date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
+lang:       {{ fm_lang | default(value = get_env(name='LANG', default='')) | json_encode }}
+revision:   {{ fm_revision | default(value = '1.0') | json_encode }}
+{% if fm_sort_tag %}\
+sort_tag:   {{ fm_sort_tag | json_encode }}
+{% endif %}\
+{% if fm_file_ext %}\
+file_ext:   {{ fm_file_ext | json_encode }}
+{% endif %}\
+---
+
+{{ stdin ~ clipboard }}
+
+";
+
+/// Default filename template used when the stdin or the clipboard contains a string
+/// and one of them has a valid YAML header.
+/// Useful variables in this context are:
+/// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}`,
+/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case
+/// its value starts with a number, the string is prepended with `'`.
+/// The first non-numerical variable must be some `{{ <var>| sanit(alpha) }}`
+/// variant.
+/// Note, that in this filename-template, all variables (except `now`)
+/// must be filtered by a `sanit` or `sanit(alpha=true)` filter.
+const TMPL_COPY_FILENAME: &str = "\
+{{ fm_sort_tag | default(value = now() | date(format='%Y%m%d-')) }}\
+{{ fm_title | sanit(alpha=true) }}\
+{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
+{{ fm_subtitle | default(value='') | sanit  }}\
+{{ fm_file_ext | default(value = extension_default ) | prepend_dot }}\
+";
+
+/// Default template used, when the clipboard or the input stream `stdin` contains a string
+/// and this string has no valid YAML front matter section.
 /// The clipboards content is in `{{ clipboard }}`, its truncated version
 /// in `{{ clipboard | heading }}`
 /// When the clipboard contains a hyper-link in markdown format: [<link-name>](<link-url>),
 /// its first part is stored in `{{ clipboard | linkname }}`, the second part in
 /// `{{ clipboard | linkurl }}`.
 /// The following variables are defined:
-/// `{{ file_dirname }}`, `{{ file | stem }}`, `{{ extension }}`, `{{ extension_default }}`
+/// `{{ dir | stem }}`, `{{ file | stem }}`, `{{ file_ext }}`, `{{ extension_default }}`
 /// `{{ path }}`, `{{ file | tag }}`, `{{ username }}`.
 /// In addition all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}`
@@ -130,16 +182,17 @@ revision:   {{ '1.0' | json_encode }}
 /// Note, that in this filename-template, all variables (except `now`)
 /// must be filtered by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_CLIPBOARD_FILENAME: &str = "\
-{{ now() | date(format='%Y%m%d') }}-\
-{{ title | sanit(alpha=true) }}{% if subtitle | sanit != '' %}--{% endif %}\
-{{ subtitle | sanit  }}{{ extension_default | prepend_dot }}\
+{{ now() | date(format='%Y%m%d-') }}\
+{{ fm_title | sanit(alpha=true) }}\
+{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
+{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
 ";
 
 /// Default template used when the command-line <path> parameter points to
 /// an existing non-`.md`-file. Can be modified through editing
 /// the configuration file.
 /// The following variables are  defined:
-/// `{{ file | dirname }}`, `{{ file | stem }}`, `{{ extension }}`, `{{ extension_default }}`
+/// `{{ file | dirname }}`, `{{ file | stem }}`, `{{ file_ext }}`, `{{ extension_default }}`
 /// `{{ file | tag }}`, `{{ username }}`, `{{ lang }}`,
 /// `{{ path }}`.
 /// In addition all environment variables can be used, e.g.
@@ -182,9 +235,9 @@ revision:   {{ '1.0' | json_encode }}
 /// Note, that in this filename-template, all variables (expect `file | tag`)
 /// must be filtered by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_ANNOTATE_FILENAME: &str = "\
-{{ file | tag }}{{ title | sanit(alpha=true) }}\
-{% if subtitle | sanit != '' %}--{% endif %}\
-{{ subtitle | sanit }}{{ extension_default | prepend_dot }}\
+{{ file | tag }}{{ fm_title | sanit(alpha=true) }}\
+{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
+{{ fm_subtitle | default(value='') | sanit }}{{ extension_default | prepend_dot }}\
 ";
 
 /// Default filename-template to test, if the filename of an existing note file on
@@ -203,11 +256,10 @@ const TMPL_ANNOTATE_FILENAME: &str = "\
 /// This is the only template that has access to the `{{ tag }}` variable.
 /// `{{ tag }}` contains the content of the YAML header variable `sort_tag`.
 const TMPL_SYNC_FILENAME: &str = "\
-{% if sort_tag is undefined -%}{% set sort_tag = file | tag -%}{% endif -%}
-{% if extension is undefined -%}{% set extension = file | ext -%}{% endif -%}
-{{ sort_tag }}{{ title | sanit(alpha=true) }}\
-{% if subtitle | sanit != '' %}--{% endif %}\
-{{ subtitle | sanit  }}{{ extension | prepend_dot }}\
+{{ fm_sort_tag | default(value = file | tag) }}{{ fm_title | sanit(alpha=true) }}\
+{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
+{{ fm_subtitle | default(value='') | sanit  }}\
+{{ fm_file_ext | default(value = file | ext) | prepend_dot }}\
 ";
 
 /// Default command-line argument list when launching external editor.
@@ -333,7 +385,10 @@ const ENABLE_READ_CLIPBOARD: bool = true;
 const ENABLE_EMPTY_CLIPBOARD: bool = true;
 
 /// Limit the size of clipboard data `tp-note` accepts as input.
-const CLIPBOARD_LEN_MAX: usize = 0x8000;
+const CLIPBOARD_LEN_MAX: usize = 0x10000;
+
+/// Limit the size of `stdin` input data `tp-note` accepts.
+const STDIN_LEN_MAX: usize = 0x10000;
 
 #[derive(Debug, PartialEq, StructOpt)]
 #[structopt(
@@ -386,6 +441,8 @@ pub struct Cfg {
     pub note_file_extensions: Vec<String>,
     pub tmpl_new_content: String,
     pub tmpl_new_filename: String,
+    pub tmpl_copy_content: String,
+    pub tmpl_copy_filename: String,
     pub tmpl_clipboard_content: String,
     pub tmpl_clipboard_filename: String,
     pub tmpl_annotate_content: String,
@@ -418,6 +475,8 @@ impl ::std::default::Default for Cfg {
                 .collect(),
             tmpl_new_content: TMPL_NEW_CONTENT.to_string(),
             tmpl_new_filename: TMPL_NEW_FILENAME.to_string(),
+            tmpl_copy_content: TMPL_COPY_CONTENT.to_string(),
+            tmpl_copy_filename: TMPL_COPY_FILENAME.to_string(),
             tmpl_clipboard_content: TMPL_CLIPBOARD_CONTENT.to_string(),
             tmpl_clipboard_filename: TMPL_CLIPBOARD_FILENAME.to_string(),
             tmpl_annotate_content: TMPL_ANNOTATE_CONTENT.to_string(),
@@ -514,7 +573,12 @@ lazy_static! {
 
 lazy_static! {
     /// Reads the input stream stdin if there is any.
-    pub static ref STDIN: String = {
+    /// The stdin data is stored in `STDIN.1`.
+    /// The first variable of the tuple `STDIN.0` contains the
+    /// YAML header if there is any in the input data.
+    /// In this case `STDIN.1` contains only the body of
+    /// the data without header.
+    pub static ref STDIN: (String, String) = {
         let mut buffer = String::new();
 
         // Read stdin().
@@ -523,14 +587,29 @@ lazy_static! {
             let mut handle = stdin.lock();
             let _ = handle.read_to_string(&mut buffer);
         }
+        if buffer.len() > STDIN_LEN_MAX {
+            AlertDialog::print(&format!(
+                "WARNING: the input stream content is discarded because its size \
+                exceeds {} bytes.", STDIN_LEN_MAX));
+            return (String::new(), String::new());
+        }
 
-        buffer.trim().to_string()
+        #[cfg(target_family = "windows")]
+        let buffer = (&buffer).replace("\r\n", "\n");
+
+        let (header, body) = Content::split(&buffer.trim());
+        (header.to_string(), body.to_string())
     };
 }
 
 lazy_static! {
-    /// Reads the clipboard and empties it.
-    pub static ref CLIPBOARD: String = {
+    /// Reads the clipboard, if there is any and empties it.
+    /// The clipboard's data is stored in `CLIPBOARD.1`.
+    /// The first variable of the tuple `CLIPBOARD.0` contains the
+    /// YAML header if there is any in the input data.
+    /// In this case `CLIPBOARD.1` contains only the body of
+    /// the data without header.
+    pub static ref CLIPBOARD: (String, String) = {
         let mut buffer = String::new();
 
         // Concatenate clipboard content.
@@ -544,13 +623,17 @@ lazy_static! {
                         AlertDialog::print(&format!(
                             "WARNING: the clipboard content is discarded because its size \
                             exceeds {} bytes.", CLIPBOARD_LEN_MAX));
-                        return String::new();
+                        return (String::new(), String::new());
                     }
                 };
                 buffer.push_str(&s.unwrap_or_default());
             }
         };
-        buffer.trim().to_string()
+        #[cfg(target_family = "windows")]
+        let buffer = (&buffer).replace("\r\n", "\n");
+
+        let (header, body) = Content::split(&buffer.trim());
+        (header.to_string(), body.to_string())
     };
 }
 

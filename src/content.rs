@@ -1,11 +1,13 @@
 //! Deals with the note's content string.
-use std::ops::Deref;
 
 #[derive(Debug, PartialEq)]
 /// This is a newtype and thin wrapper around the note's content.
 /// It deals with operating system specific handling of newlines.
 pub struct Content {
-    s: String,
+    /// The YAML header without `---`.
+    pub header: String,
+    /// Everything after the YAML header.
+    pub body: String,
 }
 
 /// The content of a note is stored in some Rust-like utf-8 string with
@@ -13,39 +15,60 @@ pub struct Content {
 /// BOM is removed while reading with `new()`.
 impl Content {
     /// Reads also notes created on Windows machines: in this
-    /// case it converts all /// `\r\n` to `\n`.
+    /// case it converts all `\r\n` to `\n`.
     pub fn new(input: &str) -> Self {
+        let content = input.trim_matches('\u{feff}').replace("\r\n", "\n");
+        let (header, body) = Self::split(&content);
+
         Self {
-            s: input.trim_matches('\u{feff}').replace("\r\n", "\n"),
+            header: header.to_string(),
+            body: body.to_string(),
         }
     }
 
+    /// Concatenates the header and the body and prints the content.
+    pub fn to_string(&self) -> String {
+        let mut s = "\u{feff}---\n".to_string();
+        s.push_str(&self.header);
+        s.push_str("\n---\n");
+        s.push_str(&self.body);
+        s
+    }
     /// Write out the content string to be saved on disk.
     /// The format varies depending on the operating system:
     /// On Unix a newline is represented by one single byte: `\n`.
     /// On Windows a newline consists of two bytes: `\r\n`.
     pub fn to_osstring(&self) -> String {
+        let s = self.to_string();
+
         // Replaces Windows newline + carriage return -> newline.
         #[cfg(target_family = "windows")]
-        let mut s = self.replace("\n", "\r\n");
-        #[cfg(target_family = "windows")]
-        s.insert(0, '\u{feff}');
-
+        let s = (&s).replace("\n", "\r\n");
         // Under Unix no conversion is needed.
-        #[cfg(not(target_family = "windows"))]
-        let mut s = "\u{feff}".to_string();
-        #[cfg(not(target_family = "windows"))]
-        s.push_str(self);
         s
     }
-}
 
-/// Automatically dereference the newtype's inner string.
-impl Deref for Content {
-    type Target = String;
+    /// Helper function that splits the content into header and body
+    pub fn split<'a>(content: &'a str) -> (&'a str, &'a str) {
+        let fm_start = content.find("---").map(|x| x + 3);
+        if fm_start.is_none() {
+            return ("", content);
+        };
+        let fm_start = fm_start.unwrap();
 
-    fn deref(&self) -> &Self::Target {
-        &self.s
+        let fm_end = content[fm_start..]
+            .find("---\n")
+            .or_else(|| content[fm_start..].find("...\n"))
+            .map(|x| x + fm_start);
+
+        if fm_end.is_none() {
+            return ("", content);
+        };
+        let fm_end = fm_end.unwrap();
+
+        let body_start = fm_end + 4;
+
+        (&content[fm_start..fm_end].trim(), &content[body_start..])
     }
 }
 
@@ -57,22 +80,26 @@ mod tests {
     fn test_new() {
         // test windows string
         let content = Content::new("first\r\nsecond\r\nthird");
-        assert_eq!(content.as_str(), "first\nsecond\nthird");
+        assert_eq!(content.body, "first\nsecond\nthird");
         // test Unixstring
         let content = Content::new("first\nsecond\nthird");
-        assert_eq!(content.as_str(), "first\nsecond\nthird");
+        assert_eq!(content.body, "first\nsecond\nthird");
         // test BOM removal
         let content = Content::new("\u{feff}first\nsecond\nthird");
-        assert_eq!(content.as_str(), "first\nsecond\nthird");
+        assert_eq!(content.body, "first\nsecond\nthird");
+        // test header extraction
+        let content = Content::new("\u{feff}---\nfirst\n---\nsecond\nthird");
+        assert_eq!(content.header, "first");
+        assert_eq!(content.body, "second\nthird");
     }
 
     #[test]
     fn test_to_osstring() {
-        let content = Content::new("first\r\nsecond\r\nthird");
+        let content = Content::new("---first\r\n---\r\nsecond\r\nthird");
         let s = content.to_osstring();
         #[cfg(target_family = "windows")]
-        assert_eq!(s.as_str(), "\u{feff}first\r\nsecond\r\nthird");
+        assert_eq!(s.as_str(), "\u{feff}---\r\nfirst\r\n---\r\nsecond\r\nthird");
         #[cfg(not(target_family = "windows"))]
-        assert_eq!(s.as_str(), "\u{feff}first\nsecond\nthird");
+        assert_eq!(s.as_str(), "\u{feff}---\nfirst\n---\nsecond\nthird");
     }
 }
