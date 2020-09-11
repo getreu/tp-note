@@ -315,12 +315,40 @@ Here some typical workflows:
   ```
 
 * Download a webpage, convert it to Markdown and insert the result
-  into a _Tp-Note_ file:
+  into a _Tp-Note_ file. The note's title is the name of the
+  first hyperlink found in the webpage.
 
   ```shell
-  wget 'https://blog.getreu.net' | pandoc -f html -t markdown_strict | tp-note
+  curl 'https://blog.getreu.net' | pandoc -f html -t markdown_strict | tp-note
   ```
 
+* Generate note for a given content with YAML header
+
+  ```shell
+  echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tp-note |
+  ```
+
+  creates the file `20200910-Todo.mdtxt` with the content:
+
+  ```
+  ---
+  title:    "Todo"
+  file_ext: "mdtxt"
+  ---
+
+  nothing
+  ```
+
+* Download a webpage, convert it to Markdown and copy the result into a
+  _Tp-Note_ file. The note's title is the same than the webpage's title:
+
+
+  ```shell
+  curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
+  ```
+
+  creates the note file `20200910-Jens\ Getreu\'s\ blog.md` with the webpage's
+  content.
 
 
 # How it works: Organize your files and notes with sort-tags
@@ -331,7 +359,7 @@ Consider the following _Tp-Note_-file:
 
 The filename has 4 parts:
 
-    {{ tag }}-{{ title }}--{{ subtitle }}.{{ extension }}
+    {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
 
 A so called _sort-tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
@@ -356,7 +384,7 @@ The figures below illustrate organizing files with *sort-tags".
 ![File with chronological sort-tag](images/filing-system2.png){width="7cm"}
 
 When _Tp-Note_ creates a new note, it prepends automatically a *chronological
-sort-tag* of today. The `{{ title }}` part is usually derived from the parent
+sort-tag* of today. The `{{ fm_title }}` part is usually derived from the parent
 directory's name omitting its own *sort-tag*.
 
 [^sort-tag]: The characters `_` and `-` are not considered to be

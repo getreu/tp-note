@@ -140,6 +140,76 @@ revision: "1.0"
 [The Rust Book](https://doc.rust-lang.org/book/)
 ```
 
+### The clipboard contains a string with a YAML header
+
+Example: `<path>` is a directory, the clipboard is not empty and it contains
+the string: "`---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing`".
+
+```sh
+> tp-note
+```
+
+This creates the note: '`20200911-Todo.mdtxt`' with the following
+content:
+
+```yaml
+---
+title:      "Todo"
+subtitle:   ""
+author:     "getreu"
+date:       "2020-09-11"
+lang:       "en_GB.UTF-8"
+revision:   "1.0"
+file_ext:   "mdtxt"
+---
+
+nothing
+```
+
+The same result can also be achieved without the clipboard by tying in a
+terminal:
+
+```sh
+> echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tp-note
+```
+
+In the input stream the YAML header variables: '`{{ fm_title }}`',
+'`{{  subtitle }}`', '`{{  sort_tag }}`' and '`{{ fm_file_ext }}`' are evaluated
+and can be used in the '`tmpl_copy_content`' and '`tmpl_copy_filename`'
+templates.
+
+Besides, this operation mode is very handy with pipes in general, as shows the
+following example: it downloads a webpage, converts it to Markdown and copies
+the result into a _Tp-Note_ file. The note's title is the same than the
+webpage's title:
+
+```sh
+curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
+```
+
+creates the note file '`20200910-Jens Getreu's blog.md`' with the webpage's
+content converted to Markdown.
+
+To save some typing while using this pattern, create a script with
+
+```shell
+sudo nano /usr/local/bin/download
+sudo chmod a+x /usr/local/bin/download
+```
+
+having the following content:
+
+```sh
+#!/bin/sh
+curl "$1" | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
+```
+
+and execute it with:
+
+```shell
+> download 'https://blog.getreu.net'
+```
+
 
 ## New note with empty clipboard
 
@@ -181,7 +251,7 @@ revision:   "1.0"
 ---
 ```
 
-## New note based on a non Tp-Note file
+## New note based on an existing non-Tp-Note file
 
 When '`<path>`' points to an existing file, whose file-extension is other than
 '`.md`', a new note is created with a similar filename and a reference to the
@@ -200,7 +270,7 @@ Example:
 
 creates the note:
 
-    "Classic Shell Scripting--Note.md"
+    "Classic Shell Scripting.pdf--Note.md"
 
 with the content:
 
@@ -220,6 +290,10 @@ revision:   "1.1"
 The configuration file variable '`note_file_extensions`' lists all file
 extensions that _Tp-Note_ recognizes and opens as own file types. Others are
 treated as described above.
+
+This so called _annotation_ mode can also be used with the clipboard: when it
+is not empty, its data is appended to the note's body.
+
 
 ## Editing notes
 
@@ -336,7 +410,7 @@ Consider the following _Tp-Note_-file:
 
 The filename has 4 parts:
 
-    {{ sort-tag }}-{{ title }}--{{ subtitle }}.{{ extension }}
+    {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
 
 A so called _sort-tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
@@ -355,7 +429,7 @@ numerical digits, a _sort-tag_ can be any combination of
         09_02-Notes
 
 When _Tp-Note_ creates a new note, it prepends automatically a *chronological
-sort-tag* of today. The '`{{ title }}`' part is usually derived from the
+sort-tag* of today. The '`{{ fm_title }}`' part is usually derived from the
 parent directory name omitting its own *sort-tag*.
 
 [^sort-tag]: The characters '`_`' and '`-`' are considered to be
@@ -364,8 +438,8 @@ part of the *sort-tag* when they appear in last position.
 A note's filename is in sync with its meta-data, when the following is true
 (slightly simplified, see the configuration file for the complete definition):
 
-> filename on disk without *sort-tag* == '`-{{ title }}--{{ subtitle }}.md`'
-  ^[The variables '`{{ title }}`' and '`{{ subtitle }}`' reflect the values in
+> filename on disk without *sort-tag* == '`-{{ fm_title }}--{{ fm_subtitle }}.md`'
+  ^[The variables '`{{ fm_title }}`' and '`{{ fm_subtitle }}`' reflect the values in
   the note's metadata.]
 
 Consider the following document with the filename:
@@ -404,7 +478,6 @@ document's date in the front matter and you want to change the chronological
 sort tag in one go. In order to overwrite the note's sort-tag on disk, you can
 add a '`sort_tag`' variable to its front matter:
 
-
 ``` yaml
 ---
 title:      "1. The Beginning"
@@ -433,13 +506,13 @@ sort_tag:   ""
 
 In the same way, how it is possible to pin the sort-tag of the note from within
 the note's meta-data, you can also change the file extension by adding the
-optional '`extension`' variable into the note's front matter:
+optional '`file_ext`' variable into the note's front matter:
 
 ``` yaml
 ---
 title:      "1. The Beginning"
 ...
-extension:  "rst"
+file_ext:   "rst"
 ...
 ---
 ```
@@ -447,7 +520,7 @@ extension:  "rst"
 This will change the file extension from '`.md`' to '`.rst`. The resulting
 filename becomes "`20200307-'1. The Beginning--Note.rst`".
 
-Important: '`extension`' must be one of the registered file extensions
+Important: '`file_ext`' must be one of the registered file extensions
 listed in the '`note_file_extensions`' variable in Tp-Note's configuration
 file. If needed you can add more extensions there.
 
@@ -456,7 +529,7 @@ should not adjust the sort-tag string in its file name manually by renaming the
 file, as your change will be overwritten next time you open the note with
 _Tp-Note_.  However, you can switch back to _Tp-Note_'s default behaviour any
 time by deleting the '`sort_tag`' line in the note's metadata. The same applies
-to the '`extension`' variable.
+to the '`file_ext`' variable.
 
 
 
@@ -494,9 +567,19 @@ In addition, _Tp-Note_ defines the following variables:
 * '`{{ path }}`': same as above but without filename and extension.
 
 * '`{{ clipboard }}`': the complete text content from the clipboard,
+  In case the clipboard's content starts with a YAML header, it does not
+  appear in this variable.
+
+* '`{{ clipboard_header }}`': the YAML section of the clipboard data, if
+  one exists. Otherwise: empty string.
 
 * '`{{ stdin }}`': the complete text content originating form the input stream
   `/dev/stdin`. This stream can replace the clipboard when it is not available.
+  In case the input stream's content starts with a YAML header, it does not
+  appear in this variable.
+
+* '`{{ stdin_header }}`': the YAML section of the input stream, if
+  one exists. Otherwise: empty string.
 
 * '`{{ extension_default }}`': the default extension for new notes
   (can be changed in the configuration file),
@@ -504,27 +587,39 @@ In addition, _Tp-Note_ defines the following variables:
 * '`{{ username }}`': the content of the first non-empty environment
   variable: `LOGNAME`, `USER` or `USERNAME`.
 
-* '`{{ title }}`': the title as indicated in the YAML front matter of the
-  note (only available in filename-templates).
+* '`{{ fm_title }}`': the '`title:`' as indicated in the YAML front matter of the note
+  (only available in filename-templates and in '`TMPL_COPY_CONTENT`').
 
-* '`{{ subtitle }}`': the subtitle as indicated in the YAML front matter of
-  the note (only available in filename-templates).
+* '`{{ fm_subtitle }}`': the '`subtitle:`' as indicated in the YAML front matter of the
+  note (only available in filename-templates and in '`TMPL_COPY_CONTENT`').
 
-* '`{{ extension }}`': holds the value of the optional YAML header variable
-  '`extension`' (e.g. '`extension: "rst"`'). This variable is only available in
-  the '`TMPL_SYNC_FILENAME`' template! Note, that '`{{ extension }}`' is
+* '`{{ fm_author }}`': the '`author:`' as indicated in the YAML front matter of the
+  note (only available in filename-templates and in '`TMPL_COPY_CONTENT`')
+
+* '`{{ fm_lang }}`': the '`lang:`' as indicated in the YAML front matter of the
+  note (only available in filename-templates and in '`TMPL_COPY_CONTENT`')
+
+* '`{{ fm_revision}}`': the '`revision:`' as indicated in the YAML front matter of the
+  note (only available in filename-templates and in '`TMPL_COPY_CONTENT`')
+
+* '`{{ fm_file_ext }}`': holds the value of the optional YAML header variable
+  '`file_ext:`' (e.g. '`file_ext: "rst"`'). This variable is only available in
+  the '`TMPL_SYNC_FILENAME`', '`TMPL_COPY_CONTENT`' and the
+  '`TMPL_COPY_FILENAME`' templates!  Note, that '`{{ fm_file_ext }}`' is
   undefined, when the corresponding YAML header variable is not present in the
   note's header.
 
-* '`{{ sort_tag }}`': The sort variable as defined in the YAML front matter of
+* '`{{ fm_sort_tag }}`': The sort variable as defined in the YAML front matter of
   this note (e.g. '`sort_tag: "20200312-"`'). This variable is only available
-  in the '`TMPL_SYNC_FILENAME`' template!  Note, that '`{{ sort_tag }}`' is
+  in the '`TMPL_SYNC_FILENAME`', '`TMPL_COPY_CONTENT`' and the
+  '`TMPL_COPY_FILENAME`' templates!  Note, that '`{{ fm_sort_tag }}`' is
   undefined, when the corresponding YAML header variable is not present in the
   note's header.
 
-Except for '`{{ extension }}`' and '`{{ sort_tag }}`' is guaranteed,
-that the above variables are always defined, even if their data
-source is not available. In this case their content is the empty string.
+* Except for '`{{ fm_title }}`', it is **not** guaranteed, that the above
+  '`{{ fm_... }}`' variables are defined! Depending on the last content template
+  result, the variables might be undefined. In addition a defined variable
+  might contain an empty string '`""`'.
 
 
 ## Template filters
@@ -635,9 +730,9 @@ can check this when you launch the text editor from the command-line: if the
 prompt returns immediately, then it forks the process. In contrast, it is Ok
 when the prompt only comes back at the moment when the text editor is closed.
 Many text editors provide an option not to fork: for example the
-_VScode_-editor can be launched with the '`--wait`' option and `vim` with `vim
---nofork`. However, _Tp-Note_ also works with forking text editors. Then , the
-only drawback is, that _Tp-Note_ can not synchronize the filename with the
+_VScode_-editor can be launched with the '`--wait`' option and `vim` with
+`vim --nofork`. However, _Tp-Note_ also works with forking text editors. Then,
+the only drawback is, that _Tp-Note_ can not synchronize the filename with the
 note's metadata when the user has finished editing. It will still happen, but
 only when the user opens the note again with _Tp-Note_.
 
