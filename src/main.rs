@@ -156,8 +156,11 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             (n, new_fqfn)
         };
 
+        // Check if the filename is not taken already
+        let new_fqfn = Note::find_free_filename(new_fqfn)?;
+
         // Write new note on disk.
-        n.write_to_disk(&new_fqfn)
+        n.write_to_disk(new_fqfn)
     } else {
         let file_extension = path
             .extension()
@@ -189,8 +192,11 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
                 .context("Can not parse `tmpl_annotate_content` in config file.")?;
             let new_fqfn = n.render_filename(&CFG.tmpl_annotate_filename)?;
 
+            // Check if the filename is not taken already
+            let new_fqfn = Note::find_free_filename(new_fqfn)?;
+
             // Write new note on disk.
-            n.write_to_disk(&new_fqfn)
+            n.write_to_disk(new_fqfn)
         }
     }
 }

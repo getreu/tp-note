@@ -13,6 +13,7 @@ use crate::config::CLIPBOARD;
 use crate::config::NOTE_FILENAME_LEN_MAX;
 use crate::config::STDIN;
 use crate::content::Content;
+use crate::filter;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use anyhow::{anyhow, Context, Result};
@@ -404,8 +405,43 @@ impl Note {
         Ok(fm)
     }
 
+    /// When the path `p` exists on disk already, append some extension
+    /// with an incrementing counter to the sort-tag in `p` until
+    /// we find a free slot.
+    pub fn find_free_filename(p: PathBuf) -> Result<PathBuf, anyhow::Error> {
+        if !p.exists() {
+            return Ok(p);
+        };
+
+        // Disassemble path.
+        let (sort_tag, stem, extension) = filter::disassemble_filename(&p);
+
+        // Remove unwanted.
+        let sort_tag = filter::remove_tag_extension(sort_tag);
+        let sort_tag = sort_tag.trim_end_matches(|c: char| c == '_' || c == '-');
+
+        let mut new_path = p.clone();
+
+        // Try up to 99 sort-tag-extensions, then give up.
+        for n in 1..99 {
+            let new_tag = filter::append_tag_extension(sort_tag.to_string(), n);
+            let filename = filter::assemble_filename(new_tag, &stem, &extension);
+            new_path.set_file_name(filename);
+
+            if !new_path.exists() {
+                break;
+            }
+        }
+
+        if new_path.exists() {
+            return Err(anyhow!("can not find unused filename for new note"));
+        }
+
+        Ok(new_path)
+    }
+
     /// Writes the note to disk with `new_fqfn`-filename.
-    pub fn write_to_disk(&self, new_fqfn: &Path) -> Result<PathBuf, anyhow::Error> {
+    pub fn write_to_disk(&self, new_fqfn: PathBuf) -> Result<PathBuf, anyhow::Error> {
         // Write new note on disk.
         let outfile = OpenOptions::new()
             .write(true)
