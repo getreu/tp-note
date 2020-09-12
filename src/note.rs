@@ -305,50 +305,46 @@ impl Note {
                 .trim()
         });
 
-        Ok(Self::shorten_filename(Path::new(&fqfn)))
+        Ok(Self::shorten_filename(fqfn))
     }
 
     /// Shortens the stem of a filename so that
     /// `file_stem.len()+file_extension.len() <= NOTE_FILENAME_LEN_MAX`
-    fn shorten_filename(fqfn: &Path) -> PathBuf {
-        let mut parent = if let Some(p) = fqfn.parent() {
-            p.to_path_buf()
-        } else {
-            PathBuf::new()
-        };
+    fn shorten_filename(mut fqfn: PathBuf) -> PathBuf {
         // Determine length of file-extension.
-        let mut note_extension_len = 0;
-        let mut note_extension = "";
-        if let Some(ext) = &fqfn.extension() {
-            if let Some(ext) = ext.to_str() {
-                note_extension_len = ext.len();
-                note_extension = ext;
-            }
-        };
+        let note_extension = fqfn
+            .extension()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default();
+        let note_extension_len = note_extension.len();
 
         // Limit length of file-stem.
+        let note_stem = fqfn
+            .file_stem()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default();
+
+        // Limit the size of `fqfn`
         let mut note_stem_short = String::new();
-        if let Some(note_stem) = &fqfn.file_stem() {
-            if let Some(note_stem) = note_stem.to_str() {
-                // Limit the size of `fqfn`
-                // `+1` reserves one byte for `.` before the extension.
-                for i in (0..NOTE_FILENAME_LEN_MAX - (note_extension_len + 1)).rev() {
-                    if let Some(s) = note_stem.get(..=i) {
-                        note_stem_short = s.to_string();
-                        break;
-                    }
-                }
+        // `+1` reserves one byte for `.` before the extension.
+        for i in (0..NOTE_FILENAME_LEN_MAX - (note_extension_len + 1)).rev() {
+            if let Some(s) = note_stem.get(..=i) {
+                note_stem_short = s.to_string();
+                break;
             }
-        };
+        }
 
         // Assemble.
         let mut note_filename = note_stem_short;
         note_filename.push('.');
         note_filename.push_str(note_extension);
 
-        // Add to parent.
-        parent.push(Path::new(&note_filename).to_path_buf());
-        parent
+        // Replace filename
+        fqfn.set_file_name(note_filename);
+
+        fqfn
     }
 
     /// Helper function deserializing the front-matter of an `.md`-file.
@@ -483,15 +479,15 @@ mod tests {
     #[test]
     fn test_shorten_filename() {
         use std::ffi::OsString;
-        use std::path::Path;
+        use std::path::PathBuf;
 
         // Test short filename.
-        let input = Path::new("long directory name/abc.ext");
+        let input = PathBuf::from("long directory name/abc.ext");
         let output = Note::shorten_filename(input);
         assert_eq!(OsString::from("long directory name/abc.ext"), output);
 
         // Test long filename.
-        let input = Path::new("long directory name/long filename.ext");
+        let input = PathBuf::from("long directory name/long filename.ext");
         let output = Note::shorten_filename(input);
         assert_eq!(OsString::from("long directory name/long f.ext"), output);
     }
