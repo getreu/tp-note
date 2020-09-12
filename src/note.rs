@@ -412,15 +412,11 @@ impl Note {
         // Disassemble path.
         let (sort_tag, stem, extension) = filter::disassemble_filename(&p);
 
-        // Remove unwanted.
-        let sort_tag = filter::remove_tag_extension(sort_tag);
-        let sort_tag = sort_tag.trim_end_matches(|c: char| c == '_' || c == '-');
-
         let mut new_path = p.clone();
 
         // Try up to 99 sort-tag-extensions, then give up.
         for n in 1..99 {
-            let new_tag = filter::append_tag_extension(sort_tag.to_string(), n);
+            let new_tag = filter::append_tag_extension(&sort_tag, n);
             let filename = filter::assemble_filename(new_tag, &stem, &extension);
             new_path.set_file_name(filename);
 

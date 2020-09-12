@@ -254,23 +254,30 @@ pub fn assemble_filename(sort_tag: String, stem: &str, extension: &str) -> Strin
     filename
 }
 
-/// Helper function that trims the pattern `__n__` at the end of string matching
-/// `*__n__`, where `n` is an integer.
+/// Helper function that trims the pattern `_-n-_` at the end of string matching
+/// `*_-n-_`, where `n` is an integer.
 /// When the pattern is not found return the whole string.
+/// Do the same if the string ends with `-_n_-`.
+#[inline]
 pub fn remove_tag_extension(tag: &str) -> &str {
-    // Strip `__` at the end.
-    let tag1 = if let Some(t) = tag.strip_suffix("__") {
+    // Get separator.
+    let lastchar = tag.chars().rev().next().unwrap_or_default();
+    let sepsep_start = if lastchar == '_' { "_-" } else { "-_" };
+    let sepsep_end = if lastchar == '_' { "-_" } else { "_-" };
+
+    // Strip `sepsepend` at the end.
+    let tag1 = if let Some(t) = tag.strip_suffix(sepsep_end) {
         t
     } else {
         return tag;
     };
-    // Strip numbers at the end.
+    // Now strip numbers.
     let tag2 = tag1.trim_end_matches(|c: char| c.is_numeric());
     if tag2.len() == tag1.len() {
         return tag;
     };
-    // Strip `__` at the end.
-    let tag3 = if let Some(t) = tag2.strip_suffix("__") {
+    // And finally strip `sepsepstart`.
+    let tag3 = if let Some(t) = tag2.strip_suffix(sepsep_start) {
         t
     } else {
         return tag;
@@ -279,11 +286,25 @@ pub fn remove_tag_extension(tag: &str) -> &str {
     return tag3;
 }
 
-/// Appends the string `__n__`, where `n` is an integer.
-pub fn append_tag_extension(mut tag: String, n: usize) -> String {
-    tag.push_str("__");
+/// When the string ends with `_` append the string `_-n-_`, where `n` is an integer.
+/// Otherwise append `-_n_-`.
+/// Before appending, remove the sort tag extension, if there is one, and all
+/// trailing `_` and `-`.
+#[inline]
+pub fn append_tag_extension(tag: &str, n: usize) -> String {
+    let lastchar = tag.chars().rev().next().unwrap_or_default();
+    let sepsep_start = if lastchar == '_' { "_-" } else { "-_" };
+    let sepsep_end = if lastchar == '_' { "-_" } else { "_-" };
+
+    // In case this has a sort tag extension already, remove it.
+    let tag = remove_tag_extension(tag);
+
+    // Remove more separators, if they exist.
+    let mut tag = tag.trim_end_matches(|c| c == '_' || c == '-').to_string();
+    // Append sort-tag extension.
+    tag.push_str(sepsep_start);
     tag.push_str(&n.to_string());
-    tag.push_str("__");
+    tag.push_str(sepsep_end);
     tag
 }
 
@@ -489,17 +510,22 @@ mod tests {
     fn test_remove_sort_tag_extension() {
         // Pattern found and removed.
         let expected = "123-1_2";
-        let result = remove_tag_extension("123-1_2__78__");
+        let result = remove_tag_extension("123-1_2_-78-_");
+        assert_eq!(expected, result);
+
+        // Pattern found and removed.
+        let expected = "123-1_2";
+        let result = remove_tag_extension("123-1_2-_78_-");
         assert_eq!(expected, result);
 
         // Pattern found and removed.
         let expected = "123-1_2-";
-        let result = remove_tag_extension("123-1_2-__78__");
+        let result = remove_tag_extension("123-1_2-_-78-_");
         assert_eq!(expected, result);
 
         // Pattern found and removed.
         let expected = "123-1_2_";
-        let result = remove_tag_extension("123-1_2___78__");
+        let result = remove_tag_extension("123-1_2_-_78_-");
         assert_eq!(expected, result);
 
         // Pattern not found.
@@ -516,8 +542,28 @@ mod tests {
 
     #[test]
     fn test_append_sort_tag_extension() {
-        let expected = "123-1_2__987__";
-        let result = append_tag_extension("123-1_2".to_string(), 987);
+        let expected = "123-1_2-_987_-";
+        let result = append_tag_extension("123-1_2", 987);
+        assert_eq!(expected, result);
+
+        let expected = "123-1_2_-987-_";
+        let result = append_tag_extension("123-1_2_", 987);
+        assert_eq!(expected, result);
+
+        let expected = "123-1_2_-987-_";
+        let result = append_tag_extension("123-1_2___", 987);
+        assert_eq!(expected, result);
+
+        let expected = "123-1_2-_987_-";
+        let result = append_tag_extension("123-1_2-", 987);
+        assert_eq!(expected, result);
+
+        let expected = "123-1_2-_987_-";
+        let result = append_tag_extension("123-1_2-_666_-", 987);
+        assert_eq!(expected, result);
+
+        let expected = "123-1_2-_987_-";
+        let result = append_tag_extension("123-1_2-_---_666_-", 987);
         assert_eq!(expected, result);
     }
 }
