@@ -171,14 +171,7 @@ pub fn tag_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let p = try_get_value!("tag", "value", String, value);
 
-    let tag = Path::new(&p)
-        .file_stem()
-        .unwrap_or_default()
-        .to_str()
-        .unwrap_or_default()
-        .chars()
-        .take_while(|&c| c.is_numeric() || c == '-' || c == '_')
-        .collect::<String>();
+    let (tag, _, _) = disassemble_filename(Path::new(&p));
 
     Ok(to_value(&tag).unwrap())
 }
@@ -190,12 +183,7 @@ pub fn stem_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let p = try_get_value!("stem", "value", String, value);
 
-    let stem = Path::new(&p)
-        .file_stem()
-        .unwrap_or_default()
-        .to_str()
-        .unwrap_or_default()
-        .trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_');
+    let (_, stem, _) = disassemble_filename(Path::new(&p));
 
     Ok(to_value(&stem).unwrap())
 }
@@ -231,6 +219,72 @@ pub fn ext_filter<S: BuildHasher>(
         .unwrap_or_default();
 
     Ok(to_value(&ext).unwrap())
+}
+
+/// Helper function that decomposes a fully qualified path name
+/// into (parent_dir, sort_tag, file_stem_without_sort_tag, extension).
+pub fn disassemble_filename<'a>(p: &Path) -> (&str, &str, &str) {
+    let stem = p
+        .file_stem()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap_or_default();
+
+    let stem_without_sort_tag =
+        stem.trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_');
+
+    let sort_tag = &stem[0..stem.len() - stem_without_sort_tag.len()];
+    let extension = p
+        .extension()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap_or_default();
+    (sort_tag, stem_without_sort_tag, extension)
+}
+
+/// Concatenates the 3 parameters.
+pub fn assemble_filename(sort_tag: String, stem: &str, extension: &str) -> String {
+    // Assemble path.
+    let mut filename = sort_tag;
+    filename.push_str(stem);
+    if !extension.is_empty() {
+        filename.push('.');
+        filename.push_str(extension);
+    };
+    filename
+}
+
+/// Helper function that trims the pattern `__n__` at the end of string matching
+/// `*__n__`, where `n` is an integer.
+/// When the pattern is not found return the whole string.
+pub fn remove_tag_extension(tag: &str) -> &str {
+    // Strip `__` at the end.
+    let tag1 = if let Some(t) = tag.strip_suffix("__") {
+        t
+    } else {
+        return tag;
+    };
+    // Strip numbers at the end.
+    let tag2 = tag1.trim_end_matches(|c: char| c.is_numeric());
+    if tag2.len() == tag1.len() {
+        return tag;
+    };
+    // Strip `__` at the end.
+    let tag3 = if let Some(t) = tag2.strip_suffix("__") {
+        t
+    } else {
+        return tag;
+    };
+
+    return tag3;
+}
+
+/// Appends the string `__n__`, where `n` is an integer.
+pub fn append_tag_extension(mut tag: String, n: usize) -> String {
+    tag.push_str("__");
+    tag.push_str(&n.to_string());
+    tag.push_str("__");
+    tag
 }
 
 /// Tiny wrapper around Tera-context with some additional information.
@@ -415,5 +469,55 @@ mod tests {
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
         let output = ext_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
+    }
+
+    #[test]
+    fn test_disassemble_filename() {
+        let expected = ("1_2_3-", "my_file", "md");
+        let result = disassemble_filename(Path::new("/my/dir/1_2_3-my_file.md"));
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_assemble_filename() {
+        let expected = "1_2_3-my_file.md".to_string();
+        let result = assemble_filename("1_2_3-".to_string(), "my_file", "md");
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_remove_sort_tag_extension() {
+        // Pattern found and removed.
+        let expected = "123-1_2";
+        let result = remove_tag_extension("123-1_2__78__");
+        assert_eq!(expected, result);
+
+        // Pattern found and removed.
+        let expected = "123-1_2-";
+        let result = remove_tag_extension("123-1_2-__78__");
+        assert_eq!(expected, result);
+
+        // Pattern found and removed.
+        let expected = "123-1_2_";
+        let result = remove_tag_extension("123-1_2___78__");
+        assert_eq!(expected, result);
+
+        // Pattern not found.
+        assert_eq!(expected, result);
+        let expected = "123-1_2_78__";
+        let result = remove_tag_extension("123-1_2_78__");
+        assert_eq!(expected, result);
+
+        // Pattern not found.
+        let expected = "123-1_2__78_";
+        let result = remove_tag_extension("123-1_2__78_");
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_append_sort_tag_extension() {
+        let expected = "123-1_2__987__";
+        let result = append_tag_extension("123-1_2".to_string(), 987);
+        assert_eq!(expected, result);
     }
 }
