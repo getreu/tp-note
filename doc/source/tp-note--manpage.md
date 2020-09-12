@@ -769,7 +769,7 @@ console, an alternative file editor list used: '`editor_console_args`' and
 '`viewer_console_args`'. Here you can register file editors that do not
 require a graphical environment, e.g. '`vim`' or '`nano`'.
 
-In order to  use your own text editor, just place it at the top of the list. To
+In order to use your own text editor, just place it at the top of the list. To
 make this work properly, make sure, that your text editor does not fork! You
 can check this when you launch the text editor from the command-line: if the
 prompt returns immediately, then it forks the process. In contrast, it is Ok
@@ -780,6 +780,17 @@ _VScode_-editor can be launched with the '`--wait`' option and `vim` with
 the only drawback is, that _Tp-Note_ can not synchronize the filename with the
 note's metadata when the user has finished editing. It will still happen, but
 only when the user opens the note again with _Tp-Note_.
+
+Remark for the advanced console user: It is also possible to launch a different
+editor without changing the configuration file:
+
+```shell
+> FILE=$(tp-note --batch); vi "$FILE"; tp-note --batch "$FILE"
+```
+
+Whereby '`FILE=$(tp-note --batch)`' creates the note file, '`vi "$FILE"`' opens the
+'`vi`'-file editor and '`tp-note --batch "$FILE"`' synchronizes the filename.
+
 
 ## Register a Flatpak Markdown editor
 
