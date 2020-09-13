@@ -218,5 +218,30 @@ fi
 
 
 
+## Test 9: Create 2 notes with same header 
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch \
+    --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch \
+    --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note.md"
+OUTPUT_FILENAME2="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note(1).md"
+if diff "$OUTPUT_FILENAME2" "test9-new-new-expected-output"
+then
+    echo Commandline test 9 succeeded.
+    rm "$OUTPUT_FILENAME"
+    rm "$OUTPUT_FILENAME2"
+else
+    echo Commandline test 9 failed.
+    exit 1
+fi
+
+
+
+
 
 exit 0
