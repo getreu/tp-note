@@ -48,7 +48,7 @@ pub fn exclude_copy_counter_eq(p1: &Path, p2: &Path) -> bool {
 
 /// Helper function that decomposes a fully qualified path name
 /// into (parent_dir, sort_tag, file_stem_without_sort_tag, extension).
-pub fn disassemble<'a>(p: &Path) -> (&str, &str, &str, &str) {
+pub fn disassemble(p: &Path) -> (&str, &str, &str, &str) {
     let file_stem = p
         .file_stem()
         .unwrap_or_default()

@@ -347,7 +347,7 @@ impl Note {
     }
 
     /// Helper function deserializing the front-matter of an `.md`-file.
-    fn deserialize_note<'a>(header: &'a str) -> Result<FrontMatter> {
+    fn deserialize_note(header: & str) -> Result<FrontMatter> {
         if header.is_empty() {
             return Err(anyhow!("no YAML front matter found"));
         };
