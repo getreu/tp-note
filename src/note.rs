@@ -431,7 +431,7 @@ impl Note {
             }
         }
 
-        Ok(new_fqfn.to_owned())
+        Ok(new_fqfn)
     }
 }
 
