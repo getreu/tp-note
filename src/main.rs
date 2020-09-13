@@ -10,7 +10,7 @@
 //! when omitted the current working directory), a new note is created in that
 //! directory. After creation, `tp-note` launches an external editor of your
 //! choice. Although the note's structure follows `pandoc`-conventions, it is not
-//! tied to any specific markup language.
+//! tied to any specific Markup language.
 
 mod config;
 mod content;
