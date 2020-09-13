@@ -1,5 +1,7 @@
 //! Deals with the note's content string.
 
+use std::fmt;
+
 #[derive(Debug, PartialEq)]
 /// This is a newtype and thin wrapper around the note's content.
 /// It deals with operating system specific handling of newlines.
@@ -26,14 +28,6 @@ impl Content {
         }
     }
 
-    /// Concatenates the header and the body and prints the content.
-    pub fn to_string(&self) -> String {
-        let mut s = "\u{feff}---\n".to_string();
-        s.push_str(&self.header);
-        s.push_str("\n---\n");
-        s.push_str(&self.body);
-        s
-    }
     /// Write out the content string to be saved on disk.
     /// The format varies depending on the operating system:
     /// On Unix a newline is represented by one single byte: `\n`.
@@ -69,6 +63,13 @@ impl Content {
         let body_start = fm_end + 4;
 
         (&content[fm_start..fm_end].trim(), &content[body_start..])
+    }
+}
+
+/// Concatenates the header and the body and prints the content.
+impl fmt::Display for Content {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "\u{feff}---\n{}\n---\n{}", &self.header, &self.body)
     }
 }
 
