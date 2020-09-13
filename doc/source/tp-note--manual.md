@@ -299,7 +299,7 @@ Here some typical workflows:
   This creates the file `i3-extensions.zip--URL.md` with the
   following content:
 
-  ```markdown
+  ```yaml
   ---
   title:      "i3-extensions.zip"
   subtitle:   "URL"
@@ -325,15 +325,20 @@ Here some typical workflows:
 * Generate note for a given content with YAML header
 
   ```shell
-  echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tp-note |
+  echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tp-note
   ```
 
   creates the file `20200910-Todo.mdtxt` with the content:
 
-  ```
+  ```yaml
   ---
-  title:    "Todo"
-  file_ext: "mdtxt"
+  title:      "Todo"
+  subtitle:   ""
+  author:     "getreu"
+  date:       "2020-09-13"
+  lang:       "en_GB.UTF-8"
+  revision:   "1.0"
+  file_ext:   "mdtxt"
   ---
 
   nothing
