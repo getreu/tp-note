@@ -109,7 +109,7 @@ pub fn remove_copy_counter(tag: &str) -> &str {
         return tag;
     };
 
-    return tag3;
+    tag3
 }
 
 /// When the string ends with `_` append the string `_-n-_`, where `n` is an integer.
