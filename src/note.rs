@@ -409,15 +409,14 @@ impl Note {
             return Ok(p);
         };
 
-        // Disassemble path.
-        let (sort_tag, stem, extension) = filter::disassemble_filename(&p);
+        let (sort_tag, stem, _copy_counter, ext) = filter::disassemble_filename(&p);
 
         let mut new_path = p.clone();
 
         // Try up to 99 sort-tag-extensions, then give up.
         for n in 1..99 {
-            let new_tag = filter::append_tag_extension(&sort_tag, n);
-            let filename = filter::assemble_filename(new_tag, &stem, &extension);
+            let stem_copy_counter = filter::append_copy_counter(&stem, n);
+            let filename = filter::assemble_filename(&sort_tag, &stem_copy_counter, &"", &ext);
             new_path.set_file_name(filename);
 
             if !new_path.exists() {
@@ -425,8 +424,11 @@ impl Note {
             }
         }
 
+        // This only happens, when we have 99 copies already. Should never happen.
         if new_path.exists() {
-            return Err(anyhow!("can not find unused filename for new note"));
+            return Err(anyhow!(
+                "can not find unused filename to save the note file on the disk"
+            ));
         }
 
         Ok(new_path)

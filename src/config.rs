@@ -390,12 +390,24 @@ const CLIPBOARD_LEN_MAX: usize = 0x10000;
 /// Limit the size of `stdin` input data `tp-note` accepts.
 const STDIN_LEN_MAX: usize = 0x10000;
 
+/// Tp-Note may add a counter at the end of the filename when
+/// it can not save a file because the name is taken already.
+/// This is the opening bracket search pattern. Some examples:
+/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
+const COPY_COUNTER_OPENING_BRACKETS: &str = "(";
+
+/// Tp-Note may add a counter at the end of the filename when
+/// it can not save a file because the name is taken already.
+/// This is the closing bracket search pattern. Some examples:
+/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
+const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
+
 #[derive(Debug, PartialEq, StructOpt)]
 #[structopt(
     name = "Tp-Note",
     about = "Fast note taking with templates and filename synchronization."
 )]
-/// `tp-note` is a note-taking-tool and a template system, that consistently
+/// `Tp-Note` is a note-taking-tool and a template system, that consistently
 /// synchronizes the note's meta-data with its filename. `tp-note` collects
 /// various information about its environment and the clipboard and stores them
 /// in variables. New notes are created by filling these variables in predefined
@@ -406,7 +418,7 @@ const STDIN_LEN_MAX: usize = 0x10000;
 /// when omitted the current working directory), a new note is created in that
 /// directory. After creation, `tp-note` launches an external editor of your
 /// choice. Although the note's structure follows `pandoc`-conventions, it is not
-/// tied to any specific markup language.
+/// tied to any specific Markup language.
 pub struct Args {
     /// Batch made: does not launch editor or viewer
     #[structopt(long, short = "b")]
@@ -454,6 +466,8 @@ pub struct Cfg {
     pub viewer_console_args: Vec<Vec<String>>,
     pub enable_read_clipboard: bool,
     pub enable_empty_clipboard: bool,
+    pub copy_counter_opening_brackets: String,
+    pub copy_counter_closing_brackets: String,
 }
 
 /// When no configuration-file is found, defaults are set here from built-in
@@ -500,6 +514,8 @@ impl ::std::default::Default for Cfg {
                 .collect(),
             enable_read_clipboard: ENABLE_READ_CLIPBOARD,
             enable_empty_clipboard: ENABLE_EMPTY_CLIPBOARD,
+            copy_counter_opening_brackets: COPY_COUNTER_OPENING_BRACKETS.to_string(),
+            copy_counter_closing_brackets: COPY_COUNTER_CLOSING_BRACKETS.to_string(),
         }
     }
 }

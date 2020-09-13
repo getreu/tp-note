@@ -71,7 +71,7 @@ const AUTHOR: &str = "(c) Jens Getreu, 2020";
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk and return
 /// the new filename.
-fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
+fn synchronize_filename(path: PathBuf) -> Result<PathBuf, anyhow::Error> {
     // parse file again to check for synchronicity with filename
     let n = Note::from_existing_note(&path)
         .context("Failed to parse the note's metadata: can not synchronize the filename!")?;
@@ -80,27 +80,20 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
         eprintln!("Applying template `tmpl_sync_filename`.");
     };
     let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename)?;
-    if path != new_fqfn {
+
+    if !filter::filename_exclude_copy_counter_eq(&path, &new_fqfn) {
+        let new_fqfn = Note::find_free_filename(new_fqfn).context(
+            "Can not rename the note's filename to be in sync with its\n\
+            YAML header.",
+        )?;
         // rename file
-        if !Path::new(&new_fqfn).exists() {
-            fs::rename(&path, &new_fqfn)?;
-            if ARGS.debug {
-                eprintln!("File renamed to {:?}", new_fqfn);
-            };
-            Ok(new_fqfn)
-        } else {
-            Err(anyhow!(format!(
-                "File exists already: can not rename file to:\n\
-                 \t{:?}\n\
-                 Note: at this stage filename and YAML metadata are not in sync!\n\
-                 Change `title` or `subtitle` in the metadata of file:\n\
-                 \t{:?}",
-                new_fqfn.file_name().unwrap_or_default(),
-                path
-            )))
-        }
+        fs::rename(&path, &new_fqfn)?;
+        if ARGS.debug {
+            eprintln!("File renamed to {:?}", new_fqfn);
+        };
+        Ok(new_fqfn)
     } else {
-        Ok(path.to_path_buf())
+        Ok(path)
     }
 }
 
@@ -108,7 +101,7 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
 /// Create a new note by inserting `tp-note`'s environment in a template.
 /// If the note to be created exists already, open it, read the YAML front
 /// matter and synchronize the filename if necessary.
-fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
+fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, anyhow::Error> {
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
     if path.is_dir() {
@@ -179,7 +172,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             // SYNCHRONIZE FILENAME
             // `path` points to an existing tp-note file.
             // Check if in sync with its filename:
-            Ok(synchronize_filename(&path)?)
+            Ok(synchronize_filename(path)?)
         } else {
             // ANNOTATE FILE: CREATE NEW NOTE WITH TMPL_ANNOTATE_CONTENT TEMPLATE
             // `path` points to a foreign file type that will be annotated.
@@ -399,13 +392,13 @@ fn run() -> Result<PathBuf, anyhow::Error> {
         env::current_dir()?
     };
 
-    let mut path = create_new_note_or_synchronize_filename(&path)?;
+    let path = create_new_note_or_synchronize_filename(path)?;
 
     // In batch mode, we do not launch the editor.
     if !ARGS.batch {
         launch_editor(&path)?;
 
-        path = synchronize_filename(&path)?;
+        let path = synchronize_filename(path)?;
 
         // Delete clipboard
         if CFG.enable_read_clipboard && CFG.enable_empty_clipboard && !*RUNS_ON_CONSOLE {
@@ -413,9 +406,11 @@ fn run() -> Result<PathBuf, anyhow::Error> {
             if let Some(mut ctx) = ctx {
                 ctx.set_contents("".to_owned()).unwrap_or_default();
             };
-        };
-    };
-    Ok(path)
+        }
+        Ok(path)
+    } else {
+        Ok(path)
+    }
 }
 
 /// Print some error message if `run()` does not complete.
