@@ -15,6 +15,7 @@
 mod config;
 mod content;
 mod error;
+mod filename;
 mod filter;
 mod note;
 
@@ -64,7 +65,7 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
 ///    ```
 ///
-const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.6.5");
+const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
 /// (c) Jens Getreu
 const AUTHOR: &str = "(c) Jens Getreu, 2020";
 /// Open the note file `path` on disk and reads its YAML front matter.
@@ -81,8 +82,8 @@ fn synchronize_filename(path: PathBuf) -> Result<PathBuf, anyhow::Error> {
     };
     let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename)?;
 
-    if !filter::filename_exclude_copy_counter_eq(&path, &new_fqfn) {
-        let new_fqfn = Note::find_free_filename(new_fqfn).context(
+    if !filename::exclude_copy_counter_eq(&path, &new_fqfn) {
+        let new_fqfn = filename::find_unused(new_fqfn).context(
             "Can not rename the note's filename to be in sync with its\n\
             YAML header.",
         )?;
@@ -150,7 +151,7 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
         };
 
         // Check if the filename is not taken already
-        let new_fqfn = Note::find_free_filename(new_fqfn)?;
+        let new_fqfn = filename::find_unused(new_fqfn)?;
 
         // Write new note on disk.
         n.write_to_disk(new_fqfn)
@@ -186,7 +187,7 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
             let new_fqfn = n.render_filename(&CFG.tmpl_annotate_filename)?;
 
             // Check if the filename is not taken already
-            let new_fqfn = Note::find_free_filename(new_fqfn)?;
+            let new_fqfn = filename::find_unused(new_fqfn)?;
 
             // Write new note on disk.
             n.write_to_disk(new_fqfn)

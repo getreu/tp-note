@@ -13,7 +13,6 @@ use crate::config::CLIPBOARD;
 use crate::config::NOTE_FILENAME_LEN_MAX;
 use crate::config::STDIN;
 use crate::content::Content;
-use crate::filter;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use anyhow::{anyhow, Context, Result};
@@ -399,39 +398,6 @@ impl Note {
         };
 
         Ok(fm)
-    }
-
-    /// When the path `p` exists on disk already, append some extension
-    /// with an incrementing counter to the sort-tag in `p` until
-    /// we find a free slot.
-    pub fn find_free_filename(p: PathBuf) -> Result<PathBuf, anyhow::Error> {
-        if !p.exists() {
-            return Ok(p);
-        };
-
-        let (sort_tag, stem, _copy_counter, ext) = filter::disassemble_filename(&p);
-
-        let mut new_path = p.clone();
-
-        // Try up to 99 sort-tag-extensions, then give up.
-        for n in 1..99 {
-            let stem_copy_counter = filter::append_copy_counter(&stem, n);
-            let filename = filter::assemble_filename(&sort_tag, &stem_copy_counter, &"", &ext);
-            new_path.set_file_name(filename);
-
-            if !new_path.exists() {
-                break;
-            }
-        }
-
-        // This only happens, when we have 99 copies already. Should never happen.
-        if new_path.exists() {
-            return Err(anyhow!(
-                "can not find unused filename to save the note file on the disk"
-            ));
-        }
-
-        Ok(new_path)
     }
 
     /// Writes the note to disk with `new_fqfn`-filename.

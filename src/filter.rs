@@ -1,7 +1,7 @@
 //! Extends the built-in Tera filters.
 extern crate sanitize_filename_reader_friendly;
 use crate::config::Hyperlink;
-use crate::config::CFG;
+use crate::filename::disassemble;
 use lazy_static::lazy_static;
 use sanitize_filename_reader_friendly::sanitize;
 use std::collections::HashMap;
@@ -172,7 +172,7 @@ pub fn tag_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let p = try_get_value!("tag", "value", String, value);
 
-    let (tag, _, _, _) = disassemble_filename(Path::new(&p));
+    let (tag, _, _, _) = disassemble(Path::new(&p));
 
     Ok(to_value(&tag).unwrap())
 }
@@ -184,7 +184,7 @@ pub fn stem_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let p = try_get_value!("stem", "value", String, value);
 
-    let (_, stem, _, _) = disassemble_filename(Path::new(&p));
+    let (_, stem, _, _) = disassemble(Path::new(&p));
 
     Ok(to_value(&stem).unwrap())
 }
@@ -220,97 +220,6 @@ pub fn ext_filter<S: BuildHasher>(
         .unwrap_or_default();
 
     Ok(to_value(&ext).unwrap())
-}
-
-pub fn filename_exclude_copy_counter_eq(p1: &Path, p2: &Path) -> bool {
-    let (sort_tag1, stem1, _, ext1) = disassemble_filename(p1);
-    let (sort_tag2, stem2, _, ext2) = disassemble_filename(p2);
-    sort_tag1 == sort_tag2 && stem1 == stem2 && ext1 == ext2
-}
-
-/// Helper function that decomposes a fully qualified path name
-/// into (parent_dir, sort_tag, file_stem_without_sort_tag, extension).
-pub fn disassemble_filename<'a>(p: &Path) -> (&str, &str, &str, &str) {
-    let file_stem = p
-        .file_stem()
-        .unwrap_or_default()
-        .to_str()
-        .unwrap_or_default();
-
-    let stem_copy_counter =
-        file_stem.trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_');
-
-    let sort_tag = &file_stem[0..file_stem.len() - stem_copy_counter.len()];
-
-    let stem = remove_copy_counter(stem_copy_counter);
-
-    let copy_counter = &stem_copy_counter[stem.len()..];
-
-    let extension = p
-        .extension()
-        .unwrap_or_default()
-        .to_str()
-        .unwrap_or_default();
-    (sort_tag, stem, copy_counter, extension)
-}
-
-/// Concatenates the 3 parameters.
-pub fn assemble_filename(
-    sort_tag: &str,
-    stem: &str,
-    copy_counter: &str,
-    extension: &str,
-) -> String {
-    // Assemble path.
-    let mut filename = sort_tag.to_string();
-    filename.push_str(stem);
-    filename.push_str(copy_counter);
-    if !extension.is_empty() {
-        filename.push('.');
-        filename.push_str(extension);
-    };
-    filename
-}
-
-/// Helper function that trims the pattern `_-n-_` at the end of string matching
-/// `*_-n-_`, where `n` is an integer.
-/// When the pattern is not found return the whole string.
-/// Do the same if the string ends with `-_n_-`.
-#[inline]
-pub fn remove_copy_counter(tag: &str) -> &str {
-    // Strip `sepsepend` at the end.
-    let tag1 = if let Some(t) = tag.strip_suffix(&CFG.copy_counter_closing_brackets) {
-        t
-    } else {
-        return tag;
-    };
-    // Now strip numbers.
-    let tag2 = tag1.trim_end_matches(|c: char| c.is_numeric());
-    if tag2.len() == tag1.len() {
-        return tag;
-    };
-    // And finally strip `sepsepstart`.
-    let tag3 = if let Some(t) = tag2.strip_suffix(&CFG.copy_counter_opening_brackets) {
-        t
-    } else {
-        return tag;
-    };
-
-    return tag3;
-}
-
-/// When the string ends with `_` append the string `_-n-_`, where `n` is an integer.
-/// Otherwise append `-_n_-`.
-/// Before appending, remove all trailing `_` and `-`.
-#[inline]
-pub fn append_copy_counter(tag: &str, n: usize) -> String {
-    // Remove more separators, if they exist.
-    let mut tag = tag.trim_end_matches(|c| c == '_' || c == '-').to_string();
-    // Append sort-tag extension.
-    tag.push_str(&CFG.copy_counter_opening_brackets);
-    tag.push_str(&n.to_string());
-    tag.push_str(&CFG.copy_counter_closing_brackets);
-    tag
 }
 
 /// Tiny wrapper around Tera-context with some additional information.
@@ -495,85 +404,5 @@ mod tests {
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
         let output = ext_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
-    }
-
-    #[test]
-    fn test_disassemble_filename() {
-        let expected = ("1_2_3-", "my_title--my_subtitle", "(1)", "md");
-        let result = disassemble_filename(Path::new("/my/dir/1_2_3-my_title--my_subtitle(1).md"));
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn test_assemble_filename() {
-        let expected = "1_2_3-my_file-1-.md".to_string();
-        let result = assemble_filename("1_2_3-", "my_file", "-1-", "md");
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn test_remove_sort_tag_extension() {
-        // Pattern found and removed.
-        let expected = "my_stem";
-        let result = remove_copy_counter("my_stem(78)");
-        assert_eq!(expected, result);
-
-        // Pattern found and removed.
-        let expected = "my_stem-";
-        let result = remove_copy_counter("my_stem-(78)");
-        assert_eq!(expected, result);
-
-        // Pattern found and removed.
-        let expected = "my_stem_";
-        let result = remove_copy_counter("my_stem_(78)");
-        assert_eq!(expected, result);
-
-        // Pattern not found.
-        assert_eq!(expected, result);
-        let expected = "my_stem_(78))";
-        let result = remove_copy_counter("my_stem_(78))");
-        assert_eq!(expected, result);
-
-        // Pattern not found.
-        let expected = "my_stem_)78)";
-        let result = remove_copy_counter("my_stem_)78)");
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn test_append_sort_tag_extension() {
-        let expected = "my_stem(987)";
-        let result = append_copy_counter("my_stem", 987);
-        assert_eq!(expected, result);
-
-        let expected = "my_stem(987)";
-        let result = append_copy_counter("my_stem_", 987);
-        assert_eq!(expected, result);
-
-        let expected = "my_stem(987)";
-        let result = append_copy_counter("my_stem___", 987);
-        assert_eq!(expected, result);
-
-        let expected = "my_stem(987)";
-        let result = append_copy_counter("my_stem-", 987);
-        assert_eq!(expected, result);
-
-        let expected = "my_stem(987)";
-        let result = append_copy_counter("my_stem-_---", 987);
-        assert_eq!(expected, result);
-    }
-    #[test]
-    fn test_filename_exclude_copy_counter_eq() {
-        let p1 = Path::new("/mypath/123-title(1).md");
-        let p2 = Path::new("/mypath/123-title(3).md");
-        let expected = true;
-        let result = filename_exclude_copy_counter_eq(p1, p2);
-        assert_eq!(expected, result);
-
-        let p1 = Path::new("/mypath/123-title(1).md");
-        let p2 = Path::new("/mypath/123-titlX(3).md");
-        let expected = false;
-        let result = filename_exclude_copy_counter_eq(p1, p2);
-        assert_eq!(expected, result);
     }
 }
