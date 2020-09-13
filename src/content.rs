@@ -32,6 +32,7 @@ impl Content {
     /// The format varies depending on the operating system:
     /// On Unix a newline is represented by one single byte: `\n`.
     /// On Windows a newline consists of two bytes: `\r\n`.
+    #[allow(clippy::let_and_return)]
     pub fn to_osstring(&self) -> String {
         let s = self.to_string();
 
@@ -43,7 +44,7 @@ impl Content {
     }
 
     /// Helper function that splits the content into header and body
-    pub fn split<'a>(content: &'a str) -> (&'a str, &'a str) {
+    pub fn split(content: &str) -> (&str, &str) {
         let fm_start = content.find("---").map(|x| x + 3);
         if fm_start.is_none() {
             return ("", content);
