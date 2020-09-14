@@ -204,18 +204,11 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     let mut executable_list = Vec::new();
 
     // Choose the right parameter list.
-    let editor_args = if ARGS.view {
-        if *RUNS_ON_CONSOLE {
-            &CFG.viewer_console_args
-        } else {
-            &CFG.viewer_args
-        }
-    } else {
-        if *RUNS_ON_CONSOLE {
-            &CFG.editor_console_args
-        } else {
-            &CFG.editor_args
-        }
+    let editor_args = match (ARGS.view, *RUNS_ON_CONSOLE) {
+        (true, true) => &CFG.viewer_console_args,
+        (true, false) => &CFG.viewer_args,
+        (false, true) => &CFG.editor_console_args,
+        (false, false) => &CFG.editor_args,
     };
 
     // Prepare launch of editor/viewer.
@@ -315,10 +308,8 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
 
             executable_found = true;
             break;
-        } else {
-            if ARGS.debug {
-                eprintln!("Executable \"{}\" not found.", executable_list[i]);
-            }
+        } else if ARGS.debug {
+            eprintln!("Executable \"{}\" not found.", executable_list[i]);
         }
     }
 
@@ -332,19 +323,13 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
              `{}` in Tp-Note's configuration file  or \n\
              install one of the above listed applications.",
             &executable_list,
-            if ARGS.view {
-                if *RUNS_ON_CONSOLE {
-                    "viewer_console_args"
-                } else {
-                    "viewer_args"
-                }
-            } else {
-                if *RUNS_ON_CONSOLE {
-                    "editor_console_args"
-                } else {
-                    "editor_args"
-                }
-            },
+            // Choose the right parameter list.
+            match (ARGS.view, *RUNS_ON_CONSOLE) {
+                (true, true) => "viewer_console_args",
+                (true, false) => "viewer_args",
+                (false, true) => "editor_console_args",
+                (false, false) => "editor_args",
+            }
         )));
     };
 
