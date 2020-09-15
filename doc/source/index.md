@@ -155,47 +155,42 @@ in _Tp-Note_'s manual.
 While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
 configuration file structure. In order not to loose the changes you made in
 this file, the installer does not replace it automatically with a new version.
-Instead, you might see one of the following messages:
+Instead, _Tp-Note_ renames the erroneous configuration file and prompts:
 
-    ERROR: unable to load, parse or write the configuration file
+    ERROR: configuration file version mismatch:
     ---
-    Bad TOML data: missing field `version` at line 1 column 1
+    Configuration file version: '1.7.0'
+    Tp-Note version: '1.7.1'
+    Minimum required configuration file version: '1.7.1'
 
-    Note: this error may occur after upgrading Tp-Note due
-    to some incompatible configuration file changes.
-
-    Remedy: backup and delete the configuration file in order
-    to restart Tp-Note with its default configuration.
+    Please restart Tp-Note to create a new configuration file
+    compatible with this version of Tp-Note.
     ---
     Additional technical details:
     *    Command line parameters:
-    tp-note
+    target/debug/tp-note
     *    Configuration file path:
-    /home/getreu/.config/tp-note/tp-note.toml
+    /home/getreu/.config/tp-note/tp-note.tomll
 
 or
 
     ERROR: configuration file version mismatch:
     ---
-    Configuration file version: '1.5.2'
-    Tp-Note version: '1.5.5'
-    Minimum required configuration file version: '1.5.5'
+    Configuration file version: '1.7.0'
+    Tp-Note version: '1.7.1'
+    Minimum required configuration file version: '1.7.1'
 
-    Remedy: Backup and delete the old config file in
-    order to restart Tp-Note with its default values.
+    Please restart Tp-Note to create a new configuration file
+    compatible with this version of Tp-Note.
     ---
     Additional technical details:
     *    Command line parameters:
-    tp-note
+    target/debug/tp-note
     *    Configuration file path:
     /home/getreu/.config/tp-note/tp-note.toml
 
-As the above error messages suggest, the solution is to backup and delete the
-old incompatible configuration file. Next time you start _Tp-Note_, a new
-version of this file will be installed at the same location.
-
-There is no need to say, that in case you modified the configuration file,
-you should backup before delete.
+As the above error messages suggests, all you need to do is
+to restart _Tp-Note_ in order to create a new updated configuration file.
 
 
 ## Building

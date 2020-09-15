@@ -475,49 +475,11 @@ _Tp-Note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
 ### Incompatible configuration files
 
 While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
-configuration file structure.  In order not to loose the changes you made in
-this file, the installer does not replace it automatically with the new
-version. Instead, you might see one of the following messages:
-
-    ERROR: unable to load, parse or write the configuration file
-    ---
-    Bad TOML data: missing field `version` at line 1 column 1
-
-    Note: this error may occur after upgrading Tp-Note due
-    to some incompatible configuration file changes.
-
-    Remedy: backup and delete the configuration file in order
-    to restart Tp-Note with its default configuration.
-    ---
-    Additional technical details:
-    *    Command line parameters:
-    tp-note
-    *    Configuration file path:
-    /home/getreu/.config/tp-note/tp-note.toml
-
-or
-
-    ERROR: configuration file version mismatch:
-    ---
-    Configuration file version: '1.5.2'
-    Tp-Note version: '1.5.5'
-    Minimum required configuration file version: '1.5.5'
-
-    Remedy: Backup and delete the old config file in
-    order to restart Tp-Note with its default values.
-    ---
-    Additional technical details:
-    *    Command line parameters:
-    tp-note
-    *    Configuration file path:
-    /home/getreu/.config/tp-note/tp-note.toml
-
-As the above error messages suggest, the solution is to backup and delete the
-old incompatible configuration file. Next time you start _Tp-Note_, a new
-version of this file will be installed at the same location.  Please consult
-the section [Upgrading](https://blog.getreu.net/projects/tp-note/#upgrading) in
-the project's Readme-document to locate _Tp-Note_'s configuration file
-depending on your operating system.
+configuration file structure and the program fails to start with an error
+message. Please consult the section
+[Upgrading](https://blog.getreu.net/projects/tp-note/#upgrading) in the
+project's Readme document for more information about incompatible configuration
+files.
 
 ### Debugging on Windows
 
