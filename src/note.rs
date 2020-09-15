@@ -158,66 +158,67 @@ impl Note {
         context.insert("stdin_header", &*STDIN.get_header());
         context.insert("stdin", &*STDIN.get_body_or_text());
 
-        // Can we find a front matter in the clipboard? If yes, the unmodified
-        // clipboard data is our new note content.
-        let fm = if matches!(*STDIN, Content::HeaderAndBody{..})
-            || matches!(*CLIPBOARD, Content::HeaderAndBody{..})
-        {
-            // Can we find a front matter in the clipboard? If yes, the unmodified
-            // clipboard data is our new note content.
-            if let Ok(fm) = Self::deserialize_note(&*CLIPBOARD.get_header()) {
-                if ARGS.debug {
-                    eprintln!(
-                        "*** Debug: YAML front matter in the clipboard found:\n{:#?}",
-                        fm
-                    );
-                };
-                Some(fm)
-            // Can we find a front matter in the input stream? If yes, the
-            // unmodified input stream is our new note content.
-            } else if let Ok(fm) = Self::deserialize_note(&*STDIN.get_header()) {
-                if ARGS.debug {
-                    eprintln!(
-                        "*** Debug: YAML front matter in the input stream `stdin` found:\n{:#?}",
-                        fm
-                    );
-                };
-                Some(fm)
-            //
-            } else {
-                return Err(anyhow!(format!(
-                    "no field `title: \"<String>\"` in the clipboard's YAML\n\
-                     header or in the `stdin` input stream found.
-                     {}{}{}{}{}{}",
-                    if matches!(*CLIPBOARD, Content::HeaderAndBody{..}) {
-                        "\n*   Clipboard header:\n---\n"
-                    } else {
-                        ""
-                    },
-                    CLIPBOARD.get_header(),
-                    if matches!(*CLIPBOARD, Content::HeaderAndBody{..}) {
-                        "\n---"
-                    } else {
-                        ""
-                    },
-                    if matches!(*STDIN, Content::HeaderAndBody{..}) {
-                        "\n*   Input stream header:\n---\n"
-                    } else {
-                        ""
-                    },
-                    STDIN.get_header(),
-                    if matches!(*STDIN, Content::HeaderAndBody{..}) {
-                        "\n---"
-                    } else {
-                        ""
-                    },
-                )));
-            }
-        } else {
-            None
+        // Can we find a front matter in the input stream? If yes, the
+        // unmodified input stream is our new note content.
+        let stdin_fm = Self::deserialize_note(&*STDIN.get_header()).ok();
+        if ARGS.debug && stdin_fm.is_some() {
+            eprintln!(
+                "*** Debug: YAML front matter in the input stream stdin found:\n{:#?}",
+                stdin_fm
+            );
         };
 
-        if let Some(fm) = fm {
+        // Can we find a front matter in the clipboard? If yes, the unmodified
+        // clipboard data is our new note content.
+        let clipboard_fm = Self::deserialize_note(&*CLIPBOARD.get_header()).ok();
+        if ARGS.debug && clipboard_fm.is_some() {
+            eprintln!(
+                "*** Debug: YAML front matter in the clipboard found:\n{:#?}",
+                clipboard_fm
+            );
+        };
+
+        if (matches!(*CLIPBOARD, Content::HeaderAndBody{..}) && clipboard_fm.is_none())
+            || (matches!(*STDIN, Content::HeaderAndBody{..}) && stdin_fm.is_none())
+        {
+            return Err(anyhow!(format!(
+                "no field `title: \"<String>\"` in the clipboard's YAML\n\
+                     header or in the `stdin` input stream found.
+                     {}{}{}{}{}{}",
+                if matches!(*CLIPBOARD, Content::HeaderAndBody{..}) {
+                    "\n*   Clipboard header:\n---\n"
+                } else {
+                    ""
+                },
+                CLIPBOARD.get_header(),
+                if matches!(*CLIPBOARD, Content::HeaderAndBody{..}) {
+                    "\n---"
+                } else {
+                    ""
+                },
+                if matches!(*STDIN, Content::HeaderAndBody{..}) {
+                    "\n*   Input stream header:\n---\n"
+                } else {
+                    ""
+                },
+                STDIN.get_header(),
+                if matches!(*STDIN, Content::HeaderAndBody{..}) {
+                    "\n---"
+                } else {
+                    ""
+                },
+            )));
+        };
+
+        // Register stdin front matter.
+        // Variables can be overwrittern by clipboard frontmatter.
+        if let Some(fm) = stdin_fm {
+            // Register YAML header variable `title`. We know, it exists.
+            Self::register_front_matter(&mut context, &fm);
+        }
+
+        // Register clipboard front matter.
+        if let Some(fm) = clipboard_fm {
             // Register YAML header variable `title`. We know, it exists.
             Self::register_front_matter(&mut context, &fm);
         }
