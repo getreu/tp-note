@@ -45,20 +45,30 @@ impl Content {
     /// Helper function that splits the content into header and body.
     /// The header, if present, is trimmed (`trim()`), the body
     /// is kept as it is.
+    /// To accept a "header", the document must:
+    /// 1. start with `"---"`,
+    /// 2. followed by header bytes,
+    /// 3.  optionally followed by `"\n",
+    /// 4. followed by `"---"` or `"..."`,
+    /// 5. optionall followed by `"\n"`.
+    /// The remaining bytes are "content".
     pub fn split(content: String) -> Content {
-        let fm_start = content.find("---").map(|x| x + 3);
         if content.is_empty() {
             return Content::Empty;
         };
-        let fm_start = if let Some(n) = fm_start {
-            n
+
+        let fm_start = if content[..4].as_bytes() == b"---\n" {
+            // Should be evaluated at compile time to 4.
+            b"---\n".len()
+        } else if content[..3].as_bytes() == b"---" {
+            b"---".len()
         } else {
             return Content::Text(content);
         };
 
         let fm_end = content[fm_start..]
-            .find("---\n")
-            .or_else(|| content[fm_start..].find("...\n"))
+            .find("\n---")
+            .or_else(|| content[fm_start..].find("\n..."))
             .map(|x| x + fm_start);
 
         let fm_end = if let Some(n) = fm_end {
@@ -67,7 +77,13 @@ impl Content {
             return Content::Text(content);
         };
 
-        let body_start = fm_end + 4;
+        // We advance 4 because `"\n---"` has 4 bytes.
+        let mut body_start = fm_end + 4;
+
+        // Skip potential newline.
+        if (content.len() > body_start) && (content.as_bytes()[body_start] == b'\n') {
+            body_start += 1;
+        };
 
         Content::HeaderAndBody(
             content[fm_start..fm_end].trim().to_string(),
@@ -112,19 +128,23 @@ mod tests {
 
     #[test]
     fn test_new() {
-        // test windows string
+        // Test windows string.
         let content = Content::new("first\r\nsecond\r\nthird");
         assert_eq!(content.get_body_or_text(), "first\nsecond\nthird");
-        // test Unixstring
+        // Test Unixstring.
         let content = Content::new("first\nsecond\nthird");
         assert_eq!(content.get_body_or_text(), "first\nsecond\nthird");
-        // test BOM removal
+        // Test BOM removal.
         let content = Content::new("\u{feff}first\nsecond\nthird");
         assert_eq!(content.get_body_or_text(), "first\nsecond\nthird");
-        // test header extraction
+        // Test header extraction.
         let content = Content::new("\u{feff}---\nfirst\n---\nsecond\nthird");
         assert_eq!(content.get_header(), "first");
         assert_eq!(content.get_body_or_text(), "second\nthird");
+        // Test header extraction without `\n` at the end
+        let content = Content::new("\u{feff}---\nfirst\n---");
+        assert_eq!(content.get_header(), "first");
+        assert_eq!(content.get_body_or_text(), "");
     }
 
     #[test]
