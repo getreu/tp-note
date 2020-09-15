@@ -21,6 +21,7 @@ use std::default::Default;
 use std::env;
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::matches;
 use std::path::{Path, PathBuf};
 use tera::Tera;
 
@@ -75,7 +76,7 @@ impl Note {
         let mut context = Self::capture_environment(&path)?;
 
         // deserialize the note read from disk
-        let fm = Note::deserialize_note(&content.header)?;
+        let fm = Note::deserialize_note(&content.get_header())?;
 
         Self::register_front_matter(&mut context, &fm);
 
@@ -110,13 +111,13 @@ impl Note {
             eprintln!("*** Debug: Applying content template:\n{}\n", template);
             eprintln!(
                 "*** Debug: Rendered content template:\n---\n{}\n---\n{}\n\n",
-                content.header.trim(),
-                content.body.trim()
+                content.get_header(),
+                content.get_body_or_text().trim()
             );
         };
 
         // deserialize the rendered template
-        let fm = Note::deserialize_note(&content.header)?;
+        let fm = Note::deserialize_note(&content.get_header())?;
 
         Self::register_front_matter(&mut context, &fm);
 
@@ -150,19 +151,21 @@ impl Note {
         context.insert("path", &fqpn.to_str().unwrap_or_default());
 
         // Register input from clipboard.
-        context.insert("clipboard_header", &CLIPBOARD.0);
-        context.insert("clipboard", &CLIPBOARD.1);
+        context.insert("clipboard_header", &*CLIPBOARD.get_header());
+        context.insert("clipboard", &*CLIPBOARD.get_body_or_text());
 
         // Register input from stdin.
-        context.insert("stdin_header", &STDIN.0);
-        context.insert("stdin", &STDIN.1);
+        context.insert("stdin_header", &*STDIN.get_header());
+        context.insert("stdin", &*STDIN.get_body_or_text());
 
         // Can we find a front matter in the clipboard? If yes, the unmodified
         // clipboard data is our new note content.
-        let fm = if !&CLIPBOARD.0.is_empty() || !&STDIN.0.is_empty() {
+        let fm = if matches!(*STDIN, Content::HeaderAndBody{..})
+            || matches!(*CLIPBOARD, Content::HeaderAndBody{..})
+        {
             // Can we find a front matter in the clipboard? If yes, the unmodified
             // clipboard data is our new note content.
-            if let Ok(fm) = Self::deserialize_note(&CLIPBOARD.0) {
+            if let Ok(fm) = Self::deserialize_note(&*CLIPBOARD.get_header()) {
                 if ARGS.debug {
                     eprintln!(
                         "*** Debug: YAML front matter in the clipboard found:\n{:#?}",
@@ -172,7 +175,7 @@ impl Note {
                 Some(fm)
             // Can we find a front matter in the input stream? If yes, the
             // unmodified input stream is our new note content.
-            } else if let Ok(fm) = Self::deserialize_note(&STDIN.0) {
+            } else if let Ok(fm) = Self::deserialize_note(&*STDIN.get_header()) {
                 if ARGS.debug {
                     eprintln!(
                         "*** Debug: YAML front matter in the input stream `stdin` found:\n{:#?}",
@@ -184,26 +187,30 @@ impl Note {
             } else {
                 return Err(anyhow!(format!(
                     "no field `title: \"<String>\"` in the clipboard's YAML\n\
-                     header or in the `stdin` input stream found.\n\n\
+                     header or in the `stdin` input stream found.
                      {}{}{}{}{}{}",
-                    if CLIPBOARD.0.is_empty() {
-                        ""
+                    if matches!(*CLIPBOARD, Content::HeaderAndBody{..}) {
+                        "\n*   Clipboard header:\n---\n"
                     } else {
-                        "*   Clipboard header:\n---\n"
-                    },
-                    CLIPBOARD.0.trim(),
-                    if CLIPBOARD.0.is_empty() {
                         ""
-                    } else {
-                        "\n---\n\n"
                     },
-                    if STDIN.0.is_empty() {
+                    CLIPBOARD.get_header(),
+                    if matches!(*CLIPBOARD, Content::HeaderAndBody{..}) {
+                        "\n---"
+                    } else {
                         ""
-                    } else {
-                        "*   Input stream header:\n---\n"
                     },
-                    STDIN.0.trim(),
-                    if STDIN.0.is_empty() { "" } else { "\n---" },
+                    if matches!(*STDIN, Content::HeaderAndBody{..}) {
+                        "\n*   Input stream header:\n---\n"
+                    } else {
+                        ""
+                    },
+                    STDIN.get_header(),
+                    if matches!(*STDIN, Content::HeaderAndBody{..}) {
+                        "\n---"
+                    } else {
+                        ""
+                    },
                 )));
             }
         } else {

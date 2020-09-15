@@ -5,11 +5,15 @@ use std::fmt;
 #[derive(Debug, PartialEq)]
 /// This is a newtype and thin wrapper around the note's content.
 /// It deals with operating system specific handling of newlines.
-pub struct Content {
-    /// The YAML header without `---`.
-    pub header: String,
-    /// Everything after the YAML header.
-    pub body: String,
+pub enum Content {
+    /// The first string is the trimmed YAML header without `---`, the second
+    /// the body as it is (without `trim()`).
+    /// All line endings are converted to UNIX line endings `\n`.
+    HeaderAndBody(String, String),
+    /// The raw unstructured input.
+    /// All line endings are converted to UNIX line endings `\n`.
+    Text(String),
+    Empty,
 }
 
 /// The content of a note is stored in some Rust-like utf-8 string with
@@ -20,12 +24,7 @@ impl Content {
     /// case it converts all `\r\n` to `\n`.
     pub fn new(input: &str) -> Self {
         let content = input.trim_matches('\u{feff}').replace("\r\n", "\n");
-        let (header, body) = Self::split(&content);
-
-        Self {
-            header: header.to_string(),
-            body: body.to_string(),
-        }
+        Self::split(content)
     }
 
     /// Write out the content string to be saved on disk.
@@ -43,34 +42,67 @@ impl Content {
         s
     }
 
-    /// Helper function that splits the content into header and body
-    pub fn split(content: &str) -> (&str, &str) {
+    /// Helper function that splits the content into header and body.
+    /// The header, if present, is trimmed (`trim()`), the body
+    /// is kept as it is.
+    pub fn split(content: String) -> Content {
         let fm_start = content.find("---").map(|x| x + 3);
-        if fm_start.is_none() {
-            return ("", content);
+        if content.is_empty() {
+            return Content::Empty;
         };
-        let fm_start = fm_start.unwrap();
+        let fm_start = if let Some(n) = fm_start {
+            n
+        } else {
+            return Content::Text(content);
+        };
 
         let fm_end = content[fm_start..]
             .find("---\n")
             .or_else(|| content[fm_start..].find("...\n"))
             .map(|x| x + fm_start);
 
-        if fm_end.is_none() {
-            return ("", content);
+        let fm_end = if let Some(n) = fm_end {
+            n
+        } else {
+            return Content::Text(content);
         };
-        let fm_end = fm_end.unwrap();
 
         let body_start = fm_end + 4;
 
-        (&content[fm_start..fm_end].trim(), &content[body_start..])
+        Content::HeaderAndBody(
+            content[fm_start..fm_end].trim().to_string(),
+            content[body_start..].to_string(),
+        )
+    }
+
+    /// Getter for header. If it does not exist in a variant return `""`.
+    pub fn get_header(&self) -> &str {
+        match &self {
+            Content::Empty => "",
+            Content::Text(_) => "",
+            Content::HeaderAndBody(h, _) => h,
+        }
+    }
+
+    /// Getter for body. If it does not exist in a variant return `""`.
+    pub fn get_body_or_text(&self) -> &str {
+        match &self {
+            Content::Empty => "",
+            Content::Text(b) => b,
+            Content::HeaderAndBody(_, b) => b,
+        }
     }
 }
 
 /// Concatenates the header and the body and prints the content.
 impl fmt::Display for Content {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "\u{feff}---\n{}\n---\n{}", &self.header, &self.body)
+        write!(
+            f,
+            "\u{feff}---\n{}\n---\n{}",
+            &self.get_header(),
+            &self.get_body_or_text()
+        )
     }
 }
 
@@ -82,17 +114,17 @@ mod tests {
     fn test_new() {
         // test windows string
         let content = Content::new("first\r\nsecond\r\nthird");
-        assert_eq!(content.body, "first\nsecond\nthird");
+        assert_eq!(content.get_body_or_text(), "first\nsecond\nthird");
         // test Unixstring
         let content = Content::new("first\nsecond\nthird");
-        assert_eq!(content.body, "first\nsecond\nthird");
+        assert_eq!(content.get_body_or_text(), "first\nsecond\nthird");
         // test BOM removal
         let content = Content::new("\u{feff}first\nsecond\nthird");
-        assert_eq!(content.body, "first\nsecond\nthird");
+        assert_eq!(content.get_body_or_text(), "first\nsecond\nthird");
         // test header extraction
         let content = Content::new("\u{feff}---\nfirst\n---\nsecond\nthird");
-        assert_eq!(content.header, "first");
-        assert_eq!(content.body, "second\nthird");
+        assert_eq!(content.get_header(), "first");
+        assert_eq!(content.get_body_or_text(), "second\nthird");
     }
 
     #[test]
@@ -103,5 +135,40 @@ mod tests {
         assert_eq!(s.as_str(), "\u{feff}---\r\nfirst\r\n---\r\nsecond\r\nthird");
         #[cfg(not(target_family = "windows"))]
         assert_eq!(s.as_str(), "\u{feff}---\nfirst\n---\nsecond\nthird");
+    }
+
+    #[test]
+    fn test_split() {
+        let input_stream = String::from("---first\n---\nsecond\nthird");
+        let expected = Content::HeaderAndBody("first".to_string(), "second\nthird".to_string());
+        let result = Content::split(input_stream);
+        assert_eq!(result, expected);
+
+        let input_stream = String::from("---\nfirst\n---\nsecond\nthird");
+        let expected = Content::HeaderAndBody("first".to_string(), "second\nthird".to_string());
+        let result = Content::split(input_stream);
+        assert_eq!(result, expected);
+
+        // Header is trimmed.
+        let input_stream = String::from("---\n\nfirst\n\n---\nsecond\nthird");
+        let expected = Content::HeaderAndBody("first".to_string(), "second\nthird".to_string());
+        let result = Content::split(input_stream);
+        assert_eq!(result, expected);
+
+        // Body is kept as it is (not trimmed).
+        let input_stream = String::from("---\nfirst\n---\n\nsecond\nthird\n");
+        let expected = Content::HeaderAndBody("first".to_string(), "\nsecond\nthird\n".to_string());
+        let result = Content::split(input_stream);
+        assert_eq!(result, expected);
+
+        let input_stream = String::from("\nsecond\nthird");
+        let expected = Content::Text("\nsecond\nthird".to_string());
+        let result = Content::split(input_stream);
+        assert_eq!(result, expected);
+
+        let input_stream = String::from("");
+        let expected = Content::Empty;
+        let result = Content::split(input_stream);
+        assert_eq!(result, expected);
     }
 }

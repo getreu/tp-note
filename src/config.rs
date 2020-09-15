@@ -600,7 +600,7 @@ lazy_static! {
     /// YAML header if there is any in the input data.
     /// In this case `STDIN.1` contains only the body of
     /// the data without header.
-    pub static ref STDIN: (String, String) = {
+    pub static ref STDIN: Content = {
         let mut buffer = String::new();
 
         // Read stdin().
@@ -613,14 +613,13 @@ lazy_static! {
             AlertDialog::print(&format!(
                 "WARNING: the input stream content is discarded because its size \
                 exceeds {} bytes.", STDIN_LEN_MAX));
-            return (String::new(), String::new());
+            return Content::Empty;
         }
 
         #[cfg(target_family = "windows")]
         let buffer = (&buffer).replace("\r\n", "\n");
 
-        let (header, body) = Content::split(&buffer.trim());
-        (header.to_string(), body.to_string())
+        Content::split(buffer)
     };
 }
 
@@ -631,7 +630,7 @@ lazy_static! {
     /// YAML header if there is any in the input data.
     /// In this case `CLIPBOARD.1` contains only the body of
     /// the data without header.
-    pub static ref CLIPBOARD: (String, String) = {
+    pub static ref CLIPBOARD: Content = {
         let mut buffer = String::new();
 
         // Concatenate clipboard content.
@@ -645,7 +644,7 @@ lazy_static! {
                         AlertDialog::print(&format!(
                             "WARNING: the clipboard content is discarded because its size \
                             exceeds {} bytes.", CLIPBOARD_LEN_MAX));
-                        return (String::new(), String::new());
+                        return Content::Empty;
                     }
                 };
                 buffer.push_str(&s.unwrap_or_default());
@@ -654,8 +653,7 @@ lazy_static! {
         #[cfg(target_family = "windows")]
         let buffer = (&buffer).replace("\r\n", "\n");
 
-        let (header, body) = Content::split(&buffer.trim());
-        (header.to_string(), body.to_string())
+        Content::split(buffer)
     };
 }
 
