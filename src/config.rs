@@ -617,7 +617,10 @@ lazy_static! {
         }
 
         #[cfg(target_family = "windows")]
-        let buffer = (&buffer).replace("\r\n", "\n");
+        let mut buffer = (&buffer).replace("\r\n", "\n");
+
+        // `trim_end()` content without new allocation.
+        buffer.truncate(buffer.trim_end().len());
 
         Content::split(buffer)
     };
@@ -651,7 +654,10 @@ lazy_static! {
             }
         };
         #[cfg(target_family = "windows")]
-        let buffer = (&buffer).replace("\r\n", "\n");
+        let mut buffer = (&buffer).replace("\r\n", "\n");
+
+        // `trim_end()` content without new allocation.
+        buffer.truncate(buffer.trim_end().len());
 
         Content::split(buffer)
     };
