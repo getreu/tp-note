@@ -20,7 +20,6 @@ use std::io;
 use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
-use std::process;
 use structopt::StructOpt;
 
 /// Name of this executable (without the Windows ".exe" extension).
@@ -565,31 +564,32 @@ lazy_static! {
 
 lazy_static! {
 /// This is where the `confy` crate stores the configuration file.
-    pub static ref CONFIG_PATH : PathBuf = {
+    pub static ref CONFIG_PATH : Option<PathBuf> = {
         if let Some(c) = &ARGS.config {
-            PathBuf::from(c)
+            Some(PathBuf::from(c))
         } else {
-            let config = ProjectDirs::from("rs", "", CURRENT_EXE).unwrap_or_else(|| {
-                AlertDialog::print_error("ERROR:\n\
-                    unable to determine the configuration file directory.");
-                process::exit(1)
-            });
+            let config = ProjectDirs::from("rs", "", CURRENT_EXE)?;
+
             let mut config = PathBuf::from(config.config_dir());
             config.push(Path::new(CONFIG_FILENAME));
-            config
+            Some(config)
         }
     };
 }
 
 pub fn backup_config_file() -> Result<PathBuf, anyhow::Error> {
-    if CONFIG_PATH.exists() {
-        let config_path_bak = filename::find_unused((&CONFIG_PATH).to_path_buf())?;
+    if let Some(ref config_path) = *CONFIG_PATH {
+        if config_path.exists() {
+            let config_path_bak = filename::find_unused((&config_path).to_path_buf())?;
 
-        fs::rename(&CONFIG_PATH.as_path(), &config_path_bak)?;
+            fs::rename(&config_path.as_path(), &config_path_bak)?;
 
-        Ok(config_path_bak)
+            Ok(config_path_bak)
+        } else {
+            Err(anyhow!("no file to move"))
+        }
     } else {
-        Err(anyhow!("no file to move"))
+        Err(anyhow!("no path to configuration file found"))
     }
 }
 

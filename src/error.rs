@@ -8,6 +8,7 @@ use crate::VERSION;
 use lazy_static::lazy_static;
 use msgbox::IconType;
 use std::env;
+use std::path::PathBuf;
 
 /// Window title for error box.
 const ALERT_DIALOG_TITLE: &str = "Tp-Note";
@@ -89,7 +90,11 @@ impl AlertDialog {
             *    Configuration file path:\n\
             {}",
             args_str,
-            &*CONFIG_PATH.to_str().unwrap_or_default()
+            &*CONFIG_PATH
+                .as_ref()
+                .unwrap_or(&PathBuf::from("no path found"))
+                .to_str()
+                .unwrap_or_default()
         ));
         s
     }
