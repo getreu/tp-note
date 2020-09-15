@@ -6,6 +6,7 @@ extern crate clipboard;
 extern crate directories;
 use crate::content::Content;
 use crate::error::AlertDialog;
+use crate::filename;
 use crate::VERSION;
 use anyhow::anyhow;
 use atty::{is, Stream};
@@ -14,6 +15,7 @@ use clipboard::ClipboardProvider;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
+use std::fs;
 use std::io;
 use std::io::Read;
 use std::path::Path;
@@ -553,20 +555,12 @@ lazy_static! {
         .with_extension("")
         .to_str()
         .unwrap_or_default()
-        ).unwrap_or_else(|e| {
-            AlertDialog::print_error(&format!(
-               "ERROR: unable to load, parse or write the configuration file\n\
-                ---\n\
-                \t{}\n\
-                \n\
-                Note: this error may occur after upgrading Tp-Note due\n\
-                to some incompatible configuration file changes.\n\
-                \n\
-                Remedy: backup and delete the configuration file in order\n\
-                to restart Tp-Note with its default configuration.", e));
-            process::exit(1);
-        }
-    );
+        ).unwrap_or({
+            let mut c = Cfg::default();
+            // This is a marker string that will cause a parse error on purpose.
+            c.version = "default values".to_string();
+            c
+        });
 }
 
 lazy_static! {
@@ -585,6 +579,18 @@ lazy_static! {
             config
         }
     };
+}
+
+pub fn backup_config_file() -> Result<PathBuf, anyhow::Error> {
+    if CONFIG_PATH.exists() {
+        let config_path_bak = filename::find_unused((&CONFIG_PATH).to_path_buf())?;
+
+        fs::rename(&CONFIG_PATH.as_path(), &config_path_bak)?;
+
+        Ok(config_path_bak)
+    } else {
+        Err(anyhow!("no file to move"))
+    }
 }
 
 lazy_static! {
