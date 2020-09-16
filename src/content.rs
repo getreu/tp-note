@@ -26,8 +26,8 @@ impl Content {
     /// Any BOM (byte order mark) at the beginning is ignored.
     /// On Windows machines it converts all `\r\n` to `\n`.
     pub fn new(input: String) -> Self {
-        let content = Self::remove_bom_remove_cr(input);
-        Self::split(content, false)
+        let input = Self::remove_bom_remove_cr(input);
+        Self::split(input, false)
     }
 
     /// Constructor that reads a structured document with a YAML header
@@ -37,16 +37,27 @@ impl Content {
     /// Any BOM (byte order mark) at the beginning is ignored.
     /// On Windows machines it converts all `\r\n` to `\n`.
     pub fn new_relax(input: String) -> Self {
-        let content = Self::remove_bom_remove_cr(input);
-        Self::split(content, true)
+        let input = Self::remove_bom_remove_cr(input);
+        Self::split(input, true)
     }
 
     #[inline]
     /// On Windows machines it converts all `\r\n` to `\n`.
     /// Any BOM (byte order mark) at the beginning is ignored.
     fn remove_bom_remove_cr(input: String) -> String {
-        // TODO: try to avoid allocating.
-        input.trim_matches('\u{feff}').replace("\r\n", "\n")
+        // Avoid allocating when there is nothing to do.
+        if input.is_empty() {
+            // Forward empty string.
+            input
+        } else if input.chars().next().unwrap_or_default() != '\u{feff}'
+            && input.find('\r').is_none()
+        {
+            // Forward without allocating.
+            input
+        } else {
+            // We allocate here and do a lot copying.
+            input.trim_matches('\u{feff}').replace("\r\n", "\n")
+        }
     }
 
     /// Write out the content string to be saved on disk.
