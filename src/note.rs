@@ -67,10 +67,9 @@ impl Note {
     /// Constructor that creates a memory representation of an existing note on
     /// disk.
     pub fn from_existing_note(path: &Path) -> Result<Self> {
-        let content = Content::new(
+        let content = Content::new_relax(
             fs::read_to_string(path)
-                .with_context(|| format!("Failed to read `{}`.", path.display()))?
-                .as_str(),
+                .with_context(|| format!("Failed to read `{}`.", path.display()))?,
         );
 
         let mut context = Self::capture_environment(&path)?;
@@ -94,13 +93,12 @@ impl Note {
         let mut context = Self::capture_environment(&path)?;
 
         // render template
-        let content = Content::new({
+        let content = Content::new_relax({
             let mut tera = Tera::default();
             tera.extend(&TERA).unwrap();
 
             tera.render_str(template, &context)
                 .with_context(|| format!("Failed to render the template:\n`{}`.", template))?
-                .as_str()
         });
 
         if ARGS.debug {

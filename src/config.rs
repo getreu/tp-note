@@ -622,7 +622,7 @@ lazy_static! {
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
 
-        Content::split(buffer)
+        Content::new(buffer)
     };
 }
 
@@ -659,7 +659,7 @@ lazy_static! {
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
 
-        Content::split(buffer)
+        Content::new(buffer)
     };
 }
 

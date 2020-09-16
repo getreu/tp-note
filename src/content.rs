@@ -20,11 +20,33 @@ pub enum Content {
 /// one `\n` character as newline. If present, a Byte Order Mark
 /// BOM is removed while reading with `new()`.
 impl Content {
-    /// Reads also notes created on Windows machines: in this
-    /// case it converts all `\r\n` to `\n`.
-    pub fn new(input: &str) -> Self {
-        let content = input.trim_matches('\u{feff}').replace("\r\n", "\n");
-        Self::split(content)
+    /// Constructor that reads a structured document with a YAML header
+    /// and body.
+    /// First `"---"` is required to start at the beginning of the `input`.
+    /// Any BOM (byte order mark) at the beginning is ignored.
+    /// On Windows machines it converts all `\r\n` to `\n`.
+    pub fn new(input: String) -> Self {
+        let content = Self::remove_bom_remove_cr(input);
+        Self::split(content, false)
+    }
+
+    /// Constructor that reads a structured document with a YAML header
+    /// and body.
+    /// First `"---"` does not need to be at the beginning of the document.
+    /// In this case all content before that place is ignored.
+    /// Any BOM (byte order mark) at the beginning is ignored.
+    /// On Windows machines it converts all `\r\n` to `\n`.
+    pub fn new_relax(input: String) -> Self {
+        let content = Self::remove_bom_remove_cr(input);
+        Self::split(content, true)
+    }
+
+    #[inline]
+    /// On Windows machines it converts all `\r\n` to `\n`.
+    /// Any BOM (byte order mark) at the beginning is ignored.
+    fn remove_bom_remove_cr(input: String) -> String {
+        // TODO: try to avoid allocating.
+        input.trim_matches('\u{feff}').replace("\r\n", "\n")
     }
 
     /// Write out the content string to be saved on disk.
@@ -45,30 +67,55 @@ impl Content {
     /// Helper function that splits the content into header and body.
     /// The header, if present, is trimmed (`trim()`), the body
     /// is kept as it is.
-    /// To accept a "header", the document must:
-    /// 1. start with `"---"`,
+    ///
+    /// To accept a "header" (`relax==false`):
+    /// 1. the document must start with `"---"`,
     /// 2. followed by header bytes,
-    /// 3.  optionally followed by `"\n",
+    /// 3. optionally followed by `"\n",
     /// 4. followed by `"---"` or `"..."`,
     /// 5. optionall followed by `"\n"`.
     /// The remaining bytes are "content".
-    pub fn split(content: String) -> Content {
+    ///
+    /// To accept a "header" (`relax==true`):
+    /// A YAML metadata block may occur anywhere in the document, but
+    /// if it is not at the beginning, it must be preceded by a blank line:
+    /// 1. skip all until you find `"\n\n---"`
+    /// 2. followed by header bytes,
+    /// 3. same as above ...
+    fn split(content: String, relax: bool) -> Content {
         if content.is_empty() {
             return Content::Empty;
         };
 
-        let fm_start = if content[..4].as_bytes() == b"---\n" {
-            // Should be evaluated at compile time to 4.
-            b"---\n".len()
-        } else if content[..3].as_bytes() == b"---" {
-            b"---".len()
+        let pattern = b"---";
+        let fm_start = if content[..pattern.len()].as_bytes() == pattern {
+            // Found at first byte.
+            pattern.len()
         } else {
-            return Content::Text(content);
+            if !relax {
+                // We do not search further.
+                return Content::Text(content);
+            };
+            let pattern = "\n\n---";
+            if let Some(start) = content.find(pattern).map(|x| x + pattern.len()) {
+                // Found just before `start`!
+                start
+            } else {
+                // Not found.
+                return Content::Text(content);
+            }
         };
 
+        // No need to search for an additional `\n` here, as we trim the
+        // header anyway.
+
+        let pattern1 = "\n---";
+        let pattern2 = "\n...";
+        let pattern_len = 4;
+
         let fm_end = content[fm_start..]
-            .find("\n---")
-            .or_else(|| content[fm_start..].find("\n..."))
+            .find(pattern1)
+            .or_else(|| content[fm_start..].find(pattern2))
             .map(|x| x + fm_start);
 
         let fm_end = if let Some(n) = fm_end {
@@ -78,7 +125,7 @@ impl Content {
         };
 
         // We advance 4 because `"\n---"` has 4 bytes.
-        let mut body_start = fm_end + 4;
+        let mut body_start = fm_end + pattern_len;
 
         // Skip potential newline.
         if (content.len() > body_start) && (content.as_bytes()[body_start] == b'\n') {
@@ -129,27 +176,57 @@ mod tests {
     #[test]
     fn test_new() {
         // Test windows string.
-        let content = Content::new("first\r\nsecond\r\nthird");
+        let content = Content::new("first\r\nsecond\r\nthird".to_string());
+        assert!(matches!(content, Content::Text{..}));
         assert_eq!(content.get_body_or_text(), "first\nsecond\nthird");
+
         // Test Unixstring.
-        let content = Content::new("first\nsecond\nthird");
+        let content = Content::new("first\nsecond\nthird".to_string());
         assert_eq!(content.get_body_or_text(), "first\nsecond\nthird");
+        assert!(matches!(content, Content::Text{..}));
+
         // Test BOM removal.
-        let content = Content::new("\u{feff}first\nsecond\nthird");
+        let content = Content::new("\u{feff}first\nsecond\nthird".to_string());
         assert_eq!(content.get_body_or_text(), "first\nsecond\nthird");
+        assert!(matches!(content, Content::Text{..}));
+
         // Test header extraction.
-        let content = Content::new("\u{feff}---\nfirst\n---\nsecond\nthird");
+        let content = Content::new("\u{feff}---\nfirst\n---\nsecond\nthird".to_string());
         assert_eq!(content.get_header(), "first");
         assert_eq!(content.get_body_or_text(), "second\nthird");
-        // Test header extraction without `\n` at the end
-        let content = Content::new("\u{feff}---\nfirst\n---");
+        assert!(matches!(content, Content::HeaderAndBody{..}));
+
+        // Test header extraction without `\n` at the end.
+        let content = Content::new("\u{feff}---\nfirst\n---".to_string());
         assert_eq!(content.get_header(), "first");
         assert_eq!(content.get_body_or_text(), "");
+        assert!(matches!(content, Content::HeaderAndBody{..}));
+
+        // This fails to find the header.
+        let content = Content::new("\u{feff}not ignored\n\n---\nfirst\n---".to_string());
+        assert_eq!(content.get_header(), "");
+        assert_eq!(content.get_body_or_text(), "not ignored\n\n---\nfirst\n---");
+        assert!(matches!(content, Content::Text{..}));
+    }
+
+    #[test]
+    fn test_new_relax() {
+        // The same a in the example above.
+        let content = Content::new_relax("\u{feff}---\nfirst\n---".to_string());
+        assert_eq!(content.get_header(), "first");
+        assert_eq!(content.get_body_or_text(), "");
+        assert!(matches!(content, Content::HeaderAndBody{..}));
+
+        // Here you can see the effect of relax.
+        let content = Content::new_relax("\u{feff}ignored\n\n---\nfirst\n---".to_string());
+        assert_eq!(content.get_header(), "first");
+        assert_eq!(content.get_body_or_text(), "");
+        assert!(matches!(content, Content::HeaderAndBody{..}));
     }
 
     #[test]
     fn test_to_osstring() {
-        let content = Content::new("---first\r\n---\r\nsecond\r\nthird");
+        let content = Content::new("---first\r\n---\r\nsecond\r\nthird".to_string());
         let s = content.to_osstring();
         #[cfg(target_family = "windows")]
         assert_eq!(s.as_str(), "\u{feff}---\r\nfirst\r\n---\r\nsecond\r\nthird");
@@ -161,34 +238,34 @@ mod tests {
     fn test_split() {
         let input_stream = String::from("---first\n---\nsecond\nthird");
         let expected = Content::HeaderAndBody("first".to_string(), "second\nthird".to_string());
-        let result = Content::split(input_stream);
+        let result = Content::split(input_stream, false);
         assert_eq!(result, expected);
 
         let input_stream = String::from("---\nfirst\n---\nsecond\nthird");
         let expected = Content::HeaderAndBody("first".to_string(), "second\nthird".to_string());
-        let result = Content::split(input_stream);
+        let result = Content::split(input_stream, false);
         assert_eq!(result, expected);
 
         // Header is trimmed.
         let input_stream = String::from("---\n\nfirst\n\n---\nsecond\nthird");
         let expected = Content::HeaderAndBody("first".to_string(), "second\nthird".to_string());
-        let result = Content::split(input_stream);
+        let result = Content::split(input_stream, false);
         assert_eq!(result, expected);
 
         // Body is kept as it is (not trimmed).
         let input_stream = String::from("---\nfirst\n---\n\nsecond\nthird\n");
         let expected = Content::HeaderAndBody("first".to_string(), "\nsecond\nthird\n".to_string());
-        let result = Content::split(input_stream);
+        let result = Content::split(input_stream, false);
         assert_eq!(result, expected);
 
         let input_stream = String::from("\nsecond\nthird");
         let expected = Content::Text("\nsecond\nthird".to_string());
-        let result = Content::split(input_stream);
+        let result = Content::split(input_stream, false);
         assert_eq!(result, expected);
 
         let input_stream = String::from("");
         let expected = Content::Empty;
-        let result = Content::split(input_stream);
+        let result = Content::split(input_stream, false);
         assert_eq!(result, expected);
     }
 }
