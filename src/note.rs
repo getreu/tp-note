@@ -93,7 +93,7 @@ impl Note {
         let mut context = Self::capture_environment(&path)?;
 
         // render template
-        let content = Content::new_relax({
+        let content = Content::new({
             let mut tera = Tera::default();
             tera.extend(&TERA).unwrap();
 
@@ -112,6 +112,21 @@ impl Note {
                 content.get_header(),
                 content.get_body_or_text().trim()
             );
+        };
+
+        if !matches!(content, Content::HeaderAndBody{..}) {
+            return Err(anyhow!(
+                "The rendered document structure is not conform\n\
+                 with the following convention:\n\
+                 \t~~~~~~~~~~~~~~\n\
+                 \t---\n\
+                 \t<YAML header>\n\
+                 \t---\n\
+                 \t<note body>\n\
+                 \t~~~~~~~~~~~~~~\n\
+                 Correct the template in the configuration file and\n\
+                 restart Tp-Note with `tp-note --debug`.",
+            ));
         };
 
         // deserialize the rendered template
@@ -408,7 +423,6 @@ impl Note {
 
     /// Writes the note to disk with `new_fqfn`-filename.
     pub fn write_to_disk(&self, new_fqfn: PathBuf) -> Result<PathBuf, anyhow::Error> {
-        // Write new note on disk.
         let outfile = OpenOptions::new()
             .write(true)
             .create_new(true)
