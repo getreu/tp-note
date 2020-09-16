@@ -171,12 +171,11 @@ impl Content {
 /// Concatenates the header and the body and prints the content.
 impl fmt::Display for Content {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "\u{feff}---\n{}\n---\n{}",
-            &self.get_header(),
-            &self.get_body_or_text()
-        )
+        match &self {
+            Content::Empty => write!(f, ""),
+            Content::Text(t) => write!(f, "{}", t),
+            Content::HeaderAndBody(h, b) => write!(f, "\u{feff}---\n{}\n---\n{}", &h, &b),
+        }
     }
 }
 
@@ -278,5 +277,20 @@ mod tests {
         let expected = Content::Empty;
         let result = Content::split(input_stream, false);
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_display_for_content() {
+        let input = Content::HeaderAndBody("first".to_string(), "\nsecond\nthird\n".to_string());
+        let expected = "\u{feff}---\nfirst\n---\n\nsecond\nthird\n".to_string();
+        assert_eq!(input.to_string(), expected);
+
+        let input = Content::Text("\nsecond\nthird".to_string());
+        let expected = "\nsecond\nthird".to_string();
+        assert_eq!(input.to_string(), expected);
+
+        let input = Content::Empty;
+        let expected = "".to_string();
+        assert_eq!(input.to_string(), expected);
     }
 }
