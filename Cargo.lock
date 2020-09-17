@@ -181,9 +181,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.0.59"
+version = "1.0.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66120af515773fb005778dc07c261bd201ec8ce50bd6e7144c927753fe013381"
+checksum = "ef611cc68ff783f18535d77ddd080185275713d852c4f5cbb6122c462a7a825c"
 
 [[package]]
 name = "cfg-if"
@@ -1298,9 +1298,9 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.2.19"
+version = "0.2.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80c1a1fd93112fc50b11c43a1def21f926be3c18884fad676ea879572da070a1"
+checksum = "0d4953c513c9bf1b97e9cdd83f11d60c4b0a83462880a360d80d96953a953fee"
 dependencies = [
  "const_fn",
  "libc",
@@ -1345,7 +1345,7 @@ dependencies = [
 
 [[package]]
 name = "tp-note"
-version = "1.7.2"
+version = "1.7.3"
 dependencies = [
  "anyhow",
  "atty",
@@ -1363,7 +1363,7 @@ dependencies = [
  "serde_yaml",
  "structopt",
  "tera",
- "time 0.2.19",
+ "time 0.2.20",
  "winres",
 ]
 
