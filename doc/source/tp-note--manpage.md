@@ -293,7 +293,7 @@ To execute the script type:
 
 
 
-## New note annotating another non-Tp-Note file
+## New note annotating some non-Tp-Note file
 
 When '`<path>`' points to an existing file, whose file-extension is other than
 '`.md`', a new note is created with a similar filename and a reference to the
@@ -616,7 +616,7 @@ In addition _Tp-Note_ defines the following variables:
   one exists. Otherwise: empty string.
 
 * '`{{ stdin }}`' is the complete text content originating form the input
-  stream `/dev/stdin`. This stream can replace the clipboard when it is not
+  stream '`stdin`'. This stream can replace the clipboard when it is not
   available.  In case the input stream's content starts with a YAML header, it
   does not appear in this variable.
 
@@ -661,19 +661,20 @@ In addition _Tp-Note_ defines the following variables:
   undefined, when the corresponding YAML header variable is not present in the
   note's header.
 
-Except for '`{{ fm_title }}`', it is **not** guaranteed, that the above
-'`{{ fm_* }}`' variables are defined! Depending on the last content template
+Except for '`{{ fm_title }}`', there is no guarantee, that any of the 
+'`{{ fm_* }}`' variables is defined! Depending on the last content template
 result, certain variables might be undefined. Please take into consideration,
 that a defined variable might contain the empty string '`""`'.
 
 
 ## Template filters
 
-_Tp-Note_ defines some additional Tera template filters, e.g.: '`tag()`',
-'`stem()`', '`cut()`', '`heading()`', '`linkname()`', '`linkurl()`' and
-'`ext()`'.
+In addtion to _Tera_'s [built-in
+filters](https://tera.netlify.app/docs/#built-in-filters), _Tp-Note_ comes with
+some additional filters, e.g.: '`tag`', '`stem`', '`cut`', '`heading`',
+'`linkname`', '`linkurl`' and '`ext`'.
 
-Sample usage:
+A filter is always used together with a variable. Here some examples:
 
 * '`{{ file | tag }}`' is the sort-tag (numerical filename prefix) of the
   current note on disk, e.g. '`01-23_9-`' or '`20191022-`'. Useful in content
@@ -684,8 +685,8 @@ Sample usage:
 
 * '`{{ file | stem }}`' is the note's filename without sort-tag and extension.
 
-* '`{{ file | ext | prepend_dot }}`' is the note's filename extension with a
-  leading dot (period), e.g. '`.md`'.
+* '`{{ file | ext | prepend_dot }}`' is the note's filename extension without
+  the dot (period), e.g. '`md`' od '`mdtxt`'.
 
 * '`{{ clipboard | cut }}`' is the first 200 bytes from the clipboard.
 
