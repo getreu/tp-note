@@ -5,7 +5,6 @@ extern crate atty;
 extern crate clipboard;
 extern crate directories;
 use crate::content::Content;
-use crate::error::AlertDialog;
 use crate::filename;
 use crate::VERSION;
 use anyhow::anyhow;
@@ -385,12 +384,6 @@ const ENABLE_READ_CLIPBOARD: bool = true;
 /// Default value.
 const ENABLE_EMPTY_CLIPBOARD: bool = true;
 
-/// Limit the size of clipboard data `tp-note` accepts as input.
-const CLIPBOARD_LEN_MAX: usize = 0x10000;
-
-/// Limit the size of `stdin` input data `tp-note` accepts.
-const STDIN_LEN_MAX: usize = 0x10000;
-
 /// Tp-Note may add a counter at the end of the filename when
 /// it can not save a file because the name is taken already.
 /// This is the opening bracket search pattern. Some examples:
@@ -609,12 +602,6 @@ lazy_static! {
             let mut handle = stdin.lock();
             let _ = handle.read_to_string(&mut buffer);
         }
-        if buffer.len() > STDIN_LEN_MAX {
-            AlertDialog::print(&format!(
-                "WARNING: the input stream content is discarded because its size \
-                exceeds {} bytes.", STDIN_LEN_MAX));
-            return Content::new("".to_string());
-        }
 
         #[cfg(target_family = "windows")]
         let mut buffer = (&buffer).replace("\r\n", "\n");
@@ -642,14 +629,6 @@ lazy_static! {
             if ctx.is_some() {
                 let ctx = &mut ctx.unwrap(); // This is ok since `is_some()`
                 let s = ctx.get_contents().ok();
-                if let Some(s) = &s {
-                    if s.len() > CLIPBOARD_LEN_MAX {
-                        AlertDialog::print(&format!(
-                            "WARNING: the clipboard content is discarded because its size \
-                            exceeds {} bytes.", CLIPBOARD_LEN_MAX));
-                        return Content::new("".to_string());
-                    }
-                };
                 buffer.push_str(&s.unwrap_or_default());
             }
         };
