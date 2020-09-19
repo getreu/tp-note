@@ -2,14 +2,16 @@
 
 use crate::config::ARGS;
 use anyhow::{anyhow, Result};
+use core::marker::PhantomPinned;
 use std::fmt;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::pin::Pin;
 
-#[derive(Debug, PartialEq)]
 /// This is a newtype and thin wrapper around the note's content.
 /// It deals with operating system specific handling of newlines.
+#[derive(Debug, PartialEq)]
 pub struct Content<'a> {
     /// The raw content as String, can be empty.
     // TODO Pin here.
@@ -20,6 +22,11 @@ pub struct Content<'a> {
     pub header: &'a str,
     /// Skip optional BOM and optional header and keep the rest.
     pub body: &'a str,
+    /// Pin this struct.
+    /// By making self-referential structs opt-out of Unpin, there is
+    /// no (safe) way to get a &mut T from a Pin<Box<T>> type for them. As a result, their
+    /// internal self-references are guaranteed to stay valid.
+    _pin: PhantomPinned,
 }
 
 /// This macro is useful for zero-cost conversion from &[u8] to &str. Use
@@ -47,32 +54,43 @@ impl<'a> Content<'a> {
     /// First `"---"` is required to start at the beginning of the `input`.
     /// Any BOM (byte order mark) at the beginning is ignored.
     /// On Windows machines it converts all `\r\n` to `\n`.
-    pub fn new(input: String) -> Self {
+    /// When `relax==false` the header is only found when it starts
+    /// at the beginning of the input. With `true` it can be placed
+    /// everywhere to be found.
+    pub fn new(input: String, relax: bool) -> Pin<Box<Self>> {
         let input = Self::remove_cr(input);
-        let input_ref = unborrow!(&input);
-        let (header, body) = Self::split(&input_ref, false);
-        Content {
+        let mut c = Box::pin(Content {
             s: input,
-            header,
-            body,
-        }
-    }
+            header: "",
+            body: "",
+            _pin: PhantomPinned,
+        });
 
-    /// Constructor that reads a structured document with a YAML header
-    /// and body.
-    /// First `"---"` does not need to be at the beginning of the document.
-    /// In this case all content before that place is ignored.
-    /// Any BOM (byte order mark) at the beginning is ignored.
-    /// On Windows machines it converts all `\r\n` to `\n`.
-    pub fn new_relax(input: String) -> Self {
-        let input = Self::remove_cr(input);
-        let input_ref = unborrow!(&input);
-        let (header, body) = Self::split(&input_ref, true);
-        Content {
-            s: input,
-            header,
-            body,
+        // Calculate the pointers (`str`).
+        // The following is safe, because `split()` guarantees, that `header` and `body`
+        // point into `c.s` (are a slice of).
+        let c_s = unborrow!(&c.s);
+        let (header, body) = Self::split(&c_s, relax);
+
+        // Store the pointers.
+        // The get_unchecked_mut function works on a Pin<&mut T> instead of a Pin<Box<T>>, so we
+        // have to use the Pin::as_mut for converting the value before.
+        let mut_ref = Pin::as_mut(&mut c);
+        // Rationale:
+        // 1. Requirement:
+        //    > This function is unsafe. You must guarantee that you will never move the data out of
+        //    the mutable reference you receive when you call this function, so that the invariants on
+        //    the Pin type can be upheld.
+        // 2. The following is safe, because I just reassign a pointer and do not move any data.
+        unsafe {
+            Pin::get_unchecked_mut(mut_ref).header = header;
         }
+        // Same here.
+        let mut_ref = Pin::as_mut(&mut c);
+        unsafe {
+            Pin::get_unchecked_mut(mut_ref).body = body;
+        }
+        c
     }
 
     /// On Windows machines it converts all `\r\n` to `\n`.
@@ -164,7 +182,10 @@ impl<'a> Content<'a> {
     }
 
     /// Writes the note to disk with `new_fqfn`-filename.
-    pub fn write_to_disk(self, new_fqfn: PathBuf) -> Result<PathBuf, anyhow::Error> {
+    pub fn write_to_disk(
+        self: Pin<Box<Self>>,
+        new_fqfn: PathBuf,
+    ) -> Result<PathBuf, anyhow::Error> {
         let outfile = OpenOptions::new()
             .write(true)
             .create_new(true)
@@ -176,14 +197,20 @@ impl<'a> Content<'a> {
                 };
                 write!(outfile, "\u{feff}")?;
                 if !self.header.is_empty() {
-                    write!(outfile, "---\n")?;
+                    write!(outfile, "---")?;
+                    #[cfg(target_family = "windows")]
+                    write!(outfile, "\r")?;
+                    write!(outfile, "\n")?;
                     for l in self.header.lines() {
                         write!(outfile, "{}", l)?;
                         #[cfg(target_family = "windows")]
                         write!(outfile, "\r")?;
                         write!(outfile, "\n")?;
                     }
-                    write!(outfile, "---\n")?;
+                    write!(outfile, "---")?;
+                    #[cfg(target_family = "windows")]
+                    write!(outfile, "\r")?;
+                    write!(outfile, "\n")?;
                 };
                 for l in self.body.lines() {
                     write!(outfile, "{}", l)?;
@@ -226,34 +253,34 @@ impl<'a> fmt::Display for Content<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::Content;
+    use super::*;
 
     #[test]
     fn test_new() {
         // Test windows string.
-        let content = Content::new("first\r\nsecond\r\nthird".to_string());
+        let content = Content::new("first\r\nsecond\r\nthird".to_string(), false);
         assert_eq!(content.body, "first\nsecond\nthird");
 
         // Test Unixstring.
-        let content = Content::new("first\nsecond\nthird".to_string());
+        let content = Content::new("first\nsecond\nthird".to_string(), false);
         assert_eq!(content.body, "first\nsecond\nthird");
 
         // Test BOM removal.
-        let content = Content::new("\u{feff}first\nsecond\nthird".to_string());
+        let content = Content::new("\u{feff}first\nsecond\nthird".to_string(), false);
         assert_eq!(content.body, "first\nsecond\nthird");
 
         // Test header extraction.
-        let content = Content::new("\u{feff}---\nfirst\n---\nsecond\nthird".to_string());
+        let content = Content::new("\u{feff}---\nfirst\n---\nsecond\nthird".to_string(), false);
         assert_eq!(content.header, "first");
         assert_eq!(content.body, "second\nthird");
 
         // Test header extraction without `\n` at the end.
-        let content = Content::new("\u{feff}---\nfirst\n---".to_string());
+        let content = Content::new("\u{feff}---\nfirst\n---".to_string(), false);
         assert_eq!(content.header, "first");
         assert_eq!(content.body, "");
 
         // This fails to find the header.
-        let content = Content::new("\u{feff}not ignored\n\n---\nfirst\n---".to_string());
+        let content = Content::new("\u{feff}not ignored\n\n---\nfirst\n---".to_string(), false);
         assert_eq!(content.header, "");
         assert_eq!(content.body, "not ignored\n\n---\nfirst\n---");
     }
@@ -261,12 +288,12 @@ mod tests {
     #[test]
     fn test_new_relax() {
         // The same a in the example above.
-        let content = Content::new_relax("\u{feff}---\nfirst\n---".to_string());
+        let content = Content::new("\u{feff}---\nfirst\n---".to_string(), true);
         assert_eq!(content.header, "first");
         assert_eq!(content.body, "");
 
         // Here you can see the effect of relax.
-        let content = Content::new_relax("\u{feff}ignored\n\n---\nfirst\n---".to_string());
+        let content = Content::new("\u{feff}ignored\n\n---\nfirst\n---".to_string(), true);
         assert_eq!(content.header, "first");
         assert_eq!(content.body, "");
     }
@@ -322,6 +349,7 @@ mod tests {
             s: "".to_string(),
             header: "first",
             body: "\nsecond\nthird\n",
+            _pin: PhantomPinned,
         };
         let expected = "\u{feff}---\nfirst\n---\n\nsecond\nthird\n".to_string();
         assert_eq!(input.to_string(), expected);
@@ -330,6 +358,7 @@ mod tests {
             s: "".to_string(),
             header: "",
             body: "\nsecond\nthird\n",
+            _pin: PhantomPinned,
         };
         let expected = "\nsecond\nthird\n".to_string();
         assert_eq!(input.to_string(), expected);
@@ -338,6 +367,7 @@ mod tests {
             s: "".to_string(),
             header: "",
             body: "",
+            _pin: PhantomPinned,
         };
         let expected = "".to_string();
         assert_eq!(input.to_string(), expected);

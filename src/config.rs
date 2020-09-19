@@ -19,6 +19,7 @@ use std::io;
 use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
+use std::pin::Pin;
 use structopt::StructOpt;
 
 /// Name of this executable (without the Windows ".exe" extension).
@@ -593,7 +594,7 @@ lazy_static! {
     /// YAML header if there is any in the input data.
     /// In this case `STDIN.1` contains only the body of
     /// the data without header.
-    pub static ref STDIN: Content<'static> = {
+    pub static ref STDIN: Pin<Box<Content<'static>>> = {
         let mut buffer = String::new();
 
         // Read stdin().
@@ -609,7 +610,7 @@ lazy_static! {
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
 
-        Content::new(buffer)
+        Content::new(buffer, false)
     };
 }
 
@@ -620,7 +621,7 @@ lazy_static! {
     /// YAML header if there is any in the input data.
     /// In this case `CLIPBOARD.1` contains only the body of
     /// the data without header.
-    pub static ref CLIPBOARD: Content<'static> = {
+    pub static ref CLIPBOARD: Pin<Box<Content<'static>>> = {
         let mut buffer = String::new();
 
         // Concatenate clipboard content.
@@ -638,7 +639,7 @@ lazy_static! {
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
 
-        Content::new(buffer)
+        Content::new(buffer, false)
     };
 }
 

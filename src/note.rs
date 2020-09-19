@@ -20,6 +20,7 @@ use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::env;
 use std::path::{Path, PathBuf};
+use std::pin::Pin;
 use tera::Tera;
 
 #[derive(Debug, PartialEq)]
@@ -33,7 +34,7 @@ pub struct Note<'a> {
     context: ContextWrapper,
     /// The full text content of the note, including
     /// its front matter.
-    pub content: Content<'a>,
+    pub content: Pin<Box<Content<'a>>>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Default)]
@@ -64,9 +65,10 @@ impl Note<'_> {
     /// Constructor that creates a memory representation of an existing note on
     /// disk.
     pub fn from_existing_note(path: &Path) -> Result<Self> {
-        let content = Content::new_relax(
+        let content = Content::new(
             fs::read_to_string(path)
                 .with_context(|| format!("Failed to read `{}`.", path.display()))?,
+            true,
         );
 
         let mut context = Self::capture_environment(&path)?;
@@ -90,13 +92,16 @@ impl Note<'_> {
         let mut context = Self::capture_environment(&path)?;
 
         // render template
-        let content = Content::new({
-            let mut tera = Tera::default();
-            tera.extend(&TERA).unwrap();
+        let content = Content::new(
+            {
+                let mut tera = Tera::default();
+                tera.extend(&TERA).unwrap();
 
-            tera.render_str(template, &context)
-                .with_context(|| format!("Failed to render the template:\n`{}`.", template))?
-        });
+                tera.render_str(template, &context)
+                    .with_context(|| format!("Failed to render the template:\n`{}`.", template))?
+            },
+            false,
+        );
 
         if ARGS.debug {
             eprintln!(
