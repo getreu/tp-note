@@ -163,23 +163,6 @@ impl<'a> Content<'a> {
         }
     }
 
-    /// Write out the content string to be saved on disk.
-    /// The format varies depending on the operating system:
-    /// On Unix a newline is represented by one single byte: `\n`.
-    /// On Windows a newline consists of two bytes: `\r\n`.
-    // TODO 1. avoid allocation when there is nothing to do
-    // TODO 3. Cow
-    #[allow(clippy::let_and_return)]
-    pub fn to_osstring(s: &str) -> String {
-        let s = s.to_string();
-
-        // Replaces Windows newline + carriage return -> newline.
-        #[cfg(target_family = "windows")]
-        let s = (&s).replace("\n", "\r\n");
-        // Under Unix no conversion is needed.
-        s
-    }
-
     /// Writes the note to disk with `new_fqfn`-filename.
     pub fn write_to_disk(self, new_fqfn: PathBuf) -> Result<PathBuf, anyhow::Error> {
         let outfile = OpenOptions::new()
@@ -194,12 +177,20 @@ impl<'a> Content<'a> {
                 write!(outfile, "\u{feff}")?;
                 if !self.header.is_empty() {
                     write!(outfile, "---\n")?;
-                    let h = Self::to_osstring(self.header);
-                    write!(outfile, "{}", h)?;
+                    for l in self.header.lines() {
+                        write!(outfile, "{}", l)?;
+                        #[cfg(target_family = "windows")]
+                        write!(outfile, "\r")?;
+                        write!(outfile, "\n")?;
+                    }
                     write!(outfile, "---\n")?;
                 };
-                let b = Self::to_osstring(self.body);
-                write!(outfile, "{}", b)?;
+                for l in self.body.lines() {
+                    write!(outfile, "{}", l)?;
+                    #[cfg(target_family = "windows")]
+                    write!(outfile, "\r")?;
+                    write!(outfile, "\n")?;
+                }
             }
             Err(e) => {
                 if Path::new(&new_fqfn).exists() {
@@ -278,16 +269,6 @@ mod tests {
         let content = Content::new_relax("\u{feff}ignored\n\n---\nfirst\n---".to_string());
         assert_eq!(content.header, "first");
         assert_eq!(content.body, "");
-    }
-
-    #[test]
-    fn test_to_osstring() {
-        let content = Content::new("\r\nsecond\r\nthird".to_string());
-        let s = Content::to_osstring(content.body);
-        #[cfg(target_family = "windows")]
-        assert_eq!(s.as_str(), "\r\nsecond\r\nthird");
-        #[cfg(not(target_family = "windows"))]
-        assert_eq!(s.as_str(), "\nsecond\nthird");
     }
 
     #[test]
