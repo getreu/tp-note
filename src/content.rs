@@ -75,6 +75,19 @@ impl<'a> Content<'a> {
         }
     }
 
+    /// On Windows machines it converts all `\r\n` to `\n`.
+    #[inline]
+    fn remove_cr(input: String) -> String {
+        // Avoid allocating when there is nothing to do.
+        if input.find('\r').is_none() {
+            // Forward without allocating.
+            input
+        } else {
+            // We allocate here and do a lot copying.
+            input.replace("\r\n", "\n")
+        }
+    }
+
     /// Helper function that splits the content into header and body.
     /// The header, if present, is trimmed (`trim()`), the body
     /// is kept as it is.
@@ -148,19 +161,6 @@ impl<'a> Content<'a> {
         };
 
         (content[fm_start..fm_end].trim(), &content[body_start..])
-    }
-
-    /// On Windows machines it converts all `\r\n` to `\n`.
-    #[inline]
-    fn remove_cr(input: String) -> String {
-        // Avoid allocating when there is nothing to do.
-        if input.find('\r').is_none() {
-            // Forward without allocating.
-            input
-        } else {
-            // We allocate here and do a lot copying.
-            input.replace("\r\n", "\n")
-        }
     }
 
     /// Writes the note to disk with `new_fqfn`-filename.
