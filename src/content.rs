@@ -43,7 +43,7 @@ impl<'a> Content<'a> {
     /// Any BOM (byte order mark) at the beginning is ignored.
     /// On Windows machines it converts all `\r\n` to `\n`.
     pub fn new(input: String) -> Self {
-        let input = Self::remove_bom_remove_cr(input);
+        let input = Self::remove_cr(input);
         let input_ref = unborrow!(&input);
         let (header, body) = Self::split(&input_ref, false);
         Content {
@@ -60,7 +60,7 @@ impl<'a> Content<'a> {
     /// Any BOM (byte order mark) at the beginning is ignored.
     /// On Windows machines it converts all `\r\n` to `\n`.
     pub fn new_relax(input: String) -> Self {
-        let input = Self::remove_bom_remove_cr(input);
+        let input = Self::remove_cr(input);
         let input_ref = unborrow!(&input);
         let (header, body) = Self::split(&input_ref, true);
         Content {
@@ -70,46 +70,10 @@ impl<'a> Content<'a> {
         }
     }
 
-    #[inline]
-    /// On Windows machines it converts all `\r\n` to `\n`.
-    /// Any BOM (byte order mark) at the beginning is ignored.
-    fn remove_bom_remove_cr(input: String) -> String {
-        // Avoid allocating when there is nothing to do.
-        if input.is_empty() {
-            // Forward empty string.
-            input
-        // TODO: move this to split.
-        } else if input.chars().next().unwrap_or_default() != '\u{feff}'
-            && input.find('\r').is_none()
-        {
-            // Forward without allocating.
-            input
-        } else {
-            // We allocate here and do a lot copying.
-            input.trim_matches('\u{feff}').replace("\r\n", "\n")
-        }
-    }
-
-    /// Write out the content string to be saved on disk.
-    /// The format varies depending on the operating system:
-    /// On Unix a newline is represented by one single byte: `\n`.
-    /// On Windows a newline consists of two bytes: `\r\n`.
-    // TODO 1. avoid allocation when there is nothing to do
-    // TODO 2. do not use Display as it allocates also.
-    #[allow(clippy::let_and_return)]
-    pub fn to_osstring(&self) -> String {
-        let s = self.to_string();
-
-        // Replaces Windows newline + carriage return -> newline.
-        #[cfg(target_family = "windows")]
-        let s = (&s).replace("\n", "\r\n");
-        // Under Unix no conversion is needed.
-        s
-    }
-
     /// Helper function that splits the content into header and body.
     /// The header, if present, is trimmed (`trim()`), the body
     /// is kept as it is.
+    /// Any BOM (byte order mark) at the beginning is ignored.
     ///
     /// To accept a "header" (`relax==false`):
     /// 1. the document must start with `"---"`,
@@ -126,6 +90,9 @@ impl<'a> Content<'a> {
     /// 2. followed by header bytes,
     /// 3. same as above ...
     fn split(content: &'a str, relax: bool) -> (&'a str, &'a str) {
+        // Remove BOM
+        let content = content.trim_start_matches('\u{feff}');
+
         if content.is_empty() {
             return ("", "");
         };
@@ -177,6 +144,36 @@ impl<'a> Content<'a> {
 
         (content[fm_start..fm_end].trim(), &content[body_start..])
     }
+
+    /// On Windows machines it converts all `\r\n` to `\n`.
+    #[inline]
+    fn remove_cr(input: String) -> String {
+        // Avoid allocating when there is nothing to do.
+        if input.find('\r').is_none() {
+            // Forward without allocating.
+            input
+        } else {
+            // We allocate here and do a lot copying.
+            input.replace("\r\n", "\n")
+        }
+    }
+
+    /// Write out the content string to be saved on disk.
+    /// The format varies depending on the operating system:
+    /// On Unix a newline is represented by one single byte: `\n`.
+    /// On Windows a newline consists of two bytes: `\r\n`.
+    // TODO 1. avoid allocation when there is nothing to do
+    // TODO 2. do not use Display as it allocates also.
+    #[allow(clippy::let_and_return)]
+    pub fn to_osstring(&self) -> String {
+        let s = self.to_string();
+
+        // Replaces Windows newline + carriage return -> newline.
+        #[cfg(target_family = "windows")]
+        let s = (&s).replace("\n", "\r\n");
+        // Under Unix no conversion is needed.
+        s
+    }
 }
 
 /// Concatenates the header and the body and prints the content.
@@ -199,43 +196,43 @@ mod tests {
     fn test_new() {
         // Test windows string.
         let content = Content::new("first\r\nsecond\r\nthird".to_string());
-        assert_eq!(content.get_body_or_text(), "first\nsecond\nthird");
+        assert_eq!(content.body, "first\nsecond\nthird");
 
         // Test Unixstring.
         let content = Content::new("first\nsecond\nthird".to_string());
-        assert_eq!(content.get_body_or_text(), "first\nsecond\nthird");
+        assert_eq!(content.body, "first\nsecond\nthird");
 
         // Test BOM removal.
         let content = Content::new("\u{feff}first\nsecond\nthird".to_string());
-        assert_eq!(content.get_body_or_text(), "first\nsecond\nthird");
+        assert_eq!(content.body, "first\nsecond\nthird");
 
         // Test header extraction.
         let content = Content::new("\u{feff}---\nfirst\n---\nsecond\nthird".to_string());
-        assert_eq!(content.get_header(), "first");
-        assert_eq!(content.get_body_or_text(), "second\nthird");
+        assert_eq!(content.header, "first");
+        assert_eq!(content.body, "second\nthird");
 
         // Test header extraction without `\n` at the end.
         let content = Content::new("\u{feff}---\nfirst\n---".to_string());
-        assert_eq!(content.get_header(), "first");
-        assert_eq!(content.get_body_or_text(), "");
+        assert_eq!(content.header, "first");
+        assert_eq!(content.body, "");
 
         // This fails to find the header.
         let content = Content::new("\u{feff}not ignored\n\n---\nfirst\n---".to_string());
-        assert_eq!(content.get_header(), "");
-        assert_eq!(content.get_body_or_text(), "not ignored\n\n---\nfirst\n---");
+        assert_eq!(content.header, "");
+        assert_eq!(content.body, "not ignored\n\n---\nfirst\n---");
     }
 
     #[test]
     fn test_new_relax() {
         // The same a in the example above.
         let content = Content::new_relax("\u{feff}---\nfirst\n---".to_string());
-        assert_eq!(content.get_header(), "first");
-        assert_eq!(content.get_body_or_text(), "");
+        assert_eq!(content.header, "first");
+        assert_eq!(content.body, "");
 
         // Here you can see the effect of relax.
         let content = Content::new_relax("\u{feff}ignored\n\n---\nfirst\n---".to_string());
-        assert_eq!(content.get_header(), "first");
-        assert_eq!(content.get_body_or_text(), "");
+        assert_eq!(content.header, "first");
+        assert_eq!(content.body, "");
     }
 
     #[test]
@@ -278,6 +275,16 @@ mod tests {
         assert_eq!(result, expected);
 
         let input_stream = String::from("");
+        let expected = ("", "");
+        let result = Content::split(&input_stream, false);
+        assert_eq!(result, expected);
+
+        let input_stream = String::from("\u{feff}\nsecond\nthird");
+        let expected = ("", "\nsecond\nthird");
+        let result = Content::split(&input_stream, false);
+        assert_eq!(result, expected);
+
+        let input_stream = String::from("\u{feff}");
         let expected = ("", "");
         let result = Content::split(&input_stream, false);
         assert_eq!(result, expected);
