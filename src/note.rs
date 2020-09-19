@@ -21,13 +21,12 @@ use std::default::Default;
 use std::env;
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::matches;
 use std::path::{Path, PathBuf};
 use tera::Tera;
 
 #[derive(Debug, PartialEq)]
 /// Represents a note.
-pub struct Note {
+pub struct Note<'a> {
     // Reserved for future use:
     //     /// The front matter of the note.
     //     front_matter: FrontMatter,
@@ -36,7 +35,7 @@ pub struct Note {
     context: ContextWrapper,
     /// The full text content of the note, including
     /// its front matter.
-    pub content: Content,
+    pub content: Content<'a>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Default)]
@@ -63,7 +62,7 @@ struct FrontMatter {
 }
 
 use std::fs;
-impl Note {
+impl Note<'_> {
     /// Constructor that creates a memory representation of an existing note on
     /// disk.
     pub fn from_existing_note(path: &Path) -> Result<Self> {
@@ -75,7 +74,7 @@ impl Note {
         let mut context = Self::capture_environment(&path)?;
 
         // deserialize the note read from disk
-        let fm = Note::deserialize_note(&content.get_header())?;
+        let fm = Note::deserialize_note(content.header)?;
 
         Self::register_front_matter(&mut context, &fm);
 
@@ -109,12 +108,12 @@ impl Note {
             eprintln!("*** Debug: Applying content template:\n{}\n", template);
             eprintln!(
                 "*** Debug: Rendered content template:\n---\n{}\n---\n{}\n\n",
-                content.get_header(),
-                content.get_body_or_text().trim()
+                content.header,
+                content.body.trim()
             );
         };
 
-        if !matches!(content, Content::HeaderAndBody{..}) {
+        if content.header.is_empty() {
             return Err(anyhow!(
                 "The rendered document structure is not conform\n\
                  with the following convention:\n\
@@ -130,7 +129,7 @@ impl Note {
         };
 
         // deserialize the rendered template
-        let fm = Note::deserialize_note(&content.get_header())?;
+        let fm = Note::deserialize_note(content.header)?;
 
         Self::register_front_matter(&mut context, &fm);
 
@@ -164,16 +163,16 @@ impl Note {
         context.insert("path", &fqpn.to_str().unwrap_or_default());
 
         // Register input from clipboard.
-        context.insert("clipboard_header", &*CLIPBOARD.get_header());
-        context.insert("clipboard", &*CLIPBOARD.get_body_or_text());
+        context.insert("clipboard_header", CLIPBOARD.header);
+        context.insert("clipboard", CLIPBOARD.body);
 
         // Register input from stdin.
-        context.insert("stdin_header", &*STDIN.get_header());
-        context.insert("stdin", &*STDIN.get_body_or_text());
+        context.insert("stdin_header", STDIN.header);
+        context.insert("stdin", STDIN.body);
 
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
-        let stdin_fm = Self::deserialize_note(&*STDIN.get_header()).ok();
+        let stdin_fm = Self::deserialize_note(STDIN.header).ok();
         if ARGS.debug && stdin_fm.is_some() {
             eprintln!(
                 "*** Debug: YAML front matter in the input stream stdin found:\n{:#?}",
@@ -183,7 +182,7 @@ impl Note {
 
         // Can we find a front matter in the clipboard? If yes, the unmodified
         // clipboard data is our new note content.
-        let clipboard_fm = Self::deserialize_note(&*CLIPBOARD.get_header()).ok();
+        let clipboard_fm = Self::deserialize_note(CLIPBOARD.header).ok();
         if ARGS.debug && clipboard_fm.is_some() {
             eprintln!(
                 "*** Debug: YAML front matter in the clipboard found:\n{:#?}",
@@ -191,31 +190,31 @@ impl Note {
             );
         };
 
-        if (matches!(*CLIPBOARD, Content::HeaderAndBody{..}) && clipboard_fm.is_none())
-            || (matches!(*STDIN, Content::HeaderAndBody{..}) && stdin_fm.is_none())
+        if (!CLIPBOARD.header.is_empty() && clipboard_fm.is_none())
+            || (!STDIN.header.is_empty() && stdin_fm.is_none())
         {
             return Err(anyhow!(format!(
                 "no field `title: \"<String>\"` in the clipboard's YAML\n\
                      header or in the `stdin` input stream found.
                      {}{}{}{}{}{}",
-                if matches!(*CLIPBOARD, Content::HeaderAndBody{..}) {
+                if !CLIPBOARD.header.is_empty() {
                     "\n*   Clipboard header:\n---\n"
                 } else {
                     ""
                 },
-                CLIPBOARD.get_header(),
-                if matches!(*CLIPBOARD, Content::HeaderAndBody{..}) {
+                CLIPBOARD.header,
+                if !CLIPBOARD.header.is_empty() {
                     "\n---"
                 } else {
                     ""
                 },
-                if matches!(*STDIN, Content::HeaderAndBody{..}) {
+                if !STDIN.header.is_empty() {
                     "\n*   Input stream header:\n---\n"
                 } else {
                     ""
                 },
-                STDIN.get_header(),
-                if matches!(*STDIN, Content::HeaderAndBody{..}) {
+                STDIN.header,
+                if !STDIN.header.is_empty() {
                     "\n---"
                 } else {
                     ""

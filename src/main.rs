@@ -26,7 +26,6 @@ use crate::config::CFG;
 use crate::config::CLIPBOARD;
 use crate::config::RUNS_ON_CONSOLE;
 use crate::config::STDIN;
-use crate::content::Content;
 use crate::error::AlertDialog;
 use crate::note::Note;
 use anyhow::{anyhow, Context};
@@ -108,48 +107,45 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
     if path.is_dir() {
-        let (n, new_fqfn) =
-            if matches!(*STDIN, Content::Empty) && matches!(*CLIPBOARD, Content::Empty) {
-                // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
-                let n = Note::from_content_template(&path, &CFG.tmpl_new_content)
-                    .context("Can not parse `tmpl_new_content` in config file.")?;
-                let new_fqfn = n
-                    .render_filename(&CFG.tmpl_new_filename)
-                    .context("Can not parse `tmpl_new_filename` in config file.")?;
-                if ARGS.debug {
-                    eprintln!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
-                }
-                (n, new_fqfn)
-            } else if matches!(*STDIN, Content::HeaderAndBody{..})
-                || matches!(*CLIPBOARD, Content::HeaderAndBody{..})
-            {
-                // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
-                // (only if there is a valid YAML front matter)
-                let n = Note::from_content_template(&path, &CFG.tmpl_copy_content)
-                    // CREATE A NEW NOTE WITH `TMPL_COPY_CONTENT` TEMPLATE
-                    .context("Can not parse `tmpl_copy_content` in config file.")?;
-                let new_fqfn = n
-                    .render_filename(&CFG.tmpl_copy_filename)
-                    .context("Can not parse `tmpl_copy_filename` in config file.")?;
-                if ARGS.debug {
-                    eprintln!("Applying templates: `tmpl_copy_content`, `tmpl_copy_filename`");
-                };
-                (n, new_fqfn)
-            } else {
-                // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
-                let n = Note::from_content_template(&path, &CFG.tmpl_clipboard_content)
-                    // CREATE A NEW NOTE WITH `TMPL_CLIPBOARD_CONTENT` TEMPLATE
-                    .context("Can not parse `tmpl_clipboard_content` in config file.")?;
-                let new_fqfn = n
-                    .render_filename(&CFG.tmpl_clipboard_filename)
-                    .context("Can not parse `tmpl_clipboard_filename` in config file.")?;
-                if ARGS.debug {
-                    eprintln!(
-                        "Applying templates: `tmpl_clipboard_content`, `tmpl_clipboard_filename`"
-                    );
-                };
-                (n, new_fqfn)
+        let (n, new_fqfn) = if STDIN.s.is_empty() && CLIPBOARD.s.is_empty() {
+            // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
+            let n = Note::from_content_template(&path, &CFG.tmpl_new_content)
+                .context("Can not parse `tmpl_new_content` in config file.")?;
+            let new_fqfn = n
+                .render_filename(&CFG.tmpl_new_filename)
+                .context("Can not parse `tmpl_new_filename` in config file.")?;
+            if ARGS.debug {
+                eprintln!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
+            }
+            (n, new_fqfn)
+        } else if !STDIN.header.is_empty() || !CLIPBOARD.header.is_empty() {
+            // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
+            // (only if there is a valid YAML front matter)
+            let n = Note::from_content_template(&path, &CFG.tmpl_copy_content)
+                // CREATE A NEW NOTE WITH `TMPL_COPY_CONTENT` TEMPLATE
+                .context("Can not parse `tmpl_copy_content` in config file.")?;
+            let new_fqfn = n
+                .render_filename(&CFG.tmpl_copy_filename)
+                .context("Can not parse `tmpl_copy_filename` in config file.")?;
+            if ARGS.debug {
+                eprintln!("Applying templates: `tmpl_copy_content`, `tmpl_copy_filename`");
             };
+            (n, new_fqfn)
+        } else {
+            // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
+            let n = Note::from_content_template(&path, &CFG.tmpl_clipboard_content)
+                // CREATE A NEW NOTE WITH `TMPL_CLIPBOARD_CONTENT` TEMPLATE
+                .context("Can not parse `tmpl_clipboard_content` in config file.")?;
+            let new_fqfn = n
+                .render_filename(&CFG.tmpl_clipboard_filename)
+                .context("Can not parse `tmpl_clipboard_filename` in config file.")?;
+            if ARGS.debug {
+                eprintln!(
+                    "Applying templates: `tmpl_clipboard_content`, `tmpl_clipboard_filename`"
+                );
+            };
+            (n, new_fqfn)
+        };
 
         // Check if the filename is not taken already
         let new_fqfn = filename::find_unused(new_fqfn)?;
