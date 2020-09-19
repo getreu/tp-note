@@ -151,7 +151,7 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
         let new_fqfn = filename::find_unused(new_fqfn)?;
 
         // Write new note on disk.
-        n.write_to_disk(new_fqfn)
+        n.content.write_to_disk(new_fqfn)
     } else {
         let file_extension = path
             .extension()
@@ -187,7 +187,7 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
             let new_fqfn = filename::find_unused(new_fqfn)?;
 
             // Write new note on disk.
-            n.write_to_disk(new_fqfn)
+            n.content.write_to_disk(new_fqfn)
         }
     }
 }

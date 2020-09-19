@@ -1,6 +1,11 @@
 //! Deals with the note's content string.
 
+use crate::config::ARGS;
+use anyhow::{anyhow, Result};
 use std::fmt;
+use std::fs::OpenOptions;
+use std::io::Write;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, PartialEq)]
 /// This is a newtype and thin wrapper around the note's content.
@@ -163,16 +168,56 @@ impl<'a> Content<'a> {
     /// On Unix a newline is represented by one single byte: `\n`.
     /// On Windows a newline consists of two bytes: `\r\n`.
     // TODO 1. avoid allocation when there is nothing to do
-    // TODO 2. do not use Display as it allocates also.
+    // TODO 3. Cow
     #[allow(clippy::let_and_return)]
-    pub fn to_osstring(&self) -> String {
-        let s = self.to_string();
+    pub fn to_osstring(s: &str) -> String {
+        let s = s.to_string();
 
         // Replaces Windows newline + carriage return -> newline.
         #[cfg(target_family = "windows")]
         let s = (&s).replace("\n", "\r\n");
         // Under Unix no conversion is needed.
         s
+    }
+
+    /// Writes the note to disk with `new_fqfn`-filename.
+    pub fn write_to_disk(self, new_fqfn: PathBuf) -> Result<PathBuf, anyhow::Error> {
+        let outfile = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&new_fqfn);
+        match outfile {
+            Ok(mut outfile) => {
+                if ARGS.debug {
+                    eprintln!("Creating file: {:?}", new_fqfn);
+                };
+                write!(outfile, "\u{feff}")?;
+                if !self.header.is_empty() {
+                    write!(outfile, "---\n")?;
+                    let h = Self::to_osstring(self.header);
+                    write!(outfile, "{}", h)?;
+                    write!(outfile, "---\n")?;
+                };
+                let b = Self::to_osstring(self.body);
+                write!(outfile, "{}", b)?;
+            }
+            Err(e) => {
+                if Path::new(&new_fqfn).exists() {
+                    return Err(anyhow!(format!(
+                        "Can not write new note, file exists:\n\
+                         \t{:?}\n{}",
+                        new_fqfn, e
+                    )));
+                } else {
+                    return Err(anyhow!(format!(
+                        "Can not write file: {:?}\n{}",
+                        new_fqfn, e
+                    )));
+                }
+            }
+        }
+
+        Ok(new_fqfn)
     }
 }
 
@@ -237,12 +282,12 @@ mod tests {
 
     #[test]
     fn test_to_osstring() {
-        let content = Content::new("---first\r\n---\r\nsecond\r\nthird".to_string());
-        let s = content.to_osstring();
+        let content = Content::new("\r\nsecond\r\nthird".to_string());
+        let s = Content::to_osstring(content.body);
         #[cfg(target_family = "windows")]
-        assert_eq!(s.as_str(), "\u{feff}---\r\nfirst\r\n---\r\nsecond\r\nthird");
+        assert_eq!(s.as_str(), "\r\nsecond\r\nthird");
         #[cfg(not(target_family = "windows"))]
-        assert_eq!(s.as_str(), "\u{feff}---\nfirst\n---\nsecond\nthird");
+        assert_eq!(s.as_str(), "\nsecond\nthird");
     }
 
     #[test]

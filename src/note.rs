@@ -19,8 +19,6 @@ use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::env;
-use std::fs::OpenOptions;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 use tera::Tera;
 
@@ -418,39 +416,6 @@ impl Note<'_> {
         };
 
         Ok(fm)
-    }
-
-    /// Writes the note to disk with `new_fqfn`-filename.
-    pub fn write_to_disk(&self, new_fqfn: PathBuf) -> Result<PathBuf, anyhow::Error> {
-        let outfile = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&new_fqfn);
-        match outfile {
-            Ok(mut outfile) => {
-                if ARGS.debug {
-                    eprintln!("Creating file: {:?}", new_fqfn);
-                };
-                write!(outfile, "{}", &self.content.to_osstring())
-                    .with_context(|| format!("Can not write new file {:?}", new_fqfn))?
-            }
-            Err(e) => {
-                if Path::new(&new_fqfn).exists() {
-                    return Err(anyhow!(format!(
-                        "Can not write new note, file exists:\n\
-                         \t{:?}\n{}",
-                        new_fqfn, e
-                    )));
-                } else {
-                    return Err(anyhow!(format!(
-                        "Can not write file: {:?}\n{}",
-                        new_fqfn, e
-                    )));
-                }
-            }
-        }
-
-        Ok(new_fqfn)
     }
 }
 
