@@ -14,8 +14,7 @@ use std::pin::Pin;
 #[derive(Debug, PartialEq)]
 pub struct Content<'a> {
     /// The raw content as String, can be empty.
-    // TODO Pin here.
-    pub s: String,
+    s: String,
     /// Skip optional BOM and `"---" `in `s` until next `"---"`.
     /// When no `---` is found, this is empty.
     /// `header` is always trimmed.
@@ -91,6 +90,11 @@ impl<'a> Content<'a> {
             Pin::get_unchecked_mut(mut_ref).body = body;
         }
         c
+    }
+
+    /// True if the `Content` is empty.
+    pub fn is_empty(&self) -> bool {
+        self.s.is_empty()
     }
 
     /// On Windows machines it converts all `\r\n` to `\n`.
