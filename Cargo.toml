@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.7.4"
+version = "1.7.5"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
@@ -50,7 +50,7 @@ serde_json = "1.0.57"
 anyhow = "1.0.32"
 lazy_static = "1.4.0"
 chrono = "0.4.15"
-time = "0.2.20"
+time = "0.2.21"
 confy = "0.4.0"
 clap = "2.33.3"
 structopt = "0.3.17"

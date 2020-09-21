@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.7.4 | Tp-Note documentation
+% TP-NOTE(1) Version 1.7.5 | Tp-Note documentation
 
 
 # NAME
@@ -661,7 +661,7 @@ In addition _Tp-Note_ defines the following variables:
   undefined, when the corresponding YAML header variable is not present in the
   note's header.
 
-Except for '`{{ fm_title }}`', there is no guarantee, that any of the 
+Except for '`{{ fm_title }}`', there is no guarantee, that any of the
 '`{{ fm_* }}`' variables is defined! Depending on the last content template
 result, certain variables might be undefined. Please take into consideration,
 that a defined variable might contain the empty string '`""`'.
