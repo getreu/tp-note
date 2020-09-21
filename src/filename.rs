@@ -1,9 +1,49 @@
 //! Helper funtions that deal with filenames.
 extern crate sanitize_filename_reader_friendly;
 use crate::config::CFG;
+use crate::config::NOTE_FILENAME_LEN_MAX;
 use anyhow::{anyhow, Result};
 use std::path::Path;
 use std::path::PathBuf;
+
+/// Shortens the stem of a filename so that
+/// `file_stem.len()+file_extension.len() <= NOTE_FILENAME_LEN_MAX`
+pub fn shorten_filename(mut fqfn: PathBuf) -> PathBuf {
+    // Determine length of file-extension.
+    let note_extension = fqfn
+        .extension()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap_or_default();
+    let note_extension_len = note_extension.len();
+
+    // Limit length of file-stem.
+    let note_stem = fqfn
+        .file_stem()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap_or_default();
+
+    // Limit the size of `fqfn`
+    let mut note_stem_short = String::new();
+    // `+1` reserves one byte for `.` before the extension.
+    for i in (0..NOTE_FILENAME_LEN_MAX - (note_extension_len + 1)).rev() {
+        if let Some(s) = note_stem.get(..=i) {
+            note_stem_short = s.to_string();
+            break;
+        }
+    }
+
+    // Assemble.
+    let mut note_filename = note_stem_short;
+    note_filename.push('.');
+    note_filename.push_str(note_extension);
+
+    // Replace filename
+    fqfn.set_file_name(note_filename);
+
+    fqfn
+}
 
 /// When the path `p` exists on disk already, append some extension
 /// with an incrementing counter to the sort-tag in `p` until
@@ -129,6 +169,22 @@ pub fn append_copy_counter(stem: &str, n: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_shorten_filename() {
+        use std::ffi::OsString;
+        use std::path::PathBuf;
+
+        // Test short filename.
+        let input = PathBuf::from("long directory name/abc.ext");
+        let output = shorten_filename(input);
+        assert_eq!(OsString::from("long directory name/abc.ext"), output);
+
+        // Test long filename.
+        let input = PathBuf::from("long directory name/long filename.ext");
+        let output = shorten_filename(input);
+        assert_eq!(OsString::from("long directory name/long f.ext"), output);
+    }
 
     #[test]
     fn test_disassemble_filename() {

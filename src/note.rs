@@ -10,9 +10,9 @@ extern crate time;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
-use crate::config::NOTE_FILENAME_LEN_MAX;
 use crate::config::STDIN;
 use crate::content::Content;
+use crate::filename;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use anyhow::{anyhow, Context, Result};
@@ -327,46 +327,7 @@ impl Note<'_> {
                 .trim()
         });
 
-        Ok(Self::shorten_filename(fqfn))
-    }
-
-    /// Shortens the stem of a filename so that
-    /// `file_stem.len()+file_extension.len() <= NOTE_FILENAME_LEN_MAX`
-    fn shorten_filename(mut fqfn: PathBuf) -> PathBuf {
-        // Determine length of file-extension.
-        let note_extension = fqfn
-            .extension()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default();
-        let note_extension_len = note_extension.len();
-
-        // Limit length of file-stem.
-        let note_stem = fqfn
-            .file_stem()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default();
-
-        // Limit the size of `fqfn`
-        let mut note_stem_short = String::new();
-        // `+1` reserves one byte for `.` before the extension.
-        for i in (0..NOTE_FILENAME_LEN_MAX - (note_extension_len + 1)).rev() {
-            if let Some(s) = note_stem.get(..=i) {
-                note_stem_short = s.to_string();
-                break;
-            }
-        }
-
-        // Assemble.
-        let mut note_filename = note_stem_short;
-        note_filename.push('.');
-        note_filename.push_str(note_extension);
-
-        // Replace filename
-        fqfn.set_file_name(note_filename);
-
-        fqfn
+        Ok(filename::shorten_filename(fqfn))
     }
 
     /// Helper function deserializing the front-matter of an `.md`-file.
@@ -428,22 +389,6 @@ impl Note<'_> {
 mod tests {
     use super::FrontMatter;
     use super::Note;
-
-    #[test]
-    fn test_shorten_filename() {
-        use std::ffi::OsString;
-        use std::path::PathBuf;
-
-        // Test short filename.
-        let input = PathBuf::from("long directory name/abc.ext");
-        let output = Note::shorten_filename(input);
-        assert_eq!(OsString::from("long directory name/abc.ext"), output);
-
-        // Test long filename.
-        let input = PathBuf::from("long directory name/long filename.ext");
-        let output = Note::shorten_filename(input);
-        assert_eq!(OsString::from("long directory name/long f.ext"), output);
-    }
 
     #[test]
     fn test_deserialize() {
