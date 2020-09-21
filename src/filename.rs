@@ -9,7 +9,7 @@ use std::path::PathBuf;
 /// Shortens the stem of a filename so that
 /// `file_stem.len()+file_extension.len() <= NOTE_FILENAME_LEN_MAX`.
 /// If stem ends with a pattern similar to a copy counter,
-//  add `-` to stem.`
+/// append `-` to stem.
 pub fn shorten_filename(mut fqfn: PathBuf) -> PathBuf {
     // Determine length of file-extension.
     let note_extension = fqfn
@@ -27,10 +27,10 @@ pub fn shorten_filename(mut fqfn: PathBuf) -> PathBuf {
         .unwrap_or_default()
         .to_string();
 
-    // Does this stem looks similar to a copy?
+    // Does this stem ending look similar to a copy counter?
     if note_stem.len() != remove_copy_counter(&note_stem).len() {
-        // Add a separator.
-        note_stem.push('-');
+        // Add an additional separator.
+        note_stem.push_str(&CFG.copy_counter_extra_separator);
     };
 
     // Limit the size of `fqfn`
@@ -110,6 +110,7 @@ pub fn disassemble(p: &Path) -> (&str, &str, &str, &str) {
         .to_str()
         .unwrap_or_default();
 
+    // Trim `sort_tag`.
     let stem_copy_counter =
         file_stem.trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_');
 
@@ -199,7 +200,7 @@ mod tests {
         // This makes the filename problematic
         let mut input = append_copy_counter(input, 1);
         let mut expected = input.clone();
-        expected.push('-');
+        expected.push_str(&CFG.copy_counter_extra_separator);
 
         input.push_str(".ext");
         expected.push_str(".ext");

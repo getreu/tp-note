@@ -42,7 +42,15 @@ pub const NOTE_FILE_EXTENSIONS: &[&str] =
 /// Maximum length of a note's filename in bytes. If a filename-template produces
 /// a longer string, it will be truncated.
 #[cfg(not(test))]
-pub const NOTE_FILENAME_LEN_MAX: usize = 250;
+pub const NOTE_FILENAME_LEN_MAX: usize =
+    // Most filesystem's limit.
+    255
+    // Additional separator.
+    - COPY_COUNTER_EXTRA_SEPARATOR.len()
+    // Additional copy counter.
+    - COPY_COUNTER_OPENING_BRACKETS.len() - 2 - COPY_COUNTER_CLOSING_BRACKETS.len()
+    // Extra spare bytes, in case the user's copy counter is longer.
+    - 6;
 #[cfg(test)]
 pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 
@@ -385,16 +393,23 @@ const ENABLE_READ_CLIPBOARD: bool = true;
 /// Default value.
 const ENABLE_EMPTY_CLIPBOARD: bool = true;
 
+/// If the stem of a filename ends with a pattern, that is similar
+/// to a copy counter, add this extra separator. Must be `-`, `_`
+/// or any combination of both. Shorter looks better.
+const COPY_COUNTER_EXTRA_SEPARATOR: &str = "-";
+
 /// Tp-Note may add a counter at the end of the filename when
 /// it can not save a file because the name is taken already.
 /// This is the opening bracket search pattern. Some examples:
 /// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
+/// Can be empty.
 const COPY_COUNTER_OPENING_BRACKETS: &str = "(";
 
 /// Tp-Note may add a counter at the end of the filename when
 /// it can not save a file because the name is taken already.
 /// This is the closing bracket search pattern. Some examples:
 /// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
+/// Can be empty.
 const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
 
 #[derive(Debug, PartialEq, StructOpt)]
@@ -461,6 +476,7 @@ pub struct Cfg {
     pub viewer_console_args: Vec<Vec<String>>,
     pub enable_read_clipboard: bool,
     pub enable_empty_clipboard: bool,
+    pub copy_counter_extra_separator: String,
     pub copy_counter_opening_brackets: String,
     pub copy_counter_closing_brackets: String,
 }
@@ -509,6 +525,7 @@ impl ::std::default::Default for Cfg {
                 .collect(),
             enable_read_clipboard: ENABLE_READ_CLIPBOARD,
             enable_empty_clipboard: ENABLE_EMPTY_CLIPBOARD,
+            copy_counter_extra_separator: COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
             copy_counter_opening_brackets: COPY_COUNTER_OPENING_BRACKETS.to_string(),
             copy_counter_closing_brackets: COPY_COUNTER_CLOSING_BRACKETS.to_string(),
         }

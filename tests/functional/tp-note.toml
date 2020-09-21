@@ -180,5 +180,6 @@ viewer_console_args = [
 ]
 enable_read_clipboard = true
 enable_empty_clipboard = true
+copy_counter_extra_separator = '-'
 copy_counter_opening_brackets = '('
 copy_counter_closing_brackets = ')'
