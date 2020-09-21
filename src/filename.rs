@@ -7,7 +7,9 @@ use std::path::Path;
 use std::path::PathBuf;
 
 /// Shortens the stem of a filename so that
-/// `file_stem.len()+file_extension.len() <= NOTE_FILENAME_LEN_MAX`
+/// `file_stem.len()+file_extension.len() <= NOTE_FILENAME_LEN_MAX`.
+/// If stem ends with a pattern similar to a copy counter,
+//  add `-` to stem.`
 pub fn shorten_filename(mut fqfn: PathBuf) -> PathBuf {
     // Determine length of file-extension.
     let note_extension = fqfn
@@ -18,11 +20,18 @@ pub fn shorten_filename(mut fqfn: PathBuf) -> PathBuf {
     let note_extension_len = note_extension.len();
 
     // Limit length of file-stem.
-    let note_stem = fqfn
+    let mut note_stem = fqfn
         .file_stem()
         .unwrap_or_default()
         .to_str()
-        .unwrap_or_default();
+        .unwrap_or_default()
+        .to_string();
+
+    // Does this stem looks similar to a copy?
+    if note_stem.len() != remove_copy_counter(&note_stem).len() {
+        // Add a separator.
+        note_stem.push('-');
+    };
 
     // Limit the size of `fqfn`
     let mut note_stem_short = String::new();
@@ -184,6 +193,19 @@ mod tests {
         let input = PathBuf::from("long directory name/long filename.ext");
         let output = shorten_filename(input);
         assert_eq!(OsString::from("long directory name/long f.ext"), output);
+
+        // Test concatenation of extra `-` if it ends with a copy counter pattern.
+        let input = "fn";
+        // This makes the filename problematic
+        let mut input = append_copy_counter(input, 1);
+        let mut expected = input.clone();
+        expected.push('-');
+
+        input.push_str(".ext");
+        expected.push_str(".ext");
+
+        let output = shorten_filename(PathBuf::from(input));
+        assert_eq!(OsString::from(expected), output);
     }
 
     #[test]
