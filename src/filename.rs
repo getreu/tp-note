@@ -91,10 +91,8 @@ pub fn assemble(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str)
     filename
 }
 
-/// Helper function that trims the pattern `_-n-_` at the end of string matching
-/// `*_-n-_`, where `n` is an integer.
-/// When the pattern is not found return the whole string.
-/// Do the same if the string ends with `-_n_-`.
+/// Helper function that trims the copy counter at the end of string.
+/// If there is none, return the same.
 #[inline]
 pub fn remove_copy_counter(tag: &str) -> &str {
     // Strip `sepsepend` at the end.
@@ -118,18 +116,14 @@ pub fn remove_copy_counter(tag: &str) -> &str {
     tag3
 }
 
-/// When the string ends with `_` append the string `_-n-_`, where `n` is an integer.
-/// Otherwise append `-_n_-`.
-/// Before appending, remove all trailing `_` and `-`.
+/// Append a copy counter to the string.
 #[inline]
-pub fn append_copy_counter(tag: &str, n: usize) -> String {
-    // Remove more separators, if they exist.
-    let mut tag = tag.trim_end_matches(|c| c == '_' || c == '-').to_string();
-    // Append sort-tag extension.
-    tag.push_str(&CFG.copy_counter_opening_brackets);
-    tag.push_str(&n.to_string());
-    tag.push_str(&CFG.copy_counter_closing_brackets);
-    tag
+pub fn append_copy_counter(stem: &str, n: usize) -> String {
+    let mut stem = stem.to_string();
+    stem.push_str(&CFG.copy_counter_opening_brackets);
+    stem.push_str(&n.to_string());
+    stem.push_str(&CFG.copy_counter_closing_brackets);
+    stem
 }
 
 #[cfg(test)]
@@ -151,7 +145,7 @@ mod tests {
     }
 
     #[test]
-    fn test_remove_sort_tag_extension() {
+    fn test_remove_copy_counter() {
         // Pattern found and removed.
         let expected = "my_stem";
         let result = remove_copy_counter("my_stem(78)");
@@ -183,22 +177,6 @@ mod tests {
     fn test_append_sort_tag_extension() {
         let expected = "my_stem(987)";
         let result = append_copy_counter("my_stem", 987);
-        assert_eq!(expected, result);
-
-        let expected = "my_stem(987)";
-        let result = append_copy_counter("my_stem_", 987);
-        assert_eq!(expected, result);
-
-        let expected = "my_stem(987)";
-        let result = append_copy_counter("my_stem___", 987);
-        assert_eq!(expected, result);
-
-        let expected = "my_stem(987)";
-        let result = append_copy_counter("my_stem-", 987);
-        assert_eq!(expected, result);
-
-        let expected = "my_stem(987)";
-        let result = append_copy_counter("my_stem-_---", 987);
         assert_eq!(expected, result);
     }
     #[test]
