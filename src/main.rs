@@ -239,8 +239,8 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
         };
 
         // Check if this is a `flatpak run <app>` command.
-        if executable_list[i].find("flatpak").is_some()
-            && args_list[i].len() == 3
+        if executable_list[i].starts_with("flatpak")
+            && args_list[i].len() >= 3
             && args_list[i][0] == "run"
         {
             // Check if the flatpak is installed on this system with `flatpak info <app>`.
