@@ -534,6 +534,7 @@ lazy_static! {
     };
 }
 
+#[cfg(not(test))]
 lazy_static! {
     /// Reads and parses the configuration file "tp-note.toml". An alternative
     /// filename (optionally with absolute path) can be given on the command line
@@ -554,6 +555,11 @@ lazy_static! {
             c.version = "default values".to_string();
             c
         });
+}
+
+#[cfg(test)]
+lazy_static! {
+    pub static ref CFG: Cfg = Cfg::default();
 }
 
 lazy_static! {
