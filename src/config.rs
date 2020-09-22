@@ -612,11 +612,6 @@ pub fn backup_config_file() -> Result<PathBuf, anyhow::Error> {
 
 lazy_static! {
     /// Reads the input stream stdin if there is any.
-    /// The stdin data is stored in `STDIN.1`.
-    /// The first variable of the tuple `STDIN.0` contains the
-    /// YAML header if there is any in the input data.
-    /// In this case `STDIN.1` contains only the body of
-    /// the data without header.
     pub static ref STDIN: Pin<Box<Content<'static>>> = {
         let mut buffer = String::new();
 
@@ -639,11 +634,6 @@ lazy_static! {
 
 lazy_static! {
     /// Reads the clipboard, if there is any and empties it.
-    /// The clipboard's data is stored in `CLIPBOARD.1`.
-    /// The first variable of the tuple `CLIPBOARD.0` contains the
-    /// YAML header if there is any in the input data.
-    /// In this case `CLIPBOARD.1` contains only the body of
-    /// the data without header.
     pub static ref CLIPBOARD: Pin<Box<Content<'static>>> = {
         let mut buffer = String::new();
 

@@ -12,15 +12,20 @@ your notes with your favourite editor and chose your favourite markup
 language[^1].
 
 _Tp-Note_ helps you to quickly get started writing notes with its powerful
-template system. As _Tp-Note_ takes care that the note's filename is always
-synchronized with its document title, you will find back your notes easily.
+template system. If you like to keep your notes next to your files and you care
+about expressive filenames, then _Tp-Note_ might be the tool of your choice.
+As _Tp-Note_ synchronizes the note's filename with its document title, you
+will find back your notes easily.
 
 _Tp-Note_ is available for Linux, Windows and iOS. This manual illustrates
 its main use-cases and how to get started:
 
 1. Fast start note-taking (when the lecture starts).
-2. Take a note about an existing (downloaded) file.
+2. Take a note about an existing or downloaded file.
 3. Bookmark and comment a hyperlink.
+4. Copy and annotate a page from a book.
+5. Best practise.
+6. Note taking for system administrators.
 
 If you want to customize _Tp-Note_ with own templates, another markup
 language, please consult the [man-page] for more technical details.
@@ -275,7 +280,7 @@ disk.
 [Copy Selection as Markdown]: https://addons.mozilla.org/en-GB/firefox/addon/copy-selection-as-markdown/?src=search
 
 
-## Note taking for system administrators
+## Note taking for system administrators (and console lovers)
 
 As _Tp-Note_ makes extensive use of the clipboard, it mainly targets desktop systems running
 a graphical environment. But also when working on the console _Tp-Note_ can be useful.
@@ -402,13 +407,13 @@ part of the *sort-tag* when they appear in first or last position.
 Depending on the operating system, the installation process is more
 or less automated and can be divided up into two steps:
 
-1. Binary installation\
+1. [Minimum setup with no file manager integration]\
    This step consists of downloading _Tp-Note_'s binary and copying it to your hard-disk.
    See section [Distribution](https://blog.getreu.net/projects/tp-note/#distribution)
    on _Tp-Note_'s [project page](https://blog.getreu.net/projects/tp-note/#distribution)
    for a list of available packages and binaries.
 
-2. Optional integration with your file mananger.
+2. [Optional integration with your file manager].
 
 At the moment of this writing, an installer automating steps 1. and 2. is available for
 Windows only. Packages for Debian Linux and Ubuntu help you with step 1. For other operating
@@ -422,7 +427,7 @@ yourself.
 <?dbfo-need height="6cm" ?>
 ```
 
-## Minimum setup without file manager integration
+## Minimum setup with no file manager integration
 
 _Tp-Note_'s template engine can be tested and used without window manager integration. This
 section shows a minimum setup to get started quickly.[^inst]
@@ -457,10 +462,11 @@ folder or file and drop it on the _to-note_-icon. This opens an editor with
 your new note.
 
 For more comfort, I recommend integrating _Tp-Note_ into the file-manager's
-context menu. See section [Integration with file manager] for more details.
-There you also will find a list of tested Markdown-editors, if you wish to use
-one. _Tp-Note_ works with every Unicode text editor and Markdown-editor (see
-section [Optional customization] and man-page for more details).
+context menu. See section [Optional integration with your file manager] for
+more details.  There you also will find a list of tested Markdown-editors, if
+you wish to use one. _Tp-Note_ works with every Unicode text editor and
+Markdown-editor (see section [Optional customization] and man-page for more
+details).
 
 _Tp-Note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
 [Pandoc](https://pandoc.org/) and then printed.

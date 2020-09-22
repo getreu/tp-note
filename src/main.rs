@@ -100,9 +100,10 @@ fn synchronize_filename(path: PathBuf) -> Result<PathBuf, anyhow::Error> {
 }
 
 #[inline]
-/// Create a new note by inserting `tp-note`'s environment in a template.
-/// If the note to be created exists already, open it, read the YAML front
-/// matter and synchronize the filename if necessary.
+/// Create a new note by inserting `Tp-Note`'s environment in a template.
+/// If the note to be created exists already, append a so called `copy_counter`
+/// to the filename and try to save it again. In case this does not succeed either,
+/// increment the `copy_counter` until a free filename is found.
 fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, anyhow::Error> {
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.

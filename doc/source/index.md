@@ -11,7 +11,9 @@ https://github.com/getreu/tp-note)
 
 _Tp-Note_ is a note-taking-tool and a template system - freely available for
 Windows, MacOS and Linux - that consistently synchronizes the note’s meta-data
-with its filename. _Tp-Note_ collects various information about its environment
+with its filename. If you like to keep your notes next to your files and you
+care about expressive filenames, then _Tp-Note_ might be the tool of your choice.
+_Tp-Note_ collects various information about its environment
 and the clipboard and stores them in variables. New notes are created by
 filling these variables in predefined and customizable _Tera_-templates.
 _TP-Note's_ default templates are written in Markdown and can be easily adapted
