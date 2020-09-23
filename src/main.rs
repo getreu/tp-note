@@ -405,12 +405,13 @@ fn main() {
     // in `CFG.version` which is intentionally parsable.
     let version = Version::parse(&CFG.version).unwrap_or_else(|_| {
         AlertDialog::print_error(
-            "ERROR: unable to load, parse or write the configuration file\n\
+            "NOTE: unable to load, parse or write the configuration file\n\
                 ---\n\
                 Note: this error may occur after upgrading Tp-Note due\n\
                 to some incompatible configuration file changes.\n\
                 \n\
-                Please restart Tp-Note to create a new configuration file\n\
+                For now, Tp-Note backs up the existing configuration\n\
+                file and next time it starts, it will create a new one\n\
                 with default values.",
         );
         if let Err(e) = backup_config_file() {
@@ -422,20 +423,24 @@ fn main() {
                 Please do it manually.",
                 e
             ));
+            process::exit(5);
         };
-        process::exit(5);
+
+        // As we just created the config file, version is VERSION.
+        Version::parse(VERSION.unwrap_or("0.0.0")).unwrap_or(Version::new(0, 0, 0))
     });
 
     // Is version number in the configuration file high enough?
     if version < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0")).unwrap() {
         AlertDialog::print_error(&format!(
-            "ERROR: configuration file version mismatch:\n---\n\
+            "NOTE: configuration file version mismatch:\n---\n\
                 Configuration file version: \'{}\'\n\
                 Tp-Note version: \'{}\'\n\
                 Minimum required configuration file version: \'{}\'\n\
                 \n\
-                Please restart Tp-Note to create a new configuration file\n\
-                compatible with this version of Tp-Note.",
+                For now, Tp-Note backs up the existing configuration\n\
+                file and next time it starts, it will create a new one\n\
+                with default values.",
             CFG.version,
             VERSION.unwrap_or(""),
             MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"),
@@ -449,8 +454,8 @@ fn main() {
                 Please do it manually.",
                 e
             ));
+            process::exit(5);
         };
-        process::exit(5);
     };
 
     // Run Tp-Note.
