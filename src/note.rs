@@ -180,7 +180,7 @@ impl Note<'_> {
             || (!STDIN.header.is_empty() && stdin_fm.is_none())
         {
             return Err(anyhow!(format!(
-                "no field `title: \"<String>\"` in the clipboard's YAML\n\
+                "invalid field(s) in the clipboard's YAML\n\
                      header or in the `stdin` input stream found.
                      {}{}{}{}{}{}",
                 if !CLIPBOARD.header.is_empty() {
