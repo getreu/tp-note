@@ -629,6 +629,15 @@ In addition _Tp-Note_ defines the following variables:
 * '`{{ username }}`' is the content of the first non-empty environment
   variable: `LOGNAME`, `USER` or `USERNAME`.
 
+The following '`{{ fm_* }}`' variables are typically generated, when a content
+template is filled in with data: For example a field named '`title:`' in the
+content template '`tmpl_new_content`' will generate the variable '`fm_title`'
+which can then be used in the corresponding '`tmpl_new_filename`' filename
+template.
+
+Please note that '`{{ fm_* }}`' variables are available in all filename
+templates and in the '`tmpl_copy_content`' content template only.
+
 * '`{{ fm_title }}`' is the '`title:`' as indicated in the YAML front matter of
   the note (only available in filename-templates and in '`tmpl_copy_content`').
 
@@ -661,10 +670,10 @@ In addition _Tp-Note_ defines the following variables:
   undefined, when the corresponding YAML header variable is not present in the
   note's header.
 
-Except for '`{{ fm_title }}`', there is no guarantee, that any of the
-'`{{ fm_* }}`' variables is defined! Depending on the last content template
-result, certain variables might be undefined. Please take into consideration,
-that a defined variable might contain the empty string '`""`'.
+Important: there is no guarantee, that any of the '`{{ fm_* }}`' variables is
+defined! Depending on the last content template result, certain variables might
+be undefined. Please take into consideration, that a defined variable might
+contain the empty string '`""`'.
 
 
 ## Template filters
