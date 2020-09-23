@@ -159,35 +159,36 @@ configuration file structure. In order not to loose the changes you made in
 this file, the installer does not replace it automatically with a new version.
 Instead, _Tp-Note_ renames the erroneous configuration file and prompts:
 
-    ERROR: configuration file version mismatch:
+    NOTE: configuration file version mismatch:
     ---
-    Configuration file version: '1.7.0'
-    Tp-Note version: '1.7.1'
-    Minimum required configuration file version: '1.7.1'
+    Configuration file version: '1.7.2'
+    Tp-Note version: '1.7.4'
+    Minimum required configuration file version: '1.7.4'
 
-    Please restart Tp-Note to create a new configuration file
-    compatible with this version of Tp-Note.
+    For now, Tp-Note backs up the existing configuration
+    file and next time it starts, it will create a new one
+    with default values.
     ---
     Additional technical details:
     *    Command line parameters:
-    target/debug/tp-note
+    tp-note
     *    Configuration file path:
     /home/getreu/.config/tp-note/tp-note.tomll
 
 or
 
-    ERROR: configuration file version mismatch:
+    NOTE: unable to load, parse or write the configuration file
     ---
-    Configuration file version: '1.7.0'
-    Tp-Note version: '1.7.1'
-    Minimum required configuration file version: '1.7.1'
+    Note: this error may occur after upgrading Tp-Note due
+    to some incompatible configuration file changes.
 
-    Please restart Tp-Note to create a new configuration file
-    compatible with this version of Tp-Note.
+    For now, Tp-Note backs up the existing configuration
+    file and next time it starts, it will create a new one
+    with default values.
     ---
     Additional technical details:
     *    Command line parameters:
-    target/debug/tp-note
+    tp-note
     *    Configuration file path:
     /home/getreu/.config/tp-note/tp-note.toml
 
