@@ -375,6 +375,7 @@ mod tests {
     use super::FrontMatter;
     use super::Note;
     use std::collections::BTreeMap;
+    use tera::Value;
 
     #[test]
     fn test_deserialize() {
@@ -384,20 +385,26 @@ mod tests {
         author: It's me
         date: 2020-04-21
         lang: en
-        revision: 1.0
+        revision: '1.0'
         sort_tag: 20200420-21_22
         file_ext: md
         ";
 
         let mut expected = BTreeMap::new();
-        expected.insert("title".to_string(), "The book".to_string());
-        expected.insert("subtitle".to_string(), "you always wanted".to_string());
-        expected.insert("author".to_string(), "It\'s me".to_string());
-        expected.insert("date".to_string(), "2020-04-21".to_string());
-        expected.insert("lang".to_string(), "en".to_string());
-        expected.insert("revision".to_string(), "1.0".to_string());
-        expected.insert("sort_tag".to_string(), "20200420-21_22".to_string());
-        expected.insert("file_ext".to_string(), "md".to_string());
+        expected.insert("title".to_string(), Value::String("The book".to_string()));
+        expected.insert(
+            "subtitle".to_string(),
+            Value::String("you always wanted".to_string()),
+        );
+        expected.insert("author".to_string(), Value::String("It\'s me".to_string()));
+        expected.insert("date".to_string(), Value::String("2020-04-21".to_string()));
+        expected.insert("lang".to_string(), Value::String("en".to_string()));
+        expected.insert("revision".to_string(), Value::String("1.0".to_string()));
+        expected.insert(
+            "sort_tag".to_string(),
+            Value::String("20200420-21_22".to_string()),
+        );
+        expected.insert("file_ext".to_string(), Value::String("md".to_string()));
 
         let expected_front_matter = FrontMatter { map: expected };
 
