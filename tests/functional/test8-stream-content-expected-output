@@ -4,8 +4,8 @@ subtitle:   "bbb"
 author:     "myuser"
 lang:       "en"
 revision:   "2.0"
-sort_tag:   "222-"
-file_ext:   "mdtxt"
+file_ext:		"mdtxt"
+sort_tag:		"222-"
 ---
 
 EOF

@@ -113,7 +113,13 @@ author:     {{ fm_author | default(value=username) | json_encode }}
 date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
 lang:       {{ fm_lang | default(value = get_env(name='LANG', default='')) | json_encode }}
 revision:   {{ fm_revision | default(value = '1.0') | json_encode }}
-{% for k, v in fm_all %}\
+{% for k, v in fm_all\
+ | remove(var='fm_title')\
+ | remove(var='fm_subtitle')\
+ | remove(var='fm_author')\
+ | remove(var='fm_date')\
+ | remove(var='fm_lang')\
+ | remove(var='fm_revision') %}\
 {{ k }}:\t\t{{ v | json_encode }}
 {% endfor %}\
 ---

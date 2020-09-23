@@ -33,6 +33,7 @@ lazy_static! {
         tera.register_filter("stem", stem_filter);
         tera.register_filter("ext", ext_filter);
         tera.register_filter("prepend_dot", prepend_dot_filter);
+        tera.register_filter("remove", remove_filter);
         tera
     };
 }
@@ -219,7 +220,25 @@ pub fn ext_filter<S: BuildHasher>(
         .to_str()
         .unwrap_or_default();
 
-    Ok(to_value(&ext).unwrap())
+    Ok(to_value(&ext).unwrap_or_default())
+}
+
+/// A Tera filter that takes a list of variables and remove
+/// one.
+pub fn remove_filter<S: BuildHasher>(
+    value: &Value,
+    args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let mut map = try_get_value!("remove", "value", tera::Map<String, tera::Value>, value);
+
+    let var = match args.get("var") {
+        Some(val) => try_get_value!("remove", "var", String, val),
+        None => "".to_string(),
+    };
+
+    let _ = map.remove(var.trim_start_matches("fm_"));
+
+    Ok(to_value(&map).unwrap_or_default())
 }
 
 /// Tiny wrapper around Tera-context with some additional information.

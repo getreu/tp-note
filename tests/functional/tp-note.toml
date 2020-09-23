@@ -28,9 +28,8 @@ author:     {{ fm_author | default(value=username) | json_encode }}
 date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
 lang:       {{ fm_lang | default(value = get_env(name='LANG', default='')) | json_encode }}
 revision:   {{ fm_revision | default(value = '1.0') | json_encode }}
-{% if fm_sort_tag %}sort_tag:   {{ fm_sort_tag | json_encode }}
-{% endif %}{% if fm_file_ext %}file_ext:   {{ fm_file_ext | json_encode }}
-{% endif %}---
+{% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle')| remove(var='fm_author')| remove(var='fm_date')| remove(var='fm_lang')| remove(var='fm_revision') %}{{ k }}:		{{ v | json_encode }}
+{% endfor %}---
 
 {{ stdin ~ clipboard }}
 
