@@ -107,7 +107,7 @@ const TMPL_NEW_FILENAME: &str = "\
 /// appended to each variable.
 const TMPL_COPY_CONTENT: &str = "\
 ---
-title:      {{ fm_title | cut | json_encode }}
+title:      {{ fm_title | default(value='New Note') | cut | json_encode }}
 subtitle:   {{ fm_subtitle | default(value='') | cut | json_encode }}
 author:     {{ fm_author | default(value=username) | json_encode }}
 date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
