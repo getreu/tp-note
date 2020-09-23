@@ -342,6 +342,7 @@ impl Note<'_> {
 mod tests {
     use super::FrontMatter;
     use super::Note;
+    use std::collections::BTreeMap;
 
     #[test]
     fn test_deserialize() {
@@ -352,110 +353,35 @@ mod tests {
         date: 2020-04-21
         lang: en
         revision: 1.0
+        sort_tag: 20200420-21_22
+        file_ext: md
         ";
 
-        let expected_front_matter = FrontMatter {
-            title: "The book".to_string(),
-            subtitle: Some("you always wanted".to_string()),
-            author: Some("It's me".to_string()),
-            date: Some("2020-04-21".to_string()),
-            lang: Some("en".to_string()),
-            revision: Some("1.0".to_string()),
-            sort_tag: None,
-            file_ext: None,
-        };
+        let mut expected = BTreeMap::new();
+        expected.insert("title".to_string(), "The book".to_string());
+        expected.insert("subtitle".to_string(), "you always wanted".to_string());
+        expected.insert("author".to_string(), "It\'s me".to_string());
+        expected.insert("date".to_string(), "2020-04-21".to_string());
+        expected.insert("lang".to_string(), "en".to_string());
+        expected.insert("revision".to_string(), "1.0".to_string());
+        expected.insert("sort_tag".to_string(), "20200420-21_22".to_string());
+        expected.insert("file_ext".to_string(), "md".to_string());
+
+        let expected_front_matter = FrontMatter { map: expected };
 
         assert_eq!(
             expected_front_matter,
             Note::deserialize_header(&input).unwrap()
         );
 
-        // Front matter can also end with '---'
-
-        let input = "# document start
-        title: \"The book\"
-        subtitle: you always wanted
-        author: It's me";
-
-        let expected_front_matter = FrontMatter {
-            title: "The book".to_string(),
-            subtitle: Some("you always wanted".to_string()),
-            author: Some("It's me".to_string()),
-            date: None,
-            lang: None,
-            revision: None,
-            sort_tag: None,
-            file_ext: None,
-        };
-
-        assert_eq!(
-            expected_front_matter,
-            Note::deserialize_header(&input).unwrap()
-        );
-
-        // Front matter can optionally have a tag and an extension
-
-        let input = "# document start
-        title: \"The book\"
-        subtitle: you always wanted
-        author: It's me
-        sort_tag: 20200420-21_22
-        file_ext: md";
-
-        let expected_front_matter = FrontMatter {
-            title: "The book".to_string(),
-            subtitle: Some("you always wanted".to_string()),
-            sort_tag: Some("20200420-21_22".to_string()),
-            file_ext: Some("md".to_string()),
-            author: Some("It's me".to_string()),
-            date: None,
-            lang: None,
-            revision: None,
-        };
-
-        assert_eq!(
-            expected_front_matter,
-            Note::deserialize_header(&input).unwrap()
-        );
-
+        //
         // Is empty.
 
         let input = "";
 
         assert!(Note::deserialize_header(&input).is_err());
 
-        // Missing title
-
-        let input = "# document start
-        titlxxx: The book
-        subtitle: you always wanted
-        author: It's me";
-
-        assert!(Note::deserialize_header(&input).is_err());
-
-        // Missing subtitle
-
-        let input = "# document start
-        title: The book
-        subtitlxxx: you always wanted
-        author: It's me";
-
-        let expected_front_matter = FrontMatter {
-            title: "The book".to_string(),
-            subtitle: None,
-            author: Some("It's me".to_string()),
-            date: None,
-            lang: None,
-            revision: None,
-            sort_tag: None,
-            file_ext: None,
-        };
-
-        assert_eq!(
-            expected_front_matter,
-            Note::deserialize_header(&input).unwrap()
-        );
-
+        //
         // forbidden character `x` in `tag`.
 
         let input = "# document start
@@ -463,6 +389,18 @@ mod tests {
         subtitle: you always wanted
         author: It's me
         sort_tag:    123x4";
+
+        assert!(Note::deserialize_header(&input).is_err());
+
+        //
+        // Not registered file extension.
+
+        let input = "# document start
+        title: The book
+        subtitle: you always wanted
+        author: It's me
+        sort_tag:    123x4
+        file_ext:    xyz";
 
         assert!(Note::deserialize_header(&input).is_err());
     }
