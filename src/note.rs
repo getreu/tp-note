@@ -237,11 +237,15 @@ impl Note<'_> {
 
     /// Copies the YAML front header variable in the context for later use with templates.
     fn register_front_matter(context: &mut ContextWrapper, fm: &FrontMatter) {
+        let mut tera_map = tera::Map::new();
         for (name, val) in &fm.map {
+            tera_map.insert(name.to_string(), tera::Value::String(val.to_string()));
             let mut var_name = "fm_".to_string();
             var_name.push_str(name.as_str());
             context.insert(&var_name, &val);
         }
+        // Register them all together as `Object(Map<String, Value>)`.
+        context.insert_map("fm_all", tera_map);
     }
 
     /// Applies a Tera-template to the notes context in order to generate a

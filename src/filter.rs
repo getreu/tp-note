@@ -241,10 +241,15 @@ impl ContextWrapper {
         }
     }
 
-    /// Function that forwards a `kay-value` to the encapsulated `
+    /// Function that inserts a `kay-value` using the encapsulated `
     /// tera::Context::insert()` function.
     pub fn insert(&mut self, key: &str, val: &str) {
-        // The first version is the unmodified variable `<key>` with original <val>.
+        self.ct.insert(key, &val);
+    }
+
+    /// Function that inserts a `tera::Map` using the encapsulated `
+    /// tera::Context::insert()` function.
+    pub fn insert_map(&mut self, key: &str, val: tera::Map<String, tera::Value>) {
         self.ct.insert(key, &val);
     }
 }
