@@ -225,15 +225,15 @@ impl Note<'_> {
             )));
         };
 
-        // Register stdin front matter.
-        // Variables can be overwrittern by clipboard frontmatter.
-        if let Some(fm) = stdin_fm {
+        // Register clipboard front matter.
+        if let Some(fm) = clipboard_fm {
             // Register YAML header variable `title`. We know, it exists.
             Self::register_front_matter(&mut context, &fm);
         }
 
-        // Register clipboard front matter.
-        if let Some(fm) = clipboard_fm {
+        // Register stdin front matter.
+        // Variables can be overwrittern by clipboard frontmatter.
+        if let Some(fm) = stdin_fm {
             // Register YAML header variable `title`. We know, it exists.
             Self::register_front_matter(&mut context, &fm);
         }
