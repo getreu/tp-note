@@ -40,7 +40,7 @@ pub struct Note<'a> {
 #[derive(Debug, PartialEq, Default)]
 /// Represents the front matter of the note.
 struct FrontMatter {
-    map: BTreeMap<String, String>,
+    map: BTreeMap<String, tera::Value>,
 }
 
 use std::fs;
@@ -236,15 +236,42 @@ impl Note<'_> {
     }
 
     /// Copies the YAML front header variable in the context for later use with templates.
+    /// We register only `tera::Value` types that can be converted to a String.
+    /// If there is a list, concatente its items with `, ` and register the result
+    /// as a flat string.
     fn register_front_matter(context: &mut ContextWrapper, fm: &FrontMatter) {
         let mut tera_map = tera::Map::new();
         for (name, val) in &fm.map {
+            let val = match val {
+                tera::Value::String(val) => val.to_string(),
+                tera::Value::Number(n) => n.to_string(),
+                tera::Value::Bool(b) => b.to_string(),
+                tera::Value::Array(a) => {
+                    let mut val = String::new();
+                    for v in a {
+                        let s = match v {
+                            tera::Value::String(v) => v.to_string(),
+                            tera::Value::Number(n) => n.to_string(),
+                            tera::Value::Bool(b) => b.to_string(),
+                            _ => continue,
+                        };
+                        val.push_str(&s);
+                        val.push_str(", ");
+                    }
+                    val.trim_end_matches(", ").to_string()
+                }
+                _ => continue,
+            };
+
+            // We keep a copy for the `fm_all` variable.
             tera_map.insert(name.to_string(), tera::Value::String(val.to_string()));
+
+            // Here we register `fm_<var_name>`.
             let mut var_name = "fm_".to_string();
             var_name.push_str(name.as_str());
-            context.insert(&var_name, &val);
+            context.insert(&var_name, &*val);
         }
-        // Register them all together as `Object(Map<String, Value>)`.
+        // Register the collection as `Object(Map<String, Value>)`.
         context.insert_map("fm_all", tera_map);
     }
 
@@ -292,11 +319,12 @@ impl Note<'_> {
             return Err(anyhow!("no YAML front matter found"));
         };
 
-        let map: BTreeMap<String, String> = serde_yaml::from_str(&header)?;
+        let map: BTreeMap<String, tera::Value> = serde_yaml::from_str(&header)?;
         let fm = FrontMatter { map };
 
         // `sort_tag` has additional constrains to check.
-        if let Some(sort_tag) = &fm.map.get("sort_tag") {
+
+        if let Some(tera::Value::String(sort_tag)) = &fm.map.get("sort_tag") {
             if !sort_tag.is_empty() {
                 // Check for forbidden characters.
                 if sort_tag
@@ -316,10 +344,10 @@ impl Note<'_> {
 
         // `extension` has also additional constrains to check.
         // Is `extension` listed in `CFG.note_file_extension`?
-        if let Some(extension) = &fm.map.get("file_ext") {
+        if let Some(tera::Value::String(extension)) = &fm.map.get("file_ext") {
             let mut extension_is_known = false;
             for e in &CFG.note_file_extensions {
-                if e == *extension {
+                if *e == *extension {
                     extension_is_known = true;
                     break;
                 }
