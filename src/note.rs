@@ -16,7 +16,7 @@ use crate::filename;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use anyhow::{anyhow, Context, Result};
-use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::default::Default;
 use std::env;
 use std::path::{Path, PathBuf};
@@ -37,27 +37,10 @@ pub struct Note<'a> {
     pub content: Pin<Box<Content<'a>>>,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Debug, PartialEq, Default)]
 /// Represents the front matter of the note.
 struct FrontMatter {
-    /// The note's compulsory title.
-    title: String,
-    /// The note's optional subtitle.
-    subtitle: Option<String>,
-    /// Optional YAML header variable.
-    author: Option<String>,
-    /// Optional YAML header variable.
-    date: Option<String>,
-    /// Optional YAML header variable.
-    lang: Option<String>,
-    /// Optional YAML header variable.
-    revision: Option<String>,
-    /// Optional YAML header variable. If not defined in front matter,
-    /// the file name's sort tag `file | tag` is used.
-    sort_tag: Option<String>,
-    /// Optional YAML header variable. If not defined in front matter,
-    /// the file name's extension `file | ext` is used.
-    file_ext: Option<String>,
+    map: BTreeMap<String, String>,
 }
 
 use std::fs;
@@ -74,7 +57,7 @@ impl Note<'_> {
         let mut context = Self::capture_environment(&path)?;
 
         // deserialize the note read from disk
-        let fm = Note::deserialize_note(content.header)?;
+        let fm = Note::deserialize_header(content.header)?;
 
         Self::register_front_matter(&mut context, &fm);
 
@@ -132,7 +115,7 @@ impl Note<'_> {
         };
 
         // deserialize the rendered template
-        let fm = Note::deserialize_note(content.header)?;
+        let fm = Note::deserialize_header(content.header)?;
 
         Self::register_front_matter(&mut context, &fm);
 
@@ -175,7 +158,7 @@ impl Note<'_> {
 
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
-        let stdin_fm = Self::deserialize_note(STDIN.header).ok();
+        let stdin_fm = Self::deserialize_header(STDIN.header).ok();
         if ARGS.debug && stdin_fm.is_some() {
             eprintln!(
                 "*** Debug: YAML front matter in the input stream stdin found:\n{:#?}",
@@ -185,7 +168,7 @@ impl Note<'_> {
 
         // Can we find a front matter in the clipboard? If yes, the unmodified
         // clipboard data is our new note content.
-        let clipboard_fm = Self::deserialize_note(CLIPBOARD.header).ok();
+        let clipboard_fm = Self::deserialize_header(CLIPBOARD.header).ok();
         if ARGS.debug && clipboard_fm.is_some() {
             eprintln!(
                 "*** Debug: YAML front matter in the clipboard found:\n{:#?}",
@@ -254,42 +237,11 @@ impl Note<'_> {
 
     /// Copies the YAML front header variable in the context for later use with templates.
     fn register_front_matter(context: &mut ContextWrapper, fm: &FrontMatter) {
-        context.insert("fm_title", &fm.title);
-
-        // Read YAML header variable `subtitle`. If not defined, register nothing.
-        if let Some(e) = &fm.subtitle {
-            context.insert("fm_subtitle", e);
-        };
-
-        // Read YAML header variable `author`. If not defined, register nothing.
-        if let Some(e) = &fm.author {
-            context.insert("fm_author", e);
-        };
-
-        // Read YAML header variable `date`. If not defined, register nothing.
-        if let Some(e) = &fm.date {
-            context.insert("fm_date", e);
-        };
-
-        // Read YAML header variable `lang`. If not defined, register nothing.
-        if let Some(e) = &fm.lang {
-            context.insert("fm_lang", e);
-        };
-
-        // Read YAML header variable `revision`. If not defined, register nothing.
-        if let Some(e) = &fm.revision {
-            context.insert("fm_revision", e);
-        };
-
-        // Read YAML header variable `file_ext`. If not defined, register nothing.
-        if let Some(e) = &fm.file_ext {
-            context.insert("fm_file_ext", e);
-        };
-
-        // Read YAML header variable `tag`. If not defined, register nothing.
-        if let Some(st) = &fm.sort_tag {
-            context.insert("fm_sort_tag", st);
-        };
+        for (name, val) in &fm.map {
+            let mut var_name = "fm_".to_string();
+            var_name.push_str(name.as_str());
+            context.insert(&var_name, &val);
+        }
     }
 
     /// Applies a Tera-template to the notes context in order to generate a
@@ -331,15 +283,16 @@ impl Note<'_> {
     }
 
     /// Helper function deserializing the front-matter of an `.md`-file.
-    fn deserialize_note(header: &str) -> Result<FrontMatter> {
+    fn deserialize_header(header: &str) -> Result<FrontMatter> {
         if header.is_empty() {
             return Err(anyhow!("no YAML front matter found"));
         };
 
-        let fm: FrontMatter = serde_yaml::from_str(&header)?;
+        let map: BTreeMap<String, String> = serde_yaml::from_str(&header)?;
+        let fm = FrontMatter { map };
 
         // `sort_tag` has additional constrains to check.
-        if let Some(sort_tag) = &fm.sort_tag {
+        if let Some(sort_tag) = &fm.map.get("sort_tag") {
             if !sort_tag.is_empty() {
                 // Check for forbidden characters.
                 if sort_tag
@@ -359,10 +312,10 @@ impl Note<'_> {
 
         // `extension` has also additional constrains to check.
         // Is `extension` listed in `CFG.note_file_extension`?
-        if let Some(extension) = &fm.file_ext {
+        if let Some(extension) = &fm.map.get("file_ext") {
             let mut extension_is_known = false;
             for e in &CFG.note_file_extensions {
-                if e == extension {
+                if e == *extension {
                     extension_is_known = true;
                     break;
                 }
@@ -414,7 +367,7 @@ mod tests {
 
         assert_eq!(
             expected_front_matter,
-            Note::deserialize_note(&input).unwrap()
+            Note::deserialize_header(&input).unwrap()
         );
 
         // Front matter can also end with '---'
@@ -437,7 +390,7 @@ mod tests {
 
         assert_eq!(
             expected_front_matter,
-            Note::deserialize_note(&input).unwrap()
+            Note::deserialize_header(&input).unwrap()
         );
 
         // Front matter can optionally have a tag and an extension
@@ -462,14 +415,14 @@ mod tests {
 
         assert_eq!(
             expected_front_matter,
-            Note::deserialize_note(&input).unwrap()
+            Note::deserialize_header(&input).unwrap()
         );
 
         // Is empty.
 
         let input = "";
 
-        assert!(Note::deserialize_note(&input).is_err());
+        assert!(Note::deserialize_header(&input).is_err());
 
         // Missing title
 
@@ -478,7 +431,7 @@ mod tests {
         subtitle: you always wanted
         author: It's me";
 
-        assert!(Note::deserialize_note(&input).is_err());
+        assert!(Note::deserialize_header(&input).is_err());
 
         // Missing subtitle
 
@@ -500,7 +453,7 @@ mod tests {
 
         assert_eq!(
             expected_front_matter,
-            Note::deserialize_note(&input).unwrap()
+            Note::deserialize_header(&input).unwrap()
         );
 
         // forbidden character `x` in `tag`.
@@ -511,6 +464,6 @@ mod tests {
         author: It's me
         sort_tag:    123x4";
 
-        assert!(Note::deserialize_note(&input).is_err());
+        assert!(Note::deserialize_header(&input).is_err());
     }
 }
