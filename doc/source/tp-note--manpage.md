@@ -670,10 +670,19 @@ templates and in the '`tmpl_copy_content`' content template only.
   undefined, when the corresponding YAML header variable is not present in the
   note's header.
 
-Important: there is no guarantee, that any of the '`{{ fm_* }}`' variables is
-defined! Depending on the last content template result, certain variables might
-be undefined. Please take into consideration, that a defined variable might
-contain the empty string '`""`'.
+* '`{{ fm_all }}`': is a collection (map) of all defined '`{{ fm_* }}`'
+  variables.  It is used in the '`tmpl_copy_content`' template, typically in a
+  loop like:
+
+  ```yaml
+  {% for key, value in fm_all %}{{ key }}: {{ value | json_encode }}
+  {% endfor %}
+  ```
+
+Important: there is no guarantee, that any of the above '`{{ fm_* }}`'
+variables is defined! Depending on the last content template result, certain
+variables might be undefined. Please take into consideration, that a defined
+variable might contain the empty string '`""`'.
 
 
 ## Template filters
@@ -721,6 +730,9 @@ A filter is always used together with a variable. Here some examples:
 * '`{{ title | sanit(alpha=true) }}`' the note's title as defined in its
   front-matter.  Same as above, but strings starting with a number are
   prepended by an apostrophe.
+
+* '`{{ fm_all | remove(var='fm_title') }}`' represents a collection (map) of
+  all '`fm_*`' variables, exclusive of the variable '`fm_title`'.
 
 
 ## Content-template conventions
