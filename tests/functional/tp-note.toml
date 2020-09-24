@@ -70,7 +70,8 @@ revision:   {{ '1.0' | json_encode }}
 {% endif %}
 '''
 tmpl_annotate_filename = '''{{ file | tag }}{{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}{{ fm_subtitle | default(value='') | sanit }}{{ extension_default | prepend_dot }}'''
-tmpl_sync_filename = '''{{ fm_sort_tag | default(value = file | tag) }}{{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}{{ fm_subtitle | default(value='') | sanit  }}{{ fm_file_ext | default(value = file | ext) | prepend_dot }}'''
+tmpl_sync_filename = '''{{ fm_sort_tag | default(value = file | tag) }}{{ fm_title | default(value='No title') | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}{{ fm_subtitle | default(value='') | sanit  }}{{ fm_file_ext | default(value = file | ext) | prepend_dot }}'''
+tmpl_compulsory_field_content = 'title'
 editor_args = [
     [
     'flatpak',

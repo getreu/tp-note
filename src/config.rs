@@ -268,11 +268,20 @@ const TMPL_ANNOTATE_FILENAME: &str = "\
 /// This is the only template that has access to the `{{ tag }}` variable.
 /// `{{ tag }}` contains the content of the YAML header variable `sort_tag`.
 const TMPL_SYNC_FILENAME: &str = "\
-{{ fm_sort_tag | default(value = file | tag) }}{{ fm_title | sanit(alpha=true) }}\
+{{ fm_sort_tag | default(value = file | tag) }}\
+{{ fm_title | default(value='No title') | sanit(alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}\
 {{ fm_file_ext | default(value = file | ext) | prepend_dot }}\
 ";
+
+/// As all application logic is encoded in Tp-Note's templates, it does not know about field names.
+/// Nevertheless it is useful to identify at least one field as _the_ field that identifies a note
+/// the most.  When `TMPL_COMPULSORY_FIELD_CONTENT` is not empty, Tp-Note will not synchronize the
+/// note's filename and will pop up an error message, unless it finds the field in the note's
+/// header.  When `TMPL_COMPULSORY_FIELD_CONTENT` is empty, all files are synchronized without any
+/// further field check.
+const TMPL_COMPULSORY_FIELD_CONTENT: &str = "title";
 
 /// Default command-line argument list when launching external editor.
 /// The editor list is executed item by item until an editor is found.
@@ -473,6 +482,7 @@ pub struct Cfg {
     pub tmpl_annotate_content: String,
     pub tmpl_annotate_filename: String,
     pub tmpl_sync_filename: String,
+    pub tmpl_compulsory_field_content: String,
     pub editor_args: Vec<Vec<String>>,
     pub viewer_args: Vec<Vec<String>>,
     pub editor_console_args: Vec<Vec<String>>,
@@ -510,6 +520,7 @@ impl ::std::default::Default for Cfg {
             tmpl_annotate_content: TMPL_ANNOTATE_CONTENT.to_string(),
             tmpl_annotate_filename: TMPL_ANNOTATE_FILENAME.to_string(),
             tmpl_sync_filename: TMPL_SYNC_FILENAME.to_string(),
+            tmpl_compulsory_field_content: TMPL_COMPULSORY_FIELD_CONTENT.to_string(),
             editor_args: EDITOR_ARGS
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())

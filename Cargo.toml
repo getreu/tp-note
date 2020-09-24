@@ -53,10 +53,10 @@ chrono = "0.4.15"
 time = "0.2.21"
 confy = "0.4.0"
 clap = "2.33.3"
-structopt = "0.3.17"
+structopt = "0.3.18"
 msgbox = "0.5.0"
 directories = "3.0.1"
-semver = "0.10.0"
+semver = "0.11.0"
 atty = "0.2.14"
 
 # On Linux you need the x11 library, install it with something like:

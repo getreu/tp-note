@@ -58,17 +58,20 @@ impl Note<'_> {
         // deserialize the note read from disk
         let fm = Note::deserialize_header(content.header)?;
 
-        if fm.map.get("title").is_none() {
-            return Err(anyhow!(
-                "The document is missing a `title:` field in its front matter:\n\
+        if !&CFG.tmpl_compulsory_field_content.is_empty()
+            && fm.map.get(&CFG.tmpl_compulsory_field_content).is_none()
+        {
+            return Err(anyhow!(format!(
+                "The document is missing a `{}:` field in its front matter:\n\
                  \n\
                  \t~~~~~~~~~~~~~~\n\
                  \t---\n\
-                 \ttitle: \"My note\"\n\
+                 \t{}: \"My note\"\n\
                  \t---\n\
                  \tsome text\n\
-                 \t~~~~~~~~~~~~~~"
-            ));
+                 \t~~~~~~~~~~~~~~",
+                CFG.tmpl_compulsory_field_content, CFG.tmpl_compulsory_field_content
+            )));
         }
 
         Self::register_front_matter(&mut context, &fm);
