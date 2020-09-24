@@ -58,6 +58,19 @@ impl Note<'_> {
         // deserialize the note read from disk
         let fm = Note::deserialize_header(content.header)?;
 
+        if fm.map.get("title").is_none() {
+            return Err(anyhow!(
+                "The document is missing a `title:` field in its front matter:\n\
+                 \n\
+                 \t~~~~~~~~~~~~~~\n\
+                 \t---\n\
+                 \ttitle: \"My note\"\n\
+                 \t---\n\
+                 \tsome text\n\
+                 \t~~~~~~~~~~~~~~"
+            ));
+        }
+
         Self::register_front_matter(&mut context, &fm);
 
         // Return new note.
@@ -79,8 +92,7 @@ impl Note<'_> {
                 let mut tera = Tera::default();
                 tera.extend(&TERA).unwrap();
 
-                tera.render_str(template, &context)
-                    .with_context(|| format!("Failed to render the template:\n`{}`.", template))?
+                tera.render_str(template, &context)?
             },
             false,
         );
@@ -96,21 +108,6 @@ impl Note<'_> {
                 content.header,
                 content.body.trim()
             );
-        };
-
-        if content.header.is_empty() {
-            return Err(anyhow!(
-                "The rendered document structure is not conform\n\
-                 with the following convention:\n\
-                 \t~~~~~~~~~~~~~~\n\
-                 \t---\n\
-                 \t<YAML header>\n\
-                 \t---\n\
-                 \t<note body>\n\
-                 \t~~~~~~~~~~~~~~\n\
-                 Correct the template in the configuration file and\n\
-                 restart Tp-Note with `tp-note --debug`.",
-            ));
         };
 
         // deserialize the rendered template
@@ -292,8 +289,7 @@ impl Note<'_> {
                         );
                     };
                     filename
-                })
-                .with_context(|| format!("Failed to render the template:\n`{}`.", template))?
+                })?
                 .trim()
         });
 
@@ -303,7 +299,16 @@ impl Note<'_> {
     /// Helper function deserializing the front-matter of an `.md`-file.
     fn deserialize_header(header: &str) -> Result<FrontMatter> {
         if header.is_empty() {
-            return Err(anyhow!("no YAML front matter found"));
+            return Err(anyhow!(
+                "The document (or template) has no front matter section.\n\
+                 Is one `---` missing?\n\n\
+                 \t~~~~~~~~~~~~~~\n\
+                 \t---\n\
+                 \ttitle: \"My note\"\n\
+                 \t---\n\
+                 \tsome text\n\
+                 \t~~~~~~~~~~~~~~"
+            ));
         };
 
         let map: tera::Map<String, tera::Value> = serde_yaml::from_str(&header)?;

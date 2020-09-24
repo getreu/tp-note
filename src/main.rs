@@ -75,13 +75,18 @@ const AUTHOR: &str = "(c) Jens Getreu, 2020";
 /// the new filename.
 fn synchronize_filename(path: PathBuf) -> Result<PathBuf, anyhow::Error> {
     // parse file again to check for synchronicity with filename
-    let n = Note::from_existing_note(&path)
-        .context("Failed to parse the note's metadata: can not synchronize the filename!")?;
+    let n = Note::from_existing_note(&path).context(
+        "Failed to parse the note's metadata. \
+                  Can not synchronize the note's filename!",
+    )?;
 
     if ARGS.debug {
         eprintln!("Applying template `tmpl_sync_filename`.");
     };
-    let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename)?;
+    let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename).context(
+        "Failed to render the template `tmpl_sync_filename` in config file. \
+                  Can not synchronize the note's filename!",
+    )?;
 
     if !filename::exclude_copy_counter_eq(&path, &new_fqfn) {
         let new_fqfn = filename::find_unused(new_fqfn).context(
@@ -111,10 +116,10 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
         let (n, new_fqfn) = if STDIN.is_empty() && CLIPBOARD.is_empty() {
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
             let n = Note::from_content_template(&path, &CFG.tmpl_new_content)
-                .context("Can not parse `tmpl_new_content` in config file.")?;
+                .context("Can not render the template `tmpl_new_content` in config file.")?;
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_new_filename)
-                .context("Can not parse `tmpl_new_filename` in config file.")?;
+                .context("Can not render the template `tmpl_new_filename` in config file.")?;
             if ARGS.debug {
                 eprintln!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
             }
@@ -124,10 +129,10 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
             // (only if there is a valid YAML front matter)
             let n = Note::from_content_template(&path, &CFG.tmpl_copy_content)
                 // CREATE A NEW NOTE WITH `TMPL_COPY_CONTENT` TEMPLATE
-                .context("Can not parse `tmpl_copy_content` in config file.")?;
+                .context("Can not render the template `tmpl_copy_content` in config file.")?;
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_copy_filename)
-                .context("Can not parse `tmpl_copy_filename` in config file.")?;
+                .context("Can not render the template `tmpl_copy_filename` in config file.")?;
             if ARGS.debug {
                 eprintln!("Applying templates: `tmpl_copy_content`, `tmpl_copy_filename`");
             };
@@ -136,10 +141,10 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
             let n = Note::from_content_template(&path, &CFG.tmpl_clipboard_content)
                 // CREATE A NEW NOTE WITH `TMPL_CLIPBOARD_CONTENT` TEMPLATE
-                .context("Can not parse `tmpl_clipboard_content` in config file.")?;
+                .context("Can not render the template `tmpl_clipboard_content` in config file.")?;
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_clipboard_filename)
-                .context("Can not parse `tmpl_clipboard_filename` in config file.")?;
+                .context("Can not render the template `tmpl_clipboard_filename` in config file.")?;
             if ARGS.debug {
                 eprintln!(
                     "Applying templates: `tmpl_clipboard_content`, `tmpl_clipboard_filename`"
@@ -181,8 +186,10 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
                 );
             };
             let n = Note::from_content_template(&path, &CFG.tmpl_annotate_content)
-                .context("Can not parse `tmpl_annotate_content` in config file.")?;
-            let new_fqfn = n.render_filename(&CFG.tmpl_annotate_filename)?;
+                .context("Can not render the template `tmpl_annotate_content` in config file.")?;
+            let new_fqfn = n
+                .render_filename(&CFG.tmpl_annotate_filename)
+                .context("Can not render the template `tmpl_annotate_filename` in config file.")?;
 
             // Check if the filename is not taken already
             let new_fqfn = filename::find_unused(new_fqfn)?;
@@ -219,7 +226,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
         }
         args.push(
             path.to_str()
-                .ok_or_else(|| anyhow!(format!("Failed to convert argument: {:?}", path)))?,
+                .ok_or_else(|| anyhow!(format!("Failed to convert the argument: {:?}", path)))?,
         );
         args_list.push(args);
     }
@@ -232,7 +239,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     let mut executable_found = false;
     for i in 0..executable_list.len() {
         if ARGS.debug {
-            eprint!("Trying to launch executable: {}", executable_list[i]);
+            eprint!("Trying to launch the executable: {}", executable_list[i]);
             for j in &args_list[i] {
                 eprint!(" \"{}\"", j);
             }
@@ -482,7 +489,7 @@ fn main() {
                     {:?}\n\
                     \n\
                     Please correct the error.
-                    Trying to start editor without synchronization...",
+                    Trying to start the file editor without synchronization...",
                         e
                     ));
                     let _ = launch_editor(path);
