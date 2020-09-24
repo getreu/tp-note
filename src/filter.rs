@@ -7,6 +7,7 @@ use sanitize_filename_reader_friendly::sanitize;
 use std::collections::HashMap;
 use std::hash::BuildHasher;
 use std::ops::Deref;
+use std::ops::DerefMut;
 use std::path::Path;
 use std::path::PathBuf;
 use tera::{to_value, try_get_value, Result as TeraResult, Tera, Value};
@@ -259,18 +260,6 @@ impl ContextWrapper {
             fqpn: PathBuf::new(),
         }
     }
-
-    /// Function that inserts a `kay-value` using the encapsulated `
-    /// tera::Context::insert()` function.
-    pub fn insert(&mut self, key: &str, val: &str) {
-        self.ct.insert(key, &val);
-    }
-
-    /// Function that inserts a `tera::Map` using the encapsulated `
-    /// tera::Context::insert()` function.
-    pub fn insert_map(&mut self, key: &str, val: tera::Map<String, tera::Value>) {
-        self.ct.insert(key, &val);
-    }
 }
 
 /// Auto-dereference for convenient access to `tera::Content`.
@@ -279,6 +268,13 @@ impl Deref for ContextWrapper {
 
     fn deref(&self) -> &Self::Target {
         &self.ct
+    }
+}
+
+/// Auto-dereference for convenient access to `tera::Content`.
+impl DerefMut for ContextWrapper {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.ct
     }
 }
 

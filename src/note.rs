@@ -16,7 +16,6 @@ use crate::filename;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use anyhow::{anyhow, Context, Result};
-use std::collections::BTreeMap;
 use std::default::Default;
 use std::env;
 use std::path::{Path, PathBuf};
@@ -37,10 +36,10 @@ pub struct Note<'a> {
     pub content: Pin<Box<Content<'a>>>,
 }
 
-#[derive(Debug, PartialEq, Default)]
+#[derive(Debug, PartialEq)]
 /// Represents the front matter of the note.
 struct FrontMatter {
-    map: BTreeMap<String, tera::Value>,
+    map: tera::Map<String, tera::Value>,
 }
 
 use std::fs;
@@ -137,7 +136,7 @@ impl Note<'_> {
 
         // Register the canonicalized fully qualified file name.
         let file = path.to_str().unwrap_or_default();
-        context.insert("file", &file);
+        (*context).insert("file", &file);
 
         // `fqpn` is a directory as fully qualified path, ending
         // by a separator.
@@ -146,15 +145,15 @@ impl Note<'_> {
         } else {
             path.parent().unwrap_or_else(|| Path::new("./"))
         };
-        context.insert("path", &fqpn.to_str().unwrap_or_default());
+        (*context).insert("path", &fqpn.to_str().unwrap_or_default());
 
         // Register input from clipboard.
-        context.insert("clipboard_header", CLIPBOARD.header);
-        context.insert("clipboard", CLIPBOARD.body);
+        (*context).insert("clipboard_header", CLIPBOARD.header);
+        (*context).insert("clipboard", CLIPBOARD.body);
 
         // Register input from stdin.
-        context.insert("stdin_header", STDIN.header);
-        context.insert("stdin", STDIN.body);
+        (*context).insert("stdin_header", STDIN.header);
+        (*context).insert("stdin", STDIN.body);
 
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
@@ -222,13 +221,13 @@ impl Note<'_> {
         }
 
         // Default extension for new notes as defined in the configuration file.
-        context.insert("extension_default", CFG.extension_default.as_str());
+        (*context).insert("extension_default", CFG.extension_default.as_str());
 
         // search for UNIX, Windows and MacOS user-names
         let author = env::var("LOGNAME").unwrap_or_else(|_| {
             env::var("USERNAME").unwrap_or_else(|_| env::var("USER").unwrap_or_default())
         });
-        context.insert("username", &author);
+        (*context).insert("username", &author);
 
         context.fqpn = fqpn.to_path_buf();
 
@@ -236,43 +235,31 @@ impl Note<'_> {
     }
 
     /// Copies the YAML front header variable in the context for later use with templates.
-    /// We register only `tera::Value` types that can be converted to a String.
-    /// If there is a list, concatente its items with `, ` and register the result
+    /// We register only flat `tera::Value` types.
+    /// If there is a list, concatenate its items with `, ` and register the result
     /// as a flat string.
     fn register_front_matter(context: &mut ContextWrapper, fm: &FrontMatter) {
         let mut tera_map = tera::Map::new();
-        for (name, val) in &fm.map {
-            let val = match val {
-                tera::Value::String(val) => val.to_string(),
-                tera::Value::Number(n) => n.to_string(),
-                tera::Value::Bool(b) => b.to_string(),
-                tera::Value::Array(a) => {
-                    let mut val = String::new();
-                    for v in a {
-                        let s = match v {
-                            tera::Value::String(v) => v.to_string(),
-                            tera::Value::Number(n) => n.to_string(),
-                            tera::Value::Bool(b) => b.to_string(),
-                            _ => continue,
-                        };
-                        val.push_str(&s);
-                        val.push_str(", ");
-                    }
-                    val.trim_end_matches(", ").to_string()
-                }
-                _ => continue,
+
+        for (name, value) in &fm.map {
+            // Flatten all types.
+            let val = match value {
+                tera::Value::String(_) => value.to_owned(),
+                tera::Value::Number(_) => value.to_owned(),
+                tera::Value::Bool(_) => value.to_owned(),
+                _ => tera::Value::String(value.to_string()),
             };
 
-            // We keep a copy for the `fm_all` variable.
-            tera_map.insert(name.to_string(), tera::Value::String(val.to_string()));
+            // First we register a copy with the original variable name.
+            tera_map.insert(name.to_string(), val.to_owned());
 
             // Here we register `fm_<var_name>`.
             let mut var_name = "fm_".to_string();
-            var_name.push_str(name.as_str());
-            context.insert(&var_name, &*val);
+            var_name.push_str(name);
+            (*context).insert(&var_name, &val);
         }
         // Register the collection as `Object(Map<String, Value>)`.
-        context.insert_map("fm_all", tera_map);
+        (*context).insert("fm_all", &tera_map);
     }
 
     /// Applies a Tera-template to the notes context in order to generate a
@@ -319,7 +306,7 @@ impl Note<'_> {
             return Err(anyhow!("no YAML front matter found"));
         };
 
-        let map: BTreeMap<String, tera::Value> = serde_yaml::from_str(&header)?;
+        let map: tera::Map<String, tera::Value> = serde_yaml::from_str(&header)?;
         let fm = FrontMatter { map };
 
         // `sort_tag` has additional constrains to check.
@@ -372,25 +359,34 @@ impl Note<'_> {
 
 #[cfg(test)]
 mod tests {
+    use super::ContextWrapper;
     use super::FrontMatter;
     use super::Note;
-    use std::collections::BTreeMap;
+    use serde_json::json;
     use tera::Value;
 
     #[test]
     fn test_deserialize() {
         let input = "# document start
-        title: The book
-        subtitle: you always wanted
-        author: It's me
-        date: 2020-04-21
-        lang: en
-        revision: '1.0'
-        sort_tag: 20200420-21_22
-        file_ext: md
+        title:     The book
+        subtitle:  you always wanted
+        author:    It's me
+        date:      2020-04-21
+        lang:      en
+        revision:  '1.0'
+        sort_tag:  20200420-21_22
+        file_ext:  md
+        height:    1.23
+        count:     2
+        neg:       -1
+        flag:      true
+        numbers:
+          - 1
+          - 3
+          - 5
         ";
 
-        let mut expected = BTreeMap::new();
+        let mut expected = tera::Map::new();
         expected.insert("title".to_string(), Value::String("The book".to_string()));
         expected.insert(
             "subtitle".to_string(),
@@ -405,6 +401,11 @@ mod tests {
             Value::String("20200420-21_22".to_string()),
         );
         expected.insert("file_ext".to_string(), Value::String("md".to_string()));
+        expected.insert("height".to_string(), json!(1.23)); // Number()
+        expected.insert("count".to_string(), json!(2)); // Number()
+        expected.insert("neg".to_string(), json!(-1)); // Number()
+        expected.insert("flag".to_string(), json!(true)); // Bool()
+        expected.insert("numbers".to_string(), json!([1, 3, 5])); // Array()
 
         let expected_front_matter = FrontMatter { map: expected };
 
@@ -415,14 +416,12 @@ mod tests {
 
         //
         // Is empty.
-
         let input = "";
 
         assert!(Note::deserialize_header(&input).is_err());
 
         //
         // forbidden character `x` in `tag`.
-
         let input = "# document start
         title: The book
         subtitle: you always wanted
@@ -433,7 +432,6 @@ mod tests {
 
         //
         // Not registered file extension.
-
         let input = "# document start
         title: The book
         subtitle: you always wanted
@@ -442,5 +440,36 @@ mod tests {
         file_ext:    xyz";
 
         assert!(Note::deserialize_header(&input).is_err());
+    }
+
+    #[test]
+    fn test_register_front_matter() {
+        let mut tmp = tera::Map::new();
+        tmp.insert("file_ext".to_string(), Value::String("md".to_string())); // String
+        tmp.insert("height".to_string(), json!(1.23)); // Number()
+        tmp.insert("count".to_string(), json!(2)); // Number()
+        tmp.insert("neg".to_string(), json!(-1)); // Number()
+        tmp.insert("flag".to_string(), json!(true)); // Bool()
+        tmp.insert("numbers".to_string(), json!([1, 3, 5])); // Array([Numbers()..])!
+        let mut tmp2 = tmp.clone();
+
+        let mut input1 = ContextWrapper::new();
+        let input2 = FrontMatter { map: tmp };
+
+        let mut expected = ContextWrapper::new();
+        (*expected).insert("fm_file_ext".to_string(), &json!("md")); // String
+        (*expected).insert("fm_height".to_string(), &json!(1.23)); // Number()
+        (*expected).insert("fm_count".to_string(), &json!(2)); // Number()
+        (*expected).insert("fm_neg".to_string(), &json!(-1)); // Number()
+        (*expected).insert("fm_flag".to_string(), &json!(true)); // Bool()
+        (*expected).insert("fm_numbers".to_string(), &json!("[1,3,5]")); // String()!
+        tmp2.remove("numbers");
+        tmp2.insert("numbers".to_string(), json!("[1,3,5]")); // String()!
+        (*expected).insert("fm_all".to_string(), &tmp2); // Map()
+
+        Note::register_front_matter(&mut input1, &input2);
+        let result = input1;
+
+        assert_eq!(result, expected);
     }
 }
