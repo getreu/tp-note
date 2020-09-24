@@ -39,18 +39,20 @@ lazy_static! {
     };
 }
 
-/// Add a new filter to Tera templates:
+/// Adds a new filter to Tera templates:
 /// `sanit` or `sanit()` sanitizes a string so that it can be used
 /// to assemble filenames or paths.
 /// In addition, `sanit(alpha=true)` prepends an apostroph when the result
 /// starts with a number. This way we guaranty that the filename
 /// never starts with a number. We do not allow this, to be able
 /// to distinguish reliably the sort tag from the filename.
+/// This filter converts all input types to `tera::String`.
 pub fn sanit_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("sanit", "value", String, value);
+    let p = try_get_value!("sanit", "value", Value, value);
+    let p = p.to_string();
 
     let alpha_required = match args.get("alpha") {
         Some(val) => try_get_value!("sanit", "alpha", bool, val),
@@ -68,7 +70,7 @@ pub fn sanit_filter<S: BuildHasher>(
         };
     };
 
-    Ok(to_value(&filtered).unwrap())
+    Ok(to_value(&filtered)?)
 }
 
 /// A Tera filter that searches for the first Markdown link in the input stream and returns the
@@ -81,7 +83,7 @@ pub fn linkname_filter<S: BuildHasher>(
 
     let hyperlink = Hyperlink::new(&p).unwrap_or_default();
 
-    Ok(to_value(&hyperlink.name).unwrap())
+    Ok(to_value(&hyperlink.name)?)
 }
 
 /// A Tera filter that searches for the first Markdown link in the input stream and returns the
@@ -94,26 +96,32 @@ pub fn linkurl_filter<S: BuildHasher>(
 
     let hyperlink = Hyperlink::new(&p).unwrap_or_default();
 
-    Ok(to_value(&hyperlink.url).unwrap())
+    Ok(to_value(&hyperlink.url)?)
 }
 
 /// A Tera filter that truncates the input stream and returns the
 /// max `CUT_LEN_MAX` bytes of valid UTF-8.
+/// This filter only acts on `String` types. All other types
+/// are passed through.
 pub fn cut_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("cut", "value", String, value);
+    let p = try_get_value!("cut", "value", tera::Value, value);
 
-    let mut short = String::new();
-    for i in (0..CUT_LEN_MAX).rev() {
-        if let Some(s) = p.get(..i) {
-            short = s.to_string();
-            break;
+    match p {
+        tera::Value::String(sv) => {
+            let mut short = String::new();
+            for i in (0..CUT_LEN_MAX).rev() {
+                if let Some(s) = sv.get(..i) {
+                    short = s.to_string();
+                    break;
+                }
+            }
+            Ok(to_value(&short)?)
         }
+        _ => Ok(p),
     }
-
-    Ok(to_value(&short).unwrap())
 }
 
 /// A Tera filter that return the first line or the first sentence of the input stream.
@@ -164,7 +172,7 @@ pub fn heading_filter<S: BuildHasher>(
     }
     let content_heading = p[0..index].to_string();
 
-    Ok(to_value(content_heading).unwrap())
+    Ok(to_value(content_heading)?)
 }
 
 /// A Tera filter that takes a path and extracts the tag of the filename.
@@ -176,7 +184,7 @@ pub fn tag_filter<S: BuildHasher>(
 
     let (tag, _, _, _) = disassemble(Path::new(&p));
 
-    Ok(to_value(&tag).unwrap())
+    Ok(to_value(&tag)?)
 }
 
 /// A Tera filter that takes a path and extracts its file stem.
@@ -188,7 +196,7 @@ pub fn stem_filter<S: BuildHasher>(
 
     let (_, stem, _, _) = disassemble(Path::new(&p));
 
-    Ok(to_value(&stem).unwrap())
+    Ok(to_value(&stem)?)
 }
 
 /// A Tera filter that prepends a dot when stream not empty.
@@ -205,7 +213,7 @@ pub fn prepend_dot_filter<S: BuildHasher>(
         prepend_dot.push_str(&p);
     };
 
-    Ok(to_value(&prepend_dot).unwrap())
+    Ok(to_value(&prepend_dot)?)
 }
 
 /// A Tera filter that takes a path and extracts its file extension.
@@ -221,7 +229,7 @@ pub fn ext_filter<S: BuildHasher>(
         .to_str()
         .unwrap_or_default();
 
-    Ok(to_value(&ext).unwrap_or_default())
+    Ok(to_value(&ext)?)
 }
 
 /// A Tera filter that takes a list of variables and remove
@@ -304,6 +312,12 @@ mod tests {
         let result = sanit_filter(&to_value(&"1. My first: chapter").unwrap(), &args);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), to_value(&"'1. My first_ chapter").unwrap());
+
+        let mut args = HashMap::new();
+        args.insert("alpha".to_string(), to_value(true).unwrap());
+        let result = sanit_filter(&to_value(222).unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("\'222").unwrap());
     }
     #[test]
     fn test_linkname_linkurl_filter() {
@@ -330,6 +344,12 @@ mod tests {
         let input = "Jens Getreu's blog";
         let output = cut_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("Jens Getr", output);
+
+        let args = HashMap::new();
+        // Test Markdown link in clipboard.
+        let input = 222; // Number type.
+        let output = cut_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        assert_eq!(222, output);
     }
     #[test]
     fn test_heading_filter() {
