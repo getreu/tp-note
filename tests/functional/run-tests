@@ -90,14 +90,13 @@ fi
 
 # Tp-Note ignores the clipboard in batch mode, we pass it as
 # environment variable instead.
-# echo -n '[ab:cd"ef](https://getreu.net)' | xclip -selection clipboard
 
 echo '[ab:cd"ef](https://getreu.net)' | \
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-ab_cd ef--URL.md"
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-ab_cd_ ef--URL.md"
 
 if diff "$OUTPUT_FILENAME" "test4-clipboard-expected-output"
 then
