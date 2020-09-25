@@ -179,6 +179,9 @@ or
 
     NOTE: unable to load, parse or write the configuration file
     ---
+    Reason:
+            Bad TOML data: missing field `extension_default` at line 1 column 1!
+
     Note: this error may occur after upgrading Tp-Note due
     to some incompatible configuration file changes.
 
