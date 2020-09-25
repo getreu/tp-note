@@ -327,7 +327,17 @@ Here some typical workflows:
   curl 'https://blog.getreu.net' | pandoc -f html -t markdown_strict | tp-note
   ```
 
-* Generate note for a given content with YAML header
+* The same as above, but the note's title is the same as
+  the webpage's title:
+
+  ```shell
+  curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
+  ```
+
+  creates the note file `20200910-Jens\ Getreu\'s\ blog.md` with the webpage's
+  content.
+
+* Generate note for a given content with YAML header:
 
   ```shell
   echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tp-note
@@ -349,16 +359,51 @@ Here some typical workflows:
   nothing
   ```
 
-* Download a webpage, convert it to Markdown and copy the result into a
-  _Tp-Note_ file. The note's title is the same than the webpage's title:
-
+* Reformat the header of a note file:
 
   ```shell
-  curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
+  mv "20200921-My Note.md" "20200921-My Note-(1).md"
+  cat "20200921-My Note-(1).md" | tp-note --batch
   ```
 
-  creates the note file `20200910-Jens\ Getreu\'s\ blog.md` with the webpage's
-  content.
+  creates the file `20200921-My Note.md` with a rearranged header
+  and the same body.
+
+* Launch, for once, a different file editor.\
+  The external file editor, _Tp-Note_ uses, is defined in the configuration
+  file and can be changed there. If you want to use a different file editor
+  just for one-shot, type:
+
+  ```shell
+  nvim "$(tp-note --batch)"
+  ```
+
+* Create a new note overwriting the template's default for `subtitle`:
+
+  ```shell
+  cd dev
+  echo -e "---\nsubtitle: Draft\n---\n# Draft" | tp-note
+  ```
+
+  creates the note file `20200925-dev--Draft.md` with the content:
+
+      ---
+      title:      "dev"
+      subtitle:   "Draft"
+      author:     "getreu"
+      date:       "2020-09-25"
+      lang:       "en_GB.UTF-8"
+      revision:   "1.0"
+      ---
+
+      # Draft
+
+* Synchronize filename with header of all note files in the current directory:
+
+  ```shell
+  find . -type f -name "*.md" -exec tp-note --batch {} \; >/dev/null
+  ```
+
 
 
 # How it works: Organize your files and notes with sort-tags
