@@ -470,6 +470,9 @@ pub static ref ARGS : Args = Args::from_args();
 /// Configuration data, deserialized from the configuration-file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cfg {
+    /// Version number of the config file as String -or-
+    /// a text message explaining why we could not load the
+    /// configuration file.
     pub version: String,
     pub extension_default: String,
     pub note_file_extensions: Vec<String>,
@@ -580,10 +583,14 @@ lazy_static! {
         .with_extension("")
         .to_str()
         .unwrap_or_default()
-        ).unwrap_or({
+        ).unwrap_or_else(|e|{
+            // We are here, because we could not load the config file.
             let mut c = Cfg::default();
-            // This is a marker string that will cause a parse error on purpose.
-            c.version = "default values".to_string();
+            // Instead of a version string, we store the reason why.
+            let mut e = e.to_string();
+            // This is a marker string that will cause a version parse error on purpose.
+            e.push('!');
+            c.version = e;
             c
         });
 }
