@@ -121,14 +121,14 @@ pub fn cut_filter<S: BuildHasher>(
 
     match p {
         tera::Value::String(sv) => {
-            let mut short = String::new();
+            let mut short = "";
             for i in (0..CUT_LEN_MAX).rev() {
                 if let Some(s) = sv.get(..i) {
-                    short = s.to_string();
+                    short = s;
                     break;
                 }
             }
-            Ok(to_value(&short)?)
+            Ok(to_value(short)?)
         }
         _ => Ok(p),
     }
