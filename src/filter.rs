@@ -52,14 +52,24 @@ pub fn sanit_filter<S: BuildHasher>(
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let p = try_get_value!("sanit", "value", Value, value);
-    let p = p.to_string();
+
+    // Take unmodified `String()`, but format all other types into
+    // string.
+    let ps;
+    let pstr = if p.is_string() {
+        p.as_str().unwrap()
+    } else {
+        // Convert and format.
+        ps = p.to_string();
+        ps.as_str()
+    };
 
     let alpha_required = match args.get("alpha") {
         Some(val) => try_get_value!("sanit", "alpha", bool, val),
         None => false,
     };
 
-    let mut filtered = sanitize(&p);
+    let mut filtered = sanitize(&pstr);
 
     if alpha_required {
         let first_char = filtered.chars().next();
@@ -318,6 +328,18 @@ mod tests {
         let result = sanit_filter(&to_value(222).unwrap(), &args);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), to_value("\'222").unwrap());
+
+        let mut args = HashMap::new();
+        args.insert("alpha".to_string(), to_value(true).unwrap());
+        let result = sanit_filter(&to_value(&r#"a"b'c'b"a"#).unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value(&r#"a b'c'b a"#).unwrap());
+
+        let mut args = HashMap::new();
+        args.insert("alpha".to_string(), to_value(true).unwrap());
+        let result = sanit_filter(&to_value(123.4).unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value(&"\'123.4").unwrap());
     }
     #[test]
     fn test_linkname_linkurl_filter() {
