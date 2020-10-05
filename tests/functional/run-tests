@@ -96,7 +96,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-ab_cd_ ef--URL.md"
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-ab_cd ef--URL.md"
 
 if diff "$OUTPUT_FILENAME" "test4-clipboard-expected-output"
 then
