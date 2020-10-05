@@ -45,6 +45,10 @@ assets = [
 
 [features]
 default = ["message-box"]
+# If you can do away with error message popup boxes (for example on a headless
+# system), no GTK is required. In this case all error messages will appear on
+# the console from where you started _Tp-Note_ in `stderr` only.
+# Disable this feature if you do not want error message boxes.
 message-box = ["msgbox"]
 
 [dependencies]

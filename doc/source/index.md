@@ -215,7 +215,15 @@ compile _Tp-Note_ yourself.
        cargo install tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-   See also the user manual for a detailed installation description.
+  If you can do away with error message popup boxes (for example on a headless system),
+  no GTK is required. In this case all error messages will appear on the console
+  from where you started _Tp-Note_ in `stderr` only.
+
+       cargo install --no-default-features tp-note
+       sudo cp ~/.cargo/bin/tp-note /usr/local/bin
+
+  See also the user manual for a detailed installation description.
+
 
 This project follows [Semantic Versioning](https://semver.org/).
 
