@@ -1,11 +1,14 @@
 //! Prints error messages and exceptional states.
 
+#[cfg(feature = "message-box")]
 extern crate msgbox;
 
 use crate::config::CONFIG_PATH;
+#[cfg(feature = "message-box")]
 use crate::config::RUNS_ON_CONSOLE;
 use crate::VERSION;
 use lazy_static::lazy_static;
+#[cfg(feature = "message-box")]
 use msgbox::IconType;
 use std::env;
 use std::path::PathBuf;
@@ -33,6 +36,7 @@ impl AlertDialog {
         // libraries.
         Self::print_error_console(msg);
         // Popup window.
+        #[cfg(feature = "message-box")]
         if !*RUNS_ON_CONSOLE {
             msgbox::create(
                 &*ALERT_DIALOG_TITLE_LINE,
@@ -57,6 +61,7 @@ impl AlertDialog {
         // libraries.
         Self::print_console(msg);
         // Popup window.
+        #[cfg(feature = "message-box")]
         if !*RUNS_ON_CONSOLE {
             msgbox::create(&*ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
         }
