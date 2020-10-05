@@ -575,7 +575,7 @@ files.
 
   Note-taking with _Tp-Note_ is more fun with a good markup (Markdown)
   text editor, although any Unicode text editor will do (even Notepad >=
-  Windows 10-update 1903). _Tp-Note_ it preconfigured to work with:
+  Windows 10-update 1903). _Tp-Note_ is preconfigured to work with:
 
   - [Mark Text](https://marktext.app/) — a simple and elegant Markdown editor
     focused on speed and usability.
