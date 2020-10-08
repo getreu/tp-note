@@ -54,16 +54,13 @@ pub const NOTE_FILENAME_LEN_MAX: usize =
 #[cfg(test)]
 pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 
-/// Default content-template used when the command-line argument <sanit> is a
-/// directory. Can be changed through editing the configuration file.
+/// Default content-template used when the command-line argument <sanit> is a directory. Can be
+/// changed through editing the configuration file.
 /// The following variables are  defined:
-/// `{{ sanit | stem }}`, `{{ file | stem }}`, `{{ file | ext }}`, `{{ extension_default }}`
-/// `{{ file | tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`,
-/// `{{ path }}`.
-/// In addition all environment variables can be used, e.g.
-/// `{{ get_env(name=\"LOGNAME\") }}`
-/// When placed in YAML-front-matter, the filter `| json_encode` must be
-/// appended to each variable.
+/// `{{ sanit | stem }}`, `{{ file | stem }}`, `{{ file | ext }}`, `{{ extension_default }}` `{{
+/// file | tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`, `{{ path }}`.
+/// In addition all environment variables can be used, e.g.  `{{ get_env(name=\"LOGNAME\") }}`
+/// When placed in YAML-front-matter, the filter `| json_encode` must be appended to each variable.
 const TMPL_NEW_CONTENT: &str = "\
 ---
 title:      {{ path | stem | cut | json_encode }}
@@ -77,32 +74,29 @@ revision:   {{ '1.0' | json_encode }}
 
 ";
 
-/// Default filename-template for a new note file on disk. It satisfies the
-/// sync criteria for note-meta data in front-matter and filename.
+/// Default filename-template for a new note file on disk. It implements the sync criteria for
+/// note-meta data in front-matter and filename.
 /// Useful variables in this context are:
 /// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}`,
-/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case
-/// its value starts with a number, the string is prepended with `'`.
-/// The first non-numerical variable must be some `{{ <var>| sanit(alpha) }}`
-/// variant.
-/// Note, that in this filename-template, all variables must be filtered
-/// by a `sanit` or `sanit(alpha=true)` filter.
+/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case its value starts
+/// with a number, the string is prepended with `'`.  The first non-numerical variable must be some
+/// `{{ <var>| sanit(alpha) }}` variant.
+/// Note, as this is filename-template, all variables (except `now` and `extension_default` must be
+/// filtered by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d') }}-\
 {{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
 ";
 
-/// Default template used, when the clipboard or the input stream `stdin` contains a string
-/// and one the them HAS a valid YAML front matter section.
-/// The clipboards body is in `{{ clipboard }}`, the header is in `{{ clipboard_header }}`.
-/// The stdin's body is in `{{ stdin }}`, the header is in `{{ stdin_header }}`.
-/// First the clipboard's header is read. When this is not successful, the `stdin`
-/// header is read. One of the headers must define the `title` variable, which is
-/// available in this script as `{{ fm_title }}`. Other interpreted variables are
-/// `{{ fm_subtitle }}`, `{{ fm_file_ext }}` and `{{ fm_sort_tag }}`. All others
-/// are ignored. `{{ fm_file_ext }}` and `{{ fm_sort_tag }}` are only defined when they
-/// appear in the input stream.
+/// Default template used, when the clipboard or the input stream `stdin` contains a string and one
+/// the of these strings contains a valid YAML front matter section.
+/// The clipboards body is in `{{ clipboard }}`, the header is in `{{ clipboard_header }}`.  The
+/// stdin's body is in `{{ stdin }}`, the header is in `{{ stdin_header }}`.
+/// First all variables defined in the clipboard's front matter are registered, the the ones
+/// defined in the input stream `stdin`. The latter can overwrite the former.  One of the front
+/// matters must define the `title` variable, which is then available in this template as `{{
+/// fm_title }}`. 
 /// When placed in YAML-front-matter, the filter `| json_encode` must be
 /// appended to each variable.
 const TMPL_COPY_CONTENT: &str = "\
@@ -128,16 +122,14 @@ revision:   {{ fm_revision | default(value = '1.0') | json_encode }}
 
 ";
 
-/// Default filename template used when the stdin or the clipboard contains a string
-/// and one of them has a valid YAML header.
-/// Useful variables in this context are:
-/// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}`,
-/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case
-/// its value starts with a number, the string is prepended with `'`.
-/// The first non-numerical variable must be some `{{ <var>| sanit(alpha) }}`
-/// variant.
-/// Note, that in this filename-template, all variables (except `now`)
-/// must be filtered by a `sanit` or `sanit(alpha=true)` filter.
+/// Default filename template used when the stdin or the clipboard contains a string and one of
+/// them has a valid YAML header.  Useful variables in this context are: 
+/// `{{ title|sanit(alpha=true) }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}`, All
+/// variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case its value starts with a
+/// number, the string is prepended with `'`.  The first non-numerical variable must be some `{{
+/// <var>| sanit(alpha=true) }}` variant.  Note, that in this filename-template, all variables
+/// (except `fm_sort_tag`, `fm_file_ext` and `extension_default`) must be filtered by a `sanit` or
+/// `sanit(alpha=true)` filter.
 const TMPL_COPY_FILENAME: &str = "\
 {{ fm_sort_tag | default(value = now() | date(format='%Y%m%d-')) }}\
 {{ fm_title | sanit(alpha=true) }}\
@@ -146,22 +138,17 @@ const TMPL_COPY_FILENAME: &str = "\
 {{ fm_file_ext | default(value = extension_default ) | prepend_dot }}\
 ";
 
-/// Default template used, when the clipboard or the input stream `stdin` contains a string
-/// and this string has no valid YAML front matter section.
-/// The clipboards content is in `{{ clipboard }}`, its truncated version
-/// in `{{ clipboard | heading }}`
-/// When the clipboard contains a hyper-link in markdown format: [<link-name>](<link-url>),
-/// its first part is stored in `{{ clipboard | linkname }}`, the second part in
-/// `{{ clipboard | linkurl }}`.
-/// The following variables are defined:
-/// `{{ dir | stem }}`, `{{ file | stem }}`, `{{ file_ext }}`, `{{ extension_default }}`
-/// `{{ path }}`, `{{ file | tag }}`, `{{ username }}`.
-/// In addition all environment variables can be used, e.g.
-/// `{{ get_env(name=\"LOGNAME\") }}`
-/// When placed in YAML-front-matter, the filter `| json_encode` must be
-/// appended to each variable.
-/// Trick: the expression `{% if clipboard != clipboard | heading %}` detects
-/// if the clipboard content has more than one line of text.
+/// Default template used, when the clipboard or the input stream `stdin` contains a string and
+/// this string has no valid YAML front matter section.  The clipboards content is in `{{ clipboard
+/// }}`, its truncated version in `{{ clipboard | heading }}` When the clipboard contains a
+/// hyper-link in markdown format: [<link-name>](<link-url>), its first part is stored in `{{
+/// clipboard | linkname }}`, the second part in `{{ clipboard | linkurl }}`.  The following
+/// variables are defined: `{{ dir | stem }}`, `{{ file | stem }}`, `{{ file_ext }}`,
+/// `{{ extension_default }}` `{{ path }}`, `{{ file | tag }}`, `{{ username }}`.  In addition all
+/// environment variables can be used, e.g.  `{{ get_env(name=\"LOGNAME\") }}`
+/// When placed in YAML-front-matter, the filter `| json_encode` must be appended to each variable.
+/// Trick: the expression `{% if clipboard != clipboard | heading %}` detects if the clipboard
+/// content has more than one line of text.
 const TMPL_CLIPBOARD_CONTENT: &str = "\
 ---
 {% if stdin ~ clipboard | linkname !='' %}\
@@ -184,15 +171,13 @@ revision:   {{ '1.0' | json_encode }}
 
 ";
 
-/// Default filename template used when the stdin ~ clipboard contains a string.
-/// Useful variables in this context are:
-/// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}`,
-/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case
-/// its value starts with a number, the string is prepended with `'`.
-/// The first non-numerical variable must be some `{{ <var>| sanit(alpha) }}`
-/// variant.
-/// Note, that in this filename-template, all variables (except `now`)
-/// must be filtered by a `sanit` or `sanit(alpha=true)` filter.
+/// Default filename template used when the stdin ~ clipboard contains a string.  Useful variables
+/// in this context are: `{{ title| sanit(alpha=true) }}`, `{{ subtitle| sanit }}`, `{{
+/// extension_default }}`, All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in
+/// case its value starts with a number, the string is prepended with `'`.  The first non-numerical
+/// variable must be some `{{ <var>| sanit(alpha) }}` variant.  Note, that in this
+/// filename-template, all variables (except `now` and `extension_default`) must be filtered by a
+/// `sanit` or `sanit(alpha=true)` filter.
 const TMPL_CLIPBOARD_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
 {{ fm_title | sanit(alpha=true) }}\
@@ -200,17 +185,12 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 {{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
 ";
 
-/// Default template used when the command-line <path> parameter points to
-/// an existing non-`.md`-file. Can be modified through editing
-/// the configuration file.
-/// The following variables are  defined:
-/// `{{ file | dirname }}`, `{{ file | stem }}`, `{{ file_ext }}`, `{{ extension_default }}`
-/// `{{ file | tag }}`, `{{ username }}`, `{{ lang }}`,
-/// `{{ path }}`.
-/// In addition all environment variables can be used, e.g.
-/// `{{ get_env(name=\"LOGNAME\") }}`
-/// When placed in YAML-front-matter, the filter `| json_encode` must be
-/// appended to each variable.
+/// Default template used when the command-line <path> parameter points to an existing
+/// non-`.md`-file. Can be modified through editing the configuration file.  The following
+/// variables are  defined: `{{ file | dirname }}`, `{{ file | stem }}`, `{{ file_ext }}`,
+/// `{{ extension_default }}` `{{ file | tag }}`, `{{ username }}`, `{{ lang }}`, `{{ path }}`.  In
+/// addition all environment variables can be used, e.g.  `{{ get_env(name=\"LOGNAME\") }}`
+/// When placed in YAML-front-matter, the filter `| json_encode` must be appended to each variable.
 /// Trick: the expression `{% if stdin ~ clipboard != stdin ~ clipboard | heading %}` detects
 /// if the stdin ~ clipboard content has more than one line of text.
 const TMPL_ANNOTATE_CONTENT: &str = "\
@@ -239,34 +219,28 @@ revision:   {{ '1.0' | json_encode }}
 /// Filename of a new note, that annotates an existing file on disk given in
 /// <path>.
 /// Useful variables are:
-/// `{{ title | sanit(alpha=true) }}`, `{{ subtitle | sanit }}`, `{{ extension_default }}`.
-/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case
-/// its value starts with a number, the string is prepended with `'`.
-/// The first non-numerical variable must be the `{{ <var>| sanit(alpha) }}`
-/// variant.
-/// Note, that in this filename-template, all variables (expect `file | tag`)
-/// must be filtered by a `sanit` or `sanit(alpha=true)` filter.
+/// `{{ title | sanit(alpha=true) }}`, `{{ subtitle | sanit }}`, `{{ extension_default }}`.  All
+/// variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case its value starts with a
+/// number, the string is prepended with `'`.  The first non-numerical variable must be the `{{
+/// <var>| sanit(alpha) }}` variant.
+/// Note, that in this filename-template, all variables (expect `file | tag` and
+/// `extension_default`) must be filtered by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_ANNOTATE_FILENAME: &str = "\
 {{ file | tag }}{{ fm_title | sanit(alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit }}{{ extension_default | prepend_dot }}\
 ";
 
-/// Default filename-template to test, if the filename of an existing note file on
-/// disk, corresponds to the note's meta data stored in its front matter. If
-/// it is not the case, the note's filename will be renamed.
-/// Can be modified through editing the configuration file.
+/// Default filename-template to test, if the filename of an existing note file on disk,
+/// corresponds to the note's meta data stored in its front matter. If it is not the case, the
+/// note's filename will be renamed.  Can be modified through editing the configuration file.
 /// Useful variables in this context are:
-/// `{{ tag }}`
-/// `{{ title | sanit }}`, `{{ subtitle | sanit }}`, `{{ ext_default }}`,
-/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case
-/// its value starts with a number, the string is prepended with `'`.
-/// `{{ tag  }}` must be the first in line here, then followed by a
-/// `{{ <var>| sanit(alpha) }}` variable.
-/// Note, that in this filename-template, all variables (except `tag`) must be
-/// filtered by a `sanit` or `sanit(alpha=true)` filter.
-/// This is the only template that has access to the `{{ tag }}` variable.
-/// `{{ tag }}` contains the content of the YAML header variable `sort_tag`.
+/// `{{ file | tag }}` `{{ title | sanit }}`, `{{ subtitle | sanit }}`, `{{ ext_default }}`,
+/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case its value starts
+/// with a number, the string is prepended with `'`.  `{{ file | tag  }}` must be the first in line
+/// here, then followed by a `{{ <var>| sanit(alpha) }}` variable.
+/// Note, that in this filename-template, all variables (except `file | tag` and `file | ext`) must
+/// be filtered by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_SYNC_FILENAME: &str = "\
 {{ fm_sort_tag | default(value = file | tag) }}\
 {{ fm_title | default(value='No title') | sanit(alpha=true) }}\
@@ -280,7 +254,8 @@ const TMPL_SYNC_FILENAME: &str = "\
 /// the most.  When `TMPL_COMPULSORY_FIELD_CONTENT` is not empty, Tp-Note will not synchronize the
 /// note's filename and will pop up an error message, unless it finds the field in the note's
 /// header.  When `TMPL_COMPULSORY_FIELD_CONTENT` is empty, all files are synchronized without any
-/// further field check.
+/// further field check. Make sure to define a default value with `fm_* | default(value=*)`
+/// in case the variable `fm_*` does not exist in the note's front matter.
 const TMPL_COMPULSORY_FIELD_CONTENT: &str = "title";
 
 /// Default command-line argument list when launching external editor.

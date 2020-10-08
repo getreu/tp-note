@@ -209,14 +209,12 @@ impl Note<'_> {
 
         // Register clipboard front matter.
         if let Some(fm) = clipboard_fm {
-            // Register YAML header variable `title`. We know, it exists.
             Self::register_front_matter(&mut context, &fm);
         }
 
         // Register stdin front matter.
-        // Variables can be overwrittern by clipboard frontmatter.
+        // The variables registered here can be overwrite the ones from the clipboard.
         if let Some(fm) = stdin_fm {
-            // Register YAML header variable `title`. We know, it exists.
             Self::register_front_matter(&mut context, &fm);
         }
 
