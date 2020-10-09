@@ -703,8 +703,11 @@ A filter is always used together with a variable. Here some examples:
 
 * '`{{ file | stem }}`' is the note's filename without sort-tag and extension.
 
-* '`{{ file | ext | prepend_dot }}`' is the note's filename extension without
-  the dot (period), e.g. '`md`' od '`mdtxt`'.
+* '`{{ file | ext }}`' is the note's filename extension without
+  dot (period), e.g. '`md`' od '`mdtxt`'.
+
+* '`{{ file | ext | prepend_dot }}`' is the note's filename extension with
+  dot (period), e.g. '`.md`' od '`.mdtxt`'.
 
 * '`{{ clipboard | cut }}`' is the first 200 bytes from the clipboard.
 
