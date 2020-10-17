@@ -96,7 +96,7 @@ const TMPL_NEW_FILENAME: &str = "\
 /// First all variables defined in the clipboard's front matter are registered, the the ones
 /// defined in the input stream `stdin`. The latter can overwrite the former.  One of the front
 /// matters must define the `title` variable, which is then available in this template as `{{
-/// fm_title }}`. 
+/// fm_title }}`.
 /// When placed in YAML-front-matter, the filter `| json_encode` must be
 /// appended to each variable.
 const TMPL_COPY_CONTENT: &str = "\
@@ -123,7 +123,7 @@ revision:   {{ fm_revision | default(value = '1.0') | json_encode }}
 ";
 
 /// Default filename template used when the stdin or the clipboard contains a string and one of
-/// them has a valid YAML header.  Useful variables in this context are: 
+/// them has a valid YAML header.  Useful variables in this context are:
 /// `{{ title|sanit(alpha=true) }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}`, All
 /// variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case its value starts with a
 /// number, the string is prepended with `'`.  The first non-numerical variable must be some `{{
@@ -266,6 +266,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
     &["flatpak", "run", "com.github.marktext.marktext"],
     &["marktext", "--no-sandbox"],
     &["typora"],
+    &["flatpak", "run", "com.visualstudio.code"],
     &["code", "-w", "-n"],
     &["atom", "-w"],
     &["retext"],
@@ -303,8 +304,10 @@ const EDITOR_ARGS: &[&[&str]] = &[
 /// The viewer list is executed item by item until an editor is found.
 #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
 const VIEWER_ARGS: &[&[&str]] = &[
+    &["flatpak", "run", "com.github.marktext.marktext"],
     &["marktext", "--no-sandbox"],
     &["typora"],
+    &["flatpak", "run", "com.visualstudio.code"],
     &["code", "-w", "-n"],
     &["atom", "-w"],
     &["retext"],
