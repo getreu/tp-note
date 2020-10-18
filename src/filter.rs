@@ -242,7 +242,7 @@ pub fn ext_filter<S: BuildHasher>(
     Ok(to_value(&ext)?)
 }
 
-/// A Tera filter that takes a list of variables and remove
+/// A Tera filter that takes a list of variables and removes
 /// one.
 pub fn remove_filter<S: BuildHasher>(
     value: &Value,
