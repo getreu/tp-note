@@ -66,7 +66,7 @@ common workflows.
 
 ![The folder in which the new note will be created.](images/workflow1-1.png){width="10cm"}
 
-Alternatively you can open the folder you want to create a new note in and
+Alternatively you can open the folder where you want to create a new note and
 right-click on some empty white space.
 
 ![The new unmodified note created by template on disk](images/workflow1-2.png){width="10cm"}
@@ -83,7 +83,7 @@ right-click on some empty white space.
 >
 > Before and after launching the editor _Tp-Note_ renames the file to be in
 > sync with the note's metadata (i.e. title and subtitle).
-> For more details see [Document title - filename sync]
+> For more details see [How it works: Organize your files and notes with sort-tags].
 
 
 ## Taking notes about a file
@@ -419,7 +419,7 @@ The filename has 4 parts:
 A so called _sort-tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
 numerical digits, a _sort-tag_ can be any combination of
-`0123456789-_`[^sort-tag] and is usually used as:
+`0123456789-_` and is usually used as:
 
 * *chronological sort-tag*
 
@@ -441,9 +441,6 @@ The figures below illustrate organizing files with *sort-tags".
 When _Tp-Note_ creates a new note, it prepends automatically a *chronological
 sort-tag* of today. The `{{ fm_title }}` part is usually derived from the parent
 directory's name omitting its own *sort-tag*.
-
-[^sort-tag]: The characters `_` and `-` are not considered to be
-part of the *sort-tag* when they appear in first or last position.
 
 
 
@@ -735,7 +732,7 @@ file in `~/.config/Thunar/uca.xml`.
 
 ### Configure Pcmanfm's custom actions system-wide
 
-_Pcmanfm_ is the default file-manager _Lubuntu_ and in _Raspbian_ on the
+_Pcmanfm_ is the default file-manager in _Lubuntu_ and in _Raspbian_ on the
 Raspberry Pi.
 
 Create the configuration file:
