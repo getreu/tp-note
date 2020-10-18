@@ -137,8 +137,8 @@ impl<'a> Content<'a> {
             return ("", "");
         };
 
-        let pattern = b"---";
-        let fm_start = if content[..pattern.len()].as_bytes() == pattern {
+        let pattern = "---";
+        let fm_start = if content.starts_with(pattern) {
             // Found at first byte.
             pattern.len()
         } else {
@@ -343,6 +343,11 @@ mod tests {
 
         let input_stream = String::from("\u{feff}");
         let expected = ("", "");
+        let result = Content::split(&input_stream, false);
+        assert_eq!(result, expected);
+
+        let input_stream = String::from("[📽 2 videos]");
+        let expected = ("", "[📽 2 videos]");
         let result = Content::split(&input_stream, false);
         assert_eq!(result, expected);
     }
