@@ -621,9 +621,6 @@ lazy_static! {
             let _ = handle.read_to_string(&mut buffer);
         }
 
-        #[cfg(target_family = "windows")]
-        let mut buffer = (&buffer).replace("\r\n", "\n");
-
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
 
@@ -645,8 +642,6 @@ lazy_static! {
                 buffer.push_str(&s.unwrap_or_default());
             }
         };
-        #[cfg(target_family = "windows")]
-        let mut buffer = (&buffer).replace("\r\n", "\n");
 
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
