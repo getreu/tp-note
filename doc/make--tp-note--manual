@@ -6,5 +6,5 @@ mkdir --parents ./build/man/man1
 
 # Html page
 ./docbook52pdf ./source/tp-note--manual.md ./build/pdf/tp-note--manual.pdf
-./md2docbook2html ./source/tp-note--manual.md ./build/html/tp-note--manual.html
+./docbook52html ./source/tp-note--manual.md ./build/html/tp-note--manual.html
 

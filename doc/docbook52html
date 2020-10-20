@@ -2,14 +2,13 @@
 # Author: Jens Getreu
 
 # apt install pandoc docbook-xsl-ns xsltproc
-
-
 render () {
     ### parse args
 
     #set -x
     InPath="$1"
     InFile="${InPath##*/}"
+    InFileExt="${InPath##*.}"
     InBase="${InFile%.*}"
     InDir="${InPath%/*}"
     if [ "$InDir" = "$InPath" ] ; then
@@ -36,13 +35,48 @@ render () {
     ### Generate XML
 
     # unfortunately the chain does not honor --number-section yet
-    pandoc -s -t docbook5 -o "$XmlPath" "$InPath"
+    if [ $InFileExt == 'xml' ]
+    then
+        cp "$InPath" "$XmlPath"
+    else
+        if ! pandoc -s -t docbook5 -o "$XmlPath" "$InPath"
+        then
+            echo Fatal error: Pandoc failed: \"$InPath\"
+            exit 1
+        fi
+    fi
 
+    # Workaround bug
+    # [Docbook5 Writer: produces invalid output when author is given ·
+    # Issue #6244 · jgm/pandoc](https://github.com/jgm/pandoc/issues/6244)
+
+    if grep -q '<author>' "$XmlPath" &&  ! grep -q '<personname>' "$XmlPath"
+    then
+        echo change
+        sed -i 's/<author>/<author><personname>/g' "$XmlPath"
+        sed -i 's/<\/author>/<\/personname><\/author>/g' "$XmlPath"
+    fi
+
+
+    ### Validate
+
+    if ! xmlstarlet val --err \
+        --xsd /usr/share/xml/docbook/schema/xsd/5.0/docbook.xsd \
+        "$XmlPath"
+        then
+            echo Fatal error: docbook file \"$XmlFile\" is not valid.
+            exit 1
+        fi
+
+
+
+    ### Generate .html
+    # xsltproc also take parameters e.g. --stringparam use.extensions 0\
     # this is only needed for html output
     cp -r  "$InDir/images/" "$OutDir"
     cp "$InDir/docutils_basic.css" "$OutDir"
 
-    ### Generate HTML 
+    ### Generate HTML
 
     # Xsltproc also take parameters e.g. --stringparam use.extensions 0\
     #  Schema 1.79.1 does not render figure references correctly:
@@ -58,7 +92,7 @@ render () {
 
 
 ### Main
-# usage: 
+# usage:
 # render FILE [FILE]
 # render report.md ./rendition/report.html
 

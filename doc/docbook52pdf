@@ -42,7 +42,7 @@ render () {
     # unfortunately the chain does not honor --number-section yet
     if [ $InFileExt == 'xml' ]
     then
-        cp "$InPath" "$OutDir"
+        cp "$InPath" "$XmlPath"
     else
         if ! pandoc -s -t docbook5 -o "$XmlPath" "$InPath"
         then
