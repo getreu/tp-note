@@ -35,6 +35,10 @@ after creating a new note.
 
 User documentation:
 
+* Introductory video
+
+  [Tp-Note - Most common use cases - YouTube](https://www.youtube.com/watch?v=ODhPytPFtYY)
+
 * Project page:
 
   [Tp-Note's project page](/projects/tp-note/), which
