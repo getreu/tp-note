@@ -725,6 +725,37 @@ Search for `</actions>` and replace it with:
 The change becomes effective only after the user deletes his own configuration
 file in `~/.config/Thunar/uca.xml`.
 
+**Optional bonus: add a menu entry "Download webpage as Markdown"**
+
+In addition to the above, the following adds a context menu
+entry for fast downloading and converting a webpage to a Markdown
+Tp-Note file.
+
+First install some helper programs:
+
+    sudo apt install xclip curl pandoc
+
+Then edit the system-wide Thunar configuration file:
+
+    sudo nano /etc/xdg/Thunar/uca.xml
+
+Search for `</actions>` and replace it with:
+
+```xml
+<action>
+	<icon></icon>
+	<name>Download URL here</name>
+	<command>bash -c 'curl $(xclip -o)| pandoc --standalone -f html -t markdown_strict+yaml_metadata_block+pipe_tables | tp-note  %F'</command>
+	<description>Download URL here</description>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+</actions>
+```
+
+Again, the change becomes effective only after the user deletes his own configuration
+file in `~/.config/Thunar/uca.xml`.
+
 ```{=docbook}
 <?dbfo-need height="8cm" ?>
 ```
