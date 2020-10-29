@@ -719,6 +719,14 @@ Search for `</actions>` and replace it with:
         <text-files/>
         <video-files/>
 </action>
+<action>
+        <icon>accessories-text-editor</icon>
+        <name>Tp-Note View</name>
+        <command>tp-note -v %f</command>
+        <description>Tp-Note View</description>
+        <patterns>*.md</patterns>
+        <text-files/>
+</action>
 </actions>
 ```
 
@@ -787,6 +795,28 @@ Exec=tp-note %f
 
 The above creates the custom context-menu item _Tp-Note_.
 
+#### Note viewer
+
+Create the configuration file:
+
+    sudo nano /usr/local/share/file-manager/actions/tp-note-view.desktop
+
+with the following content:
+
+```
+[Desktop Entry]
+Type=Action
+Name[en]=Tp-Note View
+Tooltip=Tp-Note View
+Icon=package-x-generic
+Profiles=profile-zero;
+
+[X-Action-Profile profile-zero]
+Name[en]=Default profile
+Exec=tp-note -v %f
+```
+
+The above creates the custom context-menu item _Tp-Note View_.
 
 
 [^1]: _Tp-Note_ is preconfigured to work with many well-known external text
