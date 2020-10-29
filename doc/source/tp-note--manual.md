@@ -222,7 +222,7 @@ revision:   "1.0"
 ---
 
 Winston kept his back turned to the telescreen. It was safer, though, as he well
-knew, even a back can be revealing. A kilometre away the Ministry of Truth, his
+knew, even a back can be revealing. A kilometer away the Ministry of Truth, his
 place of work, towered vast and white above the grimy landscape...
 ```
 
@@ -236,7 +236,7 @@ and observe the file on the disk.
 <?dbfo-need height="6cm" ?>
 ```
 
-## Best practise
+## Best practice
 
 _Tp-Note's_ greatest advantage is it's flexibility. It easily integrates with
 your workflow.  As people work differently, there is no best usage either.
@@ -248,16 +248,16 @@ preferences and configuration:
 * Markdown editor : [Mark Text](https://marktext.app/) or [Typora](https://typora.io/)
 * Integration with you file-manager as described below.
 
-My favorite Markdown editors at the moment are [Mark Text](https://marktext.app/)
+My favourite Markdown editors at the moment are [Mark Text](https://marktext.app/)
 and [Typora](https://typora.io/). I like their clean and simple interface
 helping me to stay focused on the content while writing.[^3]
 
-When copying extracts from a web-page I often need to preserve its hyperlinks.
+When copying extracts from a web-page, I often need to preserve its hyperlinks.
 For this, the Firefox browser addon [Copy Selection as Markdown] is very handy.
 It precedes the copied extract with a hyperlink to the origin of the webpage.
 When _TP-Note_ reads the extract from the clipboard, it uses the first Markdown
 hyperlink it can find for composing the note's title and its filename on disk.
-This is why the webpage's name ends up automatically in the note's title and
+This is why the web page's name ends up automatically in the note's title and
 filename.  Here a sample work flow:
 
 ![A webpage to copy extracts from](images/workflow5-1.png){width=12cm}

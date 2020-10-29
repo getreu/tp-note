@@ -84,6 +84,13 @@ editor_args = [
 ],
     ['typora'],
     [
+    'flatpak',
+    'run',
+    'com.visualstudio.code',
+    '-w',
+    '-n',
+],
+    [
     'code',
     '-w',
     '-n',
@@ -112,46 +119,6 @@ editor_args = [
     [
     'gvim',
     '--nofork',
-],
-]
-viewer_args = [
-    [
-    'marktext',
-    '--no-sandbox',
-],
-    ['typora'],
-    [
-    'code',
-    '-w',
-    '-n',
-],
-    [
-    'atom',
-    '-w',
-],
-    ['retext'],
-    [
-    'geany',
-    '-r',
-    '-s',
-    '-i',
-    '-m',
-],
-    [
-    'gedit',
-    '-w',
-],
-    ['mousepad'],
-    ['leafpad'],
-    [
-    'nvim-qt',
-    '--nofork',
-    '-R',
-],
-    [
-    'gvim',
-    '--nofork',
-    '-R',
 ],
 ]
 editor_console_args = [
@@ -160,26 +127,43 @@ editor_console_args = [
     ['vim'],
     ['vi'],
 ]
-viewer_console_args = [
-    [
-    'nano',
-    '-v',
-],
-    [
-    'nvim',
-    '-R',
-],
-    [
-    'vim',
-    '-R',
-],
-    [
-    'vi',
-    '-R',
-],
-]
-enable_read_clipboard = true
-enable_empty_clipboard = true
+clipboard_read_enabled = true
+clipboard_empty_enabled = true
 copy_counter_extra_separator = '-'
 copy_counter_opening_brackets = '('
 copy_counter_closing_brackets = ')'
+viewer_enabled = true
+viewer_notify_period = 1000
+viewer_rendition_tmpl = '''
+
+<!DOCTYPE html>
+<html lang="{{ fm_lang | default(value='en') }}">
+<head>
+<meta charset="utf-8">
+<title>{{ fm_title }}</title>
+  </head>
+  <body>
+  <pre class="noteHeader">{{ fm_all_yaml }}</pre>
+  <hr>
+  <div class="noteBody">{{ noteBody }}</div>
+  <script>{{ noteJS }}</script>
+</body>
+</html>
+'''
+viewer_error_tmpl = '''
+
+<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<title>Syntax error</title>
+</head>
+<body>
+<h3>Syntax error</h3>
+<p> in note file: <pre>{{ file }}</pre><p>
+<hr>
+<pre class=\"noteError\">{{ noteError }}<pre>
+<script>{{ noteJS }}</script>
+</body>
+</html>
+'''

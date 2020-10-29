@@ -30,7 +30,7 @@ pub struct Note<'a> {
     //     front_matter: FrontMatter,
     /// Captured environment of `tp-note` that
     /// is used to fill in templates.
-    context: ContextWrapper,
+    pub context: ContextWrapper,
     /// The full text content of the note, including
     /// its front matter.
     pub content: Pin<Box<Content<'a>>>,
@@ -93,7 +93,7 @@ impl Note<'_> {
         let content = Content::new(
             {
                 let mut tera = Tera::default();
-                tera.extend(&TERA).unwrap();
+                tera.extend(&TERA)?;
 
                 tera.render_str(template, &context)?
             },
@@ -279,7 +279,7 @@ impl Note<'_> {
         let mut fqfn = self.context.fqpn.to_owned();
         fqfn.push({
             let mut tera = Tera::default();
-            tera.extend(&TERA).unwrap();
+            tera.extend(&TERA)?;
 
             tera.render_str(template, &self.context)
                 .map(|filename| {

@@ -266,7 +266,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
     &["flatpak", "run", "com.github.marktext.marktext"],
     &["marktext", "--no-sandbox"],
     &["typora"],
-    &["flatpak", "run", "com.visualstudio.code"],
+    &["flatpak", "run", "com.visualstudio.code", "-w", "-n"],
     &["code", "-w", "-n"],
     &["atom", "-w"],
     &["retext"],
@@ -299,45 +299,6 @@ const EDITOR_ARGS: &[&[&str]] = &[
     &["/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text"],
 ];
 
-/// Default command-line argument list when launching external viewer
-/// with `--view`. Can be changed in config file.
-/// The viewer list is executed item by item until an editor is found.
-#[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-const VIEWER_ARGS: &[&[&str]] = &[
-    &["flatpak", "run", "com.github.marktext.marktext"],
-    &["marktext", "--no-sandbox"],
-    &["typora"],
-    &["flatpak", "run", "com.visualstudio.code"],
-    &["code", "-w", "-n"],
-    &["atom", "-w"],
-    &["retext"],
-    &["geany", "-r", "-s", "-i", "-m"],
-    &["gedit", "-w"],
-    &["mousepad"],
-    &["leafpad"],
-    &["nvim-qt", "--nofork", "-R"],
-    &["gvim", "--nofork", "-R"],
-];
-#[cfg(target_family = "windows")]
-const VIEWER_ARGS: &[&[&str]] = &[
-    &["C:\\Program Files\\Mark Text\\Mark Text.exe"],
-    &["C:\\Program Files\\Typora\\Typora.exe"],
-    &[
-        "C:\\Program Files\\Notepad++\\notepad++.exe",
-        "-nosession",
-        "-multiInst",
-        "-ro",
-    ],
-    &["C:\\Windows\\notepad.exe"],
-];
-// Some info about lauching programs on iOS:
-//[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
-#[cfg(all(target_family = "unix", target_vendor = "apple"))]
-const VIEWER_ARGS: &[&[&str]] = &[
-    &["/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
-    &["/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text"],
-];
-
 /// Default command-line argument list when launching an external editor
 /// and no graphical environment is available (`DISPLAY=''`).
 /// This lists console file editors only.
@@ -352,36 +313,14 @@ const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&[]];
 #[cfg(all(target_family = "unix", target_vendor = "apple"))]
 const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nano"], &["nvim"], &["vim"], &["vi"]];
 
-/// Default command-line argument list when launching external viewer
-/// with `--view`. Can be changed in config file.
-/// The viewer list is executed item by item until an editor is found.
-#[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-const VIEWER_CONSOLE_ARGS: &[&[&str]] = &[
-    &["nano", "-v"],
-    &["nvim", "-R"],
-    &["vim", "-R"],
-    &["vi", "-R"],
-];
-#[cfg(target_family = "windows")]
-const VIEWER_CONSOLE_ARGS: &[&[&str]] = &[];
-// Some info about lauching programs on iOS:
-//[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
-#[cfg(all(target_family = "unix", target_vendor = "apple"))]
-const VIEWER_CONSOLE_ARGS: &[&[&str]] = &[
-    &["nano", "-v"],
-    &["nvim", "-R"],
-    &["vim", "-R"],
-    &["vi", "-R"],
-];
-
 /// By default clipboard support is enabled, can be disabled
 /// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
 /// false.
-const ENABLE_READ_CLIPBOARD: bool = true;
+const CLIPBOARD_READ_ENABLED: bool = true;
 
 /// Should the clipboard be emptied when tp-note closes?
 /// Default value.
-const ENABLE_EMPTY_CLIPBOARD: bool = true;
+const CLIPBOARD_EMPTY_ENABLED: bool = true;
 
 /// If the stem of a filename ends with a pattern, that is similar
 /// to a copy counter, add this extra separator. Must be `-`, `_`
@@ -401,6 +340,51 @@ const COPY_COUNTER_OPENING_BRACKETS: &str = "(";
 /// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
 /// Can be empty.
 const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
+
+/// Launches a filewatcher, (Markdown)-renderer, html server
+/// and a web-browser to view the current note file.
+/// To disable this feature, set to false.
+/// TODO: after experimental period, set this to true.
+const VIEWER_ENABLED: bool = false;
+
+/// How often should the file watcher check for changes?
+/// Delay in milliseconds.
+const VIEWER_NOTIFY_PERIOD: u64 = 1000;
+
+/// Template used to render a note into html.
+pub const VIEWER_RENDITION_TMPL: &str = r#"
+<!DOCTYPE html>
+<html lang="{{ fm_lang | default(value='en') }}">
+<head>
+<meta charset="utf-8">
+<title>{{ fm_title }}</title>
+  </head>
+  <body>
+  <pre class="noteHeader">{{ fm_all_yaml }}</pre>
+  <hr>
+  <div class="noteBody">{{ noteBody }}</div>
+  <script>{{ noteJS }}</script>
+</body>
+</html>
+"#;
+
+/// Template used to render error messages into html.
+pub const VIEWER_ERROR_TMPL: &str = r#"
+<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<title>Syntax error</title>
+</head>
+<body>
+<h3>Syntax error</h3>
+<p> in note file: <pre>{{ file }}</pre><p>
+<hr>
+<pre class=\"noteError\">{{ noteError }}<pre>
+<script>{{ noteJS }}</script>
+</body>
+</html>
+"#;
 
 #[derive(Debug, PartialEq, StructOpt)]
 #[structopt(
@@ -429,7 +413,13 @@ pub struct Args {
     /// Debug: shows templates and its variables
     #[structopt(long, short = "d")]
     pub debug: bool,
-    /// Launches editor in read-only mode
+    /// Launches only the editor, no browser
+    #[structopt(long, short = "e")]
+    pub edit: bool,
+    /// Let webserver listen to a specific port
+    #[structopt(long, short = "p")]
+    pub port: Option<u16>,
+    /// Launches only the browser, no editor
     #[structopt(long, short = "v")]
     pub view: bool,
     /// <dir> as new note location or <file> to annotate
@@ -465,14 +455,16 @@ pub struct Cfg {
     pub tmpl_sync_filename: String,
     pub tmpl_compulsory_field_content: String,
     pub editor_args: Vec<Vec<String>>,
-    pub viewer_args: Vec<Vec<String>>,
     pub editor_console_args: Vec<Vec<String>>,
-    pub viewer_console_args: Vec<Vec<String>>,
-    pub enable_read_clipboard: bool,
-    pub enable_empty_clipboard: bool,
+    pub clipboard_read_enabled: bool,
+    pub clipboard_empty_enabled: bool,
     pub copy_counter_extra_separator: String,
     pub copy_counter_opening_brackets: String,
     pub copy_counter_closing_brackets: String,
+    pub viewer_enabled: bool,
+    pub viewer_notify_period: u64,
+    pub viewer_rendition_tmpl: String,
+    pub viewer_error_tmpl: String,
 }
 
 /// When no configuration-file is found, defaults are set here from built-in
@@ -506,23 +498,19 @@ impl ::std::default::Default for Cfg {
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
-            viewer_args: VIEWER_ARGS
-                .iter()
-                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
-                .collect(),
             editor_console_args: EDITOR_CONSOLE_ARGS
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
-            viewer_console_args: VIEWER_CONSOLE_ARGS
-                .iter()
-                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
-                .collect(),
-            enable_read_clipboard: ENABLE_READ_CLIPBOARD,
-            enable_empty_clipboard: ENABLE_EMPTY_CLIPBOARD,
+            clipboard_read_enabled: CLIPBOARD_READ_ENABLED,
+            clipboard_empty_enabled: CLIPBOARD_EMPTY_ENABLED,
             copy_counter_extra_separator: COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
             copy_counter_opening_brackets: COPY_COUNTER_OPENING_BRACKETS.to_string(),
             copy_counter_closing_brackets: COPY_COUNTER_CLOSING_BRACKETS.to_string(),
+            viewer_enabled: VIEWER_ENABLED,
+            viewer_notify_period: VIEWER_NOTIFY_PERIOD,
+            viewer_rendition_tmpl: VIEWER_RENDITION_TMPL.to_string(),
+            viewer_error_tmpl: VIEWER_ERROR_TMPL.to_string(),
         }
     }
 }
@@ -634,7 +622,7 @@ lazy_static! {
         let mut buffer = String::new();
 
         // Concatenate clipboard content.
-        if CFG.enable_read_clipboard && !*RUNS_ON_CONSOLE && !ARGS.batch {
+        if CFG.clipboard_read_enabled && !*RUNS_ON_CONSOLE && !ARGS.batch {
             let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
             if ctx.is_some() {
                 let ctx = &mut ctx.unwrap(); // This is ok since `is_some()`

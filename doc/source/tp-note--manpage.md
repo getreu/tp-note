@@ -406,9 +406,20 @@ synchronization).
 
         tp-note.exe -d >debug.txt 2>&1
 
+**-e**, **\--edit**
+
+:   Open only the external file editor. Do not open the web browser to view
+    the rendered note. See also the configuration variable '`viewer_enable`'.
+
 **-v**, **\--view**
 
-:   Launch the external text editor, if possible, in read-only-mode.
+:   View only mode. Launch the system's default web browser to view the note file
+    and do not any external text editor.
+
+**-p**, **\--port**=*PORT*
+
+:   Set server port the web browser connects to, to the specified value.
+    If not given, a random free port is chosen automatically.
 
 **-V**, **\--version**
 

@@ -55,6 +55,7 @@ impl AlertDialog {
     }
 
     /// Pops up a message box and prints `msg`.
+    #[allow(dead_code)]
     pub fn print(msg: &str) {
         // Print the same message also to console in case
         // the window does not pop up due to missing

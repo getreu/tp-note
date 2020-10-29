@@ -18,6 +18,10 @@ mod error;
 mod filename;
 mod filter;
 mod note;
+#[cfg(feature = "viewer")]
+mod sse_server;
+#[cfg(feature = "viewer")]
+mod viewer;
 
 extern crate semver;
 use crate::config::backup_config_file;
@@ -28,6 +32,8 @@ use crate::config::RUNS_ON_CONSOLE;
 use crate::config::STDIN;
 use crate::error::AlertDialog;
 use crate::note::Note;
+#[cfg(feature = "viewer")]
+use crate::viewer::Viewer;
 use anyhow::{anyhow, Context};
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
@@ -41,6 +47,10 @@ use std::path::PathBuf;
 use std::process;
 use std::process::Command;
 use std::process::Stdio;
+#[cfg(feature = "viewer")]
+use std::thread;
+#[cfg(feature = "viewer")]
+use std::time::Duration;
 
 /// Use the version-number defined in `../Cargo.toml`.
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
@@ -66,7 +76,7 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
 ///    ```
 ///
-const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.7.7");
+const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
 /// (c) Jens Getreu
 const AUTHOR: &str = "(c) Jens Getreu, 2020";
 /// Open the note file `path` on disk and reads its YAML front matter.
@@ -209,11 +219,9 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     let mut executable_list = Vec::new();
 
     // Choose the right parameter list.
-    let editor_args = match (ARGS.view, *RUNS_ON_CONSOLE) {
-        (true, true) => &CFG.viewer_console_args,
-        (true, false) => &CFG.viewer_args,
-        (false, true) => &CFG.editor_console_args,
-        (false, false) => &CFG.editor_args,
+    let editor_args = match *RUNS_ON_CONSOLE {
+        true => &CFG.editor_console_args,
+        false => &CFG.editor_args,
     };
 
     // Prepare launch of editor/viewer.
@@ -302,8 +310,8 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
                      and correct the following:\n\
                      \t{:?}",
                     ecode.to_string(),
-                    if ARGS.view {
-                        "viewer_args"
+                    if *RUNS_ON_CONSOLE {
+                        "editor_console_args"
                     } else {
                         "editor_args"
                     },
@@ -329,13 +337,32 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
              install one of the above listed applications.",
             &executable_list,
             // Choose the right parameter list.
-            match (ARGS.view, *RUNS_ON_CONSOLE) {
-                (true, true) => "viewer_console_args",
-                (true, false) => "viewer_args",
-                (false, true) => "editor_console_args",
-                (false, false) => "editor_args",
+            match *RUNS_ON_CONSOLE {
+                true => "editor_console_args",
+                false => "editor_args",
             }
         )));
+    };
+
+    Ok(())
+}
+
+#[inline]
+/// Launches a file watcher and Markdown renderer and displays the
+/// result in the system's default browser.
+#[cfg(feature = "viewer")]
+fn launch_viewer(path: &Path) -> Result<(), anyhow::Error> {
+    // Launch server und browser.
+    let p = path.to_path_buf();
+    thread::spawn(move || {
+        let v = Viewer::new(p);
+        v.run()
+    });
+
+    // In view-only mode, we wait a litte to make sure that the browser
+    // had enough time to open.
+    if ARGS.view {
+        thread::sleep(Duration::from_secs(4))
     };
 
     Ok(())
@@ -351,19 +378,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
 fn run() -> Result<PathBuf, anyhow::Error> {
     // process arg = `--version`
     if ARGS.version {
-        if ARGS.debug {
-            AlertDialog::print_error(&format!(
-                "Version {}, {}",
-                VERSION.unwrap_or("unknown"),
-                AUTHOR
-            ))
-        } else {
-            AlertDialog::print(&format!(
-                "Version {}, {}",
-                VERSION.unwrap_or("unknown"),
-                AUTHOR
-            ))
-        };
+        eprintln!("Version {}, {}", VERSION.unwrap_or("unknown"), AUTHOR);
         process::exit(0);
     };
 
@@ -385,14 +400,21 @@ fn run() -> Result<PathBuf, anyhow::Error> {
 
     let path = create_new_note_or_synchronize_filename(path)?;
 
+    #[cfg(feature = "viewer")]
+    // In "edit-only" mode, no viewer is wanted.
+    if !ARGS.batch && !ARGS.edit && !*RUNS_ON_CONSOLE && (ARGS.view || CFG.viewer_enabled) {
+        launch_viewer(&path)?;
+    }
+
     // In batch mode, we do not launch the editor.
-    if !ARGS.batch {
+    // In "view-only" mode, the editor is not wanted either.
+    if !ARGS.batch && !ARGS.view {
         launch_editor(&path)?;
 
         let path = synchronize_filename(path)?;
 
         // Delete clipboard
-        if CFG.enable_read_clipboard && CFG.enable_empty_clipboard && !*RUNS_ON_CONSOLE {
+        if CFG.clipboard_read_enabled && CFG.clipboard_empty_enabled && !*RUNS_ON_CONSOLE {
             let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
             if let Some(mut ctx) = ctx {
                 ctx.set_contents("".to_owned()).unwrap_or_default();
