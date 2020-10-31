@@ -17,9 +17,10 @@ _Tp-Note_ collects various information about its environment
 and the clipboard and stores them in variables. New notes are created by
 filling these variables in predefined and customizable _Tera_-templates.
 _TP-Note's_ default templates are written in Markdown and can be easily adapted
-to any other markup language if needed. By default, _TP-Note_ launches the
-system file-editor (or any other of your choice, e.g. _MarkText_ or _Typora_)
-after creating a new note.
+to any other markup language if needed. After creating a new note, _TP-Note_
+launches the system file-editor (or any other of your choice, e.g. _MarkText_
+or _Typora_) and to connects the system's default web browser to _Tp-Note_'s
+internal file watcher and web server.
 
 * Read more in [Tp-Note’s user manual](/projects/tp-note/tp-note--manual.html)
 

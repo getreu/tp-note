@@ -24,8 +24,9 @@ filename is modified. For all other file types, _Tp-Note_ creates a new note
 that annotates the file '`<path>`' points to. If '`<path>`' is a directory (or,
 when omitted the current working directory), a new note is created in that
 directory. After creation, _Tp-Note_ launches an external text editor of your
-choice. Although the note's structure follows '`pandoc`'-conventions, it is not
-tied to any specific Markup language.
+choice. At the same time the system's default web browser is started and
+connected to _Tp-Note_'s internal web server. This server watches and
+renders the edited note file and generates a live preview.
 
 After the user finished editing, _Tp-Note_ analyses eventual changes in the
 notes meta-data and renames, if necessary, the file, so that its meta-data and
@@ -157,7 +158,7 @@ We see from the above example, how the '`tmpl_clipboard_content`' content
 template extracts the first line of the clipboards content and inserts it into
 the header's '`title:`' field. Then, it copies the entire clipboard content into
 the body of the document.  However, if desired or necessary, it is possible to
-modifiy all templates in _Tp-Note_'s configuration file. Note, that not only the
+modify all templates in _Tp-Note_'s configuration file. Note, that not only the
 note's content is created with a template, but also its filename: The
 '`tmpl_clipboard_filename`' filename template concatenates the current date,
 the note's title and subtitle.
@@ -408,13 +409,18 @@ synchronization).
 
 **-e**, **\--edit**
 
-:   Open only the external file editor. Do not open the web browser to view
-    the rendered note. See also the configuration variable '`viewer_enable`'.
+:   Edit only mode: opens the external file editor, but not the file
+    viewer. This disables _Tp-Note_'s internal file watcher and web server,
+    unless '`-v`' is given. Another way to permanently disable the web server
+    is to set the configuration variable '`viewer_enable=false`'.
 
 **-v**, **\--view**
 
-:   View only mode. Launch the system's default web browser to view the note file
-    and do not any external text editor.
+:   View only mode: do not open the external text editor. This flag instructs
+    _Tp-Note_ to start an internal file watcher and web server and connect
+    the system's default web browser to view the note file and to observe live
+    file modifications. This flag has precedence over the configuration
+    variable '`viewer_enable=false`'.
 
 **-p**, **\--port**=*PORT*
 

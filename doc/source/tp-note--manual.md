@@ -6,10 +6,9 @@ date:   "2020-03-08"
 version: "1.8.0"
 ---
 
-Markup languages like *Markdown*, *ReStructuredText*, *asciidoc*, *textile*,
-*txt2tags* or *mediawiki* are perfectly suited for fast note-taking. Type
-your notes with your favourite editor and chose your favourite markup
-language[^1].
+Markup languages like *Markdown* [^1] are perfectly suited for fast
+note-taking. Type your notes with your favourite text editor and observe live
+the rendered text in you web browser.
 
 _Tp-Note_ helps you to quickly get started writing notes with its powerful
 template system. If you like to keep your notes next to your files and you care
@@ -27,8 +26,10 @@ its main use-cases and how to get started:
 5. Best practise.
 6. Note taking for system administrators.
 
-If you want to customize _Tp-Note_ with own templates, another markup
-language, please consult the [man-page] for more technical details.
+If you want to customize _Tp-Note_ with your own templates or if you want to
+use another markup language than Markdown, please consult the [man-page] for
+more technical details. It also explains how to change _Tp-Note_'s default text
+editor.
 
 The project is hosted on Github:
 [getreu/tp-note](https://github.com/getreu/tp-note). The project's webpage is on
