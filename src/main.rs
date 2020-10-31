@@ -22,12 +22,15 @@ mod note;
 mod sse_server;
 #[cfg(feature = "viewer")]
 mod viewer;
+mod watcher;
 
 extern crate semver;
 use crate::config::backup_config_file;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
+use crate::config::LAUNCH_EDITOR;
+use crate::config::LAUNCH_VIEWER;
 use crate::config::RUNS_ON_CONSOLE;
 use crate::config::STDIN;
 use crate::error::AlertDialog;
@@ -49,8 +52,6 @@ use std::process::Command;
 use std::process::Stdio;
 #[cfg(feature = "viewer")]
 use std::thread;
-#[cfg(feature = "viewer")]
-use std::time::Duration;
 
 /// Use the version-number defined in `../Cargo.toml`.
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
@@ -352,19 +353,12 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
 /// result in the system's default browser.
 #[cfg(feature = "viewer")]
 fn launch_viewer(path: &Path) -> Result<(), anyhow::Error> {
-    // Launch server und browser.
     let p = path.to_path_buf();
-    thread::spawn(move || {
-        let v = Viewer::new(p);
-        v.run()
-    });
-
-    // In view-only mode, we wait a litte to make sure that the browser
-    // had enough time to open.
-    if ARGS.view {
-        thread::sleep(Duration::from_secs(4))
-    };
-
+    if *LAUNCH_EDITOR {
+        thread::spawn(move || Viewer::run(p));
+    } else {
+        Viewer::run(p);
+    }
     Ok(())
 }
 
@@ -401,14 +395,11 @@ fn run() -> Result<PathBuf, anyhow::Error> {
     let path = create_new_note_or_synchronize_filename(path)?;
 
     #[cfg(feature = "viewer")]
-    // In "edit-only" mode, no viewer is wanted.
-    if !ARGS.batch && !ARGS.edit && !*RUNS_ON_CONSOLE && (ARGS.view || CFG.viewer_enabled) {
+    if *LAUNCH_VIEWER {
         launch_viewer(&path)?;
     }
 
-    // In batch mode, we do not launch the editor.
-    // In "view-only" mode, the editor is not wanted either.
-    if !ARGS.batch && !ARGS.view {
+    if *LAUNCH_EDITOR {
         launch_editor(&path)?;
 
         let path = synchronize_filename(path)?;

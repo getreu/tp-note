@@ -344,8 +344,7 @@ const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
 /// Launches a filewatcher, (Markdown)-renderer, html server
 /// and a web-browser to view the current note file.
 /// To disable this feature, set to false.
-/// TODO: after experimental period, set this to true.
-const VIEWER_ENABLED: bool = false;
+const VIEWER_ENABLED: bool = true;
 
 /// How often should the file watcher check for changes?
 /// Delay in milliseconds.
@@ -513,6 +512,41 @@ impl ::std::default::Default for Cfg {
             viewer_error_tmpl: VIEWER_ERROR_TMPL.to_string(),
         }
     }
+}
+
+lazy_static! {
+    /// Shall we launch the external text editor?
+    pub static ref LAUNCH_EDITOR: bool = {
+        !ARGS.batch &&
+        match (ARGS.edit, ARGS.view, CFG.viewer_enabled) {
+            (false, false, false) => true,
+            (false, false, true) => true,
+            (false, true, false) => false,
+            (false, true, true) => false,
+            (true, false, false) => true,
+            (true, false, true) => true,
+            (true, true, false) => true,
+            (true, true, true) => true,
+
+        }
+    };
+}
+
+lazy_static! {
+    /// Shall we launch the internal server and the external browser?
+    pub static ref LAUNCH_VIEWER: bool = {
+        !ARGS.batch && !*RUNS_ON_CONSOLE &&
+        match (ARGS.edit, ARGS.view, CFG.viewer_enabled) {
+            (false, false, false) => false,
+            (false, false, true) => true,
+            (false, true, false) => true,
+            (false, true, true) => true,
+            (true, false, false) => false,
+            (true, false, true) => false,
+            (true, true, false) => true,
+            (true, true, true) => true,
+        }
+    };
 }
 
 lazy_static! {

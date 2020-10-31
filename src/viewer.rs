@@ -1,41 +1,31 @@
 use crate::config::ARGS;
-use crate::config::CFG;
+use crate::config::LAUNCH_EDITOR;
 use crate::sse_server::manage_connections;
+use crate::watcher::FileWatcher;
 use anyhow::anyhow;
 use anyhow::Context;
-use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use std::net::SocketAddr;
 use std::net::TcpListener;
 use std::path::PathBuf;
-use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
+use std::thread::sleep;
+use std::thread::JoinHandle;
+use std::time::{Duration, Instant};
 use webbrowser::{open_browser, Browser};
 
 pub const EVENT_PATH: &str = "/events";
 
-/// A Server-Sent Event.
-#[derive(Clone, Debug)]
-pub struct Event {
-    pub port: u16,
-}
-
 /// Parse result.
 #[derive(Clone, Default, Debug)]
-pub struct Viewer {
-    file: PathBuf,
-}
+pub struct Viewer {}
 
 impl Viewer {
-    /// Constructor. `file` is the file to watch, render and serve as html.
-    pub fn new(file: PathBuf) -> Self {
-        Self { file }
-    }
-
-    /// Wrapper to start the server. Does not return.
-    pub fn run(&self) {
-        match Self::run2(self) {
+    /// Set up the file watcher, start the event/html server and lauch web browser.
+    /// Returns when the use closes the webbrowswer.
+    /// This is a small wrapper, that prints error messages.
+    pub fn run(file: PathBuf) {
+        match Self::run2(file) {
             Ok(_) => (),
             Err(e) => {
                 eprintln!("ERROR: Viewer::run(): {:?}", e);
@@ -43,8 +33,9 @@ impl Viewer {
         }
     }
 
-    /// Set up the file watcher and start the event/html server.
-    fn run2(&self) -> Result<(), anyhow::Error> {
+    /// Set up the file watcher, start the event/html server and lauch web browser.
+    /// Returns when the use closes the webbrowswer.
+    fn run2(file: PathBuf) -> Result<(), anyhow::Error> {
         // Launch "server sent event" server.
         let event_out = if let Some(p) = ARGS.port {
             Self::get_tcp_listener_at_port(p)?
@@ -52,18 +43,11 @@ impl Viewer {
             Self::get_tcp_listener()?
         };
 
-        let notify_period = CFG.viewer_notify_period;
-
-        // Set up the file watcher.
-        let (tx, rx) = channel();
-        let mut watcher = watcher(tx.clone(), Duration::from_millis(notify_period)).unwrap();
-        watcher.watch(&self.file, RecursiveMode::Recursive)?;
-
         // Launch a background thread to manage server-sent events subscribers.
         let event_tx_list = {
             let (listener, sse_port) = event_out;
             let sse_port = sse_port;
-            let file_path = self.file.clone();
+            let file_path = file.clone();
             let event_tx_list = Arc::new(Mutex::new(Vec::new()));
             let event_tx_list_clone = event_tx_list.clone();
             thread::spawn(move || {
@@ -73,6 +57,13 @@ impl Viewer {
             event_tx_list
         };
 
+        // Send a signal whenever the file is modified. This thread runs as
+        // long as the parent thread is running.
+        let handle: JoinHandle<Result<(), anyhow::Error>> = thread::spawn(move || loop {
+            let mut w = FileWatcher::new(file.clone(), event_tx_list.clone());
+            w.run()
+        });
+
         // Launch webbrowser.
         let url = format!("http://127.0.0.1:{}", event_out.1);
         if ARGS.debug {
@@ -81,63 +72,31 @@ impl Viewer {
                 url
             );
         }
-        thread::spawn(move || open_browser(Browser::Default, url.as_str()));
+        // This blocks when a new instance of the browser is opened.
+        let now = Instant::now();
+        open_browser(Browser::Default, url.as_str())?;
+        // Some browsers do not block, then we wait a little
+        // to give him time read the page.
+        if now.elapsed().as_secs() <= 4 {
+            sleep(Duration::new(4, 0));
+        };
 
-        // Send a signal whenever the file is modified.
-        loop {
-            match rx.recv()? {
-                // Ignore rescan and notices.
-                DebouncedEvent::NoticeRemove(_)
-                | DebouncedEvent::NoticeWrite(_)
-                | DebouncedEvent::Rescan => {}
-
-                // Actual modifications.
-                DebouncedEvent::Write(_) | DebouncedEvent::Chmod(_) | DebouncedEvent::Create(_) => {
-                    // Run the sub-command.
-                    Self::update(&event_tx_list)?;
-                }
-
-                // Removal or replacement through renaming.
-                DebouncedEvent::Remove(path) => {
-                    // Instead of modifying the file, some weird editors
-                    // (hello Gedit!) remove the current file and recreate it
-                    // by renaming the buffer.
-                    // To outsmart such editors, the watcher is set up to watch
-                    // again a file with the same name. If this succeeds, the
-                    // file is deemed changed.
-                    watcher
-                        .watch(path.clone(), RecursiveMode::NonRecursive)
-                        .map_err(|e| anyhow!(e))
-                        .and_then(|_| Self::update(&event_tx_list))?
-                }
-
-                // Treat renamed files as a fatal error because it may
-                // impact the sub-command.
-                DebouncedEvent::Rename(_path, _) => {
-                    return Err(anyhow!("file was renamed"));
-                }
-
-                // Other errors.
-                DebouncedEvent::Error(err, _path) => {
-                    return Err(err.into());
-                }
-            }
+        if *LAUNCH_EDITOR {
+            // We keep this thread alive as long as the watcher thread
+            // is running. As the watcher never ends, the `join()`
+            // will block forever unless the parent thread terminates.
+            // The parent thread and this tread will finally end, when
+            // the user closes the external file editor programm.
+            handle.join().unwrap()
+        } else {
+            // In "view-only" mode, there is no external text editor to
+            // wait for. We are here, because the user just closed the
+            // browswer. So it is Ok to exit now. This also terminates
+            // the Sse-server.
+            Ok(())
         }
     }
 
-    /// Run sub-command and notify subscribers.
-    fn update(event_tx_list: &Arc<Mutex<Vec<Sender<()>>>>) -> Result<(), anyhow::Error> {
-        // Notify subscribers and forget disconnected subscribers.
-        let tx_list = &mut *event_tx_list.lock().unwrap();
-        *tx_list = tx_list.drain(..).filter(|tx| tx.send(()).is_ok()).collect();
-        if ARGS.debug {
-            println!(
-                "*** Debug: Viewer::update(): {} subscribers updated.",
-                tx_list.len()
-            );
-        };
-        Ok(())
-    }
     /// Get TCP port and bind.
     fn get_tcp_listener_at_port(port: u16) -> Result<(TcpListener, u16), anyhow::Error> {
         TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], port)))
