@@ -17,7 +17,7 @@ use tera::Tera;
 /// Javascript client code, part 1
 /// Refresh on WTFiles events.
 pub const SSE_CLIENT_CODE1: &str = r#"
-var evtSource = new EventSource("http://127.0.0.1:"#;
+var evtSource = new EventSource("http://localhost:"#;
 /// Javascript client code, part 2
 /// Save last scroll position into local storage.
 /// Jump to the last saved scroll position.

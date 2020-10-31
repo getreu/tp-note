@@ -4,7 +4,6 @@ use crate::sse_server::manage_connections;
 use crate::watcher::FileWatcher;
 use anyhow::anyhow;
 use anyhow::Context;
-use std::net::SocketAddr;
 use std::net::TcpListener;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -65,7 +64,7 @@ impl Viewer {
         });
 
         // Launch webbrowser.
-        let url = format!("http://127.0.0.1:{}", event_out.1);
+        let url = format!("http://localhost:{}", event_out.1);
         if ARGS.debug {
             eprintln!(
                 "*** Debug: Viewer::run(): launching browser with URL: {}",
@@ -99,7 +98,7 @@ impl Viewer {
 
     /// Get TCP port and bind.
     fn get_tcp_listener_at_port(port: u16) -> Result<(TcpListener, u16), anyhow::Error> {
-        TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], port)))
+        TcpListener::bind(("localhost", port))
             .map(|l| (l, port))
             .with_context(|| format!("can not bind to port: {}", port))
     }
@@ -112,7 +111,7 @@ impl Viewer {
             start += 1024
         };
         for port in start..0xffff {
-            match TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], port))) {
+            match TcpListener::bind(("localhost", port)) {
                 Ok(l) => return Ok((l, port)),
                 _ => {}
             }
