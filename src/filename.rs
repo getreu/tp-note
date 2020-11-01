@@ -145,7 +145,7 @@ pub fn assemble(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str)
 /// If there is none, return the same.
 #[inline]
 pub fn remove_copy_counter(tag: &str) -> &str {
-    // Strip `sepsepend` at the end.
+    // Strip closing brackets at the end.
     let tag1 = if let Some(t) = tag.strip_suffix(&CFG.copy_counter_closing_brackets) {
         t
     } else {
@@ -156,7 +156,7 @@ pub fn remove_copy_counter(tag: &str) -> &str {
     if tag2.len() == tag1.len() {
         return tag;
     };
-    // And finally strip `sepsepstart`.
+    // And finally strip starting brackets.
     let tag3 = if let Some(t) = tag2.strip_suffix(&CFG.copy_counter_opening_brackets) {
         t
     } else {

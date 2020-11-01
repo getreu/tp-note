@@ -327,7 +327,7 @@ impl Note<'_> {
                     > 0
                 {
                     return Err(anyhow!(format!(
-                        "The `tag`-variable contains forbidden character(s): tag = \"{}\". \
+                        "The `sort_tag` header variable contains forbidden character(s): sort_tag = \"{}\". \
                         Only numbers, `-` and `_` are allowed here.",
                         sort_tag
                     )));

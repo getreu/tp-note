@@ -42,7 +42,7 @@ lazy_static! {
 /// Adds a new filter to Tera templates:
 /// `sanit` or `sanit()` sanitizes a string so that it can be used
 /// to assemble filenames or paths.
-/// In addition, `sanit(alpha=true)` prepends an apostroph when the result
+/// In addition, `sanit(alpha=true)` prepends an apostrophe when the result
 /// starts with a number. This way we guaranty that the filename
 /// never starts with a number. We do not allow this, to be able
 /// to distinguish reliably the sort tag from the filename.

@@ -120,7 +120,7 @@ impl<'a> Content<'a> {
     /// 2. followed by header bytes,
     /// 3. optionally followed by `"\n",
     /// 4. followed by `"---"` or `"..."`,
-    /// 5. optionall followed by `"\n"`.
+    /// 5. optionally followed by `"\n"`.
     /// The remaining bytes are "content".
     ///
     /// To accept a "header" (`relax==true`):

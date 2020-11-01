@@ -1,3 +1,6 @@
+//! Server-sent-event server for the Markdown note viewer feature.
+//! This module contains also the web browser Javascript client code.
+
 use crate::viewer::EVENT_PATH;
 use std::io::{ErrorKind, Read, Write};
 use std::net::{TcpListener, TcpStream};

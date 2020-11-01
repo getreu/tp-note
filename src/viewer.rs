@@ -1,3 +1,5 @@
+//! Main module for the Markdown note viewer feature.
+
 use crate::config::ARGS;
 use crate::config::LAUNCH_EDITOR;
 use crate::sse_server::manage_connections;

@@ -1,3 +1,5 @@
+//! Implements the file watcher for the Markdown note viewer feature.
+
 use crate::config::ARGS;
 use crate::config::CFG;
 use anyhow::anyhow;
