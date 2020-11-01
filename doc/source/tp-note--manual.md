@@ -3,7 +3,7 @@ title:  "Tp-Note: fast note taking with templates and filename synchronization"
 subtitle: "Organize your notes with your favourite editor and markup-language"
 author: "Jens Getreu"
 date:   "2020-11-01"
-version: "1.8.1"
+version: "1.8.2"
 ---
 
 Markup languages like *Markdown* [^1] are perfectly suited for fast
