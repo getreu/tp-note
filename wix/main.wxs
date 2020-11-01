@@ -133,6 +133,14 @@
 										 Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\edit.tp-note.exe\command">
        							 <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;%1&quot;" Type="string" />
 							</RegistryKey>
+							<RegistryKey Root="HKLM" 
+										 Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\view.tp-note.exe">
+								 <RegistryValue Value="View Tp-Note" Type="string" />
+							</RegistryKey>
+							<RegistryKey Root="HKLM" 
+										 Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\view.tp-note.exe\command">
+       							 <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;-v&quot; &quot;%1&quot;" Type="string" />
+							</RegistryKey>
 						</Component>
                     </Directory>
                 </Directory>
