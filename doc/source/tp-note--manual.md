@@ -2,7 +2,7 @@
 title:  "Tp-Note: fast note taking with templates and filename synchronization"
 subtitle: "Organize your notes with your favourite editor and markup-language"
 author: "Jens Getreu"
-date:   "2020-03-08"
+date:   "2020-11-01"
 version: "1.8.1"
 ---
 
@@ -639,6 +639,12 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
         [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\edit.tp-note.exe\command]
         @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"%1\""
 
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\view.tp-note.exe]
+        @="View Tp-Note"
+
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\view.tp-note.exe\command]
+        @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"-v\" \"%1\""
+
 3. Save the file as:
 
    * File name: `tp-note.reg`
@@ -677,6 +683,9 @@ _Debian_ and _Ubuntu_ user can also download [Debian/Ubuntu package] and install
 
 Most file-manager allow extending the context menu. As an example, the
 following images show the configuration of the *Thunar*-file-manger.
+
+#### Add context menu entry: Edit Tp-Note
+
 In *Thunar*'s menu go to:
 
     Edit -> Configure custom actions...
@@ -691,6 +700,19 @@ In *Thunar*'s menu go to:
 
 [Debian/Unbuntu package]: https://blog.getreu.net/projects/tp-note/#tp-note-debianubuntu-installer-package
 
+
+#### Add context menu entry: View Tp-Note
+
+The following context menu entry allows us to view the rendered
+note in the system's default web browser. This is very handy
+when your note contains hyperlinks.
+
+In Thunar, we add a custom action the same way as we
+did before:
+
+![Edit custom action](images/viewer-edit_action.png){width="8cm"}
+
+![Appearance Condition](images/viewer-appearance-condition.png){width="8cm"}
 
 ```{=docbook}
 <?dbfo-need height="4cm" ?>
