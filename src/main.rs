@@ -34,6 +34,7 @@ use crate::config::LAUNCH_VIEWER;
 use crate::config::RUNS_ON_CONSOLE;
 use crate::config::STDIN;
 use crate::error::AlertDialog;
+use crate::filename::MarkupLanguage;
 use crate::note::Note;
 #[cfg(feature = "viewer")]
 use crate::viewer::Viewer;
@@ -45,6 +46,7 @@ use std::env;
 use std::fs;
 #[cfg(not(target_family = "windows"))]
 use std::fs::File;
+use std::matches;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process;
@@ -170,19 +172,8 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
         // Write new note on disk.
         n.content.write_to_disk(new_fqfn)
     } else {
-        let file_extension = path
-            .extension()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default();
-        // Points `path` to tp-note file (`.md` or similar) or a foreign file?
-        let mut extension_is_known = false;
-        for e in &CFG.note_file_extensions {
-            if e == file_extension {
-                extension_is_known = true;
-                break;
-            }
-        }
+        let extension_is_known = !matches!(MarkupLanguage::from(None, &path), MarkupLanguage::None);
+
         if extension_is_known {
             // SYNCHRONIZE FILENAME
             // `path` points to an existing tp-note file.
@@ -419,7 +410,7 @@ fn run() -> Result<PathBuf, anyhow::Error> {
 
 /// Print some error message if `run()` does not complete.
 /// Exit prematurely if the configuration file version does
-/// not match the programm version.
+/// not match the program version.
 fn main() {
     // If we could not load or parse the config file, then
     // `CFG.version` does not contain a version number, but an error message.

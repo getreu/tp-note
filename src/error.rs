@@ -38,7 +38,7 @@ impl AlertDialog {
         // Popup window.
         #[cfg(feature = "message-box")]
         if !*RUNS_ON_CONSOLE {
-            msgbox::create(
+            let _ = msgbox::create(
                 &*ALERT_DIALOG_TITLE_LINE,
                 &Self::format_error(msg),
                 IconType::Info,
@@ -64,7 +64,7 @@ impl AlertDialog {
         // Popup window.
         #[cfg(feature = "message-box")]
         if !*RUNS_ON_CONSOLE {
-            msgbox::create(&*ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
+            let _ = msgbox::create(&*ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
         }
     }
 

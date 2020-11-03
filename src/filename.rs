@@ -1,5 +1,4 @@
 //! Helper funtions that deal with filenames.
-extern crate sanitize_filename_reader_friendly;
 use crate::config::CFG;
 use crate::config::NOTE_FILENAME_LEN_MAX;
 use anyhow::{anyhow, Result};
@@ -174,6 +173,74 @@ pub fn append_copy_counter(stem: &str, n: usize) -> String {
     stem.push_str(&n.to_string());
     stem.push_str(&CFG.copy_counter_closing_brackets);
     stem
+}
+
+/// MarkupLanguage of the note content.
+pub enum MarkupLanguage {
+    Markdown,
+    RestructuredText,
+    Html,
+    Txt,
+    Unknown,
+    None,
+}
+
+impl MarkupLanguage {
+    /// Is `file_extension` listed in one of the known file extension
+    /// lists?
+    #[inline]
+    pub fn new(file_extension: &str) -> Self {
+        for e in &CFG.note_file_extensions_md {
+            if e == file_extension {
+                return MarkupLanguage::Markdown;
+            }
+        }
+        for e in &CFG.note_file_extensions_rst {
+            if e == file_extension {
+                return MarkupLanguage::RestructuredText;
+            }
+        }
+        for e in &CFG.note_file_extensions_html {
+            if e == file_extension {
+                return MarkupLanguage::Html;
+            }
+        }
+        for e in &CFG.note_file_extensions_txt {
+            if e == file_extension {
+                return MarkupLanguage::Txt;
+            }
+        }
+        for e in &CFG.note_file_extensions_unknown {
+            if e == file_extension {
+                return MarkupLanguage::Unknown;
+            }
+        }
+        // If ever `extension_default` got forgotten in
+        // one of the above lists, make sure that Tp-Note
+        // recognizes its own files. Even without Markup
+        // rendition.
+        if file_extension == &CFG.extension_default {
+            return MarkupLanguage::Txt;
+        }
+        MarkupLanguage::None
+    }
+
+    ///
+    /// Is `extension` or the file extension of `path` listed in one of the known
+    /// file extension lists?
+    #[inline]
+    pub fn from(extension: Option<&str>, path: &Path) -> Self {
+        let file_extension = if let Some(ext) = extension {
+            ext
+        } else {
+            path.extension()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default()
+        };
+
+        Self::new(file_extension)
+    }
 }
 
 #[cfg(test)]

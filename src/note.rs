@@ -3,21 +3,19 @@
 //! the memory representation is established be reading the note-file with
 //! its front matter.
 
-extern crate chrono;
-extern crate tera;
-extern crate time;
-
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
 use crate::config::STDIN;
 use crate::content::Content;
 use crate::filename;
+use crate::filename::MarkupLanguage;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use anyhow::{anyhow, Context, Result};
 use std::default::Default;
 use std::env;
+use std::matches;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use tera::Tera;
@@ -338,23 +336,27 @@ impl Note<'_> {
         // `extension` has also additional constrains to check.
         // Is `extension` listed in `CFG.note_file_extension`?
         if let Some(tera::Value::String(extension)) = &fm.map.get("file_ext") {
-            let mut extension_is_known = false;
-            for e in &CFG.note_file_extensions {
-                if *e == *extension {
-                    extension_is_known = true;
-                    break;
-                }
-            }
-            if !extension_is_known {
+            let extension_is_unknown =
+                matches!(MarkupLanguage::new(extension), MarkupLanguage::None);
+            if extension_is_unknown {
                 return Err(anyhow!(format!(
                     "`file_ext=\"{}\"`, is not registered as a valid\n\
-                        Tp-Note-file in the `note_file_extensions` variable\n\
+                        Tp-Note-file in the `note_file_extensions_*` variables\n\
                         in your configuration file:\n\
                         \t{:?}\n\
+                        \t{:?}\n\
+                        \t{:?}\n\
+                        \t{:?}\n\
+                        \t{:?}\n\
                         \n\
-                        Choose one of the above list or add more extensions to\n\
-                        `note_file_extensions` in your configuration file.",
-                    extension, &CFG.note_file_extensions
+                        Choose one of the above list or add more extensions to the\n\
+                        `note_file_extensions_*` variables in your configuration file.",
+                    extension,
+                    &CFG.note_file_extensions_md,
+                    &CFG.note_file_extensions_rst,
+                    &CFG.note_file_extensions_html,
+                    &CFG.note_file_extensions_txt,
+                    &CFG.note_file_extensions_unknown,
                 )));
             }
         };

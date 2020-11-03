@@ -1,9 +1,6 @@
 //! Collects `tp-note`'s configuration from a configuration file,
 //! the command-line parameters. It also reads the clipboard.
 
-extern crate atty;
-extern crate clipboard;
-extern crate directories;
 use crate::content::Content;
 use crate::filename;
 use crate::VERSION;
@@ -31,13 +28,47 @@ const CONFIG_FILENAME: &str = "tp-note.toml";
 /// File extension of `to-note` files.
 pub const EXTENSION_DEFAULT: &str = "md";
 
-/// List of file extensions Tp-Note recognizes as note-files and opens to read their YAML header.
-/// Files with other file extensions will not be opened by Tp-Note. Instead, a new note is created
-/// with the TMPL_ANNOTATE_CONTENT and TMPL_ANNOTATE_FILENAME templates. It is possible to add
-/// file extensions of other markup languages than Markdown here, as long as these files come with
-/// a valid YAML meta-data header.
-pub const NOTE_FILE_EXTENSIONS: &[&str] =
-    &[EXTENSION_DEFAULT, "markdown", "markdn", "mdown", "mdtxt"];
+/// The variables `NOTE_FILE_EXTENSIONS_*` list file extensions that Tp-Note
+/// considers as its own note-files.
+/// Tp-Note opens these files, reads their their YAML header and
+/// launches an external file editor and an file viewer
+/// (web browser).
+/// According to the markup language used, the appropriate
+/// renderer is called to convert the note's content into HTML.
+/// The rendered HTML is then shown to the user with his
+/// web browser.
+///
+/// The present list contains file extensions of
+/// Markdown encoded Tp-Note files.
+pub const NOTE_FILE_EXTENSIONS_MD: &[&str] = &["md", "markdown", "markdn", "mdown", "mdtxt"];
+
+/// See above.
+///
+/// The present list contains file extensions of
+/// RestructuredText encoded Tp-Note files.
+pub const NOTE_FILE_EXTENSIONS_RST: &[&str] = &["rst", "rest"];
+
+/// See above.
+///
+/// The present list contains file extensions of
+/// HTML encoded Tp-Note files. For these
+/// file types their content is forwarded to the web browser
+/// without modification.
+pub const NOTE_FILE_EXTENSIONS_HTML: &[&str] = &["htmlnote"];
+
+/// See above.
+///
+/// The present list contains file extensions of
+/// Text encoded Tp-Note files that the viewer shows
+/// literally without (almost) any additional rendering.
+pub const NOTE_FILE_EXTENSIONS_TXT: &[&str] = &["txtnote", "t2t", "textile", "twiki", "mediawiki"];
+
+/// See above.
+///
+/// The present list contains file extensions of
+/// Tp-Note files for which no viewer is opened
+/// (unless Tp-Note is invoked with `--view`).
+pub const NOTE_FILE_EXTENSIONS_UNKNOWN: &[&str] = &["adoc", "asciidoc"];
 
 /// Maximum length of a note's filename in bytes. If a filename-template produces
 /// a longer string, it will be truncated.
@@ -208,7 +239,7 @@ revision:   {{ '1.0' | json_encode }}
 ---
 
 [{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}]\
-({{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }})
+(<{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}>)
 {% if stdin ~ clipboard != '' %}{% if stdin ~ clipboard != stdin ~ clipboard | heading %}
 ---
 {% endif %}
@@ -263,12 +294,12 @@ const TMPL_COMPULSORY_FIELD_CONTENT: &str = "title";
 /// Can be changed in config file.
 #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
 const EDITOR_ARGS: &[&[&str]] = &[
+    &["code", "-w", "-n"],
+    &["flatpak", "run", "com.visualstudio.code", "-w", "-n"],
+    &["atom", "-w"],
     &["flatpak", "run", "com.github.marktext.marktext"],
     &["marktext", "--no-sandbox"],
     &["typora"],
-    &["flatpak", "run", "com.visualstudio.code", "-w", "-n"],
-    &["code", "-w", "-n"],
-    &["atom", "-w"],
     &["retext"],
     &["geany", "-s", "-i", "-m"],
     &["gedit", "-w"],
@@ -415,7 +446,7 @@ pub struct Args {
     /// Launches only the editor, no browser
     #[structopt(long, short = "e")]
     pub edit: bool,
-    /// Let webserver listen to a specific port
+    /// Let web server listen to a specific port
     #[structopt(long, short = "p")]
     pub port: Option<u16>,
     /// Launches only the browser, no editor
@@ -442,7 +473,11 @@ pub struct Cfg {
     /// configuration file.
     pub version: String,
     pub extension_default: String,
-    pub note_file_extensions: Vec<String>,
+    pub note_file_extensions_md: Vec<String>,
+    pub note_file_extensions_rst: Vec<String>,
+    pub note_file_extensions_html: Vec<String>,
+    pub note_file_extensions_txt: Vec<String>,
+    pub note_file_extensions_unknown: Vec<String>,
     pub tmpl_new_content: String,
     pub tmpl_new_filename: String,
     pub tmpl_copy_content: String,
@@ -479,7 +514,23 @@ impl ::std::default::Default for Cfg {
         Cfg {
             version,
             extension_default: EXTENSION_DEFAULT.to_string(),
-            note_file_extensions: NOTE_FILE_EXTENSIONS
+            note_file_extensions_md: NOTE_FILE_EXTENSIONS_MD
+                .iter()
+                .map(|a| (*a).to_string())
+                .collect(),
+            note_file_extensions_rst: NOTE_FILE_EXTENSIONS_RST
+                .iter()
+                .map(|a| (*a).to_string())
+                .collect(),
+            note_file_extensions_html: NOTE_FILE_EXTENSIONS_HTML
+                .iter()
+                .map(|a| (*a).to_string())
+                .collect(),
+            note_file_extensions_txt: NOTE_FILE_EXTENSIONS_TXT
+                .iter()
+                .map(|a| (*a).to_string())
+                .collect(),
+            note_file_extensions_unknown: NOTE_FILE_EXTENSIONS_UNKNOWN
                 .iter()
                 .map(|a| (*a).to_string())
                 .collect(),

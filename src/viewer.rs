@@ -2,6 +2,7 @@
 
 use crate::config::ARGS;
 use crate::config::LAUNCH_EDITOR;
+use crate::filename::MarkupLanguage;
 use crate::sse_server::manage_connections;
 use crate::watcher::FileWatcher;
 use anyhow::anyhow;
@@ -37,6 +38,17 @@ impl Viewer {
     /// Set up the file watcher, start the event/html server and lauch web browser.
     /// Returns when the use closes the webbrowswer.
     fn run2(file: PathBuf) -> Result<(), anyhow::Error> {
+        match (ARGS.view, MarkupLanguage::from(None, &file)) {
+            // The file with this file extension is exempted from being viewed.
+            // We quit here and do not start the viewer.
+            (false, MarkupLanguage::Unknown) => return Ok(()),
+            // This should never happen, since non-Tp-Note files are never
+            // edited or viewed.
+            (_, MarkupLanguage::None) => return Err(anyhow!("can not view non Tp-Note files")),
+            // All other cases: start viewer.
+            (_, _) => (),
+        };
+
         // Launch "server sent event" server.
         let event_out = if let Some(p) = ARGS.port {
             Self::get_tcp_listener_at_port(p)?

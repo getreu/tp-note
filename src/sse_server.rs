@@ -9,12 +9,17 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 const SSE_EVENT_NAME: &str = "update";
 use crate::config::CFG;
+use crate::filename::MarkupLanguage;
 use crate::filter::TERA;
 use crate::note::Note;
 use anyhow::anyhow;
 use anyhow::Context;
+use dissolve::strip_html_tags;
 use pulldown_cmark::{html, Options, Parser};
+use rst_parser::parse;
+use rst_renderer::render_html;
 use std::path::PathBuf;
+use std::str;
 use tera::Tera;
 
 /// Javascript client code, part 1
@@ -35,7 +40,6 @@ window.addEventListener('load', function() {
 });
 "#;
 
-// Listen for SSE requests.
 pub fn manage_connections(
     event_tx_list: Arc<Mutex<Vec<Sender<()>>>>,
     listener: TcpListener,
@@ -82,7 +86,7 @@ impl ServerThread {
     }
 
     /// Wrapper for `serve_event2()` that prints
-    /// errors as log messages.
+    /// errors as log messages on `stderr`.
     fn serve_events(&mut self) {
         match Self::serve_events2(self) {
             Ok(_) => (),
@@ -92,10 +96,11 @@ impl ServerThread {
         }
     }
 
-    /// Serve events via the specified subscriber stream.
-    /// This method also servers the content page and
+    /// HTTP server: serves events via the specified subscriber stream.
+    /// This method also serves the content page and
     /// the content error page.
     fn serve_events2(&mut self) -> Result<(), anyhow::Error> {
+        // This is inspired by the Spook crate.
         // Read the request.
         let mut read_buffer = [0u8; 512];
         let mut buffer = Vec::new();
@@ -137,7 +142,8 @@ impl ServerThread {
         // Check the path.
         // The browser requests the content.
         if path == "/" {
-            let html = Self::render_content(&self).context("ServerThread::render_content(): ")?;
+            let html = Self::render_content_and_error(&self)
+                .context("ServerThread::render_content(): ")?;
 
             let response = format!(
                 "HTTP/1.1 200 OK\r\n\
@@ -152,61 +158,61 @@ impl ServerThread {
             // We have been subscribed to events beforehand. As we drop the
             // receiver now, `viewer::update()` will remove us from the list soon.
             return Ok(());
-        } else if path != EVENT_PATH {
-            self.stream.write(b"HTTP/1.1 404 Not Found\r\n\r\n")?;
-            return Ok(());
-        }
+        } else if path == EVENT_PATH {
+            // This is connection for server sent events.
+            // Declare SSE capability and allow cross-origin access.
+            let response = b"\
+                HTTP/1.1 200 OK\r\n\
+                Access-Control-Allow-Origin: *\r\n\
+                Cache-Control: no-cache\r\n\
+                Connection: keep-alive\r\n\
+                Content-Type: text/event-stream\r\n\
+                \r\n";
+            self.stream.write(response)?;
 
-        // This is connection for server sent events.
-        // Declare SSE capability and allow cross-origin access.
-        let response = b"\
-        HTTP/1.1 200 OK\r\n\
-        Access-Control-Allow-Origin: *\r\n\
-        Cache-Control: no-cache\r\n\
-        Connection: keep-alive\r\n\
-        Content-Type: text/event-stream\r\n\
-        \r\n";
-        self.stream.write(response)?;
+            // Make the stream non-blocking to be able to detect whether the
+            // connection was closed by the client.
+            self.stream.set_nonblocking(true)?;
 
-        // Make the stream non-blocking to be able to detect whether the
-        // connection was closed by the client.
-        self.stream.set_nonblocking(true)?;
+            // Serve events until the connection is closed.
+            // Keep in mind that the client will often close
+            // the request after the first event if the event
+            // is used to trigger a page refresh, so try to eagerly
+            // detect closed connections.
+            loop {
+                // Wait for the next update.
+                self.rx.recv()?;
 
-        // Serve events until the connection is closed.
-        // Keep in mind that the client will often close
-        // the request after the first event if the event
-        // is used to trigger a page refresh, so try to eagerly
-        // detect closed connections.
-        loop {
-            // Wait for the next update.
-            self.rx.recv()?;
-
-            // Detect whether the connection was closed.
-            match self.stream.read(&mut read_buffer) {
-                Ok(0) => {
-                    // Connection closed.
-                    return Ok(());
-                }
-                Ok(_) => {}
-                Err(e) => {
-                    if e.kind() != ErrorKind::WouldBlock {
-                        // Something bad happened.
-                        return Err(anyhow!(format!("error reading stream: {}", e)));
+                // Detect whether the connection was closed.
+                match self.stream.read(&mut read_buffer) {
+                    Ok(0) => {
+                        // Connection closed.
+                        return Ok(());
+                    }
+                    Ok(_) => {}
+                    Err(e) => {
+                        if e.kind() != ErrorKind::WouldBlock {
+                            // Something bad happened.
+                            return Err(anyhow!(format!("error reading stream: {}", e)));
+                        }
                     }
                 }
-            }
 
-            // Send event.
-            let event = format!("event: {}\r\ndata\r\n\r\n", self.event_name);
-            self.stream.write(event.as_bytes())?;
+                // Send event.
+                let event = format!("event: {}\r\ndata\r\n\r\n", self.event_name);
+                self.stream.write(event.as_bytes())?;
+            }
+        } else {
+            self.stream.write(b"HTTP/1.1 404 Not Found\r\n\r\n")?;
+            return Ok(());
         }
     }
 
     #[inline]
-    fn render_content(&self) -> Result<String, anyhow::Error> {
-        // Deserialize.
-        let mut note = match Note::from_existing_note(&self.file_path) {
-            Ok(n) => n,
+    /// Renders the error page with the `VIEWER_ERROR_TMPL`.
+    fn render_content_and_error(&self) -> Result<String, anyhow::Error> {
+        match Self::render_content(&self) {
+            Ok(s) => Ok(s),
             Err(e) => {
                 let mut context = tera::Context::new();
                 context.insert("noteError", &e.to_string());
@@ -218,16 +224,42 @@ impl ServerThread {
                 let mut tera = Tera::default();
                 tera.extend(&TERA)?;
                 let html = tera.render_str(&CFG.viewer_error_tmpl, &context)?;
-                return Ok(html);
+                Ok(html)
             }
-        };
+        }
+    }
+
+    #[inline]
+    /// First, determines the markup language from the file extension or
+    /// the `fm_file_ext` YAML variable, if present.
+    /// Then calls the appropriate markup renderer.
+    /// Finally the result is rendered with the `VIEWER_RENDITION_TMPL`
+    /// template.
+    fn render_content(&self) -> Result<String, anyhow::Error> {
+        // Deserialize.
+        let mut note = Note::from_existing_note(&self.file_path)?;
 
         // Register header.
         note.context.insert("fm_all_yaml", note.content.header);
 
-        // Render Markdown Body
+        // Render Body.
         let input = note.content.body;
-        let html_output = Self::render_md_content(input);
+
+        // What Markup language is used?
+
+        let ext = match note.context.get("fm_file_ext") {
+            Some(tera::Value::String(file_ext)) => Some(file_ext.as_str()),
+            _ => None,
+        };
+
+        // Render the markup language.
+        let html_output = match MarkupLanguage::from(ext, &self.file_path) {
+            MarkupLanguage::Markdown => Self::render_md_content(input),
+            MarkupLanguage::RestructuredText => Self::render_rst_content(input)?,
+            MarkupLanguage::Html => input.to_string(),
+            _ => Self::render_txt_content(input),
+        };
+
         // Register rendered body.
         note.context.insert("noteBody", &html_output);
 
@@ -242,6 +274,7 @@ impl ServerThread {
     }
 
     #[inline]
+    /// Markdown renderer.
     fn render_md_content(markdown_input: &str) -> String {
         // Set up options and parser. Besides the CommonMark standard
         // we enable some useful extras.
@@ -251,6 +284,32 @@ impl ServerThread {
         // Write to String buffer.
         let mut html_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
         html::push_html(&mut html_output, parser);
+        html_output
+    }
+
+    #[inline]
+    /// RestructuredText renderer.
+    fn render_rst_content(rest_input: &str) -> Result<String, anyhow::Error> {
+        let document = parse(&rest_input.trim()).map_err(|e| anyhow!(e))?;
+        // Write to String buffer.
+        let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
+        //let mut html_output: String = String::with_capacity(rest_input.len() * 3 / 2);
+        let _ = render_html(&document, &mut html_output, false);
+        Ok(str::from_utf8(&html_output)?.to_string())
+    }
+
+    #[inline]
+    /// Renderer for markup languages other than the above.
+    fn render_txt_content(other_input: &str) -> String {
+        let mut html_output = "<pre><code>".to_string();
+        html_output.push_str(
+            strip_html_tags(other_input)
+                .iter()
+                .flat_map(|s| s.chars())
+                .collect::<String>()
+                .as_str(),
+        );
+        html_output.push_str("</code></pre>");
         html_output
     }
 }

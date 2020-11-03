@@ -1,11 +1,27 @@
 version = '1.8.2'
 extension_default = 'md'
-note_file_extensions = [
+note_file_extensions_md = [
     'md',
     'markdown',
     'markdn',
     'mdown',
     'mdtxt',
+]
+note_file_extensions_rst = [
+    'rst',
+    'rest',
+]
+note_file_extensions_html = ['htmlnote']
+note_file_extensions_txt = [
+    'txtnote',
+    't2t',
+    'textile',
+    'twiki',
+    'mediawiki',
+]
+note_file_extensions_unknown = [
+    'adoc',
+    'asciidoc',
 ]
 tmpl_new_content = '''
 ---
@@ -62,7 +78,7 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 revision:   {{ '1.0' | json_encode }}
 ---
 
-[{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}]({{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }})
+[{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}](<{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}>)
 {% if stdin ~ clipboard != '' %}{% if stdin ~ clipboard != stdin ~ clipboard | heading %}
 ---
 {% endif %}
@@ -74,6 +90,22 @@ tmpl_sync_filename = '''{{ fm_sort_tag | default(value = file | tag) }}{{ fm_tit
 tmpl_compulsory_field_content = 'title'
 editor_args = [
     [
+    'code',
+    '-w',
+    '-n',
+],
+    [
+    'flatpak',
+    'run',
+    'com.visualstudio.code',
+    '-w',
+    '-n',
+],
+    [
+    'atom',
+    '-w',
+],
+    [
     'flatpak',
     'run',
     'com.github.marktext.marktext',
@@ -83,22 +115,6 @@ editor_args = [
     '--no-sandbox',
 ],
     ['typora'],
-    [
-    'flatpak',
-    'run',
-    'com.visualstudio.code',
-    '-w',
-    '-n',
-],
-    [
-    'code',
-    '-w',
-    '-n',
-],
-    [
-    'atom',
-    '-w',
-],
     ['retext'],
     [
     'geany',
