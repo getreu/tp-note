@@ -202,6 +202,7 @@ impl ServerThread {
         }
     }
 
+    #[inline]
     fn render_content(&self) -> Result<String, anyhow::Error> {
         // Deserialize.
         let mut note = match Note::from_existing_note(&self.file_path) {
@@ -225,15 +226,8 @@ impl ServerThread {
         note.context.insert("fm_all_yaml", note.content.header);
 
         // Render Markdown Body
-        let markdown_input = note.content.body;
-        // Set up options and parser. Besides the CommonMark standard
-        // we enable some useful extras.
-        let options = Options::all();
-        let parser = Parser::new_ext(markdown_input, options);
-
-        // Write to String buffer.
-        let mut html_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
-        html::push_html(&mut html_output, parser);
+        let input = note.content.body;
+        let html_output = Self::render_md_content(input);
         // Register rendered body.
         note.context.insert("noteBody", &html_output);
 
@@ -245,5 +239,18 @@ impl ServerThread {
         tera.extend(&TERA)?;
         let html = tera.render_str(&CFG.viewer_rendition_tmpl, &note.context)?;
         Ok(html)
+    }
+
+    #[inline]
+    fn render_md_content(markdown_input: &str) -> String {
+        // Set up options and parser. Besides the CommonMark standard
+        // we enable some useful extras.
+        let options = Options::all();
+        let parser = Parser::new_ext(markdown_input, options);
+
+        // Write to String buffer.
+        let mut html_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
+        html::push_html(&mut html_output, parser);
+        html_output
     }
 }
