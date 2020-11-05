@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.8.2"
+version = "1.8.3"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
@@ -52,20 +52,20 @@ default = ["message-box", "viewer"]
 # Disable this feature if you do not want error message boxes.
 message-box = ["msgbox"]
 # Mardown renderer and viewer are optional too.
-viewer = ["notify", "httparse", "pulldown-cmark", "webbrowser", "rand"]
+viewer = ["notify", "httparse", "pulldown-cmark", "rst_parser", "rst_renderer", "webbrowser", "rand", "dissolve"]
 
 [dependencies]
 serde = { version = "1.0.117", features = ["derive"] }
 serde_yaml = "0.8.14"
 serde_json = "1.0.59"
-anyhow = "1.0.33"
+anyhow = "1.0.34"
 lazy_static = "1.4.0"
 chrono = "0.4.19"
 time = "0.2.22"
 confy = "0.4.0"
 clap = "2.33.3"
 structopt = "0.3.20"
-msgbox = { version = "0.5.0", optional = true }
+msgbox = { version = "0.6.0", optional = true }
 directories = "3.0.1"
 semver = "0.11.0"
 atty = "0.2.14"
@@ -74,7 +74,9 @@ httparse = { version = "1.3.4", optional = true }
 pulldown-cmark = { version = "0.8.0", default-features = false, features = ["simd"], optional = true }
 webbrowser = { version = "0.5.5", optional = true }
 rand = { version = "0.7.3", optional = true }
-
+rst_parser = { version = "0.4.0", optional = true }
+rst_renderer = { version = "0.4.0", optional = true }
+dissolve = { version = "0.2.2", optional = true }
 # On Linux you need the x11 library, install it with something like:
 #    sudo apt-get install xorg-dev
 clipboard = "0.5.0"

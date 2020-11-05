@@ -1,4 +1,4 @@
-version = '1.8.2'
+version = '1.8.3'
 extension_default = 'md'
 note_file_extensions_md = [
     'md',
