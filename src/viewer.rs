@@ -15,8 +15,12 @@ use std::thread::sleep;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 use webbrowser::{open_browser, Browser};
+use std::net::IpAddr;
+use std::net::Ipv4Addr;
+
 
 pub const EVENT_PATH: &str = "/events";
+pub const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
 
 /// Parse result.
 #[derive(Clone, Default, Debug)]
@@ -78,7 +82,7 @@ impl Viewer {
         });
 
         // Launch webbrowser.
-        let url = format!("http://localhost:{}", event_out.1);
+        let url = format!("http://{}:{}", LOCALHOST, event_out.1);
         if ARGS.debug {
             eprintln!(
                 "*** Debug: Viewer::run(): launching browser with URL: {}",
@@ -112,7 +116,7 @@ impl Viewer {
 
     /// Get TCP port and bind.
     fn get_tcp_listener_at_port(port: u16) -> Result<(TcpListener, u16), anyhow::Error> {
-        TcpListener::bind(("localhost", port))
+        TcpListener::bind((LOCALHOST, port))
             .map(|l| (l, port))
             .with_context(|| format!("can not bind to port: {}", port))
     }
@@ -125,7 +129,7 @@ impl Viewer {
             start += 1024
         };
         for port in start..0xffff {
-            match TcpListener::bind(("localhost", port)) {
+            match TcpListener::bind((LOCALHOST, port)) {
                 Ok(l) => return Ok((l, port)),
                 _ => {}
             }

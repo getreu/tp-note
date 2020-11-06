@@ -21,11 +21,12 @@ use rst_renderer::render_html;
 use std::path::PathBuf;
 use std::str;
 use tera::Tera;
+use crate::viewer::LOCALHOST;
 
 /// Javascript client code, part 1
 /// Refresh on WTFiles events.
 pub const SSE_CLIENT_CODE1: &str = r#"
-var evtSource = new EventSource("http://localhost:"#;
+var evtSource = new EventSource("http://"#;
 /// Javascript client code, part 2
 /// Save last scroll position into local storage.
 /// Jump to the last saved scroll position.
@@ -218,7 +219,7 @@ impl ServerThread {
                 context.insert("noteError", &e.to_string());
                 context.insert("file", self.file_path.to_str().unwrap_or_default());
                 // Java Script
-                let js = format!("{}{}{}", SSE_CLIENT_CODE1, self.sse_port, SSE_CLIENT_CODE2);
+                let js = format!("{}{}:{}{}", SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2);
                 context.insert("noteJS", &js);
 
                 let mut tera = Tera::default();
@@ -264,7 +265,7 @@ impl ServerThread {
         note.context.insert("noteBody", &html_output);
 
         // Java Script
-        let js = format!("{}{}{}", SSE_CLIENT_CODE1, self.sse_port, SSE_CLIENT_CODE2);
+        let js = format!("{}{}:{}{}", SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2);
         note.context.insert("noteJS", &js);
 
         let mut tera = Tera::default();
