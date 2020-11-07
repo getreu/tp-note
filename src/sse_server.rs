@@ -20,6 +20,7 @@ use dissolve::strip_html_tags;
 use pulldown_cmark::{html, Options, Parser};
 use rst_parser::parse;
 use rst_renderer::render_html;
+use std::net::Shutdown;
 use std::path::PathBuf;
 use std::str;
 use tera::Tera;
@@ -154,7 +155,7 @@ impl ServerThread {
 
             let response = format!(
                 "HTTP/1.1 200 OK\r\n\
-            Connection: Keep-Alive\r\n\
+            Connection: Close\r\n\
             Content-Type: text/html; charset=utf-8\r\n\
             Content-Length: {}\r\n\r\n{}",
                 html.len(),
@@ -162,6 +163,7 @@ impl ServerThread {
             );
             self.stream.write(response.as_bytes())?;
             self.stream.flush()?;
+            self.stream.shutdown(Shutdown::Both)?;
             // We have been subscribed to events beforehand. As we drop the
             // receiver now, `viewer::update()` will remove us from the list soon.
             if ARGS.debug {
@@ -174,7 +176,7 @@ impl ServerThread {
         } else if path == FAVICON_PATH {
             let response = format!(
                 "HTTP/1.1 200 OK\r\n\
-            Connection: Keep-Alive\r\n\
+            Connection: Close\r\n\
             Content-Type: image/x-icon\r\n\
             Content-Length: {}\r\n\r\n",
                 FAVICON.len(),
@@ -182,6 +184,7 @@ impl ServerThread {
             self.stream.write(response.as_bytes())?;
             self.stream.write(FAVICON)?;
             self.stream.flush()?;
+            self.stream.shutdown(Shutdown::Both)?;
             if ARGS.debug {
                 eprintln!(
                     "*** Debug: ServerThread::serve_events2: file \"{}\" served.",
