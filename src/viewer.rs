@@ -7,6 +7,8 @@ use crate::sse_server::manage_connections;
 use crate::watcher::FileWatcher;
 use anyhow::anyhow;
 use anyhow::Context;
+use std::net::IpAddr;
+use std::net::Ipv4Addr;
 use std::net::TcpListener;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -15,9 +17,6 @@ use std::thread::sleep;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 use webbrowser::{open_browser, Browser};
-use std::net::IpAddr;
-use std::net::Ipv4Addr;
-
 
 pub const EVENT_PATH: &str = "/events";
 pub const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
@@ -27,8 +26,8 @@ pub const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
 pub struct Viewer {}
 
 impl Viewer {
-    /// Set up the file watcher, start the event/html server and lauch web browser.
-    /// Returns when the use closes the webbrowswer.
+    /// Set up the file watcher, start the event/html server and launch web browser.
+    /// Returns when the use closes the web browser.
     /// This is a small wrapper, that prints error messages.
     pub fn run(file: PathBuf) {
         match Self::run2(file) {
@@ -39,8 +38,8 @@ impl Viewer {
         }
     }
 
-    /// Set up the file watcher, start the event/html server and lauch web browser.
-    /// Returns when the use closes the webbrowswer.
+    /// Set up the file watcher, start the event/html server and launch web browser.
+    /// Returns when the use closes the web browser.
     fn run2(file: PathBuf) -> Result<(), anyhow::Error> {
         match (ARGS.view, MarkupLanguage::from(None, &file)) {
             // The file with this file extension is exempted from being viewed.
@@ -76,12 +75,15 @@ impl Viewer {
 
         // Send a signal whenever the file is modified. This thread runs as
         // long as the parent thread is running.
+        let event_tx_list_clone = event_tx_list.clone();
         let handle: JoinHandle<Result<(), anyhow::Error>> = thread::spawn(move || loop {
-            let mut w = FileWatcher::new(file.clone(), event_tx_list.clone());
+            let mut w = FileWatcher::new(file.clone(), event_tx_list_clone.clone());
             w.run()
         });
 
-        // Launch webbrowser.
+        // Launch web browser.
+        #[cfg(target_family = "windows")]
+        sleep(Duration::from_millis(1000));
         let url = format!("http://{}:{}", LOCALHOST, event_out.1);
         if ARGS.debug {
             eprintln!(
@@ -92,6 +94,7 @@ impl Viewer {
         // This blocks when a new instance of the browser is opened.
         let now = Instant::now();
         open_browser(Browser::Default, url.as_str())?;
+        FileWatcher::update(&event_tx_list);
         // Some browsers do not block, then we wait a little
         // to give him time read the page.
         if now.elapsed().as_secs() <= 4 {
@@ -103,12 +106,12 @@ impl Viewer {
             // is running. As the watcher never ends, the `join()`
             // will block forever unless the parent thread terminates.
             // The parent thread and this tread will finally end, when
-            // the user closes the external file editor programm.
+            // the user closes the external file editor program.
             handle.join().unwrap()
         } else {
             // In "view-only" mode, there is no external text editor to
             // wait for. We are here, because the user just closed the
-            // browswer. So it is Ok to exit now. This also terminates
+            // browser. So it is Ok to exit now. This also terminates
             // the Sse-server.
             Ok(())
         }
@@ -124,7 +127,7 @@ impl Viewer {
     /// Get TCP port and bind.
     fn get_tcp_listener() -> Result<(TcpListener, u16), anyhow::Error> {
         // Some randomness to better hide this port.
-        let mut start = rand::random::<u16>() & 0x8fff;
+        let mut start = rand::random::<u16>() & 0x1fff;
         if start <= 1024 {
             start += 1024
         };
