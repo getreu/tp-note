@@ -19,7 +19,7 @@ pub struct FileWatcher {
     event_tx_list: Arc<Mutex<Vec<Sender<()>>>>,
 }
 
-/// Watch file changes and notifiy subscribers.
+/// Watch file changes and notify subscribers.
 impl FileWatcher {
     /// Constructor. `file` is the file to watch.
     pub fn new(file: PathBuf, event_tx_list: Arc<Mutex<Vec<Sender<()>>>>) -> Self {
@@ -69,7 +69,7 @@ impl FileWatcher {
                 // Actual modifications.
                 DebouncedEvent::Write(_) | DebouncedEvent::Chmod(_) | DebouncedEvent::Create(_) => {
                     // Run the sub-command.
-                    Self::update(&self.event_tx_list)?;
+                    Self::update(&self.event_tx_list);
                 }
 
                 // Removal or replacement through renaming.
@@ -83,7 +83,7 @@ impl FileWatcher {
                     self.watcher
                         .watch(path.clone(), RecursiveMode::NonRecursive)
                         .map_err(|e| anyhow!(e))
-                        .and_then(|_| Self::update(&self.event_tx_list))?
+                        .and_then(|_| Ok(Self::update(&self.event_tx_list)))?
                 }
 
                 // Treat renamed files as a fatal error because it may
@@ -101,16 +101,15 @@ impl FileWatcher {
     }
 
     /// Run sub-command and notify subscribers.
-    fn update(event_tx_list: &Arc<Mutex<Vec<Sender<()>>>>) -> Result<(), anyhow::Error> {
+    pub fn update(event_tx_list: &Arc<Mutex<Vec<Sender<()>>>>) {
         // Notify subscribers and forget disconnected subscribers.
         let tx_list = &mut *event_tx_list.lock().unwrap();
         *tx_list = tx_list.drain(..).filter(|tx| tx.send(()).is_ok()).collect();
         if ARGS.debug {
-            println!(
+            eprintln!(
                 "*** Debug: Viewer::update(): {} subscribers updated.",
                 tx_list.len()
             );
         };
-        Ok(())
     }
 }
