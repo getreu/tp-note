@@ -375,7 +375,12 @@ const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
 /// Launches a filewatcher, (Markdown)-renderer, html server
 /// and a web-browser to view the current note file.
 /// To disable this feature, set to false.
+/// TODO: Under Windows only Firefox is working at
+/// the moment. This is why the switch is off by default.
+#[cfg(not(target_family = "windows"))]
 const VIEWER_ENABLED: bool = true;
+#[cfg(target_family = "windows")]
+const VIEWER_ENABLED: bool = false;
 
 /// How often should the file watcher check for changes?
 /// Delay in milliseconds.

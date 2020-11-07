@@ -82,8 +82,6 @@ impl Viewer {
         });
 
         // Launch web browser.
-        #[cfg(target_family = "windows")]
-        sleep(Duration::from_millis(1000));
         let url = format!("http://{}:{}", LOCALHOST, event_out.1);
         if ARGS.debug {
             eprintln!(
