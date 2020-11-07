@@ -94,7 +94,7 @@ fn synchronize_filename(path: PathBuf) -> Result<PathBuf, anyhow::Error> {
     )?;
 
     if ARGS.debug {
-        eprintln!("Applying template `tmpl_sync_filename`.");
+        eprintln!("*** Debug: Applying template `tmpl_sync_filename`.");
     };
     let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename).context(
         "Failed to render the template `tmpl_sync_filename` in config file. \
@@ -109,7 +109,7 @@ fn synchronize_filename(path: PathBuf) -> Result<PathBuf, anyhow::Error> {
         // rename file
         fs::rename(&path, &new_fqfn)?;
         if ARGS.debug {
-            eprintln!("File renamed to {:?}", new_fqfn);
+            eprintln!("*** Debug: File renamed to {:?}", new_fqfn);
         };
         Ok(new_fqfn)
     } else {
@@ -134,7 +134,9 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
                 .render_filename(&CFG.tmpl_new_filename)
                 .context("Can not render the template `tmpl_new_filename` in config file.")?;
             if ARGS.debug {
-                eprintln!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
+                eprintln!(
+                    "*** Debug: Applying templates `tmpl_new_content` and `tmpl_new_filename`."
+                );
             }
             (n, new_fqfn)
         } else if !STDIN.header.is_empty() || !CLIPBOARD.header.is_empty() {
@@ -147,7 +149,9 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
                 .render_filename(&CFG.tmpl_copy_filename)
                 .context("Can not render the template `tmpl_copy_filename` in config file.")?;
             if ARGS.debug {
-                eprintln!("Applying templates: `tmpl_copy_content`, `tmpl_copy_filename`");
+                eprintln!(
+                    "*** Debug: Applying templates: `tmpl_copy_content`, `tmpl_copy_filename`"
+                );
             };
             (n, new_fqfn)
         } else {
@@ -160,7 +164,7 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
                 .context("Can not render the template `tmpl_clipboard_filename` in config file.")?;
             if ARGS.debug {
                 eprintln!(
-                    "Applying templates: `tmpl_clipboard_content`, `tmpl_clipboard_filename`"
+                    "*** Debug: Applying templates: `tmpl_clipboard_content`, `tmpl_clipboard_filename`"
                 );
             };
             (n, new_fqfn)
@@ -184,7 +188,7 @@ fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, any
             // `path` points to a foreign file type that will be annotated.
             if ARGS.debug {
                 eprintln!(
-                    "Applying templates `tmpl_annotate_content` and `tmpl_annotate_filename`."
+                    "*** Debug: Applying templates `tmpl_annotate_content` and `tmpl_annotate_filename`."
                 );
             };
             let n = Note::from_content_template(&path, &CFG.tmpl_annotate_content)
@@ -233,13 +237,16 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
 
     // Launch editor/viewer.
     if ARGS.debug {
-        eprintln!("Opening file {:?}", path);
+        eprintln!("*** Debug: Opening file {:?}", path);
     };
 
     let mut executable_found = false;
     for i in 0..executable_list.len() {
         if ARGS.debug {
-            eprint!("Trying to launch the executable: {}", executable_list[i]);
+            eprint!(
+                "*** Debug: Trying to launch the executable: {}",
+                executable_list[i]
+            );
             for j in &args_list[i] {
                 eprint!(" \"{}\"", j);
             }
@@ -262,7 +269,10 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
                     // This is a flatpak command, but the application is not installed on this system.
                     // Silently ignore this flatpak command.
                     if ARGS.debug {
-                        eprintln!("Flatpak executable \"{}\" not found.", args_list[i][1]);
+                        eprintln!(
+                            "*** Debug: Flatpak executable \"{}\" not found.",
+                            args_list[i][1]
+                        );
                     }
                     continue;
                 };
@@ -314,7 +324,10 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
             executable_found = true;
             break;
         } else if ARGS.debug {
-            eprintln!("Executable \"{}\" not found.", executable_list[i]);
+            eprintln!(
+                "*** Debug: Executable \"{}\" not found.",
+                executable_list[i]
+            );
         }
     }
 
