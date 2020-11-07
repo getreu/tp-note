@@ -8,10 +8,12 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 const SSE_EVENT_NAME: &str = "update";
+use crate::config::ARGS;
 use crate::config::CFG;
 use crate::filename::MarkupLanguage;
 use crate::filter::TERA;
 use crate::note::Note;
+use crate::viewer::LOCALHOST;
 use anyhow::anyhow;
 use anyhow::Context;
 use dissolve::strip_html_tags;
@@ -21,7 +23,6 @@ use rst_renderer::render_html;
 use std::path::PathBuf;
 use std::str;
 use tera::Tera;
-use crate::viewer::LOCALHOST;
 
 /// Javascript client code, part 1
 /// Refresh on WTFiles events.
@@ -40,6 +41,11 @@ window.addEventListener('load', function() {
         window.scrollTo(0, localStorage.getItem('scrollPosition'));
 });
 "#;
+
+/// Modern browser request a small image.
+pub const FAVICON: &[u8] = include_bytes!("favicon.ico");
+/// The path where the favicon is requested.
+pub const FAVICON_PATH: &str = "/favicon.ico";
 
 pub fn manage_connections(
     event_tx_list: Arc<Mutex<Vec<Sender<()>>>>,
@@ -158,6 +164,30 @@ impl ServerThread {
             self.stream.flush()?;
             // We have been subscribed to events beforehand. As we drop the
             // receiver now, `viewer::update()` will remove us from the list soon.
+            if ARGS.debug {
+                eprintln!(
+                    "*** Debug: ServerThread::serve_events2: file {:?} served.",
+                    self.file_path
+                );
+            };
+            return Ok(());
+        } else if path == FAVICON_PATH {
+            let response = format!(
+                "HTTP/1.1 200 OK\r\n\
+            Connection: Keep-Alive\r\n\
+            Content-Type: image/x-icon\r\n\
+            Content-Length: {}\r\n\r\n",
+                FAVICON.len(),
+            );
+            self.stream.write(response.as_bytes())?;
+            self.stream.write(FAVICON)?;
+            self.stream.flush()?;
+            if ARGS.debug {
+                eprintln!(
+                    "*** Debug: ServerThread::serve_events2: file \"{}\" served.",
+                    FAVICON_PATH
+                );
+            };
             return Ok(());
         } else if path == EVENT_PATH {
             // This is connection for server sent events.
@@ -202,9 +232,21 @@ impl ServerThread {
                 // Send event.
                 let event = format!("event: {}\r\ndata\r\n\r\n", self.event_name);
                 self.stream.write(event.as_bytes())?;
+                if ARGS.debug {
+                    eprintln!(
+                        "*** Debug: ServerThread::serve_events2: event: \"{}\" served.",
+                        self.event_name
+                    );
+                };
             }
         } else {
             self.stream.write(b"HTTP/1.1 404 Not Found\r\n\r\n")?;
+            if ARGS.debug {
+                eprintln!(
+                    "*** Debug: ServerThread::serve_events2: Not found: \"{}\" served.",
+                    path
+                );
+            };
             return Ok(());
         }
     }
@@ -219,7 +261,10 @@ impl ServerThread {
                 context.insert("noteError", &e.to_string());
                 context.insert("file", self.file_path.to_str().unwrap_or_default());
                 // Java Script
-                let js = format!("{}{}:{}{}", SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2);
+                let js = format!(
+                    "{}{}:{}{}",
+                    SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2
+                );
                 context.insert("noteJS", &js);
 
                 let mut tera = Tera::default();
@@ -265,7 +310,10 @@ impl ServerThread {
         note.context.insert("noteBody", &html_output);
 
         // Java Script
-        let js = format!("{}{}:{}{}", SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2);
+        let js = format!(
+            "{}{}:{}{}",
+            SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2
+        );
         note.context.insert("noteJS", &js);
 
         let mut tera = Tera::default();
