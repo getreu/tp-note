@@ -1026,6 +1026,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd179ae861f0c2e53da70d892f5f3029f9594be0c41dc5269cd371691b1dc2f9"
 
 [[package]]
+name = "httpdate"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "494b4d60369511e7dea41cf646832512a94e542f68bb9c49e54518e0f468eb47"
+
+[[package]]
 name = "humansize"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2364,7 +2370,7 @@ dependencies = [
 
 [[package]]
 name = "tp-note"
-version = "1.8.4"
+version = "1.8.5"
 dependencies = [
  "anyhow",
  "atty",
@@ -2375,6 +2381,7 @@ dependencies = [
  "directories 3.0.1",
  "dissolve",
  "httparse",
+ "httpdate",
  "lazy_static 1.4.0",
  "msgbox",
  "notify",
