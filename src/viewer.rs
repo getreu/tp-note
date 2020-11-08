@@ -7,8 +7,6 @@ use crate::sse_server::manage_connections;
 use crate::watcher::FileWatcher;
 use anyhow::anyhow;
 use anyhow::Context;
-use std::net::IpAddr;
-use std::net::Ipv4Addr;
 use std::net::TcpListener;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -19,8 +17,14 @@ use std::time::{Duration, Instant};
 use webbrowser::{open_browser, Browser};
 
 pub const EVENT_PATH: &str = "/events";
-pub const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
 
+/// This is where our loop back device is.
+/// The following is also possible, but binds us to IPv4:
+/// `pub const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);`
+/// So better just this string. It will be resolved while binding
+/// to the TCP port and also in the browser when connecting the
+/// event source.
+pub const LOCALHOST: &str = "localhost";
 /// Parse result.
 #[derive(Clone, Default, Debug)]
 pub struct Viewer {}
