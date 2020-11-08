@@ -899,19 +899,44 @@ _Mark Text_-editor will open with your note.
 
 ## Change the markup language
 
+You can change the Markup language of a specific note by adding the variable
+'`file_ext:`' to its YAML header. For example, for _RestructuredText_ add:
+
+```yaml
+file_ext: "rst"
+```
+
+The above change only applies to the current note. In addition, it is also
+possible to permanently change _Tp-Note_'s default Markup language.
+
 _Tp-Note_ is markup language agnostic, however the default templates define
-_Markdown_ as default markup language. To change this, just edit the following
-3 variables:
+_Markdown_ as default markup language. To change this to _RestructuredText_,
+just edit the following 2 variables in _Tp-Note_'s configuration file:
 
-1. Change the variable '`extension_default`'. Example:
-   '`extension_default='rst'`'.
+1. Change the default file extension from:
 
-2. Change the variable '`note_file_extension`'. Example:
-   '`note_file_extensions = [ 'rst', 'rest', 'restructuredtext' ]`'.
+       extension_default='md'
 
-3. The last line in the template '`tmpl_clipboard_content`' defines a hyperlink in
-   Markdown format. Change the link format according to your markup language
-   convention.
+   to:
+
+       extension_default='rst'
+
+2. Replace the following line in the template '`tmpl_clipboard_content`'
+   defining a hyperlink in Markdown format:
+
+       [{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}](<{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}>)
+
+   with the following line encoded in _RestructuredText_:
+
+       `<{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}>`_
+
+As a result, all future notes are created as `*.rst` files.
+
+In principle, you can define templates for every possible lightweight markup
+language. However, _Tp-Note_'s internal viewer is limited to _Markdown_ and
+_RestructuredText_.  Therefore, I recommend when using other Markup languages,
+to add their file extension to the '`note_file_extension_unknown`' variable.
+This disables the internal viewer for these file types.
 
 
 
