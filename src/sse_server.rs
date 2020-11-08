@@ -17,12 +17,16 @@ use crate::viewer::LOCALHOST;
 use anyhow::anyhow;
 use anyhow::Context;
 use dissolve::strip_html_tags;
+use httpdate;
 use pulldown_cmark::{html, Options, Parser};
 use rst_parser::parse;
 use rst_renderer::render_html;
 use std::net::Shutdown;
 use std::path::PathBuf;
 use std::str;
+use std::thread::sleep;
+use std::time::Duration;
+use std::time::SystemTime;
 use tera::Tera;
 
 /// Javascript client code, part 1
@@ -155,15 +159,15 @@ impl ServerThread {
 
             let response = format!(
                 "HTTP/1.1 200 OK\r\n\
-            Connection: Close\r\n\
+            Cache-Control: no-cache\r\n\
+            Date: {}\r\n\
             Content-Type: text/html; charset=utf-8\r\n\
-            Content-Length: {}\r\n\r\n{}",
-                html.len(),
-                html
+            Content-Length: {}\r\n\r\n",
+                httpdate::fmt_http_date(SystemTime::now()),
+                html.len()
             );
             self.stream.write(response.as_bytes())?;
-            self.stream.flush()?;
-            self.stream.shutdown(Shutdown::Both)?;
+            self.stream.write(html.as_bytes())?;
             // We have been subscribed to events beforehand. As we drop the
             // receiver now, `viewer::update()` will remove us from the list soon.
             if ARGS.debug {
@@ -171,38 +175,49 @@ impl ServerThread {
                     "*** Debug: ServerThread::serve_events2: file {:?} served.",
                     self.file_path
                 );
-            };
+            }
+            // Only Chrome and Edge on Windows need this extra time to ACK the TCP
+            // connection.
+            sleep(Duration::from_millis(100));
+            self.stream.shutdown(Shutdown::Both)?;
             return Ok(());
         } else if path == FAVICON_PATH {
             let response = format!(
                 "HTTP/1.1 200 OK\r\n\
-            Connection: Close\r\n\
+            Cache-Control: no-cache\r\n\
+            Date: {}\r\n\
             Content-Type: image/x-icon\r\n\
             Content-Length: {}\r\n\r\n",
+                httpdate::fmt_http_date(SystemTime::now()),
                 FAVICON.len(),
             );
             self.stream.write(response.as_bytes())?;
             self.stream.write(FAVICON)?;
-            self.stream.flush()?;
-            self.stream.shutdown(Shutdown::Both)?;
             if ARGS.debug {
                 eprintln!(
                     "*** Debug: ServerThread::serve_events2: file \"{}\" served.",
                     FAVICON_PATH
                 );
             };
+            // Only Chrome and Edge on Windows need this extra time to ACK the TCP
+            // connection.
+            sleep(Duration::from_millis(100));
+            self.stream.shutdown(Shutdown::Both)?;
             return Ok(());
         } else if path == EVENT_PATH {
             // This is connection for server sent events.
             // Declare SSE capability and allow cross-origin access.
-            let response = b"\
+            let response = format!(
+                "\
                 HTTP/1.1 200 OK\r\n\
                 Access-Control-Allow-Origin: *\r\n\
                 Cache-Control: no-cache\r\n\
-                Connection: keep-alive\r\n\
                 Content-Type: text/event-stream\r\n\
-                \r\n";
-            self.stream.write(response)?;
+                Date: {}\r\n\
+                \r\n",
+                httpdate::fmt_http_date(SystemTime::now()),
+            );
+            self.stream.write(response.as_bytes())?;
 
             // Make the stream non-blocking to be able to detect whether the
             // connection was closed by the client.
