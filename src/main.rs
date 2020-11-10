@@ -22,6 +22,7 @@ mod note;
 mod sse_server;
 #[cfg(feature = "viewer")]
 mod viewer;
+#[cfg(feature = "viewer")]
 mod watcher;
 
 extern crate semver;
@@ -30,6 +31,7 @@ use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
 use crate::config::LAUNCH_EDITOR;
+#[cfg(feature = "viewer")]
 use crate::config::LAUNCH_VIEWER;
 use crate::config::RUNS_ON_CONSOLE;
 use crate::config::STDIN;
