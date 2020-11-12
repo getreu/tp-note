@@ -3,8 +3,8 @@
 use crate::config::ARGS;
 use crate::config::LAUNCH_EDITOR;
 use crate::filename::MarkupLanguage;
-use crate::sse_server::manage_connections;
-use crate::watcher::FileWatcher;
+use crate::viewer::sse_server::manage_connections;
+use crate::viewer::watcher::FileWatcher;
 use anyhow::anyhow;
 use anyhow::Context;
 use std::net::TcpListener;

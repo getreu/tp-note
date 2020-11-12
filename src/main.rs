@@ -19,11 +19,7 @@ mod filename;
 mod filter;
 mod note;
 #[cfg(feature = "viewer")]
-mod sse_server;
-#[cfg(feature = "viewer")]
 mod viewer;
-#[cfg(feature = "viewer")]
-mod watcher;
 
 extern crate semver;
 use crate::config::backup_config_file;
@@ -39,7 +35,7 @@ use crate::error::AlertDialog;
 use crate::filename::MarkupLanguage;
 use crate::note::Note;
 #[cfg(feature = "viewer")]
-use crate::viewer::Viewer;
+use crate::viewer::init::Viewer;
 use anyhow::{anyhow, Context};
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
