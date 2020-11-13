@@ -99,7 +99,6 @@ subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ get_env(name='LANG', default='') | json_encode }}
-revision:   {{ '1.0' | json_encode }}
 ---
 
 
@@ -137,7 +136,6 @@ subtitle:   {{ fm_subtitle | default(value = 'Note') | cut | json_encode }}
 author:     {{ fm_author | default(value=username) | json_encode }}
 date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
 lang:       {{ fm_lang | default(value = get_env(name='LANG', default='')) | json_encode }}
-revision:   {{ fm_revision | default(value = '1.0') | json_encode }}
 {% for k, v in fm_all\
  | remove(var='fm_title')\
  | remove(var='fm_subtitle')\
@@ -195,7 +193,6 @@ subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ get_env(name='LANG', default='') | json_encode }}
-revision:   {{ '1.0' | json_encode }}
 ---
 
 {{ stdin ~ clipboard }}
@@ -235,7 +232,6 @@ subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ get_env(name='LANG', default='') | json_encode }}
-revision:   {{ '1.0' | json_encode }}
 ---
 
 [{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}]\

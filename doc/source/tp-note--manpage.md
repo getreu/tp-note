@@ -84,7 +84,6 @@ subtitle:   "Note"
 author:     "getreu"
 date:       "March  6, 2020"
 lang:       "en_GB.UTF-8"
-revision:   "1.0"
 ---
 ```
 
@@ -146,7 +145,6 @@ subtitle:   "Note"
 author:     "getreu"
 date:       "2020-09-11"
 lang:       "en_GB.UTF-8"
-revision:   "1.0"
 ---
 
 Who Moved My Cheese?
@@ -184,7 +182,6 @@ subtitle:   "URL"
 author:     "getreu"
 date:       "2020-09-11"
 lang:       "en_GB.UTF-8"
-revision:   "1.0"
 ---
 
 I recommend:
@@ -214,7 +211,6 @@ subtitle:   ""
 author:     "getreu"
 date:       "2020-09-11"
 lang:       "en_GB.UTF-8"
-revision:   "1.0"
 file_ext:   "mdtxt"
 ---
 
@@ -224,7 +220,7 @@ nothing
 Technically, the creation of the new note is performed
 using the YAML header variables: '`{{ fm_title }}`',
 '`{{ fm_subtitle }}`', '`{{ fm_author }}`', '`{{ fm_date }}`',
-'`{{ fm_lang }}`', '`{{ fm_revision }}`', '`{{ fm_sort_tag }}`' and
+'`{{ fm_lang }}`', '`{{ fm_sort_tag }}`' and
 '`{{ fm_file_ext }}`' which are evaluated with the
 '`tmpl_copy_content`' and the '`tmpl_copy_filename`' templates.
 
@@ -254,7 +250,6 @@ subtitle:   ""
 author:     "getreu"
 date:       "2020-09-11"
 lang:       "en"
-revision:   "1.0"
 ---
 
 
@@ -324,7 +319,6 @@ subtitle:   "Note"
 author:     "getreu"
 date:       "March  6, 2020"
 lang:       "en_GB.UTF-8"
-revision:   "1.1"
 ---
 
 [Classic Shell Scripting.pdf](Classic Shell Scripting.pdf)
@@ -514,7 +508,6 @@ subtitle:   "Note"
 author:     "getreu"
 date:       "March  6, 2020"
 lang:       "en_GB.UTF-8"
-revision:   "1.1"
 ---
 ```
 
@@ -888,7 +881,7 @@ editor_args = [
     'code',
     '-w',
     '-n',
-],,
+],
 #...
 ]
 ```
