@@ -357,7 +357,12 @@ impl ServerThread {
     #[inline]
     /// RestructuredText renderer.
     fn render_rst_content(rest_input: &str) -> Result<String, anyhow::Error> {
-        let document = parse(&rest_input.trim()).map_err(|e| anyhow!(e))?;
+        // To add a newline at the end, we need to copy here. No other choice.
+        // This is a work around for:
+        // <https://github.com/flying-sheep/rust-rst/issues/30>
+        let mut rest_input = rest_input.trim().to_string();
+        rest_input.push('\n');
+        let document = parse(rest_input.as_str()).map_err(|e| anyhow!(e))?;
         // Write to String buffer.
         let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
         //let mut html_output: String = String::with_capacity(rest_input.len() * 3 / 2);
