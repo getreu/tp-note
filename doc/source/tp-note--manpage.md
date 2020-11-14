@@ -915,7 +915,7 @@ just edit the following 2 variables in _Tp-Note_'s configuration file:
        extension_default='rst'
 
 2. Replace the following line in the template '`tmpl_clipboard_content`'
-   defining a hyperlink in Markdown format:
+   that defines a hyperlink in Markdown format:
 
        [{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}](<{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}>)
 
@@ -923,7 +923,7 @@ just edit the following 2 variables in _Tp-Note_'s configuration file:
 
        `<{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}>`_
 
-As a result, all future notes are created as `*.rst` files.
+As a result, all future notes are created as '`*.rst`' files.
 
 In principle, you can define templates for every possible lightweight markup
 language. However, _Tp-Note_'s internal viewer is limited to _Markdown_ and
@@ -932,6 +932,78 @@ to add their file extension to the '`note_file_extension_unknown`' variable.
 This disables the internal viewer for these file types.
 
 
+## Customize the built-in viewer
+
+_Tp-Note_'s built-in viewer generates its HTML rendition through the
+customizable HTML templates '`viewer_rendition_tmpl`' and
+'`viewer_error_tmpl`'. The following code example of
+'`viewer_rendition_tmpl`' illustrates the available variables:
+
+```html
+viewer_rendition_tmpl = '''<!DOCTYPE html>
+<html lang="{{ fm_lang | default(value='en') }}">
+<head>
+<meta charset="utf-8">
+<title>{{ fm_title }}</title>
+  </head>
+  <body>
+  <pre class="noteHeader">{{ fm_all_yaml }}</pre>
+  <hr>
+  <div class="noteBody">{{ noteBody }}</div>
+  <script>{{ noteJS }}</script>
+</body>
+</html>
+'''
+```
+
+Specifically:
+
+* '`{{ fm_* }}`' are the deserialized header variables. All content
+  template variables and filters are available. See section _Template
+  variables_ above.
+
+* '`{{ fm_all_yaml }}`' is the raw UTF-8 copy of the header. Not to be
+  confounded with the dictionary variable '`{{ fm_all }}`'.
+
+* '`{{ noteBody }}`' is the note's body as HTML rendition.
+
+* '`{{ noteJS }}`' is the Java-Script browser code for
+  live updates.
+
+Alternatively, the header enclosed by '`<pre>...</pre>`' can also be rendered
+as a table:
+
+```html
+  <table>
+    <tr><th>title:</th><th>{{ fm_title }}</th> </tr>
+    <tr><th>subtitle:</th><th>{{ fm_subtitle | default(value='') }}</th></tr>
+  {% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle') %}
+    <tr><th>{{ k }}:</th><th>{{ v }}</th></tr>
+  {% endfor %}
+  </table>
+```
+
+The error page template '`viewer_error_tmpl`' (see below) does not provide '`fm_*`'
+variables, because of possible header syntax errors. Instead, the variable
+'`{{ noteError }}`' contains the error message as raw UTF-8:
+
+```html
+viewer_error_tmpl = '''<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<title>Syntax error</title>
+</head>
+<body>
+<h3>Syntax error</h3>
+<p> in note file: <pre>{{ file }}</pre><p>
+<hr>
+<pre class=\"noteError\">{{ noteError }}<pre>
+<script>{{ noteJS }}</script>
+</body>
+</html>
+'''
+```
 
 # RESOURCES
 
