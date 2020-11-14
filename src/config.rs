@@ -380,16 +380,66 @@ const VIEWER_ENABLED: bool = true;
 const VIEWER_NOTIFY_PERIOD: u64 = 1000;
 
 /// Template used to render a note into html.
-pub const VIEWER_RENDITION_TMPL: &str = r#"
-<!DOCTYPE html>
+pub const VIEWER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
 <meta charset="utf-8">
 <title>{{ fm_title }}</title>
+<style>
+table, th, td {
+  font-weight: normal;
+}
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+  background-color: #f3f2e4;
+  border:1px solid grey;
+}
+th, td {
+  padding: 3px;
+  padding-left:15px;
+  padding-right:15px;
+}
+th.key{
+  color:#444444;
+  text-align:right;
+}
+th.val{
+  color:#386938;
+  text-align:left;
+  font-family:sans-serif;
+}
+th.keygrey{
+  color:grey;
+  text-align:right;
+}
+th.valgrey{
+  color:grey;
+  text-align:left;
+}
+</style>
   </head>
   <body>
-  <pre class="noteHeader">{{ fm_all_yaml }}</pre>
-  <hr>
+  <table class="center">
+    <tr>
+    <th class="key">title:</th>
+    <th class="val"><b>{{ fm_title }}</b></th>
+  </tr>
+    <tr>
+    <th class="key">subtitle:</th>
+    <th class="val">{{ fm_subtitle | default(value='') }}</th>
+  </tr>
+    <tr>
+    <th class="keygrey">date:</th>
+    <th class="valgrey">{{ fm_date | default(value='') }}</th>
+  </tr>
+  {% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle')| remove(var='fm_date') %}
+    <tr>
+    <th class="keygrey">{{ k }}:</th>
+    <th class="valgrey">{{ v }}</th>
+  </tr>
+  {% endfor %}
+  </table>
   <div class="noteBody">{{ noteBody }}</div>
   <script>{{ noteJS }}</script>
 </body>
@@ -397,8 +447,7 @@ pub const VIEWER_RENDITION_TMPL: &str = r#"
 "#;
 
 /// Template used to render error messages into html.
-pub const VIEWER_ERROR_TMPL: &str = r#"
-<!DOCTYPE html>
+pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
 <html lang=\"en\">
 <head>
 <meta charset=\"utf-8\">
