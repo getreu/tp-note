@@ -3,8 +3,9 @@ title:      "aaa"
 subtitle:   "bbb"
 author:     "myuser"
 lang:       "en"
-revision:   "2.0"
 file_ext:		"mdtxt"
+my_own_var:		"foo"
+revision:		"2.0"
 sort_tag:		"222-"
 ---
 

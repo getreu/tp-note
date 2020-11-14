@@ -30,7 +30,6 @@ subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ get_env(name='LANG', default='') | json_encode }}
-revision:   {{ '1.0' | json_encode }}
 ---
 
 
@@ -43,8 +42,7 @@ subtitle:   {{ fm_subtitle | default(value = 'Note') | cut | json_encode }}
 author:     {{ fm_author | default(value=username) | json_encode }}
 date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
 lang:       {{ fm_lang | default(value = get_env(name='LANG', default='')) | json_encode }}
-revision:   {{ fm_revision | default(value = '1.0') | json_encode }}
-{% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle')| remove(var='fm_author')| remove(var='fm_date')| remove(var='fm_lang')| remove(var='fm_revision') %}{{ k }}:		{{ v | json_encode }}
+{% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle')| remove(var='fm_author')| remove(var='fm_date')| remove(var='fm_lang') %}{{ k }}:		{{ v | json_encode }}
 {% endfor %}---
 
 {{ stdin ~ clipboard }}
@@ -60,7 +58,6 @@ tmpl_clipboard_content = '''
 {% endif %}author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ get_env(name='LANG', default='') | json_encode }}
-revision:   {{ '1.0' | json_encode }}
 ---
 
 {{ stdin ~ clipboard }}
@@ -75,7 +72,6 @@ title:      {% filter json_encode %}{{ file | stem }}{{ file | ext | prepend_dot
 {% endif %}author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ get_env(name='LANG', default='') | json_encode }}
-revision:   {{ '1.0' | json_encode }}
 ---
 
 [{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}](<{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}>)
@@ -151,23 +147,72 @@ copy_counter_closing_brackets = ')'
 viewer_enabled = true
 viewer_notify_period = 1000
 viewer_rendition_tmpl = '''
-
 <!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
 <meta charset="utf-8">
 <title>{{ fm_title }}</title>
+<style>
+table, th, td {
+  font-weight: normal;
+}
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+  background-color: #f3f2e4;
+  border:1px solid grey;
+}
+th, td {
+  padding: 3px;
+  padding-left:15px;
+  padding-right:15px;
+}
+th.key{
+  color:#444444;
+  text-align:right;
+}
+th.val{
+  color:#386938;
+  text-align:left;
+  font-family:sans-serif;
+}
+th.keygrey{
+  color:grey;
+  text-align:right;
+}
+th.valgrey{
+  color:grey;
+  text-align:left;
+}
+</style>
   </head>
   <body>
-  <pre class="noteHeader">{{ fm_all_yaml }}</pre>
-  <hr>
+  <table class="center">
+    <tr>
+    <th class="key">title:</th>
+    <th class="val"><b>{{ fm_title }}</b></th>
+  </tr>
+    <tr>
+    <th class="key">subtitle:</th>
+    <th class="val">{{ fm_subtitle | default(value='') }}</th>
+  </tr>
+    <tr>
+    <th class="keygrey">date:</th>
+    <th class="valgrey">{{ fm_date | default(value='') }}</th>
+  </tr>
+  {% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle')| remove(var='fm_date') %}
+    <tr>
+    <th class="keygrey">{{ k }}:</th>
+    <th class="valgrey">{{ v }}</th>
+  </tr>
+  {% endfor %}
+  </table>
   <div class="noteBody">{{ noteBody }}</div>
   <script>{{ noteJS }}</script>
 </body>
 </html>
 '''
 viewer_error_tmpl = '''
-
 <!DOCTYPE html>
 <html lang=\"en\">
 <head>

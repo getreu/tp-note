@@ -141,8 +141,7 @@ lang:       {{ fm_lang | default(value = get_env(name='LANG', default='')) | jso
  | remove(var='fm_subtitle')\
  | remove(var='fm_author')\
  | remove(var='fm_date')\
- | remove(var='fm_lang')\
- | remove(var='fm_revision') %}\
+ | remove(var='fm_lang') %}\
 {{ k }}:\t\t{{ v | json_encode }}
 {% endfor %}\
 ---

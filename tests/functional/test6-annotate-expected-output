@@ -3,8 +3,7 @@ title:      "test6-annotate-input-dummy.pdf"
 subtitle:   "Note"
 author:     "myuser"
 lang:       "en_US.UTF-8"
-revision:   "1.0"
 ---
 
-[test6-annotate-input-dummy.pdf](test6-annotate-input-dummy.pdf)
+[test6-annotate-input-dummy.pdf](<test6-annotate-input-dummy.pdf>)
 

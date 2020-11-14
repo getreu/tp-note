@@ -195,6 +195,7 @@ lang: 'en'
 revision: '2.0'
 sort_tag: '222-'
 file_ext: 'mdtxt'
+my_own_var: 'foo'
 ...
 EOF
 "
