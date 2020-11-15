@@ -42,32 +42,32 @@ pub const EXTENSION_DEFAULT: &str = "md";
 /// Markdown encoded Tp-Note files.
 pub const NOTE_FILE_EXTENSIONS_MD: &[&str] = &["md", "markdown", "markdn", "mdown", "mdtxt"];
 
-/// See above.
-///
 /// The present list contains file extensions of
 /// RestructuredText encoded Tp-Note files.
+///
+/// See also `NOTE_FILE_EXTENSION_MD`.
 pub const NOTE_FILE_EXTENSIONS_RST: &[&str] = &["rst", "rest"];
 
-/// See above.
-///
 /// The present list contains file extensions of
 /// HTML encoded Tp-Note files. For these
 /// file types their content is forwarded to the web browser
 /// without modification.
+///
+/// See also `NOTE_FILE_EXTENSION_MD`.
 pub const NOTE_FILE_EXTENSIONS_HTML: &[&str] = &["htmlnote"];
 
-/// See above.
-///
 /// The present list contains file extensions of
 /// Text encoded Tp-Note files that the viewer shows
 /// literally without (almost) any additional rendering.
+///
+/// See also `NOTE_FILE_EXTENSION_MD`.
 pub const NOTE_FILE_EXTENSIONS_TXT: &[&str] = &["txtnote", "t2t", "textile", "twiki", "mediawiki"];
 
-/// See above.
-///
 /// The present list contains file extensions of
 /// Tp-Note files for which no viewer is opened
 /// (unless Tp-Note is invoked with `--view`).
+///
+/// See also `NOTE_FILE_EXTENSION_MD`.
 pub const NOTE_FILE_EXTENSIONS_UNKNOWN: &[&str] = &["adoc", "asciidoc"];
 
 /// Maximum length of a note's filename in bytes. If a filename-template produces

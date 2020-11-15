@@ -102,10 +102,9 @@ subtitle:   "Note"
 author:     "getreu"
 date:       "March 10, 2020"
 lang:       "en_GB.UTF-8"
-revision:   "1.0"
 ---
 
-[03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt](03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt)
+[03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt](<03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt>)
 ```
 
 ![Annotate](images/workflow2-3.png){width="11cm"}
@@ -137,12 +136,11 @@ subtitle:   "URL"
 author:     "getreu"
 date:       "2020-08-27"
 lang:       "en_GB.UTF-8"
-revision:   "1.0"
 ---
 
-[ascii-hangman.exe](ascii-hangman.exe)
+[ascii-hangman.exe](<ascii-hangman.exe>)
 
-[ASCII-Hangman - hangman game for children with ASCII-art rewarding](https://blog.getreu.net/projects/ascii-hangman/#distribution)
+[ASCII-Hangman - hangman game for children with ASCII-art rewarding](<https://blog.getreu.net/projects/ascii-hangman/#distribution>)
 
 ```
 
@@ -176,10 +174,9 @@ subtitle:   "URL"
 author:     "getreu"
 date:       "March 10, 2020"
 lang:       "en_GB.UTF-8"
-revision:   "1.0"
 ---
 
-[Rustacean Station](https://rustacean-station.org/)
+[Rustacean Station](<https://rustacean-station.org/>)
 ```
 
 In this example we copied only one Markdown-link "Rustacean Station".
@@ -219,7 +216,6 @@ subtitle:   "Note"
 author:     "getreu"
 date:       "2020-03-23"
 lang:       "en_GB.UTF-8"
-revision:   "1.0"
 ---
 
 Winston kept his back turned to the telescreen. It was safer, though, as he well
@@ -299,7 +295,7 @@ Here some typical workflows:
   Document from where you downloaded the file:
 
   ```shell
-  echo  "[download](http://blog.getreu.net/_downloads/i3-extensions.zip)" | tp-note i3-extensions.zip
+  echo  "[download](<http://blog.getreu.net/_downloads/i3-extensions.zip>)" | tp-note i3-extensions.zip
   ```
 
   This creates the file `i3-extensions.zip--URL.md` with the
@@ -312,12 +308,11 @@ Here some typical workflows:
   author:     "getreu"
   date:       "2020-09-03"
   lang:       "en_GB.UTF-8"
-  revision:   "1.0"
   ---
 
-  [i3-extensions.zip](i3-extensions.zip)
+  [i3-extensions.zip](<i3-extensions.zip>)
 
-  [download](http://blog.getreu.net/_downloads/i3-extensions.zip)
+  [download](<http://blog.getreu.net/_downloads/i3-extensions.zip>)
   ```
 
 * Download a webpage, convert it to Markdown and insert the result
@@ -353,7 +348,6 @@ Here some typical workflows:
   author:     "getreu"
   date:       "2020-09-13"
   lang:       "en_GB.UTF-8"
-  revision:   "1.0"
   file_ext:   "mdtxt"
   ---
 
@@ -394,7 +388,6 @@ Here some typical workflows:
       author:     "getreu"
       date:       "2020-09-25"
       lang:       "en_GB.UTF-8"
-      revision:   "1.0"
       ---
 
       # Draft
@@ -747,7 +740,7 @@ Search for `</actions>` and replace it with:
         <name>Tp-Note View</name>
         <command>tp-note -v %f</command>
         <description>Tp-Note View</description>
-        <patterns>*.md</patterns>
+        <patterns>*.md;*.rst</patterns>
         <text-files/>
 </action>
 </actions>

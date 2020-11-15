@@ -178,7 +178,7 @@ Instead, _Tp-Note_ renames the erroneous configuration file and prompts:
     *    Command line parameters:
     tp-note
     *    Configuration file path:
-    /home/getreu/.config/tp-note/tp-note.tomll
+    /home/getreu/.config/tp-note/tp-note.toml
 
 or
 
