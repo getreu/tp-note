@@ -317,12 +317,19 @@ const EDITOR_ARGS: &[&[&str]] = &[
     ],
     &["C:\\Windows\\notepad.exe"],
 ];
-// Some info about lauching programs on iOS:
+// Some info about launching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(all(target_family = "unix", target_vendor = "apple"))]
 const EDITOR_ARGS: &[&[&str]] = &[
-    &["/Applications/TextEdit.app/Contents/MacOS/TextEdit"],
-    &["/Applications/Mark\\ Text.app/Contents/MacOS/Mark\\ Text"],
+    &["code", "-w", "-n"],
+    &["atom", "-w"],
+    &["marktext", "--no-sandbox"],
+    &["typora"],
+    &["gvim", "--nofork"],
+    &["mate"],
+    &["open", "-a", "TextEdit"],
+    &["open", "-a", "TextMate"],
+    &["open"],
 ];
 
 /// Default command-line argument list when launching an external editor
@@ -331,13 +338,20 @@ const EDITOR_ARGS: &[&[&str]] = &[
 /// The editor list is executed item by item until an editor is found.
 /// Can be changed in config file.
 #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nano"], &["nvim"], &["vim"], &["vi"]];
+const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nano"], &["nvim"], &["vim"], &["emacs"], &["vi"]];
 #[cfg(target_family = "windows")]
 const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&[]];
 // Some info about lauching programs on iOS:
 // [dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(all(target_family = "unix", target_vendor = "apple"))]
-const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nano"], &["nvim"], &["vim"], &["vi"]];
+const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[
+    &["nano"],
+    &["pico"],
+    &["nvim"],
+    &["vim"],
+    &["emacs"],
+    &["vi"],
+];
 
 /// By default clipboard support is enabled, can be disabled
 /// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
