@@ -171,12 +171,15 @@ const TMPL_COPY_FILENAME: &str = "\
 /// Default template used, when the clipboard or the input stream `stdin` contains a string and
 /// this string has no valid YAML front matter section.  The clipboards content is in `{{ clipboard
 /// }}`, its truncated version in `{{ clipboard | heading }}` When the clipboard contains a
-/// hyper-link in markdown format: [<link-name>](<link-url>), its first part is stored in `{{
-/// clipboard | linkname }}`, the second part in `{{ clipboard | linktarget }}`.  The following
-/// variables are defined: `{{ dir | stem }}`, `{{ file | stem }}`, `{{ file_ext }}`,
-/// `{{ extension_default }}` `{{ path }}`, `{{ file | tag }}`, `{{ username }}`.  In addition all
-/// environment variables can be used, e.g.  `{{ get_env(name=\"LOGNAME\") }}`
-/// When placed in YAML-front-matter, the filter `| json_encode` must be appended to each variable.
+/// hyper-link in Markdown or reStruncturedText format. See crate `parse-hyperlinks` for details.
+/// For example: `[<link-name>](<link-url> "link-title")`, can be accessed with the variables:
+/// `{{ clipboard | linkname }}`, `{{ clipboard | linktarget }}` and `{{ clipboard | linkttitle }}`.
+/// The following variables are always defined: `{{ dir | stem }}`, `{{ file |
+/// stem }}`, `{{ file_ext }}`, `{{ extension_default }}` `{{ path }}`, `{{ file
+/// | tag }}`, `{{ username }}`. In addition all environment variables can be
+/// used, e.g. `{{ get_env(name=\"LOGNAME\") }}` When placed in
+/// YAML-front-matter, the filter `| json_encode` must be appended to each
+/// variable.
 /// Trick: the expression `{% if clipboard != clipboard | heading %}` detects if the clipboard
 /// content has more than one line of text.
 const TMPL_CLIPBOARD_CONTENT: &str = "\

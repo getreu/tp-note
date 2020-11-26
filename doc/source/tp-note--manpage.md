@@ -93,12 +93,13 @@ lang:       "en_GB.UTF-8"
 When '`<path>`' is a directory and the clipboard is not empty, the clipboard's
 content is stored in the variable '`{{ clipboard }}`'. In addition, if the
 content contains an hyperlink in Markdown format, the hyperlink's name can be
-accessed with '`{{ clipboard | linkname }}`' and its URL with '`{{ clipboard |
-linktarget }}`'. The new note is then created with the '`tmpl_clipboard_content`'
-and the '`tmpl_clipboard_filename`' templates.  Finally, the newly created note
-file is opened again with some external text editor. When the user closes the
-text editor, _Tp-Note_ synchronizes the note's meta-data and its filename with
-the template '`tmpl_sync_filename`'.
+accessed with '`{{ clipboard | linkname }}`', its URL with
+'`{{ clipboard | linktarget }}`' and its title with
+'`{{ clipboard | linktitle }}`'. The new note is then created with the
+'`tmpl_clipboard_content`' and the '`tmpl_clipboard_filename`' templates.
+Finally, the newly created note file is opened again with some external text
+editor. When the user closes the text editor, _Tp-Note_ synchronizes the
+note's meta-data and its filename with the template '`tmpl_sync_filename`'.
 
 > Note: this operation mode also empties the clipboard (configurable feature).
 
@@ -700,7 +701,7 @@ variable might contain the empty string '`""`'.
 In addtion to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), _Tp-Note_ comes with
 some additional filters, e.g.: '`tag`', '`stem`', '`cut`', '`heading`',
-'`linkname`', '`linktarget`' and '`ext`'.
+'`linkname`', '`linktarget`', '`linktitle`' and '`ext`'.
 
 A filter is always used together with a variable. Here some examples:
 
@@ -724,11 +725,14 @@ A filter is always used together with a variable. Here some examples:
 * '`{{ clipboard | heading }}`' is the clipboard's content until end of the first
   sentence ending, or the first newline.
 
-* '`{{ clipboard | linkname }}`' is the name of the first Markdown formatted link
-  in the clipboard.
+* '`{{ clipboard | linkname }}`' is the name of the first Markdown or
+  reStructuredText formatted link in the clipboard.
 
-* '`{{ clipboard | linktarget }}`' is the URL of the first Markdown formatted link
-  in the clipboard.
+* '`{{ clipboard | linktarget }}`' is the URL of the first Markdown or
+  reStruncturedText formatted link in the clipboard.
+
+* '`{{ clipboard | linktitle }}`' is the title of the first Markdown or
+  reStruncturedText formatted link in the clipboard.
 
 * '`{{ file | ext }}`' is the filename extension of the current note on disk.
 

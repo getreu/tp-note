@@ -27,6 +27,7 @@ lazy_static! {
         tera.register_filter("sanit", sanit_filter);
         tera.register_filter("linkname", linkname_filter);
         tera.register_filter("linktarget", linktarget_filter);
+        tera.register_filter("linktitle", linktitle_filter);
         tera.register_filter("heading", heading_filter);
         tera.register_filter("cut", cut_filter);
         tera.register_filter("tag", tag_filter);
@@ -82,8 +83,8 @@ pub fn sanit_filter<S: BuildHasher>(
     Ok(to_value(&filtered)?)
 }
 
-/// A Tera filter that searches for the first Markdown link in the input stream and returns the
-/// link's name.
+/// A Tera filter that searches for the first Markdown or reStructuredText link
+/// in the input stream and returns the link's name.
 pub fn linkname_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -95,8 +96,8 @@ pub fn linkname_filter<S: BuildHasher>(
     Ok(to_value(&hyperlink.name)?)
 }
 
-/// A Tera filter that searches for the first Markdown link in the input stream and returns the
-/// link's URL.
+/// A Tera filter that searches for the first Markdown or reStructuredText link
+/// in the input stream and returns the link's URL.
 pub fn linktarget_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -106,6 +107,19 @@ pub fn linktarget_filter<S: BuildHasher>(
     let hyperlink = Hyperlink::new(&p).unwrap_or_default();
 
     Ok(to_value(&hyperlink.target)?)
+}
+
+/// A Tera filter that searches for the first Markdown or reStructuredText link
+/// in the input stream and returns the link's title.
+pub fn linktitle_filter<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let p = try_get_value!("linktitle", "value", String, value);
+
+    let hyperlink = Hyperlink::new(&p).unwrap_or_default();
+
+    Ok(to_value(&hyperlink.title)?)
 }
 
 /// A Tera filter that truncates the input stream and returns the
@@ -341,22 +355,26 @@ mod tests {
         assert_eq!(result.unwrap(), to_value(&"\'123.4").unwrap());
     }
     #[test]
-    fn test_linkname_linktarget_filter() {
+    fn test_linkname_linktarget_linktitle_filter() {
         let args = HashMap::new();
         // Test Markdown link in clipboard.
-        let input = "xxx[Jens Getreu's blog](https://blog.getreu.net)";
+        let input = r#"xxx[Jens Getreu's blog](https://blog.getreu.net "My blog")"#;
         let output_ln = linkname_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("Jens Getreu's blog", output_ln);
-        let output_lu = linktarget_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("https://blog.getreu.net", output_lu);
+        let output_lta = linktarget_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("https://blog.getreu.net", output_lta);
+        let output_lti = linktitle_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("My blog", output_lti);
 
         // Test non-link string in clipboard.
         let input = "Tp-Note helps you to quickly get\
             started writing notes.";
         let output_ln = linkname_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_ln);
-        let output_lu = linktarget_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("", output_lu);
+        let output_lta = linktarget_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("", output_lta);
+        let output_lti = linktitle_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("", output_lti);
     }
     #[test]
     fn test_cut_filter() {
