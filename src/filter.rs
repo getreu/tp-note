@@ -26,7 +26,7 @@ lazy_static! {
         let mut tera = Tera::default();
         tera.register_filter("sanit", sanit_filter);
         tera.register_filter("linkname", linkname_filter);
-        tera.register_filter("linkurl", linkurl_filter);
+        tera.register_filter("linktarget", linktarget_filter);
         tera.register_filter("heading", heading_filter);
         tera.register_filter("cut", cut_filter);
         tera.register_filter("tag", tag_filter);
@@ -97,7 +97,7 @@ pub fn linkname_filter<S: BuildHasher>(
 
 /// A Tera filter that searches for the first Markdown link in the input stream and returns the
 /// link's URL.
-pub fn linkurl_filter<S: BuildHasher>(
+pub fn linktarget_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -341,13 +341,13 @@ mod tests {
         assert_eq!(result.unwrap(), to_value(&"\'123.4").unwrap());
     }
     #[test]
-    fn test_linkname_linkurl_filter() {
+    fn test_linkname_linktarget_filter() {
         let args = HashMap::new();
         // Test Markdown link in clipboard.
         let input = "xxx[Jens Getreu's blog](https://blog.getreu.net)";
         let output_ln = linkname_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("Jens Getreu's blog", output_ln);
-        let output_lu = linkurl_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_lu = linktarget_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("https://blog.getreu.net", output_lu);
 
         // Test non-link string in clipboard.
@@ -355,7 +355,7 @@ mod tests {
             started writing notes.";
         let output_ln = linkname_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_ln);
-        let output_lu = linkurl_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_lu = linktarget_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_lu);
     }
     #[test]

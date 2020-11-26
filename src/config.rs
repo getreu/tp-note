@@ -172,7 +172,7 @@ const TMPL_COPY_FILENAME: &str = "\
 /// this string has no valid YAML front matter section.  The clipboards content is in `{{ clipboard
 /// }}`, its truncated version in `{{ clipboard | heading }}` When the clipboard contains a
 /// hyper-link in markdown format: [<link-name>](<link-url>), its first part is stored in `{{
-/// clipboard | linkname }}`, the second part in `{{ clipboard | linkurl }}`.  The following
+/// clipboard | linkname }}`, the second part in `{{ clipboard | linktarget }}`.  The following
 /// variables are defined: `{{ dir | stem }}`, `{{ file | stem }}`, `{{ file_ext }}`,
 /// `{{ extension_default }}` `{{ path }}`, `{{ file | tag }}`, `{{ username }}`.  In addition all
 /// environment variables can be used, e.g.  `{{ get_env(name=\"LOGNAME\") }}`
