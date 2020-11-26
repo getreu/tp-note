@@ -105,7 +105,7 @@ pub fn linkurl_filter<S: BuildHasher>(
 
     let hyperlink = Hyperlink::new(&p).unwrap_or_default();
 
-    Ok(to_value(&hyperlink.url)?)
+    Ok(to_value(&hyperlink.target)?)
 }
 
 /// A Tera filter that truncates the input stream and returns the

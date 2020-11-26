@@ -10,6 +10,8 @@ use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
+//use parse_hyperlinks::parser::first_hyperlink;
+use parse_hyperlinks::parser::first_hyperlink;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io;
@@ -787,53 +789,22 @@ lazy_static! {
 /// Represents a hyperlink.
 pub struct Hyperlink {
     pub name: String,
-    pub url: String,
+    pub target: String,
+    pub title: String,
 }
 
 impl Hyperlink {
     /// Parse a markdown formatted hyperlink and stores the result in `Self`.
     pub fn new(input: &str) -> Result<Hyperlink, anyhow::Error> {
-        // parse input_linkname
-        let name_start = input
-            .find('[')
-            .ok_or_else(|| anyhow!(format!("no `[` in \"{}\"", input)))?
-            + 1;
-
-        let mut bracket_counter = 1;
-        let name_end = input[name_start..]
-            .find(|c: char| {
-                if c == '[' {
-                    bracket_counter += 1;
-                } else if c == ']' {
-                    bracket_counter -= 1;
-                };
-                bracket_counter == 0
+        if let Some((link_name, link_target, link_title)) = first_hyperlink(input) {
+            Ok(Hyperlink {
+                name: link_name,
+                target: link_target,
+                title: link_title,
             })
-            .ok_or_else(|| anyhow!(format!("no closing`]` in \"{}\"", input)))?
-            + name_start;
-
-        // parse input_linkurl
-        if input[name_end + 1..].chars().next().unwrap_or('x') != '(' {
-            return Err(anyhow!(format!("no `](` in \"{}\"", input)));
-        };
-        let url_start = name_end + 2;
-        let mut bracket_counter = 1;
-        let url_end = input[url_start..]
-            .find(|c: char| {
-                if c == '(' {
-                    bracket_counter += 1;
-                } else if c == ')' {
-                    bracket_counter -= 1;
-                };
-                bracket_counter == 0
-            })
-            .ok_or_else(|| anyhow!(format!("no closing `)` in \"{}\"", input)))?
-            + url_start;
-
-        Ok(Hyperlink {
-            name: input[name_start..name_end].to_string(),
-            url: input[url_start..url_end].to_string(),
-        })
+        } else {
+            Err(anyhow!(format!("no hyperlink found in \"{}\"", input)))
+        }
     }
 }
 
@@ -843,54 +814,46 @@ mod tests {
 
     #[test]
     fn test_parse_hyperlink() {
-        // Regular link
-        let input = "xxx[Homepage](https://blog.getreu.net)";
+        // Stand alone Markdown link.
+        let input = r#"abc[Homepage](https://blog.getreu.net "My blog")abc"#;
         let expected_output = Hyperlink {
             name: "Homepage".to_string(),
-            url: "https://blog.getreu.net".to_string(),
+            target: "https://blog.getreu.net".to_string(),
+            title: "My blog".to_string(),
         };
         let output = Hyperlink::new(input);
         assert_eq!(expected_output, output.unwrap());
 
-        // URL with ()
-        let input = "xxx[Homepage](https://blog.getreu.net/(main))";
+        // Markdown link refernce.
+        let input = r#"   [Homepage]: https://blog.getreu.net "My blog""#;
         let expected_output = Hyperlink {
             name: "Homepage".to_string(),
-            url: "https://blog.getreu.net/(main)".to_string(),
+            target: "https://blog.getreu.net".to_string(),
+            title: "My blog".to_string(),
         };
         let output = Hyperlink::new(input);
         assert_eq!(expected_output, output.unwrap());
 
         //
-        // link with () in name
-        let input = "[Homepage (my first)](https://getreu.net)";
+        // RestructuredText link
+        let input = "abc`Homepage <https://blog.getreu.net>`_\nabc";
         let expected_output = Hyperlink {
-            name: "Homepage (my first)".to_string(),
-            url: "https://getreu.net".to_string(),
+            name: "Homepage".to_string(),
+            target: "https://blog.getreu.net".to_string(),
+            title: "".to_string(),
         };
         let output = Hyperlink::new(input);
         assert_eq!(expected_output, output.unwrap());
 
         //
-        // link with [] in name
-        let input = "[Homepage [my first]](https://getreu.net)";
+        // RestructuredText link ref
+        let input = "  .. _Homepage: https://blog.getreu.net\nabc";
         let expected_output = Hyperlink {
-            name: "Homepage [my first]".to_string(),
-            url: "https://getreu.net".to_string(),
+            name: "Homepage".to_string(),
+            target: "https://blog.getreu.net".to_string(),
+            title: "".to_string(),
         };
         let output = Hyperlink::new(input);
         assert_eq!(expected_output, output.unwrap());
-
-        //
-        // link with [ in name
-        let input = "[Homepage [my first](https://getreu.net)";
-        let output = Hyperlink::new(input);
-        assert!(output.is_err());
-
-        //
-        // link with only []
-        let input = "[Homepage (my first)]";
-        let output = Hyperlink::new(input);
-        assert!(output.is_err());
     }
 }
