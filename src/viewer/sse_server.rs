@@ -201,7 +201,7 @@ impl ServerThread {
             };
             // Only Chrome and Edge on Windows need this extra time to ACK the TCP
             // connection.
-            sleep(Duration::from_millis(500));
+            sleep(Duration::from_millis(900));
             self.stream.shutdown(Shutdown::Both)?;
             return Ok(());
         } else if path == EVENT_PATH {
