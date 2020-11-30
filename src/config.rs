@@ -801,9 +801,9 @@ impl Hyperlink {
     pub fn new(input: &str) -> Result<Hyperlink, anyhow::Error> {
         if let Some((link_name, link_target, link_title)) = first_hyperlink(input) {
             Ok(Hyperlink {
-                name: link_name,
-                target: link_target,
-                title: link_title,
+                name: link_name.to_string(),
+                target: link_target.to_string(),
+                title: link_title.to_string(),
             })
         } else {
             Err(anyhow!(format!("no hyperlink found in \"{}\"", input)))
