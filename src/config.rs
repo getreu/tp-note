@@ -10,8 +10,7 @@ use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
-//use parse_hyperlinks::parser::first_hyperlink;
-use parse_hyperlinks::parser::first_hyperlink;
+use parse_hyperlinks::iterator::first_hyperlink;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io;
@@ -828,7 +827,8 @@ mod tests {
         assert_eq!(expected_output, output.unwrap());
 
         // Markdown link refernce.
-        let input = r#"   [Homepage]: https://blog.getreu.net "My blog""#;
+        let input = r#"abc[Homepage][home]abc
+                      [home]: https://blog.getreu.net "My blog""#;
         let expected_output = Hyperlink {
             name: "Homepage".to_string(),
             target: "https://blog.getreu.net".to_string(),
@@ -850,7 +850,7 @@ mod tests {
 
         //
         // RestructuredText link ref
-        let input = "  .. _Homepage: https://blog.getreu.net\nabc";
+        let input = "abc `Homepage<home_>`_ abc\n.. _home: https://blog.getreu.net\nabc";
         let expected_output = Hyperlink {
             name: "Homepage".to_string(),
             target: "https://blog.getreu.net".to_string(),
