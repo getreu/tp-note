@@ -16,8 +16,8 @@ use crate::note::Note;
 use crate::viewer::init::LOCALHOST;
 use anyhow::anyhow;
 use anyhow::Context;
-use dissolve::strip_html_tags;
 use httpdate;
+use parse_hyperlinks::renderer::text_rawlinks2html;
 use pulldown_cmark::{html, Options, Parser};
 use rst_parser::parse;
 use rst_renderer::render_html;
@@ -374,15 +374,6 @@ impl ServerThread {
     #[inline]
     /// Renderer for markup languages other than the above.
     fn render_txt_content(other_input: &str) -> String {
-        let mut html_output = "<pre><code>".to_string();
-        html_output.push_str(
-            strip_html_tags(other_input)
-                .iter()
-                .flat_map(|s| s.chars())
-                .collect::<String>()
-                .as_str(),
-        );
-        html_output.push_str("</code></pre>");
-        html_output
+        text_rawlinks2html(other_input)
     }
 }
