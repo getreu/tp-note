@@ -556,11 +556,25 @@ files.
 
 ## Optional customization
 
-* Your preferred markup language is not *Markdown*, but *ReStructuredText*,
-  *T2t*, *Textile*, *Wiki*, *Mediawiki* or *Asciidoc*? Change it!
+### Change the default markup language
 
-  Please refer to [Tp-Note's man-page] to learn how to change its
-  templates in the configuration file.
+* Your preferred markup language is not *Markdown*, but ReStructuredText*,
+  *Asciidoc*, *T2t*, *Textile*, *Wiki* or *Mediawiki*? Change it!
+
+  _Tp-Note_'s core function is a template system and as such it is
+  markup language agnostic. The default templates largely abstain from
+  markup specific code, which makes it easy to switch the default new note's
+  markup language. Please refer to [Tp-Note's man-page] to learn how to
+  change its templates in the configuration file.
+
+  In addition, _Tp-Note_ comes with a build in note viewer which is
+  optional and independent from its core functionality. When _Tp-Note_ opens
+  a note file, it choses depending on the file extension which
+  Renderer to launch for which markup language. It is possible to
+  change this association in _Tp-Note_'s configuration file. Please refer
+  to the [Tp-Note's man-page] for details.
+
+### Chose your favorite text editor and make it default
 
 * Your preferred text editor is not *Notepad*? Change it![^1]
 
@@ -582,6 +596,8 @@ files.
 
   Please refer to [Tp-Note's man-page] to learn how to register your text
   editor in _Tp-Note_'s configuration file.
+
+### Integrate _Tp-Note_ with your file manager
 
 * You prefer working in a desktop environment instead of working on a shell?
 

@@ -896,21 +896,15 @@ _Mark Text_-editor will open with your note.
 
 ## Change the markup language
 
-You can change the Markup language of a specific note by adding the variable
-'`file_ext:`' to its YAML header. For example, for _RestructuredText_ add:
+### Change the way how new notes are created
 
-```yaml
-file_ext: "rst"
-```
+_Tp-Note_'s core function is a template system and as such it depends
+very little on the used markup language. The default templates are
+designed in a way that they contain almost no markup specific code. There
+is one little exception though. The following configuration variables
+affect the way new notes are created:
 
-The above change only applies to the current note. In addition, it is also
-possible to permanently change _Tp-Note_'s default Markup language.
-
-_Tp-Note_ is markup language agnostic, however the default templates define
-_Markdown_ as default markup language. To change this to _RestructuredText_,
-just edit the following 2 variables in _Tp-Note_'s configuration file:
-
-1. Change the default file extension from:
+1. Change the default file extension for new notes from:
 
        extension_default='md'
 
@@ -929,19 +923,38 @@ just edit the following 2 variables in _Tp-Note_'s configuration file:
 
 As a result, all future notes are created as '`*.rst`' files.
 
-In principle, you can define templates for every possible lightweight markup
-language. However, _Tp-Note_'s internal viewer is limited to _Markdown_ and
-_RestructuredText_.  Therefore, I recommend when using other Markup languages,
-to add their file extension to the '`note_file_extension_unknown`' variable.
-This disables the internal viewer for these file types.
+### Change the way how note files are viewed
+
+Besides its core function, _Tp-Note_ comes with some optional note renderer and
+viewer and can work with various markup languages at the same time. Depending on the markup language, this feature is more or less
+advanced and complete: _Markdown_ (cf. '`note_file_extension_md`') is best
+supported and feature complete: It complies with the _Common Mark_
+specification. The _reStructuredText_ renderer (cf.
+'`note_file_extension_rst`') is quit new and still in experimental state. For
+all other markup languages _Tp-Note_ has a built in markup source viewer (cf.
+'`note_file_extension_txt`') that renders hyperlinks to make them clickable.
+In case none of the above rendition engines suits you, it is possible to
+disable the viewer feature for some file extensions only: just place
+those extensions in the '`note_file_extension_no_rendering`' variable.
+
+### Change the markup language for one specific note only
+
+You can change the Markup language of a specific note by adding the variable
+'`file_ext:`' to its YAML header. For example, for _RestructuredText_ add:
+
+```yaml
+file_ext: "rst"
+```
+
+The above change only applies to the current note.
 
 
 ## Customize the built-in viewer
 
-_Tp-Note_'s built-in viewer generates its HTML rendition through the
-customizable HTML templates '`viewer_rendition_tmpl`' and
-'`viewer_error_tmpl`'. The following code example of
-'`viewer_rendition_tmpl`' illustrates the available variables:
+After the markup rendition process, _Tp-Note_'s built-in viewer generates its
+HTML rendition through the customizable HTML templates
+'`viewer_rendition_tmpl`' and '`viewer_error_tmpl`'. The following code
+example of '`viewer_rendition_tmpl`' illustrates the available variables:
 
 ```html
 viewer_rendition_tmpl = '''<!DOCTYPE html>
