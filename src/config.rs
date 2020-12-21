@@ -391,6 +391,11 @@ const COPY_COUNTER_OPENING_BRACKETS: &str = "(";
 /// Can be empty.
 const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
 
+/// When a filename is taken already, Tp-Note adds a copy
+/// counter number in the range of `0..COPY_COUNTER_MAX`
+/// at the end.
+pub const COPY_COUNTER_MAX: usize = 400;
+
 /// Launches a filewatcher, (Markdown)-renderer, html server
 /// and a web-browser to view the current note file.
 /// To disable this feature, set to false.

@@ -1,5 +1,6 @@
-//! Helper funtions that deal with filenames.
+//! Helper functions that deal with filenames.
 use crate::config::CFG;
+use crate::config::COPY_COUNTER_MAX;
 use crate::config::NOTE_FILENAME_LEN_MAX;
 use anyhow::{anyhow, Result};
 use std::path::Path;
@@ -66,7 +67,7 @@ pub fn find_unused(p: PathBuf) -> Result<PathBuf, anyhow::Error> {
     let mut new_path = p.clone();
 
     // Try up to 99 sort-tag-extensions, then give up.
-    for n in 1..99 {
+    for n in 1..COPY_COUNTER_MAX {
         let stem_copy_counter = append_copy_counter(&stem, n);
         let filename = assemble(&sort_tag, &stem_copy_counter, &"", &ext);
         new_path.set_file_name(filename);
