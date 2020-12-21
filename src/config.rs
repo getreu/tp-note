@@ -184,8 +184,12 @@ const TMPL_COPY_FILENAME: &str = "\
 /// Trick: the expression `{% if clipboard != clipboard | heading %}` detects if the clipboard
 /// content has more than one line of text.
 const TMPL_CLIPBOARD_CONTENT: &str = "\
+{%- set lname = stdin ~ clipboard | linkname -%}
+{%- set ok_linkname = lname !=''\
+    and not lname is starting_with(\"http\")\
+    and not lname is starting_with(\"HTTP\") -%}
 ---
-{% if stdin ~ clipboard | linkname !='' %}\
+{% if ok_linkname %}\
 title:      {{ stdin ~ clipboard | linkname | cut | json_encode }}
 {% else %}\
 title:      {{ stdin ~ clipboard | heading | cut | json_encode }}
