@@ -69,7 +69,7 @@ pub const NOTE_FILE_EXTENSIONS_TXT: &[&str] = &["txtnote", "t2t", "textile", "tw
 /// (unless Tp-Note is invoked with `--view`).
 ///
 /// See also `NOTE_FILE_EXTENSION_MD`.
-pub const NOTE_FILE_EXTENSIONS_UNKNOWN: &[&str] = &["adoc", "asciidoc"];
+pub const NOTE_FILE_EXTENSIONS_NO_RENDERING: &[&str] = &["adoc", "asciidoc"];
 
 /// Maximum length of a note's filename in bytes. If a filename-template produces
 /// a longer string, it will be truncated.
@@ -541,7 +541,7 @@ pub struct Cfg {
     pub note_file_extensions_rst: Vec<String>,
     pub note_file_extensions_html: Vec<String>,
     pub note_file_extensions_txt: Vec<String>,
-    pub note_file_extensions_unknown: Vec<String>,
+    pub note_file_extensions_no_rendering: Vec<String>,
     pub tmpl_new_content: String,
     pub tmpl_new_filename: String,
     pub tmpl_copy_content: String,
@@ -594,7 +594,7 @@ impl ::std::default::Default for Cfg {
                 .iter()
                 .map(|a| (*a).to_string())
                 .collect(),
-            note_file_extensions_unknown: NOTE_FILE_EXTENSIONS_UNKNOWN
+            note_file_extensions_no_rendering: NOTE_FILE_EXTENSIONS_NO_RENDERING
                 .iter()
                 .map(|a| (*a).to_string())
                 .collect(),

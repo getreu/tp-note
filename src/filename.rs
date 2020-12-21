@@ -210,7 +210,7 @@ impl MarkupLanguage {
                 return MarkupLanguage::Txt;
             }
         }
-        for e in &CFG.note_file_extensions_unknown {
+        for e in &CFG.note_file_extensions_no_rendering {
             if e == file_extension {
                 return MarkupLanguage::Unknown;
             }
