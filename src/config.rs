@@ -60,16 +60,18 @@ pub const NOTE_FILE_EXTENSIONS_HTML: &[&str] = &["htmlnote"];
 /// The present list contains file extensions of
 /// Text encoded Tp-Note files that the viewer shows
 /// literally without (almost) any additional rendering.
+/// Only hyperlinks in _Markdown_, _reStructuredText_, _Asciidoc_ and _HTML_ are
+/// rendered, thus clickable.
 ///
 /// See also `NOTE_FILE_EXTENSION_MD`.
-pub const NOTE_FILE_EXTENSIONS_TXT: &[&str] = &["txtnote", "t2t", "textile", "twiki", "mediawiki"];
+pub const NOTE_FILE_EXTENSIONS_TXT: &[&str] = &["txtnote", "adoc", "asciidoc"];
 
 /// The present list contains file extensions of
 /// Tp-Note files for which no viewer is opened
 /// (unless Tp-Note is invoked with `--view`).
 ///
 /// See also `NOTE_FILE_EXTENSION_MD`.
-pub const NOTE_FILE_EXTENSIONS_NO_RENDERING: &[&str] = &["adoc", "asciidoc"];
+pub const NOTE_FILE_EXTENSIONS_NO_RENDERING: &[&str] = &["t2t", "textile", "twiki", "mediawiki"];
 
 /// Maximum length of a note's filename in bytes. If a filename-template produces
 /// a longer string, it will be truncated.

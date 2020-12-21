@@ -14,14 +14,14 @@ note_file_extensions_rst = [
 note_file_extensions_html = ['htmlnote']
 note_file_extensions_txt = [
     'txtnote',
+    'adoc',
+    'asciidoc',
+]
+note_file_extensions_no_rendering = [
     't2t',
     'textile',
     'twiki',
     'mediawiki',
-]
-note_file_extensions_unknown = [
-    'adoc',
-    'asciidoc',
 ]
 tmpl_new_content = '''
 ---
@@ -137,6 +137,7 @@ editor_console_args = [
     ['nano'],
     ['nvim'],
     ['vim'],
+    ['emacs'],
     ['vi'],
 ]
 clipboard_read_enabled = true
