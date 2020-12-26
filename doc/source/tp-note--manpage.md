@@ -534,10 +534,8 @@ add a '`sort_tag`' variable to its front matter:
 ``` yaml
 ---
 title:      "1. The Beginning"
-...
 date:       "March  7, 2020"
 sort_tag:   "20200307-"
-...
 ---
 ```
 
@@ -551,9 +549,7 @@ note without any sort-tag:
 ``` yaml
 ---
 title:      "1. The Beginning"
-...
 sort_tag:   ""
-...
 ---
 ```
 
@@ -564,18 +560,19 @@ optional '`file_ext`' variable into the note's front matter:
 ``` yaml
 ---
 title:      "1. The Beginning"
-...
-file_ext:   "mdtxt"
-...
+file_ext:   "rst"
 ---
 ```
 
-This will change the file extension from '`.md`' to '`.mdtxt`. The resulting
-filename becomes "`20200307-'1. The Beginning--Note.mdtxt`".
+This will change the file extension from '`.md`' to '`.rst`. The resulting
+filename becomes "`20200307-'1. The Beginning--Note.rst`".
 
-Important: '`mdtxt`' must be one of the registered file extensions
-listed in the '`note_file_extensions`' variable in Tp-Note's configuration
-file. If needed you can add more extensions there.
+Important: '`rst`' must be one of the registered file extensions
+listed in the '`note_file_extensions_*`' variables in Tp-Note's configuration
+file. If needed you can add more extensions there. If the new filename extension
+is not listed in one of theses variables, _Tp-Note_ will not be able to
+recognize the note file as such and will not open it in the external file editor
+and viewer.
 
 Note: When a '`sort_tag`' variable is defined in the note's YAML header, you
 should not change the sort-tag string in the note's file name manually by
@@ -943,7 +940,10 @@ You can change the Markup language of a specific note by adding the variable
 '`file_ext:`' to its YAML header. For example, for _RestructuredText_ add:
 
 ```yaml
+---
+title:    "some note"
 file_ext: "rst"
+---
 ```
 
 The above change only applies to the current note.
