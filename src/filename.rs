@@ -211,7 +211,7 @@ impl MarkupLanguage {
                 return MarkupLanguage::Txt;
             }
         }
-        for e in &CFG.note_file_extensions_no_rendering {
+        for e in &CFG.note_file_extensions_no_viewer {
             if e == file_extension {
                 return MarkupLanguage::Unknown;
             }

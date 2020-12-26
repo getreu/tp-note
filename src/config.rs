@@ -71,13 +71,13 @@ pub const NOTE_FILE_EXTENSIONS_TXT: &[&str] = &["txtnote", "adoc", "asciidoc"];
 /// (unless Tp-Note is invoked with `--view`).
 ///
 /// See also `NOTE_FILE_EXTENSION_MD`.
-pub const NOTE_FILE_EXTENSIONS_NO_RENDERING: &[&str] = &["t2t", "textile", "twiki", "mediawiki"];
+pub const NOTE_FILE_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t", "textile", "twiki", "mediawiki"];
 
 /// Maximum length of a note's filename in bytes. If a filename-template produces
 /// a longer string, it will be truncated.
 #[cfg(not(test))]
 pub const NOTE_FILENAME_LEN_MAX: usize =
-    // Most filesystem's limit.
+    // Most file system's limit.
     255
     // Additional separator.
     - COPY_COUNTER_EXTRA_SEPARATOR.len()
@@ -552,7 +552,7 @@ pub struct Cfg {
     pub note_file_extensions_rst: Vec<String>,
     pub note_file_extensions_html: Vec<String>,
     pub note_file_extensions_txt: Vec<String>,
-    pub note_file_extensions_no_rendering: Vec<String>,
+    pub note_file_extensions_no_viewer: Vec<String>,
     pub tmpl_new_content: String,
     pub tmpl_new_filename: String,
     pub tmpl_copy_content: String,
@@ -605,7 +605,7 @@ impl ::std::default::Default for Cfg {
                 .iter()
                 .map(|a| (*a).to_string())
                 .collect(),
-            note_file_extensions_no_rendering: NOTE_FILE_EXTENSIONS_NO_RENDERING
+            note_file_extensions_no_viewer: NOTE_FILE_EXTENSIONS_NO_VIEWER
                 .iter()
                 .map(|a| (*a).to_string())
                 .collect(),

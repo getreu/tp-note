@@ -356,7 +356,7 @@ impl Note<'_> {
                     &CFG.note_file_extensions_rst,
                     &CFG.note_file_extensions_html,
                     &CFG.note_file_extensions_txt,
-                    &CFG.note_file_extensions_no_rendering,
+                    &CFG.note_file_extensions_no_viewer,
                 )));
             }
         };

@@ -932,7 +932,7 @@ all other markup languages _Tp-Note_ has a built in markup source viewer (cf.
 '`note_file_extension_txt`') that renders hyperlinks to make them clickable.
 In case none of the above rendition engines suits you, it is possible to
 disable the viewer feature for some file extensions only: just place
-those extensions in the '`note_file_extension_no_rendering`' variable.
+those extensions in the '`note_file_extension_no_viewer`' variable.
 
 ### Change the markup language for one specific note only
 

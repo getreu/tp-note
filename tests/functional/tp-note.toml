@@ -17,7 +17,7 @@ note_file_extensions_txt = [
     'adoc',
     'asciidoc',
 ]
-note_file_extensions_no_rendering = [
+note_file_extensions_no_viewer = [
     't2t',
     'textile',
     'twiki',
