@@ -445,6 +445,9 @@ th.valgrey{
   color:grey;
   text-align:left;
 }
+pre {
+  white-space: pre-wrap;
+}
 </style>
   </head>
   <body>
