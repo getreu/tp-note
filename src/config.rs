@@ -302,8 +302,8 @@ const EDITOR_ARGS: &[&[&str]] = &[
     &["code", "-w", "-n"],
     &["flatpak", "run", "com.visualstudio.code", "-w", "-n"],
     &["atom", "-w"],
-    &["flatpak", "run", "com.github.marktext.marktext"],
-    &["marktext", "--no-sandbox"],
+    &["marktext", "--no-sandbox", "--new-window"],
+    &["flatpak", "run", "com.github.marktext.marktext", "--new-window"],
     &["typora"],
     &["retext"],
     &["geany", "-s", "-i", "-m"],
@@ -351,7 +351,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
 const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nano"], &["nvim"], &["vim"], &["emacs"], &["vi"]];
 #[cfg(target_family = "windows")]
 const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&[]];
-// Some info about lauching programs on iOS:
+// Some info about launching programs on iOS:
 // [dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(all(target_family = "unix", target_vendor = "apple"))]
 const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[
