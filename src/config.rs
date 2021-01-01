@@ -303,7 +303,12 @@ const EDITOR_ARGS: &[&[&str]] = &[
     &["flatpak", "run", "com.visualstudio.code", "-w", "-n"],
     &["atom", "-w"],
     &["marktext", "--no-sandbox", "--new-window"],
-    &["flatpak", "run", "com.github.marktext.marktext", "--new-window"],
+    &[
+        "flatpak",
+        "run",
+        "com.github.marktext.marktext",
+        "--new-window",
+    ],
     &["typora"],
     &["retext"],
     &["geany", "-s", "-i", "-m"],
@@ -474,12 +479,20 @@ pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
 <head>
 <meta charset=\"utf-8\">
 <title>Syntax error</title>
+<style>
+pre { white-space: pre-wrap; }
+em { color: #523626; }
+a { color: #316128; }
+h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
+</style>
 </head>
 <body>
 <h3>Syntax error</h3>
 <p> in note file: <pre>{{ file }}</pre><p>
 <hr>
-<pre class=\"noteError\">{{ noteError }}<pre>
+<pre class=\"noteError\">{{ noteError }}</pre>
+<hr>
+{{ noteErrorContent }}
 <script>{{ noteJS }}</script>
 </body>
 </html>

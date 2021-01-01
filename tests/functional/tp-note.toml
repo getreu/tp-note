@@ -50,8 +50,10 @@ lang:       {{ fm_lang | default(value = get_env(name='LANG', default='')) | jso
 '''
 tmpl_copy_filename = '''{{ fm_sort_tag | default(value = now() | date(format='%Y%m%d-')) }}{{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}{{ fm_subtitle | default(value='') | sanit  }}{{ fm_file_ext | default(value = extension_default ) | prepend_dot }}'''
 tmpl_clipboard_content = '''
+{%- set lname = stdin ~ clipboard | linkname -%}
+{%- set ok_linkname = lname !=''and not lname is starting_with("http")and not lname is starting_with("HTTP") -%}
 ---
-{% if stdin ~ clipboard | linkname !='' %}title:      {{ stdin ~ clipboard | linkname | cut | json_encode }}
+{% if ok_linkname %}title:      {{ stdin ~ clipboard | linkname | cut | json_encode }}
 {% else %}title:      {{ stdin ~ clipboard | heading | cut | json_encode }}
 {% endif %}{% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}subtitle:   {{ 'URL' | json_encode }}
 {% else %}subtitle:   {{ 'Note' | json_encode }}
@@ -102,13 +104,15 @@ editor_args = [
     '-w',
 ],
     [
+    'marktext',
+    '--no-sandbox',
+    '--new-window',
+],
+    [
     'flatpak',
     'run',
     'com.github.marktext.marktext',
-],
-    [
-    'marktext',
-    '--no-sandbox',
+    '--new-window',
 ],
     ['typora'],
     ['retext'],
@@ -154,9 +158,7 @@ viewer_rendition_tmpl = '''
 <meta charset="utf-8">
 <title>{{ fm_title }}</title>
 <style>
-table, th, td {
-  font-weight: normal;
-}
+table, th, td { font-weight: normal; }
 table.center {
   margin-left: auto;
   margin-right: auto;
@@ -168,23 +170,19 @@ th, td {
   padding-left:15px;
   padding-right:15px;
 }
-th.key{
-  color:#444444;
-  text-align:right;
-}
+th.key{ color:#444444; text-align:right; }
 th.val{
-  color:#386938;
+  color:#316128;
   text-align:left;
   font-family:sans-serif;
 }
-th.keygrey{
-  color:grey;
-  text-align:right;
-}
-th.valgrey{
-  color:grey;
-  text-align:left;
-}
+th.keygrey{ color:grey; text-align:right; }
+th.valgrey{ color:grey; text-align:left; }
+pre { white-space: pre-wrap; }
+em { color: #523626; }
+a { color: #316128; }
+h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
+
 </style>
   </head>
   <body>
@@ -219,12 +217,20 @@ viewer_error_tmpl = '''
 <head>
 <meta charset=\"utf-8\">
 <title>Syntax error</title>
+<style>
+pre { white-space: pre-wrap; }
+em { color: #523626; }
+a { color: #316128; }
+h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
+</style>
 </head>
 <body>
 <h3>Syntax error</h3>
 <p> in note file: <pre>{{ file }}</pre><p>
 <hr>
-<pre class=\"noteError\">{{ noteError }}<pre>
+<pre class=\"noteError\">{{ noteError }}</pre>
+<hr>
+{{ noteErrorContent }}
 <script>{{ noteJS }}</script>
 </body>
 </html>

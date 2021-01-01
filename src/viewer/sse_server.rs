@@ -21,6 +21,7 @@ use parse_hyperlinks::renderer::text_rawlinks2html;
 use pulldown_cmark::{html, Options, Parser};
 use rst_parser::parse;
 use rst_renderer::render_html;
+use std::fs;
 use std::net::Shutdown;
 use std::path::PathBuf;
 use std::str;
@@ -277,13 +278,17 @@ impl ServerThread {
             Err(e) => {
                 let mut context = tera::Context::new();
                 context.insert("noteError", &e.to_string());
-                context.insert("file", self.file_path.to_str().unwrap_or_default());
+                context.insert("file", &self.file_path.to_str().unwrap_or_default());
                 // Java Script
                 let js = format!(
                     "{}{}:{}{}",
                     SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2
                 );
                 context.insert("noteJS", &js);
+
+                let note_error_content = fs::read_to_string(&self.file_path).unwrap_or_default();
+                let note_error_content = text_rawlinks2html(&note_error_content);
+                context.insert("noteErrorContent", note_error_content.trim());
 
                 let mut tera = Tera::default();
                 tera.extend(&TERA)?;

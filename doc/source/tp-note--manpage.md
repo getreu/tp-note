@@ -1015,7 +1015,9 @@ viewer_error_tmpl = '''<!DOCTYPE html>
 <h3>Syntax error</h3>
 <p> in note file: <pre>{{ file }}</pre><p>
 <hr>
-<pre class=\"noteError\">{{ noteError }}<pre>
+<pre class=\"noteError\">{{ noteError }}</pre>
+<hr>
+{{ noteErrorContent }}
 <script>{{ noteJS }}</script>
 </body>
 </html>
