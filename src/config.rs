@@ -414,9 +414,7 @@ pub const VIEWER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
 <meta charset="utf-8">
 <title>{{ fm_title }}</title>
 <style>
-table, th, td {
-  font-weight: normal;
-}
+table, th, td { font-weight: normal; }
 table.center {
   margin-left: auto;
   margin-right: auto;
@@ -428,26 +426,19 @@ th, td {
   padding-left:15px;
   padding-right:15px;
 }
-th.key{
-  color:#444444;
-  text-align:right;
-}
+th.key{ color:#444444; text-align:right; }
 th.val{
-  color:#386938;
+  color:#316128;
   text-align:left;
   font-family:sans-serif;
 }
-th.keygrey{
-  color:grey;
-  text-align:right;
-}
-th.valgrey{
-  color:grey;
-  text-align:left;
-}
-pre {
-  white-space: pre-wrap;
-}
+th.keygrey{ color:grey; text-align:right; }
+th.valgrey{ color:grey; text-align:left; }
+pre { white-space: pre-wrap; }
+em { color: #523626; }
+a { color: #316128; }
+h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
+
 </style>
   </head>
   <body>
