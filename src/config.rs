@@ -480,18 +480,20 @@ pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
 <meta charset=\"utf-8\">
 <title>Syntax error</title>
 <style>
+.noteError { color: #523626; }
 pre { white-space: pre-wrap; }
-em { color: #523626; }
 a { color: #316128; }
-h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
+h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 </style>
 </head>
 <body>
 <h3>Syntax error</h3>
 <p> in note file: <pre>{{ file }}</pre><p>
+<div class="noteError">
 <hr>
-<pre class=\"noteError\">{{ noteError }}</pre>
+<pre>{{ noteError }}</pre>
 <hr>
+</div>
 {{ noteErrorContent }}
 <script>{{ noteJS }}</script>
 </body>
