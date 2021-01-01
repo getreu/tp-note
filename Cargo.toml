@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.8.11"
+version = "1.9.1"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
@@ -88,5 +88,5 @@ sanitize-filename-reader-friendly = "1.1.0"
 # sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
 
 [dependencies.tera]
-version = "1.6.0"
+version = "1.6.1"
 default-features = true
