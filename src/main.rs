@@ -84,7 +84,7 @@ const AUTHOR: &str = "(c) Jens Getreu, 2020";
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk and return
 /// the new filename.
-fn synchronize_filename(path: PathBuf) -> Result<PathBuf, anyhow::Error> {
+fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
     // parse file again to check for synchronicity with filename
     let n = Note::from_existing_note(&path).context(
         "Failed to parse the note's metadata. \
@@ -111,7 +111,7 @@ fn synchronize_filename(path: PathBuf) -> Result<PathBuf, anyhow::Error> {
         };
         Ok(new_fqfn)
     } else {
-        Ok(path)
+        Ok(path.to_path_buf())
     }
 }
 
@@ -120,7 +120,7 @@ fn synchronize_filename(path: PathBuf) -> Result<PathBuf, anyhow::Error> {
 /// If the note to be created exists already, append a so called `copy_counter`
 /// to the filename and try to save it again. In case this does not succeed either,
 /// increment the `copy_counter` until a free filename is found.
-fn create_new_note_or_synchronize_filename(path: PathBuf) -> Result<PathBuf, anyhow::Error> {
+fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
     if path.is_dir() {
@@ -379,7 +379,7 @@ fn run() -> Result<PathBuf, anyhow::Error> {
     };
 
     // process arg = <path>
-    let path = if let Some(p) = &ARGS.path {
+    let mut path = if let Some(p) = &ARGS.path {
         p.canonicalize().with_context(|| {
             format!(
                 "invalid <path>: `{}`",
@@ -394,7 +394,26 @@ fn run() -> Result<PathBuf, anyhow::Error> {
         env::current_dir()?
     };
 
-    let path = create_new_note_or_synchronize_filename(path)?;
+    match create_new_note_or_synchronize_filename(&path) {
+        // Use the new `path` from now on.
+        Ok(p) => path = p,
+        Err(e) => {
+            // When the viewer is launched, we do not need a dialog
+            // box to communicate the error to the user.
+            // In this case we skip the following.
+            if !*LAUNCH_VIEWER {
+                AlertDialog::print_error(&format!(
+                    "ERROR:\n\
+                    ---\n\
+                    {:?}\n\
+                    \n\
+                    Please correct the error.
+                    Trying to start the test editor without synchronization...",
+                    e
+                ))
+            }
+        }
+    };
 
     #[cfg(feature = "viewer")]
     if *LAUNCH_VIEWER {
@@ -404,7 +423,18 @@ fn run() -> Result<PathBuf, anyhow::Error> {
     if *LAUNCH_EDITOR {
         launch_editor(&path)?;
 
-        let path = synchronize_filename(path)?;
+        match synchronize_filename(&path) {
+            Ok(p) => path = p,
+            Err(e) => {
+                if !*LAUNCH_VIEWER {
+                    // As there is no viewer, the uses must be informed about the error.
+                    return Err(e);
+                } else {
+                    // Silently ignore error, but do not delete clipboard.
+                    return Ok(path);
+                }
+            }
+        };
 
         // Delete clipboard
         if CFG.clipboard_read_enabled && CFG.clipboard_empty_enabled && !*RUNS_ON_CONSOLE {
@@ -497,31 +527,14 @@ fn main() {
                     e
                 ));
             } else {
-                // Unwrap path argument.
-                let no_path = PathBuf::new();
-                let path: &Path = ARGS.path.as_ref().unwrap_or(&no_path);
-
-                if path.is_file() {
-                    AlertDialog::print_error(&format!(
-                        "ERROR:\n\
-                    ---\n\
-                    {:?}\n\
-                    \n\
-                    Please correct the error.
-                    Trying to start the file editor without synchronization...",
-                        e
-                    ));
-                    let _ = launch_editor(path);
-                } else {
-                    AlertDialog::print_error(&format!(
-                        "ERROR:\n\
+                AlertDialog::print_error(&format!(
+                    "ERROR:\n\
                     ---\n\
                     {:?}\n\
                     \n\
                     Please correct the error and start again.",
-                        e
-                    ));
-                }
+                    e
+                ));
             }
             process::exit(1);
         }
