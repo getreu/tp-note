@@ -1002,7 +1002,9 @@ as a table:
 
 The error page template '`viewer_error_tmpl`' (see below) does not provide '`fm_*`'
 variables, because of possible header syntax errors. Instead, the variable
-'`{{ noteError }}`' contains the error message as raw UTF-8:
+'`{{ noteError }}`' contains the error message as raw UTF-8 and the variable
+'`{{ noteErrorContent }}`' the HTML rendition of the text source with
+clickable hyperlinks:
 
 ```html
 viewer_error_tmpl = '''<!DOCTYPE html>
