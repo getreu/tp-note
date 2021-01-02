@@ -17,6 +17,7 @@ use crate::viewer::init::LOCALHOST;
 use anyhow::anyhow;
 use anyhow::Context;
 use httpdate;
+use parse_hyperlinks::renderer::text_links2html;
 use parse_hyperlinks::renderer::text_rawlinks2html;
 use pulldown_cmark::{html, Options, Parser};
 use rst_parser::parse;
@@ -379,6 +380,6 @@ impl ServerThread {
     #[inline]
     /// Renderer for markup languages other than the above.
     fn render_txt_content(other_input: &str) -> String {
-        text_rawlinks2html(other_input)
+        text_links2html(other_input)
     }
 }
