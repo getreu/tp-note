@@ -606,6 +606,18 @@ files.
 
 [Tp-Note's man-page]: http://blog.getreu.net/projects/tp-note/tp-note--manpage.html#customization
 
+### Customize _Tp-Note_'s internal note viewer
+
+Tp-Note's internal viewer starts automatically the default browser after
+the file editor is opened or when invoked with `tp-note --view`.
+
+![Tp-Note with open file editor (left) and viewer (right)](images/editor_and_viewer.png){width="12cm"}
+
+Please refer to [Tp-Note's man-page] to learn how to register a file extension
+with one Tp-Note's internal markup renderer or to learn how to change the
+HTML-template that renders the viewer page in the browser.
+
+
 # Optional integration with your file manager
 
 This section shows how to integrate _Tp-Note_ in the context menu of your
