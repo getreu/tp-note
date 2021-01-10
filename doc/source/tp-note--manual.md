@@ -32,7 +32,7 @@ more technical details. It also explains how to change _Tp-Note_'s default text
 editor.
 
 The project is hosted on Github:
-[getreu/tp-note](https://github.com/getreu/tp-note). The project's webpage is on
+[getreu/tp-note](https://gitlab.com/getreu/tp-note). The project's webpage is on
 [http://blog.getreu.net](http://blog.getreu.net/projects/tp-note/).
 The documentation of this project is dived into tow parts:
 

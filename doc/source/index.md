@@ -7,7 +7,7 @@ https://crates.io/crates/tp-note)
 [![Documentation](https://docs.rs/tp-note/badge.svg)](
 https://docs.rs/tp-note)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](
-https://github.com/getreu/tp-note)
+https://gitlab.com/getreu/tp-note)
 
 _Tp-Note_ is a note-taking-tool and a template system - freely available for
 Windows, MacOS and Linux - that consistently synchronizes the note’s meta-data
@@ -83,7 +83,9 @@ Developer documentation:
 
 Repository:
 
-* [Tp-Note on Github](https://github.com/getreu/tp-note)
+* [Tp-Note on Gitlab](https://gitlab.com/getreu/tp-note)
+
+* [Tp-Note on Github (mirror)](https://github.com/getreu/tp-note)
 
 
 ## Distribution

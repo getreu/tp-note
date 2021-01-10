@@ -1030,9 +1030,9 @@ viewer_error_tmpl = '''<!DOCTYPE html>
 
 _Tp-Note_ it hosted on:
 
-* Github: <https://github.com/getreu/tp-note> and on
+* Gitlab: <https://gitlab.com/getreu/tp-note>.
 
-* Gitlab (mirror): <https://gitlab.com/getreu/tp-note>.
+* Github (mirror): <https://github.com/getreu/tp-note> and on
 
 
 
