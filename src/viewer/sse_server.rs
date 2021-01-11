@@ -57,9 +57,10 @@ pub const FAVICON_PATH: &str = "/favicon.ico";
 pub fn manage_connections(
     event_tx_list: Arc<Mutex<Vec<Sender<()>>>>,
     listener: TcpListener,
-    sse_port: u16,
     file_path: PathBuf,
 ) {
+    // Unwarp is Ok here here, because we just did it before successfully.
+    let sse_port = listener.local_addr().unwrap().port();
     for stream in listener.incoming() {
         if let Ok(stream) = stream {
             let (event_tx, event_rx) = channel();

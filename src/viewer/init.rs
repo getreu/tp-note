@@ -6,7 +6,6 @@ use crate::filename::MarkupLanguage;
 use crate::viewer::sse_server::manage_connections;
 use crate::viewer::watcher::FileWatcher;
 use anyhow::anyhow;
-use anyhow::Context;
 use std::net::TcpListener;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -57,22 +56,20 @@ impl Viewer {
         };
 
         // Launch "server sent event" server.
-        let event_out = if let Some(p) = ARGS.port {
-            Self::get_tcp_listener_at_port(p)?
+        let listener = if let Some(p) = ARGS.port {
+            TcpListener::bind((LOCALHOST, p))?
         } else {
-            Self::get_tcp_listener()?
+            // Use random port.
+            TcpListener::bind((LOCALHOST, 0))?
         };
+        let localport = listener.local_addr()?.port();
 
         // Launch a background thread to manage server-sent events subscribers.
         let event_tx_list = {
-            let (listener, sse_port) = event_out;
-            let sse_port = sse_port;
             let file_path = file.clone();
             let event_tx_list = Arc::new(Mutex::new(Vec::new()));
             let event_tx_list_clone = event_tx_list.clone();
-            thread::spawn(move || {
-                manage_connections(event_tx_list_clone, listener, sse_port, file_path)
-            });
+            thread::spawn(move || manage_connections(event_tx_list_clone, listener, file_path));
 
             event_tx_list
         };
@@ -86,7 +83,7 @@ impl Viewer {
         });
 
         // Launch web browser.
-        let url = format!("http://{}:{}", LOCALHOST, event_out.1);
+        let url = format!("http://{}:{}", LOCALHOST, localport);
         if ARGS.debug {
             eprintln!(
                 "*** Debug: Viewer::run(): launching browser with URL: {}",
@@ -117,20 +114,5 @@ impl Viewer {
             // the Sse-server.
             Ok(())
         }
-    }
-
-    /// Get TCP port and bind.
-    fn get_tcp_listener_at_port(port: u16) -> Result<(TcpListener, u16), anyhow::Error> {
-        TcpListener::bind((LOCALHOST, port))
-            .map(|l| (l, port))
-            .with_context(|| format!("can not bind to port: {}", port))
-    }
-
-    /// Get TCP port and bind.
-    fn get_tcp_listener() -> Result<(TcpListener, u16), anyhow::Error> {
-        // Some randomness to better hide this port.
-        let l = TcpListener::bind((LOCALHOST, 0))?;
-        let port = l.local_addr()?.port();
-        Ok((l, port))
     }
 }
