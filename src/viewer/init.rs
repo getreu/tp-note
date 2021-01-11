@@ -129,17 +129,8 @@ impl Viewer {
     /// Get TCP port and bind.
     fn get_tcp_listener() -> Result<(TcpListener, u16), anyhow::Error> {
         // Some randomness to better hide this port.
-        let mut start = rand::random::<u16>() & 0x1fff;
-        if start <= 1024 {
-            start += 1024
-        };
-        for port in start..0xffff {
-            match TcpListener::bind((LOCALHOST, port)) {
-                Ok(l) => return Ok((l, port)),
-                _ => {}
-            }
-        }
-
-        Err(anyhow!("can not find free port to bind to"))
+        let l = TcpListener::bind((LOCALHOST, 0))?;
+        let port = l.local_addr()?.port();
+        Ok((l, port))
     }
 }
