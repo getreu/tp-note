@@ -1,4 +1,4 @@
-//! Implements the file watcher for the Markdown note viewer feature.
+//! Implements the file watcher for the note viewer feature.
 
 use crate::config::ARGS;
 use crate::config::CFG;

@@ -442,6 +442,10 @@ th.valgrey{ color:grey; text-align:left; }
 pre { white-space: pre-wrap; }
 em { color: #523626; }
 a { color: #316128; }
+h1 { font-size: 150% }
+h2 { font-size: 132% }
+h3 { font-size: 115% }
+h4, h5, h6 { font-size: 100% }
 h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 
 </style>

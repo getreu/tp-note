@@ -1,4 +1,4 @@
-//! Server-sent-event server for the Markdown note viewer feature.
+//! Server-sent-event server for the note viewer feature.
 //! This module contains also the web browser Javascript client code.
 
 use crate::viewer::init::EVENT_PATH;

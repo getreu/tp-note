@@ -1,4 +1,4 @@
-//! Main module for the Markdown note viewer feature.
+//! Main module for the markup renderer and note viewer feature.
 
 use crate::config::ARGS;
 use crate::config::LAUNCH_EDITOR;
@@ -30,7 +30,7 @@ pub struct Viewer {}
 
 impl Viewer {
     /// Set up the file watcher, start the event/html server and launch web browser.
-    /// Returns when the use closes the web browser.
+    /// Returns when the user closes the web browser.
     /// This is a small wrapper, that prints error messages.
     pub fn run(file: PathBuf) {
         match Self::run2(file) {
