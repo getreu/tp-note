@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.9.2 | Tp-Note documentation
+% TP-NOTE(1) Version 1.9.3 | Tp-Note documentation
 
 
 # NAME
@@ -625,8 +625,8 @@ In addition _Tp-Note_ defines the following variables:
 
 * '`{{ stdin }}`' is the complete text content originating form the input
   stream '`stdin`'. This stream can replace the clipboard when it is not
-  available.  In case the input stream's content starts with a YAML header, it
-  does not appear in this variable.
+  available.  In case the input stream's content starts with a YAML header,
+  the latter does not appear in this variable.
 
 * '`{{ stdin_header }}`' is the YAML section of the input stream, if
   one exists. Otherwise: empty string.

@@ -77,9 +77,9 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
 ///    ```
 ///
-const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.9.1");
+const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
 /// (c) Jens Getreu
-const AUTHOR: &str = "(c) Jens Getreu, 2020";
+const AUTHOR: &str = "(c) Jens Getreu, 2020-2021";
 /// Open the note file `path` on disk and reads its YAML front matter.
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk and return
