@@ -1,5 +1,5 @@
 ---
-title: Tp-Note - fast note-taking with templates and filename synchronization
+title: Tp-Note - save and edit your clipboard content as a note file
 ---
 
 [![Cargo](https://img.shields.io/crates/v/tp-note.svg)](

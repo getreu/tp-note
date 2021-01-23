@@ -3,7 +3,7 @@
 
 # NAME
 
-_Tp-Note_ - fast note taking with templates and filename synchronization.
+_Tp-Note_ - save and edit your clipboard content as a note file.
 
 
 # SYNOPSIS

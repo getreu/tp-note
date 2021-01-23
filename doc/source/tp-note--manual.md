@@ -1,5 +1,5 @@
 ---
-title:  "Tp-Note: fast note taking with templates and filename synchronization"
+title:  "Tp-Note: save and edit your clipboard content as a note file"
 subtitle: "Organize your notes with your favourite editor and markup-language"
 author: "Jens Getreu"
 date:   "2020-11-01"
