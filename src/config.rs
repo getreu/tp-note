@@ -97,7 +97,7 @@ pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 /// When placed in YAML-front-matter, the filter `| json_encode` must be appended to each variable.
 const TMPL_NEW_CONTENT: &str = "\
 ---
-title:      {{ path | stem | cut | json_encode }}
+title:      {{ path | trim_tag | cut | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -134,7 +134,7 @@ const TMPL_NEW_FILENAME: &str = "\
 /// appended to each variable.
 const TMPL_COPY_CONTENT: &str = "\
 ---
-title:      {{ fm_title | default(value = path|stem) | cut | json_encode }}
+title:      {{ fm_title | default(value = path|trim_tag) | cut | json_encode }}
 subtitle:   {{ fm_subtitle | default(value = 'Note') | cut | json_encode }}
 author:     {{ fm_author | default(value=username) | json_encode }}
 date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}

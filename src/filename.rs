@@ -62,7 +62,7 @@ pub fn find_unused(p: PathBuf) -> Result<PathBuf, anyhow::Error> {
         return Ok(p);
     };
 
-    let (sort_tag, stem, _copy_counter, ext) = disassemble(&p);
+    let (sort_tag, _, stem, _copy_counter, ext) = disassemble(&p);
 
     let mut new_path = p.clone();
 
@@ -96,36 +96,47 @@ pub fn find_unused(p: PathBuf) -> Result<PathBuf, anyhow::Error> {
 /// Check if 2 filenames are equal. Compare all parts, except the copy counter.
 /// Consider 2 file identical even when they have a different copy counter.
 pub fn exclude_copy_counter_eq(p1: &Path, p2: &Path) -> bool {
-    let (sort_tag1, stem1, _, ext1) = disassemble(p1);
-    let (sort_tag2, stem2, _, ext2) = disassemble(p2);
+    let (sort_tag1, _, stem1, _, ext1) = disassemble(p1);
+    let (sort_tag2, _, stem2, _, ext2) = disassemble(p2);
     sort_tag1 == sort_tag2 && stem1 == stem2 && ext1 == ext2
 }
 
 /// Helper function that decomposes a fully qualified path name
-/// into (parent_dir, sort_tag, file_stem_without_sort_tag, extension).
-pub fn disassemble(p: &Path) -> (&str, &str, &str, &str) {
+/// into (`sort_tag`, `stem_copy_counter_ext`, `stem`, `copy_counter`, `ext`).
+pub fn disassemble(p: &Path) -> (&str, &str, &str, &str, &str) {
+    let tag_stem_copy_counter_ext = p
+        .file_name()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap_or_default();
+
+    let stem_copy_counter_ext = tag_stem_copy_counter_ext
+        .trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_');
+
+    let sort_tag = &tag_stem_copy_counter_ext
+        [0..tag_stem_copy_counter_ext.len() - stem_copy_counter_ext.len()];
+
     let file_stem = p
         .file_stem()
         .unwrap_or_default()
         .to_str()
-        .unwrap_or_default();
+        .unwrap_or_default()
+        .trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_');
 
     // Trim `sort_tag`.
     let stem_copy_counter =
         file_stem.trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_');
 
-    let sort_tag = &file_stem[0..file_stem.len() - stem_copy_counter.len()];
-
     let stem = remove_copy_counter(stem_copy_counter);
 
     let copy_counter = &stem_copy_counter[stem.len()..];
 
-    let extension = p
+    let ext = p
         .extension()
         .unwrap_or_default()
         .to_str()
         .unwrap_or_default();
-    (sort_tag, stem, copy_counter, extension)
+    (sort_tag, stem_copy_counter_ext, stem, copy_counter, ext)
 }
 
 /// Concatenates the 3 parameters.
@@ -279,7 +290,13 @@ mod tests {
 
     #[test]
     fn test_disassemble_filename() {
-        let expected = ("1_2_3-", "my_title--my_subtitle", "(1)", "md");
+        let expected = (
+            "1_2_3-",
+            "my_title--my_subtitle(1).md",
+            "my_title--my_subtitle",
+            "(1)",
+            "md",
+        );
         let result = disassemble(Path::new("/my/dir/1_2_3-my_title--my_subtitle(1).md"));
         assert_eq!(expected, result);
     }

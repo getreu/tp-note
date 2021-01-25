@@ -30,6 +30,7 @@ lazy_static! {
         tera.register_filter("linktitle", linktitle_filter);
         tera.register_filter("heading", heading_filter);
         tera.register_filter("cut", cut_filter);
+        tera.register_filter("trim_tag", trim_tag_filter);
         tera.register_filter("tag", tag_filter);
         tera.register_filter("stem", stem_filter);
         tera.register_filter("ext", ext_filter);
@@ -205,19 +206,34 @@ pub fn tag_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let p = try_get_value!("tag", "value", String, value);
 
-    let (tag, _, _, _) = disassemble(Path::new(&p));
+    let (tag, _, _, _, _) = disassemble(Path::new(&p));
 
     Ok(to_value(&tag)?)
 }
 
-/// A Tera filter that takes a path and extracts its file stem.
+/// A Tera filter that takes a path and extracts its last element.
+/// This function trims the `sort_tag` if present.
+pub fn trim_tag_filter<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let p = try_get_value!("filename", "value", String, value);
+
+    let (_, fname, _, _, _) = disassemble(Path::new(&p));
+
+    Ok(to_value(&fname)?)
+}
+
+/// A Tera filter that takes a path and extracts its file stem,
+/// in other words: the filename without `sort_tag`, `copy_counter`
+/// and `extension`.
 pub fn stem_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let p = try_get_value!("stem", "value", String, value);
 
-    let (_, stem, _, _) = disassemble(Path::new(&p));
+    let (_, _, stem, _, _) = disassemble(Path::new(&p));
 
     Ok(to_value(&stem)?)
 }

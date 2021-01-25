@@ -697,7 +697,7 @@ variable might contain the empty string '`""`'.
 
 In addtion to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), _Tp-Note_ comes with
-some additional filters, e.g.: '`tag`', '`stem`', '`cut`', '`heading`',
+some additional filters, e.g.: '`tag`', '`trim_tag`', '`stem`', '`cut`', '`heading`',
 '`linkname`', '`linktarget`', '`linktitle`' and '`ext`'.
 
 A filter is always used together with a variable. Here some examples:
@@ -707,15 +707,18 @@ A filter is always used together with a variable. Here some examples:
   templates, for example to create new notes based on a path with a filename
   (e.g.  '`tmpl_annotate_content`').
 
-* '`{{ path | stem }}`' is the parent directory's name of the note on disk.
-
-* '`{{ file | stem }}`' is the note's filename without sort-tag and extension.
+* '`{{ file | stem }}`' is the note's filename without sort-tag, copy-counter
+   and extension.
 
 * '`{{ file | ext }}`' is the note's filename extension without
   dot (period), e.g. '`md`' od '`mdtxt`'.
 
 * '`{{ file | ext | prepend_dot }}`' is the note's filename extension with
   dot (period), e.g. '`.md`' od '`.mdtxt`'.
+
+* '`{{ path | trim_tag }}`' the last element of `path`, which is the parent
+   directory's name of the note on disk. If present, the sort-tag is skipped
+   and only the following characters are retained.
 
 * '`{{ clipboard | cut }}`' is the first 200 bytes from the clipboard.
 
