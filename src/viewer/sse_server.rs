@@ -10,18 +10,13 @@ use std::thread;
 const SSE_EVENT_NAME: &str = "update";
 use crate::config::ARGS;
 use crate::config::CFG;
-use crate::filename::MarkupLanguage;
 use crate::filter::TERA;
 use crate::note::Note;
 use crate::viewer::init::LOCALHOST;
 use anyhow::anyhow;
 use anyhow::Context;
 use httpdate;
-use parse_hyperlinks::renderer::text_links2html;
 use parse_hyperlinks::renderer::text_rawlinks2html;
-use pulldown_cmark::{html, Options, Parser};
-use rst_parser::parse;
-use rst_renderer::render_html;
 use std::fs;
 use std::net::Shutdown;
 use std::path::PathBuf;
@@ -275,17 +270,21 @@ impl ServerThread {
     #[inline]
     /// Renders the error page with the `VIEWER_ERROR_TMPL`.
     fn render_content_and_error(&self) -> Result<String, anyhow::Error> {
-        match Self::render_content(&self) {
+        // Deserialize.
+        let js = format!(
+            "{}{}:{}{}",
+            SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2
+        );
+
+        match Note::from_existing_note(&self.file_path)
+            .and_then(|mut note| note.render_content(&js))
+        {
             Ok(s) => Ok(s),
             Err(e) => {
                 let mut context = tera::Context::new();
                 context.insert("noteError", &e.to_string());
                 context.insert("file", &self.file_path.to_str().unwrap_or_default());
                 // Java Script
-                let js = format!(
-                    "{}{}:{}{}",
-                    SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2
-                );
                 context.insert("noteJS", &js);
 
                 let note_error_content = fs::read_to_string(&self.file_path).unwrap_or_default();
@@ -298,86 +297,5 @@ impl ServerThread {
                 Ok(html)
             }
         }
-    }
-
-    #[inline]
-    /// First, determines the markup language from the file extension or
-    /// the `fm_file_ext` YAML variable, if present.
-    /// Then calls the appropriate markup renderer.
-    /// Finally the result is rendered with the `VIEWER_RENDITION_TMPL`
-    /// template.
-    fn render_content(&self) -> Result<String, anyhow::Error> {
-        // Deserialize.
-        let mut note = Note::from_existing_note(&self.file_path)?;
-
-        // Render Body.
-        let input = note.content.body;
-
-        // What Markup language is used?
-
-        let ext = match note.context.get("fm_file_ext") {
-            Some(tera::Value::String(file_ext)) => Some(file_ext.as_str()),
-            _ => None,
-        };
-
-        // Render the markup language.
-        let html_output = match MarkupLanguage::from(ext, &self.file_path) {
-            MarkupLanguage::Markdown => Self::render_md_content(input),
-            MarkupLanguage::RestructuredText => Self::render_rst_content(input)?,
-            MarkupLanguage::Html => input.to_string(),
-            _ => Self::render_txt_content(input),
-        };
-
-        // Register rendered body.
-        note.context.insert("noteBody", &html_output);
-
-        // Java Script
-        let js = format!(
-            "{}{}:{}{}",
-            SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2
-        );
-        note.context.insert("noteJS", &js);
-
-        let mut tera = Tera::default();
-        tera.extend(&TERA)?;
-        let html = tera.render_str(&CFG.viewer_rendition_tmpl, &note.context)?;
-        Ok(html)
-    }
-
-    #[inline]
-    /// Markdown renderer.
-    fn render_md_content(markdown_input: &str) -> String {
-        // Set up options and parser. Besides the CommonMark standard
-        // we enable some useful extras.
-        let options = Options::all();
-        let parser = Parser::new_ext(markdown_input, options);
-
-        // Write to String buffer.
-        let mut html_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
-        html::push_html(&mut html_output, parser);
-        html_output
-    }
-
-    #[inline]
-    /// RestructuredText renderer.
-    fn render_rst_content(rest_input: &str) -> Result<String, anyhow::Error> {
-        // Note, that the current rst renderer requires files to end with a new line.
-        // <https://github.com/flying-sheep/rust-rst/issues/30>
-        let mut rest_input = rest_input.trim_start();
-        // The rst parser accepts only exactly one newline at the end.
-        while rest_input.ends_with("\n\n") {
-            rest_input = &rest_input[..rest_input.len() - 1];
-        }
-        let document = parse(rest_input.trim_start()).map_err(|e| anyhow!(e))?;
-        // Write to String buffer.
-        let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
-        let _ = render_html(&document, &mut html_output, false);
-        Ok(str::from_utf8(&html_output)?.to_string())
-    }
-
-    #[inline]
-    /// Renderer for markup languages other than the above.
-    fn render_txt_content(other_input: &str) -> String {
-        text_links2html(other_input)
     }
 }

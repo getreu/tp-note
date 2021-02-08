@@ -13,11 +13,16 @@ use crate::filename::MarkupLanguage;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use anyhow::{anyhow, Context, Result};
+use parse_hyperlinks::renderer::text_links2html;
+use pulldown_cmark::{html, Options, Parser};
+use rst_parser::parse;
+use rst_renderer::render_html;
 use std::default::Default;
 use std::env;
 use std::matches;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
+use std::str;
 use tera::Tera;
 
 #[derive(Debug, PartialEq)]
@@ -365,6 +370,91 @@ impl Note<'_> {
         };
 
         Ok(fm)
+    }
+
+    #[inline]
+    /// First, determines the markup language from the file extension or
+    /// the `fm_file_ext` YAML variable, if present.
+    /// Then calls the appropriate markup renderer.
+    /// Finally the result is rendered with the `VIEWER_RENDITION_TMPL`
+    /// template.
+    pub fn render_content(&mut self, java_script: &str) -> Result<String, anyhow::Error> {
+        // Deserialize.
+
+        // Render Body.
+        let input = self.content.body;
+
+        // What Markup language is used?
+
+        let ext = match self.context.get("fm_file_ext") {
+            Some(tera::Value::String(file_ext)) => Some(file_ext.as_str()),
+            _ => None,
+        };
+
+        // We can `unwrap()` here, because we know that `file` is always registered.
+        let file_path = Path::new(
+            self.context
+                .get("file")
+                .unwrap()
+                .as_str()
+                .unwrap_or_default(),
+        );
+
+        // Render the markup language.
+        let html_output = match MarkupLanguage::from(ext, &file_path) {
+            MarkupLanguage::Markdown => Self::render_md_content(input),
+            MarkupLanguage::RestructuredText => Self::render_rst_content(input)?,
+            MarkupLanguage::Html => input.to_string(),
+            _ => Self::render_txt_content(input),
+        };
+
+        // Register rendered body.
+        self.context.insert("noteBody", &html_output);
+
+        // Java Script
+        self.context.insert("noteJS", java_script);
+
+        let mut tera = Tera::default();
+        tera.extend(&TERA)?;
+        let html = tera.render_str(&CFG.viewer_rendition_tmpl, &self.context)?;
+        Ok(html)
+    }
+
+    #[inline]
+    /// Markdown renderer.
+    fn render_md_content(markdown_input: &str) -> String {
+        // Set up options and parser. Besides the CommonMark standard
+        // we enable some useful extras.
+        let options = Options::all();
+        let parser = Parser::new_ext(markdown_input, options);
+
+        // Write to String buffer.
+        let mut html_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
+        html::push_html(&mut html_output, parser);
+        html_output
+    }
+
+    #[inline]
+    /// RestructuredText renderer.
+    fn render_rst_content(rest_input: &str) -> Result<String, anyhow::Error> {
+        // Note, that the current rst renderer requires files to end with a new line.
+        // <https://github.com/flying-sheep/rust-rst/issues/30>
+        let mut rest_input = rest_input.trim_start();
+        // The rst parser accepts only exactly one newline at the end.
+        while rest_input.ends_with("\n\n") {
+            rest_input = &rest_input[..rest_input.len() - 1];
+        }
+        let document = parse(rest_input.trim_start()).map_err(|e| anyhow!(e))?;
+        // Write to String buffer.
+        let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
+        let _ = render_html(&document, &mut html_output, false);
+        Ok(str::from_utf8(&html_output)?.to_string())
+    }
+
+    #[inline]
+    /// Renderer for markup languages other than the above.
+    fn render_txt_content(other_input: &str) -> String {
+        text_links2html(other_input)
     }
 }
 

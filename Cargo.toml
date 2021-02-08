@@ -7,9 +7,9 @@ readme = "README.md"
 description = "fast note-taking with templates and filename synchronization"
 license = "MIT/Apache-2.0"
 categories = ["command-line-utilities", "template-engine", "text-processing"]
-documentation = "https://blog.getreu.net/projects/tp-note/tp-note--manpage.html"
+documentation = "https://blog.getreu.net/projects/tp-note/tp-note--manual.html"
 homepage = "https://blog.getreu.net/projects/tp-note/"
-repository = "https://github.com/getreu/tp-note"
+repository = "https://gitlab.com/getreu/tp-note"
 build =  "build.rs"
 
 [target.'cfg(windows)'.build-dependencies]
