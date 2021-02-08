@@ -319,12 +319,19 @@ Here some typical workflows:
   into a _Tp-Note_ file. The note's title is the name of the
   first hyperlink found in the webpage.
 
+  Install `pandoc` and `curl`:
+
+  ```shell
+  sudo apt install pandoc curl
+  ```
+
+  Download and convert:
+
   ```shell
   curl 'https://blog.getreu.net' | pandoc -f html -t markdown_strict | tp-note
   ```
 
-* The same as above, but the note's title is the same as
-  the webpage's title:
+* Download a webpage and keep the webpage's metadata, e.g. title, date... :
 
   ```shell
   curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
@@ -333,7 +340,7 @@ Here some typical workflows:
   creates the note file `20200910-Jens\ Getreu\'s\ blog.md` with the webpage's
   content.
 
-* Generate note for a given content with YAML header:
+* Generate a note for a given content with YAML header:
 
   ```shell
   echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tp-note
@@ -364,8 +371,8 @@ Here some typical workflows:
   creates the file `20200921-My Note.md` with a rearranged header
   and the same body.
 
-* Launch, for once, a different file editor.\
-  The external file editor, _Tp-Note_ uses, is defined in the configuration
+* Launch, for once only, a different file editor.\
+  The external file editor, _Tp-Note_ defaults to, is defined in the configuration
   file and can be changed there. If you want to use a different file editor
   just for one-shot, type:
 
@@ -396,6 +403,32 @@ Here some typical workflows:
 
   ```shell
   find . -type f -name "*.md" -exec tp-note --batch {} \; >/dev/null
+  ```
+
+* Generate an HTML rendition of an existing note file in the same directory:
+
+  ```shell
+  tp-note --export=./my_notes ./my_notes/20210209-debug--Note.md
+  ```
+
+  or, equivalent but shorter:
+
+  ```shell
+  tp-note --export= ./my_notes/20210209-debug--Note.md
+  ```
+
+* Generate a PDF rendition of an existing note file:
+
+  Install the `wkhtmltopdf`-tool:
+
+  ```shell
+  sudo apt install wkhtmltopdf
+  ```
+
+  Generate the PDF rendition:
+
+  ```shell
+  tp-note -o - 20210209-debug--Note.md | wkhtmltopdf - 20210209-debug--Note.md.pdf
   ```
 
 

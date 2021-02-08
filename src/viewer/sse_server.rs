@@ -276,9 +276,9 @@ impl ServerThread {
             SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2
         );
 
-        match Note::from_existing_note(&self.file_path)
-            .and_then(|mut note| note.render_content(&js))
-        {
+        match Note::from_existing_note(&self.file_path).and_then(|mut note| {
+            note.render_content(&self.file_path, &CFG.viewer_rendition_tmpl, &js)
+        }) {
             Ok(s) => Ok(s),
             Err(e) => {
                 let mut context = tera::Context::new();

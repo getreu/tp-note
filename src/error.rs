@@ -3,6 +3,7 @@
 #[cfg(feature = "message-box")]
 extern crate msgbox;
 
+use crate::config::ARGS;
 use crate::config::CONFIG_PATH;
 #[cfg(feature = "message-box")]
 use crate::config::RUNS_ON_CONSOLE;
@@ -37,7 +38,7 @@ impl AlertDialog {
         Self::print_error_console(msg);
         // Popup window.
         #[cfg(feature = "message-box")]
-        if !*RUNS_ON_CONSOLE {
+        if !*RUNS_ON_CONSOLE && !ARGS.batch {
             let _ = msgbox::create(
                 &*ALERT_DIALOG_TITLE_LINE,
                 &Self::format_error(msg),
@@ -93,7 +94,7 @@ impl AlertDialog {
             Additional technical details:\n\
             *    Command line parameters:\n\
             {}\n\
-            *    Configuration file path:\n\
+            *    Configuration file:\n\
             {}",
             args_str,
             &*CONFIG_PATH

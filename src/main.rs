@@ -86,7 +86,7 @@ const AUTHOR: &str = "(c) Jens Getreu, 2020-2021";
 /// the new filename.
 fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
     // parse file again to check for synchronicity with filename
-    let n = Note::from_existing_note(&path).context(
+    let mut n = Note::from_existing_note(&path).context(
         "Failed to parse the note's metadata. \
                   Can not synchronize the note's filename!",
     )?;
@@ -99,7 +99,7 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
                   Can not synchronize the note's filename!",
     )?;
 
-    if !filename::exclude_copy_counter_eq(&path, &new_fqfn) {
+    let new_fqfn = if !filename::exclude_copy_counter_eq(&path, &new_fqfn) {
         let new_fqfn = filename::find_unused(new_fqfn).context(
             "Can not rename the note's filename to be in sync with its\n\
             YAML header.",
@@ -109,10 +109,18 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
         if ARGS.debug {
             eprintln!("*** Debug: File renamed to {:?}", new_fqfn);
         };
-        Ok(new_fqfn)
+        new_fqfn
     } else {
-        Ok(path.to_path_buf())
+        path.to_path_buf()
+    };
+
+    // Print HTML rendition.
+    if let Some(dir) = &ARGS.export {
+        n.render_and_write_content(&new_fqfn, &dir)
+            .context(format!("Can not write HTML rendition into: {:?}", dir))?;
     }
+
+    Ok(new_fqfn)
 }
 
 #[inline]
@@ -173,6 +181,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
 
         // Write new note on disk.
         n.content.write_to_disk(&new_fqfn)?;
+
         Ok(new_fqfn)
     } else {
         let extension_is_known = !matches!(MarkupLanguage::from(None, &path), MarkupLanguage::None);
@@ -201,6 +210,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
 
             // Write new note on disk.
             n.content.write_to_disk(&new_fqfn)?;
+
             Ok(new_fqfn)
         }
     }
@@ -396,6 +406,14 @@ fn run() -> Result<PathBuf, anyhow::Error> {
         env::current_dir()?
     };
 
+    if ARGS.export.is_some() && !path.is_file() {
+        return Err(anyhow!(format!(
+            "`--export` and `-x` need a <path> to an existing note file.\n\
+              *    Current <path>:\n{}",
+            path.as_os_str().to_str().unwrap_or_default()
+        )));
+    };
+
     match create_new_note_or_synchronize_filename(&path) {
         // Use the new `path` from now on.
         Ok(p) => path = p,
@@ -403,16 +421,20 @@ fn run() -> Result<PathBuf, anyhow::Error> {
             // When the viewer is launched, we do not need a dialog
             // box to communicate the error to the user.
             // In this case we skip the following.
-            if !*LAUNCH_VIEWER {
+            if !*LAUNCH_VIEWER && *LAUNCH_EDITOR {
                 AlertDialog::print_error(&format!(
                     "ERROR:\n\
                     ---\n\
                     {:?}\n\
                     \n\
                     Please correct the error.
-                    Trying to start the test editor without synchronization...",
+                    Trying to start the editor without synchronization...",
                     e
                 ))
+            } else if !*LAUNCH_VIEWER || !path.is_file() {
+                // If `path` points to a directory, no viewer and no editor can open.
+                // This is a fatal error, so we quit.
+                return Err(e);
             }
         }
     };
@@ -540,8 +562,14 @@ fn main() {
             }
             process::exit(1);
         }
+
+        // Print `path` unless `--export=-`.
         Ok(path) => {
-            println!("{}", path.to_str().unwrap_or_default());
+            if let Some(p) = &ARGS.export {
+                if p.as_os_str().to_str().unwrap_or_default() != "-" {
+                    println!("{}", path.to_str().unwrap_or_default());
+                }
+            }
         }
     };
 }

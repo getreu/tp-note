@@ -19,12 +19,14 @@ use rst_parser::parse;
 use rst_renderer::render_html;
 use std::default::Default;
 use std::env;
+use std::fs::OpenOptions;
+use std::io;
+use std::io::Write;
 use std::matches;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::str;
 use tera::Tera;
-
 #[derive(Debug, PartialEq)]
 /// Represents a note.
 pub struct Note<'a> {
@@ -372,33 +374,108 @@ impl Note<'_> {
         Ok(fm)
     }
 
+    pub fn render_and_write_content(
+        &mut self,
+        note_path: &Path,
+        export_dir: &Path,
+    ) -> Result<(), anyhow::Error> {
+        // Determine filename of html-file.
+        let mut html_path = PathBuf::new();
+        if export_dir
+            .as_os_str()
+            .to_str()
+            .unwrap_or_default()
+            .is_empty()
+        {
+            html_path = note_path.parent().unwrap_or(Path::new("")).to_path_buf();
+            let mut html_filename = note_path
+                .file_name()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default()
+                .to_string();
+            html_filename.push_str(".html");
+            html_path.push(PathBuf::from(html_filename.as_str()));
+        } else if export_dir.as_os_str().to_str().unwrap_or_default() != "-" {
+            html_path = export_dir.to_owned();
+            let mut html_filename = note_path
+                .file_name()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default()
+                .to_string();
+            html_filename.push_str(".html");
+            html_path.push(PathBuf::from(html_filename.as_str()));
+        } else {
+            // `export_dir` points to `-` and `html_path` is empty.
+        }
+
+        if ARGS.debug {
+            if html_path
+                .as_os_str()
+                .to_str()
+                .unwrap_or_default()
+                .is_empty()
+            {
+                eprintln!("*** Debug: rendering HTML to STDOUT (`{:?}`)", export_dir);
+            } else {
+                eprintln!("*** Debug: rendering HTML into: {:?}", html_path);
+            }
+        };
+
+        // Check where to dump output.
+        if html_path
+            .as_os_str()
+            .to_str()
+            .unwrap_or_default()
+            .is_empty()
+        {
+            let stdout = io::stdout();
+            let mut handle = stdout.lock();
+
+            // Write HTML rendition.
+            handle.write_all(
+                self.render_content(&note_path, &CFG.exporter_rendition_tmpl, "")?
+                    .as_bytes(),
+            )?;
+        } else {
+            let mut handle = OpenOptions::new()
+                .write(true)
+                .create(true)
+                .open(&html_path)?;
+            // Write HTML rendition.
+            handle.write_all(
+                self.render_content(&note_path, &CFG.exporter_rendition_tmpl, "")?
+                    .as_bytes(),
+            )?;
+        };
+        Ok(())
+    }
+
     #[inline]
     /// First, determines the markup language from the file extension or
     /// the `fm_file_ext` YAML variable, if present.
     /// Then calls the appropriate markup renderer.
     /// Finally the result is rendered with the `VIEWER_RENDITION_TMPL`
     /// template.
-    pub fn render_content(&mut self, java_script: &str) -> Result<String, anyhow::Error> {
+    pub fn render_content(
+        &mut self,
+        // From this path we only need the extension to determine the
+        // Markup language.
+        file_path: &Path,
+        tmpl: &str,
+        java_script: &str,
+    ) -> Result<String, anyhow::Error> {
         // Deserialize.
 
         // Render Body.
         let input = self.content.body;
 
         // What Markup language is used?
-
         let ext = match self.context.get("fm_file_ext") {
             Some(tera::Value::String(file_ext)) => Some(file_ext.as_str()),
             _ => None,
         };
-
-        // We can `unwrap()` here, because we know that `file` is always registered.
-        let file_path = Path::new(
-            self.context
-                .get("file")
-                .unwrap()
-                .as_str()
-                .unwrap_or_default(),
-        );
 
         // Render the markup language.
         let html_output = match MarkupLanguage::from(ext, &file_path) {
@@ -416,7 +493,7 @@ impl Note<'_> {
 
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
-        let html = tera.render_str(&CFG.viewer_rendition_tmpl, &self.context)?;
+        let html = tera.render_str(tmpl, &self.context)?;
         Ok(html)
     }
 

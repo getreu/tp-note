@@ -384,7 +384,8 @@ synchronization).
 **-b**, **\--batch**
 
 :   Do not launch the external text editor or viewer. All other operations
-    are available and are executed in the same way.
+    are available and are executed in the same way. In batch mode, error
+    messages are dumped on the console only and no alert window pops up.
 
 :   _Tp-Note_ ignores the clipboard when run in batch mode with '`--batch`'.
     Instead, if available, it reads the `stdin` stream as if the data came
@@ -411,6 +412,11 @@ synchronization).
     unless '`-v`' is given. Another way to permanently disable the web server
     is to set the configuration variable '`viewer_enable=false`'.
 
+**-p**, **\--port**=*PORT*
+
+:   Set server port the web browser connects to, to the specified value.
+    If not given, a random free port is chosen automatically.
+
 **-v**, **\--view**
 
 :   View only mode: do not open the external text editor. This flag instructs
@@ -419,20 +425,18 @@ synchronization).
     file modifications. This flag has precedence over the configuration
     variable '`viewer_enable=false`'.
 
-**-p**, **\--port**=*PORT*
-
-:   Set server port the web browser connects to, to the specified value.
-    If not given, a random free port is chosen automatically.
-
-**-r**, **\--render**
-
-:   Renders the note into HTML and saves the rendition as `.html` file.
-    Implies **--batch**.
-
 **-V**, **\--version**
 
 :   Print _Tp-Note_'s version and exit. When combined with '`--debug`',
     additional technical details are printed.
+
+**-x** *FILE*, **\--export**=*DIRECTORY*
+
+:   Prints the note as HTML-rendition into _DIRECTORY_. '`-x -`' prints to
+    _stdout_. The empty string, e.g. '`--export= `' or '`-x ""`', defaults to
+    the directory where the note file resides. No external file editor or
+    viewer is launched. Can be combined with '`--batch`' to avoid pop-up
+    error alert windows.
 
 
 

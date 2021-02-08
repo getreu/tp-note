@@ -186,7 +186,7 @@ impl<'a> Content<'a> {
     }
 
     /// Writes the note to disk with `new_fqfn`-filename.
-    pub fn write_to_disk(self: Pin<Box<Self>>, new_fqfn: &PathBuf) -> Result<(), anyhow::Error> {
+    pub fn write_to_disk(self: &Pin<Box<Self>>, new_fqfn: &PathBuf) -> Result<(), anyhow::Error> {
         let outfile = OpenOptions::new()
             .write(true)
             .create_new(true)
@@ -194,7 +194,7 @@ impl<'a> Content<'a> {
         match outfile {
             Ok(mut outfile) => {
                 if ARGS.debug {
-                    eprintln!("Creating file: {:?}", new_fqfn);
+                    eprintln!("*** Debug: Creating file: {:?}", new_fqfn);
                 };
                 write!(outfile, "\u{feff}")?;
                 if !self.header.is_empty() {

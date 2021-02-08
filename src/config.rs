@@ -412,7 +412,7 @@ const VIEWER_ENABLED: bool = true;
 /// Delay in milliseconds.
 const VIEWER_NOTIFY_PERIOD: u64 = 1000;
 
-/// Template used to render a note into html.
+/// Template used by the viewer to render a note into html.
 pub const VIEWER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
@@ -477,7 +477,7 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 </html>
 "#;
 
-/// Template used to render error messages into html.
+/// Template used by the viewer to render error messages into html.
 pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
 <html lang=\"en\">
 <head>
@@ -500,6 +500,71 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 </div>
 {{ noteErrorContent }}
 <script>{{ noteJS }}</script>
+</body>
+</html>
+"#;
+
+/// Template used to render a note into html when the
+/// rendition is saved to disk
+pub const EXPORTER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
+<html lang="{{ fm_lang | default(value='en') }}">
+<head>
+<meta charset="utf-8">
+<title>{{ fm_title }}</title>
+<style>
+table, th, td { font-weight: normal; }
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+  background-color: #f3f2e4;
+  border:1px solid grey;
+}
+th, td {
+  padding: 3px;
+  padding-left:15px;
+  padding-right:15px;
+}
+th.key{ color:#444444; text-align:right; }
+th.val{
+  color:#316128;
+  text-align:left;
+  font-family:sans-serif;
+}
+th.keygrey{ color:grey; text-align:right; }
+th.valgrey{ color:grey; text-align:left; }
+pre { white-space: pre-wrap; }
+em { color: #523626; }
+a { color: #316128; }
+h1 { font-size: 150% }
+h2 { font-size: 132% }
+h3 { font-size: 115% }
+h4, h5, h6 { font-size: 100% }
+h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
+
+</style>
+  </head>
+  <body>
+  <table class="center">
+    <tr>
+    <th class="key">title:</th>
+    <th class="val"><b>{{ fm_title }}</b></th>
+  </tr>
+    <tr>
+    <th class="key">subtitle:</th>
+    <th class="val">{{ fm_subtitle | default(value='') }}</th>
+  </tr>
+    <tr>
+    <th class="keygrey">date:</th>
+    <th class="valgrey">{{ fm_date | default(value='') }}</th>
+  </tr>
+  {% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle')| remove(var='fm_date') %}
+    <tr>
+    <th class="keygrey">{{ k }}:</th>
+    <th class="valgrey">{{ v }}</th>
+  </tr>
+  {% endfor %}
+  </table>
+  <div class="noteBody">{{ noteBody }}</div>
 </body>
 </html>
 "#;
@@ -534,7 +599,7 @@ pub struct Args {
     /// Launches only the editor, no browser
     #[structopt(long, short = "e")]
     pub edit: bool,
-    /// Let web server listen to a specific port
+    /// Lets web server listen to a specific port
     #[structopt(long, short = "p")]
     pub port: Option<u16>,
     /// Launches only the browser, no editor
@@ -546,6 +611,10 @@ pub struct Args {
     /// Prints version and exits
     #[structopt(long, short = "V")]
     pub version: bool,
+    /// Prints HTML-rendition into <export>
+    /// directory or stdout if `-`.
+    #[structopt(long, short = "x", parse(from_os_str))]
+    pub export: Option<PathBuf>,
 }
 
 lazy_static! {
@@ -587,6 +656,7 @@ pub struct Cfg {
     pub viewer_notify_period: u64,
     pub viewer_rendition_tmpl: String,
     pub viewer_error_tmpl: String,
+    pub exporter_rendition_tmpl: String,
 }
 
 /// When no configuration-file is found, defaults are set here from built-in
@@ -649,6 +719,7 @@ impl ::std::default::Default for Cfg {
             viewer_notify_period: VIEWER_NOTIFY_PERIOD,
             viewer_rendition_tmpl: VIEWER_RENDITION_TMPL.to_string(),
             viewer_error_tmpl: VIEWER_ERROR_TMPL.to_string(),
+            exporter_rendition_tmpl: EXPORTER_RENDITION_TMPL.to_string(),
         }
     }
 }
@@ -656,7 +727,7 @@ impl ::std::default::Default for Cfg {
 lazy_static! {
     /// Shall we launch the external text editor?
     pub static ref LAUNCH_EDITOR: bool = {
-        !ARGS.batch &&
+        !ARGS.batch && ARGS.export.is_none() &&
         match (ARGS.edit, ARGS.view, CFG.viewer_enabled) {
             (false, false, false) => true,
             (false, false, true) => true,
@@ -674,7 +745,7 @@ lazy_static! {
 lazy_static! {
     /// Shall we launch the internal server and the external browser?
     pub static ref LAUNCH_VIEWER: bool = {
-        !ARGS.batch && !*RUNS_ON_CONSOLE &&
+        !ARGS.batch && ARGS.export.is_none() && !*RUNS_ON_CONSOLE &&
         match (ARGS.edit, ARGS.view, CFG.viewer_enabled) {
             (false, false, false) => false,
             (false, false, true) => true,
