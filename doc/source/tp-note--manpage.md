@@ -163,7 +163,7 @@ note's content is created with a template, but also its filename: The
 the note's title and subtitle.
 
 
-### The clipboard contains a Markdown link
+### The clipboard contains a hyperlink
 
 Example: `<path>` is a directory, the clipboard is not empty and it contains
 the string: "`I recommend:\n[The Rust Book](https://doc.rust-lang.org/book/)`".
@@ -189,8 +189,10 @@ I recommend:
 [The Rust Book](https://doc.rust-lang.org/book/))
 ```
 
-When the clipboard content contains an hyperlink in Markdown format, the
-template will use the name of the first hyperlink as document title.
+When analyzing the clipboard's content, _Tp-Note_ searches for hyperlinks in
+Markdown, ReStructuredText, Asciidoc and HTML format. When successful, the
+content template uses the link text of the first hyperlink found as document
+title.
 
 
 ### The clipboard contains a string with a YAML header
@@ -421,6 +423,11 @@ synchronization).
 
 :   Set server port the web browser connects to, to the specified value.
     If not given, a random free port is chosen automatically.
+
+**-r**, **\--render**
+
+:   Renders the note into HTML and saves the rendition as `.html` file.
+    Implies **--batch**.
 
 **-V**, **\--version**
 
@@ -926,16 +933,18 @@ As a result, all future notes are created as '`*.rst`' files.
 ### Change the way how note files are viewed
 
 Besides its core function, _Tp-Note_ comes with some optional note renderer and
-viewer and can work with various markup languages at the same time. Depending on the markup language, this feature is more or less
-advanced and complete: _Markdown_ (cf. '`note_file_extension_md`') is best
-supported and feature complete: It complies with the _Common Mark_
-specification. The _reStructuredText_ renderer (cf.
-'`note_file_extension_rst`') is quit new and still in experimental state. For
-all other markup languages _Tp-Note_ has a built in markup source viewer (cf.
-'`note_file_extension_txt`') that renders hyperlinks to make them clickable.
-In case none of the above rendition engines suits you, it is possible to
-disable the viewer feature for some file extensions only: just place
-those extensions in the '`note_file_extension_no_viewer`' variable.
+viewer and can work with various markup languages at the same time. Depending
+on the markup language, this feature is more or less advanced and complete:
+_Markdown_ (cf. '`note_file_extension_md`') is best supported and feature
+complete: It complies with the _Common Mark_ specification. The
+_reStructuredText_ renderer (cf.  '`note_file_extension_rst`') is quit new and
+still in experimental state. For all other markup languages _Tp-Note_ has a
+built in markup source viewer (cf.  '`note_file_extension_txt`') that renders
+hyperlinks to make them clickable.  In case none of the above rendition engines
+suits you, it is possible to disable the viewer feature for some file
+extensions only: just place those extensions in the
+'`note_file_extension_no_viewer`' variable. If you wish to disable the viewer
+feature overall, set the variable `viewer_enabled = false`.
 
 ### Change the markup language for one specific note only
 
