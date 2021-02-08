@@ -53,7 +53,10 @@ impl Note<'_> {
 
         let mut context = Self::capture_environment(&path)?;
 
-        // deserialize the note read from disk
+        // Register the raw serialized header text.
+        (*context).insert("fm_all_yaml", &content.header);
+
+        // Deserialize the note read from disk.
         let fm = Note::deserialize_header(content.header)?;
 
         if !&CFG.tmpl_compulsory_field_content.is_empty()

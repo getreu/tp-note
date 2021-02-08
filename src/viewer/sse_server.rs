@@ -310,9 +310,6 @@ impl ServerThread {
         // Deserialize.
         let mut note = Note::from_existing_note(&self.file_path)?;
 
-        // Register header.
-        note.context.insert("fm_all_yaml", note.content.header);
-
         // Render Body.
         let input = note.content.body;
 
