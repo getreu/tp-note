@@ -172,7 +172,8 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
         let new_fqfn = filename::find_unused(new_fqfn)?;
 
         // Write new note on disk.
-        n.content.write_to_disk(new_fqfn)
+        n.content.write_to_disk(&new_fqfn)?;
+        Ok(new_fqfn)
     } else {
         let extension_is_known = !matches!(MarkupLanguage::from(None, &path), MarkupLanguage::None);
 
@@ -199,7 +200,8 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             let new_fqfn = filename::find_unused(new_fqfn)?;
 
             // Write new note on disk.
-            n.content.write_to_disk(new_fqfn)
+            n.content.write_to_disk(&new_fqfn)?;
+            Ok(new_fqfn)
         }
     }
 }

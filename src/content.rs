@@ -186,10 +186,7 @@ impl<'a> Content<'a> {
     }
 
     /// Writes the note to disk with `new_fqfn`-filename.
-    pub fn write_to_disk(
-        self: Pin<Box<Self>>,
-        new_fqfn: PathBuf,
-    ) -> Result<PathBuf, anyhow::Error> {
+    pub fn write_to_disk(self: Pin<Box<Self>>, new_fqfn: &PathBuf) -> Result<(), anyhow::Error> {
         let outfile = OpenOptions::new()
             .write(true)
             .create_new(true)
@@ -239,7 +236,7 @@ impl<'a> Content<'a> {
             }
         }
 
-        Ok(new_fqfn)
+        Ok(())
     }
 }
 
