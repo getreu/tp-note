@@ -1,10 +1,10 @@
 [package]
 name = "tp-note"
-version = "1.9.4"
+version = "1.10.0"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
-description = "fast note-taking with templates and filename synchronization"
+description = "edit and save your clipboard content as a note file"
 license = "MIT/Apache-2.0"
 categories = ["command-line-utilities", "template-engine", "text-processing"]
 documentation = "https://blog.getreu.net/projects/tp-note/tp-note--manual.html"
@@ -55,9 +55,9 @@ message-box = ["msgbox"]
 viewer = ["notify", "httparse", "pulldown-cmark", "rst_parser", "rst_renderer", "webbrowser", "rand", "httpdate"]
 
 [dependencies]
-serde = { version = "1.0.122", features = ["derive"] }
-serde_yaml = "0.8.15"
-serde_json = "1.0.61"
+serde = { version = "1.0.123", features = ["derive"] }
+serde_yaml = "0.8.16"
+serde_json = "1.0.62"
 anyhow = "1.0.38"
 lazy_static = "1.4.0"
 chrono = "0.4.19"
@@ -74,10 +74,10 @@ atty = "0.2.14"
 parse-hyperlinks = "0.19.5"
 # parse-hyperlinks = { path = "../parse-hyperlinks" }
 notify = { version = "4.0.15", optional = true }
-httparse = { version = "1.3.4", optional = true }
+httparse = { version = "1.3.5", optional = true }
 pulldown-cmark = { version = "0.8.0", default-features = false, features = ["simd"], optional = true }
 webbrowser = { version = "0.5.5", optional = true }
-rand = { version = "0.8.2", optional = true }
+rand = { version = "0.8.3", optional = true }
 rst_parser = { version = "0.4.0", optional = true }
 rst_renderer = { version = "0.4.0", optional = true }
 httpdate = { version = "0.3.2", optional = true }
