@@ -25,7 +25,7 @@ note_file_extensions_no_viewer = [
 ]
 tmpl_new_content = '''
 ---
-title:      {{ path | stem | cut | json_encode }}
+title:      {{ path | trim_tag | cut | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -37,7 +37,7 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 tmpl_new_filename = '''{{ now() | date(format='%Y%m%d') }}-{{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}'''
 tmpl_copy_content = '''
 ---
-title:      {{ fm_title | default(value = path|stem) | cut | json_encode }}
+title:      {{ fm_title | default(value = path|trim_tag) | cut | json_encode }}
 subtitle:   {{ fm_subtitle | default(value = 'Note') | cut | json_encode }}
 author:     {{ fm_author | default(value=username) | json_encode }}
 date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
@@ -238,6 +238,69 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 </div>
 {{ noteErrorContent }}
 <script>{{ noteJS }}</script>
+</body>
+</html>
+'''
+exporter_rendition_tmpl = '''
+<!DOCTYPE html>
+<html lang="{{ fm_lang | default(value='en') }}">
+<head>
+<meta charset="utf-8">
+<title>{{ fm_title }}</title>
+<style>
+table, th, td { font-weight: normal; }
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+  background-color: #f3f2e4;
+  border:1px solid grey;
+}
+th, td {
+  padding: 3px;
+  padding-left:15px;
+  padding-right:15px;
+}
+th.key{ color:#444444; text-align:right; }
+th.val{
+  color:#316128;
+  text-align:left;
+  font-family:sans-serif;
+}
+th.keygrey{ color:grey; text-align:right; }
+th.valgrey{ color:grey; text-align:left; }
+pre { white-space: pre-wrap; }
+em { color: #523626; }
+a { color: #316128; }
+h1 { font-size: 150% }
+h2 { font-size: 132% }
+h3 { font-size: 115% }
+h4, h5, h6 { font-size: 100% }
+h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
+
+</style>
+  </head>
+  <body>
+  <table class="center">
+    <tr>
+    <th class="key">title:</th>
+    <th class="val"><b>{{ fm_title }}</b></th>
+  </tr>
+    <tr>
+    <th class="key">subtitle:</th>
+    <th class="val">{{ fm_subtitle | default(value='') }}</th>
+  </tr>
+    <tr>
+    <th class="keygrey">date:</th>
+    <th class="valgrey">{{ fm_date | default(value='') }}</th>
+  </tr>
+  {% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle')| remove(var='fm_date') %}
+    <tr>
+    <th class="keygrey">{{ k }}:</th>
+    <th class="valgrey">{{ v }}</th>
+  </tr>
+  {% endfor %}
+  </table>
+  <div class="noteBody">{{ noteBody }}</div>
 </body>
 </html>
 '''

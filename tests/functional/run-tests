@@ -243,5 +243,41 @@ fi
 
 
 
+## Test 10: Export note 
+INPUT_FILENAME="$PWD/123-abc--edf.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: "xxx"
+subtitle: "yyy"
+sort_tag: "111-"
+file_ext: "mdtxt"
+...
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+INPUT2_FILENAME="$PWD/111-xxx--yyy.mdtxt"
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+     --export "" \
+    "$INPUT2_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/111-xxx--yyy.mdtxt.html"
+
+if diff "$OUTPUT_FILENAME"  "test10-html-expected-output"
+then
+    echo Commandline test 10 succeeded.
+    rm "$INPUT2_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 10 failed.
+    exit 1
+fi
+
+
+
 
 exit 0
