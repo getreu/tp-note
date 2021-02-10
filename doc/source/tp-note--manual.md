@@ -801,14 +801,20 @@ Search for `</actions>` and replace it with:
         <name>Tp-Note View</name>
         <command>tp-note -v %f</command>
         <description>Tp-Note View</description>
-        <patterns>*.md;*.rst</patterns>
+        <patterns>*.md;*.rst;*.adoc</patterns>
         <text-files/>
 </action>
 </actions>
 ```
 
 The change becomes effective only after the user deletes his own configuration
-file in `~/.config/Thunar/uca.xml`.
+file in `~/.config/Thunar/uca.xml`:
+
+```shell
+killall thunar
+rm ~/.config/Thunar/uca.xml
+thunar
+```
 
 **Optional bonus: add a menu entry "Download webpage as Markdown"**
 
@@ -828,18 +834,59 @@ Search for `</actions>` and replace it with:
 
 ```xml
 <action>
-	<icon></icon>
-	<name>Download URL here</name>
-	<command>bash -c 'curl $(xclip -o)| pandoc --standalone -f html -t markdown_strict+yaml_metadata_block+pipe_tables | tp-note  %F'</command>
-	<description>Download URL here</description>
-	<patterns>*</patterns>
-	<directories/>
+        <icon>accessories-text-editor</icon>
+        <name>Download URL here</name>
+        <command>curl $(xclip -o)| pandoc --standalone -f html -t markdown_strict+yaml_metadata_block+pipe_tables | tp-note  %F</command>
+        <description>Download URL</description>
+        <patterns>*</patterns>
+        <directories/>
 </action>
 </actions>
 ```
 
-Again, the change becomes effective only after the user deletes his own configuration
-file in `~/.config/Thunar/uca.xml`.
+The change becomes effective only after the user deletes his own configuration
+file in `~/.config/Thunar/uca.xml`:
+
+```shell
+killall thunar
+rm ~/.config/Thunar/uca.xml
+thunar
+```
+
+**Optional bonus 2: add a menu entry "Export note as Pdf"**
+
+First install some helper programs:
+
+    sudo apt install wkhtmltopdf
+
+Then edit the system-wide Thunar configuration file:
+
+    sudo nano /etc/xdg/Thunar/uca.xml
+
+Search for `</actions>` and replace it with:
+
+```xml
+<action>
+        <icon>accessories-text-editor</icon>
+        <name>Tp-Note Export</name>
+        <command>tp-note --export=- %f | wkhtmltopdf -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>
+        <description>Tp-Note Export</description>
+        <patterns>*.md;*.rst;*.adoc</patterns>
+        <text-files/>
+</action>
+</actions>
+
+```
+
+The change becomes effective only after the user deletes his own configuration
+file in `~/.config/Thunar/uca.xml`:
+
+```shell
+killall thunar
+rm ~/.config/Thunar/uca.xml
+thunar
+```
+
 
 ```{=docbook}
 <?dbfo-need height="8cm" ?>
