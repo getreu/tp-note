@@ -423,6 +423,13 @@ impl Note<'_> {
             }
         };
 
+        // The file extension identifies the markup language.
+        let note_path_ext = note_path
+            .extension()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default();
+
         // Check where to dump output.
         if html_path
             .as_os_str()
@@ -435,7 +442,7 @@ impl Note<'_> {
 
             // Write HTML rendition.
             handle.write_all(
-                self.render_content(&note_path, &CFG.exporter_rendition_tmpl, "")?
+                self.render_content(&note_path_ext, &CFG.exporter_rendition_tmpl, "")?
                     .as_bytes(),
             )?;
         } else {
@@ -445,7 +452,7 @@ impl Note<'_> {
                 .open(&html_path)?;
             // Write HTML rendition.
             handle.write_all(
-                self.render_content(&note_path, &CFG.exporter_rendition_tmpl, "")?
+                self.render_content(&note_path_ext, &CFG.exporter_rendition_tmpl, "")?
                     .as_bytes(),
             )?;
         };
@@ -460,10 +467,12 @@ impl Note<'_> {
     /// template.
     pub fn render_content(
         &mut self,
-        // From this path we only need the extension to determine the
-        // Markup language.
-        file_path: &Path,
+        // We need the file extension to determine the
+        // markup language.
+        file_ext: &str,
+        // HTML template for this rendition.
         tmpl: &str,
+        // If not empty, Java-Script code to inject in output.
         java_script: &str,
     ) -> Result<String, anyhow::Error> {
         // Deserialize.
@@ -478,7 +487,7 @@ impl Note<'_> {
         };
 
         // Render the markup language.
-        let html_output = match MarkupLanguage::from(ext, &file_path) {
+        let html_output = match MarkupLanguage::from(ext, &file_ext) {
             MarkupLanguage::Markdown => Self::render_md_content(input),
             MarkupLanguage::RestructuredText => Self::render_rst_content(input)?,
             MarkupLanguage::Html => input.to_string(),

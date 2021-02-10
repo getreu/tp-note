@@ -44,7 +44,16 @@ impl Viewer {
     /// Set up the file watcher, start the event/html server and launch web browser.
     /// Returns when the use closes the web browser.
     fn run2(file: PathBuf) -> Result<(), anyhow::Error> {
-        match (ARGS.view, MarkupLanguage::from(None, &file)) {
+        match (
+            ARGS.view,
+            MarkupLanguage::from(
+                None,
+                file.extension()
+                    .unwrap_or_default()
+                    .to_str()
+                    .unwrap_or_default(),
+            ),
+        ) {
             // The file with this file extension is exempted from being viewed.
             // We quit here and do not start the viewer.
             (false, MarkupLanguage::Unknown) => return Ok(()),

@@ -184,7 +184,16 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
 
         Ok(new_fqfn)
     } else {
-        let extension_is_known = !matches!(MarkupLanguage::from(None, &path), MarkupLanguage::None);
+        let extension_is_known = !matches!(
+            MarkupLanguage::from(
+                None,
+                path.extension()
+                    .unwrap_or_default()
+                    .to_str()
+                    .unwrap_or_default()
+            ),
+            MarkupLanguage::None
+        );
 
         if extension_is_known {
             // SYNCHRONIZE FILENAME

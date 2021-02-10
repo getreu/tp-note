@@ -276,11 +276,21 @@ impl ServerThread {
             SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2
         );
 
+        // Extension determines markup language when rendering.
+        let file_path_ext = self
+            .file_path
+            .extension()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default();
+
+        // Render.
         match Note::from_existing_note(&self.file_path).and_then(|mut note| {
-            note.render_content(&self.file_path, &CFG.viewer_rendition_tmpl, &js)
+            note.render_content(file_path_ext, &CFG.viewer_rendition_tmpl, &js)
         }) {
             Ok(s) => Ok(s),
             Err(e) => {
+                // Render error page providing all information we have.
                 let mut context = tera::Context::new();
                 context.insert("noteError", &e.to_string());
                 context.insert("file", &self.file_path.to_str().unwrap_or_default());

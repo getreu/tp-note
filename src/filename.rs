@@ -238,17 +238,14 @@ impl MarkupLanguage {
     }
 
     ///
-    /// Is `extension` or the file extension of `path` listed in one of the known
-    /// file extension lists?
+    /// Is `extension` or the file extension of `note_path_ext` listed in one of
+    /// the known file extension lists?
     #[inline]
-    pub fn from(extension: Option<&str>, path: &Path) -> Self {
+    pub fn from(extension: Option<&str>, note_path_ext: &str) -> Self {
         let file_extension = if let Some(ext) = extension {
             ext
         } else {
-            path.extension()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default()
+            note_path_ext
         };
 
         Self::new(file_extension)
