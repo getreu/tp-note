@@ -430,7 +430,7 @@ synchronization).
 :   Print _Tp-Note_'s version and exit. When combined with '`--debug`',
     additional technical details are printed.
 
-**-x** *FILE*, **\--export**=*DIRECTORY*
+**-x** *DIRECTORY*, **\--export**=*DIRECTORY*
 
 :   Prints the note as HTML-rendition into _DIRECTORY_. '`-x -`' prints to
     _stdout_. The empty string, e.g. '`--export= `' or '`-x ""`', defaults to
