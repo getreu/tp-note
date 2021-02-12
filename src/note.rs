@@ -14,8 +14,11 @@ use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use anyhow::{anyhow, Context, Result};
 use parse_hyperlinks::renderer::text_links2html;
+#[cfg(feature = "viewer")]
 use pulldown_cmark::{html, Options, Parser};
+#[cfg(feature = "viewer")]
 use rst_parser::parse;
+#[cfg(feature = "viewer")]
 use rst_renderer::render_html;
 use std::default::Default;
 use std::env;
@@ -374,6 +377,9 @@ impl Note<'_> {
         Ok(fm)
     }
 
+    /// Renders `self` into HTML and saves the result in `export_dir`. If
+    /// `export_dir` is the empty string, the directory of `note_path` is
+    /// used. `-` dumps the rendition to STDOUT.
     pub fn render_and_write_content(
         &mut self,
         note_path: &Path,
@@ -488,7 +494,9 @@ impl Note<'_> {
 
         // Render the markup language.
         let html_output = match MarkupLanguage::from(ext, &file_ext) {
+            #[cfg(feature = "viewer")]
             MarkupLanguage::Markdown => Self::render_md_content(input),
+            #[cfg(feature = "viewer")]
             MarkupLanguage::RestructuredText => Self::render_rst_content(input)?,
             MarkupLanguage::Html => input.to_string(),
             _ => Self::render_txt_content(input),
@@ -507,6 +515,7 @@ impl Note<'_> {
     }
 
     #[inline]
+    #[cfg(feature = "viewer")]
     /// Markdown renderer.
     fn render_md_content(markdown_input: &str) -> String {
         // Set up options and parser. Besides the CommonMark standard
@@ -521,6 +530,7 @@ impl Note<'_> {
     }
 
     #[inline]
+    #[cfg(feature = "viewer")]
     /// RestructuredText renderer.
     fn render_rst_content(rest_input: &str) -> Result<String, anyhow::Error> {
         // Note, that the current rst renderer requires files to end with a new line.

@@ -742,8 +742,9 @@ lazy_static! {
     };
 }
 
+#[cfg(feature = "viewer")]
 lazy_static! {
-    /// Shall we launch the internal server and the external browser?
+    /// Shall we launch the internal http server and the external browser?
     pub static ref LAUNCH_VIEWER: bool = {
         !ARGS.batch && ARGS.export.is_none() && !*RUNS_ON_CONSOLE &&
         match (ARGS.edit, ARGS.view, CFG.viewer_enabled) {
@@ -756,6 +757,14 @@ lazy_static! {
             (true, true, false) => true,
             (true, true, true) => true,
         }
+    };
+}
+
+#[cfg(not(feature = "viewer"))]
+lazy_static! {
+    /// Shall we launch the internal http server and the external browser?
+    pub static ref LAUNCH_VIEWER: bool = {
+        false
     };
 }
 

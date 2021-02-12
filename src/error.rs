@@ -3,6 +3,7 @@
 #[cfg(feature = "message-box")]
 extern crate msgbox;
 
+#[cfg(feature = "message-box")]
 use crate::config::ARGS;
 use crate::config::CONFIG_PATH;
 #[cfg(feature = "message-box")]
