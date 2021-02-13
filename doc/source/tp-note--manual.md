@@ -279,9 +279,29 @@ disk.
 
 ## Note taking for system administrators (and console lovers)
 
-As _Tp-Note_ makes extensive use of the clipboard, it mainly targets desktop systems running
-a graphical environment. But also when working on the console _Tp-Note_ can be useful.
-Here some typical workflows:
+As _Tp-Note_ makes extensive use of the clipboard, it mainly targets desktop
+systems running a graphical environment. But also when working on the console
+_Tp-Note_ can be useful with its built-in clipboard simulation: Instead of
+copying the content into your clipboard, pipe it into _Tp-Note_:
+
+```shell
+echo  "Some clipboard content" | tp-note
+```
+
+### Installation on headless systems
+
+On headless systems, it is recommended to compile _Tp-Note_ without its
+`viewer` and `message-box` features:
+
+```shell
+cargo install --no-default-features tp-note
+sudo cp ~/.cargo/bin/tp-note /usr/local/bin
+```
+
+### Typical workflows
+
+The following examples work with the full featured version of _Tp-Note_ as
+well as with the `--no-default-features` console-only version.
 
 * Document a downloaded file:
 
@@ -331,7 +351,10 @@ Here some typical workflows:
   curl 'https://blog.getreu.net' | pandoc -f html -t markdown_strict | tp-note
   ```
 
-* Download a webpage and keep the webpage's metadata, e.g. title, date... :
+* Download a webpage while preserving its metadata:
+
+  Same as above, but the following preserves the webpage's metadata, e.g.
+  title, author, date... :
 
   ```shell
   curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
@@ -399,7 +422,7 @@ Here some typical workflows:
 
       # Draft
 
-* Synchronize filename with header of all note files in the current directory:
+* Synchronize filenames and headers of all note files in the current directory:
 
   ```shell
   find . -type f -name "*.md" -exec tp-note --batch {} \; >/dev/null
@@ -417,6 +440,12 @@ Here some typical workflows:
   tp-note --export= ./my_notes/20210209-debug--Note.md
   ```
 
+  or, even shorter:
+
+  ```shell
+  tp-note -o '' ./my_notes/20210209-debug--Note.md
+  ```
+
 * Generate a PDF rendition of an existing note file:
 
   Install the `wkhtmltopdf`-tool:
@@ -430,6 +459,20 @@ Here some typical workflows:
   ```shell
   tp-note -o - 20210209-debug--Note.md | wkhtmltopdf - 20210209-debug--Note.md.pdf
   ```
+
+* View and follow hyperlinks in notes
+
+  When no graphical environment is available, _Tp-Note_ disables the viewer
+  feature with its internal HTTP server. However, in order to follow
+  comfortably hyperlinks in you notes, you can always use _Tp-Note_'s HTML
+  export:
+
+  ```shell
+  tp-note -o - 20210122-my_note.md | lynx --stdin
+  ```
+
+  The above also works in case _Tp-Note_ was compiled with
+  `--no-default-features` which is recommended for headless systems.
 
 
 

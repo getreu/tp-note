@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 
 ./10-clear-all-builds
 ./11-test

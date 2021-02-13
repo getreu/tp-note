@@ -94,7 +94,7 @@ Repository:
 
 * Installer package for Windows:
 
-  [tp-note-1.10.1-x86_64.msi](/projects/tp-note/_downloads/wix/tp-note-1.10.1-x86_64.msi)
+  [tp-note-1.10.2-x86_64.msi](/projects/tp-note/_downloads/wix/tp-note-1.10.2-x86_64.msi)
 
   As this early version of the Windows installer is not signed yet, Windows
   will show the error message “Windows protected your PC”. As a work-around,
@@ -107,7 +107,7 @@ Repository:
 
 * Package compiled for Debian 10+ (Buster):
 
-  [x86_64-unknown-linux-gnu/debian/tp-note_1.10.1_amd64.deb](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.10.1_amd64.deb)
+  [x86_64-unknown-linux-gnu/debian/tp-note_1.10.2_amd64.deb](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_1.10.2_amd64.deb)
 
 ### Various binaries for Windows, MacOS and Linux
 
@@ -152,7 +152,7 @@ Repository:
 Depending on the availability of installer packages for your operating system,
 the installation process is more or less automated. For Windows users the fully
 automated installation package
-[tp-note-1.10.1-x86_64.msi](/projects/tp-note/_downloads/wix/tp-note-1.10.1-x86_64.msi)
+[tp-note-1.10.2-x86_64.msi](/projects/tp-note/_downloads/wix/tp-note-1.10.2-x86_64.msi)
 is available. For more information, please consult the [Distribution section](#distribution)
 above and the [Installation
 section](/projects/tp-note/tp-note--manual.html#installation)
@@ -222,14 +222,27 @@ compile _Tp-Note_ yourself.
        cargo install tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-  If you can without error message popup boxes (for example on a headless system),
+  If you can do without error message popup boxes (for example on a headless system),
   no GTK is required. In this case all error messages are dumped on the console
-  from where you started _Tp-Note_ in `stderr`.
+  from where you started _Tp-Note_ into `stderr`.
+
+       cargo install --no-default-features --features viewer tp-note
+       sudo cp ~/.cargo/bin/tp-note /usr/local/bin
+
+  In case minimal binary size with minimal dependencies matters to you, it is
+  possible to compile _Tp-Note_ without the message-box and the viewer
+  feature. This spares roughly half of the dependencies and 70% of the binary
+  size compared to the full featured version.
 
        cargo install --no-default-features tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-  See also the user manual for a detailed installation description.
+  Even though, the no-viewer version is deprived of it's internal HTTP server
+  and markup renderer, limited HTML export is always available (see: `tp-note
+  --export=`). This way you can comfortably follow hyperlinks in your
+  note files with any text based web browser, e.g. `lynx`.
+
+  See also the user manual for a more detailed installation description.
 
 
 This project follows [Semantic Versioning](https://semver.org/).
