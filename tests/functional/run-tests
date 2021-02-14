@@ -218,7 +218,7 @@ fi
 
 
 
-## Test 9: Create 2 notes with same header 
+## Test 9: Create 2 notes with same header
 
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch \
@@ -243,7 +243,7 @@ fi
 
 
 
-## Test 10: Export note 
+## Test 10: Export note
 INPUT_FILENAME="$PWD/123-abc--edf.md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 ---
@@ -274,6 +274,36 @@ then
     rm "$OUTPUT_FILENAME"
 else
     echo Commandline test 10 failed.
+    exit 1
+fi
+
+
+
+
+## Test 11:  Compilation --no-default-features --features viewer
+
+cargo check --no-default-features --features viewer >/dev/null 2>&1
+
+if [ $? -eq 0 ]
+then
+    echo Commandline test 11 succeeded.
+else
+    echo Commandline test 11 failed.
+    exit 1
+fi
+
+
+
+
+## Test 12:  Compilation --no-default-features
+
+cargo check --no-default-features >/dev/null 2>&1
+
+if [ $? -eq 0 ]
+then
+    echo Commandline test 12 succeeded.
+else
+    echo Commandline test 12 failed.
     exit 1
 fi
 
