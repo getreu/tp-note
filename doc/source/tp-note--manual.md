@@ -31,7 +31,7 @@ use another markup language than Markdown, please consult the [man-page] for
 more technical details. It also explains how to change _Tp-Note_'s default text
 editor.
 
-The project is hosted on Github:
+The project is hosted on Gitlab:
 [getreu/tp-note](https://gitlab.com/getreu/tp-note). The project's webpage is on
 [http://blog.getreu.net](http://blog.getreu.net/projects/tp-note/).
 The documentation of this project is dived into tow parts:
@@ -443,10 +443,10 @@ well as with the `--no-default-features` console-only version.
   or, even shorter:
 
   ```shell
-  tp-note -o '' ./my_notes/20210209-debug--Note.md
+  tp-note -x '' ./my_notes/20210209-debug--Note.md
   ```
 
-* Generate a PDF rendition of an existing note file:
+* Generate a PDF rendition of an existing note file :
 
   Install the `wkhtmltopdf`-tool:
 
@@ -454,21 +454,30 @@ well as with the `--no-default-features` console-only version.
   sudo apt install wkhtmltopdf
   ```
 
-  Generate the PDF rendition:
+  Generate the PDF rendition of the existing note `20210122-my--Note.md`:
 
   ```shell
-  tp-note -o - 20210209-debug--Note.md | wkhtmltopdf - 20210209-debug--Note.md.pdf
+  tp-note -x - 20210122-my--Note.md | wkhtmltopdf - 20210209-debug--Note.md.pdf
   ```
 
-* View and follow hyperlinks in notes
+* View and follow hyperlinks in a note file:
 
   When no graphical environment is available, _Tp-Note_ disables the viewer
   feature with its internal HTTP server. However, in order to follow
   comfortably hyperlinks in you notes, you can always use _Tp-Note_'s HTML
-  export:
+  export.
+
+  Install the text-based web browser `lynx`:
 
   ```shell
-  tp-note -o - 20210122-my_note.md | lynx --stdin
+  sudo apt install lynx
+  ```
+
+  Convert the existing note `20210122-my_note.md` into HTML and
+  open the rendition with `lynx`:
+
+  ```shell
+  tp-note -x - 20210122-my_note.md | lynx --stdin
   ```
 
   The above also works in case _Tp-Note_ was compiled with

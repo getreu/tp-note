@@ -222,27 +222,33 @@ compile _Tp-Note_ yourself.
        cargo install tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-  If you can do without error message popup boxes (for example on a headless system),
-  no GTK is required. In this case all error messages are dumped on the console
-  from where you started _Tp-Note_ into `stderr`.
+
+   In case you experience compilation errors in dependend crates, replace
+   `cargo install tp-note` with the following:
+
+       cargo install --locked tp-note
+
+   If you can do without error message popup boxes (for example on a headless
+   system), no GTK is required. In this case all error messages are dumped on
+   the console from where you started _Tp-Note_ into `stderr`.
 
        cargo install --no-default-features --features viewer tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-  In case minimal binary size with minimal dependencies matters to you, it is
-  possible to compile _Tp-Note_ without the message-box and the viewer
-  feature. This spares roughly half of the dependencies and 70% of the binary
-  size compared to the full featured version.
+   In case minimal binary size with minimal dependencies matters to you, it
+   is possible to compile _Tp-Note_ without the message-box and the viewer
+   feature. This spares roughly half of the dependencies and 70% of the
+   binary size compared to the full featured version.
 
        cargo install --no-default-features tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-  Even though, the no-viewer version is deprived of it's internal HTTP server
-  and markup renderer, limited HTML export is always available (see: `tp-note
-  --export=`). This way you can comfortably follow hyperlinks in your
-  note files with any text based web browser, e.g. `lynx`.
+   Even though, the no-viewer version is deprived of it's internal HTTP
+   server and markup renderer, limited HTML export is always available (see:
+   `tp-note --export=`). This way you can comfortably follow hyperlinks in
+   your note files with any text based web browser, e.g. `lynx`.
 
-  See also the user manual for a more detailed installation description.
+   See also the user manual for a more detailed installation description.
 
 
 This project follows [Semantic Versioning](https://semver.org/).
