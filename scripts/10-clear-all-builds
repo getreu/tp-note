@@ -1,8 +1,8 @@
 #!/bin/sh
 
 rustup update
-cargo upgrade
 cargo update
+#cargo upgrade
 
 rm -r ../target
 rm -r ../doc/build

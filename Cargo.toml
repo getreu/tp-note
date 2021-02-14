@@ -86,6 +86,9 @@ httpdate = { version = "0.3.2", optional = true }
 clipboard = "0.5.0"
 sanitize-filename-reader-friendly = "1.1.0"
 # sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
+# Workaround downstream bug: https://github.com/myrrlyn/funty/issues/3
+funty= "=1.1.0"
+
 
 [dependencies.tera]
 version = "1.6.1"
