@@ -90,25 +90,29 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
                   Can not synchronize the note's filename!",
     )?;
 
-    if ARGS.debug {
-        eprintln!("*** Debug: Applying template `tmpl_sync_filename`.");
-    };
-    let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename).context(
-        "Failed to render the template `tmpl_sync_filename` in config file. \
-                  Can not synchronize the note's filename!",
-    )?;
-
-    let new_fqfn = if !filename::exclude_copy_counter_eq(&path, &new_fqfn) {
-        let new_fqfn = filename::find_unused(new_fqfn).context(
-            "Can not rename the note's filename to be in sync with its\n\
-            YAML header.",
-        )?;
-        // rename file
-        fs::rename(&path, &new_fqfn)?;
+    let new_fqfn = if !ARGS.no_sync {
         if ARGS.debug {
-            eprintln!("*** Debug: File renamed to {:?}", new_fqfn);
+            eprintln!("*** Debug: Applying template `tmpl_sync_filename`.");
         };
-        new_fqfn
+        let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename).context(
+            "Failed to render the template `tmpl_sync_filename` in config file. \
+                  Can not synchronize the note's filename!",
+        )?;
+
+        if !filename::exclude_copy_counter_eq(&path, &new_fqfn) {
+            let new_fqfn = filename::find_unused(new_fqfn).context(
+                "Can not rename the note's filename to be in sync with its\n\
+            YAML header.",
+            )?;
+            // rename file
+            fs::rename(&path, &new_fqfn)?;
+            if ARGS.debug {
+                eprintln!("*** Debug: File renamed to {:?}", new_fqfn);
+            };
+            new_fqfn
+        } else {
+            path.to_path_buf()
+        }
     } else {
         path.to_path_buf()
     };

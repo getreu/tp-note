@@ -600,6 +600,9 @@ pub struct Args {
     /// Lets web server listen to a specific port
     #[structopt(long, short = "p")]
     pub port: Option<u16>,
+    /// Disables filename synchronization
+    #[structopt(long, short = "n")]
+    pub no_sync: bool,
     /// Launches only the browser, no editor
     #[structopt(long, short = "v")]
     pub view: bool,

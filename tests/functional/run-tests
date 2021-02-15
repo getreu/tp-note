@@ -310,4 +310,28 @@ fi
 
 
 
+## Test 13: Do not synchronize meta data and filename
+INPUT_FILENAME="$PWD/123-abc--edf.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: "xxx"
+subtitle: "yyy"
+...
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch --no-sync --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/123-abc--edf.md"
+
+if diff "$OUTPUT_FILENAME"  "test1-synchronize-expected-output"
+then
+    echo Commandline test 13 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 13 failed.
+    exit 1
+fi
+
 exit 0

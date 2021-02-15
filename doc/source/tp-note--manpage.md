@@ -417,6 +417,16 @@ synchronization).
 :   Set server port the web browser connects to, to the specified value.
     If not given, a random free port is chosen automatically.
 
+**-n**, **\--no-sync**
+
+:   Whenever _Tp-Note_ opens a note file, it synchronizes its YAML-metadata
+    with its filename. '`--no-sync`' disables the synchronization. This is
+    mainly useful in scripts for testing '`.md`'-files. When
+    '`tp-note -n -b <FILE>`' returns the code '`0`', the note file has a valid
+    YAML header with at least one '`title:`' field. In addition, when
+    '`tp-note -n -b -x - <FILE>`' returns the code '`0`', the note's body can
+    be rendered without error.
+
 **-v**, **\--view**
 
 :   View only mode: do not open the external text editor. This flag instructs
@@ -458,7 +468,10 @@ document structure as shown in the figure below.
 
 The YAML front matter starts at the beginning of the document with '`---`'
 and ends with '`...`' or '`---`'. Note that according to the YAML standard,
-string-literals are always encoded as JSON strings.
+string-literals are always encoded as JSON strings. By convention, a valid
+note-file has at least one YAML field named '`title:`' (the name of this
+compulsory field is defined by the '`tmpl_compulsory_field_content`'
+variable in the configuration file and can be changed there).
 
 There is no restriction about the markup language used in the note's text body.
 However, the default templates assume that Markdown and the file extension
