@@ -257,6 +257,10 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
         args_list.push(args);
     }
 
+    // Move and make immutable.
+    let args_list = args_list;
+    let executable_list = executable_list;
+
     // Launch editor/viewer.
     if ARGS.debug {
         eprintln!("*** Debug: Opening file {:?}", path);
