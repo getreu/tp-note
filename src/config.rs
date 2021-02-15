@@ -404,8 +404,6 @@ pub const COPY_COUNTER_MAX: usize = 400;
 /// Launches a filewatcher, (Markdown)-renderer, html server
 /// and a web-browser to view the current note file.
 /// To disable this feature, set to false.
-/// TODO: Under Windows only Firefox is working at
-/// the moment. This is why the switch is off by default.
 const VIEWER_ENABLED: bool = true;
 
 /// How often should the file watcher check for changes?

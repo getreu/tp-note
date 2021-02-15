@@ -1010,3 +1010,35 @@ previewer.
 [^4]: Versions for other operating systems and a Debian package are
 [available here](https://blog.getreu.net/projects/tp-note/_downloads/).
 
+
+### Configure the text-based file manager MidnightCommander
+
+The Ncurses library based file manager _MidnightCommander_ `mc` enjoys great
+popularity among people working on the console. The following configures
+`mc`'s `[F3]`-key to open `.md` files for viewing. This is where _Tp-Note_
+generates the HTML rendition of the note file and opens the rendition with
+the _Lynx_ web browser. The `[Enter]`-key runs _Tp-Note_ in editing mode.
+
+First install the _Lynx_ web browser:
+
+    sudo apt install lynx
+
+Edit `mc`'s configuration file `/etc/mc/mc.ext`:
+
+    sudo nano /etc/mc/mc.ext
+
+Replace the line `default/*` with:
+
+    shell/i/.md
+        Open=tp-note %f
+        View=if HTML=`tp-note -b -x - %f`; then (echo $HTML | lynx --stdin); else less %f; fi
+
+    default/*
+
+Restart all instances of `mc` :
+
+    sudo killall mc
+    mc
+
+To test the configuration, navigate to some `.md` note file and
+press `[F3]` or `[Enter]`.

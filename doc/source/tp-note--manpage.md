@@ -905,7 +905,14 @@ Save the modified configuration file.  Next time you launch _Tp-Note_, the
 _Mark Text_-editor will open with your note.
 
 
-## Change the markup language
+## Change the default markup language
+
+_Tp-Note_ identifies the note's markup language by its file extension and
+renders the content accordingly (see '`note_file_extension_*`' variables).
+This ensure interoperability between authors that use different markup
+languages. Although _Tp-Note_ is flexible in opening existing note files, new
+notes are always created in the same markup language, which is by default
+_Markdown_. How to change this is shown in the following section.
 
 ### Change the way how new notes are created
 
@@ -1041,6 +1048,20 @@ viewer_error_tmpl = '''<!DOCTYPE html>
 </html>
 '''
 ```
+
+
+## Customize the built-in HTML exporter
+
+Customizing _Tp-Note_'s HTML export function works the same way than
+customizing the built-in viewer. There are some slight differences though:
+The role of the '`viewer_rendition_tmpl`' template - discussed above - is
+taken over by the '`exporter_rendition_tmpl`' template. In this template the
+same _Tera_ variables are available, except '`{{ noteJS }}`' which does not
+make sense in this context. As the exporter prints possible rendition error
+messages on the console, there is no equivalent to the '`viewer_error_tmpl`'
+template.
+
+
 
 # RESOURCES
 
