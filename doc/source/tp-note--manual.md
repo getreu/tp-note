@@ -3,7 +3,7 @@ title:  "Tp-Note: save and edit your clipboard content as a note file"
 subtitle: "Organize your notes with your favourite editor and markup-language"
 author: "Jens Getreu"
 date:   "2020-11-01"
-version: "1.10.3"
+version: "1.10.4"
 ---
 
 Markup languages like *Markdown* [^1] are perfectly suited for fast
@@ -308,13 +308,13 @@ well as with the `--no-default-features` console-only version.
   Download the file
   [i3-extensions.zip](http://blog.getreu.net/_downloads/i3-extensions.zip):
 
-  ```shell
+  ```bash
   wget "http://blog.getreu.net/_downloads/i3-extensions.zip"
   ```
 
   Document from where you downloaded the file:
 
-  ```shell
+  ```bash
   echo  "[download](<http://blog.getreu.net/_downloads/i3-extensions.zip>)" | tp-note i3-extensions.zip
   ```
 
@@ -341,13 +341,13 @@ well as with the `--no-default-features` console-only version.
 
   Install `pandoc` and `curl`:
 
-  ```shell
+  ```bash
   sudo apt install pandoc curl
   ```
 
   Download and convert:
 
-  ```shell
+  ```bash
   curl 'https://blog.getreu.net' | pandoc -f html -t markdown_strict | tp-note
   ```
 
@@ -356,7 +356,7 @@ well as with the `--no-default-features` console-only version.
   Same as above, but the following preserves the webpage's metadata, e.g.
   title, author, date... :
 
-  ```shell
+  ```bash
   curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
   ```
 
@@ -365,7 +365,7 @@ well as with the `--no-default-features` console-only version.
 
 * Generate a note for a given content with YAML header:
 
-  ```shell
+  ```bash
   echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tp-note
   ```
 
@@ -386,7 +386,7 @@ well as with the `--no-default-features` console-only version.
 
 * Reformat the header of a note file:
 
-  ```shell
+  ```bash
   mv "20200921-My Note.md" "20200921-My Note-(1).md"
   cat "20200921-My Note-(1).md" | tp-note --batch
   ```
@@ -399,65 +399,67 @@ well as with the `--no-default-features` console-only version.
   file and can be changed there. If you want to use a different file editor
   just for one-shot, type:
 
-  ```shell
+  ```bash
   nvim "$(tp-note --batch)"
   ```
 
 * Create a new note overwriting the template's default for `subtitle`:
 
-  ```shell
+  ```bash
   cd dev
   echo -e "---\nsubtitle: Draft\n---\n# Draft" | tp-note
   ```
 
   creates the note file `20200925-dev--Draft.md` with the content:
 
-      ---
-      title:      "dev"
-      subtitle:   "Draft"
-      author:     "getreu"
-      date:       "2020-09-25"
-      lang:       "en_GB.UTF-8"
-      ---
+  ```yaml
+  ---
+  title:      "dev"
+  subtitle:   "Draft"
+  author:     "getreu"
+  date:       "2020-09-25"
+  lang:       "en_GB.UTF-8"
+  ---
 
-      # Draft
+  # Draft
+  ```
 
 * Synchronize filenames and headers of all note files in the current directory:
 
-  ```shell
+  ```bash
   find . -type f -name "*.md" -exec tp-note --batch {} \; >/dev/null
   ```
 
 * Generate an HTML rendition of an existing note file in the same directory:
 
-  ```shell
-  tp-note --export=./my_notes ./my_notes/20210209-debug--Note.md
+  ```bash
+  tp-note --export='./my_notes' './my_notes/20210209-debug--Note.md'
   ```
 
   or, equivalent but shorter:
 
-  ```shell
-  tp-note --export= ./my_notes/20210209-debug--Note.md
+  ```bash
+  tp-note --export= './my_notes/20210209-debug--Note.md'
   ```
 
   or, even shorter:
 
-  ```shell
-  tp-note -x '' ./my_notes/20210209-debug--Note.md
+  ```bash
+  tp-note -x '' './my_notes/20210209-debug--Note.md'
   ```
 
 * Generate a PDF rendition of an existing note file :
 
   Install the `wkhtmltopdf`-tool:
 
-  ```shell
+  ```bash
   sudo apt install wkhtmltopdf
   ```
 
   Generate the PDF rendition of the existing note `20210122-my--Note.md`:
 
-  ```shell
-  tp-note -x - 20210122-my--Note.md | wkhtmltopdf - 20210209-debug--Note.md.pdf
+  ```bash
+  tp-note -x - '20210122-my--Note.md' | wkhtmltopdf - '20210209-debug--Note.md.pdf'
   ```
 
 * View and follow hyperlinks in a note file:
@@ -469,15 +471,15 @@ well as with the `--no-default-features` console-only version.
 
   Install the text-based web browser `lynx`:
 
-  ```shell
+  ```bash
   sudo apt install lynx
   ```
 
   Convert the existing note `20210122-my_note.md` into HTML and
   open the rendition with `lynx`:
 
-  ```shell
-  tp-note -x - 20210122-my_note.md | lynx --stdin
+  ```bash
+  tp-note -x - '20210122-my_note.md' | lynx --stdin
   ```
 
   The above also works in case _Tp-Note_ was compiled with
