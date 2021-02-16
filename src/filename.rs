@@ -79,7 +79,7 @@ pub fn find_unused(p: PathBuf) -> Result<PathBuf, anyhow::Error> {
 
     // This only happens, when we have 99 copies already. Should never happen.
     if new_path.exists() {
-        return Err(anyhow!(format!(
+        return Err(anyhow!(
             "can not find unused filename in directory:\n\
             \t{}\n\
             (only 99 copies are allowed).",
@@ -87,7 +87,7 @@ pub fn find_unused(p: PathBuf) -> Result<PathBuf, anyhow::Error> {
                 .unwrap_or(Path::new(""))
                 .to_str()
                 .unwrap_or_default()
-        )));
+        ));
     }
 
     Ok(new_path)

@@ -190,7 +190,7 @@ impl Note<'_> {
         if (!CLIPBOARD.header.is_empty() && clipboard_fm.is_none())
             || (!STDIN.header.is_empty() && stdin_fm.is_none())
         {
-            return Err(anyhow!(format!(
+            return Err(anyhow!(
                 "invalid field(s) in the clipboard's YAML\n\
                      header or in the `stdin` input stream found.
                      {}{}{}{}{}{}",
@@ -216,7 +216,7 @@ impl Note<'_> {
                 } else {
                     ""
                 },
-            )));
+            ));
         };
 
         // Register clipboard front matter.
@@ -339,11 +339,11 @@ impl Note<'_> {
                     .count()
                     > 0
                 {
-                    return Err(anyhow!(format!(
+                    return Err(anyhow!(
                         "The `sort_tag` header variable contains forbidden character(s): sort_tag = \"{}\". \
                         Only numbers, `-` and `_` are allowed here.",
                         sort_tag
-                    )));
+                    ));
                 }
             };
         };
@@ -354,7 +354,7 @@ impl Note<'_> {
             let extension_is_unknown =
                 matches!(MarkupLanguage::new(extension), MarkupLanguage::None);
             if extension_is_unknown {
-                return Err(anyhow!(format!(
+                return Err(anyhow!(
                     "`file_ext=\"{}\"`, is not registered as a valid\n\
                         Tp-Note-file in the `note_file_extensions_*` variables\n\
                         in your configuration file:\n\
@@ -372,7 +372,7 @@ impl Note<'_> {
                     &CFG.note_file_extensions_html,
                     &CFG.note_file_extensions_txt,
                     &CFG.note_file_extensions_no_viewer,
-                )));
+                ));
             }
         };
 

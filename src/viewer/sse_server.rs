@@ -138,7 +138,7 @@ impl ServerThread {
                         break (method, path);
                     }
                 }
-                Err(e) => return Err(anyhow!(format!("can not parse request in buffer: {}", e))),
+                Err(e) => return Err(anyhow!("can not parse request in buffer: {}", e)),
             }
         };
 
@@ -240,7 +240,7 @@ impl ServerThread {
                     Err(e) => {
                         if e.kind() != ErrorKind::WouldBlock {
                             // Something bad happened.
-                            return Err(anyhow!(format!("error reading stream: {}", e)));
+                            return Err(anyhow!("error reading stream: {}", e));
                         }
                     }
                 }

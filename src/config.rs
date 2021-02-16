@@ -910,7 +910,7 @@ impl Hyperlink {
                 title: link_title.to_string(),
             })
         } else {
-            Err(anyhow!(format!("no hyperlink found in \"{}\"", input)))
+            Err(anyhow!("no hyperlink found in \"{}\"", input))
         }
     }
 }

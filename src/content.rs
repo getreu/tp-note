@@ -222,16 +222,14 @@ impl<'a> Content<'a> {
             }
             Err(e) => {
                 if Path::new(&new_fqfn).exists() {
-                    return Err(anyhow!(format!(
+                    return Err(anyhow!(
                         "Can not write new note, file exists:\n\
                          \t{:?}\n{}",
-                        new_fqfn, e
-                    )));
+                        new_fqfn,
+                        e
+                    ));
                 } else {
-                    return Err(anyhow!(format!(
-                        "Can not write file: {:?}\n{}",
-                        new_fqfn, e
-                    )));
+                    return Err(anyhow!("Can not write file: {:?}\n{}", new_fqfn, e));
                 }
             }
         }

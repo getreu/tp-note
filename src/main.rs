@@ -252,7 +252,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
         }
         args.push(
             path.to_str()
-                .ok_or_else(|| anyhow!(format!("Failed to convert the argument: {:?}", path)))?,
+                .ok_or_else(|| anyhow!("Failed to convert the argument: {:?}", path))?,
         );
         args_list.push(args);
     }
@@ -330,7 +330,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
             let ecode = child.wait().context("Failed to wait on editor to close.")?;
 
             if !ecode.success() {
-                return Err(anyhow!(format!(
+                return Err(anyhow!(
                     "The external file editor did not terminate gracefully:\n\
                      \t{}\n\
                      \n\
@@ -344,7 +344,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
                         "editor_args"
                     },
                     &*editor_args[i],
-                )));
+                ));
             };
 
             executable_found = true;
@@ -358,7 +358,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     }
 
     if !executable_found {
-        return Err(anyhow!(format!(
+        return Err(anyhow!(
             "None of the following external file editor\n\
              applications can be found on your system:\n\
              \t{:?}\n\
@@ -372,7 +372,7 @@ fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
                 true => "editor_console_args",
                 false => "editor_args",
             }
-        )));
+        ));
     };
 
     Ok(())
@@ -423,11 +423,11 @@ fn run() -> Result<PathBuf, anyhow::Error> {
     };
 
     if ARGS.export.is_some() && !path.is_file() {
-        return Err(anyhow!(format!(
+        return Err(anyhow!(
             "`--export` and `-x` need a <path> to an existing note file.\n\
               *    Current <path>:\n{}",
             path.as_os_str().to_str().unwrap_or_default()
-        )));
+        ));
     };
 
     match create_new_note_or_synchronize_filename(&path) {
