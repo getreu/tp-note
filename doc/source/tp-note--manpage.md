@@ -8,7 +8,8 @@ _Tp-Note_ - save and edit your clipboard content as a note file.
 
 # SYNOPSIS
 
-    tp-note [-V] [-b] [-d] [-v] [-c <config-file>] [<path>]
+    tp-note [-b] [-c <FILE>] [-d] [-e] [-p <NUM>] 
+            [-n] [-v] [-V] [-x <DIR>|''|'-'] [<DIR>|<FILE>]
 
 
 

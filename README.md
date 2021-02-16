@@ -222,21 +222,22 @@ compile _Tp-Note_ yourself.
        cargo install tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-
    In case you experience compilation errors in dependend crates, replace
    `cargo install tp-note` with the following:
 
        cargo install --locked tp-note
 
-   If you can do without error message popup boxes (for example on a headless
-   system), no GTK is required. In this case all error messages are dumped on
-   the console from where you started _Tp-Note_ into `stderr`.
+   **Building for Linux**
+
+   If - under Linux - you can do without error message popup boxes (for example
+   on a headless system), no GTK is required. In this case all error messages
+   are dumped on the console from where you started _Tp-Note_ into `stderr`.
 
        cargo install --no-default-features --features viewer tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
    In case minimal binary size with minimal dependencies matters to you, it
-   is possible to compile _Tp-Note_ without the message-box and the viewer
+   is possible to compile _Tp-Note_ without the `message-box` and the `viewer`
    feature. This spares roughly half of the dependencies and 70% of the
    binary size compared to the full featured version.
 
@@ -248,7 +249,21 @@ compile _Tp-Note_ yourself.
    `tp-note --export=`). This way you can comfortably follow hyperlinks in
    your note files with any text based web browser, e.g. `lynx`.
 
+   **Building for Windows**
+
+   When building for Windows, it does not make sense to exclude the
+   `message-box` feature, because - under Windows - it does not rely on the
+   GTK library. Instead it uses direct Windows-API calls for popping up alert
+   boxes. As these calls have no footprint in binary size or speed, always
+   keep the `message-box` feature compiled in.
+
+   If - for some reason - you need to reduce _Tp-Note_'s dependencies and
+   binary size, better exclude only its `viewer` feature:
+
+       cargo install --no-default-features --features message-box tp-note
+
    See also the user manual for a more detailed installation description.
+
 
 
 This project follows [Semantic Versioning](https://semver.org/).
