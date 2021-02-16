@@ -72,7 +72,7 @@ impl Note<'_> {
         if !&CFG.tmpl_compulsory_field_content.is_empty()
             && fm.map.get(&CFG.tmpl_compulsory_field_content).is_none()
         {
-            return Err(anyhow!(format!(
+            return Err(anyhow!(
                 "The document is missing a `{}:` field in its front matter:\n\
                  \n\
                  \t~~~~~~~~~~~~~~\n\
@@ -81,8 +81,9 @@ impl Note<'_> {
                  \t---\n\
                  \tsome text\n\
                  \t~~~~~~~~~~~~~~",
-                CFG.tmpl_compulsory_field_content, CFG.tmpl_compulsory_field_content
-            )));
+                CFG.tmpl_compulsory_field_content,
+                CFG.tmpl_compulsory_field_content
+            ));
         }
 
         Self::register_front_matter(&mut context, &fm);
@@ -316,10 +317,11 @@ impl Note<'_> {
                  Is one `---` missing?\n\n\
                  \t~~~~~~~~~~~~~~\n\
                  \t---\n\
-                 \ttitle: \"My note\"\n\
+                 \t{}: \"My note\"\n\
                  \t---\n\
                  \tsome text\n\
-                 \t~~~~~~~~~~~~~~"
+                 \t~~~~~~~~~~~~~~",
+                CFG.tmpl_compulsory_field_content
             ));
         };
 
