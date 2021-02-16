@@ -3,7 +3,7 @@ title:  "Tp-Note: save and edit your clipboard content as a note file"
 subtitle: "Organize your notes with your favourite editor and markup-language"
 author: "Jens Getreu"
 date:   "2020-11-01"
-version: "1.10.3"
+version: "1.10.4"
 ---
 
 Markup languages like *Markdown* [^1] are perfectly suited for fast
@@ -412,15 +412,17 @@ well as with the `--no-default-features` console-only version.
 
   creates the note file `20200925-dev--Draft.md` with the content:
 
-      ---
-      title:      "dev"
-      subtitle:   "Draft"
-      author:     "getreu"
-      date:       "2020-09-25"
-      lang:       "en_GB.UTF-8"
-      ---
-
-      # Draft
+  ```yaml
+  ---    
+  title:      "dev"    
+  subtitle:   "Draft"    
+  author:     "getreu"    
+  date:       "2020-09-25"    
+  lang:       "en_GB.UTF-8"    
+  ---    
+ 
+  # Draft    
+  ```    
 
 * Synchronize filenames and headers of all note files in the current directory:
 
