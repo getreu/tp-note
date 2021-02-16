@@ -424,8 +424,8 @@ synchronization).
     mainly useful in scripts for testing '`.md`'-files. When
     '`tp-note -n -b <FILE>`' returns the code '`0`', the note file has a valid
     YAML header with at least one '`title:`' field. In addition, when
-    '`tp-note -n -b -x - <FILE>`' returns the code '`0`', the note's body can
-    be rendered without error.
+    '`tp-note -n -b -x - <FILE>`' returns the code '`0`', the note's body was
+    rendered without error.
 
 **-v**, **\--view**
 
@@ -922,7 +922,7 @@ _Mark Text_-editor will open with your note.
 
 _Tp-Note_ identifies the note's markup language by its file extension and
 renders the content accordingly (see '`note_file_extension_*`' variables).
-This ensure interoperability between authors that use different markup
+This ensures interoperability between authors using different markup
 languages. Although _Tp-Note_ is flexible in opening existing note files, new
 notes are always created in the same markup language, which is by default
 _Markdown_. How to change this is shown in the following section.
@@ -1076,6 +1076,14 @@ template.
 
 
 
+# EXIT STATUS
+
+Normally the exit status is '`0`' when the note file was processed without
+error or '`1`' otherwise. If _Tp-Note_ can not read or write its
+configuration file, the exit status is '`5`'.
+
+
+
 # RESOURCES
 
 _Tp-Note_ it hosted on:
@@ -1088,7 +1096,7 @@ _Tp-Note_ it hosted on:
 
 # COPYING
 
-Copyright (C) 2016-2020 Jens Getreu
+Copyright (C) 2016-2021 Jens Getreu
 
 Licensed under either of
 
