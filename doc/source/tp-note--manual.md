@@ -775,15 +775,15 @@ To simplify the configuration we first place the binary _Tp-Note_
 in our `$PATH`:
 
 ```sh
-> cd /usr/local/bin
-> sudo wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note
-> sudo chmod 755 tp-note
+cd /usr/local/bin
+sudo wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note
+sudo chmod 755 tp-note
 ```
 
 _Debian_ and _Ubuntu_ user can also download [Debian/Ubuntu package] and install it with:
 
 ``` sh
-> sudo dpkg -i tp-note_X.X.X_amd64.deb
+sudo dpkg -i tp-note_X.X.X_amd64.deb
 ```
 
 
@@ -838,25 +838,25 @@ Search for `</actions>` and replace it with:
 
 ```xml
 <action>
-        <icon>accessories-text-editor</icon>
-        <name>Tp-Note</name>
-        <command>tp-note %f</command>
-        <description>Tp-Note</description>
-        <patterns>*</patterns>
-        <directories/>
-        <audio-files/>
-        <image-files/>
-        <other-files/>
-        <text-files/>
-        <video-files/>
+  <icon>accessories-text-editor</icon>
+  <name>Tp-Note</name>
+  <command>tp-note %f</command>
+  <description>Tp-Note</description>
+  <patterns>*</patterns>
+  <directories/>
+  <audio-files/>
+  <image-files/>
+  <other-files/>
+  <text-files/>
+  <video-files/>
 </action>
 <action>
-        <icon>accessories-text-editor</icon>
-        <name>Tp-Note View</name>
-        <command>tp-note -v %f</command>
-        <description>Tp-Note View</description>
-        <patterns>*.md;*.rst;*.adoc</patterns>
-        <text-files/>
+  <icon>accessories-text-editor</icon>
+  <name>Tp-Note View</name>
+  <command>tp-note -v %f</command>
+  <description>Tp-Note View</description>
+  <patterns>*.md;*.rst;*.adoc</patterns>
+  <text-files/>
 </action>
 </actions>
 ```
@@ -888,12 +888,12 @@ Search for `</actions>` and replace it with:
 
 ```xml
 <action>
-        <icon>accessories-text-editor</icon>
-        <name>Download URL here</name>
-        <command>curl $(xclip -o)| pandoc --standalone -f html -t markdown_strict+yaml_metadata_block+pipe_tables | tp-note  %F</command>
-        <description>Download URL</description>
-        <patterns>*</patterns>
-        <directories/>
+  <icon>accessories-text-editor</icon>
+  <name>Download URL here</name>
+  <command>curl $(xclip -o)| pandoc --standalone -f html -t markdown_strict+yaml_metadata_block+pipe_tables | tp-note  %F</command>
+  <description>Download URL</description>
+  <patterns>*</patterns>
+  <directories/>
 </action>
 </actions>
 ```
@@ -921,12 +921,12 @@ Search for `</actions>` and replace it with:
 
 ```xml
 <action>
-        <icon>accessories-text-editor</icon>
-        <name>Tp-Note Export</name>
-        <command>tp-note --export=- %f | wkhtmltopdf -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>
-        <description>Tp-Note Export</description>
-        <patterns>*.md;*.rst;*.adoc</patterns>
-        <text-files/>
+  <icon>accessories-text-editor</icon>
+  <name>Tp-Note Export</name>
+  <command>tp-note --export=- %f | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>
+  <description>Tp-Note Export</description>
+  <patterns>*.md;*.rst;*.adoc</patterns>
+  <text-files/>
 </action>
 </actions>
 
@@ -941,6 +941,14 @@ rm ~/.config/Thunar/uca.xml
 thunar
 ```
 
+In order to get the page number rendered in Debian Buster, you need to upgrade
+the package `wkhtmltopdf`:
+
+```shell
+sudo apt remove --purge wkhtmltopdf
+wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_amd64.deb
+sudo dpkg -i wkhtmltox_0.12.6-1.buster_amd64.deb
+```
 
 ```{=docbook}
 <?dbfo-need height="8cm" ?>

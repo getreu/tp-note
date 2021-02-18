@@ -512,7 +512,7 @@ sort-tag* of today. The '`{{ fm_title }}`' part is usually derived from the
 parent directory name omitting its own *sort-tag*.
 
 [^sort-tag]: The characters '`_`' and '`-`' are considered to be
-part of the *sort-tag* when they appear in last position.
+part of the *sort-tag* even when they appear in last position.
 
 A note's filename is in sync with its meta-data, when the following is true
 (slightly simplified, see the configuration file for the complete definition):
