@@ -1024,31 +1024,45 @@ previewer.
 ### Configure the text-based file manager MidnightCommander
 
 The Ncurses library based file manager _MidnightCommander_ `mc` enjoys great
-popularity among people working on the console. The following configures
-`mc`'s `[F3]`-key to open `.md` files for viewing. This is where _Tp-Note_
-generates the HTML rendition of the note file and opens the rendition with
-the _Lynx_ web browser. The `[Enter]`-key runs _Tp-Note_ in editing mode.
+popularity among people working on the console.
+As _Tp-Note_ stores the note's content in UTF-8 encoded plain text, `mc`
+can be used for full text searches in all note files of a directory.
+Start  the full text search with the keys `[Esc]` `[?]`.
 
-First install the _Lynx_ web browser:
+The following instructions configure `mc`'s `[F3]`-key to open `.md` files for
+viewing. This is where _Tp-Note_ generates the HTML rendition of the note
+file and opens the rendition with the _Lynx_ web browser. The `[Enter]`-key
+runs _Tp-Note_ in editing mode.
 
-    sudo apt install lynx
+1. First install the _Midnight Commander_ and the _Lynx_ web browser:
 
-Edit `mc`'s configuration file `/etc/mc/mc.ext`:
+   ```bash
+   sudo apt install mc lynx
+   ```
 
-    sudo nano /etc/mc/mc.ext
+2. Edit `mc`'s configuration file `/etc/mc/mc.ext`:
 
-Replace the line `default/*` with:
+   ```bash
+   sudo nano /etc/mc/mc.ext
+   ```
 
-    shell/i/.md
-        Open=tp-note %f
-        View=if HTML=`tp-note -b -n -x - %f`; then (echo $HTML | lynx --stdin); else less %f; fi
+3. Replace the line `default/*` with:
 
-    default/*
+   ```bash
+   shell/i/.md
+       Open=tp-note %f
+       View=if HTML=`tp-note -b -n -x - %f`; then (echo $HTML | lynx --stdin); else less    %f; fi
 
-Restart all instances of `mc` :
+   default/*
+   ```
 
-    sudo killall mc
-    mc
+4. Restart all instances of `mc` :
+
+   ```bash
+   sudo killall mc
+   mc
+   ```
 
 To test the configuration, navigate to some `.md` note file and
 press `[F3]` or `[Enter]`.
+
