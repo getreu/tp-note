@@ -662,46 +662,35 @@ In addition _Tp-Note_ defines the following variables:
 * '`{{ username }}`' is the content of the first non-empty environment
   variable: `LOGNAME`, `USER` or `USERNAME`.
 
-The following '`{{ fm_* }}`' variables are typically generated, when a content
-template is filled in with data: For example a field named '`title:`' in the
-content template '`tmpl_new_content`' will generate the variable '`fm_title`'
-which can then be used in the corresponding '`tmpl_new_filename`' filename
-template.
+The following '`{{ fm_* }}`' variables are typically generated, _after_ a
+content template was filled in with data: For example a field named '`title:`'
+in the content template '`tmpl_new_content`' will generate the variable
+'`fm_title`' which can then be used in the corresponding '`tmpl_new_filename`'
+filename template. '`{{ fm_* }}`' variables are generated dynamically. This 
+means, a YAmL front matter variable '`foo:`' in a note will generate a 
+'`{{ fm_foo }}`' template variable. On the other hand, a missing '`foo:`'
+will cause '`{{ fm_foo }}`' to be undefined.
 
 Please note that '`{{ fm_* }}`' variables are available in all filename
 templates and in the '`tmpl_copy_content`' content template only.
 
 * '`{{ fm_title }}`' is the '`title:`' as indicated in the YAML front matter of
-  the note (only available in filename-templates and in '`tmpl_copy_content`').
+  the note.
 
 * '`{{ fm_subtitle }}`' is the '`subtitle:`' as indicated in the YAML front
-  matter of the note (only available in filename-templates and in
-  '`tmpl_copy_content`').
+  matter of the note.
 
 * '`{{ fm_author }}`' is the '`author:`' as indicated in the YAML front matter
-  of the note (only available in filename-templates and in
-  '`tmpl_copy_content`')
+  of the note.
 
 * '`{{ fm_lang }}`' is the '`lang:`' as indicated in the YAML front matter of
-  the note (only available in filename-templates and in '`tmpl_copy_content`')
-
-* '`{{ fm_revision}}`' is  the '`revision:`' as indicated in the YAML front
-  matter of the note (only available in filename-templates and in
-  '`tmpl_copy_content`')
+  the note.
 
 * '`{{ fm_file_ext }}`' holds the value of the optional YAML header variable
-  '`file_ext:`' (e.g. '`file_ext: "rst"`'). This variable is only available with
-  the '`tmpl_sync_filename`', '`tmpl_copy_content`' and the
-  '`tmpl_copy_filename`' templates!  Note, that '`{{ fm_file_ext }}`' is
-  undefined, when the corresponding YAML header variable is not present in the
-  note's header.
+  '`file_ext:`' (e.g. '`file_ext: "rst"`').
 
 * '`{{ fm_sort_tag }}`': The sort variable as defined in the YAML front matter of
-  this note (e.g. '`sort_tag: "20200312-"`'). This variable is only available
-  in the '`tmpl_sync_filename`', '`tmpl_copy_content`' and the
-  '`tmpl_copy_filename`' templates! Note, that '`{{ fm_sort_tag }}`' is
-  undefined, when the corresponding YAML header variable is not present in the
-  note's header.
+  this note (e.g. '`sort_tag: "20200312-"`').
 
 * '`{{ fm_all }}`': is a collection (map) of all defined '`{{ fm_* }}`'
   variables.  It is used in the '`tmpl_copy_content`' template, typically in a
@@ -720,7 +709,7 @@ variable might contain the empty string '`""`'.
 
 ## Template filters
 
-In addtion to _Tera_'s [built-in
+In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), _Tp-Note_ comes with
 some additional filters, e.g.: '`tag`', '`trim_tag`', '`stem`', '`cut`', '`heading`',
 '`linkname`', '`linktarget`', '`linktitle`' and '`ext`'.
