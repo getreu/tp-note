@@ -917,13 +917,13 @@ Then edit the system-wide Thunar configuration file:
 
     sudo nano /etc/xdg/Thunar/uca.xml
 
-Search for `</actions>` and replace it with:
+Search for `</actions>` and replace it with: [^5]
 
 ```xml
 <action>
   <icon>accessories-text-editor</icon>
   <name>Tp-Note Export</name>
-  <command>tp-note --export=- %f | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>
+  <command>tp-note --export=- %f | sed 's_&lt;_\r&lt;_g' -  | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>
   <description>Tp-Note Export</description>
   <patterns>*.md;*.rst;*.adoc</patterns>
   <text-files/>
@@ -931,6 +931,7 @@ Search for `</actions>` and replace it with:
 </actions>
 
 ```
+
 
 The change becomes effective only after the user deletes his own configuration
 file in `~/.config/Thunar/uca.xml`:
@@ -1005,21 +1006,6 @@ Exec=tp-note -v %f
 The above creates the custom context-menu item _Tp-Note View_.
 
 
-[^1]: _Tp-Note_ is preconfigured to work with many well-known external text
-editors: e.g.: `code`, `atom`, `retext`, `geany`, `gedit`, `mousepad`,
-`leafpad`, `nvim-qt`, and `gvim` under Linux and `notpad++` and `notepad`
-under Windows.  To register your own text editor, please consult the man-page.
-For best user experience, I recommend text editors with internal markup
-previewer.
-
-[^2]: For a personalized setup read _Tp-Note_'s man-page.
-
-[^3]: If you use [Typora](https://typora.io/#download), make sure to install a
-  recent version (version >=0.9.89).
-
-[^4]: Versions for other operating systems and a Debian package are
-[available here](https://blog.getreu.net/projects/tp-note/_downloads/).
-
 
 ### Configure the text-based file manager MidnightCommander
 
@@ -1066,3 +1052,21 @@ runs _Tp-Note_ in editing mode.
 To test the configuration, navigate to some `.md` note file and
 press `[F3]` or `[Enter]`.
 
+---
+
+[^1]: _Tp-Note_ is preconfigured to work with many well-known external text
+      editors: e.g.: `code`, `atom`, `retext`, `geany`, `gedit`, `mousepad`,
+      `leafpad`, `nvim-qt`, and `gvim` under Linux and `notpad++` and `notepad`
+      under Windows.  To register your own text editor, please consult the
+      man-page.  For best user experience, I recommend text editors with
+      internal markup previewer.
+
+[^3]: If you use [Typora](https://typora.io/#download), make sure to install a
+      recent version (version >=0.9.89).
+
+[^4]: Versions for other operating systems and a Debian package are
+      [available here](https://blog.getreu.net/projects/tp-note/_downloads/).
+
+[^5]: The `sed` filter is a workaround a [bug in wkhtmltopdf](https://github.com/wkhtmltopdf/wkhtmltopdf/issues/4960).
+      Once this is solved, you can remove the `sed` command: `<command>tp-note --export=- %f | wkhtmltopdf ...`
+      ```
