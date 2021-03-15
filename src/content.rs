@@ -156,6 +156,18 @@ impl<'a> Content<'a> {
             }
         };
 
+        // The first character after the document start marker
+        // must be a whitespace.
+        if !content[fm_start..]
+            .chars()
+            .next()
+            // If none, make test fail.
+            .unwrap_or('x')
+            .is_whitespace()
+        {
+            return ("", content);
+        };
+
         // No need to search for an additional `\n` here, as we trim the
         // header anyway.
 
@@ -177,10 +189,19 @@ impl<'a> Content<'a> {
         // We advance 4 because `"\n---"` has 4 bytes.
         let mut body_start = fm_end + pattern_len;
 
-        // Skip potential newline.
-        if (content.len() > body_start) && (content.as_bytes()[body_start] == b'\n') {
-            body_start += 1;
-        };
+        // Skip spaces and tabs followed by one optional newline.
+        while let Some(c) = content[body_start..].chars().next() {
+            if c == ' ' || c == '\t' {
+                body_start += 1;
+            } else {
+                // Skip exactly one newline, if there is at least one.
+                if c == '\n' {
+                    body_start += 1;
+                }
+                // Exit loop.
+                break;
+            };
+        }
 
         (content[fm_start..fm_end].trim(), &content[body_start..])
     }
@@ -299,12 +320,26 @@ mod tests {
 
     #[test]
     fn test_split() {
+        // Document start marker is not followed by whitespace.
         let input_stream = String::from("---first\n---\nsecond\nthird");
+        let expected = ("", "---first\n---\nsecond\nthird");
+        let result = Content::split(&input_stream, false);
+        assert_eq!(result, expected);
+
+        // Document start marker is followed by whitespace.
+        let input_stream = String::from("---\nfirst\n---\nsecond\nthird");
         let expected = ("first", "second\nthird");
         let result = Content::split(&input_stream, false);
         assert_eq!(result, expected);
 
-        let input_stream = String::from("---\nfirst\n---\nsecond\nthird");
+        // Document start marker is followed by whitespace.
+        let input_stream = String::from("---\tfirst\n---\nsecond\nthird");
+        let expected = ("first", "second\nthird");
+        let result = Content::split(&input_stream, false);
+        assert_eq!(result, expected);
+
+        // Document start marker is followed by whitespace.
+        let input_stream = String::from("--- first\n---\nsecond\nthird");
         let expected = ("first", "second\nthird");
         let result = Content::split(&input_stream, false);
         assert_eq!(result, expected);
@@ -317,6 +352,12 @@ mod tests {
 
         // Body is kept as it is (not trimmed).
         let input_stream = String::from("---\nfirst\n---\n\nsecond\nthird\n");
+        let expected = ("first", "\nsecond\nthird\n");
+        let result = Content::split(&input_stream, false);
+        assert_eq!(result, expected);
+
+        // Header end marker line is trimmed right.
+        let input_stream = String::from("---\nfirst\n--- \t \n\nsecond\nthird\n");
         let expected = ("first", "\nsecond\nthird\n");
         let result = Content::split(&input_stream, false);
         assert_eq!(result, expected);
