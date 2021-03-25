@@ -15,7 +15,7 @@
    version="1.1"
    id="svg86"
    sodipodi:docname="tp-note.svg"
-   inkscape:version="1.0 (4035a4fb49, 2020-05-01)">
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15)">
   <metadata
      id="metadata92">
     <rdf:RDF>
@@ -24,7 +24,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -44,9 +44,9 @@
      inkscape:window-height="1041"
      id="namedview88"
      showgrid="false"
-     inkscape:zoom="15.465638"
-     inkscape:cx="12.420758"
-     inkscape:cy="21.664655"
+     inkscape:zoom="11.328329"
+     inkscape:cx="-2.7813028"
+     inkscape:cy="26.452373"
      inkscape:window-x="0"
      inkscape:window-y="18"
      inkscape:window-maximized="0"
@@ -64,12 +64,7 @@
        transform="translate(0 1028.4)"
        fill="#bdc3c7"
        id="path80"
-       style="fill:#f7f0d4;fill-opacity:1" />
-    <path
-       d="m21 1035.4-6-6v4c0 1.1 0.895 2 2 2h4z"
-       fill="#95a5a6"
-       id="path82"
-       style="fill:#c4bda8;fill-opacity:1" />
+       style="fill:#f3f2e4;fill-opacity:1" />
     <text
        xml:space="preserve"
        style="font-weight:bold;font-size:40px;line-height:1.25;font-family:Quicksand;-inkscape-font-specification:'Quicksand Bold';font-style:normal;font-stretch:normal;font-variant:normal;"
@@ -96,16 +91,21 @@
        x="8.2312737"
        style="font-weight:bold;font-size:14px;line-height:1.25;font-family:Quicksand;-inkscape-font-specification:'Quicksand Bold'"
        xml:space="preserve"><tspan
-         style="font-size:14px;fill:#6a6552;fill-opacity:1"
+         style="font-size:14px;fill:#316128;fill-opacity:1"
          y="1044.2048"
          x="8.2312737"
          id="tspan845"
          sodipodi:role="line">T</tspan></text>
+    <path
+       d="m21 1035.4-6-6v4c0 1.1 0.895 2 2 2h4z"
+       fill="#95a5a6"
+       id="path82"
+       style="fill:#c4bda8;fill-opacity:1" />
     <text
        id="text851"
        y="1046.1329"
        x="13.713947"
-       style="font-weight:bold;font-size:10px;line-height:1.25;font-family:Quicksand;-inkscape-font-specification:'Quicksand Bold';letter-spacing:0px;fill:#6a6552;fill-opacity:1"
+       style="font-weight:bold;font-size:10px;line-height:1.25;font-family:Quicksand;-inkscape-font-specification:'Quicksand Bold';letter-spacing:0px;fill:#316128;fill-opacity:1"
        xml:space="preserve"><tspan
          y="1046.1329"
          x="13.713947"

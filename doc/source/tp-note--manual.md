@@ -528,7 +528,7 @@ directory's name omitting its own *sort-tag*.
 # Installation
 
 Depending on the operating system, the installation process is more
-or less automated and can be divided up into two steps:
+or less automated and can be divided into two steps:
 
 1. [Minimum setup with no file manager integration]\
    This step consists of downloading _Tp-Note_'s binary and copying it to your hard-disk.
@@ -870,6 +870,10 @@ rm ~/.config/Thunar/uca.xml
 thunar
 ```
 
+```{=docbook}
+<?dbfo-need height="8cm" ?>
+```
+
 **Optional bonus: add a menu entry "Download webpage as Markdown"**
 
 In addition to the above, the following adds a context menu
@@ -907,9 +911,13 @@ rm ~/.config/Thunar/uca.xml
 thunar
 ```
 
+```{=docbook}
+<?dbfo-need height="8cm" ?>
+```
+
 **Optional bonus 2: add a menu entry "Export note as Pdf"**
 
-First install some helper programs:
+First install the `wkhtmltopdf` filter program: [^5]
 
     sudo apt install wkhtmltopdf
 
@@ -917,7 +925,7 @@ Then edit the system-wide Thunar configuration file:
 
     sudo nano /etc/xdg/Thunar/uca.xml
 
-Search for `</actions>` and replace it with: [^5]
+Search for `</actions>` and replace it with: [^6]
 
 ```xml
 <action>
@@ -942,14 +950,6 @@ rm ~/.config/Thunar/uca.xml
 thunar
 ```
 
-In order to get the page number rendered in Debian Buster, you need to upgrade
-the package `wkhtmltopdf`:
-
-```shell
-sudo apt remove --purge wkhtmltopdf
-wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_amd64.deb
-sudo dpkg -i wkhtmltox_0.12.6-1.buster_amd64.deb
-```
 
 ```{=docbook}
 <?dbfo-need height="8cm" ?>
@@ -1061,12 +1061,19 @@ press `[F3]` or `[Enter]`.
       man-page.  For best user experience, I recommend text editors with
       internal markup previewer.
 
-[^3]: If you use [Typora](https://typora.io/#download), make sure to install a
+[^3]: If you use [Typora](<https://typora.io/#download>), make sure to install a
       recent version (version >=0.9.89).
 
 [^4]: Versions for other operating systems and a Debian package are
-      [available here](https://blog.getreu.net/projects/tp-note/_downloads/).
+      [available here](<https://blog.getreu.net/projects/tp-note/_downloads/>).
 
-[^5]: The `sed` filter is a workaround a [bug in wkhtmltopdf](https://github.com/wkhtmltopdf/wkhtmltopdf/issues/4960).
-      Once this is solved, you can remove the `sed` command: `<command>tp-note --export=- %f | wkhtmltopdf ...`
-      ```
+[^5]: In order to get the page number rendered in Debian Buster, you need to upgrade
+      the package `wkhtmltopdf`: first remove the current version:
+      `sudo apt remove --purge wkhtmltopdf`, download:
+      `wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_amd64.deb` and
+      install the new version:
+      `sudo dpkg -i wkhtmltox_0.12.6-1.buster_amd64.deb`
+
+[^6]: The `sed` filter is a workaround a [bug in wkhtmltopdf](<https://github.com/wkhtmltopdf/wkhtmltopdf/issues/4960>).
+      Once this is solved, you can remove the `sed` command. Then the line 4 of the above listing becomes: 
+      `<command>tp-note --export=- %f | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>`
