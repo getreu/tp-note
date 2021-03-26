@@ -26,7 +26,7 @@ impl FileWatcher {
         match Self::new2(file, event_tx_list) {
             Ok(fw) => fw,
             Err(e) => {
-                panic!(format!("ERROR: Watcher::new(): {:?}", e));
+                panic!("ERROR: Watcher::new(): {:?}", e);
             }
         }
     }
