@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.10.4 | Tp-Note documentation
+% TP-NOTE(1) Version 1.10.5 | Tp-Note documentation
 
 
 # NAME
@@ -8,7 +8,7 @@ _Tp-Note_ - save and edit your clipboard content as a note file.
 
 # SYNOPSIS
 
-    tp-note [-b] [-c <FILE>] [-d] [-e] [-p <NUM>] 
+    tp-note [-b] [-c <FILE>] [-d] [-e] [-p <NUM>]
             [-n] [-v] [-V] [-x <DIR>|''|'-'] [<DIR>|<FILE>]
 
 
@@ -666,8 +666,8 @@ The following '`{{ fm_* }}`' variables are typically generated, _after_ a
 content template was filled in with data: For example a field named '`title:`'
 in the content template '`tmpl_new_content`' will generate the variable
 '`fm_title`' which can then be used in the corresponding '`tmpl_new_filename`'
-filename template. '`{{ fm_* }}`' variables are generated dynamically. This 
-means, a YAmL front matter variable '`foo:`' in a note will generate a 
+filename template. '`{{ fm_* }}`' variables are generated dynamically. This
+means, a YAmL front matter variable '`foo:`' in a note will generate a
 '`{{ fm_foo }}`' template variable. On the other hand, a missing '`foo:`'
 will cause '`{{ fm_foo }}`' to be undefined.
 

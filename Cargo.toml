@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.10.4"
+version = "1.10.5"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
@@ -55,13 +55,13 @@ message-box = ["msgbox"]
 viewer = ["notify", "httparse", "pulldown-cmark", "rst_parser", "rst_renderer", "webbrowser", "rand", "httpdate"]
 
 [dependencies]
-serde = { version = "1.0.123", features = ["derive"] }
+serde = { version = "1.0.124", features = ["derive"] }
 serde_yaml = "0.8.17"
-serde_json = "1.0.62"
-anyhow = "1.0.38"
+serde_json = "1.0.64"
+anyhow = "1.0.39"
 lazy_static = "1.4.0"
 chrono = "0.4.19"
-time = "0.2.25"
+time = "0.2.26"
 confy = "0.4.0"
 clap = "2.33.3"
 structopt = "0.3.21"
@@ -84,12 +84,12 @@ httpdate = { version = "0.3.2", optional = true }
 # On Debian Linux you need:
 #    sudo apt-get install xorg-dev
 clipboard = "0.5.0"
-sanitize-filename-reader-friendly = "1.1.0"
+sanitize-filename-reader-friendly = "1.1.1"
 # sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
 # Workaround downstream bug: https://github.com/myrrlyn/funty/issues/3
-funty= "=1.1.0"
+funty= "1.1.0"
 
 
 [dependencies.tera]
-version = "1.6.1"
+version = "1.7.0"
 default-features = true

@@ -3,7 +3,7 @@ title:  "Tp-Note: save and edit your clipboard content as a note file"
 subtitle: "Organize your notes with your favourite editor and markup-language"
 author: "Jens Getreu"
 date:   "2020-11-01"
-version: "1.10.4"
+version: "1.10.5"
 ---
 
 Markup languages like *Markdown* [^1] are perfectly suited for fast
@@ -1075,5 +1075,5 @@ press `[F3]` or `[Enter]`.
       `sudo dpkg -i wkhtmltox_0.12.6-1.buster_amd64.deb`
 
 [^6]: The `sed` filter is a workaround a [bug in wkhtmltopdf](<https://github.com/wkhtmltopdf/wkhtmltopdf/issues/4960>).
-      Once this is solved, you can remove the `sed` command. Then the line 4 of the above listing becomes: 
+      Once this is solved, you can remove the `sed` command. Then the line 4 of the above listing becomes:
       `<command>tp-note --export=- %f | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>`
