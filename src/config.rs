@@ -410,6 +410,25 @@ const VIEWER_ENABLED: bool = true;
 /// Delay in milliseconds.
 const VIEWER_NOTIFY_PERIOD: u64 = 1000;
 
+/// Served file types with corresponding mime types.
+/// First entry per line is the file extension, the second the corresponding mime
+/// type. Embedded files with types other than those listed here are silently
+/// ignored.
+/// Note, that image files must be located in the same directory than the note
+/// file to be served.
+const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
+    &["bmp", "image/bmp"],
+    &["gif", "image/gif"],
+    &["ico", "image/vnd.microsoft.icon"],
+    &["jpeg", "image/jpeg"],
+    &["jpg", "image/jpeg"],
+    &["png", "image/png"],
+    &["svg", "image/svg+xml"],
+    &["tiff", "image/tiff"],
+    &["tif", "image/tiff"],
+    &["webp", "image/webp"],
+];
+
 /// Template used by the viewer to render a note into html.
 pub const VIEWER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
@@ -655,6 +674,7 @@ pub struct Cfg {
     pub copy_counter_closing_brackets: String,
     pub viewer_enabled: bool,
     pub viewer_notify_period: u64,
+    pub viewer_served_mime_types: Vec<Vec<String>>,
     pub viewer_rendition_tmpl: String,
     pub viewer_error_tmpl: String,
     pub exporter_rendition_tmpl: String,
@@ -718,6 +738,10 @@ impl ::std::default::Default for Cfg {
             copy_counter_closing_brackets: COPY_COUNTER_CLOSING_BRACKETS.to_string(),
             viewer_enabled: VIEWER_ENABLED,
             viewer_notify_period: VIEWER_NOTIFY_PERIOD,
+            viewer_served_mime_types: VIEWER_SERVED_MIME_TYPES
+                .iter()
+                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
+                .collect(),
             viewer_rendition_tmpl: VIEWER_RENDITION_TMPL.to_string(),
             viewer_error_tmpl: VIEWER_ERROR_TMPL.to_string(),
             exporter_rendition_tmpl: EXPORTER_RENDITION_TMPL.to_string(),

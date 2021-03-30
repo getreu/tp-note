@@ -1,26 +1,26 @@
 //! Server-sent-event server for the note viewer feature.
 //! This module contains also the web browser Javascript client code.
 
-use crate::viewer::init::EVENT_PATH;
-use std::io::{ErrorKind, Read, Write};
-use std::net::{TcpListener, TcpStream};
-use std::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::{Arc, Mutex};
-use std::thread;
-const SSE_EVENT_NAME: &str = "update";
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::filter::TERA;
 use crate::note::Note;
+use crate::viewer::init::EVENT_PATH;
 use crate::viewer::init::LOCALHOST;
 use anyhow::anyhow;
 use anyhow::Context;
 use httpdate;
 use parse_hyperlinks::renderer::text_rawlinks2html;
 use std::fs;
+use std::io::{ErrorKind, Read, Write};
 use std::net::Shutdown;
+use std::net::{TcpListener, TcpStream};
+use std::path::Path;
 use std::path::PathBuf;
 use std::str;
+use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::{Arc, Mutex};
+use std::thread;
 use std::thread::sleep;
 use std::time::Duration;
 use std::time::SystemTime;
@@ -43,6 +43,8 @@ window.addEventListener('load', function() {
         window.scrollTo(0, localStorage.getItem('scrollPosition'));
 });
 "#;
+/// Server sent event method name to request a page update.
+const SSE_EVENT_NAME: &str = "update";
 
 /// Modern browser request a small image.
 pub const FAVICON: &[u8] = include_bytes!("favicon.ico");
@@ -75,7 +77,7 @@ struct ServerThread {
     stream: TcpStream,
     event_name: String,
     sse_port: u16,
-    file_path: PathBuf,
+    doc_path: PathBuf,
 }
 
 impl ServerThread {
@@ -84,14 +86,14 @@ impl ServerThread {
         stream: TcpStream,
         event_name: String,
         sse_port: u16,
-        file_path: PathBuf,
+        doc_path: PathBuf,
     ) -> Self {
         Self {
             rx,
             stream,
             event_name,
             sse_port,
-            file_path,
+            doc_path,
         }
     }
 
@@ -170,8 +172,8 @@ impl ServerThread {
             // receiver now, `viewer::update()` will remove us from the list soon.
             if ARGS.debug {
                 eprintln!(
-                    "*** Debug: ServerThread::serve_events2: file {:?} served.",
-                    self.file_path
+                    "*** Debug: ServerThread::serve_events2: 200 OK, file {:?} served.",
+                    self.doc_path
                 );
             }
             // Only Chrome and Edge on Windows need this extra time to ACK the TCP
@@ -193,7 +195,7 @@ impl ServerThread {
             self.stream.write(FAVICON)?;
             if ARGS.debug {
                 eprintln!(
-                    "*** Debug: ServerThread::serve_events2: file \"{}\" served.",
+                    "*** Debug: ServerThread::serve_events2: 200 OK, file \"{}\" served.",
                     FAVICON_PATH
                 );
             };
@@ -250,21 +252,114 @@ impl ServerThread {
                 self.stream.write(event.as_bytes())?;
                 if ARGS.debug {
                     eprintln!(
-                        "*** Debug: ServerThread::serve_events2: event: \"{}\" served.",
+                        "*** Debug: ServerThread::serve_events2: 200 OK, event \"{}\" served.",
                         self.event_name
                     );
                 };
             }
         } else {
-            self.stream.write(b"HTTP/1.1 404 Not Found\r\n\r\n")?;
-            if ARGS.debug {
-                eprintln!(
-                    "*** Debug: ServerThread::serve_events2: Not found: \"{}\" served.",
-                    path
-                );
+            let path = Path::new(path).strip_prefix("/")?;
+            // Concatenate document directory and URL path.
+            let doc_path = self.doc_path.canonicalize()?;
+            let doc_dir = doc_path
+                .parent()
+                .ok_or_else(|| anyhow!("can not determine document directory"))?;
+            let file_path = doc_dir.join(path);
+
+            // Find the corresponding mime type of this file extension.
+            let mut mime_type = &String::new();
+            for l in &CFG.viewer_served_mime_types {
+                if l.len() >= 2
+                    && file_path
+                        .extension()
+                        .unwrap_or_default()
+                        .to_str()
+                        .unwrap_or_default()
+                        == l[0]
+                {
+                    mime_type = &l[1];
+                    break;
+                }
+            }
+
+            // Reject all files with extensions not listed.
+            if mime_type.is_empty() {
+                if ARGS.debug {
+                    eprintln!(
+                        "*** Debug: ServerThread::serve_events2: \
+                        file type of \"{}\" is not served, rejecting.",
+                        path.to_str().unwrap_or_default(),
+                    );
+                    return self.write_not_found(&path);
+                };
             };
-            return Ok(());
+
+            // Only serve resources in the same or under the document's directory.
+            match file_path.canonicalize() {
+                Ok(p) => {
+                    if !p.starts_with(doc_dir) {
+                        if ARGS.debug {
+                            eprintln!(
+                                "*** Debug: ServerThread::serve_events2:\
+                                file \"{}\" is not in directory \"{}\", rejecting.",
+                                path.to_str().unwrap_or_default(),
+                                doc_dir.to_str().unwrap_or_default()
+                            );
+                            return self.write_not_found(&path);
+                        };
+                    }
+                }
+                Err(e) => {
+                    if ARGS.debug {
+                        eprintln!(
+                            "*** Debug: ServerThread::serve_events2: can not access file: \"{}\": {}.",
+                            file_path.to_str().unwrap_or_default(),
+                            e
+                        );
+                    };
+                }
+            };
+
+            if let Ok(file_content) = fs::read(&file_path) {
+                let response = format!(
+                    "HTTP/1.1 200 OK\r\n\
+                    Cache-Control: no-cache\r\n\
+                    Date: {}\r\n\
+                    Content-Type: {}\r\n\
+                    Content-Length: {}\r\n\r\n",
+                    httpdate::fmt_http_date(SystemTime::now()),
+                    mime_type,
+                    file_content.len(),
+                );
+                self.stream.write(response.as_bytes())?;
+                self.stream.write(&file_content)?;
+                if ARGS.debug {
+                    eprintln!(
+                        "*** Debug: ServerThread::serve_events2: 200 OK, file \"{}\" served.",
+                        file_path.to_str().unwrap_or_default()
+                    );
+                };
+                // Only Chrome and Edge on Windows need this extra time to ACK the TCP
+                // connection.
+                sleep(Duration::from_millis(900));
+                self.stream.shutdown(Shutdown::Both)?;
+                return Ok(());
+            } else {
+                return self.write_not_found(&path);
+            }
         }
+    }
+
+    /// Write HTTP not found response.
+    fn write_not_found(&mut self, file_path: &Path) -> Result<(), anyhow::Error> {
+        self.stream.write(b"HTTP/1.1 404 Not Found\r\n\r\n")?;
+        if ARGS.debug {
+            eprintln!(
+                "*** Debug: ServerThread::serve_events2: 404 Not found, \"{}\" served.",
+                file_path.to_str().unwrap_or_default()
+            );
+        };
+        Ok(())
     }
 
     #[inline]
@@ -278,14 +373,14 @@ impl ServerThread {
 
         // Extension determines markup language when rendering.
         let file_path_ext = self
-            .file_path
+            .doc_path
             .extension()
             .unwrap_or_default()
             .to_str()
             .unwrap_or_default();
 
         // Render.
-        match Note::from_existing_note(&self.file_path).and_then(|mut note| {
+        match Note::from_existing_note(&self.doc_path).and_then(|mut note| {
             note.render_content(file_path_ext, &CFG.viewer_rendition_tmpl, &js)
         }) {
             Ok(s) => Ok(s),
@@ -293,11 +388,11 @@ impl ServerThread {
                 // Render error page providing all information we have.
                 let mut context = tera::Context::new();
                 context.insert("noteError", &e.to_string());
-                context.insert("file", &self.file_path.to_str().unwrap_or_default());
+                context.insert("file", &self.doc_path.to_str().unwrap_or_default());
                 // Java Script
                 context.insert("noteJS", &js);
 
-                let note_error_content = fs::read_to_string(&self.file_path).unwrap_or_default();
+                let note_error_content = fs::read_to_string(&self.doc_path).unwrap_or_default();
                 let note_error_content = text_rawlinks2html(&note_error_content);
                 context.insert("noteErrorContent", note_error_content.trim());
 
