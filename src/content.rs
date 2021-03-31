@@ -120,6 +120,7 @@ impl<'a> Content<'a> {
     /// 2. followed by header bytes,
     /// 3. optionally followed by `"\n",
     /// 4. followed by `"---"` or `"..."`,
+    /// 5. optionally followed by some `"\t"` and/or some `" "`,
     /// 5. optionally followed by `"\n"`.
     /// The remaining bytes are "content".
     ///

@@ -1066,6 +1066,34 @@ template.
 
 
 
+# SECURITY CONSIDERATIONS
+
+As discussed above, _Tp-Note_'s built-in viewer sets up an HTTP server on the
+`localhost` interface. This HTTP server runs as long as the _Tp-Note_ process
+is running:  In `--view` mode, the HTTP server is kept up for about one second,
+in normal mode it is kept up as long as the file editor launched by _Tp-Note_
+is running. The HTTP server not only exposes the rendered note itself, but also
+all image files in the same directory (and all subdirectories) where the note
+file resides. For security reasons symbolic links to images outside the note's
+directory are not followed. As the _Tp-Note_'s built-in viewer binds to the
+`localhost` interface, the note's content and all images are accessible to all
+processes running on the local computer. As long as only one user at a given
+time is logged in, this is no problem as only that sole user can access the
+HTTP server.
+
+On systems where multiple users are logged in at the same time, it is
+recommended to disable _Tp-Note_'s viewer feature. This can be achieved with
+the command line option `--edit` or by setting the configuration file variable
+`viewer_enabled = false`. Alternatively, you can also compile _Tp-Note_ without
+the `viewer` feature. Note, that one can still render the note manually
+with the `--export` option.
+
+As an alternative option, it is also possible to instruct the internal HTTP
+server not to serve any image files by setting `viewer_served_mime_types =
+[]`. Here, only the note's content is exposed to the `localhost` interface.
+
+
+
 # EXIT STATUS
 
 Normally the exit status is '`0`' when the note file was processed without
@@ -1096,6 +1124,7 @@ Licensed under either of
   <http://opensource.org/licenses/MIT>)
 
 at your option.
+
 
 ## Contribution
 
