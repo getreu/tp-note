@@ -32,8 +32,8 @@ impl Viewer {
     /// Set up the file watcher, start the event/html server and launch web browser.
     /// Returns when the user closes the web browser.
     /// This is a small wrapper, that prints error messages.
-    pub fn run(file: PathBuf) {
-        match Self::run2(file) {
+    pub fn run(doc: PathBuf) {
+        match Self::run2(doc) {
             Ok(_) => (),
             Err(e) => {
                 eprintln!("ERROR: Viewer::run(): {:?}", e);
@@ -43,12 +43,12 @@ impl Viewer {
 
     /// Set up the file watcher, start the event/html server and launch web browser.
     /// Returns when the use closes the web browser.
-    fn run2(file: PathBuf) -> Result<(), anyhow::Error> {
+    fn run2(doc: PathBuf) -> Result<(), anyhow::Error> {
         match (
             ARGS.view,
             MarkupLanguage::from(
                 None,
-                file.extension()
+                doc.extension()
                     .unwrap_or_default()
                     .to_str()
                     .unwrap_or_default(),
@@ -75,10 +75,10 @@ impl Viewer {
 
         // Launch a background thread to manage server-sent events subscribers.
         let event_tx_list = {
-            let file_path = file.clone();
+            let doc_path = doc.clone();
             let event_tx_list = Arc::new(Mutex::new(Vec::new()));
             let event_tx_list_clone = event_tx_list.clone();
-            thread::spawn(move || manage_connections(event_tx_list_clone, listener, file_path));
+            thread::spawn(move || manage_connections(event_tx_list_clone, listener, doc_path));
 
             event_tx_list
         };
@@ -87,7 +87,7 @@ impl Viewer {
         // long as the parent thread is running.
         let event_tx_list_clone = event_tx_list.clone();
         let handle: JoinHandle<Result<(), anyhow::Error>> = thread::spawn(move || loop {
-            let mut w = FileWatcher::new(file.clone(), event_tx_list_clone.clone());
+            let mut w = FileWatcher::new(doc.clone(), event_tx_list_clone.clone());
             w.run()
         });
 

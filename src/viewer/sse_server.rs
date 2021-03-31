@@ -54,7 +54,7 @@ pub const FAVICON_PATH: &str = "/favicon.ico";
 pub fn manage_connections(
     event_tx_list: Arc<Mutex<Vec<Sender<()>>>>,
     listener: TcpListener,
-    file_path: PathBuf,
+    doc_path: PathBuf,
 ) {
     // Unwarp is Ok here here, because we just did it before successfully.
     let sse_port = listener.local_addr().unwrap().port();
@@ -63,9 +63,9 @@ pub fn manage_connections(
             let (event_tx, event_rx) = channel();
             event_tx_list.lock().unwrap().push(event_tx);
             let event_name = SSE_EVENT_NAME.to_string();
-            let file_path2 = file_path.clone();
+            let doc_path2 = doc_path.clone();
             thread::spawn(move || {
-                let mut st = ServerThread::new(event_rx, stream, event_name, sse_port, file_path2);
+                let mut st = ServerThread::new(event_rx, stream, event_name, sse_port, doc_path2);
                 st.serve_events()
             });
         }
