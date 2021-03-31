@@ -151,6 +151,48 @@ copy_counter_opening_brackets = '('
 copy_counter_closing_brackets = ')'
 viewer_enabled = true
 viewer_notify_period = 1000
+viewer_served_mime_types = [
+    [
+    'bmp',
+    'image/bmp',
+],
+    [
+    'gif',
+    'image/gif',
+],
+    [
+    'ico',
+    'image/vnd.microsoft.icon',
+],
+    [
+    'jpeg',
+    'image/jpeg',
+],
+    [
+    'jpg',
+    'image/jpeg',
+],
+    [
+    'png',
+    'image/png',
+],
+    [
+    'svg',
+    'image/svg+xml',
+],
+    [
+    'tiff',
+    'image/tiff',
+],
+    [
+    'tif',
+    'image/tiff',
+],
+    [
+    'webp',
+    'image/webp',
+],
+]
 viewer_rendition_tmpl = '''
 <!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
