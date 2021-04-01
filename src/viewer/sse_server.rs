@@ -11,6 +11,8 @@ use anyhow::anyhow;
 use anyhow::Context;
 use httpdate;
 use parse_hyperlinks::renderer::text_rawlinks2html;
+use percent_encoding::percent_decode_str;
+use std::ffi::OsStr;
 use std::fs;
 use std::io::{ErrorKind, Read, Write};
 use std::net::Shutdown;
@@ -154,6 +156,9 @@ impl ServerThread {
             return Ok(());
         }
 
+        // Decode the percent encoding in the URL path.
+        let path = percent_decode_str(path).decode_utf8()?;
+
         // Check the path.
         // The browser requests the content.
         if path == "/" {
@@ -261,7 +266,11 @@ impl ServerThread {
                 };
             }
         } else {
-            let path = Path::new(path).strip_prefix("/")?;
+            // Strip `/` and convert to `Path`.
+            let path = path
+                .strip_prefix("/")
+                .ok_or_else(|| anyhow!("URL path must start with `/`"))?;
+            let path = Path::new(OsStr::new(&path));
             // Concatenate document directory and URL path.
             let doc_path = self.doc_path.canonicalize()?;
             let doc_dir = doc_path
@@ -309,7 +318,8 @@ impl ServerThread {
                 Err(e) => {
                     if ARGS.debug {
                         eprintln!(
-                            "*** Debug: ServerThread::serve_events2: can not access file: \"{}\": {}.",
+                            "*** Debug: ServerThread::serve_events2: can not access file: \
+                            \"{}\": {}.",
                             file_path.to_str().unwrap_or_default(),
                             e
                         );

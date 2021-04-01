@@ -2133,6 +2133,7 @@ dependencies = [
  "msgbox",
  "notify",
  "parse-hyperlinks",
+ "percent-encoding",
  "pulldown-cmark",
  "rand",
  "rst_parser",
