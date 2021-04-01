@@ -56,6 +56,15 @@ pub const FAVICON: &[u8] = include_bytes!("favicon.ico");
 /// The path where the favicon is requested.
 pub const FAVICON_PATH: &str = "/favicon.ico";
 
+/// Chrome and Edge under Windows don't like when the server closes
+/// the TCP connection too early and does not wait for ACK.
+/// Firefox does not need this.
+/// The problem was observed in 4/2020. Maybe some later version
+/// does not require this hack.
+/// It seems 100ms is enough, we chose a bit more to be sure. This keeps the
+/// thread a bit longer alive. The unit is milliseconds.
+const SERVER_EXTRA_KEEP_ALIVE: u64 = 900;
+
 pub fn manage_connections(
     event_tx_list: Arc<Mutex<Vec<Sender<()>>>>,
     listener: TcpListener,
@@ -186,7 +195,7 @@ impl ServerThread {
             }
             // Only Chrome and Edge on Windows need this extra time to ACK the TCP
             // connection.
-            sleep(Duration::from_millis(100));
+            sleep(Duration::from_millis(SERVER_EXTRA_KEEP_ALIVE));
             self.stream.shutdown(Shutdown::Both)?;
             return Ok(());
         } else if path == FAVICON_PATH {
@@ -209,7 +218,7 @@ impl ServerThread {
             };
             // Only Chrome and Edge on Windows need this extra time to ACK the TCP
             // connection.
-            sleep(Duration::from_millis(900));
+            sleep(Duration::from_millis(SERVER_EXTRA_KEEP_ALIVE));
             self.stream.shutdown(Shutdown::Both)?;
             return Ok(());
         } else if path == EVENT_PATH {
@@ -348,7 +357,7 @@ impl ServerThread {
                 };
                 // Only Chrome and Edge on Windows need this extra time to ACK the TCP
                 // connection.
-                sleep(Duration::from_millis(900));
+                sleep(Duration::from_millis(SERVER_EXTRA_KEEP_ALIVE));
                 self.stream.shutdown(Shutdown::Both)?;
                 return Ok(());
             } else {
