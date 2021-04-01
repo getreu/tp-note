@@ -3,9 +3,9 @@
 
 use crate::config::ARGS;
 use crate::config::CFG;
+use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::filter::TERA;
 use crate::note::Note;
-use crate::viewer::init::EVENT_PATH;
 use crate::viewer::init::LOCALHOST;
 use anyhow::anyhow;
 use anyhow::Context;
@@ -46,7 +46,10 @@ window.addEventListener('load', function() {
 /// Server sent event method name to request a page update.
 const SSE_EVENT_NAME: &str = "update";
 
-/// Modern browser request a small image.
+/// Connection for server sent events.
+const EVENT_PATH: &str = "/events";
+
+/// Modern browser request a small icon image.
 pub const FAVICON: &[u8] = include_bytes!("favicon.ico");
 /// The path where the favicon is requested.
 pub const FAVICON_PATH: &str = "/favicon.ico";
@@ -266,32 +269,26 @@ impl ServerThread {
                 .ok_or_else(|| anyhow!("can not determine document directory"))?;
             let file_path = doc_dir.join(path);
 
-            // Find the corresponding mime type of this file extension.
-            let mut mime_type = &String::new();
-            for l in &CFG.viewer_served_mime_types {
-                if l.len() >= 2
-                    && file_path
-                        .extension()
-                        .unwrap_or_default()
-                        .to_str()
-                        .unwrap_or_default()
-                        == l[0]
-                {
-                    mime_type = &l[1];
-                    break;
-                }
-            }
+            let extension = file_path
+                .extension()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default();
 
-            // Reject all files with extensions not listed.
-            if mime_type.is_empty() {
-                if ARGS.debug {
-                    eprintln!(
-                        "*** Debug: ServerThread::serve_events2: \
-                        file type of \"{}\" is not served, rejecting.",
-                        path.to_str().unwrap_or_default(),
-                    );
+            // Find the corresponding mime type of this file extension.
+            let mime_type = match VIEWER_SERVED_MIME_TYPES_HMAP.get(&*extension) {
+                Some(mt) => mt,
+                None => {
+                    // Reject all files with extensions not listed.
+                    if ARGS.debug {
+                        eprintln!(
+                            "*** Debug: ServerThread::serve_events2: \
+                            file type of \"{}\" is not served, rejecting.",
+                            path.to_str().unwrap_or_default(),
+                        );
+                    };
                     return self.write_not_found(&path);
-                };
+                }
             };
 
             // Only serve resources in the same or under the document's directory.

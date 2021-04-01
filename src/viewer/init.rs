@@ -2,6 +2,7 @@
 
 use crate::config::ARGS;
 use crate::config::LAUNCH_EDITOR;
+use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::filename::MarkupLanguage;
 use crate::viewer::sse_server::manage_connections;
 use crate::viewer::watcher::FileWatcher;
@@ -15,8 +16,6 @@ use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 use webbrowser::{open_browser, Browser};
 
-pub const EVENT_PATH: &str = "/events";
-
 /// This is where our loop back device is.
 /// The following is also possible, but binds us to IPv4:
 /// `pub const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);`
@@ -24,14 +23,14 @@ pub const EVENT_PATH: &str = "/events";
 /// to the TCP port and also in the browser when connecting the
 /// event source.
 pub const LOCALHOST: &str = "localhost";
-/// Parse result.
+
 #[derive(Clone, Default, Debug)]
 pub struct Viewer {}
 
 impl Viewer {
     /// Set up the file watcher, start the event/html server and launch web browser.
-    /// Returns when the user closes the web browser.
-    /// This is a small wrapper, that prints error messages.
+    /// Returns when the user closes the web browser and/or file editor.
+    /// This is a small wrapper printing error messages.
     pub fn run(doc: PathBuf) {
         match Self::run2(doc) {
             Ok(_) => (),
@@ -42,8 +41,9 @@ impl Viewer {
     }
 
     /// Set up the file watcher, start the event/html server and launch web browser.
-    /// Returns when the use closes the web browser.
+    /// Returns when the user closes the web browser and/or file editor.
     fn run2(doc: PathBuf) -> Result<(), anyhow::Error> {
+        // Check if the master document (note file) has a known file extension.
         match (
             ARGS.view,
             MarkupLanguage::from(
@@ -54,7 +54,7 @@ impl Viewer {
                     .unwrap_or_default(),
             ),
         ) {
-            // The file with this file extension is exempted from being viewed.
+            // A master document with this file extension is exempted from being viewed.
             // We quit here and do not start the viewer.
             (false, MarkupLanguage::Unknown) => return Ok(()),
             // This should never happen, since non-Tp-Note files are never
@@ -72,6 +72,17 @@ impl Viewer {
             TcpListener::bind((LOCALHOST, 0))?
         };
         let localport = listener.local_addr()?.port();
+
+        // Concerning non-master-documents, we only serve these file extensions.
+        if ARGS.debug {
+            eprintln!(
+                "*** Debug: Viewer::run(): \
+                 Besides `/`, we only serve files with the following listed extensions:"
+            );
+            for (key, val) in VIEWER_SERVED_MIME_TYPES_HMAP.iter() {
+                eprintln!("{}:\t{}", key, val);
+            }
+        };
 
         // Launch a background thread to manage server-sent events subscribers.
         let event_tx_list = {

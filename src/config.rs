@@ -12,6 +12,7 @@ use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use parse_hyperlinks::iterator::first_hyperlink;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::io;
 use std::io::Read;
@@ -747,6 +748,20 @@ impl ::std::default::Default for Cfg {
             exporter_rendition_tmpl: EXPORTER_RENDITION_TMPL.to_string(),
         }
     }
+}
+
+lazy_static! {
+    /// Store the extension as key and mime type as value in HashMap.
+    pub static ref VIEWER_SERVED_MIME_TYPES_HMAP: HashMap<&'static str, &'static str> = {
+        let mut hm = HashMap::new();
+        for l in &CFG.viewer_served_mime_types {
+            if l.len() >= 2
+            {
+                hm.insert(l[0].as_str(), l[1].as_str());
+            };
+        };
+        hm
+    };
 }
 
 lazy_static! {
