@@ -10,6 +10,7 @@ use crate::viewer::init::LOCALHOST;
 use anyhow::anyhow;
 use anyhow::Context;
 use httpdate;
+use parse_hyperlinks::iterator_html::{Hyperlink, InlineImage};
 use parse_hyperlinks::renderer::text_rawlinks2html;
 use percent_encoding::percent_decode_str;
 use std::collections::HashMap;
@@ -28,6 +29,7 @@ use std::thread::sleep;
 use std::time::Duration;
 use std::time::SystemTime;
 use tera::Tera;
+use url::Url;
 
 /// Javascript client code, part 1
 /// Refresh on WTFiles events.
@@ -73,13 +75,17 @@ pub fn manage_connections(
 ) {
     // Unwarp is Ok here here, because we just did it before successfully.
     let sse_port = listener.local_addr().unwrap().port();
+    // A list of in the not referenced local links to images or other documents.
+    let doc_local_links = Arc::new(RwLock::new(HashMap::new()));
     for stream in listener.incoming() {
         if let Ok(stream) = stream {
             let (event_tx, event_rx) = channel();
             event_tx_list.lock().unwrap().push(event_tx);
-            let doc_path2 = doc_path.clone();
+            let doc_path = doc_path.clone();
+            let doc_local_links = doc_local_links.clone();
             thread::spawn(move || {
-                let mut st = ServerThread::new(event_rx, stream, sse_port, doc_path2);
+                let mut st =
+                    ServerThread::new(event_rx, stream, sse_port, doc_path, doc_local_links);
                 st.serve_events()
             });
         }
@@ -96,16 +102,25 @@ struct ServerThread {
     sse_port: u16,
     /// Local file system path of the note document.
     doc_path: PathBuf,
+    /// A list of in the not referenced local links to images or other documents.
+    doc_local_links: Arc<RwLock<HashMap<PathBuf, ()>>>,
 }
 
 impl ServerThread {
     /// Constructor.
-    fn new(rx: Receiver<()>, stream: TcpStream, sse_port: u16, doc_path: PathBuf) -> Self {
+    fn new(
+        rx: Receiver<()>,
+        stream: TcpStream,
+        sse_port: u16,
+        doc_path: PathBuf,
+        doc_local_links: Arc<RwLock<HashMap<PathBuf, ()>>>,
+    ) -> Self {
         Self {
             rx,
             stream,
             sse_port,
             doc_path,
+            doc_local_links,
         }
     }
 
@@ -334,6 +349,25 @@ impl ServerThread {
                 }
             };
 
+            // Only serve files that appear explicitly in `self.doc_local_links`.
+            let doc_local_links = self
+                .doc_local_links
+                .read()
+                .map_err(|e| anyhow!("can not obtain RwLock for reading: {}", e))?;
+            if !doc_local_links.contains_key(Path::new(path)) {
+                if ARGS.debug {
+                    eprintln!(
+                        "*** Debug: ServerThread::serve_events2: target not referenced, rejecting: \
+                            \"{}\"",
+                        path.to_str().unwrap_or_default()
+                    );
+                };
+                drop(doc_local_links);
+                return self.write_not_found(&path);
+            }
+            // Release the `RwLockReadGuard`.
+            drop(doc_local_links);
+
             if let Ok(file_content) = fs::read(&file_path) {
                 let response = format!(
                     "HTTP/1.1 200 OK\r\n\
@@ -397,7 +431,44 @@ impl ServerThread {
         match Note::from_existing_note(&self.doc_path).and_then(|mut note| {
             note.render_content(file_path_ext, &CFG.viewer_rendition_tmpl, &js)
         }) {
-            Ok(s) => Ok(s),
+            Ok(s) => {
+                let mut doc_local_links = self
+                    .doc_local_links
+                    .write()
+                    .map_err(|e| anyhow!("can not obtain RwLock for writing: {}", e))?;
+
+                // Start from scratch and populate the list again.
+                doc_local_links.clear();
+
+                // Search for hyperlinks in the HTML rendition of this note.
+                for ((_, _, _), (_, link, _)) in Hyperlink::new(&s) {
+                    // We skip absolute URLs.
+                    if Url::parse(&link).is_ok() {
+                        continue;
+                    };
+                    let path = PathBuf::from(Path::new(&*link));
+                    doc_local_links.insert(path, ());
+                }
+                // Search for image links in the HTML rendition of this note.
+                for ((_, _, _), (_, link)) in InlineImage::new(&s) {
+                    // We skip absolute URLs.
+                    if Url::parse(&link).is_ok() {
+                        continue;
+                    };
+                    let path = PathBuf::from(Path::new(&*link));
+                    doc_local_links.insert(path, ());
+                }
+
+                if ARGS.debug && !doc_local_links.is_empty() {
+                    eprintln!("*** Debug: ServerThread: referenced local files to be served:");
+                    for l in &*doc_local_links {
+                        eprintln!("\t{}", l.0.as_os_str().to_str().unwrap_or_default());
+                    }
+                };
+
+                Ok(s)
+                // The `RwLockWriteGuard` is released here.
+            }
             Err(e) => {
                 // Render error page providing all information we have.
                 let mut context = tera::Context::new();

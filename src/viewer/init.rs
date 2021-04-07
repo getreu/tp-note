@@ -81,7 +81,7 @@ impl Viewer {
                  Besides `/`, we only serve files with the following listed extensions:"
             );
             for (key, val) in VIEWER_SERVED_MIME_TYPES_HMAP.iter() {
-                eprintln!("{}:\t{}", key, val);
+                eprintln!("\t{}:\t{}", key, val);
             }
         };
 
