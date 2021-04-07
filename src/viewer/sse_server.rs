@@ -12,6 +12,7 @@ use anyhow::Context;
 use httpdate;
 use parse_hyperlinks::renderer::text_rawlinks2html;
 use percent_encoding::percent_decode_str;
+use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs;
 use std::io::{ErrorKind, Read, Write};
@@ -21,7 +22,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::str;
 use std::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::thread::sleep;
 use std::time::Duration;
@@ -76,36 +77,33 @@ pub fn manage_connections(
         if let Ok(stream) = stream {
             let (event_tx, event_rx) = channel();
             event_tx_list.lock().unwrap().push(event_tx);
-            let event_name = SSE_EVENT_NAME.to_string();
             let doc_path2 = doc_path.clone();
             thread::spawn(move || {
-                let mut st = ServerThread::new(event_rx, stream, event_name, sse_port, doc_path2);
+                let mut st = ServerThread::new(event_rx, stream, sse_port, doc_path2);
                 st.serve_events()
             });
         }
     }
 }
 
+/// Server thread state.
 struct ServerThread {
+    /// Receiver side of the channel where `update` events are sent.
     rx: Receiver<()>,
+    /// Byte stream coming from a TCP connection.
     stream: TcpStream,
-    event_name: String,
+    /// The TCP port this stream comes from.
     sse_port: u16,
+    /// Local file system path of the note document.
     doc_path: PathBuf,
 }
 
 impl ServerThread {
-    fn new(
-        rx: Receiver<()>,
-        stream: TcpStream,
-        event_name: String,
-        sse_port: u16,
-        doc_path: PathBuf,
-    ) -> Self {
+    /// Constructor.
+    fn new(rx: Receiver<()>, stream: TcpStream, sse_port: u16, doc_path: PathBuf) -> Self {
         Self {
             rx,
             stream,
-            event_name,
             sse_port,
             doc_path,
         }
@@ -265,12 +263,12 @@ impl ServerThread {
                 }
 
                 // Send event.
-                let event = format!("event: {}\r\ndata\r\n\r\n", self.event_name);
+                let event = format!("event: {}\r\ndata\r\n\r\n", SSE_EVENT_NAME);
                 self.stream.write(event.as_bytes())?;
                 if ARGS.debug {
                     eprintln!(
                         "*** Debug: ServerThread::serve_events2: 200 OK, event \"{}\" served.",
-                        self.event_name
+                        SSE_EVENT_NAME
                     );
                 };
             }
