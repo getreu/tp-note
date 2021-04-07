@@ -418,11 +418,16 @@ const VIEWER_NOTIFY_PERIOD: u64 = 1000;
 /// Note, that image files must be located in the same directory than the note
 /// file to be served.
 const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
+    &["apng", "image/apng"],
+    &["avif", "image/avif"],
     &["bmp", "image/bmp"],
     &["gif", "image/gif"],
+    &["html", "text/html"],
+    &["htm", "text/html"],
     &["ico", "image/vnd.microsoft.icon"],
     &["jpeg", "image/jpeg"],
     &["jpg", "image/jpeg"],
+    &["pdf", "application/pdf"],
     &["png", "image/png"],
     &["svg", "image/svg+xml"],
     &["tiff", "image/tiff"],
