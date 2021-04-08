@@ -179,7 +179,9 @@ impl ServerThread {
         }
 
         // Decode the percent encoding in the URL path.
-        let path = percent_decode_str(path).decode_utf8()?;
+        let path = percent_decode_str(path)
+            .decode_utf8()
+            .context(format!("error decoding URL: {}", path))?;
 
         // Check the path.
         // The browser requests the content.
@@ -428,34 +430,49 @@ impl ServerThread {
             .unwrap_or_default();
 
         // Render.
-        match Note::from_existing_note(&self.doc_path).and_then(|mut note| {
-            note.render_content(file_path_ext, &CFG.viewer_rendition_tmpl, &js)
-        }) {
-            Ok(s) => {
+        // First decompose header and body, then deserialize header.
+        match Note::from_existing_note(&self.doc_path)
+            .context("Error in YAML file header:")
+            // Now, try to render to html.
+            .and_then(|mut note| {
+                note.render_content(file_path_ext, &CFG.viewer_rendition_tmpl, &js)
+                    .context("Can not render the note's content:")
+            })
+            // Now scan the HTML result for links and store them in a HashMap accessible to all threads.
+            .and_then(|html| {
                 let mut doc_local_links = self
                     .doc_local_links
                     .write()
-                    .map_err(|e| anyhow!("can not obtain RwLock for writing: {}", e))?;
+                    .map_err(|e| anyhow!("Can not obtain RwLock for writing: {}", e))?;
 
-                // Start from scratch and populate the list again.
+                // Populate the list from scratch.
                 doc_local_links.clear();
 
                 // Search for hyperlinks in the HTML rendition of this note.
-                for ((_, _, _), (_, link, _)) in Hyperlink::new(&s) {
+                for ((_, _, _), (name, link, _)) in Hyperlink::new(&html) {
                     // We skip absolute URLs.
                     if Url::parse(&link).is_ok() {
                         continue;
                     };
-                    let path = PathBuf::from(Path::new(&*link));
+                    let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8().context(
+                        format!(
+                            "Can not decode URL in hyperlink \"{}\":\n\n{}\n",
+                            &name, &link
+                        ),
+                    )?);
+                    // Save the hyperlinks for other threads to check against.
                     doc_local_links.insert(path, ());
                 }
                 // Search for image links in the HTML rendition of this note.
-                for ((_, _, _), (_, link)) in InlineImage::new(&s) {
+                for ((_, _, _), (name, link)) in InlineImage::new(&html) {
                     // We skip absolute URLs.
                     if Url::parse(&link).is_ok() {
                         continue;
                     };
-                    let path = PathBuf::from(Path::new(&*link));
+                    let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8().context(
+                        format!("Can not decode URL in image \"{}\":\n\n{}\n", &name, &link),
+                    )?);
+                    // Save the image links for other threads to check against.
                     doc_local_links.insert(path, ());
                 }
 
@@ -465,14 +482,18 @@ impl ServerThread {
                         eprintln!("\t{}", l.0.as_os_str().to_str().unwrap_or_default());
                     }
                 };
-
-                Ok(s)
+                Ok(html)
                 // The `RwLockWriteGuard` is released here.
-            }
+            }) {
+            // If the rendition went well, return the HTML.
+            Ok(html) => Ok(html),
+            // We could not render the note properly. Instead we will render a special error
+            // page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
                 let mut context = tera::Context::new();
-                context.insert("noteError", &e.to_string());
+                let err = format!("{}\n{}", &e, &e.root_cause());
+                context.insert("noteError", &err);
                 context.insert("file", &self.doc_path.to_str().unwrap_or_default());
                 // Java Script
                 context.insert("noteJS", &js);
