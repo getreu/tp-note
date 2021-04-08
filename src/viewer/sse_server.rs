@@ -204,8 +204,8 @@ impl ServerThread {
             // receiver now, `viewer::update()` will remove us from the list soon.
             if ARGS.debug {
                 eprintln!(
-                    "*** Debug: ServerThread::serve_events2: 200 OK, file {:?} served.",
-                    self.doc_path
+                    "*** Debug: ServerThread::serve_events2: 200 OK, file {} served.",
+                    self.doc_path.to_str().unwrap_or_default().to_string()
                 );
             }
             // Only Chrome and Edge on Windows need this extra time to ACK the TCP
@@ -294,20 +294,15 @@ impl ServerThread {
             let path = path
                 .strip_prefix("/")
                 .ok_or_else(|| anyhow!("URL path must start with `/`"))?;
-            let path = Path::new(OsStr::new(&path));
-            // Concatenate document directory and URL path.
-            let doc_path = self.doc_path.canonicalize()?;
-            let doc_dir = doc_path
-                .parent()
-                .ok_or_else(|| anyhow!("can not determine document directory"))?;
-            let file_path = doc_dir.join(path);
+            println!("path: {:?}", &path);
+            let reqpath = Path::new(OsStr::new(&path));
 
-            let extension = file_path
+            // Condition 1.: Check if we serve this kind of extension
+            let extension = &*reqpath
                 .extension()
                 .unwrap_or_default()
                 .to_str()
                 .unwrap_or_default();
-
             // Find the corresponding mime type of this file extension.
             let mime_type = match VIEWER_SERVED_MIME_TYPES_HMAP.get(&*extension) {
                 Some(mt) => mt,
@@ -317,25 +312,55 @@ impl ServerThread {
                         eprintln!(
                             "*** Debug: ServerThread::serve_events2: \
                             file type of \"{}\" is not served, rejecting.",
-                            path.to_str().unwrap_or_default(),
+                            reqpath.to_str().unwrap_or_default(),
                         );
                     };
-                    return self.write_not_found(&path);
+                    return self.write_not_found(&reqpath);
                 }
             };
 
-            // Only serve resources in the same or under the document's directory.
-            match file_path.canonicalize() {
+            // Condition 2.: Only serve files that explicitly appear in `self.doc_local_links`.
+            let doc_local_links = self
+                .doc_local_links
+                .read()
+                .map_err(|e| anyhow!("can not obtain RwLock for reading: {}", e))?;
+            if !doc_local_links.contains_key(Path::new(&reqpath)) {
+                if ARGS.debug {
+                    eprintln!(
+                        "*** Debug: ServerThread::serve_events2: target not referenced, rejecting: \
+                            \"{}\"",
+                        reqpath.to_str().unwrap_or_default()
+                    );
+                };
+                drop(doc_local_links);
+                return self.write_not_found(&reqpath);
+            }
+            // Release the `RwLockReadGuard`.
+            drop(doc_local_links);
+
+            println!("stripped path: {:?}", &reqpath);
+
+            // Concatenate document directory and URL path.
+            let doc_path = self.doc_path.canonicalize()?;
+            let doc_dir = doc_path
+                .parent()
+                .ok_or_else(|| anyhow!("can not determine document directory"))?;
+            // If `path` is absolute, it replaces `doc_dir`.
+            let reqpath_abs = doc_dir.join(&reqpath);
+            println!("stripped path abs: {:?}", &reqpath_abs);
+
+            // Condition 3.: Only serve resources in the same or under the document's directory.
+            match reqpath_abs.canonicalize() {
                 Ok(p) => {
                     if !p.starts_with(doc_dir) {
                         if ARGS.debug {
                             eprintln!(
                                 "*** Debug: ServerThread::serve_events2:\
                                 file \"{}\" is not in directory \"{}\", rejecting.",
-                                path.to_str().unwrap_or_default(),
+                                reqpath.to_str().unwrap_or_default(),
                                 doc_dir.to_str().unwrap_or_default()
                             );
-                            return self.write_not_found(&path);
+                            return self.write_not_found(&reqpath);
                         };
                     }
                 }
@@ -344,33 +369,15 @@ impl ServerThread {
                         eprintln!(
                             "*** Debug: ServerThread::serve_events2: can not access file: \
                             \"{}\": {}.",
-                            file_path.to_str().unwrap_or_default(),
+                            reqpath_abs.to_str().unwrap_or_default(),
                             e
                         );
                     };
                 }
             };
 
-            // Only serve files that appear explicitly in `self.doc_local_links`.
-            let doc_local_links = self
-                .doc_local_links
-                .read()
-                .map_err(|e| anyhow!("can not obtain RwLock for reading: {}", e))?;
-            if !doc_local_links.contains_key(Path::new(path)) {
-                if ARGS.debug {
-                    eprintln!(
-                        "*** Debug: ServerThread::serve_events2: target not referenced, rejecting: \
-                            \"{}\"",
-                        path.to_str().unwrap_or_default()
-                    );
-                };
-                drop(doc_local_links);
-                return self.write_not_found(&path);
-            }
-            // Release the `RwLockReadGuard`.
-            drop(doc_local_links);
-
-            if let Ok(file_content) = fs::read(&file_path) {
+            // Condition 4.: Is the file readable?
+            if let Ok(file_content) = fs::read(&reqpath_abs) {
                 let response = format!(
                     "HTTP/1.1 200 OK\r\n\
                     Cache-Control: no-cache\r\n\
@@ -386,7 +393,7 @@ impl ServerThread {
                 if ARGS.debug {
                     eprintln!(
                         "*** Debug: ServerThread::serve_events2: 200 OK, file \"{}\" served.",
-                        file_path.to_str().unwrap_or_default()
+                        reqpath_abs.to_str().unwrap_or_default()
                     );
                 };
                 // Only Chrome and Edge on Windows need this extra time to ACK the TCP
@@ -395,7 +402,7 @@ impl ServerThread {
                 self.stream.shutdown(Shutdown::Both)?;
                 return Ok(());
             } else {
-                return self.write_not_found(&path);
+                return self.write_not_found(&reqpath);
             }
         }
     }
@@ -451,8 +458,10 @@ impl ServerThread {
                 // Search for hyperlinks in the HTML rendition of this note.
                 for ((_, _, _), (name, link, _)) in Hyperlink::new(&html) {
                     // We skip absolute URLs.
-                    if Url::parse(&link).is_ok() {
-                        continue;
+                    if let Ok(url) = Url::parse(&link) {
+                        if url.has_host() {
+                            continue;
+                        };
                     };
                     let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8().context(
                         format!(
@@ -466,8 +475,10 @@ impl ServerThread {
                 // Search for image links in the HTML rendition of this note.
                 for ((_, _, _), (name, link)) in InlineImage::new(&html) {
                     // We skip absolute URLs.
-                    if Url::parse(&link).is_ok() {
-                        continue;
+                    if let Ok(url) = Url::parse(&link) {
+                        if url.has_host() {
+                            continue;
+                        };
                     };
                     let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8().context(
                         format!("Can not decode URL in image \"{}\":\n\n{}\n", &name, &link),
@@ -476,8 +487,8 @@ impl ServerThread {
                     doc_local_links.insert(path, ());
                 }
 
-                if ARGS.debug && !doc_local_links.is_empty() {
-                    eprintln!("*** Debug: ServerThread: referenced local files to be served:");
+                if ARGS.debug {
+                    eprintln!("*** Debug: ServerThread: referenced and served files (maybe none):");
                     for l in &*doc_local_links {
                         eprintln!("\t{}", l.0.as_os_str().to_str().unwrap_or_default());
                     }
