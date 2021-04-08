@@ -1069,29 +1069,35 @@ template.
 # SECURITY CONSIDERATIONS
 
 As discussed above, _Tp-Note_'s built-in viewer sets up an HTTP server on the
-`localhost` interface. This HTTP server runs as long as the _Tp-Note_ process
-is running:  In `--view` mode, the HTTP server is kept up for about one second,
-in normal mode it is kept up as long as the file editor launched by _Tp-Note_
-is running. The HTTP server not only exposes the rendered note itself, but also
-all image files in the same directory (and all subdirectories) where the note
-file resides. For security reasons symbolic links to images outside the note's
-directory are not followed. As the _Tp-Note_'s built-in viewer binds to the
-`localhost` interface, the note's content and all images are accessible to all
-processes running on the local computer. As long as only one user at a given
-time is logged in, this is no problem as only that sole user can access the
-HTTP server.
+'`localhost`' interface with a random port number. This HTTP server runs as
+long as the _Tp-Note_ process is running: In '`--view`' mode, the HTTP server
+is kept up for about one second, in normal mode it is kept up as long as the
+file editor launched by _Tp-Note_ is running. The HTTP server not only exposes
+the rendered note, but also some (image) files in the same directory (and all
+subdirectories) where the note file resides. For security reasons symbolic
+links to files outside the note's directory are not followed. _Tp-Note_'s
+built-in HTTP server only serves files that are referenced in the note document
+and whose file extension is registered with the '`viewer_served_mime_type`'
+configuration file variable. As _Tp-Note_'s built-in viewer binds to the
+'`localhost`' interface, the exposed files are accessible to all processes
+running on the computer. As long as only one user is logged into the computer
+at a given time, no privacy concern is raised: any potential note reader must
+be logged in, in order to access the HTTP server. 
 
 On systems where multiple users are logged in at the same time, it is
 recommended to disable _Tp-Note_'s viewer feature. This can be achieved with
-the command line option `--edit` or by setting the configuration file variable
-`viewer_enabled = false`. Alternatively, you can also compile _Tp-Note_ without
-the `viewer` feature. Note, that one can still render the note manually
-with the `--export` option.
+the command line option '`--edit`' or by setting the configuration file variable
+'`viewer_enabled = false`'. Alternatively, you can also compile _Tp-Note_ without
+the '`viewer`' feature. Note, that even with the viewer feature disabled, one can
+still render the note manually with the '`--export`' option.
 
 As an alternative option, it is also possible to instruct the internal HTTP
-server not to serve any image files by setting `viewer_served_mime_types =
-[]`. Here, only the note's content is exposed to the `localhost` interface.
+server not to serve any local files by setting `viewer_served_mime_types = []`.
+In this case, only the note's content is exposed to the `localhost` interface.
 
+**Summary**: As long as _Tp-Note_'s built-in note viewer is running, 
+the note file and all its referenced (image) files are exposed to all users logged
+into the computer at that given time. 
 
 
 # EXIT STATUS
