@@ -585,6 +585,8 @@ fn main() {
                 if p.as_os_str().to_str().unwrap_or_default() != "-" {
                     println!("{}", path.to_str().unwrap_or_default());
                 }
+            } else {
+                println!("{}", path.to_str().unwrap_or_default());
             }
         }
     };
