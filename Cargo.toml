@@ -1,10 +1,10 @@
 [package]
 name = "tp-note"
-version = "1.11.1"
+version = "1.11.2"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
-description = "edit and save your clipboard content as a note file"
+description = "Minimalistic note taking: edit and save your clipboard content as a note file"
 license = "MIT/Apache-2.0"
 categories = ["command-line-utilities", "template-engine", "text-processing"]
 documentation = "https://blog.getreu.net/projects/tp-note/tp-note--manual.html"
@@ -52,7 +52,7 @@ default = ["message-box", "viewer"]
 # Disable this feature if you do not want error message boxes.
 message-box = ["msgbox"]
 # Mardown renderer and viewer are optional too.
-viewer = ["notify", "httparse", "pulldown-cmark", "rst_parser", "rst_renderer", "webbrowser", "rand", "httpdate", "percent-encoding"]
+viewer = ["notify", "httparse", "pulldown-cmark", "rst_parser", "rst_renderer", "webbrowser", "rand", "httpdate", "percent-encoding", "url"]
 
 [dependencies]
 serde = { version = "1.0.125", features = ["derive"] }
@@ -71,10 +71,10 @@ msgbox = { version = "0.6.0", optional = true }
 directories = "3.0.1"
 semver = "0.11.0"
 atty = "0.2.14"
-parse-hyperlinks = "0.19.6"
-# parse-hyperlinks = { path = "../parse-hyperlinks" }
+parse-hyperlinks = "0.20.0"
+# parse-hyperlinks = { path = "../parse-hyperlinks/parse-hyperlinks" }
 notify = { version = "4.0.15", optional = true }
-httparse = { version = "1.3.5", optional = true }
+httparse = { version = "1.3.6", optional = true }
 pulldown-cmark = { version = "0.8.0", default-features = false, features = ["simd"], optional = true }
 webbrowser = { version = "0.5.5", optional = true }
 rand = { version = "0.8.3", optional = true }
@@ -82,6 +82,7 @@ rst_parser = { version = "0.4.0", optional = true }
 rst_renderer = { version = "0.4.0", optional = true }
 httpdate = { version = "1.0.0", optional = true }
 percent-encoding = { version = "2.1.0", optional = true }
+url = { version = "2.2.1", optional = true }
 
 # On Debian Linux you need:
 #    sudo apt-get install xorg-dev
