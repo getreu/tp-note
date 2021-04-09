@@ -6,6 +6,7 @@ use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::filename::MarkupLanguage;
 use crate::viewer::sse_server::manage_connections;
 use crate::viewer::watcher::FileWatcher;
+use crate::viewer::web_browser;
 use anyhow::anyhow;
 use std::net::TcpListener;
 use std::path::PathBuf;
@@ -14,7 +15,7 @@ use std::thread;
 use std::thread::sleep;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
-use webbrowser::{open_browser, Browser};
+use web_browser::launch_web_browser;
 
 /// This is where our loop back device is.
 /// The following is also possible, but binds us to IPv4:
@@ -113,7 +114,7 @@ impl Viewer {
         }
         // This blocks when a new instance of the browser is opened.
         let now = Instant::now();
-        open_browser(Browser::Default, url.as_str())?;
+        launch_web_browser(&url)?;
         FileWatcher::update(&event_tx_list);
         // Some browsers do not block, then we wait a little
         // to give him time read the page.
