@@ -321,11 +321,11 @@ const EDITOR_ARGS: &[&[&str]] = &[
 ];
 #[cfg(target_family = "windows")]
 const EDITOR_ARGS: &[&[&str]] = &[
+    &["C:\\Program Files\\Typora\\Typora.exe"],
     &[
         "C:\\Program Files\\Mark Text\\Mark Text.exe",
         "--new-window",
     ],
-    &["C:\\Program Files\\Typora\\Typora.exe"],
     &[
         "C:\\Program Files\\Notepad++\\notepad++.exe",
         "-nosession",
