@@ -1,5 +1,0 @@
-#!/bin/sh
-
-mkdir -p ../target/wix
-cd ../target/wix
-ln -s ../../assets/*.msi .
