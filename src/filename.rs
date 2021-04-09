@@ -1,60 +1,10 @@
 //! Helper functions that deal with filenames.
-use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::COPY_COUNTER_MAX;
 use crate::config::NOTE_FILENAME_LEN_MAX;
-use crate::note::Note;
-use anyhow::{anyhow, Context, Result};
-use std::fs;
+use anyhow::{anyhow, Result};
 use std::path::Path;
 use std::path::PathBuf;
-
-/// Open the note file `path` on disk and reads its YAML front matter.
-/// Then calculate from the front matter how the filename should be to
-/// be in sync. If it is different, rename the note on disk and return
-/// the new filename.
-pub fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
-    // parse file again to check for synchronicity with filename
-    let mut n = Note::from_existing_note(&path).context(
-        "Failed to parse the note's metadata. \
-                  Can not synchronize the note's filename!",
-    )?;
-
-    let new_fqfn = if !ARGS.no_sync {
-        if ARGS.debug {
-            eprintln!("*** Debug: Applying template `tmpl_sync_filename`.");
-        };
-        let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename).context(
-            "Failed to render the template `tmpl_sync_filename` in config file. \
-                  Can not synchronize the note's filename!",
-        )?;
-
-        if !exclude_copy_counter_eq(&path, &new_fqfn) {
-            let new_fqfn = find_unused(new_fqfn).context(
-                "Can not rename the note's filename to be in sync with its\n\
-            YAML header.",
-            )?;
-            // rename file
-            fs::rename(&path, &new_fqfn)?;
-            if ARGS.debug {
-                eprintln!("*** Debug: File renamed to {:?}", new_fqfn);
-            };
-            new_fqfn
-        } else {
-            path.to_path_buf()
-        }
-    } else {
-        path.to_path_buf()
-    };
-
-    // Print HTML rendition.
-    if let Some(dir) = &ARGS.export {
-        n.render_and_write_content(&new_fqfn, &dir)
-            .context(format!("Can not write HTML rendition into: {:?}", dir))?;
-    }
-
-    Ok(new_fqfn)
-}
 
 /// Shortens the stem of a filename so that
 /// `file_stem.len()+file_extension.len() <= NOTE_FILENAME_LEN_MAX`.
