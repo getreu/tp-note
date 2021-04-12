@@ -2148,6 +2148,7 @@ dependencies = [
  "time 0.2.26",
  "url",
  "webbrowser",
+ "windows-win",
  "winres",
 ]
 
@@ -2440,6 +2441,15 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+
+[[package]]
+name = "windows-win"
+version = "2.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37da6987b035731a01c87d48fd9732e6f3e994a09599f1ff4f6bd7ff09160fa9"
+dependencies = [
+ "winapi 0.3.9",
+]
 
 [[package]]
 name = "winres"

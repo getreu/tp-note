@@ -400,7 +400,7 @@ well as with the `--no-default-features` console-only version.
   just for one-shot, type:
 
   ```bash
-  nvim "$(tp-note --batch)"
+  FILE=$(tp-note --batch); vi "$FILE"; tp-note --batch "$FILE"
   ```
 
 * Create a new note overwriting the template's default for `subtitle`:
