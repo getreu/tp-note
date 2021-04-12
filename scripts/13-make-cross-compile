@@ -24,6 +24,7 @@ cross build --release --target x86_64-pc-windows-gnu
 
 # docker system prune -a
 
-docker images -a
+# List all docker images.
+#    docker images -a
 
 #  docker rmi <IMAGE ID>

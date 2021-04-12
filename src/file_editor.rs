@@ -1,6 +1,5 @@
 //! Launch the user's favourite file editor.
 
-extern crate semver;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::RUNS_ON_CONSOLE;
@@ -53,7 +52,7 @@ pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     for i in 0..executable_list.len() {
         if ARGS.debug {
             eprint!(
-                "*** Debug: Trying to launch the executable: {}",
+                "*** Debug: Trying to launch the file editor: {}",
                 executable_list[i]
             );
             for j in &args_list[i] {

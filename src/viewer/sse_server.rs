@@ -294,7 +294,6 @@ impl ServerThread {
             let path = path
                 .strip_prefix("/")
                 .ok_or_else(|| anyhow!("URL path must start with `/`"))?;
-            println!("path: {:?}", &path);
             let reqpath = Path::new(OsStr::new(&path));
 
             // Condition 1.: Check if we serve this kind of extension
@@ -338,8 +337,6 @@ impl ServerThread {
             // Release the `RwLockReadGuard`.
             drop(doc_local_links);
 
-            println!("stripped path: {:?}", &reqpath);
-
             // Concatenate document directory and URL path.
             let doc_path = self.doc_path.canonicalize()?;
             let doc_dir = doc_path
@@ -347,7 +344,6 @@ impl ServerThread {
                 .ok_or_else(|| anyhow!("can not determine document directory"))?;
             // If `path` is absolute, it replaces `doc_dir`.
             let reqpath_abs = doc_dir.join(&reqpath);
-            println!("stripped path abs: {:?}", &reqpath_abs);
 
             // Condition 3.: Only serve resources in the same or under the document's directory.
             match reqpath_abs.canonicalize() {

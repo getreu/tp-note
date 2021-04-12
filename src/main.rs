@@ -19,6 +19,7 @@ mod file_editor;
 mod filename;
 mod filter;
 mod note;
+mod process_ext;
 #[cfg(feature = "viewer")]
 mod viewer;
 mod workflow;

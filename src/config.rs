@@ -369,6 +369,41 @@ const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[
     &["vi"],
 ];
 
+/// Default command-line argument list when launching the web browser.
+/// The list is executed item by item until an installed web browser is found.
+/// Can be changed in config file.
+#[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
+const BROWSER_ARGS: &[&[&str]] = &[
+    &["firefox", "--new-window"],
+    &["flatpak", "run", "org.mozilla.firefox", "--new-window"],
+    &["firefox-esr", "--new-window"],
+    &["chromium", "--new-window"],
+    &[
+        "flatpak",
+        "run",
+        "com.github.Eloston.UngoogledChromium",
+        "--new-window",
+    ],
+    &["flatpak", "run", "org.chromium.Chromium", "--new-window"],
+    &["chrome", "--new-window"],
+];
+#[cfg(target_family = "windows")]
+const BROWSER_ARGS: &[&[&str]] = &[
+    &[
+        "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
+        "--new-window",
+    ],
+    &[
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome",
+        "--new-window",
+    ],
+    &["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"],
+];
+// Some info about launching programs on iOS:
+//[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
+#[cfg(all(target_family = "unix", target_vendor = "apple"))]
+const BROWSER_ARGS: &[&[&str]] = &[];
+
 /// By default clipboard support is enabled, can be disabled
 /// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
 /// false.
@@ -673,6 +708,7 @@ pub struct Cfg {
     pub tmpl_compulsory_field_content: String,
     pub editor_args: Vec<Vec<String>>,
     pub editor_console_args: Vec<Vec<String>>,
+    pub browser_args: Vec<Vec<String>>,
     pub clipboard_read_enabled: bool,
     pub clipboard_empty_enabled: bool,
     pub copy_counter_extra_separator: String,
@@ -734,6 +770,10 @@ impl ::std::default::Default for Cfg {
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
             editor_console_args: EDITOR_CONSOLE_ARGS
+                .iter()
+                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
+                .collect(),
+            browser_args: BROWSER_ARGS
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
