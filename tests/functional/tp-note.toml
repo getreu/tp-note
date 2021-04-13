@@ -144,6 +144,42 @@ editor_console_args = [
     ['emacs'],
     ['vi'],
 ]
+browser_args = [
+    [
+    'firefox',
+    '--new-window',
+],
+    [
+    'flatpak',
+    'run',
+    'org.mozilla.firefox',
+    '--new-window',
+],
+    [
+    'firefox-esr',
+    '--new-window',
+],
+    [
+    'chromium',
+    '--new-window',
+],
+    [
+    'flatpak',
+    'run',
+    'com.github.Eloston.UngoogledChromium',
+    '--new-window',
+],
+    [
+    'flatpak',
+    'run',
+    'org.chromium.Chromium',
+    '--new-window',
+],
+    [
+    'chrome',
+    '--new-window',
+],
+]
 clipboard_read_enabled = true
 clipboard_empty_enabled = true
 copy_counter_extra_separator = '-'
@@ -153,12 +189,28 @@ viewer_enabled = true
 viewer_notify_period = 1000
 viewer_served_mime_types = [
     [
+    'apng',
+    'image/apng',
+],
+    [
+    'avif',
+    'image/avif',
+],
+    [
     'bmp',
     'image/bmp',
 ],
     [
     'gif',
     'image/gif',
+],
+    [
+    'html',
+    'text/html',
+],
+    [
+    'htm',
+    'text/html',
 ],
     [
     'ico',
@@ -171,6 +223,10 @@ viewer_served_mime_types = [
     [
     'jpg',
     'image/jpeg',
+],
+    [
+    'pdf',
+    'application/pdf',
 ],
     [
     'png',
