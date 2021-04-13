@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.11.3 | Tp-Note documentation
+% TP-NOTE(1) Version 1.11.4 | Tp-Note documentation
 
 
 # NAME
@@ -1082,7 +1082,7 @@ configuration file variable. As _Tp-Note_'s built-in viewer binds to the
 '`localhost`' interface, the exposed files are accessible to all processes
 running on the computer. As long as only one user is logged into the computer
 at a given time, no privacy concern is raised: any potential note reader must
-be logged in, in order to access the HTTP server. 
+be logged in, in order to access the HTTP server.
 
 On systems where multiple users are logged in at the same time, it is
 recommended to disable _Tp-Note_'s viewer feature. This can be achieved with
@@ -1095,9 +1095,9 @@ As an alternative option, it is also possible to instruct the internal HTTP
 server not to serve any local files by setting `viewer_served_mime_types = []`.
 In this case, only the note's content is exposed to the `localhost` interface.
 
-**Summary**: As long as _Tp-Note_'s built-in note viewer is running, 
+**Summary**: As long as _Tp-Note_'s built-in note viewer is running,
 the note file and all its referenced (image) files are exposed to all users logged
-into the computer at that given time. 
+into the computer at that given time.
 
 
 # EXIT STATUS
