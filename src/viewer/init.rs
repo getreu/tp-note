@@ -1,7 +1,6 @@
 //! Main module for the markup renderer and note viewer feature.
 
 use crate::config::ARGS;
-use crate::config::LAUNCH_EDITOR;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::filename::MarkupLanguage;
 use crate::viewer::sse_server::manage_connections;
@@ -86,7 +85,8 @@ impl Viewer {
             }
         };
 
-        // Launch a background thread to manage server-sent events subscribers.
+        // Launch a background HTTP server thread to manage server-sent events subscribers
+        // and to serve the rendered html.
         let event_tx_list = {
             let doc_path = doc.clone();
             let event_tx_list = Arc::new(Mutex::new(Vec::new()));
@@ -99,10 +99,12 @@ impl Viewer {
         // Send a signal whenever the file is modified. This thread runs as
         // long as the parent thread is running.
         let event_tx_list_clone = event_tx_list.clone();
-        let handle: JoinHandle<Result<(), anyhow::Error>> = thread::spawn(move || loop {
+        // Launch the file watcher thread.
+        let _handle: JoinHandle<Result<(), anyhow::Error>> = thread::spawn(move || loop {
             let mut w = FileWatcher::new(doc.clone(), event_tx_list_clone.clone());
             w.run()
         });
+        FileWatcher::update(&event_tx_list);
 
         // Launch web browser.
         let url = format!("http://{}:{}", LOCALHOST, localport);
@@ -112,29 +114,18 @@ impl Viewer {
                 url
             );
         }
-        // This blocks when a new instance of the browser is opened.
+
+        // This is supposed to block as long the user keeps the browser open.
         let now = Instant::now();
         launch_web_browser(&url)?;
-        FileWatcher::update(&event_tx_list);
-        // Some browsers do not block, then we wait a little
-        // to give him time read the page.
+
+        // If ever the browsers thread does not block (it should), then we wait a little to
+        // serve the rendered page and the referenced images.
         if now.elapsed().as_secs() <= 4 {
             sleep(Duration::new(4, 0));
         };
 
-        if *LAUNCH_EDITOR {
-            // We keep this thread alive as long as the watcher thread
-            // is running. As the watcher never ends, the `join()`
-            // will block forever unless the parent thread terminates.
-            // The parent thread and this tread will finally end, when
-            // the user closes the external file editor program.
-            handle.join().unwrap()
-        } else {
-            // In "view-only" mode, there is no external text editor to
-            // wait for. We are here, because the user just closed the
-            // browser. So it is Ok to exit now. This also terminates
-            // the Sse-server.
-            Ok(())
-        }
+        // This will also terminate the `FileWatcher` thread and web server thread.
+        Ok(())
     }
 }

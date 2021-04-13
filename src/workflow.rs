@@ -13,7 +13,7 @@ use crate::filename;
 use crate::filename::MarkupLanguage;
 use crate::note::Note;
 #[cfg(feature = "viewer")]
-use crate::viewer::launch_viewer;
+use crate::viewer::launch_viewer_thread;
 use crate::AUTHOR;
 use crate::VERSION;
 use anyhow::{anyhow, Context};
@@ -240,13 +240,24 @@ pub fn run() -> Result<PathBuf, anyhow::Error> {
     };
 
     #[cfg(feature = "viewer")]
-    if *LAUNCH_VIEWER {
-        launch_viewer(&path)?;
-    }
+    let viewer_join_handle = if *LAUNCH_VIEWER {
+        Some(launch_viewer_thread(&path))
+    } else {
+        None
+    };
 
     if *LAUNCH_EDITOR {
+        // This blocks.
         launch_editor(&path)?;
+    };
 
+    #[cfg(feature = "viewer")]
+    if let Some(jh) = viewer_join_handle {
+        jh.join()
+            .map_err(|_| anyhow!("can not join the Viewer thread."))?;
+    };
+
+    if *LAUNCH_EDITOR {
         match synchronize_filename(&path) {
             Ok(p) => path = p,
             Err(e) => {
