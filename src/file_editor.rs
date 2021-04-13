@@ -3,7 +3,8 @@
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::RUNS_ON_CONSOLE;
-use anyhow::{anyhow, Context};
+use crate::process_ext::ChildExt;
+use anyhow::anyhow;
 #[cfg(not(target_family = "windows"))]
 use std::fs::File;
 use std::path::Path;
@@ -62,6 +63,7 @@ pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
         };
 
         // Check if this is a `flatpak run <app>` command.
+        #[cfg(target_family = "unix")]
         if executable_list[i].starts_with("flatpak")
             && args_list[i].len() >= 3
             && args_list[i][0] == "run"
@@ -101,41 +103,48 @@ pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
         #[cfg(target_family = "windows")]
         let (config_stdin, config_stdout) = (Stdio::null(), Stdio::null());
 
-        let child = Command::new(&executable_list[i])
+        let mut command = Command::new(&executable_list[i]);
+
+        command
             .args(&args_list[i])
             .stdin(config_stdin)
             .stdout(config_stdout)
-            .stderr(Stdio::null())
-            .spawn();
+            .stderr(Stdio::null());
 
-        if let Ok(mut child) = child {
-            let ecode = child.wait().context("Failed to wait on editor to close.")?;
+        match command.spawn() {
+            Ok(child) => {
+                let mut child = ChildExt::from(child);
+                let ecode = child.wait()?;
 
-            if !ecode.success() {
-                return Err(anyhow!(
-                    "The external file editor did not terminate gracefully:\n\
+                if !ecode.success() {
+                    return Err(anyhow!(
+                        "The external file editor did not terminate gracefully:\n\
                      \t{}\n\
                      \n\
                      Edit the variable `{}` in Tp-Note's configuration file\n\
                      and correct the following:\n\
                      \t{:?}",
-                    ecode.to_string(),
-                    if *RUNS_ON_CONSOLE {
-                        "editor_console_args"
-                    } else {
-                        "editor_args"
-                    },
-                    &*editor_args[i],
-                ));
-            };
+                        ecode.to_string(),
+                        if *RUNS_ON_CONSOLE {
+                            "editor_console_args"
+                        } else {
+                            "editor_args"
+                        },
+                        &*editor_args[i],
+                    ));
+                };
 
-            executable_found = true;
-            break;
-        } else if ARGS.debug {
-            eprintln!(
-                "*** Debug: Executable \"{}\" not found.",
-                executable_list[i]
-            );
+                executable_found = true;
+                break;
+            }
+            Err(e) => {
+                if ARGS.debug {
+                    eprintln!(
+                        "*** Debug: file editor \"{}\" not found: {}",
+                        executable_list[i], e
+                    );
+                }
+            }
         }
     }
 

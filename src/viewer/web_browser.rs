@@ -6,7 +6,6 @@ use crate::process_ext::ChildExt;
 use anyhow::anyhow;
 use std::process::Command;
 use std::process::Stdio;
-
 use webbrowser::{open_browser, Browser};
 
 #[inline]
@@ -61,6 +60,7 @@ pub fn launch_listed_broswer(url: &str) -> Result<(), anyhow::Error> {
         };
 
         // Check if this is a `flatpak run <app>` command.
+        #[cfg(target_family = "unix")]
         if executable_list[i].starts_with("flatpak")
             && args_list[i].len() >= 3
             && args_list[i][0] == "run"
@@ -88,13 +88,15 @@ pub fn launch_listed_broswer(url: &str) -> Result<(), anyhow::Error> {
 
         let (config_stdin, config_stdout) = (Stdio::null(), Stdio::null());
 
-        match Command::new(&executable_list[i])
+        let mut command = Command::new(&executable_list[i]);
+
+        command
             .args(&args_list[i])
             .stdin(config_stdin)
             .stdout(config_stdout)
-            .stderr(Stdio::null())
-            .spawn()
-        {
+            .stderr(Stdio::null());
+
+        match command.spawn() {
             Ok(child) => {
                 let mut child = ChildExt::from(child);
                 let ecode = child.wait()?;
