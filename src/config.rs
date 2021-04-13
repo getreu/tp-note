@@ -377,7 +377,7 @@ const BROWSER_ARGS: &[&[&str]] = &[
     &["firefox", "--new-window"],
     &["flatpak", "run", "org.mozilla.firefox", "--new-window"],
     &["firefox-esr", "--new-window"],
-    &["chromium", "--new-window"],
+    &["chromium-browser", "--new-window"],
     &[
         "flatpak",
         "run",

@@ -5,7 +5,7 @@
 ./12-make-targets
 ./13-make-cross-compile
 ./14-make-doc
-./15-symlink-installer
-./16-build-packages
+./15-build-packages
+./16-symlink-installer
 ./17-clean-targets-keep-binaries
 ./18-make-dist
