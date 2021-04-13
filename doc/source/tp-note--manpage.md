@@ -944,26 +944,10 @@ affect the way new notes are created:
 
 As a result, all future notes are created as '`*.rst`' files.
 
-### Change the way how note files are viewed
-
-Besides its core function, _Tp-Note_ comes with some optional note renderer and
-viewer and can work with various markup languages at the same time. Depending
-on the markup language, this feature is more or less advanced and complete:
-_Markdown_ (cf. '`note_file_extension_md`') is best supported and feature
-complete: It complies with the _Common Mark_ specification. The
-_reStructuredText_ renderer (cf.  '`note_file_extension_rst`') is quit new and
-still in experimental state. For all other markup languages _Tp-Note_ has a
-built in markup source viewer (cf.  '`note_file_extension_txt`') that renders
-hyperlinks to make them clickable.  In case none of the above rendition engines
-suits you, it is possible to disable the viewer feature for some file
-extensions only: just place those extensions in the
-'`note_file_extension_no_viewer`' variable. If you wish to disable the viewer
-feature overall, set the variable `viewer_enabled = false`.
-
 ### Change the markup language for one specific note only
 
 You can change the Markup language of a specific note by adding the variable
-'`file_ext:`' to its YAML header. For example, for _RestructuredText_ add:
+'`file_ext:`' to its YAML header. For example, for _ReStructuredText_ add:
 
 ```yaml
 ---
@@ -975,12 +959,33 @@ file_ext: "rst"
 The above change only applies to the current note.
 
 
-## Customize the built-in viewer
+## Customize the built-in note viewer
+
+### Change the way how note files are rendered for viewing
+
+Besides its core function, _Tp-Note_ comes with several built-in markup
+renderer and viewer, allowing to work with different markup languages at the
+same time. The configuration file variables '`note_file_extension_*`' determine
+which markup renderer is used for which note file extension. Depending on the
+markup language, this feature is more or less advanced and complete: _Markdown_
+(cf. '`note_file_extension_md`') is best supported and feature complete: It
+complies with the _Common Mark_ specification. The _ReStructuredText_ renderer
+(cf.  '`note_file_extension_rst`') is quit new and still in experimental state.
+For all other supported markup languages _Tp-Note_ provides a built-in markup
+source text viewer (cf.  '`note_file_extension_txt`') that shows the note as
+typed (without markup), but renders all hyperlinks to make them clickable.  In
+case none of the above rendition engines suit you, it is possible to disable
+the viewer feature selectively for some particular note file extensions: just
+place these extensions in the '`note_file_extension_no_viewer`' variable. If
+you wish to disable the viewer feature overall, set the variable
+`viewer_enabled = false`.
+
+### Change the HTML rendition template
 
 After the markup rendition process, _Tp-Note_'s built-in viewer generates its
-HTML rendition through the customizable HTML templates
+final HTML rendition through the customizable HTML templates
 '`viewer_rendition_tmpl`' and '`viewer_error_tmpl`'. The following code
-example of '`viewer_rendition_tmpl`' illustrates the available variables:
+example taken from '`viewer_rendition_tmpl`' illustrates the available variables:
 
 ```html
 viewer_rendition_tmpl = '''<!DOCTYPE html>
@@ -1052,6 +1057,24 @@ viewer_error_tmpl = '''<!DOCTYPE html>
 '''
 ```
 
+### Choose your favorite web browser as note viewer
+
+Once the note is rendered into HTML, _Tp-Note_'s internal HTTP server connects
+to a random port at the `localhost` interface where the rendition is served to
+be viewed with a web browser. _Tp-Note_'s configuration file contains a list
+'`browser_args`' with common web browsers and their usual location on disk.
+This list is executed top down until a web browser is found and launched. If
+you want to view your notes with a different web browser, simply modify the
+'`browser_args`' list and put your favorite web browser on top.
+
+In case none of the listed browsers can be found, _Tp-Note_ switches into a
+fall back mode with limited functionality, where it tries to open the system's
+default web browser. A disadvantage is, that in fall back mode _Tp-Note_ is not
+able to detect when the user closes the web browser. This might lead to
+situations, where _Tp-Note_'s internal HTTP server shuts down to early. 
+In order to check if _Tp-Note_ finds the selected web browser properly, start 
+_Tp-Note_ with '`--debug`'.
+
 
 ## Customize the built-in HTML exporter
 
@@ -1066,38 +1089,34 @@ template.
 
 
 
-# SECURITY CONSIDERATIONS
+# SECURITY AND PRIVACY CONSIDERATIONS
 
 As discussed above, _Tp-Note_'s built-in viewer sets up an HTTP server on the
 '`localhost`' interface with a random port number. This HTTP server runs as
-long as the _Tp-Note_ process is running: In '`--view`' mode, the HTTP server
-is kept up for about one second, in normal mode it is kept up as long as the
-file editor launched by _Tp-Note_ is running. The HTTP server not only exposes
-the rendered note, but also some (image) files in the same directory (and all
-subdirectories) where the note file resides. For security reasons symbolic
-links to files outside the note's directory are not followed. _Tp-Note_'s
-built-in HTTP server only serves files that are referenced in the note document
-and whose file extension is registered with the '`viewer_served_mime_type`'
+long as the as long as the launched web browser window is open. It should be
+remembered, that the HTTP server not only exposes the rendered note, but also
+some other (image) files in the same directory (and all subdirectories) where
+the note file resides. For security reasons symbolic links to files outside the
+note's directory are not followed. Furthermore, _Tp-Note_'s built-in HTTP
+server only serves files that are referenced in the note document and whose
+file extensions are registered with the '`viewer_served_mime_type`'
 configuration file variable. As _Tp-Note_'s built-in viewer binds to the
-'`localhost`' interface, the exposed files are accessible to all processes
-running on the computer. As long as only one user is logged into the computer
-at a given time, no privacy concern is raised: any potential note reader must
-be logged in, in order to access the HTTP server.
+'`localhost`' interface, the exposed files are in principle accessible to all
+processes running on the computer. As long as only one user is logged into the
+computer at a given time, no privacy concern is raised: any potential note
+reader must be logged in, in order to access the `localhost` HTTP server.
 
-On systems where multiple users are logged in at the same time, it is
-recommended to disable _Tp-Note_'s viewer feature. This can be achieved with
-the command line option '`--edit`' or by setting the configuration file variable
-'`viewer_enabled = false`'. Alternatively, you can also compile _Tp-Note_ without
-the '`viewer`' feature. Note, that even with the viewer feature disabled, one can
-still render the note manually with the '`--export`' option.
+This is why on systems where multiple users are logged in at the same time, it
+is recommended to disable _Tp-Note_'s viewer feature by setting the
+configuration file variable '`viewer_enabled = false`'. Alternatively, you can
+also compile _Tp-Note_ without the '`viewer`' feature. Note, that even with the
+viewer feature disabled, one can still render the note manually with the
+'`--export`' option.
 
-As an alternative option, it is also possible to instruct the internal HTTP
-server not to serve any local files by setting `viewer_served_mime_types = []`.
-In this case, only the note's content is exposed to the `localhost` interface.
-
-**Summary**: As long as _Tp-Note_'s built-in note viewer is running,
-the note file and all its referenced (image) files are exposed to all users logged
-into the computer at that given time.
+**Summary**: As long as _Tp-Note_'s built-in note viewer is running, the note
+file and all its referenced (image) files are exposed to all users logged into
+the computer at that given time. This concerns only local users, _Tp-Note_
+never exposes any information to the network.
 
 
 # EXIT STATUS
