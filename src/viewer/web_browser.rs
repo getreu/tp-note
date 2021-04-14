@@ -1,6 +1,5 @@
 //! Launch the user's favourite web browser.
 
-use crate::config::ARGS;
 use crate::config::CFG;
 use crate::process_ext::ChildExt;
 use anyhow::anyhow;
@@ -12,10 +11,10 @@ use webbrowser::{open_browser, Browser};
 /// Launches a web browser and displays the note's HTML rendition.
 pub fn launch_web_browser(url: &str) -> Result<(), anyhow::Error> {
     if launch_listed_broswer(url).is_err() {
-        eprintln!(
-            "*** Information: the `browser_args` configuration file variable \
-                 is not configured properly. Trying to launch the system's \
-                 default web browser.",
+        log::warn!(
+            "The `browser_args` configuration file variable \
+             is not configured properly. Trying to launch the system's \
+             default web browser.",
         );
         open_browser(Browser::Default, url)?;
     };
@@ -48,16 +47,11 @@ pub fn launch_listed_broswer(url: &str) -> Result<(), anyhow::Error> {
     // Launch web browser.
     let mut executable_found = false;
     for i in 0..executable_list.len() {
-        if ARGS.debug {
-            eprint!(
-                "*** Debug: Trying to launch the web browser: {}",
-                executable_list[i]
-            );
-            for j in &args_list[i] {
-                eprint!(" {}", j);
-            }
-            eprintln!()
-        };
+        log::info!(
+            "Trying to launch the web browser: \"{}\" with {:?}",
+            executable_list[i],
+            args_list[i]
+        );
 
         // Check if this is a `flatpak run <app>` command.
         #[cfg(target_family = "unix")]
@@ -75,12 +69,7 @@ pub fn launch_listed_broswer(url: &str) -> Result<(), anyhow::Error> {
                 if !ecode.success() {
                     // This is a flatpak command, but the application is not installed on this system.
                     // Silently ignore this flatpak command.
-                    if ARGS.debug {
-                        eprintln!(
-                            "*** Debug: Flatpak executable \"{}\" not found.",
-                            args_list[i][1]
-                        );
-                    }
+                    log::info!("Flatpak executable \"{}\" not found.", args_list[i][1]);
                     continue;
                 };
             };
@@ -118,12 +107,7 @@ pub fn launch_listed_broswer(url: &str) -> Result<(), anyhow::Error> {
                 }
             }
             Err(e) => {
-                if ARGS.debug {
-                    eprintln!(
-                        "*** Debug: web browser \"{}\" not found: {}",
-                        executable_list[i], e
-                    );
-                }
+                log::info!("Web browser \"{}\" not found: {}", executable_list[i], e);
             }
         }
     }

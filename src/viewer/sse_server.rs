@@ -1,7 +1,6 @@
 //! Server-sent-event server for the note viewer feature.
 //! This module contains also the web browser Javascript client code.
 
-use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::filter::TERA;
@@ -130,7 +129,7 @@ impl ServerThread {
         match Self::serve_events2(self) {
             Ok(_) => (),
             Err(e) => {
-                eprintln!("ERROR: ServerThread::serve_events(): {:?}", e);
+                log::warn!("ServerThread::serve_events(): {:?}", e);
             }
         }
     }
@@ -202,12 +201,10 @@ impl ServerThread {
             self.stream.write(html.as_bytes())?;
             // We have been subscribed to events beforehand. As we drop the
             // receiver now, `viewer::update()` will remove us from the list soon.
-            if ARGS.debug {
-                eprintln!(
-                    "*** Debug: ServerThread::serve_events2: 200 OK, file {} served.",
-                    self.doc_path.to_str().unwrap_or_default().to_string()
-                );
-            }
+            log::debug!(
+                "ServerThread::serve_events2: 200 OK, file {} served.",
+                self.doc_path.to_str().unwrap_or_default().to_string()
+            );
             // Only Chrome and Edge on Windows need this extra time to ACK the TCP
             // connection.
             sleep(Duration::from_millis(SERVER_EXTRA_KEEP_ALIVE));
@@ -225,12 +222,10 @@ impl ServerThread {
             );
             self.stream.write(response.as_bytes())?;
             self.stream.write(FAVICON)?;
-            if ARGS.debug {
-                eprintln!(
-                    "*** Debug: ServerThread::serve_events2: 200 OK, file \"{}\" served.",
-                    FAVICON_PATH
-                );
-            };
+            log::debug!(
+                "ServerThread::serve_events2: 200 OK, file \"{}\" served.",
+                FAVICON_PATH
+            );
             // Only Chrome and Edge on Windows need this extra time to ACK the TCP
             // connection.
             sleep(Duration::from_millis(SERVER_EXTRA_KEEP_ALIVE));
@@ -282,12 +277,10 @@ impl ServerThread {
                 // Send event.
                 let event = format!("event: {}\r\ndata\r\n\r\n", SSE_EVENT_NAME);
                 self.stream.write(event.as_bytes())?;
-                if ARGS.debug {
-                    eprintln!(
-                        "*** Debug: ServerThread::serve_events2: 200 OK, event \"{}\" served.",
-                        SSE_EVENT_NAME
-                    );
-                };
+                log::debug!(
+                    "ServerThread::serve_events2: 200 OK, event \"{}\" served.",
+                    SSE_EVENT_NAME
+                );
             }
         } else {
             // Strip `/` and convert to `Path`.
@@ -307,13 +300,16 @@ impl ServerThread {
                 Some(mt) => mt,
                 None => {
                     // Reject all files with extensions not listed.
-                    if ARGS.debug {
-                        eprintln!(
-                            "*** Debug: ServerThread::serve_events2: \
-                            file type of \"{}\" is not served, rejecting.",
-                            reqpath.to_str().unwrap_or_default(),
-                        );
-                    };
+                    log::warn!(
+                        "ServerThread::serve_events2: \
+                            files with extension \"{}\" are not served. Rejecting: \"{}\"",
+                        reqpath
+                            .extension()
+                            .unwrap_or_default()
+                            .to_str()
+                            .unwrap_or_default(),
+                        reqpath.to_str().unwrap_or_default(),
+                    );
                     return self.write_not_found(&reqpath);
                 }
             };
@@ -324,13 +320,11 @@ impl ServerThread {
                 .read()
                 .map_err(|e| anyhow!("can not obtain RwLock for reading: {}", e))?;
             if !doc_local_links.contains_key(Path::new(&reqpath)) {
-                if ARGS.debug {
-                    eprintln!(
-                        "*** Debug: ServerThread::serve_events2: target not referenced, rejecting: \
+                log::warn!(
+                    "ServerThread::serve_events2: target not referenced in note file, rejecting: \
                             \"{}\"",
-                        reqpath.to_str().unwrap_or_default()
-                    );
-                };
+                    reqpath.to_str().unwrap_or_default()
+                );
                 drop(doc_local_links);
                 return self.write_not_found(&reqpath);
             }
@@ -349,26 +343,22 @@ impl ServerThread {
             match reqpath_abs.canonicalize() {
                 Ok(p) => {
                     if !p.starts_with(doc_dir) {
-                        if ARGS.debug {
-                            eprintln!(
-                                "*** Debug: ServerThread::serve_events2:\
+                        log::warn!(
+                            "ServerThread::serve_events2:\
                                 file \"{}\" is not in directory \"{}\", rejecting.",
-                                reqpath.to_str().unwrap_or_default(),
-                                doc_dir.to_str().unwrap_or_default()
-                            );
-                            return self.write_not_found(&reqpath);
-                        };
+                            reqpath.to_str().unwrap_or_default(),
+                            doc_dir.to_str().unwrap_or_default()
+                        );
+                        return self.write_not_found(&reqpath);
                     }
                 }
                 Err(e) => {
-                    if ARGS.debug {
-                        eprintln!(
-                            "*** Debug: ServerThread::serve_events2: can not access file: \
+                    log::warn!(
+                        "ServerThread::serve_events2: can not access file: \
                             \"{}\": {}.",
-                            reqpath_abs.to_str().unwrap_or_default(),
-                            e
-                        );
-                    };
+                        reqpath_abs.to_str().unwrap_or_default(),
+                        e
+                    );
                 }
             };
 
@@ -386,12 +376,10 @@ impl ServerThread {
                 );
                 self.stream.write(response.as_bytes())?;
                 self.stream.write(&file_content)?;
-                if ARGS.debug {
-                    eprintln!(
-                        "*** Debug: ServerThread::serve_events2: 200 OK, file \"{}\" served.",
-                        reqpath_abs.to_str().unwrap_or_default()
-                    );
-                };
+                log::debug!(
+                    "ServerThread::serve_events2: 200 OK, file \"{}\" served.",
+                    reqpath_abs.to_str().unwrap_or_default()
+                );
                 // Only Chrome and Edge on Windows need this extra time to ACK the TCP
                 // connection.
                 sleep(Duration::from_millis(SERVER_EXTRA_KEEP_ALIVE));
@@ -406,12 +394,10 @@ impl ServerThread {
     /// Write HTTP not found response.
     fn write_not_found(&mut self, file_path: &Path) -> Result<(), anyhow::Error> {
         self.stream.write(b"HTTP/1.1 404 Not Found\r\n\r\n")?;
-        if ARGS.debug {
-            eprintln!(
-                "*** Debug: ServerThread::serve_events2: 404 Not found, \"{}\" served.",
-                file_path.to_str().unwrap_or_default()
-            );
-        };
+        log::debug!(
+            "ServerThread::serve_events2: 404 Not found, \"{}\" served.",
+            file_path.to_str().unwrap_or_default()
+        );
         Ok(())
     }
 
@@ -483,12 +469,15 @@ impl ServerThread {
                     doc_local_links.insert(path, ());
                 }
 
-                if ARGS.debug {
-                    eprintln!("*** Debug: ServerThread: referenced and served files (maybe none):");
-                    for l in &*doc_local_links {
-                        eprintln!("\t{}", l.0.as_os_str().to_str().unwrap_or_default());
-                    }
-                };
+                if doc_local_links.is_empty() {
+                    log::debug!(
+                        "ServerThread: note file has no local hyperlinks. No additional local files served.",
+                    );
+                } else {
+                    log::debug!(
+                        "ServerThread: referenced and served local files:\n{:#?}", *doc_local_links
+                    );
+                }
                 Ok(html)
                 // The `RwLockWriteGuard` is released here.
             }) {

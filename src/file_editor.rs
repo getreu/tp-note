@@ -1,6 +1,5 @@
 //! Launch the user's favourite file editor.
 
-use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::RUNS_ON_CONSOLE;
 use crate::process_ext::ChildExt;
@@ -44,23 +43,13 @@ pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     let args_list = args_list;
     let executable_list = executable_list;
 
-    // Launch editor/viewer.
-    if ARGS.debug {
-        eprintln!("*** Debug: Opening file {:?}", path);
-    };
-
     let mut executable_found = false;
     for i in 0..executable_list.len() {
-        if ARGS.debug {
-            eprint!(
-                "*** Debug: Trying to launch the file editor: {}",
-                executable_list[i]
-            );
-            for j in &args_list[i] {
-                eprint!(" \"{}\"", j);
-            }
-            eprintln!()
-        };
+        log::info!(
+            "Trying to launch the file editor: \"{}\" with {:?}",
+            executable_list[i],
+            args_list[i]
+        );
 
         // Check if this is a `flatpak run <app>` command.
         #[cfg(target_family = "unix")]
@@ -78,12 +67,7 @@ pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
                 if !ecode.success() {
                     // This is a flatpak command, but the application is not installed on this system.
                     // Silently ignore this flatpak command.
-                    if ARGS.debug {
-                        eprintln!(
-                            "*** Debug: Flatpak executable \"{}\" not found.",
-                            args_list[i][1]
-                        );
-                    }
+                    log::info!("Flatpak executable \"{}\" not found.", args_list[i][1]);
                     continue;
                 };
             };
@@ -138,12 +122,7 @@ pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
                 break;
             }
             Err(e) => {
-                if ARGS.debug {
-                    eprintln!(
-                        "*** Debug: file editor \"{}\" not found: {}",
-                        executable_list[i], e
-                    );
-                }
+                log::info!("File editor \"{}\" not found: {}", executable_list[i], e);
             }
         }
     }

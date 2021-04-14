@@ -10,6 +10,7 @@ use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
+use log::LevelFilter;
 use parse_hyperlinks::iterator::first_hyperlink;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -651,9 +652,9 @@ pub struct Args {
     /// Loads alternative configuration file
     #[structopt(long, short = "c")]
     pub config: Option<String>,
-    /// Debug: shows templates and its variables
+    /// Console debug level: "trace", "debug", "info", "warn", "error" (default) or "off"
     #[structopt(long, short = "d")]
-    pub debug: bool,
+    pub debug: Option<LevelFilter>,
     /// Launches only the editor, no browser
     #[structopt(long, short = "e")]
     pub edit: bool,

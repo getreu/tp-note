@@ -1,6 +1,5 @@
 //! Deals with the note's content string.
 
-use crate::config::ARGS;
 use anyhow::{anyhow, Result};
 use core::marker::PhantomPinned;
 use std::fmt;
@@ -215,9 +214,7 @@ impl<'a> Content<'a> {
             .open(&new_fqfn);
         match outfile {
             Ok(mut outfile) => {
-                if ARGS.debug {
-                    eprintln!("*** Debug: Creating file: {:?}", new_fqfn);
-                };
+                log::trace!("Creating file: {:?}", new_fqfn);
                 write!(outfile, "\u{feff}")?;
                 if !self.header.is_empty() {
                     write!(outfile, "---")?;

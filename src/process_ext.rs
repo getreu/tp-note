@@ -1,6 +1,5 @@
 //! Module extending the process handling.
 //!
-use crate::config::ARGS;
 use std::convert::From;
 #[cfg(target_family = "windows")]
 use std::os::windows::io::AsRawHandle;
@@ -30,19 +29,16 @@ impl ChildExt {
     pub fn wait(&mut self) -> Result<ExitStatus, std::io::Error> {
         // Remember ID for debugging.
         let process_id = self.0.id();
-        if ARGS.debug {
-            eprintln!("*** Debug: Process started: id={}", process_id);
-        };
+        log::info!("Process started: id={}", process_id);
 
         // Under Unix `wait()` should also wait for the termination of all grand children.
         let exit_status = self.0.wait();
 
-        if ARGS.debug {
-            eprintln!(
-                "*** Debug: Process terminated: id={}, status={:?}",
-                process_id, exit_status
-            );
-        };
+        log::info!(
+            "Process terminated: id={}, status={:?}",
+            process_id,
+            exit_status
+        );
 
         exit_status
     }
@@ -53,9 +49,7 @@ impl ChildExt {
     pub fn wait(&mut self) -> Result<ExitStatus, anyhow::Error> {
         // Remember ID for debugging.
         let process_id = self.0.id();
-        if ARGS.debug {
-            eprintln!("*** Debug: Process started: id={}", process_id);
-        };
+        log::info!("Process started: id={}", process_id);
 
         // We create a job to monitor the wrapped child.
         let job = Job::create()?;
@@ -80,22 +74,16 @@ impl ChildExt {
             if job.query_process_id_list()?.len() > 0 {
                 // We do nothing, just continue waiting.
             } else {
-                if ARGS.debug {
-                    eprintln!(
-                        "*** Debug: All processes launched by id={} terminated.",
-                        process_id
-                    );
-                };
+                log::info!("All processes launched by id={} terminated.", process_id);
                 break;
             };
         }
 
-        if ARGS.debug {
-            eprintln!(
-                "*** Debug: Process terminated: id={}, status={:?}",
-                process_id, exit_status
-            );
-        };
+        log::info!(
+            "Process terminated: id={}, status={:?}",
+            process_id,
+            exit_status
+        );
 
         Ok(exit_status)
     }

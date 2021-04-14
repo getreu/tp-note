@@ -1,6 +1,7 @@
 //! Main module for the markup renderer and note viewer feature.
 
 use crate::config::ARGS;
+use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::filename::MarkupLanguage;
 use crate::viewer::sse_server::manage_connections;
@@ -35,7 +36,7 @@ impl Viewer {
         match Self::run2(doc) {
             Ok(_) => (),
             Err(e) => {
-                eprintln!("ERROR: Viewer::run(): {:?}", e);
+                log::warn!("Viewer::run(): {:?}", e);
             }
         }
     }
@@ -75,15 +76,10 @@ impl Viewer {
 
         // Concerning non-master-documents, we only serve these file extensions.
         lazy_static::initialize(&VIEWER_SERVED_MIME_TYPES_HMAP);
-        if ARGS.debug {
-            eprintln!(
-                "*** Debug: Viewer::run(): \
-                 Besides `/`, we only serve files with the following listed extensions:"
+        log::debug!(
+                "Viewer::run(): \
+                 Besides the note's HTML rendition, we only serve files with the following listed extensions:\n{:?}", CFG.viewer_served_mime_types
             );
-            for (key, val) in VIEWER_SERVED_MIME_TYPES_HMAP.iter() {
-                eprintln!("\t{}:\t{}", key, val);
-            }
-        };
 
         // Launch a background HTTP server thread to manage server-sent events subscribers
         // and to serve the rendered html.
@@ -108,12 +104,7 @@ impl Viewer {
 
         // Launch web browser.
         let url = format!("http://{}:{}", LOCALHOST, localport);
-        if ARGS.debug {
-            eprintln!(
-                "*** Debug: Viewer::run(): launching browser with URL: {}",
-                url
-            );
-        }
+        log::info!("Viewer::run(): launching browser with URL: {}", url);
 
         // This is supposed to block as long the user keeps the browser open.
         let now = Instant::now();

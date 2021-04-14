@@ -39,9 +39,7 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
     )?;
 
     let new_fqfn = if !ARGS.no_sync {
-        if ARGS.debug {
-            eprintln!("*** Debug: Applying template `tmpl_sync_filename`.");
-        };
+        log::trace!("Applying template `tmpl_sync_filename`.");
         let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename).context(
             "Failed to render the template `tmpl_sync_filename` in config file. \
                   Can not synchronize the note's filename!",
@@ -54,9 +52,7 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
             )?;
             // rename file
             fs::rename(&path, &new_fqfn)?;
-            if ARGS.debug {
-                eprintln!("*** Debug: File renamed to {:?}", new_fqfn);
-            };
+            log::trace!("File renamed to {:?}", new_fqfn);
             new_fqfn
         } else {
             path.to_path_buf()
@@ -90,11 +86,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_new_filename)
                 .context("Can not render the template `tmpl_new_filename` in config file.")?;
-            if ARGS.debug {
-                eprintln!(
-                    "*** Debug: Applying templates `tmpl_new_content` and `tmpl_new_filename`."
-                );
-            }
+            log::trace!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
             (n, new_fqfn)
         } else if !STDIN.header.is_empty() || !CLIPBOARD.header.is_empty() {
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
@@ -105,11 +97,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_copy_filename)
                 .context("Can not render the template `tmpl_copy_filename` in config file.")?;
-            if ARGS.debug {
-                eprintln!(
-                    "*** Debug: Applying templates: `tmpl_copy_content`, `tmpl_copy_filename`"
-                );
-            };
+            log::trace!("Applying templates: `tmpl_copy_content`, `tmpl_copy_filename`");
             (n, new_fqfn)
         } else {
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
@@ -119,11 +107,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_clipboard_filename)
                 .context("Can not render the template `tmpl_clipboard_filename` in config file.")?;
-            if ARGS.debug {
-                eprintln!(
-                    "*** Debug: Applying templates: `tmpl_clipboard_content`, `tmpl_clipboard_filename`"
-                );
-            };
+            log::trace!("Applying templates: `tmpl_clipboard_content`, `tmpl_clipboard_filename`");
             (n, new_fqfn)
         };
 
@@ -154,11 +138,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
         } else {
             // ANNOTATE FILE: CREATE NEW NOTE WITH TMPL_ANNOTATE_CONTENT TEMPLATE
             // `path` points to a foreign file type that will be annotated.
-            if ARGS.debug {
-                eprintln!(
-                    "*** Debug: Applying templates `tmpl_annotate_content` and `tmpl_annotate_filename`."
-                );
-            };
+            log::trace!("Applying templates `tmpl_annotate_content` and `tmpl_annotate_filename`.");
             let n = Note::from_content_template(&path, &CFG.tmpl_annotate_content)
                 .context("Can not render the template `tmpl_annotate_content` in config file.")?;
             let new_fqfn = n

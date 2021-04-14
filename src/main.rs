@@ -30,6 +30,7 @@ use crate::config::ARGS;
 use crate::config::CFG;
 use crate::error::AlertDialog;
 use crate::workflow::run;
+use log::{Level, LevelFilter, Metadata, Record};
 use semver::Version;
 use std::process;
 
@@ -61,10 +62,36 @@ const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.11.0");
 /// (c) Jens Getreu
 const AUTHOR: &str = "(c) Jens Getreu, 2020-2021";
 
+/// Console logger.
+struct AppLogger;
+static APP_LOGGER: AppLogger = AppLogger;
+
+/// Trait defining the logging format and destination.
+impl log::Log for AppLogger {
+    fn enabled(&self, metadata: &Metadata) -> bool {
+        metadata.level() <= Level::Trace
+    }
+
+    fn log(&self, record: &Record) {
+        if self.enabled(record.metadata()) {
+            eprintln!("*** {}: {}", record.level(), record.args());
+        }
+    }
+    fn flush(&self) {}
+}
+
 /// Print some error message if `run()` does not complete.
 /// Exit prematurely if the configuration file version does
 /// not match the program version.
 fn main() {
+    // Setup logger.
+    log::set_logger(&APP_LOGGER).unwrap();
+    if let Some(level) = ARGS.debug {
+        log::set_max_level(level);
+    } else {
+        log::set_max_level(LevelFilter::Error);
+    }
+
     // If we could not load or parse the config file, then
     // `CFG.version` does not contain a version number, but an error message.
     let config_file_version = Version::parse(&CFG.version).unwrap_or_else(|_| {

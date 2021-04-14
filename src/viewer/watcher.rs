@@ -1,6 +1,5 @@
 //! Implements the file watcher for the note viewer feature.
 
-use crate::config::ARGS;
 use crate::config::CFG;
 use anyhow::anyhow;
 use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
@@ -52,7 +51,7 @@ impl FileWatcher {
         match Self::run2(self) {
             Ok(_) => (),
             Err(e) => {
-                eprintln!("ERROR: Watcher::run(): {:?}", e);
+                log::warn!("Watcher::run(): {:?}", e);
             }
         }
     }
@@ -105,11 +104,7 @@ impl FileWatcher {
         // Notify subscribers and forget disconnected subscribers.
         let tx_list = &mut *event_tx_list.lock().unwrap();
         *tx_list = tx_list.drain(..).filter(|tx| tx.send(()).is_ok()).collect();
-        if ARGS.debug {
-            eprintln!(
-                "*** Debug: Viewer::update(): {} subscribers updated.",
-                tx_list.len()
-            );
-        };
+
+        log::debug!("Viewer::update(): {} subscribers updated.", tx_list.len());
     }
 }

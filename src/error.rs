@@ -53,29 +53,7 @@ impl AlertDialog {
         // Print the same message also to console in case
         // the window does not pop up due to missing
         // libraries.
-        eprintln!("{}\n{}", *ALERT_DIALOG_TITLE_LINE, &Self::format_error(msg));
-    }
-
-    /// Pops up a message box and prints `msg`.
-    #[allow(dead_code)]
-    pub fn print(msg: &str) {
-        // Print the same message also to console in case
-        // the window does not pop up due to missing
-        // libraries.
-        Self::print_console(msg);
-        // Popup window.
-        #[cfg(feature = "message-box")]
-        if !*RUNS_ON_CONSOLE {
-            let _ = msgbox::create(&*ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
-        }
-    }
-
-    /// Prints `msg` on console.
-    pub fn print_console(msg: &str) {
-        // Print the same message also to console in case
-        // the window does not pop up due to missing
-        // libraries.
-        println!("{}\n{}", &*ALERT_DIALOG_TITLE_LINE, msg);
+        log::error!("{}\n{}", *ALERT_DIALOG_TITLE_LINE, &Self::format_error(msg));
     }
 
     /// Add a footer with additional debugging information, such as

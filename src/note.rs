@@ -3,7 +3,6 @@
 //! the memory representation is established be reading the note-file with
 //! its front matter.
 
-use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CLIPBOARD;
 use crate::config::STDIN;
@@ -112,18 +111,16 @@ impl Note<'_> {
             false,
         );
 
-        if ARGS.debug {
-            eprintln!(
-                "*** Debug: Available substitution variables for content template:\n{:#?}\n",
-                *context
-            );
-            eprintln!("*** Debug: Applying content template:\n{}\n", template);
-            eprintln!(
-                "*** Debug: Rendered content template:\n---\n{}\n---\n{}\n\n",
-                content.header,
-                content.body.trim()
-            );
-        };
+        log::trace!(
+            "Available substitution variables for content template:\n{:#?}\n",
+            *context
+        );
+        log::trace!("Applying content template:\n{}\n", template);
+        log::trace!(
+            "Rendered content template:\n---\n{}\n---\n{}\n\n",
+            content.header,
+            content.body.trim()
+        );
 
         // deserialize the rendered template
         let fm = Note::deserialize_header(content.header)?;
@@ -170,9 +167,9 @@ impl Note<'_> {
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
         let stdin_fm = Self::deserialize_header(STDIN.header).ok();
-        if ARGS.debug && stdin_fm.is_some() {
-            eprintln!(
-                "*** Debug: YAML front matter in the input stream stdin found:\n{:#?}",
+        if stdin_fm.is_some() {
+            log::trace!(
+                "YAML front matter in the input stream stdin found:\n{:#?}",
                 stdin_fm
             );
         };
@@ -180,9 +177,9 @@ impl Note<'_> {
         // Can we find a front matter in the clipboard? If yes, the unmodified
         // clipboard data is our new note content.
         let clipboard_fm = Self::deserialize_header(CLIPBOARD.header).ok();
-        if ARGS.debug && clipboard_fm.is_some() {
-            eprintln!(
-                "*** Debug: YAML front matter in the clipboard found:\n{:#?}",
+        if clipboard_fm.is_some() {
+            log::trace!(
+                "YAML front matter in the clipboard found:\n{:#?}",
                 clipboard_fm
             );
         };
@@ -276,16 +273,11 @@ impl Note<'_> {
     /// sanitized filename that is in sync with the note's meta data stored in
     /// its front matter.
     pub fn render_filename(&self, template: &str) -> Result<PathBuf> {
-        if ARGS.debug {
-            eprintln!(
-                "*** Debug: Available substitution variables for the filename template:\n{:#?}\n",
-                *self.context
-            );
-            eprintln!(
-                "*** Debug: Applying the filename template:\n{}\n\n",
-                template
-            );
-        };
+        log::trace!(
+            "Available substitution variables for the filename template:\n{:#?}\n",
+            *self.context
+        );
+        log::trace!("Applying the filename template:\n{}\n\n", template);
 
         // render template
         let mut fqfn = self.context.fqpn.to_owned();
@@ -295,12 +287,7 @@ impl Note<'_> {
 
             tera.render_str(template, &self.context)
                 .map(|filename| {
-                    if ARGS.debug {
-                        eprintln!(
-                            "*** Debug: Rendered the filename template:\n{:?}\n\n",
-                            filename
-                        );
-                    };
+                    log::trace!("Rendered the filename template:\n{:?}\n\n", filename);
                     filename
                 })?
                 .trim()
@@ -418,17 +405,15 @@ impl Note<'_> {
             // `export_dir` points to `-` and `html_path` is empty.
         }
 
-        if ARGS.debug {
-            if html_path
-                .as_os_str()
-                .to_str()
-                .unwrap_or_default()
-                .is_empty()
-            {
-                eprintln!("*** Debug: rendering HTML to STDOUT (`{:?}`)", export_dir);
-            } else {
-                eprintln!("*** Debug: rendering HTML into: {:?}", html_path);
-            }
+        if html_path
+            .as_os_str()
+            .to_str()
+            .unwrap_or_default()
+            .is_empty()
+        {
+            log::trace!("Rendering HTML to STDOUT (`{:?}`)", export_dir);
+        } else {
+            log::trace!("Rendering HTML into: {:?}", html_path);
         };
 
         // The file extension identifies the markup language.
