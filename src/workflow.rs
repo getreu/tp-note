@@ -7,7 +7,6 @@ use crate::config::LAUNCH_EDITOR;
 use crate::config::LAUNCH_VIEWER;
 use crate::config::RUNS_ON_CONSOLE;
 use crate::config::STDIN;
-use crate::error::AlertDialog;
 use crate::file_editor::launch_editor;
 use crate::filename;
 use crate::filename::MarkupLanguage;
@@ -166,7 +165,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
 pub fn run() -> Result<PathBuf, anyhow::Error> {
     // process arg = `--version`
     if ARGS.version {
-        eprintln!("Version {}, {}", VERSION.unwrap_or("unknown"), AUTHOR);
+        println!("Version {}, {}", VERSION.unwrap_or("unknown"), AUTHOR);
         process::exit(0);
     };
 
@@ -202,15 +201,13 @@ pub fn run() -> Result<PathBuf, anyhow::Error> {
             // box to communicate the error to the user.
             // In this case we skip the following.
             if !*LAUNCH_VIEWER && *LAUNCH_EDITOR {
-                AlertDialog::print_error(&format!(
-                    "ERROR:\n\
-                    ---\n\
-                    {:?}\n\
+                log::error!(
+                    "{:?}\n\
                     \n\
                     Please correct the error.
                     Trying to start the editor without synchronization...",
                     e
-                ))
+                );
             } else if !*LAUNCH_VIEWER || !path.is_file() {
                 // If `path` points to a directory, no viewer and no editor can open.
                 // This is a fatal error, so we quit.

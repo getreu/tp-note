@@ -10,10 +10,53 @@ use crate::config::CONFIG_PATH;
 use crate::config::RUNS_ON_CONSOLE;
 use crate::VERSION;
 use lazy_static::lazy_static;
+use log::LevelFilter;
+use log::{Level, Metadata, Record};
 #[cfg(feature = "message-box")]
 use msgbox::IconType;
 use std::env;
 use std::path::PathBuf;
+
+/// Console logger.
+pub struct AppLogger;
+pub static APP_LOGGER: AppLogger = AppLogger;
+
+/// Initialize logger.
+impl AppLogger {
+    pub fn init() {
+        log::set_logger(&APP_LOGGER).unwrap();
+        if let Some(level) = ARGS.debug {
+            log::set_max_level(level);
+        } else {
+            log::set_max_level(LevelFilter::Error);
+        }
+    }
+}
+
+/// Trait defining the logging format and destination.
+impl log::Log for AppLogger {
+    fn enabled(&self, metadata: &Metadata) -> bool {
+        metadata.level() <= Level::Trace
+    }
+
+    fn log(&self, record: &Record) {
+        if self.enabled(record.metadata()) {
+            if record.metadata().level() == Level::Error {
+                let msg = format!(
+                    "{}:\n{}",
+                    record.level(),
+                    &AlertDialog::format_error(&record.args().to_string())
+                );
+                eprintln!("*** {}", msg);
+                // In addition, we open an alert window.
+                AlertDialog::print_error(&msg);
+            } else {
+                eprintln!("*** {}: {}", record.level(), record.args());
+            }
+        }
+    }
+    fn flush(&self) {}
+}
 
 /// Window title for error box.
 const ALERT_DIALOG_TITLE: &str = "Tp-Note";
@@ -32,28 +75,16 @@ pub struct AlertDialog {}
 
 impl AlertDialog {
     /// Pops up an error message box and prints `msg`.
-    pub fn print_error(msg: &str) {
+    fn print_error(msg: &str) {
         // Print the same message also to console in case
         // the window does not pop up due to missing
         // libraries.
-        Self::print_error_console(msg);
+        //Self::print_error_console(msg);
         // Popup window.
         #[cfg(feature = "message-box")]
         if !*RUNS_ON_CONSOLE && !ARGS.batch {
-            let _ = msgbox::create(
-                &*ALERT_DIALOG_TITLE_LINE,
-                &Self::format_error(msg),
-                IconType::Info,
-            );
+            let _ = msgbox::create(&*ALERT_DIALOG_TITLE_LINE, &msg, IconType::Info);
         }
-    }
-
-    /// Prints an error `msg` on console.
-    pub fn print_error_console(msg: &str) {
-        // Print the same message also to console in case
-        // the window does not pop up due to missing
-        // libraries.
-        log::error!("{}\n{}", *ALERT_DIALOG_TITLE_LINE, &Self::format_error(msg));
     }
 
     /// Add a footer with additional debugging information, such as

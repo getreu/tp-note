@@ -28,9 +28,8 @@ extern crate semver;
 use crate::config::backup_config_file;
 use crate::config::ARGS;
 use crate::config::CFG;
-use crate::error::AlertDialog;
+use crate::error::AppLogger;
 use crate::workflow::run;
-use log::{Level, LevelFilter, Metadata, Record};
 use semver::Version;
 use std::process;
 
@@ -58,68 +57,41 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
 ///    ```
 ///
-const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.11.0");
+const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
 /// (c) Jens Getreu
 const AUTHOR: &str = "(c) Jens Getreu, 2020-2021";
-
-/// Console logger.
-struct AppLogger;
-static APP_LOGGER: AppLogger = AppLogger;
-
-/// Trait defining the logging format and destination.
-impl log::Log for AppLogger {
-    fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= Level::Trace
-    }
-
-    fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            eprintln!("*** {}: {}", record.level(), record.args());
-        }
-    }
-    fn flush(&self) {}
-}
 
 /// Print some error message if `run()` does not complete.
 /// Exit prematurely if the configuration file version does
 /// not match the program version.
 fn main() {
-    // Setup logger.
-    log::set_logger(&APP_LOGGER).unwrap();
-    if let Some(level) = ARGS.debug {
-        log::set_max_level(level);
-    } else {
-        log::set_max_level(LevelFilter::Error);
-    }
+    AppLogger::init();
 
     // If we could not load or parse the config file, then
     // `CFG.version` does not contain a version number, but an error message.
     let config_file_version = Version::parse(&CFG.version).unwrap_or_else(|_| {
-        AlertDialog::print_error(
-            format!(
-                "NOTE: unable to load, parse or write the configuration file\n\
-                ---\n\
-                Reason:\n\
-                \t{}\n\n\
-                Note: this error may occur after upgrading Tp-Note due\n\
-                to some incompatible configuration file changes.\n\
-                \n\
-                For now, Tp-Note backs up the existing configuration\n\
-                file and next time it starts, it will create a new one\n\
-                with default values.",
-                CFG.version
-            )
-            .as_str(),
+        log::error!(
+            "unable to load, parse or write the configuration file\n\
+             ---\n\
+             Reason:\n\
+             \t{}\n\n\
+             Note: this error may occur after upgrading Tp-Note due\n\
+             to some incompatible configuration file changes.\n\
+             \n\
+             For now, Tp-Note backs up the existing configuration\n\
+             file and next time it starts, it will create a new one\n\
+             with default values.",
+            CFG.version
         );
         if let Err(e) = backup_config_file() {
-            AlertDialog::print_error(&format!(
-                "ERROR: unable to backup and delete the erroneous configuration file\n\
+            log::error!(
+                "unable to backup and delete the erroneous configuration file\n\
                 ---\n\
                 \t{}\n\
                 \n\
                 Please do it manually.",
                 e
-            ));
+            );
             process::exit(5);
         };
 
@@ -129,26 +101,26 @@ fn main() {
 
     // Is version number in the configuration file high enough?
     if config_file_version < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0")).unwrap() {
-        AlertDialog::print_error(&format!(
-            "NOTE: configuration file version mismatch:\n---\n\
-                Configuration file version: \'{}\'\n\
-                Minimum required configuration file version: \'{}\'\n\
-                \n\
-                For now, Tp-Note backs up the existing configuration\n\
-                file and next time it starts, it will create a new one\n\
-                with default values.",
+        log::error!(
+            "configuration file version mismatch:\n---\n\
+             Configuration file version: \'{}\'\n\
+             Minimum required configuration file version: \'{}\'\n\
+             \n\
+             For now, Tp-Note backs up the existing configuration\n\
+             file and next time it starts, it will create a new one\n\
+             with default values.",
             CFG.version,
             MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"),
-        ));
+        );
         if let Err(e) = backup_config_file() {
-            AlertDialog::print_error(&format!(
-                "ERROR: unable to backup and delete the erroneous configuration file\n\
+            log::error!(
+                "unable to backup and delete the erroneous configuration file\n\
                 ---\n\
                 \t{}\n\
                 \n\
                 Please do it manually.",
                 e
-            ));
+            );
             process::exit(5);
         };
     };
@@ -157,24 +129,7 @@ fn main() {
     match run() {
         Err(e) => {
             // Something went wrong.
-
-            if ARGS.batch {
-                AlertDialog::print_error_console(&format!(
-                    "ERROR:\n\
-                ---\n\
-                {:?}",
-                    e
-                ));
-            } else {
-                AlertDialog::print_error(&format!(
-                    "ERROR:\n\
-                    ---\n\
-                    {:?}\n\
-                    \n\
-                    Please correct the error and start again.",
-                    e
-                ));
-            }
+            log::error!("---\n{:?}", e);
             process::exit(1);
         }
 
