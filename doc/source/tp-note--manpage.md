@@ -392,19 +392,35 @@ synchronization).
     Instead, if available, it reads the `stdin` stream as if the data came
     from the clipboard.
 
-**-c** *CF*, **\--config**=*CF*
+**-c** *FILE*, **\--config**=*FILE*
 
-:   Load the alternative config file *CF* instead of the default one.
+:   Load the alternative config file *FILE* instead of the default one.
 
-**-d**, **\--debug**
+**-d** *LEVEL*, **\--debug**=*LEVEL*
 
-:   Print additional log-messages on console. It shows the available template
-    variables, the templates used and the rendered result of the substitution.
-    This option particularly useful for debugging new templates. On Windows,
-    the output must be redirected into a file to see it. To do so open the
-    command-prompt and type:
+:   Print additional log-messages on the console '`stderr`'.
+    The debug level *LEVEL* must be one of '`trace`', '`debug`', '`info`',
+    '`warn`', '`error`' (default) or '`off`'.
 
-        tp-note.exe -d >debug.txt 2>&1
+    Use '`-d trace`' for debugging templates, '`-d debug`' if the HTTP server
+    (viewer) does work as expected or '`-d info`' if your file editor or web
+    browser does not open as expected. '`-d trace`' shows all available
+    template variables, the templates used and the rendered result of the
+    substitution. This option particularly useful for debugging new
+    templates. The option '`-d off`' silences all error message reporting and
+    suppresses the error popup window.
+
+    On Windows, the output must be redirected into a file to see it. To do
+    so, open the command-prompt window with '`cmd`', navigate to the
+    _Tp-Note_ exe-file and type:
+
+        tp-note.exe --debug info mynote.md >debug.txt 2>&1
+
+    Then open the file '`debug.txt`' with the _Notepad_ file editor.
+    Alternatively you can redirect all logfile entries into popup
+    boxes. See option **\--popup** for more details.
+
+        tp-note.exe --popup --debug info mynote.md
 
 **-e**, **\--edit**
 
@@ -415,7 +431,7 @@ synchronization).
 
 **-p**, **\--port**=*PORT*
 
-:   Set server port the web browser connects to, to the specified value.
+:   Set server port the web browser connects to, to the specified value *PORT*.
     If not given, a random free port is chosen automatically.
 
 **-n**, **\--no-sync**
@@ -427,6 +443,11 @@ synchronization).
     YAML header with at least one '`title:`' field. In addition, when
     '`tp-note -n -b -x - <FILE>`' returns the code '`0`', the note's body was
     rendered without error.
+
+**-u**, **\--popup**
+
+:   Redirect logfile entries into popup boxes. To be used together with the
+    **\--debug** option.
 
 **-v**, **\--view**
 
@@ -1057,7 +1078,7 @@ viewer_error_tmpl = '''<!DOCTYPE html>
 '''
 ```
 
-### Choose your favorite web browser as note viewer
+### Choose your favourite web browser as note viewer
 
 Once the note is rendered into HTML, _Tp-Note_'s internal HTTP server connects
 to a random port at the `localhost` interface where the rendition is served to
@@ -1065,14 +1086,14 @@ be viewed with a web browser. _Tp-Note_'s configuration file contains a list
 '`browser_args`' with common web browsers and their usual location on disk.
 This list is executed top down until a web browser is found and launched. If
 you want to view your notes with a different web browser, simply modify the
-'`browser_args`' list and put your favorite web browser on top.
+'`browser_args`' list and put your favourite web browser on top.
 
 In case none of the listed browsers can be found, _Tp-Note_ switches into a
 fall back mode with limited functionality, where it tries to open the system's
 default web browser. A disadvantage is, that in fall back mode _Tp-Note_ is not
 able to detect when the user closes the web browser. This might lead to
-situations, where _Tp-Note_'s internal HTTP server shuts down to early. 
-In order to check if _Tp-Note_ finds the selected web browser properly, start 
+situations, where _Tp-Note_'s internal HTTP server shuts down to early.
+In order to check if _Tp-Note_ finds the selected web browser properly, start
 _Tp-Note_ with '`--debug`'.
 
 

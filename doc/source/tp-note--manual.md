@@ -612,19 +612,32 @@ files.
 
 ### Debugging on Windows
 
-  When you see only Chinese characters in notepad, update Windows to the
-  latest version or install [Notepad++](https://notepad-plus-plus.org/).
+  When you see only Chinese characters in the _Notepad_ file editor, update
+  Windows to the latest version or install
+  [Notepad++](https://notepad-plus-plus.org/).
 
-  Display _Tp-Note_'s error messages:
+  Generate an error log file:
 
   1. Open the command-prompt: Click on *Windows-Start*, type `cmd` and [Enter].
 
   2. Type:
 
-         Desktop\tp-note.exe -d >Desktop\debug.txt 2>&1
+         Desktop\tp-note.exe --debug trace mynote.md >Desktop\debug.txt 2>&1
 
      This creates the file `debug.txt` on your desktop. Open the file
      and scroll to the end.
+
+  Instead of reading the logfile, you can instruct _Tp-Note_ to redirect
+  the logfile entries into popup boxes.
+
+  1. Open the command-prompt: Click on *Windows-Start*, type `cmd` and [Enter].
+
+  2. Type:
+
+         Desktop\tp-note.exe --popup --debug trace mynote.md
+
+  Please consult _Tp-Note_'s manual page for more information about the
+  debugging options `--debug` and `--popup`.
 
 ### Debugging on Linux
 
