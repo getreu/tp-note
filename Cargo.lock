@@ -1267,9 +1267,9 @@ dependencies = [
 
 [[package]]
 name = "notify"
-version = "4.0.15"
+version = "4.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80ae4a7688d1fab81c5bf19c64fc8db920be8d519ce6336ed4e7efe024724dbd"
+checksum = "2599080e87c9bd051ddb11b10074f4da7b1223298df65d4c2ec5bcf309af1533"
 dependencies = [
  "bitflags",
  "filetime",
@@ -2117,7 +2117,7 @@ dependencies = [
 
 [[package]]
 name = "tp-note"
-version = "1.12.0"
+version = "1.12.1"
 dependencies = [
  "anyhow",
  "atty",
@@ -2126,7 +2126,6 @@ dependencies = [
  "clipboard",
  "confy",
  "directories 3.0.1",
- "funty",
  "httparse",
  "httpdate",
  "lazy_static",
