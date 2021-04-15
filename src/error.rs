@@ -46,7 +46,7 @@ pub const ALERT_SERVICE_KEEP_ALIVE: u64 = 1000;
 const ALERT_DIALOG_TITLE: &str = "Tp-Note";
 
 ////////////////////////////
-/// AppLogger
+// AppLogger
 ////////////////////////////
 
 pub struct AppLogger;
@@ -54,17 +54,11 @@ pub static APP_LOGGER: AppLogger = AppLogger;
 
 /// Initialize logger.
 impl AppLogger {
+    #[inline]
     pub fn init() {
-        // Setup `AlertService`.
+        // Setup the `AlertService`
         #[cfg(feature = "message-box")]
-        if !*RUNS_ON_CONSOLE && !ARGS.batch {
-            // Set up the channel now.
-            lazy_static::initialize(&ALERT_SERVICE_CHANNEL);
-            thread::spawn(move || {
-                // this will block until the previous message has been received
-                AlertService::run();
-            });
-        };
+        AlertService::init();
 
         // Setup console logger.
         log::set_logger(&APP_LOGGER).unwrap();
@@ -184,6 +178,21 @@ pub struct AlertService {}
 
 #[cfg(feature = "message-box")]
 impl AlertService {
+    /// Initializes the service. Call once when the application starts.
+    /// Drop strings in the`ALERT_SERVICE_CHANNEL` to use this service.
+    pub fn init() {
+        // Setup the `AlertService`.
+        #[cfg(feature = "message-box")]
+        if !*RUNS_ON_CONSOLE && !ARGS.batch {
+            // Set up the channel now.
+            lazy_static::initialize(&ALERT_SERVICE_CHANNEL);
+            thread::spawn(move || {
+                // this will block until the previous message has been received
+                AlertService::run();
+            });
+        };
+    }
+
     /// Alert service, receiving Strings to display in a popup window.
     fn run() {
         // Get the receiver.
@@ -238,7 +247,7 @@ impl AlertService {
     /// The `AlertService` keeps holding a lock until `ALERT_SERVICE_KEEP_ALIVE` milliseconds after
     /// the user has closed that last error message. Only then it releases the lock. This function
     /// blocks until the lock is released.
-    fn wait_when_busy() {
+    pub fn wait_when_busy() {
         // This might block, if a guard in `run()` holds already a lock.
         let _ = ALERT_SERVICE_BUSY.lock();
     }
