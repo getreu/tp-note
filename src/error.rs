@@ -17,6 +17,8 @@ use std::sync::mpsc::sync_channel;
 #[cfg(feature = "message-box")]
 use std::sync::mpsc::Receiver;
 #[cfg(feature = "message-box")]
+use std::sync::mpsc::RecvTimeoutError;
+#[cfg(feature = "message-box")]
 use std::sync::mpsc::SyncSender;
 use std::sync::Mutex;
 #[cfg(feature = "message-box")]
@@ -34,7 +36,7 @@ pub const ALERT_SERVICE_QUEUE_LEN: usize = 30;
 /// `ALERT_SERVICE_KEEP_ALIVE` milliseconds after the last
 /// message window got closed by the user.
 #[cfg(feature = "message-box")]
-pub const ALERT_SERVICE_KEEP_ALIVE: u64 = 3000;
+pub const ALERT_SERVICE_KEEP_ALIVE: u64 = 1000;
 
 /// Window title of the message alert box.
 const ALERT_DIALOG_TITLE: &str = "Tp-Note";
@@ -78,7 +80,10 @@ impl AppLogger {
         }
     }
 
-    /// Block until the `AlertService` is not busy any more.
+    /// Blocks until the `AlertService` is not busy any more.
+    /// This should be executed before quitting the application
+    /// because there might be still queued error messages
+    /// the uses has not seen yet.
     pub fn wait_when_busy() {
         // If ever there is still a message window open, this will block.
         #[cfg(feature = "message-box")]
@@ -179,22 +184,43 @@ impl AlertService {
         let (_, rx) = &*APP_LOGGER_CHANNEL;
         let rx = rx.lock().unwrap();
 
-        let mut opt_guard = ALERT_SERVICE_BUSY.try_lock().ok();
+        // We start with the lock released.
+        let mut opt_guard = None;
         loop {
-            // Wait `ALERT_SERVICE_KEEP_ALIVE` milliseconds for error messages.
-            let msg = &rx.recv_timeout(Duration::from_millis(ALERT_SERVICE_KEEP_ALIVE));
+            let msg = if opt_guard.is_none() {
+                // As there is no lock, we block here until the next message comes.
+                // `recv()` should never return `Err`. This can only happen when
+                // the sending half of a channel (or sync_channel) is disconnected,
+                // implying that no further messages will ever be received.
+                // As this should never happen, we panic this thread then.
+                Some(rx.recv().unwrap())
+            } else {
+                // There is a lock because we just received another message.
+                // If the next `ALERT_SERVICE_KEEP_ALIVE` milliseconds no
+                // other message comes in, we release the lock again.
+                match rx.recv_timeout(Duration::from_millis(ALERT_SERVICE_KEEP_ALIVE)) {
+                    Ok(s) => Some(s),
+                    Err(RecvTimeoutError::Timeout) => None,
+                    // The sending half of a channel (or sync_channel) is `Disconnected`,
+                    // implies that no further messages will ever be received.
+                    // As this should never happen, we panic this thread then.
+                    Err(RecvTimeoutError::Disconnected) => panic!(),
+                }
+            };
+
+            // We received a message.
             match msg {
-                // We received a message.
-                Ok(s) => {
-                    // If ever there is no lock, get one.
+                Some(s) => {
+                    // If the lock is released, lock it now.
                     if opt_guard.is_none() {
                         opt_guard = ALERT_SERVICE_BUSY.try_lock().ok();
                     }
                     // This blocks until the user closes the alert window.
                     Self::print_error(&s);
                 }
-                // `ALERT_SERVICE_KEEP_ALIVE` milliseconds are over and still no message.
-                Err(_) => {
+                // `ALERT_SERVICE_KEEP_ALIVE` milliseconds are over and still no new message.
+                // We release the lock again.
+                None => {
                     // Here the `guard` goes out of scope and the lock is released.
                     opt_guard = None;
                     //
@@ -203,11 +229,11 @@ impl AlertService {
         }
     }
 
-    /// The `AlertService` keeps holding a lock until `ALERT_SERVICE_KEEP_ALIVE`
-    /// milliseconds after the last error message arrived. Only then it releases the
-    /// lock. This function blocks until the lock is released.
+    /// The `AlertService` keeps holding a lock until `ALERT_SERVICE_KEEP_ALIVE` milliseconds after
+    /// the user has closed that last error message. Only then it releases the lock. This function
+    /// blocks until the lock is released.
     fn wait_when_busy() {
-        // If ever something is still open this will block.
+        // This might block, if a guard in `run()` holds already a lock.
         let _ = ALERT_SERVICE_BUSY.lock();
     }
 
