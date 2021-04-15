@@ -4,7 +4,9 @@ use crate::config::ARGS;
 use crate::config::CONFIG_PATH;
 #[cfg(feature = "message-box")]
 use crate::config::RUNS_ON_CONSOLE;
+#[cfg(feature = "message-box")]
 use crate::VERSION;
+#[cfg(feature = "message-box")]
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
@@ -20,6 +22,7 @@ use std::sync::mpsc::Receiver;
 use std::sync::mpsc::RecvTimeoutError;
 #[cfg(feature = "message-box")]
 use std::sync::mpsc::SyncSender;
+#[cfg(feature = "message-box")]
 use std::sync::Mutex;
 #[cfg(feature = "message-box")]
 use std::thread;
@@ -39,6 +42,7 @@ pub const ALERT_SERVICE_QUEUE_LEN: usize = 30;
 pub const ALERT_SERVICE_KEEP_ALIVE: u64 = 1000;
 
 /// Window title of the message alert box.
+#[cfg(feature = "message-box")]
 const ALERT_DIALOG_TITLE: &str = "Tp-Note";
 
 ////////////////////////////
@@ -48,15 +52,6 @@ const ALERT_DIALOG_TITLE: &str = "Tp-Note";
 pub struct AppLogger;
 pub static APP_LOGGER: AppLogger = AppLogger;
 
-#[cfg(feature = "message-box")]
-lazy_static! {
-/// This is the message queue from `AppLogger` to `AlertService`.
-    pub static ref APP_LOGGER_CHANNEL: (SyncSender<String>, Mutex<Receiver<String>>) = {
-        let (tx, rx) = sync_channel(ALERT_SERVICE_QUEUE_LEN);
-        (tx, Mutex::new(rx))
-    };
-}
-
 /// Initialize logger.
 impl AppLogger {
     pub fn init() {
@@ -64,7 +59,7 @@ impl AppLogger {
         #[cfg(feature = "message-box")]
         if !*RUNS_ON_CONSOLE && !ARGS.batch {
             // Set up the channel now.
-            lazy_static::initialize(&APP_LOGGER_CHANNEL);
+            lazy_static::initialize(&ALERT_SERVICE_CHANNEL);
             thread::spawn(move || {
                 // this will block until the previous message has been received
                 AlertService::run();
@@ -142,7 +137,7 @@ impl log::Log for AppLogger {
 
                 #[cfg(feature = "message-box")]
                 if !*RUNS_ON_CONSOLE && !ARGS.batch {
-                    let (tx, _) = &*APP_LOGGER_CHANNEL;
+                    let (tx, _) = &*ALERT_SERVICE_CHANNEL;
                     let tx = tx.clone();
                     tx.send(msg).unwrap();
                 }
@@ -158,6 +153,16 @@ impl log::Log for AppLogger {
 // AlertService
 ////////////////////////////
 
+#[cfg(feature = "message-box")]
+lazy_static! {
+/// This is the message queue from `AppLogger` to `AlertService`.
+    pub static ref ALERT_SERVICE_CHANNEL: (SyncSender<String>, Mutex<Receiver<String>>) = {
+        let (tx, rx) = sync_channel(ALERT_SERVICE_QUEUE_LEN);
+        (tx, Mutex::new(rx))
+    };
+}
+
+#[cfg(feature = "message-box")]
 lazy_static! {
     /// Window title followed by version.
     pub static ref ALERT_DIALOG_TITLE_LINE: String = format!(
@@ -167,6 +172,7 @@ lazy_static! {
     );
 }
 
+#[cfg(feature = "message-box")]
 lazy_static! {
     /// This mutex does not hold any data. When it is locked, it indicates,
     /// that the `AlertService` is still busy and should not get shut down.
@@ -181,7 +187,7 @@ impl AlertService {
     /// Alert service, receiving Strings to display in a popup window.
     fn run() {
         // Get the receiver.
-        let (_, rx) = &*APP_LOGGER_CHANNEL;
+        let (_, rx) = &*ALERT_SERVICE_CHANNEL;
         let rx = rx.lock().unwrap();
 
         // We start with the lock released.
