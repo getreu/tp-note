@@ -1,9 +1,5 @@
 //! Prints error messages and exceptional states.
 
-#[cfg(feature = "message-box")]
-extern crate msgbox;
-
-#[cfg(feature = "message-box")]
 use crate::config::ARGS;
 use crate::config::CONFIG_PATH;
 #[cfg(feature = "message-box")]
@@ -16,14 +12,64 @@ use log::{Level, Metadata, Record};
 use msgbox::IconType;
 use std::env;
 use std::path::PathBuf;
+#[cfg(feature = "message-box")]
+use std::sync::mpsc::sync_channel;
+#[cfg(feature = "message-box")]
+use std::sync::mpsc::Receiver;
+#[cfg(feature = "message-box")]
+use std::sync::mpsc::SyncSender;
+use std::sync::Mutex;
+#[cfg(feature = "message-box")]
+use std::thread;
+#[cfg(feature = "message-box")]
+use std::time::Duration;
 
-/// Console logger.
+/// As error messages can drop in by every thread, they must be queued.
+/// The number of error messages that will be queued,
+#[cfg(feature = "message-box")]
+pub const ALERT_SERVICE_QUEUE_LEN: usize = 30;
+
+/// The `AlertService` reports to be busy as long as there
+/// is is a message window open and beyond that also
+/// `ALERT_SERVICE_KEEP_ALIVE` milliseconds after the last
+/// message window got closed by the user.
+#[cfg(feature = "message-box")]
+pub const ALERT_SERVICE_KEEP_ALIVE: u64 = 3000;
+
+/// Window title of the message alert box.
+const ALERT_DIALOG_TITLE: &str = "Tp-Note";
+
+////////////////////////////
+/// AppLogger
+////////////////////////////
+
 pub struct AppLogger;
 pub static APP_LOGGER: AppLogger = AppLogger;
+
+#[cfg(feature = "message-box")]
+lazy_static! {
+/// This is the message queue from `AppLogger` to `AlertService`.
+    pub static ref APP_LOGGER_CHANNEL: (SyncSender<String>, Mutex<Receiver<String>>) = {
+        let (tx, rx) = sync_channel(ALERT_SERVICE_QUEUE_LEN);
+        (tx, Mutex::new(rx))
+    };
+}
 
 /// Initialize logger.
 impl AppLogger {
     pub fn init() {
+        // Setup `AlertService`.
+        #[cfg(feature = "message-box")]
+        if !*RUNS_ON_CONSOLE && !ARGS.batch {
+            // Set up the channel now.
+            lazy_static::initialize(&APP_LOGGER_CHANNEL);
+            thread::spawn(move || {
+                // this will block until the previous message has been received
+                AlertService::run();
+            });
+        };
+
+        // Setup console logger.
         log::set_logger(&APP_LOGGER).unwrap();
         if let Some(level) = ARGS.debug {
             log::set_max_level(level);
@@ -31,63 +77,15 @@ impl AppLogger {
             log::set_max_level(LevelFilter::Error);
         }
     }
-}
 
-/// Trait defining the logging format and destination.
-impl log::Log for AppLogger {
-    fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= Level::Trace
-    }
-
-    fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            if record.metadata().level() == Level::Error {
-                let msg = format!(
-                    "{}:\n{}",
-                    record.level(),
-                    &AlertDialog::format_error(&record.args().to_string())
-                );
-                eprintln!("*** {}", msg);
-                // In addition, we open an alert window.
-                AlertDialog::print_error(&msg);
-            } else {
-                eprintln!("*** {}: {}", record.level(), record.args());
-            }
-        }
-    }
-    fn flush(&self) {}
-}
-
-/// Window title for error box.
-const ALERT_DIALOG_TITLE: &str = "Tp-Note";
-
-lazy_static! {
-    /// Window title followed by version.
-    pub static ref ALERT_DIALOG_TITLE_LINE: String = format!(
-        "{} (v{})",
-        &ALERT_DIALOG_TITLE,
-        VERSION.unwrap_or("unknown")
-    );
-}
-
-/// Empty struct. This crate is stateless.
-pub struct AlertDialog {}
-
-impl AlertDialog {
-    /// Pops up an error message box and prints `msg`.
-    fn print_error(msg: &str) {
-        // Print the same message also to console in case
-        // the window does not pop up due to missing
-        // libraries.
-        //Self::print_error_console(msg);
-        // Popup window.
+    /// Block until the `AlertService` is not busy any more.
+    pub fn wait_when_busy() {
+        // If ever there is still a message window open, this will block.
         #[cfg(feature = "message-box")]
-        if !*RUNS_ON_CONSOLE && !ARGS.batch {
-            let _ = msgbox::create(&*ALERT_DIALOG_TITLE_LINE, &msg, IconType::Info);
-        }
+        AlertService::wait_when_busy();
     }
 
-    /// Add a footer with additional debugging information, such as
+    /// Adds a footer with additional debugging information, such as
     /// command line parameters and configuration file path.
     fn format_error(msg: &str) -> String {
         // Remember the command-line-arguments.
@@ -114,5 +112,108 @@ impl AlertDialog {
                 .unwrap_or_default()
         ));
         s
+    }
+}
+
+/// Trait defining the logging format and destination.
+impl log::Log for AppLogger {
+    fn enabled(&self, metadata: &Metadata) -> bool {
+        metadata.level() <= Level::Trace
+    }
+
+    fn log(&self, record: &Record) {
+        if self.enabled(record.metadata()) {
+            if (record.metadata().level() == Level::Error) || ARGS.popup {
+                let msg = if record.metadata().level() == Level::Error {
+                    format!(
+                        "{}:\n{}",
+                        record.level(),
+                        &Self::format_error(&record.args().to_string())
+                    )
+                } else {
+                    format!("{}:\n{}", record.level(), &record.args().to_string())
+                };
+                eprintln!("*** {}", msg);
+
+                #[cfg(feature = "message-box")]
+                if !*RUNS_ON_CONSOLE && !ARGS.batch {
+                    let (tx, _) = &*APP_LOGGER_CHANNEL;
+                    let tx = tx.clone();
+                    tx.send(msg).unwrap();
+                }
+            } else {
+                eprintln!("*** {}: {}", record.level(), record.args());
+            }
+        }
+    }
+    fn flush(&self) {}
+}
+
+////////////////////////////
+// AlertService
+////////////////////////////
+
+lazy_static! {
+    /// Window title followed by version.
+    pub static ref ALERT_DIALOG_TITLE_LINE: String = format!(
+        "{} (v{})",
+        &ALERT_DIALOG_TITLE,
+        VERSION.unwrap_or("unknown")
+    );
+}
+
+lazy_static! {
+    /// This mutex does not hold any data. When it is locked, it indicates,
+    /// that the `AlertService` is still busy and should not get shut down.
+    static ref ALERT_SERVICE_BUSY: Mutex<()> = Mutex::new(());
+}
+
+#[cfg(feature = "message-box")]
+pub struct AlertService {}
+
+#[cfg(feature = "message-box")]
+impl AlertService {
+    /// Alert service, receiving Strings to display in a popup window.
+    fn run() {
+        // Get the receiver.
+        let (_, rx) = &*APP_LOGGER_CHANNEL;
+        let rx = rx.lock().unwrap();
+
+        let mut opt_guard = ALERT_SERVICE_BUSY.try_lock().ok();
+        loop {
+            // Wait `ALERT_SERVICE_KEEP_ALIVE` milliseconds for error messages.
+            let msg = &rx.recv_timeout(Duration::from_millis(ALERT_SERVICE_KEEP_ALIVE));
+            match msg {
+                // We received a message.
+                Ok(s) => {
+                    // If ever there is no lock, get one.
+                    if opt_guard.is_none() {
+                        opt_guard = ALERT_SERVICE_BUSY.try_lock().ok();
+                    }
+                    // This blocks until the user closes the alert window.
+                    Self::print_error(&s);
+                }
+                // `ALERT_SERVICE_KEEP_ALIVE` milliseconds are over and still no message.
+                Err(_) => {
+                    // Here the `guard` goes out of scope and the lock is released.
+                    opt_guard = None;
+                    //
+                }
+            }
+        }
+    }
+
+    /// The `AlertService` keeps holding a lock until `ALERT_SERVICE_KEEP_ALIVE`
+    /// milliseconds after the last error message arrived. Only then it releases the
+    /// lock. This function blocks until the lock is released.
+    fn wait_when_busy() {
+        // If ever something is still open this will block.
+        let _ = ALERT_SERVICE_BUSY.lock();
+    }
+
+    /// Pops up an error message box and prints `msg`.
+    /// Blocks until the user closes the window.
+    fn print_error(msg: &str) {
+        let _ = msgbox::create(&*ALERT_DIALOG_TITLE_LINE, &msg, IconType::Info);
     }
 }

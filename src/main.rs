@@ -65,6 +65,7 @@ const AUTHOR: &str = "(c) Jens Getreu, 2020-2021";
 /// Exit prematurely if the configuration file version does
 /// not match the program version.
 fn main() {
+    // Setup logger.
     AppLogger::init();
 
     // If we could not load or parse the config file, then
@@ -92,6 +93,7 @@ fn main() {
                 Please do it manually.",
                 e
             );
+            AppLogger::wait_when_busy();
             process::exit(5);
         };
 
@@ -121,6 +123,7 @@ fn main() {
                 Please do it manually.",
                 e
             );
+            AppLogger::wait_when_busy();
             process::exit(5);
         };
     };
@@ -130,6 +133,7 @@ fn main() {
         Err(e) => {
             // Something went wrong.
             log::error!("---\n{:?}", e);
+            AppLogger::wait_when_busy();
             process::exit(1);
         }
 
@@ -144,4 +148,7 @@ fn main() {
             }
         }
     };
+
+    // Wait if there are still error messages windows open.
+    AppLogger::wait_when_busy();
 }

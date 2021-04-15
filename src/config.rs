@@ -655,6 +655,9 @@ pub struct Args {
     /// Console debug level: "trace", "debug", "info", "warn", "error" (default) or "off"
     #[structopt(long, short = "d")]
     pub debug: Option<LevelFilter>,
+    /// Show console debug messages also as popup windows
+    #[structopt(long, short = "u")]
+    pub popup: bool,
     /// Launches only the editor, no browser
     #[structopt(long, short = "e")]
     pub edit: bool,
