@@ -12,9 +12,7 @@ use std::net::TcpListener;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::thread::sleep;
 use std::thread::JoinHandle;
-use std::time::{Duration, Instant};
 use web_browser::launch_web_browser;
 
 /// This is where our loop back device is.
@@ -106,15 +104,8 @@ impl Viewer {
         let url = format!("http://{}:{}", LOCALHOST, localport);
         log::info!("Viewer::run(): launching browser with URL: {}", url);
 
-        // This is supposed to block as long the user keeps the browser open.
-        let now = Instant::now();
+        // This blocks until the browser is closed.
         launch_web_browser(&url)?;
-
-        // If ever the browsers thread does not block (it should), then we wait a little to
-        // serve the rendered page and the referenced images.
-        if now.elapsed().as_secs() <= 4 {
-            sleep(Duration::new(4, 0));
-        };
 
         // This will also terminate the `FileWatcher` thread and web server thread.
         Ok(())
