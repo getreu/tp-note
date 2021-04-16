@@ -398,33 +398,49 @@ synchronization).
 
 **-d** *LEVEL*, **\--debug**=*LEVEL*
 
-:   Print additional log-messages on the console '`stderr`'.
-    The debug level *LEVEL* must be one of '`trace`', '`debug`', '`info`',
-    '`warn`', '`error`' (default) or '`off`'.
+:   Print additional log-messages on the console '`stderr`'.  The debug level
+    *LEVEL* must be one out of '`trace`', '`debug`', '`info`', '`warn`', '`error`'
+    (default) or '`off`'. The level '`trace`' reports the most detailed
+    information, while '`error`' informs about a failure.  A '`warn`' means,
+    that not all functionality might be available or work as expected.
 
-    Use '`-d trace`' for debugging templates, '`-d debug`' if the HTTP server
-    (viewer) does work as expected or '`-d info`' if your file editor or web
-    browser does not open as expected. '`-d trace`' shows all available
-    template variables, the templates used and the rendered result of the
-    substitution. This option particularly useful for debugging new
-    templates. The option '`-d off`' silences all error message reporting and
-    suppresses the error popup window.
+    Use '`--debug trace`' for debugging templates, if the HTTP server
+    (viewer) does work as expected '`--debug debug`', if your text editor
+    does not open as expected '`--debug info --edit`' or to observe the
+    launch of the web browser '`--debug info --view`'. The option
+    '`--debug trace`' shows all available template variables, the templates
+    used and the rendered result of the substitution. This option
+    particularly useful for debugging new templates. The option '`--debug
+    off`' silences all error message reporting and suppresses also the error
+    popup window.
 
-    On Windows, the output must be redirected into a file to see it. To do
-    so, open the command-prompt window with '`cmd`', navigate to the
-    _Tp-Note_ exe-file and type:
+    All error messages are dumped in the error stream `stderr` and appear
+    on the console from where _Tp-Note_ was launched:
 
-        tp-note.exe --debug info mynote.md >debug.txt 2>&1
+        tp-note.exe --debug info my_note.md >debug.txt 2>&1
 
-    Then open the file '`debug.txt`' with the _Notepad_ file editor.
-    Alternatively you can redirect all logfile entries into popup
-    boxes. See option **\--popup** for more details.
+    On Windows the output must be redirected into a file to see it:
 
-        tp-note.exe --popup --debug info mynote.md
+        tp-note.exe --debug info my_note.md >debug.txt 2>&1
+
+    Alternatively, you can redirect all logfile entries into popup alert
+    windows.
+
+        tp-note.exe --popup --debug info my_note.md
+
+    The same can be achieved by setting following configuration file
+    variables (especially useful under Windows):
+
+        debug = 'INFO'
+        popup = true
+
+    Here the value for `debug` must be one out of `TRACE`, `DEBUG`, `INFO`,
+    `WARN`, `ERROR` (default) and `OFF`. They have the same meaning than the
+    corresponding command line options.
 
 **-e**, **\--edit**
 
-:   Edit only mode: opens the external file editor, but not the file
+:   Edit only mode: opens the external text editor, but not the file
     viewer. This disables _Tp-Note_'s internal file watcher and web server,
     unless '`-v`' is given. Another way to permanently disable the web server
     is to set the configuration variable '`viewer_enable=false`'.
@@ -446,8 +462,13 @@ synchronization).
 
 **-u**, **\--popup**
 
-:   Redirect logfile entries into popup boxes. To be used together with the
-    **\--debug** option.
+: Redirect log-file entries into popup alert windows. Must be used together
+with the **\--debug** option to have an effect. Note, that debug level
+'`error`' conditions will always trigger popup messages, regardless of
+**\--popup** and **\--debug** (unless '`--debug off`'). Popup alert windows
+are queued and will never interrupt _Tp-note_. To better associate a
+particular action with its log events, read through all upcoming popup alert
+windows until they fail to appear.
 
 **-v**, **\--view**
 
@@ -464,10 +485,10 @@ synchronization).
 
 **-x** *DIRECTORY*, **\--export**=*DIRECTORY*
 
-:   Prints the note as HTML-rendition into _DIRECTORY_. '`-x -`' prints to
+:   Print the note as HTML-rendition into _DIRECTORY_. '`-x -`' prints to
     _stdout_. The empty string, e.g. '`--export= `' or '`-x ""`', defaults to
-    the directory where the note file resides. No external file editor or
-    viewer is launched. Can be combined with '`--batch`' to avoid pop-up
+    the directory where the note file resides. No external text editor or
+    viewer is launched. Can be combined with '`--batch`' to avoid popup
     error alert windows.
 
 
@@ -617,7 +638,7 @@ Important: '`rst`' must be one of the registered file extensions
 listed in the '`note_file_extensions_*`' variables in Tp-Note's configuration
 file. If needed you can add more extensions there. If the new filename extension
 is not listed in one of theses variables, _Tp-Note_ will not be able to
-recognize the note file as such and will not open it in the external file editor
+recognize the note file as such and will not open it in the external text editor
 and viewer.
 
 Note: When a '`sort_tag`' variable is defined in the note's YAML header, you
@@ -833,27 +854,28 @@ with '`{{ file | tag }}`' and '`{{ path | tag }}`'.
 
 ## Register your own external text editor
 
-The configuration file variables '`editor_args`' and '`viewer_args`' define a
-list of external text editors to be launched for editing. '`viewer_args`' is
-used when _Tp-Note_ is invoked with '`--view`' in viewer mode.  The list
-contains well-known text editor names and its command-line arguments.
-_Tp-Note_ tries to launch every text editor from the beginning of the list
-until it finds an installed text editor. When _Tp-Note_ is started on a Linux
-console, an alternative file editor list used: '`editor_console_args`' and
-'`viewer_console_args`'. Here you can register file editors that do not
-require a graphical environment, e.g. '`vim`' or '`nano`'.
+The configuration file variables '`editor_args`' and '`editor_console_args`'
+define lists of external text editors to be launched for editing. The lists
+contain by default well-known text editor names and their command-line
+arguments.  _Tp-Note_ tries to launch every text editor in '`editor_args`' from
+the beginning of the list until it finds an installed text editor. When
+_Tp-Note_ is started on a Linux console, the list '`editor_console_args`' is
+used instead. Here you can register text editors that do not require a
+graphical environment, e.g. '`vim`' or '`nano`'.  In order to use your own text
+editor, just place it at the top of the list. To debug your changes
+invoke _Tp-Note_ with '`tp-note --debug info --popup --edit`'
 
-In order to use your own text editor, just place it at the top of the list. To
-make this work properly, make sure, that your text editor does not fork! You
-can check this when you launch the text editor from the command-line: if the
-prompt returns immediately, then it forks the process. In contrast, it is Ok
-when the prompt only comes back at the moment when the text editor is closed.
-Many text editors provide an option not to fork: for example the
-_VScode_-editor can be launched with the '`--wait`' option and `vim` with
-`vim --nofork`. However, _Tp-Note_ also works with forking text editors. Then,
-the only drawback is, that _Tp-Note_ can not synchronize the filename with the
-note's metadata when the user has finished editing. It will still happen, but
-only when the user opens the note again with _Tp-Note_.
+When you configure _Tp-Note_ to work with your text editor, make sure, that
+your text editor does not fork! You can check this when you launch the text
+editor from the command-line: if the prompt returns immediately, then it
+forks the process. Everything is OK when the prompt only comes back at the
+moment when the text editor is closed. Many text editors provide an option
+not to fork: for example the _VScode_-editor can be launched with the
+'`--wait`' option and `vim` with `--nofork`. However, _Tp-Note_ also works
+with forking text editors. Then, the only drawback is, that _Tp-Note_ might
+quit too early and can not synchronize the filename with the note's metadata
+when the user has finished editing. Synchronization will still happen, but
+only next time when the user opens the note with _Tp-Note_.
 
 Remark for the advanced console user: It is also possible to launch a different
 editor without changing the configuration file:
@@ -863,14 +885,14 @@ editor without changing the configuration file:
 ```
 
 Whereby '`FILE=$(tp-note --batch)`' creates the note file, '`vi "$FILE"`' opens the
-'`vi`'-file editor and '`tp-note --batch "$FILE"`' synchronizes the filename.
+'`vi`'-text editor and '`tp-note --batch "$FILE"`' synchronizes the filename.
 
 
 ## Register a Flatpak Markdown editor
 
 [Flathub for Linux] is a cross-platform application repository that works well
 with _Tp-Note_.  To showcase an example, we will add a _Tp-Note_ launcher for
-the _Mark Text_ Markdown file editor available as [Flatpak package]. Before
+the _Mark Text_ Markdown text editor available as [Flatpak package]. Before
 installing, make sure that you have [setup Flatpack] correctly. Then install
 the application with:
 
@@ -900,9 +922,9 @@ editor_args = [
 ```
 
 The structure of this variable is a list of lists. Every item in the outer list
-corresponds to one entire command line launching a different file editor, here
+corresponds to one entire command line launching a different text editor, here
 _Typora_ and _VSCode_.  When launching, _Tp-Note_ searches through this list
-until it finds an installed file editor on the system.
+until it finds an installed text editor on the system.
 
 In this example, we register the _Mark Text_ editor at the first place in this
 list, by inserting '`['flatpak', 'run', 'com.github.marktext.marktext'],`:
@@ -1093,8 +1115,8 @@ fall back mode with limited functionality, where it tries to open the system's
 default web browser. A disadvantage is, that in fall back mode _Tp-Note_ is not
 able to detect when the user closes the web browser. This might lead to
 situations, where _Tp-Note_'s internal HTTP server shuts down to early.
-In order to check if _Tp-Note_ finds the selected web browser properly, start
-_Tp-Note_ with '`--debug`'.
+In order to check if _Tp-Note_ finds the selected web browser as intended,
+invoke _Tp-Note_ with '`tp-note --debug info --popup --view`'.
 
 
 ## Customize the built-in HTML exporter

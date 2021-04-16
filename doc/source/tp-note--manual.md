@@ -49,6 +49,8 @@ The documentation of this project is dived into tow parts:
   [Tp-Note manual page - pdf](https://blog.getreu.net/_downloads/tp-note--manpage.pdf)
 
 
+
+
 # How students take notes
 
 A fellow student still uses paper and pen. I ask her why, and she replied "I can
@@ -87,6 +89,7 @@ right-click on some empty white space.
 > For more details see [How it works: Organize your files and notes with sort-tags].
 
 
+
 ## Taking notes about a file
 
 ![We want to take a note about a pdf](images/workflow2-1.png){width="9cm"}
@@ -112,10 +115,10 @@ lang:       "en_GB.UTF-8"
 ![The new note file on disk after closing the editor](images/workflow2-4.png){width="8cm"}
 
 
+
 ## Document the download location of a local file
 
 The approach is similar to what we have seen in the [previous chapter](#taking-notes-about-a-file):
-
 
 ![Copy the location of the download page as Markdown](images/workflow6-1.png){width="9cm"}
 
@@ -148,9 +151,7 @@ lang:       "en_GB.UTF-8"
 
 
 
-
 ## Bookmark and comment a hyperlink
-
 
 ![Copy a link in Markdown format](images/workflow3-2.png){width="11cm"}
 
@@ -195,6 +196,7 @@ note.
 ```
 
 
+
 ## Copy a page from a book
 
 ![Copy some chapters](images/workflow4-1.png){width="10cm"}
@@ -232,6 +234,8 @@ and observe the file on the disk.
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
 ```
+
+
 
 ## Best practice
 
@@ -277,6 +281,7 @@ disk.
 [Copy Selection as Markdown]: https://addons.mozilla.org/en-GB/firefox/addon/copy-selection-as-markdown/?src=search
 
 
+
 ## Note taking for system administrators (and console lovers)
 
 As _Tp-Note_ makes extensive use of the clipboard, it mainly targets desktop
@@ -288,6 +293,7 @@ copying the content into your clipboard, pipe it into _Tp-Note_:
 echo  "Some clipboard content" | tp-note
 ```
 
+
 ### Installation on headless systems
 
 On headless systems, it is recommended to compile _Tp-Note_ without its
@@ -297,6 +303,7 @@ On headless systems, it is recommended to compile _Tp-Note_ without its
 cargo install --no-default-features tp-note
 sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 ```
+
 
 ### Typical workflows
 
@@ -394,9 +401,9 @@ well as with the `--no-default-features` console-only version.
   creates the file `20200921-My Note.md` with a rearranged header
   and the same body.
 
-* Launch, for once only, a different file editor.\
-  The external file editor, _Tp-Note_ defaults to, is defined in the configuration
-  file and can be changed there. If you want to use a different file editor
+* Launch, for once only, a different text editor.\
+  The external text editor, _Tp-Note_ defaults to, is defined in the configuration
+  file and can be changed there. If you want to use a different text editor
   just for one-shot, type:
 
   ```bash
@@ -487,6 +494,7 @@ well as with the `--no-default-features` console-only version.
 
 
 
+
 # How it works: Organize your files and notes with sort-tags
 
 Consider the following _Tp-Note_-file:
@@ -525,6 +533,7 @@ directory's name omitting its own *sort-tag*.
 
 
 
+
 # Installation
 
 Depending on the operating system, the installation process is more
@@ -549,6 +558,8 @@ yourself.
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
 ```
+
+
 
 ## Minimum setup with no file manager integration
 
@@ -578,6 +589,7 @@ section shows a minimum setup to get started quickly.[^inst]
 A new _Tp-Note_-icon appears on your desktop.
 
 
+
 ## Usage of the minimum setup
 
 To create a new note, either double-click on the _Tp-Note_-icon, or drag a
@@ -599,7 +611,10 @@ _Tp-Note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
 <?dbfo-need height="6cm" ?>
 ```
 
+
+
 ## Troubleshooting
+
 
 ### Incompatible configuration files
 
@@ -610,51 +625,24 @@ message. Please consult the section
 project's Readme document for more information about incompatible configuration
 files.
 
-### Debugging on Windows
 
-  When you see only Chinese characters in the _Notepad_ file editor, update
-  Windows to the latest version or install
-  [Notepad++](https://notepad-plus-plus.org/).
+### Debugging
 
-  Generate an error log file:
+`Tp-Note`'s logging feature is controlled with the command-line-options:
+`--debug` and `--popup` or by the corresponding configuration file variables:
+`debug` and `popup`.
 
-  1. Open the command-prompt: Click on *Windows-Start*, type `cmd` and [Enter].
+Please consult _Tp-Note_'s manual page for more information about the
+debugging options `--debug` and `--popup` and how to use them.
 
-  2. Type:
+BTW: Under Windows, when you see only Chinese characters in the _Notepad_
+text editor, update Windows to the latest version or install
+[Notepad++](https://notepad-plus-plus.org/).
 
-         Desktop\tp-note.exe --debug trace mynote.md >Desktop\debug.txt 2>&1
 
-     This creates the file `debug.txt` on your desktop. Open the file
-     and scroll to the end.
-
-  Instead of reading the logfile, you can instruct _Tp-Note_ to redirect
-  the logfile entries into popup boxes.
-
-  1. Open the command-prompt: Click on *Windows-Start*, type `cmd` and [Enter].
-
-  2. Type:
-
-         Desktop\tp-note.exe --popup --debug trace mynote.md
-
-  Please consult _Tp-Note_'s manual page for more information about the
-  debugging options `--debug` and `--popup`.
-
-### Debugging on Linux
-
-  Display _Tp-Note_'s error messages:
-
-  1. Open a console and change to the directory where you saved the
-     _Tp-Note_-executable.
-
-  2. Type:
-
-         > tp-note -d 2>&1 | less
-
-```{=docbook}
-<?dbfo-need height="6cm" ?>
-```
 
 ## Optional customization
+
 
 ### Change the default markup language
 
@@ -674,7 +662,8 @@ files.
   change this association in _Tp-Note_'s configuration file. Please refer
   to the [Tp-Note's man-page] for details.
 
-### Chose your favorite text editor and make it default
+
+### Chose your favourite text editor and make it default
 
 * Your preferred text editor is not *Notepad*? Change it![^1]
 
@@ -695,7 +684,7 @@ files.
   - _VS-Code_, _Atom_ ...
 
   Please refer to [Tp-Note's man-page] to learn how to register your text
-  editor in _Tp-Note_'s configuration file.
+  editor with _Tp-Note_'s configuration file.
 
 ### Integrate _Tp-Note_ with your file manager
 
@@ -706,16 +695,35 @@ files.
 
 [Tp-Note's man-page]: http://blog.getreu.net/projects/tp-note/tp-note--manpage.html#customization
 
-### Customize _Tp-Note_'s internal note viewer
 
-Tp-Note's internal viewer starts automatically the default browser after
-the file editor is opened or when invoked with `tp-note --view`.
+### Chose the web browser for note viewing and make it default
 
-![Tp-Note with open file editor (left) and viewer (right)](images/editor_and_viewer.png){width="12cm"}
+* Your preferred web browser is not *Firefox*? Change it![^1]
 
-Please refer to [Tp-Note's man-page] to learn how to register a file extension
-with one Tp-Note's internal markup renderer or to learn how to change the
-HTML-template that renders the viewer page in the browser.
+  After opening the text editor, _Tp-Note_ internally renders the note file
+  and opens a web browser to display the note's content. Which web browser on
+  your system will be launched, depends on which of them _Tp-Note_ finds
+  first by searching through a configurable list of well known web browsers.
+
+  ![Tp-Note with open text editor (left) and viewer (right)](images/editor_and_viewer.png){width="12cm"}
+
+  Please refer to [Tp-Note's man-page] to learn how change which web browser
+  _Tp-Note_ launches as note viewer.
+
+### Customize the way how _Tp-Note_'s viewer renders the note's content
+
+The way the note will appear in your web browser depends on:
+
+* which of _Tp-Note_'s internal markup renderer is used and
+
+* the HTML template, that defines the visual appearance
+  (colours, fonts etc.) of the rendition.
+
+Please refer to [Tp-Note's man-page] to learn how to register a file
+extension with a particular markup renderer or to learn
+how to change the HTML-template that renders the note's content.
+
+
 
 
 # Optional integration with your file manager
@@ -731,6 +739,7 @@ path to the selected icon.
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
 ```
+
 
 ## Windows file explorer configuration
 
@@ -782,6 +791,7 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
    ![Press "Change ..." and choose "tp-note"](images/Properties-Opens_with-tp-note.png){width="8cm"}
 
 
+
 ## Linux file manager configuration
 
 To simplify the configuration we first place the binary _Tp-Note_
@@ -820,7 +830,6 @@ In *Thunar*'s menu go to:
 ![Thunar's custom action configuration with Tp-Note](images/custom_actions2.png){width="8cm"}
 
 [Debian/Unbuntu package]: https://blog.getreu.net/projects/tp-note/#tp-note-debianubuntu-installer-package
-
 
 #### Add context menu entry: View Tp-Note
 
@@ -953,7 +962,6 @@ Search for `</actions>` and replace it with: [^6]
 
 ```
 
-
 The change becomes effective only after the user deletes his own configuration
 file in `~/.config/Thunar/uca.xml`:
 
@@ -962,7 +970,6 @@ killall thunar
 rm ~/.config/Thunar/uca.xml
 thunar
 ```
-
 
 ```{=docbook}
 <?dbfo-need height="8cm" ?>
@@ -1017,7 +1024,6 @@ Exec=tp-note -v %f
 ```
 
 The above creates the custom context-menu item _Tp-Note View_.
-
 
 
 ### Configure the text-based file manager MidnightCommander
