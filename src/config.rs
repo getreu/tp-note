@@ -8,6 +8,7 @@ use anyhow::anyhow;
 use atty::{is, Stream};
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
+use confy::ConfyError;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use log::LevelFilter;
@@ -20,6 +21,7 @@ use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
 use std::pin::Pin;
+use std::sync::RwLock;
 use structopt::StructOpt;
 
 /// Name of this executable (without the Windows ".exe" extension).
@@ -889,6 +891,11 @@ lazy_static! {
     };
 }
 
+lazy_static! {
+    /// Variable indicating with `Err` if the loading of the configuration file went wrong.
+    pub static ref CFG_FILE_LOADING: RwLock<Result<(), ConfyError>> = RwLock::new(Ok(()));
+}
+
 #[cfg(not(test))]
 lazy_static! {
     /// Reads and parses the configuration file "tp-note.toml". An alternative
@@ -905,14 +912,13 @@ lazy_static! {
         .to_str()
         .unwrap_or_default()
         ).unwrap_or_else(|e|{
-            // We are here, because we could not load the config file.
-            let mut c = Cfg::default();
-            // Instead of a version string, we store the reason why.
-            let mut e = e.to_string();
-            // This is a marker string that will cause a version parse error on purpose.
-            e.push('!');
-            c.version = e;
-            c
+            // Remember that something went wrong.
+            let mut cfg_file_loading = CFG_FILE_LOADING.write().unwrap();
+            *cfg_file_loading = Err(e);
+
+            // As we could not load the config file, we will user the default
+            // configuration.
+            Cfg::default()
         });
 }
 

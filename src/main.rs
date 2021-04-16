@@ -28,6 +28,7 @@ extern crate semver;
 use crate::config::backup_config_file;
 use crate::config::ARGS;
 use crate::config::CFG;
+use crate::config::CFG_FILE_LOADING;
 use crate::error::AppLogger;
 use crate::workflow::run;
 use semver::Version;
@@ -80,11 +81,25 @@ fn main() {
     // popup alert windows.
     AppLogger::set_popup_always_enabled(CFG.popup || ARGS.popup);
 
-    // If we could not load or parse the config file, then
-    // `CFG.version` does not contain a version number, but an error message.
-    let config_file_version = Version::parse(&CFG.version).unwrap_or_else(|_| {
-        log::error!(
-            "unable to load, parse or write the configuration file\n\
+    // Check if the config file loading was successful.
+    let cfg_file_loading = &*CFG_FILE_LOADING.read().unwrap();
+    let cfg_file_loading_err = cfg_file_loading.as_ref().err().map(|e| e.to_string());
+
+    // Check if we can parse the version number in there.
+    let cfg_file_version = Version::parse(&*CFG.version);
+    let cfg_file_version_err = cfg_file_version.clone().err().map(|e| e.to_string());
+
+    // This is `Some::String` if one of them is `Err`.
+    let cfg_err = cfg_file_loading_err.or(cfg_file_version_err);
+
+    let config_file_version = match cfg_err {
+        // This is always `Some::Version` because none of them are `Err`.
+        None => cfg_file_version.ok(),
+
+        // One of them is `Err`, we do not care who.
+        Some(e) => {
+            log::error!(
+                "unable to load, parse or write the configuration file\n\
              ---\n\
              Reason:\n\
              \t{}\n\n\
@@ -94,49 +109,55 @@ fn main() {
              For now, Tp-Note backs up the existing configuration\n\
              file and next time it starts, it will create a new one\n\
              with default values.",
-            CFG.version
-        );
-        if let Err(e) = backup_config_file() {
-            log::error!(
-                "unable to backup and delete the erroneous configuration file\n\
+                e
+            );
+
+            // Move erroneous config file away.
+            if let Err(e) = backup_config_file() {
+                log::error!(
+                    "unable to backup and delete the erroneous configuration file\n\
                 ---\n\
                 \t{}\n\
                 \n\
                 Please do it manually.",
-                e
-            );
-            AppLogger::wait_when_busy();
-            process::exit(5);
-        };
+                    e
+                );
+                AppLogger::wait_when_busy();
+                process::exit(5);
+            };
 
-        // As we just created the config file, config_file_version is VERSION.
-        Version::parse(VERSION.unwrap_or("0.0.0")).unwrap_or(Version::new(0, 0, 0))
-    });
+            // As we have an error, we indicate that there is no version.
+            None
+        }
+    };
 
     // Is version number in the configuration file high enough?
-    if config_file_version < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0")).unwrap() {
-        log::error!(
-            "configuration file version mismatch:\n---\n\
+    if let Some(config_file_version) = config_file_version {
+        if config_file_version < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0")).unwrap()
+        {
+            log::error!(
+                "configuration file version mismatch:\n---\n\
              Configuration file version: \'{}\'\n\
              Minimum required configuration file version: \'{}\'\n\
              \n\
              For now, Tp-Note backs up the existing configuration\n\
              file and next time it starts, it will create a new one\n\
              with default values.",
-            CFG.version,
-            MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"),
-        );
-        if let Err(e) = backup_config_file() {
-            log::error!(
-                "unable to backup and delete the erroneous configuration file\n\
+                config_file_version,
+                MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"),
+            );
+            if let Err(e) = backup_config_file() {
+                log::error!(
+                    "unable to backup and delete the erroneous configuration file\n\
                 ---\n\
                 \t{}\n\
                 \n\
                 Please do it manually.",
-                e
-            );
-            AppLogger::wait_when_busy();
-            process::exit(5);
+                    e
+                );
+                AppLogger::wait_when_busy();
+                process::exit(5);
+            };
         };
     };
 
