@@ -24,13 +24,15 @@ use std::sync::mpsc::RecvTimeoutError;
 use std::sync::mpsc::SyncSender;
 #[cfg(feature = "message-box")]
 use std::sync::Mutex;
+use std::sync::RwLock;
 #[cfg(feature = "message-box")]
 use std::thread;
 #[cfg(feature = "message-box")]
 use std::time::Duration;
 
-/// As error messages can drop in by every thread, they must be queued.
-/// The number of error messages that will be queued,
+/// The number of messages that will be queued.
+/// As error messages can drop in by every thread and we can only
+/// show one alert window at the same time, they must be queued.
 #[cfg(feature = "message-box")]
 pub const ALERT_SERVICE_QUEUE_LEN: usize = 30;
 
@@ -49,6 +51,12 @@ const ALERT_DIALOG_TITLE: &str = "Tp-Note";
 // AppLogger
 ////////////////////////////
 
+lazy_static! {
+    /// If `true`, all future log events will trigger the opening of a popup
+    /// alert window. Otherwise only `Level::Error` will do.
+    static ref APP_LOGGER_POPUP_ALWAYS_ENABLED: RwLock<bool> = RwLock::new(false);
+}
+
 pub struct AppLogger;
 pub static APP_LOGGER: AppLogger = AppLogger;
 
@@ -62,11 +70,23 @@ impl AppLogger {
 
         // Setup console logger.
         log::set_logger(&APP_LOGGER).unwrap();
-        if let Some(level) = ARGS.debug {
-            log::set_max_level(level);
-        } else {
-            log::set_max_level(LevelFilter::Error);
-        }
+        log::set_max_level(LevelFilter::Error);
+    }
+
+    /// Sets the maximum level debug events must have to be logged.
+    #[allow(dead_code)]
+    pub fn set_max_level(level: LevelFilter) {
+        log::set_max_level(level);
+    }
+
+    /// If called with `true`, all debug events will also trigger the appearance of
+    /// a popup alert window.
+    #[allow(dead_code)]
+    pub fn set_popup_always_enabled(popup: bool) {
+        // This blocks if ever another thread wants to write.  As we are the only ones to write
+        // here, this lock can never get poisoned and we will can safely `unwrap()` here.
+        let mut lock = APP_LOGGER_POPUP_ALWAYS_ENABLED.write().unwrap();
+        *lock = popup;
     }
 
     /// Blocks until the `AlertService` is not busy any more.
@@ -117,7 +137,17 @@ impl log::Log for AppLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            if (record.metadata().level() == Level::Error) || ARGS.popup {
+            // Log this to `stderr`.
+            eprintln!("*** {}: {}", record.level(), record.args());
+
+            // Eventually also log as popup alert window.
+            #[cfg(feature = "message-box")]
+            if !*RUNS_ON_CONSOLE
+                && !ARGS.batch
+                && ((record.metadata().level() == LevelFilter::Error)
+                        // This lock can never get poisoned, so `unwrap()` is safe here.
+                        || *(APP_LOGGER_POPUP_ALWAYS_ENABLED.read().unwrap()))
+            {
                 let msg = if record.metadata().level() == Level::Error {
                     format!(
                         "{}:\n{}",
@@ -127,19 +157,14 @@ impl log::Log for AppLogger {
                 } else {
                     format!("{}:\n{}", record.level(), &record.args().to_string())
                 };
-                eprintln!("*** {}", msg);
 
-                #[cfg(feature = "message-box")]
-                if !*RUNS_ON_CONSOLE && !ARGS.batch {
-                    let (tx, _) = &*ALERT_SERVICE_CHANNEL;
-                    let tx = tx.clone();
-                    tx.send(msg).unwrap();
-                }
-            } else {
-                eprintln!("*** {}: {}", record.level(), record.args());
-            }
+                let (tx, _) = &*ALERT_SERVICE_CHANNEL;
+                let tx = tx.clone();
+                tx.send(msg).unwrap();
+            };
         }
     }
+
     fn flush(&self) {}
 }
 
@@ -149,7 +174,8 @@ impl log::Log for AppLogger {
 
 #[cfg(feature = "message-box")]
 lazy_static! {
-/// This is the message queue from `AppLogger` to `AlertService`.
+/// The message queue accepting strings for being shown as
+/// popup alert windows.
     pub static ref ALERT_SERVICE_CHANNEL: (SyncSender<String>, Mutex<Receiver<String>>) = {
         let (tx, rx) = sync_channel(ALERT_SERVICE_QUEUE_LEN);
         (tx, Mutex::new(rx))
@@ -159,7 +185,7 @@ lazy_static! {
 #[cfg(feature = "message-box")]
 lazy_static! {
     /// Window title followed by version.
-    pub static ref ALERT_DIALOG_TITLE_LINE: String = format!(
+    static ref ALERT_DIALOG_TITLE_LINE: String = format!(
         "{} (v{})",
         &ALERT_DIALOG_TITLE,
         VERSION.unwrap_or("unknown")
@@ -245,7 +271,7 @@ impl AlertService {
     }
 
     /// The `AlertService` keeps holding a lock until `ALERT_SERVICE_KEEP_ALIVE` milliseconds after
-    /// the user has closed that last error message. Only then it releases the lock. This function
+    /// the user has closed that last error message. Only then, it releases the lock. This function
     /// blocks until the lock is released.
     pub fn wait_when_busy() {
         // This might block, if a guard in `run()` holds already a lock.

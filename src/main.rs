@@ -68,6 +68,18 @@ fn main() {
     // Setup logger.
     AppLogger::init();
 
+    // Read configuration file, or write one if none exists.
+    lazy_static::initialize(&CFG);
+
+    // Set the debug level. Only use config file value if
+    // no command-line-option `--debug` is present.
+    let level = ARGS.debug.unwrap_or(CFG.debug);
+    AppLogger::set_max_level(level);
+
+    // This eventually will extend the error reporting with more
+    // popup alert windows.
+    AppLogger::set_popup_always_enabled(CFG.popup || ARGS.popup);
+
     // If we could not load or parse the config file, then
     // `CFG.version` does not contain a version number, but an error message.
     let config_file_version = Version::parse(&CFG.version).unwrap_or_else(|_| {
