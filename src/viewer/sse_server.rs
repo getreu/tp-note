@@ -12,7 +12,7 @@ use httpdate;
 use parse_hyperlinks::iterator_html::{Hyperlink, InlineImage};
 use parse_hyperlinks::renderer::text_rawlinks2html;
 use percent_encoding::percent_decode_str;
-use std::collections::HashMap;
+use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::fs;
 use std::io::{ErrorKind, Read, Write};
@@ -75,7 +75,7 @@ pub fn manage_connections(
     // Unwarp is Ok here here, because we just did it before successfully.
     let sse_port = listener.local_addr().unwrap().port();
     // A list of in the not referenced local links to images or other documents.
-    let doc_local_links = Arc::new(RwLock::new(HashMap::new()));
+    let doc_local_links = Arc::new(RwLock::new(HashSet::new()));
     for stream in listener.incoming() {
         if let Ok(stream) = stream {
             let (event_tx, event_rx) = channel();
@@ -102,7 +102,7 @@ struct ServerThread {
     /// Local file system path of the note document.
     doc_path: PathBuf,
     /// A list of in the not referenced local links to images or other documents.
-    doc_local_links: Arc<RwLock<HashMap<PathBuf, ()>>>,
+    doc_local_links: Arc<RwLock<HashSet<PathBuf>>>,
 }
 
 impl ServerThread {
@@ -112,7 +112,7 @@ impl ServerThread {
         stream: TcpStream,
         sse_port: u16,
         doc_path: PathBuf,
-        doc_local_links: Arc<RwLock<HashMap<PathBuf, ()>>>,
+        doc_local_links: Arc<RwLock<HashSet<PathBuf>>>,
     ) -> Self {
         Self {
             rx,
@@ -319,7 +319,7 @@ impl ServerThread {
                 .doc_local_links
                 .read()
                 .map_err(|e| anyhow!("can not obtain RwLock for reading: {}", e))?;
-            if !doc_local_links.contains_key(Path::new(&reqpath)) {
+            if !doc_local_links.contains(Path::new(&reqpath)) {
                 log::warn!(
                     "ServerThread::serve_events2: target not referenced in note file, rejecting: \
                             \"{}\"",
@@ -452,7 +452,7 @@ impl ServerThread {
                         ),
                     )?);
                     // Save the hyperlinks for other threads to check against.
-                    doc_local_links.insert(path, ());
+                    doc_local_links.insert(path);
                 }
                 // Search for image links in the HTML rendition of this note.
                 for ((_, _, _), (name, link)) in InlineImage::new(&html) {
@@ -466,7 +466,7 @@ impl ServerThread {
                         format!("Can not decode URL in image \"{}\":\n\n{}\n", &name, &link),
                     )?);
                     // Save the image links for other threads to check against.
-                    doc_local_links.insert(path, ());
+                    doc_local_links.insert(path);
                 }
 
                 if doc_local_links.is_empty() {
