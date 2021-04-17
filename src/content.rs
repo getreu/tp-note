@@ -220,23 +220,23 @@ impl<'a> Content<'a> {
                     write!(outfile, "---")?;
                     #[cfg(target_family = "windows")]
                     write!(outfile, "\r")?;
-                    write!(outfile, "\n")?;
+                    writeln!(outfile)?;
                     for l in self.header.lines() {
                         write!(outfile, "{}", l)?;
                         #[cfg(target_family = "windows")]
                         write!(outfile, "\r")?;
-                        write!(outfile, "\n")?;
+                        writeln!(outfile)?;
                     }
                     write!(outfile, "---")?;
                     #[cfg(target_family = "windows")]
                     write!(outfile, "\r")?;
-                    write!(outfile, "\n")?;
+                    writeln!(outfile)?;
                 };
                 for l in self.body.lines() {
                     write!(outfile, "{}", l)?;
                     #[cfg(target_family = "windows")]
                     write!(outfile, "\r")?;
-                    write!(outfile, "\n")?;
+                    writeln!(outfile)?;
                 }
             }
             Err(e) => {
