@@ -8,7 +8,6 @@ use crate::note::Note;
 use crate::viewer::init::LOCALHOST;
 use anyhow::anyhow;
 use anyhow::Context;
-use httpdate;
 use parse_hyperlinks::iterator_html::{Hyperlink, InlineImage};
 use parse_hyperlinks::renderer::text_rawlinks2html;
 use percent_encoding::percent_decode_str;
