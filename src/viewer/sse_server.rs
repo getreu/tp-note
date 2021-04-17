@@ -172,7 +172,7 @@ impl ServerThread {
         // The only supported request method for SSE is GET.
         if method != "GET" {
             self.stream
-                .write(b"HTTP/1.1 405 Method Not Allowed\r\n\r\n")?;
+                .write_all(b"HTTP/1.1 405 Method Not Allowed\r\n\r\n")?;
             return Ok(());
         }
 
@@ -196,8 +196,8 @@ impl ServerThread {
                 httpdate::fmt_http_date(SystemTime::now()),
                 html.len()
             );
-            self.stream.write(response.as_bytes())?;
-            self.stream.write(html.as_bytes())?;
+            self.stream.write_all(response.as_bytes())?;
+            self.stream.write_all(html.as_bytes())?;
             // We have been subscribed to events beforehand. As we drop the
             // receiver now, `viewer::update()` will remove us from the list soon.
             log::debug!(
@@ -219,8 +219,8 @@ impl ServerThread {
                 httpdate::fmt_http_date(SystemTime::now()),
                 FAVICON.len(),
             );
-            self.stream.write(response.as_bytes())?;
-            self.stream.write(FAVICON)?;
+            self.stream.write_all(response.as_bytes())?;
+            self.stream.write_all(FAVICON)?;
             log::debug!(
                 "ServerThread::serve_events2: 200 OK, file \"{}\" served.",
                 FAVICON_PATH
@@ -243,7 +243,7 @@ impl ServerThread {
                 \r\n",
                 httpdate::fmt_http_date(SystemTime::now()),
             );
-            self.stream.write(response.as_bytes())?;
+            self.stream.write_all(response.as_bytes())?;
 
             // Make the stream non-blocking to be able to detect whether the
             // connection was closed by the client.
@@ -275,7 +275,7 @@ impl ServerThread {
 
                 // Send event.
                 let event = format!("event: {}\r\ndata\r\n\r\n", SSE_EVENT_NAME);
-                self.stream.write(event.as_bytes())?;
+                self.stream.write_all(event.as_bytes())?;
                 log::debug!(
                     "ServerThread::serve_events2: 200 OK, event \"{}\" served.",
                     SSE_EVENT_NAME
@@ -373,8 +373,8 @@ impl ServerThread {
                     mime_type,
                     file_content.len(),
                 );
-                self.stream.write(response.as_bytes())?;
-                self.stream.write(&file_content)?;
+                self.stream.write_all(response.as_bytes())?;
+                self.stream.write_all(&file_content)?;
                 log::debug!(
                     "ServerThread::serve_events2: 200 OK, file \"{}\" served.",
                     reqpath_abs.to_str().unwrap_or_default()
@@ -392,7 +392,7 @@ impl ServerThread {
 
     /// Write HTTP not found response.
     fn write_not_found(&mut self, file_path: &Path) -> Result<(), anyhow::Error> {
-        self.stream.write(b"HTTP/1.1 404 Not Found\r\n\r\n")?;
+        self.stream.write_all(b"HTTP/1.1 404 Not Found\r\n\r\n")?;
         log::debug!(
             "ServerThread::serve_events2: 404 Not found, \"{}\" served.",
             file_path.to_str().unwrap_or_default()

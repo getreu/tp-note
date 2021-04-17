@@ -382,7 +382,10 @@ impl Note<'_> {
             .unwrap_or_default()
             .is_empty()
         {
-            html_path = note_path.parent().unwrap_or_else(||Path::new("")).to_path_buf();
+            html_path = note_path
+                .parent()
+                .unwrap_or_else(|| Path::new(""))
+                .to_path_buf();
             let mut html_filename = note_path
                 .file_name()
                 .unwrap_or_default()

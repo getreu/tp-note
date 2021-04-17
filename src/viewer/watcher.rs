@@ -37,7 +37,7 @@ impl FileWatcher {
     ) -> Result<Self, anyhow::Error> {
         let notify_period = CFG.viewer_notify_period;
         let (tx, rx) = channel();
-        let mut watcher = watcher(tx.clone(), Duration::from_millis(notify_period))?;
+        let mut watcher = watcher(tx, Duration::from_millis(notify_period))?;
         watcher.watch(&file, RecursiveMode::Recursive)?;
         Ok(Self {
             rx,

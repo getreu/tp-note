@@ -84,7 +84,7 @@ pub fn find_unused(p: PathBuf) -> Result<PathBuf, anyhow::Error> {
             \t{}\n\
             (only 99 copies are allowed).",
             p.parent()
-                .unwrap_or_else(||Path::new(""))
+                .unwrap_or_else(|| Path::new(""))
                 .to_str()
                 .unwrap_or_default()
         ));
