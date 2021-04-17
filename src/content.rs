@@ -5,7 +5,7 @@ use core::marker::PhantomPinned;
 use std::fmt;
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::pin::Pin;
 
 /// This is a newtype and thin wrapper around the note's content.
@@ -207,7 +207,7 @@ impl<'a> Content<'a> {
     }
 
     /// Writes the note to disk with `new_fqfn`-filename.
-    pub fn write_to_disk(self: &Pin<Box<Self>>, new_fqfn: &PathBuf) -> Result<(), anyhow::Error> {
+    pub fn write_to_disk(self: &Pin<Box<Self>>, new_fqfn: &Path) -> Result<(), anyhow::Error> {
         let outfile = OpenOptions::new()
             .write(true)
             .create_new(true)
