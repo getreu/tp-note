@@ -1,4 +1,6 @@
 version = '1.12.1'
+debug = 'ERROR'
+popup = false
 extension_default = 'md'
 note_file_extensions_md = [
     'md',
@@ -160,7 +162,7 @@ browser_args = [
     '--new-window',
 ],
     [
-    'chromium',
+    'chromium-browser',
     '--new-window',
 ],
     [
