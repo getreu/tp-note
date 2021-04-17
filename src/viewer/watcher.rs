@@ -82,7 +82,7 @@ impl FileWatcher {
                     self.watcher
                         .watch(path.clone(), RecursiveMode::NonRecursive)
                         .map_err(|e| anyhow!(e))
-                        .and_then(|_| Ok(Self::update(&self.event_tx_list)))?
+                        .map(|_| Self::update(&self.event_tx_list))?
                 }
 
                 // Treat renamed files as a fatal error because it may
