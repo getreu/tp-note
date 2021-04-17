@@ -6,7 +6,14 @@ use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher
 use std::path::PathBuf;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
+use std::thread::sleep;
 use std::time::Duration;
+
+/// Some file editors do not modify the file on disk, they move the old version
+/// away and write a new file with the same name. As this takes some time,
+/// the watcher waits a bit before trying to access the new file.
+/// The delay is in milliseconds.
+const WAIT_EDITOR_WRITING_NEW_FILE: u64 = 200;
 
 /// The `watcher` notifies about changes through `rx`.
 pub struct FileWatcher {
@@ -21,17 +28,7 @@ pub struct FileWatcher {
 /// Watch file changes and notify subscribers.
 impl FileWatcher {
     /// Constructor. `file` is the file to watch.
-    pub fn new(file: PathBuf, event_tx_list: Arc<Mutex<Vec<Sender<()>>>>) -> Self {
-        match Self::new2(file, event_tx_list) {
-            Ok(fw) => fw,
-            Err(e) => {
-                panic!("ERROR: Watcher::new(): {:?}", e);
-            }
-        }
-    }
-
-    /// Constructor. `file` is the file to watch.
-    pub fn new2(
+    pub fn new(
         file: PathBuf,
         event_tx_list: Arc<Mutex<Vec<Sender<()>>>>,
     ) -> Result<Self, anyhow::Error> {
@@ -39,6 +36,8 @@ impl FileWatcher {
         let (tx, rx) = channel();
         let mut watcher = watcher(tx, Duration::from_millis(notify_period))?;
         watcher.watch(&file, RecursiveMode::Recursive)?;
+        log::debug!("File watcher started");
+
         Ok(Self {
             rx,
             watcher,
@@ -51,7 +50,7 @@ impl FileWatcher {
         match Self::run2(self) {
             Ok(_) => (),
             Err(e) => {
-                log::warn!("Watcher::run(): {:?}", e);
+                log::debug!("File watcher terminated: {}", e);
             }
         }
     }
@@ -59,42 +58,37 @@ impl FileWatcher {
     /// Set up the file watcher and start the event/html server.
     fn run2(&mut self) -> Result<(), anyhow::Error> {
         loop {
-            match self.rx.recv().unwrap() {
-                // Ignore rescan and notices.
-                DebouncedEvent::NoticeRemove(_)
-                | DebouncedEvent::NoticeWrite(_)
-                | DebouncedEvent::Rescan => {}
+            let evnt = self.rx.recv().unwrap();
+            log::trace!("File watcher event: {:?}", evnt);
 
-                // Actual modifications.
-                DebouncedEvent::Write(_) | DebouncedEvent::Chmod(_) | DebouncedEvent::Create(_) => {
-                    // Run the sub-command.
-                    Self::update(&self.event_tx_list);
-                }
-
-                // Removal or replacement through renaming.
-                DebouncedEvent::Remove(path) => {
-                    // Instead of modifying the file, some weird editors
-                    // (hello Gedit!) remove the current file and recreate it
-                    // by renaming the buffer.
-                    // To outsmart such editors, the watcher is set up to watch
-                    // again a file with the same name. If this succeeds, the
-                    // file is deemed changed.
+            match evnt {
+                DebouncedEvent::NoticeRemove(path) | DebouncedEvent::Remove(path) => {
+                    // Some text editors e.g. Neovim and Gedit rename first the existing file
+                    // and then write a new one with the same name.
+                    // First we give same time to finish writing the new file.
+                    sleep(Duration::from_millis(WAIT_EDITOR_WRITING_NEW_FILE));
+                    // Then we have to set up the watcher again.
                     self.watcher
                         .watch(path.clone(), RecursiveMode::NonRecursive)
                         .map_err(|e| anyhow!(e))
                         .map(|_| Self::update(&self.event_tx_list))?
                 }
 
-                // Treat renamed files as a fatal error because it may
-                // impact the sub-command.
-                DebouncedEvent::Rename(_path, _) => {
-                    return Err(anyhow!("file was renamed"));
+                // These we can ignore.
+                DebouncedEvent::NoticeWrite(_) | DebouncedEvent::Rescan => {}
+
+                // This is what most text editors do, the modify the existing file.
+                DebouncedEvent::Write(_) | DebouncedEvent::Chmod(_) | DebouncedEvent::Create(_) =>
+                // Inform web clients.
+                {
+                    Self::update(&self.event_tx_list)
                 }
 
-                // Other errors.
-                DebouncedEvent::Error(err, _path) => {
-                    return Err(err.into());
-                }
+                // Here we better restart the whole watcher again, if possible. Seems fatal.
+                DebouncedEvent::Rename(_path, _) => return Err(anyhow!("file was renamed")),
+
+                // Dito.
+                DebouncedEvent::Error(err, _path) => return Err(err.into()),
             }
         }
     }

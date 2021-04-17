@@ -1,18 +1,21 @@
 //! Prints error messages and exceptional states.
 
+#[cfg(feature = "message-box")]
 use crate::config::ARGS;
+#[cfg(feature = "message-box")]
 use crate::config::CONFIG_PATH;
 #[cfg(feature = "message-box")]
 use crate::config::RUNS_ON_CONSOLE;
 #[cfg(feature = "message-box")]
 use crate::VERSION;
-#[cfg(feature = "message-box")]
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
 #[cfg(feature = "message-box")]
 use msgbox::IconType;
+#[cfg(feature = "message-box")]
 use std::env;
+#[cfg(feature = "message-box")]
 use std::path::PathBuf;
 #[cfg(feature = "message-box")]
 use std::sync::mpsc::sync_channel;
@@ -101,6 +104,7 @@ impl AppLogger {
 
     /// Adds a footer with additional debugging information, such as
     /// command line parameters and configuration file path.
+    #[cfg(feature = "message-box")]
     fn format_error(msg: &str) -> String {
         // Remember the command-line-arguments.
         let mut args_str = String::new();

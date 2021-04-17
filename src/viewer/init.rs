@@ -41,6 +41,7 @@ impl Viewer {
 
     /// Set up the file watcher, start the event/html server and launch web browser.
     /// Returns when the user closes the web browser and/or file editor.
+    #[inline]
     fn run2(doc: PathBuf) -> Result<(), anyhow::Error> {
         // Check if the master document (note file) has a known file extension.
         match (
@@ -90,15 +91,19 @@ impl Viewer {
             event_tx_list
         };
 
-        // Send a signal whenever the file is modified. This thread runs as
-        // long as the parent thread is running.
-        let event_tx_list_clone = event_tx_list.clone();
         // Launch the file watcher thread.
-        let _handle: JoinHandle<Result<(), anyhow::Error>> = thread::spawn(move || loop {
-            let mut w = FileWatcher::new(doc.clone(), event_tx_list_clone.clone());
-            w.run()
+        // Send a signal whenever the file is modified. Without error, this thread runs as long as
+        // the parent thread (where we are) is running.
+        let event_tx_list_clone = event_tx_list.clone();
+        let _handle: JoinHandle<_> = thread::spawn(move || loop {
+            match FileWatcher::new(doc.clone(), event_tx_list_clone.clone()) {
+                Ok(mut w) => w.run(),
+                Err(e) => {
+                    log::warn!("Can not (re-)start file watcher, giving up: {}", e);
+                    break;
+                }
+            }
         });
-        FileWatcher::update(&event_tx_list);
 
         // Launch web browser.
         let url = format!("http://{}:{}", LOCALHOST, localport);
