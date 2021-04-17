@@ -52,13 +52,14 @@ default = ["message-box", "viewer"]
 message-box = ["msgbox"]
 # Markdown renderer and viewer are optional too.
 viewer = ["notify", "httparse", "pulldown-cmark", "rst_parser", "rst_renderer", "webbrowser", "rand", "httpdate", "percent-encoding", "url"]
+read-clipboard = ["clipboard"]
 
 [dependencies]
 anyhow = "1.0.40"
 atty = "0.2.14"
 chrono = "0.4.19"
 clap = "2.33.3"
-clipboard = "0.5.0"
+clipboard = { version = "0.5.0", optional = true }
 # clipboard: On Debian Linux you need to: sudo apt-get install xorg-dev
 confy = "0.4.0"
 directories = "3.0.1"

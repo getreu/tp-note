@@ -6,7 +6,9 @@ use crate::filename;
 use crate::VERSION;
 use anyhow::anyhow;
 use atty::{is, Stream};
+#[cfg(feature = "read-clipboard")]
 use clipboard::ClipboardContext;
+#[cfg(feature = "read-clipboard")]
 use clipboard::ClipboardProvider;
 use confy::ConfyError;
 use directories::ProjectDirs;
@@ -983,6 +985,7 @@ lazy_static! {
         let mut buffer = String::new();
 
         // Concatenate clipboard content.
+        #[cfg(feature="read-clipboard")]
         if CFG.clipboard_read_enabled && !*RUNS_ON_CONSOLE && !ARGS.batch {
             let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
             if ctx.is_some() {

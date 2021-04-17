@@ -5,6 +5,7 @@ use crate::config::CFG;
 use crate::config::CLIPBOARD;
 use crate::config::LAUNCH_EDITOR;
 use crate::config::LAUNCH_VIEWER;
+#[cfg(feature = "read-clipboard")]
 use crate::config::RUNS_ON_CONSOLE;
 use crate::config::STDIN;
 use crate::file_editor::launch_editor;
@@ -16,7 +17,9 @@ use crate::viewer::launch_viewer_thread;
 use crate::AUTHOR;
 use crate::VERSION;
 use anyhow::{anyhow, Context};
+#[cfg(feature = "read-clipboard")]
 use clipboard::ClipboardContext;
+#[cfg(feature = "read-clipboard")]
 use clipboard::ClipboardProvider;
 use std::env;
 use std::fs;
@@ -248,7 +251,8 @@ pub fn run() -> Result<PathBuf, anyhow::Error> {
             }
         };
 
-        // Delete clipboard
+        // Delete clipboard content.
+        #[cfg(feature = "read-clipboard")]
         if CFG.clipboard_read_enabled && CFG.clipboard_empty_enabled && !*RUNS_ON_CONSOLE {
             let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
             if let Some(mut ctx) = ctx {
