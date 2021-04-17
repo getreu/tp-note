@@ -275,7 +275,7 @@ impl AlertService {
     /// blocks until the lock is released.
     pub fn wait_when_busy() {
         // This might block, if a guard in `run()` holds already a lock.
-        let _ = ALERT_SERVICE_BUSY.lock();
+        let _res = ALERT_SERVICE_BUSY.lock();
     }
 
     /// Pops up an error message box and prints `msg`.
