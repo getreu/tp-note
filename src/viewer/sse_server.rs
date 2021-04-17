@@ -136,6 +136,7 @@ impl ServerThread {
     /// HTTP server: serves events via the specified subscriber stream.
     /// This method also serves the content page and
     /// the content error page.
+    #[allow(clippy::needless_return)]
     fn serve_events2(&mut self) -> Result<(), anyhow::Error> {
         // This is inspired by the Spook crate.
         // Read the request.
@@ -168,6 +169,7 @@ impl ServerThread {
                 Err(e) => return Err(anyhow!("can not parse request in buffer: {}", e)),
             }
         };
+        // End of input junk loop.
 
         // The only supported request method for SSE is GET.
         if method != "GET" {
@@ -182,7 +184,7 @@ impl ServerThread {
             .context(format!("error decoding URL: {}", path))?;
 
         // Check the path.
-        // The browser requests the content.
+        // Serve note rendition.
         if path == "/" {
             let html = Self::render_content_and_error(&self)
                 .context("ServerThread::render_content(): ")?;
@@ -209,6 +211,8 @@ impl ServerThread {
             sleep(Duration::from_millis(SERVER_EXTRA_KEEP_ALIVE));
             self.stream.shutdown(Shutdown::Both)?;
             return Ok(());
+
+        // Serve image.
         } else if path == FAVICON_PATH {
             let response = format!(
                 "HTTP/1.1 200 OK\r\n\
@@ -230,6 +234,8 @@ impl ServerThread {
             sleep(Duration::from_millis(SERVER_EXTRA_KEEP_ALIVE));
             self.stream.shutdown(Shutdown::Both)?;
             return Ok(());
+
+        // Serve update events.
         } else if path == EVENT_PATH {
             // This is connection for server sent events.
             // Declare SSE capability and allow cross-origin access.
@@ -281,6 +287,8 @@ impl ServerThread {
                     SSE_EVENT_NAME
                 );
             }
+
+        // Serve all other documents.
         } else {
             // Strip `/` and convert to `Path`.
             let path = path
@@ -387,7 +395,8 @@ impl ServerThread {
             } else {
                 return self.write_not_found(&reqpath);
             }
-        }
+        };
+        // End of serve all other documents.
     }
 
     /// Write HTTP not found response.
