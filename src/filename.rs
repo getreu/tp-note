@@ -231,7 +231,7 @@ impl MarkupLanguage {
         // one of the above lists, make sure that Tp-Note
         // recognizes its own files. Even without Markup
         // rendition.
-        if file_extension == &CFG.extension_default {
+        if file_extension == CFG.extension_default {
             return MarkupLanguage::Txt;
         }
         MarkupLanguage::None
