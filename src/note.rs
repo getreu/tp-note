@@ -414,9 +414,9 @@ impl Note<'_> {
             .unwrap_or_default()
             .is_empty()
         {
-            log::trace!("Rendering HTML to STDOUT (`{:?}`)", export_dir);
+            log::info!("Rendering HTML to STDOUT (`{:?}`)", export_dir);
         } else {
-            log::trace!("Rendering HTML into: {:?}", html_path);
+            log::info!("Rendering HTML into: {:?}", html_path);
         };
 
         // The file extension identifies the markup language.
