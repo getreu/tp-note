@@ -1056,7 +1056,7 @@ runs _Tp-Note_ in editing mode.
    ```bash
    shell/i/.md
        Open=tp-note %f
-       View=if HTML=`tp-note -b -n -x - %f`; then (echo $HTML | lynx --stdin); else less    %f; fi
+       View=if HTML=`tp-note -b -n -x - %f`; then (echo $"HTML" | lynx --stdin); else less    %f; fi
 
    default/*
    ```
