@@ -13,11 +13,11 @@ use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use anyhow::{anyhow, Context, Result};
 use parse_hyperlinks::renderer::text_links2html;
-#[cfg(feature = "viewer")]
+#[cfg(feature = "renderer")]
 use pulldown_cmark::{html, Options, Parser};
-#[cfg(feature = "viewer")]
+#[cfg(feature = "renderer")]
 use rst_parser::parse;
-#[cfg(feature = "viewer")]
+#[cfg(feature = "renderer")]
 use rst_renderer::render_html;
 use std::default::Default;
 use std::env;
@@ -484,9 +484,9 @@ impl Note<'_> {
 
         // Render the markup language.
         let html_output = match MarkupLanguage::from(ext, &file_ext) {
-            #[cfg(feature = "viewer")]
+            #[cfg(feature = "renderer")]
             MarkupLanguage::Markdown => Self::render_md_content(input),
-            #[cfg(feature = "viewer")]
+            #[cfg(feature = "renderer")]
             MarkupLanguage::RestructuredText => Self::render_rst_content(input)?,
             MarkupLanguage::Html => input.to_string(),
             _ => Self::render_txt_content(input),
@@ -505,7 +505,7 @@ impl Note<'_> {
     }
 
     #[inline]
-    #[cfg(feature = "viewer")]
+    #[cfg(feature = "renderer")]
     /// Markdown renderer.
     fn render_md_content(markdown_input: &str) -> String {
         // Set up options and parser. Besides the CommonMark standard
@@ -520,7 +520,7 @@ impl Note<'_> {
     }
 
     #[inline]
-    #[cfg(feature = "viewer")]
+    #[cfg(feature = "renderer")]
     /// RestructuredText renderer.
     fn render_rst_content(rest_input: &str) -> Result<String, anyhow::Error> {
         // Note, that the current rst renderer requires files to end with a new line.

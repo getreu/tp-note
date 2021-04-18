@@ -43,16 +43,17 @@ assets = [
 ]
 
 [features]
+default = ["read-clipboard", "message-box", "viewer", "renderer"]
+
 # To disable features: `cargo build --no-default-features`
-default = ["message-box", "viewer"]
 # If you can do away with error message popup boxes (for example on a headless
 # system), no GTK is required. In this case all error messages will appear on
 # the console from where you started _Tp-Note_ in `stderr` only.
 # Disable this feature if you do not want error message boxes.
 message-box = ["msgbox"]
-# Markdown renderer and viewer are optional too.
-viewer = ["notify", "httparse", "pulldown-cmark", "rst_parser", "rst_renderer", "webbrowser", "rand", "httpdate", "percent-encoding", "url"]
 read-clipboard = ["clipboard"]
+viewer = ["notify", "httparse", "pulldown-cmark", "webbrowser", "rand", "httpdate", "percent-encoding", "url"]
+renderer = ["rst_parser", "rst_renderer"]
 
 [dependencies]
 anyhow = "1.0.40"
