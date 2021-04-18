@@ -22,11 +22,11 @@ launches the system file editor (or any other of your choice, e.g. _MarkText_
 or _Typora_) and connects the default web browser to _Tp-Note_'s
 internal Markdown/RestructuredText renderer and web server.
 
-* Read more in [Tp-Note’s user manual](/projects/tp-note/tp-note--manual.html)
+* Read more in [Tp-Note’s user manual]
 
-* [Download Tp-Note](/projects/tp-note/index.html#distribution)
+* [Download Tp-Note]
 
-* Project page: [Tp-Note - fast note-taking with templates and filename synchronization](/projects/tp-note/)
+* Project page: [Tp-Note - fast note-taking with templates and filename synchronization]
 
 
 ---
@@ -38,11 +38,11 @@ User documentation:
 
 * Introductory video
 
-  [Tp-Note - Most common use cases - YouTube](https://www.youtube.com/watch?v=ODhPytPFtYY)
+  [Tp-Note - Most common use cases - YouTube]
 
 * Project page:
 
-  [Tp-Note's project page](/projects/tp-note/), which
+  [Tp-Note's project page], which
   you are reading right now, lists where you can download _Tp-Note_ and gives
   an overview of _Tp-Note_'s resources and documentation.
 
@@ -51,31 +51,31 @@ User documentation:
   The user manual showcases how to best use use _Tp-Note_ and how to integrate it
   with you file manager.
 
-  [Tp-Note user manual - html](/projects/tp-note/tp-note--manual.html)
+  [Tp-Note user manual - html]
 
-  [Tp-Note user manual - pdf](/_downloads/tp-note--manual.pdf)
+  [Tp-Note user manual - pdf]
 
 * Unix man-page:
 
   The Unix man-page is _Tp-Note_'s technical reference. Here you learn how to customize
   _Tp-Note_'s templates and how to change its default settings.
 
-  [Tp-Note manual page - html](/projects/tp-note/tp-note--manpage.html)
+  [Tp-Note manual page - html]
 
-  [Tp-Note manual page - pdf](/_downloads/tp-note--manpage.pdf)
+  [Tp-Note manual page - pdf]
 
-* [Blogposts about Tp-Note](/tags/tp-note/)
+* [Blogposts about Tp-Note]
 
 Developer documentation:
 
 * API documentation
 
   _Tp-Note_'s program code documentation targets mainly software developers.
-  The advanced user may consult the [Tp-Note's config module documentation](/projects/tp-note/_downloads/doc/tp_note/config/)
+  The advanced user may consult the [Tp-Note's config module documentation]
   which explains the default templates and setting. Many of them can be
   customized through _Tp-Note_'s configuration file.
 
-  [API documentation](/projects/tp-note/_downloads/doc/tp_note/)
+  [API documentation]
 
 
 
@@ -83,9 +83,9 @@ Developer documentation:
 
 Repository:
 
-* [Tp-Note on Gitlab](https://gitlab.com/getreu/tp-note)
+* [Tp-Note on Gitlab]
 
-* [Tp-Note on Github (mirror)](https://github.com/getreu/tp-note)
+* [Tp-Note on Github (mirror)]
 
 
 ## Distribution
@@ -94,26 +94,26 @@ Repository:
 
 * Installer package for Windows:
 
-  [tp-note-latest-x86_64.msi](/projects/tp-note/_downloads/wix/tp-note-latest-x86_64.msi)
+  [tp-note-latest-x86_64.msi]
 
   As this early version of the Windows installer is not signed yet, Windows
   will show the error message “Windows protected your PC”. As a work-around,
   when you click on the link “More info”, a ”Run anyway” button will appear
   allowing you to continue the installation process. In general, regardless
   of where a program comes from, I recommend checking every installable
-  file with [VirusTotal](https://www.virustotal.com/gui/home/upload).
+  file with [VirusTotal]
 
 ### Tp-Note Debian/Ubuntu installer package
 
 * Package compiled for Debian 10+ (Buster):
 
-  [x86_64-unknown-linux-gnu/debian/tp-note_latest_amd64.deb](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_latest_amd64.deb)
+  [x86_64-unknown-linux-gnu/debian/tp-note_latest_amd64.deb]
 
 ### Various binaries for Windows, MacOS and Linux
 
 * Binaries for Ubuntu-Linux 18.04, Windows, MacOS:
 
-    1. Open: [Releases - getreu/tp-note](https://github.com/getreu/tp-note/releases)
+    1. Open: [Releases - getreu/tp-note]
 
     2. Open the latest release.
 
@@ -125,26 +125,26 @@ Repository:
 
 * Executable for Windows:
 
-    * [x86_64-pc-windows-gnu/release/tp-note.exe](/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe)
+    * [x86_64-pc-windows-gnu/release/tp-note.exe]
 
 * Universal Linux binary (compiled with Debian 10 Buster):
 
-    * [x86_64-unknown-linux-gnu/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note)
+    * [x86_64-unknown-linux-gnu/release/tp-note]
 
     * The following "musl" version is well suited for headless systems, as it
       does not require _GTK_ libraries to be installed.
 
-      [x86_64-unknown-linux-musl/release/tp-note](/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note)
+      [x86_64-unknown-linux-musl/release/tp-note]
 
 
 
 * Installable Unix man-page:
 
-  - [tp-note.1.gz](/projects/tp-note/_downloads/tp-note.1.gz)
+  - [tp-note.1.gz]
 
 * Zipfile with all binaries and documentation:
 
-  - [tp-note all](/_downloads/tp-note.zip)
+  - [tp-note all]
 
 
 ## Installation
@@ -152,10 +152,9 @@ Repository:
 Depending on the availability of installer packages for your operating system,
 the installation process is more or less automated. For Windows users the fully
 automated installation package
-[tp-note-latest-x86_64.msi](/projects/tp-note/_downloads/wix/tp-note-latest-x86_64.msi)
+[tp-note-latest-x86_64.msi]
 is available. For more information, please consult the [Distribution section](#distribution)
-above and the [Installation
-section](/projects/tp-note/tp-note--manual.html#installation)
+above and the [Installation section]
 in _Tp-Note_'s manual.
 
 
@@ -212,44 +211,59 @@ If the above precompiled binaries do not suite you, you can
 compile _Tp-Note_ yourself.
 
 
-1. [Install Rust](https://www.rust-lang.org/tools/install), e.g.
+1. [Install Rust], e.g.
 
        curl https://sh.rustup.rs -sSf | sh
 
 2. Download, compile and install _Tp-Note_:
 
+   **Building for Linux**
+
        sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
        cargo install tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-   In case you experience compilation errors in dependend crates, replace
+   In case you experience compilation errors in dependent crates, replace
    `cargo install tp-note` with the following:
 
        cargo install --locked tp-note
 
-   **Building for Linux**
+   If - under Linux - you need to reduce the binary size and you can do without
+   error message popup boxes (for example on a headless system), no GTK is
+   required. In this case all error messages are dumped on the console from
+   where you started _Tp-Note_ into `stderr`.
 
-   If - under Linux - you can do without error message popup boxes (for example
-   on a headless system), no GTK is required. In this case all error messages
-   are dumped on the console from where you started _Tp-Note_ into `stderr`.
-
-       cargo install --no-default-features --features viewer tp-note
+       cargo install --no-default-features --features read-clipboard,viewer,renderer tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-   In case minimal binary size with minimal dependencies matters to you, it
-   is possible to compile _Tp-Note_ without the `message-box` and the `viewer`
-   feature. This spares roughly half of the dependencies and 70% of the
-   binary size compared to the full featured version.
+   **Linux console version without dependencies on GUI libraries**
+
+   The full featured version of _Tp-Note_ depends on GUI libraries like GTK
+   that might not be installed on a headless system. Either download the Musl
+   version [x86_64-unknown-linux-musl/release/tp-note] or compile _Tp-Note_
+   without default features:
 
        cargo install --no-default-features tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-   Even though, the no-viewer version is deprived of it's internal HTTP
-   server and markup renderer, limited HTML export is always available (see:
-   `tp-note --export=`). This way you can comfortably follow hyperlinks in
+   Note, that even though this no-renderer version is deprived of it's 
+   markup renderer, limited rendered HTML export is still available (see command
+   line option `--export`). This way you can comfortably follow hyperlinks in
    your note files with any text based web browser, e.g. `lynx`.
 
+   **Linux server version**
+
+   The same as the above console version (without GUI libraries), but with
+   additional Markdown, ReStructuredText etc. renderer compiled in.
+
+       cargo install --no-default-features --features renderer tp-note
+       sudo cp ~/.cargo/bin/tp-note /usr/local/bin
+
    **Building for Windows**
+
+   Build the full featured version with:
+
+       cargo install tp-note
 
    When building for Windows, it does not make sense to exclude the
    `message-box` feature, because - under Windows - it does not rely on the
@@ -257,16 +271,11 @@ compile _Tp-Note_ yourself.
    boxes. As these calls have no footprint in binary size or speed, always
    keep the `message-box` feature compiled in.
 
-   If - for some reason - you need to reduce _Tp-Note_'s dependencies and
-   binary size, better exclude only its `viewer` feature:
-
-       cargo install --no-default-features --features message-box tp-note
-
    See also the user manual for a more detailed installation description.
 
 
 
-This project follows [Semantic Versioning](https://semver.org/).
+This project follows [Semantic Versioning].
 
 
 
@@ -280,8 +289,31 @@ Copyright:
 
 * Apache 2 licence or MIT licence
 
-<!--
-Build status:
 
-* ![status](https://travis-ci.org/getreu/tp-note.svg?branch=master)
--->
+[Tp-Note’s user manual]: /projects/tp-note/tp-note--manual.html
+[Download Tp-Note]: /projects/tp-note/index.html#distribution
+[Tp-Note - fast note-taking with templates and filename synchronization]: /projects/tp-note/
+[Tp-Note - Most common use cases - YouTube]: https://www.youtube.com/watch?v=ODhPytPFtYY
+[Tp-Note's project page]: /projects/tp-note/
+[Tp-Note user manual - html]: /projects/tp-note/tp-note--manual.html
+[Tp-Note user manual - pdf]: /_downloads/tp-note--manual.pdf
+[Tp-Note manual page - html]: /projects/tp-note/tp-note--manpage.html
+[Tp-Note manual page - pdf]: /_downloads/tp-note--manpage.pdf
+[Blogposts about Tp-Note]: /tags/tp-note/
+[Tp-Note's config module documentation]: /projects/tp-note/_downloads/doc/tp_note/config/
+[API documentation]: /projects/tp-note/_downloads/doc/tp_note/
+[Tp-Note on Gitlab]: https://gitlab.com/getreu/tp-note
+[Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
+[tp-note-latest-x86_64.msi]: /projects/tp-note/_downloads/wix/tp-note-latest-x86_64.msi
+[VirusTotal]: https://www.virustotal.com/gui/home/upload
+[x86_64-unknown-linux-gnu/debian/tp-note_latest_amd64.deb]: /projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_latest_amd64.deb
+[Releases - getreu/tp-note]: https://github.com/getreu/tp-note/releases
+[x86_64-pc-windows-gnu/release/tp-note.exe]: /projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe
+[x86_64-unknown-linux-gnu/release/tp-note]: /projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note
+[x86_64-unknown-linux-musl/release/tp-note]: /projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note
+[tp-note.1.gz]: /projects/tp-note/_downloads/tp-note.1.gz
+[tp-note all]: /_downloads/tp-note.zip
+[tp-note-latest-x86_64.msi]: /projects/tp-note/_downloads/wix/tp-note-latest-x86_64.msi
+[Installation section]: /projects/tp-note/tp-note--manual.html#installation
+[Install Rust]: https://www.rust-lang.org/tools/install
+[Semantic Versioning]: https://semver.org/
