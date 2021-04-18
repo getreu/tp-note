@@ -1,4 +1,4 @@
-version = '1.12.2'
+version = '1.12.3'
 debug = 'ERROR'
 popup = false
 extension_default = 'md'
