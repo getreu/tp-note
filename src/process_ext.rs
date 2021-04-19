@@ -13,6 +13,7 @@ use std::time::Duration;
 use win32job::Job;
 
 /// Polling interval when waiting for grand children to terminate.
+#[cfg(target_family = "windows")]
 const PROCESS_POLLING_INTERVAL: u64 = 1000;
 
 /// Newtype wrapping some `Child`.
