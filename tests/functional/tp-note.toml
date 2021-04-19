@@ -1,4 +1,4 @@
-version = '1.12.3'
+version = '1.12.4'
 debug_arg_default = 'ERROR'
 edit_arg_default = false
 popup_arg_default = true

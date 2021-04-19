@@ -1379,9 +1379,9 @@ dependencies = [
 
 [[package]]
 name = "parse-hyperlinks"
-version = "0.20.0"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "859ded622afae44a61456d9b3fd1c4d7f672eac88c29b11711e39822d8c21812"
+checksum = "42e07588dd835146c54f4c9559037fa426df604f23420bf09a5234056566e08b"
 dependencies = [
  "html-escape",
  "nom",
@@ -2118,7 +2118,7 @@ dependencies = [
 
 [[package]]
 name = "tp-note"
-version = "1.12.3"
+version = "1.12.4"
 dependencies = [
  "anyhow",
  "atty",
