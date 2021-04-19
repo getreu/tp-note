@@ -203,7 +203,7 @@ impl ServerThread {
             // We have been subscribed to events beforehand. As we drop the
             // receiver now, `viewer::update()` will remove us from the list soon.
             log::debug!(
-                "ServerThread::serve_events2: 200 OK, file {} served.",
+                "ServerThread::serve_events2: 200 OK, served file:\n'{}'",
                 self.doc_path.to_str().unwrap_or_default().to_string()
             );
             // Only Chrome and Edge on Windows need this extra time to ACK the TCP
@@ -226,7 +226,7 @@ impl ServerThread {
             self.stream.write_all(response.as_bytes())?;
             self.stream.write_all(FAVICON)?;
             log::debug!(
-                "ServerThread::serve_events2: 200 OK, file \"{}\" served.",
+                "ServerThread::serve_events2: 200 OK, served file:\n'{}'",
                 FAVICON_PATH
             );
             // Only Chrome and Edge on Windows need this extra time to ACK the TCP
@@ -283,7 +283,7 @@ impl ServerThread {
                 let event = format!("event: {}\r\ndata\r\n\r\n", SSE_EVENT_NAME);
                 self.stream.write_all(event.as_bytes())?;
                 log::debug!(
-                    "ServerThread::serve_events2: 200 OK, event \"{}\" served.",
+                    "ServerThread::serve_events2: 200 OK, served file:\n'{}'",
                     SSE_EVENT_NAME
                 );
             }
@@ -309,7 +309,7 @@ impl ServerThread {
                     // Reject all files with extensions not listed.
                     log::warn!(
                         "ServerThread::serve_events2: \
-                            files with extension \"{}\" are not served. Rejecting: \"{}\"",
+                            files with extension '{}' are not served. Rejecting: '{}'",
                         reqpath
                             .extension()
                             .unwrap_or_default()
@@ -329,7 +329,7 @@ impl ServerThread {
             if !doc_local_links.contains(Path::new(&reqpath)) {
                 log::warn!(
                     "ServerThread::serve_events2: target not referenced in note file, rejecting: \
-                            \"{}\"",
+                            '{}'",
                     reqpath.to_str().unwrap_or_default()
                 );
                 drop(doc_local_links);
@@ -352,7 +352,7 @@ impl ServerThread {
                     if !p.starts_with(doc_dir) {
                         log::warn!(
                             "ServerThread::serve_events2:\
-                                file \"{}\" is not in directory \"{}\", rejecting.",
+                                file '{}' is not in directory '{}', rejecting.",
                             reqpath.to_str().unwrap_or_default(),
                             doc_dir.to_str().unwrap_or_default()
                         );
@@ -362,7 +362,7 @@ impl ServerThread {
                 Err(e) => {
                     log::warn!(
                         "ServerThread::serve_events2: can not access file: \
-                            \"{}\": {}.",
+                            '{}': {}.",
                         reqpath_abs.to_str().unwrap_or_default(),
                         e
                     );
@@ -384,7 +384,7 @@ impl ServerThread {
                 self.stream.write_all(response.as_bytes())?;
                 self.stream.write_all(&file_content)?;
                 log::debug!(
-                    "ServerThread::serve_events2: 200 OK, file \"{}\" served.",
+                    "ServerThread::serve_events2: 200 OK, served file:\n'{}'",
                     reqpath_abs.to_str().unwrap_or_default()
                 );
                 // Only Chrome and Edge on Windows need this extra time to ACK the TCP
@@ -403,7 +403,7 @@ impl ServerThread {
     fn write_not_found(&mut self, file_path: &Path) -> Result<(), anyhow::Error> {
         self.stream.write_all(b"HTTP/1.1 404 Not Found\r\n\r\n")?;
         log::debug!(
-            "ServerThread::serve_events2: 404 Not found, \"{}\" served.",
+            "ServerThread::serve_events2: 404 \"Not found served:\"\n'{}'",
             file_path.to_str().unwrap_or_default()
         );
         Ok(())
@@ -455,7 +455,7 @@ impl ServerThread {
                     };
                     let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8().context(
                         format!(
-                            "Can not decode URL in hyperlink \"{}\":\n\n{}\n",
+                            "Can not decode URL in hyperlink '{}':\n\n{}\n",
                             &name, &link
                         ),
                     )?);
@@ -471,7 +471,7 @@ impl ServerThread {
                         };
                     };
                     let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8().context(
-                        format!("Can not decode URL in image \"{}\":\n\n{}\n", &name, &link),
+                        format!("Can not decode URL in image '{}':\n\n{}\n", &name, &link),
                     )?);
                     // Save the image links for other threads to check against.
                     doc_local_links.insert(path);
@@ -482,13 +482,16 @@ impl ServerThread {
                         "Viewer: note file has no local hyperlinks. No additional local files are served.",
                     );
                 } else {
-                    let mut list = String::new();
-                    for p in doc_local_links.iter() {
-                        let s = p.as_path().to_str().unwrap_or_default();
-                        list.push_str(s)
-                    };
                     log::info!(
-                        "Viewer: referenced and served local files:\n{}", list
+                        "Viewer: referenced and served local files:\n{}",
+                        doc_local_links
+                        .iter()
+                        .map(|p|{
+                            let mut s = "*   ".to_string();
+                            s.push_str(p.as_path().to_str().unwrap_or_default());
+                            s.push_str("\n");
+                            s
+                        }).collect::<String>()
                     );
                 }
                 Ok(html)

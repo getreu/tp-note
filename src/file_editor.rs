@@ -49,9 +49,17 @@ pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     let mut executable_found = false;
     for i in 0..executable_list.len() {
         log::info!(
-            "Trying to launch the file editor: \"{}\" with {:?}",
+            "Trying to launch the file editor:\n\'{}\' {}",
             executable_list[i],
             args_list[i]
+                .iter()
+                .map(|p| {
+                    let mut s = "'".to_string();
+                    s.push_str(p);
+                    s.push_str("' ");
+                    s
+                })
+                .collect::<String>()
         );
 
         // Check if this is a `flatpak run <app>` command.

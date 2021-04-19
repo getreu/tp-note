@@ -1,7 +1,6 @@
 //! Main module for the markup renderer and note viewer feature.
 
 use crate::config::ARGS;
-use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::filename::MarkupLanguage;
 use crate::viewer::sse_server::manage_connections;
@@ -76,9 +75,18 @@ impl Viewer {
         // Concerning non-master-documents, we only serve these file extensions.
         lazy_static::initialize(&VIEWER_SERVED_MIME_TYPES_HMAP);
         log::debug!(
-                "Viewer::run(): \
-                 Besides the note's HTML rendition, we only serve files with the following listed extensions:\n{:?}", CFG.viewer_served_mime_types
-            );
+            "Viewer::run(): \
+                 Besides the note's HTML rendition, we only serve files with the following\
+                 listed extensions: \n{}",
+            &VIEWER_SERVED_MIME_TYPES_HMAP
+                .keys()
+                .map(|s| {
+                    let mut s = s.to_string();
+                    s.push_str(", ");
+                    s
+                })
+                .collect::<String>()
+        );
 
         // Launch a background HTTP server thread to manage server-sent events subscribers
         // and to serve the rendered html.
