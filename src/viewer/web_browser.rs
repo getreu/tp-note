@@ -9,18 +9,21 @@ use webbrowser::{open_browser, Browser};
 
 #[inline]
 /// Launches a web browser and displays the note's HTML rendition.
+/// When not in _fall back mode: this function blocks until the user
+/// closes the browser window.
 pub fn launch_web_browser(url: &str) -> Result<(), anyhow::Error> {
-    if launch_listed_broswer(url).is_err() {
-        log::warn!(
-            "The `browser_args` configuration file variable \
-             is not configured properly. Trying to launch the system's \
-             default web browser.",
-        );
+    if let Err(e) = launch_listed_broswer(url) {
+        log::warn!("{}", e);
+        log::warn!("As fall back workaround, trying to launch the system's default web browser.");
+        // This might not block in all circumstances.
         open_browser(Browser::Default, url)?;
     };
     Ok(())
 }
 
+/// Launches one be one, all browsers from the list `CFG.browser_args` until
+/// it finds an installed one. This blocks until the browser is closed by the
+/// user.
 pub fn launch_listed_broswer(url: &str) -> Result<(), anyhow::Error> {
     let mut args_list = Vec::new();
     let mut executable_list = Vec::new();
@@ -95,12 +98,11 @@ pub fn launch_listed_broswer(url: &str) -> Result<(), anyhow::Error> {
                     break;
                 } else {
                     return Err(anyhow!(
-                        "The web browser did not terminate gracefully:\n\
-                     \t{}\n\
-                     \n\
-                     Edit the variable `browser_args` in Tp-Note's configuration file\n\
-                     and correct the following:\n\
-                     \t{:?}",
+                        "The web browser did not terminate gracefully: {}\n\
+                        \n\
+                        Edit the variable `browser_args` in Tp-Note's configuration file\n\
+                        and correct the following:\n\
+                        \t{:?}",
                         ecode.to_string(),
                         &*browser_args[i],
                     ));

@@ -11,8 +11,11 @@ use std::process::Command;
 use std::process::Stdio;
 
 #[inline]
-/// Launch some external editor. The editor can be chosen through
-/// `tp-note`'s configuration file.
+/// Launch some external text editor. The editor can be chosen through
+/// `tp-note`'s configuration file. This function searches the lists
+/// `CFG.editor_console_args` or `CFG.editor_args` until it finds un installed
+/// text editor. Once the editor is launched, the function blocks until the user
+/// closes the editor window.
 pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     // Both lists have always the same number of items.
     let mut args_list = Vec::new();
@@ -102,12 +105,11 @@ pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
 
                 if !ecode.success() {
                     return Err(anyhow!(
-                        "The external file editor did not terminate gracefully:\n\
-                     \t{}\n\
-                     \n\
-                     Edit the variable `{}` in Tp-Note's configuration file\n\
-                     and correct the following:\n\
-                     \t{:?}",
+                        "The external file editor did not terminate gracefully: {}\n\
+                        \n\
+                        Edit the variable `{}` in Tp-Note's configuration file\n\
+                        and correct the following:\n\
+                        \t{:?}",
                         ecode.to_string(),
                         if *RUNS_ON_CONSOLE {
                             "editor_console_args"
