@@ -837,18 +837,7 @@ lazy_static! {
 lazy_static! {
     /// Shall we launch the external text editor?
     pub static ref LAUNCH_EDITOR: bool = {
-        !ARGS.batch && ARGS.export.is_none() &&
-        match (ARGS.edit, ARGS.view, CFG.edit_arg_default) {
-            (false, false, false) => true,
-            (false, false, true) => true,
-            (false, true, false) => false,
-            (false, true, true) => false,
-            (true, false, false) => true,
-            (true, false, true) => true,
-            (true, true, false) => false,
-            (true, true, true) => false,
-
-        }
+        !ARGS.batch && ARGS.export.is_none() && !ARGS.view
     };
 }
 
@@ -857,16 +846,7 @@ lazy_static! {
     /// Shall we launch the internal http server and the external browser?
     pub static ref LAUNCH_VIEWER: bool = {
         !ARGS.batch && ARGS.export.is_none() && !*RUNS_ON_CONSOLE &&
-        match (ARGS.edit, ARGS.view, CFG.edit_arg_default) {
-            (false, false, false) => true,
-            (false, false, true) => false,
-            (false, true, false) => true,
-            (false, true, true) => true,
-            (true, false, false) => false,
-            (true, false, true) => false,
-            (true, true, false) => true,
-            (true, true, true) => true,
-        }
+            (ARGS.view || ( !ARGS.edit && !CFG.edit_arg_default ))
     };
 }
 
