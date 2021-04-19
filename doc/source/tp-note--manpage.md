@@ -431,11 +431,11 @@ synchronization).
     The same can be achieved by setting following configuration file
     variables (especially useful under Windows):
 
-        debug = 'INFO'
-        popup = true
+        debug_arg_default = 'info'
+        popup_arg_default = true
 
-    Here the value for `debug` must be one out of `TRACE`, `DEBUG`, `INFO`,
-    `WARN`, `ERROR` (default) and `OFF`. They have the same meaning than the
+    Here the value for `debug_arg_default` must be one out of `trace`, `debug`, `info`,
+    `warn`, `error` (default) and `off`. They have the same meaning than the
     corresponding command line options.
 
 **-e**, **\--edit**

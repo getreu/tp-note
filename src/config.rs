@@ -29,14 +29,18 @@ use structopt::StructOpt;
 /// Name of this executable (without the Windows ".exe" extension).
 const CURRENT_EXE: &str = "tp-note";
 
+/// Default value for the `--debug` command line option.
 /// Determines the maximum debug level, events must have to be logged.
-/// If the command-line-option `--debug` is present, its value will
+/// If the command line option `--debug` is present, its value will
 /// be used instead.
-const DEBUG: LevelFilter = LevelFilter::Error;
+const DEBUG_ARG_DEFAULT: LevelFilter = LevelFilter::Error;
 
-/// If the command-line-flag `--popup` or `POPUP` is `true`, all log
+/// Default value for the `--popup` command line flag.
+/// If the command line flag `--popup` or `POPUP` is `true`, all log
 /// events will also trigger the appearance of a popup alert window.
-const POPUP: bool = false;
+/// Note, that error level debug events will always pop up, regardless
+/// of `--popup` and `POPUP` (unless `--debug=off`).
+const POPUP_ARG_DEFAULT: bool = true;
 
 /// Crate `confy` version 0.4 uses this filename by default.
 const CONFIG_FILENAME: &str = "tp-note.toml";
@@ -707,8 +711,8 @@ pub struct Cfg {
     /// a text message explaining why we could not load the
     /// configuration file.
     pub version: String,
-    pub debug: LevelFilter,
-    pub popup: bool,
+    pub debug_arg_default: LevelFilter,
+    pub popup_arg_default: bool,
     pub extension_default: String,
     pub note_file_extensions_md: Vec<String>,
     pub note_file_extensions_rst: Vec<String>,
@@ -753,8 +757,8 @@ impl ::std::default::Default for Cfg {
 
         Cfg {
             version,
-            debug: DEBUG,
-            popup: POPUP,
+            debug_arg_default: DEBUG_ARG_DEFAULT,
+            popup_arg_default: POPUP_ARG_DEFAULT,
             extension_default: EXTENSION_DEFAULT.to_string(),
             note_file_extensions_md: NOTE_FILE_EXTENSIONS_MD
                 .iter()

@@ -74,12 +74,12 @@ fn main() {
 
     // Set the debug level. Only use config file value if
     // no command-line-option `--debug` is present.
-    let level = ARGS.debug.unwrap_or(CFG.debug);
+    let level = ARGS.debug.unwrap_or(CFG.debug_arg_default);
     AppLogger::set_max_level(level);
 
     // This eventually will extend the error reporting with more
     // popup alert windows.
-    AppLogger::set_popup_always_enabled(CFG.popup || ARGS.popup);
+    AppLogger::set_popup_always_enabled(ARGS.popup || CFG.popup_arg_default);
 
     // Check if the config file loading was successful.
     let cfg_file_loading = &*CFG_FILE_LOADING.read().unwrap();
