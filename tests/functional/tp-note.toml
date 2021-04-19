@@ -1,6 +1,7 @@
 version = '1.12.3'
-debug = 'ERROR'
-popup = false
+debug_arg_default = 'ERROR'
+edit_arg_default = false
+popup_arg_default = true
 extension_default = 'md'
 note_file_extensions_md = [
     'md',
@@ -187,7 +188,6 @@ clipboard_empty_enabled = true
 copy_counter_extra_separator = '-'
 copy_counter_opening_brackets = '('
 copy_counter_closing_brackets = ')'
-viewer_enabled = true
 viewer_notify_period = 1000
 viewer_served_mime_types = [
     [
