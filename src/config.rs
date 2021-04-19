@@ -29,13 +29,18 @@ use structopt::StructOpt;
 /// Name of this executable (without the Windows ".exe" extension).
 const CURRENT_EXE: &str = "tp-note";
 
-/// Default value for the `--debug` command line option.
-/// Determines the maximum debug level, events must have to be logged.
+/// Default value for command line option `--debug`.
+/// Determines the maximum debug level events must have, to be logged.
 /// If the command line option `--debug` is present, its value will
 /// be used instead.
 const DEBUG_ARG_DEFAULT: LevelFilter = LevelFilter::Error;
 
-/// Default value for the `--popup` command line flag.
+/// Default value for command line flag `--edit`
+/// To disable file watcher, (Markdown)-renderer, html server
+/// and a web-browser launcher set to `true`.
+const EDITOR_ARG_DEFAULT: bool = false;
+
+/// Default value for command line flag `--popup`
 /// If the command line flag `--popup` or `POPUP` is `true`, all log
 /// events will also trigger the appearance of a popup alert window.
 /// Note, that error level debug events will always pop up, regardless
@@ -455,11 +460,6 @@ const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
 /// at the end.
 pub const COPY_COUNTER_MAX: usize = 400;
 
-/// Launches a filewatcher, (Markdown)-renderer, html server
-/// and a web-browser to view the current note file.
-/// To disable this feature, set to false.
-const VIEWER_ENABLED: bool = true;
-
 /// How often should the file watcher check for changes?
 /// Delay in milliseconds.
 const VIEWER_NOTIFY_PERIOD: u64 = 1000;
@@ -712,6 +712,7 @@ pub struct Cfg {
     /// configuration file.
     pub version: String,
     pub debug_arg_default: LevelFilter,
+    pub edit_arg_default: bool,
     pub popup_arg_default: bool,
     pub extension_default: String,
     pub note_file_extensions_md: Vec<String>,
@@ -737,7 +738,6 @@ pub struct Cfg {
     pub copy_counter_extra_separator: String,
     pub copy_counter_opening_brackets: String,
     pub copy_counter_closing_brackets: String,
-    pub viewer_enabled: bool,
     pub viewer_notify_period: u64,
     pub viewer_served_mime_types: Vec<Vec<String>>,
     pub viewer_rendition_tmpl: String,
@@ -758,6 +758,7 @@ impl ::std::default::Default for Cfg {
         Cfg {
             version,
             debug_arg_default: DEBUG_ARG_DEFAULT,
+            edit_arg_default: EDITOR_ARG_DEFAULT,
             popup_arg_default: POPUP_ARG_DEFAULT,
             extension_default: EXTENSION_DEFAULT.to_string(),
             note_file_extensions_md: NOTE_FILE_EXTENSIONS_MD
@@ -807,7 +808,6 @@ impl ::std::default::Default for Cfg {
             copy_counter_extra_separator: COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
             copy_counter_opening_brackets: COPY_COUNTER_OPENING_BRACKETS.to_string(),
             copy_counter_closing_brackets: COPY_COUNTER_CLOSING_BRACKETS.to_string(),
-            viewer_enabled: VIEWER_ENABLED,
             viewer_notify_period: VIEWER_NOTIFY_PERIOD,
             viewer_served_mime_types: VIEWER_SERVED_MIME_TYPES
                 .iter()
@@ -838,15 +838,15 @@ lazy_static! {
     /// Shall we launch the external text editor?
     pub static ref LAUNCH_EDITOR: bool = {
         !ARGS.batch && ARGS.export.is_none() &&
-        match (ARGS.edit, ARGS.view, CFG.viewer_enabled) {
+        match (ARGS.edit, ARGS.view, CFG.edit_arg_default) {
             (false, false, false) => true,
             (false, false, true) => true,
             (false, true, false) => false,
             (false, true, true) => false,
             (true, false, false) => true,
             (true, false, true) => true,
-            (true, true, false) => true,
-            (true, true, true) => true,
+            (true, true, false) => false,
+            (true, true, true) => false,
 
         }
     };
@@ -857,9 +857,9 @@ lazy_static! {
     /// Shall we launch the internal http server and the external browser?
     pub static ref LAUNCH_VIEWER: bool = {
         !ARGS.batch && ARGS.export.is_none() && !*RUNS_ON_CONSOLE &&
-        match (ARGS.edit, ARGS.view, CFG.viewer_enabled) {
-            (false, false, false) => false,
-            (false, false, true) => true,
+        match (ARGS.edit, ARGS.view, CFG.edit_arg_default) {
+            (false, false, false) => true,
+            (false, false, true) => false,
             (false, true, false) => true,
             (false, true, true) => true,
             (true, false, false) => false,

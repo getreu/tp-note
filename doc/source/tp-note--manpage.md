@@ -444,6 +444,8 @@ synchronization).
     viewer. This disables _Tp-Note_'s internal file watcher and web server,
     unless '`-v`' is given. Another way to permanently disable the web server
     is to set the configuration variable '`viewer_enable=false`'.
+    When '`--edit --view`' appear together, '`--view`' takes precedence and
+    '`--edit`' is ignored.
 
 **-p**, **\--port**=*PORT*
 
@@ -477,6 +479,8 @@ windows until they fail to appear.
     the system's default web browser to view the note file and to observe live
     file modifications. This flag has precedence over the configuration
     variable '`viewer_enable=false`'.
+    When '`--edit --view`' appear together, '`--view`' takes precedence and
+    '`--edit`' is ignored.
 
 **-V**, **\--version**
 
@@ -1021,7 +1025,7 @@ case none of the above rendition engines suit you, it is possible to disable
 the viewer feature selectively for some particular note file extensions: just
 place these extensions in the '`note_file_extension_no_viewer`' variable. If
 you wish to disable the viewer feature overall, set the variable
-`viewer_enabled = false`.
+`edit_arg_default = true`.
 
 ### Change the HTML rendition template
 
@@ -1151,7 +1155,7 @@ reader must be logged in, in order to access the `localhost` HTTP server.
 
 This is why on systems where multiple users are logged in at the same time, it
 is recommended to disable _Tp-Note_'s viewer feature by setting the
-configuration file variable '`viewer_enabled = false`'. Alternatively, you can
+configuration file variable '`edit_arg_default = true`'. Alternatively, you can
 also compile _Tp-Note_ without the '`viewer`' feature. Note, that even with the
 viewer feature disabled, one can still render the note manually with the
 '`--export`' option.
