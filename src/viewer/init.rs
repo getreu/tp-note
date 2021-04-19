@@ -43,24 +43,21 @@ impl Viewer {
     #[inline]
     fn run2(doc: PathBuf) -> Result<(), anyhow::Error> {
         // Check if the master document (note file) has a known file extension.
-        match (
-            ARGS.view,
-            MarkupLanguage::from(
-                None,
-                doc.extension()
-                    .unwrap_or_default()
-                    .to_str()
-                    .unwrap_or_default(),
-            ),
+        match MarkupLanguage::from(
+            None,
+            doc.extension()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default(),
         ) {
             // A master document with this file extension is exempted from being viewed.
             // We quit here and do not start the viewer.
-            (false, MarkupLanguage::Unknown) => return Ok(()),
+            MarkupLanguage::Unknown => return Ok(()),
             // This should never happen, since non-Tp-Note files are never
             // edited or viewed.
-            (_, MarkupLanguage::None) => return Err(anyhow!("can not view non Tp-Note files")),
+            MarkupLanguage::None => return Err(anyhow!("can not view non Tp-Note files")),
             // All other cases: start viewer.
-            (_, _) => (),
+            _ => (),
         };
 
         // Launch "server sent event" server.
