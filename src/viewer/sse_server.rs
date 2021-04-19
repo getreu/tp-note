@@ -479,11 +479,16 @@ impl ServerThread {
 
                 if doc_local_links.is_empty() {
                     log::debug!(
-                        "ServerThread: note file has no local hyperlinks. No additional local files served.",
+                        "Viewer: note file has no local hyperlinks. No additional local files are served.",
                     );
                 } else {
-                    log::debug!(
-                        "ServerThread: referenced and served local files:\n{:#?}", *doc_local_links
+                    let mut list = String::new();
+                    for p in doc_local_links.iter() {
+                        let s = p.as_path().to_str().unwrap_or_default();
+                        list.push_str(s)
+                    };
+                    log::info!(
+                        "Viewer: referenced and served local files:\n{}", list
                     );
                 }
                 Ok(html)
