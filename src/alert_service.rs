@@ -54,10 +54,10 @@ lazy_static! {
 #[cfg(feature = "message-box")]
 const KEEP_ALIVE: u64 = 1000;
 
-// Extra timeout for the method `wait_when_busy()`, before it checks if there is still an open
+// Extra timeout for the `flush()` method, before it checks if there is still an open
 // popup alert window.  We wait a moment just in case that there are pending messages we have not
 // received yet. 1 millisecond is enough, we wait 10 just to be sure.
-const WAIT_WHEN_BUSY_TIMEOUT: u64 = 10;
+const FLUSH_TIMEOUT: u64 = 10;
 
 pub struct AlertService {}
 
@@ -129,12 +129,12 @@ impl AlertService {
         }
     }
 
-    /// The `AlertService` keeps holding a lock until `ALERT_SERVICE_KEEP_ALIVE` milliseconds after
+    /// The `AlertService` keeps holding a lock until `KEEP_ALIVE` milliseconds after
     /// the user has closed that last error alert window. Only then, it releases the lock. This function
     /// blocks until the lock is released.
-    pub fn wait_when_busy() {
+    pub fn flush() {
         // See constant documentation why we wait here.
-        sleep(Duration::from_millis(WAIT_WHEN_BUSY_TIMEOUT));
+        sleep(Duration::from_millis(FLUSH_TIMEOUT));
         // This might block, if a guard in `run()` holds already a lock.
         let _res = BUSY_LOCK.lock();
     }

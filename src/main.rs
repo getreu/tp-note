@@ -124,7 +124,7 @@ fn main() {
                 Please do it manually.",
                     e
                 );
-                AppLogger::wait_when_busy();
+                AppLogger::flush();
                 process::exit(5);
             };
 
@@ -157,7 +157,7 @@ fn main() {
                 Please do it manually.",
                     e
                 );
-                AppLogger::wait_when_busy();
+                AppLogger::flush();
                 process::exit(5);
             };
         };
@@ -168,7 +168,7 @@ fn main() {
         Err(e) => {
             // Something went wrong.
             log::error!("---\n{:?}", e);
-            AppLogger::wait_when_busy();
+            AppLogger::flush();
             process::exit(1);
         }
 
@@ -185,5 +185,5 @@ fn main() {
     };
 
     // Wait if there are still error messages windows open.
-    AppLogger::wait_when_busy();
+    AppLogger::flush();
 }

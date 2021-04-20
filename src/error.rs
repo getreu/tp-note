@@ -61,11 +61,11 @@ impl AppLogger {
     /// This should be executed before quitting the application
     /// because there might be still queued error messages
     /// the uses has not seen yet.
-    pub fn wait_when_busy() {
+    pub fn flush() {
         #[cfg(feature = "message-box")]
         if !*RUNS_ON_CONSOLE && !ARGS.batch {
             // If ever there is still a message window open, this will block.
-            AlertService::wait_when_busy();
+            AlertService::flush();
         }
     }
 
