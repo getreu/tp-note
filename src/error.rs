@@ -19,14 +19,17 @@ use std::env;
 use std::path::PathBuf;
 use std::sync::RwLock;
 
-lazy_static! {
+pub struct AppLogger {
     /// If `true`, all future log events will trigger the opening of a popup
     /// alert window. Otherwise only `Level::Error` will do.
-    static ref APP_LOGGER_POPUP_ALWAYS_ENABLED: RwLock<bool> = RwLock::new(false);
+    popup_always_enabled: RwLock<bool>,
 }
 
-pub struct AppLogger;
-pub static APP_LOGGER: AppLogger = AppLogger;
+lazy_static! {
+    static ref APP_LOGGER: AppLogger = AppLogger {
+        popup_always_enabled: RwLock::new(false)
+    };
+}
 
 /// Initialize logger.
 impl AppLogger {
@@ -37,7 +40,7 @@ impl AppLogger {
         AlertService::init();
 
         // Setup console logger.
-        log::set_logger(&APP_LOGGER).unwrap();
+        log::set_logger(&*APP_LOGGER).unwrap();
         log::set_max_level(LevelFilter::Error);
     }
 
@@ -53,7 +56,7 @@ impl AppLogger {
     pub fn set_popup_always_enabled(popup: bool) {
         // This blocks if ever another thread wants to write.  As we are the only ones to write
         // here, this lock can never get poisoned and we will can safely `unwrap()` here.
-        let mut lock = APP_LOGGER_POPUP_ALWAYS_ENABLED.write().unwrap();
+        let mut lock = APP_LOGGER.popup_always_enabled.write().unwrap();
         *lock = popup;
     }
 
@@ -117,7 +120,7 @@ impl log::Log for AppLogger {
                 && !ARGS.batch
                 && ((record.metadata().level() == LevelFilter::Error)
                         // This lock can never get poisoned, so `unwrap()` is safe here.
-                        || *(APP_LOGGER_POPUP_ALWAYS_ENABLED.read().unwrap()))
+                        || *(APP_LOGGER.popup_always_enabled.read().unwrap()))
             {
                 let msg = if record.metadata().level() == Level::Error {
                     format!(
