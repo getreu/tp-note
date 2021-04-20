@@ -31,6 +31,8 @@ use std::sync::RwLock;
 #[cfg(feature = "message-box")]
 use std::thread;
 #[cfg(feature = "message-box")]
+use std::thread::sleep;
+#[cfg(feature = "message-box")]
 use std::time::Duration;
 
 /// The number of messages that will be queued.
@@ -38,13 +40,6 @@ use std::time::Duration;
 /// show one alert window at the same time, they must be queued.
 #[cfg(feature = "message-box")]
 pub const ALERT_SERVICE_QUEUE_LEN: usize = 30;
-
-/// The `AlertService` reports to be busy as long as there
-/// is is a message window open and beyond that also
-/// `ALERT_SERVICE_KEEP_ALIVE` milliseconds after the last
-/// message window got closed by the user.
-#[cfg(feature = "message-box")]
-pub const ALERT_SERVICE_KEEP_ALIVE: u64 = 1000;
 
 /// Window title of the message alert box.
 #[cfg(feature = "message-box")]
@@ -97,9 +92,11 @@ impl AppLogger {
     /// because there might be still queued error messages
     /// the uses has not seen yet.
     pub fn wait_when_busy() {
-        // If ever there is still a message window open, this will block.
         #[cfg(feature = "message-box")]
-        AlertService::wait_when_busy();
+        if !*RUNS_ON_CONSOLE && !ARGS.batch {
+            // If ever there is still a message window open, this will block.
+            AlertService::wait_when_busy();
+        }
     }
 
     /// Adds a footer with additional debugging information, such as
@@ -203,6 +200,19 @@ lazy_static! {
     static ref ALERT_SERVICE_BUSY: Mutex<()> = Mutex::new(());
 }
 
+/// The `AlertService` reports to be busy as long as there
+/// is is a message window open and beyond that also
+/// `ALERT_SERVICE_KEEP_ALIVE` milliseconds after the last
+/// message window got closed by the user.
+#[cfg(feature = "message-box")]
+pub const ALERT_SERVICE_KEEP_ALIVE: u64 = 1000;
+
+// Extra timeout for the method `wait_when_busy()`, before it checks if there is still an open
+// popup alert window.  We wait a moment just in case that there are pending messages we have not
+// received yet. 1 millisecond is enough, we wait 10 just to be sure.
+#[cfg(feature = "message-box")]
+pub const ALERT_SERVICE_WAIT_WHEN_BUSY_TIMEOUT: u64 = 10;
+
 #[cfg(feature = "message-box")]
 pub struct AlertService {}
 
@@ -275,9 +285,11 @@ impl AlertService {
     }
 
     /// The `AlertService` keeps holding a lock until `ALERT_SERVICE_KEEP_ALIVE` milliseconds after
-    /// the user has closed that last error message. Only then, it releases the lock. This function
+    /// the user has closed that last error alert window. Only then, it releases the lock. This function
     /// blocks until the lock is released.
     pub fn wait_when_busy() {
+        // See constante documentation why we wait here.
+        sleep(Duration::from_millis(ALERT_SERVICE_WAIT_WHEN_BUSY_TIMEOUT));
         // This might block, if a guard in `run()` holds already a lock.
         let _res = ALERT_SERVICE_BUSY.lock();
     }
