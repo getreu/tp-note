@@ -1,53 +1,23 @@
 //! Prints error messages and exceptional states.
 
 #[cfg(feature = "message-box")]
+use crate::alert_service::AlertService;
+#[cfg(feature = "message-box")]
+use crate::alert_service::MESSAGE_CHANNEL;
+#[cfg(feature = "message-box")]
 use crate::config::ARGS;
 #[cfg(feature = "message-box")]
 use crate::config::CONFIG_PATH;
 #[cfg(feature = "message-box")]
 use crate::config::RUNS_ON_CONSOLE;
-#[cfg(feature = "message-box")]
-use crate::VERSION;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
 #[cfg(feature = "message-box")]
-use msgbox::IconType;
-#[cfg(feature = "message-box")]
 use std::env;
 #[cfg(feature = "message-box")]
 use std::path::PathBuf;
-#[cfg(feature = "message-box")]
-use std::sync::mpsc::sync_channel;
-#[cfg(feature = "message-box")]
-use std::sync::mpsc::Receiver;
-#[cfg(feature = "message-box")]
-use std::sync::mpsc::RecvTimeoutError;
-#[cfg(feature = "message-box")]
-use std::sync::mpsc::SyncSender;
-#[cfg(feature = "message-box")]
-use std::sync::Mutex;
 use std::sync::RwLock;
-#[cfg(feature = "message-box")]
-use std::thread;
-#[cfg(feature = "message-box")]
-use std::thread::sleep;
-#[cfg(feature = "message-box")]
-use std::time::Duration;
-
-/// The number of messages that will be queued.
-/// As error messages can drop in by every thread and we can only
-/// show one alert window at the same time, they must be queued.
-#[cfg(feature = "message-box")]
-pub const ALERT_SERVICE_QUEUE_LEN: usize = 30;
-
-/// Window title of the message alert box.
-#[cfg(feature = "message-box")]
-const ALERT_DIALOG_TITLE: &str = "Tp-Note";
-
-////////////////////////////
-// AppLogger
-////////////////////////////
 
 lazy_static! {
     /// If `true`, all future log events will trigger the opening of a popup
@@ -159,7 +129,7 @@ impl log::Log for AppLogger {
                     format!("{}:\n{}", record.level(), &record.args().to_string())
                 };
 
-                let (tx, _) = &*ALERT_SERVICE_CHANNEL;
+                let (tx, _) = &*MESSAGE_CHANNEL;
                 let tx = tx.clone();
                 tx.send(msg).unwrap();
             };
@@ -167,136 +137,4 @@ impl log::Log for AppLogger {
     }
 
     fn flush(&self) {}
-}
-
-////////////////////////////
-// AlertService
-////////////////////////////
-
-#[cfg(feature = "message-box")]
-lazy_static! {
-/// The message queue accepting strings for being shown as
-/// popup alert windows.
-    pub static ref ALERT_SERVICE_CHANNEL: (SyncSender<String>, Mutex<Receiver<String>>) = {
-        let (tx, rx) = sync_channel(ALERT_SERVICE_QUEUE_LEN);
-        (tx, Mutex::new(rx))
-    };
-}
-
-#[cfg(feature = "message-box")]
-lazy_static! {
-    /// Window title followed by version.
-    static ref ALERT_DIALOG_TITLE_LINE: String = format!(
-        "{} (v{})",
-        &ALERT_DIALOG_TITLE,
-        VERSION.unwrap_or("unknown")
-    );
-}
-
-#[cfg(feature = "message-box")]
-lazy_static! {
-    /// This mutex does not hold any data. When it is locked, it indicates,
-    /// that the `AlertService` is still busy and should not get shut down.
-    static ref ALERT_SERVICE_BUSY: Mutex<()> = Mutex::new(());
-}
-
-/// The `AlertService` reports to be busy as long as there
-/// is is a message window open and beyond that also
-/// `ALERT_SERVICE_KEEP_ALIVE` milliseconds after the last
-/// message window got closed by the user.
-#[cfg(feature = "message-box")]
-pub const ALERT_SERVICE_KEEP_ALIVE: u64 = 1000;
-
-// Extra timeout for the method `wait_when_busy()`, before it checks if there is still an open
-// popup alert window.  We wait a moment just in case that there are pending messages we have not
-// received yet. 1 millisecond is enough, we wait 10 just to be sure.
-#[cfg(feature = "message-box")]
-pub const ALERT_SERVICE_WAIT_WHEN_BUSY_TIMEOUT: u64 = 10;
-
-#[cfg(feature = "message-box")]
-pub struct AlertService {}
-
-#[cfg(feature = "message-box")]
-impl AlertService {
-    /// Initializes the service. Call once when the application starts.
-    /// Drop strings in the`ALERT_SERVICE_CHANNEL` to use this service.
-    pub fn init() {
-        // Setup the `AlertService`.
-        #[cfg(feature = "message-box")]
-        if !*RUNS_ON_CONSOLE && !ARGS.batch {
-            // Set up the channel now.
-            lazy_static::initialize(&ALERT_SERVICE_CHANNEL);
-            thread::spawn(move || {
-                // this will block until the previous message has been received
-                AlertService::run();
-            });
-        };
-    }
-
-    /// Alert service, receiving Strings to display in a popup window.
-    fn run() {
-        // Get the receiver.
-        let (_, rx) = &*ALERT_SERVICE_CHANNEL;
-        let rx = rx.lock().unwrap();
-
-        // We start with the lock released.
-        let mut opt_guard = None;
-        loop {
-            let msg = if opt_guard.is_none() {
-                // As there is no lock, we block here until the next message comes.
-                // `recv()` should never return `Err`. This can only happen when
-                // the sending half of a channel (or sync_channel) is disconnected,
-                // implying that no further messages will ever be received.
-                // As this should never happen, we panic this thread then.
-                Some(rx.recv().unwrap())
-            } else {
-                // There is a lock because we just received another message.
-                // If the next `ALERT_SERVICE_KEEP_ALIVE` milliseconds no
-                // other message comes in, we release the lock again.
-                match rx.recv_timeout(Duration::from_millis(ALERT_SERVICE_KEEP_ALIVE)) {
-                    Ok(s) => Some(s),
-                    Err(RecvTimeoutError::Timeout) => None,
-                    // The sending half of a channel (or sync_channel) is `Disconnected`,
-                    // implies that no further messages will ever be received.
-                    // As this should never happen, we panic this thread then.
-                    Err(RecvTimeoutError::Disconnected) => panic!(),
-                }
-            };
-
-            // We received a message.
-            match msg {
-                Some(s) => {
-                    // If the lock is released, lock it now.
-                    if opt_guard.is_none() {
-                        opt_guard = ALERT_SERVICE_BUSY.try_lock().ok();
-                    }
-                    // This blocks until the user closes the alert window.
-                    Self::print_error(&s);
-                }
-                // `ALERT_SERVICE_KEEP_ALIVE` milliseconds are over and still no new message.
-                // We release the lock again.
-                None => {
-                    // Here the `guard` goes out of scope and the lock is released.
-                    opt_guard = None;
-                    //
-                }
-            }
-        }
-    }
-
-    /// The `AlertService` keeps holding a lock until `ALERT_SERVICE_KEEP_ALIVE` milliseconds after
-    /// the user has closed that last error alert window. Only then, it releases the lock. This function
-    /// blocks until the lock is released.
-    pub fn wait_when_busy() {
-        // See constante documentation why we wait here.
-        sleep(Duration::from_millis(ALERT_SERVICE_WAIT_WHEN_BUSY_TIMEOUT));
-        // This might block, if a guard in `run()` holds already a lock.
-        let _res = ALERT_SERVICE_BUSY.lock();
-    }
-
-    /// Pops up an error message box and prints `msg`.
-    /// Blocks until the user closes the window.
-    fn print_error(msg: &str) {
-        let _ = msgbox::create(&*ALERT_DIALOG_TITLE_LINE, &msg, IconType::Info);
-    }
 }

@@ -12,6 +12,8 @@
 //! choice. Although the note's structure follows `pandoc`-conventions, it is not
 //! tied to any specific Markup language.
 
+#[cfg(feature = "message-box")]
+mod alert_service;
 mod config;
 mod content;
 mod error;
