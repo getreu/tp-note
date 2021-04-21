@@ -33,12 +33,12 @@ impl ChildExt {
     pub fn wait(&mut self) -> Result<ExitStatus, anyhow::Error> {
         // Remember ID for debugging.
         let process_id = self.0.id();
-        log::info!("Process started: id={}", process_id);
+        log::debug!("Process started: id={}", process_id);
 
         // Under Unix `wait()` should also wait for the termination of all grand children.
         let exit_status = self.0.wait();
 
-        log::info!(
+        log::debug!(
             "Process terminated: id={}, {}",
             process_id,
             match &exit_status {
