@@ -1,5 +1,5 @@
-//! Collects `tp-note`'s configuration from a configuration file,
-//! the command-line parameters. It also reads the clipboard.
+//! Collects _Tp-Note_'s configuration from a configuration file,
+//! the command line parameters. It also reads the clipboard.
 
 use crate::content::Content;
 use crate::filename;
@@ -37,7 +37,7 @@ const DEBUG_ARG_DEFAULT: LevelFilter = LevelFilter::Error;
 
 /// Default value for command line flag `--edit`
 /// To disable file watcher, (Markdown)-renderer, html server
-/// and a web-browser launcher set to `true`.
+/// and a web browser launcher set to `true`.
 const EDITOR_ARG_DEFAULT: bool = false;
 
 /// Default value for command line flag `--popup`
@@ -54,7 +54,7 @@ const CONFIG_FILENAME: &str = "tp-note.toml";
 pub const EXTENSION_DEFAULT: &str = "md";
 
 /// The variables `NOTE_FILE_EXTENSIONS_*` list file extensions that Tp-Note
-/// considers as its own note-files.
+/// considers as its own note files.
 /// Tp-Note opens these files, reads their their YAML header and
 /// launches an external file editor and an file viewer
 /// (web browser).
@@ -97,7 +97,7 @@ pub const NOTE_FILE_EXTENSIONS_TXT: &[&str] = &["txtnote", "adoc", "asciidoc"];
 /// See also `NOTE_FILE_EXTENSION_MD`.
 pub const NOTE_FILE_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t", "textile", "twiki", "mediawiki"];
 
-/// Maximum length of a note's filename in bytes. If a filename-template produces
+/// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
 #[cfg(not(test))]
 pub const NOTE_FILENAME_LEN_MAX: usize =
@@ -112,13 +112,13 @@ pub const NOTE_FILENAME_LEN_MAX: usize =
 #[cfg(test)]
 pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 
-/// Default content-template used when the command-line argument <sanit> is a directory. Can be
+/// Default content template used when the command line argument <sanit> is a directory. Can be
 /// changed through editing the configuration file.
 /// The following variables are  defined:
 /// `{{ sanit | stem }}`, `{{ file | stem }}`, `{{ file | ext }}`, `{{ extension_default }}` `{{
 /// file | tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`, `{{ path }}`.
 /// In addition all environment variables can be used, e.g.  `{{ get_env(name=\"LOGNAME\") }}`
-/// When placed in YAML-front-matter, the filter `| json_encode` must be appended to each variable.
+/// When placed in YAML front matter, the filter `| json_encode` must be appended to each variable.
 const TMPL_NEW_CONTENT: &str = "\
 ---
 title:      {{ path | trim_tag | cut | json_encode }}
@@ -131,14 +131,14 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 
 ";
 
-/// Default filename-template for a new note file on disk. It implements the sync criteria for
-/// note-meta data in front-matter and filename.
+/// Default filename template for a new note file on disk. It implements the sync criteria for
+/// note metadata in front matter and filename.
 /// Useful variables in this context are:
 /// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}`,
 /// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case its value starts
 /// with a number, the string is prepended with `'`.  The first non-numerical variable must be some
 /// `{{ <var>| sanit(alpha) }}` variant.
-/// Note, as this is filename-template, all variables (except `now` and `extension_default` must be
+/// Note, as this is filename template, all variables (except `now` and `extension_default` must be
 /// filtered by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d') }}-\
@@ -150,11 +150,11 @@ const TMPL_NEW_FILENAME: &str = "\
 /// the of these strings contains a valid YAML front matter section.
 /// The clipboards body is in `{{ clipboard }}`, the header is in `{{ clipboard_header }}`.  The
 /// stdin's body is in `{{ stdin }}`, the header is in `{{ stdin_header }}`.
-/// First all variables defined in the clipboard's front matter are registered, the the ones
+/// First all variables defined in the clipboard's front matter are registered, the ones
 /// defined in the input stream `stdin`. The latter can overwrite the former.  One of the front
 /// matters must define the `title` variable, which is then available in this template as `{{
 /// fm_title }}`.
-/// When placed in YAML-front-matter, the filter `| json_encode` must be
+/// When placed in YAML front matter, the filter `| json_encode` must be
 /// appended to each variable.
 const TMPL_COPY_CONTENT: &str = "\
 ---
@@ -182,7 +182,7 @@ lang:       {{ fm_lang | default(value = get_env(name='LANG', default='')) | jso
 /// `{{ title|sanit(alpha=true) }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}`, All
 /// variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case its value starts with a
 /// number, the string is prepended with `'`.  The first non-numerical variable must be some `{{
-/// <var>| sanit(alpha=true) }}` variant.  Note, that in this filename-template, all variables
+/// <var>| sanit(alpha=true) }}` variant.  Note, that in this filename template, all variables
 /// (except `fm_sort_tag`, `fm_file_ext` and `extension_default`) must be filtered by a `sanit` or
 /// `sanit(alpha=true)` filter.
 const TMPL_COPY_FILENAME: &str = "\
@@ -196,7 +196,7 @@ const TMPL_COPY_FILENAME: &str = "\
 /// Default template used, when the clipboard or the input stream `stdin` contains a string and
 /// this string has no valid YAML front matter section.  The clipboards content is in `{{ clipboard
 /// }}`, its truncated version in `{{ clipboard | heading }}` When the clipboard contains a
-/// hyper-link in Markdown or reStruncturedText format. See crate `parse-hyperlinks` for details.
+/// hyperlink in Markdown or reStruncturedText format. See crate `parse-hyperlinks` for details.
 /// For example: `[<link-name>](<link-url> "link-title")`, can be accessed with the variables:
 /// `{{ clipboard | linkname }}`, `{{ clipboard | linktarget }}` and `{{ clipboard | linkttitle }}`.
 /// The following variables are always defined: `{{ dir | stem }}`, `{{ file |
@@ -237,7 +237,7 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 /// extension_default }}`, All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in
 /// case its value starts with a number, the string is prepended with `'`.  The first non-numerical
 /// variable must be some `{{ <var>| sanit(alpha) }}` variant.  Note, that in this
-/// filename-template, all variables (except `now` and `extension_default`) must be filtered by a
+/// filename template, all variables (except `now` and `extension_default`) must be filtered by a
 /// `sanit` or `sanit(alpha=true)` filter.
 const TMPL_CLIPBOARD_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
@@ -246,7 +246,7 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 {{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
 ";
 
-/// Default template used when the command-line <path> parameter points to an existing
+/// Default template used when the command line <path> parameter points to an existing
 /// non-`.md`-file. Can be modified through editing the configuration file.  The following
 /// variables are  defined: `{{ file | dirname }}`, `{{ file | stem }}`, `{{ file_ext }}`,
 /// `{{ extension_default }}` `{{ file | tag }}`, `{{ username }}`, `{{ lang }}`, `{{ path }}`.  In
@@ -283,7 +283,7 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 /// variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case its value starts with a
 /// number, the string is prepended with `'`.  The first non-numerical variable must be the `{{
 /// <var>| sanit(alpha) }}` variant.
-/// Note, that in this filename-template, all variables (expect `file | tag` and
+/// Note, that in this filename template, all variables (expect `file | tag` and
 /// `extension_default`) must be filtered by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_ANNOTATE_FILENAME: &str = "\
 {{ file | tag }}{{ fm_title | sanit(alpha=true) }}\
@@ -291,7 +291,7 @@ const TMPL_ANNOTATE_FILENAME: &str = "\
 {{ fm_subtitle | default(value='') | sanit }}{{ extension_default | prepend_dot }}\
 ";
 
-/// Default filename-template to test, if the filename of an existing note file on disk,
+/// Default filename template to test, if the filename of an existing note file on disk,
 /// corresponds to the note's meta data stored in its front matter. If it is not the case, the
 /// note's filename will be renamed.  Can be modified through editing the configuration file.
 /// Useful variables in this context are:
@@ -299,7 +299,7 @@ const TMPL_ANNOTATE_FILENAME: &str = "\
 /// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case its value starts
 /// with a number, the string is prepended with `'`.  `{{ file | tag  }}` must be the first in line
 /// here, then followed by a `{{ <var>| sanit(alpha) }}` variable.
-/// Note, that in this filename-template, all variables (except `file | tag` and `file | ext`) must
+/// Note, that in this filename template, all variables (except `file | tag` and `file | ext`) must
 /// be filtered by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_SYNC_FILENAME: &str = "\
 {{ fm_sort_tag | default(value = file | tag) }}\
@@ -318,7 +318,7 @@ const TMPL_SYNC_FILENAME: &str = "\
 /// in case the variable `fm_*` does not exist in the note's front matter.
 const TMPL_COMPULSORY_FIELD_CONTENT: &str = "title";
 
-/// Default command-line argument list when launching external editor.
+/// Default command line argument list when launching external editor.
 /// The editor list is executed item by item until an editor is found.
 /// Can be changed in config file.
 #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
@@ -371,7 +371,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
     &["open"],
 ];
 
-/// Default command-line argument list when launching an external editor
+/// Default command line argument list when launching an external editor
 /// and no graphical environment is available (`DISPLAY=''`).
 /// This lists console file editors only.
 /// The editor list is executed item by item until an editor is found.
@@ -392,7 +392,7 @@ const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[
     &["vi"],
 ];
 
-/// Default command-line argument list when launching the web browser.
+/// Default command line argument list when launching the web browser.
 /// The list is executed item by item until an installed web browser is found.
 /// Can be changed in config file.
 #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
@@ -693,18 +693,18 @@ pub struct Args {
     /// Prints version and exits
     #[structopt(long, short = "V")]
     pub version: bool,
-    /// Prints HTML-rendition into <export>
-    /// directory or stdout if `-`.
+    /// Saves the HTML rendition in the <export>
+    /// dir, the note's dir if '' or stdout if '-'.
     #[structopt(long, short = "x", parse(from_os_str))]
     pub export: Option<PathBuf>,
 }
 
 lazy_static! {
-/// Structure to hold the parsed command-line arguments.
+/// Structure to hold the parsed command line arguments.
 pub static ref ARGS : Args = Args::from_args();
 }
 
-/// Configuration data, deserialized from the configuration-file.
+/// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cfg {
     /// Version number of the config file as String -or-
@@ -745,7 +745,7 @@ pub struct Cfg {
     pub exporter_rendition_tmpl: String,
 }
 
-/// When no configuration-file is found, defaults are set here from built-in
+/// When no configuration file is found, defaults are set here from built-in
 /// constants. These defaults are then serialized into a newly created
 /// configuration file on disk.
 impl ::std::default::Default for Cfg {

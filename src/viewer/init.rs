@@ -69,7 +69,7 @@ impl Viewer {
         };
         let localport = listener.local_addr()?.port();
 
-        // Concerning non-master-documents, we only serve these file extensions.
+        // We only serve files with `VIEWER_SERVED_MIME_TYPES_HMAP` file extensions.
         lazy_static::initialize(&VIEWER_SERVED_MIME_TYPES_HMAP);
         log::debug!(
             "Viewer::run(): \

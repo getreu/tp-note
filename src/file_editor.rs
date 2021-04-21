@@ -12,7 +12,7 @@ use std::process::Stdio;
 
 #[inline]
 /// Launch some external text editor. The editor can be chosen through
-/// `tp-note`'s configuration file. This function searches the lists
+/// _Tp-Note_'s configuration file. This function searches the lists
 /// `CFG.editor_console_args` or `CFG.editor_args` until it finds un installed
 /// text editor. Once the editor is launched, the function blocks until the user
 /// closes the editor window.

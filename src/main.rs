@@ -1,15 +1,15 @@
 #![windows_subsystem = "windows"]
-//! _Tp-Note_ is a note-taking-tool and a template system, that consistently
-//! synchronizes the note's meta-data with its filename. `tp-note` collects
+//! _Tp-Note_ is a note taking tool and a template system, that consistently
+//! synchronizes the note's metadata with its filename. _Tp-Note_ collects
 //! various information about its environment and the clipboard and stores them
 //! in variables. New notes are created by filling these variables in predefined
 //! and customizable `Tera`-templates. In case `<path>` points to an existing
-//! `tp-note`-file, the note's meta-data is analysed and, if necessary, its
-//! filename is modified. For all other file types, `tp-note` creates a new note
+//! _Tp-Note_-file, the note's metadata is analysed and, if necessary, its
+//! filename is modified. For all other file types, _Tp-Note_ creates a new note
 //! that annotates the file `<path>` points to. If `<path>` is a directory (or,
 //! when omitted the current working directory), a new note is created in that
-//! directory. After creation, `tp-note` launches an external editor of your
-//! choice. Although the note's structure follows `pandoc`-conventions, it is not
+//! directory. After creation, _Tp-Note_ launches an external editor of your
+//! choice. Although the note's structure follows _Pandoc_'s conventions, it is not
 //! tied to any specific Markup language.
 
 #[cfg(feature = "message-box")]
@@ -36,7 +36,7 @@ use crate::workflow::run;
 use semver::Version;
 use std::process;
 
-/// Use the version-number defined in `../Cargo.toml`.
+/// Use the version number defined in `../Cargo.toml`.
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 /// Set the minimum required config file version that is compatible with this Tp-Note version.
 ///

@@ -24,7 +24,7 @@ pub const QUEUE_LEN: usize = 30;
 const DIALOG_TITLE: &str = "Tp-Note";
 
 lazy_static! {
-/// The message queue accepting strings for being shocrate::alert_service::MESSAGE_CHANNELwn as
+/// The message queue accepting strings for being shown as
 /// popup alert windows.
     pub static ref MESSAGE_CHANNEL: (SyncSender<String>, Mutex<Receiver<String>>) = {
         let (tx, rx) = sync_channel(QUEUE_LEN);

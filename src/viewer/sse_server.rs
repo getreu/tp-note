@@ -71,7 +71,7 @@ pub fn manage_connections(
     listener: TcpListener,
     doc_path: PathBuf,
 ) {
-    // Unwarp is Ok here here, because we just did it before successfully.
+    // `unwarp()` is Ok here here, because we just did it before successfully.
     let sse_port = listener.local_addr().unwrap().port();
     // A list of in the not referenced local links to images or other documents.
     let doc_local_links = Arc::new(RwLock::new(HashSet::new()));

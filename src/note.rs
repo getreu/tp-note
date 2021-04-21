@@ -1,6 +1,6 @@
-//! Creates a memory representations of the note by inserting `tp-note`'s
+//! Creates a memory representations of the note by inserting _Tp-Note_'s
 //! environment data in some templates. If the note exists on disk already,
-//! the memory representation is established be reading the note-file with
+//! the memory representation is established be reading the note file with
 //! its front matter.
 
 use crate::config::CFG;
@@ -35,7 +35,7 @@ pub struct Note<'a> {
     // Reserved for future use:
     //     /// The front matter of the note.
     //     front_matter: FrontMatter,
-    /// Captured environment of `tp-note` that
+    /// Captured environment of _Tp-Note_ that
     /// is used to fill in templates.
     pub context: ContextWrapper,
     /// The full text content of the note, including
@@ -138,7 +138,7 @@ impl Note<'_> {
 
     /// Capture `tp_note`'s environment and stores it as variables in a
     /// `context` collection. The variables are needed later to populate
-    /// a context-template and a filename-template.
+    /// a context template and a filename template.
     /// The `path` parameter must be a canonicalized fully qualified file name.
     fn capture_environment(path: &Path) -> Result<ContextWrapper> {
         let mut context = ContextWrapper::new();
@@ -269,7 +269,7 @@ impl Note<'_> {
         (*context).insert("fm_all", &tera_map);
     }
 
-    /// Applies a Tera-template to the notes context in order to generate a
+    /// Applies a Tera template to the notes context in order to generate a
     /// sanitized filename that is in sync with the note's meta data stored in
     /// its front matter.
     pub fn render_filename(&self, template: &str) -> Result<PathBuf> {
@@ -468,7 +468,7 @@ impl Note<'_> {
         file_ext: &str,
         // HTML template for this rendition.
         tmpl: &str,
-        // If not empty, Java-Script code to inject in output.
+        // If not empty, Javascript code to inject in output.
         java_script: &str,
     ) -> Result<String, anyhow::Error> {
         // Deserialize.

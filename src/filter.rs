@@ -13,7 +13,7 @@ use tera::{to_value, try_get_value, Result as TeraResult, Tera, Value};
 
 /// Filter parameter of the `cut_filter()` that limits the maximum length of template variables,
 /// which are usually used to in the note's front matter as title. For example: the title should
-/// not be too long, because it will end up as part of the file-name when the note is saved to
+/// not be too long, because it will end up as part of the filename when the note is saved to
 /// disk. Filenames of some operating systems are limited to 255 bytes.
 #[cfg(not(test))]
 const CUT_LEN_MAX: usize = 200;
@@ -289,7 +289,7 @@ pub fn remove_filter<S: BuildHasher>(
     Ok(to_value(&map).unwrap_or_default())
 }
 
-/// Tiny wrapper around Tera-context with some additional information.
+/// Tiny wrapper around "Tera context" with some additional information.
 #[derive(Debug, PartialEq)]
 pub struct ContextWrapper {
     // Collection of substitution variables.

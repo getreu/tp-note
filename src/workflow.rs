@@ -134,7 +134,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
 
         if extension_is_known {
             // SYNCHRONIZE FILENAME
-            // `path` points to an existing tp-note file.
+            // `path` points to an existing Tp-Note file.
             // Check if in sync with its filename:
             Ok(synchronize_filename(path)?)
         } else {
@@ -159,7 +159,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
 }
 
 /// Run Tp-Note and return the (modified) path to the (new) note file.
-/// 1. Create a new note by inserting `tp-note`'s environment in a template.
+/// 1. Create a new note by inserting `Tp-Note`'s environment in a template.
 /// 2. If the note to be created exists already, open it, read the YAML front
 ///    matter and synchronize the filename if necessary.
 /// 3. Open the new note in an external editor (configurable).

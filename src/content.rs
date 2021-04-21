@@ -43,7 +43,7 @@ macro_rules! unborrow {
     }};
 }
 
-/// The content of a note is stored in some Rust-like utf-8 string with
+/// The content of a note is stored as UTF-8 string with
 /// one `\n` character as newline. If present, a Byte Order Mark
 /// BOM is removed while reading with `new()`.
 impl<'a> Content<'a> {
@@ -279,7 +279,7 @@ mod tests {
         let content = Content::new("first\r\nsecond\r\nthird".to_string(), false);
         assert_eq!(content.body, "first\nsecond\nthird");
 
-        // Test Unixstring.
+        // Test Unix string.
         let content = Content::new("first\nsecond\nthird".to_string(), false);
         assert_eq!(content.body, "first\nsecond\nthird");
 
