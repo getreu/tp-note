@@ -196,7 +196,17 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
 pub fn run() -> Result<PathBuf, WorkflowError> {
     // process arg = `--version`
     if ARGS.version {
-        println!("Version {}, {}", VERSION.unwrap_or("unknown"), AUTHOR);
+        print!("Version {}, {}, ", VERSION.unwrap_or("unknown"), AUTHOR);
+        print!("compiled-in features: [");
+        #[cfg(feature = "message-box")]
+        print!("message-box, ");
+        #[cfg(feature = "viewer")]
+        print!("viewer, ");
+        #[cfg(feature = "renderer")]
+        print!("renderer, ");
+        #[cfg(feature = "clipboard")]
+        print!("clipboard, ");
+        println!("]");
         process::exit(0);
     };
 
