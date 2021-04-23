@@ -52,8 +52,8 @@ default = ["read-clipboard", "message-box", "viewer", "renderer"]
 # Disable this feature if you do not want error message boxes.
 message-box = ["msgbox"]
 read-clipboard = ["clipboard"]
-viewer = ["notify", "httparse", "pulldown-cmark", "webbrowser", "rand", "httpdate", "percent-encoding", "url"]
-renderer = ["rst_parser", "rst_renderer"]
+viewer = ["notify", "httparse", "webbrowser", "rand", "httpdate", "percent-encoding", "url"]
+renderer = ["pulldown-cmark", "rst_parser", "rst_renderer"]
 
 [dependencies]
 anyhow = "1.0.40"

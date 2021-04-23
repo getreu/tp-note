@@ -245,6 +245,7 @@ pub enum NoteError {
 
     /// Remedy: check reStructuredText syntax.
     #[error("Can not parse reStructuredText input:\n{msg}")]
+    #[cfg(feature = "renderer")]
     RstParse { msg: String },
 
     #[error(transparent)]
