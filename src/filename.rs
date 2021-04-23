@@ -2,7 +2,7 @@
 use crate::config::CFG;
 use crate::config::COPY_COUNTER_MAX;
 use crate::config::NOTE_FILENAME_LEN_MAX;
-use anyhow::{anyhow, Result};
+use crate::error::FileError;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -57,7 +57,7 @@ pub fn shorten_filename(mut fqfn: PathBuf) -> PathBuf {
 /// When the path `p` exists on disk already, append some extension
 /// with an incrementing counter to the sort-tag in `p` until
 /// we find a free slot.
-pub fn find_unused(p: PathBuf) -> Result<PathBuf, anyhow::Error> {
+pub fn find_unused(p: PathBuf) -> Result<PathBuf, FileError> {
     if !p.exists() {
         return Ok(p);
     };
@@ -79,15 +79,9 @@ pub fn find_unused(p: PathBuf) -> Result<PathBuf, anyhow::Error> {
 
     // This only happens, when we have 99 copies already. Should never happen.
     if new_path.exists() {
-        return Err(anyhow!(
-            "can not find unused filename in directory:\n\
-            \t{}\n\
-            (only 99 copies are allowed).",
-            p.parent()
-                .unwrap_or_else(|| Path::new(""))
-                .to_str()
-                .unwrap_or_default()
-        ));
+        return Err(FileError::NoFreeFileName {
+            directory: p.parent().unwrap_or_else(|| Path::new("")).to_path_buf(),
+        });
     }
 
     Ok(new_path)

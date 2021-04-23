@@ -1,6 +1,6 @@
 //! Deals with the note's content string.
 
-use anyhow::{anyhow, Result};
+use crate::error::FileError;
 use core::marker::PhantomPinned;
 use std::fmt;
 use std::fs::OpenOptions;
@@ -207,7 +207,7 @@ impl<'a> Content<'a> {
     }
 
     /// Writes the note to disk with `new_fqfn`-filename.
-    pub fn write_to_disk(self: &Pin<Box<Self>>, new_fqfn: &Path) -> Result<(), anyhow::Error> {
+    pub fn write_to_disk(self: &Pin<Box<Self>>, new_fqfn: &Path) -> Result<(), FileError> {
         let outfile = OpenOptions::new()
             .write(true)
             .create_new(true)
@@ -240,16 +240,10 @@ impl<'a> Content<'a> {
                 }
             }
             Err(e) => {
-                if Path::new(&new_fqfn).exists() {
-                    return Err(anyhow!(
-                        "Can not write new note, file exists:\n\
-                         \t{:?}\n{}",
-                        new_fqfn,
-                        e
-                    ));
-                } else {
-                    return Err(anyhow!("Can not write file: {:?}\n{}", new_fqfn, e));
-                }
+                return Err(FileError::Write {
+                    path: new_fqfn.to_path_buf(),
+                    source_str: e.to_string(),
+                });
             }
         }
 

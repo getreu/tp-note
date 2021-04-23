@@ -2,9 +2,10 @@
 //! the command line parameters. It also reads the clipboard.
 
 use crate::content::Content;
+use crate::error::FileError;
+use crate::error::NoteError;
 use crate::filename;
 use crate::VERSION;
-use anyhow::anyhow;
 use atty::{is, Stream};
 #[cfg(feature = "read-clipboard")]
 use clipboard::ClipboardContext;
@@ -928,7 +929,7 @@ lazy_static! {
     };
 }
 
-pub fn backup_config_file() -> Result<PathBuf, anyhow::Error> {
+pub fn backup_config_file() -> Result<PathBuf, FileError> {
     if let Some(ref config_path) = *CONFIG_PATH {
         if config_path.exists() {
             let config_path_bak = filename::find_unused((&config_path).to_path_buf())?;
@@ -937,10 +938,10 @@ pub fn backup_config_file() -> Result<PathBuf, anyhow::Error> {
 
             Ok(config_path_bak)
         } else {
-            Err(anyhow!("no file to move"))
+            Err(FileError::ConfigFileNotFound)
         }
     } else {
-        Err(anyhow!("no path to configuration file found"))
+        Err(FileError::PathToConfigFileNotFound)
     }
 }
 
@@ -996,7 +997,7 @@ pub struct Hyperlink {
 
 impl Hyperlink {
     /// Parse a markdown formatted hyperlink and stores the result in `Self`.
-    pub fn new(input: &str) -> Result<Hyperlink, anyhow::Error> {
+    pub fn new(input: &str) -> Result<Hyperlink, NoteError> {
         if let Some((link_name, link_target, link_title)) = first_hyperlink(input) {
             Ok(Hyperlink {
                 name: link_name.to_string(),
@@ -1004,7 +1005,7 @@ impl Hyperlink {
                 title: link_title.to_string(),
             })
         } else {
-            Err(anyhow!("no hyperlink found in \"{}\"", input))
+            Err(NoteError::NoHyperlinkFound)
         }
     }
 }

@@ -1,143 +1,263 @@
-//! Prints error messages and exceptional states.
+//! Custom error types.
 
-#[cfg(feature = "message-box")]
-use crate::alert_service::AlertService;
-#[cfg(feature = "message-box")]
-use crate::alert_service::MESSAGE_CHANNEL;
-#[cfg(feature = "message-box")]
-use crate::config::ARGS;
-#[cfg(feature = "message-box")]
-use crate::config::CONFIG_PATH;
-#[cfg(feature = "message-box")]
-use crate::config::RUNS_ON_CONSOLE;
-use lazy_static::lazy_static;
-use log::LevelFilter;
-use log::{Level, Metadata, Record};
-#[cfg(feature = "message-box")]
-use std::env;
-#[cfg(feature = "message-box")]
+use crate::process_ext::ChildExtError;
+use std::io;
 use std::path::PathBuf;
-use std::sync::RwLock;
+use std::process::ExitStatus;
+use thiserror::Error;
 
-pub struct AppLogger {
-    /// If `true`, all future log events will trigger the opening of a popup
-    /// alert window. Otherwise only `Level::Error` will do.
-    popup_always_enabled: RwLock<bool>,
+#[derive(Debug, Error)]
+/// Error arising in the `workflow` and `main` module.
+pub enum WorkflowError {
+    /// Remedy: check <path> to note file.
+    #[error("Can not export. No note file found.")]
+    ExportsNeedsNoteFile,
+
+    /// Remedy: restart with `--debug trace`.
+    #[error("Failed to render template! (cf. `{tmpl}` in configuration file).\n{source}")]
+    Template { tmpl: String, source: NoteError },
+
+    #[error(transparent)]
+    Note {
+        #[from]
+        source: NoteError,
+    },
+
+    #[error(transparent)]
+    File(#[from] FileError),
+
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
 }
 
-lazy_static! {
-    static ref APP_LOGGER: AppLogger = AppLogger {
-        popup_always_enabled: RwLock::new(false)
-    };
+/// Error related to the filesystem and to invoking external applications.
+#[derive(Debug, Error)]
+pub enum FileError {
+    /// Remedy: delete or rename the configuration file.
+    #[error(
+        "Can not backup and delete the erroneous configuration file:\n\
+        ---\n\
+        {error}\n\n\
+        Please do it manually."
+    )]
+    ConfigFileBackup { error: String },
+
+    /// Remedy: restart, or check file permission of the configuration file.
+    #[error(
+        "Unable to load, parse or write the configuration file:\n\
+        ---\n\
+        {error}\n\n\
+        Note: this error may occur after upgrading Tp-Note due\n\
+        to some incompatible configuration file changes.\n\
+        \n\
+        For now, Tp-Note backs up the existing configuration\n\
+        file and next time it starts, it will create a new one\n\
+        with default values."
+    )]
+    ConfigFileLoadParseWrite { error: String },
+
+    /// Remedy: restart.
+    #[error(
+        "Configuration file version mismatch:\n---\n\
+        Configuration file version: \'{config_file_version}\'\n\
+        Minimum required configuration file version: \'{min_version}\'\n\
+        \n\
+        For now, Tp-Note backs up the existing configuration\n\
+        file and next time it starts, it will create a new one\n\
+        with default values."
+    )]
+    ConfigFileVersionMismatch {
+        config_file_version: String,
+        min_version: String,
+    },
+
+    /// Should not happen. Please report this bug.
+    #[error("No path to configuration file found.")]
+    PathToConfigFileNotFound,
+
+    /// Should not happen. Please report this bug.
+    #[error("Configuration file not found.")]
+    ConfigFileNotFound,
+
+    /// Remedy: delete all files in configuration file directory.
+    #[error(
+        "Can not find unused filename in directory:\n\
+        \t{directory:?}\n\
+        (only `COPY_COUNTER_MAX` copies are allowed)."
+    )]
+    NoFreeFileName { directory: PathBuf },
+
+    /// Remedy: check file permission.
+    #[error("Can not write file:\n{path:?}\n{source_str}")]
+    Write { path: PathBuf, source_str: String },
+
+    /// Should not happen. Please report this bug.
+    #[error("Can not convert path to UFT8:\n{path:?}")]
+    PathNotUtf8 { path: PathBuf },
+
+    /// Remdedy: check the configuration file variables `editor_args` and `browser_args`.
+    #[error("Error executing external application:")]
+    ChildExt {
+        #[from]
+        source: ChildExtError,
+    },
+
+    /// Remedy: check the configuration file variable `editor_args`.
+    #[error(
+        "The external file editor did not terminate gracefully: {code}\n\
+         \n\
+         Edit the variable `{var_name}` in Tp-Note's configuration file\n\
+         and correct the following:\n\
+         \t{args:?}"
+    )]
+    TextEditorReturn {
+        code: ExitStatus,
+        var_name: String,
+        args: Vec<String>,
+    },
+
+    /// Remedy: check the configuration file variable `editor_args`.
+    #[error(
+        "None of the following external file editor\n\
+        applications can be found on your system:\n\
+        \t{editor_list:?}\n\
+        \n\
+        Register some already installed file editor in the variable\n\
+        `{var_name}` in Tp-Note's configuration file  or \n\
+        install one of the above listed applications."
+    )]
+    NoEditorFound {
+        editor_list: Vec<String>,
+        var_name: String,
+    },
+
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
 }
 
-/// Initialize logger.
-impl AppLogger {
-    #[inline]
-    pub fn init() {
-        // Setup the `AlertService`
-        #[cfg(feature = "message-box")]
-        AlertService::init();
+#[derive(Debug, Error)]
+/// Error type returned form methods in or related to the `note` module.
+pub enum NoteError {
+    /// Remedy: check the file permission of the note file.
+    #[error("Can not read file: {path:?}\n{:?}")]
+    Read { path: PathBuf, source: io::Error },
 
-        // Setup console logger.
-        log::set_logger(&*APP_LOGGER).unwrap();
-        log::set_max_level(LevelFilter::Error);
-    }
+    #[error(
+        "Tera template error:\n\
+         {source_str}"
+    )]
+    TeraTemplate { source_str: String },
 
-    /// Sets the maximum level debug events must have to be logged.
-    #[allow(dead_code)]
-    pub fn set_max_level(level: LevelFilter) {
-        log::set_max_level(level);
-    }
+    /// Remedy: restart with `--debug trace`.
+    #[error(
+        "Tera template error:\n\
+         {source}"
+    )]
+    Tera {
+        #[from]
+        source: tera::Error,
+    },
 
-    /// If called with `true`, all debug events will also trigger the appearance of
-    /// a popup alert window.
-    #[allow(dead_code)]
-    pub fn set_popup_always_enabled(popup: bool) {
-        // This blocks if ever another thread wants to write.  As we are the only ones to write
-        // here, this lock can never get poisoned and we will can safely `unwrap()` here.
-        let mut lock = APP_LOGGER.popup_always_enabled.write().unwrap();
-        *lock = popup;
-    }
+    /// Remedy: add the misssing field in the note's front matter.
+    #[error(
+        "The document is missing a `{field_name}:` field in its front matter:\n\
+         \n\
+         \t~~~~~~~~~~~~~~\n\
+         \t---\n\
+         \t{field_name}: \"My note\"\n\
+         \t---\n\
+         \tsome text\n\
+         \t~~~~~~~~~~~~~~"
+    )]
+    MissingFrontMatterField { field_name: String },
 
-    /// Blocks until the `AlertService` is not busy any more.
-    /// This should be executed before quitting the application
-    /// because there might be still queued error messages
-    /// the uses has not seen yet.
-    pub fn flush() {
-        #[cfg(feature = "message-box")]
-        if !*RUNS_ON_CONSOLE && !ARGS.batch {
-            // If ever there is still a message window open, this will block.
-            AlertService::flush();
-        }
-    }
+    /// Remedy: check YAML syntax in the note's front matter.
+    #[error(
+        "Can not parse front matter:\n\
+         \n\
+         ---\n\
+         {front_matter}\n\
+         ---\n\n\
+         {source_error}\n"
+    )]
+    InvalidFrontMatterYaml {
+        front_matter: String,
+        source_error: serde_yaml::Error,
+    },
 
-    /// Adds a footer with additional debugging information, such as
-    /// command line parameters and configuration file path.
-    #[cfg(feature = "message-box")]
-    fn format_error(msg: &str) -> String {
-        // Remember the command-line-arguments.
-        let mut args_str = String::new();
-        for argument in env::args() {
-            args_str.push_str(argument.as_str());
-            args_str.push(' ');
-        }
+    /// Remedy: check YAML syntax in the input stream's front matter.
+    #[error(
+        "Invalid YAML field(s) in the `stdin` input stream data found:\n\
+        {source_str}"
+    )]
+    InvalidStdinYaml { source_str: String },
 
-        let mut s = String::from(msg);
-        s.push_str(&format!(
-            "\n\
-            ---\n\
-            Additional technical details:\n\
-            *    Command line parameters:\n\
-            {}\n\
-            *    Configuration file:\n\
-            {}",
-            args_str,
-            &*CONFIG_PATH
-                .as_ref()
-                .unwrap_or(&PathBuf::from("no path found"))
-                .to_str()
-                .unwrap_or_default()
-        ));
-        s
-    }
-}
+    /// Remedy: check YAML syntax in the clipboard's front matter.
+    #[error(
+        "Invalid YAML field(s) in the clipboard data found:\n\
+        {source_str}"
+    )]
+    InvalidClipboardYaml { source_str: String },
 
-/// Trait defining the logging format and destination.
-impl log::Log for AppLogger {
-    fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= Level::Trace
-    }
+    /// Remedy: check front matter delimiters `----`.
+    #[error(
+        "The document (or template) has no front matter section.\n\
+         Is one `---` missing?\n\n\
+         \t~~~~~~~~~~~~~~\n\
+         \t---\n\
+         \t{compulsory_field}: \"My note\"\n\
+         \t---\n\
+         \tsome text\n\
+         \t~~~~~~~~~~~~~~"
+    )]
+    MissingFrontMatter { compulsory_field: String },
 
-    fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            // Log this to `stderr`.
-            eprintln!("*** {}: {}", record.level(), record.args());
+    /// Remedy: remove invalid characters.
+    #[error(
+        "The `sort_tag` header variable contains invalid \
+         character(s): sort_tag = \"{sort_tag}\". \
+         Only numbers, `-` and `_` are allowed here."
+    )]
+    SortTagVarInvalidChar { sort_tag: String },
 
-            // Eventually also log as popup alert window.
-            #[cfg(feature = "message-box")]
-            if !*RUNS_ON_CONSOLE
-                && !ARGS.batch
-                && ((record.metadata().level() == LevelFilter::Error)
-                        // This lock can never get poisoned, so `unwrap()` is safe here.
-                        || *(APP_LOGGER.popup_always_enabled.read().unwrap()))
-            {
-                let msg = if record.metadata().level() == Level::Error {
-                    format!(
-                        "{}:\n{}",
-                        record.level(),
-                        &Self::format_error(&record.args().to_string())
-                    )
-                } else {
-                    format!("{}:\n{}", record.level(), &record.args().to_string())
-                };
+    /// Remedy: correct the front matter variable `file_ext`.
+    #[error(
+        "`file_ext=\"{extension}\"`, is not registered as a valid\n\
+        Tp-Note-file in the `note_file_extensions_*` variables\n\
+        in your configuration file:\n\
+        \t{md_ext:?}\n\
+        \t{rst_ext:?}\n\
+        \t{html_ext:?}\n\
+        \t{txt_ext:?}\n\
+        \t{no_viewer_ext:?}\n\
+        \n\
+        Choose one of the above list or add more extensions to the\n\
+        `note_file_extensions_*` variables in your configuration file."
+    )]
+    FileExtNotRegistered {
+        extension: String,
+        md_ext: Vec<String>,
+        rst_ext: Vec<String>,
+        html_ext: Vec<String>,
+        txt_ext: Vec<String>,
+        no_viewer_ext: Vec<String>,
+    },
 
-                let (tx, _) = &*MESSAGE_CHANNEL;
-                let tx = tx.clone();
-                tx.send(msg).unwrap();
-            };
-        }
-    }
+    /// Remedy: check reStructuredText syntax.
+    #[error("Can not parse reStructuredText input:\n{msg}")]
+    RstParse { msg: String },
 
-    fn flush(&self) {}
+    #[error(transparent)]
+    Utf8Conversion {
+        #[from]
+        source: core::str::Utf8Error,
+    },
+
+    /// Remedy: make sure that the hyperlink is formatted in
+    /// a supported markup language.
+    #[error("No hyperlink found in input stream.")]
+    NoHyperlinkFound,
+
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
 }

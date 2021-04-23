@@ -2,8 +2,8 @@
 
 use crate::config::CFG;
 use crate::config::RUNS_ON_CONSOLE;
+use crate::error::FileError;
 use crate::process_ext::ChildExt;
-use anyhow::anyhow;
 #[cfg(not(target_family = "windows"))]
 use std::fs::File;
 use std::path::Path;
@@ -16,7 +16,7 @@ use std::process::Stdio;
 /// `CFG.editor_console_args` or `CFG.editor_args` until it finds un installed
 /// text editor. Once the editor is launched, the function blocks until the user
 /// closes the editor window.
-pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
+pub fn launch_editor(path: &Path) -> Result<(), FileError> {
     // Both lists have always the same number of items.
     let mut args_list = Vec::new();
     let mut executable_list = Vec::new();
@@ -35,10 +35,9 @@ pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
         for s in app[1..].iter() {
             args.push(s);
         }
-        args.push(
-            path.to_str()
-                .ok_or_else(|| anyhow!("Failed to convert the argument: {:?}", path))?,
-        );
+        args.push(path.to_str().ok_or(FileError::PathNotUtf8 {
+            path: path.to_path_buf(),
+        })?);
         args_list.push(args);
     }
 
@@ -112,20 +111,15 @@ pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
                 let ecode = child.wait()?;
 
                 if !ecode.success() {
-                    return Err(anyhow!(
-                        "The external file editor did not terminate gracefully: {}\n\
-                        \n\
-                        Edit the variable `{}` in Tp-Note's configuration file\n\
-                        and correct the following:\n\
-                        \t{:?}",
-                        ecode.to_string(),
-                        if *RUNS_ON_CONSOLE {
-                            "editor_console_args"
+                    return Err(FileError::TextEditorReturn {
+                        code: ecode,
+                        var_name: if *RUNS_ON_CONSOLE {
+                            "editor_console_args".to_string()
                         } else {
-                            "editor_args"
+                            "editor_args".to_string()
                         },
-                        &*editor_args[i],
-                    ));
+                        args: (*editor_args[i]).to_vec(),
+                    });
                 };
 
                 executable_found = true;
@@ -138,21 +132,17 @@ pub fn launch_editor(path: &Path) -> Result<(), anyhow::Error> {
     }
 
     if !executable_found {
-        return Err(anyhow!(
-            "None of the following external file editor\n\
-             applications can be found on your system:\n\
-             \t{:?}\n\
-             \n\
-             Register some already installed file editor in the variable\n\
-             `{}` in Tp-Note's configuration file  or \n\
-             install one of the above listed applications.",
-            &executable_list,
+        return Err(FileError::NoEditorFound {
+            editor_list: executable_list
+                .into_iter()
+                .map(|s| s.to_owned())
+                .collect::<Vec<String>>(),
             // Choose the right parameter list.
-            match *RUNS_ON_CONSOLE {
-                true => "editor_console_args",
-                false => "editor_args",
-            }
-        ));
+            var_name: match *RUNS_ON_CONSOLE {
+                true => "editor_console_args".to_string(),
+                false => "editor_args".to_string(),
+            },
+        });
     };
 
     Ok(())

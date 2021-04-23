@@ -20,6 +20,7 @@ mod error;
 mod file_editor;
 mod filename;
 mod filter;
+mod logger;
 mod note;
 mod process_ext;
 #[cfg(feature = "viewer")]
@@ -31,8 +32,9 @@ use crate::config::backup_config_file;
 use crate::config::ARGS;
 use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
-use crate::error::AppLogger;
+use crate::logger::AppLogger;
 use crate::workflow::run;
+use error::FileError;
 use semver::Version;
 use std::process;
 
@@ -89,40 +91,27 @@ fn main() {
 
     // Check if we can parse the version number in there.
     let cfg_file_version = Version::parse(&*CFG.version);
-    let cfg_file_version_err = cfg_file_version.clone().err().map(|e| e.to_string());
+    let cfg_file_version_err = cfg_file_version.as_ref().err().map(|e| e.to_string());
 
     // This is `Some::String` if one of them is `Err`.
     let cfg_err = cfg_file_loading_err.or(cfg_file_version_err);
 
     let config_file_version = match cfg_err {
         // This is always `Some::Version` because none of them are `Err`.
-        None => cfg_file_version.ok(),
+        None => cfg_file_version.clone().ok(),
 
         // One of them is `Err`, we do not care who.
         Some(e) => {
-            log::error!(
-                "unable to load, parse or write the configuration file\n\
-             ---\n\
-             Reason:\n\
-             \t{}\n\n\
-             Note: this error may occur after upgrading Tp-Note due\n\
-             to some incompatible configuration file changes.\n\
-             \n\
-             For now, Tp-Note backs up the existing configuration\n\
-             file and next time it starts, it will create a new one\n\
-             with default values.",
-                e
-            );
+            log::error!("{}", FileError::ConfigFileLoadParseWrite { error: e });
 
             // Move erroneous config file away.
             if let Err(e) = backup_config_file() {
                 log::error!(
-                    "unable to backup and delete the erroneous configuration file\n\
-                ---\n\
-                \t{}\n\
-                \n\
-                Please do it manually.",
-                    e
+                    "{}",
+                    FileError::ConfigFileBackup {
+                        error: e.to_string()
+                    }
+                    .to_string()
                 );
                 AppLogger::flush();
                 process::exit(5);
@@ -138,24 +127,20 @@ fn main() {
         if config_file_version < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0")).unwrap()
         {
             log::error!(
-                "configuration file version mismatch:\n---\n\
-             Configuration file version: \'{}\'\n\
-             Minimum required configuration file version: \'{}\'\n\
-             \n\
-             For now, Tp-Note backs up the existing configuration\n\
-             file and next time it starts, it will create a new one\n\
-             with default values.",
-                config_file_version,
-                MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0"),
+                "{}",
+                FileError::ConfigFileVersionMismatch {
+                    config_file_version: config_file_version.to_string(),
+                    min_version: MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0").to_string(),
+                }
+                .to_string()
             );
             if let Err(e) = backup_config_file() {
                 log::error!(
-                    "unable to backup and delete the erroneous configuration file\n\
-                ---\n\
-                \t{}\n\
-                \n\
-                Please do it manually.",
-                    e
+                    "{}",
+                    FileError::ConfigFileBackup {
+                        error: e.to_string()
+                    }
+                    .to_string()
                 );
                 AppLogger::flush();
                 process::exit(5);
@@ -167,7 +152,7 @@ fn main() {
     match run() {
         Err(e) => {
             // Something went wrong.
-            log::error!("---\n{:?}", e);
+            log::error!("---\n{}", e);
             AppLogger::flush();
             process::exit(1);
         }

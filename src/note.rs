@@ -7,11 +7,11 @@ use crate::config::CFG;
 use crate::config::CLIPBOARD;
 use crate::config::STDIN;
 use crate::content::Content;
+use crate::error::NoteError;
 use crate::filename;
 use crate::filename::MarkupLanguage;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
-use anyhow::{anyhow, Context, Result};
 use parse_hyperlinks::renderer::text_links2html;
 #[cfg(feature = "renderer")]
 use pulldown_cmark::{html, Options, Parser};
@@ -29,6 +29,7 @@ use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::str;
 use tera::Tera;
+
 #[derive(Debug, PartialEq)]
 /// Represents a note.
 pub struct Note<'a> {
@@ -53,10 +54,12 @@ use std::fs;
 impl Note<'_> {
     /// Constructor that creates a memory representation of an existing note on
     /// disk.
-    pub fn from_existing_note(path: &Path) -> Result<Self> {
+    pub fn from_existing_note(path: &Path) -> Result<Self, NoteError> {
         let content = Content::new(
-            fs::read_to_string(path)
-                .with_context(|| format!("Failed to read `{}`.", path.display()))?,
+            fs::read_to_string(path).map_err(|e| NoteError::Read {
+                path: path.to_path_buf(),
+                source: e,
+            })?,
             true,
         );
 
@@ -71,18 +74,9 @@ impl Note<'_> {
         if !&CFG.tmpl_compulsory_field_content.is_empty()
             && fm.map.get(&CFG.tmpl_compulsory_field_content).is_none()
         {
-            return Err(anyhow!(
-                "The document is missing a `{}:` field in its front matter:\n\
-                 \n\
-                 \t~~~~~~~~~~~~~~\n\
-                 \t---\n\
-                 \t{}: \"My note\"\n\
-                 \t---\n\
-                 \tsome text\n\
-                 \t~~~~~~~~~~~~~~",
-                CFG.tmpl_compulsory_field_content,
-                CFG.tmpl_compulsory_field_content
-            ));
+            return Err(NoteError::MissingFrontMatterField {
+                field_name: CFG.tmpl_compulsory_field_content.to_owned(),
+            });
         }
 
         Self::register_front_matter(&mut context, &fm);
@@ -97,7 +91,7 @@ impl Note<'_> {
     }
 
     /// Constructor that creates a new note by filling in the content template `template`.
-    pub fn from_content_template(path: &Path, template: &str) -> Result<Self> {
+    pub fn from_content_template(path: &Path, template: &str) -> Result<Self, NoteError> {
         let mut context = Self::capture_environment(&path)?;
 
         // render template
@@ -106,7 +100,12 @@ impl Note<'_> {
                 let mut tera = Tera::default();
                 tera.extend(&TERA)?;
 
-                tera.render_str(template, &context)?
+                tera.render_str(template, &context)
+                    .map_err(|e| NoteError::TeraTemplate {
+                        source_str: std::error::Error::source(&e)
+                            .unwrap_or(&tera::Error::msg(""))
+                            .to_string(),
+                    })?
             },
             false,
         );
@@ -140,7 +139,7 @@ impl Note<'_> {
     /// `context` collection. The variables are needed later to populate
     /// a context template and a filename template.
     /// The `path` parameter must be a canonicalized fully qualified file name.
-    fn capture_environment(path: &Path) -> Result<ContextWrapper> {
+    fn capture_environment(path: &Path) -> Result<ContextWrapper, NoteError> {
         let mut context = ContextWrapper::new();
 
         // Register the canonicalized fully qualified file name.
@@ -166,64 +165,46 @@ impl Note<'_> {
 
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
-        let stdin_fm = Self::deserialize_header(STDIN.header).ok();
-        if stdin_fm.is_some() {
-            log::trace!(
+        let stdin_fm = Self::deserialize_header(STDIN.header);
+        match stdin_fm {
+            Ok(ref stdin_fm) => log::trace!(
                 "YAML front matter in the input stream stdin found:\n{:#?}",
-                stdin_fm
-            );
+                &stdin_fm
+            ),
+            Err(ref e) => {
+                if !STDIN.header.is_empty() {
+                    return Err(NoteError::InvalidStdinYaml {
+                        source_str: e.to_string(),
+                    });
+                }
+            }
         };
 
         // Can we find a front matter in the clipboard? If yes, the unmodified
         // clipboard data is our new note content.
-        let clipboard_fm = Self::deserialize_header(CLIPBOARD.header).ok();
-        if clipboard_fm.is_some() {
-            log::trace!(
+        let clipboard_fm = Self::deserialize_header(CLIPBOARD.header);
+        match clipboard_fm {
+            Ok(ref clipboard_fm) => log::trace!(
                 "YAML front matter in the clipboard found:\n{:#?}",
-                clipboard_fm
-            );
-        };
-
-        if (!CLIPBOARD.header.is_empty() && clipboard_fm.is_none())
-            || (!STDIN.header.is_empty() && stdin_fm.is_none())
-        {
-            return Err(anyhow!(
-                "invalid field(s) in the clipboard's YAML\n\
-                     header or in the `stdin` input stream found.
-                     {}{}{}{}{}{}",
+                &clipboard_fm
+            ),
+            Err(ref e) => {
                 if !CLIPBOARD.header.is_empty() {
-                    "\n*   Clipboard header:\n---\n"
-                } else {
-                    ""
-                },
-                CLIPBOARD.header,
-                if !CLIPBOARD.header.is_empty() {
-                    "\n---"
-                } else {
-                    ""
-                },
-                if !STDIN.header.is_empty() {
-                    "\n*   Input stream header:\n---\n"
-                } else {
-                    ""
-                },
-                STDIN.header,
-                if !STDIN.header.is_empty() {
-                    "\n---"
-                } else {
-                    ""
-                },
-            ));
+                    return Err(NoteError::InvalidClipboardYaml {
+                        source_str: e.to_string(),
+                    });
+                }
+            }
         };
 
         // Register clipboard front matter.
-        if let Some(fm) = clipboard_fm {
+        if let Ok(fm) = clipboard_fm {
             Self::register_front_matter(&mut context, &fm);
         }
 
         // Register stdin front matter.
         // The variables registered here can be overwrite the ones from the clipboard.
-        if let Some(fm) = stdin_fm {
+        if let Ok(fm) = stdin_fm {
             Self::register_front_matter(&mut context, &fm);
         }
 
@@ -272,7 +253,7 @@ impl Note<'_> {
     /// Applies a Tera template to the notes context in order to generate a
     /// sanitized filename that is in sync with the note's meta data stored in
     /// its front matter.
-    pub fn render_filename(&self, template: &str) -> Result<PathBuf> {
+    pub fn render_filename(&self, template: &str) -> Result<PathBuf, NoteError> {
         log::trace!(
             "Available substitution variables for the filename template:\n{:#?}\n",
             *self.context
@@ -297,22 +278,18 @@ impl Note<'_> {
     }
 
     /// Helper function deserializing the front-matter of an `.md`-file.
-    fn deserialize_header(header: &str) -> Result<FrontMatter> {
+    fn deserialize_header(header: &str) -> Result<FrontMatter, NoteError> {
         if header.is_empty() {
-            return Err(anyhow!(
-                "The document (or template) has no front matter section.\n\
-                 Is one `---` missing?\n\n\
-                 \t~~~~~~~~~~~~~~\n\
-                 \t---\n\
-                 \t{}: \"My note\"\n\
-                 \t---\n\
-                 \tsome text\n\
-                 \t~~~~~~~~~~~~~~",
-                CFG.tmpl_compulsory_field_content
-            ));
+            return Err(NoteError::MissingFrontMatter {
+                compulsory_field: CFG.tmpl_compulsory_field_content.to_owned(),
+            });
         };
 
-        let map: tera::Map<String, tera::Value> = serde_yaml::from_str(&header)?;
+        let map: tera::Map<String, tera::Value> =
+            serde_yaml::from_str(&header).map_err(|e| NoteError::InvalidFrontMatterYaml {
+                front_matter: header.to_owned(),
+                source_error: e,
+            })?;
         let fm = FrontMatter { map };
 
         // `sort_tag` has additional constrains to check.
@@ -326,11 +303,9 @@ impl Note<'_> {
                     .count()
                     > 0
                 {
-                    return Err(anyhow!(
-                        "The `sort_tag` header variable contains forbidden character(s): sort_tag = \"{}\". \
-                        Only numbers, `-` and `_` are allowed here.",
-                        sort_tag
-                    ));
+                    return Err(NoteError::SortTagVarInvalidChar {
+                        sort_tag: sort_tag.to_owned(),
+                    });
                 }
             };
         };
@@ -341,25 +316,14 @@ impl Note<'_> {
             let extension_is_unknown =
                 matches!(MarkupLanguage::new(extension), MarkupLanguage::None);
             if extension_is_unknown {
-                return Err(anyhow!(
-                    "`file_ext=\"{}\"`, is not registered as a valid\n\
-                        Tp-Note-file in the `note_file_extensions_*` variables\n\
-                        in your configuration file:\n\
-                        \t{:?}\n\
-                        \t{:?}\n\
-                        \t{:?}\n\
-                        \t{:?}\n\
-                        \t{:?}\n\
-                        \n\
-                        Choose one of the above list or add more extensions to the\n\
-                        `note_file_extensions_*` variables in your configuration file.",
-                    extension,
-                    &CFG.note_file_extensions_md,
-                    &CFG.note_file_extensions_rst,
-                    &CFG.note_file_extensions_html,
-                    &CFG.note_file_extensions_txt,
-                    &CFG.note_file_extensions_no_viewer,
-                ));
+                return Err(NoteError::FileExtNotRegistered {
+                    extension: extension.to_owned(),
+                    md_ext: CFG.note_file_extensions_md.to_owned(),
+                    rst_ext: CFG.note_file_extensions_rst.to_owned(),
+                    html_ext: CFG.note_file_extensions_html.to_owned(),
+                    txt_ext: CFG.note_file_extensions_txt.to_owned(),
+                    no_viewer_ext: CFG.note_file_extensions_no_viewer.to_owned(),
+                });
             }
         };
 
@@ -373,7 +337,7 @@ impl Note<'_> {
         &mut self,
         note_path: &Path,
         export_dir: &Path,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), NoteError> {
         // Determine filename of html-file.
         let mut html_path = PathBuf::new();
         if export_dir
@@ -470,7 +434,7 @@ impl Note<'_> {
         tmpl: &str,
         // If not empty, Javascript code to inject in output.
         java_script: &str,
-    ) -> Result<String, anyhow::Error> {
+    ) -> Result<String, NoteError> {
         // Deserialize.
 
         // Render Body.
@@ -522,7 +486,7 @@ impl Note<'_> {
     #[inline]
     #[cfg(feature = "renderer")]
     /// RestructuredText renderer.
-    fn render_rst_content(rest_input: &str) -> Result<String, anyhow::Error> {
+    fn render_rst_content(rest_input: &str) -> Result<String, NoteError> {
         // Note, that the current rst renderer requires files to end with a new line.
         // <https://github.com/flying-sheep/rust-rst/issues/30>
         let mut rest_input = rest_input.trim_start();
@@ -530,7 +494,8 @@ impl Note<'_> {
         while rest_input.ends_with("\n\n") {
             rest_input = &rest_input[..rest_input.len() - 1];
         }
-        let document = parse(rest_input.trim_start()).map_err(|e| anyhow!(e))?;
+        let document = parse(rest_input.trim_start())
+            .map_err(|e| NoteError::RstParse { msg: e.to_string() })?;
         // Write to String buffer.
         let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
         let _ = render_html(&document, &mut html_output, false);

@@ -9,12 +9,28 @@ use std::process::ExitStatus;
 use std::thread::sleep;
 #[cfg(target_family = "windows")]
 use std::time::Duration;
+use thiserror::Error;
 #[cfg(target_family = "windows")]
 use win32job::Job;
+#[cfg(target_family = "windows")]
+use win32job::JobError;
 
 /// Polling interval when waiting for grand children to terminate.
 #[cfg(target_family = "windows")]
 const PROCESS_POLLING_INTERVAL: u64 = 1000;
+
+#[derive(Debug, Error)]
+pub enum ChildExtError {
+    #[error("error executing external application")]
+    Wait(#[from] std::io::Error),
+    #[cfg(target_family = "windows")]
+    #[error("can not monitor the termination of the launched application")]
+    Monitor(#[from] JobError),
+    #[allow(dead_code)]
+    #[cfg(not(target_family = "windows"))]
+    #[error("can not monitor the termination of the launched application")]
+    Monitor,
+}
 
 /// Newtype wrapping some `Child`.
 /// The wrapper "overloads" the `Child::wait()` function when compiled for Windows.
@@ -30,12 +46,11 @@ impl From<Child> for ChildExt {
 impl ChildExt {
     #[cfg(not(target_family = "windows"))]
     #[inline]
-    pub fn wait(&mut self) -> Result<ExitStatus, anyhow::Error> {
+    pub fn wait(&mut self) -> Result<ExitStatus, ChildExtError> {
         // Remember ID for debugging.
         let process_id = self.0.id();
         log::debug!("Process started: id={}", process_id);
 
-        // Under Unix `wait()` should also wait for the termination of all grand children.
         let exit_status = self.0.wait();
 
         log::debug!(
@@ -53,7 +68,7 @@ impl ChildExt {
     /// This `wait()` implementation not only waits until the `Child` process
     /// terminates, it also waits until all its subprocesses terminate.
     #[cfg(target_family = "windows")]
-    pub fn wait(&mut self) -> Result<ExitStatus, anyhow::Error> {
+    pub fn wait(&mut self) -> Result<ExitStatus, ChildExtError> {
         // Remember ID for debugging.
         let process_id = self.0.id();
         log::debug!("Process started: id={}", process_id);

@@ -8,6 +8,7 @@ use crate::config::LAUNCH_VIEWER;
 #[cfg(feature = "read-clipboard")]
 use crate::config::RUNS_ON_CONSOLE;
 use crate::config::STDIN;
+use crate::error::WorkflowError;
 use crate::file_editor::launch_editor;
 use crate::filename;
 use crate::filename::MarkupLanguage;
@@ -16,7 +17,6 @@ use crate::note::Note;
 use crate::viewer::launch_viewer_thread;
 use crate::AUTHOR;
 use crate::VERSION;
-use anyhow::{anyhow, Context};
 #[cfg(feature = "read-clipboard")]
 use clipboard::ClipboardContext;
 #[cfg(feature = "read-clipboard")]
@@ -33,25 +33,22 @@ use std::process;
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk and return
 /// the new filename.
-fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
+fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
     // parse file again to check for synchronicity with filename
-    let mut n = Note::from_existing_note(&path).context(
-        "Failed to parse the note's metadata. \
-                  Can not synchronize the note's filename!",
-    )?;
+    let mut n = Note::from_existing_note(&path)?;
 
     let new_fqfn = if !ARGS.no_sync {
         log::trace!("Applying template `tmpl_sync_filename`.");
-        let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename).context(
-            "Failed to render the template `tmpl_sync_filename` in config file. \
-                  Can not synchronize the note's filename!",
-        )?;
+        let new_fqfn =
+            n.render_filename(&CFG.tmpl_sync_filename)
+                .map_err(|e| WorkflowError::Template {
+                    tmpl: "tmpl_sync_filename".to_string(),
+                    source: e,
+                })?;
 
         if !filename::exclude_copy_counter_eq(&path, &new_fqfn) {
-            let new_fqfn = filename::find_unused(new_fqfn).context(
-                "Can not rename the note's filename to be in sync with its\n\
-            YAML header.",
-            )?;
+            let new_fqfn = filename::find_unused(new_fqfn)?;
+
             // rename file
             fs::rename(&path, &new_fqfn)?;
             log::trace!("File renamed to {:?}", new_fqfn);
@@ -65,8 +62,7 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
 
     // Print HTML rendition.
     if let Some(dir) = &ARGS.export {
-        n.render_and_write_content(&new_fqfn, &dir)
-            .context(format!("Can not write HTML rendition into: {:?}", dir))?;
+        n.render_and_write_content(&new_fqfn, &dir)?;
     }
 
     Ok(new_fqfn)
@@ -77,38 +73,61 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
 /// If the note to be created exists already, append a so called `copy_counter`
 /// to the filename and try to save it again. In case this does not succeed either,
 /// increment the `copy_counter` until a free filename is found.
-fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyhow::Error> {
+fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
     if path.is_dir() {
         let (n, new_fqfn) = if STDIN.is_empty() && CLIPBOARD.is_empty() {
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
-            let n = Note::from_content_template(&path, &CFG.tmpl_new_content)
-                .context("Can not render the template `tmpl_new_content` in config file.")?;
-            let new_fqfn = n
-                .render_filename(&CFG.tmpl_new_filename)
-                .context("Can not render the template `tmpl_new_filename` in config file.")?;
+            let n = Note::from_content_template(&path, &CFG.tmpl_new_content).map_err(|e| {
+                WorkflowError::Template {
+                    tmpl: "tmpl_new_content".to_string(),
+                    source: e,
+                }
+            })?;
+            let new_fqfn =
+                n.render_filename(&CFG.tmpl_new_filename)
+                    .map_err(|e| WorkflowError::Template {
+                        tmpl: "tmpl_new_filename".to_string(),
+                        source: e,
+                    })?;
             log::trace!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
             (n, new_fqfn)
         } else if !STDIN.header.is_empty() || !CLIPBOARD.header.is_empty() {
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
             // (only if there is a valid YAML front matter)
-            let n = Note::from_content_template(&path, &CFG.tmpl_copy_content)
-                // CREATE A NEW NOTE WITH `TMPL_COPY_CONTENT` TEMPLATE
-                .context("Can not render the template `tmpl_copy_content` in config file.")?;
-            let new_fqfn = n
-                .render_filename(&CFG.tmpl_copy_filename)
-                .context("Can not render the template `tmpl_copy_filename` in config file.")?;
+            let n = Note::from_content_template(&path, &CFG.tmpl_copy_content).map_err(|e| {
+                WorkflowError::Template {
+                    tmpl: "tmpl_copy_content".to_string(),
+                    source: e,
+                }
+            })?;
+            // CREATE A NEW NOTE WITH `TMPL_COPY_CONTENT` TEMPLATE
+            let new_fqfn = n.render_filename(&CFG.tmpl_copy_filename).map_err(|e| {
+                WorkflowError::Template {
+                    tmpl: "tmpl_copy_filename".to_string(),
+                    source: e,
+                }
+            })?;
             log::trace!("Applying templates: `tmpl_copy_content`, `tmpl_copy_filename`");
             (n, new_fqfn)
         } else {
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
-            let n = Note::from_content_template(&path, &CFG.tmpl_clipboard_content)
-                // CREATE A NEW NOTE WITH `TMPL_CLIPBOARD_CONTENT` TEMPLATE
-                .context("Can not render the template `tmpl_clipboard_content` in config file.")?;
+            let n =
+                Note::from_content_template(&path, &CFG.tmpl_clipboard_content).map_err(|e| {
+                    WorkflowError::Template {
+                        tmpl: "tmpl_clipboard_content".to_string(),
+                        source: e,
+                    }
+                })?;
+
+            // CREATE A NEW NOTE WITH `TMPL_CLIPBOARD_CONTENT` TEMPLATE
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_clipboard_filename)
-                .context("Can not render the template `tmpl_clipboard_filename` in config file.")?;
+                .map_err(|e| WorkflowError::Template {
+                    tmpl: "tmpl_clipboard_filename".to_string(),
+                    source: e,
+                })?;
             log::trace!("Applying templates: `tmpl_clipboard_content`, `tmpl_clipboard_filename`");
             (n, new_fqfn)
         };
@@ -141,11 +160,20 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
             // ANNOTATE FILE: CREATE NEW NOTE WITH TMPL_ANNOTATE_CONTENT TEMPLATE
             // `path` points to a foreign file type that will be annotated.
             log::trace!("Applying templates `tmpl_annotate_content` and `tmpl_annotate_filename`.");
-            let n = Note::from_content_template(&path, &CFG.tmpl_annotate_content)
-                .context("Can not render the template `tmpl_annotate_content` in config file.")?;
+            let n =
+                Note::from_content_template(&path, &CFG.tmpl_annotate_content).map_err(|e| {
+                    WorkflowError::Template {
+                        tmpl: "tmpl_annotate_content".to_string(),
+                        source: e,
+                    }
+                })?;
+
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_annotate_filename)
-                .context("Can not render the template `tmpl_annotate_filename` in config file.")?;
+                .map_err(|e| WorkflowError::Template {
+                    tmpl: "tmpl_annotate_filename".to_string(),
+                    source: e,
+                })?;
 
             // Check if the filename is not taken already
             let new_fqfn = filename::find_unused(new_fqfn)?;
@@ -165,7 +193,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, anyho
 /// 3. Open the new note in an external editor (configurable).
 /// 4. Read the front matter again and resynchronize the filename if necessary.
 #[inline]
-pub fn run() -> Result<PathBuf, anyhow::Error> {
+pub fn run() -> Result<PathBuf, WorkflowError> {
     // process arg = `--version`
     if ARGS.version {
         println!("Version {}, {}", VERSION.unwrap_or("unknown"), AUTHOR);
@@ -174,26 +202,13 @@ pub fn run() -> Result<PathBuf, anyhow::Error> {
 
     // process arg = <path>
     let mut path = if let Some(p) = &ARGS.path {
-        p.canonicalize().with_context(|| {
-            format!(
-                "invalid <path>: `{}`",
-                &ARGS
-                    .path
-                    .as_ref()
-                    .unwrap_or(&PathBuf::from("unknown"))
-                    .display()
-            )
-        })?
+        p.canonicalize()?
     } else {
         env::current_dir()?
     };
 
     if ARGS.export.is_some() && !path.is_file() {
-        return Err(anyhow!(
-            "`--export` and `-x` need a <path> to an existing note file.\n\
-              *    Current <path>:\n{}",
-            path.as_os_str().to_str().unwrap_or_default()
-        ));
+        Err(WorkflowError::ExportsNeedsNoteFile)?
     };
 
     match create_new_note_or_synchronize_filename(&path) {
@@ -203,15 +218,19 @@ pub fn run() -> Result<PathBuf, anyhow::Error> {
             // When the viewer is launched, we do not need a dialog
             // box to communicate the error to the user.
             // In this case we skip the following.
-            if !*LAUNCH_VIEWER && *LAUNCH_EDITOR {
-                log::error!(
-                    "{:?}\n\
+            if path.is_file() {
+                // We are here because we tried in vain to synchronize the filename.
+                // This is not fatal, the user might correct the header,
+                // but in case there is no viewer, we must inform him.
+                if !*LAUNCH_VIEWER {
+                    log::error!(
+                        "{}\n\
                     \n\
-                    Please correct the error.
-                    Trying to start the editor without synchronization...",
-                    e
-                );
-            } else if !*LAUNCH_VIEWER || !path.is_file() {
+                    Please correct the error.",
+                        e,
+                    );
+                }
+            } else {
                 // If `path` points to a directory, no viewer and no editor can open.
                 // This is a fatal error, so we quit.
                 return Err(e);
@@ -233,8 +252,7 @@ pub fn run() -> Result<PathBuf, anyhow::Error> {
 
     #[cfg(feature = "viewer")]
     if let Some(jh) = viewer_join_handle {
-        jh.join()
-            .map_err(|_| anyhow!("can not join the Viewer thread."))?;
+        let _ = jh.join();
     };
 
     if *LAUNCH_EDITOR {
@@ -242,7 +260,7 @@ pub fn run() -> Result<PathBuf, anyhow::Error> {
             Ok(p) => path = p,
             Err(e) => {
                 if !*LAUNCH_VIEWER {
-                    // As there is no viewer, the uses must be informed about the error.
+                    // As there is no viewer, the user must be informed about the error.
                     return Err(e);
                 } else {
                     // Silently ignore error, but do not delete clipboard.
