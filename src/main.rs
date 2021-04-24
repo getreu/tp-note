@@ -98,7 +98,7 @@ fn main() {
 
     let config_file_version = match cfg_err {
         // This is always `Some::Version` because none of them are `Err`.
-        None => cfg_file_version.clone().ok(),
+        None => cfg_file_version.ok(),
 
         // One of them is `Err`, we do not care who.
         Some(e) => {
