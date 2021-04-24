@@ -140,7 +140,7 @@ pub enum FileError {
     },
 
     #[error(transparent)]
-    IO(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
 }
 
 #[derive(Debug, Error)]
@@ -275,5 +275,5 @@ pub enum NoteError {
     NoHyperlinkFound,
 
     #[error(transparent)]
-    IO(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
 }
