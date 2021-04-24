@@ -99,9 +99,8 @@ impl Viewer {
         // Launch the file watcher thread.
         // Send a signal whenever the file is modified. Without error, this thread runs as long as
         // the parent thread (where we are) is running.
-        let event_tx_list_clone = event_tx_list.clone();
         let _handle: JoinHandle<_> = thread::spawn(move || loop {
-            match FileWatcher::new(doc.clone(), event_tx_list_clone.clone()) {
+            match FileWatcher::new(doc.clone(), event_tx_list.clone()) {
                 Ok(mut w) => w.run(),
                 Err(e) => {
                     log::warn!("Can not (re-)start file watcher, giving up: {}", e);
