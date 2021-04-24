@@ -7,16 +7,10 @@ use crate::alert_service::MESSAGE_CHANNEL;
 #[cfg(feature = "message-box")]
 use crate::config::ARGS;
 #[cfg(feature = "message-box")]
-use crate::config::CONFIG_PATH;
-#[cfg(feature = "message-box")]
 use crate::config::RUNS_ON_CONSOLE;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
-#[cfg(feature = "message-box")]
-use std::env;
-#[cfg(feature = "message-box")]
-use std::path::PathBuf;
 use std::sync::RwLock;
 
 pub struct AppLogger {
@@ -71,35 +65,6 @@ impl AppLogger {
             AlertService::flush();
         }
     }
-
-    /// Adds a footer with additional debugging information, such as
-    /// command line parameters and configuration file path.
-    #[cfg(feature = "message-box")]
-    fn format_error(msg: &str) -> String {
-        // Remember the command-line-arguments.
-        let mut args_str = String::new();
-        for argument in env::args() {
-            args_str.push_str(argument.as_str());
-            args_str.push(' ');
-        }
-
-        format!(
-            "{}\n\
-            __________\n\
-            Additional technical details:\n\
-            *    Command line parameters:\n\
-            {}\n\
-            *    Configuration file:\n\
-            {}",
-            msg,
-            args_str,
-            &*CONFIG_PATH
-                .as_ref()
-                .unwrap_or(&PathBuf::from("no path found"))
-                .to_str()
-                .unwrap_or_default()
-        )
-    }
 }
 
 /// Trait defining the logging format and destination.
@@ -125,7 +90,7 @@ impl log::Log for AppLogger {
                     format!(
                         "{}:\n{}",
                         record.level(),
-                        &Self::format_error(&record.args().to_string())
+                        &AlertService::format_error(&record.args().to_string())
                     )
                 } else {
                     format!("{}:\n{}", record.level(), &record.args().to_string())

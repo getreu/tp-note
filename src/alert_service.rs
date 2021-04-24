@@ -2,10 +2,13 @@
 //! one by one in popup alert windows.
 
 use crate::config::ARGS;
+use crate::config::CONFIG_PATH;
 use crate::config::RUNS_ON_CONSOLE;
 use crate::VERSION;
 use lazy_static::lazy_static;
 use msgbox::IconType;
+use std::env;
+use std::path::PathBuf;
 use std::sync::mpsc::sync_channel;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::RecvTimeoutError;
@@ -143,5 +146,33 @@ impl AlertService {
     /// Blocks until the user closes the window.
     fn print_error(msg: &str) {
         let _ = msgbox::create(&*DIALOG_TITLE_LINE, &msg, IconType::Info);
+    }
+
+    /// Adds a footer with additional debugging information, such as
+    /// command line parameters and configuration file path.
+    pub fn format_error(msg: &str) -> String {
+        // Remember the command-line-arguments.
+        let mut args_str = String::new();
+        for argument in env::args() {
+            args_str.push_str(argument.as_str());
+            args_str.push(' ');
+        }
+
+        format!(
+            "{}\n\
+            __________\n\
+            Additional technical details:\n\
+            *    Command line parameters:\n\
+            {}\n\
+            *    Configuration file:\n\
+            {}",
+            msg,
+            args_str,
+            &*CONFIG_PATH
+                .as_ref()
+                .unwrap_or(&PathBuf::from("no path found"))
+                .to_str()
+                .unwrap_or_default()
+        )
     }
 }
