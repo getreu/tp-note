@@ -670,8 +670,9 @@ starting with '`tmpl_*`' are _Tera-Template_-strings (see:
 _Tp-Note_ captures and stores its environment in _Tera-variables_. For example,
 the variable '`{{ path }}`' is initialized with the note's target
 directory. The variable '`{{ clipboard }}`' contains the content of the
-clipboard. To learn more about variables, launch _Tp-Note_ with the '`--debug`'
-option and observe what information it captures from its environment.
+clipboard. To learn more about variables, launch _Tp-Note_ with the 
+'`--debug trace`' option and observe what information it captures from its
+environment.
 
 ## Template variables
 
@@ -856,7 +857,7 @@ leading or trailing position. For this reason no '`sanit`'-filter is allowed
 with '`{{ file | tag }}`' and '`{{ path | tag }}`'.
 
 
-## Register your own external text editor
+## Register your own text editor
 
 The configuration file variables '`editor_args`' and '`editor_console_args`'
 define lists of external text editors to be launched for editing. The lists
@@ -871,7 +872,7 @@ invoke _Tp-Note_ with '`tp-note --debug info --popup --edit`'
 
 When you configure _Tp-Note_ to work with your text editor, make sure, that
 your text editor does not fork! You can check this when you launch the text
-editor from the command-line: if the prompt returns immediately, then it
+editor from the command line: if the prompt returns immediately, then it
 forks the process. Everything is OK when the prompt only comes back at the
 moment when the text editor is closed. Many text editors provide an option
 not to fork: for example the _VScode_-editor can be launched with the
@@ -892,7 +893,7 @@ Whereby '`FILE=$(tp-note --batch)`' creates the note file, '`vi "$FILE"`' opens 
 '`vi`'-text editor and '`tp-note --batch "$FILE"`' synchronizes the filename.
 
 
-## Register a Flatpak Markdown editor
+**Register a Flatpak Markdown editor**
 
 [Flathub for Linux] is a cross-platform application repository that works well
 with _Tp-Note_.  To showcase an example, we will add a _Tp-Note_ launcher for
@@ -955,6 +956,60 @@ Save the modified configuration file.  Next time you launch _Tp-Note_, the
 _Mark Text_-editor will open with your note.
 
 
+**Register a console text editor running in a terminal emulator**
+
+In this setup _Tp-Note_ launches the terminal emulator which is configured
+to launch the text editor as child process. Both should should not fork when they
+start (see above).
+
+Examples, adjust to your needs and taste: 
+
+* _Neovim_ in _Xfce4-Terminal_:
+
+  ```toml
+  editor_args = [
+    [
+      'xfce4-terminal',
+      '--disable-server',
+      '-x',
+      'nvim',
+      '-c',
+      'colorscheme pablo',
+    ],
+  ]
+  ```
+* _Neovim_ in _LXTerminal_:
+
+  ```toml
+  editor_args = [
+    [
+      'lxterminal',
+      '--no-remote',
+      '-e',
+      'nvim',
+      '-c',
+      'colorscheme pablo',
+    ],
+  ]
+  ```
+
+* _Neovim_ in _Xterm_:
+
+  ```toml
+  editor_args = [
+      [
+        'xterm',
+        '-fa', 
+        'DejaVu Sans Mono',
+        '-fs',
+        '12',
+        '-e',
+        'nvim',
+    ],
+  ]
+  ```
+
+
 ## Change the default markup language
 
 _Tp-Note_ identifies the note's markup language by its file extension and
@@ -1008,7 +1063,7 @@ The above change only applies to the current note.
 
 ## Customize the built-in note viewer
 
-### Change the way how note files are rendered for viewing
+**Change the way how note files are rendered for viewing**
 
 Besides its core function, _Tp-Note_ comes with several built-in markup
 renderer and viewer, allowing to work with different markup languages at the
@@ -1027,7 +1082,7 @@ place these extensions in the '`note_file_extension_no_viewer`' variable. If
 you wish to disable the viewer feature overall, set the variable
 `edit_arg_default = true`.
 
-### Change the HTML rendition template
+**Change the HTML rendition template**
 
 After the markup rendition process, _Tp-Note_'s built-in viewer generates its
 final HTML rendition through the customizable HTML templates
@@ -1104,7 +1159,19 @@ viewer_error_tmpl = '''<!DOCTYPE html>
 '''
 ```
 
-### Choose your favourite web browser as note viewer
+**Customize the built-in HTML exporter**
+
+Customizing _Tp-Note_'s HTML export function works the same way than
+customizing the built-in viewer. There are some slight differences though:
+The role of the '`viewer_rendition_tmpl`' template - discussed above - is
+taken over by the '`exporter_rendition_tmpl`' template. In this template the
+same _Tera_ variables are available, except '`{{ noteJS }}`' which does not
+make sense in this context. As the exporter prints possible rendition error
+messages on the console, there is no equivalent to the '`viewer_error_tmpl`'
+template.
+
+
+## Choose your favourite web browser as note viewer
 
 Once the note is rendered into HTML, _Tp-Note_'s internal HTTP server connects
 to a random port at the `localhost` interface where the rendition is served to
@@ -1122,17 +1189,6 @@ situations, where _Tp-Note_'s internal HTTP server shuts down to early.
 In order to check if _Tp-Note_ finds the selected web browser as intended,
 invoke _Tp-Note_ with '`tp-note --debug info --popup --view`'.
 
-
-## Customize the built-in HTML exporter
-
-Customizing _Tp-Note_'s HTML export function works the same way than
-customizing the built-in viewer. There are some slight differences though:
-The role of the '`viewer_rendition_tmpl`' template - discussed above - is
-taken over by the '`exporter_rendition_tmpl`' template. In this template the
-same _Tera_ variables are available, except '`{{ noteJS }}`' which does not
-make sense in this context. As the exporter prints possible rendition error
-messages on the console, there is no equivalent to the '`viewer_error_tmpl`'
-template.
 
 
 
