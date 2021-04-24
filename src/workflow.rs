@@ -231,17 +231,21 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
         return Err(WorkflowError::ExportsNeedsNoteFile);
     };
 
-    // Indicates
+    // Depending on this we might not show the viewer later or
+    // log an error as WARN level instead of ERROR level.
     let mut missing_header;
 
     match create_new_note_or_synchronize_filename(&path) {
         // Use the new `path` from now on.
         Ok(p) => {
             path = p;
-            missing_header = false;
+            #[cfg(feature = "viewer")]
+            {
+                missing_header = false;
+            }
         }
         Err(e) => {
-            if path.is_file() {
+            if path.is_file() && !ARGS.batch {
                 missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
                     || matches!(e, WorkflowError::MissingFrontMatterField { .. });
 
