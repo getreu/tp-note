@@ -2146,6 +2146,7 @@ dependencies = [
  "serde_yaml",
  "structopt",
  "tera",
+ "thiserror",
  "time 0.2.26",
  "url",
  "webbrowser",

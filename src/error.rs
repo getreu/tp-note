@@ -17,6 +17,14 @@ pub enum WorkflowError {
     #[error("Failed to render template! (cf. `{tmpl}` in configuration file).\n{source}")]
     Template { tmpl: String, source: NoteError },
 
+    /// Forward `MissingFrontMatter` from `NoteError`.
+    #[error(transparent)]
+    MissingFrontMatter { source: NoteError },
+
+    /// Forward `MissingFrontMatterField` from `NoteError`.
+    #[error(transparent)]
+    MissingFrontMatterField { source: NoteError },
+
     #[error(transparent)]
     Note {
         #[from]

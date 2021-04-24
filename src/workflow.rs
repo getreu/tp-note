@@ -8,6 +8,7 @@ use crate::config::LAUNCH_VIEWER;
 #[cfg(feature = "read-clipboard")]
 use crate::config::RUNS_ON_CONSOLE;
 use crate::config::STDIN;
+use crate::error::NoteError;
 use crate::error::WorkflowError;
 use crate::file_editor::launch_editor;
 use crate::filename;
@@ -35,7 +36,16 @@ use std::process;
 /// the new filename.
 fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
     // parse file again to check for synchronicity with filename
-    let mut n = Note::from_existing_note(&path)?;
+    let mut n = match Note::from_existing_note(&path) {
+        Ok(n) => n,
+        Err(e) if matches!(e, NoteError::MissingFrontMatter { .. }) => {
+            Err(WorkflowError::MissingFrontMatter { source: e })?
+        }
+        Err(e) if matches!(e, NoteError::MissingFrontMatterField { .. }) => {
+            Err(WorkflowError::MissingFrontMatterField { source: e })?
+        }
+        Err(e) => Err(e)?,
+    };
 
     let new_fqfn = if !ARGS.no_sync {
         log::trace!("Applying template `tmpl_sync_filename`.");
@@ -221,25 +231,36 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
         Err(WorkflowError::ExportsNeedsNoteFile)?
     };
 
+    // Indicates
+    let mut missing_header;
+
     match create_new_note_or_synchronize_filename(&path) {
         // Use the new `path` from now on.
-        Ok(p) => path = p,
+        Ok(p) => {
+            path = p;
+            missing_header = false;
+        }
         Err(e) => {
-            // When the viewer is launched, we do not need a dialog
-            // box to communicate the error to the user.
-            // In this case we skip the following.
             if path.is_file() {
-                // We are here because we tried in vain to synchronize the filename.
-                // This is not fatal, the user might correct the header,
-                // but in case there is no viewer, we must inform him.
-                if !*LAUNCH_VIEWER {
-                    log::error!(
+                missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
+                    || matches!(e, WorkflowError::MissingFrontMatterField { .. });
+
+                if *LAUNCH_VIEWER || (missing_header && CFG.silently_ignore_missing_header) {
+                    log::warn!(
                         "{}\n\
-                    \n\
-                    Please correct the error.",
+                        \n\
+                        Please correct the front matter if this is supposed \
+                        to be a Tp-Note file. Ignore otherwise.",
                         e,
                     );
-                }
+                } else {
+                    log::error!(
+                        "{}\n\
+                        \n\
+                        Please correct the error.",
+                        e,
+                    );
+                };
             } else {
                 // If `path` points to a directory, no viewer and no editor can open.
                 // This is a fatal error, so we quit.
@@ -249,7 +270,9 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
     };
 
     #[cfg(feature = "viewer")]
-    let viewer_join_handle = if *LAUNCH_VIEWER {
+    let viewer_join_handle = if *LAUNCH_VIEWER
+        && !(missing_header && CFG.missing_header_disables_viewer && !ARGS.view)
+    {
         Some(launch_viewer_thread(&path))
     } else {
         None
@@ -269,12 +292,22 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
         match synchronize_filename(&path) {
             Ok(p) => path = p,
             Err(e) => {
-                if !*LAUNCH_VIEWER {
-                    // As there is no viewer, the user must be informed about the error.
-                    return Err(e);
-                } else {
-                    // Silently ignore error, but do not delete clipboard.
+                missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
+                    || matches!(e, WorkflowError::MissingFrontMatterField { .. });
+
+                if missing_header && CFG.silently_ignore_missing_header {
+                    // Silently ignore error.
+                    log::warn!(
+                        "{}\n\
+                        \n\
+                        Please correct the front matter if this is supposed \
+                        to be a Tp-Note file. Ignore otherwise.",
+                        e,
+                    );
                     return Ok(path);
+                } else {
+                    // Report all other errors.
+                    return Err(e);
                 }
             }
         };

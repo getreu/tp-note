@@ -30,26 +30,38 @@ use structopt::StructOpt;
 /// Name of this executable (without the Windows ".exe" extension).
 const CURRENT_EXE: &str = "tp-note";
 
-/// Default value for command line option `--debug`.
-/// Determines the maximum debug level events must have, to be logged.
-/// If the command line option `--debug` is present, its value will
-/// be used instead.
-const DEBUG_ARG_DEFAULT: LevelFilter = LevelFilter::Error;
-
-/// Default value for command line flag `--edit`
-/// To disable file watcher, (Markdown)-renderer, html server
-/// and a web browser launcher set to `true`.
-const EDITOR_ARG_DEFAULT: bool = false;
-
-/// Default value for command line flag `--popup`
-/// If the command line flag `--popup` or `POPUP` is `true`, all log
-/// events will also trigger the appearance of a popup alert window.
-/// Note, that error level debug events will always pop up, regardless
-/// of `--popup` and `POPUP` (unless `--debug=off`).
-const POPUP_ARG_DEFAULT: bool = true;
-
 /// Crate `confy` version 0.4 uses this filename by default.
 const CONFIG_FILENAME: &str = "tp-note.toml";
+
+/// Default value for command line option `--debug`.  Determines the maximum
+/// debug level events must have, to be logged.  If the command line option
+/// `--debug` is present, its value will be used instead.
+const DEBUG_ARG_DEFAULT: LevelFilter = LevelFilter::Error;
+
+/// Default value for command line flag `--edit` To disable file watcher,
+/// (Markdown)-renderer, html server and a web browser launcher set to `true`.
+const EDITOR_ARG_DEFAULT: bool = false;
+
+/// Default value for command line flag `--popup` If the command line flag
+/// `--popup` or `POPUP` is `true`, all log events will also trigger the
+/// appearance of a popup alert window.  Note, that error level debug events
+/// will always pop up, regardless of `--popup` and `POPUP` (unless
+/// `--debug=off`).
+const POPUP_ARG_DEFAULT: bool = true;
+
+/// _Tp-Note_ opens all `.md` files with an external editor. It recognizes its
+/// own files, by the file extension `.md`, by a valid YAML header and the
+/// presence of a "title" variable*). When set to `false`, popup alert windows
+/// inform the user about missing headers. `true` suppresses the popup alert
+/// windows and the text editor starts without further notification.
+///
+/// *) all string literals given in this example are configurable.
+const SILENTLY_IGNORE_MISSING_HEADER: bool = true;
+
+/// When set to true, the viewer feature is automatically disabled when
+/// _Tp-Note_ encounters an `.md` file without header.  Experienced users can
+/// set this to `true`.
+const MISSING_HEADER_DISABLES_VIEWER: bool = false;
 
 /// File extension of `to-note` files.
 pub const EXTENSION_DEFAULT: &str = "md";
@@ -715,6 +727,8 @@ pub struct Cfg {
     pub debug_arg_default: LevelFilter,
     pub edit_arg_default: bool,
     pub popup_arg_default: bool,
+    pub silently_ignore_missing_header: bool,
+    pub missing_header_disables_viewer: bool,
     pub extension_default: String,
     pub note_file_extensions_md: Vec<String>,
     pub note_file_extensions_rst: Vec<String>,
@@ -761,6 +775,8 @@ impl ::std::default::Default for Cfg {
             debug_arg_default: DEBUG_ARG_DEFAULT,
             edit_arg_default: EDITOR_ARG_DEFAULT,
             popup_arg_default: POPUP_ARG_DEFAULT,
+            silently_ignore_missing_header: SILENTLY_IGNORE_MISSING_HEADER,
+            missing_header_disables_viewer: MISSING_HEADER_DISABLES_VIEWER,
             extension_default: EXTENSION_DEFAULT.to_string(),
             note_file_extensions_md: NOTE_FILE_EXTENSIONS_MD
                 .iter()
