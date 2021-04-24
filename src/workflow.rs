@@ -44,7 +44,7 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
         Err(e) if matches!(e, NoteError::MissingFrontMatterField { .. }) => {
             return Err(WorkflowError::MissingFrontMatterField { source: e })
         }
-        Err(e) => Err(e)?,
+        Err(e) => return Err(e.into()),
     };
 
     let new_fqfn = if !ARGS.no_sync {
