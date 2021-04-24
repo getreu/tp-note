@@ -489,7 +489,7 @@ impl ServerThread {
                         .map(|p|{
                             let mut s = "*   ".to_string();
                             s.push_str(p.as_path().to_str().unwrap_or_default());
-                            s.push_str("\n");
+                            s.push('\n');
                             s
                         }).collect::<String>()
                     );
