@@ -152,7 +152,7 @@ fn main() {
     match run() {
         Err(e) => {
             // Something went wrong.
-            log::error!("---\n{}", e);
+            log::error!("{}", e);
             AppLogger::flush();
             process::exit(1);
         }

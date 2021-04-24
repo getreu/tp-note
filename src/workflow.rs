@@ -39,10 +39,10 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
     let mut n = match Note::from_existing_note(&path) {
         Ok(n) => n,
         Err(e) if matches!(e, NoteError::MissingFrontMatter { .. }) => {
-            Err(WorkflowError::MissingFrontMatter { source: e })?
+            return Err(WorkflowError::MissingFrontMatter { source: e })
         }
         Err(e) if matches!(e, NoteError::MissingFrontMatterField { .. }) => {
-            Err(WorkflowError::MissingFrontMatterField { source: e })?
+            return Err(WorkflowError::MissingFrontMatterField { source: e })
         }
         Err(e) => Err(e)?,
     };
@@ -228,7 +228,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
     };
 
     if ARGS.export.is_some() && !path.is_file() {
-        Err(WorkflowError::ExportsNeedsNoteFile)?
+        return Err(WorkflowError::ExportsNeedsNoteFile);
     };
 
     // Indicates

@@ -147,7 +147,7 @@ pub enum FileError {
 /// Error type returned form methods in or related to the `note` module.
 pub enum NoteError {
     /// Remedy: check the file permission of the note file.
-    #[error("Can not read file: {path:?}\n{:?}")]
+    #[error("Can not read file:\n\t {path:?}\n{source}")]
     Read { path: PathBuf, source: io::Error },
 
     #[error(
@@ -186,7 +186,7 @@ pub enum NoteError {
          ---\n\
          {front_matter}\n\
          ---\n\n\
-         {source_error}\n"
+         {source_error}"
     )]
     InvalidFrontMatterYaml {
         front_matter: String,
@@ -223,14 +223,21 @@ pub enum NoteError {
     /// Remedy: remove invalid characters.
     #[error(
         "The `sort_tag` header variable contains invalid \
-         character(s): sort_tag = \"{sort_tag}\". \
+         character(s):\n\n\
+         \t---\n\
+         \tsort_tag = \"{sort_tag}\".\n\
+         \t---\n\n\
          Only numbers, `-` and `_` are allowed here."
     )]
     SortTagVarInvalidChar { sort_tag: String },
 
     /// Remedy: correct the front matter variable `file_ext`.
     #[error(
-        "`file_ext=\"{extension}\"`, is not registered as a valid\n\
+        "The file extension:\n\
+        \t---\n\
+        \tfile_ext=\"{extension}\"\n\
+        \t---\n\
+        is not registered as a valid\n\
         Tp-Note-file in the `note_file_extensions_*` variables\n\
         in your configuration file:\n\
         \t{md_ext:?}\n\

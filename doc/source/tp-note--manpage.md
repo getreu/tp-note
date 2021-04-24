@@ -434,9 +434,9 @@ synchronization).
         debug_arg_default = 'info'
         popup_arg_default = true
 
-    Here the value for `debug_arg_default` must be one out of `trace`, `debug`, `info`,
-    `warn`, `error` (default) and `off`. They have the same meaning than the
-    corresponding command line options.
+    Here the value for '`debug_arg_default`' must be one out of '`trace`',
+    '`debug`', '`info`', '`warn`', '`error`' (default) and '`off`'. They have
+    the same meaning as the corresponding command line options.
 
 **-e**, **\--edit**
 

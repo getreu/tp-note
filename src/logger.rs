@@ -83,23 +83,22 @@ impl AppLogger {
             args_str.push(' ');
         }
 
-        let mut s = String::from(msg);
-        s.push_str(&format!(
-            "\n\
-            ---\n\
+        format!(
+            "{}\n\
+            __________\n\
             Additional technical details:\n\
             *    Command line parameters:\n\
             {}\n\
             *    Configuration file:\n\
             {}",
+            msg,
             args_str,
             &*CONFIG_PATH
                 .as_ref()
                 .unwrap_or(&PathBuf::from("no path found"))
                 .to_str()
                 .unwrap_or_default()
-        ));
-        s
+        )
     }
 }
 
