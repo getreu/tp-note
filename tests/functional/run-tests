@@ -307,7 +307,7 @@ fi
 
 ## Test 12:  Compilation --no-default-features
 
-cargo check --no-default-features >/dev/null 2>&1
+cargo check --no-default-features >/dev/null
 
 if [ $? -eq 0 ]
 then
@@ -320,7 +320,7 @@ fi
 
 
 ## Test 13:  Compilation --no-default-features --features renderer
-cargo check --no-default-features --features message-box >/dev/null 2>&1
+cargo check --no-default-features --features message-box >/dev/null
 
 if [ $? -eq 0 ]
 then
@@ -333,7 +333,7 @@ fi
 
 
 ## Test 14:  Compilation --no-default-features --features viewer
-cargo check --no-default-features --features viewer >/dev/null 2>&1
+cargo check --no-default-features --features viewer >/dev/null
 
 if [ $? -eq 0 ]
 then
@@ -346,7 +346,7 @@ fi
 
 
 ## Test 15:  Compilation --no-default-features --features message-box
-cargo check --no-default-features --features message-box >/dev/null 2>&1
+cargo check --no-default-features --features message-box >/dev/null
 
 if [ $? -eq 0 ]
 then
@@ -359,7 +359,7 @@ fi
 
 
 ## Test 16:  Compilation --no-default-features --features read-clipboard
-cargo check --no-default-features --features read-clipboard >/dev/null 2>&1
+cargo check --no-default-features --features read-clipboard >/dev/null
 
 if [ $? -eq 0 ]
 then
