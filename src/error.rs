@@ -35,7 +35,7 @@ pub enum WorkflowError {
     File(#[from] FileError),
 
     #[error(transparent)]
-    IO(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
 }
 
 /// Error related to the filesystem and to invoking external applications.
@@ -112,13 +112,13 @@ pub enum FileError {
 
     /// Remedy: check the configuration file variable `editor_args`.
     #[error(
-        "The external file editor did not terminate gracefully: {code}\n\
+        "The external application did not terminate gracefully: {code}\n\
          \n\
          Edit the variable `{var_name}` in Tp-Note's configuration file\n\
          and correct the following:\n\
          \t{args:?}"
     )]
-    TextEditorReturn {
+    ApplicationReturn {
         code: ExitStatus,
         var_name: String,
         args: Vec<String>,
@@ -126,16 +126,15 @@ pub enum FileError {
 
     /// Remedy: check the configuration file variable `editor_args`.
     #[error(
-        "None of the following external file editor\n\
-        applications can be found on your system:\n\
-        \t{editor_list:?}\n\
+        "None of the following external applications can be found on your system:\n\
+        \t{app_list:?}\n\
         \n\
-        Register some already installed file editor in the variable\n\
-        `{var_name}` in Tp-Note's configuration file  or \n\
-        install one of the above listed applications."
+        Install one of the listed applications on your system -or-\n\
+        register some already installed application in the variable \n\
+        `{var_name}` in Tp-Note's configuration file."
     )]
-    NoEditorFound {
-        editor_list: Vec<String>,
+    NoApplicationFound {
+        app_list: Vec<String>,
         var_name: String,
     },
 

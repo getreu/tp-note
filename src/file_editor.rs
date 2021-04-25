@@ -111,7 +111,7 @@ pub fn launch_editor(path: &Path) -> Result<(), FileError> {
                 let ecode = child.wait()?;
 
                 if !ecode.success() {
-                    return Err(FileError::TextEditorReturn {
+                    return Err(FileError::ApplicationReturn {
                         code: ecode,
                         var_name: if *RUNS_ON_CONSOLE {
                             "editor_console_args".to_string()
@@ -132,8 +132,8 @@ pub fn launch_editor(path: &Path) -> Result<(), FileError> {
     }
 
     if !executable_found {
-        return Err(FileError::NoEditorFound {
-            editor_list: executable_list
+        return Err(FileError::NoApplicationFound {
+            app_list: executable_list
                 .into_iter()
                 .map(|s| s.to_owned())
                 .collect::<Vec<String>>(),

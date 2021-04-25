@@ -1,8 +1,11 @@
 //! Launch the user's favourite web browser.
 
+extern crate webbrowser;
+
 use crate::config::CFG;
+use crate::error::FileError;
 use crate::process_ext::ChildExt;
-use anyhow::anyhow;
+use crate::viewer::error::ViewerError;
 use std::process::Command;
 use std::process::Stdio;
 use webbrowser::{open_browser, Browser};
@@ -11,7 +14,7 @@ use webbrowser::{open_browser, Browser};
 /// Launches a web browser and displays the note's HTML rendition.
 /// When not in _fall back mode: this function blocks until the user
 /// closes the browser window.
-pub fn launch_web_browser(url: &str) -> Result<(), anyhow::Error> {
+pub fn launch_web_browser(url: &str) -> Result<(), ViewerError> {
     if let Err(e) = launch_listed_broswer(url) {
         log::warn!("{}", e);
         log::warn!("As fall back workaround, trying to launch the system's default web browser.");
@@ -24,7 +27,7 @@ pub fn launch_web_browser(url: &str) -> Result<(), anyhow::Error> {
 /// Launches one be one, all browsers from the list `CFG.browser_args` until
 /// it finds an installed one. This blocks until the browser is closed by the
 /// user.
-pub fn launch_listed_broswer(url: &str) -> Result<(), anyhow::Error> {
+pub fn launch_listed_broswer(url: &str) -> Result<(), ViewerError> {
     let mut args_list = Vec::new();
     let mut executable_list = Vec::new();
 
@@ -105,15 +108,12 @@ pub fn launch_listed_broswer(url: &str) -> Result<(), anyhow::Error> {
                     executable_found = true;
                     break;
                 } else {
-                    return Err(anyhow!(
-                        "The web browser did not terminate gracefully: {}\n\
-                        \n\
-                        Edit the variable `browser_args` in Tp-Note's configuration file\n\
-                        and correct the following:\n\
-                        \t{:?}",
-                        ecode.to_string(),
-                        &*browser_args[i],
-                    ));
+                    return Err(FileError::ApplicationReturn {
+                        code: ecode,
+                        var_name: "browser_agrs".to_string(),
+                        args: (*browser_args[i]).to_vec(),
+                    }
+                    .into());
                 }
             }
             Err(e) => {
@@ -123,16 +123,14 @@ pub fn launch_listed_broswer(url: &str) -> Result<(), anyhow::Error> {
     }
 
     if !executable_found {
-        return Err(anyhow!(
-            "None of the following external web browser\n\
-             applications can be found on your system:\n\
-             \t{:?}\n\
-             \n\
-             Register some already installed web browser in the variable\n\
-             `browser_args` in Tp-Note's configuration file  or \n\
-             install one of the above listed applications.",
-            &executable_list,
-        ));
+        return Err(FileError::NoApplicationFound {
+            app_list: executable_list
+                .into_iter()
+                .map(|s| s.to_owned())
+                .collect::<Vec<String>>(),
+            var_name: "browser_args".to_string(),
+        }
+        .into());
     };
 
     Ok(())

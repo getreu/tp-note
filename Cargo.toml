@@ -52,11 +52,10 @@ default = ["read-clipboard", "message-box", "viewer", "renderer"]
 # Disable this feature if you do not want error message boxes.
 message-box = ["msgbox"]
 read-clipboard = ["clipboard"]
-viewer = ["notify", "httparse", "webbrowser", "rand", "httpdate", "percent-encoding", "url", "anyhow"]
+viewer = ["notify", "httparse", "webbrowser", "rand", "httpdate", "percent-encoding", "url"]
 renderer = ["pulldown-cmark", "rst_parser", "rst_renderer"]
 
 [dependencies]
-anyhow = { version = "1.0.40", optional = true }
 atty = "0.2.14"
 chrono = "0.4.19"
 clap = "2.33.3"

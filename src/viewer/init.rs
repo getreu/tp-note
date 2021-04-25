@@ -3,16 +3,15 @@
 use crate::config::ARGS;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::filename::MarkupLanguage;
+use crate::viewer::error::ViewerError;
 use crate::viewer::sse_server::manage_connections;
 use crate::viewer::watcher::FileWatcher;
-use crate::viewer::web_browser;
-use anyhow::anyhow;
+use crate::viewer::web_browser::launch_web_browser;
 use std::net::TcpListener;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
-use web_browser::launch_web_browser;
 
 /// This is where our loop back device is.
 /// The following is also possible, but binds us to IPv4:
@@ -33,7 +32,7 @@ impl Viewer {
         match Self::run2(doc) {
             Ok(_) => (),
             Err(e) => {
-                log::warn!("Viewer::run(): {:?}", e);
+                log::warn!("Viewer::run(): {}", e);
             }
         }
     }
@@ -41,7 +40,7 @@ impl Viewer {
     /// Set up the file watcher, start the event/html server and launch web browser.
     /// Returns when the user closes the web browser and/or file editor.
     #[inline]
-    fn run2(doc: PathBuf) -> Result<(), anyhow::Error> {
+    fn run2(doc: PathBuf) -> Result<(), ViewerError> {
         // Check if the master document (note file) has a known file extension.
         match MarkupLanguage::from(
             None,
@@ -53,9 +52,8 @@ impl Viewer {
             // A master document with this file extension is exempted from being viewed.
             // We quit here and do not start the viewer.
             MarkupLanguage::Unknown => return Ok(()),
-            // This should never happen, since non-Tp-Note files are never
-            // edited or viewed.
-            MarkupLanguage::None => return Err(anyhow!("can not view non Tp-Note files")),
+            // This should never happen, since non-Tp-Note files are viewed as text files.
+            MarkupLanguage::None => return Err(ViewerError::MarkupLanguageNone),
             // All other cases: start viewer.
             _ => (),
         };

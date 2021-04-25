@@ -1,7 +1,9 @@
 //! Implements the file watcher for the note viewer feature.
 
+extern crate notify;
+
 use crate::config::CFG;
-use anyhow::anyhow;
+use crate::viewer::error::ViewerError;
 use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 use std::path::PathBuf;
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -31,7 +33,7 @@ impl FileWatcher {
     pub fn new(
         file: PathBuf,
         event_tx_list: Arc<Mutex<Vec<Sender<()>>>>,
-    ) -> Result<Self, anyhow::Error> {
+    ) -> Result<Self, ViewerError> {
         let notify_period = CFG.viewer_notify_period;
         let (tx, rx) = channel();
         let mut watcher = watcher(tx, Duration::from_millis(notify_period))?;
@@ -56,7 +58,7 @@ impl FileWatcher {
     }
 
     /// Set up the file watcher and start the event/html server.
-    fn run2(&mut self) -> Result<(), anyhow::Error> {
+    fn run2(&mut self) -> Result<(), ViewerError> {
         loop {
             let evnt = self.rx.recv().unwrap();
             log::trace!("File watcher event: {:?}", evnt);
@@ -70,7 +72,6 @@ impl FileWatcher {
                     // Then we have to set up the watcher again.
                     self.watcher
                         .watch(path.clone(), RecursiveMode::NonRecursive)
-                        .map_err(|e| anyhow!(e))
                         .map(|_| Self::update(&self.event_tx_list))?
                 }
 
@@ -85,7 +86,7 @@ impl FileWatcher {
                 }
 
                 // Here we better restart the whole watcher again, if possible. Seems fatal.
-                DebouncedEvent::Rename(_path, _) => return Err(anyhow!("file was renamed")),
+                DebouncedEvent::Rename(_path, _) => return Err(ViewerError::LostRenamedFile),
 
                 // Dito.
                 DebouncedEvent::Error(err, _path) => return Err(err.into()),

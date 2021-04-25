@@ -1,13 +1,17 @@
 //! Server-sent-event server for the note viewer feature.
 //! This module contains also the web browser Javascript client code.
 
+extern crate parse_hyperlinks;
+extern crate percent_encoding;
+extern crate tera;
+extern crate url;
+
 use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::filter::TERA;
 use crate::note::Note;
+use crate::viewer::error::ViewerError;
 use crate::viewer::init::LOCALHOST;
-use anyhow::anyhow;
-use anyhow::Context;
 use parse_hyperlinks::iterator_html::{Hyperlink, InlineImage};
 use parse_hyperlinks::renderer::text_rawlinks2html;
 use percent_encoding::percent_decode_str;
@@ -71,7 +75,7 @@ pub fn manage_connections(
     listener: TcpListener,
     doc_path: PathBuf,
 ) {
-    // `unwarp()` is Ok here here, because we just did it before successfully.
+    // `unwrap()` is Ok here here, because we just did it before successfully.
     let sse_port = listener.local_addr().unwrap().port();
     // A list of in the not referenced local links to images or other documents.
     let doc_local_links = Arc::new(RwLock::new(HashSet::new()));
@@ -128,7 +132,7 @@ impl ServerThread {
         match Self::serve_events2(self) {
             Ok(_) => (),
             Err(e) => {
-                log::warn!("ServerThread::serve_events(): {:?}", e);
+                log::warn!("sse_server::serve_events(): {}", e);
             }
         }
     }
@@ -137,7 +141,7 @@ impl ServerThread {
     /// This method also serves the content page and
     /// the content error page.
     #[allow(clippy::needless_return)]
-    fn serve_events2(&mut self) -> Result<(), anyhow::Error> {
+    fn serve_events2(&mut self) -> Result<(), ViewerError> {
         // This is inspired by the Spook crate.
         // Read the request.
         let mut read_buffer = [0u8; 512];
@@ -158,15 +162,12 @@ impl ServerThread {
             // Try to parse the request.
             let mut headers = [httparse::EMPTY_HEADER; 16];
             let mut req = httparse::Request::new(&mut headers);
-            match req.parse(&buffer) {
-                Ok(_) => {
-                    // We are happy even with a partial parse as long as the method
-                    // and path are available.
-                    if let (Some(method), Some(path)) = (req.method, req.path) {
-                        break (method, path);
-                    }
-                }
-                Err(e) => return Err(anyhow!("can not parse request in buffer: {}", e)),
+            req.parse(&buffer)?;
+
+            // We are happy even with a partial parse as long as the method
+            // and path are available.
+            if let (Some(method), Some(path)) = (req.method, req.path) {
+                break (method, path);
             }
         };
         // End of input junk loop.
@@ -179,15 +180,14 @@ impl ServerThread {
         }
 
         // Decode the percent encoding in the URL path.
-        let path = percent_decode_str(path)
-            .decode_utf8()
-            .context(format!("error decoding URL: {}", path))?;
+        let path = percent_decode_str(path).decode_utf8()?;
 
         // Check the path.
         // Serve note rendition.
         if path == "/" {
-            let html = Self::render_content_and_error(&self)
-                .context("ServerThread::render_content(): ")?;
+            // Renders a content page or an error page for the current note.
+            // Tera template errors
+            let html = Self::render_content_and_error(&self)?;
 
             let response = format!(
                 "HTTP/1.1 200 OK\r\n\
@@ -274,7 +274,9 @@ impl ServerThread {
                     Err(e) => {
                         if e.kind() != ErrorKind::WouldBlock {
                             // Something bad happened.
-                            return Err(anyhow!("error reading stream: {}", e));
+                            return Err(ViewerError::StreamRead {
+                                source_str: e.to_string(),
+                            });
                         }
                     }
                 }
@@ -283,7 +285,7 @@ impl ServerThread {
                 let event = format!("event: {}\r\ndata\r\n\r\n", SSE_EVENT_NAME);
                 self.stream.write_all(event.as_bytes())?;
                 log::debug!(
-                    "ServerThread::serve_events2: 200 OK, served file:\n'{}'",
+                    "ServerThread::serve_events2: 200 OK, served event: '{}'",
                     SSE_EVENT_NAME
                 );
             }
@@ -293,7 +295,7 @@ impl ServerThread {
             // Strip `/` and convert to `Path`.
             let path = path
                 .strip_prefix("/")
-                .ok_or_else(|| anyhow!("URL path must start with `/`"))?;
+                .ok_or(ViewerError::UrlMustStartWithSlash)?;
             let reqpath = Path::new(OsStr::new(&path));
 
             // Condition 1.: Check if we serve this kind of extension
@@ -325,7 +327,8 @@ impl ServerThread {
             let doc_local_links = self
                 .doc_local_links
                 .read()
-                .map_err(|e| anyhow!("can not obtain RwLock for reading: {}", e))?;
+                .expect("Can not read `doc_local_links`! RwLock is poisoned. Panic.");
+
             if !doc_local_links.contains(Path::new(&reqpath)) {
                 log::warn!(
                     "ServerThread::serve_events2: target not referenced in note file, rejecting: \
@@ -340,9 +343,9 @@ impl ServerThread {
 
             // Concatenate document directory and URL path.
             let doc_path = self.doc_path.canonicalize()?;
-            let doc_dir = doc_path
-                .parent()
-                .ok_or_else(|| anyhow!("can not determine document directory"))?;
+
+            #[allow(clippy::or_fun_call)]
+            let doc_dir = doc_path.parent().unwrap_or(Path::new(""));
             // If `path` is absolute, it replaces `doc_dir`.
             let reqpath_abs = doc_dir.join(&reqpath);
 
@@ -400,7 +403,7 @@ impl ServerThread {
     }
 
     /// Write HTTP not found response.
-    fn write_not_found(&mut self, file_path: &Path) -> Result<(), anyhow::Error> {
+    fn write_not_found(&mut self, file_path: &Path) -> Result<(), ViewerError> {
         self.stream.write_all(b"HTTP/1.1 404 Not Found\r\n\r\n")?;
         log::debug!(
             "ServerThread::serve_events2: 404 \"Not found served:\"\n'{}'",
@@ -411,7 +414,7 @@ impl ServerThread {
 
     #[inline]
     /// Renders the error page with the `VIEWER_ERROR_TMPL`.
-    fn render_content_and_error(&self) -> Result<String, anyhow::Error> {
+    fn render_content_and_error(&self) -> Result<String, Box<dyn std::error::Error>> {
         // Deserialize.
         let js = format!(
             "{}{}:{}{}",
@@ -429,50 +432,41 @@ impl ServerThread {
         // Render.
         // First decompose header and body, then deserialize header.
         match Note::from_existing_note(&self.doc_path)
-            .context("Error in YAML file header:")
             // Now, try to render to html.
             .and_then(|mut note| {
                 note.render_content(file_path_ext, &CFG.viewer_rendition_tmpl, &js)
-                    .context("Can not render the note's content:")
             })
             // Now scan the HTML result for links and store them in a HashMap accessible to all threads.
             .and_then(|html| {
                 let mut doc_local_links = self
                     .doc_local_links
                     .write()
-                    .map_err(|e| anyhow!("Can not obtain RwLock for writing: {}", e))?;
+                    .expect("Can not write `doc_local_links`. RwLock is poisoned. Panic.");
 
                 // Populate the list from scratch.
                 doc_local_links.clear();
 
                 // Search for hyperlinks in the HTML rendition of this note.
-                for ((_, _, _), (name, link, _)) in Hyperlink::new(&html) {
+                for ((_, _, _), (_, link, _)) in Hyperlink::new(&html) {
                     // We skip absolute URLs.
                     if let Ok(url) = Url::parse(&link) {
                         if url.has_host() {
                             continue;
                         };
                     };
-                    let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8().context(
-                        format!(
-                            "Can not decode URL in hyperlink '{}':\n\n{}\n",
-                            &name, &link
-                        ),
-                    )?);
+                    let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8()?);
                     // Save the hyperlinks for other threads to check against.
                     doc_local_links.insert(path);
                 }
                 // Search for image links in the HTML rendition of this note.
-                for ((_, _, _), (name, link)) in InlineImage::new(&html) {
+                for ((_, _, _), (_, link)) in InlineImage::new(&html) {
                     // We skip absolute URLs.
                     if let Ok(url) = Url::parse(&link) {
                         if url.has_host() {
                             continue;
                         };
                     };
-                    let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8().context(
-                        format!("Can not decode URL in image '{}':\n\n{}\n", &name, &link),
-                    )?);
+                    let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8()?);
                     // Save the image links for other threads to check against.
                     doc_local_links.insert(path);
                 }
@@ -504,7 +498,7 @@ impl ServerThread {
             Err(e) => {
                 // Render error page providing all information we have.
                 let mut context = tera::Context::new();
-                let err = format!("{}\n{}", &e, &e.root_cause());
+                let err = e.to_string();
                 context.insert("noteError", &err);
                 context.insert("file", &self.doc_path.to_str().unwrap_or_default());
                 // Java Script

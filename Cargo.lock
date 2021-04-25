@@ -2061,7 +2061,6 @@ dependencies = [
 name = "tp-note"
 version = "1.12.6"
 dependencies = [
- "anyhow",
  "atty",
  "chrono",
  "clap",
