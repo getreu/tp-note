@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.12.6 | Tp-Note documentation
+% TP-NOTE(1) Version 1.12.7 | Tp-Note documentation
 
 
 # NAME
@@ -670,7 +670,7 @@ starting with '`tmpl_*`' are _Tera-Template_-strings (see:
 _Tp-Note_ captures and stores its environment in _Tera-variables_. For example,
 the variable '`{{ path }}`' is initialized with the note's target
 directory. The variable '`{{ clipboard }}`' contains the content of the
-clipboard. To learn more about variables, launch _Tp-Note_ with the 
+clipboard. To learn more about variables, launch _Tp-Note_ with the
 '`--debug trace`' option and observe what information it captures from its
 environment.
 
@@ -962,7 +962,7 @@ In this setup _Tp-Note_ launches the terminal emulator which is configured
 to launch the text editor as child process. Both should should not fork when they
 start (see above).
 
-Examples, adjust to your needs and taste: 
+Examples, adjust to your needs and taste:
 
 * _Neovim_ in _Xfce4-Terminal_:
 
@@ -999,7 +999,7 @@ Examples, adjust to your needs and taste:
   editor_args = [
       [
         'xterm',
-        '-fa', 
+        '-fa',
         'DejaVu Sans Mono',
         '-fs',
         '12',

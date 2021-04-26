@@ -1643,9 +1643,9 @@ dependencies = [
 
 [[package]]
 name = "sanitize-filename-reader-friendly"
-version = "1.1.1"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8fb75e41de0b28eff4b40d5fb9946a2b56ff0049f95bbcbd7e464b12eec0ea4"
+checksum = "0bdc83ec41dd03db391a2012a3455ea0abb22c996d586204ca1b1842c2d3732e"
 
 [[package]]
 name = "semver"
@@ -2059,7 +2059,7 @@ dependencies = [
 
 [[package]]
 name = "tp-note"
-version = "1.12.6"
+version = "1.12.7"
 dependencies = [
  "atty",
  "chrono",
