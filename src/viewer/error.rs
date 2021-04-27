@@ -23,8 +23,12 @@ pub enum ViewerError {
     UrlMustStartWithSlash,
 
     /// Network error.
-    #[error("Can not read from TCP stream.")]
-    StreamRead { source_str: String },
+    #[error("Can not read TCP stream: {error}")]
+    StreamRead { error: std::io::Error },
+
+    /// Network error.
+    #[error("Can not parse HTTP header in TCP stream: {source_str}")]
+    StreamParse { source_str: String },
 
     /// Remedy: check `browser_args` configuration file variable.
     #[error("Error executing external application.")]

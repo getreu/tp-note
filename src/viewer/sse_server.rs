@@ -16,10 +16,11 @@ use parse_hyperlinks::iterator_html::{Hyperlink, InlineImage};
 use parse_hyperlinks::renderer::text_rawlinks2html;
 use percent_encoding::percent_decode_str;
 use std::collections::HashSet;
-use std::ffi::OsStr;
 use std::fs;
 use std::io::{ErrorKind, Read, Write};
-use std::net::Shutdown;
+use std::net::Ipv4Addr;
+use std::net::SocketAddr;
+use std::net::SocketAddrV4;
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
 use std::path::PathBuf;
@@ -27,8 +28,6 @@ use std::str;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
-use std::thread::sleep;
-use std::time::Duration;
 use std::time::SystemTime;
 use tera::Tera;
 use url::Url;
@@ -61,14 +60,8 @@ pub const FAVICON: &[u8] = include_bytes!("favicon.ico");
 /// The path where the favicon is requested.
 pub const FAVICON_PATH: &str = "/favicon.ico";
 
-/// Chrome and Edge under Windows don't like when the server closes
-/// the TCP connection too early and does not wait for ACK.
-/// Firefox does not need this.
-/// The problem was observed in 4/2020. Maybe some later version
-/// does not require this hack.
-/// It seems 100ms is enough, we chose a bit more to be sure. This keeps the
-/// thread a bit longer alive. The unit is milliseconds.
-const SERVER_EXTRA_KEEP_ALIVE: u64 = 900;
+/// Time in seconds the browsers should keep the delivered content in cache.
+const MAX_AGE: u64 = 600;
 
 pub fn manage_connections(
     event_tx_list: Arc<Mutex<Vec<Sender<()>>>>,
@@ -88,7 +81,7 @@ pub fn manage_connections(
             thread::spawn(move || {
                 let mut st =
                     ServerThread::new(event_rx, stream, sse_port, doc_path, doc_local_links);
-                st.serve_events()
+                st.serve_connection()
             });
         }
     }
@@ -126,288 +119,350 @@ impl ServerThread {
         }
     }
 
-    /// Wrapper for `serve_event2()` that prints
-    /// errors as log messages on `stderr`.
-    fn serve_events(&mut self) {
-        match Self::serve_events2(self) {
+    /// Wrapper for `serve_connection2()` that logs
+    /// errors as log message warnings.
+    fn serve_connection(&mut self) {
+        match Self::serve_connection2(self) {
             Ok(_) => (),
             Err(e) => {
-                log::warn!("sse_server::serve_events(): {}", e);
+                log::debug!(
+                    "TCP peer port {}: Closed connection because of error: {}",
+                    self.stream
+                        .peer_addr()
+                        .unwrap_or(SocketAddr::V4(SocketAddrV4::new(
+                            Ipv4Addr::new(0, 0, 0, 0),
+                            0
+                        )))
+                        .port(),
+                    e
+                );
             }
         }
     }
 
-    /// HTTP server: serves events via the specified subscriber stream.
-    /// This method also serves the content page and
-    /// the content error page.
+    /// HTTP server: serves content and events via the specified subscriber stream.
+    #[inline]
     #[allow(clippy::needless_return)]
-    fn serve_events2(&mut self) -> Result<(), ViewerError> {
-        // This is inspired by the Spook crate.
-        // Read the request.
-        let mut read_buffer = [0u8; 512];
-        let mut buffer = Vec::new();
-        let (method, path) = loop {
-            // Read the request, or part thereof.
-            match self.stream.read(&mut read_buffer) {
-                Ok(0) | Err(_) => {
-                    // Connection closed or error.
-                    return Ok(());
-                }
-                Ok(n) => {
-                    // Successful read.
-                    buffer.extend_from_slice(&read_buffer[..n]);
-                }
-            }
-
-            // Try to parse the request.
-            let mut headers = [httparse::EMPTY_HEADER; 16];
-            let mut req = httparse::Request::new(&mut headers);
-            req.parse(&buffer)?;
-
-            // We are happy even with a partial parse as long as the method
-            // and path are available.
-            if let (Some(method), Some(path)) = (req.method, req.path) {
-                break (method, path);
-            }
-        };
-        // End of input junk loop.
-
-        // The only supported request method for SSE is GET.
-        if method != "GET" {
-            self.stream
-                .write_all(b"HTTP/1.1 405 Method Not Allowed\r\n\r\n")?;
-            return Ok(());
-        }
-
-        // Decode the percent encoding in the URL path.
-        let path = percent_decode_str(path).decode_utf8()?;
-
-        // Check the path.
-        // Serve note rendition.
-        if path == "/" {
-            // Renders a content page or an error page for the current note.
-            // Tera template errors
-            let html = Self::render_content_and_error(&self)?;
-
-            let response = format!(
-                "HTTP/1.1 200 OK\r\n\
-            Cache-Control: no-cache\r\n\
-            Date: {}\r\n\
-            Content-Type: text/html; charset=utf-8\r\n\
-            Content-Length: {}\r\n\r\n",
-                httpdate::fmt_http_date(SystemTime::now()),
-                html.len()
-            );
-            self.stream.write_all(response.as_bytes())?;
-            self.stream.write_all(html.as_bytes())?;
-            // We have been subscribed to events beforehand. As we drop the
-            // receiver now, `viewer::update()` will remove us from the list soon.
-            log::debug!(
-                "ServerThread::serve_events2: 200 OK, served file:\n'{}'",
-                self.doc_path.to_str().unwrap_or_default().to_string()
-            );
-            // Only Chrome and Edge on Windows need this extra time to ACK the TCP
-            // connection.
-            sleep(Duration::from_millis(SERVER_EXTRA_KEEP_ALIVE));
-            self.stream.shutdown(Shutdown::Both)?;
-            return Ok(());
-
-        // Serve image.
-        } else if path == FAVICON_PATH {
-            let response = format!(
-                "HTTP/1.1 200 OK\r\n\
-            Cache-Control: no-cache\r\n\
-            Date: {}\r\n\
-            Content-Type: image/x-icon\r\n\
-            Content-Length: {}\r\n\r\n",
-                httpdate::fmt_http_date(SystemTime::now()),
-                FAVICON.len(),
-            );
-            self.stream.write_all(response.as_bytes())?;
-            self.stream.write_all(FAVICON)?;
-            log::debug!(
-                "ServerThread::serve_events2: 200 OK, served file:\n'{}'",
-                FAVICON_PATH
-            );
-            // Only Chrome and Edge on Windows need this extra time to ACK the TCP
-            // connection.
-            sleep(Duration::from_millis(SERVER_EXTRA_KEEP_ALIVE));
-            self.stream.shutdown(Shutdown::Both)?;
-            return Ok(());
-
-        // Serve update events.
-        } else if path == EVENT_PATH {
-            // This is connection for server sent events.
-            // Declare SSE capability and allow cross-origin access.
-            let response = format!(
-                "\
-                HTTP/1.1 200 OK\r\n\
-                Access-Control-Allow-Origin: *\r\n\
-                Cache-Control: no-cache\r\n\
-                Content-Type: text/event-stream\r\n\
-                Date: {}\r\n\
-                \r\n",
-                httpdate::fmt_http_date(SystemTime::now()),
-            );
-            self.stream.write_all(response.as_bytes())?;
-
-            // Make the stream non-blocking to be able to detect whether the
-            // connection was closed by the client.
-            self.stream.set_nonblocking(true)?;
-
-            // Serve events until the connection is closed.
-            // Keep in mind that the client will often close
-            // the request after the first event if the event
-            // is used to trigger a page refresh, so try to eagerly
-            // detect closed connections.
-            loop {
-                // Wait for the next update.
-                self.rx.recv()?;
-
-                // Detect whether the connection was closed.
+    fn serve_connection2(&mut self) -> Result<(), ViewerError> {
+        log::trace!(
+            "TCP peer port {}: New incoming TCP connection.",
+            self.stream.peer_addr()?.port(),
+        );
+        'tcp_connection: loop {
+            // This is inspired by the Spook crate.
+            // Read the request.
+            let mut read_buffer = [0u8; 512];
+            let mut buffer = Vec::new();
+            let (method, path) = 'assemble_tcp_chunks: loop {
+                // Read the request, or part thereof.
                 match self.stream.read(&mut read_buffer) {
                     Ok(0) => {
-                        // Connection closed.
-                        return Ok(());
-                    }
-                    Ok(_) => {}
-                    Err(e) => {
-                        if e.kind() != ErrorKind::WouldBlock {
-                            // Something bad happened.
-                            return Err(ViewerError::StreamRead {
-                                source_str: e.to_string(),
-                            });
-                        }
-                    }
-                }
-
-                // Send event.
-                let event = format!("event: {}\r\ndata\r\n\r\n", SSE_EVENT_NAME);
-                self.stream.write_all(event.as_bytes())?;
-                log::debug!(
-                    "ServerThread::serve_events2: 200 OK, served event: '{}'",
-                    SSE_EVENT_NAME
-                );
-            }
-
-        // Serve all other documents.
-        } else {
-            // Strip `/` and convert to `Path`.
-            let path = path
-                .strip_prefix("/")
-                .ok_or(ViewerError::UrlMustStartWithSlash)?;
-            let reqpath = Path::new(OsStr::new(&path));
-
-            // Condition 1.: Check if we serve this kind of extension
-            let extension = &*reqpath
-                .extension()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default();
-            // Find the corresponding mime type of this file extension.
-            let mime_type = match VIEWER_SERVED_MIME_TYPES_HMAP.get(&*extension) {
-                Some(mt) => mt,
-                None => {
-                    // Reject all files with extensions not listed.
-                    log::warn!(
-                        "ServerThread::serve_events2: \
-                            files with extension '{}' are not served. Rejecting: '{}'",
-                        reqpath
-                            .extension()
-                            .unwrap_or_default()
-                            .to_str()
-                            .unwrap_or_default(),
-                        reqpath.to_str().unwrap_or_default(),
-                    );
-                    return self.write_not_found(&reqpath);
-                }
-            };
-
-            // Condition 2.: Only serve files that explicitly appear in `self.doc_local_links`.
-            let doc_local_links = self
-                .doc_local_links
-                .read()
-                .expect("Can not read `doc_local_links`! RwLock is poisoned. Panic.");
-
-            if !doc_local_links.contains(Path::new(&reqpath)) {
-                log::warn!(
-                    "ServerThread::serve_events2: target not referenced in note file, rejecting: \
-                            '{}'",
-                    reqpath.to_str().unwrap_or_default()
-                );
-                drop(doc_local_links);
-                return self.write_not_found(&reqpath);
-            }
-            // Release the `RwLockReadGuard`.
-            drop(doc_local_links);
-
-            // Concatenate document directory and URL path.
-            let doc_path = self.doc_path.canonicalize()?;
-
-            #[allow(clippy::or_fun_call)]
-            let doc_dir = doc_path.parent().unwrap_or(Path::new(""));
-            // If `path` is absolute, it replaces `doc_dir`.
-            let reqpath_abs = doc_dir.join(&reqpath);
-
-            // Condition 3.: Only serve resources in the same or under the document's directory.
-            match reqpath_abs.canonicalize() {
-                Ok(p) => {
-                    if !p.starts_with(doc_dir) {
-                        log::warn!(
-                            "ServerThread::serve_events2:\
-                                file '{}' is not in directory '{}', rejecting.",
-                            reqpath.to_str().unwrap_or_default(),
-                            doc_dir.to_str().unwrap_or_default()
+                        log::trace!(
+                            "TCP peer port {}: Connection closed by peer.",
+                            self.stream.peer_addr()?.port()
                         );
-                        return self.write_not_found(&reqpath);
+                        // Connection by peer.
+                        break 'tcp_connection;
+                    }
+                    Err(e) => {
+                        // Connection closed or error.
+                        return Err(ViewerError::StreamRead { error: e });
+                    }
+                    Ok(n) => {
+                        // Successful read.
+                        buffer.extend_from_slice(&read_buffer[..n]);
+                        log::trace!(
+                            "TCP peer port {}: chunk: {:?} ...",
+                            self.stream.peer_addr()?.port(),
+                            std::str::from_utf8(&read_buffer)
+                                .unwrap_or_default()
+                                .chars()
+                                .take(60)
+                                .collect::<String>()
+                        );
                     }
                 }
-                Err(e) => {
-                    log::warn!(
-                        "ServerThread::serve_events2: can not access file: \
-                            '{}': {}.",
-                        reqpath_abs.to_str().unwrap_or_default(),
-                        e
-                    );
-                }
-            };
 
-            // Condition 4.: Is the file readable?
-            if let Ok(file_content) = fs::read(&reqpath_abs) {
-                let response = format!(
-                    "HTTP/1.1 200 OK\r\n\
-                    Cache-Control: no-cache\r\n\
-                    Date: {}\r\n\
-                    Content-Type: {}\r\n\
-                    Content-Length: {}\r\n\r\n",
-                    httpdate::fmt_http_date(SystemTime::now()),
-                    mime_type,
-                    file_content.len(),
-                );
-                self.stream.write_all(response.as_bytes())?;
-                self.stream.write_all(&file_content)?;
-                log::debug!(
-                    "ServerThread::serve_events2: 200 OK, served file:\n'{}'",
-                    reqpath_abs.to_str().unwrap_or_default()
-                );
-                // Only Chrome and Edge on Windows need this extra time to ACK the TCP
-                // connection.
-                sleep(Duration::from_millis(SERVER_EXTRA_KEEP_ALIVE));
-                self.stream.shutdown(Shutdown::Both)?;
-                return Ok(());
-            } else {
-                return self.write_not_found(&reqpath);
+                // Try to parse the request.
+                let mut headers = [httparse::EMPTY_HEADER; 16];
+                let mut req = httparse::Request::new(&mut headers);
+                let res = req.parse(&buffer)?;
+                if res.is_partial() {
+                    continue 'assemble_tcp_chunks;
+                }
+
+                // Check if the HTTP header is complete and valid.
+                if res.is_complete() {
+                    if let (Some(method), Some(path)) = (req.method, req.path) {
+                        // This is the only regular exit.
+                        break 'assemble_tcp_chunks (method, path);
+                    }
+                };
+                // We quit with error. There is nothing more we can do here.
+                return Err(ViewerError::StreamParse {
+                    source_str: std::str::from_utf8(&*buffer)
+                        .unwrap_or_default()
+                        .chars()
+                        .take(60)
+                        .collect::<String>(),
+                });
+            };
+            // End of input chunk loop.
+
+            // The only supported request method for SSE is GET.
+            if method != "GET" {
+                self.respond_method_not_allowed(&method)?;
+                continue 'tcp_connection;
             }
-        };
-        // End of serve all other documents.
+
+            // Decode the percent encoding in the URL path.
+            let path = percent_decode_str(path).decode_utf8()?;
+
+            // Check the path.
+            // Serve note rendition.
+            match &*path {
+                // The client wants the rendered note.
+                "/" => {
+                    // Renders a content page or an error page for the current note.
+                    // Tera template errors.
+                    // The contains Javascript code to subscribe to `EVENT_PATH`, which
+                    // reloads this document on request of `self.rx`.
+                    let html = Self::render_content_and_error(&self)?;
+
+                    self.respond_file_ok(Path::new("/"), "text/html", &html.as_bytes())?;
+                    // `self.rx` was not used and is dropped here.
+                }
+
+                // This is a connection for Server-Sent-Events.
+                EVENT_PATH => {
+                    // Serve event response, but keep the connection.
+                    self.respond_event_ok()?;
+                    // Make the stream non-blocking to be able to detect whether the
+                    // connection was closed by the client.
+                    self.stream.set_nonblocking(true)?;
+
+                    // Serve events until the connection is closed.
+                    // Keep in mind that the client will often close
+                    // the request after the first event if the event
+                    // is used to trigger a page refresh, so try to eagerly
+                    // detect closed connections.
+                    '_event: loop {
+                        // Wait for the next update.
+                        self.rx.recv()?;
+
+                        // Detect whether the connection was closed.
+                        match self.stream.read(&mut read_buffer) {
+                            // Connection closed.
+                            Ok(0) => {
+                                log::trace!(
+                                    "TCP peer port {}: Event connection closed by peer.",
+                                    self.stream.peer_addr()?.port()
+                                );
+                                // Our peer closed this connection, we finish also then.
+                                break 'tcp_connection;
+                            }
+                            // Connection alive.
+                            Ok(_) => {}
+                            // `WouldBlock` is OK, all others not.
+                            Err(e) => {
+                                if e.kind() != ErrorKind::WouldBlock {
+                                    // Something bad happened.
+                                    return Err(ViewerError::StreamRead { error: e });
+                                }
+                            }
+                        }
+
+                        // Send event.
+                        let event = format!("event: {}\r\ndata\r\n\r\n", SSE_EVENT_NAME);
+                        self.stream.write_all(event.as_bytes())?;
+                        log::debug!(
+                            "TCP peer port {}: ... pushed '{}' in open event connection to client.",
+                            self.stream.peer_addr()?.port(),
+                            SSE_EVENT_NAME
+                        );
+                    }
+                }
+
+                // Serve icon.
+                FAVICON_PATH => {
+                    self.respond_file_ok(Path::new(&FAVICON_PATH), "image/x-icon", &FAVICON)?;
+                }
+
+                // Serve all other documents.
+                _ => {
+                    // Strip `/` and convert to `Path`.
+                    let path = path
+                        .strip_prefix("/")
+                        .ok_or(ViewerError::UrlMustStartWithSlash)?;
+                    let reqpath = Path::new(&path);
+
+                    // Condition 1.: Check if we serve this kind of extension
+                    let extension = &*reqpath
+                        .extension()
+                        .unwrap_or_default()
+                        .to_str()
+                        .unwrap_or_default();
+                    // Find the corresponding mime type of this file extension.
+                    let mime_type = match VIEWER_SERVED_MIME_TYPES_HMAP.get(&*extension) {
+                        Some(mt) => mt,
+                        None => {
+                            // Reject all files with extensions not listed.
+                            log::warn!(
+                                "TCP peer port {}: \
+                         files with extension '{}' are not served. Rejecting: '{}'",
+                                self.stream.peer_addr()?.port(),
+                                reqpath
+                                    .extension()
+                                    .unwrap_or_default()
+                                    .to_str()
+                                    .unwrap_or_default(),
+                                reqpath.to_str().unwrap_or_default(),
+                            );
+                            self.respond_not_found(&reqpath)?;
+                            continue 'tcp_connection;
+                        }
+                    };
+
+                    // Condition 2.: Only serve files that explicitly appear in `self.doc_local_links`.
+                    let doc_local_links = self
+                        .doc_local_links
+                        .read()
+                        .expect("Can not read `doc_local_links`! RwLock is poisoned. Panic.");
+
+                    if !doc_local_links.contains(Path::new(&reqpath)) {
+                        log::warn!(
+                            "TCP peer port {}: target not referenced in note file, rejecting: '{}'",
+                            self.stream.peer_addr()?.port(),
+                            reqpath.to_str().unwrap_or_default()
+                        );
+                        drop(doc_local_links);
+                        self.respond_not_found(&reqpath)?;
+                        continue 'tcp_connection;
+                    }
+                    // Release the `RwLockReadGuard`.
+                    drop(doc_local_links);
+
+                    // Concatenate document directory and URL path.
+                    let doc_path = self.doc_path.canonicalize()?;
+
+                    #[allow(clippy::or_fun_call)]
+                    let doc_dir = doc_path.parent().unwrap_or(Path::new(""));
+                    // If `path` is absolute, it replaces `doc_dir`.
+                    let reqpath_abs = doc_dir.join(&reqpath);
+
+                    // Condition 3.: Only serve resources in the same or under the document's directory.
+                    match reqpath_abs.canonicalize() {
+                        Ok(p) => {
+                            if !p.starts_with(doc_dir) {
+                                log::warn!(
+                                    "TCP peer port {}:\
+                                file '{}' is not in directory '{}', rejecting.",
+                                    self.stream.peer_addr()?.port(),
+                                    reqpath.to_str().unwrap_or_default(),
+                                    doc_dir.to_str().unwrap_or_default()
+                                );
+                                self.respond_not_found(&reqpath)?;
+                                continue 'tcp_connection;
+                            }
+                        }
+                        Err(e) => {
+                            log::warn!(
+                                "TCP peer port {}: can not access file: \
+                            '{}': {}.",
+                                self.stream.peer_addr()?.port(),
+                                reqpath_abs.to_str().unwrap_or_default(),
+                                e
+                            );
+                            self.respond_not_found(&reqpath)?;
+                            continue 'tcp_connection;
+                        }
+                    };
+
+                    // Condition 4.: Is the file readable?
+                    if let Ok(file_content) = fs::read(&reqpath_abs) {
+                        self.respond_file_ok(&Path::new(&path), mime_type, &*file_content)?;
+                    } else {
+                        self.respond_not_found(&reqpath)?;
+                    }
+                }
+            }; // end of match path
+        } // Goto 'tcp_connection loop start
+
+        // We came here because the client closed this connection.
+        Ok(())
+    }
+
+    /// Write HTTP event response.
+    fn respond_event_ok(&mut self) -> Result<(), ViewerError> {
+        // Declare SSE capability and allow cross-origin access.
+        let response = format!(
+            "\
+             HTTP/1.1 200 OK\r\n\
+             Date: {}\r\n\
+             Access-Control-Allow-Origin: *\r\n\
+             Cache-Control: no-cache\r\n\
+             Content-Type: text/event-stream\r\n\
+             \r\n",
+            httpdate::fmt_http_date(SystemTime::now()),
+        );
+        self.stream.write_all(response.as_bytes())?;
+
+        log::debug!(
+            "TCP peer port {}: 200 OK, served event header, \
+            keeping event connection open ...",
+            self.stream.peer_addr()?.port(),
+        );
+        Ok(())
+    }
+
+    /// Write HTTP OK response with content.
+    fn respond_file_ok(
+        &mut self,
+        reqpath: &Path,
+        mime_type: &str,
+        content: &[u8],
+    ) -> Result<(), ViewerError> {
+        let response = format!(
+            "HTTP/1.1 200 OK\r\n\
+             Date: {}\r\n\
+             Cache-Control: private, max-age={}\r\n\
+             Content-Type: {}\r\n\
+             Content-Length: {}\r\n\r\n",
+            httpdate::fmt_http_date(SystemTime::now()),
+            MAX_AGE.to_string(),
+            mime_type,
+            content.len(),
+        );
+        self.stream.write_all(response.as_bytes())?;
+        self.stream.write_all(&content)?;
+        log::debug!(
+            "TCP peer port {}: 200 OK, served file: '{}'",
+            self.stream.peer_addr()?.port(),
+            reqpath.to_str().unwrap_or_default()
+        );
+
+        Ok(())
     }
 
     /// Write HTTP not found response.
-    fn write_not_found(&mut self, file_path: &Path) -> Result<(), ViewerError> {
+    fn respond_not_found(&mut self, reqpath: &Path) -> Result<(), ViewerError> {
         self.stream.write_all(b"HTTP/1.1 404 Not Found\r\n\r\n")?;
         log::debug!(
-            "ServerThread::serve_events2: 404 \"Not found served:\"\n'{}'",
-            file_path.to_str().unwrap_or_default()
+            "TCP peer port {}: 404 \"Not found\" served: '{}'",
+            self.stream.peer_addr()?.port(),
+            reqpath.to_str().unwrap_or_default()
+        );
+        Ok(())
+    }
+
+    /// Write HTTP not found response.
+    fn respond_method_not_allowed(&mut self, path: &str) -> Result<(), ViewerError> {
+        self.stream
+            .write_all(b"HTTP/1.1 405 Method Not Allowed\r\n\r\n")?;
+        log::debug!(
+            "TCP peer port {}: 405 \"Method Not Allowed\" served: '{}'",
+            self.stream.peer_addr()?.port(),
+            path,
         );
         Ok(())
     }
@@ -477,13 +532,12 @@ impl ServerThread {
                     );
                 } else {
                     log::info!(
-                        "Viewer: referenced and served local files:\n{}",
+                        "Viewer: referenced and allowed to be served local files: {}",
                         doc_local_links
                         .iter()
                         .map(|p|{
-                            let mut s = "*   ".to_string();
+                            let mut s = "\n    '".to_string();
                             s.push_str(p.as_path().to_str().unwrap_or_default());
-                            s.push('\n');
                             s
                         }).collect::<String>()
                     );
