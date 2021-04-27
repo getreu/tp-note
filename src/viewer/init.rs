@@ -83,16 +83,12 @@ impl Viewer {
                 .collect::<String>()
         );
 
-        // Launch a background HTTP server thread to manage server-sent events subscribers
+        // Launch a background HTTP server thread to manage Server-Sent-Event subscribers
         // and to serve the rendered html.
-        let event_tx_list = {
-            let doc_path = doc.clone();
-            let event_tx_list = Arc::new(Mutex::new(Vec::new()));
-            let event_tx_list_clone = event_tx_list.clone();
-            thread::spawn(move || manage_connections(event_tx_list_clone, listener, doc_path));
-
-            event_tx_list
-        };
+        let event_tx_list = Arc::new(Mutex::new(Vec::new()));
+        let doc_clone = doc.clone();
+        let event_tx_list_clone = event_tx_list.clone();
+        thread::spawn(move || manage_connections(event_tx_list_clone, listener, doc_clone));
 
         // Launch the file watcher thread.
         // Send a signal whenever the file is modified. Without error, this thread runs as long as
