@@ -111,12 +111,12 @@ impl Note<'_> {
         );
 
         log::trace!(
-            "Available substitution variables for content template:\n{:#?}\n",
+            "Available substitution variables for content template:\n{:#?}",
             *context
         );
-        log::trace!("Applying content template:\n{}\n", template);
-        log::trace!(
-            "Rendered content template:\n---\n{}\n---\n{}\n\n",
+        log::trace!("Applying content template:\n{}", template);
+        log::debug!(
+            "Rendered content template:\n---\n{}\n---\n{}",
             content.header,
             content.body.trim()
         );
@@ -255,10 +255,10 @@ impl Note<'_> {
     /// its front matter.
     pub fn render_filename(&self, template: &str) -> Result<PathBuf, NoteError> {
         log::trace!(
-            "Available substitution variables for the filename template:\n{:#?}\n",
+            "Available substitution variables for the filename template:\n{:#?}",
             *self.context
         );
-        log::trace!("Applying the filename template:\n{}\n\n", template);
+        log::trace!("Applying the filename template:\n{}", template);
 
         // render template
         let mut fqfn = self.context.fqpn.to_owned();
@@ -268,7 +268,7 @@ impl Note<'_> {
 
             tera.render_str(template, &self.context)
                 .map(|filename| {
-                    log::trace!("Rendered the filename template:\n{:?}\n\n", filename);
+                    log::debug!("Rendered filename template:\n{:?}", filename);
                     filename
                 })?
                 .trim()

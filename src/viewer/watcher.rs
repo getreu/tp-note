@@ -100,6 +100,9 @@ impl FileWatcher {
         let tx_list = &mut *event_tx_list.lock().unwrap();
         *tx_list = tx_list.drain(..).filter(|tx| tx.send(()).is_ok()).collect();
 
-        log::debug!("Viewer::update(): {} subscribers updated.", tx_list.len());
+        log::debug!(
+            "FileWatcher::update(): {} subscribers updated.",
+            tx_list.len()
+        );
     }
 }
