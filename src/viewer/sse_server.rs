@@ -71,18 +71,32 @@ pub fn manage_connections(
     // `unwrap()` is Ok here here, because we just did it before successfully.
     let sse_port = listener.local_addr().unwrap().port();
     // A list of in the not referenced local links to images or other documents.
+    // Every thread gets an (ARC) reference to it.
     let doc_local_links = Arc::new(RwLock::new(HashSet::new()));
+    // We use an ARC to count the number of running threads.
+    let conn_counter = Arc::new(());
+
     for stream in listener.incoming() {
-        if let Ok(stream) = stream {
-            let (event_tx, event_rx) = channel();
-            event_tx_list.lock().unwrap().push(event_tx);
-            let doc_path = doc_path.clone();
-            let doc_local_links = doc_local_links.clone();
-            thread::spawn(move || {
-                let mut st =
-                    ServerThread::new(event_rx, stream, sse_port, doc_path, doc_local_links);
-                st.serve_connection()
-            });
+        match stream {
+            Ok(stream) => {
+                let (event_tx, event_rx) = channel();
+                event_tx_list.lock().unwrap().push(event_tx);
+                let doc_path = doc_path.clone();
+                let doc_local_links = doc_local_links.clone();
+                let conn_counter = conn_counter.clone();
+                thread::spawn(move || {
+                    let mut st = ServerThread::new(
+                        event_rx,
+                        stream,
+                        sse_port,
+                        doc_path,
+                        doc_local_links,
+                        conn_counter,
+                    );
+                    st.serve_connection()
+                });
+            }
+            Err(e) => log::warn!("TCP connection failed: {}", e),
         }
     }
 }
@@ -97,8 +111,12 @@ struct ServerThread {
     sse_port: u16,
     /// Local file system path of the note document.
     doc_path: PathBuf,
-    /// A list of in the not referenced local links to images or other documents.
+    /// A list of in the not referenced local links to images or other
+    /// documents.
     doc_local_links: Arc<RwLock<HashSet<PathBuf>>>,
+    /// We do not store anything here, instead we use the ARC pointing to
+    /// `conn_counter` to count the number of instances of `ServerThread`.
+    conn_counter: Arc<()>,
 }
 
 impl ServerThread {
@@ -109,6 +127,7 @@ impl ServerThread {
         sse_port: u16,
         doc_path: PathBuf,
         doc_local_links: Arc<RwLock<HashSet<PathBuf>>>,
+        conn_counter: Arc<()>,
     ) -> Self {
         Self {
             rx,
@@ -116,6 +135,7 @@ impl ServerThread {
             sse_port,
             doc_path,
             doc_local_links,
+            conn_counter,
         }
     }
 
@@ -129,7 +149,7 @@ impl ServerThread {
                     "TCP peer port {}: Closed connection because of error: {}",
                     self.stream
                         .peer_addr()
-                        .unwrap_or(SocketAddr::V4(SocketAddrV4::new(
+                        .unwrap_or_else(|_| SocketAddr::V4(SocketAddrV4::new(
                             Ipv4Addr::new(0, 0, 0, 0),
                             0
                         )))
@@ -144,10 +164,24 @@ impl ServerThread {
     #[inline]
     #[allow(clippy::needless_return)]
     fn serve_connection2(&mut self) -> Result<(), ViewerError> {
+        // One reference is hold by the `manage_connections` thread and does not count.
+        // This is why we subtract 1.
+        let open_connections = Arc::<()>::strong_count(&self.conn_counter) - 1;
         log::trace!(
-            "TCP peer port {}: New incoming TCP connection.",
+            "TCP peer port {}: New incoming TCP connection ({} open).",
             self.stream.peer_addr()?.port(),
+            open_connections
         );
+
+        // Check if we exceed our connection limit.
+        if open_connections > CFG.viewer_tcp_connections_max {
+            self.respond_service_unavailable()?;
+            // This ends this thread and closes the connection.
+            return Err(ViewerError::TcpConnectionsExceeded {
+                max_conn: CFG.viewer_tcp_connections_max,
+            });
+        }
+
         'tcp_connection: loop {
             // This is inspired by the Spook crate.
             // Read the request.
@@ -464,6 +498,13 @@ impl ServerThread {
             self.stream.peer_addr()?.port(),
             path,
         );
+        Ok(())
+    }
+
+    /// Write HTTP service unavailable response.
+    fn respond_service_unavailable(&mut self) -> Result<(), ViewerError> {
+        self.stream
+            .write_all(b"HTTP/1.1 503 Service Unavailable\r\n\r\n")?;
         Ok(())
     }
 

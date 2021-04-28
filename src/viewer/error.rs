@@ -22,6 +22,18 @@ pub enum ViewerError {
     #[error("URL path must start with `/`")]
     UrlMustStartWithSlash,
 
+    /// Remedy: restart with `--debug trace` and make sure that
+    /// no local process is attacking our HTTP server.
+    /// If there are good reasons to allow more connections,
+    /// raise the value `tcp_connections_max` in the
+    /// configuration file.
+    #[error(
+        "Maximum open TCP connections ({max_conn}) exceeded. \
+         Can not handle request. Consider raising the configuration variable \
+         `tcp_connections_max` in the configuration file."
+    )]
+    TcpConnectionsExceeded { max_conn: usize },
+
     /// Network error.
     #[error("Can not read TCP stream: {error}")]
     StreamRead { error: std::io::Error },

@@ -477,6 +477,15 @@ pub const COPY_COUNTER_MAX: usize = 400;
 /// Delay in milliseconds.
 const VIEWER_NOTIFY_PERIOD: u64 = 1000;
 
+/// The maximum number of TCP connections the HTTP server can handle at the same
+/// time. In general, the serving and live update of the HTML rendition of the
+/// note file, requires normally 3 TCP connections: 1 old event channel (that is
+/// still open from the previous update), 1 TCP connection to serve the HTML,
+/// the local images (and referenced documents), and 1 new event channel.  In
+/// practise, stale connection are not always closed immediately. Hence 4 open
+/// connections are not uncommon.
+const VIEWER_TCP_CONNECTIONS_MAX: usize = 16;
+
 /// Served file types with corresponding mime types.
 /// First entry per line is the file extension, the second the corresponding mime
 /// type. Embedded files with types other than those listed here are silently
@@ -754,6 +763,7 @@ pub struct Cfg {
     pub copy_counter_opening_brackets: String,
     pub copy_counter_closing_brackets: String,
     pub viewer_notify_period: u64,
+    pub viewer_tcp_connections_max: usize,
     pub viewer_served_mime_types: Vec<Vec<String>>,
     pub viewer_rendition_tmpl: String,
     pub viewer_error_tmpl: String,
@@ -826,6 +836,7 @@ impl ::std::default::Default for Cfg {
             copy_counter_opening_brackets: COPY_COUNTER_OPENING_BRACKETS.to_string(),
             copy_counter_closing_brackets: COPY_COUNTER_CLOSING_BRACKETS.to_string(),
             viewer_notify_period: VIEWER_NOTIFY_PERIOD,
+            viewer_tcp_connections_max: VIEWER_TCP_CONNECTIONS_MAX,
             viewer_served_mime_types: VIEWER_SERVED_MIME_TYPES
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
