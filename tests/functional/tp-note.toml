@@ -191,6 +191,7 @@ copy_counter_opening_brackets = '('
 copy_counter_closing_brackets = ')'
 viewer_missing_header_disables = false
 viewer_notify_period = 1000
+viewer_tcp_connections_max = 16
 viewer_served_mime_types = [
     [
     'apng',
