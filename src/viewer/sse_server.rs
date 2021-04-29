@@ -32,6 +32,9 @@ use std::time::SystemTime;
 use tera::Tera;
 use url::Url;
 
+/// The TCP stream is read in chunks. This is the read buffer size.
+const TCP_READ_BUFFER_SIZE: usize = 512;
+
 /// Javascript client code, part 1
 /// Refresh on WTFiles events.
 pub const SSE_CLIENT_CODE1: &str = r#"
@@ -49,11 +52,11 @@ window.addEventListener('load', function() {
         window.scrollTo(0, localStorage.getItem('scrollPosition'));
 });
 "#;
-/// Server sent event method name to request a page update.
-const SSE_EVENT_NAME: &str = "update";
 
-/// Connection for server sent events.
-const EVENT_PATH: &str = "/events";
+/// Server-Sent-Event token to request a page update.
+const SSE_EVENT_TOKEN: &str = "update";
+/// URL path for Server-Sent-Events.
+const SSE_EVENT_PATH: &str = "/events";
 
 /// Modern browser request a small icon image.
 pub const FAVICON: &[u8] = include_bytes!("favicon.ico");
@@ -185,7 +188,7 @@ impl ServerThread {
         'tcp_connection: loop {
             // This is inspired by the Spook crate.
             // Read the request.
-            let mut read_buffer = [0u8; 512];
+            let mut read_buffer = [0u8; TCP_READ_BUFFER_SIZE];
             let mut buffer = Vec::new();
             let (method, path) = 'assemble_tcp_chunks: loop {
                 // Read the request, or part thereof.
@@ -268,7 +271,7 @@ impl ServerThread {
                 }
 
                 // This is a connection for Server-Sent-Events.
-                EVENT_PATH => {
+                SSE_EVENT_PATH => {
                     // Serve event response, but keep the connection.
                     self.respond_event_ok()?;
                     // Make the stream non-blocking to be able to detect whether the
@@ -307,12 +310,12 @@ impl ServerThread {
                         }
 
                         // Send event.
-                        let event = format!("event: {}\r\ndata\r\n\r\n", SSE_EVENT_NAME);
+                        let event = format!("event: {}\r\ndata\r\n\r\n", SSE_EVENT_TOKEN);
                         self.stream.write_all(event.as_bytes())?;
                         log::debug!(
                             "TCP peer port {}: ... pushed '{}' in open event connection to client.",
                             self.stream.peer_addr()?.port(),
-                            SSE_EVENT_NAME
+                            SSE_EVENT_TOKEN
                         );
                     }
                 }
