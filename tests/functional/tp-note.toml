@@ -3,7 +3,6 @@ debug_arg_default = 'ERROR'
 edit_arg_default = false
 popup_arg_default = true
 silently_ignore_missing_header = true
-missing_header_disables_viewer = false
 extension_default = 'md'
 note_file_extensions_md = [
     'md',
@@ -190,6 +189,7 @@ clipboard_empty_enabled = true
 copy_counter_extra_separator = '-'
 copy_counter_opening_brackets = '('
 copy_counter_closing_brackets = ')'
+viewer_missing_header_disables = false
 viewer_notify_period = 1000
 viewer_served_mime_types = [
     [

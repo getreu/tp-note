@@ -54,14 +54,10 @@ const POPUP_ARG_DEFAULT: bool = true;
 /// presence of a "title" variable*). When set to `false`, popup alert windows
 /// inform the user about missing headers. `true` suppresses the popup alert
 /// windows and the text editor starts without further notification.
+/// See also `VIEWER_MISSING_HEADER_DISABLES`.
 ///
 /// *) all string literals given in this example are configurable.
 const SILENTLY_IGNORE_MISSING_HEADER: bool = true;
-
-/// When set to true, the viewer feature is automatically disabled when
-/// _Tp-Note_ encounters an `.md` file without header.  Experienced users can
-/// set this to `true`.
-const MISSING_HEADER_DISABLES_VIEWER: bool = false;
 
 /// File extension of `to-note` files.
 pub const EXTENSION_DEFAULT: &str = "md";
@@ -473,6 +469,11 @@ const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
 /// at the end.
 pub const COPY_COUNTER_MAX: usize = 400;
 
+/// When set to true, the viewer feature is automatically disabled when
+/// _Tp-Note_ encounters an `.md` file without header.  Experienced users can
+/// set this to `true`. See also `SILENTLY_IGNORE_MISSING_HEADER`.
+const VIEWER_MISSING_HEADER_DISABLES: bool = false;
+
 /// How often should the file watcher check for changes?
 /// Delay in milliseconds.
 const VIEWER_NOTIFY_PERIOD: u64 = 1000;
@@ -737,7 +738,6 @@ pub struct Cfg {
     pub edit_arg_default: bool,
     pub popup_arg_default: bool,
     pub silently_ignore_missing_header: bool,
-    pub missing_header_disables_viewer: bool,
     pub extension_default: String,
     pub note_file_extensions_md: Vec<String>,
     pub note_file_extensions_rst: Vec<String>,
@@ -762,6 +762,7 @@ pub struct Cfg {
     pub copy_counter_extra_separator: String,
     pub copy_counter_opening_brackets: String,
     pub copy_counter_closing_brackets: String,
+    pub viewer_missing_header_disables: bool,
     pub viewer_notify_period: u64,
     pub viewer_tcp_connections_max: usize,
     pub viewer_served_mime_types: Vec<Vec<String>>,
@@ -786,7 +787,6 @@ impl ::std::default::Default for Cfg {
             edit_arg_default: EDITOR_ARG_DEFAULT,
             popup_arg_default: POPUP_ARG_DEFAULT,
             silently_ignore_missing_header: SILENTLY_IGNORE_MISSING_HEADER,
-            missing_header_disables_viewer: MISSING_HEADER_DISABLES_VIEWER,
             extension_default: EXTENSION_DEFAULT.to_string(),
             note_file_extensions_md: NOTE_FILE_EXTENSIONS_MD
                 .iter()
@@ -835,6 +835,7 @@ impl ::std::default::Default for Cfg {
             copy_counter_extra_separator: COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
             copy_counter_opening_brackets: COPY_COUNTER_OPENING_BRACKETS.to_string(),
             copy_counter_closing_brackets: COPY_COUNTER_CLOSING_BRACKETS.to_string(),
+            viewer_missing_header_disables: VIEWER_MISSING_HEADER_DISABLES,
             viewer_notify_period: VIEWER_NOTIFY_PERIOD,
             viewer_tcp_connections_max: VIEWER_TCP_CONNECTIONS_MAX,
             viewer_served_mime_types: VIEWER_SERVED_MIME_TYPES

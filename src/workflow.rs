@@ -275,7 +275,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
 
     #[cfg(feature = "viewer")]
     let viewer_join_handle = if *LAUNCH_VIEWER
-        && !(missing_header && CFG.missing_header_disables_viewer && !ARGS.view)
+        && !(missing_header && CFG.viewer_missing_header_disables && !ARGS.view)
     {
         Some(launch_viewer_thread(&path))
     } else {
