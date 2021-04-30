@@ -8,6 +8,7 @@ use crate::config::CLIPBOARD;
 use crate::config::STDIN;
 use crate::content::Content;
 use crate::error::NoteError;
+use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::filename;
 use crate::filename::MarkupLanguage;
 use crate::filter::ContextWrapper;
@@ -287,7 +288,12 @@ impl Note<'_> {
 
         let map: tera::Map<String, tera::Value> =
             serde_yaml::from_str(&header).map_err(|e| NoteError::InvalidFrontMatterYaml {
-                front_matter: header.to_owned(),
+                front_matter: header
+                    .lines()
+                    .enumerate()
+                    .map(|(n, s)| format!("{:03}: {}\n", n + 1, s))
+                    .take(FRONT_MATTER_ERROR_MAX_LINES)
+                    .collect::<String>(),
                 source_error: e,
             })?;
         let fm = FrontMatter { map };

@@ -103,7 +103,7 @@ pub enum FileError {
     #[error("Can not convert path to UFT8:\n{path:?}")]
     PathNotUtf8 { path: PathBuf },
 
-    /// Remdedy: check the configuration file variables `editor_args` and `browser_args`.
+    /// Remedy: check the configuration file variables `editor_args` and `browser_args`.
     #[error("Error executing external application:")]
     ChildExt {
         #[from]
@@ -141,6 +141,10 @@ pub enum FileError {
     #[error(transparent)]
     Io(#[from] std::io::Error),
 }
+
+/// The error `InvalidFrontMatterYaml` prints the front matter section of the
+/// note file. This constant limits the number of text lines that are printed.
+pub const FRONT_MATTER_ERROR_MAX_LINES: usize = 20;
 
 #[derive(Debug, Error)]
 /// Error type returned form methods in or related to the `note` module.
@@ -182,9 +186,8 @@ pub enum NoteError {
     #[error(
         "Can not parse front matter:\n\
          \n\
-         ---\n\
-         {front_matter}\n\
-         ---\n\n\
+         {front_matter}\
+         \n\
          {source_error}"
     )]
     InvalidFrontMatterYaml {
