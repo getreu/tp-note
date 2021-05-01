@@ -14,6 +14,7 @@ use crate::filename::MarkupLanguage;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use parse_hyperlinks::renderer::text_links2html;
+use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
 use pulldown_cmark::{html, Options, Parser};
 #[cfg(feature = "renderer")]
@@ -439,7 +440,7 @@ impl Note<'_> {
         // HTML template for this rendition.
         tmpl: &str,
         // If not empty, Javascript code to inject in output.
-        java_script: &str,
+        java_script_insert: &str,
     ) -> Result<String, NoteError> {
         // Deserialize.
 
@@ -466,7 +467,7 @@ impl Note<'_> {
         self.context.insert("noteBody", &html_output);
 
         // Java Script
-        self.context.insert("noteJS", java_script);
+        self.context.insert("noteJS", java_script_insert);
 
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
@@ -512,6 +513,37 @@ impl Note<'_> {
     /// Renderer for markup languages other than the above.
     fn render_txt_content(other_input: &str) -> String {
         text_links2html(other_input)
+    }
+
+    /// When the header can not be deserialized, the content is rendered as
+    /// "Error HTML page".
+    pub fn render_erroneous_content(
+        doc_path: &Path,
+        java_script_insert: &str,
+        err: NoteError,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        // Render error page providing all information we have.
+        let mut context = tera::Context::new();
+        let err = err.to_string();
+        context.insert("noteError", &err);
+        context.insert("file", &doc_path.to_str().unwrap_or_default());
+        // Java Script
+        context.insert("noteJS", &java_script_insert);
+
+        // Read from file.
+        let note_error_content = fs::read_to_string(&doc_path).unwrap_or_default();
+        // Trim BOM.
+        let note_error_content = note_error_content.trim_start_matches('\u{feff}');
+        // Render to HTML.
+        let note_error_content = text_rawlinks2html(&note_error_content);
+        // Insert.
+        context.insert("noteErrorContent", note_error_content.trim());
+
+        // Apply template.
+        let mut tera = Tera::default();
+        tera.extend(&TERA)?;
+        let html = tera.render_str(&CFG.viewer_error_tmpl, &context)?;
+        Ok(html)
     }
 }
 

@@ -8,12 +8,10 @@ extern crate url;
 
 use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
-use crate::filter::TERA;
 use crate::note::Note;
 use crate::viewer::error::ViewerError;
 use crate::viewer::init::LOCALHOST;
 use parse_hyperlinks::iterator_html::{Hyperlink, InlineImage};
-use parse_hyperlinks::renderer::text_rawlinks2html;
 use percent_encoding::percent_decode_str;
 use std::collections::HashSet;
 use std::fs;
@@ -29,7 +27,6 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::time::SystemTime;
-use tera::Tera;
 use url::Url;
 
 /// The TCP stream is read in chunks. This is the read buffer size.
@@ -595,27 +592,7 @@ impl ServerThread {
             // page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
-                let mut context = tera::Context::new();
-                let err = e.to_string();
-                context.insert("noteError", &err);
-                context.insert("file", &self.doc_path.to_str().unwrap_or_default());
-                // Java Script
-                context.insert("noteJS", &js);
-
-                // Read from file.
-                let note_error_content = fs::read_to_string(&self.doc_path).unwrap_or_default();
-                // Trim BOM.
-                let note_error_content = note_error_content.trim_start_matches('\u{feff}');
-                // Render to HTML.
-                let note_error_content = text_rawlinks2html(&note_error_content);
-                // Insert.
-                context.insert("noteErrorContent", note_error_content.trim());
-
-                // Apply template.
-                let mut tera = Tera::default();
-                tera.extend(&TERA)?;
-                let html = tera.render_str(&CFG.viewer_error_tmpl, &context)?;
-                Ok(html)
+                Note::render_erroneous_content(&self.doc_path, &js, e)
             }
         }
     }
