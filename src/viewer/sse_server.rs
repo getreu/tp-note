@@ -602,10 +602,16 @@ impl ServerThread {
                 // Java Script
                 context.insert("noteJS", &js);
 
+                // Read from file.
                 let note_error_content = fs::read_to_string(&self.doc_path).unwrap_or_default();
+                // Trim BOM.
+                let note_error_content = note_error_content.trim_start_matches('\u{feff}');
+                // Render to HTML.
                 let note_error_content = text_rawlinks2html(&note_error_content);
+                // Insert.
                 context.insert("noteErrorContent", note_error_content.trim());
 
+                // Apply template.
                 let mut tera = Tera::default();
                 tera.extend(&TERA)?;
                 let html = tera.render_str(&CFG.viewer_error_tmpl, &context)?;
