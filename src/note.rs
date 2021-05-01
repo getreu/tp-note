@@ -14,6 +14,7 @@ use crate::filename::MarkupLanguage;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use parse_hyperlinks::renderer::text_links2html;
+#[cfg(feature = "viewer")]
 use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
 use pulldown_cmark::{html, Options, Parser};
@@ -31,6 +32,72 @@ use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::str;
 use tera::Tera;
+
+/// This template variable contains the fully qualified file name of
+/// the note file.
+pub const TMPL_VAR_FILE: &str = "file";
+
+/// Contains the fully qualified directory path in which the note
+/// file is located.
+const TMPL_VAR_PATH: &str = "path";
+
+/// Contains the YAML header (if any) of the clipboard content.
+/// Otherwise the empty string.
+const TMPL_VAR_CLIPBOARD_HEADER: &str = "clipboard_header";
+
+/// If there is a YAML header in the clipboard content, this contains
+/// the body only. Otherwise, it contains the whole clipboard content.
+const TMPL_VAR_CLIPBOARD: &str = "clipboard_header";
+
+/// Contains the YAML header (if any) of the `stdin` input stream.
+/// Otherwise the empty string.
+const TMPL_VAR_STDIN_HEADER: &str = "stdin_header";
+
+/// If there is a YAML header in the `stdin` input stream, this contains the
+/// body only. Otherwise, it contains the whole input stream.
+const TMPL_VAR_STDIN: &str = "stdin";
+
+/// Contains the default file extension for new note files as defined in the
+/// configuration file.
+const TMPL_VAR_EXTENSION_DEFAULT: &str = "extension_default";
+
+/// Contains the content of the first non empty environment variable
+/// `LOGNAME`, `USERNAME` of `USER`.
+const TMPL_VAR_USERNAME: &str = "username";
+
+/// Prefix prepended to front matter field names when a template variable
+/// is generated with the same name.
+const TMPL_VAR_FM_: &str = "fm_";
+
+/// Contains a Hash Map with all front matter fields. Lists are flattened
+/// into a string.
+const TMPL_VAR_FM_ALL: &str = "fm_all";
+
+/// All the front matter fields as text, exactly as they appear in the front
+/// matter.
+const TMPL_VAR_FM_ALL_YAML: &str = "fm_all_yaml";
+
+/// Contains the value of the front matter field `file_ext` and
+/// determines the markup language used to render the document. When the field is
+/// missing the markup language is derived from the note's filename extension.
+const TMPL_VAR_FM_FILE_EXT: &str = "fm_file_ext";
+
+/// HTML template variable containing the note's body.
+const TMPL_VAR_NOTE_BODY: &str = "noteBody";
+
+/// HTML template variable containing the automatically generated JavaScript
+/// code to be included in the HTML rendition.
+pub const TMPL_VAR_NOTE_JS: &str = "noteJS";
+
+/// HTML template variable used in the error page containing the error message
+/// explaining why this page could not be rendered.
+#[cfg(feature = "viewer")]
+pub const TMPL_VAR_NOTE_ERROR: &str = "noteError";
+
+/// HTML template variable used in the error page containing a limited verbatim
+/// HTML rendition of the erroneous note file.
+#[cfg(feature = "viewer")]
+pub const TMPL_VAR_NOTE_ERROR_CONTENT: &str = "noteErrorContent";
 
 #[derive(Debug, PartialEq)]
 /// Represents a note.
@@ -68,7 +135,7 @@ impl Note<'_> {
         let mut context = Self::capture_environment(&path)?;
 
         // Register the raw serialized header text.
-        (*context).insert("fm_all_yaml", &content.header);
+        (*context).insert(TMPL_VAR_FM_ALL_YAML, &content.header);
 
         // Deserialize the note read from disk.
         let fm = Note::deserialize_header(content.header)?;
@@ -146,7 +213,7 @@ impl Note<'_> {
 
         // Register the canonicalized fully qualified file name.
         let file = path.to_str().unwrap_or_default();
-        (*context).insert("file", &file);
+        (*context).insert(TMPL_VAR_FILE, &file);
 
         // `fqpn` is a directory as fully qualified path, ending
         // by a separator.
@@ -155,15 +222,15 @@ impl Note<'_> {
         } else {
             path.parent().unwrap_or_else(|| Path::new("./"))
         };
-        (*context).insert("path", &fqpn.to_str().unwrap_or_default());
+        (*context).insert(TMPL_VAR_PATH, &fqpn.to_str().unwrap_or_default());
 
         // Register input from clipboard.
-        (*context).insert("clipboard_header", CLIPBOARD.header);
-        (*context).insert("clipboard", CLIPBOARD.body);
+        (*context).insert(TMPL_VAR_CLIPBOARD_HEADER, CLIPBOARD.header);
+        (*context).insert(TMPL_VAR_CLIPBOARD, CLIPBOARD.body);
 
         // Register input from stdin.
-        (*context).insert("stdin_header", STDIN.header);
-        (*context).insert("stdin", STDIN.body);
+        (*context).insert(TMPL_VAR_STDIN_HEADER, STDIN.header);
+        (*context).insert(TMPL_VAR_STDIN, STDIN.body);
 
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
@@ -211,13 +278,13 @@ impl Note<'_> {
         }
 
         // Default extension for new notes as defined in the configuration file.
-        (*context).insert("extension_default", CFG.extension_default.as_str());
+        (*context).insert(TMPL_VAR_EXTENSION_DEFAULT, CFG.extension_default.as_str());
 
         // search for UNIX, Windows and MacOS user-names
         let author = env::var("LOGNAME").unwrap_or_else(|_| {
             env::var("USERNAME").unwrap_or_else(|_| env::var("USER").unwrap_or_default())
         });
-        (*context).insert("username", &author);
+        (*context).insert(TMPL_VAR_USERNAME, &author);
 
         context.fqpn = fqpn.to_path_buf();
 
@@ -244,12 +311,12 @@ impl Note<'_> {
             tera_map.insert(name.to_string(), val.to_owned());
 
             // Here we register `fm_<var_name>`.
-            let mut var_name = "fm_".to_string();
+            let mut var_name = TMPL_VAR_FM_.to_string();
             var_name.push_str(name);
             (*context).insert(&var_name, &val);
         }
         // Register the collection as `Object(Map<String, Value>)`.
-        (*context).insert("fm_all", &tera_map);
+        (*context).insert(TMPL_VAR_FM_ALL, &tera_map);
     }
 
     /// Applies a Tera template to the notes context in order to generate a
@@ -448,7 +515,7 @@ impl Note<'_> {
         let input = self.content.body;
 
         // What Markup language is used?
-        let ext = match self.context.get("fm_file_ext") {
+        let ext = match self.context.get(TMPL_VAR_FM_FILE_EXT) {
             Some(tera::Value::String(file_ext)) => Some(file_ext.as_str()),
             _ => None,
         };
@@ -464,10 +531,10 @@ impl Note<'_> {
         };
 
         // Register rendered body.
-        self.context.insert("noteBody", &html_output);
+        self.context.insert(TMPL_VAR_NOTE_BODY, &html_output);
 
         // Java Script
-        self.context.insert("noteJS", java_script_insert);
+        self.context.insert(TMPL_VAR_NOTE_JS, java_script_insert);
 
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
@@ -517,6 +584,8 @@ impl Note<'_> {
 
     /// When the header can not be deserialized, the content is rendered as
     /// "Error HTML page".
+    #[inline]
+    #[cfg(feature = "viewer")]
     pub fn render_erroneous_content(
         doc_path: &Path,
         java_script_insert: &str,
@@ -525,10 +594,10 @@ impl Note<'_> {
         // Render error page providing all information we have.
         let mut context = tera::Context::new();
         let err = err.to_string();
-        context.insert("noteError", &err);
-        context.insert("file", &doc_path.to_str().unwrap_or_default());
+        context.insert(TMPL_VAR_NOTE_ERROR, &err);
+        context.insert(TMPL_VAR_FILE, &doc_path.to_str().unwrap_or_default());
         // Java Script
-        context.insert("noteJS", &java_script_insert);
+        context.insert(TMPL_VAR_NOTE_JS, &java_script_insert);
 
         // Read from file.
         let note_error_content = fs::read_to_string(&doc_path).unwrap_or_default();
@@ -537,7 +606,7 @@ impl Note<'_> {
         // Render to HTML.
         let note_error_content = text_rawlinks2html(&note_error_content);
         // Insert.
-        context.insert("noteErrorContent", note_error_content.trim());
+        context.insert(TMPL_VAR_NOTE_ERROR_CONTENT, note_error_content.trim());
 
         // Apply template.
         let mut tera = Tera::default();
