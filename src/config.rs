@@ -570,8 +570,8 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
   </tr>
   {% endfor %}
   </table>
-  <div class="noteBody">{{ noteBody }}</div>
-  <script>{{ noteJS }}</script>
+  <div class="note-body">{{ note_body }}</div>
+  <script>{{ note_js }}</script>
 </body>
 </html>
 "#;
@@ -583,7 +583,7 @@ pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
 <meta charset=\"utf-8\">
 <title>Syntax error</title>
 <style>
-.noteError { color: #523626; }
+.note-error { color: #523626; }
 pre { white-space: pre-wrap; }
 a { color: #316128; }
 h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
@@ -592,13 +592,13 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 <body>
 <h3>Syntax error</h3>
 <p> in note file: <pre>{{ file }}</pre><p>
-<div class="noteError">
+<div class="note-error">
 <hr>
-<pre>{{ noteError }}</pre>
+<pre>{{ note_error }}</pre>
 <hr>
 </div>
-{{ noteErrorContent }}
-<script>{{ noteJS }}</script>
+{{ note_erroneous_content }}
+<script>{{ note_js }}</script>
 </body>
 </html>
 "#;
@@ -663,7 +663,7 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
   </tr>
   {% endfor %}
   </table>
-  <div class="noteBody">{{ noteBody }}</div>
+  <div class="note-body">{{ note_body }}</div>
 </body>
 </html>
 "#;

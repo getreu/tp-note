@@ -47,7 +47,7 @@ const TMPL_VAR_CLIPBOARD_HEADER: &str = "clipboard_header";
 
 /// If there is a YAML header in the clipboard content, this contains
 /// the body only. Otherwise, it contains the whole clipboard content.
-const TMPL_VAR_CLIPBOARD: &str = "clipboard_header";
+const TMPL_VAR_CLIPBOARD: &str = "clipboard";
 
 /// Contains the YAML header (if any) of the `stdin` input stream.
 /// Otherwise the empty string.
@@ -83,21 +83,21 @@ const TMPL_VAR_FM_ALL_YAML: &str = "fm_all_yaml";
 const TMPL_VAR_FM_FILE_EXT: &str = "fm_file_ext";
 
 /// HTML template variable containing the note's body.
-const TMPL_VAR_NOTE_BODY: &str = "noteBody";
+const TMPL_VAR_NOTE_BODY: &str = "note_body";
 
 /// HTML template variable containing the automatically generated JavaScript
 /// code to be included in the HTML rendition.
-pub const TMPL_VAR_NOTE_JS: &str = "noteJS";
+pub const TMPL_VAR_NOTE_JS: &str = "note_js";
 
 /// HTML template variable used in the error page containing the error message
 /// explaining why this page could not be rendered.
 #[cfg(feature = "viewer")]
-pub const TMPL_VAR_NOTE_ERROR: &str = "noteError";
+pub const TMPL_VAR_NOTE_ERROR: &str = "note_error";
 
 /// HTML template variable used in the error page containing a limited verbatim
 /// HTML rendition of the erroneous note file.
 #[cfg(feature = "viewer")]
-pub const TMPL_VAR_NOTE_ERROR_CONTENT: &str = "noteErrorContent";
+pub const TMPL_VAR_NOTE_ERRONEOUS_CONTENT: &str = "note_erroneous_content";
 
 #[derive(Debug, PartialEq)]
 /// Represents a note.
@@ -600,13 +600,16 @@ impl Note<'_> {
         context.insert(TMPL_VAR_NOTE_JS, &java_script_insert);
 
         // Read from file.
-        let note_error_content = fs::read_to_string(&doc_path).unwrap_or_default();
+        let note_erroneous_content = fs::read_to_string(&doc_path).unwrap_or_default();
         // Trim BOM.
-        let note_error_content = note_error_content.trim_start_matches('\u{feff}');
+        let note_erroneous_content = note_erroneous_content.trim_start_matches('\u{feff}');
         // Render to HTML.
-        let note_error_content = text_rawlinks2html(&note_error_content);
+        let note_erroneous_content = text_rawlinks2html(&note_erroneous_content);
         // Insert.
-        context.insert(TMPL_VAR_NOTE_ERROR_CONTENT, note_error_content.trim());
+        context.insert(
+            TMPL_VAR_NOTE_ERRONEOUS_CONTENT,
+            note_erroneous_content.trim(),
+        );
 
         // Apply template.
         let mut tera = Tera::default();

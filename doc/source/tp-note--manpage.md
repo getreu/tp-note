@@ -1097,10 +1097,10 @@ viewer_rendition_tmpl = '''<!DOCTYPE html>
 <title>{{ fm_title }}</title>
   </head>
   <body>
-  <pre class="noteHeader">{{ fm_all_yaml }}</pre>
+  <pre class="note-header">{{ fm_all_yaml }}</pre>
   <hr>
-  <div class="noteBody">{{ noteBody }}</div>
-  <script>{{ noteJS }}</script>
+  <div class="note-body">{{ note_body }}</div>
+  <script>{{ note_js }}</script>
 </body>
 </html>
 '''
@@ -1115,9 +1115,9 @@ Specifically:
 * '`{{ fm_all_yaml }}`' is the raw UTF-8 copy of the header. Not to be
   confounded with the dictionary variable '`{{ fm_all }}`'.
 
-* '`{{ noteBody }}`' is the note's body as HTML rendition.
+* '`{{ note_body }}`' is the note's body as HTML rendition.
 
-* '`{{ noteJS }}`' is the Java-Script browser code for
+* '`{{ note_js }}`' is the Java-Script browser code for
   live updates.
 
 Alternatively, the header enclosed by '`<pre>...</pre>`' can also be rendered
@@ -1135,8 +1135,8 @@ as a table:
 
 The error page template '`viewer_error_tmpl`' (see below) does not provide '`fm_*`'
 variables, because of possible header syntax errors. Instead, the variable
-'`{{ noteError }}`' contains the error message as raw UTF-8 and the variable
-'`{{ noteErrorContent }}`' the HTML rendition of the text source with
+'`{{ note_error }}`' contains the error message as raw UTF-8 and the variable
+'`{{ note_erroneous_content }}`' the HTML rendition of the text source with
 clickable hyperlinks:
 
 ```html
@@ -1150,10 +1150,10 @@ viewer_error_tmpl = '''<!DOCTYPE html>
 <h3>Syntax error</h3>
 <p> in note file: <pre>{{ file }}</pre><p>
 <hr>
-<pre class=\"noteError\">{{ noteError }}</pre>
+<pre class="note-error">{{ note_error }}</pre>
 <hr>
-{{ noteErrorContent }}
-<script>{{ noteJS }}</script>
+{{ note_erroneous_content }}
+<script>{{ note_js }}</script>
 </body>
 </html>
 '''
@@ -1165,7 +1165,7 @@ Customizing _Tp-Note_'s HTML export function works the same way than
 customizing the built-in viewer. There are some slight differences though:
 The role of the '`viewer_rendition_tmpl`' template - discussed above - is
 taken over by the '`exporter_rendition_tmpl`' template. In this template the
-same _Tera_ variables are available, except '`{{ noteJS }}`' which does not
+same _Tera_ variables are available, except '`{{ note_js }}`' which does not
 make sense in this context. As the exporter prints possible rendition error
 messages on the console, there is no equivalent to the '`viewer_error_tmpl`'
 template.
