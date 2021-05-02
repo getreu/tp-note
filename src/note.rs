@@ -67,7 +67,7 @@ const TMPL_VAR_USERNAME: &str = "username";
 
 /// Prefix prepended to front matter field names when a template variable
 /// is generated with the same name.
-const TMPL_VAR_FM_: &str = "fm_";
+pub const TMPL_VAR_FM_: &str = "fm_";
 
 /// Contains a Hash Map with all front matter fields. Lists are flattened
 /// into a string.
@@ -81,6 +81,11 @@ const TMPL_VAR_FM_ALL_YAML: &str = "fm_all_yaml";
 /// determines the markup language used to render the document. When the field is
 /// missing the markup language is derived from the note's filename extension.
 const TMPL_VAR_FM_FILE_EXT: &str = "fm_file_ext";
+
+/// Contains the value of the front matter field `no_filename_sync`.  When set to
+/// `no_filename_sync:` or `no_filename_sync: true`, the filename synchronisation mechanism is
+/// disabled for this note file.
+pub const TMPL_VAR_FM_NO_FILENAME_SYNC: &str = "fm_no_filename_sync";
 
 /// HTML template variable containing the note's body.
 const TMPL_VAR_NOTE_BODY: &str = "note_body";

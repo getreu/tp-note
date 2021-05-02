@@ -706,7 +706,7 @@ pub struct Args {
     pub port: Option<u16>,
     /// Disables filename synchronization
     #[structopt(long, short = "n")]
-    pub no_sync: bool,
+    pub no_filename_sync: bool,
     /// Launches only the browser, no editor
     #[structopt(long, short = "v")]
     pub view: bool,

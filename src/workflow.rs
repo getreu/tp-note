@@ -14,6 +14,8 @@ use crate::file_editor::launch_editor;
 use crate::filename;
 use crate::filename::MarkupLanguage;
 use crate::note::Note;
+use crate::note::TMPL_VAR_FM_;
+use crate::note::TMPL_VAR_FM_NO_FILENAME_SYNC;
 #[cfg(feature = "viewer")]
 use crate::viewer::launch_viewer_thread;
 use crate::AUTHOR;
@@ -29,6 +31,7 @@ use std::matches;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process;
+use tera::Value;
 
 /// Open the note file `path` on disk and reads its YAML front matter.
 /// Then calculate from the front matter how the filename should be to
@@ -47,7 +50,28 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
         Err(e) => return Err(e.into()),
     };
 
-    let new_fqfn = if !ARGS.no_sync {
+    let no_filename_sync = match n.context.get(TMPL_VAR_FM_NO_FILENAME_SYNC) {
+        // By default we sync.
+        None => false,
+        Some(Value::Bool(nsync)) => *nsync,
+        Some(_) => true,
+    };
+
+    if no_filename_sync {
+        // Do not sync, if explicitly disabled.
+        log::trace!(
+            "Filename synchronisation disabled with the front matter field: `{}: {}`",
+            TMPL_VAR_FM_NO_FILENAME_SYNC.trim_start_matches(TMPL_VAR_FM_),
+            no_filename_sync
+        );
+    }
+
+    if ARGS.no_filename_sync {
+        // Do not sync, if explicitly disabled.
+        log::trace!("Filename synchronisation disabled with the flag: `--no-filename-sync`",);
+    }
+
+    let new_fqfn = if !no_filename_sync && !ARGS.no_filename_sync {
         log::trace!("Applying template `tmpl_sync_filename`.");
         let new_fqfn =
             n.render_filename(&CFG.tmpl_sync_filename)
