@@ -103,7 +103,11 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
 
     // Print HTML rendition.
     if let Some(dir) = &ARGS.export {
-        n.render_and_write_content(&new_fqfn, &dir)?;
+        n.render_and_write_content(&new_fqfn, &CFG.exporter_rendition_tmpl, &dir)
+            .map_err(|e| WorkflowError::Template {
+                tmpl_name: "exporter_rendition_tmpl".to_string(),
+                source: e,
+            })?;
     }
 
     Ok(new_fqfn)

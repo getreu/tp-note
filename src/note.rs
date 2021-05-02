@@ -413,6 +413,7 @@ impl Note<'_> {
     pub fn render_and_write_content(
         &mut self,
         note_path: &Path,
+        template: &str,
         export_dir: &Path,
     ) -> Result<(), NoteError> {
         // Determine filename of html-file.
@@ -479,7 +480,7 @@ impl Note<'_> {
 
             // Write HTML rendition.
             handle.write_all(
-                self.render_content(&note_path_ext, &CFG.exporter_rendition_tmpl, "")?
+                self.render_content(&note_path_ext, &template, "")?
                     .as_bytes(),
             )?;
         } else {
@@ -489,7 +490,7 @@ impl Note<'_> {
                 .open(&html_path)?;
             // Write HTML rendition.
             handle.write_all(
-                self.render_content(&note_path_ext, &CFG.exporter_rendition_tmpl, "")?
+                self.render_content(&note_path_ext, &template, "")?
                     .as_bytes(),
             )?;
         };

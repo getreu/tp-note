@@ -156,6 +156,9 @@ macro_rules! note_error_tera_template {
         NoteError::TeraTemplate {
             source_str: std::error::Error::source(&$e)
                 .unwrap_or(&tera::Error::msg(""))
+                .to_string()
+                // Remove useless information.
+                .trim_end_matches("in context while rendering '__tera_one_off'")
                 .to_string(),
         }
     };
@@ -169,10 +172,7 @@ pub enum NoteError {
     Read { path: PathBuf, source: io::Error },
 
     /// Remedy: check the syntax of the Tera template in the configuration file.
-    #[error(
-        "Tera template error:\n\
-         {source_str}"
-    )]
+    #[error("Tera template error: {source_str}")]
     TeraTemplate { source_str: String },
 
     /// Remedy: restart with `--debug trace`.
