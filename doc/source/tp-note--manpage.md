@@ -398,26 +398,26 @@ synchronization).
 
 **-d** *LEVEL*, **\--debug**=*LEVEL*
 
-:   Print additional log-messages on the console '`stderr`'.  The debug level
-    *LEVEL* must be one out of '`trace`', '`debug`', '`info`', '`warn`', '`error`'
-    (default) or '`off`'. The level '`trace`' reports the most detailed
-    information, while '`error`' informs about a failure.  A '`warn`' means,
-    that not all functionality might be available or work as expected.
+:   Print additional log-messages.  The debug level *LEVEL* must be one out of
+    '`trace`', '`debug`', '`info`', '`warn`', '`error`' (default) or '`off`'.
+    The level '`trace`' reports the most detailed information, while '`error`'
+    informs only about failures.  A '`warn`' level message means, that not all
+    functionality might be available or work as expected.
 
-    Use '`--debug trace`' for debugging templates, if the HTTP server
-    (viewer) does work as expected '`--debug debug`', if your text editor
-    does not open as expected '`--debug info --edit`' or to observe the
-    launch of the web browser '`--debug info --view`'. The option
-    '`--debug trace`' shows all available template variables, the templates
-    used and the rendered result of the substitution. This option
-    particularly useful for debugging new templates. The option '`--debug
-    off`' silences all error message reporting and suppresses also the error
-    popup window.
+    Use '`-b -d trace`' for debugging templates, if the HTTP server
+    (viewer) does not work as expected '`-n -d debug`', if your text editor
+    does not open as expected '`-n -d info --edit`' or to observe the
+    launch of the web browser '`-n -d info --view`'. The option
+    '`-d trace`' shows all available template variables, the templates
+    used and the rendered result of the substitution, which is
+    particularly useful for debugging new templates. The option 
+    '`-d off`' silences all error message reporting and suppresses also the
+    error popup window.
 
     All error messages are dumped in the error stream `stderr` and appear
     on the console from where _Tp-Note_ was launched:
 
-        tp-note.exe --debug info my_note.md >debug.txt 2>&1
+        tp-note.exe --debug info my_note.md 
 
     On Windows the output must be redirected into a file to see it:
 
@@ -434,7 +434,7 @@ synchronization).
         debug_arg_default = 'info'
         popup_arg_default = true
 
-    Here the value for '`debug_arg_default`' must be one out of '`trace`',
+    The value for '`debug_arg_default`' must be one out of '`trace`',
     '`debug`', '`info`', '`warn`', '`error`' (default) and '`off`'. They have
     the same meaning as the corresponding command line options.
 
@@ -452,16 +452,14 @@ synchronization).
 :   Set server port the web browser connects to, to the specified value *PORT*.
     If not given, a random free port is chosen automatically.
 
-**-n**, **\--no-sync**
+**-n**, **\--no-filename-sync**
 
 :   Whenever _Tp-Note_ opens a note file, it synchronizes its YAML-metadata
-    with its filename. '`--no-sync`' disables the synchronization. This is
-    mainly useful in scripts for testing '`.md`'-files. When
-    '`tp-note -n -b <FILE>`' returns the code '`0`', the note file has a valid
-    YAML header with at least one '`title:`' field. In addition, when
-    '`tp-note -n -b -x - <FILE>`' returns the code '`0`', the note's body was
-    rendered without error.
-
+    with its filename. '`--no-filename-sync`' disables the synchronization.
+    Mainly useful is this flag in scripts for testing '`.md`'-files. 
+    See section EXIT STATUS for more details.  The section METADATA FILENAME
+    SYNCHRONIZATION shows alternative ways to disable synchronisation.
+    
 **-u**, **\--popup**
 
 : Redirect log-file entries into popup alert windows. Must be used together
@@ -527,7 +525,7 @@ configuration file.
 
 
 
-# META-DATA FILENAME SYNCHRONIZATION
+# METADATA FILENAME SYNCHRONIZATION
 
 Consider the following _Tp-Note_-file:
 
@@ -625,7 +623,7 @@ sort_tag:   ""
 ```
 
 In the same way, how it is possible to pin the sort-tag of the note from within
-the note's meta-data, you can also change the file extension by adding the
+the note's metadata, you can also change the file extension by adding the
 optional '`file_ext`' variable into the note's front matter:
 
 ``` yaml
@@ -652,6 +650,13 @@ note with _Tp-Note_.  However, you can switch back to _Tp-Note_'s default
 behaviour any time by deleting the '`sort_tag`' line in the note's metadata.
 The same applies to the '`file_ext`' variable.
 
+The metadata filename synchronisation feature can be disabled permanently
+by setting the configuration file variable 
+'`no_filename_sync_arg_default = true`'. To disable this feature for one time
+only, invoke _Tp-note_ with '`--no-filename-sync`'. To exclude a particular note
+from filename synchronisation, add the YAML header field '`no_filename_sync:`'
+or '`no_filename_sync: true`'.
+
 
 
 # CUSTOMIZATION
@@ -673,6 +678,7 @@ directory. The variable '`{{ clipboard }}`' contains the content of the
 clipboard. To learn more about variables, launch _Tp-Note_ with the
 '`--debug trace`' option and observe what information it captures from its
 environment.
+
 
 ## Template variables
 
@@ -1228,6 +1234,10 @@ Normally the exit status is '`0`' when the note file was processed without
 error or '`1`' otherwise. If _Tp-Note_ can not read or write its
 configuration file, the exit status is '`5`'.
 
+When '`tp-note -n -b <FILE>`' returns the code '`0`', the note file has a
+valid YAML header with a '`title:`' field. In addition, when
+'`tp-note -n -b -x - <FILE>`' returns the code '`0`', the note's body was
+rendered without error.
 
 
 # RESOURCES
