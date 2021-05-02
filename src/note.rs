@@ -13,6 +13,7 @@ use crate::filename;
 use crate::filename::MarkupLanguage;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
+use crate::note_error_tera_template;
 use parse_hyperlinks::renderer::text_links2html;
 #[cfg(feature = "viewer")]
 use parse_hyperlinks::renderer::text_rawlinks2html;
@@ -175,11 +176,7 @@ impl Note<'_> {
                 tera.extend(&TERA)?;
 
                 tera.render_str(template, &context)
-                    .map_err(|e| NoteError::TeraTemplate {
-                        source_str: std::error::Error::source(&e)
-                            .unwrap_or(&tera::Error::msg(""))
-                            .to_string(),
-                    })?
+                    .map_err(|e| note_error_tera_template!(e))?
             },
             false,
         );
@@ -345,11 +342,7 @@ impl Note<'_> {
                 fqfn.push(filename.trim());
             }
             Err(e) => {
-                return Err(NoteError::TeraTemplate {
-                    source_str: std::error::Error::source(&e)
-                        .unwrap_or(&tera::Error::msg(""))
-                        .to_string(),
-                });
+                return Err(note_error_tera_template!(e));
             }
         }
 
@@ -550,11 +543,7 @@ impl Note<'_> {
         tera.extend(&TERA)?;
         let html = tera
             .render_str(tmpl, &self.context)
-            .map_err(|e| NoteError::TeraTemplate {
-                source_str: std::error::Error::source(&e)
-                    .unwrap_or(&tera::Error::msg(""))
-                    .to_string(),
-            })?;
+            .map_err(|e| note_error_tera_template!(e))?;
         Ok(html)
     }
 
@@ -630,11 +619,7 @@ impl Note<'_> {
         tera.extend(&TERA)?;
         let html = tera
             .render_str(&template, &context)
-            .map_err(|e| NoteError::TeraTemplate {
-                source_str: std::error::Error::source(&e)
-                    .unwrap_or(&tera::Error::msg(""))
-                    .to_string(),
-            })?;
+            .map_err(|e| note_error_tera_template!(e))?;
         Ok(html)
     }
 }

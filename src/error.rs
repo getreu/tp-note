@@ -149,6 +149,18 @@ pub enum FileError {
 /// note file. This constant limits the number of text lines that are printed.
 pub const FRONT_MATTER_ERROR_MAX_LINES: usize = 20;
 
+/// Macro to construct a `NoteError::TeraTemplate from a `Tera::Error` .
+#[macro_export]
+macro_rules! note_error_tera_template {
+    ($e:ident) => {
+        NoteError::TeraTemplate {
+            source_str: std::error::Error::source(&$e)
+                .unwrap_or(&tera::Error::msg(""))
+                .to_string(),
+        }
+    };
+}
+
 #[derive(Debug, Error)]
 /// Error type returned form methods in or related to the `note` module.
 pub enum NoteError {
