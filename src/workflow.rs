@@ -82,7 +82,7 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
             log::trace!("Applying template `tmpl_sync_filename`.");
             let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename).map_err(|e| {
                 WorkflowError::Template {
-                    tmpl: "tmpl_sync_filename".to_string(),
+                    tmpl_name: "tmpl_sync_filename".to_string(),
                     source: e,
                 }
             })?;
@@ -122,14 +122,14 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
             let n = Note::from_content_template(&path, &CFG.tmpl_new_content).map_err(|e| {
                 WorkflowError::Template {
-                    tmpl: "tmpl_new_content".to_string(),
+                    tmpl_name: "tmpl_new_content".to_string(),
                     source: e,
                 }
             })?;
             let new_fqfn =
                 n.render_filename(&CFG.tmpl_new_filename)
                     .map_err(|e| WorkflowError::Template {
-                        tmpl: "tmpl_new_filename".to_string(),
+                        tmpl_name: "tmpl_new_filename".to_string(),
                         source: e,
                     })?;
             log::trace!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
@@ -139,14 +139,14 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             // (only if there is a valid YAML front matter)
             let n = Note::from_content_template(&path, &CFG.tmpl_copy_content).map_err(|e| {
                 WorkflowError::Template {
-                    tmpl: "tmpl_copy_content".to_string(),
+                    tmpl_name: "tmpl_copy_content".to_string(),
                     source: e,
                 }
             })?;
             // CREATE A NEW NOTE WITH `TMPL_COPY_CONTENT` TEMPLATE
             let new_fqfn = n.render_filename(&CFG.tmpl_copy_filename).map_err(|e| {
                 WorkflowError::Template {
-                    tmpl: "tmpl_copy_filename".to_string(),
+                    tmpl_name: "tmpl_copy_filename".to_string(),
                     source: e,
                 }
             })?;
@@ -157,7 +157,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             let n =
                 Note::from_content_template(&path, &CFG.tmpl_clipboard_content).map_err(|e| {
                     WorkflowError::Template {
-                        tmpl: "tmpl_clipboard_content".to_string(),
+                        tmpl_name: "tmpl_clipboard_content".to_string(),
                         source: e,
                     }
                 })?;
@@ -166,7 +166,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_clipboard_filename)
                 .map_err(|e| WorkflowError::Template {
-                    tmpl: "tmpl_clipboard_filename".to_string(),
+                    tmpl_name: "tmpl_clipboard_filename".to_string(),
                     source: e,
                 })?;
             log::trace!("Applying templates: `tmpl_clipboard_content`, `tmpl_clipboard_filename`");
@@ -204,7 +204,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             let n =
                 Note::from_content_template(&path, &CFG.tmpl_annotate_content).map_err(|e| {
                     WorkflowError::Template {
-                        tmpl: "tmpl_annotate_content".to_string(),
+                        tmpl_name: "tmpl_annotate_content".to_string(),
                         source: e,
                     }
                 })?;
@@ -212,7 +212,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             let new_fqfn = n
                 .render_filename(&CFG.tmpl_annotate_filename)
                 .map_err(|e| WorkflowError::Template {
-                    tmpl: "tmpl_annotate_filename".to_string(),
+                    tmpl_name: "tmpl_annotate_filename".to_string(),
                     source: e,
                 })?;
 
