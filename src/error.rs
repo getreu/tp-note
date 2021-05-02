@@ -14,8 +14,8 @@ pub enum WorkflowError {
     ExportsNeedsNoteFile,
 
     /// Remedy: restart with `--debug trace`.
-    #[error("Failed to render template! (cf. `{tmpl}` in configuration file).\n{source}")]
-    Template { tmpl: String, source: NoteError },
+    #[error("Failed to render template (cf. `{tmpl_name}` in configuration file)!\n{source}")]
+    Template { tmpl_name: String, source: NoteError },
 
     /// Forward `MissingFrontMatter` from `NoteError`.
     #[error(transparent)]

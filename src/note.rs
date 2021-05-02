@@ -548,7 +548,13 @@ impl Note<'_> {
 
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
-        let html = tera.render_str(tmpl, &self.context)?;
+        let html = tera
+            .render_str(tmpl, &self.context)
+            .map_err(|e| NoteError::TeraTemplate {
+                source_str: std::error::Error::source(&e)
+                    .unwrap_or(&tera::Error::msg(""))
+                    .to_string(),
+            })?;
         Ok(html)
     }
 
