@@ -58,7 +58,6 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
     };
 
     if no_filename_sync {
-        // Do not sync, if explicitly disabled.
         log::trace!(
             "Filename synchronisation disabled with the front matter field: `{}: {}`",
             TMPL_VAR_FM_NO_FILENAME_SYNC.trim_start_matches(TMPL_VAR_FM_),
@@ -67,32 +66,40 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
     }
 
     if ARGS.no_filename_sync {
-        // Do not sync, if explicitly disabled.
         log::trace!("Filename synchronisation disabled with the flag: `--no-filename-sync`",);
     }
 
-    let new_fqfn = if !no_filename_sync && !ARGS.no_filename_sync {
-        log::trace!("Applying template `tmpl_sync_filename`.");
-        let new_fqfn =
-            n.render_filename(&CFG.tmpl_sync_filename)
-                .map_err(|e| WorkflowError::Template {
+    if CFG.no_filename_sync_arg_default {
+        log::trace!(
+            "Filename synchronisation disabled with the configuration file \
+             variable: `no_filename_sync_arg_default = true`",
+        );
+    }
+
+    let new_fqfn =
+        // Do not sync, if explicitly disabled.
+        if !no_filename_sync && !CFG.no_filename_sync_arg_default && !ARGS.no_filename_sync {
+            log::trace!("Applying template `tmpl_sync_filename`.");
+            let new_fqfn = n.render_filename(&CFG.tmpl_sync_filename).map_err(|e| {
+                WorkflowError::Template {
                     tmpl: "tmpl_sync_filename".to_string(),
                     source: e,
-                })?;
+                }
+            })?;
 
-        if !filename::exclude_copy_counter_eq(&path, &new_fqfn) {
-            let new_fqfn = filename::find_unused(new_fqfn)?;
+            if !filename::exclude_copy_counter_eq(&path, &new_fqfn) {
+                let new_fqfn = filename::find_unused(new_fqfn)?;
 
-            // rename file
-            fs::rename(&path, &new_fqfn)?;
-            log::trace!("File renamed to {:?}", new_fqfn);
-            new_fqfn
+                // rename file
+                fs::rename(&path, &new_fqfn)?;
+                log::trace!("File renamed to {:?}", new_fqfn);
+                new_fqfn
+            } else {
+                path.to_path_buf()
+            }
         } else {
             path.to_path_buf()
-        }
-    } else {
-        path.to_path_buf()
-    };
+        };
 
     // Print HTML rendition.
     if let Some(dir) = &ARGS.export {

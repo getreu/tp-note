@@ -38,7 +38,7 @@ const CONFIG_FILENAME: &str = "tp-note.toml";
 /// `--debug` is present, its value will be used instead.
 const DEBUG_ARG_DEFAULT: LevelFilter = LevelFilter::Error;
 
-/// Default value for command line flag `--edit` To disable file watcher,
+/// Default value for command line flag `--edit` to disable file watcher,
 /// (Markdown)-renderer, html server and a web browser launcher set to `true`.
 const EDITOR_ARG_DEFAULT: bool = false;
 
@@ -48,6 +48,11 @@ const EDITOR_ARG_DEFAULT: bool = false;
 /// will always pop up, regardless of `--popup` and `POPUP` (unless
 /// `--debug=off`).
 const POPUP_ARG_DEFAULT: bool = true;
+
+/// Default value for command line flag `--no-filename-sync` to disable
+/// the title to filename synchronisation mechanism permanently.
+/// If set to `true`, the corresponding command line flag is ignored.
+const NO_FILENAME_SYNC_ARG_DEFAULT: bool = false;
 
 /// _Tp-Note_ opens all `.md` files with an external editor. It recognizes its
 /// own files, by the file extension `.md`, by a valid YAML header and the
@@ -736,6 +741,7 @@ pub struct Cfg {
     pub version: String,
     pub debug_arg_default: LevelFilter,
     pub edit_arg_default: bool,
+    pub no_filename_sync_arg_default: bool,
     pub popup_arg_default: bool,
     pub silently_ignore_missing_header: bool,
     pub extension_default: String,
@@ -786,6 +792,7 @@ impl ::std::default::Default for Cfg {
             debug_arg_default: DEBUG_ARG_DEFAULT,
             edit_arg_default: EDITOR_ARG_DEFAULT,
             popup_arg_default: POPUP_ARG_DEFAULT,
+            no_filename_sync_arg_default: NO_FILENAME_SYNC_ARG_DEFAULT,
             silently_ignore_missing_header: SILENTLY_IGNORE_MISSING_HEADER,
             extension_default: EXTENSION_DEFAULT.to_string(),
             note_file_extensions_md: NOTE_FILE_EXTENSIONS_MD
