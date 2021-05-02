@@ -331,17 +331,22 @@ impl Note<'_> {
 
         // render template
         let mut fqfn = self.context.fqpn.to_owned();
-        fqfn.push({
-            let mut tera = Tera::default();
-            tera.extend(&TERA)?;
+        let mut tera = Tera::default();
+        tera.extend(&TERA)?;
 
-            tera.render_str(template, &self.context)
-                .map(|filename| {
-                    log::debug!("Rendered filename template:\n{:?}", filename);
-                    filename
-                })?
-                .trim()
-        });
+        match tera.render_str(template, &self.context) {
+            Ok(filename) => {
+                log::debug!("Rendered filename template:\n{:?}", filename.trim());
+                fqfn.push(filename.trim());
+            }
+            Err(e) => {
+                return Err(NoteError::TeraTemplate {
+                    source_str: std::error::Error::source(&e)
+                        .unwrap_or(&tera::Error::msg(""))
+                        .to_string(),
+                });
+            }
+        }
 
         Ok(filename::shorten_filename(fqfn))
     }
@@ -588,9 +593,10 @@ impl Note<'_> {
     #[cfg(feature = "viewer")]
     pub fn render_erroneous_content(
         doc_path: &Path,
+        template: &str,
         java_script_insert: &str,
         err: NoteError,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, NoteError> {
         // Render error page providing all information we have.
         let mut context = tera::Context::new();
         let err = err.to_string();
@@ -606,15 +612,18 @@ impl Note<'_> {
         // Render to HTML.
         let note_erroneous_content = text_rawlinks2html(&note_erroneous_content);
         // Insert.
-        context.insert(
-            TMPL_VAR_NOTE_ERRONEOUS_CONTENT,
-            note_erroneous_content.trim(),
-        );
+        context.insert(TMPL_VAR_NOTE_ERRONEOUS_CONTENT, &note_erroneous_content);
 
         // Apply template.
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
-        let html = tera.render_str(&CFG.viewer_error_tmpl, &context)?;
+        let html = tera
+            .render_str(&template, &context)
+            .map_err(|e| NoteError::TeraTemplate {
+                source_str: std::error::Error::source(&e)
+                    .unwrap_or(&tera::Error::msg(""))
+                    .to_string(),
+            })?;
         Ok(html)
     }
 }

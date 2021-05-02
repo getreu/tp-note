@@ -3,11 +3,14 @@ extern crate httparse;
 extern crate notify;
 
 use crate::error::FileError;
+use crate::error::NoteError;
 use crate::process_ext::ChildExtError;
 use core::str::Utf8Error;
 use std::sync::mpsc::RecvError;
 use thiserror::Error;
 
+/// Represents an error in the viewer feature.
+/// Hint: to see this error restart _Tp-Note_ with `--debug debug`.
 #[derive(Debug, Error)]
 pub enum ViewerError {
     /// The watched file was moved by another process.
@@ -49,6 +52,12 @@ pub enum ViewerError {
         source: ChildExtError,
     },
 
+    /// Remedy: Check the template syntax.
+    #[error(
+        "Failed to render the HTML error page (cf. `{tmpl}` in configuration file).\n{source}"
+    )]
+    RenderErrorPage { tmpl: String, source: NoteError },
+
     /// Watcher error.
     #[error(transparent)]
     Notify(#[from] notify::Error),
@@ -57,21 +66,21 @@ pub enum ViewerError {
     #[error(transparent)]
     Httparse(#[from] httparse::Error),
 
-    /// Error in `sse_server::render_content_and_errror()` mainly while rendering the error page.
-    #[error(transparent)]
-    Rendition(#[from] Box<dyn std::error::Error>),
-
     /// Error in `sse_server::serve_event2()` when the watcher thread disconnects the `event`
     /// channel.
     #[error(transparent)]
     Recv(#[from] RecvError),
 
-    /// `viewer::web_browser` needs `FileError::ApplicationReturn` and
-    /// `FileError::NoApplicationFound`.
+    /// Forward `FileError::ApplicationReturn` and `FileError::NoApplicationFound needed by
+    /// `viewer::web_browser`.
     #[error(transparent)]
     File(#[from] FileError),
 
-    /// Error in `sse_server::ercent_decode_str().decode_utf8()`
+    /// Forward errors from `error::NoteError` when rendering the page.
+    #[error(transparent)]
+    Note(#[from] NoteError),
+
+    /// Error while decoding URL path.
     #[error(transparent)]
     Utf8(#[from] Utf8Error),
 

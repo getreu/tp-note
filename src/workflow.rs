@@ -245,7 +245,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
             }
         }
         Err(e) => {
-            if path.is_file() && !ARGS.batch {
+            if path.is_file() && !matches!(e, WorkflowError::Template { .. }) && !ARGS.batch {
                 missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
                     || matches!(e, WorkflowError::MissingFrontMatterField { .. });
 

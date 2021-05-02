@@ -153,6 +153,7 @@ pub enum NoteError {
     #[error("Can not read file:\n\t {path:?}\n{source}")]
     Read { path: PathBuf, source: io::Error },
 
+    /// Remedy: check the syntax of the Tera template in the configuration file.
     #[error(
         "Tera template error:\n\
          {source_str}"
@@ -161,7 +162,7 @@ pub enum NoteError {
 
     /// Remedy: restart with `--debug trace`.
     #[error(
-        "Tera template error:\n\
+        "Tera error:\n\
          {source}"
     )]
     Tera {

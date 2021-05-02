@@ -35,20 +35,20 @@ const TCP_READ_BUFFER_SIZE: usize = 512;
 /// Javascript client code, part 1
 /// Refresh on WTFiles events.
 pub const SSE_CLIENT_CODE1: &str = r#"
-var evtSource = new EventSource("http://"#;
+    var evtSource = new EventSource("http://"#;
 /// Javascript client code, part 2
 /// Save last scroll position into local storage.
 /// Jump to the last saved scroll position.
 pub const SSE_CLIENT_CODE2: &str = r#"/events");
-evtSource.addEventListener("update", function(e) {
-    localStorage.setItem('scrollPosition', window.scrollY);
-    window.location.reload(true);
-});
-window.addEventListener('load', function() {
-    if(localStorage.getItem('scrollPosition') !== null)
-        window.scrollTo(0, localStorage.getItem('scrollPosition'));
-});
-"#;
+    evtSource.addEventListener("update", function(e) {
+        localStorage.setItem('scrollPosition', window.scrollY);
+        window.location.reload(true);
+    });
+    window.addEventListener('load', function() {
+        if(localStorage.getItem('scrollPosition') !== null)
+            window.scrollTo(0, localStorage.getItem('scrollPosition'));
+    });
+    "#;
 
 /// Server-Sent-Event token to request a page update.
 const SSE_EVENT_TOKEN: &str = "update";
@@ -510,7 +510,7 @@ impl ServerThread {
 
     #[inline]
     /// Renders the error page with the `VIEWER_ERROR_TMPL`.
-    fn render_content_and_error(&self) -> Result<String, Box<dyn std::error::Error>> {
+    fn render_content_and_error(&self) -> Result<String, ViewerError> {
         // Deserialize.
         let js = format!(
             "{}{}:{}{}",
@@ -592,7 +592,11 @@ impl ServerThread {
             // page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
-                Note::render_erroneous_content(&self.doc_path, &js, e)
+                Note::render_erroneous_content(&self.doc_path, &CFG.viewer_error_tmpl, &js, e)
+                    .map_err(|e| { ViewerError::RenderErrorPage {
+                        tmpl: "viewer_error_tmpl".to_string(),
+                        source: e,
+                    }})
             }
         }
     }
