@@ -34,12 +34,12 @@ use std::pin::Pin;
 use std::str;
 use tera::Tera;
 
-/// This template variable contains the fully qualified file name of
-/// the note file.
-pub const TMPL_VAR_FILE: &str = "file";
+/// The template variable contains the fully qualified file name of
+/// the `<path>` command line argument.
+pub const TMPL_VAR_PATH: &str = "path";
 
-/// Contains the fully qualified directory path in which the note
-/// file is located.
+/// Contains the fully qualified directory path of the `<path>`
+/// command line argument.
 const TMPL_VAR_DIR_PATH: &str = "dir_path";
 
 /// Contains the YAML header (if any) of the clipboard content.
@@ -215,7 +215,7 @@ impl Note<'_> {
 
         // Register the canonicalized fully qualified file name.
         let file = path.to_str().unwrap_or_default();
-        (*context).insert(TMPL_VAR_FILE, &file);
+        (*context).insert(TMPL_VAR_PATH, &file);
 
         // `fqpn` is a directory as fully qualified path, ending
         // by a separator.
@@ -602,7 +602,7 @@ impl Note<'_> {
         let mut context = tera::Context::new();
         let err = err.to_string();
         context.insert(TMPL_VAR_NOTE_ERROR, &err);
-        context.insert(TMPL_VAR_FILE, &doc_path.to_str().unwrap_or_default());
+        context.insert(TMPL_VAR_PATH, &doc_path.to_str().unwrap_or_default());
         // Java Script
         context.insert(TMPL_VAR_NOTE_JS, &java_script_insert);
 

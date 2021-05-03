@@ -688,7 +688,7 @@ gives you access to the '`LANG`' environment variable.
 
 In addition _Tp-Note_ defines the following variables:
 
-* '`{{ file }}`' is the canonicalized fully qualified file name corresponding
+* '`{{ path }}`' is the canonicalized fully qualified file name corresponding
   to _Tp-Note_'s positional parameter '`<path>`'. If '`<path>`' points to a
   directory the content of this variable is identical to '`{{ dir_path }}`'.
 
@@ -769,21 +769,21 @@ some additional filters, e.g.: '`tag`', '`trim_tag`', '`stem`', '`cut`', '`headi
 
 A filter is always used together with a variable. Here some examples:
 
-* '`{{ file | tag }}`' is the sort-tag (numerical filename prefix) of the
+* '`{{ path | tag }}`' is the sort-tag (numerical filename prefix) of the
   current note on disk, e.g. '`01-23_9-`' or '`20191022-`'. Useful in content
   templates, for example to create new notes based on a path with a filename
   (e.g.  '`tmpl_annotate_content`').
 
-* '`{{ file | stem }}`' is the note's filename without sort-tag, copy-counter
+* '`{{ path | stem }}`' is the note's filename without sort-tag, copy-counter
    and extension.
 
-* '`{{ file | ext }}`' is the note's filename extension without
+* '`{{ path | ext }}`' is the note's filename extension without
   dot (period), e.g. '`md`' od '`mdtxt`'.
 
-* '`{{ file | ext | prepend_dot }}`' is the note's filename extension with
+* '`{{ path | ext | prepend_dot }}`' is the note's filename extension with
   dot (period), e.g. '`.md`' od '`.mdtxt`'.
 
-* '`{{ dir_path | trim_tag }}`' the last element of `path`, which is the parent
+* '`{{ dir_path | trim_tag }}`' the last element of '`path`', which is the parent
    directory's name of the note on disk. If present, the sort-tag is skipped
    and only the following characters are retained.
 
@@ -801,7 +801,7 @@ A filter is always used together with a variable. Here some examples:
 * '`{{ clipboard | linktitle }}`' is the title of the first Markdown or
   reStruncturedText formatted link in the clipboard.
 
-* '`{{ file | ext }}`' is the filename extension of the current note on disk.
+* '`{{ path | ext }}`' is the filename extension of the current note on disk.
 
 * '`{{ username | json_encode }}`' is the username Json encoded. All YAML
   front matter must be Json encoded, so this filter should be the last in all
@@ -821,9 +821,11 @@ A filter is always used together with a variable. Here some examples:
 
 ## Content-template conventions
 
-_Tp-Note_ distinguishes two template types: content-templates '`tmpl_*_content`'
-used to create the note's content (front-matter and body) and filename-templates
-'`tmpl_*_filename`' used to calculate the note's filename.
+_Tp-Note_ distinguishes two template types: content-templates are used to create
+the note's content (front-matter and body) and the corresponding
+filename-templates '`tmpl_*_filename`' are used to calculate the note's
+filename.  By convention, content templates appear in the configuration file in
+variables named '`tmpl_*_content`'.
 
 Strings in the YAML front matter of content-templates are JSON encoded.
 Therefore, all variables used in the front matter must pass an additional
@@ -834,10 +836,14 @@ becomes '`{{ dir_path | stem | json_encode() }}`' or just
 
 ## Filename-template convention
 
-The same applies to filename-template-variables: in this context we must
-guarantee, that the variable contains only file system friendly characters.
-For this purpose _Tp-Note_ provides the additional Tera filters '`sanit`' and
-'`sanit(alpha=true)`'.
+By convention, filename templates appear in the configuration file in variables
+named '`tmpl_*_filename`'.  When a content-template creates a new note, the
+corresponding filename-templates is called afterwards to calculate the filename
+of the new notes.  The filename template '`tmpl_sync_filename`' has a special
+role as it is synchronizes the filename of existing note files.  As we are
+dealing with filenames we  must guarantee, that the templates produce only file
+system friendly characters.  For this purpose _Tp-Note_ provides the additional
+Tera filters '`sanit`' and '`sanit(alpha=true)`'.
 
 * The '`sanit()`' filter transforms a string in a file system friendly from. This
   is done by replacing forbidden characters like '`?`' and '`\\`' with '`_`'
@@ -854,13 +860,13 @@ For this purpose _Tp-Note_ provides the additional Tera filters '`sanit`' and
 
 In filename-templates most variables must pass either the '`sanit`' or the
 '`sanit(alpha=true)`' filter. Exception to this rule are the sort-tag variables
-'`{{ file | tag }}`' and '`{{ dir_path | tag }}`'. As these are guaranteed to contain only
-the filesystem-friendly characters: '`0..9-_`', no additional filtering is
+'`{{ path | tag }}`' and '`{{ dir_path | tag }}`'. As these are guaranteed to contain only
+the filesystem friendly characters: '`0..9-_`', no additional filtering is
 required. In addition, a '`sanit()`'-filter would needlessly restrict the value
-range of '`{{ file | tag }}`' and '`{{ dir_path | tag }}`': a sort tag usually ends with a
+range of '`{{ path | tag }}`' and '`{{ dir_path | tag }}`': a sort tag usually ends with a
 '`-`', a character that the '`sanit`'-filter screens out when it appears in
 leading or trailing position. For this reason no '`sanit`'-filter is allowed
-with '`{{ file | tag }}`' and '`{{ dir_path | tag }}`'.
+with '`{{ path | tag }}`' and '`{{ dir_path | tag }}`'.
 
 
 ## Register your own text editor
@@ -1044,11 +1050,11 @@ affect the way new notes are created:
 2. Replace the following line in the template '`tmpl_clipboard_content`'
    that defines a hyperlink in Markdown format:
 
-       [{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}](<{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}>)
+       [{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}](<{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}>)
 
    with the following line encoded in _RestructuredText_:
 
-       `<{{ file | tag }}{{ file | stem }}{{ file | ext | prepend_dot }}>`_
+       `<{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}>`_
 
 As a result, all future notes are created as '`*.rst`' files.
 
@@ -1154,7 +1160,7 @@ viewer_error_tmpl = '''<!DOCTYPE html>
 </head>
 <body>
 <h3>Syntax error</h3>
-<p> in note file: <pre>{{ file }}</pre><p>
+<p> in note file: <pre>{{ path }}</pre><p>
 <hr>
 <pre class="note-error">{{ note_error }}</pre>
 <hr>
