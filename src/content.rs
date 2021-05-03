@@ -206,15 +206,15 @@ impl<'a> Content<'a> {
         (content[fm_start..fm_end].trim(), &content[body_start..])
     }
 
-    /// Writes the note to disk with `new_fqfn`-filename.
-    pub fn write_to_disk(self: &Pin<Box<Self>>, new_fqfn: &Path) -> Result<(), FileError> {
+    /// Writes the note to disk with `new_file_path`-filename.
+    pub fn write_to_disk(self: &Pin<Box<Self>>, new_file_path: &Path) -> Result<(), FileError> {
         let outfile = OpenOptions::new()
             .write(true)
             .create_new(true)
-            .open(&new_fqfn);
+            .open(&new_file_path);
         match outfile {
             Ok(mut outfile) => {
-                log::trace!("Creating file: {:?}", new_fqfn);
+                log::trace!("Creating file: {:?}", new_file_path);
                 write!(outfile, "\u{feff}")?;
                 if !self.header.is_empty() {
                     write!(outfile, "---")?;
@@ -241,7 +241,7 @@ impl<'a> Content<'a> {
             }
             Err(e) => {
                 return Err(FileError::Write {
-                    path: new_fqfn.to_path_buf(),
+                    path: new_file_path.to_path_buf(),
                     source_str: e.to_string(),
                 });
             }

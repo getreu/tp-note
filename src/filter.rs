@@ -295,7 +295,7 @@ pub struct ContextWrapper {
     // Collection of substitution variables.
     ct: tera::Context,
     // The note's directory path on disk.
-    pub fqpn: PathBuf,
+    pub dir_path: PathBuf,
 }
 
 /// A thin wrapper around `tera::Context` storing some additional
@@ -304,7 +304,7 @@ impl ContextWrapper {
     pub fn new() -> Self {
         Self {
             ct: tera::Context::new(),
-            fqpn: PathBuf::new(),
+            dir_path: PathBuf::new(),
         }
     }
 }

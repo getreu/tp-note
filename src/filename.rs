@@ -10,9 +10,9 @@ use std::path::PathBuf;
 /// `file_stem.len()+file_extension.len() <= NOTE_FILENAME_LEN_MAX`.
 /// If stem ends with a pattern similar to a copy counter,
 /// append `-` to stem.
-pub fn shorten_filename(mut fqfn: PathBuf) -> PathBuf {
+pub fn shorten_filename(mut file_path: PathBuf) -> PathBuf {
     // Determine length of file-extension.
-    let note_extension = fqfn
+    let note_extension = file_path
         .extension()
         .unwrap_or_default()
         .to_str()
@@ -20,7 +20,7 @@ pub fn shorten_filename(mut fqfn: PathBuf) -> PathBuf {
     let note_extension_len = note_extension.len();
 
     // Limit length of file-stem.
-    let mut note_stem = fqfn
+    let mut note_stem = file_path
         .file_stem()
         .unwrap_or_default()
         .to_str()
@@ -33,7 +33,7 @@ pub fn shorten_filename(mut fqfn: PathBuf) -> PathBuf {
         note_stem.push_str(&CFG.copy_counter_extra_separator);
     };
 
-    // Limit the size of `fqfn`
+    // Limit the size of `file_path`
     let mut note_stem_short = String::new();
     // `+1` reserves one byte for `.` before the extension.
     for i in (0..NOTE_FILENAME_LEN_MAX - (note_extension_len + 1)).rev() {
@@ -49,9 +49,9 @@ pub fn shorten_filename(mut fqfn: PathBuf) -> PathBuf {
     note_filename.push_str(note_extension);
 
     // Replace filename
-    fqfn.set_file_name(note_filename);
+    file_path.set_file_name(note_filename);
 
-    fqfn
+    file_path
 }
 
 /// When the path `p` exists on disk already, append some extension

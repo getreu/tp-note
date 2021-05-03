@@ -217,14 +217,14 @@ impl Note<'_> {
         let file = path.to_str().unwrap_or_default();
         (*context).insert(TMPL_VAR_PATH, &file);
 
-        // `fqpn` is a directory as fully qualified path, ending
+        // `dir_path` is a directory as fully qualified path, ending
         // by a separator.
-        let fqpn = if path.is_dir() {
+        let dir_path = if path.is_dir() {
             path
         } else {
             path.parent().unwrap_or_else(|| Path::new("./"))
         };
-        (*context).insert(TMPL_VAR_DIR_PATH, &fqpn.to_str().unwrap_or_default());
+        (*context).insert(TMPL_VAR_DIR_PATH, &dir_path.to_str().unwrap_or_default());
 
         // Register input from clipboard.
         (*context).insert(TMPL_VAR_CLIPBOARD_HEADER, CLIPBOARD.header);
@@ -288,7 +288,7 @@ impl Note<'_> {
         });
         (*context).insert(TMPL_VAR_USERNAME, &author);
 
-        context.fqpn = fqpn.to_path_buf();
+        context.dir_path = dir_path.to_path_buf();
 
         Ok(context)
     }
@@ -332,21 +332,21 @@ impl Note<'_> {
         log::trace!("Applying the filename template:\n{}", template);
 
         // render template
-        let mut fqfn = self.context.fqpn.to_owned();
+        let mut file_path = self.context.dir_path.to_owned();
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
 
         match tera.render_str(template, &self.context) {
             Ok(filename) => {
                 log::debug!("Rendered filename template:\n{:?}", filename.trim());
-                fqfn.push(filename.trim());
+                file_path.push(filename.trim());
             }
             Err(e) => {
                 return Err(note_error_tera_template!(e));
             }
         }
 
-        Ok(filename::shorten_filename(fqfn))
+        Ok(filename::shorten_filename(file_path))
     }
 
     /// Helper function deserializing the front-matter of an `.md`-file.
