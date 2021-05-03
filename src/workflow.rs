@@ -124,6 +124,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
     if path.is_dir() {
         let (n, new_file_path) = if STDIN.is_empty() && CLIPBOARD.is_empty() {
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
+            log::trace!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
             let n = Note::from_content_template(&path, &CFG.tmpl_new_content).map_err(|e| {
                 WorkflowError::Template {
                     tmpl_name: "tmpl_new_content".to_string(),
@@ -136,11 +137,11 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
                         tmpl_name: "tmpl_new_filename".to_string(),
                         source: e,
                     })?;
-            log::trace!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
             (n, new_file_path)
         } else if !STDIN.header.is_empty() || !CLIPBOARD.header.is_empty() {
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
             // (only if there is a valid YAML front matter)
+            log::trace!("Applying templates: `tmpl_copy_content`, `tmpl_copy_filename`");
             let n = Note::from_content_template(&path, &CFG.tmpl_copy_content).map_err(|e| {
                 WorkflowError::Template {
                     tmpl_name: "tmpl_copy_content".to_string(),
@@ -154,10 +155,10 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
                     source: e,
                 }
             })?;
-            log::trace!("Applying templates: `tmpl_copy_content`, `tmpl_copy_filename`");
             (n, new_file_path)
         } else {
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
+            log::trace!("Applying templates: `tmpl_clipboard_content`, `tmpl_clipboard_filename`");
             let n =
                 Note::from_content_template(&path, &CFG.tmpl_clipboard_content).map_err(|e| {
                     WorkflowError::Template {
@@ -173,7 +174,6 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
                     tmpl_name: "tmpl_clipboard_filename".to_string(),
                     source: e,
                 })?;
-            log::trace!("Applying templates: `tmpl_clipboard_content`, `tmpl_clipboard_filename`");
             (n, new_file_path)
         };
 
