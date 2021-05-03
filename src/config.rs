@@ -130,12 +130,12 @@ pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 /// changed through editing the configuration file.
 /// The following variables are  defined:
 /// `{{ sanit | stem }}`, `{{ file | stem }}`, `{{ file | ext }}`, `{{ extension_default }}` `{{
-/// file | tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`, `{{ path }}`.
+/// file | tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`, `{{ dir_path }}`.
 /// In addition all environment variables can be used, e.g.  `{{ get_env(name=\"LOGNAME\") }}`
 /// When placed in YAML front matter, the filter `| json_encode` must be appended to each variable.
 const TMPL_NEW_CONTENT: &str = "\
 ---
-title:      {{ path | trim_tag | cut | json_encode }}
+title:      {{ dir_path | trim_tag | cut | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
@@ -214,7 +214,7 @@ const TMPL_COPY_FILENAME: &str = "\
 /// For example: `[<link-name>](<link-url> "link-title")`, can be accessed with the variables:
 /// `{{ clipboard | linkname }}`, `{{ clipboard | linktarget }}` and `{{ clipboard | linkttitle }}`.
 /// The following variables are always defined: `{{ dir | stem }}`, `{{ file |
-/// stem }}`, `{{ file_ext }}`, `{{ extension_default }}` `{{ path }}`, `{{ file
+/// stem }}`, `{{ file_ext }}`, `{{ extension_default }}` `{{ dir_path }}`, `{{ file
 /// | tag }}`, `{{ username }}`. In addition all environment variables can be
 /// used, e.g. `{{ get_env(name=\"LOGNAME\") }}` When placed in
 /// YAML-front-matter, the filter `| json_encode` must be appended to each
@@ -263,7 +263,7 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 /// Default template used when the command line <path> parameter points to an existing
 /// non-`.md`-file. Can be modified through editing the configuration file.  The following
 /// variables are  defined: `{{ file | dirname }}`, `{{ file | stem }}`, `{{ file_ext }}`,
-/// `{{ extension_default }}` `{{ file | tag }}`, `{{ username }}`, `{{ lang }}`, `{{ path }}`.  In
+/// `{{ extension_default }}` `{{ file | tag }}`, `{{ username }}`, `{{ lang }}`, `{{ dir_path }}`.  In
 /// addition all environment variables can be used, e.g.  `{{ get_env(name=\"LOGNAME\") }}`
 /// When placed in YAML-front-matter, the filter `| json_encode` must be appended to each variable.
 /// Trick: the expression `{% if stdin ~ clipboard != stdin ~ clipboard | heading %}` detects

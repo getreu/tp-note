@@ -40,7 +40,7 @@ pub const TMPL_VAR_FILE: &str = "file";
 
 /// Contains the fully qualified directory path in which the note
 /// file is located.
-const TMPL_VAR_PATH: &str = "path";
+const TMPL_VAR_DIR_PATH: &str = "dir_path";
 
 /// Contains the YAML header (if any) of the clipboard content.
 /// Otherwise the empty string.
@@ -224,7 +224,7 @@ impl Note<'_> {
         } else {
             path.parent().unwrap_or_else(|| Path::new("./"))
         };
-        (*context).insert(TMPL_VAR_PATH, &fqpn.to_str().unwrap_or_default());
+        (*context).insert(TMPL_VAR_DIR_PATH, &fqpn.to_str().unwrap_or_default());
 
         // Register input from clipboard.
         (*context).insert(TMPL_VAR_CLIPBOARD_HEADER, CLIPBOARD.header);

@@ -410,14 +410,14 @@ synchronization).
     launch of the web browser '`-n -d info --view`'. The option
     '`-d trace`' shows all available template variables, the templates
     used and the rendered result of the substitution, which is
-    particularly useful for debugging new templates. The option 
+    particularly useful for debugging new templates. The option
     '`-d off`' silences all error message reporting and suppresses also the
     error popup window.
 
     All error messages are dumped in the error stream `stderr` and appear
     on the console from where _Tp-Note_ was launched:
 
-        tp-note.exe --debug info my_note.md 
+        tp-note.exe --debug info my_note.md
 
     On Windows the output must be redirected into a file to see it:
 
@@ -456,10 +456,10 @@ synchronization).
 
 :   Whenever _Tp-Note_ opens a note file, it synchronizes its YAML-metadata
     with its filename. '`--no-filename-sync`' disables the synchronization.
-    Mainly useful is this flag in scripts for testing '`.md`'-files. 
+    Mainly useful is this flag in scripts for testing '`.md`'-files.
     See section EXIT STATUS for more details.  The section METADATA FILENAME
     SYNCHRONIZATION shows alternative ways to disable synchronisation.
-    
+
 **-u**, **\--popup**
 
 : Redirect log-file entries into popup alert windows. Must be used together
@@ -651,7 +651,7 @@ behaviour any time by deleting the '`sort_tag`' line in the note's metadata.
 The same applies to the '`file_ext`' variable.
 
 The metadata filename synchronisation feature can be disabled permanently
-by setting the configuration file variable 
+by setting the configuration file variable
 '`no_filename_sync_arg_default = true`'. To disable this feature for one time
 only, invoke _Tp-note_ with '`--no-filename-sync`'. To exclude a particular note
 from filename synchronisation, add the YAML header field '`no_filename_sync:`'
@@ -673,7 +673,7 @@ starting with '`tmpl_*`' are _Tera-Template_-strings (see:
 <https://tera.netlify.com/docs/#templates>).
 
 _Tp-Note_ captures and stores its environment in _Tera-variables_. For example,
-the variable '`{{ path }}`' is initialized with the note's target
+the variable '`{{ dir_path }}`' is initialized with the note's target
 directory. The variable '`{{ clipboard }}`' contains the content of the
 clipboard. To learn more about variables, launch _Tp-Note_ with the
 '`--debug trace`' option and observe what information it captures from its
@@ -690,9 +690,9 @@ In addition _Tp-Note_ defines the following variables:
 
 * '`{{ file }}`' is the canonicalized fully qualified file name corresponding
   to _Tp-Note_'s positional parameter '`<path>`'. If '`<path>`' points to a
-  directory the content of this variable is identical to '`{{ path }}`'.
+  directory the content of this variable is identical to '`{{ dir_path }}`'.
 
-* '`{{ path }}`' is same as above but without filename and extension.
+* '`{{ dir_path }}`' is same as above but without filename and extension.
 
 * '`{{ clipboard }}`' is the complete clipboard text.  In case the clipboard's
   content starts with a YAML header, the latter does not appear in this
@@ -783,7 +783,7 @@ A filter is always used together with a variable. Here some examples:
 * '`{{ file | ext | prepend_dot }}`' is the note's filename extension with
   dot (period), e.g. '`.md`' od '`.mdtxt`'.
 
-* '`{{ path | trim_tag }}`' the last element of `path`, which is the parent
+* '`{{ dir_path | trim_tag }}`' the last element of `path`, which is the parent
    directory's name of the note on disk. If present, the sort-tag is skipped
    and only the following characters are retained.
 
@@ -827,9 +827,9 @@ used to create the note's content (front-matter and body) and filename-templates
 
 Strings in the YAML front matter of content-templates are JSON encoded.
 Therefore, all variables used in the front matter must pass an additional
-'`json_encode()`'-filter. For example, the variable '`{{ path | stem }}`'
-becomes '`{{ path | stem | json_encode() }}`' or just
-'`{{ path | stem | json_encode }}`'.
+'`json_encode()`'-filter. For example, the variable '`{{ dir_path | stem }}`'
+becomes '`{{ dir_path | stem | json_encode() }}`' or just
+'`{{ dir_path | stem | json_encode }}`'.
 
 
 ## Filename-template convention
@@ -854,13 +854,13 @@ For this purpose _Tp-Note_ provides the additional Tera filters '`sanit`' and
 
 In filename-templates most variables must pass either the '`sanit`' or the
 '`sanit(alpha=true)`' filter. Exception to this rule are the sort-tag variables
-'`{{ file | tag }}`' and '`{{ path | tag }}`'. As these are guaranteed to contain only
+'`{{ file | tag }}`' and '`{{ dir_path | tag }}`'. As these are guaranteed to contain only
 the filesystem-friendly characters: '`0..9-_`', no additional filtering is
 required. In addition, a '`sanit()`'-filter would needlessly restrict the value
-range of '`{{ file | tag }}`' and '`{{ path | tag }}`': a sort tag usually ends with a
+range of '`{{ file | tag }}`' and '`{{ dir_path | tag }}`': a sort tag usually ends with a
 '`-`', a character that the '`sanit`'-filter screens out when it appears in
 leading or trailing position. For this reason no '`sanit`'-filter is allowed
-with '`{{ file | tag }}`' and '`{{ path | tag }}`'.
+with '`{{ file | tag }}`' and '`{{ dir_path | tag }}`'.
 
 
 ## Register your own text editor
