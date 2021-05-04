@@ -155,7 +155,7 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 /// Note, as this is filename template, all variables (except `now` and `extension_default` must be
 /// filtered by a `sanit` or `sanit(alpha=true)` filter.
 const TMPL_NEW_FILENAME: &str = "\
-{{ now() | date(format='%Y%m%d') }}-\
+{{ now() | date(format='%Y%m%d-') }}\
 {{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
 ";
@@ -482,7 +482,7 @@ const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
 pub const VIEWER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <title>{{ fm_title }}</title>
 <style>
 table, th, td { font-weight: normal; }
@@ -545,9 +545,9 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 
 /// Template used by the viewer to render error messages into html.
 pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
-<html lang=\"en\">
+<html lang="en">
 <head>
-<meta charset=\"utf-8\">
+<meta charset="UTF-8">
 <title>Syntax error</title>
 <style>
 .note-error { color: #523626; }
