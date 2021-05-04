@@ -15,7 +15,7 @@ use webbrowser::{open_browser, Browser};
 /// When not in _fall back mode: this function blocks until the user
 /// closes the browser window.
 pub fn launch_web_browser(url: &str) -> Result<(), ViewerError> {
-    if let Err(e) = launch_listed_broswer(url) {
+    if let Err(e) = launch_listed_browser(url) {
         log::warn!("{}", e);
         log::warn!("As fall back workaround, trying to launch the system's default web browser.");
         // This might not block in all circumstances.
@@ -27,7 +27,7 @@ pub fn launch_web_browser(url: &str) -> Result<(), ViewerError> {
 /// Launches one be one, all browsers from the list `CFG.browser_args` until
 /// it finds an installed one. This blocks until the browser is closed by the
 /// user.
-pub fn launch_listed_broswer(url: &str) -> Result<(), ViewerError> {
+pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
     let mut args_list = Vec::new();
     let mut executable_list = Vec::new();
 
