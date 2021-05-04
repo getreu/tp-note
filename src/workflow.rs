@@ -322,13 +322,9 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
         launch_editor(&path)?;
     };
 
-    #[cfg(feature = "viewer")]
-    if let Some(jh) = viewer_join_handle {
-        let _ = jh.join();
-    };
-
     if *LAUNCH_EDITOR {
         match synchronize_filename(&path) {
+            // `path` has changed!
             Ok(p) => path = p,
             Err(e) => {
                 missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
@@ -343,7 +339,6 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                         to be a Tp-Note file. Ignore otherwise.",
                         e,
                     );
-                    return Ok(path);
                 } else {
                     // Report all other errors.
                     return Err(e);
@@ -359,8 +354,12 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                 ctx.set_contents("".to_owned()).unwrap_or_default();
             };
         }
-        Ok(path)
-    } else {
-        Ok(path)
-    }
+    };
+
+    #[cfg(feature = "viewer")]
+    if let Some(jh) = viewer_join_handle {
+        let _ = jh.join();
+    };
+
+    Ok(path)
 }
