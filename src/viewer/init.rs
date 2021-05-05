@@ -11,15 +11,14 @@ use std::net::TcpListener;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::thread::sleep;
 use std::thread::JoinHandle;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
-/// Normally the viewer keeps running until the browser process finishes. This
-/// happens usually when the user closes the browser window.  In case the
-/// process returns immediately (when it forks), we keep the viewer up and
-/// running at least some seconds.
-const VIEWER_MIN_UPTIME: u64 = 4;
+/// Minimum uptime in seconds we expect a browser instance to run.
+/// When starting a second browser instance, only a signal is sent to the
+/// first instance and the process returns immediately. We detect this
+/// case if it runs less seconds than this constant.
+const BROWSER_INSTANCE_MIN_UPTIME: u64 = 3;
 
 /// This is where our loop back device is.
 /// The following is also possible, but binds us to IPv4:
@@ -101,32 +100,28 @@ impl Viewer {
         // Launch the file watcher thread.
         // Send a signal whenever the file is modified. Without error, this thread runs as long as
         // the parent thread (where we are) is running.
-        let _handle: JoinHandle<_> = thread::spawn(move || loop {
-            match FileWatcher::new(doc.clone(), event_tx_list.clone()) {
+        let watcher_handle: JoinHandle<_> =
+            thread::spawn(move || match FileWatcher::new(doc, event_tx_list) {
                 Ok(mut w) => w.run(),
                 Err(e) => {
-                    log::warn!("Can not (re-)start file watcher, giving up: {}", e);
-                    break;
+                    log::warn!("Can not start file watcher, giving up: {}", e);
                 }
-            }
-        });
+            });
 
         // Launch web browser.
         let url = format!("http://{}:{}", LOCALHOST, localport);
         log::info!("Viewer::run(): launching browser with URL: {}", url);
 
         // Start timer.
-        let now = Instant::now();
-        // This blocks until the browser is closed.
+        let browser_start = Instant::now();
+        // This (often) blocks until the browser is closed.
         launch_web_browser(&url)?;
 
-        // If ever the browsers thread does not block (it should), then we wait a little to
-        // serve the rendered page and the referenced images.
-        if now.elapsed().as_secs() <= VIEWER_MIN_UPTIME {
-            sleep(Duration::new(4, 0));
-        };
+        if browser_start.elapsed().as_secs() < BROWSER_INSTANCE_MIN_UPTIME {
+            // This blocks until the watcher terminates.
+            watcher_handle.join().unwrap();
+        }
 
-        // This will also terminate the `FileWatcher` thread and web server thread.
         Ok(())
     }
 }

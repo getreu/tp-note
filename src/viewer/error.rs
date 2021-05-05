@@ -13,6 +13,14 @@ use thiserror::Error;
 /// Hint: to see this error restart _Tp-Note_ with `--debug debug`.
 #[derive(Debug, Error)]
 pub enum ViewerError {
+
+    /// In `update()` every HTTP client in `event_tx_list`
+    /// receives a TCP message. If the client does not ACK
+    /// it is removed from the list. An empty list means,
+    /// that all clients have disconnected.
+    #[error("All subscribers have disconnected.")]
+    AllSubscriberDiconnected,
+
     /// The watched file was moved by another process.
     #[error("Watcher: lost observed file. File was renamed.")]
     LostRenamedFile,

@@ -5,11 +5,17 @@ extern crate notify;
 use crate::config::CFG;
 use crate::viewer::error::ViewerError;
 use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
+use std::panic::panic_any;
 use std::path::PathBuf;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
+
+/// Even if there is no file modification, after `WATCHER_TIMEOUT` seconds,
+/// the watcher sends an `update` request to check if there are still
+/// subscribers connected.
+const WATCHER_TIMEOUT: u64 = 60;
 
 /// Some file editors do not modify the file on disk, they move the old version
 /// away and write a new file with the same name. As this takes some time,
@@ -47,7 +53,7 @@ impl FileWatcher {
         })
     }
 
-    /// Wrapper to start the server. Does not return.
+    /// Wrapper to start the server.
     pub fn run(&mut self) {
         match Self::run2(self) {
             Ok(_) => (),
@@ -60,7 +66,20 @@ impl FileWatcher {
     /// Set up the file watcher and start the event/html server.
     fn run2(&mut self) -> Result<(), ViewerError> {
         loop {
-            let evnt = self.rx.recv().unwrap();
+            // Wait for file modifications.
+            let evnt = match self.rx.recv_timeout(Duration::from_secs(WATCHER_TIMEOUT)) {
+                Ok(ev) => ev,
+                Err(RecvTimeoutError::Timeout) => {
+                    // Send subscriber an update event in order to check if they
+                    // are still connected.
+                    Self::update(&self.event_tx_list)?;
+                    continue;
+                }
+                // The sending half of a channel (or sync_channel) is `Disconnected`,
+                // implies that no further messages will ever be received.
+                // As this should never happen, we panic this thread then.
+                Err(RecvTimeoutError::Disconnected) => panic_any(()),
+            };
             log::trace!("File watcher event: {:?}", evnt);
 
             match evnt {
@@ -72,7 +91,8 @@ impl FileWatcher {
                     // Then we have to set up the watcher again.
                     self.watcher
                         .watch(path.clone(), RecursiveMode::NonRecursive)
-                        .map(|_| Self::update(&self.event_tx_list))?
+                        .map_err(|e| e.into())
+                        .and_then(|_| Self::update(&self.event_tx_list))?
                 }
 
                 // These we can ignore.
@@ -82,7 +102,7 @@ impl FileWatcher {
                 DebouncedEvent::Write(_) | DebouncedEvent::Chmod(_) | DebouncedEvent::Create(_) =>
                 // Inform web clients.
                 {
-                    Self::update(&self.event_tx_list)
+                    Self::update(&self.event_tx_list)?
                 }
 
                 // Here we better restart the whole watcher again, if possible. Seems fatal.
@@ -95,7 +115,7 @@ impl FileWatcher {
     }
 
     /// Run sub-command and notify subscribers.
-    pub fn update(event_tx_list: &Arc<Mutex<Vec<Sender<()>>>>) {
+    pub fn update(event_tx_list: &Arc<Mutex<Vec<Sender<()>>>>) -> Result<(), ViewerError> {
         // Notify subscribers and forget disconnected subscribers.
         let tx_list = &mut *event_tx_list.lock().unwrap();
         *tx_list = tx_list.drain(..).filter(|tx| tx.send(()).is_ok()).collect();
@@ -104,5 +124,11 @@ impl FileWatcher {
             "FileWatcher::update(): {} subscribers updated.",
             tx_list.len()
         );
+
+        //TODO why 1?
+        if tx_list.len() == 0 {
+            return Err(ViewerError::AllSubscriberDiconnected);
+        }
+        Ok(())
     }
 }
