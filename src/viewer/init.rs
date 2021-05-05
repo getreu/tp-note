@@ -11,15 +11,7 @@ use std::net::TcpListener;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::thread::sleep;
 use std::thread::JoinHandle;
-use std::time::{Duration, Instant};
-
-/// Normally the viewer keeps running until the browser process finishes. This
-/// happens usually when the user closes the browser window.  In case the
-/// process returns immediately (when it forks), we keep the viewer up and
-/// running at least some seconds.
-const VIEWER_MIN_UPTIME: u64 = 4;
 
 /// This is where our loop back device is.
 /// The following is also possible, but binds us to IPv4:
@@ -101,32 +93,25 @@ impl Viewer {
         // Launch the file watcher thread.
         // Send a signal whenever the file is modified. Without error, this thread runs as long as
         // the parent thread (where we are) is running.
-        let _handle: JoinHandle<_> = thread::spawn(move || loop {
-            match FileWatcher::new(doc.clone(), event_tx_list.clone()) {
-                Ok(mut w) => w.run(),
-                Err(e) => {
-                    log::warn!("Can not (re-)start file watcher, giving up: {}", e);
-                    break;
-                }
-            }
-        });
+        let watcher_handle: JoinHandle<_> =
+            thread::spawn(
+                move || match FileWatcher::new(doc.clone(), event_tx_list.clone()) {
+                    Ok(mut w) => w.run(),
+                    Err(e) => {
+                        log::warn!("Can not start file watcher, giving up: {}", e);
+                    }
+                },
+            );
 
         // Launch web browser.
         let url = format!("http://{}:{}", LOCALHOST, localport);
         log::info!("Viewer::run(): launching browser with URL: {}", url);
 
-        // Start timer.
-        let now = Instant::now();
-        // This blocks until the browser is closed.
+        // This (often) blocks until the browser is closed.
         launch_web_browser(&url)?;
 
-        // If ever the browsers thread does not block (it should), then we wait a little to
-        // serve the rendered page and the referenced images.
-        if now.elapsed().as_secs() <= VIEWER_MIN_UPTIME {
-            sleep(Duration::new(4, 0));
-        };
-
-        // This will also terminate the `FileWatcher` thread and web server thread.
+        // This blocks until the watcher terminates.
+        watcher_handle.join().unwrap();
         Ok(())
     }
 }

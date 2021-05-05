@@ -422,6 +422,11 @@ impl ServerThread {
             }; // end of match path
         } // Goto 'tcp_connection loop start
 
+        log::trace!(
+            "TCP peer port {}: ({} open). Closing this TCP connection and waiting for ACK.",
+            self.stream.peer_addr()?.port(),
+            Arc::<()>::strong_count(&self.conn_counter) - 1,
+        );
         // We came here because the client closed this connection.
         Ok(())
     }
