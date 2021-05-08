@@ -30,7 +30,10 @@ use std::time::SystemTime;
 use url::Url;
 
 /// The TCP stream is read in chunks. This is the read buffer size.
-const TCP_READ_BUFFER_SIZE: usize = 512;
+const TCP_READ_BUFFER_SIZE: usize = 0x400;
+
+/// Content from files are served in chunks.
+const TCP_WRITE_BUFFER_SIZE: usize = 0x1000;
 
 /// Javascript client code, part 1
 /// Refresh on WTFiles events.
@@ -263,7 +266,7 @@ impl ServerThread {
                     // reloads this document on request of `self.rx`.
                     let html = Self::render_content_and_error(&self)?;
 
-                    self.respond_file_ok(Path::new("/"), "text/html", &html.as_bytes())?;
+                    self.respond_content_ok(Path::new("/"), "text/html", &html.as_bytes())?;
                     // `self.rx` was not used and is dropped here.
                 }
 
@@ -319,7 +322,7 @@ impl ServerThread {
 
                 // Serve icon.
                 FAVICON_PATH => {
-                    self.respond_file_ok(Path::new(&FAVICON_PATH), "image/x-icon", &FAVICON)?;
+                    self.respond_content_ok(Path::new(&FAVICON_PATH), "image/x-icon", &FAVICON)?;
                 }
 
                 // Serve all other documents.
@@ -413,8 +416,8 @@ impl ServerThread {
                     };
 
                     // Condition 4.: Is the file readable?
-                    if let Ok(file_content) = fs::read(&reqpath_abs) {
-                        self.respond_file_ok(&Path::new(&path), mime_type, &*file_content)?;
+                    if fs::metadata(&reqpath_abs)?.is_file() {
+                        self.respond_file_ok(&reqpath_abs, mime_type)?;
                     } else {
                         self.respond_not_found(&reqpath)?;
                     }
@@ -455,7 +458,42 @@ impl ServerThread {
     }
 
     /// Write HTTP OK response with content.
-    fn respond_file_ok(
+    fn respond_file_ok(&mut self, reqpath: &Path, mime_type: &str) -> Result<(), ViewerError> {
+        let response = format!(
+            "HTTP/1.1 200 OK\r\n\
+             Date: {}\r\n\
+             Cache-Control: private, max-age={}\r\n\
+             Content-Type: {}\r\n\
+             Content-Length: {}\r\n\r\n",
+            httpdate::fmt_http_date(SystemTime::now()),
+            MAX_AGE.to_string(),
+            mime_type,
+            fs::metadata(&reqpath)?.len(),
+        );
+        self.stream.write_all(response.as_bytes())?;
+
+        // Serve file in chunks.
+        let mut buffer = [0; TCP_WRITE_BUFFER_SIZE];
+        let mut file = fs::File::open(&reqpath)?;
+
+        while let Ok(n) = file.read(&mut buffer[..]) {
+            if n == 0 {
+                break;
+            };
+            self.stream.write_all(&buffer[..n])?;
+        }
+
+        log::debug!(
+            "TCP peer port {}: 200 OK, served file: '{}'",
+            self.stream.peer_addr()?.port(),
+            reqpath.to_str().unwrap_or_default()
+        );
+
+        Ok(())
+    }
+
+    /// Write HTTP OK response with content.
+    fn respond_content_ok(
         &mut self,
         reqpath: &Path,
         mime_type: &str,
