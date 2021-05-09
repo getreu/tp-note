@@ -370,10 +370,7 @@ mod tests {
             &HashMap::new(),
         );
         assert!(result.is_ok());
-        assert_eq!(
-            result.unwrap(),
-            to_value(&"Strange filename_ Yes.").unwrap()
-        );
+        assert_eq!(result.unwrap(), to_value(&"Strange filename_ Yes").unwrap());
     }
 
     #[test]
