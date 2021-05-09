@@ -476,6 +476,17 @@ const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
     &["tiff", "image/tiff"],
     &["tif", "image/tiff"],
     &["webp", "image/webp"],
+    &["mp3", "audio/mp3"],
+    &["ogg", "audio/ogg"],
+    &["oga", "audio/ogg"],
+    &["weba", "audio/webm"],
+    &["flac", "audio/flac"],
+    &["wav", "audio/wav"],
+    &["opus", "audio/opus"],
+    &["mp4", "video/mp4"],
+    &["ogv", "video/ogg"],
+    &["webm", "video/webm"],
+    &["ogx", "application/ogg"],
 ];
 
 /// Template used by the viewer to render a note into html.
