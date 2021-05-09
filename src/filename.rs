@@ -104,8 +104,9 @@ pub fn disassemble(p: &Path) -> (&str, &str, &str, &str, &str) {
         .to_str()
         .unwrap_or_default();
 
-    let stem_copy_counter_ext = tag_stem_copy_counter_ext
-        .trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_');
+    let stem_copy_counter_ext = tag_stem_copy_counter_ext.trim_start_matches(|c: char| {
+        c.is_numeric() || c == '-' || c == '_' || c == '.' || c.is_whitespace()
+    });
 
     let sort_tag = &tag_stem_copy_counter_ext
         [0..tag_stem_copy_counter_ext.len() - stem_copy_counter_ext.len()];
@@ -114,12 +115,10 @@ pub fn disassemble(p: &Path) -> (&str, &str, &str, &str, &str) {
         .file_stem()
         .unwrap_or_default()
         .to_str()
-        .unwrap_or_default()
-        .trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_');
+        .unwrap_or_default();
 
     // Trim `sort_tag`.
-    let stem_copy_counter =
-        file_stem.trim_start_matches(|c: char| c.is_numeric() || c == '-' || c == '_');
+    let stem_copy_counter = &file_stem[sort_tag.len()..];
 
     let stem = remove_copy_counter(stem_copy_counter);
 
@@ -289,6 +288,26 @@ mod tests {
             "md",
         );
         let result = disassemble(Path::new("/my/dir/1_2_3-my_title--my_subtitle(1).md"));
+        assert_eq!(expected, result);
+
+        let expected = (
+            "2021.04.12-",
+            "my_title--my_subtitle(1).md",
+            "my_title--my_subtitle",
+            "(1)",
+            "md",
+        );
+        let result = disassemble(Path::new("/my/dir/2021.04.12-my_title--my_subtitle(1).md"));
+        assert_eq!(expected, result);
+
+        let expected = (
+            "2021 04 12 ",
+            "my_title--my_subtitle(1).md",
+            "my_title--my_subtitle",
+            "(1)",
+            "md",
+        );
+        let result = disassemble(Path::new("/my/dir/2021 04 12 my_title--my_subtitle(1).md"));
         assert_eq!(expected, result);
     }
 

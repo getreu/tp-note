@@ -507,19 +507,21 @@ The filename has 4 parts:
 
 A so called _sort-tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
-numerical digits, a _sort-tag_ can be any combination of
-`0123456789-_` and is usually used as:
+numerical digits and whitespace, a _sort-tag_ can be any combination of
+`-_.` and is usually used as:
 
 * *chronological sort-tag*
 
         20140211-Reminder.doc
         20151208-Manual.pdf
+        2015-12-08-Manual.pdf
 
 * or as a *sequence number sort-tag*.
 
         02-Invoices
         08-Tax documents
         09_02-Notes
+        09.02-Notes
 
 The figures below illustrate organizing files with *sort-tags".
 

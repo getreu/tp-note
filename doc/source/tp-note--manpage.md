@@ -537,25 +537,27 @@ The filename has 4 parts:
 
 A so called _sort-tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
-numerical digits, a _sort-tag_ can be any combination of
-`0123456789-_`[^sort-tag] and is usually used as
+numerical digits and whitespace, a _sort-tag_ can be any combination of
+`-_.`[^sort-tag] and is usually used as
 
 * *chronological sort-tag*
 
         20140211-Reminder.doc
         20151208-Manual.pdf
+        2015-12-08-Manual.pdf
 
 * or as a *sequence number sort-tag*.
 
         02-Invoices
         08-Tax documents
         09_02-Notes
+        09.09-Notes
 
 When _Tp-Note_ creates a new note, it prepends automatically a *chronological
 sort-tag* of today. The '`{{ fm_title }}`' part is usually derived from the
 parent directory name omitting its own *sort-tag*.
 
-[^sort-tag]: The characters '`_`' and '`-`' are considered to be
+[^sort-tag]: The characters '`_`', '`-`' and '`.`' are considered to be
 part of the *sort-tag* even when they appear in last position.
 
 A note's filename is in sync with its meta-data, when the following is true
