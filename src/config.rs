@@ -246,7 +246,8 @@ const TMPL_CLIPBOARD_FILENAME: &str = "\
 /// non-`.md`-file. Can be modified through editing the configuration file.
 const TMPL_ANNOTATE_CONTENT: &str = "\
 ---
-title:      {% filter json_encode %}{{ path | stem }}{{ path | ext | prepend_dot }}{% endfilter %}
+title:      {% filter json_encode %}{{ path | stem }}{{ path | copy_counter }}\
+{{ path | ext | prepend_dot }}{% endfilter %}
 {% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}\
 subtitle:   {{ 'URL' | json_encode }}
 {% else %}\
@@ -257,8 +258,7 @@ date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ get_env(name='LANG', default='') | json_encode }}
 ---
 
-[{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}]\
-(<{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}>)
+[{{ path | filename }}](<{{ path | filename }}>)
 {% if stdin ~ clipboard != '' %}{% if stdin ~ clipboard != stdin ~ clipboard | heading %}
 ---
 {% endif %}
