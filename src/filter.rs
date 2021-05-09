@@ -33,6 +33,8 @@ lazy_static! {
         tera.register_filter("trim_tag", trim_tag_filter);
         tera.register_filter("tag", tag_filter);
         tera.register_filter("stem", stem_filter);
+        tera.register_filter("copy_counter", copy_counter_filter);
+        tera.register_filter("filename", filename_filter);
         tera.register_filter("ext", ext_filter);
         tera.register_filter("prepend_dot", prepend_dot_filter);
         tera.register_filter("remove", remove_filter);
@@ -236,6 +238,36 @@ pub fn stem_filter<S: BuildHasher>(
     let (_, _, stem, _, _) = disassemble(Path::new(&p));
 
     Ok(to_value(&stem)?)
+}
+
+/// A Tera filter that takes a path and extracts its copy counter,
+/// in other words: the filename without `sort_tag`, `stem`
+/// and `extension`.
+pub fn copy_counter_filter<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let p = try_get_value!("copy_counter", "value", String, value);
+
+    let (_, _, _, copy_counter, _) = disassemble(Path::new(&p));
+
+    Ok(to_value(&copy_counter)?)
+}
+
+/// A Tera filter that takes a path and extracts its filename.
+pub fn filename_filter<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let p = try_get_value!("filename", "value", String, value);
+
+    let filename = Path::new(&p)
+        .file_name()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap_or_default();
+
+    Ok(to_value(&filename)?)
 }
 
 /// A Tera filter that prepends a dot when stream not empty.
@@ -494,6 +526,30 @@ mod tests {
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.md";
         let output = ext_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("md", output);
+
+        let input =
+            "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
+        let output = ext_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("", output);
+        //
+        //
+        // Test copy counter filter.
+        let input =
+            "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
+        let output = copy_counter_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("(123)", output);
+
+        let input =
+            "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
+        let output = ext_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("", output);
+        //
+        //
+        // Test filename .
+        let input =
+            "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
+        let output = filename_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("20200908-My file(123).md", output);
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";

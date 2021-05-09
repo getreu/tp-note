@@ -771,12 +771,18 @@ some additional filters, e.g.: '`tag`', '`trim_tag`', '`stem`', '`cut`', '`headi
 
 A filter is always used together with a variable. Here some examples:
 
+* '`{{ path | filename }}`' is the note's filename with sort-tag, stem,
+   copy-counter, dot and extension.
+
 * '`{{ path | tag }}`' is the sort-tag (numerical filename prefix) of the
   current note on disk, e.g. '`01-23_9-`' or '`20191022-`'. Useful in content
   templates, for example to create new notes based on a path with a filename
   (e.g.  '`tmpl_annotate_content`').
 
 * '`{{ path | stem }}`' is the note's filename without sort-tag, copy-counter
+   and extension.
+
+* '`{{ path | copy_counter }}`' is the note's filename without sort-tag, stem
    and extension.
 
 * '`{{ path | ext }}`' is the note's filename extension without
