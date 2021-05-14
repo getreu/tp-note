@@ -11,12 +11,18 @@ use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
+use std::time::Instant;
 
 /// Some file editors do not modify the file on disk, they move the old version
 /// away and write a new file with the same name. As this takes some time,
 /// the watcher waits a bit before trying to access the new file.
 /// The delay is in milliseconds.
 const WAIT_EDITOR_WRITING_NEW_FILE: u64 = 200;
+
+/// Delay while `update()` with no subscribers silently ignored. This avoids
+/// a race condition, when a file has already changed on disk, but the browser
+/// has not connected yet.
+const WATCHER_MIN_UPTIME: u128 = 3000;
 
 #[derive(Debug)]
 /// Object describing how `State` transitions will happen.  State changes can
@@ -59,6 +65,8 @@ pub struct FileWatcher<State> {
     mode: Arc<Mutex<Mode>>,
     /// State.
     state: State,
+    /// StartTime of this file-watcher.
+    start_time: Instant,
 }
 
 /// Watch file changes and notify subscribers.
@@ -93,6 +101,7 @@ impl FileWatcher<State> {
             // By default, tick only once.
             mode,
             state,
+            start_time: Instant::now(),
         })
     }
 
@@ -184,7 +193,7 @@ impl FileWatcher<State> {
         );
 
         // When empty all subscribers have disconnected.
-        if tx_list.is_empty() {
+        if tx_list.is_empty() && self.start_time.elapsed().as_millis() > WATCHER_MIN_UPTIME {
             return Err(ViewerError::AllSubscriberDiconnected);
         }
         Ok(())
