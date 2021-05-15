@@ -6,7 +6,6 @@ use crate::filename::MarkupLanguage;
 use crate::viewer::error::ViewerError;
 use crate::viewer::sse_server::manage_connections;
 use crate::viewer::watcher::FileWatcher;
-use crate::viewer::watcher::Mode;
 use crate::viewer::web_browser::launch_web_browser;
 use std::net::TcpListener;
 use std::path::PathBuf;
@@ -14,10 +13,6 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 use std::time::Instant;
-
-/// Time span in seconds between extra `update()` to check if the
-/// browser is still connected.
-const WATCHDOG_INTERVAL: u64 = 60;
 
 /// Minimum uptime in milliseconds we expect a real browser instance to run.
 /// When starting a second browser instance, only a signal is sent to the
@@ -105,17 +100,13 @@ impl Viewer {
         // Launch the file watcher thread.
         // Send a signal whenever the file is modified. Without error, this thread runs as long as
         // the parent thread (where we are) is running.
-        let mode = Arc::new(Mutex::new(Mode::OneTick(WATCHDOG_INTERVAL)));
-        let mode_clone = mode.clone();
         let watcher_handle: JoinHandle<_> =
-            thread::spawn(
-                move || match FileWatcher::new(doc, event_tx_list, mode_clone) {
-                    Ok(mut w) => w.run(),
-                    Err(e) => {
-                        log::warn!("Can not start file watcher, giving up: {}", e);
-                    }
-                },
-            );
+            thread::spawn(move || match FileWatcher::new(doc, event_tx_list) {
+                Ok(mut w) => w.run(),
+                Err(e) => {
+                    log::warn!("Can not start file watcher, giving up: {}", e);
+                }
+            });
 
         // Launch web browser.
         let url = format!("http://{}:{}", LOCALHOST, localport);
@@ -128,8 +119,6 @@ impl Viewer {
 
         if browser_start.elapsed().as_millis() < BROWSER_INSTANCE_MIN_UPTIME {
             // We are there because the browser process did not block.
-            // We enable the watchdog, ...
-            *mode.lock().unwrap() = Mode::Ticks(WATCHDOG_INTERVAL);
             // ... and wait until the watchdog recognizes, that the web browser disconnected.
             watcher_handle.join().unwrap();
         }
