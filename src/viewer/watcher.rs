@@ -16,7 +16,7 @@ use std::time::Instant;
 /// Even if there is no file modification, after `WATCHER_TIMEOUT` seconds,
 /// the watcher sends an `update` request to check if there are still
 /// subscribers connected.
-const WATCHER_TIMEOUT: u64 = 30;
+const WATCHER_TIMEOUT: u64 = 10;
 
 /// Some file editors do not modify the file on disk, they move the old version
 /// away and write a new file with the same name. As this takes some time,
@@ -82,7 +82,14 @@ impl FileWatcher {
                 Err(RecvTimeoutError::Timeout) => {
                     // Send subscriber an update event in order to check if they
                     // are still connected.
-                    self.update()?;
+
+                    // When empty all subscribers have disconnected.
+                    let tx_list = &mut *self.event_tx_list.lock().unwrap();
+                    if tx_list.is_empty()
+                        && self.start_time.elapsed().as_millis() > WATCHER_MIN_UPTIME
+                    {
+                        return Err(ViewerError::AllSubscriberDiconnected);
+                    }
                     continue;
                 }
                 // The sending half of a channel (or sync_channel) is `Disconnected`,
@@ -135,11 +142,6 @@ impl FileWatcher {
             "File watcher `update()`: {} subscribers updated.",
             tx_list.len()
         );
-
-        // When empty all subscribers have disconnected.
-        if tx_list.is_empty() && self.start_time.elapsed().as_millis() > WATCHER_MIN_UPTIME {
-            return Err(ViewerError::AllSubscriberDiconnected);
-        }
         Ok(())
     }
 }
