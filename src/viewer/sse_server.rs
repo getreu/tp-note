@@ -23,7 +23,7 @@ use std::net::{TcpListener, TcpStream};
 use std::path::Path;
 use std::path::PathBuf;
 use std::str;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::time::SystemTime;
@@ -43,9 +43,11 @@ pub const SSE_CLIENT_CODE1: &str = r#"
 /// Save last scroll position into local storage.
 /// Jump to the last saved scroll position.
 pub const SSE_CLIENT_CODE2: &str = r#"/events");
-    evtSource.addEventListener("update", function(e) {
+    evtSource.addEventListener("Update", function(e) {
         localStorage.setItem('scrollPosition', window.scrollY);
         window.location.reload(true);
+    });
+    evtSource.addEventListener("Ping", function(e) {
     });
     window.addEventListener('load', function() {
         if(localStorage.getItem('scrollPosition') !== null)
@@ -53,8 +55,6 @@ pub const SSE_CLIENT_CODE2: &str = r#"/events");
     });
     "#;
 
-/// Server-Sent-Event token to request a page update.
-const SSE_EVENT_TOKEN: &str = "update";
 /// URL path for Server-Sent-Events.
 const SSE_EVENT_PATH: &str = "/events";
 
@@ -66,8 +66,18 @@ pub const FAVICON_PATH: &str = "/favicon.ico";
 /// Time in seconds the browsers should keep the delivered content in cache.
 const MAX_AGE: u64 = 600;
 
+/// Server-Sent-Event tokens our HTTP client has registered to receive.
+#[derive(Debug, Clone, Copy)]
+pub enum SseToken {
+    /// Server-Sent-Event token to request nothing but check if the client is still
+    /// there.
+    Ping,
+    /// Server-Sent-Event token to request a page update.
+    Update,
+}
+
 pub fn manage_connections(
-    event_tx_list: Arc<Mutex<Vec<Sender<()>>>>,
+    event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
     listener: TcpListener,
     doc_path: PathBuf,
 ) {
@@ -82,7 +92,7 @@ pub fn manage_connections(
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                let (event_tx, event_rx) = channel();
+                let (event_tx, event_rx) = sync_channel(0);
                 event_tx_list.lock().unwrap().push(event_tx);
                 let doc_path = doc_path.clone();
                 let doc_local_links = doc_local_links.clone();
@@ -107,7 +117,7 @@ pub fn manage_connections(
 /// Server thread state.
 struct ServerThread {
     /// Receiver side of the channel where `update` events are sent.
-    rx: Receiver<()>,
+    rx: Receiver<SseToken>,
     /// Byte stream coming from a TCP connection.
     stream: TcpStream,
     /// The TCP port this stream comes from.
@@ -125,7 +135,7 @@ struct ServerThread {
 impl ServerThread {
     /// Constructor.
     fn new(
-        rx: Receiver<()>,
+        rx: Receiver<SseToken>,
         stream: TcpStream,
         sse_port: u16,
         doc_path: PathBuf,
@@ -285,7 +295,7 @@ impl ServerThread {
                     // detect closed connections.
                     '_event: loop {
                         // Wait for the next update.
-                        self.rx.recv()?;
+                        let msg = self.rx.recv()?;
 
                         // Detect whether the connection was closed.
                         match self.stream.read(&mut read_buffer) {
@@ -310,12 +320,13 @@ impl ServerThread {
                         }
 
                         // Send event.
-                        let event = format!("event: {}\r\ndata\r\n\r\n", SSE_EVENT_TOKEN);
+                        let event = format!("event: {:?}\ndata:\r\n\r\n", msg);
                         self.stream.write_all(event.as_bytes())?;
                         log::debug!(
-                            "TCP peer port {}: ... pushed '{}' in open event connection to client.",
+                            "TCP peer port {} ({} open TCP conn.): pushed '{:?}' in event connection to web browser.",
                             self.stream.peer_addr()?.port(),
-                            SSE_EVENT_TOKEN
+                            Arc::<()>::strong_count(&self.conn_counter) - 1,
+                            msg,
                         );
                     }
                 }
@@ -426,9 +437,11 @@ impl ServerThread {
         } // Goto 'tcp_connection loop start
 
         log::trace!(
-            "TCP peer port {}: ({} open). Closing this TCP connection and waiting for ACK.",
+            "TCP peer port {}: ({} open). Closing this TCP connection.",
             self.stream.peer_addr()?.port(),
-            Arc::<()>::strong_count(&self.conn_counter) - 1,
+            // We substract 1 for the `manage connection()` thread, and
+            // 1 for the thread we will close in a moment.
+            Arc::<()>::strong_count(&self.conn_counter) - 2,
         );
         // We came here because the client closed this connection.
         Ok(())

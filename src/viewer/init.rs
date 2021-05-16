@@ -1,14 +1,17 @@
 //! Main module for the markup renderer and note viewer feature.
 
 use crate::config::ARGS;
+use crate::config::LAUNCH_EDITOR;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::filename::MarkupLanguage;
 use crate::viewer::error::ViewerError;
 use crate::viewer::sse_server::manage_connections;
+use crate::viewer::sse_server::SseToken;
 use crate::viewer::watcher::FileWatcher;
 use crate::viewer::web_browser::launch_web_browser;
 use std::net::TcpListener;
 use std::path::PathBuf;
+use std::sync::mpsc::SyncSender;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
@@ -92,7 +95,7 @@ impl Viewer {
 
         // Launch a background HTTP server thread to manage Server-Sent-Event subscribers
         // and to serve the rendered html.
-        let event_tx_list = Arc::new(Mutex::new(Vec::new()));
+        let event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>> = Arc::new(Mutex::new(Vec::new()));
         let doc_clone = doc.clone();
         let event_tx_list_clone = event_tx_list.clone();
         thread::spawn(move || manage_connections(event_tx_list_clone, listener, doc_clone));
@@ -101,12 +104,14 @@ impl Viewer {
         // Send a signal whenever the file is modified. Without error, this thread runs as long as
         // the parent thread (where we are) is running.
         let watcher_handle: JoinHandle<_> =
-            thread::spawn(move || match FileWatcher::new(doc, event_tx_list) {
-                Ok(mut w) => w.run(),
-                Err(e) => {
-                    log::warn!("Can not start file watcher, giving up: {}", e);
-                }
-            });
+            thread::spawn(
+                move || match FileWatcher::new(doc, event_tx_list, !*LAUNCH_EDITOR) {
+                    Ok(mut w) => w.run(),
+                    Err(e) => {
+                        log::warn!("Can not start file watcher, giving up: {}", e);
+                    }
+                },
+            );
 
         // Launch web browser.
         let url = format!("http://{}:{}", LOCALHOST, localport);

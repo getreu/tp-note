@@ -354,11 +354,11 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                 ctx.set_contents("".to_owned()).unwrap_or_default();
             };
         }
-    };
-
-    #[cfg(feature = "viewer")]
-    if let Some(jh) = viewer_join_handle {
-        let _ = jh.join();
+    } else {
+        #[cfg(feature = "viewer")]
+        if let Some(jh) = viewer_join_handle {
+            let _ = jh.join();
+        };
     };
 
     Ok(path)

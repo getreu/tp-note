@@ -4,10 +4,12 @@ extern crate notify;
 
 use crate::config::CFG;
 use crate::viewer::error::ViewerError;
+use crate::viewer::sse_server::SseToken;
 use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 use std::panic::panic_any;
 use std::path::PathBuf;
-use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, Sender};
+use std::sync::mpsc::TrySendError;
+use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, SyncSender};
 use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
@@ -35,7 +37,10 @@ pub struct FileWatcher {
     /// File watcher.
     watcher: RecommendedWatcher,
     /// List of subscribers to inform when the file is changed.
-    event_tx_list: Arc<Mutex<Vec<Sender<()>>>>,
+    event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
+    /// Send additional periodic update events to detect when
+    /// the browser disconnects.
+    monitor_browser_connection: bool,
     /// StartTime of this file-watcher.
     start_time: Instant,
 }
@@ -45,7 +50,8 @@ impl FileWatcher {
     /// Constructor. `file` is the file to watch.
     pub fn new(
         file: PathBuf,
-        event_tx_list: Arc<Mutex<Vec<Sender<()>>>>,
+        event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
+        monitor_browser_connection: bool,
     ) -> Result<Self, ViewerError> {
         let notify_period = CFG.viewer_notify_period;
         let (tx, rx) = channel();
@@ -59,6 +65,7 @@ impl FileWatcher {
             watcher,
             event_tx_list,
             start_time: Instant::now(),
+            monitor_browser_connection,
         })
     }
 
@@ -72,30 +79,40 @@ impl FileWatcher {
         }
     }
 
-    /// Start the file watcher. Blocks forever, unless an `ViewerError::AllSubscriberDiconnected`
+    /// Start the file watcher. Blocks forever, unless an `ViewerError::AllSubscriberDisconnected`
     /// occurs.
     fn run2(&mut self) -> Result<(), ViewerError> {
         loop {
             // Wait for file modifications.
-            let evnt = match self.rx.recv_timeout(Duration::from_secs(WATCHER_TIMEOUT)) {
-                Ok(ev) => ev,
-                Err(RecvTimeoutError::Timeout) => {
-                    // Send subscriber an update event in order to check if they
-                    // are still connected.
+            let evnt = if self.monitor_browser_connection {
+                // Detect when the browser quits, then terminate the the watcher.
+                match self.rx.recv_timeout(Duration::from_secs(WATCHER_TIMEOUT)) {
+                    Ok(ev) => ev,
+                    Err(RecvTimeoutError::Timeout) => {
+                        // Push something to detect disconnected TCP channels.
+                        self.update(SseToken::Ping)?;
+                        // When empty all TCP connections have disconnected.
 
-                    // When empty all subscribers have disconnected.
-                    let tx_list = &mut *self.event_tx_list.lock().unwrap();
-                    if tx_list.is_empty()
-                        && self.start_time.elapsed().as_millis() > WATCHER_MIN_UPTIME
-                    {
-                        return Err(ViewerError::AllSubscriberDiconnected);
+                        let tx_list = &mut *self.event_tx_list.lock().unwrap();
+                        // log::trace!(
+                        //     "File watcher timeout: {} open TCP connections.",
+                        //     tx_list.len()
+                        // );
+                        if tx_list.is_empty()
+                            && self.start_time.elapsed().as_millis() > WATCHER_MIN_UPTIME
+                        {
+                            return Err(ViewerError::AllSubscriberDiconnected);
+                        }
+                        continue;
                     }
-                    continue;
+                    // The  sending half of a channel (or sync_channel) is `Disconnected`,
+                    // implies that no further messages will ever be received.
+                    // As this should never happen, we panic this thread then.
+                    Err(RecvTimeoutError::Disconnected) => panic_any(()),
                 }
-                // The sending half of a channel (or sync_channel) is `Disconnected`,
-                // implies that no further messages will ever be received.
-                // As this should never happen, we panic this thread then.
-                Err(RecvTimeoutError::Disconnected) => panic_any(()),
+            } else {
+                // Run until the thread gets interrupted.
+                self.rx.recv().unwrap()
             };
 
             log::trace!("File watcher event: {:?}", evnt);
@@ -110,7 +127,7 @@ impl FileWatcher {
                     self.watcher
                         .watch(path.clone(), RecursiveMode::NonRecursive)
                         .map_err(|e| e.into())
-                        .and_then(|_| self.update())?
+                        .and_then(|_| self.update(SseToken::Update))?
                 }
 
                 // These we can ignore.
@@ -120,7 +137,7 @@ impl FileWatcher {
                 DebouncedEvent::Write(_) | DebouncedEvent::Chmod(_) | DebouncedEvent::Create(_) =>
                 // Inform web clients.
                 {
-                    self.update()?
+                    self.update(SseToken::Update)?
                 }
 
                 // Here we better restart the whole watcher again, if possible. Seems fatal.
@@ -133,15 +150,26 @@ impl FileWatcher {
     }
 
     /// Run sub-command and notify subscribers.
-    pub fn update(&self) -> Result<(), ViewerError> {
+    pub fn update(&self, msg: SseToken) -> Result<(), ViewerError> {
         // Notify subscribers and forget disconnected subscribers.
         let tx_list = &mut *self.event_tx_list.lock().unwrap();
-        *tx_list = tx_list.drain(..).filter(|tx| tx.send(()).is_ok()).collect();
-
-        log::debug!(
-            "File watcher `update()`: {} subscribers updated.",
-            tx_list.len()
+        let tx_list_len_before_update = tx_list.len();
+        *tx_list = tx_list
+            .drain(..)
+            .filter(|tx| match tx.try_send(msg.to_owned()) {
+                Ok(()) => true,
+                Err(TrySendError::Disconnected(_)) => false,
+                Err(_) => true,
+            })
+            .collect();
+        let tx_list_len = tx_list.len();
+        log::trace!(
+            "File watcher `update({:?})`: {} dropped TCP connections, {} still open.",
+            msg,
+            tx_list_len_before_update - tx_list_len,
+            tx_list_len,
         );
+
         Ok(())
     }
 }
