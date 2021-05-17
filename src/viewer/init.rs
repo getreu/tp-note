@@ -101,9 +101,9 @@ impl Viewer {
         // Launch a background HTTP server thread to manage Server-Sent-Event subscribers
         // and to serve the rendered html.
         let event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>> = Arc::new(Mutex::new(Vec::new()));
-        let doc_clone = doc.clone();
-        let event_tx_list_clone = event_tx_list.clone();
-        thread::spawn(move || manage_connections(event_tx_list_clone, listener, doc_clone));
+        let doc_ = doc.clone();
+        let event_tx_list_ = event_tx_list.clone();
+        thread::spawn(move || manage_connections(event_tx_list_, listener, doc_));
 
         // Launch the file watcher thread.
         // Send a signal whenever the file is modified. Without error, this thread runs as long as
@@ -116,16 +116,14 @@ impl Viewer {
             // We have one tick time to change our mind.
             Mode::OneTick(WATCHDOG_INTERVAL)
         }));
-        let mode_clone = mode.clone();
+        let mode_ = mode.clone();
         let watcher_handle: JoinHandle<_> =
-            thread::spawn(
-                move || match FileWatcher::new(doc, event_tx_list, mode_clone) {
-                    Ok(mut w) => w.run(),
-                    Err(e) => {
-                        log::warn!("Can not start file watcher, giving up: {}", e);
-                    }
-                },
-            );
+            thread::spawn(move || match FileWatcher::new(doc, event_tx_list, mode_) {
+                Ok(mut w) => w.run(),
+                Err(e) => {
+                    log::warn!("Can not start file watcher, giving up: {}", e);
+                }
+            });
 
         // Launch web browser.
         let url = format!("http://{}:{}", LOCALHOST, localport);
