@@ -41,7 +41,7 @@ pub struct FileWatcher {
     /// Send additional periodic update events to detect when
     /// the browser disconnects.
     terminate_on_browser_disconnect: Arc<Mutex<bool>>,
-    /// StartTime of this file-watcher.
+    /// Start time of this file-watcher.
     start_time: Instant,
 }
 

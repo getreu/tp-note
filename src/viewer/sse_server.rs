@@ -43,11 +43,9 @@ pub const SSE_CLIENT_CODE1: &str = r#"
 /// Save last scroll position into local storage.
 /// Jump to the last saved scroll position.
 pub const SSE_CLIENT_CODE2: &str = r#"/events");
-    evtSource.addEventListener("Update", function(e) {
+    evtSource.addEventListener("update", function(e) {
         localStorage.setItem('scrollPosition', window.scrollY);
         window.location.reload(true);
-    });
-    evtSource.addEventListener("Ping", function(e) {
     });
     window.addEventListener('load', function() {
         if(localStorage.getItem('scrollPosition') !== null)
@@ -320,7 +318,10 @@ impl ServerThread {
                         }
 
                         // Send event.
-                        let event = format!("event: {:?}\ndata:\r\n\r\n", msg);
+                        let event = match msg {
+                            SseToken::Update => format!("event: update\r\ndata:\r\n\r\n"),
+                            SseToken::Ping => format!(": ping\r\n\r\n"),
+                        };
                         self.stream.write_all(event.as_bytes())?;
                         log::debug!(
                             "TCP peer port {} ({} open TCP conn.): pushed '{:?}' in event connection to web browser.",
