@@ -890,20 +890,26 @@ graphical environment, e.g. '`vim`' or '`nano`'.  In order to use your own text
 editor, just place it at the top of the list. To debug your changes
 invoke _Tp-Note_ with '`tp-note --debug info --popup --edit`'
 
-When you configure _Tp-Note_ to work with your text editor, make sure, that
-your text editor does not fork! You can check this when you launch the text
-editor from the command line: if the prompt returns immediately, then it
-forks the process. Everything is OK when the prompt only comes back at the
-moment when the text editor is closed. Many text editors provide an option
-not to fork: for example the _VScode_-editor can be launched with the
-'`--wait`' option and `vim` with `--nofork`. However, _Tp-Note_ also works
-with forking text editors. Then, the only drawback is, that _Tp-Note_ might
-quit too early and can not synchronize the filename with the note's metadata
-when the user has finished editing. Synchronization will still happen, but
-only next time when the user opens the note with _Tp-Note_.
+When you configure _Tp-Note_ to work with your text editor, make sure, that your
+text editor does not fork! You can check this by launching the text editor from
+the command line: if the command prompt returns immediately, then the file
+editor forks the process. On the other hand everything is OK, when the command
+prompt only comes back at the moment the text editor is closed. Many text
+editors provide an option to restrain from forking: for example the
+_VScode_-editor can be launched with the '`--wait`' option or _Vim_ with
+'`--nofork`'. However, _Tp-Note_ also works with forking text editors. Although
+this should be avoided, there is a possible workaround: 
 
-Remark for the advanced console user: It is also possible to launch a different
-editor without changing the configuration file:
+```shell
+> FILE=$(tp-note --batch) # Create the new note.
+> mytexteditor "$FILE"    # The prompt returns immediatly as the editor forks.
+> tp-note --view "$FILE"  # Launch Tp-Note's viewer.
+>                         # After the editing is done...
+> tp-note --batch "$FILE" # Synchronize the note's filename.
+```
+
+Remark for the advanced console user: In a similar way, you can launch a
+different text editor than the one configured in _Tp-Note_'s configuration file: 
 
 ```shell
 > FILE=$(tp-note --batch); vi "$FILE"; tp-note --batch "$FILE"
