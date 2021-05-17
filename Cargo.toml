@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.12.16"
+version = "1.12.17"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
@@ -84,7 +84,7 @@ serde_json = "1.0.64"
 serde = { version = "1.0.126", features = ["derive"] }
 serde_yaml = "0.8.17"
 structopt = "0.3.21"
-tera = { version = "1.8.0", default-features = true }
+tera = { version = "1.9.0", default-features = true }
 time = "0.2.26"
 url = { version = "2.2.2", optional = true }
 webbrowser = { version = "0.5.5", optional = true }

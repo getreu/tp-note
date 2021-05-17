@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.12.16 | Tp-Note documentation
+% TP-NOTE(1) Version 1.12.17 | Tp-Note documentation
 
 
 # NAME
@@ -898,7 +898,7 @@ prompt only comes back at the moment the text editor is closed. Many text
 editors provide an option to restrain from forking: for example the
 _VScode_-editor can be launched with the '`--wait`' option or _Vim_ with
 '`--nofork`'. However, _Tp-Note_ also works with forking text editors. Although
-this should be avoided, there is a possible workaround: 
+this should be avoided, there is a possible workaround:
 
 ```shell
 > FILE=$(tp-note --batch) # Create the new note.
@@ -909,7 +909,7 @@ this should be avoided, there is a possible workaround:
 ```
 
 Remark for the advanced console user: In a similar way, you can launch a
-different text editor than the one configured in _Tp-Note_'s configuration file: 
+different text editor than the one configured in _Tp-Note_'s configuration file:
 
 ```shell
 > FILE=$(tp-note --batch); vi "$FILE"; tp-note --batch "$FILE"
