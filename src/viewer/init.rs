@@ -8,7 +8,6 @@ use crate::viewer::error::ViewerError;
 use crate::viewer::sse_server::manage_connections;
 use crate::viewer::sse_server::SseToken;
 use crate::viewer::watcher::FileWatcher;
-use crate::viewer::watcher::Mode;
 use crate::viewer::web_browser::launch_web_browser;
 use std::net::TcpListener;
 use std::path::PathBuf;
@@ -17,10 +16,6 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 use std::time::Instant;
-
-/// Time span in seconds between extra `update()` to check if the
-/// browser is still connected.
-const WATCHDOG_INTERVAL: u64 = 10;
 
 /// Minimum uptime in milliseconds we expect a real browser instance to run.
 /// When starting a second browser instance, only a signal is sent to the
@@ -108,22 +103,16 @@ impl Viewer {
         // Launch the file watcher thread.
         // Send a signal whenever the file is modified. Without error, this thread runs as long as
         // the parent thread (where we are) is running.
-        let mode = Arc::new(Mutex::new(if *LAUNCH_EDITOR {
-            // The watcher will not end by itself. The end of the editor process will terminate the
-            // watcher.
-            Mode::Perpetual
-        } else {
-            // We have one tick time to change our mind.
-            Mode::OneTick(WATCHDOG_INTERVAL)
-        }));
-        let mode_ = mode.clone();
-        let watcher_handle: JoinHandle<_> =
-            thread::spawn(move || match FileWatcher::new(doc, event_tx_list, mode_) {
+        let terminate_on_browser_disconnect = Arc::new(Mutex::new(false));
+        let terminate_on_browser_disconnect_ = terminate_on_browser_disconnect.clone();
+        let watcher_handle: JoinHandle<_> = thread::spawn(move || {
+            match FileWatcher::new(doc, event_tx_list, terminate_on_browser_disconnect_) {
                 Ok(mut w) => w.run(),
                 Err(e) => {
                     log::warn!("Can not start file watcher, giving up: {}", e);
                 }
-            });
+            }
+        });
 
         // Launch web browser.
         let url = format!("http://{}:{}", LOCALHOST, localport);
@@ -135,12 +124,11 @@ impl Viewer {
         launch_web_browser(&url)?;
         // Did it?
         if browser_start.elapsed().as_millis() < BROWSER_INSTANCE_MIN_UPTIME {
-            // We are there because the browser process did not block.  We enable the watchdog, ...
-            // The change will only have effect at the next tick, which implies that the watcher in
-            // in _ticking_ mode.  If the watcher is in `Mode::Perpetual`, the following has
-            // intentionally no effect.
-            *mode.lock().unwrap() = Mode::Ticks(WATCHDOG_INTERVAL);
-            // ... and wait until the watchdog recognizes, that the web browser disconnected.
+            // We are there because the browser process did not block.
+            // We instruct the watcher to terminate when it detects browser disconnection.
+            if !*LAUNCH_EDITOR {
+                *terminate_on_browser_disconnect.lock().unwrap() = true;
+            };
             watcher_handle.join().unwrap();
         }
 
