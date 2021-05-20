@@ -313,7 +313,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
     &["retext"],
     &["geany", "-s", "-i", "-m"],
     &["gedit", "-w"],
-    &["mousepad"],
+    &["mousepad", "--disable-server"],
     &["leafpad"],
     &["nvim-qt", "--nofork"],
     &["gvim", "--nofork"],
