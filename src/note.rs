@@ -135,7 +135,6 @@ impl Note<'_> {
                 path: path.to_path_buf(),
                 source: e,
             })?,
-            true,
         );
 
         let mut context = Self::capture_environment(&path)?;
@@ -178,7 +177,6 @@ impl Note<'_> {
                 tera.render_str(template, &context)
                     .map_err(|e| note_error_tera_template!(e))?
             },
-            false,
         );
 
         log::trace!(

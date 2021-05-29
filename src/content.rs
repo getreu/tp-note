@@ -8,6 +8,12 @@ use std::io::Write;
 use std::path::Path;
 use std::pin::Pin;
 
+/// As all text before the header marker `"---"` is ignored, this
+/// constant limits the maximum number of characters that are skipped
+/// before the header starts. In other words: the header
+/// must start within the first `BEFORE_HEADER_MAX_IGNORED_CHARS`.
+const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
+
 /// This is a newtype and thin wrapper around the note's content.
 /// It deals with operating system specific handling of newlines.
 #[derive(Debug, PartialEq)]
@@ -49,13 +55,14 @@ macro_rules! unborrow {
 impl<'a> Content<'a> {
     /// Constructor that reads a structured document with a YAML header
     /// and body.
-    /// First `"---"` is required to start at the beginning of the `input`.
-    /// Any BOM (byte order mark) at the beginning is ignored.
-    /// On Windows machines it converts all `\r\n` to `\n`.
-    /// When `relax==false` the header is only found when it starts
-    /// at the beginning of the input. With `true` it can be placed
-    /// everywhere to be found.
-    pub fn new(input: String, relax: bool) -> Pin<Box<Self>> {
+    /// A valid document is UTF-8 encoded and starts with an optional
+    /// BOM (byte order mark) followed by "---". When the startmarker
+    /// "---" does not follow directly the BOM, it must be prepended
+    /// by an empty line. In this case all text before is ignored:
+    /// BOM + ignored text + empty line + "---".
+    ///
+    /// On Windows machines this converts all `\r\n` to `\n`.
+    pub fn new(input: String) -> Pin<Box<Self>> {
         let input = Self::remove_cr(input);
         let mut c = Box::pin(Content {
             s: input,
@@ -68,7 +75,7 @@ impl<'a> Content<'a> {
         // The following is safe, because `split()` guarantees, that `header` and `body`
         // point into `c.s` (are a slice of).
         let c_s = unborrow!(&c.s);
-        let (header, body) = Self::split(&c_s, relax);
+        let (header, body) = Self::split(&c_s);
 
         // Store the pointers.
         // The get_unchecked_mut function works on a Pin<&mut T> instead of a Pin<Box<T>>, so we
@@ -114,8 +121,7 @@ impl<'a> Content<'a> {
     /// is kept as it is.
     /// Any BOM (byte order mark) at the beginning is ignored.
     ///
-    /// To accept a "header" (`relax==false`):
-    /// 1. the document must start with `"---"`,
+    /// 1. The document must start with `"---"`
     /// 2. followed by header bytes,
     /// 3. optionally followed by `"\n",
     /// 4. followed by `"---"` or `"..."`,
@@ -123,13 +129,12 @@ impl<'a> Content<'a> {
     /// 5. optionally followed by `"\n"`.
     /// The remaining bytes are "content".
     ///
-    /// To accept a "header" (`relax==true`):
-    /// A YAML metadata block may occur anywhere in the document, but
-    /// if it is not at the beginning, it must be preceded by a blank line:
-    /// 1. skip all until you find `"\n\n---"`
+    /// Alternatively, a YAML metadata block may occur anywhere in the document, but if it is not
+    /// at the beginning, it must be preceded by a blank line:
+    /// 1. skip all text (BEFORE_HEADER_MAX_IGNORED_CHARS) until you find `"\n\n---"`
     /// 2. followed by header bytes,
     /// 3. same as above ...
-    fn split(content: &'a str, relax: bool) -> (&'a str, &'a str) {
+    fn split(content: &'a str) -> (&'a str, &'a str) {
         // Remove BOM
         let content = content.trim_start_matches('\u{feff}');
 
@@ -142,12 +147,14 @@ impl<'a> Content<'a> {
             // Found at first byte.
             pattern.len()
         } else {
-            if !relax {
-                // We do not search further.
-                return ("", content);
-            };
             let pattern = "\n\n---";
-            if let Some(start) = content.find(pattern).map(|x| x + pattern.len()) {
+            if let Some(start) = content
+                .chars()
+                .take(BEFORE_HEADER_MAX_IGNORED_CHARS)
+                .collect::<String>()
+                .find(pattern)
+                .map(|x| x + pattern.len())
+            {
                 // Found just before `start`!
                 start
             } else {
@@ -270,44 +277,54 @@ mod tests {
     #[test]
     fn test_new() {
         // Test windows string.
-        let content = Content::new("first\r\nsecond\r\nthird".to_string(), false);
+        let content = Content::new("first\r\nsecond\r\nthird".to_string());
         assert_eq!(content.body, "first\nsecond\nthird");
 
         // Test Unix string.
-        let content = Content::new("first\nsecond\nthird".to_string(), false);
+        let content = Content::new("first\nsecond\nthird".to_string());
         assert_eq!(content.body, "first\nsecond\nthird");
 
         // Test BOM removal.
-        let content = Content::new("\u{feff}first\nsecond\nthird".to_string(), false);
+        let content = Content::new("\u{feff}first\nsecond\nthird".to_string());
         assert_eq!(content.body, "first\nsecond\nthird");
 
         // Test header extraction.
-        let content = Content::new("\u{feff}---\nfirst\n---\nsecond\nthird".to_string(), false);
+        let content = Content::new("\u{feff}---\nfirst\n---\nsecond\nthird".to_string());
         assert_eq!(content.header, "first");
         assert_eq!(content.body, "second\nthird");
 
         // Test header extraction without `\n` at the end.
-        let content = Content::new("\u{feff}---\nfirst\n---".to_string(), false);
+        let content = Content::new("\u{feff}---\nfirst\n---".to_string());
         assert_eq!(content.header, "first");
         assert_eq!(content.body, "");
 
-        // This fails to find the header.
-        let content = Content::new("\u{feff}not ignored\n\n---\nfirst\n---".to_string(), false);
+        // Some skipped bytes.
+        let content = Content::new("\u{feff}ignored\n\n---\nfirst\n---".to_string());
+        assert_eq!(content.header, "first");
+        assert_eq!(content.body, "");
+
+        // This fails to find the header because the `---` comes to late.
+        let mut s = "\u{feff}".to_string();
+        s.push_str(&String::from_utf8(vec![b'X'; BEFORE_HEADER_MAX_IGNORED_CHARS]).unwrap());
+        s.push_str("\n\n---\nfirst\n---\nsecond");
+        let s_ = s.clone();
+        let content = Content::new(s);
         assert_eq!(content.header, "");
-        assert_eq!(content.body, "not ignored\n\n---\nfirst\n---");
-    }
+        assert_eq!(content.body, &s_[3..]);
 
-    #[test]
-    fn test_new_relax() {
-        // The same a in the example above.
-        let content = Content::new("\u{feff}---\nfirst\n---".to_string(), true);
+        // This finds the header.
+        let mut s = "\u{feff}".to_string();
+        s.push_str(
+            &String::from_utf8(vec![
+                b'X';
+                BEFORE_HEADER_MAX_IGNORED_CHARS - "\n\n---".len()
+            ])
+            .unwrap(),
+        );
+        s.push_str("\n\n---\nfirst\n---\nsecond");
+        let content = Content::new(s);
         assert_eq!(content.header, "first");
-        assert_eq!(content.body, "");
-
-        // Here you can see the effect of relax.
-        let content = Content::new("\u{feff}ignored\n\n---\nfirst\n---".to_string(), true);
-        assert_eq!(content.header, "first");
-        assert_eq!(content.body, "");
+        assert_eq!(content.body, "second");
     }
 
     #[test]
@@ -315,68 +332,68 @@ mod tests {
         // Document start marker is not followed by whitespace.
         let input_stream = String::from("---first\n---\nsecond\nthird");
         let expected = ("", "---first\n---\nsecond\nthird");
-        let result = Content::split(&input_stream, false);
+        let result = Content::split(&input_stream);
         assert_eq!(result, expected);
 
         // Document start marker is followed by whitespace.
         let input_stream = String::from("---\nfirst\n---\nsecond\nthird");
         let expected = ("first", "second\nthird");
-        let result = Content::split(&input_stream, false);
+        let result = Content::split(&input_stream);
         assert_eq!(result, expected);
 
         // Document start marker is followed by whitespace.
         let input_stream = String::from("---\tfirst\n---\nsecond\nthird");
         let expected = ("first", "second\nthird");
-        let result = Content::split(&input_stream, false);
+        let result = Content::split(&input_stream);
         assert_eq!(result, expected);
 
         // Document start marker is followed by whitespace.
         let input_stream = String::from("--- first\n---\nsecond\nthird");
         let expected = ("first", "second\nthird");
-        let result = Content::split(&input_stream, false);
+        let result = Content::split(&input_stream);
         assert_eq!(result, expected);
 
         // Header is trimmed.
         let input_stream = String::from("---\n\nfirst\n\n---\nsecond\nthird");
         let expected = ("first", "second\nthird");
-        let result = Content::split(&input_stream, false);
+        let result = Content::split(&input_stream);
         assert_eq!(result, expected);
 
         // Body is kept as it is (not trimmed).
         let input_stream = String::from("---\nfirst\n---\n\nsecond\nthird\n");
         let expected = ("first", "\nsecond\nthird\n");
-        let result = Content::split(&input_stream, false);
+        let result = Content::split(&input_stream);
         assert_eq!(result, expected);
 
         // Header end marker line is trimmed right.
         let input_stream = String::from("---\nfirst\n--- \t \n\nsecond\nthird\n");
         let expected = ("first", "\nsecond\nthird\n");
-        let result = Content::split(&input_stream, false);
+        let result = Content::split(&input_stream);
         assert_eq!(result, expected);
 
         let input_stream = String::from("\nsecond\nthird");
         let expected = ("", "\nsecond\nthird");
-        let result = Content::split(&input_stream, false);
+        let result = Content::split(&input_stream);
         assert_eq!(result, expected);
 
         let input_stream = String::from("");
         let expected = ("", "");
-        let result = Content::split(&input_stream, false);
+        let result = Content::split(&input_stream);
         assert_eq!(result, expected);
 
         let input_stream = String::from("\u{feff}\nsecond\nthird");
         let expected = ("", "\nsecond\nthird");
-        let result = Content::split(&input_stream, false);
+        let result = Content::split(&input_stream);
         assert_eq!(result, expected);
 
         let input_stream = String::from("\u{feff}");
         let expected = ("", "");
-        let result = Content::split(&input_stream, false);
+        let result = Content::split(&input_stream);
         assert_eq!(result, expected);
 
         let input_stream = String::from("[📽 2 videos]");
         let expected = ("", "[📽 2 videos]");
-        let result = Content::split(&input_stream, false);
+        let result = Content::split(&input_stream);
         assert_eq!(result, expected);
     }
 
