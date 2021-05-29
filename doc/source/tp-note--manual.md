@@ -8,7 +8,7 @@ version: "1.12.18"
 
 Markup languages like *Markdown* [^1] are perfectly suited for fast
 note-taking. Type your notes with your favourite text editor and observe live
-the rendered text in you web browser.
+the rendered text in your web browser.
 
 _Tp-Note_ helps you to quickly get started writing notes with its powerful
 template system. If you like to keep your notes next to your files and you care

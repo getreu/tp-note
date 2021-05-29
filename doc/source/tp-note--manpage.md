@@ -504,7 +504,7 @@ out newlines according the operating system it runs on.
 _Tp-Note_ is designed to be compatible with '`Pandoc`'s and '`RMarkdown`s
 document structure as shown in the figure below.
 
-``` yaml
+```
 ---
 <YAML-front matter>
 ---
@@ -518,10 +518,25 @@ note-file has at least one YAML field named '`title:`' (the name of this
 compulsory field is defined by the '`tmpl_compulsory_field_content`'
 variable in the configuration file and can be changed there).
 
+Note that prepended text, placed before the YAML front matter, is ignored. There
+are however certain restrictions: If present, the skipped text should not be too
+long (cf. constant '`BEFORE_HEADER_MAX_IGNORED_CHARS`' in the source code of
+_Tp-Note_) and it must be followed by at least one blank line:
+
+```
+Prepended text is ignored.
+
+---
+<YAML-front matter>
+---
+<document-body>
+```
+
 There is no restriction about the markup language used in the note's text body.
 However, the default templates assume that Markdown and the file extension
 '`.md`' is used. Both can be changed easily by adapting _Tp-Note_'s
 configuration file.
+
 
 
 
