@@ -30,7 +30,6 @@ use std::io;
 use std::io::Write;
 use std::matches;
 use std::path::{Path, PathBuf};
-use std::pin::Pin;
 use std::str;
 use tera::Tera;
 
@@ -107,7 +106,7 @@ pub const TMPL_VAR_NOTE_ERRONEOUS_CONTENT: &str = "note_erroneous_content";
 
 #[derive(Debug, PartialEq)]
 /// Represents a note.
-pub struct Note<'a> {
+pub struct Note {
     // Reserved for future use:
     //     /// The front matter of the note.
     //     front_matter: FrontMatter,
@@ -116,7 +115,7 @@ pub struct Note<'a> {
     pub context: ContextWrapper,
     /// The full text content of the note, including
     /// its front matter.
-    pub content: Pin<Box<Content<'a>>>,
+    pub content: Content,
 }
 
 #[derive(Debug, PartialEq)]
@@ -126,24 +125,23 @@ struct FrontMatter {
 }
 
 use std::fs;
-impl Note<'_> {
+impl Note {
     /// Constructor that creates a memory representation of an existing note on
     /// disk.
     pub fn from_existing_note(path: &Path) -> Result<Self, NoteError> {
-        let content = Content::new(
-            fs::read_to_string(path).map_err(|e| NoteError::Read {
+        let content =
+            Content::from_input_with_cr(fs::read_to_string(path).map_err(|e| NoteError::Read {
                 path: path.to_path_buf(),
                 source: e,
-            })?,
-        );
+            })?);
 
         let mut context = Self::capture_environment(&path)?;
 
         // Register the raw serialized header text.
-        (*context).insert(TMPL_VAR_FM_ALL_YAML, &content.header);
+        (*context).insert(TMPL_VAR_FM_ALL_YAML, &content.borrow_dependent().header);
 
         // Deserialize the note read from disk.
-        let fm = Note::deserialize_header(content.header)?;
+        let fm = Note::deserialize_header(content.borrow_dependent().header)?;
 
         if !&CFG.tmpl_compulsory_field_content.is_empty()
             && fm.map.get(&CFG.tmpl_compulsory_field_content).is_none()
@@ -169,15 +167,13 @@ impl Note<'_> {
         let mut context = Self::capture_environment(&path)?;
 
         // render template
-        let content = Content::new(
-            {
-                let mut tera = Tera::default();
-                tera.extend(&TERA)?;
+        let content = Content::from({
+            let mut tera = Tera::default();
+            tera.extend(&TERA)?;
 
-                tera.render_str(template, &context)
-                    .map_err(|e| note_error_tera_template!(e))?
-            },
-        );
+            tera.render_str(template, &context)
+                .map_err(|e| note_error_tera_template!(e))?
+        });
 
         log::trace!(
             "Available substitution variables for content template:\n{:#?}",
@@ -186,12 +182,12 @@ impl Note<'_> {
         log::trace!("Applying content template:\n{}", template);
         log::debug!(
             "Rendered content template:\n---\n{}\n---\n{}",
-            content.header,
-            content.body.trim()
+            content.borrow_dependent().header,
+            content.borrow_dependent().body.trim()
         );
 
         // deserialize the rendered template
-        let fm = Note::deserialize_header(content.header)?;
+        let fm = Note::deserialize_header(content.borrow_dependent().header)?;
 
         Self::register_front_matter(&mut context, &fm);
 
@@ -225,23 +221,26 @@ impl Note<'_> {
         (*context).insert(TMPL_VAR_DIR_PATH, &dir_path.to_str().unwrap_or_default());
 
         // Register input from clipboard.
-        (*context).insert(TMPL_VAR_CLIPBOARD_HEADER, CLIPBOARD.header);
-        (*context).insert(TMPL_VAR_CLIPBOARD, CLIPBOARD.body);
+        (*context).insert(
+            TMPL_VAR_CLIPBOARD_HEADER,
+            CLIPBOARD.borrow_dependent().header,
+        );
+        (*context).insert(TMPL_VAR_CLIPBOARD, CLIPBOARD.borrow_dependent().body);
 
         // Register input from stdin.
-        (*context).insert(TMPL_VAR_STDIN_HEADER, STDIN.header);
-        (*context).insert(TMPL_VAR_STDIN, STDIN.body);
+        (*context).insert(TMPL_VAR_STDIN_HEADER, STDIN.borrow_dependent().header);
+        (*context).insert(TMPL_VAR_STDIN, STDIN.borrow_dependent().body);
 
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
-        let stdin_fm = Self::deserialize_header(STDIN.header);
+        let stdin_fm = Self::deserialize_header(STDIN.borrow_dependent().header);
         match stdin_fm {
             Ok(ref stdin_fm) => log::trace!(
                 "YAML front matter in the input stream stdin found:\n{:#?}",
                 &stdin_fm
             ),
             Err(ref e) => {
-                if !STDIN.header.is_empty() {
+                if !STDIN.borrow_dependent().header.is_empty() {
                     return Err(NoteError::InvalidStdinYaml {
                         source_str: e.to_string(),
                     });
@@ -251,14 +250,14 @@ impl Note<'_> {
 
         // Can we find a front matter in the clipboard? If yes, the unmodified
         // clipboard data is our new note content.
-        let clipboard_fm = Self::deserialize_header(CLIPBOARD.header);
+        let clipboard_fm = Self::deserialize_header(CLIPBOARD.borrow_dependent().header);
         match clipboard_fm {
             Ok(ref clipboard_fm) => log::trace!(
                 "YAML front matter in the clipboard found:\n{:#?}",
                 &clipboard_fm
             ),
             Err(ref e) => {
-                if !CLIPBOARD.header.is_empty() {
+                if !CLIPBOARD.borrow_dependent().header.is_empty() {
                     return Err(NoteError::InvalidClipboardYaml {
                         source_str: e.to_string(),
                     });
@@ -514,7 +513,7 @@ impl Note<'_> {
         // Deserialize.
 
         // Render Body.
-        let input = self.content.body;
+        let input = self.content.borrow_dependent().body;
 
         // What Markup language is used?
         let ext = match self.context.get(TMPL_VAR_FM_FILE_EXT) {

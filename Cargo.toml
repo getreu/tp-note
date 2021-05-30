@@ -89,6 +89,7 @@ time = "0.2.26"
 url = { version = "2.2.2", optional = true }
 webbrowser = { version = "0.5.5", optional = true }
 thiserror = "1.0.24"
+ouroboros = "0.9.3"
 
 [target.'cfg(windows)'.dependencies]
 win32job = "1.0.1"

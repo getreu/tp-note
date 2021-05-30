@@ -1,12 +1,11 @@
 //! Deals with the note's content string.
 
 use crate::error::FileError;
-use core::marker::PhantomPinned;
+use ouroboros::self_referencing;
 use std::fmt;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
-use std::pin::Pin;
 
 /// As all text before the header marker `"---"` is ignored, this
 /// constant limits the maximum number of characters that are skipped
@@ -14,93 +13,66 @@ use std::pin::Pin;
 /// must start within the first `BEFORE_HEADER_MAX_IGNORED_CHARS`.
 const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 
-/// This is a newtype and thin wrapper around the note's content.
-/// It deals with operating system specific handling of newlines.
-#[derive(Debug, PartialEq)]
-pub struct Content<'a> {
-    /// The raw content as String, can be empty.
-    s: String,
+/// The content of a note is stored as UTF-8 string with
+/// one `\n` character as newline. If present, a Byte Order Mark
+/// BOM is removed while reading with `new()`.
+#[derive(Debug, Eq, PartialEq)]
+pub struct ContentRef<'a> {
     /// Skip optional BOM and `"---" `in `s` until next `"---"`.
     /// When no `---` is found, this is empty.
     /// `header` is always trimmed.
     pub header: &'a str,
     /// Skip optional BOM and optional header and keep the rest.
     pub body: &'a str,
-    /// Pin this struct.
-    /// By making self-referential structs opt-out of Unpin, there is
-    /// no (safe) way to get a &mut T from a Pin<Box<T>> type for them. As a result, their
-    /// internal self-references are guaranteed to stay valid.
-    _pin: PhantomPinned,
 }
 
-/// This macro is useful for zero-cost conversion from &[u8] to &str. Use
-/// this with care. Make sure, that the byte-slice boundaries always fit character
-/// boundaries and that the slice only contains valid UTF-8. Also, check for potential
-/// race conditions yourself, because this disables borrow checking for
-/// `$slice_u8`.
-/// This is the immutable version.
-macro_rules! unborrow {
-    ($slice_u8:expr) => {{
-        use std::slice;
-        use std::str;
-        let ptr = $slice_u8.as_ptr();
-        let len = $slice_u8.len();
-        &unsafe { str::from_utf8_unchecked(slice::from_raw_parts(ptr, len)) }
-    }};
+/// This is a newtype and thin wrapper around the note's content.
+/// It deals with operating system specific handling of newlines.
+#[self_referencing]
+#[derive(Debug, Eq, PartialEq)]
+pub struct Content {
+    owner: String,
+
+    #[borrows(owner)]
+    #[covariant]
+    pub dependent: ContentRef<'this>,
 }
+
 
 /// The content of a note is stored as UTF-8 string with
 /// one `\n` character as newline. If present, a Byte Order Mark
 /// BOM is removed while reading with `new()`.
-impl<'a> Content<'a> {
-    /// Constructor that reads a structured document with a YAML header
-    /// and body.
+impl<'a> Content {
+    /// Constructor that parses a _Tp-Note_ document.
     /// A valid document is UTF-8 encoded and starts with an optional
     /// BOM (byte order mark) followed by "---". When the startmarker
     /// "---" does not follow directly the BOM, it must be prepended
     /// by an empty line. In this case all text before is ignored:
     /// BOM + ignored text + empty line + "---".
+    pub fn from(input: String) -> Self {
+        ContentBuilder {
+            owner: input,
+            dependent_builder: |owner: &str| {
+                let (header, body) = Content::split(&owner);
+                ContentRef { header, body }
+            },
+        }
+        .build()
+    }
+
+    /// Constructor that reads a structured document with a YAML header
+    /// and body.
     ///
-    /// On Windows machines this converts all `\r\n` to `\n`.
-    pub fn new(input: String) -> Pin<Box<Self>> {
+    /// This converts all `\r\n` to `\n`.
+    pub fn from_input_with_cr(input: String) -> Self {
         let input = Self::remove_cr(input);
-        let mut c = Box::pin(Content {
-            s: input,
-            header: "",
-            body: "",
-            _pin: PhantomPinned,
-        });
 
-        // Calculate the pointers (`str`).
-        // The following is safe, because `split()` guarantees, that `header` and `body`
-        // point into `c.s` (are a slice of).
-        let c_s = unborrow!(&c.s);
-        let (header, body) = Self::split(&c_s);
-
-        // Store the pointers.
-        // The get_unchecked_mut function works on a Pin<&mut T> instead of a Pin<Box<T>>, so we
-        // have to use the Pin::as_mut for converting the value before.
-        let mut_ref = Pin::as_mut(&mut c);
-        // Rationale:
-        // 1. Requirement:
-        //    > This function is unsafe. You must guarantee that you will never move the data out of
-        //    the mutable reference you receive when you call this function, so that the invariants on
-        //    the Pin type can be upheld.
-        // 2. The following is safe, because I just reassign a pointer and do not move any data.
-        unsafe {
-            Pin::get_unchecked_mut(mut_ref).header = header;
-        }
-        // Same here.
-        let mut_ref = Pin::as_mut(&mut c);
-        unsafe {
-            Pin::get_unchecked_mut(mut_ref).body = body;
-        }
-        c
+        Content::from(input)
     }
 
     /// True if the `Content` is empty.
     pub fn is_empty(&self) -> bool {
-        self.s.is_empty()
+        self.borrow_owner().is_empty()
     }
 
     /// On Windows machines it converts all `\r\n` to `\n`.
@@ -214,7 +186,7 @@ impl<'a> Content<'a> {
     }
 
     /// Writes the note to disk with `new_file_path`-filename.
-    pub fn write_to_disk(self: &Pin<Box<Self>>, new_file_path: &Path) -> Result<(), FileError> {
+    pub fn write_to_disk(&self, new_file_path: &Path) -> Result<(), FileError> {
         let outfile = OpenOptions::new()
             .write(true)
             .create_new(true)
@@ -223,12 +195,12 @@ impl<'a> Content<'a> {
             Ok(mut outfile) => {
                 log::trace!("Creating file: {:?}", new_file_path);
                 write!(outfile, "\u{feff}")?;
-                if !self.header.is_empty() {
+                if !self.borrow_dependent().header.is_empty() {
                     write!(outfile, "---")?;
                     #[cfg(target_family = "windows")]
                     write!(outfile, "\r")?;
                     writeln!(outfile)?;
-                    for l in self.header.lines() {
+                    for l in self.borrow_dependent().header.lines() {
                         write!(outfile, "{}", l)?;
                         #[cfg(target_family = "windows")]
                         write!(outfile, "\r")?;
@@ -239,7 +211,7 @@ impl<'a> Content<'a> {
                     write!(outfile, "\r")?;
                     writeln!(outfile)?;
                 };
-                for l in self.body.lines() {
+                for l in self.borrow_dependent().body.lines() {
                     write!(outfile, "{}", l)?;
                     #[cfg(target_family = "windows")]
                     write!(outfile, "\r")?;
@@ -259,7 +231,9 @@ impl<'a> Content<'a> {
 }
 
 /// Concatenates the header and the body and prints the content.
-impl<'a> fmt::Display for Content<'a> {
+/// This function is expensive as it involves copying the
+/// whole content.
+impl<'a> fmt::Display for ContentRef<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = if self.header.is_empty() {
             self.body.to_string()
@@ -270,47 +244,65 @@ impl<'a> fmt::Display for Content<'a> {
     }
 }
 
+/// Delegates the printing to `Display for ContentRef`.
+impl fmt::Display for Content {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.borrow_dependent().fmt(f)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_new() {
+    fn test_from_input_with_cr() {
         // Test windows string.
-        let content = Content::new("first\r\nsecond\r\nthird".to_string());
-        assert_eq!(content.body, "first\nsecond\nthird");
+        let content = Content::from_input_with_cr("first\r\nsecond\r\nthird".to_string());
+        assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test Unix string.
-        let content = Content::new("first\nsecond\nthird".to_string());
-        assert_eq!(content.body, "first\nsecond\nthird");
+        let content = Content::from_input_with_cr("first\nsecond\nthird".to_string());
+        assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test BOM removal.
-        let content = Content::new("\u{feff}first\nsecond\nthird".to_string());
-        assert_eq!(content.body, "first\nsecond\nthird");
+        let content = Content::from_input_with_cr("\u{feff}first\nsecond\nthird".to_string());
+        assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
+    }
+
+    #[test]
+    fn test_new() {
+        // Test Unix string.
+        let content = Content::from("first\nsecond\nthird".to_string());
+        assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
+
+        // Test BOM removal.
+        let content = Content::from("\u{feff}first\nsecond\nthird".to_string());
+        assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test header extraction.
-        let content = Content::new("\u{feff}---\nfirst\n---\nsecond\nthird".to_string());
-        assert_eq!(content.header, "first");
-        assert_eq!(content.body, "second\nthird");
+        let content = Content::from("\u{feff}---\nfirst\n---\nsecond\nthird".to_string());
+        assert_eq!(content.borrow_dependent().header, "first");
+        assert_eq!(content.borrow_dependent().body, "second\nthird");
 
         // Test header extraction without `\n` at the end.
-        let content = Content::new("\u{feff}---\nfirst\n---".to_string());
-        assert_eq!(content.header, "first");
-        assert_eq!(content.body, "");
+        let content = Content::from("\u{feff}---\nfirst\n---".to_string());
+        assert_eq!(content.borrow_dependent().header, "first");
+        assert_eq!(content.borrow_dependent().body, "");
 
         // Some skipped bytes.
-        let content = Content::new("\u{feff}ignored\n\n---\nfirst\n---".to_string());
-        assert_eq!(content.header, "first");
-        assert_eq!(content.body, "");
+        let content = Content::from("\u{feff}ignored\n\n---\nfirst\n---".to_string());
+        assert_eq!(content.borrow_dependent().header, "first");
+        assert_eq!(content.borrow_dependent().body, "");
 
         // This fails to find the header because the `---` comes to late.
         let mut s = "\u{feff}".to_string();
         s.push_str(&String::from_utf8(vec![b'X'; BEFORE_HEADER_MAX_IGNORED_CHARS]).unwrap());
         s.push_str("\n\n---\nfirst\n---\nsecond");
         let s_ = s.clone();
-        let content = Content::new(s);
-        assert_eq!(content.header, "");
-        assert_eq!(content.body, &s_[3..]);
+        let content = Content::from(s);
+        assert_eq!(content.borrow_dependent().header, "");
+        assert_eq!(content.borrow_dependent().body, &s_[3..]);
 
         // This finds the header.
         let mut s = "\u{feff}".to_string();
@@ -322,9 +314,9 @@ mod tests {
             .unwrap(),
         );
         s.push_str("\n\n---\nfirst\n---\nsecond");
-        let content = Content::new(s);
-        assert_eq!(content.header, "first");
-        assert_eq!(content.body, "second");
+        let content = Content::from(s);
+        assert_eq!(content.borrow_dependent().header, "first");
+        assert_eq!(content.borrow_dependent().body, "second");
     }
 
     #[test]
@@ -399,31 +391,21 @@ mod tests {
 
     #[test]
     fn test_display_for_content() {
-        let input = Content {
-            s: "".to_string(),
-            header: "first",
-            body: "\nsecond\nthird\n",
-            _pin: PhantomPinned,
-        };
         let expected = "\u{feff}---\nfirst\n---\n\nsecond\nthird\n".to_string();
+        let input = Content::from(expected.clone());
         assert_eq!(input.to_string(), expected);
 
-        let input = Content {
-            s: "".to_string(),
-            header: "",
-            body: "\nsecond\nthird\n",
-            _pin: PhantomPinned,
-        };
         let expected = "\nsecond\nthird\n".to_string();
+        let input = Content::from(expected.clone());
         assert_eq!(input.to_string(), expected);
 
-        let input = Content {
-            s: "".to_string(),
-            header: "",
-            body: "",
-            _pin: PhantomPinned,
-        };
         let expected = "".to_string();
+        let input = Content::from(expected.clone());
+        assert_eq!(input.to_string(), expected);
+
+        let expected = "\u{feff}---\nfirst\n---\n\nsecond\nthird\n".to_string();
+        let input =
+            Content::from("\u{feff}ignored\n\n---\nfirst\n---\n\nsecond\nthird\n".to_string());
         assert_eq!(input.to_string(), expected);
     }
 }

@@ -23,7 +23,6 @@ use std::io;
 use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
-use std::pin::Pin;
 use std::sync::RwLock;
 use structopt::StructOpt;
 
@@ -955,7 +954,7 @@ pub fn backup_config_file() -> Result<PathBuf, FileError> {
 
 lazy_static! {
     /// Reads the input stream stdin if there is any.
-    pub static ref STDIN: Pin<Box<Content<'static>>> = {
+    pub static ref STDIN: Content = {
         let mut buffer = String::new();
 
         // Read stdin().
@@ -968,13 +967,13 @@ lazy_static! {
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
 
-        Content::new(buffer)
+        Content::from_input_with_cr(buffer)
     };
 }
 
 lazy_static! {
     /// Reads the clipboard, if there is any and empties it.
-    pub static ref CLIPBOARD: Pin<Box<Content<'static>>> = {
+    pub static ref CLIPBOARD: Content = {
         let mut buffer = String::new();
 
         // Concatenate clipboard content.
@@ -982,7 +981,7 @@ lazy_static! {
         if CFG.clipboard_read_enabled && !*RUNS_ON_CONSOLE && !ARGS.batch {
             let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
             if ctx.is_some() {
-                let ctx = &mut ctx.unwrap(); // This is ok since `is_some()`
+                let ctx = &mut ctx.unwrap(); // This is ok since `is_some()>`
                 let s = ctx.get_contents().ok();
                 buffer.push_str(&s.unwrap_or_default());
             }
@@ -991,7 +990,7 @@ lazy_static! {
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
 
-        Content::new(buffer)
+        Content::from_input_with_cr(buffer)
     };
 }
 

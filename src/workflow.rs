@@ -138,7 +138,9 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
                         source: e,
                     })?;
             (n, new_file_path)
-        } else if !STDIN.header.is_empty() || !CLIPBOARD.header.is_empty() {
+        } else if !STDIN.borrow_dependent().header.is_empty()
+            || !CLIPBOARD.borrow_dependent().header.is_empty()
+        {
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
             // (only if there is a valid YAML front matter)
             log::trace!("Applying templates: `tmpl_copy_content`, `tmpl_copy_filename`");
