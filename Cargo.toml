@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.12.18"
+version = "1.12.19"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
@@ -64,7 +64,7 @@ clipboard = { version = "0.5.0", optional = true }
 confy = "0.4.0"
 directories = "3.0.2"
 httparse = { version = "1.4.1", optional = true }
-httpdate = { version = "1.0.0", optional = true }
+httpdate = { version = "1.0.1", optional = true }
 lazy_static = "1.4.0"
 log = { version = "0.4.14", features = ["serde"] }
 # msgbox: On Debian Linux you need to: sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
@@ -79,16 +79,16 @@ rst_parser = { version = "0.4.0", optional = true }
 rst_renderer = { version = "0.4.0", optional = true }
 sanitize-filename-reader-friendly = "2.1.0"
 # sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
-semver = "0.11.0"
+semver = "1.0.2"
 serde_json = "1.0.64"
 serde = { version = "1.0.126", features = ["derive"] }
 serde_yaml = "0.8.17"
 structopt = "0.3.21"
-tera = { version = "1.9.0", default-features = true }
+tera = { version = "1.10.0", default-features = true }
 time = "0.2.26"
 url = { version = "2.2.2", optional = true }
 webbrowser = { version = "0.5.5", optional = true }
-thiserror = "1.0.24"
+thiserror = "1.0.25"
 ouroboros = "0.9.3"
 
 [target.'cfg(windows)'.dependencies]
