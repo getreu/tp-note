@@ -300,7 +300,7 @@ On headless systems, it is recommended to compile _Tp-Note_ without its
 `viewer` and `message-box` features:
 
 ```shell
-cargo install --no-default-features tp-note
+cargo install --no-default-features --features renderer tp-note
 sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 ```
 

@@ -75,7 +75,7 @@ Developer documentation:
   which explains the default templates and setting. Many of them can be
   customized through _Tp-Note_'s configuration file.
 
-  [API documentation]
+  [Constants in API documentation]
 
 
 
@@ -163,7 +163,7 @@ in _Tp-Note_'s manual.
 While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
 configuration file structure. In order not to loose the changes you made in
 this file, the installer does not replace it automatically with a new version.
-Instead, _Tp-Note_ renames the erroneous configuration file and prompts:
+Instead, _Tp-Note_ renames the old configuration file and prompts:
 
     NOTE: configuration file version mismatch:
     ---
@@ -174,12 +174,6 @@ Instead, _Tp-Note_ renames the erroneous configuration file and prompts:
     For now, Tp-Note backs up the existing configuration
     file and next time it starts, it will create a new one
     with default values.
-    ---
-    Additional technical details:
-    *    Command line parameters:
-    tp-note
-    *    Configuration file path:
-    /home/getreu/.config/tp-note/tp-note.toml
 
 or
 
@@ -194,12 +188,6 @@ or
     For now, Tp-Note backs up the existing configuration
     file and next time it starts, it will create a new one
     with default values.
-    ---
-    Additional technical details:
-    *    Command line parameters:
-    tp-note
-    *    Configuration file path:
-    /home/getreu/.config/tp-note/tp-note.toml
 
 As the above error messages suggests, all you need to do is
 to restart _Tp-Note_ in order to create a new updated configuration file.
@@ -236,7 +224,7 @@ compile _Tp-Note_ yourself.
        cargo install --no-default-features --features read-clipboard,viewer,renderer tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-   **Linux console version without dependencies on GUI libraries**
+   **Minimal Linux console version without dependencies on GUI libraries**
 
    The full featured version of _Tp-Note_ depends on GUI libraries like GTK
    that might not be installed on a headless system. Either download the Musl
@@ -251,7 +239,7 @@ compile _Tp-Note_ yourself.
    line option `--export`). This way you can comfortably follow hyperlinks in
    your note files with any text based web browser, e.g. `lynx`.
 
-   **Linux server version**
+   **Recommended Linux console and server version**
 
    The same as the above console version (without GUI libraries), but with
    additional Markdown, ReStructuredText etc. renderer compiled in.
@@ -301,7 +289,7 @@ Copyright:
 [Tp-Note manual page - pdf]: /_downloads/tp-note--manpage.pdf
 [Blogposts about Tp-Note]: /tags/tp-note/
 [Tp-Note's config module documentation]: /projects/tp-note/_downloads/doc/tp_note/config/
-[API documentation]: /projects/tp-note/_downloads/doc/tp_note/
+[Constants in API documentation]: /projects/tp-note/_downloads/doc/tp_note/config/index.html#constants
 [Tp-Note on Gitlab]: https://gitlab.com/getreu/tp-note
 [Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
 [tp-note-latest-x86_64.msi]: /projects/tp-note/_downloads/wix/tp-note-latest-x86_64.msi
