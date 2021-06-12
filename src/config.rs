@@ -372,30 +372,45 @@ const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[
 /// Can be changed in config file.
 #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
 const BROWSER_ARGS: &[&[&str]] = &[
-    &["firefox", "--new-window"],
-    &["flatpak", "run", "org.mozilla.firefox", "--new-window"],
-    &["firefox-esr", "--new-window"],
-    &["chromium-browser", "--new-window"],
+    &[
+        "flatpak",
+        "run",
+        "org.mozilla.firefox",
+        "--new-window",
+        "--private-window",
+    ],
+    &["firefox", "--new-window", "--private-window"],
+    &["firefox-esr", "--new-window", "--private-window"],
     &[
         "flatpak",
         "run",
         "com.github.Eloston.UngoogledChromium",
         "--new-window",
+        "--incognito",
     ],
-    &["flatpak", "run", "org.chromium.Chromium", "--new-window"],
-    &["chrome", "--new-window"],
+    &[
+        "flatpak",
+        "run",
+        "org.chromium.Chromium",
+        "--new-window",
+        "--incognito",
+    ],
+    &["chromium-browser", "--new-window", "--incognito"],
+    &["chrome", "--new-window", "--incognito"],
 ];
 #[cfg(target_family = "windows")]
 const BROWSER_ARGS: &[&[&str]] = &[
     &[
         "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
         "--new-window",
+        "--private-window",
     ],
     &[
         "C:\\Program Files\\Google\\Chrome\\Application\\chrome",
         "--new-window",
+        "--incognito",
     ],
-    &["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"],
+    &["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe", "--inprivate"],
 ];
 // Some info about launching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
