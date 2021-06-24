@@ -11,7 +11,6 @@ use atty::{is, Stream};
 use clipboard::ClipboardContext;
 #[cfg(feature = "read-clipboard")]
 use clipboard::ClipboardProvider;
-use confy::ConfyError;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use log::LevelFilter;
@@ -410,7 +409,10 @@ const BROWSER_ARGS: &[&[&str]] = &[
         "--new-window",
         "--incognito",
     ],
-    &["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe", "--inprivate"],
+    &[
+        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+        "--inprivate",
+    ],
 ];
 // Some info about launching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
@@ -902,7 +904,7 @@ lazy_static! {
 
 lazy_static! {
     /// Variable indicating with `Err` if the loading of the configuration file went wrong.
-    pub static ref CFG_FILE_LOADING: RwLock<Result<(), ConfyError>> = RwLock::new(Ok(()));
+    pub static ref CFG_FILE_LOADING: RwLock<Result<(), FileError>> = RwLock::new(Ok(()));
 }
 
 #[cfg(not(test))]
@@ -910,22 +912,27 @@ lazy_static! {
     /// Reads and parses the configuration file "tp-note.toml". An alternative
     /// filename (optionally with absolute path) can be given on the command line
     /// with "--config".
-    pub static ref CFG: Cfg = confy::load::<Cfg>(PathBuf::from(
+    pub static ref CFG: Cfg = confy::load_path(&(
         if let Some(c) = &ARGS.config {
-            c
+            Path::new(c)
         } else {
-            CURRENT_EXE
+            match &*CONFIG_PATH {
+                Some(p) => p.as_path(),
+                None => {
+                    // Remember that something went wrong.
+                    let mut cfg_file_loading = CFG_FILE_LOADING.write().unwrap();
+                    *cfg_file_loading = Err(FileError::PathToConfigFileNotFound);
+                    return Cfg::default();
+                },
+            }
+
         })
-        // strip extension, ".toml" is added by `confy.load()`
-        .with_extension("")
-        .to_str()
-        .unwrap_or_default()
         ).unwrap_or_else(|e|{
             // Remember that something went wrong.
             let mut cfg_file_loading = CFG_FILE_LOADING.write().unwrap();
-            *cfg_file_loading = Err(e);
+            *cfg_file_loading = Err(e.into());
 
-            // As we could not load the config file, we will user the default
+            // As we could not load the config file, we will use the default
             // configuration.
             Cfg::default()
         });
