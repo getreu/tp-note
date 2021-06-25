@@ -38,7 +38,6 @@ pub struct Content {
     pub dependent: ContentRef<'this>,
 }
 
-
 /// The content of a note is stored as UTF-8 string with
 /// one `\n` character as newline. If present, a Byte Order Mark
 /// BOM is removed while reading with `new()`.
