@@ -11,7 +11,7 @@ use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::note::Note;
 use crate::viewer::error::ViewerError;
 use crate::viewer::init::LOCALHOST;
-use parse_hyperlinks::iterator_html::{Hyperlink, InlineImage};
+use parse_hyperlinks_html::iterator::{Hyperlink, InlineImage};
 use percent_encoding::percent_decode_str;
 use std::collections::HashSet;
 use std::fs;

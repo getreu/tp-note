@@ -70,22 +70,24 @@ log = { version = "0.4.14", features = ["serde"] }
 # msgbox: On Debian Linux you need to: sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
 msgbox = { version = "0.6.0", optional = true }
 notify = { version = "4.0.17", optional = true }
-parse-hyperlinks = "0.21.0"
+parse-hyperlinks = "0.22.0"
 # parse-hyperlinks = { path = "../parse-hyperlinks/parse-hyperlinks" }
+parse-hyperlinks-html = "0.22.0"
+# parse-hyperlinks-html = { path = "../parse-hyperlinks/parse-hyperlinks-html" }
 percent-encoding = { version = "2.1.0", optional = true }
 pulldown-cmark = { version = "0.8.0", default-features = false, features = ["simd"], optional = true }
-rand = { version = "0.8.3", optional = true }
+rand = { version = "0.8.4", optional = true }
 rst_parser = { version = "0.4.0", optional = true }
 rst_renderer = { version = "0.4.0", optional = true }
 sanitize-filename-reader-friendly = "2.1.0"
 # sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
-semver = "1.0.2"
+semver = "1.0.3"
 serde_json = "1.0.64"
 serde = { version = "1.0.126", features = ["derive"] }
 serde_yaml = "0.8.17"
 structopt = "0.3.21"
-tera = { version = "1.10.0", default-features = true }
-time = "0.2.26"
+tera = { version = "1.11.0", default-features = true }
+time = "0.2.27"
 url = { version = "2.2.2", optional = true }
 webbrowser = { version = "0.5.5", optional = true }
 thiserror = "1.0.25"
