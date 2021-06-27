@@ -709,7 +709,8 @@ In addition _Tp-Note_ defines the following variables:
   to _Tp-Note_'s positional parameter '`<path>`'. If '`<path>`' points to a
   directory the content of this variable is identical to '`{{ dir_path }}`'.
 
-* '`{{ dir_path }}`' is same as above but without filename and extension.
+* '`{{ dir_path }}`' is same as above but without filename (which comprises sort
+  tag, file stem and extension).
 
 * '`{{ clipboard }}`' is the complete clipboard text.  In case the clipboard's
   content starts with a YAML header, the latter does not appear in this
