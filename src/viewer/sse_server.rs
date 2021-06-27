@@ -53,6 +53,10 @@ pub const SSE_CLIENT_CODE2: &str = r#"/events");
     });
     "#;
 
+/// String alias that can be used in paths instead of `../` which is ignored by web
+/// browsers in leading position.
+const PATH_UPDIR_ALIAS: &str = "ParentDir..";
+
 /// URL path for Server-Sent-Events.
 const SSE_EVENT_PATH: &str = "/events";
 
@@ -339,11 +343,28 @@ impl ServerThread {
 
                 // Serve all other documents.
                 _ => {
+                    // Concatenate document directory and URL path.
+                    let doc_path = self.doc_path.canonicalize()?;
+                    #[allow(clippy::or_fun_call)]
+                    let doc_dir = doc_path.parent().unwrap_or(Path::new(""));
+
                     // Strip `/` and convert to `Path`.
-                    let path = path
-                        .strip_prefix("/")
-                        .ok_or(ViewerError::UrlMustStartWithSlash)?;
-                    let reqpath = Path::new(&path);
+                    let path = Path::new(
+                        path.strip_prefix("/")
+                            .ok_or(ViewerError::UrlMustStartWithSlash)?,
+                    );
+                    // Replace `PATH_UPDIR_ALIAS` with `..`.
+                    let mut reqpath = doc_dir.to_owned();
+                    for p in path.iter() {
+                        if p == "." {
+                            continue;
+                        }
+                        if p == PATH_UPDIR_ALIAS || p == ".." {
+                            reqpath.pop();
+                        } else {
+                            reqpath.push(p);
+                        }
+                    }
 
                     // Condition 1.: Check if we serve this kind of extension
                     let extension = &*reqpath
@@ -372,17 +393,18 @@ impl ServerThread {
                         }
                     };
 
-                    // Condition 2.: Only serve files that explicitly appear in `self.doc_local_links`.
+                    // Condition 2.: Only serve files that explicitly appear in
+                    // `self.doc_local_links`.
                     let doc_local_links = self
                         .doc_local_links
                         .read()
                         .expect("Can not read `doc_local_links`! RwLock is poisoned. Panic.");
 
-                    if !doc_local_links.contains(Path::new(&reqpath)) {
+                    if !doc_local_links.contains(path) {
                         log::warn!(
                             "TCP peer port {}: target not referenced in note file, rejecting: '{}'",
                             self.stream.peer_addr()?.port(),
-                            reqpath.to_str().unwrap_or_default()
+                            path.to_str().unwrap_or(""),
                         );
                         drop(doc_local_links);
                         self.respond_not_found(&reqpath)?;
@@ -391,45 +413,25 @@ impl ServerThread {
                     // Release the `RwLockReadGuard`.
                     drop(doc_local_links);
 
-                    // Concatenate document directory and URL path.
-                    let doc_path = self.doc_path.canonicalize()?;
-
+                    // Condition 3.: Only serve resources in the same or under the document's
+                    // parent directory.
                     #[allow(clippy::or_fun_call)]
-                    let doc_dir = doc_path.parent().unwrap_or(Path::new(""));
-                    // If `path` is absolute, it replaces `doc_dir`.
-                    let reqpath_abs = doc_dir.join(&reqpath);
-
-                    // Condition 3.: Only serve resources in the same or under the document's directory.
-                    match reqpath_abs.canonicalize() {
-                        Ok(p) => {
-                            if !p.starts_with(doc_dir) {
-                                log::warn!(
-                                    "TCP peer port {}:\
+                    let doc_parent_dir = doc_dir.parent().unwrap_or(Path::new(""));
+                    if !reqpath.starts_with(doc_parent_dir) {
+                        log::warn!(
+                            "TCP peer port {}:\
                                 file '{}' is not in directory '{}', rejecting.",
-                                    self.stream.peer_addr()?.port(),
-                                    reqpath.to_str().unwrap_or_default(),
-                                    doc_dir.to_str().unwrap_or_default()
-                                );
-                                self.respond_not_found(&reqpath)?;
-                                continue 'tcp_connection;
-                            }
-                        }
-                        Err(e) => {
-                            log::warn!(
-                                "TCP peer port {}: can not access file: \
-                            '{}': {}.",
-                                self.stream.peer_addr()?.port(),
-                                reqpath_abs.to_str().unwrap_or_default(),
-                                e
-                            );
-                            self.respond_not_found(&reqpath)?;
-                            continue 'tcp_connection;
-                        }
-                    };
+                            self.stream.peer_addr()?.port(),
+                            reqpath.to_str().unwrap_or_default(),
+                            doc_parent_dir.to_str().unwrap_or_default()
+                        );
+                        self.respond_not_found(&reqpath)?;
+                        continue 'tcp_connection;
+                    }
 
                     // Condition 4.: Is the file readable?
-                    if fs::metadata(&reqpath_abs)?.is_file() {
-                        self.respond_file_ok(&reqpath_abs, mime_type)?;
+                    if fs::metadata(&reqpath)?.is_file() {
+                        self.respond_file_ok(&reqpath, mime_type)?;
                     } else {
                         self.respond_not_found(&reqpath)?;
                     }
@@ -630,7 +632,7 @@ impl ServerThread {
                     );
                 } else {
                     log::info!(
-                        "Viewer: referenced and allowed to be served local files: {}",
+                        "Viewer: referenced local files: {}",
                         doc_local_links
                         .iter()
                         .map(|p|{
