@@ -3,6 +3,7 @@
 use crate::error::FileError;
 use ouroboros::self_referencing;
 use std::fmt;
+use std::fs::create_dir_all;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
@@ -186,6 +187,10 @@ impl<'a> Content {
 
     /// Writes the note to disk with `new_file_path`-filename.
     pub fn write_to_disk(&self, new_file_path: &Path) -> Result<(), FileError> {
+        // Create missing directories, if there are any.
+        #[allow(clippy::or_fun_call)]
+        create_dir_all(new_file_path.parent().unwrap_or(Path::new("")))?;
+
         let outfile = OpenOptions::new()
             .write(true)
             .create_new(true)
