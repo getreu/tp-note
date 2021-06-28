@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.13.0 | Tp-Note documentation
+% TP-NOTE(1) Version 1.13.1 | Tp-Note documentation
 
 
 # NAME
@@ -1103,10 +1103,10 @@ file_ext: "rst"
 The above change only applies to the current note.
 
 
-## Store new note files by default in a subdirectory 
+## Store new note files by default in a subdirectory
 
-When you are annotating an existing file on disk, the new note file is 
-placed in the same directory by default. To configure _Tp-Note_ to 
+When you are annotating an existing file on disk, the new note file is
+placed in the same directory by default. To configure _Tp-Note_ to
 store the new note file in a subdirectory, lets say '`Notes/`', instead, you
 need to modify the templates '`tmpl_annotate_filename`' and
 '`tmpl_annotate_content`':
