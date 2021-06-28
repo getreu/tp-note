@@ -1103,6 +1103,41 @@ file_ext: "rst"
 The above change only applies to the current note.
 
 
+## Store new note files by default in a subdirectory 
+
+When you are annotating an existing file on disk, the new note file is 
+placed in the same directory by default. To configure _Tp-Note_ to 
+store the new note file in a subdirectory, lets say '`Notes/`', instead, you
+need to modify the templates '`tmpl_annotate_filename`' and
+'`tmpl_annotate_content`':
+
+Replace in '`tmpl_annotate_filename`' the string:
+
+    {{ path | tag }}
+
+with:
+
+    Notes/{{ path | tag }}
+
+and in '`tmpl_annotate_content`':
+
+    [{{ path | filename }}](<{{ path | filename }}>)
+
+with (Linux, MacOS):
+
+    [{{ path | filename }}](<ParentDir../{{ path | filename }}>)
+
+or with (Windows):
+
+    [{{ path | filename }}](<ParentDir..\\{{ path | filename }}>)
+
+Please note that webbrowsers usually ignore leading '`../`' in URL paths. To
+work around this limitation, _Tp-Note_'s built-in viewer interprets the string
+'`ParentDir..`' as an alias of '`..`'. It is also worth mentioning that
+_Tp-Note_ automatically creates the subdirectory '`Notes/`' in case it does not
+exist.
+
+
 ## Customize the built-in note viewer
 
 **Change the way how note files are rendered for viewing**
@@ -1237,19 +1272,20 @@ invoke _Tp-Note_ with '`tp-note --debug info --popup --view`'.
 # SECURITY AND PRIVACY CONSIDERATIONS
 
 As discussed above, _Tp-Note_'s built-in viewer sets up an HTTP server on the
-'`localhost`' interface with a random port number. This HTTP server runs as
-long as the as long as the launched web browser window is open. It should be
+'`localhost`' interface with a random port number. This HTTP server runs as long
+as the as long as the launched web browser window is open. It should be
 remembered, that the HTTP server not only exposes the rendered note, but also
-some other (image) files in the same directory (and all subdirectories) where
-the note file resides. For security reasons symbolic links to files outside the
-note's directory are not followed. Furthermore, _Tp-Note_'s built-in HTTP
-server only serves files that are referenced in the note document and whose
-file extensions are registered with the '`viewer_served_mime_type`'
-configuration file variable. As _Tp-Note_'s built-in viewer binds to the
-'`localhost`' interface, the exposed files are in principle accessible to all
-processes running on the computer. As long as only one user is logged into the
-computer at a given time, no privacy concern is raised: any potential note
-reader must be logged in, in order to access the `localhost` HTTP server.
+some other (image) files starting from the parent directory (and all
+subdirectories) of the note file. For security reasons symbolic links to files
+outside the note's parent directory are not followed. Furthermore, _Tp-Note_'s
+built-in HTTP server only serves files that are explicitly referenced in the
+note document and whose file extensions are registered with the
+'`viewer_served_mime_type`' configuration file variable. As _Tp-Note_'s built-in
+viewer binds to the '`localhost`' interface, the exposed files are in principle
+accessible to all processes running on the computer. As long as only one user is
+logged into the computer at a given time, no privacy concern is raised: any
+potential note reader must be logged in, in order to access the `localhost` HTTP
+server.
 
 This is why on systems where multiple users are logged in at the same time, it
 is recommended to disable _Tp-Note_'s viewer feature by setting the
