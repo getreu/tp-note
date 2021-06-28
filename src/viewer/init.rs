@@ -103,6 +103,7 @@ impl Viewer {
         // Launch the file watcher thread.
         // Send a signal whenever the file is modified. Without error, this thread runs as long as
         // the parent thread (where we are) is running.
+        #[allow(clippy::mutex_atomic)]
         let terminate_on_browser_disconnect = Arc::new(Mutex::new(false));
         let terminate_on_browser_disconnect_ = terminate_on_browser_disconnect.clone();
         let watcher_handle: JoinHandle<_> = thread::spawn(move || {
