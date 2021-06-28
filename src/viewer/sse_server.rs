@@ -323,8 +323,8 @@ impl ServerThread {
 
                         // Send event.
                         let event = match msg {
-                            SseToken::Update => format!("event: update\r\ndata:\r\n\r\n"),
-                            SseToken::Ping => format!(": ping\r\n\r\n"),
+                            SseToken::Update => "event: update\r\ndata:\r\n\r\n".to_string(),
+                            SseToken::Ping => ": ping\r\n\r\n".to_string(),
                         };
                         self.stream.write_all(event.as_bytes())?;
                         log::debug!(
