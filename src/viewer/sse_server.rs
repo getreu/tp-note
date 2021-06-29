@@ -371,7 +371,8 @@ impl ServerThread {
                         .extension()
                         .unwrap_or_default()
                         .to_str()
-                        .unwrap_or_default();
+                        .unwrap_or_default()
+                        .to_lowercase();
                     // Find the corresponding mime type of this file extension.
                     let mime_type = match VIEWER_SERVED_MIME_TYPES_HMAP.get(&*extension) {
                         Some(mt) => mt,
@@ -379,7 +380,7 @@ impl ServerThread {
                             // Reject all files with extensions not listed.
                             log::warn!(
                                 "TCP peer port {}: \
-                         files with extension '{}' are not served. Rejecting: '{}'",
+                                files with extension '{}' are not served. Rejecting: '{}'",
                                 self.stream.peer_addr()?.port(),
                                 reqpath
                                     .extension()

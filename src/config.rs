@@ -470,12 +470,11 @@ const VIEWER_NOTIFY_PERIOD: u64 = 1000;
 /// connections are not uncommon.
 const VIEWER_TCP_CONNECTIONS_MAX: usize = 16;
 
-/// Served file types with corresponding mime types.
-/// First entry per line is the file extension, the second the corresponding mime
-/// type. Embedded files with types other than those listed here are silently
-/// ignored.
-/// Note, that image files must be located in the same directory than the note
-/// file to be served.
+/// Served file types with corresponding mime types.  First entry per line is
+/// the file extension in lowercase, the second the corresponding mime type.
+/// Embedded files with types other than those listed here are silently ignored.
+/// Note, that image files must be located in the same or in the note's parent
+/// directory.
 const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
     &["apng", "image/apng"],
     &["avif", "image/avif"],
