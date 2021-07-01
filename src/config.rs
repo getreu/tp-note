@@ -351,16 +351,16 @@ const EDITOR_ARGS: &[&[&str]] = &[
 /// The editor list is executed item by item until an editor is found.
 /// Can be changed in config file.
 #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nano"], &["nvim"], &["vim"], &["emacs"], &["vi"]];
+const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nvim"], &["nano"], &["vim"], &["emacs"], &["vi"]];
 #[cfg(target_family = "windows")]
 const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&[]];
 // Some info about launching programs on iOS:
 // [dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(all(target_family = "unix", target_vendor = "apple"))]
 const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[
+    &["nvim"],
     &["nano"],
     &["pico"],
-    &["nvim"],
     &["vim"],
     &["emacs"],
     &["vi"],
