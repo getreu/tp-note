@@ -262,7 +262,7 @@ pub enum NoteError {
         \tfile_ext=\"{extension}\"\n\
         \t---\n\
         is not registered as a valid\n\
-        Tp-Note-file in the `note_file_extensions_*` variables\n\
+        Tp-Note-file in the `note_file_extensions.*` variables\n\
         in your configuration file:\n\
         \t{md_ext:?}\n\
         \t{rst_ext:?}\n\
@@ -271,7 +271,7 @@ pub enum NoteError {
         \t{no_viewer_ext:?}\n\
         \n\
         Choose one of the above list or add more extensions to the\n\
-        `note_file_extensions_*` variables in your configuration file."
+        `note_file_extensions.*` variables in your configuration file."
     )]
     FileExtNotRegistered {
         extension: String,

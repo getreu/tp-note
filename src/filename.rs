@@ -30,7 +30,7 @@ pub fn shorten_filename(mut file_path: PathBuf) -> PathBuf {
     // Does this stem ending look similar to a copy counter?
     if note_stem.len() != remove_copy_counter(&note_stem).len() {
         // Add an additional separator.
-        note_stem.push_str(&CFG.copy_counter_extra_separator);
+        note_stem.push_str(&CFG.copy_counter.extra_separator);
     };
 
     // Limit the size of `file_path`
@@ -150,7 +150,7 @@ pub fn assemble(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str)
 #[inline]
 pub fn remove_copy_counter(tag: &str) -> &str {
     // Strip closing brackets at the end.
-    let tag1 = if let Some(t) = tag.strip_suffix(&CFG.copy_counter_closing_brackets) {
+    let tag1 = if let Some(t) = tag.strip_suffix(&CFG.copy_counter.closing_brackets) {
         t
     } else {
         return tag;
@@ -161,7 +161,7 @@ pub fn remove_copy_counter(tag: &str) -> &str {
         return tag;
     };
     // And finally strip starting brackets.
-    let tag3 = if let Some(t) = tag2.strip_suffix(&CFG.copy_counter_opening_brackets) {
+    let tag3 = if let Some(t) = tag2.strip_suffix(&CFG.copy_counter.opening_brackets) {
         t
     } else {
         return tag;
@@ -174,9 +174,9 @@ pub fn remove_copy_counter(tag: &str) -> &str {
 #[inline]
 pub fn append_copy_counter(stem: &str, n: usize) -> String {
     let mut stem = stem.to_string();
-    stem.push_str(&CFG.copy_counter_opening_brackets);
+    stem.push_str(&CFG.copy_counter.opening_brackets);
     stem.push_str(&n.to_string());
-    stem.push_str(&CFG.copy_counter_closing_brackets);
+    stem.push_str(&CFG.copy_counter.closing_brackets);
     stem
 }
 
@@ -195,27 +195,27 @@ impl MarkupLanguage {
     /// lists?
     #[inline]
     pub fn new(file_extension: &str) -> Self {
-        for e in &CFG.note_file_extensions_md {
+        for e in &CFG.note_file_extensions.md {
             if e == file_extension {
                 return MarkupLanguage::Markdown;
             }
         }
-        for e in &CFG.note_file_extensions_rst {
+        for e in &CFG.note_file_extensions.rst {
             if e == file_extension {
                 return MarkupLanguage::RestructuredText;
             }
         }
-        for e in &CFG.note_file_extensions_html {
+        for e in &CFG.note_file_extensions.html {
             if e == file_extension {
                 return MarkupLanguage::Html;
             }
         }
-        for e in &CFG.note_file_extensions_txt {
+        for e in &CFG.note_file_extensions.txt {
             if e == file_extension {
                 return MarkupLanguage::Txt;
             }
         }
-        for e in &CFG.note_file_extensions_no_viewer {
+        for e in &CFG.note_file_extensions.no_viewer {
             if e == file_extension {
                 return MarkupLanguage::Unknown;
             }
@@ -269,7 +269,7 @@ mod tests {
         // This makes the filename problematic
         let mut input = append_copy_counter(input, 1);
         let mut expected = input.clone();
-        expected.push_str(&CFG.copy_counter_extra_separator);
+        expected.push_str(&CFG.copy_counter.extra_separator);
 
         input.push_str(".ext");
         expected.push_str(".ext");

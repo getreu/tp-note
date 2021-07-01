@@ -1,6 +1,7 @@
 //! Reads the command line parameters and clipboard and exposes them as `static`
 //! variables.
 
+#[cfg(any(feature = "read-clipboard", feature = "viewer"))]
 use crate::config::CFG;
 use crate::content::Content;
 use crate::error::NoteError;
@@ -88,7 +89,7 @@ lazy_static! {
     /// Shall we launch the internal http server and the external browser?
     pub static ref LAUNCH_VIEWER: bool = {
         !ARGS.batch && ARGS.export.is_none() && !*RUNS_ON_CONSOLE &&
-            (ARGS.view || ( !ARGS.edit && !CFG.edit_arg_default ))
+            (ARGS.view || ( !ARGS.edit && !CFG.arg_default.edit ))
     };
 }
 
@@ -145,7 +146,7 @@ lazy_static! {
 
         // Concatenate clipboard content.
         #[cfg(feature="read-clipboard")]
-        if CFG.clipboard_read_enabled && !*RUNS_ON_CONSOLE && !ARGS.batch {
+        if CFG.clipboard.read_enabled && !*RUNS_ON_CONSOLE && !ARGS.batch {
             let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
             if ctx.is_some() {
                 let ctx = &mut ctx.unwrap(); // This is ok since `is_some()>`

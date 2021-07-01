@@ -5,8 +5,6 @@ use crate::error::FileError;
 use crate::filename;
 use crate::settings::ARGS;
 use crate::VERSION;
-#[cfg(feature = "read-clipboard")]
-#[cfg(feature = "read-clipboard")]
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use log::LevelFilter;
@@ -29,30 +27,6 @@ const CONFIG_FILENAME: &str = "tp-note.toml";
 
 /// File extension of `to-note` files.
 pub const EXTENSION_DEFAULT: &str = "md";
-
-/// If the stem of a filename ends with a pattern, that is similar
-/// to a copy counter, add this extra separator. Must be `-`, `_`
-/// or any combination of both. Shorter looks better.
-const COPY_COUNTER_EXTRA_SEPARATOR: &str = "-";
-
-/// Tp-Note may add a counter at the end of the filename when
-/// it can not save a file because the name is taken already.
-/// This is the opening bracket search pattern. Some examples:
-/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
-/// Can be empty.
-const COPY_COUNTER_OPENING_BRACKETS: &str = "(";
-
-/// Tp-Note may add a counter at the end of the filename when
-/// it can not save a file because the name is taken already.
-/// This is the closing bracket search pattern. Some examples:
-/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
-/// Can be empty.
-const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
-
-/// When a filename is taken already, Tp-Note adds a copy
-/// counter number in the range of `0..COPY_COUNTER_MAX`
-/// at the end.
-pub const COPY_COUNTER_MAX: usize = 400;
 
 /// _Tp-Note_ opens all `.md` files with an external editor. It recognizes its
 /// own files, by the file extension `.md`, by a valid YAML header and the
@@ -448,11 +422,29 @@ const CLIPBOARD_READ_ENABLED: bool = true;
 /// Default value.
 const CLIPBOARD_EMPTY_ENABLED: bool = true;
 
-/// Template used by the viewer to render error messages into html.
-/// When set to true, the viewer feature is automatically disabled when
-/// _Tp-Note_ encounters an `.md` file without header.  Experienced users can
-/// set this to `true`. See also `SILENTLY_IGNORE_MISSING_HEADER`.
-const VIEWER_MISSING_HEADER_DISABLES: bool = false;
+/// If the stem of a filename ends with a pattern, that is similar
+/// to a copy counter, add this extra separator. Must be `-`, `_`
+/// or any combination of both. Shorter looks better.
+const COPY_COUNTER_EXTRA_SEPARATOR: &str = "-";
+
+/// Tp-Note may add a counter at the end of the filename when
+/// it can not save a file because the name is taken already.
+/// This is the opening bracket search pattern. Some examples:
+/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
+/// Can be empty.
+const COPY_COUNTER_OPENING_BRACKETS: &str = "(";
+
+/// Tp-Note may add a counter at the end of the filename when
+/// it can not save a file because the name is taken already.
+/// This is the closing bracket search pattern. Some examples:
+/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
+/// Can be empty.
+const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
+
+/// When a filename is taken already, Tp-Note adds a copy
+/// counter number in the range of `0..COPY_COUNTER_MAX`
+/// at the end.
+pub const COPY_COUNTER_MAX: usize = 400;
 
 /// HTML template to render the viewer-error page.
 pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
@@ -484,6 +476,12 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 /// How often should the file watcher check for changes?
 /// Delay in milliseconds.
 const VIEWER_NOTIFY_PERIOD: u64 = 1000;
+
+/// Template used by the viewer to render error messages into html.
+/// When set to true, the viewer feature is automatically disabled when
+/// _Tp-Note_ encounters an `.md` file without header.  Experienced users can
+/// set this to `true`. See also `SILENTLY_IGNORE_MISSING_HEADER`.
+const VIEWER_MISSING_HEADER_DISABLES: bool = false;
 
 /// Served file types with corresponding mime types.  First entry per line is
 pub const VIEWER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
@@ -666,41 +664,94 @@ pub struct Cfg {
     /// configuration file.
     pub version: String,
     pub extension_default: String,
-    pub copy_counter_extra_separator: String,
-    pub copy_counter_opening_brackets: String,
-    pub copy_counter_closing_brackets: String,
     pub silently_ignore_missing_header: bool,
-    pub debug_arg_default: LevelFilter,
-    pub edit_arg_default: bool,
-    pub no_filename_sync_arg_default: bool,
-    pub popup_arg_default: bool,
-    pub note_file_extensions_md: Vec<String>,
-    pub note_file_extensions_rst: Vec<String>,
-    pub note_file_extensions_html: Vec<String>,
-    pub note_file_extensions_txt: Vec<String>,
-    pub note_file_extensions_no_viewer: Vec<String>,
-    pub tmpl_new_content: String,
-    pub tmpl_new_filename: String,
-    pub tmpl_copy_content: String,
-    pub tmpl_copy_filename: String,
-    pub tmpl_clipboard_content: String,
-    pub tmpl_clipboard_filename: String,
-    pub tmpl_annotate_content: String,
-    pub tmpl_annotate_filename: String,
-    pub tmpl_sync_filename: String,
-    pub tmpl_compulsory_field_content: String,
-    pub editor_args: Vec<Vec<String>>,
-    pub editor_console_args: Vec<Vec<String>>,
-    pub browser_args: Vec<Vec<String>>,
-    pub clipboard_read_enabled: bool,
-    pub clipboard_empty_enabled: bool,
-    pub viewer_missing_header_disables: bool,
-    pub viewer_error_tmpl: String,
-    pub viewer_notify_period: u64,
-    pub viewer_rendition_tmpl: String,
-    pub viewer_served_mime_types: Vec<Vec<String>>,
-    pub viewer_tcp_connections_max: usize,
-    pub exporter_rendition_tmpl: String,
+    pub arg_default: ArgDefault,
+    pub note_file_extensions: NoteFileExtensions,
+    pub tmpl: Tmpl,
+    pub app_args: AppArgs,
+    pub clipboard: Clipboard,
+    pub copy_counter: CopyCounter,
+    pub viewer: Viewer,
+    pub exporter: Exporter,
+}
+
+/// Command line arguments, deserialized form configuration file.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ArgDefault {
+    pub debug: LevelFilter,
+    pub edit: bool,
+    pub no_filename_sync: bool,
+    pub popup: bool,
+}
+
+/// Known note file extensions, deserialized from the configuration file.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NoteFileExtensions {
+    pub md: Vec<String>,
+    pub rst: Vec<String>,
+    pub html: Vec<String>,
+    pub txt: Vec<String>,
+    pub no_viewer: Vec<String>,
+}
+
+/// Filename templates and content templates, deserialized from the configuration file.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Tmpl {
+    pub compulsory_field_content: String,
+    pub new_content: String,
+    pub new_filename: String,
+    pub copy_content: String,
+    pub copy_filename: String,
+    pub clipboard_content: String,
+    pub clipboard_filename: String,
+    pub annotate_content: String,
+    pub annotate_filename: String,
+    pub sync_filename: String,
+}
+
+/// Arguments lists for invoking external applications, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AppArgs {
+    pub editor: Vec<Vec<String>>,
+    pub editor_console: Vec<Vec<String>>,
+    pub browser: Vec<Vec<String>>,
+}
+
+/// Configuration of clipboard behaviour, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Clipboard {
+    pub read_enabled: bool,
+    pub empty_enabled: bool,
+}
+
+/// Configuration of clipboard behaviour, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CopyCounter {
+    pub extra_separator: String,
+    pub opening_brackets: String,
+    pub closing_brackets: String,
+}
+
+/// Configuration data for the viewer feature, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Viewer {
+    pub error_tmpl: String,
+    pub notify_period: u64,
+    pub missing_header_disables: bool,
+    pub rendition_tmpl: String,
+    pub served_mime_types: Vec<Vec<String>>,
+    pub tcp_connections_max: usize,
+}
+
+/// Configuration for the HTML exporter feature, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Exporter {
+    pub rendition_tmpl: String,
 }
 
 /// When no configuration file is found, defaults are set here from built-in
@@ -716,68 +767,140 @@ impl ::std::default::Default for Cfg {
         Cfg {
             version,
             extension_default: EXTENSION_DEFAULT.to_string(),
-            copy_counter_extra_separator: COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
-            copy_counter_opening_brackets: COPY_COUNTER_OPENING_BRACKETS.to_string(),
-            copy_counter_closing_brackets: COPY_COUNTER_CLOSING_BRACKETS.to_string(),
             silently_ignore_missing_header: SILENTLY_IGNORE_MISSING_HEADER,
-            debug_arg_default: DEBUG_ARG_DEFAULT,
-            edit_arg_default: EDITOR_ARG_DEFAULT,
-            no_filename_sync_arg_default: NO_FILENAME_SYNC_ARG_DEFAULT,
-            popup_arg_default: POPUP_ARG_DEFAULT,
-            note_file_extensions_md: NOTE_FILE_EXTENSIONS_MD
+            arg_default: ArgDefault::default(),
+            note_file_extensions: NoteFileExtensions::default(),
+            tmpl: Tmpl::default(),
+            app_args: AppArgs::default(),
+            clipboard: Clipboard::default(),
+            copy_counter: CopyCounter::default(),
+            viewer: Viewer::default(),
+            exporter: Exporter::default(),
+        }
+    }
+}
+
+/// Default values for command line arguments.
+impl ::std::default::Default for ArgDefault {
+    fn default() -> Self {
+        ArgDefault {
+            debug: DEBUG_ARG_DEFAULT,
+            edit: EDITOR_ARG_DEFAULT,
+            no_filename_sync: NO_FILENAME_SYNC_ARG_DEFAULT,
+            popup: POPUP_ARG_DEFAULT,
+        }
+    }
+}
+
+/// Default values for known note file extensions.
+impl ::std::default::Default for NoteFileExtensions {
+    fn default() -> Self {
+        NoteFileExtensions {
+            md: NOTE_FILE_EXTENSIONS_MD
                 .iter()
                 .map(|a| (*a).to_string())
                 .collect(),
-            note_file_extensions_rst: NOTE_FILE_EXTENSIONS_RST
+            rst: NOTE_FILE_EXTENSIONS_RST
                 .iter()
                 .map(|a| (*a).to_string())
                 .collect(),
-            note_file_extensions_html: NOTE_FILE_EXTENSIONS_HTML
+            html: NOTE_FILE_EXTENSIONS_HTML
                 .iter()
                 .map(|a| (*a).to_string())
                 .collect(),
-            note_file_extensions_txt: NOTE_FILE_EXTENSIONS_TXT
+            txt: NOTE_FILE_EXTENSIONS_TXT
                 .iter()
                 .map(|a| (*a).to_string())
                 .collect(),
-            note_file_extensions_no_viewer: NOTE_FILE_EXTENSIONS_NO_VIEWER
+            no_viewer: NOTE_FILE_EXTENSIONS_NO_VIEWER
                 .iter()
                 .map(|a| (*a).to_string())
                 .collect(),
-            tmpl_new_content: TMPL_NEW_CONTENT.to_string(),
-            tmpl_new_filename: TMPL_NEW_FILENAME.to_string(),
-            tmpl_copy_content: TMPL_COPY_CONTENT.to_string(),
-            tmpl_copy_filename: TMPL_COPY_FILENAME.to_string(),
-            tmpl_clipboard_content: TMPL_CLIPBOARD_CONTENT.to_string(),
-            tmpl_clipboard_filename: TMPL_CLIPBOARD_FILENAME.to_string(),
-            tmpl_annotate_content: TMPL_ANNOTATE_CONTENT.to_string(),
-            tmpl_annotate_filename: TMPL_ANNOTATE_FILENAME.to_string(),
-            tmpl_sync_filename: TMPL_SYNC_FILENAME.to_string(),
-            tmpl_compulsory_field_content: TMPL_COMPULSORY_FIELD_CONTENT.to_string(),
-            editor_args: EDITOR_ARGS
+        }
+    }
+}
+
+/// Default values for templates.
+impl ::std::default::Default for Tmpl {
+    fn default() -> Self {
+        Tmpl {
+            compulsory_field_content: TMPL_COMPULSORY_FIELD_CONTENT.to_string(),
+            new_content: TMPL_NEW_CONTENT.to_string(),
+            new_filename: TMPL_NEW_FILENAME.to_string(),
+            copy_content: TMPL_COPY_CONTENT.to_string(),
+            copy_filename: TMPL_COPY_FILENAME.to_string(),
+            clipboard_content: TMPL_CLIPBOARD_CONTENT.to_string(),
+            clipboard_filename: TMPL_CLIPBOARD_FILENAME.to_string(),
+            annotate_content: TMPL_ANNOTATE_CONTENT.to_string(),
+            annotate_filename: TMPL_ANNOTATE_FILENAME.to_string(),
+            sync_filename: TMPL_SYNC_FILENAME.to_string(),
+        }
+    }
+}
+
+/// Default values for invoking external applications.
+impl ::std::default::Default for AppArgs {
+    fn default() -> Self {
+        AppArgs {
+            editor: EDITOR_ARGS
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
-            editor_console_args: EDITOR_CONSOLE_ARGS
+            editor_console: EDITOR_CONSOLE_ARGS
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
-            browser_args: BROWSER_ARGS
+            browser: BROWSER_ARGS
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
-            clipboard_read_enabled: CLIPBOARD_READ_ENABLED,
-            clipboard_empty_enabled: CLIPBOARD_EMPTY_ENABLED,
-            viewer_missing_header_disables: VIEWER_MISSING_HEADER_DISABLES,
-            viewer_notify_period: VIEWER_NOTIFY_PERIOD,
-            viewer_tcp_connections_max: VIEWER_TCP_CONNECTIONS_MAX,
-            viewer_served_mime_types: VIEWER_SERVED_MIME_TYPES
+        }
+    }
+}
+
+/// Default values for clipboard behaviour.
+impl ::std::default::Default for Clipboard {
+    fn default() -> Self {
+        Clipboard {
+            read_enabled: CLIPBOARD_READ_ENABLED,
+            empty_enabled: CLIPBOARD_EMPTY_ENABLED,
+        }
+    }
+}
+
+/// Default values for copy counter.
+impl ::std::default::Default for CopyCounter {
+    fn default() -> Self {
+        CopyCounter {
+            extra_separator: COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
+            opening_brackets: COPY_COUNTER_OPENING_BRACKETS.to_string(),
+            closing_brackets: COPY_COUNTER_CLOSING_BRACKETS.to_string(),
+        }
+    }
+}
+
+/// Default values for the viewer feature.
+impl ::std::default::Default for Viewer {
+    fn default() -> Self {
+        Viewer {
+            missing_header_disables: VIEWER_MISSING_HEADER_DISABLES,
+            notify_period: VIEWER_NOTIFY_PERIOD,
+            tcp_connections_max: VIEWER_TCP_CONNECTIONS_MAX,
+            served_mime_types: VIEWER_SERVED_MIME_TYPES
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
-            viewer_rendition_tmpl: VIEWER_RENDITION_TMPL.to_string(),
-            viewer_error_tmpl: VIEWER_ERROR_TMPL.to_string(),
-            exporter_rendition_tmpl: EXPORTER_RENDITION_TMPL.to_string(),
+            rendition_tmpl: VIEWER_RENDITION_TMPL.to_string(),
+            error_tmpl: VIEWER_ERROR_TMPL.to_string(),
+        }
+    }
+}
+
+/// Default values for the exporter feature.
+impl ::std::default::Default for Exporter {
+    fn default() -> Self {
+        Exporter {
+            rendition_tmpl: EXPORTER_RENDITION_TMPL.to_string(),
         }
     }
 }
@@ -786,7 +909,7 @@ lazy_static! {
     /// Store the extension as key and mime type as value in HashMap.
     pub static ref VIEWER_SERVED_MIME_TYPES_HMAP: HashMap<&'static str, &'static str> = {
         let mut hm = HashMap::new();
-        for l in &CFG.viewer_served_mime_types {
+        for l in &CFG.viewer.served_mime_types {
             if l.len() >= 2
             {
                 hm.insert(l[0].as_str(), l[1].as_str());

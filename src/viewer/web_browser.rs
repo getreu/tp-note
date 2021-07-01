@@ -32,7 +32,7 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
     let mut executable_list = Vec::new();
 
     // Choose the right parameter list.
-    let browser_args = &CFG.browser_args;
+    let browser_args = &CFG.app_args.browser;
 
     // Prepare launch of browser/viewer.
 

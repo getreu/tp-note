@@ -189,11 +189,11 @@ impl ServerThread {
         );
 
         // Check if we exceed our connection limit.
-        if open_connections > CFG.viewer_tcp_connections_max {
+        if open_connections > CFG.viewer.tcp_connections_max {
             self.respond_service_unavailable()?;
             // This ends this thread and closes the connection.
             return Err(ViewerError::TcpConnectionsExceeded {
-                max_conn: CFG.viewer_tcp_connections_max,
+                max_conn: CFG.viewer.tcp_connections_max,
             });
         }
 
@@ -590,7 +590,7 @@ impl ServerThread {
         match Note::from_existing_note(&self.doc_path)
             // Now, try to render to html.
             .and_then(|mut note| {
-                note.render_content(file_path_ext, &CFG.viewer_rendition_tmpl, &js)
+                note.render_content(file_path_ext, &CFG.viewer.rendition_tmpl, &js)
             })
             // Now scan the HTML result for links and store them in a HashMap accessible to all threads.
             .and_then(|html| {
@@ -652,7 +652,7 @@ impl ServerThread {
             // page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
-                Note::render_erroneous_content(&self.doc_path, &CFG.viewer_error_tmpl, &js, e)
+                Note::render_erroneous_content(&self.doc_path, &CFG.viewer.error_tmpl, &js, e)
                     .map_err(|e| { ViewerError::RenderErrorPage {
                         tmpl: "viewer_error_tmpl".to_string(),
                         source: e,

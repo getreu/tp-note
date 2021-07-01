@@ -53,7 +53,7 @@ impl FileWatcher {
         event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
         terminate_on_browser_disconnect: Arc<Mutex<bool>>,
     ) -> Result<Self, ViewerError> {
-        let notify_period = CFG.viewer_notify_period;
+        let notify_period = CFG.viewer.notify_period;
         let (tx, rx) = channel();
         let mut watcher = watcher(tx, Duration::from_millis(notify_period))?;
         watcher.watch(&file, RecursiveMode::Recursive)?;

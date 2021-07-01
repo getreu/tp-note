@@ -69,7 +69,7 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
         log::trace!("Filename synchronisation disabled with the flag: `--no-filename-sync`",);
     }
 
-    if CFG.no_filename_sync_arg_default {
+    if CFG.arg_default.no_filename_sync {
         log::trace!(
             "Filename synchronisation disabled with the configuration file \
              variable: `no_filename_sync_arg_default = true`",
@@ -78,9 +78,9 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
 
     let new_file_path =
         // Do not sync, if explicitly disabled.
-        if !no_filename_sync && !CFG.no_filename_sync_arg_default && !ARGS.no_filename_sync {
+        if !no_filename_sync && !CFG.arg_default.no_filename_sync && !ARGS.no_filename_sync {
             log::trace!("Applying template `tmpl_sync_filename`.");
-            let new_file_path = n.render_filename(&CFG.tmpl_sync_filename).map_err(|e| {
+            let new_file_path = n.render_filename(&CFG.tmpl.sync_filename).map_err(|e| {
                 WorkflowError::Template {
                     tmpl_name: "tmpl_sync_filename".to_string(),
                     source: e,
@@ -103,7 +103,7 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
 
     // Print HTML rendition.
     if let Some(dir) = &ARGS.export {
-        n.render_and_write_content(&new_file_path, &CFG.exporter_rendition_tmpl, &dir)
+        n.render_and_write_content(&new_file_path, &CFG.exporter.rendition_tmpl, &dir)
             .map_err(|e| WorkflowError::Template {
                 tmpl_name: "exporter_rendition_tmpl".to_string(),
                 source: e,
@@ -125,14 +125,14 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
         let (n, new_file_path) = if STDIN.is_empty() && CLIPBOARD.is_empty() {
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
             log::trace!("Applying templates `tmpl_new_content` and `tmpl_new_filename`.");
-            let n = Note::from_content_template(&path, &CFG.tmpl_new_content).map_err(|e| {
+            let n = Note::from_content_template(&path, &CFG.tmpl.new_content).map_err(|e| {
                 WorkflowError::Template {
                     tmpl_name: "tmpl_new_content".to_string(),
                     source: e,
                 }
             })?;
             let new_file_path =
-                n.render_filename(&CFG.tmpl_new_filename)
+                n.render_filename(&CFG.tmpl.new_filename)
                     .map_err(|e| WorkflowError::Template {
                         tmpl_name: "tmpl_new_filename".to_string(),
                         source: e,
@@ -144,14 +144,14 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
             // (only if there is a valid YAML front matter)
             log::trace!("Applying templates: `tmpl_copy_content`, `tmpl_copy_filename`");
-            let n = Note::from_content_template(&path, &CFG.tmpl_copy_content).map_err(|e| {
+            let n = Note::from_content_template(&path, &CFG.tmpl.copy_content).map_err(|e| {
                 WorkflowError::Template {
                     tmpl_name: "tmpl_copy_content".to_string(),
                     source: e,
                 }
             })?;
             // CREATE A NEW NOTE WITH `TMPL_COPY_CONTENT` TEMPLATE
-            let new_file_path = n.render_filename(&CFG.tmpl_copy_filename).map_err(|e| {
+            let new_file_path = n.render_filename(&CFG.tmpl.copy_filename).map_err(|e| {
                 WorkflowError::Template {
                     tmpl_name: "tmpl_copy_filename".to_string(),
                     source: e,
@@ -162,7 +162,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
             log::trace!("Applying templates: `tmpl_clipboard_content`, `tmpl_clipboard_filename`");
             let n =
-                Note::from_content_template(&path, &CFG.tmpl_clipboard_content).map_err(|e| {
+                Note::from_content_template(&path, &CFG.tmpl.clipboard_content).map_err(|e| {
                     WorkflowError::Template {
                         tmpl_name: "tmpl_clipboard_content".to_string(),
                         source: e,
@@ -171,7 +171,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
 
             // CREATE A NEW NOTE WITH `TMPL_CLIPBOARD_CONTENT` TEMPLATE
             let new_file_path = n
-                .render_filename(&CFG.tmpl_clipboard_filename)
+                .render_filename(&CFG.tmpl.clipboard_filename)
                 .map_err(|e| WorkflowError::Template {
                     tmpl_name: "tmpl_clipboard_filename".to_string(),
                     source: e,
@@ -208,7 +208,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             // `path` points to a foreign file type that will be annotated.
             log::trace!("Applying templates `tmpl_annotate_content` and `tmpl_annotate_filename`.");
             let n =
-                Note::from_content_template(&path, &CFG.tmpl_annotate_content).map_err(|e| {
+                Note::from_content_template(&path, &CFG.tmpl.annotate_content).map_err(|e| {
                     WorkflowError::Template {
                         tmpl_name: "tmpl_annotate_content".to_string(),
                         source: e,
@@ -216,7 +216,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
                 })?;
 
             let new_file_path = n
-                .render_filename(&CFG.tmpl_annotate_filename)
+                .render_filename(&CFG.tmpl.annotate_filename)
                 .map_err(|e| WorkflowError::Template {
                     tmpl_name: "tmpl_annotate_filename".to_string(),
                     source: e,
@@ -317,7 +317,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
 
     #[cfg(feature = "viewer")]
     let viewer_join_handle = if *LAUNCH_VIEWER
-        && !(missing_header && CFG.viewer_missing_header_disables && !ARGS.view)
+        && !(missing_header && CFG.viewer.missing_header_disables && !ARGS.view)
     {
         Some(launch_viewer_thread(&path))
     } else {
@@ -355,7 +355,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
 
         // Delete clipboard content.
         #[cfg(feature = "read-clipboard")]
-        if CFG.clipboard_read_enabled && CFG.clipboard_empty_enabled && !*RUNS_ON_CONSOLE {
+        if CFG.clipboard.read_enabled && CFG.clipboard.empty_enabled && !*RUNS_ON_CONSOLE {
             let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
             if let Some(mut ctx) = ctx {
                 ctx.set_contents("".to_owned()).unwrap_or_default();

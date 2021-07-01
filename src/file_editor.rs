@@ -23,8 +23,8 @@ pub fn launch_editor(path: &Path) -> Result<(), FileError> {
 
     // Choose the right parameter list.
     let editor_args = match *RUNS_ON_CONSOLE {
-        true => &CFG.editor_console_args,
-        false => &CFG.editor_args,
+        true => &CFG.app_args.editor_console,
+        false => &CFG.app_args.editor,
     };
 
     // Prepare launch of editor/viewer.

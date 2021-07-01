@@ -143,11 +143,11 @@ impl Note {
         // Deserialize the note read from disk.
         let fm = Note::deserialize_header(content.borrow_dependent().header)?;
 
-        if !&CFG.tmpl_compulsory_field_content.is_empty()
-            && fm.map.get(&CFG.tmpl_compulsory_field_content).is_none()
+        if !&CFG.tmpl.compulsory_field_content.is_empty()
+            && fm.map.get(&CFG.tmpl.compulsory_field_content).is_none()
         {
             return Err(NoteError::MissingFrontMatterField {
-                field_name: CFG.tmpl_compulsory_field_content.to_owned(),
+                field_name: CFG.tmpl.compulsory_field_content.to_owned(),
             });
         }
 
@@ -350,7 +350,7 @@ impl Note {
     fn deserialize_header(header: &str) -> Result<FrontMatter, NoteError> {
         if header.is_empty() {
             return Err(NoteError::MissingFrontMatter {
-                compulsory_field: CFG.tmpl_compulsory_field_content.to_owned(),
+                compulsory_field: CFG.tmpl.compulsory_field_content.to_owned(),
             });
         };
 
@@ -392,11 +392,11 @@ impl Note {
             if extension_is_unknown {
                 return Err(NoteError::FileExtNotRegistered {
                     extension: extension.to_owned(),
-                    md_ext: CFG.note_file_extensions_md.to_owned(),
-                    rst_ext: CFG.note_file_extensions_rst.to_owned(),
-                    html_ext: CFG.note_file_extensions_html.to_owned(),
-                    txt_ext: CFG.note_file_extensions_txt.to_owned(),
-                    no_viewer_ext: CFG.note_file_extensions_no_viewer.to_owned(),
+                    md_ext: CFG.note_file_extensions.md.to_owned(),
+                    rst_ext: CFG.note_file_extensions.rst.to_owned(),
+                    html_ext: CFG.note_file_extensions.html.to_owned(),
+                    txt_ext: CFG.note_file_extensions.txt.to_owned(),
+                    no_viewer_ext: CFG.note_file_extensions.no_viewer.to_owned(),
                 });
             }
         };
