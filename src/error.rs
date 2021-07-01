@@ -1,7 +1,6 @@
 //! Custom error types.
 
 use crate::process_ext::ChildExtError;
-use confy::ConfyError;
 use std::io;
 use std::path::PathBuf;
 use std::process::ExitStatus;
@@ -146,7 +145,10 @@ pub enum FileError {
     Io(#[from] std::io::Error),
 
     #[error(transparent)]
-    Confy(#[from] ConfyError),
+    Serialize(#[from] toml::ser::Error),
+
+    #[error(transparent)]
+    Deserialize(#[from] toml::de::Error),
 }
 
 /// The error `InvalidFrontMatterYaml` prints the front matter section of the

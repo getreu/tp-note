@@ -18,8 +18,12 @@ use parse_hyperlinks::iterator::first_hyperlink;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
+#[cfg(not(test))]
+use std::fs::File;
 use std::io;
 use std::io::Read;
+#[cfg(not(test))]
+use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::RwLock;
@@ -906,13 +910,32 @@ lazy_static! {
     pub static ref CFG_FILE_LOADING: RwLock<Result<(), FileError>> = RwLock::new(Ok(()));
 }
 
+/// Parse the configuration file if it exists. Otherwise write one with default values.
 #[cfg(not(test))]
+#[inline]
+fn config_load_path(config_path: &Path) -> Result<Cfg, FileError> {
+    if config_path.exists() {
+        let config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
+        Ok(config)
+    } else {
+        let mut buffer = File::create(config_path)?;
+        buffer.write_all(toml::to_string_pretty(&Cfg::default())?.as_bytes())?;
+        Ok(Cfg::default())
+    }
+}
+
+#[cfg(test)]
+#[inline]
+fn config_load_path(_config_path: &Path) -> Result<Cfg, FileError> {
+    Ok(Cfg::default())
+}
+
 lazy_static! {
     /// Reads and parses the configuration file "tp-note.toml". An alternative
     /// filename (optionally with absolute path) can be given on the command line
     /// with "--config".
-    pub static ref CFG: Cfg = confy::load_path(&(
-        if let Some(c) = &ARGS.config {
+    pub static ref CFG: Cfg = {
+        let config_path = if let Some(c) = &ARGS.config {
             Path::new(c)
         } else {
             match &*CONFIG_PATH {
@@ -924,22 +947,19 @@ lazy_static! {
                     return Cfg::default();
                 },
             }
+        };
 
-        })
-        ).unwrap_or_else(|e|{
-            // Remember that something went wrong.
-            let mut cfg_file_loading = CFG_FILE_LOADING.write().unwrap();
-            *cfg_file_loading = Err(e.into());
+        config_load_path(&config_path)
+            .unwrap_or_else(|e|{
+                // Remember that something went wrong.
+                let mut cfg_file_loading = CFG_FILE_LOADING.write().unwrap();
+                *cfg_file_loading = Err(e.into());
 
-            // As we could not load the config file, we will use the default
-            // configuration.
-            Cfg::default()
-        });
-}
-
-#[cfg(test)]
-lazy_static! {
-    pub static ref CFG: Cfg = Cfg::default();
+                // As we could not load the config file, we will use the default
+                // configuration.
+                Cfg::default()
+            })
+        };
 }
 
 lazy_static! {
