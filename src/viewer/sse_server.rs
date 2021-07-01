@@ -6,8 +6,8 @@ extern crate percent_encoding;
 extern crate tera;
 extern crate url;
 
-use crate::config::CFG;
-use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
+use crate::settings::CFG;
+use crate::settings::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::note::Note;
 use crate::viewer::error::ViewerError;
 use crate::viewer::init::LOCALHOST;

@@ -3,9 +3,9 @@
 //! the memory representation is established be reading the note file with
 //! its front matter.
 
-use crate::config::CFG;
-use crate::config::CLIPBOARD;
-use crate::config::STDIN;
+use crate::settings::CFG;
+use crate::settings::CLIPBOARD;
+use crate::settings::STDIN;
 use crate::content::Content;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;

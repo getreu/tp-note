@@ -5,9 +5,9 @@ use crate::alert_service::AlertService;
 #[cfg(feature = "message-box")]
 use crate::alert_service::MESSAGE_CHANNEL;
 #[cfg(feature = "message-box")]
-use crate::config::ARGS;
+use crate::settings::ARGS;
 #[cfg(feature = "message-box")]
-use crate::config::RUNS_ON_CONSOLE;
+use crate::settings::RUNS_ON_CONSOLE;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};

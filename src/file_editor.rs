@@ -1,7 +1,7 @@
 //! Launch the user's favourite file editor.
 
-use crate::config::CFG;
-use crate::config::RUNS_ON_CONSOLE;
+use crate::settings::CFG;
+use crate::settings::RUNS_ON_CONSOLE;
 use crate::error::FileError;
 use crate::process_ext::ChildExt;
 #[cfg(not(target_family = "windows"))]

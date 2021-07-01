@@ -2,7 +2,7 @@
 
 extern crate notify;
 
-use crate::config::CFG;
+use crate::settings::CFG;
 use crate::viewer::error::ViewerError;
 use crate::viewer::sse_server::SseToken;
 use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};

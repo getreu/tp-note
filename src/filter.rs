@@ -1,5 +1,5 @@
 //! Extends the built-in Tera filters.
-use crate::config::Hyperlink;
+use crate::settings::Hyperlink;
 use crate::filename::disassemble;
 use lazy_static::lazy_static;
 use sanitize_filename_reader_friendly::sanitize;

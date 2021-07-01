@@ -1,13 +1,13 @@
 //! High level program logic implementing the whole workflow.
 
-use crate::config::ARGS;
-use crate::config::CFG;
-use crate::config::CLIPBOARD;
-use crate::config::LAUNCH_EDITOR;
-use crate::config::LAUNCH_VIEWER;
+use crate::settings::ARGS;
+use crate::settings::CFG;
+use crate::settings::CLIPBOARD;
+use crate::settings::LAUNCH_EDITOR;
+use crate::settings::LAUNCH_VIEWER;
 #[cfg(feature = "read-clipboard")]
-use crate::config::RUNS_ON_CONSOLE;
-use crate::config::STDIN;
+use crate::settings::RUNS_ON_CONSOLE;
+use crate::settings::STDIN;
 use crate::error::NoteError;
 use crate::error::WorkflowError;
 use crate::file_editor::launch_editor;

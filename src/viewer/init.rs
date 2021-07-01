@@ -1,8 +1,8 @@
 //! Main module for the markup renderer and note viewer feature.
 
-use crate::config::ARGS;
-use crate::config::LAUNCH_EDITOR;
-use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
+use crate::settings::ARGS;
+use crate::settings::LAUNCH_EDITOR;
+use crate::settings::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::filename::MarkupLanguage;
 use crate::viewer::error::ViewerError;
 use crate::viewer::sse_server::manage_connections;

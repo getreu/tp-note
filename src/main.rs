@@ -14,7 +14,7 @@
 
 #[cfg(feature = "message-box")]
 mod alert_service;
-mod config;
+mod settings;
 mod content;
 mod error;
 mod file_editor;
@@ -28,10 +28,10 @@ mod viewer;
 mod workflow;
 
 extern crate semver;
-use crate::config::backup_config_file;
-use crate::config::ARGS;
-use crate::config::CFG;
-use crate::config::CFG_FILE_LOADING;
+use crate::settings::backup_config_file;
+use crate::settings::ARGS;
+use crate::settings::CFG;
+use crate::settings::CFG_FILE_LOADING;
 use crate::logger::AppLogger;
 use crate::workflow::run;
 use error::FileError;
