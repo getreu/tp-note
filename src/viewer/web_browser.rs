@@ -2,7 +2,7 @@
 
 extern crate webbrowser;
 
-use crate::settings::CFG;
+use crate::config::CFG;
 use crate::error::FileError;
 use crate::process_ext::ChildExt;
 use crate::viewer::error::ViewerError;

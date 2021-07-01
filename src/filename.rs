@@ -1,7 +1,7 @@
 //! Helper functions that deal with filenames.
-use crate::settings::CFG;
-use crate::settings::COPY_COUNTER_MAX;
-use crate::settings::NOTE_FILENAME_LEN_MAX;
+use crate::config::CFG;
+use crate::config::COPY_COUNTER_MAX;
+use crate::config::NOTE_FILENAME_LEN_MAX;
 use crate::error::FileError;
 use std::path::Path;
 use std::path::PathBuf;

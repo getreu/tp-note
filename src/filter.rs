@@ -1,6 +1,6 @@
 //! Extends the built-in Tera filters.
-use crate::settings::Hyperlink;
 use crate::filename::disassemble;
+use crate::settings::Hyperlink;
 use lazy_static::lazy_static;
 use sanitize_filename_reader_friendly::sanitize;
 use std::collections::HashMap;

@@ -1,9 +1,9 @@
 //! Launch the user's favourite file editor.
 
-use crate::settings::CFG;
-use crate::settings::RUNS_ON_CONSOLE;
+use crate::config::CFG;
 use crate::error::FileError;
 use crate::process_ext::ChildExt;
+use crate::settings::RUNS_ON_CONSOLE;
 #[cfg(not(target_family = "windows"))]
 use std::fs::File;
 use std::path::Path;

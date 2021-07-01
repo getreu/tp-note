@@ -1,8 +1,8 @@
 //! Receives strings by a message channel, queues them and displays them
 //! one by one in popup alert windows.
 
+use crate::config::CONFIG_PATH;
 use crate::settings::ARGS;
-use crate::settings::CONFIG_PATH;
 use crate::settings::RUNS_ON_CONSOLE;
 use crate::VERSION;
 use lazy_static::lazy_static;

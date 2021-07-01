@@ -14,7 +14,7 @@
 
 #[cfg(feature = "message-box")]
 mod alert_service;
-mod settings;
+mod config;
 mod content;
 mod error;
 mod file_editor;
@@ -23,16 +23,17 @@ mod filter;
 mod logger;
 mod note;
 mod process_ext;
+mod settings;
 #[cfg(feature = "viewer")]
 mod viewer;
 mod workflow;
 
 extern crate semver;
-use crate::settings::backup_config_file;
-use crate::settings::ARGS;
-use crate::settings::CFG;
-use crate::settings::CFG_FILE_LOADING;
+use crate::config::backup_config_file;
+use crate::config::CFG;
+use crate::config::CFG_FILE_LOADING;
 use crate::logger::AppLogger;
+use crate::settings::ARGS;
 use crate::workflow::run;
 use error::FileError;
 use semver::Version;
