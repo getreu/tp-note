@@ -325,17 +325,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "confy"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2913470204e9e8498a0f31f17f90a0de801ae92c8c5ac18c49af4819e6786697"
-dependencies = [
- "directories 2.0.2",
- "serde",
- "toml",
-]
-
-[[package]]
 name = "const_fn"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -405,16 +394,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3d0c8c8752312f9713efd397ff63acb9f85585afbf179282e720e7704954dd5"
 dependencies = [
  "generic-array",
-]
-
-[[package]]
-name = "directories"
-version = "2.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "551a778172a450d7fc12e629ca3b0428d00f6afa9a43da1b630d54604e97371c"
-dependencies = [
- "cfg-if 0.1.10",
- "dirs-sys",
 ]
 
 [[package]]
@@ -2105,8 +2084,7 @@ dependencies = [
  "chrono",
  "clap",
  "clipboard",
- "confy",
- "directories 3.0.2",
+ "directories",
  "httparse",
  "httpdate",
  "lazy_static",
@@ -2118,7 +2096,6 @@ dependencies = [
  "parse-hyperlinks-html",
  "percent-encoding",
  "pulldown-cmark",
- "rand",
  "rst_parser",
  "rst_renderer",
  "sanitize-filename-reader-friendly",
@@ -2130,6 +2107,7 @@ dependencies = [
  "tera",
  "thiserror",
  "time 0.2.27",
+ "toml",
  "url",
  "webbrowser",
  "win32job",

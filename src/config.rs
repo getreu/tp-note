@@ -27,26 +27,32 @@ const CURRENT_EXE: &str = "tp-note";
 /// Tp-Note's configuration file filename.
 const CONFIG_FILENAME: &str = "tp-note.toml";
 
-/// Default value for command line option `--debug`.  Determines the maximum
-/// debug level events must have, to be logged.  If the command line option
-/// `--debug` is present, its value will be used instead.
-const DEBUG_ARG_DEFAULT: LevelFilter = LevelFilter::Error;
+/// File extension of `to-note` files.
+pub const EXTENSION_DEFAULT: &str = "md";
 
-/// Default value for command line flag `--edit` to disable file watcher,
-/// (Markdown)-renderer, html server and a web browser launcher set to `true`.
-const EDITOR_ARG_DEFAULT: bool = false;
+/// If the stem of a filename ends with a pattern, that is similar
+/// to a copy counter, add this extra separator. Must be `-`, `_`
+/// or any combination of both. Shorter looks better.
+const COPY_COUNTER_EXTRA_SEPARATOR: &str = "-";
 
-/// Default value for command line flag `--popup` If the command line flag
-/// `--popup` or `POPUP` is `true`, all log events will also trigger the
-/// appearance of a popup alert window.  Note, that error level debug events
-/// will always pop up, regardless of `--popup` and `POPUP` (unless
-/// `--debug=off`).
-const POPUP_ARG_DEFAULT: bool = true;
+/// Tp-Note may add a counter at the end of the filename when
+/// it can not save a file because the name is taken already.
+/// This is the opening bracket search pattern. Some examples:
+/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
+/// Can be empty.
+const COPY_COUNTER_OPENING_BRACKETS: &str = "(";
 
-/// Default value for command line flag `--no-filename-sync` to disable
-/// the title to filename synchronisation mechanism permanently.
-/// If set to `true`, the corresponding command line flag is ignored.
-const NO_FILENAME_SYNC_ARG_DEFAULT: bool = false;
+/// Tp-Note may add a counter at the end of the filename when
+/// it can not save a file because the name is taken already.
+/// This is the closing bracket search pattern. Some examples:
+/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
+/// Can be empty.
+const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
+
+/// When a filename is taken already, Tp-Note adds a copy
+/// counter number in the range of `0..COPY_COUNTER_MAX`
+/// at the end.
+pub const COPY_COUNTER_MAX: usize = 400;
 
 /// _Tp-Note_ opens all `.md` files with an external editor. It recognizes its
 /// own files, by the file extension `.md`, by a valid YAML header and the
@@ -58,8 +64,26 @@ const NO_FILENAME_SYNC_ARG_DEFAULT: bool = false;
 /// *) all string literals given in this example are configurable.
 const SILENTLY_IGNORE_MISSING_HEADER: bool = true;
 
-/// File extension of `to-note` files.
-pub const EXTENSION_DEFAULT: &str = "md";
+/// Default value for command line option `--debug`.  Determines the maximum
+/// debug level events must have, to be logged.  If the command line option
+/// `--debug` is present, its value will be used instead.
+const DEBUG_ARG_DEFAULT: LevelFilter = LevelFilter::Error;
+
+/// Default value for command line flag `--edit` to disable file watcher,
+/// (Markdown)-renderer, html server and a web browser launcher set to `true`.
+const EDITOR_ARG_DEFAULT: bool = false;
+
+/// Default value for command line flag `--no-filename-sync` to disable
+/// the title to filename synchronisation mechanism permanently.
+/// If set to `true`, the corresponding command line flag is ignored.
+const NO_FILENAME_SYNC_ARG_DEFAULT: bool = false;
+
+/// Default value for command line flag `--popup` If the command line flag
+/// `--popup` or `POPUP` is `true`, all log events will also trigger the
+/// appearance of a popup alert window.  Note, that error level debug events
+/// will always pop up, regardless of `--popup` and `POPUP` (unless
+/// `--debug=off`).
+const POPUP_ARG_DEFAULT: bool = true;
 
 /// The variables `NOTE_FILE_EXTENSIONS_*` list file extensions that Tp-Note
 /// considers as its own note files.
@@ -424,83 +448,44 @@ const CLIPBOARD_READ_ENABLED: bool = true;
 /// Default value.
 const CLIPBOARD_EMPTY_ENABLED: bool = true;
 
-/// If the stem of a filename ends with a pattern, that is similar
-/// to a copy counter, add this extra separator. Must be `-`, `_`
-/// or any combination of both. Shorter looks better.
-const COPY_COUNTER_EXTRA_SEPARATOR: &str = "-";
-
-/// Tp-Note may add a counter at the end of the filename when
-/// it can not save a file because the name is taken already.
-/// This is the opening bracket search pattern. Some examples:
-/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
-/// Can be empty.
-const COPY_COUNTER_OPENING_BRACKETS: &str = "(";
-
-/// Tp-Note may add a counter at the end of the filename when
-/// it can not save a file because the name is taken already.
-/// This is the closing bracket search pattern. Some examples:
-/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
-/// Can be empty.
-const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
-
-/// When a filename is taken already, Tp-Note adds a copy
-/// counter number in the range of `0..COPY_COUNTER_MAX`
-/// at the end.
-pub const COPY_COUNTER_MAX: usize = 400;
-
+/// Template used by the viewer to render error messages into html.
 /// When set to true, the viewer feature is automatically disabled when
 /// _Tp-Note_ encounters an `.md` file without header.  Experienced users can
 /// set this to `true`. See also `SILENTLY_IGNORE_MISSING_HEADER`.
 const VIEWER_MISSING_HEADER_DISABLES: bool = false;
 
+/// HTML template to render the viewer-error page.
+pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Syntax error</title>
+<style>
+.note-error { color: #523626; }
+pre { white-space: pre-wrap; }
+a { color: #316128; }
+h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
+</style>
+</head>
+<body>
+<h3>Syntax error</h3>
+<p> in note file: <pre>{{ path }}</pre><p>
+<div class="note-error">
+<hr>
+<pre>{{ note_error }}</pre>
+<hr>
+</div>
+{{ note_erroneous_content }}
+<script>{{ note_js }}</script>
+</body>
+</html>
+"#;
+
 /// How often should the file watcher check for changes?
 /// Delay in milliseconds.
 const VIEWER_NOTIFY_PERIOD: u64 = 1000;
 
-/// The maximum number of TCP connections the HTTP server can handle at the same
-/// time. In general, the serving and live update of the HTML rendition of the
-/// note file, requires normally 3 TCP connections: 1 old event channel (that is
-/// still open from the previous update), 1 TCP connection to serve the HTML,
-/// the local images (and referenced documents), and 1 new event channel.  In
-/// practise, stale connection are not always closed immediately. Hence 4 open
-/// connections are not uncommon.
-const VIEWER_TCP_CONNECTIONS_MAX: usize = 16;
-
 /// Served file types with corresponding mime types.  First entry per line is
-/// the file extension in lowercase, the second the corresponding mime type.
-/// Embedded files with types other than those listed here are silently ignored.
-/// Note, that image files must be located in the same or in the note's parent
-/// directory.
-const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
-    &["apng", "image/apng"],
-    &["avif", "image/avif"],
-    &["bmp", "image/bmp"],
-    &["gif", "image/gif"],
-    &["html", "text/html"],
-    &["htm", "text/html"],
-    &["ico", "image/vnd.microsoft.icon"],
-    &["jpeg", "image/jpeg"],
-    &["jpg", "image/jpeg"],
-    &["pdf", "application/pdf"],
-    &["png", "image/png"],
-    &["svg", "image/svg+xml"],
-    &["tiff", "image/tiff"],
-    &["tif", "image/tiff"],
-    &["webp", "image/webp"],
-    &["mp3", "audio/mp3"],
-    &["ogg", "audio/ogg"],
-    &["oga", "audio/ogg"],
-    &["weba", "audio/webm"],
-    &["flac", "audio/flac"],
-    &["wav", "audio/wav"],
-    &["opus", "audio/opus"],
-    &["mp4", "video/mp4"],
-    &["ogv", "video/ogg"],
-    &["webm", "video/webm"],
-    &["ogx", "application/ogg"],
-];
-
-/// Template used by the viewer to render a note into html.
 pub const VIEWER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
@@ -565,32 +550,48 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 </html>
 "#;
 
-/// Template used by the viewer to render error messages into html.
-pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Syntax error</title>
-<style>
-.note-error { color: #523626; }
-pre { white-space: pre-wrap; }
-a { color: #316128; }
-h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
-</style>
-</head>
-<body>
-<h3>Syntax error</h3>
-<p> in note file: <pre>{{ path }}</pre><p>
-<div class="note-error">
-<hr>
-<pre>{{ note_error }}</pre>
-<hr>
-</div>
-{{ note_erroneous_content }}
-<script>{{ note_js }}</script>
-</body>
-</html>
-"#;
+/// the file extension in lowercase, the second the corresponding mime type.
+/// Embedded files with types other than those listed here are silently ignored.
+/// Note, that image files must be located in the same or in the note's parent
+/// directory.
+const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
+    &["apng", "image/apng"],
+    &["avif", "image/avif"],
+    &["bmp", "image/bmp"],
+    &["gif", "image/gif"],
+    &["html", "text/html"],
+    &["htm", "text/html"],
+    &["ico", "image/vnd.microsoft.icon"],
+    &["jpeg", "image/jpeg"],
+    &["jpg", "image/jpeg"],
+    &["pdf", "application/pdf"],
+    &["png", "image/png"],
+    &["svg", "image/svg+xml"],
+    &["tiff", "image/tiff"],
+    &["tif", "image/tiff"],
+    &["webp", "image/webp"],
+    &["mp3", "audio/mp3"],
+    &["ogg", "audio/ogg"],
+    &["oga", "audio/ogg"],
+    &["weba", "audio/webm"],
+    &["flac", "audio/flac"],
+    &["wav", "audio/wav"],
+    &["opus", "audio/opus"],
+    &["mp4", "video/mp4"],
+    &["ogv", "video/ogg"],
+    &["webm", "video/webm"],
+    &["ogx", "application/ogg"],
+];
+
+/// Template used by the viewer to render a note into html.
+/// The maximum number of TCP connections the HTTP server can handle at the same
+/// time. In general, the serving and live update of the HTML rendition of the
+/// note file, requires normally 3 TCP connections: 1 old event channel (that is
+/// still open from the previous update), 1 TCP connection to serve the HTML,
+/// the local images (and referenced documents), and 1 new event channel.  In
+/// practise, stale connection are not always closed immediately. Hence 4 open
+/// connections are not uncommon.
+const VIEWER_TCP_CONNECTIONS_MAX: usize = 16;
 
 /// Template used to render a note into html when the
 /// rendition is saved to disk
@@ -664,12 +665,15 @@ pub struct Cfg {
     /// a text message explaining why we could not load the
     /// configuration file.
     pub version: String,
+    pub extension_default: String,
+    pub copy_counter_extra_separator: String,
+    pub copy_counter_opening_brackets: String,
+    pub copy_counter_closing_brackets: String,
+    pub silently_ignore_missing_header: bool,
     pub debug_arg_default: LevelFilter,
     pub edit_arg_default: bool,
     pub no_filename_sync_arg_default: bool,
     pub popup_arg_default: bool,
-    pub silently_ignore_missing_header: bool,
-    pub extension_default: String,
     pub note_file_extensions_md: Vec<String>,
     pub note_file_extensions_rst: Vec<String>,
     pub note_file_extensions_html: Vec<String>,
@@ -690,15 +694,12 @@ pub struct Cfg {
     pub browser_args: Vec<Vec<String>>,
     pub clipboard_read_enabled: bool,
     pub clipboard_empty_enabled: bool,
-    pub copy_counter_extra_separator: String,
-    pub copy_counter_opening_brackets: String,
-    pub copy_counter_closing_brackets: String,
     pub viewer_missing_header_disables: bool,
-    pub viewer_notify_period: u64,
-    pub viewer_tcp_connections_max: usize,
-    pub viewer_served_mime_types: Vec<Vec<String>>,
-    pub viewer_rendition_tmpl: String,
     pub viewer_error_tmpl: String,
+    pub viewer_notify_period: u64,
+    pub viewer_rendition_tmpl: String,
+    pub viewer_served_mime_types: Vec<Vec<String>>,
+    pub viewer_tcp_connections_max: usize,
     pub exporter_rendition_tmpl: String,
 }
 
@@ -714,12 +715,15 @@ impl ::std::default::Default for Cfg {
 
         Cfg {
             version,
+            extension_default: EXTENSION_DEFAULT.to_string(),
+            copy_counter_extra_separator: COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
+            copy_counter_opening_brackets: COPY_COUNTER_OPENING_BRACKETS.to_string(),
+            copy_counter_closing_brackets: COPY_COUNTER_CLOSING_BRACKETS.to_string(),
+            silently_ignore_missing_header: SILENTLY_IGNORE_MISSING_HEADER,
             debug_arg_default: DEBUG_ARG_DEFAULT,
             edit_arg_default: EDITOR_ARG_DEFAULT,
-            popup_arg_default: POPUP_ARG_DEFAULT,
             no_filename_sync_arg_default: NO_FILENAME_SYNC_ARG_DEFAULT,
-            silently_ignore_missing_header: SILENTLY_IGNORE_MISSING_HEADER,
-            extension_default: EXTENSION_DEFAULT.to_string(),
+            popup_arg_default: POPUP_ARG_DEFAULT,
             note_file_extensions_md: NOTE_FILE_EXTENSIONS_MD
                 .iter()
                 .map(|a| (*a).to_string())
@@ -764,9 +768,6 @@ impl ::std::default::Default for Cfg {
                 .collect(),
             clipboard_read_enabled: CLIPBOARD_READ_ENABLED,
             clipboard_empty_enabled: CLIPBOARD_EMPTY_ENABLED,
-            copy_counter_extra_separator: COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
-            copy_counter_opening_brackets: COPY_COUNTER_OPENING_BRACKETS.to_string(),
-            copy_counter_closing_brackets: COPY_COUNTER_CLOSING_BRACKETS.to_string(),
             viewer_missing_header_disables: VIEWER_MISSING_HEADER_DISABLES,
             viewer_notify_period: VIEWER_NOTIFY_PERIOD,
             viewer_tcp_connections_max: VIEWER_TCP_CONNECTIONS_MAX,
