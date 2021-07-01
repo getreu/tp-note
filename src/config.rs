@@ -41,23 +41,23 @@ const SILENTLY_IGNORE_MISSING_HEADER: bool = true;
 /// Default value for command line option `--debug`.  Determines the maximum
 /// debug level events must have, to be logged.  If the command line option
 /// `--debug` is present, its value will be used instead.
-const DEBUG_ARG_DEFAULT: LevelFilter = LevelFilter::Error;
+const ARG_DEFAULT_DEBUG: LevelFilter = LevelFilter::Error;
 
 /// Default value for command line flag `--edit` to disable file watcher,
 /// (Markdown)-renderer, html server and a web browser launcher set to `true`.
-const EDITOR_ARG_DEFAULT: bool = false;
+const ARG_DEFAULT_EDITOR: bool = false;
 
 /// Default value for command line flag `--no-filename-sync` to disable
 /// the title to filename synchronisation mechanism permanently.
 /// If set to `true`, the corresponding command line flag is ignored.
-const NO_FILENAME_SYNC_ARG_DEFAULT: bool = false;
+const ARG_DEFAULT_NO_FILENAME_SYNC: bool = false;
 
 /// Default value for command line flag `--popup` If the command line flag
 /// `--popup` or `POPUP` is `true`, all log events will also trigger the
 /// appearance of a popup alert window.  Note, that error level debug events
 /// will always pop up, regardless of `--popup` and `POPUP` (unless
 /// `--debug=off`).
-const POPUP_ARG_DEFAULT: bool = true;
+const ARG_DEFAULT_POPUP: bool = true;
 
 /// The variables `NOTE_FILE_EXTENSIONS_*` list file extensions that Tp-Note
 /// considers as its own note files.
@@ -290,7 +290,7 @@ const TMPL_COMPULSORY_FIELD_CONTENT: &str = "title";
 /// The editor list is executed item by item until an editor is found.
 /// Can be changed in config file.
 #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-const EDITOR_ARGS: &[&[&str]] = &[
+const APP_ARGS_EDITOR: &[&[&str]] = &[
     &["code", "-w", "-n"],
     &["flatpak", "run", "com.visualstudio.code", "-w", "-n"],
     &["atom", "-w"],
@@ -311,7 +311,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
     &["gvim", "--nofork"],
 ];
 #[cfg(target_family = "windows")]
-const EDITOR_ARGS: &[&[&str]] = &[
+const APP_ARGS_EDITOR: &[&[&str]] = &[
     &["C:\\Program Files\\Typora\\Typora.exe"],
     &[
         "C:\\Program Files\\Mark Text\\Mark Text.exe",
@@ -327,7 +327,7 @@ const EDITOR_ARGS: &[&[&str]] = &[
 // Some info about launching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(all(target_family = "unix", target_vendor = "apple"))]
-const EDITOR_ARGS: &[&[&str]] = &[
+const APP_ARGS_EDITOR: &[&[&str]] = &[
     &["code", "-w", "-n"],
     &["atom", "-w"],
     &["marktext", "--no-sandbox"],
@@ -345,13 +345,13 @@ const EDITOR_ARGS: &[&[&str]] = &[
 /// The editor list is executed item by item until an editor is found.
 /// Can be changed in config file.
 #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&["nvim"], &["nano"], &["vim"], &["emacs"], &["vi"]];
+const APP_ARGS_EDITOR_CONSOLE: &[&[&str]] = &[&["nvim"], &["nano"], &["vim"], &["emacs"], &["vi"]];
 #[cfg(target_family = "windows")]
-const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[&[]];
+const APP_ARGS_EDITOR_CONSOLE: &[&[&str]] = &[&[]];
 // Some info about launching programs on iOS:
 // [dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(all(target_family = "unix", target_vendor = "apple"))]
-const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[
+const APP_ARGS_EDITOR_CONSOLE: &[&[&str]] = &[
     &["nvim"],
     &["nano"],
     &["pico"],
@@ -364,7 +364,7 @@ const EDITOR_CONSOLE_ARGS: &[&[&str]] = &[
 /// The list is executed item by item until an installed web browser is found.
 /// Can be changed in config file.
 #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-const BROWSER_ARGS: &[&[&str]] = &[
+const APP_ARGS_BROWSER: &[&[&str]] = &[
     &[
         "flatpak",
         "run",
@@ -392,7 +392,7 @@ const BROWSER_ARGS: &[&[&str]] = &[
     &["chrome", "--new-window", "--incognito"],
 ];
 #[cfg(target_family = "windows")]
-const BROWSER_ARGS: &[&[&str]] = &[
+const APP_ARGS_BROWSER: &[&[&str]] = &[
     &[
         "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
         "--new-window",
@@ -411,7 +411,7 @@ const BROWSER_ARGS: &[&[&str]] = &[
 // Some info about launching programs on iOS:
 //[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
 #[cfg(all(target_family = "unix", target_vendor = "apple"))]
-const BROWSER_ARGS: &[&[&str]] = &[];
+const APP_ARGS_BROWSER: &[&[&str]] = &[];
 
 /// By default clipboard support is enabled, can be disabled
 /// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
@@ -784,10 +784,10 @@ impl ::std::default::Default for Cfg {
 impl ::std::default::Default for ArgDefault {
     fn default() -> Self {
         ArgDefault {
-            debug: DEBUG_ARG_DEFAULT,
-            edit: EDITOR_ARG_DEFAULT,
-            no_filename_sync: NO_FILENAME_SYNC_ARG_DEFAULT,
-            popup: POPUP_ARG_DEFAULT,
+            debug: ARG_DEFAULT_DEBUG,
+            edit: ARG_DEFAULT_EDITOR,
+            no_filename_sync: ARG_DEFAULT_NO_FILENAME_SYNC,
+            popup: ARG_DEFAULT_POPUP,
         }
     }
 }
@@ -842,15 +842,15 @@ impl ::std::default::Default for Tmpl {
 impl ::std::default::Default for AppArgs {
     fn default() -> Self {
         AppArgs {
-            editor: EDITOR_ARGS
+            editor: APP_ARGS_EDITOR
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
-            editor_console: EDITOR_CONSOLE_ARGS
+            editor_console: APP_ARGS_EDITOR_CONSOLE
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
-            browser: BROWSER_ARGS
+            browser: APP_ARGS_BROWSER
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
