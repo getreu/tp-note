@@ -118,6 +118,15 @@ pub const NOTE_FILENAME_LEN_MAX: usize =
 #[cfg(test)]
 pub const NOTE_FILENAME_LEN_MAX: usize = 10;
 
+/// As all application logic is encoded in Tp-Note's templates, it does not know about field names.
+/// Nevertheless it is useful to identify at least one field as _the_ field that identifies a note
+/// the most.  When `TMPL_COMPULSORY_HEADER_FIELD` is not empty, Tp-Note will not synchronize the
+/// note's filename and will pop up an error message, unless it finds the field in the note's
+/// header.  When `TMPL_COMPULSORY_HEADER_FIELD` is empty, all files are synchronized without any
+/// further field check. Make sure to define a default value with `fm_* | default(value=*)`
+/// in case the variable `fm_*` does not exist in the note's front matter.
+const TMPL_COMPULSORY_HEADER_FIELD: &str = "title";
+
 /// Default content template used when the command line argument <sanit> is a directory. Can be
 /// changed through editing the configuration file.
 /// The following variables are  defined:
@@ -277,14 +286,6 @@ const TMPL_SYNC_FILENAME: &str = "\
 {{ fm_file_ext | default(value = path | ext) | prepend_dot }}\
 ";
 
-/// As all application logic is encoded in Tp-Note's templates, it does not know about field names.
-/// Nevertheless it is useful to identify at least one field as _the_ field that identifies a note
-/// the most.  When `TMPL_COMPULSORY_FIELD_CONTENT` is not empty, Tp-Note will not synchronize the
-/// note's filename and will pop up an error message, unless it finds the field in the note's
-/// header.  When `TMPL_COMPULSORY_FIELD_CONTENT` is empty, all files are synchronized without any
-/// further field check. Make sure to define a default value with `fm_* | default(value=*)`
-/// in case the variable `fm_*` does not exist in the note's front matter.
-const TMPL_COMPULSORY_FIELD_CONTENT: &str = "title";
 
 /// Default command line argument list when launching external editor.
 /// The editor list is executed item by item until an editor is found.
@@ -697,7 +698,7 @@ pub struct NoteFileExtensions {
 /// Filename templates and content templates, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Tmpl {
-    pub compulsory_field_content: String,
+    pub compulsory_header_field: String,
     pub new_content: String,
     pub new_filename: String,
     pub copy_content: String,
@@ -824,7 +825,7 @@ impl ::std::default::Default for NoteFileExtensions {
 impl ::std::default::Default for Tmpl {
     fn default() -> Self {
         Tmpl {
-            compulsory_field_content: TMPL_COMPULSORY_FIELD_CONTENT.to_string(),
+            compulsory_header_field: TMPL_COMPULSORY_HEADER_FIELD.to_string(),
             new_content: TMPL_NEW_CONTENT.to_string(),
             new_filename: TMPL_NEW_FILENAME.to_string(),
             copy_content: TMPL_COPY_CONTENT.to_string(),
@@ -938,6 +939,7 @@ fn config_load_path(config_path: &Path) -> Result<Cfg, FileError> {
     }
 }
 
+/// In unit tests we use the default configuration values.
 #[cfg(test)]
 #[inline]
 fn config_load_path(_config_path: &Path) -> Result<Cfg, FileError> {

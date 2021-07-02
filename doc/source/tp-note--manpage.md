@@ -515,7 +515,7 @@ The YAML front matter starts at the beginning of the document with '`---`'
 and ends with '`...`' or '`---`'. Note that according to the YAML standard,
 string-literals are always encoded as JSON strings. By convention, a valid
 note-file has at least one YAML field named '`title:`' (the name of this
-compulsory field is defined by the '`tmpl_compulsory_field_content`'
+compulsory field is defined by the '`[tmpl] compulsory_header_field`'
 variable in the configuration file and can be changed there).
 
 Note that prepended text, placed before the YAML front matter, is ignored. There

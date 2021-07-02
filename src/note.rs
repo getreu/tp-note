@@ -143,11 +143,11 @@ impl Note {
         // Deserialize the note read from disk.
         let fm = Note::deserialize_header(content.borrow_dependent().header)?;
 
-        if !&CFG.tmpl.compulsory_field_content.is_empty()
-            && fm.map.get(&CFG.tmpl.compulsory_field_content).is_none()
+        if !&CFG.tmpl.compulsory_header_field.is_empty()
+            && fm.map.get(&CFG.tmpl.compulsory_header_field).is_none()
         {
             return Err(NoteError::MissingFrontMatterField {
-                field_name: CFG.tmpl.compulsory_field_content.to_owned(),
+                field_name: CFG.tmpl.compulsory_header_field.to_owned(),
             });
         }
 
@@ -350,7 +350,7 @@ impl Note {
     fn deserialize_header(header: &str) -> Result<FrontMatter, NoteError> {
         if header.is_empty() {
             return Err(NoteError::MissingFrontMatter {
-                compulsory_field: CFG.tmpl.compulsory_field_content.to_owned(),
+                compulsory_field: CFG.tmpl.compulsory_header_field.to_owned(),
             });
         };
 
