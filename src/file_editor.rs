@@ -13,7 +13,7 @@ use std::process::Stdio;
 #[inline]
 /// Launch some external text editor. The editor can be chosen through
 /// _Tp-Note_'s configuration file. This function searches the lists
-/// `CFG.editor_console_args` or `CFG.editor_args` until it finds un installed
+/// `CFG.app_args.editor_console` or `CFG.app_args.editor` until it finds un installed
 /// text editor. Once the editor is launched, the function blocks until the user
 /// closes the editor window.
 pub fn launch_editor(path: &Path) -> Result<(), FileError> {
@@ -114,9 +114,9 @@ pub fn launch_editor(path: &Path) -> Result<(), FileError> {
                     return Err(FileError::ApplicationReturn {
                         code: ecode,
                         var_name: if *RUNS_ON_CONSOLE {
-                            "editor_console_args".to_string()
+                            "[app_args] editor_console".to_string()
                         } else {
-                            "editor_args".to_string()
+                            "[app_args] editor".to_string()
                         },
                         args: (*editor_args[i]).to_vec(),
                     });
@@ -139,8 +139,8 @@ pub fn launch_editor(path: &Path) -> Result<(), FileError> {
                 .collect::<Vec<String>>(),
             // Choose the right parameter list.
             var_name: match *RUNS_ON_CONSOLE {
-                true => "editor_console_args".to_string(),
-                false => "editor_args".to_string(),
+                true => "[app_args] editor_console".to_string(),
+                false => "[app_args] editor".to_string(),
             },
         });
     };

@@ -106,14 +106,15 @@ pub enum FileError {
     #[error("Can not convert path to UFT8:\n{path:?}")]
     PathNotUtf8 { path: PathBuf },
 
-    /// Remedy: check the configuration file variables `editor_args` and `browser_args`.
+    /// Remedy: check the configuration file variables `[app_args] editor`
+    /// and `[app_args] browser`.
     #[error("Error executing external application:")]
     ChildExt {
         #[from]
         source: ChildExtError,
     },
 
-    /// Remedy: check the configuration file variable `editor_args`.
+    /// Remedy: check the configuration file variable `[app_args] editor`.
     #[error(
         "The external application did not terminate gracefully: {code}\n\
          \n\
@@ -127,7 +128,7 @@ pub enum FileError {
         args: Vec<String>,
     },
 
-    /// Remedy: check the configuration file variable `editor_args`.
+    /// Remedy: check the configuration file variable `[app_args] editor`.
     #[error(
         "None of the following external applications can be found on your system:\n\
         \t{app_list:?}\n\

@@ -654,7 +654,7 @@ impl ServerThread {
                 // Render error page providing all information we have.
                 Note::render_erroneous_content(&self.doc_path, &CFG.viewer.error_tmpl, &js, e)
                     .map_err(|e| { ViewerError::RenderErrorPage {
-                        tmpl: "viewer_error_tmpl".to_string(),
+                        tmpl: "[viewer] error_tmpl".to_string(),
                         source: e,
                     }})
             }

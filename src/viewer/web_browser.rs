@@ -24,7 +24,7 @@ pub fn launch_web_browser(url: &str) -> Result<(), ViewerError> {
     Ok(())
 }
 
-/// Launches one be one, all browsers from the list `CFG.browser_args` until
+/// Launches one be one, all browsers from the list `CFG.app_args.browser` until
 /// it finds an installed one. This blocks until the browser is closed by the
 /// user.
 pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
@@ -128,7 +128,7 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
                 .into_iter()
                 .map(|s| s.to_owned())
                 .collect::<Vec<String>>(),
-            var_name: "browser_args".to_string(),
+            var_name: "[app_args] browser".to_string(),
         }
         .into());
     };

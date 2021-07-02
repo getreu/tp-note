@@ -52,7 +52,7 @@ pub enum ViewerError {
     #[error("Can not parse HTTP header in TCP stream: {source_str}")]
     StreamParse { source_str: String },
 
-    /// Remedy: check `browser_args` configuration file variable.
+    /// Remedy: check `[app_args] browser` configuration file variable.
     #[error("Error executing external application.")]
     ChildExt {
         #[from]
