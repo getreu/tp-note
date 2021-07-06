@@ -406,7 +406,7 @@ synchronization).
     informs only about failures.  A '`warn`' level message means, that not all
     functionality might be available or work as expected.
 
-    Use '`-b -d trace`' for debugging templates, if the HTTP server
+:   Use '`-b -d trace`' for debugging templates, if the HTTP server
     (viewer) does not work as expected '`-n -d debug`', if your text editor
     does not open as expected '`-n -d info --edit`' or to observe the
     launch of the web browser '`-n -d info --view`'. The option
@@ -416,28 +416,28 @@ synchronization).
     '`-d off`' silences all error message reporting and suppresses also the
     error popup window.
 
-    All error messages are dumped in the error stream `stderr` and appear
+:   All error messages are dumped in the error stream `stderr` and appear
     on the console from where _Tp-Note_ was launched:
 
         tp-note.exe --debug info my_note.md
 
-    On Windows the output must be redirected into a file to see it:
+:   On Windows the output must be redirected into a file to see it:
 
         tp-note.exe --debug info my_note.md >debug.txt 2>&1
 
-    Alternatively, you can redirect all logfile entries into popup alert
+:   Alternatively, you can redirect all logfile entries into popup alert
     windows.
 
         tp-note.exe --popup --debug info my_note.md
 
-    The same can be achieved by setting following configuration file
+:   The same can be achieved by setting following configuration file
     variables (especially useful under Windows):
 
         [arg_default]
         debug = 'info'
         popup = true
 
-    The value for '`[arg_default] debug`' must be one out of '`trace`',
+:   The value for '`[arg_default] debug`' must be one out of '`trace`',
     '`debug`', '`info`', '`warn`', '`error`' (default) and '`off`'. They have
     the same meaning as the corresponding command line options.
 
@@ -677,6 +677,11 @@ only, invoke _Tp-note_ with '`--no-filename-sync`'. To exclude a particular note
 from filename synchronisation, add the YAML header field '`no_filename_sync:`'
 or '`no_filename_sync: true`'.
 
+``` yaml
+---
+title:      "1. The Beginning"
+no_filename_sync: true
+---
 
 
 # CUSTOMIZATION

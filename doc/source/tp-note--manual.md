@@ -4,6 +4,7 @@ subtitle: "Organize your notes with your favourite editor and markup-language"
 author: "Jens Getreu"
 date:   "2020-11-01"
 version: "1.13.2"
+no_filename_sync: true
 ---
 
 Markup languages like *Markdown* [^1] are perfectly suited for fast
@@ -16,7 +17,7 @@ about expressive filenames, then _Tp-Note_ might be the tool of your choice.
 As _Tp-Note_ synchronizes the note's filename with its document title, you
 will find back your notes easily.
 
-_Tp-Note_ is available for Linux, Windows and iOS. This manual illustrates
+_Tp-Note_ is available for Linux, Windows and MacOS. This manual illustrates
 its main use-cases and how to get started:
 
 1. Fast start note-taking (when the lecture starts).
@@ -1095,6 +1096,6 @@ press `[F3]` or `[Enter]`.
       install the new version:
       `sudo dpkg -i wkhtmltox_0.12.6-1.buster_amd64.deb`
 
-[^6]: The `sed` filter is a workaround a [bug in wkhtmltopdf](<https://github.com/wkhtmltopdf/wkhtmltopdf/issues/4960>).
+[^6]: The `sed` filter is a workaround of a [bug in wkhtmltopdf](<https://github.com/wkhtmltopdf/wkhtmltopdf/issues/4960>).
       Once this is solved, you can remove the `sed` command. Then the line 4 of the above listing becomes:
       `<command>tp-note --export=- %f | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>`
