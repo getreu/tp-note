@@ -77,7 +77,7 @@ pub fn sanit_filter<S: BuildHasher>(
 
     if alpha_required {
         if filtered.starts_with(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..]) {
-            filtered.insert(0, '\'');
+            filtered.insert(0, CFG.filename.sort_tag_extra_separator);
         };
     };
 

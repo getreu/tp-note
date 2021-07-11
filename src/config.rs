@@ -128,7 +128,7 @@ const FILENAME_SORT_TAG_CHARS: &str = "0123456789.-_ \t";
 /// `SORT_TAG_CHARS` the `SORT_TAG_EXTRA_SEPARATOR`
 /// character is inserted in order to separate both parts
 /// when the filename is read next time.
-const FILENAME_SORT_TAG_EXTRA_SEPARATOR: &str = r#"'"#;
+const FILENAME_SORT_TAG_EXTRA_SEPARATOR: char = '\'';
 
 /// If the stem of a filename ends with a pattern, that is similar
 /// to a copy counter, add this extra separator. Must be `-`, `_`
@@ -711,7 +711,7 @@ pub struct NoteFileExtensions {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Filename {
     pub sort_tag_chars: String,
-    pub sort_tag_extra_separator: String,
+    pub sort_tag_extra_separator: char,
     pub copy_counter_extra_separator: String,
     pub copy_counter_opening_brackets: String,
     pub copy_counter_closing_brackets: String,
@@ -839,7 +839,7 @@ impl ::std::default::Default for Filename {
     fn default() -> Self {
         Filename {
             sort_tag_chars: FILENAME_SORT_TAG_CHARS.to_string(),
-            sort_tag_extra_separator: FILENAME_SORT_TAG_EXTRA_SEPARATOR.to_string(),
+            sort_tag_extra_separator: FILENAME_SORT_TAG_EXTRA_SEPARATOR,
             copy_counter_extra_separator: FILENAME_COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
             copy_counter_opening_brackets: FILENAME_COPY_COUNTER_OPENING_BRACKETS.to_string(),
             copy_counter_closing_brackets: FILENAME_COPY_COUNTER_CLOSING_BRACKETS.to_string(),
