@@ -1,4 +1,5 @@
 //! Extends the built-in Tera filters.
+use crate::config::CFG;
 use crate::filename::disassemble;
 use crate::settings::Hyperlink;
 use lazy_static::lazy_static;
@@ -75,11 +76,8 @@ pub fn sanit_filter<S: BuildHasher>(
     let mut filtered = sanitize(&pstr);
 
     if alpha_required {
-        let first_char = filtered.chars().next();
-        if let Some(c) = first_char {
-            if c.is_numeric() {
-                filtered.insert(0, '\'');
-            }
+        if filtered.starts_with(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..]) {
+            filtered.insert(0, '\'');
         };
     };
 

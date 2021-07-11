@@ -106,17 +106,17 @@ pub const NOTE_FILE_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t", "textile", "twiki",
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
 #[cfg(not(test))]
-pub const NOTE_FILENAME_LEN_MAX: usize =
+pub const FILENAME_LEN_MAX: usize =
     // Most file system's limit.
     255
     // Additional separator.
-    - COPY_COUNTER_EXTRA_SEPARATOR.len()
+    - FILENAME_COPY_COUNTER_EXTRA_SEPARATOR.len()
     // Additional copy counter.
-    - COPY_COUNTER_OPENING_BRACKETS.len() - 2 - COPY_COUNTER_CLOSING_BRACKETS.len()
+    - FILENAME_COPY_COUNTER_OPENING_BRACKETS.len() - 2 - FILENAME_COPY_COUNTER_CLOSING_BRACKETS.len()
     // Extra spare bytes, in case the user's copy counter is longer.
     - 6;
 #[cfg(test)]
-pub const NOTE_FILENAME_LEN_MAX: usize = 10;
+pub const FILENAME_LEN_MAX: usize = 10;
 
 /// As all application logic is encoded in Tp-Note's templates, it does not know about field names.
 /// Nevertheless it is useful to identify at least one field as _the_ field that identifies a note
@@ -286,7 +286,6 @@ const TMPL_SYNC_FILENAME: &str = "\
 {{ fm_file_ext | default(value = path | ext) | prepend_dot }}\
 ";
 
-
 /// Default command line argument list when launching external editor.
 /// The editor list is executed item by item until an editor is found.
 /// Can be changed in config file.
@@ -423,29 +422,41 @@ const CLIPBOARD_READ_ENABLED: bool = true;
 /// Default value.
 const CLIPBOARD_EMPTY_ENABLED: bool = true;
 
+/// List of characters that can be part of a _sort tag_.
+/// This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
+/// The first character in the filename which is not
+/// in this list, marks the end of the sort tag.
+const FILENAME_SORT_TAG_CHARS: &str = "0123456789.-_ \t";
+
+/// In case the file stem starts with a character in
+/// `SORT_TAG_CHARS` the `SORT_TAG_EXTRA_SEPARATOR`
+/// character is inserted in order to separate both parts
+/// when the filename is read next time.
+const FILENAME_SORT_TAG_EXTRA_SEPARATOR: &str = r#"'"#;
+
 /// If the stem of a filename ends with a pattern, that is similar
 /// to a copy counter, add this extra separator. Must be `-`, `_`
 /// or any combination of both. Shorter looks better.
-const COPY_COUNTER_EXTRA_SEPARATOR: &str = "-";
+const FILENAME_COPY_COUNTER_EXTRA_SEPARATOR: &str = "-";
 
 /// Tp-Note may add a counter at the end of the filename when
 /// it can not save a file because the name is taken already.
 /// This is the opening bracket search pattern. Some examples:
 /// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
 /// Can be empty.
-const COPY_COUNTER_OPENING_BRACKETS: &str = "(";
+const FILENAME_COPY_COUNTER_OPENING_BRACKETS: &str = "(";
 
 /// Tp-Note may add a counter at the end of the filename when
 /// it can not save a file because the name is taken already.
 /// This is the closing bracket search pattern. Some examples:
 /// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
 /// Can be empty.
-const COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
+const FILENAME_COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
 
 /// When a filename is taken already, Tp-Note adds a copy
 /// counter number in the range of `0..COPY_COUNTER_MAX`
 /// at the end.
-pub const COPY_COUNTER_MAX: usize = 400;
+pub const FILENAME_COPY_COUNTER_MAX: usize = 400;
 
 /// HTML template to render the viewer-error page.
 pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
@@ -671,7 +682,7 @@ pub struct Cfg {
     pub tmpl: Tmpl,
     pub app_args: AppArgs,
     pub clipboard: Clipboard,
-    pub copy_counter: CopyCounter,
+    pub filename: Filename,
     pub viewer: Viewer,
     pub exporter: Exporter,
 }
@@ -727,13 +738,15 @@ pub struct Clipboard {
     pub empty_enabled: bool,
 }
 
-/// Configuration of clipboard behaviour, deserialized from the
+/// Configuration of filename parsing, deserialized from the
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CopyCounter {
-    pub extra_separator: String,
-    pub opening_brackets: String,
-    pub closing_brackets: String,
+pub struct Filename {
+    pub sort_tag_chars: String,
+    pub sort_tag_extra_separator: String,
+    pub copy_counter_extra_separator: String,
+    pub copy_counter_opening_brackets: String,
+    pub copy_counter_closing_brackets: String,
 }
 
 /// Configuration data for the viewer feature, deserialized from the
@@ -774,7 +787,7 @@ impl ::std::default::Default for Cfg {
             tmpl: Tmpl::default(),
             app_args: AppArgs::default(),
             clipboard: Clipboard::default(),
-            copy_counter: CopyCounter::default(),
+            filename: Filename::default(),
             viewer: Viewer::default(),
             exporter: Exporter::default(),
         }
@@ -870,12 +883,14 @@ impl ::std::default::Default for Clipboard {
 }
 
 /// Default values for copy counter.
-impl ::std::default::Default for CopyCounter {
+impl ::std::default::Default for Filename {
     fn default() -> Self {
-        CopyCounter {
-            extra_separator: COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
-            opening_brackets: COPY_COUNTER_OPENING_BRACKETS.to_string(),
-            closing_brackets: COPY_COUNTER_CLOSING_BRACKETS.to_string(),
+        Filename {
+            sort_tag_chars: FILENAME_SORT_TAG_CHARS.to_string(),
+            sort_tag_extra_separator: FILENAME_SORT_TAG_EXTRA_SEPARATOR.to_string(),
+            copy_counter_extra_separator: FILENAME_COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
+            copy_counter_opening_brackets: FILENAME_COPY_COUNTER_OPENING_BRACKETS.to_string(),
+            copy_counter_closing_brackets: FILENAME_COPY_COUNTER_CLOSING_BRACKETS.to_string(),
         }
     }
 }

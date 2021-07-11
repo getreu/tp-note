@@ -1,7 +1,7 @@
 //! Helper functions that deal with filenames.
 use crate::config::CFG;
-use crate::config::COPY_COUNTER_MAX;
-use crate::config::NOTE_FILENAME_LEN_MAX;
+use crate::config::FILENAME_COPY_COUNTER_MAX;
+use crate::config::FILENAME_LEN_MAX;
 use crate::error::FileError;
 use std::path::Path;
 use std::path::PathBuf;
@@ -30,13 +30,13 @@ pub fn shorten_filename(mut file_path: PathBuf) -> PathBuf {
     // Does this stem ending look similar to a copy counter?
     if note_stem.len() != remove_copy_counter(&note_stem).len() {
         // Add an additional separator.
-        note_stem.push_str(&CFG.copy_counter.extra_separator);
+        note_stem.push_str(&CFG.filename.copy_counter_extra_separator);
     };
 
     // Limit the size of `file_path`
     let mut note_stem_short = String::new();
     // `+1` reserves one byte for `.` before the extension.
-    for i in (0..NOTE_FILENAME_LEN_MAX - (note_extension_len + 1)).rev() {
+    for i in (0..FILENAME_LEN_MAX - (note_extension_len + 1)).rev() {
         if let Some(s) = note_stem.get(..=i) {
             note_stem_short = s.to_string();
             break;
@@ -67,7 +67,7 @@ pub fn find_unused(p: PathBuf) -> Result<PathBuf, FileError> {
     let mut new_path = p.clone();
 
     // Try up to 99 sort-tag-extensions, then give up.
-    for n in 1..COPY_COUNTER_MAX {
+    for n in 1..FILENAME_COPY_COUNTER_MAX {
         let stem_copy_counter = append_copy_counter(&stem, n);
         let filename = assemble(&sort_tag, &stem_copy_counter, &"", &ext);
         new_path.set_file_name(filename);
@@ -104,9 +104,8 @@ pub fn disassemble(p: &Path) -> (&str, &str, &str, &str, &str) {
         .to_str()
         .unwrap_or_default();
 
-    let stem_copy_counter_ext = tag_stem_copy_counter_ext.trim_start_matches(|c: char| {
-        c.is_numeric() || c == '-' || c == '_' || c == '.' || c.is_whitespace()
-    });
+    let stem_copy_counter_ext = tag_stem_copy_counter_ext
+        .trim_start_matches(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..]);
 
     let sort_tag = &tag_stem_copy_counter_ext
         [0..tag_stem_copy_counter_ext.len() - stem_copy_counter_ext.len()];
@@ -150,7 +149,7 @@ pub fn assemble(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str)
 #[inline]
 pub fn remove_copy_counter(tag: &str) -> &str {
     // Strip closing brackets at the end.
-    let tag1 = if let Some(t) = tag.strip_suffix(&CFG.copy_counter.closing_brackets) {
+    let tag1 = if let Some(t) = tag.strip_suffix(&CFG.filename.copy_counter_closing_brackets) {
         t
     } else {
         return tag;
@@ -161,7 +160,7 @@ pub fn remove_copy_counter(tag: &str) -> &str {
         return tag;
     };
     // And finally strip starting brackets.
-    let tag3 = if let Some(t) = tag2.strip_suffix(&CFG.copy_counter.opening_brackets) {
+    let tag3 = if let Some(t) = tag2.strip_suffix(&CFG.filename.copy_counter_opening_brackets) {
         t
     } else {
         return tag;
@@ -174,9 +173,9 @@ pub fn remove_copy_counter(tag: &str) -> &str {
 #[inline]
 pub fn append_copy_counter(stem: &str, n: usize) -> String {
     let mut stem = stem.to_string();
-    stem.push_str(&CFG.copy_counter.opening_brackets);
+    stem.push_str(&CFG.filename.copy_counter_opening_brackets);
     stem.push_str(&n.to_string());
-    stem.push_str(&CFG.copy_counter.closing_brackets);
+    stem.push_str(&CFG.filename.copy_counter_closing_brackets);
     stem
 }
 
@@ -269,7 +268,7 @@ mod tests {
         // This makes the filename problematic
         let mut input = append_copy_counter(input, 1);
         let mut expected = input.clone();
-        expected.push_str(&CFG.copy_counter.extra_separator);
+        expected.push_str(&CFG.filename.copy_counter_extra_separator);
 
         input.push_str(".ext");
         expected.push_str(".ext");

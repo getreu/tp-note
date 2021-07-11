@@ -371,14 +371,15 @@ impl Note {
         if let Some(tera::Value::String(sort_tag)) = &fm.map.get("sort_tag") {
             if !sort_tag.is_empty() {
                 // Check for forbidden characters.
-                if sort_tag
-                    .chars()
-                    .filter(|&c| !c.is_numeric() && c != '_' && c != '-')
-                    .count()
-                    > 0
+                if !sort_tag
+                    .trim_start_matches(
+                        &CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..],
+                    )
+                    .is_empty()
                 {
                     return Err(NoteError::SortTagVarInvalidChar {
                         sort_tag: sort_tag.to_owned(),
+                        sort_tag_chars: CFG.filename.sort_tag_chars.escape_default().to_string(),
                     });
                 }
             };

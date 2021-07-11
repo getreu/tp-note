@@ -250,11 +250,14 @@ pub enum NoteError {
         "The `sort_tag` header variable contains invalid \
          character(s):\n\n\
          \t---\n\
-         \tsort_tag = \"{sort_tag}\".\n\
+         \tsort_tag = \"{sort_tag}\"\n\
          \t---\n\n\
-         Only numbers, `-` and `_` are allowed here."
+         Only the characters: \"{sort_tag_chars}\" are allowed here."
     )]
-    SortTagVarInvalidChar { sort_tag: String },
+    SortTagVarInvalidChar {
+        sort_tag: String,
+        sort_tag_chars: String,
+    },
 
     /// Remedy: correct the front matter variable `file_ext`.
     #[error(
