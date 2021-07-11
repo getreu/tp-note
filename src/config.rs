@@ -118,6 +118,51 @@ pub const FILENAME_LEN_MAX: usize =
 #[cfg(test)]
 pub const FILENAME_LEN_MAX: usize = 10;
 
+/// List of characters that can be part of a _sort tag_.
+/// This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
+/// The first character in the filename which is not
+/// in this list, marks the end of the sort tag.
+const FILENAME_SORT_TAG_CHARS: &str = "0123456789.-_ \t";
+
+/// In case the file stem starts with a character in
+/// `SORT_TAG_CHARS` the `SORT_TAG_EXTRA_SEPARATOR`
+/// character is inserted in order to separate both parts
+/// when the filename is read next time.
+const FILENAME_SORT_TAG_EXTRA_SEPARATOR: &str = r#"'"#;
+
+/// If the stem of a filename ends with a pattern, that is similar
+/// to a copy counter, add this extra separator. Must be `-`, `_`
+/// or any combination of both. Shorter looks better.
+const FILENAME_COPY_COUNTER_EXTRA_SEPARATOR: &str = "-";
+
+/// Tp-Note may add a counter at the end of the filename when
+/// it can not save a file because the name is taken already.
+/// This is the opening bracket search pattern. Some examples:
+/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
+/// Can be empty.
+const FILENAME_COPY_COUNTER_OPENING_BRACKETS: &str = "(";
+
+/// Tp-Note may add a counter at the end of the filename when
+/// it can not save a file because the name is taken already.
+/// This is the closing bracket search pattern. Some examples:
+/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
+/// Can be empty.
+const FILENAME_COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
+
+/// When a filename is taken already, Tp-Note adds a copy
+/// counter number in the range of `0..COPY_COUNTER_MAX`
+/// at the end.
+pub const FILENAME_COPY_COUNTER_MAX: usize = 400;
+
+/// By default clipboard support is enabled, can be disabled
+/// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
+/// false.
+const CLIPBOARD_READ_ENABLED: bool = true;
+
+/// Should the clipboard be emptied when tp-note closes?
+/// Default value.
+const CLIPBOARD_EMPTY_ENABLED: bool = true;
+
 /// As all application logic is encoded in Tp-Note's templates, it does not know about field names.
 /// Nevertheless it is useful to identify at least one field as _the_ field that identifies a note
 /// the most.  When `TMPL_COMPULSORY_HEADER_FIELD` is not empty, Tp-Note will not synchronize the
@@ -286,6 +331,59 @@ const TMPL_SYNC_FILENAME: &str = "\
 {{ fm_file_ext | default(value = path | ext) | prepend_dot }}\
 ";
 
+/// Default command line argument list when launching the web browser.
+/// The list is executed item by item until an installed web browser is found.
+/// Can be changed in config file.
+#[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
+const APP_ARGS_BROWSER: &[&[&str]] = &[
+    &[
+        "flatpak",
+        "run",
+        "org.mozilla.firefox",
+        "--new-window",
+        "--private-window",
+    ],
+    &["firefox", "--new-window", "--private-window"],
+    &["firefox-esr", "--new-window", "--private-window"],
+    &[
+        "flatpak",
+        "run",
+        "com.github.Eloston.UngoogledChromium",
+        "--new-window",
+        "--incognito",
+    ],
+    &[
+        "flatpak",
+        "run",
+        "org.chromium.Chromium",
+        "--new-window",
+        "--incognito",
+    ],
+    &["chromium-browser", "--new-window", "--incognito"],
+    &["chrome", "--new-window", "--incognito"],
+];
+#[cfg(target_family = "windows")]
+const APP_ARGS_BROWSER: &[&[&str]] = &[
+    &[
+        "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
+        "--new-window",
+        "--private-window",
+    ],
+    &[
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome",
+        "--new-window",
+        "--incognito",
+    ],
+    &[
+        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+        "--inprivate",
+    ],
+];
+// Some info about launching programs on iOS:
+//[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
+#[cfg(all(target_family = "unix", target_vendor = "apple"))]
+const APP_ARGS_BROWSER: &[&[&str]] = &[];
+
 /// Default command line argument list when launching external editor.
 /// The editor list is executed item by item until an editor is found.
 /// Can be changed in config file.
@@ -360,140 +458,58 @@ const APP_ARGS_EDITOR_CONSOLE: &[&[&str]] = &[
     &["vi"],
 ];
 
-/// Default command line argument list when launching the web browser.
-/// The list is executed item by item until an installed web browser is found.
-/// Can be changed in config file.
-#[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-const APP_ARGS_BROWSER: &[&[&str]] = &[
-    &[
-        "flatpak",
-        "run",
-        "org.mozilla.firefox",
-        "--new-window",
-        "--private-window",
-    ],
-    &["firefox", "--new-window", "--private-window"],
-    &["firefox-esr", "--new-window", "--private-window"],
-    &[
-        "flatpak",
-        "run",
-        "com.github.Eloston.UngoogledChromium",
-        "--new-window",
-        "--incognito",
-    ],
-    &[
-        "flatpak",
-        "run",
-        "org.chromium.Chromium",
-        "--new-window",
-        "--incognito",
-    ],
-    &["chromium-browser", "--new-window", "--incognito"],
-    &["chrome", "--new-window", "--incognito"],
-];
-#[cfg(target_family = "windows")]
-const APP_ARGS_BROWSER: &[&[&str]] = &[
-    &[
-        "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
-        "--new-window",
-        "--private-window",
-    ],
-    &[
-        "C:\\Program Files\\Google\\Chrome\\Application\\chrome",
-        "--new-window",
-        "--incognito",
-    ],
-    &[
-        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-        "--inprivate",
-    ],
-];
-// Some info about launching programs on iOS:
-//[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
-#[cfg(all(target_family = "unix", target_vendor = "apple"))]
-const APP_ARGS_BROWSER: &[&[&str]] = &[];
-
-/// By default clipboard support is enabled, can be disabled
-/// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
-/// false.
-const CLIPBOARD_READ_ENABLED: bool = true;
-
-/// Should the clipboard be emptied when tp-note closes?
-/// Default value.
-const CLIPBOARD_EMPTY_ENABLED: bool = true;
-
-/// List of characters that can be part of a _sort tag_.
-/// This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
-/// The first character in the filename which is not
-/// in this list, marks the end of the sort tag.
-const FILENAME_SORT_TAG_CHARS: &str = "0123456789.-_ \t";
-
-/// In case the file stem starts with a character in
-/// `SORT_TAG_CHARS` the `SORT_TAG_EXTRA_SEPARATOR`
-/// character is inserted in order to separate both parts
-/// when the filename is read next time.
-const FILENAME_SORT_TAG_EXTRA_SEPARATOR: &str = r#"'"#;
-
-/// If the stem of a filename ends with a pattern, that is similar
-/// to a copy counter, add this extra separator. Must be `-`, `_`
-/// or any combination of both. Shorter looks better.
-const FILENAME_COPY_COUNTER_EXTRA_SEPARATOR: &str = "-";
-
-/// Tp-Note may add a counter at the end of the filename when
-/// it can not save a file because the name is taken already.
-/// This is the opening bracket search pattern. Some examples:
-/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
-/// Can be empty.
-const FILENAME_COPY_COUNTER_OPENING_BRACKETS: &str = "(";
-
-/// Tp-Note may add a counter at the end of the filename when
-/// it can not save a file because the name is taken already.
-/// This is the closing bracket search pattern. Some examples:
-/// `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
-/// Can be empty.
-const FILENAME_COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
-
-/// When a filename is taken already, Tp-Note adds a copy
-/// counter number in the range of `0..COPY_COUNTER_MAX`
-/// at the end.
-pub const FILENAME_COPY_COUNTER_MAX: usize = 400;
-
-/// HTML template to render the viewer-error page.
-pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Syntax error</title>
-<style>
-.note-error { color: #523626; }
-pre { white-space: pre-wrap; }
-a { color: #316128; }
-h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
-</style>
-</head>
-<body>
-<h3>Syntax error</h3>
-<p> in note file: <pre>{{ path }}</pre><p>
-<div class="note-error">
-<hr>
-<pre>{{ note_error }}</pre>
-<hr>
-</div>
-{{ note_erroneous_content }}
-<script>{{ note_js }}</script>
-</body>
-</html>
-"#;
-
-/// How often should the file watcher check for changes?
-/// Delay in milliseconds.
-const VIEWER_NOTIFY_PERIOD: u64 = 1000;
-
 /// Template used by the viewer to render error messages into html.
 /// When set to true, the viewer feature is automatically disabled when
 /// _Tp-Note_ encounters an `.md` file without header.  Experienced users can
 /// set this to `true`. See also `SILENTLY_IGNORE_MISSING_HEADER`.
 const VIEWER_MISSING_HEADER_DISABLES: bool = false;
+
+/// How often should the file watcher check for changes?
+/// Delay in milliseconds.
+const VIEWER_NOTIFY_PERIOD: u64 = 1000;
+
+/// Template used by the viewer to render a note into html.
+/// The maximum number of TCP connections the HTTP server can handle at the same
+/// time. In general, the serving and live update of the HTML rendition of the
+/// note file, requires normally 3 TCP connections: 1 old event channel (that is
+/// still open from the previous update), 1 TCP connection to serve the HTML,
+/// the local images (and referenced documents), and 1 new event channel.  In
+/// practise, stale connection are not always closed immediately. Hence 4 open
+/// connections are not uncommon.
+const VIEWER_TCP_CONNECTIONS_MAX: usize = 16;
+
+/// the file extension in lowercase, the second the corresponding mime type.
+/// Embedded files with types other than those listed here are silently ignored.
+/// Note, that image files must be located in the same or in the note's parent
+/// directory.
+const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
+    &["apng", "image/apng"],
+    &["avif", "image/avif"],
+    &["bmp", "image/bmp"],
+    &["gif", "image/gif"],
+    &["html", "text/html"],
+    &["htm", "text/html"],
+    &["ico", "image/vnd.microsoft.icon"],
+    &["jpeg", "image/jpeg"],
+    &["jpg", "image/jpeg"],
+    &["pdf", "application/pdf"],
+    &["png", "image/png"],
+    &["svg", "image/svg+xml"],
+    &["tiff", "image/tiff"],
+    &["tif", "image/tiff"],
+    &["webp", "image/webp"],
+    &["mp3", "audio/mp3"],
+    &["ogg", "audio/ogg"],
+    &["oga", "audio/ogg"],
+    &["weba", "audio/webm"],
+    &["flac", "audio/flac"],
+    &["wav", "audio/wav"],
+    &["opus", "audio/opus"],
+    &["mp4", "video/mp4"],
+    &["ogv", "video/ogg"],
+    &["webm", "video/webm"],
+    &["ogx", "application/ogg"],
+];
 
 /// Served file types with corresponding mime types.  First entry per line is
 pub const VIEWER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
@@ -560,48 +576,32 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 </html>
 "#;
 
-/// the file extension in lowercase, the second the corresponding mime type.
-/// Embedded files with types other than those listed here are silently ignored.
-/// Note, that image files must be located in the same or in the note's parent
-/// directory.
-const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
-    &["apng", "image/apng"],
-    &["avif", "image/avif"],
-    &["bmp", "image/bmp"],
-    &["gif", "image/gif"],
-    &["html", "text/html"],
-    &["htm", "text/html"],
-    &["ico", "image/vnd.microsoft.icon"],
-    &["jpeg", "image/jpeg"],
-    &["jpg", "image/jpeg"],
-    &["pdf", "application/pdf"],
-    &["png", "image/png"],
-    &["svg", "image/svg+xml"],
-    &["tiff", "image/tiff"],
-    &["tif", "image/tiff"],
-    &["webp", "image/webp"],
-    &["mp3", "audio/mp3"],
-    &["ogg", "audio/ogg"],
-    &["oga", "audio/ogg"],
-    &["weba", "audio/webm"],
-    &["flac", "audio/flac"],
-    &["wav", "audio/wav"],
-    &["opus", "audio/opus"],
-    &["mp4", "video/mp4"],
-    &["ogv", "video/ogg"],
-    &["webm", "video/webm"],
-    &["ogx", "application/ogg"],
-];
-
-/// Template used by the viewer to render a note into html.
-/// The maximum number of TCP connections the HTTP server can handle at the same
-/// time. In general, the serving and live update of the HTML rendition of the
-/// note file, requires normally 3 TCP connections: 1 old event channel (that is
-/// still open from the previous update), 1 TCP connection to serve the HTML,
-/// the local images (and referenced documents), and 1 new event channel.  In
-/// practise, stale connection are not always closed immediately. Hence 4 open
-/// connections are not uncommon.
-const VIEWER_TCP_CONNECTIONS_MAX: usize = 16;
+/// HTML template to render the viewer-error page.
+pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Syntax error</title>
+<style>
+.note-error { color: #523626; }
+pre { white-space: pre-wrap; }
+a { color: #316128; }
+h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
+</style>
+</head>
+<body>
+<h3>Syntax error</h3>
+<p> in note file: <pre>{{ path }}</pre><p>
+<div class="note-error">
+<hr>
+<pre>{{ note_error }}</pre>
+<hr>
+</div>
+{{ note_erroneous_content }}
+<script>{{ note_js }}</script>
+</body>
+</html>
+"#;
 
 /// Template used to render a note into html when the
 /// rendition is saved to disk
@@ -679,10 +679,10 @@ pub struct Cfg {
     pub silently_ignore_missing_header: bool,
     pub arg_default: ArgDefault,
     pub note_file_extensions: NoteFileExtensions,
+    pub filename: Filename,
+    pub clipboard: Clipboard,
     pub tmpl: Tmpl,
     pub app_args: AppArgs,
-    pub clipboard: Clipboard,
-    pub filename: Filename,
     pub viewer: Viewer,
     pub exporter: Exporter,
 }
@@ -706,6 +706,25 @@ pub struct NoteFileExtensions {
     pub no_viewer: Vec<String>,
 }
 
+/// Configuration of filename parsing, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Filename {
+    pub sort_tag_chars: String,
+    pub sort_tag_extra_separator: String,
+    pub copy_counter_extra_separator: String,
+    pub copy_counter_opening_brackets: String,
+    pub copy_counter_closing_brackets: String,
+}
+
+/// Configuration of clipboard behaviour, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Clipboard {
+    pub read_enabled: bool,
+    pub empty_enabled: bool,
+}
+
 /// Filename templates and content templates, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Tmpl {
@@ -725,40 +744,21 @@ pub struct Tmpl {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AppArgs {
+    pub browser: Vec<Vec<String>>,
     pub editor: Vec<Vec<String>>,
     pub editor_console: Vec<Vec<String>>,
-    pub browser: Vec<Vec<String>>,
-}
-
-/// Configuration of clipboard behaviour, deserialized from the
-/// configuration file.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Clipboard {
-    pub read_enabled: bool,
-    pub empty_enabled: bool,
-}
-
-/// Configuration of filename parsing, deserialized from the
-/// configuration file.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Filename {
-    pub sort_tag_chars: String,
-    pub sort_tag_extra_separator: String,
-    pub copy_counter_extra_separator: String,
-    pub copy_counter_opening_brackets: String,
-    pub copy_counter_closing_brackets: String,
 }
 
 /// Configuration data for the viewer feature, deserialized from the
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Viewer {
-    pub error_tmpl: String,
-    pub notify_period: u64,
     pub missing_header_disables: bool,
-    pub rendition_tmpl: String,
-    pub served_mime_types: Vec<Vec<String>>,
+    pub notify_period: u64,
     pub tcp_connections_max: usize,
+    pub served_mime_types: Vec<Vec<String>>,
+    pub rendition_tmpl: String,
+    pub error_tmpl: String,
 }
 
 /// Configuration for the HTML exporter feature, deserialized from the
@@ -834,6 +834,19 @@ impl ::std::default::Default for NoteFileExtensions {
     }
 }
 
+/// Default values for copy counter.
+impl ::std::default::Default for Filename {
+    fn default() -> Self {
+        Filename {
+            sort_tag_chars: FILENAME_SORT_TAG_CHARS.to_string(),
+            sort_tag_extra_separator: FILENAME_SORT_TAG_EXTRA_SEPARATOR.to_string(),
+            copy_counter_extra_separator: FILENAME_COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
+            copy_counter_opening_brackets: FILENAME_COPY_COUNTER_OPENING_BRACKETS.to_string(),
+            copy_counter_closing_brackets: FILENAME_COPY_COUNTER_CLOSING_BRACKETS.to_string(),
+        }
+    }
+}
+
 /// Default values for templates.
 impl ::std::default::Default for Tmpl {
     fn default() -> Self {
@@ -878,19 +891,6 @@ impl ::std::default::Default for Clipboard {
         Clipboard {
             read_enabled: CLIPBOARD_READ_ENABLED,
             empty_enabled: CLIPBOARD_EMPTY_ENABLED,
-        }
-    }
-}
-
-/// Default values for copy counter.
-impl ::std::default::Default for Filename {
-    fn default() -> Self {
-        Filename {
-            sort_tag_chars: FILENAME_SORT_TAG_CHARS.to_string(),
-            sort_tag_extra_separator: FILENAME_SORT_TAG_EXTRA_SEPARATOR.to_string(),
-            copy_counter_extra_separator: FILENAME_COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
-            copy_counter_opening_brackets: FILENAME_COPY_COUNTER_OPENING_BRACKETS.to_string(),
-            copy_counter_closing_brackets: FILENAME_COPY_COUNTER_CLOSING_BRACKETS.to_string(),
         }
     }
 }
