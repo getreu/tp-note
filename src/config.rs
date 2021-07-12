@@ -25,16 +25,6 @@ const CURRENT_EXE: &str = "tp-note";
 /// Tp-Note's configuration file filename.
 const CONFIG_FILENAME: &str = "tp-note.toml";
 
-/// _Tp-Note_ opens all `.md` files with an external editor. It recognizes its
-/// own files, by the file extension `.md`, by a valid YAML header and the
-/// presence of a "title" variable*). When set to `false`, popup alert windows
-/// inform the user about missing headers. `true` suppresses the popup alert
-/// windows and the text editor starts without further notification.
-/// See also `VIEWER_MISSING_HEADER_DISABLES`.
-///
-/// *) all string literals given in this example are configurable.
-const SILENTLY_IGNORE_MISSING_HEADER: bool = true;
-
 /// Default value for command line option `--debug`.  Determines the maximum
 /// debug level events must have, to be logged.  If the command line option
 /// `--debug` is present, its value will be used instead.
@@ -675,7 +665,6 @@ pub struct Cfg {
     /// a text message explaining why we could not load the
     /// configuration file.
     pub version: String,
-    pub silently_ignore_missing_header: bool,
     pub arg_default: ArgDefault,
     pub filename: Filename,
     pub clipboard: Clipboard,
@@ -774,7 +763,6 @@ impl ::std::default::Default for Cfg {
 
         Cfg {
             version,
-            silently_ignore_missing_header: SILENTLY_IGNORE_MISSING_HEADER,
             arg_default: ArgDefault::default(),
             tmpl: Tmpl::default(),
             app_args: AppArgs::default(),

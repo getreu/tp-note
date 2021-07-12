@@ -295,7 +295,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                 missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
                     || matches!(e, WorkflowError::MissingFrontMatterField { .. });
 
-                if *LAUNCH_VIEWER || (missing_header && CFG.silently_ignore_missing_header) {
+                if *LAUNCH_VIEWER || missing_header {
                     log::warn!(
                         "{}\n\
                         \n\
@@ -341,7 +341,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                 missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
                     || matches!(e, WorkflowError::MissingFrontMatterField { .. });
 
-                if missing_header && CFG.silently_ignore_missing_header {
+                if missing_header {
                     // Silently ignore error.
                     log::warn!(
                         "{}\n\
