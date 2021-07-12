@@ -1,7 +1,7 @@
 ---
 title: "Tp-Note - Minimalist note taking: save and edit your clipboard content as a note file"
 author: Jens Getreu
-no_filename_sync: true
+filename_sync: false
 ---
 
 [![Cargo](https://img.shields.io/crates/v/tp-note.svg)](
@@ -236,7 +236,7 @@ compile _Tp-Note_ yourself.
        cargo install --no-default-features tp-note
        sudo cp ~/.cargo/bin/tp-note /usr/local/bin
 
-   Note, that even though this no-renderer version is deprived of it's 
+   Note, that even though this no-renderer version is deprived of it's
    markup renderer, limited rendered HTML export is still available (see command
    line option `--export`). This way you can comfortably follow hyperlinks in
    your note files with any text based web browser, e.g. `lynx`.

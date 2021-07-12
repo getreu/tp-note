@@ -330,7 +330,7 @@ lang:       "en_GB.UTF-8"
 [Classic Shell Scripting.pdf](Classic Shell Scripting.pdf)
 ```
 
-The configuration file variable '`note_file_extensions`' lists all file
+The configuration file variables '`[filename] extensions_*`' lists all file
 extensions that _Tp-Note_ recognizes and opens as own file types. Others are
 treated as described above.
 
@@ -575,7 +575,7 @@ When _Tp-Note_ creates a new note, it prepends automatically a *chronological
 sort-tag* of today. The '`{{ fm_title }}`' part is usually derived from the
 parent directory name omitting its own *sort-tag*.
 
-[^sort-tag]: The characters '`_`', '`-`' and '`.`' are considered to be
+[^sort-tag]: The characters '`_`', '`-`', '` `', '`\t`' and '`.`' are considered to be
 part of the *sort-tag* even when they appear in last position.
 
 A note's filename is in sync with its meta-data, when the following is true
@@ -657,7 +657,7 @@ This will change the file extension from '`.md`' to '`.rst`. The resulting
 filename becomes "`20200307-'1. The Beginning--Note.rst`".
 
 Important: '`rst`' must be one of the registered file extensions
-listed in the '`note_file_extensions_*`' variables in Tp-Note's configuration
+listed in the '`[filename] extensions_rst`' variables in Tp-Note's configuration
 file. If needed you can add more extensions there. If the new filename extension
 is not listed in one of theses variables, _Tp-Note_ will not be able to
 recognize the note file as such and will not open it in the external text editor
@@ -674,13 +674,12 @@ The metadata filename synchronisation feature can be disabled permanently
 by setting the configuration file variable
 '`[arg_default] no_filename_sync = true`'. To disable this feature for one time
 only, invoke _Tp-note_ with '`--no-filename-sync`'. To exclude a particular note
-from filename synchronisation, add the YAML header field '`no_filename_sync:`'
-or '`no_filename_sync: true`'.
+from filename synchronisation, add the YAML header field '`filename_sync: false`'.
 
 ``` yaml
 ---
 title:      "1. The Beginning"
-no_filename_sync: true
+filename_sync: false
 ---
 
 
@@ -692,6 +691,8 @@ _Tp-Note_'s configuration file resides typically in
 When _Tp-Note_ starts, it tries to find its configuration file. If it fails,
 it writes a default configuration file. _Tp-Note_ is best customized by
 starting it once, and then modifying its default configuration.
+For a detailed description of the available configuration variables, please
+consult the '`const`' definitions in _Tp-Note_'s source code file '`config.rs`'
 
 The configuration file is encoded according to the TOML-standard. Variables
 ending with '`[tmpl] *_content`' and '`[tmpl] *_filename`' are
@@ -785,6 +786,8 @@ variables is defined! Depending on the last content template result, certain
 variables might be undefined. Please take into consideration, that a defined
 variable might contain the empty string '`""`'.
 
+For a more detailed description of the available template variables, please
+consult the '`const`' definitions in _Tp-Note_'s source code file '`note.rs`'
 
 ## Template filters
 
@@ -1068,7 +1071,7 @@ Examples, adjust to your needs and taste:
 ## Change the default markup language
 
 _Tp-Note_ identifies the note's markup language by its file extension and
-renders the content accordingly (see '`[note_file_extension] *`' variables).
+renders the content accordingly (see '`[filename] extensions_*`' variables).
 This ensures interoperability between authors using different markup
 languages. Although _Tp-Note_ is flexible in opening existing note files, new
 notes are always created in the same markup language, which is by default
@@ -1084,10 +1087,12 @@ affect the way new notes are created:
 
 1. Change the default file extension for new notes from:
 
+       [filename]
        extension_default='md'
 
    to:
 
+       [filename]
        extension_default='rst'
 
 2. Replace the following line in the template '`[tmpl] clipboard_content`'
@@ -1113,7 +1118,20 @@ file_ext: "rst"
 ---
 ```
 
-The above change only applies to the current note.
+The above change only applies to the current note only.
+
+
+## Change the sort tag generation scheme
+
+*Sort tags* for new notes are generated with the '`[TMPL] *_filename`'
+templates and updated with the '`[TMPL] sync_filename`' template.  By default, the
+characters '`_`', '`-`', '` `', '`\t`' and '`.`' are recognized as being part of
+a *sort-tag* when they appear at the beginning of a filename.  This set of
+characters can be modified with the '`[filename] sort_tag_chars`' configuration
+variable. In addition, one special character
+'`[filename] sort_tag_extra_separator`' (by default '`'`') is sometimes used as
+"end of sort tag marker" to avoid ambiguity.  Note: the above templates and
+character sets must be matched carefully to prevent cyclic filename change!
 
 
 ## Store new note files by default in a subdirectory
@@ -1157,18 +1175,18 @@ exist.
 
 Besides its core function, _Tp-Note_ comes with several built-in markup
 renderer and viewer, allowing to work with different markup languages at the
-same time. The configuration file variables '`[note_file_extension] *`' determine
+same time. The configuration file variables '`[filename] extensions_*`' determine
 which markup renderer is used for which note file extension. Depending on the
 markup language, this feature is more or less advanced and complete: _Markdown_
-(cf. '`[note_file_extension] md`') is best supported and feature complete: It
+(cf. '`[filename] extensions_md`') is best supported and feature complete: It
 complies with the _Common Mark_ specification. The _ReStructuredText_ renderer
-(cf.  '`[note_file_extension] rst`') is quit new and still in experimental state.
+(cf.  '`[filename] extensions_rst`') is quit new and still in experimental state.
 For all other supported markup languages _Tp-Note_ provides a built-in markup
-source text viewer (cf.  '`[note_file_extension] txt`') that shows the note as
+source text viewer (cf.  '`[filename] extensions_txt`') that shows the note as
 typed (without markup), but renders all hyperlinks to make them clickable.  In
 case none of the above rendition engines suit you, it is possible to disable
 the viewer feature selectively for some particular note file extensions: just
-place these extensions in the '`[note_file_extension] no_viewer`' variable. If
+place these extensions in the '`[filename] extensions_no_viewer`' variable. If
 you wish to disable the viewer feature overall, set the variable
 `[arg_default] edit = true`.
 
@@ -1266,7 +1284,7 @@ template.
 ## Choose your favourite web browser as note viewer
 
 Once the note is rendered into HTML, _Tp-Note_'s internal HTTP server connects
-to a random port at the `localhost` interface where the rendition is served to
+to a random port at the '`localhost`' interface where the rendition is served to
 be viewed with a web browser. _Tp-Note_'s configuration file contains a list
 '`[app_args] browser`' with common web browsers and their usual location on disk.
 This list is executed top down until a web browser is found and launched. If

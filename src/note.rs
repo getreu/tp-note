@@ -395,7 +395,7 @@ impl Note {
         };
 
         // `extension` has also additional constrains to check.
-        // Is `extension` listed in `CFG.note_file_extension`?
+        // Is `extension` listed in `CFG.filename.extensions_*`?
         if let Some(tera::Value::String(extension)) = &fm.map.get("file_ext") {
             let extension_is_unknown =
                 matches!(MarkupLanguage::new(extension), MarkupLanguage::None);

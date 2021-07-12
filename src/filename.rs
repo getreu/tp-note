@@ -7,7 +7,7 @@ use std::path::Path;
 use std::path::PathBuf;
 
 /// Shortens the stem of a filename so that
-/// `file_stem.len()+file_extension.len() <= NOTE_FILENAME_LEN_MAX`.
+/// `file_stem.len()+file_extension.len() <= FILENAME_LEN_MAX`.
 /// If stem ends with a pattern similar to a copy counter,
 /// append `-` to stem.
 pub fn shorten_filename(mut file_path: PathBuf) -> PathBuf {
