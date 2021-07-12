@@ -85,7 +85,13 @@ const TMPL_VAR_FM_FILE_EXT: &str = "fm_file_ext";
 /// Contains the value of the front matter field `no_filename_sync`.  When set to
 /// `no_filename_sync:` or `no_filename_sync: true`, the filename synchronisation mechanism is
 /// disabled for this note file.
+/// Depreciated in favour of `TMPL_VAR_FM_FILENAME_SYNC`.
 pub const TMPL_VAR_FM_NO_FILENAME_SYNC: &str = "fm_no_filename_sync";
+
+/// Contains the value of the front matter field `filename_sync`.  When set to
+/// `filename_sync: false`, the filename synchronisation mechanism is
+/// disabled for this note file. Default value is `true`.
+pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
 
 /// HTML template variable containing the note's body.
 const TMPL_VAR_NOTE_BODY: &str = "note_body";

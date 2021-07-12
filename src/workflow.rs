@@ -8,6 +8,7 @@ use crate::filename;
 use crate::filename::MarkupLanguage;
 use crate::note::Note;
 use crate::note::TMPL_VAR_FM_;
+use crate::note::TMPL_VAR_FM_FILENAME_SYNC;
 use crate::note::TMPL_VAR_FM_NO_FILENAME_SYNC;
 use crate::settings::ARGS;
 use crate::settings::CLIPBOARD;
@@ -50,18 +51,23 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
         Err(e) => return Err(e.into()),
     };
 
-    let no_filename_sync = match n.context.get(TMPL_VAR_FM_NO_FILENAME_SYNC) {
+    let no_filename_sync = match (
+        n.context.get(TMPL_VAR_FM_FILENAME_SYNC),
+        n.context.get(TMPL_VAR_FM_NO_FILENAME_SYNC),
+    ) {
         // By default we sync.
-        None => false,
-        Some(Value::Bool(nsync)) => *nsync,
-        Some(_) => true,
+        (None, None) => false,
+        (None, Some(Value::Bool(nsync))) => *nsync,
+        (None, Some(_)) => true,
+        (Some(Value::Bool(sync)), None) => !*sync,
+        _ => false,
     };
 
     if no_filename_sync {
         log::trace!(
             "Filename synchronisation disabled with the front matter field: `{}: {}`",
-            TMPL_VAR_FM_NO_FILENAME_SYNC.trim_start_matches(TMPL_VAR_FM_),
-            no_filename_sync
+            TMPL_VAR_FM_FILENAME_SYNC.trim_start_matches(TMPL_VAR_FM_),
+            !no_filename_sync
         );
     }
 
