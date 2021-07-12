@@ -25,9 +25,6 @@ const CURRENT_EXE: &str = "tp-note";
 /// Tp-Note's configuration file filename.
 const CONFIG_FILENAME: &str = "tp-note.toml";
 
-/// File extension of `to-note` files.
-pub const EXTENSION_DEFAULT: &str = "md";
-
 /// _Tp-Note_ opens all `.md` files with an external editor. It recognizes its
 /// own files, by the file extension `.md`, by a valid YAML header and the
 /// presence of a "title" variable*). When set to `false`, popup alert windows
@@ -58,50 +55,6 @@ const ARG_DEFAULT_NO_FILENAME_SYNC: bool = false;
 /// will always pop up, regardless of `--popup` and `POPUP` (unless
 /// `--debug=off`).
 const ARG_DEFAULT_POPUP: bool = true;
-
-/// The variables `NOTE_FILE_EXTENSIONS_*` list file extensions that Tp-Note
-/// considers as its own note files.
-/// Tp-Note opens these files, reads their their YAML header and
-/// launches an external file editor and an file viewer
-/// (web browser).
-/// According to the markup language used, the appropriate
-/// renderer is called to convert the note's content into HTML.
-/// The rendered HTML is then shown to the user with his
-/// web browser.
-///
-/// The present list contains file extensions of
-/// Markdown encoded Tp-Note files.
-pub const NOTE_FILE_EXTENSIONS_MD: &[&str] = &["md", "markdown", "markdn", "mdown", "mdtxt"];
-
-/// The present list contains file extensions of
-/// RestructuredText encoded Tp-Note files.
-///
-/// See also `NOTE_FILE_EXTENSION_MD`.
-pub const NOTE_FILE_EXTENSIONS_RST: &[&str] = &["rst", "rest"];
-
-/// The present list contains file extensions of
-/// HTML encoded Tp-Note files. For these
-/// file types their content is forwarded to the web browser
-/// without modification.
-///
-/// See also `NOTE_FILE_EXTENSION_MD`.
-pub const NOTE_FILE_EXTENSIONS_HTML: &[&str] = &["htmlnote"];
-
-/// The present list contains file extensions of
-/// Text encoded Tp-Note files that the viewer shows
-/// literally without (almost) any additional rendering.
-/// Only hyperlinks in _Markdown_, _reStructuredText_, _Asciidoc_ and _HTML_ are
-/// rendered, thus clickable.
-///
-/// See also `NOTE_FILE_EXTENSION_MD`.
-pub const NOTE_FILE_EXTENSIONS_TXT: &[&str] = &["txtnote", "adoc", "asciidoc"];
-
-/// The present list contains file extensions of
-/// Tp-Note files for which no viewer is opened
-/// (unless Tp-Note is invoked with `--view`).
-///
-/// See also `NOTE_FILE_EXTENSION_MD`.
-pub const NOTE_FILE_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t", "textile", "twiki", "mediawiki"];
 
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
@@ -153,6 +106,53 @@ const FILENAME_COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
 /// counter number in the range of `0..COPY_COUNTER_MAX`
 /// at the end.
 pub const FILENAME_COPY_COUNTER_MAX: usize = 400;
+
+/// File extension of new _Tp-Note_ files.
+pub const FILENAME_EXTENSION_DEFAULT: &str = "md";
+
+/// The variables `FILENAME_EXTENSIONSS_*` list file extensions that Tp-Note
+/// considers as its own note files.
+/// Tp-Note opens these files, reads their their YAML header and
+/// launches an external file editor and an file viewer
+/// (web browser).
+/// According to the markup language used, the appropriate
+/// renderer is called to convert the note's content into HTML.
+/// The rendered HTML is then shown to the user with his
+/// web browser.
+///
+/// The present list contains file extensions of
+/// Markdown encoded Tp-Note files.
+pub const FILENAME_EXTENSIONS_MD: &[&str] = &["md", "markdown", "markdn", "mdown", "mdtxt"];
+
+/// The present list contains file extensions of
+/// RestructuredText encoded Tp-Note files.
+///
+/// See also `FILENAME_EXTENSIONS_MD`.
+pub const FILENAME_EXTENSIONS_RST: &[&str] = &["rst", "rest"];
+
+/// The present list contains file extensions of
+/// HTML encoded Tp-Note files. For these
+/// file types their content is forwarded to the web browser
+/// without modification.
+///
+/// See also `FILENAME_EXTENSIONS_MD`.
+pub const FILENAME_EXTENSIONS_HTML: &[&str] = &["htmlnote"];
+
+/// The present list contains file extensions of
+/// Text encoded Tp-Note files that the viewer shows
+/// literally without (almost) any additional rendering.
+/// Only hyperlinks in _Markdown_, _reStructuredText_, _Asciidoc_ and _HTML_ are
+/// rendered, thus clickable.
+///
+/// See also `FILENAME_EXTENSIONS_MD`.
+pub const FILENAME_EXTENSIONS_TXT: &[&str] = &["txtnote", "adoc", "asciidoc"];
+
+/// The present list contains file extensions of
+/// Tp-Note files for which no viewer is opened
+/// (unless Tp-Note is invoked with `--view`).
+///
+/// See also `FILENAME_EXTENSIONS_MD`.
+pub const FILENAME_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t", "textile", "twiki", "mediawiki"];
 
 /// By default clipboard support is enabled, can be disabled
 /// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
@@ -675,10 +675,8 @@ pub struct Cfg {
     /// a text message explaining why we could not load the
     /// configuration file.
     pub version: String,
-    pub extension_default: String,
     pub silently_ignore_missing_header: bool,
     pub arg_default: ArgDefault,
-    pub note_file_extensions: NoteFileExtensions,
     pub filename: Filename,
     pub clipboard: Clipboard,
     pub tmpl: Tmpl,
@@ -696,16 +694,6 @@ pub struct ArgDefault {
     pub popup: bool,
 }
 
-/// Known note file extensions, deserialized from the configuration file.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct NoteFileExtensions {
-    pub md: Vec<String>,
-    pub rst: Vec<String>,
-    pub html: Vec<String>,
-    pub txt: Vec<String>,
-    pub no_viewer: Vec<String>,
-}
-
 /// Configuration of filename parsing, deserialized from the
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize)]
@@ -715,6 +703,12 @@ pub struct Filename {
     pub copy_counter_extra_separator: String,
     pub copy_counter_opening_brackets: String,
     pub copy_counter_closing_brackets: String,
+    pub extension_default: String,
+    pub extensions_md: Vec<String>,
+    pub extensions_rst: Vec<String>,
+    pub extensions_html: Vec<String>,
+    pub extensions_txt: Vec<String>,
+    pub extensions_no_viewer: Vec<String>,
 }
 
 /// Configuration of clipboard behaviour, deserialized from the
@@ -780,10 +774,8 @@ impl ::std::default::Default for Cfg {
 
         Cfg {
             version,
-            extension_default: EXTENSION_DEFAULT.to_string(),
             silently_ignore_missing_header: SILENTLY_IGNORE_MISSING_HEADER,
             arg_default: ArgDefault::default(),
-            note_file_extensions: NoteFileExtensions::default(),
             tmpl: Tmpl::default(),
             app_args: AppArgs::default(),
             clipboard: Clipboard::default(),
@@ -806,34 +798,6 @@ impl ::std::default::Default for ArgDefault {
     }
 }
 
-/// Default values for known note file extensions.
-impl ::std::default::Default for NoteFileExtensions {
-    fn default() -> Self {
-        NoteFileExtensions {
-            md: NOTE_FILE_EXTENSIONS_MD
-                .iter()
-                .map(|a| (*a).to_string())
-                .collect(),
-            rst: NOTE_FILE_EXTENSIONS_RST
-                .iter()
-                .map(|a| (*a).to_string())
-                .collect(),
-            html: NOTE_FILE_EXTENSIONS_HTML
-                .iter()
-                .map(|a| (*a).to_string())
-                .collect(),
-            txt: NOTE_FILE_EXTENSIONS_TXT
-                .iter()
-                .map(|a| (*a).to_string())
-                .collect(),
-            no_viewer: NOTE_FILE_EXTENSIONS_NO_VIEWER
-                .iter()
-                .map(|a| (*a).to_string())
-                .collect(),
-        }
-    }
-}
-
 /// Default values for copy counter.
 impl ::std::default::Default for Filename {
     fn default() -> Self {
@@ -843,6 +807,27 @@ impl ::std::default::Default for Filename {
             copy_counter_extra_separator: FILENAME_COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
             copy_counter_opening_brackets: FILENAME_COPY_COUNTER_OPENING_BRACKETS.to_string(),
             copy_counter_closing_brackets: FILENAME_COPY_COUNTER_CLOSING_BRACKETS.to_string(),
+            extension_default: FILENAME_EXTENSION_DEFAULT.to_string(),
+            extensions_md: FILENAME_EXTENSIONS_MD
+                .iter()
+                .map(|a| (*a).to_string())
+                .collect(),
+            extensions_rst: FILENAME_EXTENSIONS_RST
+                .iter()
+                .map(|a| (*a).to_string())
+                .collect(),
+            extensions_html: FILENAME_EXTENSIONS_HTML
+                .iter()
+                .map(|a| (*a).to_string())
+                .collect(),
+            extensions_txt: FILENAME_EXTENSIONS_TXT
+                .iter()
+                .map(|a| (*a).to_string())
+                .collect(),
+            extensions_no_viewer: FILENAME_EXTENSIONS_NO_VIEWER
+                .iter()
+                .map(|a| (*a).to_string())
+                .collect(),
         }
     }
 }

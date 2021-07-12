@@ -277,7 +277,10 @@ impl Note {
         }
 
         // Default extension for new notes as defined in the configuration file.
-        (*context).insert(TMPL_VAR_EXTENSION_DEFAULT, CFG.extension_default.as_str());
+        (*context).insert(
+            TMPL_VAR_EXTENSION_DEFAULT,
+            CFG.filename.extension_default.as_str(),
+        );
 
         // search for UNIX, Windows and MacOS user-names
         let author = env::var("LOGNAME").unwrap_or_else(|_| {
@@ -393,11 +396,11 @@ impl Note {
             if extension_is_unknown {
                 return Err(NoteError::FileExtNotRegistered {
                     extension: extension.to_owned(),
-                    md_ext: CFG.note_file_extensions.md.to_owned(),
-                    rst_ext: CFG.note_file_extensions.rst.to_owned(),
-                    html_ext: CFG.note_file_extensions.html.to_owned(),
-                    txt_ext: CFG.note_file_extensions.txt.to_owned(),
-                    no_viewer_ext: CFG.note_file_extensions.no_viewer.to_owned(),
+                    md_ext: CFG.filename.extensions_md.to_owned(),
+                    rst_ext: CFG.filename.extensions_rst.to_owned(),
+                    html_ext: CFG.filename.extensions_html.to_owned(),
+                    txt_ext: CFG.filename.extensions_txt.to_owned(),
+                    no_viewer_ext: CFG.filename.extensions_no_viewer.to_owned(),
                 });
             }
         };

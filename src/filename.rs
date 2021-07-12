@@ -194,27 +194,27 @@ impl MarkupLanguage {
     /// lists?
     #[inline]
     pub fn new(file_extension: &str) -> Self {
-        for e in &CFG.note_file_extensions.md {
+        for e in &CFG.filename.extensions_md {
             if e == file_extension {
                 return MarkupLanguage::Markdown;
             }
         }
-        for e in &CFG.note_file_extensions.rst {
+        for e in &CFG.filename.extensions_rst {
             if e == file_extension {
                 return MarkupLanguage::RestructuredText;
             }
         }
-        for e in &CFG.note_file_extensions.html {
+        for e in &CFG.filename.extensions_html {
             if e == file_extension {
                 return MarkupLanguage::Html;
             }
         }
-        for e in &CFG.note_file_extensions.txt {
+        for e in &CFG.filename.extensions_txt {
             if e == file_extension {
                 return MarkupLanguage::Txt;
             }
         }
-        for e in &CFG.note_file_extensions.no_viewer {
+        for e in &CFG.filename.extensions_no_viewer {
             if e == file_extension {
                 return MarkupLanguage::Unknown;
             }
@@ -223,7 +223,7 @@ impl MarkupLanguage {
         // one of the above lists, make sure that Tp-Note
         // recognizes its own files. Even without Markup
         // rendition.
-        if file_extension == CFG.extension_default {
+        if file_extension == CFG.filename.extension_default {
             return MarkupLanguage::Txt;
         }
         MarkupLanguage::None
