@@ -82,6 +82,18 @@ pub enum FileError {
         min_version: String,
     },
 
+    /// Remedy: restart.
+    #[cfg(not(test))]
+    #[error(
+        "Configuration file error in section `[filename]`:\n\
+        `sort_tag_chars=\"{chars}\"` must not contain:\n\
+        `sort_tag_extra_separator=\"{extra_separator}\"`"
+    )]
+    ConfigFileSortTag {
+        chars: String,
+        extra_separator: String,
+    },
+
     /// Should not happen. Please report this bug.
     #[error("No path to configuration file found.")]
     PathToConfigFileNotFound,

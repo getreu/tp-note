@@ -946,6 +946,23 @@ lazy_static! {
 fn config_load_path(config_path: &Path) -> Result<Cfg, FileError> {
     if config_path.exists() {
         let config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
+        // Check for obvious configuration errors.
+        if config
+            .filename
+            .sort_tag_chars
+            .find(config.filename.sort_tag_extra_separator)
+            .is_some()
+        {
+            return Err(FileError::ConfigFileSortTag {
+                chars: config.filename.sort_tag_chars.escape_default().to_string(),
+                extra_separator: config
+                    .filename
+                    .sort_tag_extra_separator
+                    .escape_default()
+                    .to_string(),
+            });
+        }
+        // First check passed.
         Ok(config)
     } else {
         let mut buffer = File::create(config_path)?;
