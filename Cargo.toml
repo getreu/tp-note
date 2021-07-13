@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.13.2"
+version = "1.13.3"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 readme = "README.md"
@@ -67,9 +67,8 @@ httpdate = { version = "1.0.1", optional = true }
 lazy_static = "1.4.0"
 log = { version = "0.4.14", features = ["serde"] }
 # msgbox: On Debian Linux you need to: sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
-msgbox = { version = "0.6.0", optional = true }
+msgbox = { version = "0.6.1", optional = true }
 notify = { version = "4.0.17", optional = true }
-ouroboros = "0.9.3"
 parse-hyperlinks = "0.22.0"
 parse-hyperlinks-html = "0.22.0"
 # parse-hyperlinks-html = { path = "../parse-hyperlinks/parse-hyperlinks-html" }
@@ -80,13 +79,14 @@ rst_parser = { version = "0.4.0", optional = true }
 rst_renderer = { version = "0.4.0", optional = true }
 sanitize-filename-reader-friendly = "2.1.0"
 # sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
+self_cell = "0.9.0"
 semver = "1.0.3"
 serde_json = "1.0.64"
 serde = { version = "1.0.126", features = ["derive"] }
 serde_yaml = "0.8.17"
-structopt = "0.3.21"
-tera = { version = "1.11.0", default-features = true }
-thiserror = "1.0.25"
+structopt = "0.3.22"
+tera = { version = "1.12.0", default-features = true }
+thiserror = "1.0.26"
 time = "0.2.27"
 toml = "0.5.8"
 url = { version = "2.2.2", optional = true }
