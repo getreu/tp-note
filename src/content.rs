@@ -1,7 +1,7 @@
 //! Deals with the note's content string.
 
 use crate::error::FileError;
-use ouroboros::self_referencing;
+use self_cell::self_cell;
 use std::fmt;
 use std::fs::create_dir_all;
 use std::fs::OpenOptions;
@@ -27,17 +27,18 @@ pub struct ContentRef<'a> {
     pub body: &'a str,
 }
 
+self_cell!(
 /// This is a newtype and thin wrapper around the note's content.
 /// It deals with operating system specific handling of newlines.
-#[self_referencing]
-#[derive(Debug, Eq, PartialEq)]
-pub struct Content {
-    owner: String,
+    pub struct Content {
+        owner: String,
 
-    #[borrows(owner)]
-    #[covariant]
-    pub dependent: ContentRef<'this>,
-}
+        #[covariant]
+        dependent: ContentRef,
+    }
+
+    impl {Debug, Eq, PartialEq}
+);
 
 /// The content of a note is stored as UTF-8 string with
 /// one `\n` character as newline. If present, a Byte Order Mark
@@ -50,14 +51,10 @@ impl<'a> Content {
     /// by an empty line. In this case all text before is ignored:
     /// BOM + ignored text + empty line + "---".
     pub fn from(input: String) -> Self {
-        ContentBuilder {
-            owner: input,
-            dependent_builder: |owner: &str| {
-                let (header, body) = Content::split(&owner);
-                ContentRef { header, body }
-            },
-        }
-        .build()
+        Content::new(input, |owner: &String| {
+            let (header, body) = Content::split(&owner);
+            ContentRef { header, body }
+        })
     }
 
     /// Constructor that reads a structured document with a YAML header
