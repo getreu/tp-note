@@ -551,7 +551,7 @@ Consider the following _Tp-Note_-file:
 
 The filename has 4 parts:
 
-    {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
+    {{ fm_sort_tag }}{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
 
 A so called _sort-tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
@@ -581,7 +581,7 @@ part of the *sort-tag* even when they appear in last position.
 A note's filename is in sync with its meta-data, when the following is true
 (slightly simplified, see the configuration file for the complete definition):
 
-> filename on disk without *sort-tag* == '`-{{ fm_title }}--{{ fm_subtitle }}.md`'
+> filename on disk without *sort-tag* == '`{{ fm_title }}--{{ fm_subtitle }}.md`'
   ^[The variables '`{{ fm_title }}`' and '`{{ fm_subtitle }}`' reflect the values in
   the note's metadata.]
 
@@ -681,6 +681,8 @@ from filename synchronisation, add the YAML header field '`filename_sync: false`
 title:      "1. The Beginning"
 filename_sync: false
 ---
+```
+
 
 
 # CUSTOMIZATION
@@ -769,8 +771,8 @@ templates and in the '`[tmpl] copy_content`' content template only.
 * '`{{ fm_file_ext }}`' holds the value of the optional YAML header variable
   '`file_ext:`' (e.g. '`file_ext: "rst"`').
 
-* '`{{ fm_sort_tag }}`': The sort variable as defined in the YAML front matter of
-  this note (e.g. '`sort_tag: "20200312-"`').
+* '`{{ fm_sort_tag }}`': The sort tag variable as defined in the YAML front
+  matter of this note (e.g. '`sort_tag: "20200312-"`').
 
 * '`{{ fm_all }}`': is a collection (map) of all defined '`{{ fm_* }}`'
   variables.  It is used in the '`[tmpl] copy_content`' template, typically in a
@@ -788,6 +790,7 @@ variable might contain the empty string '`""`'.
 
 For a more detailed description of the available template variables, please
 consult the '`const`' definitions in _Tp-Note_'s source code file '`note.rs`'
+
 
 ## Template filters
 
@@ -818,9 +821,9 @@ A filter is always used together with a variable. Here some examples:
 * '`{{ path | ext | prepend_dot }}`' is the note's filename extension with
   dot (period), e.g. '`.md`' od '`.mdtxt`'.
 
-* '`{{ dir_path | trim_tag }}`' the last element of '`path`', which is the parent
-   directory's name of the note on disk. If present, the sort-tag is skipped
-   and only the following characters are retained.
+* '`{{ dir_path | trim_tag }}`' the last element of '`dir_path`', which is the
+  parent directory's name of the note on disk. If present, the sort-tag is
+  skipped and only the following characters are retained.
 
 * '`{{ clipboard | cut }}`' is the first 200 bytes from the clipboard.
 
@@ -836,8 +839,6 @@ A filter is always used together with a variable. Here some examples:
 * '`{{ clipboard | linktitle }}`' is the title of the first Markdown or
   reStruncturedText formatted link in the clipboard.
 
-* '`{{ path | ext }}`' is the filename extension of the current note on disk.
-
 * '`{{ username | json_encode }}`' is the username Json encoded. All YAML
   front matter must be Json encoded, so this filter should be the last in all
   lines of the front matter section.
@@ -847,8 +848,9 @@ A filter is always used together with a variable. Here some examples:
   replaced by '`-`' and '`_`'.
 
 * '`{{ title | sanit(alpha=true) }}`' the note's title as defined in its
-  front-matter.  Same as above, but strings starting with a number are
-  prepended by an apostrophe.
+  front-matter.  Same as above, but strings starting with a number are prepended
+  by an apostrophe to avoid ambiguity (the default separator can be changed with 
+  '`[filename] sort_tag_extra_separator`').
 
 * '`{{ fm_all | remove(var='fm_title') }}`' represents a collection (map) of
   all '`fm_*`' variables, exclusive of the variable '`fm_title`'.
@@ -1125,7 +1127,7 @@ The above change only applies to the current note only.
 
 *Sort tags* for new notes are generated with the '`[TMPL] *_filename`'
 templates and updated with the '`[TMPL] sync_filename`' template.  By default, the
-characters '`_`', '`-`', '` `', '`\t`' and '`.`' are recognized as being part of
+characters '`_`', '`-`', _space_, '`\t`' and '`.`' are recognized as being part of
 a *sort-tag* when they appear at the beginning of a filename.  This set of
 characters can be modified with the '`[filename] sort_tag_chars`' configuration
 variable. In addition, one special character
@@ -1301,7 +1303,6 @@ invoke _Tp-Note_ with '`tp-note --debug info --popup --view`'.
 
 
 
-
 # SECURITY AND PRIVACY CONSIDERATIONS
 
 As discussed above, _Tp-Note_'s built-in viewer sets up an HTTP server on the
@@ -1333,6 +1334,7 @@ the computer at that given time. This concerns only local users, _Tp-Note_
 never exposes any information to the network.
 
 
+
 # EXIT STATUS
 
 Normally the exit status is '`0`' when the note file was processed without
@@ -1343,6 +1345,7 @@ When '`tp-note -n -b <FILE>`' returns the code '`0`', the note file has a
 valid YAML header with a '`title:`' field. In addition, when
 '`tp-note -n -b -x - <FILE>`' returns the code '`0`', the note's body was
 rendered without error.
+
 
 
 # RESOURCES

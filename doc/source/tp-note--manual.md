@@ -504,7 +504,7 @@ Consider the following _Tp-Note_-file:
 
 The filename has 4 parts:
 
-    {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
+    {{ fm_sort_tag }}{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
 
 A so called _sort-tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
@@ -566,8 +566,8 @@ yourself.
 
 ## Minimum setup with no file manager integration
 
-_Tp-Note_'s template engine can be tested and used without window manager integration. This
-section shows a minimum setup to get started quickly.[^inst]
+_Tp-Note_'s template engine can be tested and used without window manager
+integration. This section shows a minimum setup to get started quickly.[^inst]
 
 [^inst]: Please also consult the section
   [Installation](https://blog.getreu.net/projects/tp-note/#installation) in the
@@ -606,8 +606,10 @@ you wish to use one. _Tp-Note_ works with every Unicode text editor and
 Markdown-editor (see section [Optional customization] and man-page for more
 details).
 
-_Tp-Note_'s note-files can be converted into e.g. `.docx`, `.odt`, `.html` with
-[Pandoc](https://pandoc.org/) and then printed.
+_Tp-Note_'s note-files can be printed directly from the viewer (web-browser)
+window or first converted into `.html` with `tp-note -x '' mynote.md`. For other
+formats e.g. `.docx`, `.odt` and `.pdf` use [Pandoc](https://pandoc.org/)
+or `khtmltopdf`.
 
 
 ```{=docbook}
