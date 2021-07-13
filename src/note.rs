@@ -70,22 +70,43 @@ const TMPL_VAR_USERNAME: &str = "username";
 pub const TMPL_VAR_FM_: &str = "fm_";
 
 /// Contains a Hash Map with all front matter fields. Lists are flattened
-/// into a string.
+/// into a strings.
 const TMPL_VAR_FM_ALL: &str = "fm_all";
 
-/// All the front matter fields as text, exactly as they appear in the front
-/// matter.
+/// All the front matter fields serialized as text, exactly as they appear in
+/// the front matter.
 const TMPL_VAR_FM_ALL_YAML: &str = "fm_all_yaml";
 
-/// Contains the value of the front matter field `file_ext` and
-/// determines the markup language used to render the document. When the field is
-/// missing the markup language is derived from the note's filename extension.
+/// By default, the template `TMPL_SYNC_FILENAME` defines the function of
+/// of this variable as follows:
+/// Contains the value of the front matter field `file_ext` and determines the
+/// markup language used to render the document. When the field is missing the
+/// markup language is derived from the note's filename extension.
+///
+/// This is a dynamically generated variable originating from the front matter
+/// of the current note. As all front matter variables, it's value is copied as
+/// it is without modification.  Here, the only special treatment is, when
+/// analyzing the front matter, it is verified, that the value of this variable
+/// is registered in one of the `[filename] extensions_*` variables.
 const TMPL_VAR_FM_FILE_EXT: &str = "fm_file_ext";
 
-/// Contains the value of the front matter field `no_filename_sync`.  When set to
-/// `no_filename_sync:` or `no_filename_sync: true`, the filename synchronisation mechanism is
-/// disabled for this note file.
-/// Depreciated in favour of `TMPL_VAR_FM_FILENAME_SYNC`.
+/// By default, the template `TMPL_SYNC_FILENAME` defines the function of
+/// of this variable as follows:
+/// If this variable is defined, the _sort tag_ of the filename is replaced with
+/// the value of this variable next time the filename is synchronized.  If not
+/// defined, the sort tag of the filename is never changed.
+///
+/// This is a dynamically generated variable originating from the front matter
+/// of the current note. As all front matter variables, it's value is copied as
+/// it is without modification.  Here, the only special treatment is, when
+/// analyzing the front matter, it is verified, that all the characters of the
+/// value of this variable are listed in `[filename] sort_tag_chars`.
+const TMPL_VAR_FM_SORT_TAG: &str = "fm_sort_tag";
+
+/// Contains the value of the front matter field `no_filename_sync`.  When set
+/// to `no_filename_sync:` or `no_filename_sync: true`, the filename
+/// synchronisation mechanism is disabled for this note file.  Depreciated
+/// in favour of `TMPL_VAR_FM_FILENAME_SYNC`.
 pub const TMPL_VAR_FM_NO_FILENAME_SYNC: &str = "fm_no_filename_sync";
 
 /// Contains the value of the front matter field `filename_sync`.  When set to
@@ -105,8 +126,8 @@ pub const TMPL_VAR_NOTE_JS: &str = "note_js";
 #[cfg(feature = "viewer")]
 pub const TMPL_VAR_NOTE_ERROR: &str = "note_error";
 
-/// HTML template variable used in the error page containing a limited verbatim
-/// HTML rendition of the erroneous note file.
+/// HTML template variable used in the error page containing a verbatim
+/// HTML rendition with hyperlinks of the erroneous note file.
 #[cfg(feature = "viewer")]
 pub const TMPL_VAR_NOTE_ERRONEOUS_CONTENT: &str = "note_erroneous_content";
 
@@ -206,7 +227,7 @@ impl Note {
         })
     }
 
-    /// Capture `tp_note`'s environment and stores it as variables in a
+    /// Capture _Tp-Note_'s environment and stores it as variables in a
     /// `context` collection. The variables are needed later to populate
     /// a context template and a filename template.
     /// The `path` parameter must be a canonicalized fully qualified file name.
@@ -376,8 +397,10 @@ impl Note {
         let fm = FrontMatter { map };
 
         // `sort_tag` has additional constrains to check.
-
-        if let Some(tera::Value::String(sort_tag)) = &fm.map.get("sort_tag") {
+        if let Some(tera::Value::String(sort_tag)) = &fm
+            .map
+            .get(TMPL_VAR_FM_SORT_TAG.trim_start_matches(TMPL_VAR_FM_))
+        {
             if !sort_tag.is_empty() {
                 // Check for forbidden characters.
                 if !sort_tag
@@ -396,7 +419,10 @@ impl Note {
 
         // `extension` has also additional constrains to check.
         // Is `extension` listed in `CFG.filename.extensions_*`?
-        if let Some(tera::Value::String(extension)) = &fm.map.get("file_ext") {
+        if let Some(tera::Value::String(extension)) = &fm
+            .map
+            .get(TMPL_VAR_FM_FILE_EXT.trim_start_matches(TMPL_VAR_FM_))
+        {
             let extension_is_unknown =
                 matches!(MarkupLanguage::new(extension), MarkupLanguage::None);
             if extension_is_unknown {
