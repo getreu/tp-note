@@ -11,17 +11,17 @@ use crate::settings::RUNS_ON_CONSOLE;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
-use std::sync::RwLock;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 pub struct AppLogger {
     /// If `true`, all future log events will trigger the opening of a popup
     /// alert window. Otherwise only `Level::Error` will do.
-    popup_always_enabled: RwLock<bool>,
+    popup_always_enabled: AtomicBool,
 }
 
 lazy_static! {
     static ref APP_LOGGER: AppLogger = AppLogger {
-        popup_always_enabled: RwLock::new(false)
+        popup_always_enabled: AtomicBool::new(false)
     };
 }
 
@@ -50,8 +50,9 @@ impl AppLogger {
     pub fn set_popup_always_enabled(popup: bool) {
         // This blocks if ever another thread wants to write.  As we are the only ones to write
         // here, this lock can never get poisoned and we will can safely `unwrap()` here.
-        let mut lock = APP_LOGGER.popup_always_enabled.write().unwrap();
-        *lock = popup;
+        APP_LOGGER
+            .popup_always_enabled
+            .store(popup, Ordering::SeqCst);
     }
 
     /// Blocks until the `AlertService` is not busy any more.
@@ -84,7 +85,7 @@ impl log::Log for AppLogger {
                 && !ARGS.batch
                 && ((record.metadata().level() == LevelFilter::Error)
                         // This lock can never get poisoned, so `unwrap()` is safe here.
-                        || *(APP_LOGGER.popup_always_enabled.read().unwrap()))
+                        || APP_LOGGER.popup_always_enabled.load(Ordering::SeqCst))
             {
                 let msg = if record.metadata().level() == Level::Error {
                     format!(
