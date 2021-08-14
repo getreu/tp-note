@@ -8,6 +8,7 @@ use crate::viewer::sse_server::SseToken;
 use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 use std::panic::panic_any;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::TrySendError;
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, SyncSender};
 use std::sync::{Arc, Mutex};
@@ -40,7 +41,7 @@ pub struct FileWatcher {
     event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
     /// Send additional periodic update events to detect when
     /// the browser disconnects.
-    terminate_on_browser_disconnect: Arc<Mutex<bool>>,
+    terminate_on_browser_disconnect: Arc<AtomicBool>,
     /// Start time of this file-watcher.
     start_time: Instant,
 }
@@ -51,7 +52,7 @@ impl FileWatcher {
     pub fn new(
         file: PathBuf,
         event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
-        terminate_on_browser_disconnect: Arc<Mutex<bool>>,
+        terminate_on_browser_disconnect: Arc<AtomicBool>,
     ) -> Result<Self, ViewerError> {
         let notify_period = CFG.viewer.notify_period;
         let (tx, rx) = channel();
@@ -98,7 +99,7 @@ impl FileWatcher {
                     // );
                     if tx_list.is_empty()
                         && self.start_time.elapsed().as_millis() > WATCHER_MIN_UPTIME
-                        && *self.terminate_on_browser_disconnect.lock().unwrap()
+                        && self.terminate_on_browser_disconnect.load(Ordering::SeqCst)
                     {
                         return Err(ViewerError::AllSubscriberDiconnected);
                     }

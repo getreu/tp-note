@@ -11,6 +11,7 @@ use crate::viewer::watcher::FileWatcher;
 use crate::viewer::web_browser::launch_web_browser;
 use std::net::TcpListener;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::SyncSender;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -103,8 +104,7 @@ impl Viewer {
         // Launch the file watcher thread.
         // Send a signal whenever the file is modified. Without error, this thread runs as long as
         // the parent thread (where we are) is running.
-        #[allow(clippy::mutex_atomic)]
-        let terminate_on_browser_disconnect = Arc::new(Mutex::new(false));
+        let terminate_on_browser_disconnect = Arc::new(AtomicBool::new(false));
         let terminate_on_browser_disconnect_ = terminate_on_browser_disconnect.clone();
         let watcher_handle: JoinHandle<_> = thread::spawn(move || {
             match FileWatcher::new(doc, event_tx_list, terminate_on_browser_disconnect_) {
@@ -128,7 +128,7 @@ impl Viewer {
             // We are there because the browser process did not block.
             // We instruct the watcher to terminate when it detects browser disconnection.
             if !*LAUNCH_EDITOR {
-                *terminate_on_browser_disconnect.lock().unwrap() = true;
+                terminate_on_browser_disconnect.store(true, Ordering::SeqCst);
             };
             watcher_handle.join().unwrap();
         }
