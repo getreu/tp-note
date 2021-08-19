@@ -87,7 +87,6 @@ serde_yaml = "0.8.17"
 structopt = "0.3.22"
 tera = { version = "1.12.0", default-features = true }
 thiserror = "1.0.26"
-time = "0.2.27"
 toml = "0.5.8"
 url = { version = "2.2.2", optional = true }
 webbrowser = { version = "0.5.5", optional = true }
