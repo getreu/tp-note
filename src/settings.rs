@@ -104,6 +104,18 @@ lazy_static! {
 lazy_static! {
     /// Do we run on a console?
     pub static ref RUNS_ON_CONSOLE: bool = {
+        // User `root` has usually no GUI.
+        #[cfg(target_family = "unix")]
+        if let Some(user) = std::env::var("USER")
+            // Map error to `None`.
+            .ok()
+            // A pattern mapping `Some("")` to `None`.
+            .and_then(|s: String| if s.is_empty() { None } else { Some(s) }) {
+            if user == "root" {
+                return true;
+            }
+        }
+
         // On Linux popup window only if DISPLAY is set.
         #[cfg(target_family = "unix")]
         let display = std::env::var("DISPLAY")
@@ -111,7 +123,6 @@ lazy_static! {
             .ok()
             // A pattern mapping `Some("")` to `None`.
             .and_then(|s: String| if s.is_empty() { None } else { Some(s) });
-
         // In non-Linux there is always "Some" display.
         #[cfg(not(target_family = "unix"))]
         let display = Some(String::new());
