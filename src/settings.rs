@@ -157,7 +157,7 @@ lazy_static! {
 
         // Concatenate clipboard content.
         #[cfg(feature="read-clipboard")]
-        if CFG.clipboard.read_enabled && !*RUNS_ON_CONSOLE && !ARGS.batch {
+        if CFG.clipboard.read_enabled && !ARGS.batch {
             let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
             if ctx.is_some() {
                 let ctx = &mut ctx.unwrap(); // This is ok since `is_some()>`
