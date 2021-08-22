@@ -63,7 +63,7 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
 ///    ```
 ///
-const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
+const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.13.3");
 /// (c) Jens Getreu
 const AUTHOR: &str = "(c) Jens Getreu, 2020-2021";
 
