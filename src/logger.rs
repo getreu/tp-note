@@ -25,9 +25,13 @@ lazy_static! {
     };
 }
 
-/// Initialize logger.
+/// All methods here are stateless (without _self_). Instead, their state is stored in a global
+/// variable `APP_LOGGER` in order to simplify the API for the caller.  As all the methods are
+/// stateless, the caller does not need to carry around any (state) struct. For example, just
+/// `AppLogger::log(...)` will do.
 impl AppLogger {
     #[inline]
+    /// Initialize logger.
     pub fn init() {
         // Setup the `AlertService`
         #[cfg(feature = "message-box")]
