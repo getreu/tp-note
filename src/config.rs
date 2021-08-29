@@ -448,10 +448,18 @@ const APP_ARGS_EDITOR_CONSOLE: &[&[&str]] = &[
     &["vi"],
 ];
 
+/// When Tp-Note starts, it launches two external applications: some text editor
+/// and the viewer (web browser). By default the two programs are launched at
+/// the same time (`VIEWER_STARTUP_DELAY==0`). If `VIEWER_STARTUP_DELAY>0` the
+/// viewer (web browser) will be launched `VIEWER_STARTUP_DELAY` milliseconds
+/// after the text editor. If `VIEWER_STARTUP_DELAY<0` the viewer will be
+/// started first. Common values are `-1000`, `0` and `1000`.
+const VIEWER_STARTUP_DELAY: isize = 500;
+
 /// Template used by the viewer to render error messages into html.
 /// When set to true, the viewer feature is automatically disabled when
 /// _Tp-Note_ encounters an `.md` file without header.  Experienced users can
-/// set this to `true`. See also `SILENTLY_IGNORE_MISSING_HEADER`.
+/// set this to `true`.
 const VIEWER_MISSING_HEADER_DISABLES: bool = false;
 
 /// How often should the file watcher check for changes?
@@ -736,6 +744,7 @@ pub struct AppArgs {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Viewer {
+    pub startup_delay: isize,
     pub missing_header_disables: bool,
     pub notify_period: u64,
     pub tcp_connections_max: usize,
@@ -872,6 +881,7 @@ impl ::std::default::Default for Clipboard {
 impl ::std::default::Default for Viewer {
     fn default() -> Self {
         Viewer {
+            startup_delay: VIEWER_STARTUP_DELAY,
             missing_header_disables: VIEWER_MISSING_HEADER_DISABLES,
             notify_period: VIEWER_NOTIFY_PERIOD,
             tcp_connections_max: VIEWER_TCP_CONNECTIONS_MAX,

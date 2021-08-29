@@ -1,5 +1,6 @@
 //! Main module for the markup renderer and note viewer feature.
 
+use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::filename::MarkupLanguage;
 use crate::settings::ARGS;
@@ -16,6 +17,7 @@ use std::sync::mpsc::SyncSender;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
+use std::time::Duration;
 use std::time::Instant;
 
 /// Minimum uptime in milliseconds we expect a real browser instance to run.
@@ -119,6 +121,10 @@ impl Viewer {
         let url = format!("http://{}:{}", LOCALHOST, localport);
         log::info!("Viewer::run(): launching browser with URL: {}", url);
 
+        // Shall the browser be started a little later?
+        if CFG.viewer.startup_delay > 0 {
+            thread::sleep(Duration::from_millis(CFG.viewer.startup_delay as u64));
+        };
         // Start timer.
         let browser_start = Instant::now();
         // This may block.
