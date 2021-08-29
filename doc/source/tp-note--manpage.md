@@ -849,7 +849,7 @@ A filter is always used together with a variable. Here some examples:
 
 * '`{{ title | sanit(alpha=true) }}`' the note's title as defined in its
   front-matter.  Same as above, but strings starting with a number are prepended
-  by an apostrophe to avoid ambiguity (the default separator can be changed with 
+  by an apostrophe to avoid ambiguity (the default separator can be changed with
   '`[filename] sort_tag_extra_separator`').
 
 * '`{{ fm_all | remove(var='fm_title') }}`' represents a collection (map) of
@@ -1172,6 +1172,14 @@ exist.
 
 
 ## Customize the built-in note viewer
+
+**Delay the launch of the web browser**
+
+By default, _Tp-Note_ launches two external programs: some text editor and a
+web browser. If wished for, the configuration variable
+'`[viewer] startup_delay`' allows to delay the launch of the web browser some
+milliseconds.  This way the web browser window will always appear on top of the
+editor window.  A negative value delays the start of the text editor instead.
 
 **Change the way how note files are rendered for viewing**
 
