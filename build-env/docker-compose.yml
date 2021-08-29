@@ -1,0 +1,14 @@
+# Run with `docker-compose run --rm dev`
+# To rebuild this image you must use `docker-compose build` or
+# `docker-compose up --build`.
+
+version: "3.3"
+services:
+  dev:
+    #image: rust:1.54.0
+    build: .
+    volumes:
+      - "../:/home/getreu/project"
+    environment:
+      - USER=getreu
+

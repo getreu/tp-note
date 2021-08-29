@@ -1,17 +1,5 @@
 #/bin/sh
 
-# Perquisites
-
-# [Get Docker Engine - Community for Debian | Docker Documentation](https://docs.docker.com/install/linux/docker-ce/debian/)
-
-# Don't forget `sudo adduser $LOGNAME docker`
-# LOG OUT and login in again!
-
-# Add `#![windows_subsystem = "windows"]` to `main.rs`
-
-# [GitHub - rust-embedded/cross: “Zero setup” cross compilation and “cross testing” of Rust crates](https://github.com/rust-embedded/cross)
-
-
 # Prepare session
 
 # sudo systemctl start docker
