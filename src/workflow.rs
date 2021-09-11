@@ -19,8 +19,6 @@ use crate::settings::RUNS_ON_CONSOLE;
 use crate::settings::STDIN;
 #[cfg(feature = "viewer")]
 use crate::viewer::launch_viewer_thread;
-use crate::AUTHOR;
-use crate::VERSION;
 #[cfg(feature = "read-clipboard")]
 use clipboard::ClipboardContext;
 #[cfg(feature = "read-clipboard")]
@@ -31,7 +29,6 @@ use std::fs;
 use std::matches;
 use std::path::Path;
 use std::path::PathBuf;
-use std::process;
 #[cfg(feature = "viewer")]
 use std::thread;
 #[cfg(feature = "viewer")]
@@ -255,22 +252,6 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
 /// 4. Read the front matter again and resynchronize the filename if necessary.
 #[inline]
 pub fn run() -> Result<PathBuf, WorkflowError> {
-    // process arg = `--version`
-    if ARGS.version {
-        print!("Version {}, {}, ", VERSION.unwrap_or("unknown"), AUTHOR);
-        print!("compiled-in features: [");
-        #[cfg(feature = "message-box")]
-        print!("message-box, ");
-        #[cfg(feature = "viewer")]
-        print!("viewer, ");
-        #[cfg(feature = "renderer")]
-        print!("renderer, ");
-        #[cfg(feature = "clipboard")]
-        print!("clipboard, ");
-        println!("]");
-        process::exit(0);
-    };
-
     // process arg = <path>
     let mut path = if let Some(p) = &ARGS.path {
         p.canonicalize()?

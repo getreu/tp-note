@@ -29,14 +29,20 @@ mod viewer;
 mod workflow;
 
 extern crate semver;
+#[cfg(feature = "message-box")]
+use crate::alert_service::AlertService;
 use crate::config::backup_config_file;
 use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
+use crate::config::CONFIG_PATH;
 use crate::logger::AppLogger;
 use crate::settings::ARGS;
+#[cfg(feature = "message-box")]
+use crate::settings::RUNS_ON_CONSOLE;
 use crate::workflow::run;
 use error::FileError;
 use semver::Version;
+use std::path::PathBuf;
 use std::process;
 
 /// Use the version number defined in `../Cargo.toml`.
@@ -64,8 +70,10 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 ///    ```
 ///
 const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
-/// (c) Jens Getreu
-const AUTHOR: &str = "(c) Jens Getreu, 2020-2021";
+/// Authors.
+const AUTHOR: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
+/// Copyright.
+const COPYRIGHT_FROM: &str = "2020";
 
 /// Print some error message if `run()` does not complete.
 /// Exit prematurely if the configuration file version does
@@ -147,6 +155,47 @@ fn main() {
                 process::exit(5);
             };
         };
+    };
+
+    // Process `arg = `--version`.
+    // The output is YAML formatted for further automatic processing.
+    if ARGS.version {
+        let mut msg = format!("version: {}\n\n", VERSION.unwrap_or("unknown"));
+        msg.push_str("features:\n");
+        #[cfg(feature = "message-box")]
+        msg.push_str("- message-box\n");
+        #[cfg(feature = "viewer")]
+        msg.push_str("- viewer\n");
+        #[cfg(feature = "renderer")]
+        msg.push_str("- renderer\n");
+        #[cfg(feature = "clipboard")]
+        msg.push_str("- clipboard\n");
+        msg.push('\n');
+        msg.push_str("config_file_path: |\n   ");
+        msg.push_str(
+            &*CONFIG_PATH
+                .as_ref()
+                .unwrap_or(&PathBuf::new())
+                .to_str()
+                .unwrap_or(""),
+        );
+        msg.push_str("\n\n");
+        msg.push_str(&*format!(
+            "copyright: © {} {}\n",
+            COPYRIGHT_FROM,
+            AUTHOR.unwrap(),
+        ));
+
+        // Print on console.
+        eprintln!("{}", msg);
+
+        // Print in alert box.
+        #[cfg(feature = "message-box")]
+        if !*RUNS_ON_CONSOLE && !ARGS.batch {
+            let _ = AlertService::push_str(msg);
+        };
+        AppLogger::flush();
+        process::exit(0);
     };
 
     // Run Tp-Note.
