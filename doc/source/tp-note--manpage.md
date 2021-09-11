@@ -485,8 +485,9 @@ windows until they fail to appear.
 
 **-V**, **\--version**
 
-:   Print _Tp-Note_'s version and exit. When combined with '`--debug`',
-    additional technical details are printed.
+:   Print _Tp-Note_'s version, its compiled-in features and the path to the
+    sourced configuration file. The output is YAML formatted for further
+    automatic processing.
 
 **-x** *DIRECTORY*, **\--export**=*DIRECTORY*
 
