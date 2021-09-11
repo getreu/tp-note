@@ -102,7 +102,6 @@ impl log::Log for AppLogger {
                 };
 
                 let (tx, _) = &*MESSAGE_CHANNEL;
-                let tx = tx.clone();
                 tx.send(msg).unwrap();
             };
         }
