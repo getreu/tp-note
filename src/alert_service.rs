@@ -2,8 +2,6 @@
 //! one by one in popup alert windows.
 
 use crate::config::CONFIG_PATH;
-use crate::settings::ARGS;
-use crate::settings::RUNS_ON_CONSOLE;
 use crate::VERSION;
 use lazy_static::lazy_static;
 use msgbox::IconType;
@@ -12,24 +10,17 @@ use std::path::PathBuf;
 use std::sync::mpsc::sync_channel;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::RecvTimeoutError;
+use std::sync::mpsc::SendError;
 use std::sync::mpsc::SyncSender;
 use std::sync::Mutex;
 use std::thread;
 use std::thread::sleep;
 use std::time::Duration;
 
-/// The number of messages that will be queued.
-/// As error messages can drop in by every thread and we can only
-/// show one alert window at the same time, they must be queued.
-pub const QUEUE_LEN: usize = 30;
-
-/// Window title of the message alert box.
-const DIALOG_TITLE: &str = "Tp-Note";
-
 lazy_static! {
 /// The message queue accepting strings for being shown as
 /// popup alert windows.
-    pub static ref MESSAGE_CHANNEL: (SyncSender<String>, Mutex<Receiver<String>>) = {
+    static ref MESSAGE_CHANNEL: (SyncSender<String>, Mutex<Receiver<String>>) = {
         let (tx, rx) = sync_channel(QUEUE_LEN);
         (tx, Mutex::new(rx))
     };
@@ -45,14 +36,49 @@ lazy_static! {
 }
 
 lazy_static! {
+    /// Some additional debugging information added to the end of error messages.
+    static ref DIALOG_ERR_TAIL: String = {
+        let mut args_str = String::new();
+        for argument in env::args() {
+            args_str.push_str(argument.as_str());
+            args_str.push(' ');
+        };
+
+        format!(
+            "\n\
+            __________\n\
+            Additional technical details:\n\
+            *    Command line parameters:\n\
+            {}\n\
+            *    Configuration file:\n\
+            {}",
+            args_str,
+            &*CONFIG_PATH
+                .as_ref()
+                .unwrap_or(&PathBuf::from("no path found"))
+                .to_str()
+                .unwrap_or_default()
+        )
+    };
+}
+
+lazy_static! {
     /// This mutex does not hold any data. When it is locked, it indicates,
     /// that the `AlertService` is still busy and should not get shut down.
     static ref BUSY_LOCK: Mutex<()> = Mutex::new(());
 }
 
+/// The number of messages that will be queued.
+/// As error messages can drop in by every thread and we can only
+/// show one alert window at the same time, they must be queued.
+pub const QUEUE_LEN: usize = 30;
+
+/// Window title of the message alert box.
+const DIALOG_TITLE: &str = "Tp-Note";
+
 /// The `AlertService` reports to be busy as long as there
 /// is is a message window open and beyond that also
-/// `ALERT_SERVICE_KEEP_ALIVE` milliseconds after the last
+/// `KEEP_ALIVE` milliseconds after the last
 /// message window got closed by the user.
 #[cfg(feature = "message-box")]
 const KEEP_ALIVE: u64 = 1000;
@@ -65,21 +91,17 @@ const FLUSH_TIMEOUT: u64 = 10;
 
 pub struct AlertService {}
 
-#[cfg(feature = "message-box")]
 impl AlertService {
     /// Initializes the service. Call once when the application starts.
-    /// Drop strings in the`ALERT_SERVICE_CHANNEL` to use this service.
+    /// Drop strings in the`MESSAGE_CHANNEL` to use this service.
     pub fn init() {
         // Setup the `AlertService`.
-        #[cfg(feature = "message-box")]
-        if !*RUNS_ON_CONSOLE && !ARGS.batch {
-            // Set up the channel now.
-            lazy_static::initialize(&MESSAGE_CHANNEL);
-            thread::spawn(move || {
-                // this will block until the previous message has been received
-                AlertService::run();
-            });
-        };
+        // Set up the channel now.
+        lazy_static::initialize(&MESSAGE_CHANNEL);
+        thread::spawn(move || {
+            // this will block until the previous message has been received
+            AlertService::run();
+        });
     }
 
     /// Alert service, receiving Strings to display in a popup window.
@@ -100,7 +122,7 @@ impl AlertService {
                 Some(rx.recv().unwrap())
             } else {
                 // There is a lock because we just received another message.
-                // If the next `ALERT_SERVICE_KEEP_ALIVE` milliseconds no
+                // If the next `KEEP_ALIVE` milliseconds no
                 // other message comes in, we release the lock again.
                 match rx.recv_timeout(Duration::from_millis(KEEP_ALIVE)) {
                     Ok(s) => Some(s),
@@ -122,8 +144,8 @@ impl AlertService {
                     // This blocks until the user closes the alert window.
                     Self::print_error(&s);
                 }
-                // `ALERT_SERVICE_KEEP_ALIVE` milliseconds are over and still no new message.
-                // We release the lock again.
+                // `ALERT_SERVICE_KEEP_ALIVE` milliseconds are over and still no
+                // new message. We release the lock again.
                 None => {
                     // Here the `guard` goes out of scope and the lock is released.
                     opt_guard = None;
@@ -143,37 +165,34 @@ impl AlertService {
         let _res = BUSY_LOCK.lock();
     }
 
+    #[inline]
+    /// Concatenates some extra debugging info to `msg` and pushes it into
+    /// queue. In case the message queue is full, the method blocks until there
+    /// is more free space. Make sure to initialize before with
+    /// `AlertService::init()`. Returns an `SendError` if nobody listens on
+    /// `rx` of the queue. This can happen, e.g. if `AlertService::init()` has
+    /// not been called before.
+    pub fn push_debug_str(mut msg: String) -> Result<(), SendError<String>> {
+        msg.push_str(&DIALOG_ERR_TAIL);
+
+        Self::push_str(msg)
+    }
+
+    #[inline]
+    /// Pushes `msg` into queue. In case the message queue is full, the method
+    /// blocks until there is more free space. Make sure to initialize before
+    /// with `AlertService::init()` Returns an `SendError` if nobody listens on
+    /// `rx` of the queue. This can happen, e.g. if `AlertService::init()` has
+    /// not been called before.
+    pub fn push_str(msg: String) -> Result<(), SendError<String>> {
+        let (tx, _) = &*MESSAGE_CHANNEL;
+        tx.send(msg)
+    }
+
+    #[inline]
     /// Pops up an error message box and prints `msg`.
     /// Blocks until the user closes the window.
     fn print_error(msg: &str) {
         let _ = msgbox::create(&*DIALOG_TITLE_LINE, &msg, IconType::Info);
-    }
-
-    /// Adds a footer with additional debugging information, such as
-    /// command line parameters and configuration file path.
-    pub fn format_error(msg: &str) -> String {
-        // Remember the command-line-arguments.
-        let mut args_str = String::new();
-        for argument in env::args() {
-            args_str.push_str(argument.as_str());
-            args_str.push(' ');
-        }
-
-        format!(
-            "{}\n\
-            __________\n\
-            Additional technical details:\n\
-            *    Command line parameters:\n\
-            {}\n\
-            *    Configuration file:\n\
-            {}",
-            msg,
-            args_str,
-            &*CONFIG_PATH
-                .as_ref()
-                .unwrap_or(&PathBuf::from("no path found"))
-                .to_str()
-                .unwrap_or_default()
-        )
     }
 }
