@@ -9,7 +9,7 @@ mkdir -p "$PWD"
 
 # Pepare toml
 # Generate new config file.
-cargo run -- -V -c "$PWD/tp-note.toml"
+cargo run -- -V -b -c "$PWD/tp-note.toml"
 # Remove all `date` lines of all templates.
 TP_NOTE_TEST_TOML="$PWD/tp-note-tmp.toml"
 grep -v -e ^date:  "$PWD/tp-note.toml" > "$TP_NOTE_TEST_TOML"
