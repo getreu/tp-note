@@ -17,6 +17,11 @@ RUN rustup component add rustfmt
 ### use with
 # RUN cargo fmt
 
+# Add Rust clippy.
+RUN rustup component add clippy
+### use with
+# RUN cargo clippy
+
 # Add a tool to upgrade dependencies.
 RUN apt-get -y install libssl-dev
 RUN cargo install cargo-edit

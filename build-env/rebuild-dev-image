@@ -1,2 +1,9 @@
 #!/bin/sh
 docker-compose build
+
+### Remove unused images with:
+# docker image prune --all
+
+### Remove all dangling data, i.e. containers stopped, volumes without
+### containers and images with no containers:
+# docker system prune --all
