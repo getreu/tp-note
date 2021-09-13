@@ -4,7 +4,7 @@ subtitle: "Organize your notes with your favourite editor and markup-language"
 author: "Jens Getreu"
 date:   "2021-08-25"
 version: "1.13.5"
-no_filename_sync: true
+filename_sync: false
 ---
 
 Markup languages like *Markdown* [^1] are perfectly suited for fast
