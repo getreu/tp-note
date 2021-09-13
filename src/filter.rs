@@ -75,10 +75,10 @@ pub fn sanit_filter<S: BuildHasher>(
 
     let mut filtered = sanitize(&pstr);
 
-    if alpha_required {
-        if filtered.starts_with(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..]) {
-            filtered.insert(0, CFG.filename.sort_tag_extra_separator);
-        };
+    if alpha_required
+        && filtered.starts_with(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..])
+    {
+        filtered.insert(0, CFG.filename.sort_tag_extra_separator);
     };
 
     Ok(to_value(&filtered)?)
