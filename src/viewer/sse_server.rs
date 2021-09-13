@@ -260,7 +260,7 @@ impl ServerThread {
 
             // The only supported request method for SSE is GET.
             if method != "GET" {
-                self.respond_method_not_allowed(&method)?;
+                self.respond_method_not_allowed(method)?;
                 continue 'tcp_connection;
             }
 
@@ -276,9 +276,9 @@ impl ServerThread {
                     // Tera template errors.
                     // The contains Javascript code to subscribe to `EVENT_PATH`, which
                     // reloads this document on request of `self.rx`.
-                    let html = Self::render_content_and_error(&self)?;
+                    let html = Self::render_content_and_error(self)?;
 
-                    self.respond_content_ok(Path::new("/"), "text/html", &html.as_bytes())?;
+                    self.respond_content_ok(Path::new("/"), "text/html", html.as_bytes())?;
                     // `self.rx` was not used and is dropped here.
                 }
 
@@ -338,7 +338,7 @@ impl ServerThread {
 
                 // Serve icon.
                 FAVICON_PATH => {
-                    self.respond_content_ok(Path::new(&FAVICON_PATH), "image/x-icon", &FAVICON)?;
+                    self.respond_content_ok(Path::new(&FAVICON_PATH), "image/x-icon", FAVICON)?;
                 }
 
                 // Serve all other documents.
@@ -528,7 +528,7 @@ impl ServerThread {
             content.len(),
         );
         self.stream.write_all(response.as_bytes())?;
-        self.stream.write_all(&content)?;
+        self.stream.write_all(content)?;
         log::debug!(
             "TCP peer port {}: 200 OK, served file: '{}'",
             self.stream.peer_addr()?.port(),

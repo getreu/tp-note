@@ -983,7 +983,7 @@ lazy_static! {
             }
         };
 
-        config_load_path(&config_path)
+        config_load_path(config_path)
             .unwrap_or_else(|e|{
                 // Remember that something went wrong.
                 let mut cfg_file_loading = CFG_FILE_LOADING.write().unwrap();
@@ -1014,7 +1014,7 @@ lazy_static! {
 pub fn backup_config_file() -> Result<PathBuf, FileError> {
     if let Some(ref config_path) = *CONFIG_PATH {
         if config_path.exists() {
-            let config_path_bak = filename::find_unused((&config_path).to_path_buf())?;
+            let config_path_bak = filename::find_unused((config_path).to_path_buf())?;
 
             fs::rename(&config_path.as_path(), &config_path_bak)?;
 

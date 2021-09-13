@@ -162,7 +162,7 @@ impl Note {
                 source: e,
             })?);
 
-        let mut context = Self::capture_environment(&path)?;
+        let mut context = Self::capture_environment(path)?;
 
         // Register the raw serialized header text.
         (*context).insert(TMPL_VAR_FM_ALL_YAML, &content.borrow_dependent().header);
@@ -191,7 +191,7 @@ impl Note {
 
     /// Constructor that creates a new note by filling in the content template `template`.
     pub fn from_content_template(path: &Path, template: &str) -> Result<Self, NoteError> {
-        let mut context = Self::capture_environment(&path)?;
+        let mut context = Self::capture_environment(path)?;
 
         // render template
         let content = Content::from({
@@ -385,7 +385,7 @@ impl Note {
         };
 
         let map: tera::Map<String, tera::Value> =
-            serde_yaml::from_str(&header).map_err(|e| NoteError::InvalidFrontMatterYaml {
+            serde_yaml::from_str(header).map_err(|e| NoteError::InvalidFrontMatterYaml {
                 front_matter: header
                     .lines()
                     .enumerate()
@@ -512,20 +512,14 @@ impl Note {
             let mut handle = stdout.lock();
 
             // Write HTML rendition.
-            handle.write_all(
-                self.render_content(&note_path_ext, &template, "")?
-                    .as_bytes(),
-            )?;
+            handle.write_all(self.render_content(note_path_ext, template, "")?.as_bytes())?;
         } else {
             let mut handle = OpenOptions::new()
                 .write(true)
                 .create(true)
                 .open(&html_path)?;
             // Write HTML rendition.
-            handle.write_all(
-                self.render_content(&note_path_ext, &template, "")?
-                    .as_bytes(),
-            )?;
+            handle.write_all(self.render_content(note_path_ext, template, "")?.as_bytes())?;
         };
         Ok(())
     }
@@ -558,7 +552,7 @@ impl Note {
         };
 
         // Render the markup language.
-        let html_output = match MarkupLanguage::from(ext, &file_ext) {
+        let html_output = match MarkupLanguage::from(ext, file_ext) {
             #[cfg(feature = "renderer")]
             MarkupLanguage::Markdown => Self::render_md_content(input),
             #[cfg(feature = "renderer")]
@@ -644,7 +638,7 @@ impl Note {
         // Trim BOM.
         let note_erroneous_content = note_erroneous_content.trim_start_matches('\u{feff}');
         // Render to HTML.
-        let note_erroneous_content = text_rawlinks2html(&note_erroneous_content);
+        let note_erroneous_content = text_rawlinks2html(note_erroneous_content);
         // Insert.
         context.insert(TMPL_VAR_NOTE_ERRONEOUS_CONTENT, &note_erroneous_content);
 
@@ -652,7 +646,7 @@ impl Note {
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
         let html = tera
-            .render_str(&template, &context)
+            .render_str(template, &context)
             .map_err(|e| note_error_tera_template!(e))?;
         Ok(html)
     }

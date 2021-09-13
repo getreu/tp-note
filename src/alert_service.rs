@@ -193,6 +193,6 @@ impl AlertService {
     /// Pops up an error message box and prints `msg`.
     /// Blocks until the user closes the window.
     fn print_error(msg: &str) {
-        let _ = msgbox::create(&*DIALOG_TITLE_LINE, &msg, IconType::Info);
+        let _ = msgbox::create(&*DIALOG_TITLE_LINE, msg, IconType::Info);
     }
 }

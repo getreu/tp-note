@@ -68,8 +68,8 @@ pub fn find_unused(p: PathBuf) -> Result<PathBuf, FileError> {
 
     // Try up to 99 sort-tag-extensions, then give up.
     for n in 1..FILENAME_COPY_COUNTER_MAX {
-        let stem_copy_counter = append_copy_counter(&stem, n);
-        let filename = assemble(&sort_tag, &stem_copy_counter, &"", &ext);
+        let stem_copy_counter = append_copy_counter(stem, n);
+        let filename = assemble(sort_tag, &stem_copy_counter, "", ext);
         new_path.set_file_name(filename);
 
         if !new_path.exists() {

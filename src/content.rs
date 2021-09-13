@@ -52,7 +52,7 @@ impl<'a> Content {
     /// BOM + ignored text + empty line + "---".
     pub fn from(input: String) -> Self {
         Content::new(input, |owner: &String| {
-            let (header, body) = Content::split(&owner);
+            let (header, body) = Content::split(owner);
             ContentRef { header, body }
         })
     }

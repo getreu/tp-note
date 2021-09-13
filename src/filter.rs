@@ -73,7 +73,7 @@ pub fn sanit_filter<S: BuildHasher>(
         None => false,
     };
 
-    let mut filtered = sanitize(&pstr);
+    let mut filtered = sanitize(pstr);
 
     if alpha_required
         && filtered.starts_with(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..])

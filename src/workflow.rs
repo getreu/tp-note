@@ -41,7 +41,7 @@ use tera::Value;
 /// the new filename.
 fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
     // parse file again to check for synchronicity with filename
-    let mut n = match Note::from_existing_note(&path) {
+    let mut n = match Note::from_existing_note(path) {
         Ok(n) => n,
         Err(e) if matches!(e, NoteError::MissingFrontMatter { .. }) => {
             return Err(WorkflowError::MissingFrontMatter { source: e })
@@ -94,7 +94,7 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
                 }
             })?;
 
-            if !filename::exclude_copy_counter_eq(&path, &new_file_path) {
+            if !filename::exclude_copy_counter_eq(path, &new_file_path) {
                 let new_file_path = filename::find_unused(new_file_path)?;
 
                 // rename file
@@ -110,7 +110,7 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
 
     // Print HTML rendition.
     if let Some(dir) = &ARGS.export {
-        n.render_and_write_content(&new_file_path, &CFG.exporter.rendition_tmpl, &dir)
+        n.render_and_write_content(&new_file_path, &CFG.exporter.rendition_tmpl, dir)
             .map_err(|e| WorkflowError::Template {
                 tmpl_name: "[exporter] rendition_tmpl".to_string(),
                 source: e,
@@ -132,7 +132,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
         let (n, new_file_path) = if STDIN.is_empty() && CLIPBOARD.is_empty() {
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
             log::trace!("Applying templates `[tmpl] new_content` and `[tmpl] new_filename`.");
-            let n = Note::from_content_template(&path, &CFG.tmpl.new_content).map_err(|e| {
+            let n = Note::from_content_template(path, &CFG.tmpl.new_content).map_err(|e| {
                 WorkflowError::Template {
                     tmpl_name: "[tmpl] new_content".to_string(),
                     source: e,
@@ -151,7 +151,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
             // (only if there is a valid YAML front matter)
             log::trace!("Applying templates: `[tmpl] copy_content`, `[tmpl] copy_filename`");
-            let n = Note::from_content_template(&path, &CFG.tmpl.copy_content).map_err(|e| {
+            let n = Note::from_content_template(path, &CFG.tmpl.copy_content).map_err(|e| {
                 WorkflowError::Template {
                     tmpl_name: "[tmpl] copy_content".to_string(),
                     source: e,
@@ -171,7 +171,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
                 "Applying templates: `[tmpl] clipboard_content`, `[tmpl] clipboard_filename`"
             );
             let n =
-                Note::from_content_template(&path, &CFG.tmpl.clipboard_content).map_err(|e| {
+                Note::from_content_template(path, &CFG.tmpl.clipboard_content).map_err(|e| {
                     WorkflowError::Template {
                         tmpl_name: "[tmpl] clipboard_content".to_string(),
                         source: e,
@@ -218,13 +218,12 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             log::trace!(
                 "Applying templates `[tmpl] annotate_content` and `[tmpl] annotate_filename`."
             );
-            let n =
-                Note::from_content_template(&path, &CFG.tmpl.annotate_content).map_err(|e| {
-                    WorkflowError::Template {
-                        tmpl_name: "[tmpl] annotate_content".to_string(),
-                        source: e,
-                    }
-                })?;
+            let n = Note::from_content_template(path, &CFG.tmpl.annotate_content).map_err(|e| {
+                WorkflowError::Template {
+                    tmpl_name: "[tmpl] annotate_content".to_string(),
+                    source: e,
+                }
+            })?;
 
             let new_file_path = n
                 .render_filename(&CFG.tmpl.annotate_filename)
