@@ -350,7 +350,7 @@ impl ServerThread {
 
                     // Strip `/` and convert to `Path`.
                     let path = Path::new(
-                        path.strip_prefix("/")
+                        path.strip_prefix('/')
                             .ok_or(ViewerError::UrlMustStartWithSlash)?,
                     );
                     // Replace `PATH_UPDIR_ALIAS` with `..`.
