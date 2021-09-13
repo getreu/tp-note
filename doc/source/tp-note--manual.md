@@ -1056,7 +1056,21 @@ runs _Tp-Note_ in editing mode.
    sudo nano /etc/mc/mc.ext
    ```
 
-3. Replace the line `default/*` with:
+3. Find the following lines (Debian 11+):
+
+   ```
+   shell/i/.md
+          Include=editor
+   ```
+
+   and disable them:
+
+   ```
+   #shell/i/.md
+   #       Include=editor
+   ```
+
+4. Replace the line `default/*` with:
 
    ```bash
    shell/i/.md
@@ -1066,7 +1080,7 @@ runs _Tp-Note_ in editing mode.
    default/*
    ```
 
-4. Restart all instances of `mc` :
+5. Restart all instances of `mc` :
 
    ```bash
    sudo killall mc
