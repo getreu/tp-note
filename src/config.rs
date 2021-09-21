@@ -135,14 +135,14 @@ pub const FILENAME_EXTENSIONS_HTML: &[&str] = &["htmlnote"];
 /// rendered, thus clickable.
 ///
 /// See also `FILENAME_EXTENSIONS_MD`.
-pub const FILENAME_EXTENSIONS_TXT: &[&str] = &["txtnote", "adoc", "asciidoc"];
+pub const FILENAME_EXTENSIONS_TXT: &[&str] = &["txtnote", "adoc", "asciidoc", "mediawiki", "mw"];
 
 /// The present list contains file extensions of
 /// Tp-Note files for which no viewer is opened
 /// (unless Tp-Note is invoked with `--view`).
 ///
 /// See also `FILENAME_EXTENSIONS_MD`.
-pub const FILENAME_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t", "textile", "twiki", "mediawiki"];
+pub const FILENAME_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t"];
 
 /// By default clipboard support is enabled, can be disabled
 /// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
