@@ -11,7 +11,7 @@ use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::note::Note;
 use crate::viewer::error::ViewerError;
 use crate::viewer::init::LOCALHOST;
-use parse_hyperlinks_html::iterator::{Hyperlink, InlineImage};
+use parse_hyperlinks_extras::html_iterator::HyperlinkOrInlineImage;
 use percent_encoding::percent_decode_str;
 use std::collections::HashSet;
 use std::fs;
@@ -592,7 +592,8 @@ impl ServerThread {
             .and_then(|mut note| {
                 note.render_content(file_path_ext, &CFG.viewer.rendition_tmpl, &js)
             })
-            // Now scan the HTML result for links and store them in a HashMap accessible to all threads.
+            // Now scan the HTML result for links and store them in a HashMap
+            // accessible to all threads.
             .and_then(|html| {
                 let mut doc_local_links = self
                     .doc_local_links
@@ -602,8 +603,9 @@ impl ServerThread {
                 // Populate the list from scratch.
                 doc_local_links.clear();
 
-                // Search for hyperlinks in the HTML rendition of this note.
-                for ((_, _, _), (_, link, _)) in Hyperlink::new(&html) {
+                // Search for hyperlinks and inline images in the HTML rendition
+                // of this note.
+                for ((_, _, _), link) in HyperlinkOrInlineImage::new(&html) {
                     // We skip absolute URLs.
                     if let Ok(url) = Url::parse(&link) {
                         if url.has_host() {
@@ -612,18 +614,6 @@ impl ServerThread {
                     };
                     let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8()?);
                     // Save the hyperlinks for other threads to check against.
-                    doc_local_links.insert(path);
-                }
-                // Search for image links in the HTML rendition of this note.
-                for ((_, _, _), (_, link)) in InlineImage::new(&html) {
-                    // We skip absolute URLs.
-                    if let Ok(url) = Url::parse(&link) {
-                        if url.has_host() {
-                            continue;
-                        };
-                    };
-                    let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8()?);
-                    // Save the image links for other threads to check against.
                     doc_local_links.insert(path);
                 }
 
@@ -648,8 +638,8 @@ impl ServerThread {
             }) {
             // If the rendition went well, return the HTML.
             Ok(html) => Ok(html),
-            // We could not render the note properly. Instead we will render a special error
-            // page and return this instead.
+            // We could not render the note properly. Instead we will render a
+            // special error page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
                 Note::render_erroneous_content(&self.doc_path, &CFG.viewer.error_tmpl, &js, e)
