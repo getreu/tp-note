@@ -11,7 +11,7 @@ use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::note::Note;
 use crate::viewer::error::ViewerError;
 use crate::viewer::init::LOCALHOST;
-use parse_hyperlinks_extras::html_iterator::HyperlinkOrInlineImage;
+use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
 use percent_encoding::percent_decode_str;
 use std::collections::HashSet;
 use std::fs;
@@ -605,7 +605,7 @@ impl ServerThread {
 
                 // Search for hyperlinks and inline images in the HTML rendition
                 // of this note.
-                for ((_, _, _), link) in HyperlinkOrInlineImage::new(&html) {
+                for ((_, _, _), link) in HyperlinkInlineImage::new(&html) {
                     // We skip absolute URLs.
                     if let Ok(url) = Url::parse(&link) {
                         if url.has_host() {
