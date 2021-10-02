@@ -3,8 +3,8 @@
 cargo update
 
 ### Better do these manually
-# rustup update
 # cargo upgrade
 
 rm -r ../target
 rm -r ../doc/build
+

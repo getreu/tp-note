@@ -1,0 +1,12 @@
+#!/bin/bash
+# Win .msi installer
+pushd ../target/wix
+ls *.msi |tail -n 1| xargs -I {} ln -s {} tp-note-latest-x86_64.msi
+cd ../../scripts
+pushd
+
+# Debian package
+pushd ../target/x86_64-unknown-linux-gnu/debian
+ls *.deb |tail -n 1| xargs -I {} ln -s {} tp-note_latest_amd64.deb
+pushd
+

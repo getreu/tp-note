@@ -1,5 +1,6 @@
 #!/bin/sh
 #set -x
+
 cd ..
 find target -mindepth 2 -not -path "*/release/tp-note" \
                         -not -path "*/release/tp-note.exe" \
@@ -14,4 +15,5 @@ find target -mindepth 2 -not -path "*/release/tp-note" \
 rm -r target/debug
 rm -r target/release
 rm -r target/rls
-rm target/.rustc_info.json
+rm target/.rustdoc_fingerprint.json
+rm target/CACHEDIR.TAG

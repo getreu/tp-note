@@ -1,11 +1,16 @@
 #!/bin/sh
+set -x
 
-./10-clear-all-builds
+./10-clear-targets
 ./11-test
 ./12-make-targets
-./13d-make-cross-compile
-./14-make-doc
-./15-build-packages
-./16-symlink-installer
-./17-clean-targets-keep-binaries
-./18-make-dist
+./13-make-win-cross-compile
+./14-make-rustdoc
+./15-make-doc
+./16-prepare-build-dir
+# The next is using Docker:
+./17-make-win-msi-package
+./18-make-deb-package
+./19-symlink-installer
+./20-clear-targets-keep-binaries
+./21-make-dist

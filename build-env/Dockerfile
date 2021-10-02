@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=rust:1.54-slim-buster
 
 FROM $BASE_IMAGE as planner
-WORKDIR /home/getreu/project
+WORKDIR /home/dockeruser/project
 
 RUN apt-get update
 
@@ -11,6 +11,8 @@ RUN apt-get -y install python3 mc
 # Tp-Note needs GTK dev for the `message-box` feature.
 RUN apt-get -y install --no-install-recommends xorg-dev \
         libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
+
+RUN apt-get -y install binutils-mingw-w64
 
 # Add Rust format tool.
 RUN rustup component add rustfmt
@@ -44,11 +46,8 @@ RUN rustup target add x86_64-pc-windows-gnu
 ### use with
 # RUN cargo build --target x86_64-pc-windows-gnu
 
-# Build environment for documentation
-# HTML: see `docbook52htm`
-RUN apt-get -y install pandoc docbook-xsl-ns xsltproc
-# PDF: see `docbook52pdf`
-RUN apt-get -y install pandoc docbook5-xml docbook-xsl-ns xsltproc fop xmlto libxml2-utils xmlstarlet
+# Pack artifacts in archive.
+RUN apt-get -y install zip
 
 COPY . .
 

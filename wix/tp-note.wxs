@@ -21,7 +21,7 @@
   destination for 32-bit versus 64-bit installers. Removal of these lines will
   cause installation errors.
 -->
-<?if $(var.Platform) = x64 ?>
+<?if $(env.Platform) = x64 ?>
     <?define Win64 = "yes" ?>
     <?define PlatformProgramFilesFolder = "ProgramFiles64Folder" ?>
 <?else ?>
@@ -38,7 +38,7 @@
         Manufacturer='Jens Getreu'
         Language='1033'
         Codepage='1252'
-        Version='$(var.Version)'>
+        Version='$(env.Version)'>
 
         <Package Id='*'
             Keywords='Installer'
@@ -46,10 +46,10 @@
             Manufacturer='Jens Getreu'
             InstallerVersion='450'
             Languages='1033'
-            Compressed='yes'
+           Compressed='yes'
             InstallScope='perMachine'
             SummaryCodepage='1252'
-            Platform='$(var.Platform)'/>
+            Platform='$(env.Platform)'/>
 
         <MajorUpgrade
             Schedule='afterInstallInitialize'
@@ -61,7 +61,7 @@
         <Directory Id='TARGETDIR' Name='SourceDir'>
             <Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
                 <Directory Id='APPLICATIONFOLDER' Name='tp-note'>
-                    
+
                     <!--
                       Enabling the license sidecar file in the installer is a four step process:
 
@@ -93,13 +93,13 @@
                                 Action='set'
                                 System='yes'/>
                         </Component>
-						
+
                         <Component Id='binary0' Guid='A8243A93-6019-4637-8173-03869B47EDC2' Win64='$(var.Win64)'>
                             <File
                                 Id='exe0'
                                 Name='tp-note.exe'
                                 DiskId='1'
-                                Source='target\$(var.Profile)\tp-note.exe'
+			        Source='tp-note.exe'
                                 KeyPath='yes'/>
 
 							<RegistryKey Root='HKCR'
@@ -111,18 +111,18 @@
 								<RegistryValue Type='string' Value=''/>
 							</RegistryKey>
 
-							<ProgId Id ="application.tp-note" Description="Tp-Note data files" Advertise="yes" Icon ="TpNoteLogo.ico">
-								<Extension Id ="md" ContentType="application/text">
-									<Verb Id ="open" Sequence='10' Command="open"  Argument="&quot;%1&quot;"/>
+							<ProgId Id="application.tp-note" Description="Tp-Note data files" Advertise="yes" Icon="TpNoteLogo.ico">
+								<Extension Id="md" ContentType="application/text">
+									<Verb Id="open" Sequence='10' Command="open"  Argument="&quot;%1&quot;"/>
 								</Extension>
 								<Extension Id ="rst" ContentType="application/text">
-									<Verb Id ="open" Sequence='10' Command="open"  Argument="&quot;%1&quot;"/>
+									<Verb Id="open" Sequence='10' Command="open"  Argument="&quot;%1&quot;"/>
 								</Extension>
 							</ProgId>
-							<RegistryKey Root='HKCR' Key='.md'> 
+							<RegistryKey Root='HKCR' Key='.md'>
 								<RegistryValue Value='tp-note.mdfile' Type='string' />
 							</RegistryKey>
-							<RegistryKey Root='HKCR' Key='.rst'> 
+							<RegistryKey Root='HKCR' Key='.rst'>
 								<RegistryValue Value='tp-note.rstfile' Type='string' />
 							</RegistryKey>
 							<RegistryKey Root='HKCR' Key='tp-note.mdfile'>
@@ -141,15 +141,15 @@
 										 Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\edit.tp-note.exe">
 								 <RegistryValue Value="Edit Tp-Note" Type="string" />
 							</RegistryKey>
-							<RegistryKey Root="HKLM" 
+							<RegistryKey Root="HKLM"
 										 Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\edit.tp-note.exe\command">
        							 <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;%1&quot;" Type="string" />
 							</RegistryKey>
-							<RegistryKey Root="HKLM" 
+							<RegistryKey Root="HKLM"
 										 Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\view.tp-note.exe">
 								 <RegistryValue Value="View Tp-Note" Type="string" />
 							</RegistryKey>
-							<RegistryKey Root="HKLM" 
+							<RegistryKey Root="HKLM"
 										 Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\view.tp-note.exe\command">
        							 <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;-v&quot; &quot;%1&quot;" Type="string" />
 							</RegistryKey>
@@ -158,15 +158,15 @@
 										 Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\edit.tp-note.exe">
 								 <RegistryValue Value="Edit Tp-Note" Type="string" />
 							</RegistryKey>
-							<RegistryKey Root="HKLM" 
+							<RegistryKey Root="HKLM"
 										 Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\edit.tp-note.exe\command">
        							 <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;%1&quot;" Type="string" />
 							</RegistryKey>
-							<RegistryKey Root="HKLM" 
+							<RegistryKey Root="HKLM"
 										 Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\view.tp-note.exe">
 								 <RegistryValue Value="View Tp-Note" Type="string" />
 							</RegistryKey>
-							<RegistryKey Root="HKLM" 
+							<RegistryKey Root="HKLM"
 										 Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\view.tp-note.exe\command">
        							 <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;-v&quot; &quot;%1&quot;" Type="string" />
 							</RegistryKey>
@@ -186,7 +186,7 @@
             AllowAdvertise='no'
             Display='expand'
             Absent='disallow'>
-            
+
             <!--
               Uncomment the following `ComponentRef` tag to add the license
               sidecar file to the installer.
@@ -211,21 +211,23 @@
 
         <SetProperty Id='ARPINSTALLLOCATION' Value='[APPLICATIONFOLDER]' After='CostFinalize'/>
 
-        
+
         <!--
           Uncomment the following `Icon` and `Property` tags to change the product icon.
 
           The product icon is the graphic that appears in the Add/Remove
           Programs control panel for the application.
         -->
-        <!--<Icon Id='ProductICO' SourceFile='wix\Product.ico'/>-->
-        <!--<Property Id='ARPPRODUCTICON' Value='ProductICO' />-->
-
+        <!--<Icon Id='TpNoteICO' SourceFile='wix\Product.ico'/>-->
+        <!--<Property Id='ARPPRODUCTICON' Value='TpNoteICO' />-->
+	<Icon Id='TpNoteLogo.ico' SourceFile='tp-note.ico'/>
+	<Property Id='ARPPRODUCTICON' Value='TpNoteLogo.ico' />
         <Property Id='ARPHELPLINK' Value='https://blog.getreu.net/projects/tp-note/tp-note--manpage.html'/>
-        
+	<!--
         <UI>
             <UIRef Id='WixUI_FeatureTree'/>
-            
+
+        -->
             <!--
               Enabling the EULA dialog in the installer is a three step process:
 
@@ -236,12 +238,13 @@
                    the path to a RTF file that will be used as the EULA and
                    displayed in the license agreement dialog.
             -->
+       <!--
             <Publish Dialog='WelcomeDlg' Control='Next' Event='NewDialog' Value='CustomizeDlg' Order='99'>1</Publish>
             <Publish Dialog='CustomizeDlg' Control='Back' Event='NewDialog' Value='WelcomeDlg' Order='99'>1</Publish>
 
         </UI>
+        -->
 
-        
         <!--
           Enabling the EULA dialog in the installer requires uncommenting
           the following `WixUILicenseRTF` tag and changing the `Value`
@@ -249,7 +252,7 @@
         -->
         <!-- <WixVariable Id='WixUILicenseRtf' Value='Relative\Path\to\Eula.rtf'/> -->
 
-        
+
         <!--
           Uncomment the next `WixVaraible` tag to customize the installer's
           Graphical User Interface (GUI) and add a custom banner image across
@@ -260,7 +263,7 @@
         -->
         <!--<WixVariable Id='WixUIBannerBmp' Value='wix\Banner.bmp'/>-->
 
-        
+
         <!--
           Uncomment the next `WixVariable` tag to customize the installer's
           Graphical User Interface (GUI) and add a custom image to the first
@@ -270,7 +273,6 @@
           The dialog BMP dimensions are 493 x 312 pixels.
         -->
         <!--<WixVariable Id='WixUIDialogBmp' Value='wix\Dialog.bmp'/>-->
-		<Icon Id="TpNoteLogo.ico" SourceFile='tp-note.ico'/>
     </Product>
 
 </Wix>

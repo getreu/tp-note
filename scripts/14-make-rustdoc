@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cargo doc --no-deps --document-private-items --package tp-note --
+

@@ -1,0 +1,13 @@
+#!/bin/sh
+#set -x
+
+HOST_PROJECT_DIR="$(dirname $(pwd))"
+SCRIPT_DIR="$(basename $(pwd))"
+DOCKER_PROJECT_DIR="/home/dockeruser/project"
+DOCKER_SCRIPT_DIR="$DOCKER_PROJECT_DIR/$SCRIPT_DIR"
+
+docker run  -it --env USER=dockeruser \
+   -v $HOST_PROJECT_DIR:$DOCKER_PROJECT_DIR \
+   build-doc-env_dev \
+   /bin/bash -c "cd $DOCKER_SCRIPT_DIR; ./$1"
+

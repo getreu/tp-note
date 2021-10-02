@@ -1,0 +1,19 @@
+#!/bin/sh
+set -x
+
+### You might want to (re-)build the Docker image before:
+#../build-env/rebuild-dev-image
+
+../build-env/run-script         ./10-clear-targets
+../build-env/run-script         ./11-test
+../build-env/run-script         ./12-make-targets
+../build-env/run-script         ./13-make-win-cross-compile
+../build-env/run-script         ./14-make-rustdoc
+../doc/build-doc-env/run-script ./15-make-doc
+../build-env/run-script         ./16-prepare-build-dir
+# The following starts its own Docker container:
+                                ./17-make-win-msi-package
+../build-env/run-script         ./18-make-deb-package
+../build-env/run-script         ./19-symlink-installer
+../build-env/run-script         ./20-clear-targets-keep-binaries
+../build-env/run-script         ./21-make-dist
