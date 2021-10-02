@@ -438,12 +438,12 @@ impl ServerThread {
                     }
                 }
             }; // end of match path
-        } // Goto 'tcp_connection loop start
+        } // Go to 'tcp_connection loop start
 
         log::trace!(
             "TCP peer port {}: ({} open). Closing this TCP connection.",
             self.stream.peer_addr()?.port(),
-            // We substract 1 for the `manage connection()` thread, and
+            // We subtract 1 for the `manage connection()` thread, and
             // 1 for the thread we will close in a moment.
             Arc::<()>::strong_count(&self.conn_counter) - 2,
         );
