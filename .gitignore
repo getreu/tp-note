@@ -8,4 +8,4 @@ target
 .vscode/
 tests/functional/test_output/
 .idea
-doc/build/
+docs/build/

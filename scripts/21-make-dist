@@ -33,7 +33,7 @@ pack () {
 
 
 ### Main
-# usage: 
+# usage:
 # pack FILE [FILE]
 # pack reports ./package/report.zip
 
@@ -44,6 +44,6 @@ pack () {
 #fi
 #pack "$1" "$OutPath"
 
-cd "../doc/build"
-pack "." "./dist/tp-note.zip" 
+cd "../docs/build"
+pack "." "./dist/tp-note.zip"
 

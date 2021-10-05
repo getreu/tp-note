@@ -34,10 +34,10 @@ of your choice. Although the note’s structure follows “pandoc”-conventions
 is not tied to any specific markup language.
 '''
 assets = [
-    ["doc/build/html/index.html", "usr/share/doc/tp-note/", "644"],
-    ["doc/build/pdf/tp-note--manpage.pdf", "usr/share/doc/tp-note/", "644"],
-    ["doc/build/pdf/tp-note--manual.pdf", "usr/share/doc/tp-note/", "644"],
-    ["doc/build/man/man1/tp-note.1.gz", "usr/share/man/man1/", "644"],
+    ["docs/build/html/index.html", "usr/share/doc/tp-note/", "644"],
+    ["docs/build/pdf/tp-note--manpage.pdf", "usr/share/doc/tp-note/", "644"],
+    ["docs/build/pdf/tp-note--manual.pdf", "usr/share/doc/tp-note/", "644"],
+    ["docs/build/man/man1/tp-note.1.gz", "usr/share/man/man1/", "644"],
     ["target/release/tp-note", "usr/bin/tp-note", "755"],
     ["assets/tp-note.svg", "usr/share/pixmaps/", "644"]
 ]

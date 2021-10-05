@@ -17,3 +17,5 @@ rm -r target/release
 rm -r target/rls
 rm target/.rustdoc_fingerprint.json
 rm target/CACHEDIR.TAG
+rm target/.rustc_info.json
+

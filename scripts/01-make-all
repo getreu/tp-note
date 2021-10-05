@@ -6,7 +6,7 @@ set -x
 ./12-make-targets
 ./13-make-win-cross-compile
 ./14-make-rustdoc
-./15-make-doc
+./15-make-docs
 ./16-prepare-build-dir
 # The next is using Docker:
 ./17-make-win-msi-package
