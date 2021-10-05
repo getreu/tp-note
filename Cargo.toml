@@ -12,8 +12,8 @@ homepage = "https://blog.getreu.net/projects/tp-note/"
 repository = "https://gitlab.com/getreu/tp-note"
 build =  "build.rs"
 
-[target.'cfg(windows)'.build-dependencies]
-winres = "0.1.11"
+[build-dependencies]
+winres = "0.1.12"
 
 [package.metadata.deb]
 maintainer = "Jens Getreu, <getreu@web.de>"
