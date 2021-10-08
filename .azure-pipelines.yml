@@ -31,7 +31,7 @@ stages:
               sudo apt-get update
               sudo apt-get install -m -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
             condition: eq( variables['Agent.OS'], 'Linux' )
-            displayName: Install build dependencies 
+            displayName: Install build dependencies
           - script: |
                 curl -sSf -o rustup-init.exe https://win.rustup.rs
                 rustup-init.exe -y --default-toolchain %RUSTUP_TOOLCHAIN% --default-host x86_64-pc-windows-msvc
@@ -76,7 +76,7 @@ stages:
               sudo apt-get update
               sudo apt-get install -m -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
             condition: eq( variables['Agent.OS'], 'Linux' )
-            displayName: Install build dependencies 
+            displayName: Install build dependencies
           - script: |
               set CARGO_HOME=%USERPROFILE%\.cargo
               curl -sSf -o rustup-init.exe https://win.rustup.rs
@@ -93,7 +93,7 @@ stages:
             displayName: Build
           - script: |
               sudo apt-get install pandoc docbook5-xml docbook-xsl-ns xsltproc fop xmlto libxml2-utils xmlstarlet
-              cd '$(Build.SourcesDirectory)/doc/'
+              cd '$(Build.SourcesDirectory)/docs/'
               './make--all'
             condition: eq( variables['Agent.OS'], 'Linux' )
             displayName: Build documentation
@@ -110,7 +110,7 @@ stages:
             displayName: Copy documentation assets
             condition: eq( variables['Agent.OS'], 'Linux' )
             inputs:
-              sourceFolder: '$(Build.SourcesDirectory)/doc/build/pdf'
+              sourceFolder: '$(Build.SourcesDirectory)/docs/build/pdf'
               contents: '*.pdf'
               targetFolder: '$(Build.ArtifactStagingDirectory)/'
           - task: CopyFiles@2
