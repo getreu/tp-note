@@ -33,12 +33,17 @@ use std::path::{Path, PathBuf};
 use std::str;
 use tera::Tera;
 
-/// The template variable contains the fully qualified file name of
-/// the `<path>` command line argument.
+/// The template variable contains the fully qualified path of the `<path>`
+/// command line argument. If `<path> points to a file, the variable contains the
+/// file path. If it points to a directory, it contains the directory path, or -
+/// if no `path` is given - the current working directory.
 pub const TMPL_VAR_PATH: &str = "path";
 
-/// Contains the fully qualified directory path of the `<path>`
-/// command line argument.
+/// Contains the fully qualified directory path of the `<path>` command line
+/// argument.
+/// If `<path>` points to a file, the last component (the file name) is omitted.
+/// If it points to a directory, the content of this variable is identical to
+/// `TMPL_VAR_PATH`,
 const TMPL_VAR_DIR_PATH: &str = "dir_path";
 
 /// Contains the YAML header (if any) of the clipboard content.

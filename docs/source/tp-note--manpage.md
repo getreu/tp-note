@@ -717,12 +717,15 @@ gives you access to the '`LANG`' environment variable.
 
 In addition _Tp-Note_ defines the following variables:
 
-* '`{{ path }}`' is the canonicalized fully qualified file name corresponding
-  to _Tp-Note_'s positional parameter '`<path>`'. If '`<path>`' points to a
-  directory the content of this variable is identical to '`{{ dir_path }}`'.
+* '`{{ path }}`' is the canonicalized fully qualified path name corresponding
+  to _Tp-Note_'s positional command line parameter '`<path>`'. If none was
+  given on the command line, '`{{ path }}`' contains the current working
+  directory path.
 
-* '`{{ dir_path }}`' is same as above but without filename (which comprises sort
-  tag, file stem and extension).
+* '`{{ dir_path }}`': is identical to  '`{{ path }}`' with one exception: if
+  '`{{ path }}`' points to a file, the last component (the file name) is omitted
+  and only the directory path is retained. If '`{{ path }}`' points to a
+  directory, '`{{ path_dir }}`' equals '`{{ path }}`'.
 
 * '`{{ clipboard }}`' is the complete clipboard text.  In case the clipboard's
   content starts with a YAML header, the latter does not appear in this
@@ -802,29 +805,38 @@ some additional filters, e.g.: '`tag`', '`trim_tag`', '`stem`', '`cut`', '`headi
 
 A filter is always used together with a variable. Here some examples:
 
-* '`{{ path | filename }}`' is the note's filename with sort-tag, stem,
-   copy-counter, dot and extension.
+* '`{{ path | filename }}`' returns the final component of '`{{ path }}`'.
+  If '`{{ path }}`' points to a file, the filter returns the complete
+  filename including its sort-tag, stem, copy-counter, dot and extension. If the
+  '`<path>`' points to a directory, the filter returns the final directory name.
 
-* '`{{ path | tag }}`' is the sort-tag (numerical filename prefix) of the
-  current note on disk, e.g. '`01-23_9-`' or '`20191022-`'. Useful in content
-  templates, for example to create new notes based on a path with a filename
-  (e.g.  '`[tmpl] annotate_content`').
+* '`{{ path | tag }}`' is the sort-tag (numerical filename prefix) of the final
+  component of '`{{ path }}`', e.g. '`01-23_9-`' or '`20191022-`'. It is similar
+  to  '`{{ path | filename }}`' but without returning its stem, copy-counter and
+  extension.
 
-* '`{{ path | stem }}`' is the note's filename without sort-tag, copy-counter
-   and extension.
+* '`{{ path | stem }}`' is similar to  '`{{ path | filename }}`' but without its
+  sort-tag, copy-counter and extension. Only the stem of '`{{ path }}`''s last
+  component is returned.
 
-* '`{{ path | copy_counter }}`' is the note's filename without sort-tag, stem
-   and extension.
+* '`{{ path | copy_counter }}`' is similar to  '`{{ path | filename }}`' but
+  without its sort-tag, stem and extension. Only the copy counter of '`{{ path
+  }}`''s last component is returned.
 
-* '`{{ path | ext }}`' is the note's filename extension without
-  dot (period), e.g. '`md`' od '`mdtxt`'.
+* '`{{ path | ext }}`' is '`{{ path }}`''s file extension without
+  dot (period), e.g. '`md`' or '`mdtxt`'.
 
-* '`{{ path | ext | prepend_dot }}`' is the note's filename extension with
-  dot (period), e.g. '`.md`' od '`.mdtxt`'.
+* '`{{ path | ext | prepend_dot }}`' is '`{{ path }}`''s file extension with
+  dot (period), e.g. '`.md`' or '`.mdtxt`'.
 
-* '`{{ dir_path | trim_tag }}`' the last element of '`dir_path`', which is the
-  parent directory's name of the note on disk. If present, the sort-tag is
-  skipped and only the following characters are retained.
+* '`{{ path | trim_tag }}`' returns the final component of '`path`' which might
+  be a directory name of a file name. Unlike the '`filename`' filter (which also
+  returns the final component), '`trim_tag`' trims the sort tag if there is one.
+
+* '`{{ dir_path | trim_tag }}`' returns the final component of '`dir_path`'
+  (which is the final directory name in '`{{ path }}`'). Unlike the '`filename`'
+  filter (which also returns the final component), '`trim_tag`' trims the sort
+  tag if there is one.
 
 * '`{{ clipboard | cut }}`' is the first 200 bytes from the clipboard.
 
@@ -844,11 +856,11 @@ A filter is always used together with a variable. Here some examples:
   front matter must be Json encoded, so this filter should be the last in all
   lines of the front matter section.
 
-* '`{{ subtitle | sanit }}`' the note's subtitle as defined in its front-matter,
+* '`{{ fm_subtitle | sanit }}`' the note's subtitle as defined in its front-matter,
   sanitized in a filesystem friendly form. Special characters are omitted or
   replaced by '`-`' and '`_`'.
 
-* '`{{ title | sanit(alpha=true) }}`' the note's title as defined in its
+* '`{{ fm_title | sanit(alpha=true) }}`' the note's title as defined in its
   front-matter.  Same as above, but strings starting with a number are prepended
   by an apostrophe to avoid ambiguity (the default separator can be changed with
   '`[filename] sort_tag_extra_separator`').
