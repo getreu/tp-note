@@ -187,7 +187,7 @@ fn main() {
         ));
 
         // Print on console.
-        eprintln!("{}", msg);
+        println!("{}", msg);
 
         // Print in alert box.
         #[cfg(feature = "message-box")]
