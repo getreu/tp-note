@@ -780,6 +780,12 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
         [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\view.tp-note.exe\command]
         @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"-v\" \"%1\""
 
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\export.tp-note.exe]
+        @="Export Tp-Note"
+
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\view.tp-note.exe\command]
+        @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"--export=\" \"%1\""
+
 3. Save the file as:
 
    * File name: `tp-note.reg`
