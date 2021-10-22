@@ -27,7 +27,7 @@ filename is modified. For all other file types, _Tp-Note_ creates a new note
 that annotates the file '`<path>`' points to. If '`<path>`' is a directory (or,
 when omitted the current working directory), a new note is created in that
 directory. After creation, _Tp-Note_ launches an external text editor of your
-choice. At the same time the system's default web browser is started and
+choice. At the same time the system's web browser is started and
 connected to _Tp-Note_'s internal web server. This server watches and
 renders the edited note file and generates a live preview.
 
