@@ -40,8 +40,11 @@ use crate::settings::ARGS;
 #[cfg(feature = "message-box")]
 use crate::settings::RUNS_ON_CONSOLE;
 use crate::workflow::run;
+use chrono::Datelike;
+use chrono::Utc;
 use error::FileError;
 use semver::Version;
+use serde::Serialize;
 use std::path::PathBuf;
 use std::process;
 
@@ -74,6 +77,14 @@ const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.13.7");
 const AUTHOR: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 /// Copyright.
 const COPYRIGHT_FROM: &str = "2020";
+
+#[derive(Debug, PartialEq, Serialize)]
+struct About {
+    version: String,
+    features: Vec<String>,
+    config_file_path: String,
+    copyright: String,
+}
 
 /// Print some error message if `run()` does not complete.
 /// Exit prematurely if the configuration file version does
@@ -160,31 +171,36 @@ fn main() {
     // Process `arg = `--version`.
     // The output is YAML formatted for further automatic processing.
     if ARGS.version {
-        let mut msg = format!("version: {}\n\n", VERSION.unwrap_or("unknown"));
-        msg.push_str("features:\n");
+        #[allow(unused_mut)]
+        let mut features = Vec::new();
         #[cfg(feature = "message-box")]
-        msg.push_str("- message-box\n");
+        features.push("message-box".to_string());
         #[cfg(feature = "viewer")]
-        msg.push_str("- viewer\n");
+        features.push("viewer".to_string());
         #[cfg(feature = "renderer")]
-        msg.push_str("- renderer\n");
+        features.push("renderer".to_string());
         #[cfg(feature = "clipboard")]
-        msg.push_str("- clipboard\n");
-        msg.push('\n');
-        msg.push_str("config_file_path: |\n   ");
-        msg.push_str(
-            &*CONFIG_PATH
+        features.push("clipboard".to_string());
+
+        let about = About {
+            version: VERSION.unwrap_or("unknown").to_string(),
+            features,
+            config_file_path: CONFIG_PATH
                 .as_ref()
                 .unwrap_or(&PathBuf::new())
                 .to_str()
-                .unwrap_or(""),
-        );
-        msg.push_str("\n\n");
-        msg.push_str(&*format!(
-            "copyright: © {} {}\n",
-            COPYRIGHT_FROM,
-            AUTHOR.unwrap(),
-        ));
+                .unwrap_or("")
+                .to_string(),
+            copyright: format!(
+                "© {}-{} {}",
+                COPYRIGHT_FROM,
+                Utc::now().year(),
+                AUTHOR.unwrap()
+            ),
+        };
+
+        let mut msg = serde_yaml::to_string(&about).unwrap_or("unknown".to_string());
+        msg.push_str("---");
 
         // Print on console.
         println!("{}", msg);
