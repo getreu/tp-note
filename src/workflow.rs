@@ -129,6 +129,11 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
     if path.is_dir() {
+        // Error if we are supposed to export a directory.
+        if ARGS.export.is_some() {
+            return Err(WorkflowError::ExportsNeedsNoteFile);
+        };
+
         let (n, new_file_path) = if STDIN.is_empty() && CLIPBOARD.is_empty() {
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
             log::trace!("Applying templates `[tmpl] new_content` and `[tmpl] new_filename`.");
@@ -213,6 +218,11 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             // Check if in sync with its filename:
             Ok(synchronize_filename(path)?)
         } else {
+            // Error if we are supposed to export an unknown file type.
+            if ARGS.export.is_some() {
+                return Err(WorkflowError::ExportsNeedsNoteFile);
+            };
+
             // ANNOTATE FILE: CREATE NEW NOTE WITH TMPL_ANNOTATE_CONTENT TEMPLATE
             // `path` points to a foreign file type that will be annotated.
             log::trace!(
@@ -256,10 +266,6 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
         p.canonicalize()?
     } else {
         env::current_dir()?
-    };
-
-    if ARGS.export.is_some() && !path.is_file() {
-        return Err(WorkflowError::ExportsNeedsNoteFile);
     };
 
     // Depending on this we might not show the viewer later or
