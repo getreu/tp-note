@@ -1,7 +1,4 @@
 //! The viewer feature's error type.
-extern crate httparse;
-extern crate notify;
-
 use crate::error::FileError;
 use crate::error::NoteError;
 use crate::process_ext::ChildExtError;

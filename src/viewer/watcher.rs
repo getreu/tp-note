@@ -1,7 +1,5 @@
 //! Implements the file watcher for the note viewer feature.
 
-extern crate notify;
-
 use crate::config::CFG;
 use crate::viewer::error::ViewerError;
 use crate::viewer::sse_server::SseToken;

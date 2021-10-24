@@ -2,7 +2,7 @@
 name = "tp-note"
 version = "1.13.10"
 authors = ["Jens Getreu <getreu@web.de>"]
-edition = "2018"
+edition = "2021"
 readme = "README.md"
 description = "Minimalist note taking: save and edit your clipboard content as a note file"
 license = "MIT/Apache-2.0"

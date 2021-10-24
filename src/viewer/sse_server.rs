@@ -1,11 +1,6 @@
 //! Server-sent-event server for the note viewer feature.
 //! This module contains also the web browser Javascript client code.
 
-extern crate parse_hyperlinks;
-extern crate percent_encoding;
-extern crate tera;
-extern crate url;
-
 use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::note::Note;
@@ -345,8 +340,7 @@ impl ServerThread {
                 _ => {
                     // Concatenate document directory and URL path.
                     let doc_path = self.doc_path.canonicalize()?;
-                    #[allow(clippy::or_fun_call)]
-                    let doc_dir = doc_path.parent().unwrap_or(Path::new(""));
+                    let doc_dir = doc_path.parent().unwrap_or_else(|| Path::new(""));
 
                     // Strip `/` and convert to `Path`.
                     let path = Path::new(

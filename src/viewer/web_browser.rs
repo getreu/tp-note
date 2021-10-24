@@ -1,7 +1,5 @@
 //! Launch the user's favourite web browser.
 
-extern crate webbrowser;
-
 use crate::config::CFG;
 use crate::error::FileError;
 use crate::process_ext::ChildExt;

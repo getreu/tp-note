@@ -947,8 +947,7 @@ fn config_load_path(config_path: &Path) -> Result<Cfg, FileError> {
         // First check passed.
         Ok(config)
     } else {
-        #[allow(clippy::or_fun_call)]
-        fs::create_dir_all(config_path.parent().unwrap_or(Path::new("")))?;
+        fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
 
         let mut buffer = File::create(config_path)?;
         buffer.write_all(toml::to_string_pretty(&Cfg::default())?.as_bytes())?;

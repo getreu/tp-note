@@ -1,4 +1,5 @@
 #![windows_subsystem = "windows"]
+#![allow(clippy::vec_init_then_push)]
 //! _Tp-Note_ is a note taking tool and a template system, that consistently
 //! synchronizes the note's metadata with its filename. _Tp-Note_ collects
 //! various information about its environment and the clipboard and stores them
@@ -28,7 +29,6 @@ mod settings;
 mod viewer;
 mod workflow;
 
-extern crate semver;
 #[cfg(feature = "message-box")]
 use crate::alert_service::AlertService;
 use crate::config::backup_config_file;
@@ -199,7 +199,7 @@ fn main() {
             ),
         };
 
-        let mut msg = serde_yaml::to_string(&about).unwrap_or("unknown".to_string());
+        let mut msg = serde_yaml::to_string(&about).unwrap_or_else(|_| "unknown".to_string());
         msg.push_str("---");
 
         // Print on console.

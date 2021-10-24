@@ -185,8 +185,7 @@ impl<'a> Content {
     /// Writes the note to disk with `new_file_path`-filename.
     pub fn write_to_disk(&self, new_file_path: &Path) -> Result<(), FileError> {
         // Create missing directories, if there are any.
-        #[allow(clippy::or_fun_call)]
-        create_dir_all(new_file_path.parent().unwrap_or(Path::new("")))?;
+        create_dir_all(new_file_path.parent().unwrap_or_else(|| Path::new("")))?;
 
         let outfile = OpenOptions::new()
             .write(true)
@@ -235,7 +234,7 @@ impl<'a> Content {
 /// This function is expensive as it involves copying the
 /// whole content.
 impl<'a> fmt::Display for ContentRef<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = if self.header.is_empty() {
             self.body.to_string()
         } else {
@@ -247,7 +246,7 @@ impl<'a> fmt::Display for ContentRef<'a> {
 
 /// Delegates the printing to `Display for ContentRef`.
 impl fmt::Display for Content {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.borrow_dependent().fmt(f)
     }
 }
