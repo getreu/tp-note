@@ -1930,7 +1930,7 @@ dependencies = [
 
 [[package]]
 name = "tp-note"
-version = "1.13.9"
+version = "1.13.10"
 dependencies = [
  "atty",
  "chrono",
