@@ -28,6 +28,10 @@ pub enum WorkflowError {
     #[error(transparent)]
     MissingFrontMatterField { source: NoteError },
 
+    /// Forward `InvalidFrontMatterYaml` from `NoteError`.
+    #[error(transparent)]
+    InvalidFrontMatterYaml { source: NoteError },
+
     #[error(transparent)]
     Note {
         #[from]
@@ -204,7 +208,7 @@ pub enum NoteError {
         source: tera::Error,
     },
 
-    /// Remedy: add the misssing field in the note's front matter.
+    /// Remedy: add the missing field in the note's front matter.
     #[error(
         "The document is missing a `{field_name}:` field in its front matter:\n\
          \n\

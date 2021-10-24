@@ -49,6 +49,9 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
         Err(e) if matches!(e, NoteError::MissingFrontMatterField { .. }) => {
             return Err(WorkflowError::MissingFrontMatterField { source: e })
         }
+        Err(e) if matches!(e, NoteError::InvalidFrontMatterYaml { .. }) => {
+            return Err(WorkflowError::InvalidFrontMatterYaml { source: e })
+        }
         Err(e) => return Err(e.into()),
     };
 
@@ -282,16 +285,19 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
             }
         }
         Err(e) => {
-            if path.is_file()
-                && !matches!(e, WorkflowError::Io { .. })
-                && !matches!(e, WorkflowError::File { .. })
-                && !matches!(e, WorkflowError::Template { .. })
+            if (matches!(e, WorkflowError::InvalidFrontMatterYaml { .. })
+                || matches!(e, WorkflowError::MissingFrontMatter { .. })
+                || matches!(e, WorkflowError::MissingFrontMatterField { .. }))
                 && !ARGS.batch
+                && ARGS.export.is_none()
             {
+                // Continue the workflow.
+
                 missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
                     || matches!(e, WorkflowError::MissingFrontMatterField { .. });
 
                 if *LAUNCH_VIEWER || missing_header {
+                    // Inform user when `--debug warn`, then continue workflow.
                     log::warn!(
                         "{}\n\
                         \n\
@@ -300,6 +306,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                         e,
                     );
                 } else {
+                    // Inform user, then continue workflow.
                     log::error!(
                         "{}\n\
                         \n\
@@ -308,7 +315,6 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                     );
                 };
             } else {
-                // If `path` points to a directory, no viewer and no editor can open.
                 // This is a fatal error, so we quit.
                 return Err(e);
             }
