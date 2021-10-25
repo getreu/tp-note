@@ -830,7 +830,7 @@ A filter is always used together with a variable. Here some examples:
   dot (period), e.g. '`.md`' or '`.mdtxt`'.
 
 * '`{{ path | trim_tag }}`' returns the final component of '`path`' which might
-  be a directory name of a file name. Unlike the '`filename`' filter (which also
+  be a directory name or a file name. Unlike the '`filename`' filter (which also
   returns the final component), '`trim_tag`' trims the sort tag if there is one.
 
 * '`{{ dir_path | trim_tag }}`' returns the final component of '`dir_path`'
@@ -1147,7 +1147,10 @@ variable. In addition, one special character
 '`[filename] sort_tag_extra_separator`' (by default '`'`') is sometimes used as
 "end of sort tag marker" to avoid ambiguity.  Note: the above templates and
 character sets must be matched carefully to prevent cyclic filename change!
+To debug your '`[TMPL] sync_filename`' template, create a test note file
+'`test.md`' and invoke _Tp-Note_ with '`--debug trace`' and '`--batch`':
 
+    tp-note --batch --debug trace test.md
 
 ## Store new note files by default in a subdirectory
 
