@@ -112,7 +112,7 @@ pub const FILENAME_EXTENSION_DEFAULT: &str = "md";
 ///
 /// The present list contains file extensions of
 /// Markdown encoded Tp-Note files.
-pub const FILENAME_EXTENSIONS_MD: &[&str] = &["md", "markdown", "markdn", "mdown", "mdtxt"];
+pub const FILENAME_EXTENSIONS_MD: &[&str] = &["txt", "md", "markdown", "markdn", "mdown", "mdtxt"];
 
 /// The present list contains file extensions of
 /// RestructuredText encoded Tp-Note files.

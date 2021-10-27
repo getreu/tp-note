@@ -60,7 +60,7 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.5.1");
 ///    ```
 ///
-/// 2. Require the config file to be of the same version as this binary. Abort if not satisfied.
+/// 2. Require the config file to be of the same version as this binary.
 ///
 ///    ```no_run
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
@@ -72,7 +72,7 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
 ///    ```
 ///
-const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.13.7");
+const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
 /// Authors.
 const AUTHOR: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 /// Copyright.
