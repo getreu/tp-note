@@ -326,7 +326,7 @@ well as with the `--no-default-features` console-only version.
   echo  "[download](<http://blog.getreu.net/_downloads/i3-extensions.zip>)" | tp-note i3-extensions.zip
   ```
 
-  This creates the file `i3-extensions.zip--URL.md` with the
+  This creates the file `i3-extensions.zip--URL.txt` with the
   following content:
 
   ```yaml
@@ -368,7 +368,7 @@ well as with the `--no-default-features` console-only version.
   curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
   ```
 
-  creates the note file `20200910-Jens\ Getreu\'s\ blog.md` with the webpage's
+  creates the note file `20200910-Jens\ Getreu\'s\ blog.txt` with the webpage's
   content.
 
 * Generate a note for a given content with YAML header:
@@ -395,11 +395,11 @@ well as with the `--no-default-features` console-only version.
 * Reformat the header of a note file:
 
   ```bash
-  mv "20200921-My Note.md" "20200921-My Note-(1).md"
-  cat "20200921-My Note-(1).md" | tp-note --batch
+  mv "20200921-My Note.txt" "20200921-My Note-(1).txt"
+  cat "20200921-My Note-(1).txt" | tp-note --batch
   ```
 
-  creates the file `20200921-My Note.md` with a rearranged header
+  creates the file `20200921-My Note.txt` with a rearranged header
   and the same body.
 
 * Launch, for once only, a different text editor.\
@@ -418,7 +418,7 @@ well as with the `--no-default-features` console-only version.
   echo -e "---\nsubtitle: Draft\n---\n# Draft" | tp-note
   ```
 
-  creates the note file `20200925-dev--Draft.md` with the content:
+  creates the note file `20200925-dev--Draft.txt` with the content:
 
   ```yaml
   ---
@@ -435,25 +435,25 @@ well as with the `--no-default-features` console-only version.
 * Synchronize filenames and headers of all note files in the current directory:
 
   ```bash
-  find . -type f -name "*.md" -exec tp-note --batch {} \; >/dev/null
+  find . -type f -name "*.txt" -exec tp-note --batch {} \; >/dev/null
   ```
 
 * Generate an HTML rendition of an existing note file in the same directory:
 
   ```bash
-  tp-note --export='./my_notes' './my_notes/20210209-debug--Note.md'
+  tp-note --export='./my_notes' './my_notes/20210209-debug--Note.txt'
   ```
 
   or, equivalent but shorter:
 
   ```bash
-  tp-note --export= './my_notes/20210209-debug--Note.md'
+  tp-note --export= './my_notes/20210209-debug--Note.txt'
   ```
 
   or, even shorter:
 
   ```bash
-  tp-note -x '' './my_notes/20210209-debug--Note.md'
+  tp-note -x '' './my_notes/20210209-debug--Note.txt'
   ```
 
 * Generate a PDF rendition of an existing note file :
@@ -464,10 +464,10 @@ well as with the `--no-default-features` console-only version.
   sudo apt install wkhtmltopdf
   ```
 
-  Generate the PDF rendition of the existing note `20210122-my--Note.md`:
+  Generate the PDF rendition of the existing note `20210122-my--Note.txt`:
 
   ```bash
-  tp-note -x - '20210122-my--Note.md' | wkhtmltopdf - '20210209-debug--Note.md.pdf'
+  tp-note -x - '20210122-my--Note.txt' | wkhtmltopdf - '20210209-debug--Note.txt.pdf'
   ```
 
 * View and follow hyperlinks in a note file:
@@ -483,11 +483,11 @@ well as with the `--no-default-features` console-only version.
   sudo apt install lynx
   ```
 
-  Convert the existing note `20210122-my_note.md` into HTML and
+  Convert the existing note `20210122-my_note.txt` into HTML and
   open the rendition with `lynx`:
 
   ```bash
-  tp-note -x - '20210122-my_note.md' | lynx --stdin
+  tp-note -x - '20210122-my_note.txt' | lynx --stdin
   ```
 
   The above also works in case _Tp-Note_ was compiled with
@@ -500,7 +500,7 @@ well as with the `--no-default-features` console-only version.
 
 Consider the following _Tp-Note_-file:
 
-    20151208-Make this world a better place--Suggestions.md
+    20151208-Make this world a better place--Suggestions.txt
 
 The filename has 4 parts:
 
@@ -607,7 +607,7 @@ Markdown-editor (see section [Optional customization] and man-page for more
 details).
 
 _Tp-Note_'s note-files can be printed directly from the viewer (web-browser)
-window or first converted into `.html` with `tp-note -x '' mynote.md`. For other
+window or first converted into `.html` with `tp-note -x '' mynote.txt`. For other
 formats e.g. `.docx`, `.odt` and `.pdf` use [Pandoc](https://pandoc.org/)
 or `khtmltopdf`.
 
@@ -768,22 +768,22 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
         [HKEY_CLASSES_ROOT\*\OpenWithList\tp-note.exe]
         @=""
 
-        [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\edit.tp-note.exe]
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\edit.tp-note.exe]
         @="Edit Tp-Note"
 
-        [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\edit.tp-note.exe\command]
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\edit.tp-note.exe\command]
         @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"%1\""
 
-        [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\view.tp-note.exe]
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\view.tp-note.exe]
         @="View Tp-Note"
 
-        [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\view.tp-note.exe\command]
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\view.tp-note.exe\command]
         @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"-v\" \"%1\""
 
-        [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\export.tp-note.exe]
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\export.tp-note.exe]
         @="Export Tp-Note"
 
-        [HKEY_CLASSES_ROOT\SystemFileAssociations\.md\shell\view.tp-note.exe\command]
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\view.tp-note.exe\command]
         @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"--export=\" \"%1\""
 
 3. Save the file as:
@@ -795,9 +795,9 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
 
 4. Double-click on `tp-note.reg` and confirm several times.
 
-5. Assign `tp-note` as default application for `.md`-files
+5. Assign `tp-note` as default application for `.txt`-files
 
-   ![Click-right on .md file to open file properties](images/Properties-Opens_with-Notepad.png){width="8cm"}
+   ![Click-right on .txt file to open file properties](images/Properties-Opens_with-Notepad.png){width="8cm"}
 
    ![Press "Change ..." and choose "tp-note"](images/Properties-Opens_with-tp-note.png){width="8cm"}
 
@@ -888,7 +888,7 @@ Search for `</actions>` and replace it with:
   <name>Tp-Note View</name>
   <command>tp-note -v %f</command>
   <description>Tp-Note View</description>
-  <patterns>*.md;*.rst;*.adoc</patterns>
+  <patterns>*.txt; *.md;*.rst;*.adoc</patterns>
   <text-files/>
 </action>
 </actions>
@@ -966,7 +966,7 @@ Search for `</actions>` and replace it with: [^6]
   <name>Tp-Note Export</name>
   <command>tp-note --export=- %f | sed 's_&lt;_\r&lt;_g' -  | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>
   <description>Tp-Note Export</description>
-  <patterns>*.md;*.rst;*.adoc</patterns>
+  <patterns>*.txt; *.md;*.rst;*.adoc</patterns>
   <text-files/>
 </action>
 </actions>
@@ -1045,7 +1045,7 @@ As _Tp-Note_ stores the note's content in UTF-8 encoded plain text, `mc`
 can be used for full text searches in all note files of a directory.
 Start  the full text search with the keys `[Esc]` `[?]`.
 
-The following instructions configure `mc`'s `[F3]`-key to open `.md` files for
+The following instructions configure `mc`'s `[F3]`-key to open `.txt` files for
 viewing. This is where _Tp-Note_ generates the HTML rendition of the note
 file and opens the rendition with the _Lynx_ web browser. The `[Enter]`-key
 runs _Tp-Note_ in editing mode.
@@ -1065,21 +1065,21 @@ runs _Tp-Note_ in editing mode.
 3. Find the following lines (Debian 11+):
 
    ```
-   shell/i/.md
+   shell/i/.txt
           Include=editor
    ```
 
    and disable them:
 
    ```
-   #shell/i/.md
+   #shell/i/.txt
    #       Include=editor
    ```
 
 4. Replace the line `default/*` with:
 
    ```bash
-   shell/i/.md
+   regex/i/.(txt|md|rst)$
        Open=tp-note %f
        View=if HTML=`tp-note -b -n -x - %f`; then (echo $"HTML" | lynx --stdin); else less    %f; fi
 
@@ -1093,7 +1093,7 @@ runs _Tp-Note_ in editing mode.
    mc
    ```
 
-To test the configuration, navigate to some `.md` note file and
+To test the configuration, navigate to some `.txt` note file and
 press `[F3]` or `[Enter]`.
 
 ---

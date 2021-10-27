@@ -76,7 +76,7 @@ or
 
 creates the document:
 
-    "./03-Favorite Readings/20200306-Favorite Readings--Note.md"
+    "./03-Favorite Readings/20200306-Favorite Readings--Note.txt"
 
 with the content:
 
@@ -138,7 +138,7 @@ or
 
 This creates the document:
 
-    "./03-Favorite Readings/20200306-Who Moved My Cheese--Note.md"
+    "./03-Favorite Readings/20200306-Who Moved My Cheese--Note.txt"
 
 with the content:
 
@@ -177,7 +177,7 @@ the string: "`I recommend:\n[The Rust Book](https://doc.rust-lang.org/book/)`".
 
 This creates the following document:
 
-    ./doc/Lecture 1/20200911-The Rust Book--Notes.md
+    ./doc/Lecture 1/20200911-The Rust Book--Notes.txt
 
 ```yaml
 ---
@@ -298,7 +298,7 @@ To execute the script type:
 ## New note annotating some non-Tp-Note file
 
 When '`<path>`' points to an existing file, whose file-extension is other than
-'`.md`', a new note is created with a similar filename and a reference to the
+'`.txt`', a new note is created with a similar filename and a reference to the
 original file is copied into the new note's body. If the clipboard contains
 some text, it is appended there also. The logic of this is implemented in the
 templates: '`[tmpl] annotate_content`' and '`[tmpl] annotate_filename`'. Once the
@@ -314,7 +314,7 @@ Example:
 
 creates the note:
 
-    "Classic Shell Scripting.pdf--Note.md"
+    "Classic Shell Scripting.pdf--Note.txt"
 
 with the content:
 
@@ -342,13 +342,13 @@ is not empty, its data is appended to the note's body.
 
 If not invoked with '`--batch`', _Tp-Note_ launches an external text editor
 after creating a new note. This also happens when '`<path>`' points to an
-existing '`.md`'-file.
+existing '`.txt`'-file.
 
 Example: edit the note from the previous example:
 
 ``` bash
 > cd "./03-Favorite Readings"
-> tp-note 20200306-Favorite Readings--Note.md
+> tp-note 20200306-Favorite Readings--Note.txt
 ```
 
 
@@ -363,7 +363,7 @@ you to find your notes back quickly.
 Example:
 
 ``` sh
-> tp-note "20200306-Favorite Readings--Note.md"
+> tp-note "20200306-Favorite Readings--Note.txt"
 ```
 
 The way how _Tp-Note_ synchronizes the note's metadata and filename is defined
@@ -374,7 +374,7 @@ the title in the note's YAML metadata section from '`title: "Favorite
 Readings"`' to '`title: "Introduction to bookkeeping"`'.  After closing the text
 editor the filename is automatically updated too and looks like:
 
-    "20200306-Introduction to bookkeeping--Note.md"
+    "20200306-Introduction to bookkeeping--Note.txt"
 
 Note: the sort-tag '`20200306`' has not changed. The filename synchronization
 mechanism by default never does. (See below for more details about filename
@@ -419,16 +419,16 @@ synchronization).
 :   All error messages are dumped in the error stream `stderr` and appear
     on the console from where _Tp-Note_ was launched:
 
-        tp-note.exe --debug info my_note.md
+        tp-note.exe --debug info my_note.txt
 
 :   On Windows the output must be redirected into a file to see it:
 
-        tp-note.exe --debug info my_note.md >debug.txt 2>&1
+        tp-note.exe --debug info my_note.txt >debug.txt 2>&1
 
 :   Alternatively, you can redirect all logfile entries into popup alert
     windows.
 
-        tp-note.exe --popup --debug info my_note.md
+        tp-note.exe --popup --debug info my_note.txt
 
 :   The same can be achieved by setting following configuration file
     variables (especially useful under Windows):
@@ -459,7 +459,7 @@ synchronization).
 
 :   Whenever _Tp-Note_ opens a note file, it synchronizes its YAML-metadata
     with its filename. '`--no-filename-sync`' disables the synchronization.
-    Mainly useful is this flag in scripts for testing '`.md`'-files.
+    Mainly useful is this flag in scripts for testing '`.txt`'-files.
     See section EXIT STATUS for more details.  The section METADATA FILENAME
     SYNCHRONIZATION shows alternative ways to disable synchronisation.
 
@@ -536,11 +536,13 @@ Prepended text is ignored.
 <document-body>
 ```
 
-There is no restriction about the markup language used in the note's text body.
-However, the default templates assume that Markdown and the file extension
-'`.md`' is used. Both can be changed easily by adapting _Tp-Note_'s
-configuration file.
-
+There is no restriction about the markup language being used in the note's text
+body. However, the default templates assume Markdown and the file extension
+'`.txt`'. Both can be changed easily by adapting _Tp-Note_'s configuration file.
+Besides the requirements concerning its header, a valid _Tp-Note_ file must have
+a filename extension that is listed in one of the configuration file variables:
+'`[filename] extension_*`'. The latter also determine which internal markup
+language render is called for _Tp-Note_'s renderer feature.
 
 
 
@@ -548,7 +550,7 @@ configuration file.
 
 Consider the following _Tp-Note_-file:
 
-    20151208-Make this world a better place--Suggestions.md
+    20151208-Make this world a better place--Suggestions.txt
 
 The filename has 4 parts:
 
@@ -582,13 +584,13 @@ part of the *sort-tag* even when they appear in last position.
 A note's filename is in sync with its meta-data, when the following is true
 (slightly simplified, see the configuration file for the complete definition):
 
-> filename on disk without *sort-tag* == '`{{ fm_title }}--{{ fm_subtitle }}.md`'
+> filename on disk without *sort-tag* == '`{{ fm_title }}--{{ fm_subtitle }}.txt`'
   ^[The variables '`{{ fm_title }}`' and '`{{ fm_subtitle }}`' reflect the values in
   the note's metadata.]
 
 Consider the following document with the filename:
 
-    20200306-My file.md
+    20200306-My file.txt
 
 and the content:
 
@@ -602,10 +604,10 @@ lang:       "en_GB.UTF-8"
 ---
 ```
 
-As "`-My file.md`" is not equal to "`-'1. The Beginning--Note.md`",
-_Tp-Note_ will rename the file to "`20200306-'1. The Beginning--Note.md`".
-If the filename had been "`05_02-My file.md`", it would rename it to
-"`05_02-'1. The Beginning--Note.md`".
+As "`-My file.txt`" is not equal to "`-'1. The Beginning--Note.txt`",
+_Tp-Note_ will rename the file to "`20200306-'1. The Beginning--Note.txt`".
+If the filename had been "`05_02-My file.txt`", it would rename it to
+"`05_02-'1. The Beginning--Note.txt`".
 
 Note: When the YAML front matter does not contain the optional '`sort_tag`'
 variable, _Tp-Note_ will never change a sort-tag. Nevertheless, it might
@@ -631,7 +633,7 @@ sort_tag:   "20200307-"
 
 When _Tp-Note_ synchronizes the note's metadata with its filename, it will also
 change the sort-tag from '`20200306-`' to '`20200307-`'. The resulting filename
-becomes "`20200307-'1. The Beginning--Note.md`".
+becomes "`20200307-'1. The Beginning--Note.txt`".
 
 The '`sort_tag`' variable also becomes handy, when you want to create one single
 note without any sort-tag:
@@ -654,7 +656,7 @@ file_ext:   "rst"
 ---
 ```
 
-This will change the file extension from '`.md`' to '`.rst`. The resulting
+This will change the file extension from '`.txt`' to '`.rst`. The resulting
 filename becomes "`20200307-'1. The Beginning--Note.rst`".
 
 Important: '`rst`' must be one of the registered file extensions
@@ -824,10 +826,10 @@ A filter is always used together with a variable. Here some examples:
   }}`''s last component is returned.
 
 * '`{{ path | ext }}`' is '`{{ path }}`''s file extension without
-  dot (period), e.g. '`md`' or '`mdtxt`'.
+  dot (period), e.g. '.txt`' or '`.md`'.
 
 * '`{{ path | ext | prepend_dot }}`' is '`{{ path }}`''s file extension with
-  dot (period), e.g. '`.md`' or '`.mdtxt`'.
+  dot (period), e.g. '`.txt`' or '`.md`'.
 
 * '`{{ path | trim_tag }}`' returns the final component of '`path`' which might
   be a directory name or a file name. Unlike the '`filename`' filter (which also
@@ -1103,7 +1105,7 @@ affect the way new notes are created:
 1. Change the default file extension for new notes from:
 
        [filename]
-       extension_default='md'
+       extension_default=.txt'
 
    to:
 
@@ -1148,9 +1150,9 @@ variable. In addition, one special character
 "end of sort tag marker" to avoid ambiguity.  Note: the above templates and
 character sets must be matched carefully to prevent cyclic filename change!
 To debug your '`[TMPL] sync_filename`' template, create a test note file
-'`test.md`' and invoke _Tp-Note_ with '`--debug trace`' and '`--batch`':
+'`test.txt`' and invoke _Tp-Note_ with '`--debug trace`' and '`--batch`':
 
-    tp-note --batch --debug trace test.md
+    tp-note --batch --debug trace test.txt
 
 ## Store new note files by default in a subdirectory
 
