@@ -987,7 +987,6 @@ Then open _Tp-Note_'s configuration file `tp-note.toml` and search for the
 ```toml
 [app_args]
 editor = [
-    ['typora'],
     [
     'code',
     '-w',
@@ -999,7 +998,7 @@ editor = [
 
 The structure of this variable is a list of lists. Every item in the outer list
 corresponds to one entire command line launching a different text editor, here
-_Typora_ and _VSCode_.  When launching, _Tp-Note_ searches through this list
+_VSCode_.  When launching, _Tp-Note_ searches through this list
 until it finds an installed text editor on the system.
 
 In this example, we register the _Mark Text_ editor at the first place in this
@@ -1014,7 +1013,6 @@ editor = [
     'run',
     'com.github.marktext.marktext',
 ],
-    ['typora'],
     [
     'code',
     '-w',

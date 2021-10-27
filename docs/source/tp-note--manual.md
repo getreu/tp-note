@@ -247,12 +247,13 @@ preferences and configuration:
 
 * [Tp-Note](https://blog.getreu.net/projects/tp-note/)
 * Addon for Firefox: [Copy Selection as Markdown]
-* Markdown editor : [Mark Text](https://marktext.app/) or [Typora](https://typora.io/)
+* Markdown editor : [Mark Text](https://marktext.app/)
+  <!--or [Typora](https://typora.io/)-->
 * Integration with you file-manager as described below.
 
-My favourite Markdown editors at the moment are [Mark Text](https://marktext.app/)
-and [Typora](https://typora.io/). I like their clean and simple interface
-helping me to stay focused on the content while writing.[^3]
+My favourite Markdown editor at the moment is [Mark Text](https://marktext.app/).
+I like its clean and simple interface helping me to stay focused on the content
+while writing.[^3]
 
 When copying extracts from a web-page, I often need to preserve its hyperlinks.
 For this, the Firefox browser addon [Copy Selection as Markdown] is very handy.
@@ -678,11 +679,11 @@ text editor, update Windows to the latest version or install
 
   - [Mark Text](https://marktext.app/) — a simple and elegant Markdown editor
     focused on speed and usability.
-
-  - [Typora — a Markdown editor, Markdown reader.](https://typora.io/)
+  <!-- [Typora — a Markdown editor, Markdown reader.](https://typora.io/)
     Make sure that you have at least version 0.9.89 installed, as this version
     contains a [bugfix](https://github.com/typora/typora-issues/issues/3348)
     required to work properly with _Tp-Note_.
+   -->
 
   - [ReText — Simple but powerful editor for Markdown and reStructuredText](https://github.com/retext-project/retext)
 

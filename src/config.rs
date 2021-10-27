@@ -388,7 +388,9 @@ const APP_ARGS_EDITOR: &[&[&str]] = &[
         "com.github.marktext.marktext",
         "--new-window",
     ],
-    &["typora"],
+    // Disable Typora until bug fix:
+    // https://github.com/typora/typora-issues/issues/4633
+    //    &["typora"],
     &["retext"],
     &["geany", "-s", "-i", "-m"],
     &["gedit", "-w"],
@@ -399,7 +401,9 @@ const APP_ARGS_EDITOR: &[&[&str]] = &[
 ];
 #[cfg(target_family = "windows")]
 const APP_ARGS_EDITOR: &[&[&str]] = &[
-    &["C:\\Program Files\\Typora\\Typora.exe"],
+    // Disable Typora until bug fix:
+    // https://github.com/typora/typora-issues/issues/4633
+    //    &["C:\\Program Files\\Typora\\Typora.exe"],
     &[
         "C:\\Program Files\\Mark Text\\Mark Text.exe",
         "--new-window",
