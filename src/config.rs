@@ -98,7 +98,7 @@ const FILENAME_COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
 pub const FILENAME_COPY_COUNTER_MAX: usize = 400;
 
 /// File extension of new _Tp-Note_ files.
-pub const FILENAME_EXTENSION_DEFAULT: &str = "md";
+pub const FILENAME_EXTENSION_DEFAULT: &str = "txt";
 
 /// The variables `FILENAME_EXTENSIONSS_*` list file extensions that Tp-Note
 /// considers as its own note files.
