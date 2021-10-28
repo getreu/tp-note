@@ -273,7 +273,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
 
     // Depending on this we might not show the viewer later or
     // log an error as WARN level instead of ERROR level.
-    let mut missing_header;
+    let launch_viewer;
 
     match create_new_note_or_synchronize_filename(&path) {
         // Use the new `path` from now on.
@@ -281,7 +281,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
             path = p;
             #[cfg(feature = "viewer")]
             {
-                missing_header = false;
+                launch_viewer = *LAUNCH_VIEWER;
             }
         }
         Err(e) => {
@@ -293,10 +293,13 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
             {
                 // Continue the workflow.
 
-                missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
+                let missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
                     || matches!(e, WorkflowError::MissingFrontMatterField { .. });
 
-                if *LAUNCH_VIEWER || missing_header {
+                launch_viewer = *LAUNCH_VIEWER
+                    && !(missing_header && CFG.viewer.missing_header_disables && !ARGS.view);
+
+                if launch_viewer || missing_header {
                     // Inform user when `--debug warn`, then continue workflow.
                     log::warn!(
                         "{}\n\
@@ -310,7 +313,8 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                     log::error!(
                         "{}\n\
                         \n\
-                        Please correct the error.",
+                        Please correct the front matter if this is supposed \
+                        to be a Tp-Note file. Ignore otherwise.",
                         e,
                     );
                 };
@@ -322,9 +326,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
     };
 
     #[cfg(feature = "viewer")]
-    let viewer_join_handle = if *LAUNCH_VIEWER
-        && !(missing_header && CFG.viewer.missing_header_disables && !ARGS.view)
-    {
+    let viewer_join_handle = if launch_viewer {
         Some(launch_viewer_thread(&path))
     } else {
         None
@@ -345,7 +347,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
             // `path` has changed!
             Ok(p) => path = p,
             Err(e) => {
-                missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
+                let missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
                     || matches!(e, WorkflowError::MissingFrontMatterField { .. });
 
                 if missing_header {
