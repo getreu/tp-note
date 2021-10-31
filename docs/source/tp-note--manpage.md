@@ -76,7 +76,7 @@ or
 
 creates the document:
 
-    "./03-Favorite Readings/20200306-Favorite Readings--Note.txt"
+    "./03-Favorite Readings/20211031-Favorite Readings--Note.txt"
 
 with the content:
 
@@ -85,7 +85,7 @@ with the content:
 title:      "Favorite Readings"
 subtitle:   "Note"
 author:     "getreu"
-date:       "March  6, 2020"
+date:       "2021-10-31"
 lang:       "en_GB.UTF-8"
 ---
 ```
@@ -138,7 +138,7 @@ or
 
 This creates the document:
 
-    "./03-Favorite Readings/20200306-Who Moved My Cheese--Note.txt"
+    "./03-Favorite Readings/20211031-Who Moved My Cheese--Note.txt"
 
 with the content:
 
@@ -147,7 +147,7 @@ with the content:
 title:      "Who Moved My Cheese"
 subtitle:   "Note"
 author:     "getreu"
-date:       "2020-09-11"
+date:       "2021-10-31"
 lang:       "en_GB.UTF-8"
 ---
 
@@ -177,14 +177,14 @@ the string: "`I recommend:\n[The Rust Book](https://doc.rust-lang.org/book/)`".
 
 This creates the following document:
 
-    ./doc/Lecture 1/20200911-The Rust Book--Notes.txt
+    ./doc/Lecture 1/20211031-The Rust Book--Notes.txt
 
 ```yaml
 ---
 title:      "The Rust Book"
 subtitle:   "URL"
 author:     "getreu"
-date:       "2020-09-11"
+date:       "2021-10-31"
 lang:       "en_GB.UTF-8"
 ---
 
@@ -207,7 +207,7 @@ the string: "`---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing`".
 > tp-note
 ```
 
-This creates the note: '`20200911-Todo.mdtxt`' with the following
+This creates the note: '`20211031-Todo.mdtxt`' with the following
 content:
 
 ```yaml
@@ -215,7 +215,7 @@ content:
 title:      "Todo"
 subtitle:   ""
 author:     "getreu"
-date:       "2020-09-11"
+date:       "2021-10-31"
 lang:       "en_GB.UTF-8"
 file_ext:   "mdtxt"
 ---
@@ -246,7 +246,7 @@ note's title:
 curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
 ```
 
-creates the note file '`20200910-Jens Getreu's blog.md`' with the webpage's
+creates the note file '`20211031-Jens Getreu's blog.md`' with the webpage's
 content converted to Markdown:
 
 ```yaml
@@ -254,7 +254,7 @@ content converted to Markdown:
 title:      "Jens Getreu's blog"
 subtitle:   ""
 author:     "getreu"
-date:       "2020-09-11"
+date:       "2021-10-31"
 lang:       "en"
 ---
 
@@ -323,7 +323,7 @@ with the content:
 title:      "Classic Shell Scripting.pdf"
 subtitle:   "Note"
 author:     "getreu"
-date:       "March  6, 2020"
+date:       "2021-10-31"
 lang:       "en_GB.UTF-8"
 ---
 
@@ -348,7 +348,7 @@ Example: edit the note from the previous example:
 
 ``` bash
 > cd "./03-Favorite Readings"
-> tp-note 20200306-Favorite Readings--Note.txt
+> tp-note 20211031-Favorite Readings--Note.txt
 ```
 
 
@@ -376,7 +376,7 @@ editor the filename is automatically updated too and looks like:
 
     "20200306-Introduction to bookkeeping--Note.txt"
 
-Note: the sort-tag '`20200306`' has not changed. The filename synchronization
+Note: the sort tag '`20200306-`' has not changed. The filename synchronization
 mechanism by default never does. (See below for more details about filename
 synchronization).
 
@@ -556,18 +556,18 @@ The filename has 4 parts:
 
     {{ fm_sort_tag }}{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
 
-A so called _sort-tag_ is a numerical prefix at the beginning of the
+A so called _sort tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
-numerical digits and whitespace, a _sort-tag_ can be any combination of
-`-_.`[^sort-tag] and is usually used as
+numerical digits and whitespace, a _sort tag_ can be any combination of
+`-_.`[^sort tag] and is usually used as
 
-* *chronological sort-tag*
+* *chronological sort tag*
 
         20140211-Reminder.doc
         20151208-Manual.pdf
         2015-12-08-Manual.pdf
 
-* or as a *sequence number sort-tag*.
+* or as a *sequence number sort tag*.
 
         02-Invoices
         08-Tax documents
@@ -575,22 +575,22 @@ numerical digits and whitespace, a _sort-tag_ can be any combination of
         09.09-Notes
 
 When _Tp-Note_ creates a new note, it prepends automatically a *chronological
-sort-tag* of today. The '`{{ fm_title }}`' part is usually derived from the
-parent directory name omitting its own *sort-tag*.
+sort tag* of today. The '`{{ fm_title }}`' part is usually derived from the
+parent directory name omitting its own *sort tag*.
 
-[^sort-tag]: The characters '`_`', '`-`', '` `', '`\t`' and '`.`' are considered to be
-part of the *sort-tag* even when they appear in last position.
+[^sort tag]: The characters '`_`', '`-`', '` `', '`\t`' and '`.`' are considered to be
+part of the *sort tag* even when they appear in last position.
 
-A note's filename is in sync with its meta-data, when the following is true
+A note's filename is in sync with its meta data, when the following is true
 (slightly simplified, see the configuration file for the complete definition):
 
-> filename on disk without *sort-tag* == '`{{ fm_title }}--{{ fm_subtitle }}.txt`'
+> filename on disk without *sort tag* == '`{{ fm_title }}--{{ fm_subtitle }}.txt`'
   ^[The variables '`{{ fm_title }}`' and '`{{ fm_subtitle }}`' reflect the values in
   the note's metadata.]
 
 Consider the following document with the filename:
 
-    20200306-My file.txt
+    20211031-My file.txt
 
 and the content:
 
@@ -599,44 +599,44 @@ and the content:
 title:      "1. The Beginning"
 subtitle:   "Note"
 author:     "getreu"
-date:       "March  6, 2020"
+date:       "2021-10-31"
 lang:       "en_GB.UTF-8"
 ---
 ```
 
 As "`-My file.txt`" is not equal to "`-'1. The Beginning--Note.txt`",
-_Tp-Note_ will rename the file to "`20200306-'1. The Beginning--Note.txt`".
+_Tp-Note_ will rename the file to "`20211031-'1. The Beginning--Note.txt`".
 If the filename had been "`05_02-My file.txt`", it would rename it to
 "`05_02-'1. The Beginning--Note.txt`".
 
 Note: When the YAML front matter does not contain the optional '`sort_tag`'
-variable, _Tp-Note_ will never change a sort-tag. Nevertheless, it might
+variable, _Tp-Note_ will never change a sort tag. Nevertheless, it might
 change the rest of the filename!
 
-The reason why by default _Tp-Note_ does not change sort-tags is, that they
+The reason why by default _Tp-Note_ does not change sort tags is, that they
 define their order in the file listing. In general this order is independent of
-the notes content. The simplest way to organize the sort-tags of your files is
-by renaming them directly in your file-system. Nevertheless, in some cases you
+the notes content. The simplest way to organize the sort tags of your files is
+by renaming them directly in your file system. Nevertheless, in some cases you
 might want to have full control over the whole filename through the note's YAML
 front matter. For example, if — for some reason — you have changed the
 document's date in the front matter and you want to change the chronological
-sort tag in one go. In order to overwrite the note's sort-tag on disk, you can
+sort tag in one go. In order to overwrite the note's sort tag on disk, you can
 add a '`sort_tag`' variable to its front matter:
 
 ``` yaml
 ---
 title:      "1. The Beginning"
-date:       "March  7, 2020"
-sort_tag:   "20200307-"
+date:       "2021-10-31"
+sort_tag:   "20211101-"
 ---
 ```
 
 When _Tp-Note_ synchronizes the note's metadata with its filename, it will also
-change the sort-tag from '`20200306-`' to '`20200307-`'. The resulting filename
-becomes "`20200307-'1. The Beginning--Note.txt`".
+change the sort tag from '`20211031-`' to '`20211101-`'. The resulting filename
+becomes "`20211101-'1. The Beginning--Note.txt`".
 
 The '`sort_tag`' variable also becomes handy, when you want to create one single
-note without any sort-tag:
+note without any sort tag:
 
 ``` yaml
 ---
@@ -645,7 +645,7 @@ sort_tag:   ""
 ---
 ```
 
-In the same way, how it is possible to pin the sort-tag of the note from within
+In the same way, how it is possible to pin the sort tag of the note from within
 the note's metadata, you can also change the file extension by adding the
 optional '`file_ext`' variable into the note's front matter:
 
@@ -657,7 +657,7 @@ file_ext:   "rst"
 ```
 
 This will change the file extension from '`.txt`' to '`.rst`. The resulting
-filename becomes "`20200307-'1. The Beginning--Note.rst`".
+filename becomes "`20211101-'1. The Beginning--Note.rst`".
 
 Important: '`rst`' must be one of the registered file extensions
 listed in the '`[filename] extensions_rst`' variables in Tp-Note's configuration
@@ -667,7 +667,7 @@ recognize the note file as such and will not open it in the external text editor
 and viewer.
 
 Note: When a '`sort_tag`' variable is defined in the note's YAML header, you
-should not change the sort-tag string in the note's file name manually by
+should not change the sort tag string in the note's file name manually by
 renaming the file, as your change will be overwritten next time you open the
 note with _Tp-Note_.  However, you can switch back to _Tp-Note_'s default
 behaviour any time by deleting the '`sort_tag`' line in the note's metadata.
@@ -676,7 +676,7 @@ The same applies to the '`file_ext`' variable.
 The metadata filename synchronisation feature can be disabled permanently
 by setting the configuration file variable
 '`[arg_default] no_filename_sync = true`'. To disable this feature for one time
-only, invoke _Tp-note_ with '`--no-filename-sync`'. To exclude a particular note
+only, invoke _Tp-Note_ with '`--no-filename-sync`'. To exclude a particular note
 from filename synchronisation, add the YAML header field '`filename_sync: false`'.
 
 ``` yaml
@@ -809,20 +809,20 @@ A filter is always used together with a variable. Here some examples:
 
 * '`{{ path | filename }}`' returns the final component of '`{{ path }}`'.
   If '`{{ path }}`' points to a file, the filter returns the complete
-  filename including its sort-tag, stem, copy-counter, dot and extension. If the
+  filename including its sort tag, stem, copy-counter, dot and extension. If the
   '`<path>`' points to a directory, the filter returns the final directory name.
 
-* '`{{ path | tag }}`' is the sort-tag (numerical filename prefix) of the final
+* '`{{ path | tag }}`' is the sort tag (numerical filename prefix) of the final
   component of '`{{ path }}`', e.g. '`01-23_9-`' or '`20191022-`'. It is similar
   to  '`{{ path | filename }}`' but without returning its stem, copy-counter and
   extension.
 
 * '`{{ path | stem }}`' is similar to  '`{{ path | filename }}`' but without its
-  sort-tag, copy-counter and extension. Only the stem of '`{{ path }}`''s last
+  sort tag, copy-counter and extension. Only the stem of '`{{ path }}`''s last
   component is returned.
 
 * '`{{ path | copy_counter }}`' is similar to  '`{{ path | filename }}`' but
-  without its sort-tag, stem and extension. Only the copy counter of '`{{ path
+  without its sort tag, stem and extension. Only the copy counter of '`{{ path
   }}`''s last component is returned.
 
 * '`{{ path | ext }}`' is '`{{ path }}`''s file extension without
@@ -908,10 +908,10 @@ Tera filters '`sanit`' and '`sanit(alpha=true)`'.
   For example: "`1 The Show Begins`" becomes "`'1 The Show Begins`".
   This filter should always be applied to the first variable assembling the new
   filename, e.g. '`{{ title | sanit(alpha=true )}`'. This way, it is always
-  possible to distinguish the sort-tag from the actual filename.
+  possible to distinguish the sort tag from the actual filename.
 
 In filename-templates most variables must pass either the '`sanit`' or the
-'`sanit(alpha=true)`' filter. Exception to this rule are the sort-tag variables
+'`sanit(alpha=true)`' filter. Exception to this rule are the sort tag variables
 '`{{ path | tag }}`' and '`{{ dir_path | tag }}`'. As these are guaranteed to
 contain only the filesystem friendly characters: '`0..9 -_`', no additional
 filtering is required. Please note that in this case a '`sanit()`'-filter would
@@ -1141,7 +1141,7 @@ The above change only applies to the current note only.
 *Sort tags* for new notes are generated with the '`[TMPL] *_filename`'
 templates and updated with the '`[TMPL] sync_filename`' template.  By default, the
 characters '`_`', '`-`', _space_, '`\t`' and '`.`' are recognized as being part of
-a *sort-tag* when they appear at the beginning of a filename.  This set of
+a *sort tag* when they appear at the beginning of a filename.  This set of
 characters can be modified with the '`[filename] sort_tag_chars`' configuration
 variable. In addition, one special character
 '`[filename] sort_tag_extra_separator`' (by default '`'`') is sometimes used as
