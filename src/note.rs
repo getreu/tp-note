@@ -711,14 +711,14 @@ mod tests {
 
         assert_eq!(
             expected_front_matter,
-            Note::deserialize_header(&input).unwrap()
+            Note::deserialize_header(input).unwrap()
         );
 
         //
         // Is empty.
         let input = "";
 
-        assert!(Note::deserialize_header(&input).is_err());
+        assert!(Note::deserialize_header(input).is_err());
 
         //
         // forbidden character `x` in `tag`.
@@ -728,7 +728,7 @@ mod tests {
         author: It's me
         sort_tag:    123x4";
 
-        assert!(Note::deserialize_header(&input).is_err());
+        assert!(Note::deserialize_header(input).is_err());
 
         //
         // Not registered file extension.
@@ -739,7 +739,7 @@ mod tests {
         sort_tag:    123x4
         file_ext:    xyz";
 
-        assert!(Note::deserialize_header(&input).is_err());
+        assert!(Note::deserialize_header(input).is_err());
     }
 
     #[test]
