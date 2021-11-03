@@ -20,17 +20,29 @@ pub enum WorkflowError {
         source: NoteError,
     },
 
-    /// Forward `MissingFrontMatter` from `NoteError`.
     #[error(transparent)]
     MissingFrontMatter { source: NoteError },
 
-    /// Forward `MissingFrontMatterField` from `NoteError`.
     #[error(transparent)]
     MissingFrontMatterField { source: NoteError },
 
-    /// Forward `InvalidFrontMatterYaml` from `NoteError`.
     #[error(transparent)]
     InvalidFrontMatterYaml { source: NoteError },
+
+    #[error(transparent)]
+    InvalidStdinYaml { source: NoteError },
+
+    #[error(transparent)]
+    InvalidClipboardYaml { source: NoteError },
+
+    #[error(transparent)]
+    SortTagVarInvalidChar { source: NoteError },
+
+    #[error(transparent)]
+    FileExtNotRegistered { source: NoteError },
+
+    #[error(transparent)]
+    NoHyperlinkFound { source: NoteError },
 
     #[error(transparent)]
     Note {
