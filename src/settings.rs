@@ -4,7 +4,6 @@
 #[cfg(any(feature = "read-clipboard", feature = "viewer"))]
 use crate::config::CFG;
 use crate::content::Content;
-use crate::error::NoteError;
 use atty::{is, Stream};
 #[cfg(feature = "read-clipboard")]
 use clipboard::ClipboardContext;
@@ -183,16 +182,12 @@ pub struct Hyperlink {
 
 impl Hyperlink {
     /// Parse a markdown formatted hyperlink and stores the result in `Self`.
-    pub fn new(input: &str) -> Result<Hyperlink, NoteError> {
-        if let Some((link_name, link_target, link_title)) = first_hyperlink(input) {
-            Ok(Hyperlink {
-                name: link_name.to_string(),
-                target: link_target.to_string(),
-                title: link_title.to_string(),
-            })
-        } else {
-            Err(NoteError::NoHyperlinkFound)
-        }
+    pub fn from(input: &str) -> Option<Hyperlink> {
+        first_hyperlink(input).map(|(link_name, link_target, link_title)| Hyperlink {
+            name: link_name.to_string(),
+            target: link_target.to_string(),
+            title: link_title.to_string(),
+        })
     }
 }
 
@@ -209,10 +204,10 @@ mod tests {
             target: "https://blog.getreu.net".to_string(),
             title: "My blog".to_string(),
         };
-        let output = Hyperlink::new(input);
+        let output = Hyperlink::from(input);
         assert_eq!(expected_output, output.unwrap());
 
-        // Markdown link refernce.
+        // Markdown link reference.
         let input = r#"abc[Homepage][home]abc
                       [home]: https://blog.getreu.net "My blog""#;
         let expected_output = Hyperlink {
@@ -220,7 +215,7 @@ mod tests {
             target: "https://blog.getreu.net".to_string(),
             title: "My blog".to_string(),
         };
-        let output = Hyperlink::new(input);
+        let output = Hyperlink::from(input);
         assert_eq!(expected_output, output.unwrap());
 
         //
@@ -231,7 +226,7 @@ mod tests {
             target: "https://blog.getreu.net".to_string(),
             title: "".to_string(),
         };
-        let output = Hyperlink::new(input);
+        let output = Hyperlink::from(input);
         assert_eq!(expected_output, output.unwrap());
 
         //
@@ -242,7 +237,7 @@ mod tests {
             target: "https://blog.getreu.net".to_string(),
             title: "".to_string(),
         };
-        let output = Hyperlink::new(input);
+        let output = Hyperlink::from(input);
         assert_eq!(expected_output, output.unwrap());
     }
 }

@@ -92,7 +92,7 @@ pub fn linkname_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let p = try_get_value!("linkname", "value", String, value);
 
-    let hyperlink = Hyperlink::new(&p).unwrap_or_default();
+    let hyperlink = Hyperlink::from(&p).unwrap_or_default();
 
     Ok(to_value(&hyperlink.name)?)
 }
@@ -105,7 +105,7 @@ pub fn linktarget_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let p = try_get_value!("linkname", "value", String, value);
 
-    let hyperlink = Hyperlink::new(&p).unwrap_or_default();
+    let hyperlink = Hyperlink::from(&p).unwrap_or_default();
 
     Ok(to_value(&hyperlink.target)?)
 }
@@ -118,7 +118,7 @@ pub fn linktitle_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let p = try_get_value!("linktitle", "value", String, value);
 
-    let hyperlink = Hyperlink::new(&p).unwrap_or_default();
+    let hyperlink = Hyperlink::from(&p).unwrap_or_default();
 
     Ok(to_value(&hyperlink.title)?)
 }

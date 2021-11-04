@@ -30,9 +30,6 @@ pub enum WorkflowError {
     InvalidFrontMatterYaml { source: NoteError },
 
     #[error(transparent)]
-    InvalidStdinYaml { source: NoteError },
-
-    #[error(transparent)]
     InvalidClipboardYaml { source: NoteError },
 
     #[error(transparent)]
@@ -40,9 +37,6 @@ pub enum WorkflowError {
 
     #[error(transparent)]
     FileExtNotRegistered { source: NoteError },
-
-    #[error(transparent)]
-    NoHyperlinkFound { source: NoteError },
 
     #[error(transparent)]
     Note {
@@ -324,11 +318,6 @@ pub enum NoteError {
         #[from]
         source: core::str::Utf8Error,
     },
-
-    /// Remedy: make sure that the hyperlink is formatted in
-    /// a supported markup language.
-    #[error("No hyperlink found in input stream.")]
-    NoHyperlinkFound,
 
     #[error(transparent)]
     Io(#[from] std::io::Error),

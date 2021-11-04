@@ -15,7 +15,6 @@ use crate::settings::CLIPBOARD;
 use crate::settings::LAUNCH_EDITOR;
 use crate::settings::LAUNCH_VIEWER;
 #[cfg(feature = "read-clipboard")]
-use crate::settings::RUNS_ON_CONSOLE;
 use crate::settings::STDIN;
 #[cfg(feature = "viewer")]
 use crate::viewer::launch_viewer_thread;
@@ -56,9 +55,6 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
         }
         Err(e) if matches!(e, NoteError::FileExtNotRegistered { .. }) => {
             return Err(WorkflowError::FileExtNotRegistered { source: e })
-        }
-        Err(e) if matches!(e, NoteError::NoHyperlinkFound { .. }) => {
-            return Err(WorkflowError::NoHyperlinkFound { source: e })
         }
         Err(e) => return Err(e.into()),
     };
@@ -297,8 +293,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                 || matches!(e, WorkflowError::MissingFrontMatter { .. })
                 || matches!(e, WorkflowError::MissingFrontMatterField { .. })
                 || matches!(e, WorkflowError::SortTagVarInvalidChar { .. })
-                || matches!(e, WorkflowError::FileExtNotRegistered { .. })
-                || matches!(e, WorkflowError::NoHyperlinkFound { .. }))
+                || matches!(e, WorkflowError::FileExtNotRegistered { .. }))
                 && !ARGS.batch
                 && ARGS.export.is_none()
             {
