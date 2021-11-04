@@ -35,13 +35,19 @@ use crate::config::backup_config_file;
 use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
 use crate::config::CONFIG_PATH;
+use crate::error::WorkflowError;
 use crate::logger::AppLogger;
 use crate::settings::ARGS;
+use crate::settings::LAUNCH_EDITOR;
 #[cfg(feature = "message-box")]
 use crate::settings::RUNS_ON_CONSOLE;
 use crate::workflow::run;
 use chrono::Datelike;
 use chrono::Utc;
+#[cfg(feature = "read-clipboard")]
+use clipboard::ClipboardContext;
+#[cfg(feature = "read-clipboard")]
+use clipboard::ClipboardProvider;
 use error::FileError;
 use semver::Version;
 use serde::Serialize;
@@ -215,16 +221,15 @@ fn main() {
     };
 
     // Run Tp-Note.
-    match run() {
-        Err(e) => {
-            // Something went wrong.
+    let res = run();
+    match res {
+        Err(ref e) => {
+            // Something went wrong. Inform user.
             log::error!("{}", e);
-            AppLogger::flush();
-            process::exit(1);
         }
 
         // Print `path` unless `--export=-`.
-        Ok(path) => {
+        Ok(ref path) => {
             if let Some(p) = &ARGS.export {
                 if p.as_os_str().to_str().unwrap_or_default() != "-" {
                     println!("{}", path.to_str().unwrap_or_default());
@@ -237,4 +242,22 @@ fn main() {
 
     // Wait if there are still error messages windows open.
     AppLogger::flush();
+
+    // Delete clipboard content.
+    #[cfg(feature = "read-clipboard")]
+    if (*LAUNCH_EDITOR
+        && CFG.clipboard.read_enabled
+        && CFG.clipboard.empty_enabled
+        && !*RUNS_ON_CONSOLE)
+        || matches!(&res, Err(WorkflowError::InvalidClipboardYaml { .. }))
+    {
+        let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
+        if let Some(mut ctx) = ctx {
+            ctx.set_contents("".to_owned()).unwrap_or_default();
+        };
+    }
+
+    if res.is_err() {
+        process::exit(1);
+    }
 }

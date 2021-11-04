@@ -19,10 +19,6 @@ use crate::settings::RUNS_ON_CONSOLE;
 use crate::settings::STDIN;
 #[cfg(feature = "viewer")]
 use crate::viewer::launch_viewer_thread;
-#[cfg(feature = "read-clipboard")]
-use clipboard::ClipboardContext;
-#[cfg(feature = "read-clipboard")]
-use clipboard::ClipboardProvider;
 use std::env;
 use std::fs;
 #[cfg(not(target_family = "windows"))]
@@ -385,15 +381,6 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                 }
             }
         };
-
-        // Delete clipboard content.
-        #[cfg(feature = "read-clipboard")]
-        if CFG.clipboard.read_enabled && CFG.clipboard.empty_enabled && !*RUNS_ON_CONSOLE {
-            let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
-            if let Some(mut ctx) = ctx {
-                ctx.set_contents("".to_owned()).unwrap_or_default();
-            };
-        }
     } else {
         #[cfg(feature = "viewer")]
         if let Some(jh) = viewer_join_handle {
