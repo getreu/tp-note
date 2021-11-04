@@ -48,9 +48,6 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
         Err(e) if matches!(e, NoteError::InvalidFrontMatterYaml { .. }) => {
             return Err(WorkflowError::InvalidFrontMatterYaml { source: e })
         }
-        Err(e) if matches!(e, NoteError::InvalidStdinYaml { .. }) => {
-            return Err(WorkflowError::InvalidStdinYaml { source: e })
-        }
         Err(e) if matches!(e, NoteError::InvalidClipboardYaml { .. }) => {
             return Err(WorkflowError::InvalidClipboardYaml { source: e })
         }
@@ -299,8 +296,6 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
             if (matches!(e, WorkflowError::InvalidFrontMatterYaml { .. })
                 || matches!(e, WorkflowError::MissingFrontMatter { .. })
                 || matches!(e, WorkflowError::MissingFrontMatterField { .. })
-                || matches!(e, WorkflowError::InvalidStdinYaml { .. })
-                || matches!(e, WorkflowError::InvalidClipboardYaml { .. })
                 || matches!(e, WorkflowError::SortTagVarInvalidChar { .. })
                 || matches!(e, WorkflowError::FileExtNotRegistered { .. })
                 || matches!(e, WorkflowError::NoHyperlinkFound { .. }))
