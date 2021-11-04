@@ -223,7 +223,10 @@ pub enum NoteError {
          \t{field_name}: \"My note\"\n\
          \t---\n\
          \tsome text\n\
-         \t~~~~~~~~~~~~~~"
+         \t~~~~~~~~~~~~~~\n\
+         \n\
+         Please correct the front matter if this is supposed \
+         to be a Tp-Note file. Ignore otherwise."
     )]
     MissingFrontMatterField { field_name: String },
 
@@ -263,7 +266,10 @@ pub enum NoteError {
          \t{compulsory_field}: \"My note\"\n\
          \t---\n\
          \tsome text\n\
-         \t~~~~~~~~~~~~~~"
+         \t~~~~~~~~~~~~~~\n\
+         \n\
+         Please correct the front matter if this is supposed \
+         to be a Tp-Note file. Ignore otherwise."
     )]
     MissingFrontMatter { compulsory_field: String },
 

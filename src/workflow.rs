@@ -307,22 +307,10 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
 
                 if launch_viewer || missing_header {
                     // Inform user when `--debug warn`, then continue workflow.
-                    log::warn!(
-                        "{}\n\
-                        \n\
-                        Please correct the front matter if this is supposed \
-                        to be a Tp-Note file. Ignore otherwise.",
-                        e,
-                    );
+                    log::warn!("{}", e,);
                 } else {
                     // Inform user, then continue workflow.
-                    log::error!(
-                        "{}\n\
-                        \n\
-                        Please correct the front matter if this is supposed \
-                        to be a Tp-Note file. Ignore otherwise.",
-                        e,
-                    );
+                    log::error!("{}", e,);
                 };
             } else {
                 // This is a fatal error, so we quit.
