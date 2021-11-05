@@ -229,7 +229,7 @@ compile _Tp-Note_ yourself.
    **Minimal Linux console version without dependencies on GUI libraries**
 
    The full featured version of _Tp-Note_ depends on GUI libraries like GTK
-   that might not be installed on a headless system. Either download the Musl
+   that might not be installable on a headless system. Either download the Musl
    version [x86_64-unknown-linux-musl/release/tp-note] or compile _Tp-Note_
    without default features:
 
