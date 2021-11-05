@@ -249,7 +249,7 @@ preferences and configuration:
 * Addon for Firefox: [Copy Selection as Markdown]
 * Markdown editor : [Mark Text](https://marktext.app/)
   <!--or [Typora](https://typora.io/)-->
-* Integration with you file-manager as described below.
+* Integration with the file-manager (start entry in context menue) as described below.
 
 My favourite Markdown editor at the moment is [Mark Text](https://marktext.app/).
 I like its clean and simple interface helping me to stay focused on the content
