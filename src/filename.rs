@@ -66,7 +66,7 @@ pub fn find_unused(p: PathBuf) -> Result<PathBuf, FileError> {
 
     let mut new_path = p.clone();
 
-    // Try up to 99 sort-tag-extensions, then give up.
+    // Try up to 99 sort tag extensions, then give up.
     for n in 1..FILENAME_COPY_COUNTER_MAX {
         let stem_copy_counter = append_copy_counter(stem, n);
         let filename = assemble(sort_tag, &stem_copy_counter, "", ext);
@@ -98,26 +98,37 @@ pub fn exclude_copy_counter_eq(p1: &Path, p2: &Path) -> bool {
 /// Helper function that decomposes a fully qualified path name
 /// into (`sort_tag`, `stem_copy_counter_ext`, `stem`, `copy_counter`, `ext`).
 pub fn disassemble(p: &Path) -> (&str, &str, &str, &str, &str) {
-    let tag_stem_copy_counter_ext = p
+    let sort_tag_stem_copy_counter_ext = p
         .file_name()
         .unwrap_or_default()
         .to_str()
         .unwrap_or_default();
 
-    let stem_copy_counter_ext = tag_stem_copy_counter_ext
-        .trim_start_matches(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..]);
-
-    let sort_tag = &tag_stem_copy_counter_ext
-        [0..tag_stem_copy_counter_ext.len() - stem_copy_counter_ext.len()];
-
-    let file_stem = p
+    let sort_tag_stem_copy_counter = p
         .file_stem()
         .unwrap_or_default()
         .to_str()
         .unwrap_or_default();
 
+    let stem_copy_counter = sort_tag_stem_copy_counter
+        .trim_start_matches(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..]);
+
+    let sort_tag =
+        &sort_tag_stem_copy_counter[0..sort_tag_stem_copy_counter.len() - stem_copy_counter.len()];
+
     // Trim `sort_tag`.
-    let stem_copy_counter = &file_stem[sort_tag.len()..];
+    let stem_copy_counter_ext = if sort_tag_stem_copy_counter_ext.len() > sort_tag.len() {
+        &sort_tag_stem_copy_counter_ext[sort_tag.len()..]
+    } else {
+        ""
+    };
+
+    // Trim `sort_tag`.
+    let stem_copy_counter = if sort_tag_stem_copy_counter.len() > sort_tag.len() {
+        &sort_tag_stem_copy_counter[sort_tag.len()..]
+    } else {
+        ""
+    };
 
     let stem = remove_copy_counter(stem_copy_counter);
 
@@ -307,6 +318,19 @@ mod tests {
             "md",
         );
         let result = disassemble(Path::new("/my/dir/2021 04 12 my_title--my_subtitle(1).md"));
+        assert_eq!(expected, result);
+
+        let expected = ("2021 04 12 ", "", "", "", "");
+        let result = disassemble(Path::new("/my/dir/2021 04 12 "));
+        assert_eq!(expected, result);
+
+        // This triggers the bug fixed with v1.14.3.
+        let expected = ("2021 04 12 ", ".md", "", "", "md");
+        let result = disassemble(Path::new("/my/dir/2021 04 12 .md"));
+        assert_eq!(expected, result);
+
+        let expected = ("2021 04 12 ", "(9).md", "", "(9)", "md");
+        let result = disassemble(Path::new("/my/dir/2021 04 12 (9).md"));
         assert_eq!(expected, result);
     }
 
