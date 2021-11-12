@@ -340,9 +340,9 @@ is not empty, its data is appended to the note's body.
 
 ## Editing notes
 
-If not invoked with '`--batch`', _Tp-Note_ launches an external text editor
-after creating a new note. This also happens when '`<path>`' points to an
-existing '`.txt`'-file.
+Unless invoked with '`--batch`' or '`--view`', _Tp-Note_ launches an external
+text editor after creating a new note. This also happens when '`<path>`' points
+to an existing '`.txt`'-file.
 
 Example: edit the note from the previous example:
 
