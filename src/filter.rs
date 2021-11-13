@@ -60,7 +60,7 @@ pub fn sanit_filter<S: BuildHasher>(
 
     // Take unmodified `String()`, but format all other types into
     // string.
-    let p = if p.is_string() {
+    let mut p = if p.is_string() {
         Cow::Borrowed(p.as_str().unwrap())
     } else {
         // Convert and format.
@@ -72,13 +72,13 @@ pub fn sanit_filter<S: BuildHasher>(
         None => false,
     };
 
-    let mut filtered = sanitize(&p);
-
     if alpha_required
-        && filtered.starts_with(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..])
+        && p.starts_with(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..])
     {
-        filtered.insert(0, CFG.filename.sort_tag_extra_separator);
+        p.to_mut().insert(0, CFG.filename.sort_tag_extra_separator);
     };
+
+    let filtered = sanitize(&p);
 
     Ok(to_value(&filtered)?)
 }
