@@ -395,6 +395,13 @@ mod tests {
         let result = sanit_filter(&to_value(123.4).unwrap(), &args);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), to_value(&"\'123.4").unwrap());
+
+        let mut args = HashMap::new();
+        args.insert("alpha".to_string(), to_value(true).unwrap());
+        // Note: the dot is trimmed by the `sanitize_filename_reader_friendly` lib.
+        let result = sanit_filter(&to_value(&".pdf").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value(&"'.pdf").unwrap());
     }
     #[test]
     fn test_linkname_linktarget_linktitle_filter() {
