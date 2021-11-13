@@ -78,7 +78,18 @@ pub fn sanit_filter<S: BuildHasher>(
         p.to_mut().insert(0, CFG.filename.sort_tag_extra_separator);
     };
 
-    let filtered = sanitize(&p);
+    let mut filtered = sanitize(&p);
+
+    // Normally `sort_tag_extra_separator` is chosen in way so that `sanitize()` will never
+    // `trim_start()` it. If ever it does, no problem, we add it a second time.
+    if alpha_required
+        // `sort_tag_extra_separator` is guaranteed not to be part of `sort_tag_chars`.
+        // Thus, the following makes sure, that we do not accidentally add two
+        // `sort_tag_extra_separator`.
+        && filtered.starts_with(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..])
+    {
+        filtered.insert(0, CFG.filename.sort_tag_extra_separator);
+    };
 
     Ok(to_value(&filtered)?)
 }
