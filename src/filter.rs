@@ -4,6 +4,7 @@ use crate::filename::disassemble;
 use crate::settings::Hyperlink;
 use lazy_static::lazy_static;
 use sanitize_filename_reader_friendly::sanitize;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::hash::BuildHasher;
 use std::ops::Deref;
@@ -59,13 +60,11 @@ pub fn sanit_filter<S: BuildHasher>(
 
     // Take unmodified `String()`, but format all other types into
     // string.
-    let ps;
-    let pstr = if p.is_string() {
-        p.as_str().unwrap()
+    let p = if p.is_string() {
+        Cow::Borrowed(p.as_str().unwrap())
     } else {
         // Convert and format.
-        ps = p.to_string();
-        ps.as_str()
+        Cow::Owned(p.to_string())
     };
 
     let alpha_required = match args.get("alpha") {
@@ -73,7 +72,7 @@ pub fn sanit_filter<S: BuildHasher>(
         None => false,
     };
 
-    let mut filtered = sanitize(pstr);
+    let mut filtered = sanitize(&p);
 
     if alpha_required
         && filtered.starts_with(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..])
