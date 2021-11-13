@@ -35,11 +35,13 @@ use crate::config::backup_config_file;
 use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
 use crate::config::CONFIG_PATH;
+#[cfg(feature = "read-clipboard")]
 use crate::error::WorkflowError;
 use crate::logger::AppLogger;
 use crate::settings::ARGS;
+#[cfg(feature = "read-clipboard")]
 use crate::settings::LAUNCH_EDITOR;
-#[cfg(feature = "message-box")]
+#[cfg(any(feature = "read-clipboard", feature = "message-box"))]
 use crate::settings::RUNS_ON_CONSOLE;
 use crate::workflow::run;
 use chrono::Datelike;

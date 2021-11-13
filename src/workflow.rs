@@ -14,7 +14,6 @@ use crate::settings::ARGS;
 use crate::settings::CLIPBOARD;
 use crate::settings::LAUNCH_EDITOR;
 use crate::settings::LAUNCH_VIEWER;
-#[cfg(feature = "read-clipboard")]
 use crate::settings::STDIN;
 #[cfg(feature = "viewer")]
 use crate::viewer::launch_viewer_thread;
