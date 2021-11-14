@@ -149,6 +149,9 @@ pub const FILENAME_EXTENSIONS_TXT: &[&str] = &["txtnote", "adoc", "asciidoc", "m
 /// See also `FILENAME_EXTENSIONS_MD`.
 pub const FILENAME_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t"];
 
+/// This a dot by definition.
+pub(crate) const FILENAME_DOTFILE_MARKER: char = '.';
+
 /// By default clipboard support is enabled, can be disabled
 /// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
 /// false.
@@ -943,8 +946,10 @@ fn config_load_path(config_path: &Path) -> Result<Cfg, FileError> {
             .sort_tag_chars
             .find(config.filename.sort_tag_extra_separator)
             .is_some()
+            || config.filename.sort_tag_extra_separator == FILENAME_DOTFILE_MARKER
         {
             return Err(FileError::ConfigFileSortTag {
+                char: FILENAME_DOTFILE_MARKER,
                 chars: config.filename.sort_tag_chars.escape_default().to_string(),
                 extra_separator: config
                     .filename
@@ -955,10 +960,7 @@ fn config_load_path(config_path: &Path) -> Result<Cfg, FileError> {
         }
 
         // Check for obvious configuration errors.
-        if TRIM_LINE_CHARS
-            .find(&config.filename.copy_counter_extra_separator)
-            .is_none()
-        {
+        if !TRIM_LINE_CHARS.contains(&config.filename.copy_counter_extra_separator) {
             return Err(FileError::ConfigFileCopyCounter {
                 chars: TRIM_LINE_CHARS.escape_default().to_string(),
                 extra_separator: config

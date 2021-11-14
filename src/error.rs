@@ -96,10 +96,12 @@ pub enum FileError {
     #[cfg(not(test))]
     #[error(
         "Configuration file error in section `[filename]`:\n\
-        `sort_tag_chars=\"{chars}\"` must not contain:\n\
-        `sort_tag_extra_separator=\"{extra_separator}\"`"
+        `sort_tag_extra_separator=\"{extra_separator}\"\n\
+        must not be one of `sort_tag_chars=\"{chars}\"`\n\
+        or `{char}`"
     )]
     ConfigFileSortTag {
+        char: char,
         chars: String,
         extra_separator: String,
     },

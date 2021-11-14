@@ -1,6 +1,8 @@
 //! Extends the built-in Tera filters.
 use crate::config::CFG;
+use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::filename::disassemble;
+use crate::filename::is_well_formed_filename;
 use crate::settings::Hyperlink;
 use lazy_static::lazy_static;
 use sanitize_filename_reader_friendly::sanitize;
@@ -47,11 +49,14 @@ lazy_static! {
 /// Adds a new filter to Tera templates:
 /// `sanit` or `sanit()` sanitizes a string so that it can be used
 /// to assemble filenames or paths.
-/// In addition, `sanit(alpha=true)` prepends an apostrophe when the result
-/// starts with a number. This way we guaranty that the filename
-/// never starts with a number. We do not allow this, to be able
-/// to distinguish reliably the sort tag from the filename.
-/// This filter converts all input types to `tera::String`.
+/// In addition, `sanit(alpha=true)` prepends the `sort_tag_extra_separator`
+/// when the result starts with one of `sort_tag_chars`, usually a number. This
+/// way we guaranty that the filename never starts with a number. We do not
+/// allow this, to be able to distinguish reliably the sort tag from the
+/// filename. In addition to the above, the filter checks if the string
+/// represents a "well formed" filename. If it is the case, and the filename
+/// starts with a dot, the file is prepended by `sort_tag_extra_separator`.
+/// Note, this filter converts all input types to `tera::String`.
 pub fn sanit_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
@@ -72,26 +77,25 @@ pub fn sanit_filter<S: BuildHasher>(
         None => false,
     };
 
+    // Check if this is a usual filename.
+    if p.starts_with(FILENAME_DOTFILE_MARKER) && is_well_formed_filename(Path::new(&*p)) {
+        p.to_mut().insert(0, CFG.filename.sort_tag_extra_separator);
+    }
+
+    // Sanitize string.
+    p = sanitize(&p).into();
+
+    // Check if we must prepend a `sort_tag_extra_separator`.
     if alpha_required
+        // `sort_tag_extra_separator` is guaranteed not to be part of `sort_tag_chars`.
+        // Thus, the following makes sure, that we do not accidentally add two
+        // `sort_tag_extra_separator`.
         && p.starts_with(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..])
     {
         p.to_mut().insert(0, CFG.filename.sort_tag_extra_separator);
     };
 
-    let mut filtered = sanitize(&p);
-
-    // Normally `sort_tag_extra_separator` is chosen in way so that `sanitize()` will never
-    // `trim_start()` it. If ever it does, no problem, we add it a second time.
-    if alpha_required
-        // `sort_tag_extra_separator` is guaranteed not to be part of `sort_tag_chars`.
-        // Thus, the following makes sure, that we do not accidentally add two
-        // `sort_tag_extra_separator`.
-        && filtered.starts_with(&CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..])
-    {
-        filtered.insert(0, CFG.filename.sort_tag_extra_separator);
-    };
-
-    Ok(to_value(&filtered)?)
+    Ok(to_value(&p)?)
 }
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link

@@ -1,6 +1,7 @@
 //! Helper functions that deal with filenames.
 use crate::config::CFG;
 use crate::config::FILENAME_COPY_COUNTER_MAX;
+use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::FILENAME_LEN_MAX;
 use crate::error::FileError;
 use std::path::Path;
@@ -52,6 +53,38 @@ pub fn shorten_filename(mut file_path: PathBuf) -> PathBuf {
     file_path.set_file_name(note_filename);
 
     file_path
+}
+
+/// Check if a `path` is a "well formed" filename.
+/// We consider it well formed,
+/// * if `path` has no directory components, only
+///   a filename, and
+/// * if the filename is not empty, and
+/// * if the filename is a dot file (len >1 and without whitespace), or
+/// * if the filename has an extension.
+/// A valid extension must not contain whitespace.
+pub fn is_well_formed_filename(path: &Path) -> bool {
+    let filename = path.file_name().unwrap_or_default();
+    let ext = path
+        .extension()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap_or_default();
+
+    let is_filename = !filename.is_empty() && (filename == path);
+
+    let filename = filename.to_str().unwrap_or_default();
+    let is_dot_file = filename.starts_with(FILENAME_DOTFILE_MARKER)
+            // We consider only dot files without whitespace.
+            && (filename == filename.trim())
+            && filename.split_whitespace().count() == 1;
+
+    let has_extension = !ext.is_empty()
+            // Make sure that there is no whitespace.
+            && (ext == ext.trim())
+            && ext.split_whitespace().count() == 1;
+
+    is_filename && (is_dot_file || has_extension)
 }
 
 /// When the path `p` exists on disk already, append some extension
@@ -286,6 +319,41 @@ mod tests {
 
         let output = shorten_filename(PathBuf::from(input));
         assert_eq!(OsString::from(expected), output);
+    }
+
+    #[test]
+    fn test_is_well_formed() {
+        use std::path::Path;
+
+        // Test long filename.
+        assert_eq!(
+            is_well_formed_filename(Path::new("long filename.ext")),
+            true
+        );
+
+        // Test long file path.
+        assert_eq!(
+            is_well_formed_filename(Path::new("long directory name/long filename.ext")),
+            false
+        );
+
+        // Test dot file.
+        assert_eq!(is_well_formed_filename(Path::new(".dotfile")), true);
+
+        // Test dot file with extension.
+        assert_eq!(is_well_formed_filename(Path::new(".dotfile.ext")), true);
+
+        // Test dot file with whitespace.
+        assert_eq!(is_well_formed_filename(Path::new(".dot file")), false);
+
+        // Test space in ext.
+        assert_eq!(is_well_formed_filename(Path::new("filename.e xt")), false);
+
+        // Test space in ext.
+        assert_eq!(is_well_formed_filename(Path::new("filename. ext")), false);
+
+        // Test space in ext.
+        assert_eq!(is_well_formed_filename(Path::new("filename.ext ")), false);
     }
 
     #[test]
