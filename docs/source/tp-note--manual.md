@@ -565,7 +565,7 @@ yourself.
 
 
 
-## Minimum setup with no file manager integration
+## Minimum setup without file manager integration
 
 _Tp-Note_'s template engine can be tested and used without window manager
 integration. This section shows a minimum setup to get started quickly.[^inst]

@@ -9,3 +9,4 @@ target
 tests/functional/test_output/
 .idea
 docs/build/
+docs/source/index.md

@@ -8,5 +8,6 @@ cp ./source/README.md ./source/index.md
 sed -i 's/http.*\.getreu\.net//g' ./source/index.md
 
 ./docbook52html ./source/index.md ./build/html/index.html
-#rm index.md
-./docbook52pdf ./source/README.md ./build/pdf/README.pdf 
+rm index.md
+
+./docbook52pdf ./source/README.md ./build/pdf/README.pdf
