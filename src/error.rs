@@ -104,6 +104,18 @@ pub enum FileError {
         extra_separator: String,
     },
 
+    /// Remedy: restart.
+    #[cfg(not(test))]
+    #[error(
+        "Configuration file error in section `[filename]`:\n\
+        `copy_counter_extra_separator=\"{extra_separator}\"`\n\
+        must be one of: \"{chars}\""
+    )]
+    ConfigFileCopyCounter {
+        chars: String,
+        extra_separator: String,
+    },
+
     /// Should not happen. Please report this bug.
     #[error("No path to configuration file found.")]
     PathToConfigFileNotFound,

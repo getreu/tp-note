@@ -8,6 +8,8 @@ use crate::VERSION;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use log::LevelFilter;
+#[cfg(not(test))]
+use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -53,7 +55,7 @@ pub const FILENAME_LEN_MAX: usize =
     // Most file system's limit.
     255
     // Additional separator.
-    - FILENAME_COPY_COUNTER_EXTRA_SEPARATOR.len()
+    - 1
     // Additional copy counter.
     - FILENAME_COPY_COUNTER_OPENING_BRACKETS.len() - 2 - FILENAME_COPY_COUNTER_CLOSING_BRACKETS.len()
     // Extra spare bytes, in case the user's copy counter is longer.
@@ -73,10 +75,13 @@ const FILENAME_SORT_TAG_CHARS: &str = "0123456789.-_ \t";
 /// when the filename is read next time.
 const FILENAME_SORT_TAG_EXTRA_SEPARATOR: char = '\'';
 
-/// If the stem of a filename ends with a pattern, that is similar
-/// to a copy counter, add this extra separator. Must be `-`, `_`
-/// or any combination of both. Shorter looks better.
-const FILENAME_COPY_COUNTER_EXTRA_SEPARATOR: &str = "-";
+/// If the stem of a filename ends with a pattern, that is
+/// similar to a copy counter, add this extra separator. It
+/// must be one of `TRIM_LINE_CHARS` (see definition in
+/// crate: `sanitize_filename_reader_friendly`) because they
+/// are known not to appear at the end of `sanitze()`'d
+/// strings. This is why they are suitable here.
+const FILENAME_COPY_COUNTER_EXTRA_SEPARATOR: char = '-';
 
 /// Tp-Note may add a counter at the end of the filename when
 /// it can not save a file because the name is taken already.
@@ -944,6 +949,21 @@ fn config_load_path(config_path: &Path) -> Result<Cfg, FileError> {
                 extra_separator: config
                     .filename
                     .sort_tag_extra_separator
+                    .escape_default()
+                    .to_string(),
+            });
+        }
+
+        // Check for obvious configuration errors.
+        if TRIM_LINE_CHARS
+            .find(&config.filename.copy_counter_extra_separator)
+            .is_none()
+        {
+            return Err(FileError::ConfigFileCopyCounter {
+                chars: TRIM_LINE_CHARS.escape_default().to_string(),
+                extra_separator: config
+                    .filename
+                    .copy_counter_extra_separator
                     .escape_default()
                     .to_string(),
             });
