@@ -370,9 +370,10 @@ The way how _Tp-Note_ synchronizes the note's metadata and filename is defined
 in the template '`[tmpl] sync_filename`'.
 
 Once _Tp-Note_ opens the file in an text editor, the note-taker may decide updating
-the title in the note's YAML metadata section from '`title: "Favorite
-Readings"`' to '`title: "Introduction to bookkeeping"`'.  After closing the text
-editor the filename is automatically updated too and looks like:
+the title in the note's YAML metadata section from
+'`title: "Favorite Readings"`' to '`title: "Introduction to bookkeeping"`'.
+After closing the text editor the filename is automatically updated too and
+looks like:
 
     "20200306-Introduction to bookkeeping--Note.txt"
 
@@ -858,14 +859,14 @@ A filter is always used together with a variable. Here some examples:
   front matter must be Json encoded, so this filter should be the last in all
   lines of the front matter section.
 
-* '`{{ fm_subtitle | sanit }}`' the note's subtitle as defined in its front-matter,
-  sanitized in a filesystem friendly form. Special characters are omitted or
-  replaced by '`-`' and '`_`'.
+* '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its
+  front-matter, sanitized in a filesystem friendly form. Special characters are
+  omitted or replaced by '`-`' and '`_`'. See the section _Filename-template
+  convention_ for more details about this filter.
 
-* '`{{ fm_title | sanit(alpha=true) }}`' the note's title as defined in its
-  front-matter.  Same as above, but strings starting with a number are prepended
-  by an apostrophe to avoid ambiguity (the default separator can be changed with
-  '`[filename] sort_tag_extra_separator`').
+* '`{{ fm_title | sanit(alpha=true) }}`' is the note's title as defined in its
+  front-matter.  Same as above, but strings starting with a sort tag are
+  prepended by an apostrophe to avoid ambiguity.
 
 * '`{{ fm_all | remove(var='fm_title') }}`' represents a collection (map) of
   all '`fm_*`' variables, exclusive of the variable '`fm_title`'.
@@ -899,26 +900,34 @@ Tera filters '`sanit`' and '`sanit(alpha=true)`'.
 
 * The '`sanit()`' filter transforms a string in a file system friendly from. This
   is done by replacing forbidden characters like '`?`' and '`\\`' with '`_`'
-  or space. This filter can be used with any variables, but is most useful with
+  or space. This filter can be used with any variable, but is most useful with
   filename-templates. For example, in the '`[tmpl] sync_filename`'
   template, we find the expression '`{{ subtitle | sanit }}`'.
+  Note that the filter recognizes strings that represent a so called dot file
+  name and treats them a little differently by prepending them with an
+  apostrophe: a dot file is a file whose name starts with '`.`' and that does
+  not contain whitespace. It may or may not end with a file extension.
+  The apostrophe preserves the following dot from being filtered.
 
-* '`sanit(alpha=true)`' is similar to the above, with one exception: when a string
-  starts with a digit '`0`-`9`', the whole string is prepended with `'`.
-  For example: "`1 The Show Begins`" becomes "`'1 The Show Begins`".
-  This filter should always be applied to the first variable assembling the new
-  filename, e.g. '`{{ title | sanit(alpha=true )}`'. This way, it is always
-  possible to distinguish the sort tag from the actual filename.
+* '`sanit(alpha=true)`' is similar to the above, with one exception: when a
+  string starts with a digit '`0123456789`' or '`-_ `', the whole string is
+  prepended with `'`. For example: "`1 The Show Begins`" becomes "`'1 The Show
+  Begins`". This filter should always be applied to the first variable
+  assembling the new filename, e.g. '`{{ title | sanit(alpha=true )}`'. This
+  way, it is always possible to distinguish the sort tag from the actual
+  filename. The default sort tag separator '`'`' can be changed with the
+  configuration variable '`[filename] sort_tag_extra_separator`'.
 
 In filename-templates most variables must pass either the '`sanit`' or the
 '`sanit(alpha=true)`' filter. Exception to this rule are the sort tag variables
 '`{{ path | tag }}`' and '`{{ dir_path | tag }}`'. As these are guaranteed to
-contain only the filesystem friendly characters: '`0..9 -_`', no additional
-filtering is required. Please note that in this case a '`sanit()`'-filter would
-needlessly restrict the value range of sort tags as they usually end with a
-'`-`', a character, which the '`sanit`'-filter screens out when it appears in
-leading or trailing position. For this reason no '`sanit`'-filter is allowed
-with '`{{ path | tag }}`' and '`{{ dir_path | tag }}`'.
+contain only the filesystem friendly characters '`0123456789 -_`', no
+additional filtering is required. Please note that in this case a
+'`sanit`'-filter would needlessly restrict the value range of sort tags as
+they usually end with a '`-`', a character, which the '`sanit`'-filter screens
+out when it appears in leading or trailing position. For this reason no
+'`sanit`'-filter is not allowed with '`{{ path | tag }}`' and
+'`{{ dir_path | tag }}`'.
 
 
 ## Register your own text editor
