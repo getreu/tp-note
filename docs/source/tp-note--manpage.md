@@ -401,7 +401,7 @@ synchronization).
 
 **-d** *LEVEL*, **\--debug**=*LEVEL*
 
-:   Print additional log-messages.  The debug level *LEVEL* must be one out of
+:   Print additional log messages.  The debug level *LEVEL* must be one out of
     '`trace`', '`debug`', '`info`', '`warn`', '`error`' (default) or '`off`'.
     The level '`trace`' reports the most detailed information, while '`error`'
     informs only about failures.  A '`warn`' level message means, that not all
@@ -464,15 +464,24 @@ synchronization).
     See section EXIT STATUS for more details.  The section METADATA FILENAME
     SYNCHRONIZATION shows alternative ways to disable synchronisation.
 
+**-t**, **\--tty**
+
+:   _Tp-Note_ tries different heuristics to detect weather a graphic environment
+    is available or not. For example, under Linux, the '`DISPLAY`' environment
+    variable is evaluated. The '`--tty`' flag disables the automatic detection
+    and sets _Tp-Note_ in "console" mode, where only the non GUI editor
+    (see configuration variable: '`[app_args] editor_console`') and no viewer
+    is launched.
+
 **-u**, **\--popup**
 
-: Redirect log-file entries into popup alert windows. Must be used together
-with the **\--debug** option to have an effect. Note, that debug level
-'`error`' conditions will always trigger popup messages, regardless of
-**\--popup** and **\--debug** (unless '`--debug off`'). Popup alert windows
-are queued and will never interrupt _Tp-note_. To better associate a
-particular action with its log events, read through all upcoming popup alert
-windows until they fail to appear.
+:   Redirect log file entries into popup alert windows. Must be used together
+    with the **\--debug** option to have an effect. Note, that debug level
+    '`error`' conditions will always trigger popup messages, regardless of
+    **\--popup** and **\--debug** (unless '`--debug off`'). Popup alert windows
+    are queued and will never interrupt _Tp-note_. To better associate a
+    particular action with its log events, read through all upcoming popup alert
+    windows until they fail to appear.
 
 **-v**, **\--view**
 
