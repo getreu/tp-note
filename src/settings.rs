@@ -159,7 +159,7 @@ lazy_static! {
 
         // Concatenate clipboard content.
         #[cfg(feature="read-clipboard")]
-        if CFG.clipboard.read_enabled && !ARGS.batch {
+        if CFG.clipboard.read_enabled && !*RUNS_ON_CONSOLE && !ARGS.batch {
             if let Ok(ctx) = ClipboardProvider::new(){
                 let mut ctx: ClipboardContext = ctx;
                 if let Ok(s) = ctx.get_contents(){
