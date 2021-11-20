@@ -22,18 +22,22 @@ use structopt::StructOpt;
     name = "Tp-Note",
     about = "Fast note taking with templates and filename synchronization."
 )]
-/// `Tp-Note` is a note-taking-tool and a template system, that consistently
-/// synchronizes the note's meta-data with its filename. `tp-note` collects
-/// various information about its environment and the clipboard and stores them
-/// in variables. New notes are created by filling these variables in predefined
-/// and customizable `Tera`-templates. In case `<path>` points to an existing
-/// `tp-note`-file, the note's meta-data is analysed and, if necessary, its
-/// filename is modified. For all other file types, `tp-note` creates a new note
-/// that annotates the file `<path>` points to. If `<path>` is a directory (or,
-/// when omitted the current working directory), a new note is created in that
-/// directory. After creation, `tp-note` launches an external editor of your
-/// choice. Although the note's structure follows `pandoc`-conventions, it is not
-/// tied to any specific markup language.
+/// _Tp-Note_ is a note taking tool and a template system, that synchronizes the
+/// note's metadata with its filename. _Tp-Note_ collects various information
+/// about its environment and the clipboard and stores it in variables. New
+/// notes are created by filling these variables in predefined and customizable
+/// `Tera`-templates. In case `<path>` points to an existing _Tp-Note_-file, the
+/// note's metadata is analysed and, if necessary, its filename is adjusted.
+/// For all other file types, _Tp-Note_ creates a new note annotating the
+/// file `<path>` points to. If `<path>` is a directory (or, when omitted the
+/// current working directory), a new note is created in that directory. After
+/// creation, _Tp-Note_ launches an external editor of your choice. Although the
+/// templates are written for Markdown, _Tp-Note_ is not tied to
+/// any specific markup language. However, _Tp-Note_ comes with an optional
+/// viewer feature, that currently renders only Markdown, ReStructuredText and
+/// HTML. Note, that there is also some limited support for Asciidoc and
+/// WikiText. The note's rendition with its hyperlinks is live updated and
+/// displayed in the user's webbrowser.
 pub struct Args {
     /// Batch made: does not launch editor or viewer
     #[structopt(long, short = "b")]
