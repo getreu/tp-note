@@ -50,6 +50,9 @@ pub struct Args {
     /// Launches only the editor, no browser
     #[structopt(long, short = "e")]
     pub edit: bool,
+    /// Force console mode: open console editor, no browser
+    #[structopt(long, short = "t")]
+    pub tty: bool,
     /// Lets web server listen to a specific port
     #[structopt(long, short = "p")]
     pub port: Option<u16>,
@@ -126,7 +129,7 @@ lazy_static! {
         #[cfg(not(target_family = "unix"))]
         let display = Some(String::new());
 
-        display.is_none()
+        display.is_none() || ARGS.tty
     };
 }
 
