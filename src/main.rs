@@ -253,9 +253,9 @@ fn main() {
         && !*RUNS_ON_CONSOLE)
         || matches!(&res, Err(WorkflowError::InvalidClipboardYaml { .. }))
     {
-        let ctx: Option<ClipboardContext> = ClipboardProvider::new().ok();
-        if let Some(mut ctx) = ctx {
-            ctx.set_contents("".to_owned()).unwrap_or_default();
+        if let Ok(ctx) = ClipboardProvider::new() {
+            let mut ctx: ClipboardContext = ctx;
+            let _ = ctx.set_contents("".to_owned());
         };
     }
 
