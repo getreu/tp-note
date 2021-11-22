@@ -133,7 +133,7 @@ lazy_static! {
         #[cfg(not(target_family = "unix"))]
         let display = Some(String::new());
 
-        display.is_none() || ARGS.tty
+        display.is_none() || ARGS.tty || CFG.arg_default.tty
     };
 }
 
