@@ -33,7 +33,7 @@
 
     <Product
         Id='*'
-        Name='tp-note'
+        Name='Tp-Note'
         UpgradeCode='660A6875-A136-4728-9586-C10143F932FB'
         Manufacturer='Jens Getreu'
         Language='1033'
@@ -42,7 +42,7 @@
 
         <Package Id='*'
             Keywords='Installer'
-            Description='fast note-taking with templates and filename synchronization'
+            Description='Fast note taking with templates and filename synchronization'
             Manufacturer='Jens Getreu'
             InstallerVersion='450'
             Languages='1033'
@@ -56,11 +56,11 @@
             DowngradeErrorMessage='A newer version of Tp-Note is already installed. Setup will now exit.'/>
 
         <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1'/>
-        <Property Id='DiskPrompt' Value='tp-note Installation'/>
+        <Property Id='DiskPrompt' Value='tpnote Installation'/>
 
         <Directory Id='TARGETDIR' Name='SourceDir'>
             <Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
-                <Directory Id='APPLICATIONFOLDER' Name='tp-note'>
+                <Directory Id='APPLICATIONFOLDER' Name='tpnote'>
 
                     <!--
                       Enabling the license sidecar file in the installer is a four step process:
@@ -97,21 +97,21 @@
                         <Component Id='binary0' Guid='A8243A93-6019-4637-8173-03869B47EDC2' Win64='$(var.Win64)'>
                             <File
                                 Id='exe0'
-                                Name='tp-note.exe'
+                                Name='tpnote.exe'
                                 DiskId='1'
-                Source='tp-note.exe'
+                                Source='tpnote.exe'
                                 KeyPath='yes'/>
 
                             <RegistryKey Root='HKCR'
                                          Key='Directory\Background\shell\New Tp-Note\command'>
-                                <RegistryValue Type='string' Value='C:\Program Files\tp-note\bin\tp-note.exe' />
+                                <RegistryValue Type='string' Value='C:\Program Files\tp-note\bin\tpnote.exe' />
                             </RegistryKey>
                             <RegistryKey Root='HKCR'
-                                         Key='*\OpenWithList\tp-note.exe'>
+                                         Key='*\OpenWithList\tpnote.exe'>
                                 <RegistryValue Type='string' Value=''/>
                             </RegistryKey>
 
-                            <ProgId Id="application.tp-note" Description="Tp-Note data files" Advertise="yes" Icon="TpNoteLogo.ico">
+                            <ProgId Id="application.tpnote" Description="Tp-Note data files" Advertise="yes" Icon="TpNoteLogo.ico">
                                 <Extension Id="md" ContentType="application/text">
                                     <Verb Id="open" Sequence='10' Command="open"  Argument="&quot;%1&quot;"/>
                                 </Extension>
@@ -123,106 +123,106 @@
                                 </Extension>
                             </ProgId>
                             <RegistryKey Root='HKCR' Key='.md'>
-                                <RegistryValue Value='tp-note.mdfile' Type='string' />
+                                <RegistryValue Value='tpnote.mdfile' Type='string' />
                             </RegistryKey>
                             <RegistryKey Root='HKCR' Key='.txt'>
-                                <RegistryValue Value='tp-note.txtfile' Type='string' />
+                                <RegistryValue Value='tpnote.txtfile' Type='string' />
                             </RegistryKey>
                             <RegistryKey Root='HKCR' Key='.rst'>
-                                <RegistryValue Value='tp-note.rstfile' Type='string' />
+                                <RegistryValue Value='tpnote.rstfile' Type='string' />
                             </RegistryKey>
-                            <RegistryKey Root='HKCR' Key='tp-note.mdfile'>
+                            <RegistryKey Root='HKCR' Key='tpnote.mdfile'>
                                 <RegistryValue Value='Tp-Note file' Type='string' />
                              </RegistryKey>
-                            <RegistryKey Root='HKCR' Key='tp-note.mdfile\DefaultIcon'>
-                                <RegistryValue Value='[APPLICATIONFOLDER]bin\tp-note.exe,1' Type ='string' />
+                            <RegistryKey Root='HKCR' Key='tpnote.mdfile\DefaultIcon'>
+                                <RegistryValue Value='[APPLICATIONFOLDER]bin\tpnote.exe,1' Type ='string' />
                              </RegistryKey>
-                            <RegistryKey Root='HKCR' Key='tp-note.txtfile'>
+                            <RegistryKey Root='HKCR' Key='tpnote.txtfile'>
                                 <RegistryValue Value='Tp-Note file' Type='string' />
                              </RegistryKey>
-                            <RegistryKey Root='HKCR' Key='tp-note.txtfile\DefaultIcon'>
-                                <RegistryValue Value='[APPLICATIONFOLDER]bin\tp-note.exe,1' Type ='string' />
+                            <RegistryKey Root='HKCR' Key='tpnote.txtfile\DefaultIcon'>
+                                <RegistryValue Value='[APPLICATIONFOLDER]bin\tpnote.exe,1' Type ='string' />
                              </RegistryKey>
-                            <RegistryKey Root='HKCR' Key='tp-note.rstfile'>
+                            <RegistryKey Root='HKCR' Key='tpnote.rstfile'>
                                 <RegistryValue Value='Tp-Note file' Type='string' />
                              </RegistryKey>
-                            <RegistryKey Root='HKCR' Key='tp-note.rstfile\DefaultIcon'>
-                                <RegistryValue Value='[APPLICATIONFOLDER]bin\tp-note.exe,1' Type ='string' />
+                            <RegistryKey Root='HKCR' Key='tpnote.rstfile\DefaultIcon'>
+                                <RegistryValue Value='[APPLICATIONFOLDER]bin\tpnote.exe,1' Type ='string' />
                             </RegistryKey>
 
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\edit.tp-note.exe">
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\edit.tpnote.exe">
                                  <RegistryValue Value="Edit Tp-Note" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\edit.tp-note.exe\command">
-                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;%1&quot;" Type="string" />
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\edit.tpnote.exe\command">
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\view.tp-note.exe">
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\view.tpnote.exe">
                                  <RegistryValue Value="View Tp-Note" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\view.tp-note.exe\command">
-                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;-v&quot; &quot;%1&quot;" Type="string" />
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\view.tpnote.exe\command">
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;-v&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\export.tp-note.exe">
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\export.tpnote.exe">
                                  <RegistryValue Value="Export Tp-Note" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\export.tp-note.exe\command">
-                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;--export=&quot; &quot;%1&quot;" Type="string" />
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\export.tpnote.exe\command">
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;--export=&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
 
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\edit.tp-note.exe">
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\edit.tpnote.exe">
                                  <RegistryValue Value="Edit Tp-Note" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\edit.tp-note.exe\command">
-                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;%1&quot;" Type="string" />
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\edit.tpnote.exe\command">
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\view.tp-note.exe">
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\view.tpnote.exe">
                                  <RegistryValue Value="View Tp-Note" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\view.tp-note.exe\command">
-                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;-v&quot; &quot;%1&quot;" Type="string" />
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\view.tpnote.exe\command">
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;-v&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\export.tp-note.exe">
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\export.tpnote.exe">
                                  <RegistryValue Value="Export Tp-Note" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\export.tp-note.exe\command">
-                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;--export=&quot; &quot;%1&quot;" Type="string" />
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\export.tpnote.exe\command">
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;--export=&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
 
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\edit.tp-note.exe">
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\edit.tpnote.exe">
                                  <RegistryValue Value="Edit Tp-Note" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\edit.tp-note.exe\command">
-                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;%1&quot;" Type="string" />
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\edit.tpnote.exe\command">
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\view.tp-note.exe">
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\view.tpnote.exe">
                                  <RegistryValue Value="View Tp-Note" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\view.tp-note.exe\command">
-                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;-v&quot; &quot;%1&quot;" Type="string" />
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\view.tpnote.exe\command">
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;-v&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\export.tp-note.exe">
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\export.tpnote.exe">
                                  <RegistryValue Value="Export Tp-Note" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
-                                         Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\export.tp-note.exe\command">
-                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tp-note.exe&quot; &quot;--export=&quot; &quot;%1&quot;" Type="string" />
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\export.tpnote.exe\command">
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;--export=&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
 
                         </Component>

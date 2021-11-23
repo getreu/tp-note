@@ -22,10 +22,10 @@ use std::path::PathBuf;
 use std::sync::RwLock;
 
 /// Name of this executable (without the Windows ".exe" extension).
-const CURRENT_EXE: &str = "tp-note";
+const CURRENT_EXE: &str = "tpnote";
 
 /// Tp-Note's configuration file filename.
-const CONFIG_FILENAME: &str = "tp-note.toml";
+const CONFIG_FILENAME: &str = "tpnote.toml";
 
 /// Default value for command line option `--debug`.  Determines the maximum
 /// debug level events must have, to be logged.  If the command line option

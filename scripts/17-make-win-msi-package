@@ -4,7 +4,8 @@ cd ..
 PROJECT_DIR="$(pwd)"
 BUILD_DIR="$PROJECT_DIR/target/wix"
 
-BIN_NAME="tp-note"
+PACKAGE_NAME="tp-note"
+BIN_NAME="tpnote"
 EXE_NAME="$BIN_NAME.exe"
 BIN_VERSION=$(grep -e '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
 
@@ -18,7 +19,7 @@ docker run --rm --env Platform=x64 --env Version=$BIN_VERSION \
     candle "$BIN_NAME.wxs"
 
 docker run -i --rm -v "$BUILD_DIR:/wix" dactiv/wix \
-   light -out "$BIN_NAME-$BIN_VERSION-x86_64.msi" "$BIN_NAME.wixobj" -sval
+   light -out "$PACKAGE_NAME-$BIN_VERSION-x86_64.msi" "$BIN_NAME.wixobj" -sval
 
 
 

@@ -4,7 +4,7 @@ cd ..
 PROJECT_DIR="$(pwd)"
 BUILD_DIR="$PROJECT_DIR/target/wix"
 
-BIN_NAME="tp-note"
+BIN_NAME="tpnote"
 EXE_NAME="$BIN_NAME.exe"
 BIN_VERSION=$(grep -e '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
 
@@ -13,6 +13,6 @@ mkdir "$BUILD_DIR"
 chmod 777 "$BUILD_DIR"
 
 cp "./tp-note.ico" "$BUILD_DIR"
-cp "./target/x86_64-pc-windows-gnu/release/tp-note.exe" "$BUILD_DIR"
-cp "./wix/tp-note.wxs" "$BUILD_DIR"
+cp "./target/x86_64-pc-windows-gnu/release/$EXE_NAME" "$BUILD_DIR"
+cp "./wix/tpnote.wxs" "$BUILD_DIR"
 

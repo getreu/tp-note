@@ -88,7 +88,7 @@ stages:
           - script: |
               rustup target add $TARGET
               cargo build --release --target $TARGET
-              strip '$(Build.SourcesDirectory)/target/$(TARGET)/release/tp-note'
+              strip '$(Build.SourcesDirectory)/target/$(TARGET)/release/tpnote'
             condition: ne( variables['Agent.OS'], 'Windows_NT' )
             displayName: Build
           - script: |
@@ -118,7 +118,7 @@ stages:
             condition: ne( variables['Agent.OS'], 'Windows_NT' )
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)/target/$(TARGET)/release'
-              contents: tp-note
+              contents: tpnote
               targetFolder: '$(Build.BinariesDirectory)/'
           - task: CopyFiles@2
             displayName: Copy deb package
@@ -132,7 +132,7 @@ stages:
             condition: eq( variables['Agent.OS'], 'Windows_NT' )
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)/target/$(TARGET)/release'
-              contents: tp-note.exe
+              contents: tpnote.exe
               targetFolder: '$(Build.BinariesDirectory)/'
 
           - task: ArchiveFiles@2
@@ -147,7 +147,7 @@ stages:
             displayName: Gather assets
             condition: eq( variables['Agent.OS'], 'Windows_NT' )
             inputs:
-              rootFolderOrFile: '$(Build.BinariesDirectory)/tp-note.exe'
+              rootFolderOrFile: '$(Build.BinariesDirectory)/tpnote.exe'
               archiveType: 'zip'
               archiveFile: '$(Build.ArtifactStagingDirectory)/tp-note-$(Build.SourceBranchName)-$(TARGET).zip'
 

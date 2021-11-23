@@ -15,6 +15,10 @@ build =  "build.rs"
 [build-dependencies]
 winres = "0.1.12"
 
+[[bin]]
+name = "tpnote"
+path = "src/main.rs"
+
 [package.metadata.deb]
 maintainer = "Jens Getreu, <getreu@web.de>"
 copyright = "2015-2020, Jens Getreu <getreu@web.de>"
@@ -41,8 +45,8 @@ assets = [
     ["docs/build/html/index.html", "usr/share/doc/tp-note/", "644"],
     ["docs/build/pdf/tp-note--manpage.pdf", "usr/share/doc/tp-note/", "644"],
     ["docs/build/pdf/tp-note--manual.pdf", "usr/share/doc/tp-note/", "644"],
-    ["docs/build/man/man1/tp-note.1.gz", "usr/share/man/man1/", "644"],
-    ["target/release/tp-note", "usr/bin/tp-note", "755"],
+    ["docs/build/man/man1/tpnote.1.gz", "usr/share/man/man1/", "644"],
+    ["target/release/tpnote", "usr/bin/tpnote", "755"],
     ["assets/tp-note.svg", "usr/share/pixmaps/", "644"]
 ]
 
