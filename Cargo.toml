@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.14.4"
+version = "1.15.0"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2021"
 readme = "README.md"
@@ -88,9 +88,9 @@ rst_parser = { version = "0.4.0", optional = true }
 rst_renderer = { version = "0.4.0", optional = true }
 sanitize-filename-reader-friendly = "2.2.1"
 # sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
-self_cell = "0.10.1"
+self_cell = "0.10.2"
 semver = "1.0.4"
-serde_json = "1.0.71"
+serde_json = "1.0.72"
 serde = { version = "1.0.130", features = ["derive"] }
 serde_yaml = "0.8.21"
 structopt = "0.3.25"
