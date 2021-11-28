@@ -4,7 +4,7 @@ cd ..
 PROJECT_DIR="$(pwd)"
 BUILD_DIR="$PROJECT_DIR/target/wix"
 
-PACKAGE_NAME="tp-note"
+PACKAGE_NAME="tpnote"
 BIN_NAME="tpnote"
 EXE_NAME="$BIN_NAME.exe"
 BIN_VERSION=$(grep -e '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/')

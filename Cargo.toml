@@ -20,6 +20,7 @@ name = "tpnote"
 path = "src/main.rs"
 
 [package.metadata.deb]
+name = "tpnote"
 maintainer = "Jens Getreu, <getreu@web.de>"
 copyright = "2015-2020, Jens Getreu <getreu@web.de>"
 depends = "$auto"
@@ -42,9 +43,9 @@ WikiText. The note's rendition with its hyperlinks is live updated and
 displayed in the user's webbrowser.
 '''
 assets = [
-    ["docs/build/html/index.html", "usr/share/doc/tp-note/", "644"],
-    ["docs/build/pdf/tp-note--manpage.pdf", "usr/share/doc/tp-note/", "644"],
-    ["docs/build/pdf/tp-note--manual.pdf", "usr/share/doc/tp-note/", "644"],
+    ["docs/build/html/index.html", "usr/share/doc/tpnote/", "644"],
+    ["docs/build/pdf/tp-note--manpage.pdf", "usr/share/doc/tpnote/", "644"],
+    ["docs/build/pdf/tp-note--manual.pdf", "usr/share/doc/tpnote/", "644"],
     ["docs/build/man/man1/tpnote.1.gz", "usr/share/man/man1/", "644"],
     ["target/release/tpnote", "usr/bin/tpnote", "755"],
     ["assets/tp-note.svg", "usr/share/pixmaps/", "644"]

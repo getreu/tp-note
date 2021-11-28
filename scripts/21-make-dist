@@ -45,5 +45,5 @@ pack () {
 #pack "$1" "$OutPath"
 
 cd "../docs/build"
-pack "." "./dist/tp-note.zip"
+pack "." "./dist/tpnote.zip"
 

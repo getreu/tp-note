@@ -96,7 +96,7 @@ Repository:
 
 * Installer package for Windows:
 
-  [tp-note-latest-x86_64.msi]
+  [tpnote-latest-x86_64.msi]
 
   As this early version of the Windows installer is not signed yet, Windows
   will show the error message “Windows protected your PC”. As a work-around,
@@ -109,7 +109,7 @@ Repository:
 
 * Package compiled for Debian 10+ (Buster):
 
-  [x86_64-unknown-linux-gnu/debian/tp-note_latest_amd64.deb]
+  [x86_64-unknown-linux-gnu/debian/tpnote_latest_amd64.deb]
 
 ### Various binaries for Windows, MacOS and Linux
 
@@ -146,7 +146,7 @@ Repository:
 
 * Zipfile with all binaries and documentation:
 
-  - [tp-note all]
+  - [Tp-Note all]
 
 
 ## Installation
@@ -154,7 +154,7 @@ Repository:
 Depending on the availability of installer packages for your operating system,
 the installation process is more or less automated. For Windows users the fully
 automated installation package
-[tp-note-latest-x86_64.msi]
+[tpnote-latest-x86_64.msi]
 is available. For more information, please consult the [Distribution section](#distribution)
 above and the [Installation section]
 in _Tp-Note_'s manual.
@@ -294,16 +294,16 @@ Copyright:
 [Constants in API documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tpnote/config/index.html#constants
 [Tp-Note on Gitlab]: https://gitlab.com/getreu/tp-note
 [Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
-[tp-note-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tp-note-latest-x86_64.msi
+[tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
 [VirusTotal]: https://www.virustotal.com/gui/home/upload
-[x86_64-unknown-linux-gnu/debian/tp-note_latest_amd64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_latest_amd64.deb
+[x86_64-unknown-linux-gnu/debian/tpnote_latest_amd64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tpnote_latest_amd64.deb
 [Releases - getreu/tp-note]: https://github.com/getreu/tp-note/releases
 [x86_64-pc-windows-gnu/release/tpnote.exe]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tpnote.exe
 [x86_64-unknown-linux-gnu/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tpnote
 [x86_64-unknown-linux-musl/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tpnote
 [tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
-[tp-note all]: https://blog.getreu.net/_downloads/tp-note.zip
-[tp-note-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tp-note-latest-x86_64.msi
+[Tp-Note all]: https://blog.getreu.net/_downloads/tpnote.zip
+[tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
 [Installation section]: https://blog.getreu.net/projects/tp-note/tp-note--manual.html#installation
 [Install Rust]: https://www.rust-lang.org/tools/install
 [Semantic Versioning]: https://semver.org/
