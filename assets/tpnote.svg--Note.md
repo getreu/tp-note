@@ -1,5 +1,5 @@
 ﻿---
-title:      "tp-note"
+title:      "tpnote.svg"
 subtitle:   "Note"
 author:     "Jens Getreu"
 date:       "2020-08-01"
@@ -7,7 +7,7 @@ lang:       "en_GB.UTF-8"
 revision:   "1.0"
 ---
 
-[tp-note.svg](tp-note.svg)
+[tpnote.svg](tpnote.svg)
 
 Icon based on:
 

@@ -27,5 +27,5 @@ fn add_icon_to_bin_when_building_for_win(icon_path: &str) -> Result<(), Box<dyn 
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    add_icon_to_bin_when_building_for_win("tp-note.ico")
+    add_icon_to_bin_when_building_for_win("tpnote.ico")
 }

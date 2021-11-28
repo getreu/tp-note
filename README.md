@@ -4,7 +4,7 @@ author: Jens Getreu
 filename_sync: false
 ---
 
-[![Cargo](https://img.shields.io/crates/v/tp-note.svg)](
+[![Cargo](https://img.shields.io/crates/v/tpnote.svg)](
 https://crates.io/crates/tp-note)
 [![Documentation](https://docs.rs/tp-note/badge.svg)](
 https://docs.rs/tp-note)

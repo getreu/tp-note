@@ -12,7 +12,7 @@ rm -R "$BUILD_DIR"
 mkdir "$BUILD_DIR"
 chmod 777 "$BUILD_DIR"
 
-cp "./tp-note.ico" "$BUILD_DIR"
+cp "./tpnote.ico" "$BUILD_DIR"
 cp "./target/x86_64-pc-windows-gnu/release/$EXE_NAME" "$BUILD_DIR"
 cp "./wix/tpnote.wxs" "$BUILD_DIR"
 
