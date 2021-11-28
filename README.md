@@ -280,15 +280,15 @@ Copyright:
 * Apache 2 licence or MIT licence
 
 
-[Tp-Note’s user manual]: https://blog.getreu.net/projects/tp-note/tp-note--manual.html
+[Tp-Note’s user manual]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html
 [Download Tp-Note]: https://blog.getreu.net/projects/tp-note/index.html#distribution
 [Tp-Note - fast note-taking with templates and filename synchronization]: https://blog.getreu.net/projects/tp-note/
 [Tp-Note - Most common use cases - YouTube]: https://www.youtube.com/watch?v=ODhPytPFtYY
 [Tp-Note's project page]: https://blog.getreu.net/projects/tp-note/
-[Tp-Note user manual - html]: https://blog.getreu.net/projects/tp-note/tp-note--manual.html
-[Tp-Note user manual - pdf]: https://blog.getreu.net/_downloads/tp-note--manual.pdf
-[Tp-Note manual page - html]: https://blog.getreu.net/projects/tp-note/tp-note--manpage.html
-[Tp-Note manual page - pdf]: https://blog.getreu.net/_downloads/tp-note--manpage.pdf
+[Tp-Note user manual - html]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html
+[Tp-Note user manual - pdf]: https://blog.getreu.net/_downloads/tpnote--manual.pdf
+[Tp-Note manual page - html]: https://blog.getreu.net/projects/tp-note/tpnote--manpage.html
+[Tp-Note manual page - pdf]: https://blog.getreu.net/_downloads/tpnote--manpage.pdf
 [Blogposts about Tp-Note]: https://blog.getreu.net/tags/tp-note/
 [Tp-Note's config module documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tpnote/config/
 [Constants in API documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tpnote/config/index.html#constants
@@ -304,6 +304,6 @@ Copyright:
 [tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
 [Tp-Note all]: https://blog.getreu.net/_downloads/tpnote.zip
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
-[Installation section]: https://blog.getreu.net/projects/tp-note/tp-note--manual.html#installation
+[Installation section]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html#installation
 [Install Rust]: https://www.rust-lang.org/tools/install
 [Semantic Versioning]: https://semver.org/

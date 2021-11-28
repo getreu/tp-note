@@ -4,8 +4,8 @@
 cd "${0%/*}"
 rm -r ./build
 
-./make--index 
-./make--tp-note--manpage
-./make--tp-note--manual
+./make--index
+./make--tpnote--manpage
+./make--tpnote--manual
 ./make--rustdoc-link
 

@@ -39,15 +39,15 @@ The documentation of this project is dived into tow parts:
 
 * User manual
 
-  [Tp-Note user manual - html](https://blog.getreu.net/projects/tp-note/tp-note--manual.html)
+  [Tp-Note user manual - html](https://blog.getreu.net/projects/tp-note/tpnote--manual.html)
 
-  [Tp-Note user manual - pdf](https://blog.getreu.net/_downloads/tp-note--manual.pdf)
+  [Tp-Note user manual - pdf](https://blog.getreu.net/_downloads/tpnote--manual.pdf)
 
 * Unix man-page (more technical)
 
-  [Tp-Note manual page - html](https://blog.getreu.net/projects/tp-note/tp-note--manpage.html)
+  [Tp-Note manual page - html](https://blog.getreu.net/projects/tp-note/tpnote--manpage.html)
 
-  [Tp-Note manual page - pdf](https://blog.getreu.net/_downloads/tp-note--manpage.pdf)
+  [Tp-Note manual page - pdf](https://blog.getreu.net/_downloads/tpnote--manpage.pdf)
 
 
 
@@ -699,7 +699,7 @@ text editor, update Windows to the latest version or install
   Read the following section [Optional integration with your file manager] to
   learn how to configure your file manager's context menu to launch _Tp-Note_.
 
-[Tp-Note's man-page]: http://blog.getreu.net/projects/tp-note/tp-note--manpage.html#customization
+[Tp-Note's man-page]: http://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization
 
 
 ### Chose the web browser for note viewing and make it default

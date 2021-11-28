@@ -41,7 +41,7 @@ filename are in sync again. Finally, the resulting path is printed to
 This document is _Tp-Note_'s technical reference. More information
 can be found in [Tp-Note's user manual] and at [Tp-Note's project page].
 
-[Tp-Note's user manual]: https://blog.getreu.net/projects/tp-note/tp-note--manual.html
+[Tp-Note's user manual]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html
 [Tp-Note's project page]: https://blog.getreu.net/projects/tp-note/
 
 

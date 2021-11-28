@@ -1,0 +1,11 @@
+#!/bin/sh
+
+mkdir --parents ./build/html
+mkdir --parents ./build/html/_downloads
+mkdir --parents ./build/man/man1
+
+# Html page
+./md2man ./source/tpnote--manpage.md ./build/man/man1/tpnote.1
+./docbook52pdf ./source/tpnote--manpage.md ./build/pdf/tpnote--manpage.pdf
+./docbook52html ./source/tpnote--manpage.md ./build/html/tpnote--manpage.html
+

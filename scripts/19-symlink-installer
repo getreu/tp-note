@@ -10,3 +10,15 @@ pushd ../target/x86_64-unknown-linux-gnu/debian
 ls *.deb |tail -n 1| xargs -I {} ln -s {} tpnote_latest_amd64.deb
 pushd
 
+# Documentation
+# (for backwards compatibility)
+pushd ../docs/build/html/
+ls *--manpage.html |tail -n 1| xargs -I {} ln -s {} tp-note--manpage.html
+ls *--manual.html |tail -n 1| xargs -I {} ln -s {} tp-note--manual.html
+pushd
+
+pushd ../docs/build/pdf/
+ls *--manpage.pdf |tail -n 1| xargs -I {} ln -s {} tp-note--manpage.pdf
+ls *--manual.pdf |tail -n 1| xargs -I {} ln -s {} tp-note--manual.pdf
+pushd
+

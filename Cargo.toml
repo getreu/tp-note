@@ -7,7 +7,7 @@ readme = "README.md"
 description = "Minimalist note taking: save and edit your clipboard content as a note file"
 license = "MIT/Apache-2.0"
 categories = ["command-line-utilities", "template-engine", "text-processing"]
-documentation = "https://blog.getreu.net/projects/tp-note/tp-note--manual.html"
+documentation = "https://blog.getreu.net/projects/tp-note/tpnote--manual.html"
 homepage = "https://blog.getreu.net/projects/tp-note/"
 repository = "https://gitlab.com/getreu/tp-note"
 build =  "build.rs"
@@ -44,8 +44,8 @@ displayed in the user's webbrowser.
 '''
 assets = [
     ["docs/build/html/index.html", "usr/share/doc/tpnote/", "644"],
-    ["docs/build/pdf/tp-note--manpage.pdf", "usr/share/doc/tpnote/", "644"],
-    ["docs/build/pdf/tp-note--manual.pdf", "usr/share/doc/tpnote/", "644"],
+    ["docs/build/pdf/tpnote--manpage.pdf", "usr/share/doc/tpnote/", "644"],
+    ["docs/build/pdf/tpnote--manual.pdf", "usr/share/doc/tpnote/", "644"],
     ["docs/build/man/man1/tpnote.1.gz", "usr/share/man/man1/", "644"],
     ["target/release/tpnote", "usr/bin/tpnote", "755"],
     ["assets/tpnote.svg", "usr/share/pixmaps/", "644"]
