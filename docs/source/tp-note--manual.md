@@ -18,7 +18,7 @@ As _Tp-Note_ synchronizes the note's filename with its document title, you
 will find back your notes easily.
 
 _Tp-Note_ is available for Linux, Windows and MacOS. This manual illustrates
-its main use-cases and how to get started:
+its main use cases and how to get started:
 
 1. Fast start note-taking (when the lecture starts).
 2. Take a note about an existing or downloaded file.
@@ -28,7 +28,7 @@ its main use-cases and how to get started:
 6. Note taking for system administrators.
 
 If you want to customize _Tp-Note_ with your own templates or if you want to
-use another markup language than Markdown, please consult the [man-page] for
+use another markup language than Markdown, please consult the [man page] for
 more technical details. It also explains how to change _Tp-Note_'s default text
 editor.
 
@@ -292,7 +292,7 @@ _Tp-Note_ can be useful with its built-in clipboard simulation: Instead of
 copying the content into your clipboard, pipe it into _Tp-Note_:
 
 ```shell
-echo  "Some clipboard content" | tp-note
+echo  "Some clipboard content" | tpnote
 ```
 
 
@@ -303,7 +303,7 @@ On headless systems, it is recommended to compile _Tp-Note_ without its
 
 ```shell
 cargo install --no-default-features --features renderer tp-note
-sudo cp ~/.cargo/bin/tp-note /usr/local/bin
+sudo cp ~/.cargo/bin/tpnote /usr/local/bin
 ```
 
 
@@ -324,7 +324,7 @@ well as with the `--no-default-features` console-only version.
   Document from where you downloaded the file:
 
   ```bash
-  echo  "[download](<http://blog.getreu.net/_downloads/i3-extensions.zip>)" | tp-note i3-extensions.zip
+  echo  "[download](<http://blog.getreu.net/_downloads/i3-extensions.zip>)" | tpnote i3-extensions.zip
   ```
 
   This creates the file `i3-extensions.zip--URL.txt` with the
@@ -357,7 +357,7 @@ well as with the `--no-default-features` console-only version.
   Download and convert:
 
   ```bash
-  curl 'https://blog.getreu.net' | pandoc -f html -t markdown_strict | tp-note
+  curl 'https://blog.getreu.net' | pandoc -f html -t markdown_strict | tpnote
   ```
 
 * Download a webpage while preserving its metadata:
@@ -366,7 +366,7 @@ well as with the `--no-default-features` console-only version.
   title, author, date... :
 
   ```bash
-  curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
+  curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tpnote
   ```
 
   creates the note file `20200910-Jens\ Getreu\'s\ blog.txt` with the webpage's
@@ -375,7 +375,7 @@ well as with the `--no-default-features` console-only version.
 * Generate a note for a given content with YAML header:
 
   ```bash
-  echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tp-note
+  echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tpnote
   ```
 
   creates the file `20200910-Todo.mdtxt` with the content:
@@ -397,7 +397,7 @@ well as with the `--no-default-features` console-only version.
 
   ```bash
   mv "20200921-My Note.txt" "20200921-My Note-(1).txt"
-  cat "20200921-My Note-(1).txt" | tp-note --batch
+  cat "20200921-My Note-(1).txt" | tpnote --batch
   ```
 
   creates the file `20200921-My Note.txt` with a rearranged header
@@ -409,14 +409,14 @@ well as with the `--no-default-features` console-only version.
   just for one-shot, type:
 
   ```bash
-  FILE=$(tp-note --batch); vi "$FILE"; tp-note --batch "$FILE"
+  FILE=$(tpnote --batch); vi "$FILE"; tpnote --batch "$FILE"
   ```
 
 * Create a new note overwriting the template's default for `subtitle`:
 
   ```bash
   cd dev
-  echo -e "---\nsubtitle: Draft\n---\n# Draft" | tp-note
+  echo -e "---\nsubtitle: Draft\n---\n# Draft" | tpnote
   ```
 
   creates the note file `20200925-dev--Draft.txt` with the content:
@@ -436,25 +436,25 @@ well as with the `--no-default-features` console-only version.
 * Synchronize filenames and headers of all note files in the current directory:
 
   ```bash
-  find . -type f -name "*.txt" -exec tp-note --batch {} \; >/dev/null
+  find . -type f -name "*.txt" -exec tpnote --batch {} \; >/dev/null
   ```
 
 * Generate an HTML rendition of an existing note file in the same directory:
 
   ```bash
-  tp-note --export='./my_notes' './my_notes/20210209-debug--Note.txt'
+  tpnote --export='./my_notes' './my_notes/20210209-debug--Note.txt'
   ```
 
   or, equivalent but shorter:
 
   ```bash
-  tp-note --export= './my_notes/20210209-debug--Note.txt'
+  tpnote --export= './my_notes/20210209-debug--Note.txt'
   ```
 
   or, even shorter:
 
   ```bash
-  tp-note -x '' './my_notes/20210209-debug--Note.txt'
+  tpnote -x '' './my_notes/20210209-debug--Note.txt'
   ```
 
 * Generate a PDF rendition of an existing note file :
@@ -468,7 +468,7 @@ well as with the `--no-default-features` console-only version.
   Generate the PDF rendition of the existing note `20210122-my--Note.txt`:
 
   ```bash
-  tp-note -x - '20210122-my--Note.txt' | wkhtmltopdf - '20210209-debug--Note.txt.pdf'
+  tpnote -x - '20210122-my--Note.txt' | wkhtmltopdf - '20210209-debug--Note.txt.pdf'
   ```
 
 * View and follow hyperlinks in a note file:
@@ -488,7 +488,7 @@ well as with the `--no-default-features` console-only version.
   open the rendition with `lynx`:
 
   ```bash
-  tp-note -x - '20210122-my_note.txt' | lynx --stdin
+  tpnote -x - '20210122-my_note.txt' | lynx --stdin
   ```
 
   The above also works in case _Tp-Note_ was compiled with
@@ -577,7 +577,7 @@ integration. This section shows a minimum setup to get started quickly.[^inst]
 * **Windows**
 
   Download the
-  [tp-note executable for Windows](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe) [^4]
+  [tpnote executable for Windows](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tpnote.exe) [^4]
   and place it on your desktop.
 
 * **Linux**
@@ -586,8 +586,8 @@ integration. This section shows a minimum setup to get started quickly.[^inst]
 
   ``` sh
   > cd ~/Desktop
-  > wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note
-  > chmod 755 tp-note
+  > wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tpnote
+  > chmod 755 tpnote
   ```
 
 A new _Tp-Note_-icon appears on your desktop.
@@ -608,7 +608,7 @@ Markdown-editor (see section [Optional customization] and man-page for more
 details).
 
 _Tp-Note_'s note-files can be printed directly from the viewer (web-browser)
-window or first converted into `.html` with `tp-note -x '' mynote.txt`. For other
+window or first converted into `.html` with `tpnote -x '' mynote.txt`. For other
 formats e.g. `.docx`, `.odt` and `.pdf` use [Pandoc](https://pandoc.org/)
 or `khtmltopdf`.
 
@@ -753,7 +753,7 @@ _Tp-Note_ is distributed with a Microsoft Windows Installler package
 `tp-note-x.x.x-x86_64.msi`, which automates the following key registration.
 Omit this section if you have installed _Tp-Note_ through this `.msi` package!
 
-1. Make the directory `C:\Windows\tp-note\bin\` and move `tp-note.exe`
+1. Make the directory `C:\Windows\tpnote\bin\` and move `tpnote.exe`
    into it.
 
 2. Open the *notepad* text editor and paste the following registry-key into
@@ -764,43 +764,43 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
         [HKEY_CLASSES_ROOT\Directory\Background\shell\New Tp-Note]
 
         [HKEY_CLASSES_ROOT\Directory\Background\shell\New Tp-Note\command]
-        @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\""
+        @="\"C:\\Program Files\\tpnote\\bin\\tpnote.exe\""
 
-        [HKEY_CLASSES_ROOT\*\OpenWithList\tp-note.exe]
+        [HKEY_CLASSES_ROOT\*\OpenWithList\tpnote.exe]
         @=""
 
-        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\edit.tp-note.exe]
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\edit.tpnote.exe]
         @="Edit Tp-Note"
 
-        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\edit.tp-note.exe\command]
-        @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"%1\""
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\edit.tpnote.exe\command]
+        @="\"C:\\Program Files\\tpnote\\bin\\tpnote.exe\" \"%1\""
 
-        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\view.tp-note.exe]
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\view.tpnote.exe]
         @="View Tp-Note"
 
-        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\view.tp-note.exe\command]
-        @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"-v\" \"%1\""
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\view.tpnote.exe\command]
+        @="\"C:\\Program Files\\tpnote\\bin\\tpnote.exe\" \"-v\" \"%1\""
 
-        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\export.tp-note.exe]
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\export.tpnote.exe]
         @="Export Tp-Note"
 
-        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\view.tp-note.exe\command]
-        @="\"C:\\Program Files\\tp-note\\bin\\tp-note.exe\" \"--export=\" \"%1\""
+        [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\view.tpnote.exe\command]
+        @="\"C:\\Program Files\\tpnote\\bin\\tpnote.exe\" \"--export=\" \"%1\""
 
 3. Save the file as:
 
-   * File name: `tp-note.reg`
+   * File name: `tpnote.reg`
    * Save as type: `All files`
    * Encoding:  `UTF-16 LE`
 
 
-4. Double-click on `tp-note.reg` and confirm several times.
+4. Double-click on `tpnote.reg` and confirm several times.
 
-5. Assign `tp-note` as default application for `.txt`-files
+5. Assign `tpnote` as default application for `.txt`-files
 
    ![Click-right on .txt file to open file properties](images/Properties-Opens_with-Notepad.png){width="8cm"}
 
-   ![Press "Change ..." and choose "tp-note"](images/Properties-Opens_with-tp-note.png){width="8cm"}
+   ![Press "Change ..." and choose "Tp-Note"](images/Properties-Opens_with-tp-note.png){width="8cm"}
 
 
 
@@ -811,8 +811,8 @@ in our `$PATH`:
 
 ```sh
 cd /usr/local/bin
-sudo wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note
-sudo chmod 755 tp-note
+sudo wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tpnote
+sudo chmod 755 tpnote
 ```
 
 _Debian_ and _Ubuntu_ user can also download [Debian/Ubuntu package] and install it with:
@@ -874,7 +874,7 @@ Search for `</actions>` and replace it with:
 <action>
   <icon>accessories-text-editor</icon>
   <name>Tp-Note</name>
-  <command>tp-note %f</command>
+  <command>tpnote %f</command>
   <description>Tp-Note</description>
   <patterns>*</patterns>
   <directories/>
@@ -887,7 +887,7 @@ Search for `</actions>` and replace it with:
 <action>
   <icon>accessories-text-editor</icon>
   <name>Tp-Note View</name>
-  <command>tp-note -v %f</command>
+  <command>tpnote -v %f</command>
   <description>Tp-Note View</description>
   <patterns>*.txt; *.md;*.rst;*.adoc</patterns>
   <text-files/>
@@ -928,7 +928,7 @@ Search for `</actions>` and replace it with:
 <action>
   <icon>accessories-text-editor</icon>
   <name>Download URL here</name>
-  <command>curl $(xclip -o)| pandoc --standalone -f html -t markdown_strict+yaml_metadata_block+pipe_tables | tp-note  %F</command>
+  <command>curl $(xclip -o)| pandoc --standalone -f html -t markdown_strict+yaml_metadata_block+pipe_tables | tpnote  %F</command>
   <description>Download URL</description>
   <patterns>*</patterns>
   <directories/>
@@ -965,7 +965,7 @@ Search for `</actions>` and replace it with: [^6]
 <action>
   <icon>accessories-text-editor</icon>
   <name>Tp-Note Export</name>
-  <command>tp-note --export=- %f | sed 's_&lt;_\r&lt;_g' -  | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>
+  <command>tpnote --export=- %f | sed 's_&lt;_\r&lt;_g' -  | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>
   <description>Tp-Note Export</description>
   <patterns>*.txt; *.md;*.rst;*.adoc</patterns>
   <text-files/>
@@ -995,7 +995,7 @@ Raspberry Pi.
 
 Create the configuration file:
 
-    sudo nano /usr/local/share/file-manager/actions/tp-note.desktop
+    sudo nano /usr/local/share/file-manager/actions/tpnote.desktop
 
 with the following content:
 
@@ -1009,7 +1009,7 @@ Profiles=profile-zero;
 
 [X-Action-Profile profile-zero]
 Name[en]=Default profile
-Exec=tp-note %f
+Exec=tpnote %f
 ```
 
 The above creates the custom context-menu item _Tp-Note_.
@@ -1018,7 +1018,7 @@ The above creates the custom context-menu item _Tp-Note_.
 
 Create the configuration file:
 
-    sudo nano /usr/local/share/file-manager/actions/tp-note-view.desktop
+    sudo nano /usr/local/share/file-manager/actions/tpnote-view.desktop
 
 with the following content:
 
@@ -1032,7 +1032,7 @@ Profiles=profile-zero;
 
 [X-Action-Profile profile-zero]
 Name[en]=Default profile
-Exec=tp-note -v %f
+Exec=tpnote -v %f
 ```
 
 The above creates the custom context-menu item _Tp-Note View_.
@@ -1081,8 +1081,8 @@ runs _Tp-Note_ in editing mode.
 
    ```bash
    regex/i/.(txt|md|rst)$
-       Open=tp-note %f
-       View=if HTML=`tp-note -b -n -x - %f`; then (echo $"HTML" | lynx --stdin); else less    %f; fi
+       Open=tpnote %f
+       View=if HTML=`tpnote -b -n -x - %f`; then (echo $"HTML" | lynx --stdin); else less    %f; fi
 
    default/*
    ```
@@ -1121,4 +1121,4 @@ press `[F3]` or `[Enter]`.
 
 [^6]: The `sed` filter is a workaround of a [bug in wkhtmltopdf](<https://github.com/wkhtmltopdf/wkhtmltopdf/issues/4960>).
       Once this is solved, you can remove the `sed` command. Then the line 4 of the above listing becomes:
-      `<command>tp-note --export=- %f | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>`
+      `<command>tpnote --export=- %f | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>`

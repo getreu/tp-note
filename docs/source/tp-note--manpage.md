@@ -10,33 +10,35 @@ _Tp-Note_ - save and edit your clipboard content as a note file.
 
 # SYNOPSIS
 
-    tp-note [-b] [-c <FILE>] [-d] [-e] [-p <NUM>]
+    tpnote [-b] [-c <FILE>] [-d] [-e] [-p <NUM>]
             [-n] [-v] [-V] [-x <DIR>|''|'-'] [<DIR>|<FILE>]
 
 
 
 # DESCRIPTION
 
-_Tp-Note_ is a note-taking-tool and a template system, that consistently
-synchronizes the note's meta-data with its filename. _Tp-Note_ collects
-various information about its environment and the clipboard and stores them
-in variables. New notes are created by filling these variables in predefined
-and customizable _Tera_-templates. In case '`<path>`' points to an existing
-'_Tp-Note_'-file, the note's meta-data is analysed and, if necessary, its
-filename is modified. For all other file types, _Tp-Note_ creates a new note
-that annotates the file '`<path>`' points to. If '`<path>`' is a directory (or,
-when omitted the current working directory), a new note is created in that
-directory. After creation, _Tp-Note_ launches an external text editor of your
-choice. At the same time the system's web browser is started and
-connected to _Tp-Note_'s internal web server. This server watches and
-renders the edited note file and generates a live preview.
+_Tp-Note_ is a note taking tool and a template system, that synchronizes the
+note's metadata with its filename. _Tp-Note_ collects various information about
+its environment and the clipboard and stores it in variables. New notes are
+created by filling these variables in predefined and customizable
+`Tera`-templates. In case `<path>` points to an existing _Tp-Note_-file, the
+note's metadata is analysed and, if necessary, its filename is adjusted. For all
+other file types, _Tp-Note_ creates a new note annotating the file `<path>`
+points to. If `<path>` is a directory (or, when omitted the current working
+directory), a new note is created in that directory. After creation, _Tp-Note_
+launches an external editor of your choice. Although the templates are written
+for Markdown, _Tp-Note_ is not tied to any specific markup language. However,
+_Tp-Note_ comes with an optional viewer feature, that currently renders only
+Markdown, ReStructuredText and HTML. Note, that there is also some limited
+support for Asciidoc and WikiText. The note's rendition with its hyperlinks is
+live updated and displayed in the user's webbrowser.
 
 After the user finished editing, _Tp-Note_ analyses eventual changes in the
-notes meta-data and renames, if necessary, the file, so that its meta-data and
+notes metadata and renames, if necessary, the file, so that its metadata and
 filename are in sync again. Finally, the resulting path is printed to
 '`stdout`', log and error messages are dumped to '`stderr`'.
 
-This document is Tp-Note's technical reference. More information
+This document is _Tp-Note_'s technical reference. More information
 can be found in [Tp-Note's user manual] and at [Tp-Note's project page].
 
 [Tp-Note's user manual]: https://blog.getreu.net/projects/tp-note/tp-note--manual.html
@@ -46,9 +48,9 @@ can be found in [Tp-Note's user manual] and at [Tp-Note's project page].
 
 # OPERATION MODES
 
-_Tp-Note_ operates in 4 different modes, depending on its
-commend-line-arguments and the clipboard state. Each mode is usually
-associated with one content-template and one filename-template.
+_Tp-Note_ operates in 4 different modes, depending on its commend line arguments
+and the clipboard state. Each mode is usually associated with one content
+template and one filename template.
 
 
 ## New note without clipboard
@@ -58,20 +60,20 @@ with the templates: '`[tmpl] new_content`' and '`[tmpl] new_filename`'.  By
 default, the new note's title is the parent's directory name. The newly created
 file is then opened with an external text editor, allowing to change the
 proposed title and to add other content. When the text editor closes, _Tp-Note_
-synchronizes the note's meta-data and its filename. This operation is performed
+synchronizes the note's metadata and its filename. This operation is performed
 with the '`[tmpl] sync_filename`' template.
 
 Example: the clipboard is empty and `<path>` is a directory (or empty):
 
 ``` sh
-> tp-note "./03-Favorite Readings/"
+> tpnote "./03-Favorite Readings/"
 ```
 
 or
 
 ``` sh
 > cd "./03-Favorite Readings"
-> tp-note
+> tpnote
 ```
 
 creates the document:
@@ -102,7 +104,7 @@ accessed with '`{{ clipboard | linkname }}`', its URL with
 '`[tmpl] clipboard_content`' and the '`[tmpl] clipboard_filename`' templates.
 Finally, the newly created note file is opened again with some external text
 editor. When the user closes the text editor, _Tp-Note_ synchronizes the
-note's meta-data and its filename with the template '`[tmpl] sync_filename`'.
+note's metadata and its filename with the template '`[tmpl] sync_filename`'.
 
 > Note: this operation mode also empties the clipboard (configurable feature).
 
@@ -112,7 +114,7 @@ When no mouse and clipboard is available, the clipboard feature can be
 simulated by feeding the clipboard data into `stdin`:
 
 ```sh
-> echo "[The Rust Book](https://doc.rust-lang.org/book/)" | tp-note
+> echo "[The Rust Book](https://doc.rust-lang.org/book/)" | tpnote
 ```
 
 _Tp-Note_ behaves here as if the clipboard contained the string:
@@ -126,14 +128,14 @@ Example: While launching _Tp-Note_ the clipboard contains the string:
 "`Who Moved My Cheese?\n\nChapter 2`" and `<path>` is a directory.
 
 ``` sh
-> tp-note "./03-Favorite Readings/"
+> tpnote "./03-Favorite Readings/"
 ```
 
 or
 
 ``` sh
 > cd "./03-Favorite Readings/"
-> tp-note
+> tpnote
 ```
 
 This creates the document:
@@ -172,7 +174,7 @@ Example: `<path>` is a directory, the clipboard is not empty and it contains
 the string: "`I recommend:\n[The Rust Book](https://doc.rust-lang.org/book/)`".
 
 ```sh
-> tp-note './doc/Lecture 1'
+> tpnote './doc/Lecture 1'
 ```
 
 This creates the following document:
@@ -204,7 +206,7 @@ Example: `<path>` is a directory, the clipboard is not empty and it contains
 the string: "`---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing`".
 
 ```sh
-> tp-note
+> tpnote
 ```
 
 This creates the note: '`20211031-Todo.mdtxt`' with the following
@@ -234,7 +236,7 @@ Note, that the same result can also be achieved without any clipboard by tying
 in a terminal:
 
 ```sh
-> echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tp-note
+> echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tpnote
 ```
 
 Furthermore, this operation mode is very handy with pipes in general, as shows the
@@ -243,7 +245,7 @@ the result into a _Tp-Note_ file. The procedure preserves the webpage's title in
 note's title:
 
 ```sh
-curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
+curl 'https://blog.getreu.net' | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tpnote
 ```
 
 creates the note file '`20211031-Jens Getreu's blog.md`' with the webpage's
@@ -278,7 +280,7 @@ Insert the following content:
 
 ```sh
 #!/bin/sh
-curl "$1" | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tp-note
+curl "$1" | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tpnote
 ```
 
 and make it executable:
@@ -297,19 +299,19 @@ To execute the script type:
 
 ## New note annotating some non-Tp-Note file
 
-When '`<path>`' points to an existing file, whose file-extension is other than
+When '`<path>`' points to an existing file, whose file extension is other than
 '`.txt`', a new note is created with a similar filename and a reference to the
 original file is copied into the new note's body. If the clipboard contains
 some text, it is appended there also. The logic of this is implemented in the
 templates: '`[tmpl] annotate_content`' and '`[tmpl] annotate_filename`'. Once the
 file is created, it is opened with an external text editor. After editing the
 file, it will be - if necessary - renamed to be in sync with the note's
-meta-data.
+metadata.
 
 Example:
 
 ``` sh
-> tp-note "Classic Shell Scripting.pdf"
+> tpnote "Classic Shell Scripting.pdf"
 ```
 
 creates the note:
@@ -348,7 +350,7 @@ Example: edit the note from the previous example:
 
 ``` bash
 > cd "./03-Favorite Readings"
-> tp-note 20211031-Favorite Readings--Note.txt
+> tpnote 20211031-Favorite Readings--Note.txt
 ```
 
 
@@ -363,13 +365,13 @@ you to find your notes back quickly.
 Example:
 
 ``` sh
-> tp-note "20200306-Favorite Readings--Note.txt"
+> tpnote "20200306-Favorite Readings--Note.txt"
 ```
 
 The way how _Tp-Note_ synchronizes the note's metadata and filename is defined
 in the template '`[tmpl] sync_filename`'.
 
-Once _Tp-Note_ opens the file in an text editor, the note-taker may decide updating
+Once _Tp-Note_ opens the file in an text editor, the note taker may decide updating
 the title in the note's YAML metadata section from
 '`title: "Favorite Readings"`' to '`title: "Introduction to bookkeeping"`'.
 After closing the text editor the filename is automatically updated too and
@@ -420,16 +422,16 @@ synchronization).
 :   All error messages are dumped in the error stream `stderr` and appear
     on the console from where _Tp-Note_ was launched:
 
-        tp-note.exe --debug info my_note.txt
+        tpnote.exe --debug info my_note.txt
 
 :   On Windows the output must be redirected into a file to see it:
 
-        tp-note.exe --debug info my_note.txt >debug.txt 2>&1
+        tpnote.exe --debug info my_note.txt >debug.txt 2>&1
 
 :   Alternatively, you can redirect all logfile entries into popup alert
     windows.
 
-        tp-note.exe --popup --debug info my_note.txt
+        tpnote.exe --popup --debug info my_note.txt
 
 :   The same can be achieved by setting following configuration file
     variables (especially useful under Windows):
@@ -520,19 +522,19 @@ document structure as shown in the figure below.
 
 ```
 ---
-<YAML-front matter>
+<YAML-front-matter>
 ---
 <document-body>
 ```
 
-The YAML front matter starts at the beginning of the document with '`---`'
+The YAML front-matter starts at the beginning of the document with '`---`'
 and ends with '`...`' or '`---`'. Note that according to the YAML standard,
 string literals are always encoded as JSON strings. By convention, a valid
 _Tp-Note_ file has at least one YAML field named '`title:`' (the name of this
 compulsory field is defined by the '`[tmpl] compulsory_header_field`'
 variable in the configuration file and can be changed there).
 
-Note that prepended text, placed before the YAML front matter, is ignored. There
+Note that prepended text, placed before the YAML front-matter, is ignored. There
 are however certain restrictions: If present, the skipped text should not be too
 long (cf. constant '`BEFORE_HEADER_MAX_IGNORED_CHARS`' in the source code of
 _Tp-Note_) and it must be followed by at least one blank line:
@@ -541,7 +543,7 @@ _Tp-Note_) and it must be followed by at least one blank line:
 Prepended text is ignored.
 
 ---
-<YAML-front matter>
+<YAML-front-matter>
 ---
 <document-body>
 ```
@@ -619,7 +621,7 @@ _Tp-Note_ will rename the file to "`20211031-'1. The Beginning--Note.txt`".
 If the filename had been "`05_02-My file.txt`", it would rename it to
 "`05_02-'1. The Beginning--Note.txt`".
 
-Note: When the YAML front matter does not contain the optional '`sort_tag`'
+Note: When the YAML front-matter does not contain the optional '`sort_tag`'
 variable, _Tp-Note_ will never change a sort tag. Nevertheless, it might
 change the rest of the filename!
 
@@ -628,10 +630,10 @@ define their order in the file listing. In general this order is independent of
 the notes content. The simplest way to organize the sort tags of your files is
 by renaming them directly in your file system. Nevertheless, in some cases you
 might want to have full control over the whole filename through the note's YAML
-front matter. For example, if — for some reason — you have changed the
-document's date in the front matter and you want to change the chronological
+front-matter. For example, if — for some reason — you have changed the
+document's date in the front-matter and you want to change the chronological
 sort tag in one go. In order to overwrite the note's sort tag on disk, you can
-add a '`sort_tag`' variable to its front matter:
+add a '`sort_tag`' variable to its front-matter:
 
 ``` yaml
 ---
@@ -657,7 +659,7 @@ sort_tag:   ""
 
 In the same way, how it is possible to pin the sort tag of the note from within
 the note's metadata, you can also change the file extension by adding the
-optional '`file_ext`' variable into the note's front matter:
+optional '`file_ext`' variable into the note's front-matter:
 
 ``` yaml
 ---
@@ -670,7 +672,7 @@ This will change the file extension from '`.txt`' to '`.rst`. The resulting
 filename becomes "`20211101-'1. The Beginning--Note.rst`".
 
 Important: '`rst`' must be one of the registered file extensions
-listed in the '`[filename] extensions_rst`' variables in Tp-Note's configuration
+listed in the '`[filename] extensions_rst`' variables in _Tp-Note_'s configuration
 file. If needed you can add more extensions there. If the new filename extension
 is not listed in one of theses variables, _Tp-Note_ will not be able to
 recognize the note file as such and will not open it in the external text editor
@@ -701,8 +703,8 @@ filename_sync: false
 # CUSTOMIZATION
 
 _Tp-Note_'s configuration file resides typically in
-'`~/.config/tp-note/tp-note.toml`' on Unix or in
-'`C:\Users\<LOGIN>\AppData\Roaming\tp-note\config\tp-note.toml>`' on Windows.
+'`~/.config/tpnote/tpnote.toml`' on Unix or in
+'`C:\Users\<LOGIN>\AppData\Roaming\tpnote\config\tpnote.toml>`' on Windows.
 When _Tp-Note_ starts, it tries to find its configuration file. If it fails,
 it writes a default configuration file. _Tp-Note_ is best customized by
 starting it once, and then modifying its default configuration.
@@ -765,23 +767,23 @@ content template was filled in with data: For example a field named '`title:`'
 in the content template '`[tmpl] new_content`' will generate the variable
 '`fm_title`' which can then be used in the corresponding '`[tmpl] new_filename`'
 filename template. '`{{ fm_* }}`' variables are generated dynamically. This
-means, a YAmL front matter variable '`foo:`' in a note will generate a
+means, a YAmL front-matter variable '`foo:`' in a note will generate a
 '`{{ fm_foo }}`' template variable. On the other hand, a missing '`foo:`'
 will cause '`{{ fm_foo }}`' to be undefined.
 
 Please note that '`{{ fm_* }}`' variables are available in all filename
 templates and in the '`[tmpl] copy_content`' content template only.
 
-* '`{{ fm_title }}`' is the '`title:`' as indicated in the YAML front matter of
+* '`{{ fm_title }}`' is the '`title:`' as indicated in the YAML front-matter of
   the note.
 
 * '`{{ fm_subtitle }}`' is the '`subtitle:`' as indicated in the YAML front
   matter of the note.
 
-* '`{{ fm_author }}`' is the '`author:`' as indicated in the YAML front matter
+* '`{{ fm_author }}`' is the '`author:`' as indicated in the YAML front-matter
   of the note.
 
-* '`{{ fm_lang }}`' is the '`lang:`' as indicated in the YAML front matter of
+* '`{{ fm_lang }}`' is the '`lang:`' as indicated in the YAML front-matter of
   the note.
 
 * '`{{ fm_file_ext }}`' holds the value of the optional YAML header variable
@@ -865,8 +867,8 @@ A filter is always used together with a variable. Here some examples:
   reStruncturedText formatted link in the clipboard.
 
 * '`{{ username | json_encode }}`' is the username Json encoded. All YAML
-  front matter must be Json encoded, so this filter should be the last in all
-  lines of the front matter section.
+  front-matter must be Json encoded, so this filter should be the last in all
+  lines of the front-matter section.
 
 * '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its
   front-matter, sanitized in a filesystem friendly form. Special characters are
@@ -889,8 +891,8 @@ filename-templates '`[tmpl] *_filename`' are used to calculate the note's
 filename.  By convention, content templates appear in the configuration file in
 variables named '`[tmpl] *_content`'.
 
-Strings in the YAML front matter of content-templates are JSON encoded.
-Therefore, all variables used in the front matter must pass an additional
+Strings in the YAML front-matter of content-templates are JSON encoded.
+Therefore, all variables used in the front-matter must pass an additional
 '`json_encode()`'-filter. For example, the variable '`{{ dir_path | stem }}`'
 becomes '`{{ dir_path | stem | json_encode() }}`' or just
 '`{{ dir_path | stem | json_encode }}`'.
@@ -943,14 +945,14 @@ out when it appears in leading or trailing position. For this reason no
 
 The configuration file variables '`[app_args] editor`' and '`[app_args] editor_console`'
 define lists of external text editors to be launched for editing. The lists
-contain by default well-known text editor names and their command-line
+contain by default well-known text editor names and their command line
 arguments.  _Tp-Note_ tries to launch every text editor in '`[app_args] editor`' from
 the beginning of the list until it finds an installed text editor. When
 _Tp-Note_ is started on a Linux console, the list '`[app_args] editor_console`' is
 used instead. Here you can register text editors that do not require a
 graphical environment, e.g. '`vim`' or '`nano`'.  In order to use your own text
 editor, just place it at the top of the list. To debug your changes
-invoke _Tp-Note_ with '`tp-note --debug info --popup --edit`'
+invoke _Tp-Note_ with '`tpnote --debug info --popup --edit`'
 
 When you configure _Tp-Note_ to work with your text editor, make sure, that your
 text editor does not fork! You can check this by launching the text editor from
@@ -963,22 +965,22 @@ _VScode_-editor can be launched with the '`--wait`' option or _Vim_ with
 this should be avoided, there is a possible workaround:
 
 ```shell
-> FILE=$(tp-note --batch) # Create the new note.
+> FILE=$(tpnote --batch) # Create the new note.
 > mytexteditor "$FILE"    # The prompt returns immediatly as the editor forks.
-> tp-note --view "$FILE"  # Launch Tp-Note's viewer.
+> tpnote --view "$FILE"  # Launch Tp-Note's viewer.
 >                         # After the editing is done...
-> tp-note --batch "$FILE" # Synchronize the note's filename.
+> tpnote --batch "$FILE" # Synchronize the note's filename.
 ```
 
 Remark for the advanced console user: In a similar way, you can launch a
 different text editor than the one configured in _Tp-Note_'s configuration file:
 
 ```shell
-> FILE=$(tp-note --batch); vi "$FILE"; tp-note --batch "$FILE"
+> FILE=$(tpnote --batch); vi "$FILE"; tpnote --batch "$FILE"
 ```
 
-Whereby '`FILE=$(tp-note --batch)`' creates the note file, '`vi "$FILE"`' opens the
-'`vi`'-text editor and '`tp-note --batch "$FILE"`' synchronizes the filename.
+Whereby '`FILE=$(tpnote --batch)`' creates the note file, '`vi "$FILE"`' opens the
+'`vi`'-text editor and '`tpnote --batch "$FILE"`' synchronizes the filename.
 
 
 **Register a Flatpak Markdown editor**
@@ -995,11 +997,11 @@ the application with:
 
     > sudo flatpak install flathub com.github.marktext.marktext
 
-To test, run _Mark Text_ from the command-line:
+To test, run _Mark Text_ from the command line:
 
     > flatpak run com.github.marktext.marktext
 
-Then open _Tp-Note_'s configuration file `tp-note.toml` and search for the
+Then open _Tp-Note_'s configuration file `tpnote.toml` and search for the
 '`[app_args] editor`' variable, quoted shortened below:
 
 ```toml
@@ -1168,7 +1170,7 @@ character sets must be matched carefully to prevent cyclic filename change!
 To debug your '`[TMPL] sync_filename`' template, create a test note file
 '`test.txt`' and invoke _Tp-Note_ with '`--debug trace`' and '`--batch`':
 
-    tp-note --batch --debug trace test.txt
+    tpnote --batch --debug trace test.txt
 
 ## Store new note files by default in a subdirectory
 
@@ -1341,7 +1343,7 @@ default web browser. A disadvantage is, that in fall back mode _Tp-Note_ is not
 able to detect when the user closes the web browser. This might lead to
 situations, where _Tp-Note_'s internal HTTP server shuts down to early.
 In order to check if _Tp-Note_ finds the selected web browser as intended,
-invoke _Tp-Note_ with '`tp-note --debug info --popup --view`'.
+invoke _Tp-Note_ with '`tpnote --debug info --popup --view`'.
 
 
 
@@ -1383,9 +1385,9 @@ Normally the exit status is '`0`' when the note file was processed without
 error or '`1`' otherwise. If _Tp-Note_ can not read or write its
 configuration file, the exit status is '`5`'.
 
-When '`tp-note -n -b <FILE>`' returns the code '`0`', the note file has a
+When '`tpnote -n -b <FILE>`' returns the code '`0`', the note file has a
 valid YAML header with a '`title:`' field. In addition, when
-'`tp-note -n -b -x - <FILE>`' returns the code '`0`', the note's body was
+'`tpnote -n -b -x - <FILE>`' returns the code '`0`', the note's body was
 rendered without error.
 
 

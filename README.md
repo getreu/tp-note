@@ -127,22 +127,22 @@ Repository:
 
 * Executable for Windows:
 
-    * [x86_64-pc-windows-gnu/release/tp-note.exe]
+    * [x86_64-pc-windows-gnu/release/tpnote.exe]
 
 * Universal Linux binary (compiled with Debian 10 Buster):
 
-    * [x86_64-unknown-linux-gnu/release/tp-note]
+    * [x86_64-unknown-linux-gnu/release/tpnote]
 
     * The following "musl" version is well suited for headless systems, as it
       does not require _GTK_ libraries to be installed.
 
-      [x86_64-unknown-linux-musl/release/tp-note]
+      [x86_64-unknown-linux-musl/release/tpnote]
 
 
 
 * Installable Unix man-page:
 
-  - [tp-note.1.gz]
+  - [tpnote.1.gz]
 
 * Zipfile with all binaries and documentation:
 
@@ -211,7 +211,7 @@ compile _Tp-Note_ yourself.
 
        sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
        cargo install tp-note
-       sudo cp ~/.cargo/bin/tp-note /usr/local/bin
+       sudo cp ~/.cargo/bin/tpnote /usr/local/bin
 
    In case you experience compilation errors in dependent crates, replace
    `cargo install tp-note` with the following:
@@ -224,17 +224,17 @@ compile _Tp-Note_ yourself.
    where you started _Tp-Note_ into `stderr`.
 
        cargo install --no-default-features --features read-clipboard,viewer,renderer tp-note
-       sudo cp ~/.cargo/bin/tp-note /usr/local/bin
+       sudo cp ~/.cargo/bin/tpnote /usr/local/bin
 
    **Minimal Linux console version without dependencies on GUI libraries**
 
    The full featured version of _Tp-Note_ depends on GUI libraries like GTK
    that might not be installable on a headless system. Either download the Musl
-   version [x86_64-unknown-linux-musl/release/tp-note] or compile _Tp-Note_
+   version [x86_64-unknown-linux-musl/release/tpnote] or compile _Tp-Note_
    without default features:
 
        cargo install --no-default-features tp-note
-       sudo cp ~/.cargo/bin/tp-note /usr/local/bin
+       sudo cp ~/.cargo/bin/tpnote /usr/local/bin
 
    Note, that even though this no-renderer version is deprived of it's
    markup renderer, limited rendered HTML export is still available (see command
@@ -247,7 +247,7 @@ compile _Tp-Note_ yourself.
    additional Markdown, ReStructuredText etc. renderer compiled in.
 
        cargo install --no-default-features --features renderer tp-note
-       sudo cp ~/.cargo/bin/tp-note /usr/local/bin
+       sudo cp ~/.cargo/bin/tpnote /usr/local/bin
 
    **Building for Windows**
 
@@ -290,18 +290,18 @@ Copyright:
 [Tp-Note manual page - html]: https://blog.getreu.net/projects/tp-note/tp-note--manpage.html
 [Tp-Note manual page - pdf]: https://blog.getreu.net/_downloads/tp-note--manpage.pdf
 [Blogposts about Tp-Note]: https://blog.getreu.net/tags/tp-note/
-[Tp-Note's config module documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tp_note/config/
-[Constants in API documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tp_note/config/index.html#constants
+[Tp-Note's config module documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tpnote/config/
+[Constants in API documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tpnote/config/index.html#constants
 [Tp-Note on Gitlab]: https://gitlab.com/getreu/tp-note
 [Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
 [tp-note-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tp-note-latest-x86_64.msi
 [VirusTotal]: https://www.virustotal.com/gui/home/upload
 [x86_64-unknown-linux-gnu/debian/tp-note_latest_amd64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tp-note_latest_amd64.deb
 [Releases - getreu/tp-note]: https://github.com/getreu/tp-note/releases
-[x86_64-pc-windows-gnu/release/tp-note.exe]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tp-note.exe
-[x86_64-unknown-linux-gnu/release/tp-note]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tp-note
-[x86_64-unknown-linux-musl/release/tp-note]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tp-note
-[tp-note.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tp-note.1.gz
+[x86_64-pc-windows-gnu/release/tpnote.exe]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tpnote.exe
+[x86_64-unknown-linux-gnu/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tpnote
+[x86_64-unknown-linux-musl/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tpnote
+[tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
 [tp-note all]: https://blog.getreu.net/_downloads/tp-note.zip
 [tp-note-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tp-note-latest-x86_64.msi
 [Installation section]: https://blog.getreu.net/projects/tp-note/tp-note--manual.html#installation
