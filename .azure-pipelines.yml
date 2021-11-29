@@ -139,17 +139,17 @@ stages:
             displayName: Gather assets
             condition: ne( variables['Agent.OS'], 'Windows_NT' )
             inputs:
-              rootFolderOrFile: '$(Build.BinariesDirectory)/tp-note'
+              rootFolderOrFile: '$(Build.BinariesDirectory)/tpnote'
               archiveType: 'tar'
               tarCompression: 'gz'
-              archiveFile: '$(Build.ArtifactStagingDirectory)/tp-note-$(Build.SourceBranchName)-$(TARGET).tar.gz'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/tpnote-$(Build.SourceBranchName)-$(TARGET).tar.gz'
           - task: ArchiveFiles@2
             displayName: Gather assets
             condition: eq( variables['Agent.OS'], 'Windows_NT' )
             inputs:
               rootFolderOrFile: '$(Build.BinariesDirectory)/tpnote.exe'
               archiveType: 'zip'
-              archiveFile: '$(Build.ArtifactStagingDirectory)/tp-note-$(Build.SourceBranchName)-$(TARGET).zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/tpnote-$(Build.SourceBranchName)-$(TARGET).zip'
 
           - task: GithubRelease@0
             condition: eq( variables['Agent.OS'], 'Linux' )
@@ -173,7 +173,7 @@ stages:
               target: '$(build.sourceVersion)'
               tagSource: 'manual'
               tag: '$(Build.SourceBranchName)'
-              assets: '$(Build.ArtifactStagingDirectory)/tp-note-$(Build.SourceBranchName)-$(TARGET).tar.gz'
+              assets: '$(Build.ArtifactStagingDirectory)/tpnote-$(Build.SourceBranchName)-$(TARGET).tar.gz'
               title: '$(Build.SourceBranchName)'
               assetUploadMode: 'replace'
               addChangeLog: false
@@ -186,7 +186,7 @@ stages:
               target: '$(build.sourceVersion)'
               tagSource: 'manual'
               tag: '$(Build.SourceBranchName)'
-              assets: '$(Build.ArtifactStagingDirectory)/tp-note-$(Build.SourceBranchName)-$(TARGET).zip'
+              assets: '$(Build.ArtifactStagingDirectory)/tpnote-$(Build.SourceBranchName)-$(TARGET).zip'
               title: '$(Build.SourceBranchName)'
               assetUploadMode: 'replace'
               addChangeLog: false
