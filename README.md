@@ -1,10 +1,10 @@
 ---
-title: "Tp-Note - Minimalist note taking: save and edit your clipboard content as a note file"
+title: "Tp-Note - Minimalistic note taking: save and edit your clipboard content as a note file"
 author: Jens Getreu
 filename_sync: false
 ---
 
-[![Cargo](https://img.shields.io/crates/v/tpnote.svg)](
+[![Cargo](https://img.shields.io/crates/v/tp-note.svg)](
 https://crates.io/crates/tp-note)
 [![Documentation](https://docs.rs/tp-note/badge.svg)](
 https://docs.rs/tp-note)

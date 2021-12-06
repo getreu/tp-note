@@ -409,12 +409,12 @@ synchronization).
     informs only about failures.  A '`warn`' level message means, that not all
     functionality might be available or work as expected.
 
-:   Use '`-b -d trace`' for debugging templates, if the HTTP server
-    (viewer) does not work as expected '`-n -d debug`', if your text editor
-    does not open as expected '`-n -d info --edit`' or to observe the
-    launch of the web browser '`-n -d info --view`'. The option
+:   Use '`-b -d trace`' for debugging templates. If the HTTP server
+    (viewer) does not work as expected: '`-n -d debug`'. If your text editor
+    does not open as expected: '`-n -d info --edit`'. Or, to observe the
+    launch of the web browser: '`-n -d info --view`'. The option
     '`-d trace`' shows all available template variables, the templates
-    used and the rendered result of the substitution, which is
+    used and the rendered result of the substitution. This is
     particularly useful for debugging new templates. The option
     '`-d off`' silences all error message reporting and suppresses also the
     error popup window.
@@ -497,13 +497,13 @@ synchronization).
 
 **-V**, **\--version**
 
-:   Print _Tp-Note_'s version, its compiled-in features and the path to the
+:   Print _Tp-Note_'s version, its builtin features and the path to the
     sourced configuration file. The output is YAML formatted for further
     automatic processing.
 
 **-x** *DIRECTORY*, **\--export**=*DIRECTORY*
 
-:   Print the note as HTML-rendition into _DIRECTORY_. '`-x -`' prints to
+:   Print the note as HTML rendition into _DIRECTORY_. '`-x -`' prints to
     _stdout_. The empty string, e.g. '`--export= `' or '`-x ""`', defaults to
     the directory where the note file resides. No external text editor or
     viewer is launched. Can be combined with '`--batch`' to avoid popup
@@ -711,11 +711,11 @@ starting it once, and then modifying its default configuration.
 For a detailed description of the available configuration variables, please
 consult the '`const`' definitions in _Tp-Note_'s source code file '`config.rs`'
 
-The configuration file is encoded according to the TOML-standard. Variables
+The configuration file is encoded according to the TOML standard. Variables
 ending with '`[tmpl] *_content`' and '`[tmpl] *_filename`' are
 _Tera-Template_-strings (see: <https://tera.netlify.com/docs/#templates>).
 
-_Tp-Note_ captures and stores its environment in _Tera-variables_. For example,
+_Tp-Note_ captures and stores its environment in _Tera variables_. For example,
 the variable '`{{ dir_path }}`' is initialized with the note's target
 directory. The variable '`{{ clipboard }}`' contains the content of the
 clipboard. To learn more about variables, launch _Tp-Note_ with the
@@ -872,7 +872,7 @@ A filter is always used together with a variable. Here some examples:
 
 * '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its
   front-matter, sanitized in a filesystem friendly form. Special characters are
-  omitted or replaced by '`-`' and '`_`'. See the section _Filename-template
+  omitted or replaced by '`-`' and '`_`'. See the section _Filename template
   convention_ for more details about this filter.
 
 * '`{{ fm_title | sanit(alpha=true) }}`' is the note's title as defined in its
@@ -883,26 +883,26 @@ A filter is always used together with a variable. Here some examples:
   all '`fm_*`' variables, exclusive of the variable '`fm_title`'.
 
 
-## Content-template conventions
+## Content template conventions
 
-_Tp-Note_ distinguishes two template types: content-templates are used to create
+_Tp-Note_ distinguishes two template types: content templates are used to create
 the note's content (front-matter and body) and the corresponding
-filename-templates '`[tmpl] *_filename`' are used to calculate the note's
+filename templates '`[tmpl] *_filename`' are used to calculate the note's
 filename.  By convention, content templates appear in the configuration file in
 variables named '`[tmpl] *_content`'.
 
-Strings in the YAML front-matter of content-templates are JSON encoded.
+Strings in the YAML front-matter of content templates are JSON encoded.
 Therefore, all variables used in the front-matter must pass an additional
 '`json_encode()`'-filter. For example, the variable '`{{ dir_path | stem }}`'
 becomes '`{{ dir_path | stem | json_encode() }}`' or just
 '`{{ dir_path | stem | json_encode }}`'.
 
 
-## Filename-template convention
+## Filename template conventions
 
 By convention, filename templates appear in the configuration file in variables
-named '`[tmpl] *_filename`'.  When a content-template creates a new note, the
-corresponding filename-templates is called afterwards to calculate the filename
+named '`[tmpl] *_filename`'.  When a content template creates a new note, the
+corresponding filename templates is called afterwards to calculate the filename
 of the new notes.  The filename template '`[tmpl] sync_filename`' has a special
 role as it is synchronizes the filename of existing note files.  As we are
 dealing with filenames we  must guarantee, that the templates produce only file
@@ -912,7 +912,7 @@ Tera filters '`sanit`' and '`sanit(alpha=true)`'.
 * The '`sanit()`' filter transforms a string in a file system friendly from. This
   is done by replacing forbidden characters like '`?`' and '`\\`' with '`_`'
   or space. This filter can be used with any variable, but is most useful with
-  filename-templates. For example, in the '`[tmpl] sync_filename`'
+  filename templates. For example, in the '`[tmpl] sync_filename`'
   template, we find the expression '`{{ subtitle | sanit }}`'.
   Note that the filter recognizes strings that represent a so called dot file
   name and treats them a little differently by prepending them with an
@@ -929,7 +929,7 @@ Tera filters '`sanit`' and '`sanit(alpha=true)`'.
   filename. The default sort tag separator '`'`' can be changed with the
   configuration variable '`[filename] sort_tag_extra_separator`'.
 
-In filename-templates most variables must pass either the '`sanit`' or the
+In filename templates most variables must pass either the '`sanit`' or the
 '`sanit(alpha=true)`' filter. Exception to this rule are the sort tag variables
 '`{{ path | tag }}`' and '`{{ dir_path | tag }}`'. As these are guaranteed to
 contain only the filesystem friendly characters '`0123456789 -_`', no
@@ -985,7 +985,7 @@ Whereby '`FILE=$(tpnote --batch)`' creates the note file, '`vi "$FILE"`' opens t
 
 **Register a Flatpak Markdown editor**
 
-[Flathub for Linux] is a cross-platform application repository that works well
+[Flathub for Linux] is a cross platform application repository that works well
 with _Tp-Note_.  To showcase an example, we will add a _Tp-Note_ launcher for
 the _Mark Text_ Markdown text editor available as [Flatpak package]. Before
 installing, make sure that you have [setup Flatpack] correctly. Then install
@@ -1064,8 +1064,8 @@ Examples, adjust to your needs and taste:
       '--disable-server',
       '-x',
       'nvim',
-      '-c',
-      'colorscheme pablo',
+      '+colorscheme pablo',
+      '+set syntax=markdown',
     ],
   ]
   ```
@@ -1079,8 +1079,8 @@ Examples, adjust to your needs and taste:
       '--no-remote',
       '-e',
       'nvim',
-      '-c',
-      'colorscheme pablo',
+      '+colorscheme pablo',
+      '+set syntax=markdown',
     ],
   ]
   ```
@@ -1098,6 +1098,8 @@ Examples, adjust to your needs and taste:
         '12',
         '-e',
         'nvim',
+        '+colorscheme pablo',
+        '+set syntax=markdown',
     ],
   ]
   ```
@@ -1226,7 +1228,7 @@ which markup renderer is used for which note file extension. Depending on the
 markup language, this feature is more or less advanced and complete: _Markdown_
 (cf. '`[filename] extensions_md`') is best supported and feature complete: It
 complies with the _Common Mark_ specification. The _ReStructuredText_ renderer
-(cf.  '`[filename] extensions_rst`') is quit new and still in experimental state.
+(cf.  '`[filename] extensions_rst`') is quite new and still in experimental state.
 For all other supported markup languages _Tp-Note_ provides a built-in markup
 source text viewer (cf.  '`[filename] extensions_txt`') that shows the note as
 typed (without markup), but renders all hyperlinks to make them clickable.  In
@@ -1272,7 +1274,7 @@ Specifically:
 
 * '`{{ note_body }}`' is the note's body as HTML rendition.
 
-* '`{{ note_js }}`' is the Java-Script browser code for
+* '`{{ note_js }}`' is the JavaScript browser code for
   live updates.
 
 Alternatively, the header enclosed by '`<pre>...</pre>`' can also be rendered

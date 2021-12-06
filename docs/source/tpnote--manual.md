@@ -1,6 +1,6 @@
 ---
 title:  "Tp-Note: save and edit your clipboard content as a note file"
-subtitle: "Organize your notes with your favourite editor and markup-language"
+subtitle: "Organize your notes with your favourite editor and markup language"
 author: "Jens Getreu"
 date:   "2021-08-25"
 version: "1.15.0"
@@ -8,7 +8,7 @@ filename_sync: false
 ---
 
 Markup languages like *Markdown* [^1] are perfectly suited for fast
-note-taking. Type your notes with your favourite text editor and observe live
+note taking. Type your notes with your favourite text editor and observe live
 the rendered text in your web browser.
 
 _Tp-Note_ helps you to quickly get started writing notes with its powerful
@@ -20,7 +20,7 @@ will find back your notes easily.
 _Tp-Note_ is available for Linux, Windows and MacOS. This manual illustrates
 its main use cases and how to get started:
 
-1. Fast start note-taking (when the lecture starts).
+1. Fast start note taking (when the lecture starts).
 2. Take a note about an existing or downloaded file.
 3. Bookmark and comment a hyperlink.
 4. Copy and annotate a page from a book.
@@ -66,7 +66,7 @@ common workflows.
 
 
 
-## Fast start note-taking (when the lecture starts)
+## Fast start note taking (when the lecture starts)
 
 ![The folder in which the new note will be created.](images/workflow1-1.png){width="10cm"}
 
@@ -97,7 +97,7 @@ right-click on some empty white space.
 
 ![The new unmodified note created automatically](images/workflow2-2.png){width="11cm"}
 
-The source-code of the note shows the link with its target. The left-click, opens the `.odt` document.
+The source code of the note shows the link with its target. The left-click, opens the `.odt` document.
 
 ```yaml
 ---
@@ -181,11 +181,11 @@ lang:       "en_GB.UTF-8"
 [Rustacean Station](<https://rustacean-station.org/>)
 ```
 
-In this example we copied only one Markdown-link "Rustacean Station".
+In this example we copied only one Markdown link "Rustacean Station".
 Furthermore, *Tp-Note* allows you also to insert a list of Markdown links in a
 template. For example with [Copy as Markdown] you could copy a link list of all
 open tabs. In this case, _Tp-Note_ would retain only the name of the first link
-as document title, whereas the whole link-list would appear in the body of the
+as document title, whereas the whole link list would appear in the body of the
 note.
 
 ![Annotate](images/workflow3-5.png){width="11cm"}
@@ -249,7 +249,7 @@ preferences and configuration:
 * Addon for Firefox: [Copy Selection as Markdown]
 * Markdown editor : [Mark Text](https://marktext.app/)
   <!--or [Typora](https://typora.io/)-->
-* Integration with the file-manager (start entry in context menue) as described below.
+* Integration with the file manager (start entry in context menue) as described below.
 
 My favourite Markdown editor at the moment is [Mark Text](https://marktext.app/).
 I like its clean and simple interface helping me to stay focused on the content
@@ -310,7 +310,7 @@ sudo cp ~/.cargo/bin/tpnote /usr/local/bin
 ### Typical workflows
 
 The following examples work with the full featured version of _Tp-Note_ as
-well as with the `--no-default-features` console-only version.
+well as with the `--no-default-features` console only version.
 
 * Document a downloaded file:
 
@@ -478,7 +478,7 @@ well as with the `--no-default-features` console-only version.
   comfortably hyperlinks in you notes, you can always use _Tp-Note_'s HTML
   export.
 
-  Install the text-based web browser `lynx`:
+  Install the text based web browser `lynx`:
 
   ```bash
   sudo apt install lynx
@@ -597,20 +597,20 @@ A new _Tp-Note_-icon appears on your desktop.
 ## Usage of the minimum setup
 
 To create a new note, either double-click on the _Tp-Note_-icon, or drag a
-folder or file and drop it on the _to-note_-icon. This opens an editor with
+folder or file and drop it on the _Tp-Note_-icon. This opens an editor with
 your new note.
 
-For more comfort, I recommend integrating _Tp-Note_ into the file-manager's
+For more comfort, I recommend integrating _Tp-Note_ into the file manager's
 context menu. See section [Optional integration with your file manager] for
-more details.  There you also will find a list of tested Markdown-editors, if
+more details.  There you also will find a list of tested Markdown editors, if
 you wish to use one. _Tp-Note_ works with every Unicode text editor and
-Markdown-editor (see section [Optional customization] and man-page for more
+Markdown editor (see section [Optional customization] and man-page for more
 details).
 
-_Tp-Note_'s note-files can be printed directly from the viewer (web-browser)
+_Tp-Note_'s note files can be printed directly from the viewer (webbrowser)
 window or first converted into `.html` with `tpnote -x '' mynote.txt`. For other
 formats e.g. `.docx`, `.odt` and `.pdf` use [Pandoc](https://pandoc.org/)
-or `khtmltopdf`.
+or `wkhtmltopdf`.
 
 
 ```{=docbook}
@@ -634,7 +634,7 @@ files.
 
 ### Debugging
 
-`Tp-Note`'s logging feature is controlled with the command-line-options:
+`Tp-Note`'s logging feature is controlled with the command line-options:
 `--debug` and `--popup` or by the corresponding configuration file variables:
 `[arg_default] debug` and `[arg_default] popup`.
 
@@ -661,19 +661,19 @@ text editor, update Windows to the latest version or install
   markup language. Please refer to [Tp-Note's man-page] to learn how to
   change its templates in the configuration file.
 
-  In addition, _Tp-Note_ comes with a build in note viewer which is
-  optional and independent from its core functionality. When _Tp-Note_ opens
-  a note file, it choses depending on the file extension which
-  Renderer to launch for which markup language. It is possible to
-  change this association in _Tp-Note_'s configuration file. Please refer
-  to the [Tp-Note's man-page] for details.
+  In addition, _Tp-Note_ comes with a build in note viewer which is optional and
+  independent from its core functionality. When _Tp-Note_ opens a note file, it
+  detects the markup language through the note file extension and launches the
+  associated builtin markup renderer. The whole process can be customized in
+  _Tp-Note_'s configuration file. Please refer to [Tp-Note's man-page] for
+  details.
 
 
 ### Chose your favourite text editor and make it default
 
 * Your preferred text editor is not *Notepad*? Change it![^1]
 
-  Note-taking with _Tp-Note_ is more fun with a good markup (Markdown)
+  Note taking with _Tp-Note_ is more fun with a good markup (Markdown)
   text editor, although any Unicode text editor will do (even Notepad >=
   Windows 10-update 1903). _Tp-Note_ is preconfigured to work with:
 
@@ -737,7 +737,7 @@ how to change the HTML-template that renders the note's content.
 This section shows how to integrate _Tp-Note_ in the context menu of your
 file manager. The context menu appears, when you click right on a file icon,
 on a directory icon or on the white space in between (cf. figure below). In
-the following we will configure the file-manager to launch _Tp-Note_ with the
+the following we will configure the file manager to launch _Tp-Note_ with the
 path to the selected icon.
 
 ![Tp-note in the context-menu (right-click menu)](images/workflow2-1.png){width="9cm"}
@@ -749,14 +749,14 @@ path to the selected icon.
 
 ## Windows file explorer configuration
 
-_Tp-Note_ is distributed with a Microsoft Windows Installler package
-`tp-note-x.x.x-x86_64.msi`, which automates the following key registration.
+_Tp-Note_ is distributed with a Microsoft Windows Installer package
+`tpnote-x.x.x-x86_64.msi`, which automates the following key registration.
 Omit this section if you have installed _Tp-Note_ through this `.msi` package!
 
 1. Make the directory `C:\Windows\tpnote\bin\` and move `tpnote.exe`
    into it.
 
-2. Open the *notepad* text editor and paste the following registry-key into
+2. Open the *notepad* text editor and paste the following registry key into
    it.
 
         Windows Registry Editor Version 5.00
@@ -824,8 +824,8 @@ sudo dpkg -i tp-note_X.X.X_amd64.deb
 
 ### Configure Thunar's custom actions
 
-Most file-manager allow extending the context menu. As an example, the
-following images show the configuration of the *Thunar*-file-manger.
+Most file manager allow extending the context menu. As an example, the
+following images show the configuration of the *Thunar* file manger.
 
 #### Add context menu entry: Edit Tp-Note
 
@@ -990,7 +990,7 @@ thunar
 
 ### Configure Pcmanfm's custom actions system-wide
 
-_Pcmanfm_ is the default file-manager in _Lubuntu_ and in _Raspbian_ on the
+_Pcmanfm_ is the default file manager in _Lubuntu_ and in _Raspbian_ on the
 Raspberry Pi.
 
 Create the configuration file:
@@ -1012,7 +1012,7 @@ Name[en]=Default profile
 Exec=tpnote %f
 ```
 
-The above creates the custom context-menu item _Tp-Note_.
+The above creates the custom context menu item _Tp-Note_.
 
 #### Note viewer
 
@@ -1035,10 +1035,10 @@ Name[en]=Default profile
 Exec=tpnote -v %f
 ```
 
-The above creates the custom context-menu item _Tp-Note View_.
+The above creates the custom context menu item _Tp-Note View_.
 
 
-### Configure the text-based file manager MidnightCommander
+### Configure the text based file manager MidnightCommander
 
 The Ncurses library based file manager _MidnightCommander_ `mc` enjoys great
 popularity among people working on the console.
@@ -1106,8 +1106,9 @@ press `[F3]` or `[Enter]`.
       man-page.  For best user experience, I recommend text editors with
       internal markup previewer.
 
-[^3]: If you use [Typora](<https://typora.io/#download>), make sure to install a
-      recent version (version >=0.9.89).
+[^3]: At the moment I do not recommend using [Typora](<https://typora.io/#download>) because of
+      this bug: [Errornous rendering when the value of the last header var
+      is the empty string · Issue #4633 · typora/typora-issues](https://github.com/typora/typora-issues/issues/4633)
 
 [^4]: Versions for other operating systems and a Debian package are
       [available here](<https://blog.getreu.net/projects/tp-note/_downloads/>).

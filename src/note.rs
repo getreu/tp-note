@@ -34,7 +34,7 @@ use std::str;
 use tera::Tera;
 
 /// The template variable contains the fully qualified path of the `<path>`
-/// command line argument. If `<path> points to a file, the variable contains the
+/// command line argument. If `<path>` points to a file, the variable contains the
 /// file path. If it points to a directory, it contains the directory path, or -
 /// if no `path` is given - the current working directory.
 pub const TMPL_VAR_PATH: &str = "path";
