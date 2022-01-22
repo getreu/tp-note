@@ -273,7 +273,7 @@ title:      {{ stdin ~ clipboard | linkname | cut | json_encode }}
 {% else %}\
 title:      {{ stdin ~ clipboard | heading | cut | json_encode }}
 {% endif %}\
-{% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}\
+{% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut %}\
 subtitle:   {{ 'URL' | json_encode }}
 {% else %}\
 subtitle:   {{ 'Note' | json_encode }}
