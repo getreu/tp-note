@@ -1,5 +1,5 @@
 #!/bin/sh
-docker-compose run --rm dev
+docker-compose run --name tpnote-dev --rm dev
 
 ### This is equivalent to:
 # cd ..
