@@ -110,6 +110,7 @@ lazy_static! {
 lazy_static! {
     /// Do we run on a console?
     pub static ref RUNS_ON_CONSOLE: bool = {
+        use crate::CFG;
         // User `root` has usually no GUI.
         #[cfg(target_family = "unix")]
         if let Some(user) = std::env::var("USER")
