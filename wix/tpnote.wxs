@@ -104,7 +104,7 @@
 
                             <RegistryKey Root='HKCR'
                                          Key='Directory\Background\shell\New Tp-Note\command'>
-                                <RegistryValue Type='string' Value='C:\Program Files\tp-note\bin\tpnote.exe' />
+                                <RegistryValue Type='string' Value='C:\Program Files\tpnote\bin\tpnote.exe' />
                             </RegistryKey>
                             <RegistryKey Root='HKCR'
                                          Key='*\OpenWithList\tpnote.exe'>
