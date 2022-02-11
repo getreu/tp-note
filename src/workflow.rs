@@ -345,13 +345,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
 
                 if missing_header {
                     // Silently ignore error.
-                    log::warn!(
-                        "{}\n\
-                        \n\
-                        Please correct the front matter if this is supposed \
-                        to be a Tp-Note file. Ignore otherwise.",
-                        e,
-                    );
+                    log::warn!("{}", e);
                 } else {
                     // Report all other errors.
                     return Err(e);
