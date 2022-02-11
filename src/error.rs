@@ -27,6 +27,9 @@ pub enum WorkflowError {
     MissingFrontMatterField { source: NoteError },
 
     #[error(transparent)]
+    CompulsoryFrontMatterFieldIsEmpty { source: NoteError },
+
+    #[error(transparent)]
     InvalidFrontMatterYaml { source: NoteError },
 
     #[error(transparent)]

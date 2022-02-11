@@ -43,6 +43,9 @@ fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
         Err(e) if matches!(e, NoteError::MissingFrontMatterField { .. }) => {
             return Err(WorkflowError::MissingFrontMatterField { source: e })
         }
+        Err(e) if matches!(e, NoteError::CompulsoryFrontMatterFieldIsEmpty { .. }) => {
+            return Err(WorkflowError::CompulsoryFrontMatterFieldIsEmpty { source: e })
+        }
         Err(e) if matches!(e, NoteError::InvalidFrontMatterYaml { .. }) => {
             return Err(WorkflowError::InvalidFrontMatterYaml { source: e })
         }
@@ -291,6 +294,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
             if (matches!(e, WorkflowError::InvalidFrontMatterYaml { .. })
                 || matches!(e, WorkflowError::MissingFrontMatter { .. })
                 || matches!(e, WorkflowError::MissingFrontMatterField { .. })
+                || matches!(e, WorkflowError::CompulsoryFrontMatterFieldIsEmpty { .. })
                 || matches!(e, WorkflowError::SortTagVarInvalidChar { .. })
                 || matches!(e, WorkflowError::FileExtNotRegistered { .. }))
                 && !ARGS.batch
