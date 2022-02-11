@@ -137,7 +137,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
     if path.is_dir() {
         // Error if we are supposed to export a directory.
         if ARGS.export.is_some() {
-            return Err(WorkflowError::ExportsNeedsNoteFile);
+            return Err(WorkflowError::ExportNeedsNoteFile);
         };
 
         let (n, new_file_path) = if STDIN.is_empty() && CLIPBOARD.is_empty() {
@@ -226,7 +226,7 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
         } else {
             // Error if we are supposed to export an unknown file type.
             if ARGS.export.is_some() {
-                return Err(WorkflowError::ExportsNeedsNoteFile);
+                return Err(WorkflowError::ExportNeedsNoteFile);
             };
 
             // ANNOTATE FILE: CREATE NEW NOTE WITH TMPL_ANNOTATE_CONTENT TEMPLATE

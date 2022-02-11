@@ -11,7 +11,7 @@ use thiserror::Error;
 pub enum WorkflowError {
     /// Remedy: check <path> to note file.
     #[error("Can not export. No note file found.")]
-    ExportsNeedsNoteFile,
+    ExportNeedsNoteFile,
 
     /// Remedy: restart with `--debug trace`.
     #[error("Failed to render template (cf. `{tmpl_name}` in configuration file)!\n{source}")]
