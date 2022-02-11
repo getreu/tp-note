@@ -477,7 +477,7 @@ impl ServerThread {
              Content-Type: {}\r\n\
              Content-Length: {}\r\n\r\n",
             httpdate::fmt_http_date(SystemTime::now()),
-            MAX_AGE.to_string(),
+            MAX_AGE,
             mime_type,
             fs::metadata(&reqpath)?.len(),
         );
@@ -517,7 +517,7 @@ impl ServerThread {
              Content-Type: {}\r\n\
              Content-Length: {}\r\n\r\n",
             httpdate::fmt_http_date(SystemTime::now()),
-            MAX_AGE.to_string(),
+            MAX_AGE,
             mime_type,
             content.len(),
         );
