@@ -175,12 +175,20 @@ impl Note {
         // Deserialize the note read from disk.
         let fm = Note::deserialize_header(content.borrow_dependent().header)?;
 
-        if !&CFG.tmpl.compulsory_header_field.is_empty()
-            && fm.map.get(&CFG.tmpl.compulsory_header_field).is_none()
-        {
-            return Err(NoteError::MissingFrontMatterField {
-                field_name: CFG.tmpl.compulsory_header_field.to_owned(),
-            });
+        if !&CFG.tmpl.compulsory_header_field.is_empty() {
+            if let Some(tera::Value::String(header_field)) =
+                fm.map.get(&CFG.tmpl.compulsory_header_field)
+            {
+                if header_field.is_empty() {
+                    return Err(NoteError::CompulsoryFrontMatterFieldIsEmpty {
+                        field_name: CFG.tmpl.compulsory_header_field.to_owned(),
+                    });
+                };
+            } else {
+                return Err(NoteError::MissingFrontMatterField {
+                    field_name: CFG.tmpl.compulsory_header_field.to_owned(),
+                });
+            }
         }
 
         Self::register_front_matter(&mut context, &fm);
@@ -381,7 +389,7 @@ impl Note {
         Ok(filename::shorten_filename(file_path))
     }
 
-    /// Helper function deserializing the front-matter of an `.md`-file.
+    /// Helper function deserializing the front-matter of the note file.
     fn deserialize_header(header: &str) -> Result<FrontMatter, NoteError> {
         if header.is_empty() {
             return Err(NoteError::MissingFrontMatter {

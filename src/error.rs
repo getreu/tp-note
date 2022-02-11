@@ -244,6 +244,10 @@ pub enum NoteError {
     )]
     MissingFrontMatterField { field_name: String },
 
+    /// Remedy: enter a string.
+    #[error("The value of the front matter field `{field_name}:` must be a non empty string.")]
+    CompulsoryFrontMatterFieldIsEmpty { field_name: String },
+
     /// Remedy: check YAML syntax in the note's front matter.
     #[error(
         "Can not parse front matter:\n\
