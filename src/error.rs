@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::process::ExitStatus;
 use thiserror::Error;
 
+#[allow(dead_code)]
 #[derive(Debug, Error)]
 /// Error arising in the `workflow` and `main` module.
 pub enum WorkflowError {
@@ -19,7 +20,6 @@ pub enum WorkflowError {
         tmpl_name: String,
         source: NoteError,
     },
-
     #[error(transparent)]
     MissingFrontMatter { source: NoteError },
 

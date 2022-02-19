@@ -1,7 +1,6 @@
 //! High level program logic implementing the whole workflow.
 
 use crate::config::CFG;
-use crate::error::NoteError;
 use crate::error::WorkflowError;
 use crate::file_editor::launch_editor;
 use crate::filename;
@@ -35,31 +34,7 @@ use tera::Value;
 /// the new filename.
 fn synchronize_filename(path: &Path) -> Result<PathBuf, WorkflowError> {
     // parse file again to check for synchronicity with filename
-    let mut n = match Note::from_existing_note(path) {
-        Ok(n) => n,
-        Err(e) if matches!(e, NoteError::MissingFrontMatter { .. }) => {
-            return Err(WorkflowError::MissingFrontMatter { source: e })
-        }
-        Err(e) if matches!(e, NoteError::MissingFrontMatterField { .. }) => {
-            return Err(WorkflowError::MissingFrontMatterField { source: e })
-        }
-        Err(e) if matches!(e, NoteError::CompulsoryFrontMatterFieldIsEmpty { .. }) => {
-            return Err(WorkflowError::CompulsoryFrontMatterFieldIsEmpty { source: e })
-        }
-        Err(e) if matches!(e, NoteError::InvalidFrontMatterYaml { .. }) => {
-            return Err(WorkflowError::InvalidFrontMatterYaml { source: e })
-        }
-        Err(e) if matches!(e, NoteError::InvalidClipboardYaml { .. }) => {
-            return Err(WorkflowError::InvalidClipboardYaml { source: e })
-        }
-        Err(e) if matches!(e, NoteError::SortTagVarInvalidChar { .. }) => {
-            return Err(WorkflowError::SortTagVarInvalidChar { source: e })
-        }
-        Err(e) if matches!(e, NoteError::FileExtNotRegistered { .. }) => {
-            return Err(WorkflowError::FileExtNotRegistered { source: e })
-        }
-        Err(e) => return Err(e.into()),
-    };
+    let mut n = Note::from_existing_note(path)?;
 
     let no_filename_sync = match (
         n.context.get(TMPL_VAR_FM_FILENAME_SYNC),
