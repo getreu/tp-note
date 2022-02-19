@@ -98,9 +98,8 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
             .stderr(Stdio::null());
 
         match command.spawn() {
-            Ok(child) => {
-                let mut child = ChildExt::from(child);
-                let ecode = child.wait()?;
+            Ok(mut child) => {
+                let ecode = child.wait_subprocess()?;
 
                 if ecode.success() {
                     executable_found = true;

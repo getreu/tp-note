@@ -1,6 +1,5 @@
 //! Custom error types.
 
-use crate::process_ext::ChildExtError;
 use std::io;
 use std::path::PathBuf;
 use std::process::ExitStatus;
@@ -144,14 +143,6 @@ pub enum FileError {
     /// Should not happen. Please report this bug.
     #[error("Can not convert path to UFT8:\n{path:?}")]
     PathNotUtf8 { path: PathBuf },
-
-    /// Remedy: check the configuration file variables `[app_args] editor`
-    /// and `[app_args] browser`.
-    #[error("Error executing external application:")]
-    ChildExt {
-        #[from]
-        source: ChildExtError,
-    },
 
     /// Remedy: check the configuration file variable `[app_args] editor`.
     #[error(

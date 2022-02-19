@@ -1,7 +1,6 @@
 //! The viewer feature's error type.
 use crate::error::FileError;
 use crate::error::NoteError;
-use crate::process_ext::ChildExtError;
 use core::str::Utf8Error;
 use std::sync::mpsc::RecvError;
 use thiserror::Error;
@@ -48,13 +47,6 @@ pub enum ViewerError {
     /// Network error.
     #[error("Can not parse HTTP header in TCP stream: {source_str}")]
     StreamParse { source_str: String },
-
-    /// Remedy: check `[app_args] browser` configuration file variable.
-    #[error("Error executing external application.")]
-    ChildExt {
-        #[from]
-        source: ChildExtError,
-    },
 
     /// Remedy: Check the template syntax.
     #[error(

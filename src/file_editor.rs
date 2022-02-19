@@ -106,9 +106,8 @@ pub fn launch_editor(path: &Path) -> Result<(), FileError> {
             .stderr(Stdio::null());
 
         match command.spawn() {
-            Ok(child) => {
-                let mut child = ChildExt::from(child);
-                let ecode = child.wait()?;
+            Ok(mut child) => {
+                let ecode = child.wait_subprocess()?;
 
                 if !ecode.success() {
                     return Err(FileError::ApplicationReturn {
