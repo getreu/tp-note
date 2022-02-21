@@ -870,7 +870,7 @@ A filter is always used together with a variable. Here some examples:
   reStruncturedText formatted link in the clipboard.
 
 * '`{{ username | json_encode }}`' is the username Json encoded. All YAML
-  front-matter must be Json encoded, so the filter code should be the last 
+  front-matter must be Json encoded, so the filter code should be the last
   thing in the front-matter block.
 
 * '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its
@@ -897,7 +897,7 @@ variables named '`[tmpl] *_content`'.
 Strings in the YAML front-matter of content templates are JSON encoded.
 Therefore, all variables used in the front-matter must pass an additional
 '`json_encode()`'-filter. For example, the variable '`{{ dir_path | stem }}`'
-becomes '`{{ dir_path | stem | json_encode() }}`' or just
+becomes '`{{ dir_path | stem() | json_encode() }}`' or just
 '`{{ dir_path | stem | json_encode }}`'.
 
 
@@ -905,12 +905,13 @@ becomes '`{{ dir_path | stem | json_encode() }}`' or just
 
 By convention, filename templates appear in the configuration file in variables
 named '`[tmpl] *_filename`'.  When a content template creates a new note, the
-corresponding filename templates is called afterwards to calculate the filename
-of the new notes.  The filename template '`[tmpl] sync_filename`' has a special
-role as it is synchronizes the filename of existing note files.  As we are
-dealing with filenames we  must guarantee, that the templates produce only file
-system friendly characters.  For this purpose _Tp-Note_ provides the additional
-Tera filters '`sanit`' and '`sanit(alpha=true)`'.
+corresponding filename template is called afterwards to calculate the filename
+of the new note. Please note that, the filename template
+'`[tmpl] sync_filename`' has a special role as it is synchronizes the filename
+of existing note files. Besides this, as we are dealing with filenames we must
+guarantee, that the filename templates produce only file system friendly
+characters.  For this purpose _Tp-Note_ provides the additional Tera filters
+'`sanit`' and '`sanit(alpha=true)`':
 
 * The '`sanit()`' filter transforms a string in a file system friendly from. This
   is done by replacing forbidden characters like '`?`' and '`\\`' with '`_`'
