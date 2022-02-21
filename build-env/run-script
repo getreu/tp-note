@@ -9,6 +9,6 @@ DOCKER_SCRIPT_DIR="$DOCKER_PROJECT_DIR/$SCRIPT_DIR"
 docker run \
    -it --env USER=dockeruser \
    -v $HOST_PROJECT_DIR:$DOCKER_PROJECT_DIR \
-   tpnote-dev \
+   build-env-dev \
    /bin/bash -c "cd $DOCKER_SCRIPT_DIR; ./$1"
 

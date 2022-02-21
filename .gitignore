@@ -1,5 +1,6 @@
 doc/build/html/_downloads/
 target
+build-edit-env
 *.sw?
 *.html
 *.1
