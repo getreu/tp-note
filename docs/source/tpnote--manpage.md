@@ -48,7 +48,7 @@ can be found in [Tp-Note's user manual] and at [Tp-Note's project page].
 
 # OPERATION MODES
 
-_Tp-Note_ operates in 4 different modes, depending on its commend line arguments
+_Tp-Note_ operates in 4 different modes, depending on its command line arguments
 and the clipboard state. Each mode is usually associated with one content
 template and one filename template.
 
@@ -58,8 +58,8 @@ template and one filename template.
 In case the clipboard is empty while starting, the new note is created
 with the templates: '`[tmpl] new_content`' and '`[tmpl] new_filename`'.  By
 default, the new note's title is the parent's directory name. The newly created
-file is then opened with an external text editor, allowing to change the
-proposed title and to add other content. When the text editor closes, _Tp-Note_
+file is then opened with an external text editor, allowing it to change the
+proposed title and add other content. When the text editor closes, _Tp-Note_
 synchronizes the note's metadata and its filename. This operation is performed
 with the '`[tmpl] sync_filename`' template.
 
@@ -270,7 +270,7 @@ lang:       "en"
 
 ### Use Tp-Note in shell scripts
 
-To save some typing while using the above pattern, you can create a script with:
+Using the method displayed above you can save time and create a script with:
 
 ```
 > sudo nano /usr/local/bin/download
@@ -371,11 +371,11 @@ Example:
 The way how _Tp-Note_ synchronizes the note's metadata and filename is defined
 in the template '`[tmpl] sync_filename`'.
 
-Once _Tp-Note_ opens the file in an text editor, the note taker may decide updating
-the title in the note's YAML metadata section from
-'`title: "Favorite Readings"`' to '`title: "Introduction to bookkeeping"`'.
-After closing the text editor the filename is automatically updated too and
-looks like:
+Once _Tp-Note_ opens the file in an text editor, the person taking notes may
+decide updating the title in the note's YAML metadata section from '`title:
+"Favorite Readings"`' to '`title: "Introduction to bookkeeping"`'.  After
+closing the text editor the filename is automatically updated too and looks
+like:
 
     "20200306-Introduction to bookkeeping--Note.txt"
 
@@ -391,7 +391,7 @@ synchronization).
 
 :   Do not launch the external text editor or viewer. All other operations
     are available and are executed in the same way. In batch mode, error
-    messages are dumped on the console only and no alert window pops up.
+    messages are dumped on the console only and no alert windows pop up.
 
 :   _Tp-Note_ ignores the clipboard when run in batch mode with '`--batch`'.
     Instead, if available, it reads the `stdin` stream as if the data came
@@ -404,10 +404,10 @@ synchronization).
 **-d** *LEVEL*, **\--debug**=*LEVEL*
 
 :   Print additional log messages.  The debug level *LEVEL* must be one out of
-    '`trace`', '`debug`', '`info`', '`warn`', '`error`' (default) or '`off`'.
-    The level '`trace`' reports the most detailed information, while '`error`'
-    informs only about failures.  A '`warn`' level message means, that not all
-    functionality might be available or work as expected.
+'`trace`', '`debug`', '`info`', '`warn`', '`error`' (default) or '`off`'.  The
+level '`trace`' reports the most detailed information, while '`error`' informs
+you only about failures.  A '`warn`' level message means, that not all
+functionality might be available or work as expected.
 
 :   Use '`-b -d trace`' for debugging templates. If the HTTP server
     (viewer) does not work as expected: '`-n -d debug`'. If your text editor
@@ -416,8 +416,8 @@ synchronization).
     '`-d trace`' shows all available template variables, the templates
     used and the rendered result of the substitution. This is
     particularly useful for debugging new templates. The option
-    '`-d off`' silences all error message reporting and suppresses also the
-    error popup window.
+    '`-d off`' silences all error message reporting and also suppresses the
+    error popup windows.
 
 :   All error messages are dumped in the error stream `stderr` and appear
     on the console from where _Tp-Note_ was launched:
@@ -434,7 +434,7 @@ synchronization).
         tpnote.exe --popup --debug info my_note.txt
 
 :   The same can be achieved by setting following configuration file
-    variables (especially useful under Windows):
+    variables (especially useful with Windows):
 
         [arg_default]
         debug = 'info'
@@ -455,20 +455,21 @@ synchronization).
 
 **-p**, **\--port**=*PORT*
 
-:   Set server port the web browser connects to, to the specified value *PORT*.
-    If not given, a random free port is chosen automatically.
+:   Sets the server port that the web browser connects to, to the specified value *PORT*.
+    If not given, a random available port is chosen automatically.
 
 **-n**, **\--no-filename-sync**
 
-:   Whenever _Tp-Note_ opens a note file, it synchronizes its YAML-metadata
-    with its filename. '`--no-filename-sync`' disables the synchronization.
-    Mainly useful is this flag in scripts for testing '`.txt`'-files.
-    See section EXIT STATUS for more details.  The section METADATA FILENAME
-    SYNCHRONIZATION shows alternative ways to disable synchronisation.
+:   Whenever _Tp-Note_ opens a note file, it synchronizes its YAML-metadata with
+    its filename. '`--no-filename-sync`' disables the synchronization.  In
+    addition, the "flag in scripts" can be especially useful for testing
+    '`.txt`'-files.  See section EXIT STATUS for more details.  The section
+    METADATA FILENAME SYNCHRONIZATION shows alternative ways to disable
+    synchronization.
 
 **-t**, **\--tty**
 
-:   _Tp-Note_ tries different heuristics to detect weather a graphic environment
+:   _Tp-Note_ tries different heuristics to detect a graphic environment
     is available or not. For example, under Linux, the '`DISPLAY`' environment
     variable is evaluated. The '`--tty`' flag disables the automatic detection
     and sets _Tp-Note_ in "console" mode, where only the non GUI editor
@@ -586,7 +587,8 @@ numerical digits and whitespace, a _sort tag_ can be any combination of
         09_02-Notes
         09.09-Notes
 
-When _Tp-Note_ creates a new note, it prepends automatically a *chronological
+When _Tp-Note_ creates a new note, it will automatically prepend a
+*chronological
 sort tag* of today. The '`{{ fm_title }}`' part is usually derived from the
 parent directory name omitting its own *sort tag*.
 
@@ -685,11 +687,12 @@ note with _Tp-Note_.  However, you can switch back to _Tp-Note_'s default
 behaviour any time by deleting the '`sort_tag`' line in the note's metadata.
 The same applies to the '`file_ext`' variable.
 
-The metadata filename synchronisation feature can be disabled permanently
+The metadata filename synchronization feature can be disabled permanently
 by setting the configuration file variable
 '`[arg_default] no_filename_sync = true`'. To disable this feature for one time
 only, invoke _Tp-Note_ with '`--no-filename-sync`'. To exclude a particular note
-from filename synchronisation, add the YAML header field '`filename_sync: false`'.
+from filename synchronization, add the YAML header field '`filename_sync:
+false`'.
 
 ``` yaml
 ---
@@ -767,7 +770,7 @@ content template was filled in with data: For example a field named '`title:`'
 in the content template '`[tmpl] new_content`' will generate the variable
 '`fm_title`' which can then be used in the corresponding '`[tmpl] new_filename`'
 filename template. '`{{ fm_* }}`' variables are generated dynamically. This
-means, a YAmL front-matter variable '`foo:`' in a note will generate a
+means, a YAML front-matter variable '`foo:`' in a note will generate a
 '`{{ fm_foo }}`' template variable. On the other hand, a missing '`foo:`'
 will cause '`{{ fm_foo }}`' to be undefined.
 
@@ -802,7 +805,7 @@ templates and in the '`[tmpl] copy_content`' content template only.
   ```
 
 Important: there is no guarantee, that any of the above '`{{ fm_* }}`'
-variables is defined! Depending on the last content template result, certain
+variables are defined! Depending on the last content template result, certain
 variables might be undefined. Please take into consideration, that a defined
 variable might contain the empty string '`""`'.
 
@@ -855,7 +858,7 @@ A filter is always used together with a variable. Here some examples:
 * '`{{ clipboard | cut }}`' is the first 200 bytes from the clipboard.
 
 * '`{{ clipboard | heading }}`' is the clipboard's content until end of the first
-  sentence ending, or the first newline.
+  sentence, or the first newline.
 
 * '`{{ clipboard | linkname }}`' is the name of the first Markdown or
   reStructuredText formatted link in the clipboard.
@@ -867,8 +870,8 @@ A filter is always used together with a variable. Here some examples:
   reStruncturedText formatted link in the clipboard.
 
 * '`{{ username | json_encode }}`' is the username Json encoded. All YAML
-  front-matter must be Json encoded, so this filter should be the last in all
-  lines of the front-matter section.
+  front-matter must be Json encoded, so the filter code should be the last 
+  thing in the front-matter block.
 
 * '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its
   front-matter, sanitized in a filesystem friendly form. Special characters are
@@ -1048,8 +1051,8 @@ _Mark Text_-editor will open with your note.
 
 **Register a console text editor running in a terminal emulator**
 
-In this setup _Tp-Note_ launches the terminal emulator which is configured
-to launch the text editor as child process. Both should should not fork when they
+In this setup _Tp-Note_ launches the terminal emulator which is configured to
+launch the text editor as child process. Niether process should fork when they
 start (see above).
 
 Examples, adjust to your needs and taste:

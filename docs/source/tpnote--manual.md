@@ -15,7 +15,7 @@ _Tp-Note_ helps you to quickly get started writing notes with its powerful
 template system. If you like to keep your notes next to your files and you care
 about expressive filenames, then _Tp-Note_ might be the tool of your choice.
 As _Tp-Note_ synchronizes the note's filename with its document title, you
-will find back your notes easily.
+will find your notes more easily.
 
 _Tp-Note_ is available for Linux, Windows and MacOS. This manual illustrates
 its main use cases and how to get started:
@@ -24,11 +24,11 @@ its main use cases and how to get started:
 2. Take a note about an existing or downloaded file.
 3. Bookmark and comment a hyperlink.
 4. Copy and annotate a page from a book.
-5. Best practise.
+5. Best practice.
 6. Note taking for system administrators.
 
 If you want to customize _Tp-Note_ with your own templates or if you want to
-use another markup language than Markdown, please consult the [man page] for
+use another markup language than Markdown, please consult the [man-page] for
 more technical details. It also explains how to change _Tp-Note_'s default text
 editor.
 
@@ -54,12 +54,12 @@ The documentation of this project is dived into tow parts:
 
 # How students take notes
 
-A fellow student still uses paper and pen. I ask her why, and she replied "I can
-better concentrate. My computer distracts me. I will do all other things, but
-not listening.".
+A fellow student still uses paper and pen. I asked her why, and she replied with
+"It helps me concentrate better. My computer distracts me. I will do many other
+things and I wont remain concentrated on my task.".
 
 This is certainly true. As far as I am concerned, I am not good at logistics.
-For me having all documents and notes in one little machine is a blessing.
+For me having all my documents and notes on one little machine is a blessing.
 
 The following sections illustrate how to work with _Tp-Note_ with my most
 common workflows.
@@ -406,7 +406,7 @@ well as with the `--no-default-features` console only version.
 * Launch, for once only, a different text editor.\
   The external text editor, _Tp-Note_ defaults to, is defined in the configuration
   file and can be changed there. If you want to use a different text editor
-  just for one-shot, type:
+  just for a one-shot, type:
 
   ```bash
   FILE=$(tpnote --batch); vi "$FILE"; tpnote --batch "$FILE"
@@ -531,7 +531,7 @@ The figures below illustrate organizing files with *sort-tags".
 
 ![File with chronological sort-tag](images/filing-system2.png){width="7cm"}
 
-When _Tp-Note_ creates a new note, it prepends automatically a *chronological
+When _Tp-Note_ creates a new note, it automatically prepends a *chronological
 sort-tag* of today. The `{{ fm_title }}` part is usually derived from the parent
 directory's name omitting its own *sort-tag*.
 
@@ -625,8 +625,8 @@ or `wkhtmltopdf`.
 ### Incompatible configuration files
 
 While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
-configuration file structure and the program fails to start with an error
-message. Please consult the section
+configuration file structure and the program may fail to start displaying an
+error message. Please consult the following section
 [Upgrading](https://blog.getreu.net/projects/tp-note/#upgrading) in the
 project's Readme document for more information about incompatible configuration
 files.
@@ -702,9 +702,9 @@ text editor, update Windows to the latest version or install
 [Tp-Note's man-page]: http://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization
 
 
-### Chose the web browser for note viewing and make it default
+### Choose the web browser for note viewing and make it your default
 
-* Your preferred web browser is not *Firefox*? Change it![^1]
+* Is your preferred web browser is not *Firefox*? Change it![^1]
 
   After opening the text editor, _Tp-Note_ internally renders the note file
   and opens a web browser to display the note's content. Which web browser on

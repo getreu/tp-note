@@ -19,6 +19,7 @@ pub enum WorkflowError {
         tmpl_name: String,
         source: NoteError,
     },
+
     #[error(transparent)]
     MissingFrontMatter { source: NoteError },
 
@@ -314,7 +315,7 @@ pub enum NoteError {
         \t{txt_ext:?}\n\
         \t{no_viewer_ext:?}\n\
         \n\
-        Choose one of the above list or add more extensions to the\n\
+        Choose one of the listed above or add more extensions to the\n\
         `[filename] extensions_*` variables in your configuration file."
     )]
     FileExtNotRegistered {
