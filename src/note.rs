@@ -496,6 +496,17 @@ impl Note {
             // `export_dir` points to `-` and `html_path` is empty.
         }
 
+        if html_path
+            .as_os_str()
+            .to_str()
+            .unwrap_or_default()
+            .is_empty()
+        {
+            log::info!("Rendering HTML to STDOUT (`{:?}`)", export_dir);
+        } else {
+            log::info!("Rendering HTML into: {:?}", html_path);
+        };
+
         // The file extension identifies the markup language.
         let note_path_ext = note_path
             .extension()
@@ -510,14 +521,12 @@ impl Note {
             .unwrap_or_default()
             .is_empty()
         {
-            log::info!("Rendering HTML to STDOUT (`{:?}`)", export_dir);
             let stdout = io::stdout();
             let mut handle = stdout.lock();
 
             // Write HTML rendition.
             handle.write_all(self.render_content(note_path_ext, template, "")?.as_bytes())?;
         } else {
-            log::info!("Rendering HTML into: {:?}", html_path);
             let mut handle = OpenOptions::new()
                 .write(true)
                 .create(true)
