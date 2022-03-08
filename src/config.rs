@@ -948,7 +948,7 @@ lazy_static! {
 /// Parse the configuration file if it exists. Otherwise write one with default values.
 #[cfg(not(test))]
 #[inline]
-fn config_load_path(config_path: &Path) -> Result<Cfg, FileError> {
+fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
     if config_path.exists() {
         let config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
         // Check for obvious configuration errors.
@@ -984,19 +984,27 @@ fn config_load_path(config_path: &Path) -> Result<Cfg, FileError> {
         // First check passed.
         Ok(config)
     } else {
-        fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
-
-        let mut buffer = File::create(config_path)?;
-        buffer.write_all(toml::to_string_pretty(&Cfg::default())?.as_bytes())?;
-        Ok(Cfg::default())
+        let cfg = Cfg::default();
+        config_write(&cfg, config_path)?;
+        Ok(cfg)
     }
 }
 
 /// In unit tests we use the default configuration values.
 #[cfg(test)]
 #[inline]
-fn config_load_path(_config_path: &Path) -> Result<Cfg, FileError> {
+fn config_load(_config_path: &Path) -> Result<Cfg, FileError> {
     Ok(Cfg::default())
+}
+
+/// Writes the default configuration to `Path`.
+#[cfg(not(test))]
+fn config_write(config: &Cfg, config_path: &Path) -> Result<(), FileError> {
+    fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
+
+    let mut buffer = File::create(config_path)?;
+    buffer.write_all(toml::to_string_pretty(config)?.as_bytes())?;
+    Ok(())
 }
 
 lazy_static! {
@@ -1018,7 +1026,7 @@ lazy_static! {
             }
         };
 
-        config_load_path(config_path)
+        config_load(config_path)
             .unwrap_or_else(|e|{
                 // Remember that something went wrong.
                 let mut cfg_file_loading = CFG_FILE_LOADING.write().unwrap();
