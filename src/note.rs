@@ -432,15 +432,15 @@ impl Note {
 
         // `extension` has also additional constrains to check.
         // Is `extension` listed in `CFG.filename.extensions_*`?
-        if let Some(tera::Value::String(extension)) = &fm
+        if let Some(tera::Value::String(file_ext)) = &fm
             .map
             .get(TMPL_VAR_FM_FILE_EXT.trim_start_matches(TMPL_VAR_FM_))
         {
             let extension_is_unknown =
-                matches!(MarkupLanguage::new(extension), MarkupLanguage::None);
+                matches!(MarkupLanguage::from(&**file_ext), MarkupLanguage::None);
             if extension_is_unknown {
                 return Err(NoteError::FileExtNotRegistered {
-                    extension: extension.to_owned(),
+                    extension: file_ext.to_owned(),
                     md_ext: CFG.filename.extensions_md.to_owned(),
                     rst_ext: CFG.filename.extensions_rst.to_owned(),
                     html_ext: CFG.filename.extensions_html.to_owned(),
@@ -558,14 +558,15 @@ impl Note {
         // Render Body.
         let input = self.content.borrow_dependent().body;
 
-        // What Markup language is used?
-        let ext = match self.context.get(TMPL_VAR_FM_FILE_EXT) {
-            Some(tera::Value::String(file_ext)) => Some(file_ext.as_str()),
-            _ => None,
+        // If this variable is set, overwrite `file_ext`
+        let fm_file_ext = match self.context.get(TMPL_VAR_FM_FILE_EXT) {
+            Some(tera::Value::String(fm_file_ext)) => fm_file_ext.as_str(),
+            _ => "",
         };
 
         // Render the markup language.
-        let html_output = match MarkupLanguage::from(ext, file_ext) {
+        let html_output = match MarkupLanguage::from(fm_file_ext).or(MarkupLanguage::from(file_ext))
+        {
             #[cfg(feature = "renderer")]
             MarkupLanguage::Markdown => Self::render_md_content(input),
             #[cfg(feature = "renderer")]

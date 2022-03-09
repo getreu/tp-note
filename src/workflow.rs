@@ -187,7 +187,6 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
     } else {
         let extension_is_known = !matches!(
             MarkupLanguage::from(
-                None,
                 path.extension()
                     .unwrap_or_default()
                     .to_str()

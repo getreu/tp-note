@@ -224,6 +224,7 @@ pub fn append_copy_counter(stem: &str, n: usize) -> String {
 }
 
 /// The Markup language of the note content.
+#[derive(PartialEq, Debug, Clone)]
 pub enum MarkupLanguage {
     Markdown,
     RestructuredText,
@@ -234,10 +235,20 @@ pub enum MarkupLanguage {
 }
 
 impl MarkupLanguage {
+    /// If `Self` is `None` return `rhs`, otherwise return `Self`.
+    pub fn or(self, rhs: Self) -> Self {
+        match self {
+            MarkupLanguage::None => rhs,
+            _ => self,
+        }
+    }
+}
+
+impl From<&str> for MarkupLanguage {
     /// Is `file_extension` listed in one of the known file extension
     /// lists?
     #[inline]
-    pub fn new(file_extension: &str) -> Self {
+    fn from(file_extension: &str) -> Self {
         for e in &CFG.filename.extensions_md {
             if e == file_extension {
                 return MarkupLanguage::Markdown;
@@ -271,20 +282,6 @@ impl MarkupLanguage {
             return MarkupLanguage::Txt;
         }
         MarkupLanguage::None
-    }
-
-    ///
-    /// Is `extension` or the file extension of `note_path_ext` listed in one of
-    /// the known file extension lists?
-    #[inline]
-    pub fn from(extension: Option<&str>, note_path_ext: &str) -> Self {
-        let file_extension = if let Some(ext) = extension {
-            ext
-        } else {
-            note_path_ext
-        };
-
-        Self::new(file_extension)
     }
 }
 

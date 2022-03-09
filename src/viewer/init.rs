@@ -56,7 +56,6 @@ impl Viewer {
     fn run2(doc: PathBuf) -> Result<(), ViewerError> {
         // Check if the master document (note file) has a known file extension.
         match MarkupLanguage::from(
-            None,
             doc.extension()
                 .unwrap_or_default()
                 .to_str()
