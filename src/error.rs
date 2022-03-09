@@ -74,9 +74,8 @@ pub enum FileError {
         Note: this error may occur after upgrading Tp-Note due\n\
         to some incompatible configuration file changes.\n\
         \n\
-        For now, Tp-Note backs up the existing configuration\n\
-        file and next time it starts, it will create a new one\n\
-        with default values."
+        Tp-Note backs up the existing configuration\n\
+        file and creates a new one with default values."
     )]
     ConfigFileLoadParseWrite { error: String },
 
@@ -86,9 +85,8 @@ pub enum FileError {
         Configuration file version: \'{config_file_version}\'\n\
         Minimum required configuration file version: \'{min_version}\'\n\
         \n\
-        For now, Tp-Note backs up the existing configuration\n\
-        file and next time it starts, it will create a new one\n\
-        with default values."
+        Tp-Note backs up the existing configuration\n\
+        file and creates a new one with default values."
     )]
     ConfigFileVersionMismatch {
         config_file_version: String,

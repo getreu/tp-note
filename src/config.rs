@@ -1007,6 +1007,12 @@ fn config_write(config: &Cfg, config_path: &Path) -> Result<(), FileError> {
     Ok(())
 }
 
+/// In unit tests we do not write anything.
+#[cfg(test)]
+fn config_write(_config: &Cfg, _config_path: &Path) -> Result<(), FileError> {
+    Ok(())
+}
+
 lazy_static! {
     /// Reads and parses the configuration file "tp-note.toml". An alternative
     /// filename (optionally with absolute path) can be given on the command line
@@ -1060,6 +1066,8 @@ pub fn backup_config_file() -> Result<PathBuf, FileError> {
             let config_path_bak = filename::find_unused((config_path).to_path_buf())?;
 
             fs::rename(&config_path.as_path(), &config_path_bak)?;
+
+            config_write(&Cfg::default(), config_path)?;
 
             Ok(config_path_bak)
         } else {
