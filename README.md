@@ -167,17 +167,6 @@ configuration file structure. In order not to loose the changes you made in
 this file, the installer does not replace it automatically with a new version.
 Instead, _Tp-Note_ renames the old configuration file and prompts:
 
-    NOTE: configuration file version mismatch:
-    ---
-    Configuration file version: '1.7.2'
-    Tp-Note version: '1.7.4'
-    Minimum required configuration file version: '1.7.4'
-
-    For now, Tp-Note backs up the existing configuration
-    file and next time it starts, it will create a new one
-    with default values.
-
-or
 
     NOTE: unable to load, parse or write the configuration file
     ---
@@ -187,12 +176,12 @@ or
     Note: this error may occur after upgrading Tp-Note due
     to some incompatible configuration file changes.
 
-    For now, Tp-Note backs up the existing configuration
-    file and next time it starts, it will create a new one
-    with default values.
+    Tp-Note backs up the existing configuration
+    file and creates a new one with default values."
 
-As the above error messages suggests, all you need to do is
-to restart _Tp-Note_ in order to create a new updated configuration file.
+The configuration file backup is stored in the same directory as the newly
+created configuration file (cf. [Customization section] of _Tp-Note_'s
+man-page).
 
 
 ## Building
@@ -305,5 +294,6 @@ Copyright:
 [Tp-Note all]: https://blog.getreu.net/_downloads/tpnote.zip
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
 [Installation section]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html#installation
+[Customization section]: https://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization
 [Install Rust]: https://www.rust-lang.org/tools/install
 [Semantic Versioning]: https://semver.org/
