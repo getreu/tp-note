@@ -742,7 +742,7 @@ In addition _Tp-Note_ defines the following variables:
 * '`{{ dir_path }}`': is identical to  '`{{ path }}`' with one exception: if
   '`{{ path }}`' points to a file, the last component (the file name) is omitted
   and only the directory path is retained. If '`{{ path }}`' points to a
-  directory, '`{{ path_dir }}`' equals '`{{ path }}`'.
+  directory, '`{{ dir_path }}`' equals '`{{ path }}`'.
 
 * '`{{ clipboard }}`' is the complete clipboard text.  In case the clipboard's
   content starts with a YAML header, the latter does not appear in this
