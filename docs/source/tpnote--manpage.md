@@ -101,7 +101,7 @@ content contains an hyperlink in Markdown format, the hyperlink's name can be
 accessed with '`{{ clipboard | linkname }}`', its URL with
 '`{{ clipboard | linktarget }}`' and its title with
 '`{{ clipboard | linktitle }}`'. The new note is then created with the
-'`[tmpl] clipboard_content`' and the '`[tmpl] clipboard_filename`' templates.
+'`[tmpl] from_clipboard_content`' and the '`[tmpl] from_clipboard_filename`' templates.
 Finally, the newly created note file is opened again with some external text
 editor. When the user closes the text editor, _Tp-Note_ synchronizes the
 note's metadata and its filename with the template '`[tmpl] sync_filename`'.
@@ -158,13 +158,13 @@ Who Moved My Cheese?
 Chapter 2
 ```
 
-We see from the above example, how the '`[tmpl] clipboard_content`' content
+We see from the above example, how the '`[tmpl] from_clipboard_content`' content
 template extracts the first line of the clipboards content and inserts it into
 the header's '`title:`' field. Then, it copies the entire clipboard content into
 the body of the document.  However, if desired or necessary, it is possible to
 modify all templates in _Tp-Note_'s configuration file. Note, that not only the
 note's content is created with a template, but also its filename: The
-'`[tmpl] clipboard_filename`' filename template concatenates the current date,
+'`[tmpl] from_clipboard_filename`' filename template concatenates the current date,
 the note's title and subtitle.
 
 
@@ -230,7 +230,7 @@ using the YAML header variables: '`{{ fm_title }}`',
 '`{{ fm_subtitle }}`', '`{{ fm_author }}`', '`{{ fm_date }}`',
 '`{{ fm_lang }}`', '`{{ fm_sort_tag }}`' and
 '`{{ fm_file_ext }}`' which are evaluated with the
-'`[tmpl] copy_content`' and the '`[tmpl] copy_filename`' templates.
+'`[tmpl] from_clipboard_yaml_content`' and the '`[tmpl] from_clipboard_yaml_filename`' templates.
 
 Note, that the same result can also be achieved without any clipboard by tying
 in a terminal:
@@ -303,7 +303,7 @@ When '`<path>`' points to an existing file, whose file extension is other than
 '`.txt`', a new note is created with a similar filename and a reference to the
 original file is copied into the new note's body. If the clipboard contains
 some text, it is appended there also. The logic of this is implemented in the
-templates: '`[tmpl] annotate_content`' and '`[tmpl] annotate_filename`'. Once the
+templates: '`[tmpl] annotate_file_content`' and '`[tmpl] annotate_file_filename`'. Once the
 file is created, it is opened with an external text editor. After editing the
 file, it will be - if necessary - renamed to be in sync with the note's
 metadata.
@@ -775,7 +775,7 @@ means, a YAML front-matter variable '`foo:`' in a note will generate a
 will cause '`{{ fm_foo }}`' to be undefined.
 
 Please note that '`{{ fm_* }}`' variables are available in all filename
-templates and in the '`[tmpl] copy_content`' content template only.
+templates and in the '`[tmpl] from_clipboard_yaml_content`' content template only.
 
 * '`{{ fm_title }}`' is the '`title:`' as indicated in the YAML front-matter of
   the note.
@@ -796,7 +796,7 @@ templates and in the '`[tmpl] copy_content`' content template only.
   matter of this note (e.g. '`sort_tag: "20200312-"`').
 
 * '`{{ fm_all }}`': is a collection (map) of all defined '`{{ fm_* }}`'
-  variables.  It is used in the '`[tmpl] copy_content`' template, typically in a
+  variables.  It is used in the '`[tmpl] from_clipboard_yaml_content`' template, typically in a
   loop like:
 
   ```yaml
@@ -1136,7 +1136,7 @@ affect the way new notes are created:
        [filename]
        extension_default='rst'
 
-2. Replace the following line in the template '`[tmpl] clipboard_content`'
+2. Replace the following line in the template '`[tmpl] from_clipboard_content`'
    that defines a hyperlink in Markdown format:
 
        [{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}](<{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}>)
@@ -1183,10 +1183,10 @@ To debug your '`[TMPL] sync_filename`' template, create a test note file
 When you are annotating an existing file on disk, the new note file is
 placed in the same directory by default. To configure _Tp-Note_ to
 store the new note file in a subdirectory, lets say '`Notes/`', instead, you
-need to modify the templates '`[tmpl] annotate_filename`' and
-'`[tmpl] annotate_content`':
+need to modify the templates '`[tmpl] annotate_file_filename`' and
+'`[tmpl] annotate_file_content`':
 
-Replace in '`[tmpl] annotate_filename`' the string:
+Replace in '`[tmpl] annotate_file_filename`' the string:
 
     {{ path | tag }}
 
@@ -1194,7 +1194,7 @@ with:
 
     Notes/{{ path | tag }}
 
-and in '`[tmpl] annotate_content`':
+and in '`[tmpl] annotate_file_content`':
 
     [{{ path | filename }}](<{{ path | filename }}>)
 

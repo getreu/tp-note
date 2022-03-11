@@ -260,8 +260,6 @@ const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
 /// hyperlink in Markdown or reStruncturedText format. See crate `parse-hyperlinks` for details.
 /// For example: `[<link-name>](<link-url> "link-title")`, can be accessed with the variables:
 /// `{{ clipboard | linkname }}`, `{{ clipboard | linktarget }}` and `{{ clipboard | linkttitle }}`.
-/// Trick: the expression `{% if clipboard != clipboard | heading %}` detects if the clipboard
-/// content has more than one line of text.
 const TMPL_FROM_CLIPBOARD_CONTENT: &str = "\
 {%- set lname = stdin ~ clipboard | linkname -%}
 {%- set ok_linkname = lname !=''\
@@ -776,6 +774,8 @@ pub struct Tmpl {
     pub from_clipboard_yaml_filename: String,
     pub from_clipboard_content: String,
     pub from_clipboard_filename: String,
+    pub from_text_file_content: String,
+    pub from_text_file_filename: String,
     pub annotate_file_content: String,
     pub annotate_file_filename: String,
     pub sync_filename: String,
@@ -891,6 +891,8 @@ impl ::std::default::Default for Tmpl {
             from_clipboard_yaml_filename: TMPL_FROM_CLIPBOARD_YAML_FILENAME.to_string(),
             from_clipboard_content: TMPL_FROM_CLIPBOARD_CONTENT.to_string(),
             from_clipboard_filename: TMPL_FROM_CLIPBOARD_FILENAME.to_string(),
+            from_text_file_content: TMPL_FROM_TEXT_FILE_CONTENT.to_string(),
+            from_text_file_filename: TMPL_FROM_TEXT_FILE_FILENAME.to_string(),
             annotate_file_content: TMPL_ANNOTATE_FILE_CONTENT.to_string(),
             annotate_file_filename: TMPL_ANNOTATE_FILE_FILENAME.to_string(),
             sync_filename: TMPL_SYNC_FILENAME.to_string(),
