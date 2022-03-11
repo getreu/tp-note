@@ -326,7 +326,7 @@ const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 
 /// Default template used when the command line <path> parameter points to an existing
 /// non-`.md`-file. Can be modified through editing the configuration file.
-const TMPL_ANNOTATE_CONTENT: &str = "\
+const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
 ---
 title:      {{ path | trim_tag | json_encode }}
 {% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}\
@@ -349,7 +349,7 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 
 /// Filename of a new note, that annotates an existing file on disk given in
 /// <path>.
-const TMPL_ANNOTATE_FILENAME: &str = "\
+const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
 {{ path | tag }}{{ fm_title | sanit(alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit }}{{ extension_default | prepend_dot }}\
@@ -776,8 +776,8 @@ pub struct Tmpl {
     pub from_clipboard_yaml_filename: String,
     pub from_clipboard_content: String,
     pub from_clipboard_filename: String,
-    pub annotate_content: String,
-    pub annotate_filename: String,
+    pub annotate_file_content: String,
+    pub annotate_file_filename: String,
     pub sync_filename: String,
 }
 
@@ -891,8 +891,8 @@ impl ::std::default::Default for Tmpl {
             from_clipboard_yaml_filename: TMPL_FROM_CLIPBOARD_YAML_FILENAME.to_string(),
             from_clipboard_content: TMPL_FROM_CLIPBOARD_CONTENT.to_string(),
             from_clipboard_filename: TMPL_FROM_CLIPBOARD_FILENAME.to_string(),
-            annotate_content: TMPL_ANNOTATE_CONTENT.to_string(),
-            annotate_filename: TMPL_ANNOTATE_FILENAME.to_string(),
+            annotate_file_content: TMPL_ANNOTATE_FILE_CONTENT.to_string(),
+            annotate_file_filename: TMPL_ANNOTATE_FILE_FILENAME.to_string(),
             sync_filename: TMPL_SYNC_FILENAME.to_string(),
         }
     }
