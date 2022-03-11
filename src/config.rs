@@ -223,7 +223,7 @@ const TMPL_NEW_FILENAME: &str = "\
 /// fm_title }}`.
 /// When placed in YAML front matter, the filter `| json_encode` must be
 /// appended to each variable.
-const TMPL_COPY_CONTENT: &str = "\
+const TMPL_FROM_CLIPBOARD_YAML_CONTENT: &str = "\
 ---
 title:      {{ fm_title | default(value = path|trim_tag) | cut | json_encode }}
 subtitle:   {{ fm_subtitle | default(value = 'Note') | cut | json_encode }}
@@ -246,7 +246,7 @@ lang:       {{ fm_lang | default(value = get_env(name='LANG', default='')) | jso
 
 /// Default filename template used when the stdin or the clipboard contains a string and one of
 /// them has a valid YAML header.
-const TMPL_COPY_FILENAME: &str = "\
+const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
 {{ fm_sort_tag | default(value = now() | date(format='%Y%m%d-')) }}\
 {{ fm_title | sanit(alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
@@ -772,8 +772,8 @@ pub struct Tmpl {
     pub compulsory_header_field: String,
     pub new_content: String,
     pub new_filename: String,
-    pub copy_content: String,
-    pub copy_filename: String,
+    pub from_clipboard_yaml_content: String,
+    pub from_clipboard_yaml_filename: String,
     pub from_clipboard_content: String,
     pub from_clipboard_filename: String,
     pub annotate_content: String,
@@ -887,8 +887,8 @@ impl ::std::default::Default for Tmpl {
             compulsory_header_field: TMPL_COMPULSORY_HEADER_FIELD.to_string(),
             new_content: TMPL_NEW_CONTENT.to_string(),
             new_filename: TMPL_NEW_FILENAME.to_string(),
-            copy_content: TMPL_COPY_CONTENT.to_string(),
-            copy_filename: TMPL_COPY_FILENAME.to_string(),
+            from_clipboard_yaml_content: TMPL_FROM_CLIPBOARD_YAML_CONTENT.to_string(),
+            from_clipboard_yaml_filename: TMPL_FROM_CLIPBOARD_YAML_FILENAME.to_string(),
             from_clipboard_content: TMPL_FROM_CLIPBOARD_CONTENT.to_string(),
             from_clipboard_filename: TMPL_FROM_CLIPBOARD_FILENAME.to_string(),
             annotate_content: TMPL_ANNOTATE_CONTENT.to_string(),

@@ -140,19 +140,18 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
             // (only if there is a valid YAML front matter)
             log::trace!("Applying templates: `[tmpl] copy_content`, `[tmpl] copy_filename`");
-            let n = Note::from_content_template(path, &CFG.tmpl.copy_content).map_err(|e| {
-                WorkflowError::Template {
+            let n = Note::from_content_template(path, &CFG.tmpl.from_clipboard_yaml_content)
+                .map_err(|e| WorkflowError::Template {
                     tmpl_name: "[tmpl] copy_content".to_string(),
                     source: e,
-                }
-            })?;
+                })?;
             // CREATE A NEW NOTE WITH `TMPL_COPY_CONTENT` TEMPLATE
-            let new_file_path = n.render_filename(&CFG.tmpl.copy_filename).map_err(|e| {
-                WorkflowError::Template {
+            let new_file_path = n
+                .render_filename(&CFG.tmpl.from_clipboard_yaml_filename)
+                .map_err(|e| WorkflowError::Template {
                     tmpl_name: "[tmpl] copy_filename".to_string(),
                     source: e,
-                }
-            })?;
+                })?;
             (n, new_file_path)
         } else {
             // CREATE A NEW NOTE BASED ON CLIPBOARD OR INPUT STREAM
@@ -210,15 +209,15 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             log::trace!(
                 "Applying templates `[tmpl] annotate_content` and `[tmpl] annotate_filename`."
             );
-            let n = Note::from_content_template(path, &CFG.tmpl.annotate_content).map_err(|e| {
-                WorkflowError::Template {
+            let n = Note::from_content_template(path, &CFG.tmpl.annotate_file_content).map_err(
+                |e| WorkflowError::Template {
                     tmpl_name: "[tmpl] annotate_content".to_string(),
                     source: e,
-                }
-            })?;
+                },
+            )?;
 
             let new_file_path = n
-                .render_filename(&CFG.tmpl.annotate_filename)
+                .render_filename(&CFG.tmpl.annotate_file_filename)
                 .map_err(|e| WorkflowError::Template {
                     tmpl_name: "[tmpl] annotate_filename".to_string(),
                     source: e,
