@@ -3,6 +3,9 @@ use crate::config::CFG;
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::filename::disassemble;
 use crate::filename::is_well_formed_filename;
+use crate::note::FrontMatter;
+use crate::note::TMPL_VAR_FM_;
+use crate::note::TMPL_VAR_FM_ALL;
 use crate::settings::Hyperlink;
 use lazy_static::lazy_static;
 use sanitize_filename_reader_friendly::sanitize;
@@ -350,6 +353,34 @@ impl ContextWrapper {
             ct: tera::Context::new(),
             dir_path: PathBuf::new(),
         }
+    }
+
+    /// Inserts the YAML front header variable in the context for later use with templates.
+    /// We register only flat `tera::Value` types.
+    /// If there is a list, concatenate its items with `, ` and register the result
+    /// as a flat string.
+    pub fn insert_front_matter(&mut self, fm: &FrontMatter) {
+        let mut tera_map = tera::Map::new();
+
+        for (name, value) in &fm.map {
+            // Flatten all types.
+            let val = match value {
+                tera::Value::String(_) => value.to_owned(),
+                tera::Value::Number(_) => value.to_owned(),
+                tera::Value::Bool(_) => value.to_owned(),
+                _ => tera::Value::String(value.to_string()),
+            };
+
+            // First we register a copy with the original variable name.
+            tera_map.insert(name.to_string(), val.to_owned());
+
+            // Here we register `fm_<var_name>`.
+            let mut var_name = TMPL_VAR_FM_.to_string();
+            var_name.push_str(name);
+            self.ct.insert(&var_name, &val);
+        }
+        // Register the collection as `Object(Map<String, Value>)`.
+        self.ct.insert(TMPL_VAR_FM_ALL, &tera_map);
     }
 }
 

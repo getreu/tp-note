@@ -76,7 +76,7 @@ pub const TMPL_VAR_FM_: &str = "fm_";
 
 /// Contains a Hash Map with all front matter fields. Lists are flattened
 /// into a strings.
-const TMPL_VAR_FM_ALL: &str = "fm_all";
+pub const TMPL_VAR_FM_ALL: &str = "fm_all";
 
 /// All the front matter fields serialized as text, exactly as they appear in
 /// the front matter.
@@ -152,8 +152,8 @@ pub struct Note {
 
 #[derive(Debug, PartialEq)]
 /// Represents the front matter of the note.
-struct FrontMatter {
-    map: tera::Map<String, tera::Value>,
+pub struct FrontMatter {
+    pub map: tera::Map<String, tera::Value>,
 }
 
 impl TryFrom<&Content> for FrontMatter {
@@ -268,7 +268,7 @@ impl Note {
             }
         }
 
-        Self::register_front_matter(&mut context, &fm);
+        context.insert_front_matter(&fm);
 
         // Return new note.
         Ok(Self {
@@ -306,7 +306,7 @@ impl Note {
         // deserialize the rendered template
         let fm = FrontMatter::try_from(&content)?;
 
-        Self::register_front_matter(&mut context, &fm);
+        context.insert_front_matter(&fm);
 
         // Return new note.
         Ok(Self {
@@ -384,13 +384,13 @@ impl Note {
 
         // Register clipboard front matter.
         if let Ok(fm) = clipboard_fm {
-            Self::register_front_matter(&mut context, &fm);
+            context.insert_front_matter(&fm);
         }
 
         // Register stdin front matter.
         // The variables registered here can be overwrite the ones from the clipboard.
         if let Ok(fm) = stdin_fm {
-            Self::register_front_matter(&mut context, &fm);
+            context.insert_front_matter(&fm);
         }
 
         // Default extension for new notes as defined in the configuration file.
@@ -408,34 +408,6 @@ impl Note {
         context.dir_path = dir_path.to_path_buf();
 
         Ok(context)
-    }
-
-    /// Copies the YAML front header variable in the context for later use with templates.
-    /// We register only flat `tera::Value` types.
-    /// If there is a list, concatenate its items with `, ` and register the result
-    /// as a flat string.
-    fn register_front_matter(context: &mut ContextWrapper, fm: &FrontMatter) {
-        let mut tera_map = tera::Map::new();
-
-        for (name, value) in &fm.map {
-            // Flatten all types.
-            let val = match value {
-                tera::Value::String(_) => value.to_owned(),
-                tera::Value::Number(_) => value.to_owned(),
-                tera::Value::Bool(_) => value.to_owned(),
-                _ => tera::Value::String(value.to_string()),
-            };
-
-            // First we register a copy with the original variable name.
-            tera_map.insert(name.to_string(), val.to_owned());
-
-            // Here we register `fm_<var_name>`.
-            let mut var_name = TMPL_VAR_FM_.to_string();
-            var_name.push_str(name);
-            (*context).insert(&var_name, &val);
-        }
-        // Register the collection as `Object(Map<String, Value>)`.
-        (*context).insert(TMPL_VAR_FM_ALL, &tera_map);
     }
 
     /// Applies a Tera template to the notes context in order to generate a
@@ -683,7 +655,6 @@ impl Note {
 mod tests {
     use super::ContextWrapper;
     use super::FrontMatter;
-    use super::Note;
     use serde_json::json;
     use tera::Value;
 
@@ -786,7 +757,7 @@ mod tests {
         tmp2.insert("numbers".to_string(), json!("[1,3,5]")); // String()!
         (*expected).insert("fm_all".to_string(), &tmp2); // Map()
 
-        Note::register_front_matter(&mut input1, &input2);
+        input1.insert_front_matter(&input2);
         let result = input1;
 
         assert_eq!(result, expected);
