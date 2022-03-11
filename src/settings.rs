@@ -39,6 +39,9 @@ use structopt::StructOpt;
 /// WikiText. The note's rendition with its hyperlinks is live updated and
 /// displayed in the user's webbrowser.
 pub struct Args {
+    /// Prepend YAML header if missing
+    #[structopt(long, short = "a")]
+    pub add_header: bool,
     /// Batch made: does not launch editor or viewer
     #[structopt(long, short = "b")]
     pub batch: bool,
