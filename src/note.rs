@@ -156,6 +156,83 @@ struct FrontMatter {
     map: tera::Map<String, tera::Value>,
 }
 
+impl TryFrom<&Content> for FrontMatter {
+    type Error = NoteError;
+    /// Helper function deserializing the front-matter of the note file.
+    fn try_from(content: &Content) -> Result<FrontMatter, NoteError> {
+        let header = content.borrow_dependent().header;
+        Self::try_from(header)
+    }
+}
+
+impl TryFrom<&str> for FrontMatter {
+    type Error = NoteError;
+    /// Helper function deserializing the front-matter of the note file.
+    fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
+        //fn deserialize_header(header: &str) -> Result<FrontMatter, NoteError> {
+        if header.is_empty() {
+            return Err(NoteError::MissingFrontMatter {
+                compulsory_field: CFG.tmpl.compulsory_header_field.to_owned(),
+            });
+        };
+
+        let map: tera::Map<String, tera::Value> =
+            serde_yaml::from_str(header).map_err(|e| NoteError::InvalidFrontMatterYaml {
+                front_matter: header
+                    .lines()
+                    .enumerate()
+                    .map(|(n, s)| format!("{:03}: {}\n", n + 1, s))
+                    .take(FRONT_MATTER_ERROR_MAX_LINES)
+                    .collect::<String>(),
+                source_error: e,
+            })?;
+        let fm = FrontMatter { map };
+
+        // `sort_tag` has additional constrains to check.
+        if let Some(tera::Value::String(sort_tag)) = &fm
+            .map
+            .get(TMPL_VAR_FM_SORT_TAG.trim_start_matches(TMPL_VAR_FM_))
+        {
+            if !sort_tag.is_empty() {
+                // Check for forbidden characters.
+                if !sort_tag
+                    .trim_start_matches(
+                        &CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..],
+                    )
+                    .is_empty()
+                {
+                    return Err(NoteError::SortTagVarInvalidChar {
+                        sort_tag: sort_tag.to_owned(),
+                        sort_tag_chars: CFG.filename.sort_tag_chars.escape_default().to_string(),
+                    });
+                }
+            };
+        };
+
+        // `extension` has also additional constrains to check.
+        // Is `extension` listed in `CFG.filename.extensions_*`?
+        if let Some(tera::Value::String(file_ext)) = &fm
+            .map
+            .get(TMPL_VAR_FM_FILE_EXT.trim_start_matches(TMPL_VAR_FM_))
+        {
+            let extension_is_unknown =
+                matches!(MarkupLanguage::from(&**file_ext), MarkupLanguage::None);
+            if extension_is_unknown {
+                return Err(NoteError::FileExtNotRegistered {
+                    extension: file_ext.to_owned(),
+                    md_ext: CFG.filename.extensions_md.to_owned(),
+                    rst_ext: CFG.filename.extensions_rst.to_owned(),
+                    html_ext: CFG.filename.extensions_html.to_owned(),
+                    txt_ext: CFG.filename.extensions_txt.to_owned(),
+                    no_viewer_ext: CFG.filename.extensions_no_viewer.to_owned(),
+                });
+            }
+        };
+
+        Ok(fm)
+    }
+}
+
 use std::fs;
 impl Note {
     /// Constructor that creates a memory representation of an existing note on
@@ -173,7 +250,7 @@ impl Note {
         (*context).insert(TMPL_VAR_FM_ALL_YAML, &content.borrow_dependent().header);
 
         // Deserialize the note read from disk.
-        let fm = Note::deserialize_header(content.borrow_dependent().header)?;
+        let fm = FrontMatter::try_from(&content)?;
 
         if !&CFG.tmpl.compulsory_header_field.is_empty() {
             if let Some(tera::Value::String(header_field)) =
@@ -227,7 +304,7 @@ impl Note {
         );
 
         // deserialize the rendered template
-        let fm = Note::deserialize_header(content.borrow_dependent().header)?;
+        let fm = FrontMatter::try_from(&content)?;
 
         Self::register_front_matter(&mut context, &fm);
 
@@ -273,7 +350,7 @@ impl Note {
 
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
-        let stdin_fm = Self::deserialize_header(STDIN.borrow_dependent().header);
+        let stdin_fm = FrontMatter::try_from(&*STDIN);
         match stdin_fm {
             Ok(ref stdin_fm) => log::trace!(
                 "YAML front matter in the input stream stdin found:\n{:#?}",
@@ -290,7 +367,7 @@ impl Note {
 
         // Can we find a front matter in the clipboard? If yes, the unmodified
         // clipboard data is our new note content.
-        let clipboard_fm = Self::deserialize_header(CLIPBOARD.borrow_dependent().header);
+        let clipboard_fm = FrontMatter::try_from(&*CLIPBOARD);
         match clipboard_fm {
             Ok(ref clipboard_fm) => log::trace!(
                 "YAML front matter in the clipboard found:\n{:#?}",
@@ -387,70 +464,6 @@ impl Note {
         }
 
         Ok(filename::shorten_filename(file_path))
-    }
-
-    /// Helper function deserializing the front-matter of the note file.
-    fn deserialize_header(header: &str) -> Result<FrontMatter, NoteError> {
-        if header.is_empty() {
-            return Err(NoteError::MissingFrontMatter {
-                compulsory_field: CFG.tmpl.compulsory_header_field.to_owned(),
-            });
-        };
-
-        let map: tera::Map<String, tera::Value> =
-            serde_yaml::from_str(header).map_err(|e| NoteError::InvalidFrontMatterYaml {
-                front_matter: header
-                    .lines()
-                    .enumerate()
-                    .map(|(n, s)| format!("{:03}: {}\n", n + 1, s))
-                    .take(FRONT_MATTER_ERROR_MAX_LINES)
-                    .collect::<String>(),
-                source_error: e,
-            })?;
-        let fm = FrontMatter { map };
-
-        // `sort_tag` has additional constrains to check.
-        if let Some(tera::Value::String(sort_tag)) = &fm
-            .map
-            .get(TMPL_VAR_FM_SORT_TAG.trim_start_matches(TMPL_VAR_FM_))
-        {
-            if !sort_tag.is_empty() {
-                // Check for forbidden characters.
-                if !sort_tag
-                    .trim_start_matches(
-                        &CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..],
-                    )
-                    .is_empty()
-                {
-                    return Err(NoteError::SortTagVarInvalidChar {
-                        sort_tag: sort_tag.to_owned(),
-                        sort_tag_chars: CFG.filename.sort_tag_chars.escape_default().to_string(),
-                    });
-                }
-            };
-        };
-
-        // `extension` has also additional constrains to check.
-        // Is `extension` listed in `CFG.filename.extensions_*`?
-        if let Some(tera::Value::String(file_ext)) = &fm
-            .map
-            .get(TMPL_VAR_FM_FILE_EXT.trim_start_matches(TMPL_VAR_FM_))
-        {
-            let extension_is_unknown =
-                matches!(MarkupLanguage::from(&**file_ext), MarkupLanguage::None);
-            if extension_is_unknown {
-                return Err(NoteError::FileExtNotRegistered {
-                    extension: file_ext.to_owned(),
-                    md_ext: CFG.filename.extensions_md.to_owned(),
-                    rst_ext: CFG.filename.extensions_rst.to_owned(),
-                    html_ext: CFG.filename.extensions_html.to_owned(),
-                    txt_ext: CFG.filename.extensions_txt.to_owned(),
-                    no_viewer_ext: CFG.filename.extensions_no_viewer.to_owned(),
-                });
-            }
-        };
-
-        Ok(fm)
     }
 
     /// Renders `self` into HTML and saves the result in `export_dir`. If
@@ -718,16 +731,13 @@ mod tests {
 
         let expected_front_matter = FrontMatter { map: expected };
 
-        assert_eq!(
-            expected_front_matter,
-            Note::deserialize_header(input).unwrap()
-        );
+        assert_eq!(expected_front_matter, FrontMatter::try_from(input).unwrap());
 
         //
         // Is empty.
         let input = "";
 
-        assert!(Note::deserialize_header(input).is_err());
+        assert!(FrontMatter::try_from(input).is_err());
 
         //
         // forbidden character `x` in `tag`.
@@ -737,7 +747,7 @@ mod tests {
         author: It's me
         sort_tag:    123x4";
 
-        assert!(Note::deserialize_header(input).is_err());
+        assert!(FrontMatter::try_from(input).is_err());
 
         //
         // Not registered file extension.
@@ -748,7 +758,7 @@ mod tests {
         sort_tag:    123x4
         file_ext:    xyz";
 
-        assert!(Note::deserialize_header(input).is_err());
+        assert!(FrontMatter::try_from(input).is_err());
     }
 
     #[test]
