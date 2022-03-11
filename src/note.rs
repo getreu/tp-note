@@ -12,8 +12,6 @@ use crate::filename::MarkupLanguage;
 use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use crate::note_error_tera_template;
-use crate::settings::CLIPBOARD;
-use crate::settings::STDIN;
 use parse_hyperlinks::renderer::text_links2html;
 #[cfg(feature = "viewer")]
 use parse_hyperlinks::renderer::text_rawlinks2html;
@@ -24,7 +22,6 @@ use rst_parser::parse;
 #[cfg(feature = "renderer")]
 use rst_renderer::render_html;
 use std::default::Default;
-use std::env;
 use std::fs::OpenOptions;
 use std::io;
 use std::io::Write;
@@ -44,31 +41,31 @@ pub const TMPL_VAR_PATH: &str = "path";
 /// If `<path>` points to a file, the last component (the file name) is omitted.
 /// If it points to a directory, the content of this variable is identical to
 /// `TMPL_VAR_PATH`,
-const TMPL_VAR_DIR_PATH: &str = "dir_path";
+pub const TMPL_VAR_DIR_PATH: &str = "dir_path";
 
 /// Contains the YAML header (if any) of the clipboard content.
 /// Otherwise the empty string.
-const TMPL_VAR_CLIPBOARD_HEADER: &str = "clipboard_header";
+pub const TMPL_VAR_CLIPBOARD_HEADER: &str = "clipboard_header";
 
 /// If there is a YAML header in the clipboard content, this contains
 /// the body only. Otherwise, it contains the whole clipboard content.
-const TMPL_VAR_CLIPBOARD: &str = "clipboard";
+pub const TMPL_VAR_CLIPBOARD: &str = "clipboard";
 
 /// Contains the YAML header (if any) of the `stdin` input stream.
 /// Otherwise the empty string.
-const TMPL_VAR_STDIN_HEADER: &str = "stdin_header";
+pub const TMPL_VAR_STDIN_HEADER: &str = "stdin_header";
 
 /// If there is a YAML header in the `stdin` input stream, this contains the
 /// body only. Otherwise, it contains the whole input stream.
-const TMPL_VAR_STDIN: &str = "stdin";
+pub const TMPL_VAR_STDIN: &str = "stdin";
 
 /// Contains the default file extension for new note files as defined in the
 /// configuration file.
-const TMPL_VAR_EXTENSION_DEFAULT: &str = "extension_default";
+pub const TMPL_VAR_EXTENSION_DEFAULT: &str = "extension_default";
 
 /// Contains the content of the first non empty environment variable
 /// `LOGNAME`, `USERNAME` of `USER`.
-const TMPL_VAR_USERNAME: &str = "username";
+pub const TMPL_VAR_USERNAME: &str = "username";
 
 /// Prefix prepended to front matter field names when a template variable
 /// is generated with the same name.
@@ -244,11 +241,6 @@ impl Note {
                 source: e,
             })?);
 
-        let mut context = Self::capture_environment(path)?;
-
-        // Register the raw serialized header text.
-        (*context).insert(TMPL_VAR_FM_ALL_YAML, &content.borrow_dependent().header);
-
         // Deserialize the note read from disk.
         let fm = FrontMatter::try_from(&content)?;
 
@@ -268,6 +260,12 @@ impl Note {
             }
         }
 
+        let mut context = ContextWrapper::new();
+        context.insert_environment(path)?;
+
+        // Register the raw serialized header text.
+        (*context).insert(TMPL_VAR_FM_ALL_YAML, &content.borrow_dependent().header);
+
         context.insert_front_matter(&fm);
 
         // Return new note.
@@ -281,7 +279,15 @@ impl Note {
 
     /// Constructor that creates a new note by filling in the content template `template`.
     pub fn from_content_template(path: &Path, template: &str) -> Result<Self, NoteError> {
-        let mut context = Self::capture_environment(path)?;
+        let mut context = ContextWrapper::new();
+        context.insert_environment(path)?;
+
+        log::trace!(
+            "Available substitution variables for content template:\n{:#?}",
+            *context
+        );
+
+        log::trace!("Applying content template:\n{}", template);
 
         // render template
         let content = Content::from({
@@ -292,11 +298,6 @@ impl Note {
                 .map_err(|e| note_error_tera_template!(e))?
         });
 
-        log::trace!(
-            "Available substitution variables for content template:\n{:#?}",
-            *context
-        );
-        log::trace!("Applying content template:\n{}", template);
         log::debug!(
             "Rendered content template:\n---\n{}\n---\n{}",
             content.borrow_dependent().header,
@@ -315,99 +316,6 @@ impl Note {
             context,
             content,
         })
-    }
-
-    /// Capture _Tp-Note_'s environment and stores it as variables in a
-    /// `context` collection. The variables are needed later to populate
-    /// a context template and a filename template.
-    /// The `path` parameter must be a canonicalized fully qualified file name.
-    fn capture_environment(path: &Path) -> Result<ContextWrapper, NoteError> {
-        let mut context = ContextWrapper::new();
-
-        // Register the canonicalized fully qualified file name.
-        let file = path.to_str().unwrap_or_default();
-        (*context).insert(TMPL_VAR_PATH, &file);
-
-        // `dir_path` is a directory as fully qualified path, ending
-        // by a separator.
-        let dir_path = if path.is_dir() {
-            path
-        } else {
-            path.parent().unwrap_or_else(|| Path::new("./"))
-        };
-        (*context).insert(TMPL_VAR_DIR_PATH, &dir_path.to_str().unwrap_or_default());
-
-        // Register input from clipboard.
-        (*context).insert(
-            TMPL_VAR_CLIPBOARD_HEADER,
-            CLIPBOARD.borrow_dependent().header,
-        );
-        (*context).insert(TMPL_VAR_CLIPBOARD, CLIPBOARD.borrow_dependent().body);
-
-        // Register input from stdin.
-        (*context).insert(TMPL_VAR_STDIN_HEADER, STDIN.borrow_dependent().header);
-        (*context).insert(TMPL_VAR_STDIN, STDIN.borrow_dependent().body);
-
-        // Can we find a front matter in the input stream? If yes, the
-        // unmodified input stream is our new note content.
-        let stdin_fm = FrontMatter::try_from(&*STDIN);
-        match stdin_fm {
-            Ok(ref stdin_fm) => log::trace!(
-                "YAML front matter in the input stream stdin found:\n{:#?}",
-                &stdin_fm
-            ),
-            Err(ref e) => {
-                if !STDIN.borrow_dependent().header.is_empty() {
-                    return Err(NoteError::InvalidStdinYaml {
-                        source_str: e.to_string(),
-                    });
-                }
-            }
-        };
-
-        // Can we find a front matter in the clipboard? If yes, the unmodified
-        // clipboard data is our new note content.
-        let clipboard_fm = FrontMatter::try_from(&*CLIPBOARD);
-        match clipboard_fm {
-            Ok(ref clipboard_fm) => log::trace!(
-                "YAML front matter in the clipboard found:\n{:#?}",
-                &clipboard_fm
-            ),
-            Err(ref e) => {
-                if !CLIPBOARD.borrow_dependent().header.is_empty() {
-                    return Err(NoteError::InvalidClipboardYaml {
-                        source_str: e.to_string(),
-                    });
-                }
-            }
-        };
-
-        // Register clipboard front matter.
-        if let Ok(fm) = clipboard_fm {
-            context.insert_front_matter(&fm);
-        }
-
-        // Register stdin front matter.
-        // The variables registered here can be overwrite the ones from the clipboard.
-        if let Ok(fm) = stdin_fm {
-            context.insert_front_matter(&fm);
-        }
-
-        // Default extension for new notes as defined in the configuration file.
-        (*context).insert(
-            TMPL_VAR_EXTENSION_DEFAULT,
-            CFG.filename.extension_default.as_str(),
-        );
-
-        // search for UNIX, Windows and MacOS user-names
-        let author = env::var("LOGNAME").unwrap_or_else(|_| {
-            env::var("USERNAME").unwrap_or_else(|_| env::var("USER").unwrap_or_default())
-        });
-        (*context).insert(TMPL_VAR_USERNAME, &author);
-
-        context.dir_path = dir_path.to_path_buf();
-
-        Ok(context)
     }
 
     /// Applies a Tera template to the notes context in order to generate a
