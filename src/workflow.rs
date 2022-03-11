@@ -159,17 +159,16 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
             log::trace!(
                 "Applying templates: `[tmpl] clipboard_content`, `[tmpl] clipboard_filename`"
             );
-            let n =
-                Note::from_content_template(path, &CFG.tmpl.clipboard_content).map_err(|e| {
-                    WorkflowError::Template {
-                        tmpl_name: "[tmpl] clipboard_content".to_string(),
-                        source: e,
-                    }
-                })?;
+            let n = Note::from_content_template(path, &CFG.tmpl.from_clipboard_content).map_err(
+                |e| WorkflowError::Template {
+                    tmpl_name: "[tmpl] clipboard_content".to_string(),
+                    source: e,
+                },
+            )?;
 
             // CREATE A NEW NOTE WITH `TMPL_CLIPBOARD_CONTENT` TEMPLATE
             let new_file_path = n
-                .render_filename(&CFG.tmpl.clipboard_filename)
+                .render_filename(&CFG.tmpl.from_clipboard_filename)
                 .map_err(|e| WorkflowError::Template {
                     tmpl_name: "[tmpl] clipboard_filename".to_string(),
                     source: e,

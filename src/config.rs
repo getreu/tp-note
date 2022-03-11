@@ -262,7 +262,7 @@ const TMPL_COPY_FILENAME: &str = "\
 /// `{{ clipboard | linkname }}`, `{{ clipboard | linktarget }}` and `{{ clipboard | linkttitle }}`.
 /// Trick: the expression `{% if clipboard != clipboard | heading %}` detects if the clipboard
 /// content has more than one line of text.
-const TMPL_CLIPBOARD_CONTENT: &str = "\
+const TMPL_FROM_CLIPBOARD_CONTENT: &str = "\
 {%- set lname = stdin ~ clipboard | linkname -%}
 {%- set ok_linkname = lname !=''\
     and not lname is starting_with(\"http\")\
@@ -288,11 +288,40 @@ lang:       {{ get_env(name='LANG', default='') | json_encode }}
 ";
 
 /// Default filename template used when the stdin ~ clipboard contains a string.
-const TMPL_CLIPBOARD_FILENAME: &str = "\
+const TMPL_FROM_CLIPBOARD_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
 {{ fm_title | sanit(alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
+";
+
+/// Default template used, when the opened text file (with a known file
+/// extension) is missing a YAML front matter section. This template prepends
+/// such a section. The template inserts information extracted from the input
+/// filename and its creation date.
+const TMPL_FROM_TEXT_FILE_CONTENT: &str = "\
+---
+title:      {{ path | stem | split(pat='--') | first | cut | json_encode }}
+subtitle:   {{ path | stem | split(pat='--') | nth(n=1) | cut | json_encode }}
+author:     {{ username | json_encode }}
+date:       {{ path_file_date | date(format='%Y-%m-%d') | json_encode }}
+lang:       {{ get_env(name='LANG', default='') | json_encode }}
+orig_name:  {{ path | filename | json_encode }}
+---
+
+{{ path_file_text }}
+";
+
+/// Default filename template used when the input file (with a known
+/// file extension) is missing a YAML front matter section.
+/// The text file's sort-tag and file extension are preserved.
+const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
+{% if path | tag == '' %}{{ path_file_date | date(format='%Y%m%d-') }}\
+{% else %}{{ path | tag }}{% endif %}\
+{{ fm_title | sanit(alpha=true) }}\
+{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
+{{ fm_subtitle | default(value='') | sanit  }}\
+{{ path | ext | prepend_dot }}\
 ";
 
 /// Default template used when the command line <path> parameter points to an existing
@@ -745,8 +774,8 @@ pub struct Tmpl {
     pub new_filename: String,
     pub copy_content: String,
     pub copy_filename: String,
-    pub clipboard_content: String,
-    pub clipboard_filename: String,
+    pub from_clipboard_content: String,
+    pub from_clipboard_filename: String,
     pub annotate_content: String,
     pub annotate_filename: String,
     pub sync_filename: String,
@@ -860,8 +889,8 @@ impl ::std::default::Default for Tmpl {
             new_filename: TMPL_NEW_FILENAME.to_string(),
             copy_content: TMPL_COPY_CONTENT.to_string(),
             copy_filename: TMPL_COPY_FILENAME.to_string(),
-            clipboard_content: TMPL_CLIPBOARD_CONTENT.to_string(),
-            clipboard_filename: TMPL_CLIPBOARD_FILENAME.to_string(),
+            from_clipboard_content: TMPL_FROM_CLIPBOARD_CONTENT.to_string(),
+            from_clipboard_filename: TMPL_FROM_CLIPBOARD_FILENAME.to_string(),
             annotate_content: TMPL_ANNOTATE_CONTENT.to_string(),
             annotate_filename: TMPL_ANNOTATE_FILENAME.to_string(),
             sync_filename: TMPL_SYNC_FILENAME.to_string(),
