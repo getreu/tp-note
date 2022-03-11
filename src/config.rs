@@ -27,28 +27,28 @@ const CURRENT_EXE: &str = "tpnote";
 /// Tp-Note's configuration file filename.
 const CONFIG_FILENAME: &str = "tpnote.toml";
 
-/// Default value for command line option `--debug`.  Determines the maximum
+/// Default value for the command line option `--debug`.  Determines the maximum
 /// debug level events must have, to be logged.  If the command line option
 /// `--debug` is present, its value will be used instead.
 const ARG_DEFAULT_DEBUG: LevelFilter = LevelFilter::Error;
 
-/// Default value for command line flag `--edit` to disable file watcher,
+/// Default value for the command line flag `--edit` to disable file watcher,
 /// (Markdown)-renderer, html server and a web browser launcher set to `true`.
 const ARG_DEFAULT_EDITOR: bool = false;
 
-/// Default value for command line flag `--no-filename-sync` to disable
+/// Default value for the command line flag `--no-filename-sync` to disable
 /// the title to filename synchronisation mechanism permanently.
 /// If set to `true`, the corresponding command line flag is ignored.
 const ARG_DEFAULT_NO_FILENAME_SYNC: bool = false;
 
-/// Default value for command line flag `--popup`. If the command line flag
+/// Default value for the command line flag `--popup`. If the command line flag
 /// `--popup` or `POPUP` is `true`, all log events will also trigger the
 /// appearance of a popup alert window.  Note, that error level debug events
 /// will always pop up, regardless of `--popup` and `POPUP` (unless
 /// `--debug=off`).
 const ARG_DEFAULT_POPUP: bool = true;
 
-/// Default value for command line flag `--tty`. _Tp-Note_ tries different
+/// Default value for the command line flag `--tty`. _Tp-Note_ tries different
 /// heuristics to detect weather a graphic environment is available or not. For
 /// example, under Linux, the '`DISPLAY`' environment variable is evaluated. The
 /// '`--tty`' flag disables the automatic detection and sets _Tp-Note_ in
@@ -56,6 +56,12 @@ const ARG_DEFAULT_POPUP: bool = true;
 /// '`[app_args] editor_console`') and no viewer is launched. If this is set
 /// to `true` _Tp-Note_ starts in console mode permanently.
 const ARG_DEFAULT_TTY: bool = false;
+
+/// Default value for the command line flag `--add-header`. If unset,
+/// _Tp-Note_ exits of when it tries to open a text file without a YAML
+/// header. When this flag is set, the missing header is constructed by
+/// means of the text file's filename and creation date.
+const ARG_DEFAULT_ADD_HEADER: bool = false;
 
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
@@ -737,6 +743,7 @@ pub struct ArgDefault {
     pub no_filename_sync: bool,
     pub popup: bool,
     pub tty: bool,
+    pub add_header: bool,
 }
 
 /// Configuration of filename parsing, deserialized from the
@@ -842,6 +849,7 @@ impl ::std::default::Default for ArgDefault {
             no_filename_sync: ARG_DEFAULT_NO_FILENAME_SYNC,
             popup: ARG_DEFAULT_POPUP,
             tty: ARG_DEFAULT_TTY,
+            add_header: ARG_DEFAULT_ADD_HEADER,
         }
     }
 }
