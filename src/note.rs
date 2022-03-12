@@ -22,12 +22,15 @@ use rst_parser::parse;
 #[cfg(feature = "renderer")]
 use rst_renderer::render_html;
 use std::default::Default;
+use std::fs::File;
 use std::fs::OpenOptions;
 use std::io;
+use std::io::prelude::*;
 use std::io::Write;
 use std::matches;
 use std::path::{Path, PathBuf};
 use std::str;
+use std::time::SystemTime;
 use tera::Tera;
 
 /// The template variable contains the fully qualified path of the `<path>`
@@ -64,8 +67,18 @@ pub const TMPL_VAR_STDIN: &str = "stdin";
 pub const TMPL_VAR_EXTENSION_DEFAULT: &str = "extension_default";
 
 /// Contains the content of the first non empty environment variable
-/// `LOGNAME`, `USERNAME` of `USER`.
+/// `LOGNAME`, `USERNAME` or `USER`.
 pub const TMPL_VAR_USERNAME: &str = "username";
+
+///  Contains the body of the file the command line option `<path>`
+///  points to. Only available in the `TMPL_FROM_TEXT_FILE_CONTENT` template.
+///  Only available in the `TMPL_FROM_TEXT_FILE_CONTENT` template.
+const TMPL_VAR_PATH_FILE_TEXT: &str = "path_file_text";
+
+///  Contains the date of the file the command line option `<path>` points to. The date is
+///  represented as an integer the way `std::time::SystemTime` resolves to on the platform.
+///  Only available in the `TMPL_FROM_TEXT_FILE_CONTENT` template.
+const TMPL_VAR_PATH_FILE_DATE: &str = "path_file_date";
 
 /// Prefix prepended to front matter field names when a template variable
 /// is generated with the same name.
@@ -265,6 +278,80 @@ impl Note {
 
         // Register the raw serialized header text.
         (*context).insert(TMPL_VAR_FM_ALL_YAML, &content.borrow_dependent().header);
+
+        context.insert_front_matter(&fm);
+
+        // Return new note.
+        Ok(Self {
+            // Reserved for future use:
+            //     front_matter: fm,
+            context,
+            content,
+        })
+    }
+
+    /// Constructor that prepends a YAML header to an existing text file.
+    /// Throws an error if the file has a header.
+    pub fn from_text_file(path: &Path, template: &str) -> Result<Self, NoteError> {
+        let mut context = ContextWrapper::new();
+        context.insert_environment(path)?;
+        {
+            let mut file = File::open(path)?;
+            // Get the file's content.
+            let mut raw_text = String::new();
+            file.read_to_string(&mut raw_text)?;
+            //We keep only the body, if ever there is a header.
+            let content = Content::from_input_with_cr(raw_text);
+            let header = &content.borrow_dependent().header;
+            if !header.is_empty() {
+                return Err(NoteError::CannotPrependHeader {
+                    existing_header: header
+                        .lines()
+                        .take(5)
+                        .map(|s| s.to_string())
+                        .collect::<String>(),
+                });
+            };
+            //We keep the body.
+            (*context).insert(TMPL_VAR_PATH_FILE_TEXT, &content.borrow_dependent().body);
+
+            // Get the file's creation date.
+            let metadata = file.metadata()?;
+            if let Ok(time) = metadata.created() {
+                (*context).insert(
+                    TMPL_VAR_PATH_FILE_DATE,
+                    &time
+                        .duration_since(SystemTime::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs(),
+                );
+            }
+        }
+
+        log::trace!(
+            "Available substitution variables for content template:\n{:#?}",
+            *context
+        );
+
+        log::trace!("Applying content template:\n{}", template);
+
+        // render template
+        let content = Content::from({
+            let mut tera = Tera::default();
+            tera.extend(&TERA)?;
+
+            tera.render_str(template, &context)
+                .map_err(|e| note_error_tera_template!(e))?
+        });
+
+        log::debug!(
+            "Rendered content template:\n---\n{}\n---\n{}",
+            content.borrow_dependent().header,
+            content.borrow_dependent().body.trim()
+        );
+
+        // deserialize the rendered template
+        let fm = FrontMatter::try_from(&content)?;
 
         context.insert_front_matter(&fm);
 

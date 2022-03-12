@@ -207,6 +207,10 @@ pub enum NoteError {
     #[error("Can not read file:\n\t {path:?}\n{source}")]
     Read { path: PathBuf, source: io::Error },
 
+    /// Remedy: report this error. It should not happen.
+    #[error("Can not prepend header. File has one already: \n{existing_header}")]
+    CannotPrependHeader { existing_header: String },
+
     /// Remedy: check the syntax of the Tera template in the configuration file.
     #[error("Tera template error: {source_str}")]
     TeraTemplate { source_str: String },
