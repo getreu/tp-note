@@ -1,6 +1,7 @@
 //! High level program logic implementing the whole workflow.
 
 use crate::config::CFG;
+use crate::error::NoteError;
 use crate::error::WorkflowError;
 use crate::file_editor::launch_editor;
 use crate::filename;
@@ -183,6 +184,8 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
 
         Ok(new_file_path)
     } else {
+        // `path` points to a file.
+
         let extension_is_known = !matches!(
             MarkupLanguage::from(
                 path.extension()
@@ -196,8 +199,41 @@ fn create_new_note_or_synchronize_filename(path: &Path) -> Result<PathBuf, Workf
         if extension_is_known {
             // SYNCHRONIZE FILENAME
             // `path` points to an existing Tp-Note file.
-            // Check if in sync with its filename:
-            Ok(synchronize_filename(path)?)
+            // Check if in sync with its filename.
+            // If the note file has no header, we prepend one if wished for.
+            match (
+                synchronize_filename(path),
+                // Shall we prepend a header, in case it is missing?
+                (ARGS.add_header || CFG.arg_default.add_header)
+                    && !CFG.arg_default.no_filename_sync
+                    && !ARGS.no_filename_sync,
+            ) {
+                (Ok(path), _) => Ok(path),
+                (
+                    Err(WorkflowError::Note {
+                        source: NoteError::MissingFrontMatter { .. },
+                    }),
+                    true,
+                ) => {
+                    log::trace!(
+                       "Applying template: `[tmpl] from_text_file_content`, `[tmpl] from_text_file_filename`"
+                    );
+                    let n = Note::from_text_file(path, &CFG.tmpl.from_text_file_content)?;
+                    let new_file_path = n
+                        .render_filename(&CFG.tmpl.from_text_file_filename)
+                        .map_err(|e| WorkflowError::Template {
+                            tmpl_name: "[tmpl] from_text_file_filename".to_string(),
+                            source: e,
+                        })?;
+                    n.content.write_to_disk(&*new_file_path)?;
+                    if path != new_file_path {
+                        log::trace!("Deleting file: {:?}", path);
+                        fs::remove_file(path)?;
+                    }
+                    Ok(new_file_path)
+                }
+                (Err(e), _) => Err(e),
+            }
         } else {
             // Error if we are supposed to export an unknown file type.
             if ARGS.export.is_some() {

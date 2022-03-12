@@ -189,7 +189,7 @@ impl<'a> Content {
 
         let outfile = OpenOptions::new()
             .write(true)
-            .create_new(true)
+            .create(true)
             .open(&new_file_path);
         match outfile {
             Ok(mut outfile) => {
