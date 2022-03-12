@@ -294,7 +294,6 @@ impl Note {
     /// Throws an error if the file has a header.
     pub fn from_text_file(path: &Path, template: &str) -> Result<Self, NoteError> {
         let mut context = ContextWrapper::new();
-        context.insert_environment(path)?;
         {
             let mut file = File::open(path)?;
             // Get the file's content.
@@ -327,46 +326,22 @@ impl Note {
                 );
             }
         }
-
-        log::trace!(
-            "Available substitution variables for content template:\n{:#?}",
-            *context
-        );
-
-        log::trace!("Applying content template:\n{}", template);
-
-        // render template
-        let content = Content::from({
-            let mut tera = Tera::default();
-            tera.extend(&TERA)?;
-
-            tera.render_str(template, &context)
-                .map_err(|e| note_error_tera_template!(e))?
-        });
-
-        log::debug!(
-            "Rendered content template:\n---\n{}\n---\n{}",
-            content.borrow_dependent().header,
-            content.borrow_dependent().body.trim()
-        );
-
-        // deserialize the rendered template
-        let fm = FrontMatter::try_from(&content)?;
-
-        context.insert_front_matter(&fm);
-
-        // Return new note.
-        Ok(Self {
-            // Reserved for future use:
-            //     front_matter: fm,
-            context,
-            content,
-        })
+        Self::from_content_template_context(path, template, context)
     }
 
     /// Constructor that creates a new note by filling in the content template `template`.
     pub fn from_content_template(path: &Path, template: &str) -> Result<Self, NoteError> {
-        let mut context = ContextWrapper::new();
+        let context = ContextWrapper::new();
+        Self::from_content_template_context(path, template, context)
+    }
+
+    /// Constructor that creates a new note by filling in the content template `template`.
+    /// This version takes also a provided prefilled `ContextWrapper`.
+    fn from_content_template_context(
+        path: &Path,
+        template: &str,
+        mut context: ContextWrapper,
+    ) -> Result<Self, NoteError> {
         context.insert_environment(path)?;
 
         log::trace!(
