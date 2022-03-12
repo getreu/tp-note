@@ -21,27 +21,6 @@ pub enum WorkflowError {
     },
 
     #[error(transparent)]
-    MissingFrontMatter { source: NoteError },
-
-    #[error(transparent)]
-    MissingFrontMatterField { source: NoteError },
-
-    #[error(transparent)]
-    CompulsoryFrontMatterFieldIsEmpty { source: NoteError },
-
-    #[error(transparent)]
-    InvalidFrontMatterYaml { source: NoteError },
-
-    #[error(transparent)]
-    InvalidClipboardYaml { source: NoteError },
-
-    #[error(transparent)]
-    SortTagVarInvalidChar { source: NoteError },
-
-    #[error(transparent)]
-    FileExtNotRegistered { source: NoteError },
-
-    #[error(transparent)]
     Note {
         #[from]
         source: NoteError,

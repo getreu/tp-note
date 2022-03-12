@@ -298,20 +298,20 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                 launch_viewer = *LAUNCH_VIEWER;
             }
         }
-        Err(e) => {
-            if (matches!(e, WorkflowError::InvalidFrontMatterYaml { .. })
-                || matches!(e, WorkflowError::MissingFrontMatter { .. })
-                || matches!(e, WorkflowError::MissingFrontMatterField { .. })
-                || matches!(e, WorkflowError::CompulsoryFrontMatterFieldIsEmpty { .. })
-                || matches!(e, WorkflowError::SortTagVarInvalidChar { .. })
-                || matches!(e, WorkflowError::FileExtNotRegistered { .. }))
+        Err(WorkflowError::Note { source: e }) => {
+            if (matches!(e, NoteError::InvalidFrontMatterYaml { .. })
+                || matches!(e, NoteError::MissingFrontMatter { .. })
+                || matches!(e, NoteError::MissingFrontMatterField { .. })
+                || matches!(e, NoteError::CompulsoryFrontMatterFieldIsEmpty { .. })
+                || matches!(e, NoteError::SortTagVarInvalidChar { .. })
+                || matches!(e, NoteError::FileExtNotRegistered { .. }))
                 && !ARGS.batch
                 && ARGS.export.is_none()
             {
                 // Continue the workflow.
 
-                let missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
-                    || matches!(e, WorkflowError::MissingFrontMatterField { .. });
+                let missing_header = matches!(e, NoteError::MissingFrontMatter { .. })
+                    || matches!(e, NoteError::MissingFrontMatterField { .. });
 
                 launch_viewer = *LAUNCH_VIEWER
                     && !(missing_header && CFG.viewer.missing_header_disables && !ARGS.view);
@@ -325,9 +325,11 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                 };
             } else {
                 // This is a fatal error, so we quit.
-                return Err(e);
+                return Err(WorkflowError::Note { source: e });
             }
         }
+        // This is a fatal error, so we quit.
+        Err(e) => return Err(e),
     };
 
     #[cfg(feature = "viewer")]
@@ -352,8 +354,17 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
             // `path` has changed!
             Ok(p) => path = p,
             Err(e) => {
-                let missing_header = matches!(e, WorkflowError::MissingFrontMatter { .. })
-                    || matches!(e, WorkflowError::MissingFrontMatterField { .. });
+                let missing_header = matches!(
+                    e,
+                    WorkflowError::Note {
+                        source: NoteError::MissingFrontMatter { .. }
+                    }
+                ) || matches!(
+                    e,
+                    WorkflowError::Note {
+                        source: NoteError::MissingFrontMatterField { .. }
+                    }
+                );
 
                 if missing_header {
                     // Silently ignore error.

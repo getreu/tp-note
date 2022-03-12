@@ -36,6 +36,8 @@ use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
 use crate::config::CONFIG_PATH;
 #[cfg(feature = "read-clipboard")]
+use crate::error::NoteError;
+#[cfg(feature = "read-clipboard")]
 use crate::error::WorkflowError;
 use crate::logger::AppLogger;
 use crate::settings::ARGS;
@@ -251,7 +253,12 @@ fn main() {
         && CFG.clipboard.read_enabled
         && CFG.clipboard.empty_enabled
         && !*RUNS_ON_CONSOLE)
-        || matches!(&res, Err(WorkflowError::InvalidClipboardYaml { .. }))
+        || matches!(
+            &res,
+            Err(WorkflowError::Note {
+                source: NoteError::InvalidClipboardYaml { .. },
+            })
+        )
     {
         if let Ok(ctx) = ClipboardProvider::new() {
             let mut ctx: ClipboardContext = ctx;
