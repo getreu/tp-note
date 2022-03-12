@@ -763,7 +763,7 @@ In addition _Tp-Note_ defines the following variables:
   (can be changed in the configuration file),
 
 * '`{{ username }}`' is the content of the first non-empty environment
-  variable: `LOGNAME`, `USER` or `USERNAME`.
+  variable: `TPNOTEUSER`, `LOGNAME`, `USER` or `USERNAME`.
 
 The following '`{{ fm_* }}`' variables are typically generated, _after_ a
 content template was filled in with data: For example a field named '`title:`'

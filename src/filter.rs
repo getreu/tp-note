@@ -476,8 +476,10 @@ impl ContextWrapper {
         );
 
         // search for UNIX, Windows and MacOS user-names
-        let author = env::var("LOGNAME").unwrap_or_else(|_| {
-            env::var("USERNAME").unwrap_or_else(|_| env::var("USER").unwrap_or_default())
+        let author = env::var("TPNOTEUSER").unwrap_or_else(|_| {
+            env::var("LOGNAME").unwrap_or_else(|_| {
+                env::var("USERNAME").unwrap_or_else(|_| env::var("USER").unwrap_or_default())
+            })
         });
         (*self).insert(TMPL_VAR_USERNAME, &author);
 
