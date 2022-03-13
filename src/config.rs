@@ -61,7 +61,7 @@ const ARG_DEFAULT_TTY: bool = false;
 /// _Tp-Note_ exits of when it tries to open a text file without a YAML
 /// header. When this flag is set, the missing header is constructed by
 /// means of the text file's filename and creation date.
-const ARG_DEFAULT_ADD_HEADER: bool = false;
+const ARG_DEFAULT_ADD_HEADER: bool = true;
 
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
