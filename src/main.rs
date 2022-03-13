@@ -17,6 +17,7 @@
 mod alert_service;
 mod config;
 mod content;
+mod context;
 mod error;
 mod file_editor;
 mod filename;

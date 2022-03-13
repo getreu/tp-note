@@ -5,11 +5,11 @@
 
 use crate::config::CFG;
 use crate::content::Content;
+use crate::context::ContextWrapper;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::filename;
 use crate::filename::MarkupLanguage;
-use crate::filter::ContextWrapper;
 use crate::filter::TERA;
 use crate::note_error_tera_template;
 use parse_hyperlinks::renderer::text_links2html;
