@@ -53,7 +53,7 @@ and the clipboard state. Each mode is usually associated with one content
 template and one filename template.
 
 
-## New note without clipboard
+## Create a new note with empty clipboard
 
 In case the clipboard is empty while starting, the new note is created
 with the templates: '`[tmpl] new_content`' and '`[tmpl] new_filename`'.  By
@@ -93,7 +93,7 @@ lang:       "en_GB.UTF-8"
 ```
 
 
-## New note based on clipboard data
+## Create a new note based on clipboard data
 
 When '`<path>`' is a directory and the clipboard is not empty, the clipboard's
 content is stored in the variable '`{{ clipboard }}`'. In addition, if the
@@ -297,7 +297,7 @@ To execute the script type:
 
 
 
-## New note annotating some non-Tp-Note file
+## Create a new note annotating a non-Tp-Note file
 
 When '`<path>`' points to an existing file, whose file extension is other than
 '`.txt`', a new note is created with a similar filename and a reference to the
@@ -338,6 +338,38 @@ treated as described above.
 
 This so called _annotation_ mode can also be used with the clipboard: when it
 is not empty, its data is appended to the note's body.
+
+
+
+## Convert a text file into a Tp-Note file
+
+Consider the content of the following text file
+'`Ascii-Hangman -- A game for children.md`' whose creation date is 13 March 2022:
+
+    A little game designed for primary kids to revise vocabulary in classroom.
+
+To convert the text file into a _Tp-Note_ file type:
+
+```bash
+> tpnote --add-header --batch "Ascii-Hangman -- A game for children.md"
+```
+
+Tp-Note converts the filename into:
+'`20220313-Ascii-Hangman--A game for children.md`'
+and prepends a YAML header to the file's content:
+
+```yaml
+---
+title:      "Ascii-Hangman "
+subtitle:   " A game for children"
+author:     "getreu"
+date:       "2022-03-13"
+lang:       "en_GB.UTF-8"
+orig_name:  "Ascii-Hangman -- A game for children.md"
+---
+
+A little game designed for primary kids to revise vocabulary in classroom.
+```
 
 
 ## Editing notes
@@ -387,6 +419,18 @@ synchronization).
 
 # OPTIONS
 
+**-a**, **\--add-header**
+
+:   Prepend a YAML header in case the text file does not have one.
+    The default template, deduces the '`title:`' and '`subtitle:`'
+    header field from the filename. It's sort-tag and file extension
+    is kept. In case the filename is lacking a _sort-tag_,
+    the file creation date in numerical format is prepended.
+    As this option is activated by default, it has no effect unless
+    you set '`[arg_default] add_header = false`' in the configuration
+    file.
+
+
 **-b**, **\--batch**
 
 :   Do not launch the external text editor or viewer. All other operations
@@ -404,10 +448,10 @@ synchronization).
 **-d** *LEVEL*, **\--debug**=*LEVEL*
 
 :   Print additional log messages.  The debug level *LEVEL* must be one out of
-'`trace`', '`debug`', '`info`', '`warn`', '`error`' (default) or '`off`'.  The
-level '`trace`' reports the most detailed information, while '`error`' informs
-you only about failures.  A '`warn`' level message means, that not all
-functionality might be available or work as expected.
+    '`trace`', '`debug`', '`info`', '`warn`', '`error`' (default) or '`off`'.
+    The level '`trace`' reports the most detailed information, while '`error`'
+    informs you only about failures.  A '`warn`' level message means, that not
+    all functionality might be available or work as expected.
 
 :   Use '`-b -d trace`' for debugging templates. If the HTTP server
     (viewer) does not work as expected: '`-n -d debug`'. If your text editor
@@ -455,7 +499,8 @@ functionality might be available or work as expected.
 
 **-p**, **\--port**=*PORT*
 
-:   Sets the server port that the web browser connects to, to the specified value *PORT*.
+:   Sets the server port that the web browser connects to, to the specified
+    value *PORT*.
     If not given, a random available port is chosen automatically.
 
 **-n**, **\--no-filename-sync**
@@ -513,6 +558,16 @@ functionality might be available or work as expected.
 
 
 # THE NOTE'S DOCUMENT STRUCTURE
+
+_Tp-Note_ considers a text file to be a valid note file, if its:
+
+* file extension is listed in one of the configuration file variables
+  '`[filename] extension_*`'; if its
+
+* content has a valid YAML header and
+
+* the YAML header contains a key whose name is defined in the configuration
+  file variable '`[tmpl] compulsory_header_field`' (default '`title`').
 
 A _Tp-Note_-note file is always UTF-8 encoded. As newline, either the Unix
 standard '`\n`' or the Windows standard '`\r\n`' is accepted. _Tp-Note_ writes
