@@ -308,13 +308,22 @@ fi
 
 
 
-## Test 12:  Compilation --no-default-features
+## Test 12: Do not synchronize meta data and filename
+INPUT_FILENAME="$PWD/20220312-abc-- edf.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+Only body
+EOF
 
-cargo check --no-default-features >/dev/null
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch --add-header --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
 
-if [ $? -eq 0 ]
+OUTPUT_FILENAME="$PWD/20220312-abc--edf.md"
+
+if diff "$OUTPUT_FILENAME"  "test12-add-header-expected-output"
 then
     echo Commandline test 12 succeeded.
+    rm "$OUTPUT_FILENAME"
 else
     echo Commandline test 12 failed.
     exit 1
@@ -322,8 +331,9 @@ fi
 
 
 
-## Test 13:  Compilation --no-default-features --features renderer
-cargo check --no-default-features --features message-box >/dev/null
+## Test 13:  Compilation --no-default-features
+
+cargo check --no-default-features >/dev/null
 
 if [ $? -eq 0 ]
 then
@@ -335,8 +345,8 @@ fi
 
 
 
-## Test 14:  Compilation --no-default-features --features viewer
-cargo check --no-default-features --features viewer >/dev/null
+## Test 14:  Compilation --no-default-features --features renderer
+cargo check --no-default-features --features message-box >/dev/null
 
 if [ $? -eq 0 ]
 then
@@ -348,8 +358,8 @@ fi
 
 
 
-## Test 15:  Compilation --no-default-features --features message-box
-cargo check --no-default-features --features message-box >/dev/null
+## Test 15:  Compilation --no-default-features --features viewer
+cargo check --no-default-features --features viewer >/dev/null
 
 if [ $? -eq 0 ]
 then
@@ -361,14 +371,27 @@ fi
 
 
 
-## Test 16:  Compilation --no-default-features --features read-clipboard
-cargo check --no-default-features --features read-clipboard >/dev/null
+## Test 16:  Compilation --no-default-features --features message-box
+cargo check --no-default-features --features message-box >/dev/null
 
 if [ $? -eq 0 ]
 then
     echo Commandline test 16 succeeded.
 else
     echo Commandline test 16 failed.
+    exit 1
+fi
+
+
+
+## Test 17:  Compilation --no-default-features --features read-clipboard
+cargo check --no-default-features --features read-clipboard >/dev/null
+
+if [ $? -eq 0 ]
+then
+    echo Commandline test 17 succeeded.
+else
+    echo Commandline test 17 failed.
     exit 1
 fi
 
