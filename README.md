@@ -177,7 +177,7 @@ Instead, _Tp-Note_ renames the old configuration file and prompts:
     to some incompatible configuration file changes.
 
     Tp-Note backs up the existing configuration
-    file and creates a new one with default values."
+    file and creates a new one with default values.
 
 The configuration file backup is stored in the same directory as the newly
 created configuration file (cf. [Customization section] of _Tp-Note_'s
@@ -215,25 +215,12 @@ compile _Tp-Note_ yourself.
        cargo install --no-default-features --features read-clipboard,viewer,renderer tp-note
        sudo cp ~/.cargo/bin/tpnote /usr/local/bin
 
-   **Minimal Linux console version without dependencies on GUI libraries**
+   **Recommended Linux console and server version**
 
    The full featured version of _Tp-Note_ depends on GUI libraries like GTK
    that might not be installable on a headless system. Either download the Musl
    version [x86_64-unknown-linux-musl/release/tpnote] or compile _Tp-Note_
    without default features:
-
-       cargo install --no-default-features tp-note
-       sudo cp ~/.cargo/bin/tpnote /usr/local/bin
-
-   Note, that even though this no-renderer version is deprived of it's
-   markup renderer, limited rendered HTML export is still available (see command
-   line option `--export`). This way you can comfortably follow hyperlinks in
-   your note files with any text based web browser, e.g. `lynx`.
-
-   **Recommended Linux console and server version**
-
-   The same as the above console version (without GUI libraries), but with
-   additional Markdown, ReStructuredText etc. renderer compiled in.
 
        cargo install --no-default-features --features renderer tp-note
        sudo cp ~/.cargo/bin/tpnote /usr/local/bin

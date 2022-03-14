@@ -75,9 +75,10 @@ pub const TMPL_VAR_USERNAME: &str = "username";
 ///  Only available in the `TMPL_FROM_TEXT_FILE_CONTENT` template.
 const TMPL_VAR_PATH_FILE_TEXT: &str = "path_file_text";
 
-///  Contains the date of the file the command line option `<path>` points to. The date is
-///  represented as an integer the way `std::time::SystemTime` resolves to on the platform.
-///  Only available in the `TMPL_FROM_TEXT_FILE_CONTENT` template.
+///  Contains the date of the file the command line option `<path>` points to.
+///  The date is represented as an integer the way `std::time::SystemTime`
+///  resolves to on the platform. Only available in the
+///  `TMPL_FROM_TEXT_FILE_CONTENT` template.
 const TMPL_VAR_PATH_FILE_DATE: &str = "path_file_date";
 
 /// Prefix prepended to front matter field names when a template variable
