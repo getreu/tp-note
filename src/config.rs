@@ -513,7 +513,7 @@ const VIEWER_STARTUP_DELAY: isize = 500;
 /// When set to true, the viewer feature is automatically disabled when
 /// _Tp-Note_ encounters an `.md` file without header.  Experienced users can
 /// set this to `true`.
-const VIEWER_MISSING_HEADER_DISABLES: bool = true;
+const VIEWER_MISSING_HEADER_DISABLES: bool = false;
 
 /// How often should the file watcher check for changes?
 /// Delay in milliseconds.
