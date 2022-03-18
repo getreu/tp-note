@@ -19,6 +19,9 @@ winres = "0.1.12"
 name = "tpnote"
 path = "src/main.rs"
 
+[profile.release]
+strip = "symbols"
+
 [package.metadata.deb]
 name = "tpnote"
 maintainer = "Jens Getreu, <getreu@web.de>"
