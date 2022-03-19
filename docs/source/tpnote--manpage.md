@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.16.0 | Tp-Note documentation
+% TP-NOTE(1) Version 1.16.1 | Tp-Note documentation
 
 
 
@@ -876,7 +876,7 @@ modes:
   note file. The '`sync_filename`' template operates on it's own without any
   corresponding content template.
 
-* Prepend header to text file (new feature in _Tp-Note_ v1.16.0): When _Tp-Note_
+* Prepend header to text file (new feature in _Tp-Note_ v1.16.1): When _Tp-Note_
   opens a regular text file without a YAML header, a new header is prepended
   automatically. It's data origins mainly form the filename of the
   text file. The templates applied in this use case are:
