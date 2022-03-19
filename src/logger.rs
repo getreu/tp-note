@@ -2,13 +2,13 @@
 
 #[cfg(feature = "message-box")]
 use crate::alert_service::AlertService;
-#[cfg(feature = "message-box")]
 use crate::settings::ARGS;
 #[cfg(feature = "message-box")]
 use crate::settings::RUNS_ON_CONSOLE;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 pub struct AppLogger {
@@ -82,7 +82,18 @@ impl log::Log for AppLogger {
     fn log(&self, record: &Record<'_>) {
         if self.enabled(record.metadata()) {
             // Log this to `stderr`.
-            eprintln!("*** {}: {}", record.level(), record.args());
+            eprintln!(
+                "*** {}: {}\n\
+                 *   The command line argument <path> was:\n{}",
+                record.level(),
+                record.args(),
+                ARGS.path
+                    .as_ref()
+                    .unwrap_or(&PathBuf::new())
+                    .as_os_str()
+                    .to_str()
+                    .unwrap_or_default()
+            );
 
             // Eventually also log as popup alert window.
             #[cfg(feature = "message-box")]
