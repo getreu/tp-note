@@ -39,10 +39,10 @@ use structopt::StructOpt;
 /// WikiText. The note's rendition with its hyperlinks is live updated and
 /// displayed in the user's webbrowser.
 pub struct Args {
-    /// Prepend YAML header if missing
+    /// Prepends YAML header if missing
     #[structopt(long, short = "a")]
     pub add_header: bool,
-    /// Batch made: does not launch editor or viewer
+    /// Batch mode: does not launch editor or viewer
     #[structopt(long, short = "b")]
     pub batch: bool,
     /// Loads alternative configuration file
@@ -51,13 +51,13 @@ pub struct Args {
     /// Console debug level: "trace", "debug", "info", "warn", "error" (default) or "off"
     #[structopt(long, short = "d")]
     pub debug: Option<LevelFilter>,
-    /// Show console debug messages also as popup windows
+    /// Shows console debug messages also as popup windows
     #[structopt(long, short = "u")]
     pub popup: bool,
     /// Launches only the editor, no browser
     #[structopt(long, short = "e")]
     pub edit: bool,
-    /// Force console mode: open console editor, no browser
+    /// Forces console mode: opens console editor, no browser
     #[structopt(long, short = "t")]
     pub tty: bool,
     /// Lets web server listen to a specific port

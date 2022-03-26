@@ -547,10 +547,10 @@ synchronization).
 
 **-t**, **\--tty**
 
-:   Tp-Note tries different heuristics to detect a graphic environment
+:   Tp-Note tries different heuristics to detect whether a graphic environment
     is available or not. For example, under Linux, the '`DISPLAY`' environment
     variable is evaluated. The '`--tty`' flag disables the automatic detection
-    and sets Tp-Note in "console" mode, where only the non GUI editor
+    and sets Tp-Note into "console only" mode: now only the non GUI editor
     (see configuration variable: '`[app_args] editor_console`') and no viewer
     is launched.
 
@@ -1053,7 +1053,7 @@ affect the way new notes are created:
 
    ```toml
    [filename]
-   extension_default=.txt'
+   extension_default='txt'
    ```
 
    to:
@@ -1423,7 +1423,7 @@ In addition Tp-Note defines the following variables:
   given on the command line, '`{{ path }}`' contains the current working
   directory path.
 
-* '`{{ dir_path }}`': is identical to  '`{{ path }}`' with one exception: if
+* '`{{ dir_path }}`' is identical to  '`{{ path }}`' with one exception: if
   '`{{ path }}`' points to a file, the last component (the file name) is omitted
   and only the directory path is retained. If '`{{ path }}`' points to a
   directory, '`{{ dir_path }}`' equals '`{{ path }}`'.
@@ -1529,13 +1529,13 @@ A filter is always used together with a variable. Here some examples:
   component is returned.
 
 * '`{{ path | copy_counter }}`' is similar to  '`{{ path | filename }}`' but
-  without its sort tag, stem and extension. Only the copy counter of '`{{ path
-  }}`''s last component is returned.
+  without its sort tag, stem and extension. Only the copy counter of
+  '`{{ path }}`''s last component is returned.
 
-* '`{{ path | ext }}`' is '`{{ path }}`''s file extension without
-  dot (period), e.g. '.txt`' or '`.md`'.
+* '`{{ path | ext }}`' is '`{{ path }}`'’s file extension without
+  dot (period), e.g. '`txt`' or '`md`'.
 
-* '`{{ path | ext | prepend_dot }}`' is '`{{ path }}`''s file extension with
+* '`{{ path | ext | prepend_dot }}`' is '`{{ path }}`'’s file extension with
   dot (period), e.g. '`.txt`' or '`.md`'.
 
 * '`{{ path | trim_tag }}`' returns the final component of '`path`' which might

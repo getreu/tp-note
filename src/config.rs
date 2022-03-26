@@ -509,7 +509,6 @@ const APP_ARGS_EDITOR_CONSOLE: &[&[&str]] = &[
 /// started first. Common values are `-1000`, `0` and `1000`.
 const VIEWER_STARTUP_DELAY: isize = 500;
 
-/// Template used by the viewer to render error messages into html.
 /// When set to true, the viewer feature is automatically disabled when
 /// _Tp-Note_ encounters an `.md` file without header.  Experienced users can
 /// set this to `true`.
@@ -519,7 +518,6 @@ const VIEWER_MISSING_HEADER_DISABLES: bool = false;
 /// Delay in milliseconds.
 const VIEWER_NOTIFY_PERIOD: u64 = 1000;
 
-/// Template used by the viewer to render a note into html.
 /// The maximum number of TCP connections the HTTP server can handle at the same
 /// time. In general, the serving and live update of the HTML rendition of the
 /// note file, requires normally 3 TCP connections: 1 old event channel (that is
