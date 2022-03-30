@@ -314,7 +314,11 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                     || matches!(e, NoteError::MissingFrontMatterField { .. });
 
                 launch_viewer = *LAUNCH_VIEWER
-                    && !(missing_header && CFG.viewer.missing_header_disables && !ARGS.view);
+                    && !(missing_header
+                        && CFG.viewer.missing_header_disables
+                        && !CFG.arg_default.add_header
+                        && !ARGS.add_header
+                        && !ARGS.view);
 
                 if launch_viewer || missing_header {
                     // Inform user when `--debug warn`, then continue workflow.
