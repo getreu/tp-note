@@ -779,7 +779,7 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
         @="View Tp-Note"
 
         [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\view.tpnote.exe\command]
-        @="\"C:\\Program Files\\tpnote\\bin\\tpnote.exe\" \"-v\" \"%1\""
+        @="\"C:\\Program Files\\tpnote\\bin\\tpnote.exe\" \"-v\" \"-n\" \"%1\""
 
         [HKEY_CLASSES_ROOT\SystemFileAssociations\.txt\shell\export.tpnote.exe]
         @="Export Tp-Note"
@@ -887,7 +887,7 @@ Search for `</actions>` and replace it with:
 <action>
   <icon>accessories-text-editor</icon>
   <name>Tp-Note View</name>
-  <command>tpnote -v %f</command>
+  <command>tpnote -v -n %f</command>
   <description>Tp-Note View</description>
   <patterns>*.txt; *.md;*.rst;*.adoc</patterns>
   <text-files/>
@@ -1032,7 +1032,7 @@ Profiles=profile-zero;
 
 [X-Action-Profile profile-zero]
 Name[en]=Default profile
-Exec=tpnote -v %f
+Exec=tpnote -v -n %f
 ```
 
 The above creates the custom context menu item _Tp-Note View_.

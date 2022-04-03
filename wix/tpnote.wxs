@@ -164,7 +164,7 @@
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
                                          Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\view.tpnote.exe\command">
-                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;-v&quot; &quot;%1&quot;" Type="string" />
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;-v&quot; &quot;-n&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
                                          Key="SOFTWARE\Classes\SystemFileAssociations\.md\shell\export.tpnote.exe">
@@ -189,7 +189,7 @@
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
                                          Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\view.tpnote.exe\command">
-                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;-v&quot; &quot;%1&quot;" Type="string" />
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;-v&quot; &quot;-n&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
                                          Key="SOFTWARE\Classes\SystemFileAssociations\.txt\shell\export.tpnote.exe">
@@ -214,7 +214,7 @@
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
                                          Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\view.tpnote.exe\command">
-                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;-v&quot; &quot;%1&quot;" Type="string" />
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;-v&quot; &quot;-n&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
                                          Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\export.tpnote.exe">
