@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.16.2"
+version = "1.16.3"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2021"
 readme = "README.md"
@@ -67,7 +67,7 @@ renderer = ["pulldown-cmark", "rst_parser", "rst_renderer"]
 [dependencies]
 atty = "0.2.14"
 chrono = "0.4.19"
-clap = "3.1.6"
+clap = "3.1.8"
 # clipboard: On Debian Linux you need to: sudo apt-get install xorg-dev
 clipboard = { version = "0.5.0", optional = true }
 directories = "4.0.1"
@@ -89,7 +89,7 @@ rst_renderer = { version = "0.4.0", optional = true }
 sanitize-filename-reader-friendly = "2.2.1"
 # sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
 self_cell = "0.10.2"
-semver = "1.0.6"
+semver = "1.0.7"
 serde_json = "1.0.79"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_yaml = "0.8.23"
