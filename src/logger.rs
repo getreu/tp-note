@@ -5,11 +5,40 @@ use crate::alert_service::AlertService;
 use crate::settings::ARGS;
 #[cfg(feature = "message-box")]
 use crate::settings::RUNS_ON_CONSOLE;
+use crate::CONFIG_PATH;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
+use std::env;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
+
+lazy_static! {
+    /// Some additional debugging information added to the end of error messages.
+    pub static ref DIALOG_ERR_TAIL: String = {
+        let mut args_str = String::new();
+        for argument in env::args() {
+            args_str.push_str(argument.as_str());
+            args_str.push(' ');
+        };
+
+        format!(
+            "\n\
+            __________\n\
+            Additional technical details:\n\
+            *    Command line parameters:\n\
+            {}\n\
+            *    Configuration file:\n\
+            {}",
+            args_str,
+            &*CONFIG_PATH
+                .as_ref()
+                .unwrap_or(&PathBuf::from("no path found"))
+                .to_str()
+                .unwrap_or_default()
+        )
+    };
+}
 
 pub struct AppLogger {
     /// If `true`, all future log events will trigger the opening of a popup

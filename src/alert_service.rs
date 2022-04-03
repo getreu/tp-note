@@ -1,12 +1,10 @@
 //! Receives strings by a message channel, queues them and displays them
 //! one by one in popup alert windows.
 
-use crate::config::CONFIG_PATH;
+use crate::logger::DIALOG_ERR_TAIL;
 use crate::VERSION;
 use lazy_static::lazy_static;
 use msgbox::IconType;
-use std::env;
-use std::path::PathBuf;
 use std::sync::mpsc::sync_channel;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::RecvTimeoutError;
@@ -33,33 +31,6 @@ lazy_static! {
         &DIALOG_TITLE,
         VERSION.unwrap_or("unknown")
     );
-}
-
-lazy_static! {
-    /// Some additional debugging information added to the end of error messages.
-    static ref DIALOG_ERR_TAIL: String = {
-        let mut args_str = String::new();
-        for argument in env::args() {
-            args_str.push_str(argument.as_str());
-            args_str.push(' ');
-        };
-
-        format!(
-            "\n\
-            __________\n\
-            Additional technical details:\n\
-            *    Command line parameters:\n\
-            {}\n\
-            *    Configuration file:\n\
-            {}",
-            args_str,
-            &*CONFIG_PATH
-                .as_ref()
-                .unwrap_or(&PathBuf::from("no path found"))
-                .to_str()
-                .unwrap_or_default()
-        )
-    };
 }
 
 lazy_static! {
