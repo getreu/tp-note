@@ -15,7 +15,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 lazy_static! {
     /// Some additional debugging information added to the end of error messages.
-    pub static ref DIALOG_ERR_TAIL: String = {
+    pub static ref ERR_MSG_TAIL: String = {
         let mut args_str = String::new();
         for argument in env::args() {
             args_str.push_str(argument.as_str());

@@ -1,7 +1,7 @@
 //! Receives strings by a message channel, queues them and displays them
 //! one by one in popup alert windows.
 
-use crate::logger::DIALOG_ERR_TAIL;
+use crate::logger::ERR_MSG_TAIL;
 use crate::VERSION;
 use lazy_static::lazy_static;
 use msgbox::IconType;
@@ -144,7 +144,7 @@ impl AlertService {
     /// `rx` of the queue. This can happen, e.g. if `AlertService::init()` has
     /// not been called before.
     pub fn push_debug_str(mut msg: String) -> Result<(), SendError<String>> {
-        msg.push_str(&DIALOG_ERR_TAIL);
+        msg.push_str(&ERR_MSG_TAIL);
 
         Self::push_str(msg)
     }
