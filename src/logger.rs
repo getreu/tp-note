@@ -132,14 +132,13 @@ impl log::Log for AppLogger {
                         // This lock can never get poisoned, so `unwrap()` is safe here.
                         || APP_LOGGER.popup_always_enabled.load(Ordering::SeqCst))
             {
-                let msg = format!("{}:\n{}", record.level(), &record.args().to_string());
+                let mut msg = format!("{}:\n{}", record.level(), &record.args().to_string());
+                if record.metadata().level() == Level::Error {
+                    msg.push_str(&ERR_MSG_TAIL);
+                };
                 // We silently ignore failing pushes. We have printed the
                 // error message on the console already.
-                let _res = if record.metadata().level() == Level::Error {
-                    AlertService::push_debug_str(msg)
-                } else {
-                    AlertService::push_str(msg)
-                };
+                let _ = AlertService::push_str(msg);
             };
         }
     }

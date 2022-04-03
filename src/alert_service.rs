@@ -1,7 +1,6 @@
 //! Receives strings by a message channel, queues them and displays them
 //! one by one in popup alert windows.
 
-use crate::logger::ERR_MSG_TAIL;
 use crate::VERSION;
 use lazy_static::lazy_static;
 use msgbox::IconType;
@@ -134,19 +133,6 @@ impl AlertService {
         sleep(Duration::from_millis(FLUSH_TIMEOUT));
         // This might block, if a guard in `run()` holds already a lock.
         let _res = BUSY_LOCK.lock();
-    }
-
-    #[inline]
-    /// Concatenates some extra debugging info to `msg` and pushes it into
-    /// queue. In case the message queue is full, the method blocks until there
-    /// is more free space. Make sure to initialize before with
-    /// `AlertService::init()`. Returns an `SendError` if nobody listens on
-    /// `rx` of the queue. This can happen, e.g. if `AlertService::init()` has
-    /// not been called before.
-    pub fn push_debug_str(mut msg: String) -> Result<(), SendError<String>> {
-        msg.push_str(&ERR_MSG_TAIL);
-
-        Self::push_str(msg)
     }
 
     #[inline]
