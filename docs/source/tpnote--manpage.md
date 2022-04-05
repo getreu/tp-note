@@ -457,7 +457,7 @@ synchronization).
 :   Prepend a YAML header in case the text file does not have one.
     The default template, deduces the '`title:`' and '`subtitle:`'
     header field from the filename. It's sort-tag and file extension
-    is kept. In case the filename is lacking a _sort-tag_,
+    remain untouched. In case the filename is lacking a _sort-tag_,
     the file creation date in numerical format is prepended.
     As this option is activated by default, it has no effect unless
     you set '`[arg_default] add_header = false`' in the configuration
@@ -573,6 +573,9 @@ synchronization).
     variable '`[viewer] enable=false`'.
     When '`--edit --view`' appear together, '`--view`' takes precedence and
     '`--edit`' is ignored.
+
+:   As most users do expect file change when they _view_ a file, '`--view`'
+    is usually used together with '`--no-filename-sync`'.
 
 **-V**, **\--version**
 
