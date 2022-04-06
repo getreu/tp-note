@@ -118,7 +118,24 @@ const FILENAME_COPY_COUNTER_CLOSING_BRACKETS: &str = ")";
 pub const FILENAME_COPY_COUNTER_MAX: usize = 400;
 
 /// File extension of new _Tp-Note_ files.
+///
+/// For Unix-like systems this defaults to `.md` because all the
+/// listed file editors (see `APP_ARGS_EDITOR`) support it. The
+/// Windows default is `.txt` to ensure that the _Notepad_ editor can
+/// handle these files properly.
+///
+/// As longs as all extensions are part of the same group, here
+/// `FILENAME_EXTENSIONS_MD`, all note files are interpreted as
+/// _Markdown_ on all systems.
+///
+/// NB: Do not forget to adapt the templates `TMPL_*` in case you set
+/// this to another markup language.
+#[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
+pub const FILENAME_EXTENSION_DEFAULT: &str = "md";
+#[cfg(target_family = "windows")]
 pub const FILENAME_EXTENSION_DEFAULT: &str = "txt";
+#[cfg(all(target_family = "unix", target_vendor = "apple"))]
+pub const FILENAME_EXTENSION_DEFAULT: &str = "md";
 
 /// The variables `FILENAME_EXTENSIONSS_*` list file extensions that Tp-Note
 /// considers as its own note files.
