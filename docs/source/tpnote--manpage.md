@@ -1,4 +1,4 @@
-﻿% TP-NOTE(1) Version 1.16.4 | Tp-Note documentation
+% TP-NOTE(1) Version 1.16.4 | Tp-Note documentation
 
 
 
@@ -574,7 +574,7 @@ synchronization).
     When '`--edit --view`' appear together, '`--view`' takes precedence and
     '`--edit`' is ignored.
 
-:   As most users do expect file change when they _view_ a file, '`--view`'
+:   As most users do not expect the viewed file to change, '`--view`'
     is usually used together with '`--no-filename-sync`'.
 
 **-V**, **\--version**
