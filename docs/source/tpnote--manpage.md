@@ -78,7 +78,7 @@ or
 
 creates the document:
 
-    "./03-Favorite Readings/20211031-Favorite Readings--Note.txt"
+    "./03-Favorite Readings/20211031-Favorite Readings--Note.md"
 
 with the content:
 
@@ -141,7 +141,7 @@ or
 
 This creates the document:
 
-    "./03-Favorite Readings/20211031-Who Moved My Cheese--Note.txt"
+    "./03-Favorite Readings/20211031-Who Moved My Cheese--Note.md"
 
 with the content:
 
@@ -181,7 +181,7 @@ the string: "`I recommend:\n[The Rust Book](https://doc.rust-lang.org/book/)`".
 Tp-Note's templates '`[tmpl] from_clipboard_content`' and
 '`[tmpl] from_clipboard_filename`' create the following document:
 
-    ./doc/Lecture 1/20211031-The Rust Book--Notes.txt
+    ./doc/Lecture 1/20211031-The Rust Book--Notes.md
 
 ```yaml
 ---
@@ -274,7 +274,7 @@ lang:       "en"
 ## Create a new note annotating a non-Tp-Note file
 
 When '`<path>`' points to an existing file, whose file extension is other than
-'`.txt`', a new note is created with a similar filename and a reference to the
+'`.md`', a new note is created with a similar filename and a reference to the
 original file is copied into the new note's body. If the clipboard contains some
 text, it is appended there also. The logic of this is implemented in the
 templates: '`[tmpl] annotate_file_content`' and
@@ -290,7 +290,7 @@ Example:
 
 creates the note:
 
-    Classic Shell Scripting.pdf--Note.txt"
+    Classic Shell Scripting.pdf--Note.md"
 
 with the content:
 
@@ -318,14 +318,14 @@ is not empty, its data is appended to the new note's body.
 ## Convert a text file into a Tp-Note file
 
 Consider the content of the following text file
-'`Ascii-Hangman--A game for children.txt`' whose creation date is 13 March 2022:
+'`Ascii-Hangman--A game for children.md`' whose creation date is 13 March 2022:
 
     A little game designed for primary kids to revise vocabulary in classroom.
 
 To convert the text file into a Tp-Note file type:
 
 ```bash
-> tpnote --add-header --batch "Ascii-Hangman--A game for children.txt"
+> tpnote --add-header --batch "Ascii-Hangman--A game for children.md"
 ```
 
 NB: the '`--add-header`' flag is actually not necessary, as it is enabled by
@@ -334,7 +334,7 @@ default through the configuration file variable
 
 As a result of the above command, Tp-Note converts the filename into:
 
-    20220313-Ascii-Hangman--A game for children.txt
+    20220313-Ascii-Hangman--A game for children.md
 
 and prepends a YAML header to the file's content:
 
@@ -345,7 +345,7 @@ subtitle:   "A game for children"
 author:     "getreu"
 date:       "2022-03-13"
 lang:       "en_GB.UTF-8"
-orig_name:  "Ascii-Hangman--A game for children.txt"
+orig_name:  "Ascii-Hangman--A game for children.md"
 ---
 
 A little game designed for primary kids to revise vocabulary in classroom.
@@ -387,10 +387,10 @@ A little game designed for primary kids to revise vocabulary in classroom.
   header data.
 
   ```shell
-  > TPNOTEUSER="John" find . -type f -name '*.txt' -exec tpnote -a -b {} > /dev/null \;
+  > TPNOTEUSER="John" find . -type f -name '*.md' -exec tpnote -a -b {} > /dev/null \;
   ```
 
-  The direction of the synchronization depends on whether the '`.txt`' file has
+  The direction of the synchronization depends on whether the '`.md`' file has
   a valid YAML header or not:
 
   * A YAML header is present and valid: the header fields might update
@@ -409,13 +409,13 @@ A little game designed for primary kids to revise vocabulary in classroom.
 
 Unless invoked with '`--batch`' or '`--view`', Tp-Note launches an external
 text editor after creating a new note. This also happens when '`<path>`' points
-to an existing '`.txt`'-file.
+to an existing '`.md`'-file.
 
 Example: edit the note from the previous example:
 
 ``` bash
 > cd "./03-Favorite Readings"
-> tpnote 20211031-Favorite Readings--Note.txt
+> tpnote 20211031-Favorite Readings--Note.md
 ```
 
 
@@ -430,7 +430,7 @@ to retrieve your notes in large data pools.
 Example:
 
 ``` sh
-> tpnote "20200306-Favorite Readings--Note.txt"
+> tpnote "20200306-Favorite Readings--Note.md"
 ```
 
 The way how Tp-Note synchronizes the note's metadata and filename is defined
@@ -442,7 +442,7 @@ decide updating the title in the note's YAML metadata section from '`title:
 closing the text editor the filename is automatically updated too and looks
 like:
 
-    "20200306-Introduction to bookkeeping--Note.txt"
+    "20200306-Introduction to bookkeeping--Note.md"
 
 Note: the sort tag '`20200306-`' has not changed. The filename synchronization
 mechanism by default never does. (See below for more details about filename
@@ -499,16 +499,16 @@ synchronization).
 :   All error messages are dumped in the error stream `stderr` and appear
     on the console from where Tp-Note was launched:
 
-        tpnote.exe --debug info my_note.txt
+        tpnote.exe --debug info my_note.md
 
 :   On Windows the output must be redirected into a file to see it:
 
-        tpnote.exe --debug info my_note.txt >debug.txt 2>&1
+        tpnote.exe --debug info my_note.md >debug.md 2>&1
 
 :   Alternatively, you can redirect all logfile entries into popup alert
     windows.
 
-        tpnote.exe --popup --debug info my_note.txt
+        tpnote.exe --popup --debug info my_note.md
 
 :   The same can be achieved by setting following configuration file
     variables (especially useful with Windows):
@@ -541,7 +541,7 @@ synchronization).
 :   Whenever Tp-Note opens a note file, it synchronizes its YAML-metadata with
     its filename. '`--no-filename-sync`' disables the synchronization.  In
     addition, the "flag in scripts" can be especially useful for testing
-    '`.txt`'-files.  See section EXIT STATUS for more details.  The section
+    '`.md`'-files.  See section EXIT STATUS for more details.  The section
     METADATA FILENAME SYNCHRONIZATION shows alternative ways to disable
     synchronization.
 
@@ -643,7 +643,7 @@ Prepended text is ignored.
 
 There is no restriction about the markup language being used in the note's text
 body. However, the default templates assume Markdown and the file extension
-'`.txt`'. Both can be changed easily by adapting Tp-Note's configuration file.
+'`.md`'. Both can be changed easily by adapting Tp-Note's configuration file.
 Besides the requirements concerning its header, a valid Tp-Note file must have
 a filename extension that is listed in one of the configuration file variables:
 '`[filename] extension_*`'. The latter also determine which internal markup
@@ -656,7 +656,7 @@ language render is called for Tp-Note's renderer feature.
 
 Consider the following Tp-Note-file:
 
-    20151208-Make this world a better place--Suggestions.txt
+    20151208-Make this world a better place--Suggestions.md
 
 The filename has 4 parts:
 
@@ -691,13 +691,13 @@ parent directory name omitting its own *sort tag*.
 A note's filename is in sync with its meta data, when the following is true
 (slightly simplified, see the configuration file for the complete definition):
 
-> filename on disk without *sort tag* == '`{{ fm_title }}--{{ fm_subtitle }}.txt`'
+> filename on disk without *sort tag* == '`{{ fm_title }}--{{ fm_subtitle }}.md`'
   ^[The variables '`{{ fm_title }}`' and '`{{ fm_subtitle }}`' reflect the values in
   the note's metadata.]
 
 Consider the following document with the filename:
 
-    20211031-My file.txt
+    20211031-My file.md
 
 and the content:
 
@@ -711,10 +711,10 @@ lang:       "en_GB.UTF-8"
 ---
 ```
 
-As "`-My file.txt`" is not equal to "`-'1. The Beginning--Note.txt`",
-Tp-Note will rename the file to "`20211031-'1. The Beginning--Note.txt`".
-If the filename had been "`05_02-My file.txt`", it would rename it to
-"`05_02-'1. The Beginning--Note.txt`".
+As "`-My file.md`" is not equal to "`-'1. The Beginning--Note.md`",
+Tp-Note will rename the file to "`20211031-'1. The Beginning--Note.md`".
+If the filename had been "`05_02-My file.md`", it would rename it to
+"`05_02-'1. The Beginning--Note.md`".
 
 Note: When the YAML front-matter does not contain the optional '`sort_tag`'
 variable, Tp-Note will never change a sort tag. Nevertheless, it might
@@ -740,7 +740,7 @@ sort_tag:   "20211101-"
 
 When Tp-Note synchronizes the note's metadata with its filename, it will also
 change the sort tag from '`20211031-`' to '`20211101-`'. The resulting filename
-becomes "`20211101-'1. The Beginning--Note.txt`".
+becomes "`20211101-'1. The Beginning--Note.md`".
 
 The '`sort_tag`' variable also becomes handy, when you want to create one single
 note without any sort tag:
@@ -763,7 +763,7 @@ file_ext:   "rst"
 ---
 ```
 
-This will change the file extension from '`.txt`' to '`.rst`. The resulting
+This will change the file extension from '`.md`' to '`.rst`. The resulting
 filename becomes "`20211101-'1. The Beginning--Note.rst`".
 
 Important: '`rst`' must be one of the registered file extensions
@@ -1014,7 +1014,7 @@ extensions, that are regarded as Markdown files:
 extensions_md = [ 'txt', 'md', 'markdown' ]
 ```
 
-The default file extension for new note files is defined in:
+The default file extension for new note files under Windows is defined as:
 
 ```toml
 [filename]
@@ -1056,7 +1056,7 @@ affect the way new notes are created:
 
    ```toml
    [filename]
-   extension_default='txt'
+   extension_default='md'
    ```
 
    to:
@@ -1136,9 +1136,9 @@ the '`[tmpl] sync_filname`' template should always give the same result, even
 after repeated application.
 
 To debug your '`[tmpl] sync_filename`' template, create a test note file
-'`test.txt`' and invoke Tp-Note with '`--debug trace`' and '`--batch`':
+'`test.md`' and invoke Tp-Note with '`--debug trace`' and '`--batch`':
 
-    tpnote --batch --debug trace test.txt
+    tpnote --batch --debug trace test.md
 
 
 
@@ -1539,7 +1539,7 @@ A filter is always used together with a variable. Here some examples:
   dot (period), e.g. '`txt`' or '`md`'.
 
 * '`{{ path | ext | prepend_dot }}`' is '`{{ path }}`'’s file extension with
-  dot (period), e.g. '`.txt`' or '`.md`'.
+  dot (period), e.g. '`.md`' or '`.md`'.
 
 * '`{{ path | trim_tag }}`' returns the final component of '`path`' which might
   be a directory name or a file name. Unlike the '`filename`' filter (which also
