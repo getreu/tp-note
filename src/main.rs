@@ -250,10 +250,7 @@ fn main() {
 
     // Delete clipboard content.
     #[cfg(feature = "read-clipboard")]
-    if (*LAUNCH_EDITOR
-        && CFG.clipboard.read_enabled
-        && CFG.clipboard.empty_enabled
-        && !*RUNS_ON_CONSOLE)
+    if (*LAUNCH_EDITOR && !ARGS.batch && CFG.clipboard.read_enabled && CFG.clipboard.empty_enabled)
         || matches!(
             &res,
             Err(WorkflowError::Note {
