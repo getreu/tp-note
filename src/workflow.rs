@@ -29,7 +29,7 @@ use std::thread;
 use std::time::Duration;
 use tera::Value;
 
-/// Open the note file `path` on disk and reads its YAML front matter.
+/// Open the note file `path` on disk and read its YAML front matter.
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk and return
 /// the new filename.

@@ -9,7 +9,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 /// Error arising in the `workflow` and `main` module.
 pub enum WorkflowError {
-    /// Remedy: check <path> to note file.
+    /// Remedy: check `<path>`` to note file.
     #[error("Can not export. No note file found.")]
     ExportNeedsNoteFile,
 
