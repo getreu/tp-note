@@ -1,4 +1,4 @@
-doc/build/html/_downloads/
+docs/build/html/_downloads/
 target
 build-edit-env
 *.sw?
@@ -9,5 +9,8 @@ build-edit-env
 .vscode/
 tests/functional/test_output/
 .idea
-docs/build/
+docs/build/dist/
+docs/build/html/
+docs/build/pdf/
+# We keep `docs/build/man` to ease packaging.
 docs/source/index.md
