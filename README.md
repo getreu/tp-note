@@ -138,15 +138,17 @@ Repository:
 
       [x86_64-unknown-linux-musl/release/tpnote]
 
-### Tp-note NetBSD
+### Tp-Note NetBSD
 
 * An official package is available on NetBSD and other pkgsrc supported platforms
 
-To install Tp-note on NetBSD, simply use the native package manager.
+  To install Tp-Note on NetBSD, simply use the native package manager.
 
-```sh
-pkgin install tp-note
-```
+  ```sh
+  pkgin install tp-note
+  ```
+
+### Other ressources
 
 * Installable Unix man-page:
 
