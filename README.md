@@ -138,15 +138,17 @@ Repository:
 
       [x86_64-unknown-linux-musl/release/tpnote]
 
-### Tp-note NetBSD
+### Tp-Note NetBSD
 
-* An official package is available on NetBSD and other pkgsrc supported platforms
+* An official package is available on NetBSD and other "pkgsrc" supported platforms:
 
-To install Tp-note on NetBSD, simply use the native package manager.
+  To install Tp-Note on NetBSD, simply use the native package manager.
 
-```sh
-pkgin install tp-note
-```
+  ```sh
+  pkgin install tp-note
+  ```
+
+### Other ressources
 
 * Installable Unix man-page:
 
@@ -225,7 +227,7 @@ compile _Tp-Note_ yourself.
 
    **Recommended Linux console and server version**
 
-   The full featured version of _Tp-Note_ depends on GUI libraries like GTK
+   The full-featured version of _Tp-Note_ depends on GUI libraries like GTK
    that might not be installable on a headless system. Either download the Musl
    version [x86_64-unknown-linux-musl/release/tpnote] or compile _Tp-Note_
    without default features:
@@ -241,7 +243,7 @@ compile _Tp-Note_ yourself.
 
    When building for Windows, it does not make sense to exclude the
    `message-box` feature, because - under Windows - it does not rely on the
-   GTK library. Instead it uses direct Windows-API calls for popping up alert
+   GTK library. Instead, it uses direct Windows-API calls for popping up alert
    boxes. As these calls have no footprint in binary size or speed, always
    keep the `message-box` feature compiled in.
 
