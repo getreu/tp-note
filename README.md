@@ -140,7 +140,7 @@ Repository:
 
 ### Tp-Note NetBSD
 
-* An official package is available on NetBSD and other pkgsrc supported platforms
+* An official package is available on NetBSD and other "pkgsrc" supported platforms:
 
   To install Tp-Note on NetBSD, simply use the native package manager.
 
