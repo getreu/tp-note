@@ -47,7 +47,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch \
     --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note.txt"
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note.md"
 
 if diff "$OUTPUT_FILENAME" "test2-new-expected-output"
 then
@@ -74,7 +74,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 	    "$INPUT_FILENAME" >/dev/null 2>&1
 
 # the + is not considered to be a secure char, therefor ommitted
-OUTPUT_FILENAME="$PWD/test3-annotate+clipboard-input-dummy.pdf--URL.txt"
+OUTPUT_FILENAME="$PWD/test3-annotate+clipboard-input-dummy.pdf--URL.md"
 
 if diff "$OUTPUT_FILENAME" "test3-annotate+clipboard-expected-output"
 then
@@ -99,7 +99,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-ab_cd ef--URL.txt"
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-ab_cd ef--URL.md"
 
 if diff "$OUTPUT_FILENAME" "test4-clipboard-expected-output"
 then
@@ -121,7 +121,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-Good morning--Note.txt"
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-Good morning--Note.md"
 
 if diff "$OUTPUT_FILENAME" "test5-clipboard-expected-output"
 then
@@ -146,7 +146,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
     --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/test6-annotate-input-dummy.pdf--Note.txt"
+OUTPUT_FILENAME="$PWD/test6-annotate-input-dummy.pdf--Note.md"
 
 if diff "$OUTPUT_FILENAME" "test6-annotate-expected-output"
 then
@@ -167,7 +167,7 @@ cat - > "$INPUT_FILENAME" <<'EOF'
 title: "xxx"
 subtitle: "yyy"
 sort_tag: "111-"
-file_ext: "mdtxt"
+file_ext: "md"
 ...
 EOF
 
@@ -175,7 +175,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME"  >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/111-xxx--yyy.mdtxt"
+OUTPUT_FILENAME="$PWD/111-xxx--yyy.md"
 
 if diff "$OUTPUT_FILENAME"  "test7-tag-expected-output"
 then
@@ -231,8 +231,8 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch \
     --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note.txt"
-OUTPUT_FILENAME2="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note(1).txt"
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note.md"
+OUTPUT_FILENAME2="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note(1).md"
 if diff "$OUTPUT_FILENAME2" "test9-new-new-expected-output"
 then
     echo Commandline test 9 succeeded.
@@ -253,7 +253,7 @@ cat - > "$INPUT_FILENAME" <<'EOF'
 title: "xxx"
 subtitle: "yyy"
 sort_tag: "111-"
-file_ext: "mdtxt"
+file_ext: "md"
 ...
 EOF
 
@@ -261,14 +261,14 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME"  >/dev/null 2>&1
 
-INPUT2_FILENAME="$PWD/111-xxx--yyy.mdtxt"
+INPUT2_FILENAME="$PWD/111-xxx--yyy.md"
 
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
      --export "" \
     "$INPUT2_FILENAME"  >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/111-xxx--yyy.mdtxt.html"
+OUTPUT_FILENAME="$PWD/111-xxx--yyy.md.html"
 
 if diff "$OUTPUT_FILENAME"  "test10-html-expected-output"
 then

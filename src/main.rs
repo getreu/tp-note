@@ -44,7 +44,7 @@ use crate::logger::AppLogger;
 use crate::settings::ARGS;
 #[cfg(feature = "read-clipboard")]
 use crate::settings::LAUNCH_EDITOR;
-#[cfg(any(feature = "read-clipboard", feature = "message-box"))]
+#[cfg(feature = "message-box")]
 use crate::settings::RUNS_ON_CONSOLE;
 use crate::workflow::run;
 use chrono::Datelike;
