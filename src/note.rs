@@ -70,6 +70,15 @@ pub const TMPL_VAR_EXTENSION_DEFAULT: &str = "extension_default";
 /// `LOGNAME`, `USERNAME` or `USER`.
 pub const TMPL_VAR_USERNAME: &str = "username";
 
+/// Contains the user's language tag as defined in
+/// [RFC 5646](http://www.rfc-editor.org/rfc/rfc5646.txt).
+/// Not to be confused with the UNIX `LANG` environment variable from which
+/// this value is derived under Linux/MacOS.
+/// Under Windows, the user's language tag is queried through the WinAPI.
+/// If defined, the environment variable `TPNOTELANG` overwrites this value
+/// (all operating systems).
+pub const TMPL_VAR_LANG: &str = "lang";
+
 ///  Contains the body of the file the command line option `<path>`
 ///  points to. Only available in the `TMPL_FROM_TEXT_FILE_CONTENT` template.
 ///  Only available in the `TMPL_FROM_TEXT_FILE_CONTENT` template.

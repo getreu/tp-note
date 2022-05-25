@@ -7,6 +7,7 @@ use crate::note::TMPL_VAR_DIR_PATH;
 use crate::note::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::note::TMPL_VAR_FM_;
 use crate::note::TMPL_VAR_FM_ALL;
+use crate::note::TMPL_VAR_LANG;
 use crate::note::TMPL_VAR_PATH;
 use crate::note::TMPL_VAR_STDIN;
 use crate::note::TMPL_VAR_STDIN_HEADER;
@@ -19,6 +20,10 @@ use std::ops::Deref;
 use std::ops::DerefMut;
 use std::path::Path;
 use std::path::PathBuf;
+#[cfg(target_family = "windows")]
+use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
+#[cfg(target_family = "windows")]
+use windows_sys::Win32::System::SystemServices::LOCALE_NAME_MAX_LENGTH;
 
 /// Tiny wrapper around "Tera context" with some additional information.
 #[derive(Debug, PartialEq)]
@@ -147,7 +152,7 @@ impl ContextWrapper {
             CFG.filename.extension_default.as_str(),
         );
 
-        // search for UNIX, Windows and MacOS user-names
+        // Search for UNIX, Windows and MacOS user-names.
         let author = env::var("TPNOTEUSER").unwrap_or_else(|_| {
             env::var("LOGNAME").unwrap_or_else(|_| {
                 env::var("USERNAME").unwrap_or_else(|_| env::var("USER").unwrap_or_default())
@@ -155,6 +160,48 @@ impl ContextWrapper {
         });
         (*self).insert(TMPL_VAR_USERNAME, &author);
 
+        // Get the user's language tag.
+        let tpnotelang = env::var("TPNOTELANG").ok();
+        // Unix/MacOS version.
+        #[cfg(not(target_family = "windows"))]
+        if let Some(tpnotelang) = tpnotelang {
+            (*self).insert(TMPL_VAR_LANG, &tpnotelang);
+        } else {
+            // [Linux: Define Locale and Language Settings - ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
+            let lang_env = env::var("LANG").unwrap_or_default();
+            // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
+            let mut language = "";
+            // [ISO 3166](https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes) country code.
+            let mut territory = "";
+            if let Some((l, lang_env)) = lang_env.split_once('_') {
+                language = l;
+                if let Some((t, _codeset)) = lang_env.split_once('.') {
+                    territory = t;
+                }
+            }
+            // [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
+            let mut lang = language.to_string();
+            lang.push('-');
+            lang.push_str(territory);
+            (*self).insert(TMPL_VAR_LANG, &lang);
+        }
+
+        // Get the user's language tag.
+        // Windows version.
+        #[cfg(target_family = "windows")]
+        if let Some(tpnotelang) = tpnotelang {
+            (*self).insert(TMPL_VAR_LANG, &tpnotelang);
+        } else {
+            let mut lang = String::new();
+            let mut buf = [0u16; LOCALE_NAME_MAX_LENGTH as usize];
+            let len = unsafe { GetUserDefaultLocaleName(buf.as_mut_ptr(), buf.len() as i32) };
+            if len > 0 {
+                lang = String::from_utf16_lossy(&buf[..((len - 1) as usize)]);
+            }
+            (*self).insert(TMPL_VAR_LANG, &lang);
+        }
+
+        // Store a copy of `dir_path` in `ContextWrapper`.
         self.dir_path = dir_path.to_path_buf();
 
         Ok(())

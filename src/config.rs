@@ -215,7 +215,7 @@ title:      {{ dir_path | trim_tag | cut | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ get_env(name='LANG', default='') | json_encode }}
+lang:       {{ lang | json_encode }}
 ---
 
 
@@ -252,7 +252,7 @@ title:      {{ fm_title | default(value = path|trim_tag) | cut | json_encode }}
 subtitle:   {{ fm_subtitle | default(value = 'Note') | cut | json_encode }}
 author:     {{ fm_author | default(value=username) | json_encode }}
 date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
-lang:       {{ fm_lang | default(value = get_env(name='LANG', default='')) | json_encode }}
+lang:       {{ fm_lang | default(value = lang) | json_encode }}
 {% for k, v in fm_all\
  | remove(var='fm_title')\
  | remove(var='fm_subtitle')\
@@ -301,7 +301,7 @@ subtitle:   {{ 'Note' | json_encode }}
 {% endif %}\
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ get_env(name='LANG', default='') | json_encode }}
+lang:       {{ lang | json_encode }}
 ---
 
 {{ stdin ~ clipboard }}
@@ -326,7 +326,7 @@ title:      {{ path | stem | split(pat='--') | first | cut | json_encode }}
 subtitle:   {{ path | stem | split(pat='--') | nth(n=1) | cut | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ path_file_date | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ get_env(name='LANG', default='') | json_encode }}
+lang:       {{ lang | json_encode }}
 orig_name:  {{ path | filename | json_encode }}
 ---
 
@@ -357,7 +357,7 @@ subtitle:   {{ 'Note' | json_encode }}
 {% endif %}\
 author:     {{ username | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ get_env(name='LANG', default='') | json_encode }}
+lang:       {{ lang | json_encode }}
 ---
 
 [{{ path | filename }}](<{{ path | filename }}>)
