@@ -1,10 +1,11 @@
 ---
-title:  "Tp-Note: save and edit your clipboard content as a note file"
+title:    "Tp-Note: save and edit your clipboard content as a note file"
 subtitle: "Organize your notes with your favourite editor and markup language"
-author: "Jens Getreu"
-date:   "2021-08-25"
-version: "1.16.6"
+author:   "Jens Getreu"
+date:     "2021-08-25"
+version:  "1.16.6"
 filename_sync: false
+lang:     "en-GB"
 ---
 
 Markup languages like *Markdown* [^1] are perfectly suited for fast

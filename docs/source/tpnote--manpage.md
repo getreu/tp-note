@@ -769,7 +769,7 @@ filename becomes "`20211101-'1. The Beginning--Note.rst`".
 Important: '`rst`' must be one of the registered file extensions
 listed in the '`[filename] extensions_rst`' variables in Tp-Note's configuration
 file. If needed you can add more extensions there. If the new filename extension
-is not listed in one of theses variables, Tp-Note will not be able to
+is not listed in one of these variables, Tp-Note will not be able to
 recognize the note file as such and will not open it in the external text editor
 and viewer.
 
@@ -777,7 +777,7 @@ Note: When a '`sort_tag`' variable is defined in the note's YAML header, you
 should not change the sort tag string in the note's file name manually by
 renaming the file, as your change will be overwritten next time you open the
 note with Tp-Note.  However, you can switch back to Tp-Note's default
-behaviour any time by deleting the '`sort_tag`' line in the note's metadata.
+behavior any time by deleting the '`sort_tag`' line in the note's metadata.
 The same applies to the '`file_ext`' variable.
 
 The metadata filename synchronization feature can be disabled permanently
@@ -868,7 +868,7 @@ Whereby '`FILE=$(tpnote --batch)`' creates the note file, '`vi "$FILE"`' opens t
 
 **Register a Flatpak Markdown editor**
 
-[Flathub for Linux] is a cross platform application repository that works well
+[Flathub for Linux] is a cross-platform application repository that works well
 with Tp-Note.  To showcase an example, we will add a Tp-Note launcher for
 the _Mark Text_ Markdown text editor available as [Flatpak package]. Before
 installing, make sure that you have [setup Flatpack] correctly. Then install
@@ -932,7 +932,7 @@ _Mark Text_-editor will open with your note.
 **Register a console text editor running in a terminal emulator**
 
 In this setup Tp-Note launches the terminal emulator which is configured to
-launch the text editor as child process. Niether process should fork when they
+launch the text editor as child process. Neither process should fork when they
 start (see above).
 
 Examples, adjust to your needs and taste:
@@ -1001,6 +1001,21 @@ Examples, adjust to your needs and taste:
   ]
   ```
 
+* _Helix-editor_ in _XFCE4-Terminal_:
+
+  ```toml
+  [app_args]
+  editor = [
+    [
+      'xfce4-terminal',
+      '--disable-server',
+      '-x',
+      'hx',
+    ],
+  ]
+  ```
+
+
 
 ## Change the file extension for new note files
 
@@ -1039,7 +1054,7 @@ belong to the same extension group defined in '`[filename] extensions_md`'.
 Tp-Note's core functionality, the management of note file headers and
 filenames, is markup language agnostic. However, there is one content template
 '`[tmpl] from_clipboard_content`' that generates a hyperlink. The hyperlink
-syntax varies depending on the markup language. Hence you should not forget to
+syntax varies depending on the markup language. Hence, you should not forget to
 modify the '`[tmpl] from_clipboard_content`' content template, when you
 change the default markup language defined in '`[filename] extension_default`'.
 
@@ -1090,7 +1105,7 @@ file_ext: "rst"
 ---
 ```
 
-When Tp-Note triggers the next filename synchronisation, the filename
+When Tp-Note triggers the next filename synchronization, the filename
 extension of the note file will change to '`.rst`'. The above modification
 applies to the current note only.
 
@@ -1146,7 +1161,7 @@ To debug your '`[tmpl] sync_filename`' template, create a test note file
 
 When you are annotating an existing file on disk, the new note file is
 placed in the same directory by default. To configure Tp-Note to
-store the new note file in a subdirectory, lets say '`Notes/`', instead, you
+store the new note file in a subdirectory, let's say '`Notes/`', instead, you
 need to modify the templates '`[tmpl] annotate_file_filename`' and
 '`[tmpl] annotate_file_content`':
 
@@ -1170,7 +1185,7 @@ or with (Windows):
 
     [{{ path | filename }}](<ParentDir..\\{{ path | filename }}>)
 
-Please note that webbrowsers usually ignore leading '`../`' in URL paths. To
+Please note that web browsers usually ignore leading '`../`' in URL paths. To
 work around this limitation, Tp-Note's built-in viewer interprets the string
 '`ParentDir..`' as an alias of '`..`'. It is also worth mentioning that
 Tp-Note automatically creates the subdirectory '`Notes/`' in case it does not
@@ -1288,7 +1303,7 @@ error_tmpl = '''<!DOCTYPE html>
 
 **Customize the built-in HTML exporter**
 
-Customizing Tp-Note's HTML export function works the same way than
+Customizing Tp-Note's HTML export function works the same way as
 customizing the built-in viewer. There are some slight differences though:
 The role of the '`[viewer] rendition_tmpl`' template - discussed above - is
 taken over by the '`[exporter] rendition_tmpl`' template. In this template the
@@ -1299,7 +1314,7 @@ template.
 
 
 
-## Choose your favourite web browser as note viewer
+## Choose your favorite web browser as note viewer
 
 Once the note is rendered into HTML, Tp-Note's internal HTTP server connects
 to a random port at the '`localhost`' interface where the rendition is served to
@@ -1307,7 +1322,7 @@ be viewed with a web browser. Tp-Note's configuration file contains a list
 '`[app_args] browser`' with common web browsers and their usual location on disk.
 This list is executed top down until a web browser is found and launched. If
 you want to view your notes with a different web browser, simply modify the
-'`[app_args] browser`' list and put your favourite web browser on top.
+'`[app_args] browser`' list and put your favorite web browser on top.
 
 In case none of the listed browsers can be found, Tp-Note switches into a
 fall back mode with limited functionality, where it tries to open the system's
@@ -1339,12 +1354,12 @@ environment.
 
 ## Template types
 
-The content of a new notes is composed by one of it's internal customisable
+The content of a new note is composed by one of Tp-Note's internal customizable
 templates, hence the name Tp-Note, where _Tp_ stands for “template”. Which of
 the internal templates is applied depends on the context in which Tp-Note is
 invoked: e.g. the template for clipboard text input is called
-'`[tmpl] from_clipboard_content`'. If the clipboard contains text with a YAML header,
-the template '`[tmpl] from_clipboard_yaml_content`' is used.
+'`[tmpl] from_clipboard_content`'. If the clipboard contains text with a YAML
+header, the template '`[tmpl] from_clipboard_yaml_content`' is used.
 
 In total, there are 5 different '`[tmpl] *_content`' templates:
 
@@ -1356,11 +1371,11 @@ In total, there are 5 different '`[tmpl] *_content`' templates:
 
 In general, the templates are designed in a way, that the text input
 stream -usually originating from the clipboard- ends up in the body of the
-note file, whereas the environment -such as the user name- ends up in
+note file, whereas the environment -such as the username- ends up in
 the header of the note file.
 
 Once the content of the new note is set by one of the content templates,
-another template type comes into play: the so called _filename template_.
+another template type comes into play: the so-called _filename template_.
 Each content template has a corresponding filename template, e.g.:
 
 * '`[tmpl] new_filename`'
@@ -1371,7 +1386,7 @@ Each content template has a corresponding filename template, e.g.:
 * '`[tmpl] sync_filename`' (no corresponding content template)
 
 As the name suggests, the role of a filename template is to determine the
-filename of the new note. This is done by evaluating (deserialising) it's YAML
+filename of the new note. This is done by evaluating (deserializing) it's YAML
 header. The values of the note's YAML header fields are can be accessed in
 filename templates through various '`{{ fm_<key> }}`' dynamically created
 template variables. For example the value of the YAML header field '`title:`'
@@ -1393,7 +1408,7 @@ and _synchronize filename_:
   information is then applied to the '`[tmpl] sync_filename`' template and the
   resulting filename is compared to the actual filename on disk. If they differ,
   [Tp-Note] renames the note file. The '`[tmpl] sync_filename`' template operates on
-  it's own without a corresponding content template.
+  its own without a corresponding content template.
 
 Note, that in the operation mode _synchronize filename_, the header data
 overwrites the filename of the note, whereas in the operation mode _prepend
@@ -1401,7 +1416,7 @@ header_ the filename data is copied into the new prepended header. Keep in mind,
 that even in the latter mode the filename might change slightly. This is because
 after the header creation with the '`[tmpl] from_text_file_content`' template,
 the '`[tmpl] from_text_file_filename`' template is applied, which might cause a
-slight filename modification due to it's sanitization filters (cf. '`sanit()`'
+slight filename modification due to its sanitization filters (cf. '`sanit()`'
 in the section _Template filters_).
 
 You can disable the _prepend header_ feature by setting the configuration file
@@ -1419,14 +1434,14 @@ All [Tera template variables and functions](https://tera.netlify.com/docs/#templ
 can be used within Tp-Note's templates. For example '`{{ get_env(name='LANG') }}'`
 gives you access to the '`LANG`' environment variable.
 
-In addition Tp-Note defines the following variables:
+In addition, Tp-Note defines the following variables:
 
 * '`{{ path }}`' is the canonicalized fully qualified path name corresponding
   to Tp-Note's positional command line parameter '`<path>`'. If none was
   given on the command line, '`{{ path }}`' contains the current working
   directory path.
 
-* '`{{ dir_path }}`' is identical to  '`{{ path }}`' with one exception: if
+* '`{{ dir_path }}`' is identical to '`{{ path }}`' with one exception: if
   '`{{ path }}`' points to a file, the last component (the file name) is omitted
   and only the directory path is retained. If '`{{ path }}`' points to a
   directory, '`{{ dir_path }}`' equals '`{{ path }}`'.
@@ -1457,7 +1472,15 @@ In addition Tp-Note defines the following variables:
   (can be changed in the configuration file),
 
 * '`{{ username }}`' is the content of the first non-empty environment
-  variable: `TPNOTEUSER`, `LOGNAME`, `USER` or `USERNAME`.
+  variable: '`TPNOTEUSER`', '`LOGNAME`', '`USER`' or '`USERNAME`'.
+
+* '`{{ lang }}`' contains the user's language tag as defined in
+  [RFC 5646](http://www.rfc-editor.org/rfc/rfc5646.txt).
+  Not to be confused with the UNIX '`LANG`' environment variable from which
+  this value is derived under Linux/MacOS.
+  Under Windows, the user's language tag is queried through the WinAPI.
+  If defined, the environment variable '`TPNOTELANG`' overwrites the value
+  of '`{{ lang }}`' (all operating systems).
 
 The following '`{{ fm_* }}`' variables are typically generated, _after_ a
 content template was filled in with data: For example a field named '`title:`'
@@ -1515,7 +1538,7 @@ filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
 some additional filters, e.g.: '`tag`', '`trim_tag`', '`stem`', '`cut`', '`heading`',
 '`linkname`', '`linktarget`', '`linktitle`' and '`ext`'.
 
-A filter is always used together with a variable. Here some examples:
+A filter is always used together with a variable. Here are some examples:
 
 * '`{{ path | filename }}`' returns the final component of '`{{ path }}`'.
   If '`{{ path }}`' points to a file, the filter returns the complete
@@ -1524,14 +1547,14 @@ A filter is always used together with a variable. Here some examples:
 
 * '`{{ path | tag }}`' is the sort tag (numerical filename prefix) of the final
   component of '`{{ path }}`', e.g. '`01-23_9-`' or '`20191022-`'. It is similar
-  to  '`{{ path | filename }}`' but without returning its stem, copy-counter and
+  to '`{{ path | filename }}`' but without returning its stem, copy-counter and
   extension.
 
-* '`{{ path | stem }}`' is similar to  '`{{ path | filename }}`' but without its
+* '`{{ path | stem }}`' is similar to '`{{ path | filename }}`' but without its
   sort tag, copy-counter and extension. Only the stem of '`{{ path }}`''s last
   component is returned.
 
-* '`{{ path | copy_counter }}`' is similar to  '`{{ path | filename }}`' but
+* '`{{ path | copy_counter }}`' is similar to '`{{ path | filename }}`' but
   without its sort tag, stem and extension. Only the copy counter of
   '`{{ path }}`''s last component is returned.
 
@@ -1569,7 +1592,7 @@ A filter is always used together with a variable. Here some examples:
   thing in the front-matter block.
 
 * '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its
-  front-matter, sanitized in a filesystem friendly form. Special characters are
+  front-matter, sanitized in a file system friendly form. Special characters are
   omitted or replaced by '`-`' and '`_`'. See the section _Filename template
   convention_ for more details about this filter.
 
@@ -1604,7 +1627,7 @@ By convention, filename templates appear in the configuration file in variables
 named '`[tmpl] *_filename`'.  When a content template creates a new note, the
 corresponding filename template is called afterwards to calculate the filename
 of the new note. Please note that, the filename template
-'`[tmpl] sync_filename`' has a special role as it is synchronizes the filename
+'`[tmpl] sync_filename`' has a special role as it synchronizes the filename
 of existing note files. Besides this, as we are dealing with filenames we must
 guarantee, that the filename templates produce only file system friendly
 characters.  For this purpose Tp-Note provides the additional Tera filters
@@ -1615,7 +1638,7 @@ characters.  For this purpose Tp-Note provides the additional Tera filters
   or space. This filter can be used with any variable, but is most useful with
   filename templates. For example, in the '`[tmpl] sync_filename`'
   template, we find the expression '`{{ subtitle | sanit }}`'.
-  Note that the filter recognizes strings that represent a so called dot file
+  Note that the filter recognizes strings that represent a so-called dot file
   name and treats them a little differently by prepending them with an
   apostrophe: a dot file is a file whose name starts with '`.`' and that does
   not contain whitespace. It may or may not end with a file extension.
@@ -1633,7 +1656,7 @@ characters.  For this purpose Tp-Note provides the additional Tera filters
 In filename templates most variables must pass either the '`sanit`' or the
 '`sanit(alpha=true)`' filter. Exception to this rule are the sort tag variables
 '`{{ path | tag }}`' and '`{{ dir_path | tag }}`'. As these are guaranteed to
-contain only the filesystem friendly characters '`0123456789 -_`', no
+contain only the file system friendly characters '`0123456789 -_`', no
 additional filtering is required. Please note that in this case a
 '`sanit`'-filter would needlessly restrict the value range of sort tags as
 they usually end with a '`-`', a character, which the '`sanit`'-filter screens
@@ -1675,6 +1698,21 @@ viewer feature disabled, one can still render the note manually with the
 file and all its referenced (image) files are exposed to all users logged into
 the computer at that given time. This concerns only local users, Tp-Note
 never exposes any information to the network.
+
+
+
+
+# ENVIRONMENT VARIABLES
+
+TPNOTELANG
+
+:   Tp-Note stores the user's locale settings in the template variable
+    '`{{ lang }}`'. When set, '`TPNOTELANG`' overwrites the locale settings.
+
+TPNOTEUSER
+
+:   The template variable '`{{ username }}`' is the content of the first
+    non-empty variable: '`TPNOTEUSER`', '`LOGNAME`', '`USER`' or '`USERNAME`'.
 
 
 
