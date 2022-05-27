@@ -29,14 +29,14 @@ its main use cases and how to get started:
 6. Note taking for system administrators.
 
 If you want to customize _Tp-Note_ with your own templates or if you want to
-use another markup language than Markdown, please consult the [man-page] for
+use another markup language than Markdown, please consult [Tp-Note's man-page] for
 more technical details. It also explains how to change _Tp-Note_'s default text
 editor.
 
 The project is hosted on Gitlab:
 [getreu/tp-note](https://gitlab.com/getreu/tp-note). The project's webpage is on
 [http://blog.getreu.net](http://blog.getreu.net/projects/tp-note/).
-The documentation of this project is dived into tow parts:
+The documentation of this project is dived into two parts:
 
 * User manual
 
@@ -106,7 +106,7 @@ title:      "Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt"
 subtitle:   "Note"
 author:     "getreu"
 date:       "March 10, 2020"
-lang:       "en_GB.UTF-8"
+lang:       "en-GB"
 ---
 
 [03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt](<03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt>)
@@ -140,7 +140,7 @@ title:      "ascii-hangman.exe"
 subtitle:   "URL"
 author:     "getreu"
 date:       "2020-08-27"
-lang:       "en_GB.UTF-8"
+lang:       "en-GB"
 ---
 
 [ascii-hangman.exe](<ascii-hangman.exe>)
@@ -176,7 +176,7 @@ title:      "Rustacean Station"
 subtitle:   "URL"
 author:     "getreu"
 date:       "March 10, 2020"
-lang:       "en_GB.UTF-8"
+lang:       "en-GB"
 ---
 
 [Rustacean Station](<https://rustacean-station.org/>)
@@ -219,7 +219,7 @@ title:      "Winston kept his back turned to the telescreen"
 subtitle:   "Note"
 author:     "getreu"
 date:       "2020-03-23"
-lang:       "en_GB.UTF-8"
+lang:       "en-GB"
 ---
 
 Winston kept his back turned to the telescreen. It was safer, though, as he well
@@ -337,7 +337,7 @@ well as with the `--no-default-features` console only version.
   subtitle:   "URL"
   author:     "getreu"
   date:       "2020-09-03"
-  lang:       "en_GB.UTF-8"
+  lang:       "en-GB"
   ---
 
   [i3-extensions.zip](<i3-extensions.zip>)
@@ -387,7 +387,7 @@ well as with the `--no-default-features` console only version.
   subtitle:   ""
   author:     "getreu"
   date:       "2020-09-13"
-  lang:       "en_GB.UTF-8"
+  lang:       "en-GB"
   file_ext:   "mdtxt"
   ---
 
@@ -428,7 +428,7 @@ well as with the `--no-default-features` console only version.
   subtitle:   "Draft"
   author:     "getreu"
   date:       "2020-09-25"
-  lang:       "en_GB.UTF-8"
+  lang:       "en-GB"
   ---
 
   # Draft
@@ -693,14 +693,13 @@ text editor, update Windows to the latest version or install
   Please refer to [Tp-Note's man-page] to learn how to register your text
   editor with _Tp-Note_'s configuration file.
 
+
 ### Integrate _Tp-Note_ with your file manager
 
 * You prefer working in a desktop environment instead of working on a shell?
 
   Read the following section [Optional integration with your file manager] to
   learn how to configure your file manager's context menu to launch _Tp-Note_.
-
-[Tp-Note's man-page]: http://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization
 
 
 ### Choose the web browser for note viewing and make it your default
@@ -1144,3 +1143,6 @@ press `[F3]` or `[Enter]`.
 [^6]: The `sed` filter is a workaround of a [bug in wkhtmltopdf](<https://github.com/wkhtmltopdf/wkhtmltopdf/issues/4960>).
       Once this is solved, you can remove the `sed` command. Then the line 4 of the above listing becomes:
       `<command>tpnote --export=- %f | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>`
+
+
+[Tp-Note's man-page]: http://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization

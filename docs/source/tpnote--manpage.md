@@ -88,7 +88,7 @@ title:      "Favorite Readings"
 subtitle:   "Note"
 author:     "getreu"
 date:       "2021-10-31"
-lang:       "en_GB.UTF-8"
+lang:       "en-GB"
 ---
 ```
 
@@ -151,7 +151,7 @@ title:      "Who Moved My Cheese"
 subtitle:   "Note"
 author:     "getreu"
 date:       "2021-10-31"
-lang:       "en_GB.UTF-8"
+lang:       "en-GB"
 ---
 
 Who Moved My Cheese?
@@ -189,7 +189,7 @@ title:      "The Rust Book"
 subtitle:   "URL"
 author:     "getreu"
 date:       "2021-10-31"
-lang:       "en_GB.UTF-8"
+lang:       "en-GB"
 ---
 
 I recommend:
@@ -204,7 +204,7 @@ title.
 
 ### The clipboard contains a string with a YAML header
 
-Example: `<path>` is a directory, the clipboard is not empty and it contains
+Example: '`<path>`' is a directory, the clipboard is not empty and contains
 the string: "`---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing`".
 
 ```sh
@@ -220,7 +220,7 @@ title:      "Todo"
 subtitle:   ""
 author:     "getreu"
 date:       "2021-10-31"
-lang:       "en_GB.UTF-8"
+lang:       "en-GB"
 file_ext:   "mdtxt"
 ---
 
@@ -300,7 +300,7 @@ title:      "Classic Shell Scripting.pdf"
 subtitle:   "Note"
 author:     "getreu"
 date:       "2021-10-31"
-lang:       "en_GB.UTF-8"
+lang:       "en-GB"
 ---
 
 [Classic Shell Scripting.pdf](Classic Shell Scripting.pdf)
@@ -344,7 +344,7 @@ title:      "Ascii-Hangman "
 subtitle:   "A game for children"
 author:     "getreu"
 date:       "2022-03-13"
-lang:       "en_GB.UTF-8"
+lang:       "en-GB"
 orig_name:  "Ascii-Hangman--A game for children.md"
 ---
 
@@ -381,7 +381,7 @@ A little game designed for primary kids to revise vocabulary in classroom.
   > download 'https://blog.getreu.net'
   ```
 
-* **Use case: synchronize recursively filenames and meta data**
+* **Use case: synchronize recursively filenames and metadata**
 
   The following synchronizes bidirectionally all filenames with the note's YAML
   header data.
@@ -505,7 +505,7 @@ synchronization).
 
         tpnote.exe --debug info my_note.md >debug.md 2>&1
 
-:   Alternatively, you can redirect all logfile entries into popup alert
+:   Alternatively, you can redirect all log file entries into popup alert
     windows.
 
         tpnote.exe --popup --debug info my_note.md
@@ -579,7 +579,7 @@ synchronization).
 
 **-V**, **\--version**
 
-:   Print Tp-Note's version, its builtin features and the path to the
+:   Print Tp-Note's version, its built-in features and the path to the
     sourced configuration file. The output is YAML formatted for further
     automatic processing.
 
@@ -654,7 +654,7 @@ language render is called for Tp-Note's renderer feature.
 
 # METADATA FILENAME SYNCHRONIZATION
 
-Consider the following Tp-Note-file:
+Consider the following Tp-Note file:
 
     20151208-Make this world a better place--Suggestions.md
 
@@ -662,7 +662,7 @@ The filename has 4 parts:
 
     {{ fm_sort_tag }}{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
 
-A so called _sort tag_ is a numerical prefix at the beginning of the
+A so-called _sort tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
 numerical digits and whitespace, a _sort tag_ can be any combination of
 `-_.`[^sort tag] and is usually used as
@@ -707,7 +707,7 @@ title:      "1. The Beginning"
 subtitle:   "Note"
 author:     "getreu"
 date:       "2021-10-31"
-lang:       "en_GB.UTF-8"
+lang:       "en-GB"
 ---
 ```
 
@@ -871,12 +871,12 @@ Whereby '`FILE=$(tpnote --batch)`' creates the note file, '`vi "$FILE"`' opens t
 [Flathub for Linux] is a cross-platform application repository that works well
 with Tp-Note.  To showcase an example, we will add a Tp-Note launcher for
 the _Mark Text_ Markdown text editor available as [Flatpak package]. Before
-installing, make sure that you have [setup Flatpack] correctly. Then install
+installing, make sure that you have [set up Flatpack] correctly. Then install
 the application with:
 
 [Flathub for Linux]: https://www.flathub.org/home
 [Flatpak package]: https://www.flathub.org/apps/details/com.github.marktext.marktext
-[setup Flatpack]: https://flatpak.org/setup/
+[set up Flatpack]: https://flatpak.org/setup/
 
     > sudo flatpak install flathub com.github.marktext.marktext
 
@@ -1394,7 +1394,7 @@ can be accessed with '`{{ fm_title }}`'. Once the filename is set, Tp-Note
 writes out the new note on disk.
 
 Most of the above templates are dedicated to the creation of new note files.
-However, three of them have a special role: _prepend header to text file_
+However, two of them have a special role: _prepend header to text file_
 and _synchronize filename_:
 
 * _Prepend header to text file_ (new feature in Tp-Note v1.16.0): When Tp-Note
@@ -1460,7 +1460,7 @@ In addition, Tp-Note defines the following variables:
 * '`{{ clipboard_header }}`' is the YAML section of the clipboard data, if
   one exists. Otherwise: empty string.
 
-* '`{{ stdin }}`' is the complete text content originating form the input
+* '`{{ stdin }}`' is the complete text content originating from the input
   stream '`stdin`'. This stream can replace the clipboard when it is not
   available.  In case the input stream's content starts with a YAML header,
   the latter does not appear in this variable.
@@ -1587,9 +1587,9 @@ A filter is always used together with a variable. Here are some examples:
 * '`{{ clipboard | linktitle }}`' is the title of the first Markdown or
   reStruncturedText formatted link in the clipboard.
 
-* '`{{ username | json_encode }}`' is the username Json encoded. All YAML
-  front-matter must be Json encoded, so the filter code should be the last
-  thing in the front-matter block.
+* '`{{ username | json_encode }}`' is the username JSON encoded. As all YAML
+  front-matter is JSON encoded, this filter code must be appended to any
+  template variable placed in the front-matter block.
 
 * '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its
   front-matter, sanitized in a file system friendly form. Special characters are
