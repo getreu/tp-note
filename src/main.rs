@@ -47,8 +47,6 @@ use crate::settings::LAUNCH_EDITOR;
 #[cfg(feature = "message-box")]
 use crate::settings::RUNS_ON_CONSOLE;
 use crate::workflow::run;
-use chrono::Datelike;
-use chrono::Utc;
 #[cfg(feature = "read-clipboard")]
 use copypasta::ClipboardContext;
 #[cfg(feature = "read-clipboard")]
@@ -58,6 +56,7 @@ use semver::Version;
 use serde::Serialize;
 use std::path::PathBuf;
 use std::process;
+use time;
 
 /// Use the version number defined in `../Cargo.toml`.
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
@@ -205,7 +204,7 @@ fn main() {
             copyright: format!(
                 "© {}-{} {}",
                 COPYRIGHT_FROM,
-                Utc::now().year(),
+                time::OffsetDateTime::now_utc().year(),
                 AUTHOR.unwrap()
             ),
         };

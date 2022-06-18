@@ -69,7 +69,6 @@ renderer = ["pulldown-cmark", "rst_parser", "rst_renderer"]
 
 [dependencies]
 atty = "0.2.14"
-chrono = "0.4.19"
 clap = "3.2.5"
 # clipboard: On Debian Linux you need to: sudo apt-get install xorg-dev
 copypasta = { version = "0.8.1", optional = true }
@@ -99,6 +98,7 @@ serde_yaml = "0.8.24"
 structopt = "0.3.26"
 tera = { version = "1.16.0", default-features = true }
 thiserror = "1.0.31"
+time = "0.3.9"
 toml = "0.5.9"
 url = { version = "2.2.2", optional = true }
 webbrowser = { version = "0.7.1", optional = true }
