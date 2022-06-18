@@ -50,9 +50,9 @@ use crate::workflow::run;
 use chrono::Datelike;
 use chrono::Utc;
 #[cfg(feature = "read-clipboard")]
-use clipboard::ClipboardContext;
+use copypasta::ClipboardContext;
 #[cfg(feature = "read-clipboard")]
-use clipboard::ClipboardProvider;
+use copypasta::ClipboardProvider;
 use error::FileError;
 use semver::Version;
 use serde::Serialize;
@@ -258,9 +258,8 @@ fn main() {
             })
         )
     {
-        if let Ok(ctx) = ClipboardProvider::new() {
-            let mut ctx: ClipboardContext = ctx;
-            let _ = ctx.set_contents("".to_owned());
+        if let Ok(mut ctx) = ClipboardContext::new() {
+            let _ = ctx.set_contents("".to_string());
         };
     }
 

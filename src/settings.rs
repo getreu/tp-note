@@ -6,9 +6,9 @@ use crate::config::CFG;
 use crate::content::Content;
 use atty::{is, Stream};
 #[cfg(feature = "read-clipboard")]
-use clipboard::ClipboardContext;
+use copypasta::ClipboardContext;
 #[cfg(feature = "read-clipboard")]
-use clipboard::ClipboardProvider;
+use copypasta::ClipboardProvider;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use parse_hyperlinks::iterator::first_hyperlink;
@@ -168,8 +168,7 @@ lazy_static! {
         // Concatenate clipboard content.
         #[cfg(feature="read-clipboard")]
         if CFG.clipboard.read_enabled && !ARGS.batch {
-            if let Ok(ctx) = ClipboardProvider::new(){
-                let mut ctx: ClipboardContext = ctx;
+            if let Ok(mut ctx) = ClipboardContext::new(){
                 if let Ok(s) = ctx.get_contents(){
                     buffer.push_str(&s);
                 }
