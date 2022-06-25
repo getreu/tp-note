@@ -21,17 +21,19 @@ Tp-Note is a note taking tool and a template system, that synchronizes the
 note's metadata with its filename. Tp-Note analyses its environment and the
 clipboard content and stores the result in variables. New notes are
 created by filling these variables in predefined and customizable
-`Tera`-templates. In case `<path>` points to an existing Tp-Note-file, the
-note's metadata is parsed and, if necessary, its filename is adjusted. For all
-other file types, Tp-Note creates a new note annotating the file `<path>`
-points to. If `<path>` is a directory (or, when omitted the current working
-directory), a new note is created in that directory. After creation, Tp-Note
-launches the external editor of your choice. Although the templates are written
-for Markdown, Tp-Note is not tied to any specific markup language. However,
-Tp-Note comes with an optional viewer feature, that currently renders only
-Markdown, ReStructuredText and HTML. In addition, there is some limited
-support for Asciidoc and WikiText. The note's rendition with its hyperlinks is
-live updated and displayed in the user's webbrowser.
+_Tera_-templates. In case the first positional parameter '`<FILE>`'
+points to an existing Tp-Note file, the note's metadata is parsed
+and, if necessary, its filename is adjusted. For all other file types,
+Tp-Note creates a new note in the same directory annotating the file. If
+the positional parameter '`<DIR>`' points to an existing directory (or,
+when omitted, the current working directory), a new note is created in
+that directory. After creation, Tp-Note launches the systems file editor. 
+Although the configurable default templates are written for Markdown, Tp-Note
+is not tied to any specific markup language. However, Tp-Note comes
+with an optional viewer feature, that currently renders only Markdown,
+ReStructuredText and HTML input. In addition, there is some limited
+support for Asciidoc and WikiText. Finally, the note's rendition is live
+updated and displayed in the user's web browser.
 
 After the user finished editing, Tp-Note analyses eventual changes in the
 notes metadata and renames, if necessary, the file, so that its metadata and
@@ -115,11 +117,11 @@ When no mouse and clipboard is available, the clipboard feature can be
 simulated by feeding the clipboard data into `stdin`:
 
 ```sh
-> echo "[The Rust Book](https://doc.rust-lang.org/book/)" | tpnote
+> echo "[The Rust Book](<https://doc.rust-lang.org/book/>)" | tpnote
 ```
 
 Tp-Note behaves here as if the clipboard contained the string:
-"`[The Rust Book](https://doc.rust-lang.org/book/)`".
+"`[The Rust Book](<https://doc.rust-lang.org/book/>)`".
 
 
 
@@ -193,7 +195,7 @@ lang:       "en-GB"
 ---
 
 I recommend:
-[The Rust Book](https://doc.rust-lang.org/book/))
+[The Rust Book](<https://doc.rust-lang.org/book/>)
 ```
 
 When analyzing the clipboard's content, Tp-Note searches for hyperlinks in
@@ -303,7 +305,7 @@ date:       "2021-10-31"
 lang:       "en-GB"
 ---
 
-[Classic Shell Scripting.pdf](Classic Shell Scripting.pdf)
+[Classic Shell Scripting.pdf](<Classic Shell Scripting.pdf>)
 ```
 
 The configuration file variables '`[filename] extensions_*`' list all the file
@@ -501,23 +503,23 @@ synchronization).
 
         tpnote.exe --debug info my_note.md
 
-:   On Windows the output must be redirected into a file to see it:
+    On Windows the output must be redirected into a file to see it:
 
         tpnote.exe --debug info my_note.md >debug.md 2>&1
 
-:   Alternatively, you can redirect all log file entries into popup alert
+    Alternatively, you can redirect all log file entries into popup alert
     windows.
 
         tpnote.exe --popup --debug info my_note.md
 
-:   The same can be achieved by setting following configuration file
+    The same can be achieved by setting following configuration file
     variables (especially useful with Windows):
 
         [arg_default]
         debug = 'info'
         popup = true
 
-:   The value for '`[arg_default] debug`' must be one out of '`trace`',
+    The value for '`[arg_default] debug`' must be one out of '`trace`',
     '`debug`', '`info`', '`warn`', '`error`' (default) and '`off`'. They have
     the same meaning as the corresponding command line options.
 
@@ -1177,13 +1179,9 @@ and in '`[tmpl] annotate_file_content`':
 
     [{{ path | filename }}](<{{ path | filename }}>)
 
-with (Linux, MacOS):
+with:
 
     [{{ path | filename }}](<ParentDir../{{ path | filename }}>)
-
-or with (Windows):
-
-    [{{ path | filename }}](<ParentDir..\\{{ path | filename }}>)
 
 Please note that web browsers usually ignore leading '`../`' in URL paths. To
 work around this limitation, Tp-Note's built-in viewer interprets the string
