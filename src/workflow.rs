@@ -346,7 +346,9 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
     if *LAUNCH_EDITOR {
         #[cfg(feature = "viewer")]
         if viewer_join_handle.is_some() && CFG.viewer.startup_delay < 0 {
-            thread::sleep(Duration::from_millis(CFG.viewer.startup_delay.abs() as u64));
+            thread::sleep(Duration::from_millis(
+                CFG.viewer.startup_delay.unsigned_abs() as u64,
+            ));
         };
 
         // This blocks.
