@@ -56,7 +56,6 @@ use semver::Version;
 use serde::Serialize;
 use std::path::PathBuf;
 use std::process;
-use time;
 
 /// Use the version number defined in `../Cargo.toml`.
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
