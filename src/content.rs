@@ -111,18 +111,18 @@ impl<'a> Content {
             return ("", "");
         };
 
-        let pattern = "---";
-        let fm_start = if content.starts_with(pattern) {
+        const HEADER_START_TAG: &str = "---";
+        let fm_start = if content.starts_with(HEADER_START_TAG) {
             // Found at first byte.
-            pattern.len()
+            HEADER_START_TAG.len()
         } else {
-            let pattern = "\n\n---";
+            const HEADER_START_TAG: &str = "\n\n---";
             if let Some(start) = content
                 .chars()
                 .take(BEFORE_HEADER_MAX_IGNORED_CHARS)
                 .collect::<String>()
-                .find(pattern)
-                .map(|x| x + pattern.len())
+                .find(HEADER_START_TAG)
+                .map(|x| x + HEADER_START_TAG.len())
             {
                 // Found just before `start`!
                 start
@@ -147,13 +147,15 @@ impl<'a> Content {
         // No need to search for an additional `\n` here, as we trim the
         // header anyway.
 
-        let pattern1 = "\n---";
-        let pattern2 = "\n...";
-        let pattern_len = 4;
+        const HEADER_END_TAG1: &str = "\n---";
+        // Contract: next pattern must have the same length!
+        const HEADER_END_TAG2: &str = "\n...";
+        debug_assert_eq!(HEADER_END_TAG1.len(), HEADER_END_TAG2.len());
+        const TAG_LEN: usize = HEADER_END_TAG1.len();
 
         let fm_end = content[fm_start..]
-            .find(pattern1)
-            .or_else(|| content[fm_start..].find(pattern2))
+            .find(HEADER_END_TAG1)
+            .or_else(|| content[fm_start..].find(HEADER_END_TAG2))
             .map(|x| x + fm_start);
 
         let fm_end = if let Some(n) = fm_end {
@@ -163,7 +165,7 @@ impl<'a> Content {
         };
 
         // We advance 4 because `"\n---"` has 4 bytes.
-        let mut body_start = fm_end + pattern_len;
+        let mut body_start = fm_end + TAG_LEN;
 
         // Skip spaces and tabs followed by one optional newline.
         while let Some(c) = content[body_start..].chars().next() {
