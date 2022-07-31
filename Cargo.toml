@@ -96,6 +96,7 @@ serde_json = "1.0.81"
 serde = { version = "1.0.137", features = ["derive"] }
 serde_yaml = "0.8.24"
 structopt = "0.3.26"
+substring = "1.4.5"
 tera = { version = "1.16.0", default-features = true }
 thiserror = "1.0.31"
 time = "0.3.9"

@@ -7,6 +7,7 @@ use std::fs::create_dir_all;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
+use substring::Substring;
 
 /// As all text before the header marker `"---"` is ignored, this
 /// constant limits the maximum number of characters that are skipped
@@ -118,9 +119,7 @@ impl<'a> Content {
         } else {
             const HEADER_START_TAG: &str = "\n\n---";
             if let Some(start) = content
-                .chars()
-                .take(BEFORE_HEADER_MAX_IGNORED_CHARS)
-                .collect::<String>()
+                .substring(0, BEFORE_HEADER_MAX_IGNORED_CHARS)
                 .find(HEADER_START_TAG)
                 .map(|x| x + HEADER_START_TAG.len())
             {
