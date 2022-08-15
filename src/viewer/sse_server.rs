@@ -368,7 +368,7 @@ impl ServerThread {
                         .unwrap_or_default()
                         .to_lowercase();
                     // Find the corresponding mime type of this file extension.
-                    let mime_type = match VIEWER_SERVED_MIME_TYPES_HMAP.get(&*extension) {
+                    let mime_type = match VIEWER_SERVED_MIME_TYPES_HMAP.get(extension) {
                         Some(mt) => mt,
                         None => {
                             // Reject all files with extensions not listed.

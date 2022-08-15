@@ -29,7 +29,7 @@ pub fn launch_editor(path: &Path) -> Result<(), FileError> {
 
     // Prepare launch of editor/viewer.
 
-    for app in &*editor_args {
+    for app in editor_args {
         executable_list.push(&app[0]);
         let mut args: Vec<&str> = Vec::new();
         for s in app[1..].iter() {

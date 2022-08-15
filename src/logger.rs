@@ -32,7 +32,7 @@ lazy_static! {
             *    Configuration file:\n\
             {}",
             args_str,
-            &*CONFIG_PATH
+            CONFIG_PATH
                 .as_ref()
                 .unwrap_or(&PathBuf::from("no path found"))
                 .to_str()

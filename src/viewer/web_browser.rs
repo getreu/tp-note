@@ -33,8 +33,7 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
     let browser_args = &CFG.app_args.browser;
 
     // Prepare launch of browser/viewer.
-
-    for app in &*browser_args {
+    for app in browser_args {
         executable_list.push(&app[0]);
         let mut args: Vec<&str> = Vec::new();
         for s in app[1..].iter() {
