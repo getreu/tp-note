@@ -33,7 +33,7 @@ render () {
 
     pandoc -s -t man -o "$OutDir/$ManFile" "$InPath"
 
-    gzip -f "$OutDir/$ManFile"
+    gzip -k -f "$OutDir/$ManFile"
 }
 
 
