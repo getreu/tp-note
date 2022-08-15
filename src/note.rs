@@ -170,7 +170,7 @@ pub struct Note {
     pub content: Content,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 /// Represents the front matter of the note.
 pub struct FrontMatter {
     pub map: tera::Map<String, tera::Value>,

@@ -17,7 +17,7 @@ use std::io::Read;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-#[derive(Debug, PartialEq, StructOpt)]
+#[derive(Debug, Eq, PartialEq, StructOpt)]
 #[structopt(
     name = "Tp-Note",
     about = "Fast note taking with templates and filename synchronization."
@@ -182,7 +182,7 @@ lazy_static! {
     };
 }
 
-#[derive(Debug, PartialEq, Default)]
+#[derive(Debug, Eq, PartialEq, Default)]
 /// Represents a hyperlink.
 pub struct Hyperlink {
     pub name: String,

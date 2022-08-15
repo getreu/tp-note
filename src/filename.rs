@@ -224,7 +224,7 @@ pub fn append_copy_counter(stem: &str, n: usize) -> String {
 }
 
 /// The Markup language of the note content.
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 pub enum MarkupLanguage {
     Markdown,
     RestructuredText,
