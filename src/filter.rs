@@ -69,10 +69,17 @@ pub fn sanit_filter<S: BuildHasher>(
         Cow::Owned(p.to_string())
     };
 
-    let alpha_required = match args.get("alpha") {
-        Some(val) => try_get_value!("sanit", "alpha", bool, val),
+    let mut force_alpha = match args.get("force_alpha") {
+        Some(val) => try_get_value!("sanit", "force_alpha", bool, val),
         None => false,
     };
+
+    // Allow also the short form for backwards compatibility.
+    force_alpha = force_alpha
+        || match args.get("alpha") {
+            Some(val) => try_get_value!("sanit", "alpha", bool, val),
+            None => false,
+        };
 
     // Check if this is a usual filename.
     if p.starts_with(FILENAME_DOTFILE_MARKER) && is_well_formed_filename(Path::new(&*p)) {
@@ -83,7 +90,7 @@ pub fn sanit_filter<S: BuildHasher>(
     p = sanitize(&p).into();
 
     // Check if we must prepend a `sort_tag_extra_separator`.
-    if alpha_required
+    if force_alpha
         // `sort_tag_extra_separator` is guaranteed not to be part of `sort_tag_chars`.
         // Thus, the following makes sure, that we do not accidentally add two
         // `sort_tag_extra_separator`.

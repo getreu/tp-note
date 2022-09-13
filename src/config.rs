@@ -229,10 +229,10 @@ lang:       {{ lang | json_encode }}
 /// with a number, the string is prepended with `'`.  The first non-numerical variable must be some
 /// `{{ <var>| sanit(alpha) }}` variant.
 /// Note, as this is filename template, all variables (except `now` and `extension_default` must be
-/// filtered by a `sanit` or `sanit(alpha=true)` filter.
+/// filtered by a `sanit` or `sanit(force_alpha=true)` filter.
 const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
-{{ fm_title | sanit(alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
+{{ fm_title | sanit(force_alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
 ";
 
@@ -271,7 +271,7 @@ lang:       {{ fm_lang | default(value = lang) | json_encode }}
 /// them has a valid YAML header.
 const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
 {{ fm_sort_tag | default(value = now() | date(format='%Y%m%d-')) }}\
-{{ fm_title | sanit(alpha=true) }}\
+{{ fm_title | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}\
 {{ fm_file_ext | default(value = extension_default ) | prepend_dot }}\
@@ -311,7 +311,7 @@ lang:       {{ lang | json_encode }}
 /// Default filename template used when the stdin ~ clipboard contains a string.
 const TMPL_FROM_CLIPBOARD_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
-{{ fm_title | sanit(alpha=true) }}\
+{{ fm_title | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
 ";
@@ -339,7 +339,7 @@ orig_name:  {{ path | filename | json_encode }}
 const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 {% if path | tag == '' %}{{ path_file_date | date(format='%Y%m%d-') }}\
 {% else %}{{ path | tag }}{% endif %}\
-{{ fm_title | sanit(alpha=true) }}\
+{{ fm_title | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}\
 {{ path | ext | prepend_dot }}\
@@ -371,7 +371,7 @@ lang:       {{ lang | json_encode }}
 /// Filename of a new note, that annotates an existing file on disk given in
 /// <path>.
 const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
-{{ path | tag }}{{ fm_title | sanit(alpha=true) }}\
+{{ path | tag }}{{ fm_title | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit }}{{ extension_default | prepend_dot }}\
 ";
@@ -381,7 +381,7 @@ const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
 /// note's filename will be renamed.  Can be modified through editing the configuration file.
 const TMPL_SYNC_FILENAME: &str = "\
 {{ fm_sort_tag | default(value = path | tag) }}\
-{{ fm_title | default(value='No title') | sanit(alpha=true) }}\
+{{ fm_title | default(value='No title') | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}\
 {{ fm_file_ext | default(value = path | ext) | prepend_dot }}\

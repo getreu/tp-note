@@ -1141,9 +1141,9 @@ initially set up by any '`[tmpl] *_filename`' template.
 
 Secondly, make sure that the expression in '`[tmpl] sync_filename`' describing
 the filename's _sort tag_ e.g. '`{{ path | tag }}`' is always followed by a
-variable with the '`sanit(alpha=true)`' filter set, e.g.:
+variable with the '`sanit(force_alpha=true)`' filter set, e.g.:
 
-    {{ path | tag }}{{ fm_title | sanit(alpha=true) }}
+    {{ path | tag }}{{ fm_title | sanit(force_alpha=true) }}
 
 The first expression guarantees, that it resolves only to characters defined in
 the '`[filename] sort_tag_chars`' set, while the second expression is known
@@ -1573,17 +1573,17 @@ A filter is always used together with a variable. Here are some examples:
 
 * '`{{ clipboard | cut }}`' is the first 200 bytes from the clipboard.
 
-* '`{{ clipboard | heading }}`' is the clipboard's content until end of the first
-  sentence, or the first newline.
+* '`{{ clipboard | heading }}`' is the clipboard's content until the
+  end of the first sentence, or the first newline.
 
 * '`{{ clipboard | linkname }}`' is the name of the first Markdown or
-  reStructuredText formatted link in the clipboard.
+  ReStructuredText formatted link in the clipboard.
 
 * '`{{ clipboard | linktarget }}`' is the URL of the first Markdown or
-  reStruncturedText formatted link in the clipboard.
+  ReStruncturedText formatted link in the clipboard.
 
 * '`{{ clipboard | linktitle }}`' is the title of the first Markdown or
-  reStruncturedText formatted link in the clipboard.
+  ReStruncturedText formatted link in the clipboard.
 
 * '`{{ username | json_encode }}`' is the username JSON encoded. As all YAML
   front-matter is JSON encoded, this filter code must be appended to any
@@ -1594,7 +1594,7 @@ A filter is always used together with a variable. Here are some examples:
   omitted or replaced by '`-`' and '`_`'. See the section _Filename template
   convention_ for more details about this filter.
 
-* '`{{ fm_title | sanit(alpha=true) }}`' is the note's title as defined in its
+* '`{{ fm_title | sanit(force_alpha=true) }}`' is the note's title as defined in its
   front-matter.  Same as above, but strings starting with a sort tag are
   prepended by an apostrophe to avoid ambiguity.
 
@@ -1629,7 +1629,7 @@ of the new note. Please note that, the filename template
 of existing note files. Besides this, as we are dealing with filenames we must
 guarantee, that the filename templates produce only file system friendly
 characters.  For this purpose Tp-Note provides the additional Tera filters
-'`sanit`' and '`sanit(alpha=true)`':
+'`sanit`' and '`sanit(force_alpha=true)`':
 
 * The '`sanit()`' filter transforms a string in a file system friendly from. This
   is done by replacing forbidden characters like '`?`' and '`\\`' with '`_`'
@@ -1642,17 +1642,17 @@ characters.  For this purpose Tp-Note provides the additional Tera filters
   not contain whitespace. It may or may not end with a file extension.
   The apostrophe preserves the following dot from being filtered.
 
-* '`sanit(alpha=true)`' is similar to the above, with one exception: when a
+* '`sanit(force_alpha=true)`' is similar to the above, with one exception: when a
   string starts with a digit '`0123456789`' or '`-_ `', the whole string is
   prepended with `'`. For example: "`1 The Show Begins`" becomes "`'1 The Show
   Begins`". This filter should always be applied to the first variable
-  assembling the new filename, e.g. '`{{ title | sanit(alpha=true )}`'. This
+  assembling the new filename, e.g. '`{{ title | sanit(force_alpha=true )}`'. This
   way, it is always possible to distinguish the sort tag from the actual
   filename. The default sort tag separator '`'`' can be changed with the
   configuration variable '`[filename] sort_tag_extra_separator`'.
 
 In filename templates most variables must pass either the '`sanit`' or the
-'`sanit(alpha=true)`' filter. Exception to this rule are the sort tag variables
+'`sanit(force_alpha=true)`' filter. Exception to this rule are the sort tag variables
 '`{{ path | tag }}`' and '`{{ dir_path | tag }}`'. As these are guaranteed to
 contain only the file system friendly characters '`0123456789 -_`', no
 additional filtering is required. Please note that in this case a
