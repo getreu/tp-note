@@ -11,13 +11,17 @@ use crate::VERSION;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
+#[cfg(feature = "message-box")]
+use msgbox::IconType;
 use std::env;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+#[cfg(feature = "message-box")]
 /// Window title of the message alert box.
 const ALERT_DIALOG_TITLE: &str = "Tp-Note";
 
+#[cfg(feature = "message-box")]
 lazy_static! {
     /// Window title followed by version.
     pub static ref ALERT_DIALOG_TITLE_LINE: String = format!(
@@ -25,6 +29,13 @@ lazy_static! {
         &ALERT_DIALOG_TITLE,
         VERSION.unwrap_or("unknown")
     );
+}
+
+/// Pops up an error message box and prints `msg`.
+/// Blocks until the user closes the window.
+#[cfg(feature = "message-box")]
+fn popup_alert(msg: &str) {
+    let _ = msgbox::create(&*ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
 }
 
 lazy_static! {
@@ -78,7 +89,7 @@ impl AppLogger {
         // Setup the `AlertService`
         #[cfg(feature = "message-box")]
         if !*RUNS_ON_CONSOLE && !ARGS.batch {
-            AlertService::init();
+            AlertService::init(popup_alert);
         };
 
         // Setup console logger.

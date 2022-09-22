@@ -1,9 +1,7 @@
 //! Receives strings by a message channel, queues them and displays them
 //! one by one in popup alert windows.
 
-use crate::logger::ALERT_DIALOG_TITLE_LINE;
 use lazy_static::lazy_static;
-use msgbox::IconType;
 use std::sync::mpsc::sync_channel;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::RecvTimeoutError;
@@ -44,7 +42,9 @@ lazy_static! {
         },
         /// This mutex does not hold any data. When it is locked, it indicates,
         /// that the `AlertService` is still busy and should not get shut down.
-        busy_lock: Mutex::new(())
+        busy_lock: Mutex::new(()),
+        /// We start with no funtion pointer.
+        popup_alert: Mutex::new(None),
     };
 }
 
@@ -55,15 +55,20 @@ pub struct AlertService {
     /// This mutex does not hold any data. When it is locked, it indicates,
     /// that the `AlertService` is still busy and should not get shut down.
     busy_lock: Mutex<()>,
+    /// Function pointer to the function that is called when the
+    /// popup alert dialog shall appear.
+    /// None means no function pointer was registered.
+    popup_alert: Mutex<Option<fn(&str)>>,
 }
 
 impl AlertService {
     /// Initializes the service. Call once when the application starts.
     /// Drop strings in the`ALERT_SERVICE.message_channel` to use this service.
-    pub fn init() {
+    pub fn init(popup_alert: fn(&str)) {
         // Setup the `AlertService`.
         // Set up the channel now.
         lazy_static::initialize(&ALERT_SERVICE);
+        *ALERT_SERVICE.popup_alert.lock().unwrap() = Some(popup_alert);
         thread::spawn(move || {
             // this will block until the previous message has been received
             AlertService::run();
@@ -107,8 +112,15 @@ impl AlertService {
                     if opt_guard.is_none() {
                         opt_guard = ALERT_SERVICE.busy_lock.try_lock().ok();
                     }
-                    // This blocks until the user closes the alert window.
-                    Self::popup_alert(&s);
+                    match *ALERT_SERVICE.popup_alert.lock().unwrap() {
+                        // This blocks until the user closes the alert window.
+                        Some(popup_alert) => popup_alert(&s),
+                        _ => panic!(
+                            "Can not print message \"{}\". \
+                            No alert function registered!",
+                            &s
+                        ),
+                    };
                 }
                 // `ALERT_SERVICE_KEEP_ALIVE` milliseconds are over and still no
                 // new message. We release the lock again.
@@ -140,12 +152,5 @@ impl AlertService {
     pub fn push_str(msg: String) -> Result<(), SendError<String>> {
         let (tx, _) = &ALERT_SERVICE.message_channel;
         tx.send(msg)
-    }
-
-    #[inline]
-    /// Pops up an error message box and prints `msg`.
-    /// Blocks until the user closes the window.
-    fn popup_alert(msg: &str) {
-        let _ = msgbox::create(&*ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
     }
 }
