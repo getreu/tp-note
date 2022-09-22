@@ -14,21 +14,6 @@ use std::thread;
 use std::thread::sleep;
 use std::time::Duration;
 
-lazy_static! {
-/// The message queue accepting strings for being shown as
-/// popup alert windows.
-    static ref MESSAGE_CHANNEL: (SyncSender<String>, Mutex<Receiver<String>>) = {
-        let (tx, rx) = sync_channel(QUEUE_LEN);
-        (tx, Mutex::new(rx))
-    };
-}
-
-lazy_static! {
-    /// This mutex does not hold any data. When it is locked, it indicates,
-    /// that the `AlertService` is still busy and should not get shut down.
-    static ref BUSY_LOCK: Mutex<()> = Mutex::new(());
-}
-
 /// The number of messages that will be queued.
 /// As error messages can drop in by every thread and we can only
 /// show one alert window at the same time, they must be queued.
@@ -47,15 +32,38 @@ const KEEP_ALIVE: u64 = 1000;
 /// 10 just to be sure.
 const FLUSH_TIMEOUT: u64 = 10;
 
-pub struct AlertService {}
+lazy_static! {
+    /// Hold `AlertService` in a static variable, that
+    /// `AlertService::push_str()` can be called easily from everywhere.
+    static ref ALERT_SERVICE: AlertService = AlertService {
+        /// The message queue accepting strings for being shown as
+        /// popup alert windows.
+        message_channel: {
+            let (tx, rx) = sync_channel(QUEUE_LEN);
+            (tx, Mutex::new(rx))
+        },
+        /// This mutex does not hold any data. When it is locked, it indicates,
+        /// that the `AlertService` is still busy and should not get shut down.
+        busy_lock: Mutex::new(())
+    };
+}
+
+pub struct AlertService {
+    /// The message queue accepting strings for being shown as
+    /// popup alert windows.
+    message_channel: (SyncSender<String>, Mutex<Receiver<String>>),
+    /// This mutex does not hold any data. When it is locked, it indicates,
+    /// that the `AlertService` is still busy and should not get shut down.
+    busy_lock: Mutex<()>,
+}
 
 impl AlertService {
     /// Initializes the service. Call once when the application starts.
-    /// Drop strings in the`MESSAGE_CHANNEL` to use this service.
+    /// Drop strings in the`ALERT_SERVICE.message_channel` to use this service.
     pub fn init() {
         // Setup the `AlertService`.
         // Set up the channel now.
-        lazy_static::initialize(&MESSAGE_CHANNEL);
+        lazy_static::initialize(&ALERT_SERVICE);
         thread::spawn(move || {
             // this will block until the previous message has been received
             AlertService::run();
@@ -65,7 +73,7 @@ impl AlertService {
     /// Alert service, receiving Strings to display in a popup window.
     fn run() {
         // Get the receiver.
-        let (_, rx) = &*MESSAGE_CHANNEL;
+        let (_, rx) = &ALERT_SERVICE.message_channel;
         let rx = rx.lock().unwrap();
 
         // We start with the lock released.
@@ -97,7 +105,7 @@ impl AlertService {
                 Some(s) => {
                     // If the lock is released, lock it now.
                     if opt_guard.is_none() {
-                        opt_guard = BUSY_LOCK.try_lock().ok();
+                        opt_guard = ALERT_SERVICE.busy_lock.try_lock().ok();
                     }
                     // This blocks until the user closes the alert window.
                     Self::popup_alert(&s);
@@ -120,7 +128,7 @@ impl AlertService {
         // See constant documentation why we wait here.
         sleep(Duration::from_millis(FLUSH_TIMEOUT));
         // This might block, if a guard in `run()` holds already a lock.
-        let _res = BUSY_LOCK.lock();
+        let _res = ALERT_SERVICE.busy_lock.lock();
     }
 
     #[inline]
@@ -130,7 +138,7 @@ impl AlertService {
     /// `rx` of the queue. This can happen, e.g. if `AlertService::init()` has
     /// not been called before.
     pub fn push_str(msg: String) -> Result<(), SendError<String>> {
-        let (tx, _) = &*MESSAGE_CHANNEL;
+        let (tx, _) = &ALERT_SERVICE.message_channel;
         tx.send(msg)
     }
 
