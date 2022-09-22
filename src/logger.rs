@@ -83,9 +83,6 @@ impl AppLogger {
     /// a popup alert window.
     #[allow(dead_code)]
     pub fn set_popup_always_enabled(popup: bool) {
-        // This blocks if ever another thread wants to write.  As we are the
-        // only ones to write here, this lock can never get poisoned and we will
-        // can safely `unwrap()` here.
         APP_LOGGER
             .popup_always_enabled
             .store(popup, Ordering::SeqCst);

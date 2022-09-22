@@ -25,9 +25,9 @@ lazy_static! {
 
 lazy_static! {
     /// Window title followed by version.
-    static ref DIALOG_TITLE_LINE: String = format!(
+    static ref ALERT_DIALOG_TITLE_LINE: String = format!(
         "{} (v{})",
-        &DIALOG_TITLE,
+        &ALERT_DIALOG_TITLE,
         VERSION.unwrap_or("unknown")
     );
 }
@@ -44,7 +44,7 @@ lazy_static! {
 pub const QUEUE_LEN: usize = 30;
 
 /// Window title of the message alert box.
-const DIALOG_TITLE: &str = "Tp-Note";
+const ALERT_DIALOG_TITLE: &str = "Tp-Note";
 
 /// The `AlertService` reports to be busy as long as there
 /// is is a message window open and beyond that also
@@ -150,6 +150,6 @@ impl AlertService {
     /// Pops up an error message box and prints `msg`.
     /// Blocks until the user closes the window.
     fn print_error(msg: &str) {
-        let _ = msgbox::create(&*DIALOG_TITLE_LINE, msg, IconType::Info);
+        let _ = msgbox::create(&*ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
     }
 }
