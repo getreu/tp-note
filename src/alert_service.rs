@@ -100,7 +100,7 @@ impl AlertService {
                         opt_guard = BUSY_LOCK.try_lock().ok();
                     }
                     // This blocks until the user closes the alert window.
-                    Self::print_error(&s);
+                    Self::popup_alert(&s);
                 }
                 // `ALERT_SERVICE_KEEP_ALIVE` milliseconds are over and still no
                 // new message. We release the lock again.
@@ -137,7 +137,7 @@ impl AlertService {
     #[inline]
     /// Pops up an error message box and prints `msg`.
     /// Blocks until the user closes the window.
-    fn print_error(msg: &str) {
+    fn popup_alert(msg: &str) {
         let _ = msgbox::create(&*ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
     }
 }
