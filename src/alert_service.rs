@@ -1,7 +1,7 @@
 //! Receives strings by a message channel, queues them and displays them
 //! one by one in popup alert windows.
 
-use crate::VERSION;
+use crate::logger::ALERT_DIALOG_TITLE_LINE;
 use lazy_static::lazy_static;
 use msgbox::IconType;
 use std::sync::mpsc::sync_channel;
@@ -24,15 +24,6 @@ lazy_static! {
 }
 
 lazy_static! {
-    /// Window title followed by version.
-    static ref ALERT_DIALOG_TITLE_LINE: String = format!(
-        "{} (v{})",
-        &ALERT_DIALOG_TITLE,
-        VERSION.unwrap_or("unknown")
-    );
-}
-
-lazy_static! {
     /// This mutex does not hold any data. When it is locked, it indicates,
     /// that the `AlertService` is still busy and should not get shut down.
     static ref BUSY_LOCK: Mutex<()> = Mutex::new(());
@@ -42,9 +33,6 @@ lazy_static! {
 /// As error messages can drop in by every thread and we can only
 /// show one alert window at the same time, they must be queued.
 pub const QUEUE_LEN: usize = 30;
-
-/// Window title of the message alert box.
-const ALERT_DIALOG_TITLE: &str = "Tp-Note";
 
 /// The `AlertService` reports to be busy as long as there
 /// is is a message window open and beyond that also

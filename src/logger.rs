@@ -7,12 +7,25 @@ use crate::settings::ARGS;
 #[cfg(feature = "message-box")]
 use crate::settings::RUNS_ON_CONSOLE;
 use crate::CONFIG_PATH;
+use crate::VERSION;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
 use std::env;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
+
+/// Window title of the message alert box.
+const ALERT_DIALOG_TITLE: &str = "Tp-Note";
+
+lazy_static! {
+    /// Window title followed by version.
+    pub static ref ALERT_DIALOG_TITLE_LINE: String = format!(
+        "{} (v{})",
+        &ALERT_DIALOG_TITLE,
+        VERSION.unwrap_or("unknown")
+    );
+}
 
 lazy_static! {
     /// Some additional debugging information added to the end of error messages.
