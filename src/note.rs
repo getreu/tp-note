@@ -12,6 +12,8 @@ use crate::filename;
 use crate::filename::MarkupLanguage;
 use crate::filter::TERA;
 use crate::note_error_tera_template;
+use crate::settings::CLIPBOARD;
+use crate::settings::STDIN;
 use parse_hyperlinks::renderer::text_links2html;
 #[cfg(feature = "viewer")]
 use parse_hyperlinks::renderer::text_rawlinks2html;
@@ -285,7 +287,7 @@ impl Note {
 
         let mut context = Context::new();
         context.insert_environment(path)?;
-        context.insert_content()?;
+        context.insert_content(&CLIPBOARD, &STDIN)?;
 
         // Register the raw serialized header text.
         (*context).insert(TMPL_VAR_FM_ALL_YAML, &content.borrow_dependent().header);
@@ -354,7 +356,7 @@ impl Note {
         mut context: Context,
     ) -> Result<Self, NoteError> {
         context.insert_environment(path)?;
-        context.insert_content()?;
+        context.insert_content(&CLIPBOARD, &STDIN)?;
 
         log::trace!(
             "Available substitution variables for content template:\n{:#?}",

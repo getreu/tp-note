@@ -1,4 +1,5 @@
 //! Extends the built-in Tera filters.
+use crate::content::Content;
 use crate::error::NoteError;
 use crate::note::FrontMatter;
 use crate::note::TMPL_VAR_CLIPBOARD;
@@ -12,8 +13,6 @@ use crate::note::TMPL_VAR_PATH;
 use crate::note::TMPL_VAR_STDIN;
 use crate::note::TMPL_VAR_STDIN_HEADER;
 use crate::note::TMPL_VAR_USERNAME;
-use crate::settings::CLIPBOARD;
-use crate::settings::STDIN;
 use crate::CFG;
 use std::env;
 use std::ops::Deref;
@@ -77,30 +76,30 @@ impl Context {
     /// variables. Those are added via `insert_front_matter()`.
     pub fn insert_content(
         &mut self,
-        //clipboard: &Content,
-        //stdin: &Content,
+        clipboard: &Content,
+        stdin: &Content,
     ) -> Result<(), NoteError> {
         // Register input from clipboard.
         (*self).insert(
             TMPL_VAR_CLIPBOARD_HEADER,
-            CLIPBOARD.borrow_dependent().header,
+            clipboard.borrow_dependent().header,
         );
-        (*self).insert(TMPL_VAR_CLIPBOARD, CLIPBOARD.borrow_dependent().body);
+        (*self).insert(TMPL_VAR_CLIPBOARD, clipboard.borrow_dependent().body);
 
         // Register input from stdin.
-        (*self).insert(TMPL_VAR_STDIN_HEADER, STDIN.borrow_dependent().header);
-        (*self).insert(TMPL_VAR_STDIN, STDIN.borrow_dependent().body);
+        (*self).insert(TMPL_VAR_STDIN_HEADER, stdin.borrow_dependent().header);
+        (*self).insert(TMPL_VAR_STDIN, stdin.borrow_dependent().body);
 
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
-        let stdin_fm = FrontMatter::try_from(&*STDIN);
+        let stdin_fm = FrontMatter::try_from(&*stdin);
         match stdin_fm {
             Ok(ref stdin_fm) => log::trace!(
                 "YAML front matter in the input stream stdin found:\n{:#?}",
                 &stdin_fm
             ),
             Err(ref e) => {
-                if !STDIN.borrow_dependent().header.is_empty() {
+                if !stdin.borrow_dependent().header.is_empty() {
                     return Err(NoteError::InvalidStdinYaml {
                         source_str: e.to_string(),
                     });
@@ -110,14 +109,14 @@ impl Context {
 
         // Can we find a front matter in the clipboard? If yes, the unmodified
         // clipboard data is our new note content.
-        let clipboard_fm = FrontMatter::try_from(&*CLIPBOARD);
+        let clipboard_fm = FrontMatter::try_from(&*clipboard);
         match clipboard_fm {
             Ok(ref clipboard_fm) => log::trace!(
                 "YAML front matter in the clipboard found:\n{:#?}",
                 &clipboard_fm
             ),
             Err(ref e) => {
-                if !CLIPBOARD.borrow_dependent().header.is_empty() {
+                if !clipboard.borrow_dependent().header.is_empty() {
                     return Err(NoteError::InvalidClipboardYaml {
                         source_str: e.to_string(),
                     });
