@@ -44,7 +44,7 @@ impl Context {
         }
     }
 
-    /// Inserts the YAML front header variable in the context for later use with templates.
+    /// Inserts the YAML front header variables in the context for later use with templates.
     /// We register only flat `tera::Value` types.
     /// If there is a list, concatenate its items with `, ` and register the result
     /// as a flat string.
@@ -72,24 +72,14 @@ impl Context {
         self.ct.insert(TMPL_VAR_FM_ALL, &tera_map);
     }
 
-    /// Captures _Tp-Note_'s environment and stores it as variables in a
-    /// `context` collection. The variables are needed later to populate
-    /// a context template and a filename template.
-    /// The `path` parameter must be a canonicalized fully qualified file name.
-    pub fn insert_environment(&mut self, path: &Path) -> Result<(), NoteError> {
-        // Register the canonicalized fully qualified file name.
-        let file = path.to_str().unwrap_or_default();
-        (*self).insert(TMPL_VAR_PATH, &file);
-
-        // `dir_path` is a directory as fully qualified path, ending
-        // by a separator.
-        let dir_path = if path.is_dir() {
-            path
-        } else {
-            path.parent().unwrap_or_else(|| Path::new("./"))
-        };
-        (*self).insert(TMPL_VAR_DIR_PATH, &dir_path.to_str().unwrap_or_default());
-
+    /// Inserts clipboard and stdin data into the context. As these
+    /// are `Content` structs, their header may carry also front matter
+    /// variables. Those are added via `insert_front_matter()`.
+    pub fn insert_content(
+        &mut self,
+        //clipboard: &Content,
+        //stdin: &Content,
+    ) -> Result<(), NoteError> {
         // Register input from clipboard.
         (*self).insert(
             TMPL_VAR_CLIPBOARD_HEADER,
@@ -145,6 +135,26 @@ impl Context {
         if let Ok(fm) = stdin_fm {
             self.insert_front_matter(&fm);
         }
+        Ok(())
+    }
+
+    /// Captures _Tp-Note_'s environment and stores it as variables in a
+    /// `context` collection. The variables are needed later to populate
+    /// a context template and a filename template.
+    /// The `path` parameter must be a canonicalized fully qualified file name.
+    pub fn insert_environment(&mut self, path: &Path) -> Result<(), NoteError> {
+        // Register the canonicalized fully qualified file name.
+        let file = path.to_str().unwrap_or_default();
+        (*self).insert(TMPL_VAR_PATH, &file);
+
+        // `dir_path` is a directory as fully qualified path, ending
+        // by a separator.
+        let dir_path = if path.is_dir() {
+            path
+        } else {
+            path.parent().unwrap_or_else(|| Path::new("./"))
+        };
+        (*self).insert(TMPL_VAR_DIR_PATH, &dir_path.to_str().unwrap_or_default());
 
         // Default extension for new notes as defined in the configuration file.
         (*self).insert(

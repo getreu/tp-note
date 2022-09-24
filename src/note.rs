@@ -285,6 +285,7 @@ impl Note {
 
         let mut context = Context::new();
         context.insert_environment(path)?;
+        context.insert_content()?;
 
         // Register the raw serialized header text.
         (*context).insert(TMPL_VAR_FM_ALL_YAML, &content.borrow_dependent().header);
@@ -353,6 +354,7 @@ impl Note {
         mut context: Context,
     ) -> Result<Self, NoteError> {
         context.insert_environment(path)?;
+        context.insert_content()?;
 
         log::trace!(
             "Available substitution variables for content template:\n{:#?}",
