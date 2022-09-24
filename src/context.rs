@@ -27,7 +27,7 @@ use windows_sys::Win32::System::SystemServices::LOCALE_NAME_MAX_LENGTH;
 
 /// Tiny wrapper around "Tera context" with some additional information.
 #[derive(Debug, PartialEq)]
-pub struct ContextWrapper {
+pub struct Context {
     // Collection of substitution variables.
     ct: tera::Context,
     // The note's directory path on disk.
@@ -36,7 +36,7 @@ pub struct ContextWrapper {
 
 /// A thin wrapper around `tera::Context` storing some additional
 /// information.
-impl ContextWrapper {
+impl Context {
     pub fn new() -> Self {
         Self {
             ct: tera::Context::new(),
@@ -209,7 +209,7 @@ impl ContextWrapper {
 }
 
 /// Auto-dereference for convenient access to `tera::Content`.
-impl Deref for ContextWrapper {
+impl Deref for Context {
     type Target = tera::Context;
 
     fn deref(&self) -> &Self::Target {
@@ -218,7 +218,7 @@ impl Deref for ContextWrapper {
 }
 
 /// Auto-dereference for convenient access to `tera::Content`.
-impl DerefMut for ContextWrapper {
+impl DerefMut for Context {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.ct
     }

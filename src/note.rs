@@ -5,7 +5,7 @@
 
 use crate::config::CFG;
 use crate::content::Content;
-use crate::context::ContextWrapper;
+use crate::context::Context;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::filename;
@@ -164,7 +164,7 @@ pub struct Note {
     //     front_matter: FrontMatter,
     /// Captured environment of _Tp-Note_ that
     /// is used to fill in templates.
-    pub context: ContextWrapper,
+    pub context: Context,
     /// The full text content of the note, including
     /// its front matter.
     pub content: Content,
@@ -283,7 +283,7 @@ impl Note {
             }
         }
 
-        let mut context = ContextWrapper::new();
+        let mut context = Context::new();
         context.insert_environment(path)?;
 
         // Register the raw serialized header text.
@@ -303,7 +303,7 @@ impl Note {
     /// Constructor that prepends a YAML header to an existing text file.
     /// Throws an error if the file has a header.
     pub fn from_text_file(path: &Path, template: &str) -> Result<Self, NoteError> {
-        let mut context = ContextWrapper::new();
+        let mut context = Context::new();
         {
             let mut file = File::open(path)?;
             // Get the file's content.
@@ -341,7 +341,7 @@ impl Note {
 
     /// Constructor that creates a new note by filling in the content template `template`.
     pub fn from_content_template(path: &Path, template: &str) -> Result<Self, NoteError> {
-        let context = ContextWrapper::new();
+        let context = Context::new();
         Self::from_content_template_context(path, template, context)
     }
 
@@ -350,7 +350,7 @@ impl Note {
     fn from_content_template_context(
         path: &Path,
         template: &str,
-        mut context: ContextWrapper,
+        mut context: Context,
     ) -> Result<Self, NoteError> {
         context.insert_environment(path)?;
 
@@ -633,7 +633,7 @@ impl Note {
 
 #[cfg(test)]
 mod tests {
-    use super::ContextWrapper;
+    use super::Context;
     use super::FrontMatter;
     use serde_json::json;
     use tera::Value;
@@ -723,10 +723,10 @@ mod tests {
         tmp.insert("numbers".to_string(), json!([1, 3, 5])); // Array([Numbers()..])!
         let mut tmp2 = tmp.clone();
 
-        let mut input1 = ContextWrapper::new();
+        let mut input1 = Context::new();
         let input2 = FrontMatter { map: tmp };
 
-        let mut expected = ContextWrapper::new();
+        let mut expected = Context::new();
         (*expected).insert("fm_file_ext".to_string(), &json!("md")); // String
         (*expected).insert("fm_height".to_string(), &json!(1.23)); // Number()
         (*expected).insert("fm_count".to_string(), &json!(2)); // Number()
