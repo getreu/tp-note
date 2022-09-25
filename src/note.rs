@@ -285,8 +285,8 @@ impl Note {
             }
         }
 
-        let mut context = Context::new();
-        context.insert_environment(path)?;
+        let mut context = Context::from(path);
+        context.insert_environment()?;
         context.insert_content(&CLIPBOARD, &STDIN)?;
 
         // Register the raw serialized header text.
@@ -306,7 +306,7 @@ impl Note {
     /// Constructor that prepends a YAML header to an existing text file.
     /// Throws an error if the file has a header.
     pub fn from_text_file(path: &Path, template: &str) -> Result<Self, NoteError> {
-        let mut context = Context::new();
+        let mut context = Context::from(&path);
         {
             let mut file = File::open(path)?;
             // Get the file's content.
@@ -339,23 +339,22 @@ impl Note {
                 );
             }
         }
-        Self::from_content_template_context(path, template, context)
+        Self::from_content_template_context(template, context)
     }
 
     /// Constructor that creates a new note by filling in the content template `template`.
     pub fn from_content_template(path: &Path, template: &str) -> Result<Self, NoteError> {
-        let context = Context::new();
-        Self::from_content_template_context(path, template, context)
+        let context = Context::from(&path);
+        Self::from_content_template_context(template, context)
     }
 
     /// Constructor that creates a new note by filling in the content template `template`.
     /// This version takes also a provided prefilled `ContextWrapper`.
     fn from_content_template_context(
-        path: &Path,
         template: &str,
         mut context: Context,
     ) -> Result<Self, NoteError> {
-        context.insert_environment(path)?;
+        context.insert_environment()?;
         context.insert_content(&CLIPBOARD, &STDIN)?;
 
         log::trace!(
@@ -640,6 +639,7 @@ mod tests {
     use super::Context;
     use super::FrontMatter;
     use serde_json::json;
+    use std::path::Path;
     use tera::Value;
 
     #[test]
@@ -727,10 +727,10 @@ mod tests {
         tmp.insert("numbers".to_string(), json!([1, 3, 5])); // Array([Numbers()..])!
         let mut tmp2 = tmp.clone();
 
-        let mut input1 = Context::new();
+        let mut input1 = Context::from(Path::new("a/b/test.md"));
         let input2 = FrontMatter { map: tmp };
 
-        let mut expected = Context::new();
+        let mut expected = Context::from(Path::new("a/b/test.md"));
         (*expected).insert("fm_file_ext".to_string(), &json!("md")); // String
         (*expected).insert("fm_height".to_string(), &json!(1.23)); // Number()
         (*expected).insert("fm_count".to_string(), &json!(2)); // Number()

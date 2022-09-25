@@ -27,20 +27,38 @@ use windows_sys::Win32::System::SystemServices::LOCALE_NAME_MAX_LENGTH;
 /// Tiny wrapper around "Tera context" with some additional information.
 #[derive(Debug, PartialEq)]
 pub struct Context {
-    // Collection of substitution variables.
+    /// Collection of substitution variables.
     ct: tera::Context,
-    // The note's directory path on disk.
+    /// First positional command line argument.
+    pub path: PathBuf,
+    /// The directory (only) path corresponding to the first positional
+    /// command line argument. The is our working directory and
+    /// the directory where the note file is (will be) located.
     pub dir_path: PathBuf,
 }
 
 /// A thin wrapper around `tera::Context` storing some additional
 /// information.
 impl Context {
-    pub fn new() -> Self {
-        Self {
-            ct: tera::Context::new(),
-            dir_path: PathBuf::new(),
-        }
+    pub fn from(path: &Path) -> Self {
+        let mut ct = tera::Context::new();
+        let path = path.to_path_buf();
+
+        // `dir_path` is a directory as fully qualified path, ending
+        // by a separator.
+        let dir_path = if path.is_dir() {
+            path.clone()
+        } else {
+            path.parent()
+                .unwrap_or_else(|| Path::new("./"))
+                .to_path_buf()
+        };
+
+        // Register the canonicalized fully qualified file name.
+        ct.insert(TMPL_VAR_PATH, &path);
+        ct.insert(TMPL_VAR_DIR_PATH, &dir_path);
+
+        Self { ct, path, dir_path }
     }
 
     /// Inserts the YAML front header variables in the context for later use with templates.
@@ -141,20 +159,7 @@ impl Context {
     /// `context` collection. The variables are needed later to populate
     /// a context template and a filename template.
     /// The `path` parameter must be a canonicalized fully qualified file name.
-    pub fn insert_environment(&mut self, path: &Path) -> Result<(), NoteError> {
-        // Register the canonicalized fully qualified file name.
-        let file = path.to_str().unwrap_or_default();
-        (*self).insert(TMPL_VAR_PATH, &file);
-
-        // `dir_path` is a directory as fully qualified path, ending
-        // by a separator.
-        let dir_path = if path.is_dir() {
-            path
-        } else {
-            path.parent().unwrap_or_else(|| Path::new("./"))
-        };
-        (*self).insert(TMPL_VAR_DIR_PATH, &dir_path.to_str().unwrap_or_default());
-
+    pub fn insert_environment(&mut self) -> Result<(), NoteError> {
         // Default extension for new notes as defined in the configuration file.
         (*self).insert(
             TMPL_VAR_EXTENSION_DEFAULT,
@@ -209,9 +214,6 @@ impl Context {
             }
             (*self).insert(TMPL_VAR_LANG, &lang);
         }
-
-        // Store a copy of `dir_path` in `ContextWrapper`.
-        self.dir_path = dir_path.to_path_buf();
 
         Ok(())
     }
