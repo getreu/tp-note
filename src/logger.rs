@@ -7,6 +7,7 @@ use crate::settings::ARGS;
 #[cfg(feature = "message-box")]
 use crate::settings::RUNS_ON_CONSOLE;
 use crate::CONFIG_PATH;
+#[cfg(feature = "message-box")]
 use crate::VERSION;
 use lazy_static::lazy_static;
 use log::LevelFilter;

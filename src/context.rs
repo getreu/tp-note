@@ -25,7 +25,7 @@ use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
 use windows_sys::Win32::System::SystemServices::LOCALE_NAME_MAX_LENGTH;
 
 /// Tiny wrapper around "Tera context" with some additional information.
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Context {
     /// Collection of substitution variables.
     ct: tera::Context,

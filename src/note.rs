@@ -12,8 +12,6 @@ use crate::filename;
 use crate::filename::MarkupLanguage;
 use crate::filter::TERA;
 use crate::note_error_tera_template;
-use crate::settings::CLIPBOARD;
-use crate::settings::STDIN;
 use parse_hyperlinks::renderer::text_links2html;
 #[cfg(feature = "viewer")]
 use parse_hyperlinks::renderer::text_rawlinks2html;
@@ -259,11 +257,13 @@ use std::fs;
 impl Note {
     /// Constructor that creates a memory representation of an existing note on
     /// disk.
-    pub fn from_existing_note(path: &Path) -> Result<Self, NoteError> {
+    pub fn from_existing_note(mut context: Context) -> Result<Self, NoteError> {
         let content =
-            Content::from_input_with_cr(fs::read_to_string(path).map_err(|e| NoteError::Read {
-                path: path.to_path_buf(),
-                source: e,
+            Content::from_input_with_cr(fs::read_to_string(&context.path).map_err(|e| {
+                NoteError::Read {
+                    path: context.path.to_path_buf(),
+                    source: e,
+                }
             })?);
 
         // Deserialize the note read from disk.
@@ -285,10 +285,6 @@ impl Note {
             }
         }
 
-        let mut context = Context::from(path);
-        context.insert_environment()?;
-        context.insert_content(&CLIPBOARD, &STDIN)?;
-
         // Register the raw serialized header text.
         (*context).insert(TMPL_VAR_FM_ALL_YAML, &content.borrow_dependent().header);
 
@@ -305,10 +301,9 @@ impl Note {
 
     /// Constructor that prepends a YAML header to an existing text file.
     /// Throws an error if the file has a header.
-    pub fn from_text_file(path: &Path, template: &str) -> Result<Self, NoteError> {
-        let mut context = Context::from(&path);
+    pub fn from_text_file(mut context: Context, template: &str) -> Result<Self, NoteError> {
         {
-            let mut file = File::open(path)?;
+            let mut file = File::open(&context.path)?;
             // Get the file's content.
             let mut raw_text = String::new();
             file.read_to_string(&mut raw_text)?;
@@ -339,24 +334,12 @@ impl Note {
                 );
             }
         }
-        Self::from_content_template_context(template, context)
-    }
-
-    /// Constructor that creates a new note by filling in the content template `template`.
-    pub fn from_content_template(path: &Path, template: &str) -> Result<Self, NoteError> {
-        let context = Context::from(&path);
-        Self::from_content_template_context(template, context)
+        Self::from_content_template(context, template)
     }
 
     /// Constructor that creates a new note by filling in the content template `template`.
     /// This version takes also a provided prefilled `ContextWrapper`.
-    fn from_content_template_context(
-        template: &str,
-        mut context: Context,
-    ) -> Result<Self, NoteError> {
-        context.insert_environment()?;
-        context.insert_content(&CLIPBOARD, &STDIN)?;
-
+    pub fn from_content_template(mut context: Context, template: &str) -> Result<Self, NoteError> {
         log::trace!(
             "Available substitution variables for content template:\n{:#?}",
             *context

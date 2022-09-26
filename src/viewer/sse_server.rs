@@ -3,6 +3,7 @@
 
 use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
+use crate::context::Context;
 use crate::note::Note;
 use crate::viewer::error::ViewerError;
 use crate::viewer::init::LOCALHOST;
@@ -127,6 +128,8 @@ struct ServerThread {
     /// We do not store anything here, instead we use the ARC pointing to
     /// `conn_counter` to count the number of instances of `ServerThread`.
     conn_counter: Arc<()>,
+    /// We store the path of the note document in `context`.
+    context: Context,
 }
 
 impl ServerThread {
@@ -139,6 +142,7 @@ impl ServerThread {
         doc_local_links: Arc<RwLock<HashSet<PathBuf>>>,
         conn_counter: Arc<()>,
     ) -> Self {
+        let context = Context::from(&doc_path);
         Self {
             rx,
             stream,
@@ -146,6 +150,7 @@ impl ServerThread {
             doc_path,
             doc_local_links,
             conn_counter,
+            context,
         }
     }
 
@@ -580,8 +585,9 @@ impl ServerThread {
             .unwrap_or_default();
 
         // Render.
+        let context = self.context.clone();
         // First decompose header and body, then deserialize header.
-        match Note::from_existing_note(&self.doc_path)
+        match Note::from_existing_note(context)
             // Now, try to render to html.
             .and_then(|mut note| {
                 note.render_content(file_path_ext, &CFG.viewer.rendition_tmpl, &js)
