@@ -120,8 +120,6 @@ struct ServerThread {
     stream: TcpStream,
     /// The TCP port this stream comes from.
     sse_port: u16,
-    /// Local file system path of the note document.
-    doc_path: PathBuf,
     /// A list of in the not referenced local links to images or other
     /// documents.
     doc_local_links: Arc<RwLock<HashSet<PathBuf>>>,
@@ -147,7 +145,6 @@ impl ServerThread {
             rx,
             stream,
             sse_port,
-            doc_path,
             doc_local_links,
             conn_counter,
             context,
@@ -344,7 +341,7 @@ impl ServerThread {
                 // Serve all other documents.
                 _ => {
                     // Concatenate document directory and URL path.
-                    let doc_path = self.doc_path.canonicalize()?;
+                    let doc_path = &self.context.path;
                     let doc_dir = doc_path.parent().unwrap_or_else(|| Path::new(""));
 
                     // Strip `/` and convert to `Path`.
@@ -578,7 +575,8 @@ impl ServerThread {
 
         // Extension determines markup language when rendering.
         let file_path_ext = self
-            .doc_path
+            .context
+            .path
             .extension()
             .unwrap_or_default()
             .to_str()
@@ -642,7 +640,7 @@ impl ServerThread {
             // special error page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
-                Note::render_erroneous_content(&self.doc_path, &CFG.viewer.error_tmpl, &js, e)
+                Note::render_erroneous_content(&self.context.path, &CFG.viewer.error_tmpl, &js, e)
                     .map_err(|e| { ViewerError::RenderErrorPage {
                         tmpl: "[viewer] error_tmpl".to_string(),
                         source: e,
