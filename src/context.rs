@@ -110,7 +110,7 @@ impl Context {
 
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
-        let stdin_fm = FrontMatter::try_from(&*stdin);
+        let stdin_fm = FrontMatter::try_from(stdin);
         match stdin_fm {
             Ok(ref stdin_fm) => log::trace!(
                 "YAML front matter in the input stream stdin found:\n{:#?}",
@@ -127,7 +127,7 @@ impl Context {
 
         // Can we find a front matter in the clipboard? If yes, the unmodified
         // clipboard data is our new note content.
-        let clipboard_fm = FrontMatter::try_from(&*clipboard);
+        let clipboard_fm = FrontMatter::try_from(clipboard);
         match clipboard_fm {
             Ok(ref clipboard_fm) => log::trace!(
                 "YAML front matter in the clipboard found:\n{:#?}",
