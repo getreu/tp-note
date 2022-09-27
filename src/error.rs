@@ -239,17 +239,13 @@ pub enum NoteError {
 
     /// Remedy: check YAML syntax in the input stream's front matter.
     #[error(
-        "Invalid YAML field(s) in the `stdin` input stream data found:\n\
+        "Invalid YAML field(s) in the {tmpl_var} input stream data found:\n\
         {source_str}"
     )]
-    InvalidStdinYaml { source_str: String },
-
-    /// Remedy: check YAML syntax in the clipboard's front matter.
-    #[error(
-        "Invalid YAML field(s) in the clipboard data found:\n\
-        {source_str}"
-    )]
-    InvalidClipboardYaml { source_str: String },
+    InvalidInputYaml {
+        tmpl_var: String,
+        source_str: String,
+    },
 
     /// Remedy: check front matter delimiters `----`.
     #[error(

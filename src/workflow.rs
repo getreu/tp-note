@@ -7,9 +7,13 @@ use crate::file_editor::launch_editor;
 use crate::filename;
 use crate::filename::MarkupLanguage;
 use crate::note::Note;
+use crate::note::TMPL_VAR_CLIPBOARD;
+use crate::note::TMPL_VAR_CLIPBOARD_HEADER;
 use crate::note::TMPL_VAR_FM_;
 use crate::note::TMPL_VAR_FM_FILENAME_SYNC;
 use crate::note::TMPL_VAR_FM_NO_FILENAME_SYNC;
+use crate::note::TMPL_VAR_STDIN;
+use crate::note::TMPL_VAR_STDIN_HEADER;
 use crate::settings::ARGS;
 use crate::settings::CLIPBOARD;
 use crate::settings::LAUNCH_EDITOR;
@@ -291,7 +295,8 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
     // Collect input data for templates.
     let mut context = Context::from(&path);
     context.insert_environment()?;
-    context.insert_content(&CLIPBOARD, &STDIN)?;
+    context.insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &CLIPBOARD)?;
+    context.insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &STDIN)?;
 
     // Depending on this we might not show the viewer later or
     // log an error as WARN level instead of ERROR level.

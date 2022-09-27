@@ -252,7 +252,7 @@ fn main() {
         || matches!(
             &res,
             Err(WorkflowError::Note {
-                source: NoteError::InvalidClipboardYaml { .. },
+                source: NoteError::InvalidInputYaml { .. },
             })
         )
     {
