@@ -326,8 +326,8 @@ title:      {{ path | stem | split(pat='--') | first | cut | json_encode }}
 subtitle:   {{ path | stem | split(pat='--') | nth(n=1) | cut | json_encode }}
 author:     {{ username | json_encode }}
 date:       {{ path_file_date | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ lang | json_encode }}
 orig_name:  {{ path | filename | json_encode }}
+lang:       {{ lang | json_encode }}
 ---
 
 {{ path_file_text }}
