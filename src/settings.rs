@@ -89,7 +89,8 @@ pub static ref ARGS : Args = Args::from_args();
 lazy_static! {
     /// Shall we launch the external text editor?
     pub static ref LAUNCH_EDITOR: bool = {
-        !ARGS.batch && ARGS.export.is_none() && !ARGS.view
+        !ARGS.batch && ARGS.export.is_none() &&
+          (ARGS.edit || !ARGS.view)
     };
 }
 

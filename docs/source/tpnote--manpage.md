@@ -27,7 +27,7 @@ and, if necessary, its filename is adjusted. For all other file types,
 Tp-Note creates a new note in the same directory annotating the file. If
 the positional parameter '`<DIR>`' points to an existing directory (or,
 when omitted, the current working directory), a new note is created in
-that directory. After creation, Tp-Note launches the systems file editor. 
+that directory. After creation, Tp-Note launches the systems file editor.
 Although the configurable default templates are written for Markdown, Tp-Note
 is not tied to any specific markup language. However, Tp-Note comes
 with an optional viewer feature, that currently renders only Markdown,
@@ -528,9 +528,9 @@ synchronization).
 :   Edit only mode: opens the external text editor, but not the file
     viewer. This disables Tp-Note's internal file watcher and web server,
     unless '`-v`' is given. Another way to permanently disable the web server
-    is to set the configuration variable '`[viewer] enable=false`'.
-    When '`--edit --view`' appear together, '`--view`' takes precedence and
-    '`--edit`' is ignored.
+    is to set the configuration variable '`[arg_default] edit=true`'.
+    When '`--edit --view`' appear together, both the editor and the viewer
+    will open and the `[arg_default] edit` variable is ignored.
 
 **-p**, **\--port**=*PORT*
 
@@ -571,10 +571,9 @@ synchronization).
 :   View only mode: do not open the external text editor. This flag instructs
     Tp-Note to start an internal file watcher and web server and connect
     the system's default web browser to view the note file and to observe live
-    file modifications. This flag has precedence over the configuration
-    variable '`[viewer] enable=false`'.
-    When '`--edit --view`' appear together, '`--view`' takes precedence and
-    '`--edit`' is ignored.
+    file modifications. The configuration setting '`[arg_default] edit=true`'
+    disables the viewer. However, with '`--view`' given at the command line,
+    the viewer appears, regardless of the value of '`[arg_default] edit`'.
 
 :   As most users do not expect the viewed file to change, '`--view`'
     is usually used together with '`--no-filename-sync`'.
