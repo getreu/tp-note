@@ -1,8 +1,21 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
 //! and exposes the configuration as `static` variable.
-
 use crate::error::FileError;
 use crate::filename;
+use crate::note::EXPORTER_RENDITION_TMPL;
+use crate::note::TMPL_ANNOTATE_FILE_CONTENT;
+use crate::note::TMPL_ANNOTATE_FILE_FILENAME;
+use crate::note::TMPL_FROM_CLIPBOARD_CONTENT;
+use crate::note::TMPL_FROM_CLIPBOARD_FILENAME;
+use crate::note::TMPL_FROM_CLIPBOARD_YAML_CONTENT;
+use crate::note::TMPL_FROM_CLIPBOARD_YAML_FILENAME;
+use crate::note::TMPL_FROM_TEXT_FILE_CONTENT;
+use crate::note::TMPL_FROM_TEXT_FILE_FILENAME;
+use crate::note::TMPL_NEW_CONTENT;
+use crate::note::TMPL_NEW_FILENAME;
+use crate::note::TMPL_SYNC_FILENAME;
+use crate::note::VIEWER_ERROR_TMPL;
+use crate::note::VIEWER_RENDITION_TMPL;
 use crate::settings::ARGS;
 use crate::VERSION;
 use directories::ProjectDirs;
@@ -202,191 +215,6 @@ const CLIPBOARD_EMPTY_ENABLED: bool = true;
 /// in case the variable `fm_*` does not exist in the note's front matter.
 const TMPL_COMPULSORY_HEADER_FIELD: &str = "title";
 
-/// Default content template used when the command line argument <sanit> is a directory. Can be
-/// changed through editing the configuration file.
-/// The following variables are  defined:
-/// `{{ sanit | stem }}`, `{{ path | stem }}`, `{{ path | ext }}`, `{{ extension_default }}` `{{
-/// file | tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`, `{{ dir_path }}`.
-/// In addition all environment variables can be used, e.g.  `{{ get_env(name=\"LOGNAME\") }}`
-/// When placed in YAML front matter, the filter `| json_encode` must be appended to each variable.
-const TMPL_NEW_CONTENT: &str = "\
----
-title:      {{ dir_path | trim_tag | cut | json_encode }}
-subtitle:   {{ 'Note' | json_encode }}
-author:     {{ username | json_encode }}
-date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ lang | json_encode }}
----
-
-
-";
-
-/// Default filename template for a new note file on disk. It implements the sync criteria for
-/// note metadata in front matter and filename.
-/// Useful variables in this context are:
-/// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}`,
-/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case its value starts
-/// with a number, the string is prepended with `'`.  The first non-numerical variable must be some
-/// `{{ <var>| sanit(alpha) }}` variant.
-/// Note, as this is filename template, all variables (except `now` and `extension_default` must be
-/// filtered by a `sanit` or `sanit(force_alpha=true)` filter.
-const TMPL_NEW_FILENAME: &str = "\
-{{ now() | date(format='%Y%m%d-') }}\
-{{ fm_title | sanit(force_alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
-";
-
-/// Default template used, when the clipboard or the input stream `stdin` contains a string and one
-/// the of these strings contains a valid YAML front matter section.
-/// The clipboards body is in `{{ clipboard }}`, the header is in `{{ clipboard_header }}`.  The
-/// stdin's body is in `{{ stdin }}`, the header is in `{{ stdin_header }}`.
-/// First all variables defined in the clipboard's front matter are registered, the ones
-/// defined in the input stream `stdin`. The latter can overwrite the former.  One of the front
-/// matters must define the `title` variable, which is then available in this template as `{{
-/// fm_title }}`.
-/// When placed in YAML front matter, the filter `| json_encode` must be
-/// appended to each variable.
-const TMPL_FROM_CLIPBOARD_YAML_CONTENT: &str = "\
----
-title:      {{ fm_title | default(value = path|trim_tag) | cut | json_encode }}
-subtitle:   {{ fm_subtitle | default(value = 'Note') | cut | json_encode }}
-author:     {{ fm_author | default(value=username) | json_encode }}
-date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
-lang:       {{ fm_lang | default(value = lang) | json_encode }}
-{% for k, v in fm_all\
- | remove(var='fm_title')\
- | remove(var='fm_subtitle')\
- | remove(var='fm_author')\
- | remove(var='fm_date')\
- | remove(var='fm_lang') %}\
-{{ k }}:\t\t{{ v | json_encode }}
-{% endfor %}\
----
-
-{{ stdin ~ clipboard }}
-
-";
-
-/// Default filename template used when the stdin or the clipboard contains a string and one of
-/// them has a valid YAML header.
-const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
-{{ fm_sort_tag | default(value = now() | date(format='%Y%m%d-')) }}\
-{{ fm_title | sanit(force_alpha=true) }}\
-{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}\
-{{ fm_file_ext | default(value = extension_default ) | prepend_dot }}\
-";
-
-/// Default template used, when the clipboard or the input stream `stdin` contains a string and
-/// this string has no valid YAML front matter section.  The clipboards content is in `{{ clipboard
-/// }}`, its truncated version in `{{ clipboard | heading }}` When the clipboard contains a
-/// hyperlink in Markdown or reStruncturedText format. See crate `parse-hyperlinks` for details.
-/// For example: `[<link-name>](<link-url> "link-title")`, can be accessed with the variables:
-/// `{{ clipboard | linkname }}`, `{{ clipboard | linktarget }}` and `{{ clipboard | linkttitle }}`.
-const TMPL_FROM_CLIPBOARD_CONTENT: &str = "\
-{%- set lname = stdin ~ clipboard | linkname -%}
-{%- set ok_linkname = lname !=''\
-    and not lname is starting_with(\"http\")\
-    and not lname is starting_with(\"HTTP\") -%}
----
-{% if ok_linkname %}\
-title:      {{ stdin ~ clipboard | linkname | cut | json_encode }}
-{% else %}\
-title:      {{ stdin ~ clipboard | heading | cut | json_encode }}
-{% endif %}\
-{% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut %}\
-subtitle:   {{ 'URL' | json_encode }}
-{% else %}\
-subtitle:   {{ 'Note' | json_encode }}
-{% endif %}\
-author:     {{ username | json_encode }}
-date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ lang | json_encode }}
----
-
-{{ stdin ~ clipboard }}
-
-";
-
-/// Default filename template used when the stdin ~ clipboard contains a string.
-const TMPL_FROM_CLIPBOARD_FILENAME: &str = "\
-{{ now() | date(format='%Y%m%d-') }}\
-{{ fm_title | sanit(force_alpha=true) }}\
-{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
-";
-
-/// Default template used, when the opened text file (with a known file
-/// extension) is missing a YAML front matter section. This template prepends
-/// such a section. The template inserts information extracted from the input
-/// filename and its creation date.
-const TMPL_FROM_TEXT_FILE_CONTENT: &str = "\
----
-title:      {{ path | stem | split(pat='--') | first | cut | json_encode }}
-subtitle:   {{ path | stem | split(pat='--') | nth(n=1) | cut | json_encode }}
-author:     {{ username | json_encode }}
-date:       {{ path_file_date | date(format='%Y-%m-%d') | json_encode }}
-orig_name:  {{ path | filename | json_encode }}
-lang:       {{ lang | json_encode }}
----
-
-{{ path_file_text }}
-";
-
-/// Default filename template used when the input file (with a known
-/// file extension) is missing a YAML front matter section.
-/// The text file's sort-tag and file extension are preserved.
-const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
-{% if path | tag == '' %}{{ path_file_date | date(format='%Y%m%d-') }}\
-{% else %}{{ path | tag }}{% endif %}\
-{{ fm_title | sanit(force_alpha=true) }}\
-{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}\
-{{ path | ext | prepend_dot }}\
-";
-
-/// Default template used when the command line <path> parameter points to an existing
-/// non-`.md`-file. Can be modified through editing the configuration file.
-const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
----
-title:      {{ path | trim_tag | json_encode }}
-{% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}\
-subtitle:   {{ 'URL' | json_encode }}
-{% else %}\
-subtitle:   {{ 'Note' | json_encode }}
-{% endif %}\
-author:     {{ username | json_encode }}
-date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ lang | json_encode }}
----
-
-[{{ path | filename }}](<{{ path | filename }}>)
-{% if stdin ~ clipboard != '' %}{% if stdin ~ clipboard != stdin ~ clipboard | heading %}
----
-{% endif %}
-{{ stdin ~ clipboard }}
-{% endif %}
-";
-
-/// Filename of a new note, that annotates an existing file on disk given in
-/// <path>.
-const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
-{{ path | tag }}{{ fm_title | sanit(force_alpha=true) }}\
-{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit }}{{ extension_default | prepend_dot }}\
-";
-
-/// Default filename template to test, if the filename of an existing note file on disk,
-/// corresponds to the note's meta data stored in its front matter. If it is not the case, the
-/// note's filename will be renamed.  Can be modified through editing the configuration file.
-const TMPL_SYNC_FILENAME: &str = "\
-{{ fm_sort_tag | default(value = path | tag) }}\
-{{ fm_title | default(value='No title') | sanit(force_alpha=true) }}\
-{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}\
-{{ fm_file_ext | default(value = path | ext) | prepend_dot }}\
-";
-
 /// Default command line argument list when launching the web browser.
 /// The list is executed item by item until an installed web browser is found.
 /// Can be changed in config file.
@@ -548,6 +376,7 @@ const VIEWER_NOTIFY_PERIOD: u64 = 1000;
 /// connections are not uncommon.
 const VIEWER_TCP_CONNECTIONS_MAX: usize = 16;
 
+/// Served file types with corresponding mime types.
 /// The first entry per line is the file extension in lowercase(!), the second the
 /// corresponding mime type.  Embedded files with types other than those listed
 /// here are silently ignored.  Note, that image files must be located in the
@@ -580,163 +409,6 @@ const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
     &["webm", "video/webm"],
     &["ogx", "application/ogg"],
 ];
-
-/// Served file types with corresponding mime types.  First entry per line is
-pub const VIEWER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
-<html lang="{{ fm_lang | default(value='en') }}">
-<head>
-<meta charset="UTF-8">
-<title>{{ fm_title }}</title>
-<style>
-table, th, td { font-weight: normal; }
-table.center {
-  margin-left: auto;
-  margin-right: auto;
-  background-color: #f3f2e4;
-  border:1px solid grey;
-}
-th, td {
-  padding: 3px;
-  padding-left:15px;
-  padding-right:15px;
-}
-th.key{ color:#444444; text-align:right; }
-th.val{
-  color:#316128;
-  text-align:left;
-  font-family:sans-serif;
-}
-th.keygrey{ color:grey; text-align:right; }
-th.valgrey{ color:grey; text-align:left; }
-pre { white-space: pre-wrap; }
-em { color: #523626; }
-a { color: #316128; }
-h1 { font-size: 150% }
-h2 { font-size: 132% }
-h3 { font-size: 115% }
-h4, h5, h6 { font-size: 100% }
-h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
-
-</style>
-  </head>
-  <body>
-  <table class="center">
-    <tr>
-    <th class="key">title:</th>
-    <th class="val"><b>{{ fm_title }}</b></th>
-  </tr>
-    <tr>
-    <th class="key">subtitle:</th>
-    <th class="val">{{ fm_subtitle | default(value='') }}</th>
-  </tr>
-    <tr>
-    <th class="keygrey">date:</th>
-    <th class="valgrey">{{ fm_date | default(value='') }}</th>
-  </tr>
-  {% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle')| remove(var='fm_date') %}
-    <tr>
-    <th class="keygrey">{{ k }}:</th>
-    <th class="valgrey">{{ v }}</th>
-  </tr>
-  {% endfor %}
-  </table>
-  <div class="note-body">{{ note_body }}</div>
-  <script>{{ note_js }}</script>
-</body>
-</html>
-"#;
-
-/// HTML template to render the viewer-error page.
-pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Syntax error</title>
-<style>
-.note-error { color: #523626; }
-pre { white-space: pre-wrap; }
-a { color: #316128; }
-h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
-</style>
-</head>
-<body>
-<h3>Syntax error</h3>
-<p> in note file: <pre>{{ path }}</pre><p>
-<div class="note-error">
-<hr>
-<pre>{{ note_error }}</pre>
-<hr>
-</div>
-{{ note_erroneous_content }}
-<script>{{ note_js }}</script>
-</body>
-</html>
-"#;
-
-/// Template used to render a note into html when the
-/// rendition is saved to disk
-pub const EXPORTER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
-<html lang="{{ fm_lang | default(value='en') }}">
-<head>
-<meta charset="utf-8">
-<title>{{ fm_title }}</title>
-<style>
-table, th, td { font-weight: normal; }
-table.center {
-  margin-left: auto;
-  margin-right: auto;
-  background-color: #f3f2e4;
-  border:1px solid grey;
-}
-th, td {
-  padding: 3px;
-  padding-left:15px;
-  padding-right:15px;
-}
-th.key{ color:#444444; text-align:right; }
-th.val{
-  color:#316128;
-  text-align:left;
-  font-family:sans-serif;
-}
-th.keygrey{ color:grey; text-align:right; }
-th.valgrey{ color:grey; text-align:left; }
-pre { white-space: pre-wrap; }
-em { color: #523626; }
-a { color: #316128; }
-h1 { font-size: 150% }
-h2 { font-size: 132% }
-h3 { font-size: 115% }
-h4, h5, h6 { font-size: 100% }
-h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
-
-</style>
-  </head>
-  <body>
-  <table class="center">
-    <tr>
-    <th class="key">title:</th>
-    <th class="val"><b>{{ fm_title }}</b></th>
-  </tr>
-    <tr>
-    <th class="key">subtitle:</th>
-    <th class="val">{{ fm_subtitle | default(value='') }}</th>
-  </tr>
-    <tr>
-    <th class="keygrey">date:</th>
-    <th class="valgrey">{{ fm_date | default(value='') }}</th>
-  </tr>
-  {% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle')| remove(var='fm_date') %}
-    <tr>
-    <th class="keygrey">{{ k }}:</th>
-    <th class="valgrey">{{ v }}</th>
-  </tr>
-  {% endfor %}
-  </table>
-  <div class="note-body">{{ note_body }}</div>
-</body>
-</html>
-"#;
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]

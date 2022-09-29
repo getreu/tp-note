@@ -1422,6 +1422,8 @@ synchronization, set '`[arg_default] no_filename_sync = true`'. This guarantees,
 that Tp-Note will never change neither the filename nor the YAML header of an
 existing file.
 
+For a more detailed description of templates and their defaults, please
+consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 
 
 
@@ -1524,7 +1526,7 @@ variables might be undefined. Please take into consideration, that a defined
 variable might contain the empty string '`""`'.
 
 For a more detailed description of the available template variables, please
-consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'
+consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 
 
 
