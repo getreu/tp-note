@@ -837,15 +837,32 @@ editors that do not require a graphical environment, e.g. '`vim`' or '`nano`'.
 In order to use your own text editor, just place it at the top of the list. To
 debug your changes invoke Tp-Note with '`tpnote --debug info --popup --edit`'
 
+The following example showcases the configuration for the _Kate_
+file editor.  The entry '`kate`' launches the binary, while the command
+line parameter '`--block`' guarantees, that the launched process blocks
+until the user closes the editor. Tp-Note detects the end of the process,
+checks if the title of the note files has changed in its YAML header
+and renames the note file if necessary.
+
+```toml
+editor = [
+  [
+    'kate', 
+    '--block'
+  ]
+]
+```
+
 When you configure Tp-Note to work with your text editor, make sure, that your
 text editor does not fork! You can check this by launching the text editor from
 the command line: if the command prompt returns immediately, then the file
 editor forks the process. On the other hand everything is OK, when the command
 prompt only comes back at the moment the text editor is closed. Many text
 editors provide an option to restrain from forking: for example the
-_VScode_-editor can be launched with the '`--wait`' option or _Vim_ with
-'`--nofork`'. However, Tp-Note also works with forking text editors. Although
-this should be avoided, there is a possible workaround:
+_VScode_-editor can be launched with the '`--wait`' option, _Vim_ with
+'`--nofork`' or _Kate_ with '`--block`' (see example above). However,
+Tp-Note also works with forking text editors. Although this should be
+avoided, there is a possible workaround:
 
 ```shell
 > FILE=$(tpnote --batch) # Create the new note.
