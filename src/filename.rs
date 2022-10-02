@@ -1,8 +1,8 @@
 //! Helper functions that deal with filenames.
 use crate::config::CFG;
-use crate::config::FILENAME_COPY_COUNTER_MAX;
-use crate::config::FILENAME_DOTFILE_MARKER;
-use crate::config::FILENAME_LEN_MAX;
+use crate::config2::FILENAME_COPY_COUNTER_MAX;
+use crate::config2::FILENAME_DOTFILE_MARKER;
+use crate::config2::FILENAME_LEN_MAX;
 use crate::error::FileError;
 use std::path::Path;
 use std::path::PathBuf;

@@ -16,6 +16,7 @@
 #[cfg(feature = "message-box")]
 mod alert_service;
 mod config;
+mod config2;
 mod content;
 mod context;
 mod error;

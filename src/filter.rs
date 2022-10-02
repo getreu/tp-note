@@ -1,6 +1,6 @@
 //! Extends the built-in Tera filters.
 use crate::config::CFG;
-use crate::config::FILENAME_DOTFILE_MARKER;
+use crate::config2::FILENAME_DOTFILE_MARKER;
 use crate::filename::disassemble;
 use crate::filename::is_well_formed_filename;
 use crate::settings::Hyperlink;
