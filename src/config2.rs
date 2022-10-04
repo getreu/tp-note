@@ -627,11 +627,11 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 
 lazy_static! {
 /// Global variable containing the filename related configuration data.
-    pub static ref CFG_FILENAME: RwLock<Filename> = RwLock::new(Filename::default());
+    pub static ref CFG2: RwLock<Cfg> = RwLock::new(Cfg::default());
 }
 
 /// Configuration data, deserialized from the configuration file.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Cfg {
     /// Version number of the config file as String -or-
     /// a text message explaining why we could not load the
@@ -659,7 +659,7 @@ pub struct Filename {
 }
 
 /// Filename templates and content templates, deserialized from the configuration file.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tmpl {
     pub compulsory_header_field: String,
     pub new_content: String,
@@ -677,7 +677,7 @@ pub struct Tmpl {
 
 /// Configuration for the HTML exporter feature, deserialized from the
 /// configuration file.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Exporter {
     // TODO: rename, move to `config2::Rendition.exporter_tmpl`
     pub rendition_tmpl: String,

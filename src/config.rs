@@ -6,7 +6,7 @@ use crate::config2::Tmpl;
 use crate::config2::VIEWER_ERROR_TMPL;
 use crate::config2::VIEWER_RENDITION_TMPL;
 #[cfg(not(test))]
-use crate::config2::{CFG_FILENAME, FILENAME_DOTFILE_MARKER};
+use crate::config2::{CFG2, FILENAME_DOTFILE_MARKER};
 use crate::error::FileError;
 use crate::filename;
 use crate::settings::ARGS;
@@ -473,9 +473,11 @@ fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
             });
         }
         {
-            // Copy the `config.filename` into `FILENAME`.
-            let mut cfg_filename = CFG_FILENAME.write().unwrap();
-            *cfg_filename = config.filename.clone();
+            // Copy the parts of `config` into `CFG2`.
+            let mut cfg2 = CFG2.write().unwrap();
+            (*cfg2).filename = config.filename.clone();
+            (*cfg2).tmpl = config.tmpl.clone();
+            (*cfg2).exporter = config.exporter.clone();
         }
 
         // First check passed.
