@@ -3,7 +3,6 @@
 //! the memory representation is established be reading the note file with
 //! its front matter.
 
-use crate::config::CFG;
 use crate::config2::CFG2;
 use crate::config2::TMPL_VAR_FM_;
 use crate::config2::TMPL_VAR_FM_ALL_YAML;
@@ -82,7 +81,7 @@ impl TryFrom<&str> for FrontMatter {
         //fn deserialize_header(header: &str) -> Result<FrontMatter, NoteError> {
         if header.is_empty() {
             return Err(NoteError::MissingFrontMatter {
-                compulsory_field: CFG.tmpl.compulsory_header_field.to_owned(),
+                compulsory_field: (*cfg2).tmpl.compulsory_header_field.to_owned(),
             });
         };
 
@@ -148,6 +147,8 @@ impl Note {
     /// Constructor that creates a memory representation of an existing note on
     /// disk.
     pub fn from_existing_note(mut context: Context) -> Result<Self, NoteError> {
+        let cfg2 = CFG2.read().unwrap();
+
         let content =
             Content::from_input_with_cr(fs::read_to_string(&context.path).map_err(|e| {
                 NoteError::Read {
@@ -159,18 +160,18 @@ impl Note {
         // Deserialize the note read from disk.
         let fm = FrontMatter::try_from(&content)?;
 
-        if !&CFG.tmpl.compulsory_header_field.is_empty() {
+        if !(*cfg2).tmpl.compulsory_header_field.is_empty() {
             if let Some(tera::Value::String(header_field)) =
-                fm.map.get(&CFG.tmpl.compulsory_header_field)
+                fm.map.get(&(*cfg2).tmpl.compulsory_header_field)
             {
                 if header_field.is_empty() {
                     return Err(NoteError::CompulsoryFrontMatterFieldIsEmpty {
-                        field_name: CFG.tmpl.compulsory_header_field.to_owned(),
+                        field_name: (*cfg2).tmpl.compulsory_header_field.to_owned(),
                     });
                 };
             } else {
                 return Err(NoteError::MissingFrontMatterField {
-                    field_name: CFG.tmpl.compulsory_header_field.to_owned(),
+                    field_name: (*cfg2).tmpl.compulsory_header_field.to_owned(),
                 });
             }
         }
