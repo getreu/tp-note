@@ -1,4 +1,5 @@
 //! Extends the built-in Tera filters.
+use crate::config2::CFG_FILENAME;
 use crate::content::Content;
 use crate::error::NoteError;
 use crate::note::FrontMatter;
@@ -9,7 +10,6 @@ use crate::note::TMPL_VAR_FM_ALL;
 use crate::note::TMPL_VAR_LANG;
 use crate::note::TMPL_VAR_PATH;
 use crate::note::TMPL_VAR_USERNAME;
-use crate::CFG;
 use std::env;
 use std::ops::Deref;
 use std::ops::DerefMut;
@@ -130,10 +130,12 @@ impl Context {
     /// a context template and a filename template.
     /// The `path` parameter must be a canonicalized fully qualified file name.
     pub fn insert_environment(&mut self) -> Result<(), NoteError> {
+        let cfg_filename = CFG_FILENAME.read().unwrap();
+
         // Default extension for new notes as defined in the configuration file.
         (*self).insert(
             TMPL_VAR_EXTENSION_DEFAULT,
-            CFG.filename.extension_default.as_str(),
+            cfg_filename.extension_default.as_str(),
         );
 
         // Search for UNIX, Windows and MacOS user-names.

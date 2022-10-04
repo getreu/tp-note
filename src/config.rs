@@ -1,6 +1,8 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
 //! and exposes the configuration as `static` variable.
 use crate::config2::Filename;
+#[cfg(not(test))]
+use crate::config2::CFG_FILENAME;
 use crate::error::FileError;
 use crate::filename;
 use crate::note::EXPORTER_RENDITION_TMPL;
@@ -542,6 +544,12 @@ fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
                     .to_string(),
             });
         }
+        {
+            // Copy the `config.filename` into `FILENAME`.
+            let mut cfg_filename = CFG_FILENAME.write().unwrap();
+            *cfg_filename = config.filename.clone();
+        }
+
         // First check passed.
         Ok(config)
     } else {

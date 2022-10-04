@@ -4,6 +4,7 @@
 //! its front matter.
 
 use crate::config::CFG;
+use crate::config2::CFG_FILENAME;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
@@ -556,6 +557,7 @@ impl TryFrom<&str> for FrontMatter {
     type Error = NoteError;
     /// Helper function deserializing the front-matter of the note file.
     fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
+        let cfg_filename = CFG_FILENAME.read().unwrap();
         //fn deserialize_header(header: &str) -> Result<FrontMatter, NoteError> {
         if header.is_empty() {
             return Err(NoteError::MissingFrontMatter {
@@ -584,13 +586,13 @@ impl TryFrom<&str> for FrontMatter {
                 // Check for forbidden characters.
                 if !sort_tag
                     .trim_start_matches(
-                        &CFG.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..],
+                        &cfg_filename.sort_tag_chars.chars().collect::<Vec<char>>()[..],
                     )
                     .is_empty()
                 {
                     return Err(NoteError::SortTagVarInvalidChar {
                         sort_tag: sort_tag.to_owned(),
-                        sort_tag_chars: CFG.filename.sort_tag_chars.escape_default().to_string(),
+                        sort_tag_chars: cfg_filename.sort_tag_chars.escape_default().to_string(),
                     });
                 }
             };
@@ -607,11 +609,11 @@ impl TryFrom<&str> for FrontMatter {
             if extension_is_unknown {
                 return Err(NoteError::FileExtNotRegistered {
                     extension: file_ext.to_owned(),
-                    md_ext: CFG.filename.extensions_md.to_owned(),
-                    rst_ext: CFG.filename.extensions_rst.to_owned(),
-                    html_ext: CFG.filename.extensions_html.to_owned(),
-                    txt_ext: CFG.filename.extensions_txt.to_owned(),
-                    no_viewer_ext: CFG.filename.extensions_no_viewer.to_owned(),
+                    md_ext: cfg_filename.extensions_md.to_owned(),
+                    rst_ext: cfg_filename.extensions_rst.to_owned(),
+                    html_ext: cfg_filename.extensions_html.to_owned(),
+                    txt_ext: cfg_filename.extensions_txt.to_owned(),
+                    no_viewer_ext: cfg_filename.extensions_no_viewer.to_owned(),
                 });
             }
         };

@@ -1,7 +1,9 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
 //! and exposes the configuration as `static` variable.
 
+use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
+use std::sync::RwLock;
 
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
@@ -124,9 +126,14 @@ pub const FILENAME_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t"];
 /// This a dot by definition.
 pub const FILENAME_DOTFILE_MARKER: char = '.';
 
+lazy_static! {
+/// Global variable containing the filename related configuration data.
+    pub static ref CFG_FILENAME: RwLock<Filename> = RwLock::new(Filename::default());
+}
+
 /// Configuration of filename parsing, deserialized from the
 /// configuration file.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Filename {
     pub sort_tag_chars: String,
     pub sort_tag_extra_separator: char,
