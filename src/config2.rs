@@ -679,7 +679,8 @@ pub struct Tmpl {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct HtmlTmpl {
-    // TODO: rename, move to `config2::Rendition.exporter_tmpl`
+    pub viewer_tmpl: String,
+    pub viewer_error_tmpl: String,
     pub exporter_tmpl: String,
 }
 
@@ -741,6 +742,8 @@ impl ::std::default::Default for Tmpl {
 impl ::std::default::Default for HtmlTmpl {
     fn default() -> Self {
         HtmlTmpl {
+            viewer_tmpl: VIEWER_RENDITION_TMPL.to_string(),
+            viewer_error_tmpl: VIEWER_ERROR_TMPL.to_string(),
             exporter_tmpl: EXPORTER_RENDITION_TMPL.to_string(),
         }
     }

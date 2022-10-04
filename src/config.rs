@@ -326,10 +326,6 @@ pub struct Viewer {
     pub notify_period: u64,
     pub tcp_connections_max: usize,
     pub served_mime_types: Vec<Vec<String>>,
-    // TODO: rename, move to `config2::endition.viewer_tmpl`
-    pub viewer_tmpl: String,
-    // TODO: rename, move to `config2::Rendition.viewer_error_tmpl`
-    pub viewer_error_tmpl: String,
 }
 
 /// When no configuration file is found, defaults are set here from built-in
@@ -411,8 +407,6 @@ impl ::std::default::Default for Viewer {
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
-            viewer_tmpl: VIEWER_RENDITION_TMPL.to_string(),
-            viewer_error_tmpl: VIEWER_ERROR_TMPL.to_string(),
         }
     }
 }
