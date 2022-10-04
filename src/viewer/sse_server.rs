@@ -588,7 +588,7 @@ impl ServerThread {
         match Note::from_existing_note(context)
             // Now, try to render to html.
             .and_then(|mut note| {
-                note.render_content(file_path_ext, &CFG.viewer.rendition_tmpl, &js)
+                note.render_content(file_path_ext, &CFG.viewer.viewer_tmpl, &js)
             })
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
@@ -640,7 +640,7 @@ impl ServerThread {
             // special error page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
-                Note::render_erroneous_content(&self.context.path, &CFG.viewer.error_tmpl, &js, e)
+                Note::render_erroneous_content(&self.context.path, &CFG.viewer.viewer_error_tmpl, &js, e)
                     .map_err(|e| { ViewerError::RenderErrorPage {
                         tmpl: "[viewer] error_tmpl".to_string(),
                         source: e,
