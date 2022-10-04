@@ -1,15 +1,15 @@
 //! Extends the built-in Tera filters.
 use crate::config2::CFG_FILENAME;
+use crate::config2::TMPL_VAR_DIR_PATH;
+use crate::config2::TMPL_VAR_EXTENSION_DEFAULT;
+use crate::config2::TMPL_VAR_FM_;
+use crate::config2::TMPL_VAR_FM_ALL;
+use crate::config2::TMPL_VAR_LANG;
+use crate::config2::TMPL_VAR_PATH;
+use crate::config2::TMPL_VAR_USERNAME;
 use crate::content::Content;
 use crate::error::NoteError;
 use crate::note::FrontMatter;
-use crate::note::TMPL_VAR_DIR_PATH;
-use crate::note::TMPL_VAR_EXTENSION_DEFAULT;
-use crate::note::TMPL_VAR_FM_;
-use crate::note::TMPL_VAR_FM_ALL;
-use crate::note::TMPL_VAR_LANG;
-use crate::note::TMPL_VAR_PATH;
-use crate::note::TMPL_VAR_USERNAME;
 use std::env;
 use std::ops::Deref;
 use std::ops::DerefMut;

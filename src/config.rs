@@ -1,24 +1,14 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
 //! and exposes the configuration as `static` variable.
+use crate::config2::Exporter;
 use crate::config2::Filename;
+use crate::config2::Tmpl;
+use crate::config2::VIEWER_ERROR_TMPL;
+use crate::config2::VIEWER_RENDITION_TMPL;
 #[cfg(not(test))]
-use crate::config2::CFG_FILENAME;
+use crate::config2::{CFG_FILENAME, FILENAME_DOTFILE_MARKER};
 use crate::error::FileError;
 use crate::filename;
-use crate::note::EXPORTER_RENDITION_TMPL;
-use crate::note::TMPL_ANNOTATE_FILE_CONTENT;
-use crate::note::TMPL_ANNOTATE_FILE_FILENAME;
-use crate::note::TMPL_FROM_CLIPBOARD_CONTENT;
-use crate::note::TMPL_FROM_CLIPBOARD_FILENAME;
-use crate::note::TMPL_FROM_CLIPBOARD_YAML_CONTENT;
-use crate::note::TMPL_FROM_CLIPBOARD_YAML_FILENAME;
-use crate::note::TMPL_FROM_TEXT_FILE_CONTENT;
-use crate::note::TMPL_FROM_TEXT_FILE_FILENAME;
-use crate::note::TMPL_NEW_CONTENT;
-use crate::note::TMPL_NEW_FILENAME;
-use crate::note::TMPL_SYNC_FILENAME;
-use crate::note::VIEWER_ERROR_TMPL;
-use crate::note::VIEWER_RENDITION_TMPL;
 use crate::settings::ARGS;
 use crate::VERSION;
 use directories::ProjectDirs;
@@ -87,15 +77,6 @@ const CLIPBOARD_READ_ENABLED: bool = true;
 /// Should the clipboard be emptied when tp-note closes?
 /// Default value.
 const CLIPBOARD_EMPTY_ENABLED: bool = true;
-
-/// As all application logic is encoded in Tp-Note's templates, it does not know about field names.
-/// Nevertheless it is useful to identify at least one field as _the_ field that identifies a note
-/// the most.  When `TMPL_COMPULSORY_HEADER_FIELD` is not empty, Tp-Note will not synchronize the
-/// note's filename and will pop up an error message, unless it finds the field in the note's
-/// header.  When `TMPL_COMPULSORY_HEADER_FIELD` is empty, all files are synchronized without any
-/// further field check. Make sure to define a default value with `fm_* | default(value=*)`
-/// in case the variable `fm_*` does not exist in the note's front matter.
-const TMPL_COMPULSORY_HEADER_FIELD: &str = "title";
 
 /// Default command line argument list when launching the web browser.
 /// The list is executed item by item until an installed web browser is found.
@@ -327,23 +308,6 @@ pub struct Clipboard {
     pub empty_enabled: bool,
 }
 
-/// Filename templates and content templates, deserialized from the configuration file.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Tmpl {
-    pub compulsory_header_field: String,
-    pub new_content: String,
-    pub new_filename: String,
-    pub from_clipboard_yaml_content: String,
-    pub from_clipboard_yaml_filename: String,
-    pub from_clipboard_content: String,
-    pub from_clipboard_filename: String,
-    pub from_text_file_content: String,
-    pub from_text_file_filename: String,
-    pub annotate_file_content: String,
-    pub annotate_file_filename: String,
-    pub sync_filename: String,
-}
-
 /// Arguments lists for invoking external applications, deserialized from the
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize)]
@@ -362,15 +326,10 @@ pub struct Viewer {
     pub notify_period: u64,
     pub tcp_connections_max: usize,
     pub served_mime_types: Vec<Vec<String>>,
+    // TODO: rename, move to `config2::endition.viewer_tmpl`
     pub rendition_tmpl: String,
+    // TODO: rename, move to `config2::Rendition.viewer_error_tmpl`
     pub error_tmpl: String,
-}
-
-/// Configuration for the HTML exporter feature, deserialized from the
-/// configuration file.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Exporter {
-    pub rendition_tmpl: String,
 }
 
 /// When no configuration file is found, defaults are set here from built-in
@@ -406,26 +365,6 @@ impl ::std::default::Default for ArgDefault {
             popup: ARG_DEFAULT_POPUP,
             tty: ARG_DEFAULT_TTY,
             add_header: ARG_DEFAULT_ADD_HEADER,
-        }
-    }
-}
-
-/// Default values for templates.
-impl ::std::default::Default for Tmpl {
-    fn default() -> Self {
-        Tmpl {
-            compulsory_header_field: TMPL_COMPULSORY_HEADER_FIELD.to_string(),
-            new_content: TMPL_NEW_CONTENT.to_string(),
-            new_filename: TMPL_NEW_FILENAME.to_string(),
-            from_clipboard_yaml_content: TMPL_FROM_CLIPBOARD_YAML_CONTENT.to_string(),
-            from_clipboard_yaml_filename: TMPL_FROM_CLIPBOARD_YAML_FILENAME.to_string(),
-            from_clipboard_content: TMPL_FROM_CLIPBOARD_CONTENT.to_string(),
-            from_clipboard_filename: TMPL_FROM_CLIPBOARD_FILENAME.to_string(),
-            from_text_file_content: TMPL_FROM_TEXT_FILE_CONTENT.to_string(),
-            from_text_file_filename: TMPL_FROM_TEXT_FILE_FILENAME.to_string(),
-            annotate_file_content: TMPL_ANNOTATE_FILE_CONTENT.to_string(),
-            annotate_file_filename: TMPL_ANNOTATE_FILE_FILENAME.to_string(),
-            sync_filename: TMPL_SYNC_FILENAME.to_string(),
         }
     }
 }
@@ -478,15 +417,6 @@ impl ::std::default::Default for Viewer {
     }
 }
 
-/// Default values for the exporter feature.
-impl ::std::default::Default for Exporter {
-    fn default() -> Self {
-        Exporter {
-            rendition_tmpl: EXPORTER_RENDITION_TMPL.to_string(),
-        }
-    }
-}
-
 lazy_static! {
     /// Store the extension as key and mime type as value in HashMap.
     pub static ref VIEWER_SERVED_MIME_TYPES_HMAP: HashMap<&'static str, &'static str> = {
@@ -510,8 +440,6 @@ lazy_static! {
 #[cfg(not(test))]
 #[inline]
 fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
-    use crate::config2::FILENAME_DOTFILE_MARKER;
-
     if config_path.exists() {
         let config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
         // Check for obvious configuration errors.

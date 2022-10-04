@@ -1,5 +1,12 @@
 //! High level program logic implementing the whole workflow.
 use crate::config::CFG;
+use crate::config2::TMPL_VAR_CLIPBOARD;
+use crate::config2::TMPL_VAR_CLIPBOARD_HEADER;
+use crate::config2::TMPL_VAR_FM_;
+use crate::config2::TMPL_VAR_FM_FILENAME_SYNC;
+use crate::config2::TMPL_VAR_FM_NO_FILENAME_SYNC;
+use crate::config2::TMPL_VAR_STDIN;
+use crate::config2::TMPL_VAR_STDIN_HEADER;
 use crate::context::Context;
 use crate::error::NoteError;
 use crate::error::WorkflowError;
@@ -7,13 +14,6 @@ use crate::file_editor::launch_editor;
 use crate::filename;
 use crate::filename::MarkupLanguage;
 use crate::note::Note;
-use crate::note::TMPL_VAR_CLIPBOARD;
-use crate::note::TMPL_VAR_CLIPBOARD_HEADER;
-use crate::note::TMPL_VAR_FM_;
-use crate::note::TMPL_VAR_FM_FILENAME_SYNC;
-use crate::note::TMPL_VAR_FM_NO_FILENAME_SYNC;
-use crate::note::TMPL_VAR_STDIN;
-use crate::note::TMPL_VAR_STDIN_HEADER;
 use crate::settings::ARGS;
 use crate::settings::CLIPBOARD;
 use crate::settings::LAUNCH_EDITOR;
