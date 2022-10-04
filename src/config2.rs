@@ -464,7 +464,7 @@ pub const TMPL_VAR_NOTE_ERRONEOUS_CONTENT: &str = "note_erroneous_content";
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
-pub const VIEWER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
+pub const HTML_VIEWER_TMPL: &str = r#"<!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
 <meta charset="UTF-8">
@@ -533,7 +533,7 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
-pub const VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
+pub const HTML_VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -560,9 +560,9 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 "#;
 
 /// HTML template used to render a note into html when the
-/// rendition is saved to disk. Similar to `VIEWER_RENDITION_TMPL`
+/// rendition is saved to disk. Similar to `HTML_VIEWER_TMPL`
 /// but does not inject JavaScript code.
-pub const EXPORTER_RENDITION_TMPL: &str = r#"<!DOCTYPE html>
+pub const HTML_EXPORTER_TMPL: &str = r#"<!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
 <meta charset="utf-8">
@@ -742,9 +742,9 @@ impl ::std::default::Default for Tmpl {
 impl ::std::default::Default for HtmlTmpl {
     fn default() -> Self {
         HtmlTmpl {
-            viewer_tmpl: VIEWER_RENDITION_TMPL.to_string(),
-            viewer_error_tmpl: VIEWER_ERROR_TMPL.to_string(),
-            exporter_tmpl: EXPORTER_RENDITION_TMPL.to_string(),
+            viewer_tmpl: HTML_VIEWER_TMPL.to_string(),
+            viewer_error_tmpl: HTML_VIEWER_ERROR_TMPL.to_string(),
+            exporter_tmpl: HTML_EXPORTER_TMPL.to_string(),
         }
     }
 }

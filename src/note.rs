@@ -381,7 +381,7 @@ impl Note {
     /// First, determines the markup language from the file extension or
     /// the `fm_file_ext` YAML variable, if present.
     /// Then calls the appropriate markup renderer.
-    /// Finally the result is rendered with the `VIEWER_RENDITION_TMPL`
+    /// Finally the result is rendered with the `HTML_VIEWER_TMPL`
     /// template.
     pub fn render_content(
         &mut self,

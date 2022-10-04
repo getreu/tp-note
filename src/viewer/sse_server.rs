@@ -565,7 +565,7 @@ impl ServerThread {
     }
 
     #[inline]
-    /// Renders the error page with the `VIEWER_ERROR_TMPL`.
+    /// Renders the error page with the `HTML_VIEWER_ERROR_TMPL`.
     fn render_content_and_error(&self) -> Result<String, ViewerError> {
         // Deserialize.
         let js = format!(
