@@ -98,7 +98,7 @@ fn synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
 
     // Print HTML rendition.
     if let Some(dir) = &ARGS.export {
-        n.render_and_write_content(&new_file_path, &CFG.exporter.rendition_tmpl, dir)
+        n.render_and_write_content(&new_file_path, &CFG.html_tmpl.exporter_tmpl, dir)
             .map_err(|e| WorkflowError::Template {
                 tmpl_name: "[exporter] rendition_tmpl".to_string(),
                 source: e,

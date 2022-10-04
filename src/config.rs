@@ -1,7 +1,7 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
 //! and exposes the configuration as `static` variable.
-use crate::config2::Exporter;
 use crate::config2::Filename;
+use crate::config2::HtmlTmpl;
 use crate::config2::Tmpl;
 use crate::config2::VIEWER_ERROR_TMPL;
 use crate::config2::VIEWER_RENDITION_TMPL;
@@ -286,7 +286,7 @@ pub struct Cfg {
     pub tmpl: Tmpl,
     pub app_args: AppArgs,
     pub viewer: Viewer,
-    pub exporter: Exporter,
+    pub html_tmpl: HtmlTmpl,
 }
 
 /// Command line arguments, deserialized form configuration file.
@@ -350,7 +350,7 @@ impl ::std::default::Default for Cfg {
             clipboard: Clipboard::default(),
             filename: Filename::default(),
             viewer: Viewer::default(),
-            exporter: Exporter::default(),
+            html_tmpl: HtmlTmpl::default(),
         }
     }
 }
@@ -477,7 +477,7 @@ fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
             let mut cfg2 = CFG2.write().unwrap();
             (*cfg2).filename = config.filename.clone();
             (*cfg2).tmpl = config.tmpl.clone();
-            (*cfg2).exporter = config.exporter.clone();
+            (*cfg2).html_tmpl = config.html_tmpl.clone();
         }
 
         // First check passed.

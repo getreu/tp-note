@@ -638,7 +638,7 @@ pub struct Cfg {
     /// configuration file.
     pub filename: Filename,
     pub tmpl: Tmpl,
-    pub exporter: Exporter,
+    pub html_tmpl: HtmlTmpl,
 }
 
 /// Configuration of filename parsing, deserialized from the
@@ -678,9 +678,9 @@ pub struct Tmpl {
 /// Configuration for the HTML exporter feature, deserialized from the
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Exporter {
+pub struct HtmlTmpl {
     // TODO: rename, move to `config2::Rendition.exporter_tmpl`
-    pub rendition_tmpl: String,
+    pub exporter_tmpl: String,
 }
 
 /// Default values for copy counter.
@@ -738,10 +738,10 @@ impl ::std::default::Default for Tmpl {
 }
 
 /// Default values for the exporter feature.
-impl ::std::default::Default for Exporter {
+impl ::std::default::Default for HtmlTmpl {
     fn default() -> Self {
-        Exporter {
-            rendition_tmpl: EXPORTER_RENDITION_TMPL.to_string(),
+        HtmlTmpl {
+            exporter_tmpl: EXPORTER_RENDITION_TMPL.to_string(),
         }
     }
 }
