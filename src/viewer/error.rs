@@ -1,6 +1,6 @@
 //! The viewer feature's error type.
-use crate::error::FileError;
-use crate::error::NoteError;
+use crate::error::ConfigFileError;
+use crate::error2::NoteError;
 use core::str::Utf8Error;
 use std::sync::mpsc::RecvError;
 use thiserror::Error;
@@ -70,7 +70,7 @@ pub enum ViewerError {
     /// Forward `FileError::ApplicationReturn` and `FileError::NoApplicationFound needed by
     /// `viewer::web_browser`.
     #[error(transparent)]
-    File(#[from] FileError),
+    File(#[from] ConfigFileError),
 
     /// Forward errors from `error::NoteError` when rendering the page.
     #[error(transparent)]

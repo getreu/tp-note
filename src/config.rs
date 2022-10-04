@@ -3,11 +3,9 @@
 use crate::config2::Filename;
 use crate::config2::HtmlTmpl;
 use crate::config2::Tmpl;
-use crate::config2::HTML_VIEWER_ERROR_TMPL;
-use crate::config2::HTML_VIEWER_TMPL;
 #[cfg(not(test))]
 use crate::config2::{CFG2, FILENAME_DOTFILE_MARKER};
-use crate::error::FileError;
+use crate::error2::FileError;
 use crate::filename;
 use crate::settings::ARGS;
 use crate::VERSION;

@@ -1,6 +1,6 @@
 //! Deals with the note's content string.
 
-use crate::error::FileError;
+use crate::error2::FileError;
 use self_cell::self_cell;
 use std::fmt;
 use std::fs::create_dir_all;

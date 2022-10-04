@@ -1,7 +1,7 @@
 //! Launch the user's favourite file editor.
 
 use crate::config::CFG;
-use crate::error::FileError;
+use crate::error::ConfigFileError;
 use crate::process_ext::ChildExt;
 use crate::settings::RUNS_ON_CONSOLE;
 #[cfg(not(target_family = "windows"))]
@@ -16,7 +16,7 @@ use std::process::Stdio;
 /// `CFG.app_args.editor_console` or `CFG.app_args.editor` until it finds an installed
 /// text editor. Once the editor is launched, the function blocks until the user
 /// closes the editor window.
-pub fn launch_editor(path: &Path) -> Result<(), FileError> {
+pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
     // Both lists have always the same number of items.
     let mut args_list = Vec::new();
     let mut executable_list = Vec::new();
@@ -35,7 +35,7 @@ pub fn launch_editor(path: &Path) -> Result<(), FileError> {
         for s in app[1..].iter() {
             args.push(s);
         }
-        args.push(path.to_str().ok_or(FileError::PathNotUtf8 {
+        args.push(path.to_str().ok_or(ConfigFileError::PathNotUtf8 {
             path: path.to_path_buf(),
         })?);
         args_list.push(args);
@@ -110,7 +110,7 @@ pub fn launch_editor(path: &Path) -> Result<(), FileError> {
                 let ecode = child.wait_subprocess()?;
 
                 if !ecode.success() {
-                    return Err(FileError::ApplicationReturn {
+                    return Err(ConfigFileError::ApplicationReturn {
                         code: ecode,
                         var_name: if *RUNS_ON_CONSOLE {
                             "[app_args] editor_console".to_string()
@@ -131,7 +131,7 @@ pub fn launch_editor(path: &Path) -> Result<(), FileError> {
     }
 
     if !executable_found {
-        return Err(FileError::NoApplicationFound {
+        return Err(ConfigFileError::NoApplicationFound {
             app_list: executable_list
                 .into_iter()
                 .map(|s| s.to_owned())

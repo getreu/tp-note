@@ -20,6 +20,7 @@ mod config2;
 mod content;
 mod context;
 mod error;
+mod error2;
 mod file_editor;
 mod filename;
 mod filter;
@@ -38,9 +39,9 @@ use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
 use crate::config::CONFIG_PATH;
 #[cfg(feature = "read-clipboard")]
-use crate::error::NoteError;
-#[cfg(feature = "read-clipboard")]
 use crate::error::WorkflowError;
+#[cfg(feature = "read-clipboard")]
+use crate::error2::NoteError;
 use crate::logger::AppLogger;
 use crate::settings::ARGS;
 #[cfg(feature = "read-clipboard")]
@@ -52,7 +53,7 @@ use crate::workflow::run;
 use copypasta::ClipboardContext;
 #[cfg(feature = "read-clipboard")]
 use copypasta::ClipboardProvider;
-use error::FileError;
+use error::ConfigFileError;
 use semver::Version;
 use serde::Serialize;
 use std::path::PathBuf;
@@ -132,13 +133,13 @@ fn main() {
 
         // One of them is `Err`, we do not care who.
         Some(e) => {
-            log::error!("{}", FileError::ConfigFileLoadParseWrite { error: e });
+            log::error!("{}", ConfigFileError::ConfigFileLoadParseWrite { error: e });
 
             // Move erroneous config file away.
             if let Err(e) = backup_config_file() {
                 log::error!(
                     "{}",
-                    FileError::ConfigFileBackup {
+                    ConfigFileError::ConfigFileBackup {
                         error: e.to_string()
                     }
                     .to_string()
@@ -158,7 +159,7 @@ fn main() {
         {
             log::error!(
                 "{}",
-                FileError::ConfigFileVersionMismatch {
+                ConfigFileError::ConfigFileVersionMismatch {
                     config_file_version: config_file_version.to_string(),
                     min_version: MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0").to_string(),
                 }
@@ -167,7 +168,7 @@ fn main() {
             if let Err(e) = backup_config_file() {
                 log::error!(
                     "{}",
-                    FileError::ConfigFileBackup {
+                    ConfigFileError::ConfigFileBackup {
                         error: e.to_string()
                     }
                     .to_string()

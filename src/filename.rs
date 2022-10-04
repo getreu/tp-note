@@ -3,7 +3,7 @@ use crate::config2::CFG2;
 use crate::config2::FILENAME_COPY_COUNTER_MAX;
 use crate::config2::FILENAME_DOTFILE_MARKER;
 use crate::config2::FILENAME_LEN_MAX;
-use crate::error::FileError;
+use crate::error2::FileError;
 use std::path::Path;
 use std::path::PathBuf;
 

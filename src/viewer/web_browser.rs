@@ -1,7 +1,7 @@
 //! Launch the user's favourite web browser.
 
 use crate::config::CFG;
-use crate::error::FileError;
+use crate::error::ConfigFileError;
 use crate::process_ext::ChildExt;
 use crate::viewer::error::ViewerError;
 use std::process::Command;
@@ -104,7 +104,7 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
                     executable_found = true;
                     break;
                 } else {
-                    return Err(FileError::ApplicationReturn {
+                    return Err(ConfigFileError::ApplicationReturn {
                         code: ecode,
                         var_name: "browser_agrs".to_string(),
                         args: (*browser_args[i]).to_vec(),
@@ -119,7 +119,7 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
     }
 
     if !executable_found {
-        return Err(FileError::NoApplicationFound {
+        return Err(ConfigFileError::NoApplicationFound {
             app_list: executable_list
                 .into_iter()
                 .map(|s| s.to_owned())
