@@ -1240,8 +1240,8 @@ you wish to disable the viewer feature overall, set the variable
 
 After the markup rendition process, Tp-Note's built-in viewer generates its
 final HTML rendition through the customizable HTML templates
-'`[viewer] rendition_tmpl`' and '`[viewer] error_tmpl`'. The following code
-example taken from '`[viewer] rendition_tmpl`' illustrates the available variables:
+'`[html_tmpl] viewer_tmpl`' and '`[html_tmpl] viewer_error_tmpl`'. The following code
+example taken from '`[html_tmpl] viewer_tmpl`' illustrates the available variables:
 
 ```html
 [viewer]
@@ -1288,11 +1288,11 @@ as a table:
   </table>
 ```
 
-The error page template '`[viewer] error_tmpl`' (see below) does not provide '`fm_*`'
-variables, because of possible header syntax errors. Instead, the variable
-'`{{ note_error }}`' contains the error message as raw UTF-8 and the variable
-'`{{ note_erroneous_content }}`' the HTML rendition of the text source with
-clickable hyperlinks:
+The error page template '`[html_tmpl] viewer_error_tmpl`' (see below)
+does not provide '`fm_*`' variables, because of possible header syntax
+errors. Instead, the variable '`{{ note_error }}`' contains the error
+message as raw UTF-8 and the variable '`{{ note_erroneous_content }}`'
+the HTML rendition of the text source with clickable hyperlinks:
 
 ```html
 [viewer]
@@ -1319,12 +1319,12 @@ error_tmpl = '''<!DOCTYPE html>
 
 Customizing Tp-Note's HTML export function works the same way as
 customizing the built-in viewer. There are some slight differences though:
-The role of the '`[viewer] rendition_tmpl`' template - discussed above - is
-taken over by the '`[exporter] rendition_tmpl`' template. In this template the
+The role of the '`[html_tmpl] viewer_tmpl`' template - discussed above - is
+taken over by the '`[html_tmpl] exporter_tmpl`' template. In this template the
 same _Tera_ variables are available, except '`{{ note_js }}`' which does not
 make sense in this context. As the exporter prints possible rendition error
-messages on the console, there is no equivalent to the '`[viewer] error_tmpl`'
-template.
+messages on the console, there is no equivalent to the 
+'`[html_tmpl] viewer_error_tmpl`' template.
 
 
 
