@@ -27,7 +27,7 @@ use tpnote_lib::config2::TMPL_VAR_FM_NO_FILENAME_SYNC;
 use tpnote_lib::config2::TMPL_VAR_STDIN;
 use tpnote_lib::config2::TMPL_VAR_STDIN_HEADER;
 use tpnote_lib::context::Context;
-use tpnote_lib::error2::NoteError;
+use tpnote_lib::error::NoteError;
 use tpnote_lib::filename;
 use tpnote_lib::filename::MarkupLanguage;
 use tpnote_lib::note::Note;

@@ -23,7 +23,7 @@ use tpnote_lib::config2::HtmlTmpl;
 use tpnote_lib::config2::Tmpl;
 #[cfg(not(test))]
 use tpnote_lib::config2::{CFG2, FILENAME_DOTFILE_MARKER};
-use tpnote_lib::error2::FileError;
+use tpnote_lib::error::FileError;
 use tpnote_lib::filename;
 
 /// Name of this executable (without the Windows ".exe" extension).

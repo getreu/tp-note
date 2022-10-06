@@ -3,7 +3,7 @@ use crate::error::ConfigFileError;
 use core::str::Utf8Error;
 use std::sync::mpsc::RecvError;
 use thiserror::Error;
-use tpnote_lib::error2::NoteError;
+use tpnote_lib::error::NoteError;
 
 /// Represents an error in the viewer feature.
 /// Hint: to see this error restart _Tp-Note_ with `--debug debug`.

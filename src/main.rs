@@ -50,7 +50,7 @@ use serde::Serialize;
 use std::path::PathBuf;
 use std::process;
 #[cfg(feature = "read-clipboard")]
-use tpnote_lib::error2::NoteError;
+use tpnote_lib::error::NoteError;
 
 /// Use the version number defined in `../Cargo.toml`.
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");

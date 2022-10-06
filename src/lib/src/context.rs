@@ -8,7 +8,7 @@ use crate::config2::TMPL_VAR_LANG;
 use crate::config2::TMPL_VAR_PATH;
 use crate::config2::TMPL_VAR_USERNAME;
 use crate::content::Content;
-use crate::error2::NoteError;
+use crate::error::NoteError;
 use crate::note::FrontMatter;
 use std::env;
 use std::ops::Deref;

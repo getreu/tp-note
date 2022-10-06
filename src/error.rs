@@ -2,8 +2,8 @@
 use std::path::PathBuf;
 use std::process::ExitStatus;
 use thiserror::Error;
-use tpnote_lib::error2::FileError;
-use tpnote_lib::error2::NoteError;
+use tpnote_lib::error::FileError;
+use tpnote_lib::error::NoteError;
 
 #[allow(dead_code)]
 #[derive(Debug, Error)]
