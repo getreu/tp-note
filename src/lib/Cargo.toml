@@ -12,8 +12,6 @@ renderer = ["pulldown-cmark", "rst_parser", "rst_renderer"]
 lazy_static = "1.4.0"
 log = { version = "0.4.17", features = ["serde"] }
 parse-hyperlinks = "0.23.4"
-parse-hyperlinks-extras = "0.23.4"
-# parse-hyperlinks-html = { path = "../parse-hyperlinks/parse-hyperlinks-html" }
 # parse-hyperlinks = { path = "../parse-hyperlinks/parse-hyperlinks" }
 pulldown-cmark = { version = "0.9.2", default-features = false, features = ["simd"], optional = true }
 rst_parser = { version = "0.4.0", optional = true }

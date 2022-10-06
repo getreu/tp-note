@@ -71,7 +71,6 @@ renderer = []
 
 [dependencies]
 atty = "0.2.14"
-clap = "3.2.17"
 # clipboard: On Debian Linux you need to: sudo apt-get install xorg-dev
 copypasta = { version = "0.8.1", optional = true }
 directories = "4.0.1"
