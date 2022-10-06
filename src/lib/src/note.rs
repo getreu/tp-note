@@ -3,7 +3,7 @@
 //! the memory representation is established be reading the note file with
 //! its front matter.
 
-use crate::config::CFG2;
+use crate::config::CFG;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_ALL_YAML;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
@@ -80,7 +80,7 @@ impl TryFrom<&str> for FrontMatter {
     type Error = NoteError;
     /// Helper function deserializing the front-matter of the note file.
     fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
-        let cfg2 = CFG2.read().unwrap();
+        let cfg2 = CFG.read().unwrap();
         //fn deserialize_header(header: &str) -> Result<FrontMatter, NoteError> {
         if header.is_empty() {
             return Err(NoteError::MissingFrontMatter {
@@ -150,7 +150,7 @@ impl Note {
     /// Constructor that creates a memory representation of an existing note on
     /// disk.
     pub fn from_existing_note(mut context: Context) -> Result<Self, NoteError> {
-        let cfg2 = CFG2.read().unwrap();
+        let cfg2 = CFG.read().unwrap();
 
         let content =
             Content::from_input_with_cr(fs::read_to_string(&context.path).map_err(|e| {

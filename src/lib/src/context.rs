@@ -1,5 +1,5 @@
 //! Extends the built-in Tera filters.
-use crate::config::CFG2;
+use crate::config::CFG;
 use crate::config::TMPL_VAR_DIR_PATH;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
@@ -130,7 +130,7 @@ impl Context {
     /// a context template and a filename template.
     /// The `path` parameter must be a canonicalized fully qualified file name.
     pub fn insert_environment(&mut self) -> Result<(), NoteError> {
-        let cfg2 = CFG2.read().unwrap();
+        let cfg2 = CFG.read().unwrap();
 
         // Default extension for new notes as defined in the configuration file.
         (*self).insert(

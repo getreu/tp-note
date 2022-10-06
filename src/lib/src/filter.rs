@@ -1,5 +1,5 @@
 //! Extends the built-in Tera filters.
-use crate::config::CFG2;
+use crate::config::CFG;
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::filename::disassemble;
 use crate::filename::is_well_formed_filename;
@@ -58,7 +58,7 @@ pub fn sanit_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let cfg2 = CFG2.read().unwrap();
+    let cfg2 = CFG.read().unwrap();
 
     let p = try_get_value!("sanit", "value", Value, value);
 

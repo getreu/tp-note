@@ -627,7 +627,7 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 
 lazy_static! {
 /// Global variable containing the filename related configuration data.
-    pub static ref CFG2: RwLock<Cfg> = RwLock::new(Cfg::default());
+    pub static ref CFG: RwLock<Cfg> = RwLock::new(Cfg::default());
 }
 
 /// Configuration data, deserialized from the configuration file.

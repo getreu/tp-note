@@ -1,5 +1,5 @@
 //! Helper functions that deal with filenames.
-use crate::config::CFG2;
+use crate::config::CFG;
 use crate::config::FILENAME_COPY_COUNTER_MAX;
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::FILENAME_LEN_MAX;
@@ -31,7 +31,7 @@ pub fn shorten_filename(mut file_path: PathBuf) -> PathBuf {
     // Does this stem ending look similar to a copy counter?
     if note_stem.len() != remove_copy_counter(&note_stem).len() {
         // Add an additional separator.
-        let cfg2 = CFG2.read().unwrap();
+        let cfg2 = CFG.read().unwrap();
         note_stem.push_str(&cfg2.filename.copy_counter_extra_separator);
     };
 
@@ -132,7 +132,7 @@ pub fn exclude_copy_counter_eq(p1: &Path, p2: &Path) -> bool {
 /// Helper function that decomposes a fully qualified path name
 /// into (`sort_tag`, `stem_copy_counter_ext`, `stem`, `copy_counter`, `ext`).
 pub fn disassemble(p: &Path) -> (&str, &str, &str, &str, &str) {
-    let cfg2 = CFG2.read().unwrap();
+    let cfg2 = CFG.read().unwrap();
 
     let sort_tag_stem_copy_counter_ext = p
         .file_name()
@@ -195,7 +195,7 @@ pub fn assemble(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str)
 /// If there is none, return the same.
 #[inline]
 pub fn remove_copy_counter(tag: &str) -> &str {
-    let cfg2 = CFG2.read().unwrap();
+    let cfg2 = CFG.read().unwrap();
     // Strip closing brackets at the end.
     let tag1 = if let Some(t) = tag.strip_suffix(&cfg2.filename.copy_counter_closing_brackets) {
         t
@@ -220,7 +220,7 @@ pub fn remove_copy_counter(tag: &str) -> &str {
 /// Append a copy counter to the string.
 #[inline]
 pub fn append_copy_counter(stem: &str, n: usize) -> String {
-    let cfg2 = CFG2.read().unwrap();
+    let cfg2 = CFG.read().unwrap();
     let mut stem = stem.to_string();
     stem.push_str(&cfg2.filename.copy_counter_opening_brackets);
     stem.push_str(&n.to_string());
@@ -254,7 +254,7 @@ impl From<&str> for MarkupLanguage {
     /// lists?
     #[inline]
     fn from(file_extension: &str) -> Self {
-        let cfg2 = CFG2.read().unwrap();
+        let cfg2 = CFG.read().unwrap();
 
         for e in &cfg2.filename.extensions_md {
             if e == file_extension {
@@ -300,7 +300,7 @@ mod tests {
     fn test_shorten_filename() {
         use std::ffi::OsString;
         use std::path::PathBuf;
-        let cfg2 = CFG2.read().unwrap();
+        let cfg2 = CFG.read().unwrap();
 
         // Test short filename.
         let input = PathBuf::from("long directory name/abc.ext");

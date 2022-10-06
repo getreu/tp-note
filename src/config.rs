@@ -22,7 +22,9 @@ use tpnote_lib::config::Filename;
 use tpnote_lib::config::HtmlTmpl;
 use tpnote_lib::config::Tmpl;
 #[cfg(not(test))]
-use tpnote_lib::config::{CFG2, FILENAME_DOTFILE_MARKER};
+use tpnote_lib::config::FILENAME_DOTFILE_MARKER;
+#[cfg(not(test))]
+use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::error::FileError;
 use tpnote_lib::filename;
 
@@ -466,11 +468,11 @@ fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
             });
         }
         {
-            // Copy the parts of `config` into `CFG2`.
-            let mut cfg2 = CFG2.write().unwrap();
-            (*cfg2).filename = config.filename.clone();
-            (*cfg2).tmpl = config.tmpl.clone();
-            (*cfg2).html_tmpl = config.html_tmpl.clone();
+            // Copy the parts of `config` into `LIB_CFG`.
+            let mut lib_cfg = LIB_CFG.write().unwrap();
+            (*lib_cfg).filename = config.filename.clone();
+            (*lib_cfg).tmpl = config.tmpl.clone();
+            (*lib_cfg).html_tmpl = config.html_tmpl.clone();
         }
 
         // First check passed.
