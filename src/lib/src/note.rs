@@ -3,21 +3,21 @@
 //! the memory representation is established be reading the note file with
 //! its front matter.
 
-use crate::config2::CFG2;
-use crate::config2::TMPL_VAR_FM_;
-use crate::config2::TMPL_VAR_FM_ALL_YAML;
-use crate::config2::TMPL_VAR_FM_FILE_EXT;
-use crate::config2::TMPL_VAR_FM_SORT_TAG;
-use crate::config2::TMPL_VAR_NOTE_BODY;
+use crate::config::CFG2;
+use crate::config::TMPL_VAR_FM_;
+use crate::config::TMPL_VAR_FM_ALL_YAML;
+use crate::config::TMPL_VAR_FM_FILE_EXT;
+use crate::config::TMPL_VAR_FM_SORT_TAG;
+use crate::config::TMPL_VAR_NOTE_BODY;
 #[cfg(feature = "viewer")]
-use crate::config2::TMPL_VAR_NOTE_ERRONEOUS_CONTENT;
+use crate::config::TMPL_VAR_NOTE_ERRONEOUS_CONTENT;
 #[cfg(feature = "viewer")]
-use crate::config2::TMPL_VAR_NOTE_ERROR;
-use crate::config2::TMPL_VAR_NOTE_JS;
+use crate::config::TMPL_VAR_NOTE_ERROR;
+use crate::config::TMPL_VAR_NOTE_JS;
 #[cfg(feature = "viewer")]
-use crate::config2::TMPL_VAR_PATH;
-use crate::config2::TMPL_VAR_PATH_FILE_DATE;
-use crate::config2::TMPL_VAR_PATH_FILE_TEXT;
+use crate::config::TMPL_VAR_PATH;
+use crate::config::TMPL_VAR_PATH_FILE_DATE;
+use crate::config::TMPL_VAR_PATH_FILE_TEXT;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;

@@ -1,12 +1,12 @@
 //! Extends the built-in Tera filters.
-use crate::config2::CFG2;
-use crate::config2::TMPL_VAR_DIR_PATH;
-use crate::config2::TMPL_VAR_EXTENSION_DEFAULT;
-use crate::config2::TMPL_VAR_FM_;
-use crate::config2::TMPL_VAR_FM_ALL;
-use crate::config2::TMPL_VAR_LANG;
-use crate::config2::TMPL_VAR_PATH;
-use crate::config2::TMPL_VAR_USERNAME;
+use crate::config::CFG2;
+use crate::config::TMPL_VAR_DIR_PATH;
+use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
+use crate::config::TMPL_VAR_FM_;
+use crate::config::TMPL_VAR_FM_ALL;
+use crate::config::TMPL_VAR_LANG;
+use crate::config::TMPL_VAR_PATH;
+use crate::config::TMPL_VAR_USERNAME;
 use crate::content::Content;
 use crate::error::NoteError;
 use crate::note::FrontMatter;

@@ -18,11 +18,11 @@ use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::RwLock;
-use tpnote_lib::config2::Filename;
-use tpnote_lib::config2::HtmlTmpl;
-use tpnote_lib::config2::Tmpl;
+use tpnote_lib::config::Filename;
+use tpnote_lib::config::HtmlTmpl;
+use tpnote_lib::config::Tmpl;
 #[cfg(not(test))]
-use tpnote_lib::config2::{CFG2, FILENAME_DOTFILE_MARKER};
+use tpnote_lib::config::{CFG2, FILENAME_DOTFILE_MARKER};
 use tpnote_lib::error::FileError;
 use tpnote_lib::filename;
 

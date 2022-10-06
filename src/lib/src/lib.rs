@@ -1,6 +1,6 @@
 //! _Tp-Note_ library. TODO documentation
 
-pub mod config2;
+pub mod config;
 pub mod content;
 pub mod context;
 pub mod error;
