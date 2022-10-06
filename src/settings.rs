@@ -3,7 +3,6 @@
 
 #[cfg(any(feature = "read-clipboard", feature = "viewer"))]
 use crate::config::CFG;
-use crate::content::Content;
 use atty::{is, Stream};
 #[cfg(feature = "read-clipboard")]
 use copypasta::ClipboardContext;
@@ -15,6 +14,7 @@ use std::io;
 use std::io::Read;
 use std::path::PathBuf;
 use structopt::StructOpt;
+use tpnote_lib::content::Content;
 
 #[derive(Debug, Eq, PartialEq, StructOpt)]
 #[structopt(

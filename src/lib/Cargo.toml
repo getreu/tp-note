@@ -1,0 +1,29 @@
+[package]
+name = "tpnote-lib"
+version = "0.5.0"
+edition = "2021"
+
+[features]
+default = ["renderer", "viewer"]
+viewer = []
+renderer = ["pulldown-cmark", "rst_parser", "rst_renderer"]
+
+[dependencies]
+lazy_static = "1.4.0"
+log = { version = "0.4.17", features = ["serde"] }
+parse-hyperlinks = "0.23.4"
+parse-hyperlinks-extras = "0.23.4"
+# parse-hyperlinks-html = { path = "../parse-hyperlinks/parse-hyperlinks-html" }
+# parse-hyperlinks = { path = "../parse-hyperlinks/parse-hyperlinks" }
+pulldown-cmark = { version = "0.9.2", default-features = false, features = ["simd"], optional = true }
+rst_parser = { version = "0.4.0", optional = true }
+rst_renderer = { version = "0.4.0", optional = true }
+sanitize-filename-reader-friendly = "2.2.1"
+self_cell = "0.10.2"
+serde = { version = "1.0.143", features = ["derive"] }
+serde_yaml = "0.9.9"
+serde_json = "*"
+substring = "1.4.5"
+tera = { version = "1.17.0", default-features = true }
+thiserror = "1.0.32"
+toml = "0.5.9"

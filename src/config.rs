@@ -1,12 +1,5 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
 //! and exposes the configuration as `static` variable.
-use crate::config2::Filename;
-use crate::config2::HtmlTmpl;
-use crate::config2::Tmpl;
-#[cfg(not(test))]
-use crate::config2::{CFG2, FILENAME_DOTFILE_MARKER};
-use crate::error2::FileError;
-use crate::filename;
 use crate::settings::ARGS;
 use crate::VERSION;
 use directories::ProjectDirs;
@@ -14,7 +7,8 @@ use lazy_static::lazy_static;
 use log::LevelFilter;
 #[cfg(not(test))]
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
 #[cfg(not(test))]
@@ -24,6 +18,13 @@ use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::RwLock;
+use tpnote_lib::config2::Filename;
+use tpnote_lib::config2::HtmlTmpl;
+use tpnote_lib::config2::Tmpl;
+#[cfg(not(test))]
+use tpnote_lib::config2::{CFG2, FILENAME_DOTFILE_MARKER};
+use tpnote_lib::error2::FileError;
+use tpnote_lib::filename;
 
 /// Name of this executable (without the Windows ".exe" extension).
 const CURRENT_EXE: &str = "tpnote";

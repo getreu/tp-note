@@ -1,19 +1,7 @@
 //! High level program logic implementing the whole workflow.
 use crate::config::CFG;
-use crate::config2::TMPL_VAR_CLIPBOARD;
-use crate::config2::TMPL_VAR_CLIPBOARD_HEADER;
-use crate::config2::TMPL_VAR_FM_;
-use crate::config2::TMPL_VAR_FM_FILENAME_SYNC;
-use crate::config2::TMPL_VAR_FM_NO_FILENAME_SYNC;
-use crate::config2::TMPL_VAR_STDIN;
-use crate::config2::TMPL_VAR_STDIN_HEADER;
-use crate::context::Context;
 use crate::error::WorkflowError;
-use crate::error2::NoteError;
 use crate::file_editor::launch_editor;
-use crate::filename;
-use crate::filename::MarkupLanguage;
-use crate::note::Note;
 use crate::settings::ARGS;
 use crate::settings::CLIPBOARD;
 use crate::settings::LAUNCH_EDITOR;
@@ -31,6 +19,18 @@ use std::thread;
 #[cfg(feature = "viewer")]
 use std::time::Duration;
 use tera::Value;
+use tpnote_lib::config2::TMPL_VAR_CLIPBOARD;
+use tpnote_lib::config2::TMPL_VAR_CLIPBOARD_HEADER;
+use tpnote_lib::config2::TMPL_VAR_FM_;
+use tpnote_lib::config2::TMPL_VAR_FM_FILENAME_SYNC;
+use tpnote_lib::config2::TMPL_VAR_FM_NO_FILENAME_SYNC;
+use tpnote_lib::config2::TMPL_VAR_STDIN;
+use tpnote_lib::config2::TMPL_VAR_STDIN_HEADER;
+use tpnote_lib::context::Context;
+use tpnote_lib::error2::NoteError;
+use tpnote_lib::filename;
+use tpnote_lib::filename::MarkupLanguage;
+use tpnote_lib::note::Note;
 
 /// Open the note file `path` on disk and read its YAML front matter.
 /// Then calculate from the front matter how the filename should be to

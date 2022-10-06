@@ -2258,26 +2258,44 @@ dependencies = [
  "parse-hyperlinks",
  "parse-hyperlinks-extras",
  "percent-encoding",
- "pulldown-cmark",
- "rst_parser",
- "rst_renderer",
  "sanitize-filename-reader-friendly",
- "self_cell",
  "semver 1.0.13",
  "serde",
  "serde_json",
  "serde_yaml",
  "structopt",
- "substring",
  "tera",
  "thiserror",
  "time",
  "toml",
+ "tpnote-lib",
  "url",
  "webbrowser",
  "win32job",
  "windows-sys",
  "winres",
+]
+
+[[package]]
+name = "tpnote-lib"
+version = "0.5.0"
+dependencies = [
+ "lazy_static",
+ "log",
+ "parse-hyperlinks",
+ "parse-hyperlinks-extras",
+ "pulldown-cmark",
+ "rst_parser",
+ "rst_renderer",
+ "sanitize-filename-reader-friendly",
+ "self_cell",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "substring",
+ "tera",
+ "thiserror",
+ "toml",
 ]
 
 [[package]]

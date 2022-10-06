@@ -1,9 +1,9 @@
 //! Custom error types.
-use crate::error2::FileError;
-use crate::error2::NoteError;
 use std::path::PathBuf;
 use std::process::ExitStatus;
 use thiserror::Error;
+use tpnote_lib::error2::FileError;
+use tpnote_lib::error2::NoteError;
 
 #[allow(dead_code)]
 #[derive(Debug, Error)]
