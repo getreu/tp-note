@@ -3,8 +3,8 @@ use crate::config2::CFG2;
 use crate::config2::FILENAME_DOTFILE_MARKER;
 use crate::filename::disassemble;
 use crate::filename::is_well_formed_filename;
-use crate::settings::Hyperlink;
 use lazy_static::lazy_static;
+use parse_hyperlinks::iterator::first_hyperlink;
 use sanitize_filename_reader_friendly::sanitize;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -339,6 +339,25 @@ pub fn remove_filter<S: BuildHasher>(
     Ok(to_value(&map).unwrap_or_default())
 }
 
+#[derive(Debug, Eq, PartialEq, Default)]
+/// Represents a hyperlink.
+pub struct Hyperlink {
+    pub name: String,
+    pub target: String,
+    pub title: String,
+}
+
+impl Hyperlink {
+    /// Parse a markdown formatted hyperlink and stores the result in `Self`.
+    pub fn from(input: &str) -> Option<Hyperlink> {
+        first_hyperlink(input).map(|(link_name, link_target, link_title)| Hyperlink {
+            name: link_name.to_string(),
+            target: link_target.to_string(),
+            title: link_title.to_string(),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -541,5 +560,52 @@ mod tests {
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
         let output = ext_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
+    }
+
+    #[test]
+    fn test_parse_hyperlink() {
+        use super::Hyperlink;
+        // Stand alone Markdown link.
+        let input = r#"abc[Homepage](https://blog.getreu.net "My blog")abc"#;
+        let expected_output = Hyperlink {
+            name: "Homepage".to_string(),
+            target: "https://blog.getreu.net".to_string(),
+            title: "My blog".to_string(),
+        };
+        let output = Hyperlink::from(input);
+        assert_eq!(expected_output, output.unwrap());
+
+        // Markdown link reference.
+        let input = r#"abc[Homepage][home]abc
+                      [home]: https://blog.getreu.net "My blog""#;
+        let expected_output = Hyperlink {
+            name: "Homepage".to_string(),
+            target: "https://blog.getreu.net".to_string(),
+            title: "My blog".to_string(),
+        };
+        let output = Hyperlink::from(input);
+        assert_eq!(expected_output, output.unwrap());
+
+        //
+        // RestructuredText link
+        let input = "abc`Homepage <https://blog.getreu.net>`_\nabc";
+        let expected_output = Hyperlink {
+            name: "Homepage".to_string(),
+            target: "https://blog.getreu.net".to_string(),
+            title: "".to_string(),
+        };
+        let output = Hyperlink::from(input);
+        assert_eq!(expected_output, output.unwrap());
+
+        //
+        // RestructuredText link ref
+        let input = "abc `Homepage<home_>`_ abc\n.. _home: https://blog.getreu.net\nabc";
+        let expected_output = Hyperlink {
+            name: "Homepage".to_string(),
+            target: "https://blog.getreu.net".to_string(),
+            title: "".to_string(),
+        };
+        let output = Hyperlink::from(input);
+        assert_eq!(expected_output, output.unwrap());
     }
 }
