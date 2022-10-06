@@ -1,6 +1,6 @@
 //! Extends the built-in Tera filters.
-use crate::config::CFG;
 use crate::config::FILENAME_DOTFILE_MARKER;
+use crate::config::LIB_CFG;
 use crate::filename::disassemble;
 use crate::filename::is_well_formed_filename;
 use lazy_static::lazy_static;
@@ -58,7 +58,7 @@ pub fn sanit_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let cfg2 = CFG.read().unwrap();
+    let lib_cfg = LIB_CFG.read().unwrap();
 
     let p = try_get_value!("sanit", "value", Value, value);
 
@@ -85,7 +85,8 @@ pub fn sanit_filter<S: BuildHasher>(
 
     // Check if this is a usual filename.
     if p.starts_with(FILENAME_DOTFILE_MARKER) && is_well_formed_filename(Path::new(&*p)) {
-        p.to_mut().insert(0, cfg2.filename.sort_tag_extra_separator);
+        p.to_mut()
+            .insert(0, lib_cfg.filename.sort_tag_extra_separator);
     }
 
     // Sanitize string.
@@ -96,9 +97,10 @@ pub fn sanit_filter<S: BuildHasher>(
         // `sort_tag_extra_separator` is guaranteed not to be part of `sort_tag_chars`.
         // Thus, the following makes sure, that we do not accidentally add two
         // `sort_tag_extra_separator`.
-        && p.starts_with(&cfg2.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..])
+        && p.starts_with(&lib_cfg.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..])
     {
-        p.to_mut().insert(0, cfg2.filename.sort_tag_extra_separator);
+        p.to_mut()
+            .insert(0, lib_cfg.filename.sort_tag_extra_separator);
     };
 
     Ok(to_value(&p)?)

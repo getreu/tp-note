@@ -1,8 +1,8 @@
 //! Helper functions that deal with filenames.
-use crate::config::CFG;
 use crate::config::FILENAME_COPY_COUNTER_MAX;
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::FILENAME_LEN_MAX;
+use crate::config::LIB_CFG;
 use crate::error::FileError;
 use std::path::Path;
 use std::path::PathBuf;
@@ -31,8 +31,8 @@ pub fn shorten_filename(mut file_path: PathBuf) -> PathBuf {
     // Does this stem ending look similar to a copy counter?
     if note_stem.len() != remove_copy_counter(&note_stem).len() {
         // Add an additional separator.
-        let cfg2 = CFG.read().unwrap();
-        note_stem.push_str(&cfg2.filename.copy_counter_extra_separator);
+        let lib_cfg = LIB_CFG.read().unwrap();
+        note_stem.push_str(&lib_cfg.filename.copy_counter_extra_separator);
     };
 
     // Limit the size of `file_path`
@@ -132,7 +132,7 @@ pub fn exclude_copy_counter_eq(p1: &Path, p2: &Path) -> bool {
 /// Helper function that decomposes a fully qualified path name
 /// into (`sort_tag`, `stem_copy_counter_ext`, `stem`, `copy_counter`, `ext`).
 pub fn disassemble(p: &Path) -> (&str, &str, &str, &str, &str) {
-    let cfg2 = CFG.read().unwrap();
+    let lib_cfg = LIB_CFG.read().unwrap();
 
     let sort_tag_stem_copy_counter_ext = p
         .file_name()
@@ -146,8 +146,13 @@ pub fn disassemble(p: &Path) -> (&str, &str, &str, &str, &str) {
         .to_str()
         .unwrap_or_default();
 
-    let stem_copy_counter = sort_tag_stem_copy_counter
-        .trim_start_matches(&cfg2.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..]);
+    let stem_copy_counter = sort_tag_stem_copy_counter.trim_start_matches(
+        &lib_cfg
+            .filename
+            .sort_tag_chars
+            .chars()
+            .collect::<Vec<char>>()[..],
+    );
 
     let sort_tag =
         &sort_tag_stem_copy_counter[0..sort_tag_stem_copy_counter.len() - stem_copy_counter.len()];
@@ -195,9 +200,9 @@ pub fn assemble(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str)
 /// If there is none, return the same.
 #[inline]
 pub fn remove_copy_counter(tag: &str) -> &str {
-    let cfg2 = CFG.read().unwrap();
+    let lib_cfg = LIB_CFG.read().unwrap();
     // Strip closing brackets at the end.
-    let tag1 = if let Some(t) = tag.strip_suffix(&cfg2.filename.copy_counter_closing_brackets) {
+    let tag1 = if let Some(t) = tag.strip_suffix(&lib_cfg.filename.copy_counter_closing_brackets) {
         t
     } else {
         return tag;
@@ -208,7 +213,7 @@ pub fn remove_copy_counter(tag: &str) -> &str {
         return tag;
     };
     // And finally strip starting brackets.
-    let tag3 = if let Some(t) = tag2.strip_suffix(&cfg2.filename.copy_counter_opening_brackets) {
+    let tag3 = if let Some(t) = tag2.strip_suffix(&lib_cfg.filename.copy_counter_opening_brackets) {
         t
     } else {
         return tag;
@@ -220,11 +225,11 @@ pub fn remove_copy_counter(tag: &str) -> &str {
 /// Append a copy counter to the string.
 #[inline]
 pub fn append_copy_counter(stem: &str, n: usize) -> String {
-    let cfg2 = CFG.read().unwrap();
+    let lib_cfg = LIB_CFG.read().unwrap();
     let mut stem = stem.to_string();
-    stem.push_str(&cfg2.filename.copy_counter_opening_brackets);
+    stem.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
     stem.push_str(&n.to_string());
-    stem.push_str(&cfg2.filename.copy_counter_closing_brackets);
+    stem.push_str(&lib_cfg.filename.copy_counter_closing_brackets);
     stem
 }
 
@@ -254,29 +259,29 @@ impl From<&str> for MarkupLanguage {
     /// lists?
     #[inline]
     fn from(file_extension: &str) -> Self {
-        let cfg2 = CFG.read().unwrap();
+        let lib_cfg = LIB_CFG.read().unwrap();
 
-        for e in &cfg2.filename.extensions_md {
+        for e in &lib_cfg.filename.extensions_md {
             if e == file_extension {
                 return MarkupLanguage::Markdown;
             }
         }
-        for e in &cfg2.filename.extensions_rst {
+        for e in &lib_cfg.filename.extensions_rst {
             if e == file_extension {
                 return MarkupLanguage::RestructuredText;
             }
         }
-        for e in &cfg2.filename.extensions_html {
+        for e in &lib_cfg.filename.extensions_html {
             if e == file_extension {
                 return MarkupLanguage::Html;
             }
         }
-        for e in &cfg2.filename.extensions_txt {
+        for e in &lib_cfg.filename.extensions_txt {
             if e == file_extension {
                 return MarkupLanguage::Txt;
             }
         }
-        for e in &cfg2.filename.extensions_no_viewer {
+        for e in &lib_cfg.filename.extensions_no_viewer {
             if e == file_extension {
                 return MarkupLanguage::Unknown;
             }
@@ -285,7 +290,7 @@ impl From<&str> for MarkupLanguage {
         // one of the above lists, make sure that Tp-Note
         // recognizes its own files. Even without Markup
         // rendition.
-        if file_extension == cfg2.filename.extension_default {
+        if file_extension == lib_cfg.filename.extension_default {
             return MarkupLanguage::Txt;
         }
         MarkupLanguage::None
@@ -300,7 +305,7 @@ mod tests {
     fn test_shorten_filename() {
         use std::ffi::OsString;
         use std::path::PathBuf;
-        let cfg2 = CFG.read().unwrap();
+        let lib_cfg = LIB_CFG.read().unwrap();
 
         // Test short filename.
         let input = PathBuf::from("long directory name/abc.ext");
@@ -317,7 +322,7 @@ mod tests {
         // This makes the filename problematic
         let mut input = append_copy_counter(input, 1);
         let mut expected = input.clone();
-        expected.push_str(&cfg2.filename.copy_counter_extra_separator);
+        expected.push_str(&lib_cfg.filename.copy_counter_extra_separator);
 
         input.push_str(".ext");
         expected.push_str(".ext");

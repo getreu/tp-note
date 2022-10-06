@@ -3,7 +3,7 @@
 //! the memory representation is established be reading the note file with
 //! its front matter.
 
-use crate::config::CFG;
+use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_ALL_YAML;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
@@ -80,11 +80,11 @@ impl TryFrom<&str> for FrontMatter {
     type Error = NoteError;
     /// Helper function deserializing the front-matter of the note file.
     fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
-        let cfg2 = CFG.read().unwrap();
+        let lib_cfg = LIB_CFG.read().unwrap();
         //fn deserialize_header(header: &str) -> Result<FrontMatter, NoteError> {
         if header.is_empty() {
             return Err(NoteError::MissingFrontMatter {
-                compulsory_field: (*cfg2).tmpl.compulsory_header_field.to_owned(),
+                compulsory_field: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
             });
         };
 
@@ -109,13 +109,21 @@ impl TryFrom<&str> for FrontMatter {
                 // Check for forbidden characters.
                 if !sort_tag
                     .trim_start_matches(
-                        &cfg2.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..],
+                        &lib_cfg
+                            .filename
+                            .sort_tag_chars
+                            .chars()
+                            .collect::<Vec<char>>()[..],
                     )
                     .is_empty()
                 {
                     return Err(NoteError::SortTagVarInvalidChar {
                         sort_tag: sort_tag.to_owned(),
-                        sort_tag_chars: cfg2.filename.sort_tag_chars.escape_default().to_string(),
+                        sort_tag_chars: lib_cfg
+                            .filename
+                            .sort_tag_chars
+                            .escape_default()
+                            .to_string(),
                     });
                 }
             };
@@ -132,11 +140,11 @@ impl TryFrom<&str> for FrontMatter {
             if extension_is_unknown {
                 return Err(NoteError::FileExtNotRegistered {
                     extension: file_ext.to_owned(),
-                    md_ext: cfg2.filename.extensions_md.to_owned(),
-                    rst_ext: cfg2.filename.extensions_rst.to_owned(),
-                    html_ext: cfg2.filename.extensions_html.to_owned(),
-                    txt_ext: cfg2.filename.extensions_txt.to_owned(),
-                    no_viewer_ext: cfg2.filename.extensions_no_viewer.to_owned(),
+                    md_ext: lib_cfg.filename.extensions_md.to_owned(),
+                    rst_ext: lib_cfg.filename.extensions_rst.to_owned(),
+                    html_ext: lib_cfg.filename.extensions_html.to_owned(),
+                    txt_ext: lib_cfg.filename.extensions_txt.to_owned(),
+                    no_viewer_ext: lib_cfg.filename.extensions_no_viewer.to_owned(),
                 });
             }
         };
@@ -150,7 +158,7 @@ impl Note {
     /// Constructor that creates a memory representation of an existing note on
     /// disk.
     pub fn from_existing_note(mut context: Context) -> Result<Self, NoteError> {
-        let cfg2 = CFG.read().unwrap();
+        let lib_cfg = LIB_CFG.read().unwrap();
 
         let content =
             Content::from_input_with_cr(fs::read_to_string(&context.path).map_err(|e| {
@@ -163,18 +171,18 @@ impl Note {
         // Deserialize the note read from disk.
         let fm = FrontMatter::try_from(&content)?;
 
-        if !(*cfg2).tmpl.compulsory_header_field.is_empty() {
+        if !(*lib_cfg).tmpl.compulsory_header_field.is_empty() {
             if let Some(tera::Value::String(header_field)) =
-                fm.map.get(&(*cfg2).tmpl.compulsory_header_field)
+                fm.map.get(&(*lib_cfg).tmpl.compulsory_header_field)
             {
                 if header_field.is_empty() {
                     return Err(NoteError::CompulsoryFrontMatterFieldIsEmpty {
-                        field_name: (*cfg2).tmpl.compulsory_header_field.to_owned(),
+                        field_name: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
                     });
                 };
             } else {
                 return Err(NoteError::MissingFrontMatterField {
-                    field_name: (*cfg2).tmpl.compulsory_header_field.to_owned(),
+                    field_name: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
                 });
             }
         }
