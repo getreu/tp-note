@@ -9,9 +9,12 @@ use crate::config2::TMPL_VAR_FM_ALL_YAML;
 use crate::config2::TMPL_VAR_FM_FILE_EXT;
 use crate::config2::TMPL_VAR_FM_SORT_TAG;
 use crate::config2::TMPL_VAR_NOTE_BODY;
+#[cfg(feature = "viewer")]
 use crate::config2::TMPL_VAR_NOTE_ERRONEOUS_CONTENT;
+#[cfg(feature = "viewer")]
 use crate::config2::TMPL_VAR_NOTE_ERROR;
 use crate::config2::TMPL_VAR_NOTE_JS;
+#[cfg(feature = "viewer")]
 use crate::config2::TMPL_VAR_PATH;
 use crate::config2::TMPL_VAR_PATH_FILE_DATE;
 use crate::config2::TMPL_VAR_PATH_FILE_TEXT;

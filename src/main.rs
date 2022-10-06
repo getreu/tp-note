@@ -16,16 +16,9 @@
 #[cfg(feature = "message-box")]
 mod alert_service;
 mod config;
-mod config2;
-mod content;
-mod context;
 mod error;
-mod error2;
 mod file_editor;
-mod filename;
-mod filter;
 mod logger;
-mod note;
 mod process_ext;
 mod settings;
 #[cfg(feature = "viewer")]
@@ -40,8 +33,6 @@ use crate::config::CFG_FILE_LOADING;
 use crate::config::CONFIG_PATH;
 #[cfg(feature = "read-clipboard")]
 use crate::error::WorkflowError;
-#[cfg(feature = "read-clipboard")]
-use crate::error2::NoteError;
 use crate::logger::AppLogger;
 use crate::settings::ARGS;
 #[cfg(feature = "read-clipboard")]
@@ -58,6 +49,8 @@ use semver::Version;
 use serde::Serialize;
 use std::path::PathBuf;
 use std::process;
+#[cfg(feature = "read-clipboard")]
+use tpnote_lib::error2::NoteError;
 
 /// Use the version number defined in `../Cargo.toml`.
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");

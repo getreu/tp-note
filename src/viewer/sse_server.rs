@@ -3,8 +3,6 @@
 
 use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
-use crate::context::Context;
-use crate::note::Note;
 use crate::viewer::error::ViewerError;
 use crate::viewer::init::LOCALHOST;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
@@ -23,6 +21,8 @@ use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::time::SystemTime;
+use tpnote_lib::context::Context;
+use tpnote_lib::note::Note;
 use url::Url;
 
 /// The TCP stream is read in chunks. This is the read buffer size.
