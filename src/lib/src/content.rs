@@ -47,10 +47,18 @@ self_cell!(
 impl<'a> Content {
     /// Constructor that parses a _Tp-Note_ document.
     /// A valid document is UTF-8 encoded and starts with an optional
-    /// BOM (byte order mark) followed by "---". When the startmarker
-    /// "---" does not follow directly the BOM, it must be prepended
+    /// BOM (byte order mark) followed by `---`. When the startmarker
+    /// `---` does not follow directly the BOM, it must be prepended
     /// by an empty line. In this case all text before is ignored:
-    /// BOM + ignored text + empty line + "---".
+    /// BOM + ignored text + empty line + `---`.
+    ///
+    /// ```rust
+    /// use tpnote_lib::content::Content;
+    /// let c = Content::from(String::from("---\ntitle: \"My note\"\n---\nMy body"));
+    ///
+    /// assert_eq!(c.borrow_dependent().header, r#"title: "My note""#);
+    /// assert_eq!(c.borrow_dependent().body, r#"My body"#);
+    /// ```
     pub fn from(input: String) -> Self {
         Content::new(input, |owner: &String| {
             let (header, body) = Content::split(owner);
@@ -59,12 +67,19 @@ impl<'a> Content {
     }
 
     /// Constructor that reads a structured document with a YAML header
-    /// and body.
+    /// and body. All `\r\n` are converted to `\n` if there are any.
+    /// If not, no memory allocation occurs and the buffer remains untouched.
     ///
-    /// This converts all `\r\n` to `\n`.
+    /// ```rust
+    /// use tpnote_lib::content::Content;
+    /// let c = Content::from_input_with_cr(String::from(
+    ///     "---\r\ntitle: \"My note\"\r\n---\r\nMy\nbody\r\n"));
+    ///
+    /// assert_eq!(c.borrow_dependent().header, r#"title: "My note""#);
+    /// assert_eq!(c.borrow_dependent().body, "My\nbody\n");
+    /// ```
     pub fn from_input_with_cr(input: String) -> Self {
         let input = Self::remove_cr(input);
-
         Content::from(input)
     }
 
@@ -73,7 +88,9 @@ impl<'a> Content {
         self.borrow_owner().is_empty()
     }
 
-    /// On Windows machines it converts all `\r\n` to `\n`.
+    /// Converts all `\r\n` to `\n` if there are any.
+    /// If not, the buffer remains untouched and no memory allocation
+    /// occurs.
     #[inline]
     fn remove_cr(input: String) -> String {
         // Avoid allocating when there is nothing to do.
@@ -81,7 +98,7 @@ impl<'a> Content {
             // Forward without allocating.
             input
         } else {
-            // We allocate here and do a lot copying.
+            // We allocate here and do a lot of copying.
             input.replace("\r\n", "\n")
         }
     }
@@ -183,7 +200,29 @@ impl<'a> Content {
         (content[fm_start..fm_end].trim(), &content[body_start..])
     }
 
-    /// Writes the note to disk with `new_file_path`-filename.
+    /// Writes the note to disk with `new_file_path` as filename.
+    /// If `new_file_path` contains missing directories, they will be
+    /// created on the fly.
+    ///
+    /// ```rust
+    /// use std::path::Path;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    /// use tpnote_lib::content::Content;
+    /// let c = Content::from(
+    ///      String::from("prelude\n\n---\ntitle: \"My note\"\n---\nMy body"));
+    /// let outfile = temp_dir().join("mynote.md");
+    /// #[cfg(not(target_family = "windows"))]
+    /// let expected = "\u{feff}---\ntitle: \"My note\"\n---\nMy body\n";
+    /// #[cfg(target_family = "windows")]
+    /// let expected = "\u{feff}---\r\ntitle: \"My note\"\r\n---\r\nMy body\r\n";
+    ///
+    /// c.write_to_disk(&outfile).unwrap();
+    /// let result = fs::read_to_string(&outfile).unwrap();
+    ///
+    /// assert_eq!(result, expected);
+    /// fs::remove_file(&outfile);
+    /// ```
     pub fn write_to_disk(&self, new_file_path: &Path) -> Result<(), FileError> {
         // Create missing directories, if there are any.
         create_dir_all(new_file_path.parent().unwrap_or_else(|| Path::new("")))?;
@@ -387,6 +426,11 @@ mod tests {
         let input_stream = String::from("[📽 2 videos]");
         let expected = ("", "[📽 2 videos]");
         let result = Content::split(&input_stream);
+        assert_eq!(result, expected);
+
+        let input_stream = "my prelude\n\n---\nmy header\n--- \nmy body\n";
+        let expected = ("my header", "my body\n");
+        let result = Content::split(input_stream);
         assert_eq!(result, expected);
     }
 

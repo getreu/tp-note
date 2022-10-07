@@ -35,7 +35,19 @@ pub struct Context {
 
 /// A thin wrapper around `tera::Context` storing some additional
 /// information.
+///
 impl Context {
+    /// `path` is the first positional command line paramter `<path>` (see
+    ///   man page).
+    /// The `path` parameter must be a canonicalized fully qualified file name.
+    /// ```rust
+    /// use std::path::Path;
+    /// use tpnote_lib::context::Context;    
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+    ///
+    /// assert_eq!(context.path, Path::new("/path/to/mynote.md"));
+    /// assert_eq!(context.dir_path, Path::new("/path/to/"));
+    /// ```
     pub fn from(path: &Path) -> Self {
         let mut ct = tera::Context::new();
         let path = path.to_path_buf();
@@ -57,10 +69,20 @@ impl Context {
         Self { ct, path, dir_path }
     }
 
-    /// Inserts the YAML front header variables in the context for later use with templates.
-    /// We register only flat `tera::Value` types.
-    /// If there is a list, concatenate its items with `, ` and register the result
-    /// as a flat string.
+    /// Inserts the YAML front header variables in the context for later use
+    /// with templates.
+    ///
+    /// ```rust
+    /// use std::path::Path;
+    /// use tpnote_lib::context::Context;     
+    /// use tpnote_lib::note::FrontMatter;     
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+    /// context.insert_front_matter(
+    ///      &FrontMatter::try_from("title: \"My Stdin.\"").unwrap());
+    ///
+    /// assert_eq!(&context.get("fm_title").unwrap().to_string(),
+    ///     r#""My Stdin.""#);
+    /// ```
     pub fn insert_front_matter(&mut self, fm: &FrontMatter) {
         let mut tera_map = tera::Map::new();
 
@@ -85,9 +107,39 @@ impl Context {
         self.ct.insert(TMPL_VAR_FM_ALL, &tera_map);
     }
 
-    /// Inserts clipboard and stdin data into the context. As these
-    /// are `Content` structs, their header may carry also front matter
-    /// variables. Those are added via `insert_front_matter()`.
+    /// Inserts clipboard or stdin data into the context. The data may
+    /// contain some copied text with or without a YAML header.
+    /// The latter usually carries front matter variable.
+    /// These are added separately via `insert_front_matter()`.
+    /// The `input` data below is registered with the key name given
+    /// by `tmpl_var`. Typical names are `"clipboard"` or `"stdin"`.
+    /// If the below `input` contains a valid YAML header, it will
+    /// be registered in the context with the key name given by
+    /// `tmpl_var_header`. This string is typically one of
+    /// `clipboard_header` or `std_header`.
+    /// The raw data that will be inserted into the context.
+    ///
+    /// ```rust
+    /// use std::path::Path;
+    /// use tpnote_lib::context::Context;    
+    /// use tpnote_lib::content::Content;    
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+    ///
+    /// context.insert_content("clipboard", "clipboard_header",
+    ///      &Content::from(String::from("Data from clipboard.")));
+    /// assert_eq!(&context.get("clipboard").unwrap().to_string(),
+    ///     "\"Data from clipboard.\"");
+    ///
+    /// context.insert_content("stdin", "stdin_header",
+    ///      &Content::from(String::from("---\ntitle: \"My Stdin.\"\n---\nbody")));
+    /// assert_eq!(&context.get("stdin").unwrap().to_string(),
+    ///     r#""body""#);
+    /// assert_eq!(&context.get("stdin_header").unwrap().to_string(),
+    ///     r#""title: \"My Stdin.\"""#);
+    /// // "fm_title" is dynamically generated from the header variable "title".
+    /// assert_eq!(&context.get("fm_title").unwrap().to_string(),
+    ///     r#""My Stdin.""#);
+    /// ```
     pub fn insert_content(
         &mut self,
         tmpl_var: &str,
@@ -128,7 +180,22 @@ impl Context {
     /// Captures _Tp-Note_'s environment and stores it as variables in a
     /// `context` collection. The variables are needed later to populate
     /// a context template and a filename template.
-    /// The `path` parameter must be a canonicalized fully qualified file name.
+    ///
+    /// This function add the keys:
+    /// TMPL_VAR_EXTENSION_DEFAULT, TMPL_VAR_USERNAME and TMPL_VAR_LANG.
+    ///
+    /// ```
+    /// use std::path::Path;
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::config::TMPL_VAR_EXTENSION_DEFAULT; // `extension_default`
+    /// use tpnote_lib::config::FILENAME_EXTENSION_DEFAULT; // usually `md`
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+    /// context.insert_environment();
+    ///
+    /// // For most platforms `context.get("extension_default")` is `md`
+    /// assert_eq!(&context.get(TMPL_VAR_EXTENSION_DEFAULT).unwrap().to_string(),
+    ///     &format!("\"{FILENAME_EXTENSION_DEFAULT}\""));
+    /// ```
     pub fn insert_environment(&mut self) -> Result<(), NoteError> {
         let lib_cfg = LIB_CFG.read().unwrap();
 
