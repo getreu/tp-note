@@ -54,7 +54,7 @@ lazy_static! {
 /// represents a "well formed" filename. If it is the case, and the filename
 /// starts with a dot, the file is prepended by `sort_tag_extra_separator`.
 /// Note, this filter converts all input types to `tera::String`.
-pub fn sanit_filter<S: BuildHasher>(
+fn sanit_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -108,7 +108,7 @@ pub fn sanit_filter<S: BuildHasher>(
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's name.
-pub fn linkname_filter<S: BuildHasher>(
+fn linkname_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -121,7 +121,7 @@ pub fn linkname_filter<S: BuildHasher>(
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's URL.
-pub fn linktarget_filter<S: BuildHasher>(
+fn linktarget_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -134,7 +134,7 @@ pub fn linktarget_filter<S: BuildHasher>(
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's title.
-pub fn linktitle_filter<S: BuildHasher>(
+fn linktitle_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -149,7 +149,7 @@ pub fn linktitle_filter<S: BuildHasher>(
 /// max `CUT_LEN_MAX` bytes of valid UTF-8.
 /// This filter only acts on `String` types. All other types
 /// are passed through.
-pub fn cut_filter<S: BuildHasher>(
+fn cut_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -171,7 +171,7 @@ pub fn cut_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that return the first line or the first sentence of the input stream.
-pub fn heading_filter<S: BuildHasher>(
+fn heading_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -222,7 +222,7 @@ pub fn heading_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that takes a path and extracts the tag of the filename.
-pub fn tag_filter<S: BuildHasher>(
+fn tag_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -235,7 +235,7 @@ pub fn tag_filter<S: BuildHasher>(
 
 /// A Tera filter that takes a path and extracts its last element.
 /// This function trims the `sort_tag` if present.
-pub fn trim_tag_filter<S: BuildHasher>(
+fn trim_tag_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -249,7 +249,7 @@ pub fn trim_tag_filter<S: BuildHasher>(
 /// A Tera filter that takes a path and extracts its file stem,
 /// in other words: the filename without `sort_tag`, `copy_counter`
 /// and `extension`.
-pub fn stem_filter<S: BuildHasher>(
+fn stem_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -263,7 +263,7 @@ pub fn stem_filter<S: BuildHasher>(
 /// A Tera filter that takes a path and extracts its copy counter,
 /// in other words: the filename without `sort_tag`, `stem`
 /// and `extension`.
-pub fn copy_counter_filter<S: BuildHasher>(
+fn copy_counter_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -275,7 +275,7 @@ pub fn copy_counter_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that takes a path and extracts its filename.
-pub fn filename_filter<S: BuildHasher>(
+fn filename_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -291,7 +291,7 @@ pub fn filename_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that prepends a dot when stream not empty.
-pub fn prepend_dot_filter<S: BuildHasher>(
+fn prepend_dot_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -308,7 +308,7 @@ pub fn prepend_dot_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that takes a path and extracts its file extension.
-pub fn ext_filter<S: BuildHasher>(
+fn ext_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -325,7 +325,7 @@ pub fn ext_filter<S: BuildHasher>(
 
 /// A Tera filter that takes a list of variables and removes
 /// one.
-pub fn remove_filter<S: BuildHasher>(
+fn remove_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -343,15 +343,15 @@ pub fn remove_filter<S: BuildHasher>(
 
 #[derive(Debug, Eq, PartialEq, Default)]
 /// Represents a hyperlink.
-pub struct Hyperlink {
-    pub name: String,
-    pub target: String,
-    pub title: String,
+struct Hyperlink {
+    name: String,
+    target: String,
+    title: String,
 }
 
 impl Hyperlink {
     /// Parse a markdown formatted hyperlink and stores the result in `Self`.
-    pub fn from(input: &str) -> Option<Hyperlink> {
+    fn from(input: &str) -> Option<Hyperlink> {
         first_hyperlink(input).map(|(link_name, link_target, link_title)| Hyperlink {
             name: link_name.to_string(),
             target: link_target.to_string(),
