@@ -29,10 +29,10 @@ use tpnote_lib::error::FileError;
 use tpnote_lib::filename;
 
 /// Name of this executable (without the Windows ".exe" extension).
-const CURRENT_EXE: &str = "tpnote";
+const CARGO_BIN_NAME: &str = env!("CARGO_BIN_NAME");
 
 /// Tp-Note's configuration file filename.
-const CONFIG_FILENAME: &str = "tpnote.toml";
+const CONFIG_FILENAME: &str = concat!(env!("CARGO_BIN_NAME"), ".toml");
 
 /// Default value for the command line option `--debug`.  Determines the maximum
 /// debug level events must have, to be logged.  If the command line option
@@ -545,7 +545,7 @@ lazy_static! {
         if let Some(c) = &ARGS.config {
             Some(PathBuf::from(c))
         } else {
-            let config = ProjectDirs::from("rs", "", CURRENT_EXE)?;
+            let config = ProjectDirs::from("rs", "", CARGO_BIN_NAME)?;
 
             let mut config = PathBuf::from(config.config_dir());
             config.push(Path::new(CONFIG_FILENAME));
