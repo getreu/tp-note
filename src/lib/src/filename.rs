@@ -8,9 +8,34 @@ use std::path::Path;
 use std::path::PathBuf;
 
 /// Shortens the stem of a filename so that
-/// `file_stem.len()+file_extension.len() <= FILENAME_LEN_MAX`.
+/// `filename.len() <= FILENAME_LEN_MAX`.
 /// If stem ends with a pattern similar to a copy counter,
-/// append `-` to stem.
+/// append `-` to stem (cf. unit test in the source code).
+///
+/// ```rust
+/// use std::ffi::OsString;
+/// use std::path::PathBuf;
+/// use tpnote_lib::filename::shorten_filename;
+/// use tpnote_lib::config::FILENAME_LEN_MAX;
+///
+/// // Test short filename.
+/// let input = PathBuf::from("short filename.md");
+/// let output = shorten_filename(input);
+/// assert_eq!(OsString::from("short filename.md"), output);
+///
+/// // Test too long filename.
+/// let mut input = String::from("some/path/");
+/// for _ in 0..(FILENAME_LEN_MAX - "long fil.ext".len()) {
+///     input.push('x');
+/// }
+/// let mut expected = input.clone();
+/// input.push_str("long filename to be cut.ext");
+/// expected.push_str("long fil.ext");
+///
+/// let output = shorten_filename(PathBuf::from(input));
+/// assert_eq!(OsString::from(expected), output);
+/// ```
+
 pub fn shorten_filename(mut file_path: PathBuf) -> PathBuf {
     // Determine length of file-extension.
     let note_extension = file_path
@@ -61,9 +86,23 @@ pub fn shorten_filename(mut file_path: PathBuf) -> PathBuf {
 /// * if `path` has no directory components, only
 ///   a filename, and
 /// * if the filename is not empty, and
-/// * if the filename is a dot file (len >1 and without whitespace), or
-/// * if the filename has an extension.
+///   * if the filename is a dot file (len >1 and without whitespace), or
+///   * if the filename has an extension.
 /// A valid extension must not contain whitespace.
+///
+/// ```rust
+/// use std::path::Path;
+/// use tpnote_lib::filename::is_well_formed_filename;
+///
+/// let f = Path::new("tpnote.toml");
+/// assert!(is_well_formed_filename(f));
+///
+/// let f = Path::new("dir/tpnote.toml");
+/// assert!(!is_well_formed_filename(f));
+///
+/// let f = Path::new("tpnote.to ml");
+/// assert!(!is_well_formed_filename(f));
+/// ```
 pub fn is_well_formed_filename(path: &Path) -> bool {
     let filename = path.file_name().unwrap_or_default();
     let ext = path
@@ -307,21 +346,13 @@ mod tests {
         use std::path::PathBuf;
         let lib_cfg = LIB_CFG.read().unwrap();
 
-        // Test short filename.
-        let input = PathBuf::from("long directory name/abc.ext");
-        let output = shorten_filename(input);
-        assert_eq!(OsString::from("long directory name/abc.ext"), output);
-
-        // Test long filename.
-        let input = PathBuf::from("long directory name/long filename.ext");
-        let output = shorten_filename(input);
-        assert_eq!(OsString::from("long directory name/long f.ext"), output);
-
         // Test concatenation of extra `-` if it ends with a copy counter pattern.
         let input = "fn";
         // This makes the filename problematic
         let mut input = append_copy_counter(input, 1);
+        // We expect this to be corrected.
         let mut expected = input.clone();
+        // Append '-'.
         expected.push_str(&lib_cfg.filename.copy_counter_extra_separator);
 
         input.push_str(".ext");

@@ -7,7 +7,6 @@ use std::sync::RwLock;
 
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
-#[cfg(not(test))]
 pub const FILENAME_LEN_MAX: usize =
     // Most file system's limit.
     255
@@ -17,8 +16,6 @@ pub const FILENAME_LEN_MAX: usize =
     - FILENAME_COPY_COUNTER_OPENING_BRACKETS.len() - 2 - FILENAME_COPY_COUNTER_CLOSING_BRACKETS.len()
     // Extra spare bytes, in case the user's copy counter is longer.
     - 6;
-#[cfg(test)]
-pub const FILENAME_LEN_MAX: usize = 10;
 
 /// List of characters that can be part of a _sort tag_.
 /// This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
