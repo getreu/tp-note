@@ -26,7 +26,6 @@ use tpnote_lib::config::FILENAME_DOTFILE_MARKER;
 #[cfg(not(test))]
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::error::FileError;
-use tpnote_lib::filename;
 
 /// Name of this executable (without the Windows ".exe" extension).
 const CARGO_BIN_NAME: &str = env!("CARGO_BIN_NAME");
@@ -555,9 +554,10 @@ lazy_static! {
 }
 
 pub fn backup_config_file() -> Result<PathBuf, FileError> {
+    use tpnote_lib::filename::NotePathBuf;
     if let Some(ref config_path) = *CONFIG_PATH {
         if config_path.exists() {
-            let config_path_bak = filename::find_unused((config_path).to_path_buf())?;
+            let config_path_bak = config_path.find_next_unused()?;
 
             fs::rename(&config_path.as_path(), &config_path_bak)?;
 

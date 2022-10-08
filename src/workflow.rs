@@ -28,8 +28,9 @@ use tpnote_lib::config::TMPL_VAR_STDIN;
 use tpnote_lib::config::TMPL_VAR_STDIN_HEADER;
 use tpnote_lib::context::Context;
 use tpnote_lib::error::NoteError;
-use tpnote_lib::filename;
 use tpnote_lib::filename::MarkupLanguage;
+use tpnote_lib::filename::NotePath;
+use tpnote_lib::filename::NotePathBuf;
 use tpnote_lib::note::Note;
 
 /// Open the note file `path` on disk and read its YAML front matter.
@@ -82,8 +83,8 @@ fn synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
                 }
             })?;
 
-            if !filename::exclude_copy_counter_eq(&n.context.path, &new_file_path) {
-                let new_file_path = filename::find_unused(new_file_path)?;
+            if !n.context.path.exclude_copy_counter_eq(&new_file_path) {
+                let new_file_path = new_file_path.find_next_unused()?;
 
                 // rename file
                 fs::rename(&n.context.path, &new_file_path)?;
@@ -182,7 +183,7 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
         };
 
         // Check if the filename is not taken already
-        let new_file_path = filename::find_unused(new_file_path)?;
+        let new_file_path = new_file_path.find_next_unused()?;
 
         // Write new note on disk.
         n.content.write_to_disk(&new_file_path)?;
@@ -267,7 +268,7 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
                 })?;
 
             // Check if the filename is not taken already
-            let new_file_path = filename::find_unused(new_file_path)?;
+            let new_file_path = new_file_path.find_next_unused()?;
 
             // Write new note on disk.
             n.content.write_to_disk(&new_file_path)?;

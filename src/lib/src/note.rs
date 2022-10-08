@@ -22,8 +22,8 @@ use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
-use crate::filename;
 use crate::filename::MarkupLanguage;
+use crate::filename::NotePathBuf;
 use crate::filter::TERA;
 use crate::note_error_tera_template;
 use parse_hyperlinks::renderer::text_links2html;
@@ -302,7 +302,8 @@ impl Note {
             }
         }
 
-        Ok(filename::shorten_filename(file_path))
+        file_path.shorten_filename();
+        Ok(file_path)
     }
 
     /// Renders `self` into HTML and saves the result in `export_dir`. If

@@ -1,8 +1,7 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
-use crate::filename::disassemble;
-use crate::filename::is_well_formed_filename;
+use crate::filename::NotePath;
 use lazy_static::lazy_static;
 use parse_hyperlinks::iterator::first_hyperlink;
 use sanitize_filename_reader_friendly::sanitize;
@@ -10,6 +9,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::hash::BuildHasher;
 use std::path::Path;
+use std::path::PathBuf;
 use tera::{to_value, try_get_value, Result as TeraResult, Tera, Value};
 
 /// Filter parameter of the `cut_filter()` that limits the maximum length of template variables,
@@ -84,7 +84,7 @@ fn sanit_filter<S: BuildHasher>(
         };
 
     // Check if this is a usual filename.
-    if p.starts_with(FILENAME_DOTFILE_MARKER) && is_well_formed_filename(Path::new(&*p)) {
+    if p.starts_with(FILENAME_DOTFILE_MARKER) && PathBuf::from(&*p).is_well_formed_filename() {
         p.to_mut()
             .insert(0, lib_cfg.filename.sort_tag_extra_separator);
     }
@@ -227,8 +227,8 @@ fn tag_filter<S: BuildHasher>(
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let p = try_get_value!("tag", "value", String, value);
-
-    let (tag, _, _, _, _) = disassemble(Path::new(&p));
+    let p = PathBuf::from(p);
+    let (tag, _, _, _, _) = p.disassemble();
 
     Ok(to_value(&tag)?)
 }
@@ -240,8 +240,8 @@ fn trim_tag_filter<S: BuildHasher>(
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let p = try_get_value!("filename", "value", String, value);
-
-    let (_, fname, _, _, _) = disassemble(Path::new(&p));
+    let p = PathBuf::from(p);
+    let (_, fname, _, _, _) = p.disassemble();
 
     Ok(to_value(&fname)?)
 }
@@ -254,8 +254,8 @@ fn stem_filter<S: BuildHasher>(
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let p = try_get_value!("stem", "value", String, value);
-
-    let (_, _, stem, _, _) = disassemble(Path::new(&p));
+    let p = PathBuf::from(p);
+    let (_, _, stem, _, _) = p.disassemble();
 
     Ok(to_value(&stem)?)
 }
@@ -268,8 +268,8 @@ fn copy_counter_filter<S: BuildHasher>(
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let p = try_get_value!("copy_counter", "value", String, value);
-
-    let (_, _, _, copy_counter, _) = disassemble(Path::new(&p));
+    let p = PathBuf::from(p);
+    let (_, _, _, copy_counter, _) = p.disassemble();
 
     Ok(to_value(&copy_counter)?)
 }
