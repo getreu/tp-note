@@ -192,17 +192,8 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
     } else {
         // The first positional paramter `path` points to a file.
 
-        let extension_is_known = !matches!(
-            MarkupLanguage::from(
-                context
-                    .path
-                    .extension()
-                    .unwrap_or_default()
-                    .to_str()
-                    .unwrap_or_default()
-            ),
-            MarkupLanguage::None
-        );
+        let extension_is_known =
+            !matches!(MarkupLanguage::from(&*context.path), MarkupLanguage::None);
 
         if extension_is_known {
             // SYNCHRONIZE FILENAME

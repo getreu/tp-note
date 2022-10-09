@@ -317,6 +317,21 @@ impl MarkupLanguage {
     }
 }
 
+impl From<&Path> for MarkupLanguage {
+    /// Is `file_extension` listed in one of the known file extension
+    /// lists?
+    #[inline]
+    fn from(file_extension: &Path) -> Self {
+        let file_extension = file_extension
+            .extension()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default();
+
+        Self::from(file_extension)
+    }
+}
+
 impl From<&str> for MarkupLanguage {
     /// Is `file_extension` listed in one of the known file extension
     /// lists?
