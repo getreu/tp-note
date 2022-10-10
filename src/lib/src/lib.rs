@@ -6,4 +6,5 @@ pub mod context;
 pub mod error;
 pub mod filename;
 pub mod filter;
+pub mod front_matter;
 pub mod note;

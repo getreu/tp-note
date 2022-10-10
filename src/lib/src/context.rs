@@ -9,7 +9,7 @@ use crate::config::TMPL_VAR_PATH;
 use crate::config::TMPL_VAR_USERNAME;
 use crate::content::Content;
 use crate::error::NoteError;
-use crate::note::FrontMatter;
+use crate::front_matter::FrontMatter;
 use std::env;
 use std::ops::Deref;
 use std::ops::DerefMut;
@@ -75,7 +75,7 @@ impl Context {
     /// ```rust
     /// use std::path::Path;
     /// use tpnote_lib::context::Context;     
-    /// use tpnote_lib::note::FrontMatter;     
+    /// use tpnote_lib::front_matter::FrontMatter;     
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     /// context.insert_front_matter(
     ///      &FrontMatter::try_from("title: \"My Stdin.\"").unwrap());

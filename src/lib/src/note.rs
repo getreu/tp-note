@@ -4,10 +4,8 @@
 //! its front matter.
 
 use crate::config::LIB_CFG;
-use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_ALL_YAML;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
-use crate::config::TMPL_VAR_FM_SORT_TAG;
 use crate::config::TMPL_VAR_NOTE_BODY;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_VAR_NOTE_ERRONEOUS_CONTENT;
@@ -21,10 +19,10 @@ use crate::config::TMPL_VAR_PATH_FILE_TEXT;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
-use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::filename::MarkupLanguage;
 use crate::filename::NotePathBuf;
 use crate::filter::TERA;
+use crate::front_matter::FrontMatter;
 use crate::note_error_tera_template;
 use parse_hyperlinks::renderer::text_links2html;
 #[cfg(feature = "viewer")]
@@ -41,7 +39,6 @@ use std::fs::OpenOptions;
 use std::io;
 use std::io::prelude::*;
 use std::io::Write;
-use std::matches;
 use std::path::{Path, PathBuf};
 use std::str;
 use std::time::SystemTime;
@@ -59,98 +56,6 @@ pub struct Note {
     /// The full text content of the note, including
     /// its front matter.
     pub content: Content,
-}
-
-#[derive(Debug, Eq, PartialEq)]
-/// Represents the front matter of the note.
-pub struct FrontMatter {
-    pub map: tera::Map<String, tera::Value>,
-}
-
-impl TryFrom<&Content> for FrontMatter {
-    type Error = NoteError;
-    /// Helper function deserializing the front-matter of the note file.
-    fn try_from(content: &Content) -> Result<FrontMatter, NoteError> {
-        let header = content.borrow_dependent().header;
-        Self::try_from(header)
-    }
-}
-
-impl TryFrom<&str> for FrontMatter {
-    type Error = NoteError;
-    /// Helper function deserializing the front-matter of the note file.
-    fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
-        let lib_cfg = LIB_CFG.read().unwrap();
-        //fn deserialize_header(header: &str) -> Result<FrontMatter, NoteError> {
-        if header.is_empty() {
-            return Err(NoteError::MissingFrontMatter {
-                compulsory_field: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
-            });
-        };
-
-        let map: tera::Map<String, tera::Value> =
-            serde_yaml::from_str(header).map_err(|e| NoteError::InvalidFrontMatterYaml {
-                front_matter: header
-                    .lines()
-                    .enumerate()
-                    .map(|(n, s)| format!("{:03}: {}\n", n + 1, s))
-                    .take(FRONT_MATTER_ERROR_MAX_LINES)
-                    .collect::<String>(),
-                source_error: e,
-            })?;
-        let fm = FrontMatter { map };
-
-        // `sort_tag` has additional constrains to check.
-        if let Some(tera::Value::String(sort_tag)) = &fm
-            .map
-            .get(TMPL_VAR_FM_SORT_TAG.trim_start_matches(TMPL_VAR_FM_))
-        {
-            if !sort_tag.is_empty() {
-                // Check for forbidden characters.
-                if !sort_tag
-                    .trim_start_matches(
-                        &lib_cfg
-                            .filename
-                            .sort_tag_chars
-                            .chars()
-                            .collect::<Vec<char>>()[..],
-                    )
-                    .is_empty()
-                {
-                    return Err(NoteError::SortTagVarInvalidChar {
-                        sort_tag: sort_tag.to_owned(),
-                        sort_tag_chars: lib_cfg
-                            .filename
-                            .sort_tag_chars
-                            .escape_default()
-                            .to_string(),
-                    });
-                }
-            };
-        };
-
-        // `extension` has also additional constrains to check.
-        // Is `extension` listed in `CFG.filename.extensions_*`?
-        if let Some(tera::Value::String(file_ext)) = &fm
-            .map
-            .get(TMPL_VAR_FM_FILE_EXT.trim_start_matches(TMPL_VAR_FM_))
-        {
-            let extension_is_unknown =
-                matches!(MarkupLanguage::from(&**file_ext), MarkupLanguage::None);
-            if extension_is_unknown {
-                return Err(NoteError::FileExtNotRegistered {
-                    extension: file_ext.to_owned(),
-                    md_ext: lib_cfg.filename.extensions_md.to_owned(),
-                    rst_ext: lib_cfg.filename.extensions_rst.to_owned(),
-                    html_ext: lib_cfg.filename.extensions_html.to_owned(),
-                    txt_ext: lib_cfg.filename.extensions_txt.to_owned(),
-                    no_viewer_ext: lib_cfg.filename.extensions_no_viewer.to_owned(),
-                });
-            }
-        };
-
-        Ok(fm)
-    }
 }
 
 use std::fs;
