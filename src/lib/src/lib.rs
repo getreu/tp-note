@@ -8,3 +8,4 @@ pub mod filename;
 pub mod filter;
 pub mod front_matter;
 pub mod note;
+pub mod template;

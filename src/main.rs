@@ -21,6 +21,7 @@ mod file_editor;
 mod logger;
 mod process_ext;
 mod settings;
+mod template;
 #[cfg(feature = "viewer")]
 mod viewer;
 mod workflow;

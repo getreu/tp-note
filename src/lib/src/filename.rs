@@ -134,7 +134,7 @@ impl NotePathBuf for PathBuf {
         note_filename.push('.');
         note_filename.push_str(note_extension);
 
-        // Replace filename
+        // Replace filename`
         self.set_file_name(note_filename);
     }
 }
@@ -146,6 +146,7 @@ pub trait NotePath {
     fn exclude_copy_counter_eq(&self, p2: &Path) -> bool;
     fn is_well_formed_filename(&self) -> bool;
     fn remove_copy_counter(tag: &str) -> &str;
+    fn has_tpnote_extension(&self) -> bool;
 }
 
 impl NotePath for Path {
@@ -293,6 +294,16 @@ impl NotePath for Path {
             };
 
         tag3
+    }
+
+    /// True if the filename extension is considered as a tpnote file.
+    /// Checks if the filename extension is one of the following list
+    /// taken from the configuration file:
+    /// FILENAME_EXTENSIONS_MD, FILENAME_EXTENSIONS_RST, FILENAME_EXTENSIONS_HTML,
+    /// FILENAME_EXTENSIONS_TXT, FILENAME_EXTENSIONS_NO_VIEWER
+    fn has_tpnote_extension(&self) -> bool {
+        self.is_well_formed_filename()
+            && !matches!(MarkupLanguage::from(&*self), MarkupLanguage::None)
     }
 }
 

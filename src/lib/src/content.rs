@@ -83,7 +83,7 @@ impl<'a> Content {
         Content::from(input)
     }
 
-    /// True if the `Content` is empty.
+    /// True if the underlaying owned `Content` string is empty.
     pub fn is_empty(&self) -> bool {
         self.borrow_owner().is_empty()
     }
