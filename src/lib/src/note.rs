@@ -56,6 +56,11 @@ pub struct Note {
     /// The full text content of the note, including
     /// its front matter.
     pub content: Content,
+    /// 1. The `Content`'s header is deserialized into `FrontMatter`.
+    /// 2. `FrontMatter` is stored in `Context` with some environment data.
+    /// 3. `Context` data is filled in some filename template.
+    /// 4. The result is stored in `rendered_filename`.
+    pub rendered_filename: PathBuf,
 }
 
 use std::fs;
@@ -103,6 +108,7 @@ impl Note {
             //     front_matter: fm,
             context,
             content,
+            rendered_filename: PathBuf::new(),
         })
     }
 
@@ -175,17 +181,16 @@ impl Note {
 
         // Return new note.
         Ok(Self {
-            // Reserved for future use:
-            //     front_matter: fm,
             context,
             content,
+            rendered_filename: PathBuf::new(),
         })
     }
 
     /// Applies a Tera template to the notes context in order to generate a
     /// sanitized filename that is in sync with the note's meta data stored in
     /// its front matter.
-    pub fn render_filename(&self, template: &str) -> Result<PathBuf, NoteError> {
+    pub fn render_filename(&mut self, template: &str) -> Result<(), NoteError> {
         log::trace!(
             "Available substitution variables for the filename template:\n{:#?}",
             *self.context
@@ -208,9 +213,13 @@ impl Note {
         }
 
         file_path.shorten_filename();
-        Ok(file_path)
+        self.rendered_filename = file_path;
+        Ok(())
     }
 
+    /// Renders `self` into HTML and saves the result in `export_dir`. If
+    /// `export_dir` is the empty string, the directory of `note_path` is
+    /// used. `-` dumps the rendition to STDOUT.
     /// Renders `self` into HTML and saves the result in `export_dir`. If
     /// `export_dir` is the empty string, the directory of `note_path` is
     /// used. `-` dumps the rendition to STDOUT.

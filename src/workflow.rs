@@ -76,15 +76,15 @@ fn synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
         // Do not sync, if explicitly disabled.
         if !no_filename_sync && !CFG.arg_default.no_filename_sync && !ARGS.no_filename_sync {
             log::trace!("Applying template `[tmpl] sync_filename`.");
-            let new_file_path = n.render_filename(&CFG.tmpl.sync_filename).map_err(|e| {
+            n.render_filename(&CFG.tmpl.sync_filename).map_err(|e| {
                 WorkflowError::Template {
                     tmpl_name: "[tmpl] sync_filename".to_string(),
                     source: e,
                 }
             })?;
 
-            if !n.context.path.exclude_copy_counter_eq(&new_file_path) {
-                let new_file_path = new_file_path.find_next_unused()?;
+            if !n.context.path.exclude_copy_counter_eq(&n.rendered_filename) {
+                let new_file_path = n.rendered_filename.find_next_unused()?;
 
                 // rename file
                 fs::rename(&n.context.path, &new_file_path)?;
@@ -126,22 +126,22 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
             return Err(WorkflowError::ExportNeedsNoteFile);
         };
 
-        let (n, new_file_path) = if STDIN.is_empty() && CLIPBOARD.is_empty() {
+        let n = if STDIN.is_empty() && CLIPBOARD.is_empty() {
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
             log::trace!("Applying templates `[tmpl] new_content` and `[tmpl] new_filename`.");
-            let n = Note::from_content_template(context, &CFG.tmpl.new_content).map_err(|e| {
-                WorkflowError::Template {
-                    tmpl_name: "[tmpl] new_content".to_string(),
-                    source: e,
-                }
-            })?;
-            let new_file_path =
-                n.render_filename(&CFG.tmpl.new_filename)
-                    .map_err(|e| WorkflowError::Template {
-                        tmpl_name: "[tmpl] new_filename".to_string(),
+            let mut n =
+                Note::from_content_template(context, &CFG.tmpl.new_content).map_err(|e| {
+                    WorkflowError::Template {
+                        tmpl_name: "[tmpl] new_content".to_string(),
                         source: e,
-                    })?;
-            (n, new_file_path)
+                    }
+                })?;
+            n.render_filename(&CFG.tmpl.new_filename)
+                .map_err(|e| WorkflowError::Template {
+                    tmpl_name: "[tmpl] new_filename".to_string(),
+                    source: e,
+                })?;
+            n
         // The first positional parameter points to an existing file.
         } else if !STDIN.borrow_dependent().header.is_empty()
             || !CLIPBOARD.borrow_dependent().header.is_empty()
@@ -149,41 +149,39 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
             // There is a valid YAML front matter in the `CLIPBOARD` or `STDIN`.
             // Create a new note based on clipboard or input stream.
             log::trace!("Applying templates: `[tmpl] from_clipboard_yaml_content`, `[tmpl] from_clipboard_yaml_filename`");
-            let n = Note::from_content_template(context, &CFG.tmpl.from_clipboard_yaml_content)
+            let mut n = Note::from_content_template(context, &CFG.tmpl.from_clipboard_yaml_content)
                 .map_err(|e| WorkflowError::Template {
                     tmpl_name: "[tmpl] from_clipboard_yaml_content".to_string(),
                     source: e,
                 })?;
 
-            let new_file_path = n
-                .render_filename(&CFG.tmpl.from_clipboard_yaml_filename)
+            n.render_filename(&CFG.tmpl.from_clipboard_yaml_filename)
                 .map_err(|e| WorkflowError::Template {
                     tmpl_name: "[tmpl] from_clipboard_yaml_filename".to_string(),
                     source: e,
                 })?;
-            (n, new_file_path)
+            n
         } else {
             // Create a new note based on clipboard or input stream without header.
             log::trace!(
                 "Applying templates: `[tmpl] from_clipboard_content`, `[tmpl] from_clipboard_filename`"
             );
-            let n = Note::from_content_template(context, &CFG.tmpl.from_clipboard_content)
+            let mut n = Note::from_content_template(context, &CFG.tmpl.from_clipboard_content)
                 .map_err(|e| WorkflowError::Template {
                     tmpl_name: "[tmpl] from_clipboard_content".to_string(),
                     source: e,
                 })?;
 
-            let new_file_path = n
-                .render_filename(&CFG.tmpl.from_clipboard_filename)
+            n.render_filename(&CFG.tmpl.from_clipboard_filename)
                 .map_err(|e| WorkflowError::Template {
                     tmpl_name: "[tmpl] from_clipboard_filename".to_string(),
                     source: e,
                 })?;
-            (n, new_file_path)
+            n
         };
 
         // Check if the filename is not taken already
-        let new_file_path = new_file_path.find_next_unused()?;
+        let new_file_path = n.rendered_filename.find_next_unused()?;
 
         // Write new note on disk.
         n.content.write_to_disk(&new_file_path)?;
@@ -217,15 +215,19 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
                     log::trace!(
                        "Applying template: `[tmpl] from_text_file_content`, `[tmpl] from_text_file_filename`"
                     );
-                    let n = Note::from_text_file(context, &CFG.tmpl.from_text_file_content)?;
-                    let new_file_path = n
-                        .render_filename(&CFG.tmpl.from_text_file_filename)
+                    let mut n = Note::from_text_file(context, &CFG.tmpl.from_text_file_content)?;
+                    n.render_filename(&CFG.tmpl.from_text_file_filename)
                         .map_err(|e| WorkflowError::Template {
                             tmpl_name: "[tmpl] from_text_file_filename".to_string(),
                             source: e,
                         })?;
-                    n.content.write_to_disk(&*new_file_path)?;
+                    // Check if the filename is not taken already
+                    let new_file_path = n.rendered_filename.find_next_unused()?;
+
+                    // Assert that source and target destination are different.
                     if n.context.path != new_file_path {
+                        // Write new note on disk.
+                        n.content.write_to_disk(&new_file_path)?;
                         log::trace!("Deleting file: {:?}", n.context.path);
                         fs::remove_file(&n.context.path)?;
                     }
@@ -244,22 +246,20 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
             log::trace!(
                 "Applying templates `[tmpl] annotate_file_content` and `[tmpl] annotate_file_filename`."
             );
-            let n = Note::from_content_template(context, &CFG.tmpl.annotate_file_content).map_err(
-                |e| WorkflowError::Template {
+            let mut n = Note::from_content_template(context, &CFG.tmpl.annotate_file_content)
+                .map_err(|e| WorkflowError::Template {
                     tmpl_name: "[tmpl] annotate_file_content".to_string(),
                     source: e,
-                },
-            )?;
+                })?;
 
-            let new_file_path = n
-                .render_filename(&CFG.tmpl.annotate_file_filename)
+            n.render_filename(&CFG.tmpl.annotate_file_filename)
                 .map_err(|e| WorkflowError::Template {
                     tmpl_name: "[tmpl] annotate_file_filename".to_string(),
                     source: e,
                 })?;
 
             // Check if the filename is not taken already
-            let new_file_path = new_file_path.find_next_unused()?;
+            let new_file_path = n.rendered_filename.find_next_unused()?;
 
             // Write new note on disk.
             n.content.write_to_disk(&new_file_path)?;

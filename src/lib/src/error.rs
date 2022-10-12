@@ -215,6 +215,9 @@ pub enum NoteError {
     },
 
     #[error(transparent)]
+    File(#[from] FileError),
+
+    #[error(transparent)]
     Io(#[from] std::io::Error),
 }
 
