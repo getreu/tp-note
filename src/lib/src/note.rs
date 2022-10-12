@@ -47,9 +47,6 @@ use tera::Tera;
 #[derive(Debug, PartialEq)]
 /// Represents a note.
 pub struct Note {
-    // Reserved for future use:
-    //     /// The front matter of the note.
-    //     front_matter: FrontMatter,
     /// Captured environment of _Tp-Note_ that
     /// is used to fill in templates.
     pub context: Context,

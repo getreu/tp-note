@@ -84,7 +84,8 @@ fn synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
             })?;
 
             if !n.context.path.exclude_copy_counter_eq(&n.rendered_filename) {
-                let new_file_path = n.rendered_filename.find_next_unused()?;
+                let mut new_file_path = n.rendered_filename.clone();
+                new_file_path.set_next_unused()?;
 
                 // rename file
                 fs::rename(&n.context.path, &new_file_path)?;
@@ -181,7 +182,8 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
         };
 
         // Check if the filename is not taken already
-        let new_file_path = n.rendered_filename.find_next_unused()?;
+        let mut new_file_path = n.rendered_filename.clone();
+        new_file_path.set_next_unused()?;
 
         // Write new note on disk.
         n.content.write_to_disk(&new_file_path)?;
@@ -222,7 +224,8 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
                             source: e,
                         })?;
                     // Check if the filename is not taken already
-                    let new_file_path = n.rendered_filename.find_next_unused()?;
+                    let mut new_file_path = n.rendered_filename.clone();
+                    new_file_path.set_next_unused()?;
 
                     // Assert that source and target destination are different.
                     if n.context.path != new_file_path {
@@ -259,7 +262,8 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
                 })?;
 
             // Check if the filename is not taken already
-            let new_file_path = n.rendered_filename.find_next_unused()?;
+            let mut new_file_path = n.rendered_filename.clone();
+            new_file_path.set_next_unused()?;
 
             // Write new note on disk.
             n.content.write_to_disk(&new_file_path)?;

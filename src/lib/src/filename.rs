@@ -4,13 +4,14 @@ use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::FILENAME_LEN_MAX;
 use crate::config::LIB_CFG;
 use crate::error::FileError;
+use std::mem::swap;
 use std::path::Path;
 use std::path::PathBuf;
 
 pub trait NotePathBuf {
     fn from_assembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self;
     /// Append a copy counter to the string.
-    fn find_next_unused(&self) -> Result<PathBuf, FileError>;
+    fn set_next_unused(&mut self) -> Result<(), FileError>;
     fn shorten_filename(&mut self);
 }
 
@@ -33,9 +34,9 @@ impl NotePathBuf for PathBuf {
     /// When the path `p` exists on disk already, append some extension
     /// with an incrementing counter to the sort-tag in `p` until
     /// we find a free slot.
-    fn find_next_unused(&self) -> Result<PathBuf, FileError> {
+    fn set_next_unused(&mut self) -> Result<(), FileError> {
         if !&self.exists() {
-            return Ok(self.clone());
+            return Ok(());
         };
 
         let (sort_tag, _, stem, _copy_counter, ext) = &self.disassemble();
@@ -59,8 +60,8 @@ impl NotePathBuf for PathBuf {
                 directory: self.parent().unwrap_or_else(|| Path::new("")).to_path_buf(),
             });
         }
-
-        Ok(new_path)
+        swap(self, &mut new_path);
+        Ok(())
     }
 
     /// Shortens the stem of a filename so that
@@ -303,7 +304,7 @@ impl NotePath for Path {
     /// FILENAME_EXTENSIONS_TXT, FILENAME_EXTENSIONS_NO_VIEWER
     fn has_tpnote_extension(&self) -> bool {
         self.is_well_formed_filename()
-            && !matches!(MarkupLanguage::from(&*self), MarkupLanguage::None)
+            && !matches!(MarkupLanguage::from(self), MarkupLanguage::None)
     }
 }
 

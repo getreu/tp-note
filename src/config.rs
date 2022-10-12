@@ -557,7 +557,8 @@ pub fn backup_config_file() -> Result<PathBuf, FileError> {
     use tpnote_lib::filename::NotePathBuf;
     if let Some(ref config_path) = *CONFIG_PATH {
         if config_path.exists() {
-            let config_path_bak = config_path.find_next_unused()?;
+            let mut config_path_bak = config_path.clone();
+            config_path_bak.set_next_unused()?;
 
             fs::rename(&config_path.as_path(), &config_path_bak)?;
 
