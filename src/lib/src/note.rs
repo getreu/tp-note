@@ -20,6 +20,7 @@ use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
 use crate::filename::MarkupLanguage;
+use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 use crate::filter::TERA;
 use crate::front_matter::FrontMatter;
@@ -217,15 +218,7 @@ impl Note {
     /// Renders `self` into HTML and saves the result in `export_dir`. If
     /// `export_dir` is the empty string, the directory of `note_path` is
     /// used. `-` dumps the rendition to STDOUT.
-    /// Renders `self` into HTML and saves the result in `export_dir`. If
-    /// `export_dir` is the empty string, the directory of `note_path` is
-    /// used. `-` dumps the rendition to STDOUT.
-    pub fn render_and_write_content(
-        &mut self,
-        note_path: &Path,
-        template: &str,
-        export_dir: &Path,
-    ) -> Result<(), NoteError> {
+    pub fn export(&mut self, html_template: &str, export_dir: &Path) -> Result<(), NoteError> {
         // Determine filename of html-file.
         let mut html_path = PathBuf::new();
         if export_dir
@@ -234,11 +227,13 @@ impl Note {
             .unwrap_or_default()
             .is_empty()
         {
-            html_path = note_path
+            html_path = self
+                .rendered_filename
                 .parent()
                 .unwrap_or_else(|| Path::new(""))
                 .to_path_buf();
-            let mut html_filename = note_path
+            let mut html_filename = self
+                .rendered_filename
                 .file_name()
                 .unwrap_or_default()
                 .to_str()
@@ -248,7 +243,8 @@ impl Note {
             html_path.push(PathBuf::from(html_filename.as_str()));
         } else if export_dir.as_os_str().to_str().unwrap_or_default() != "-" {
             html_path = export_dir.to_owned();
-            let mut html_filename = note_path
+            let mut html_filename = self
+                .rendered_filename
                 .file_name()
                 .unwrap_or_default()
                 .to_str()
@@ -272,11 +268,13 @@ impl Note {
         };
 
         // The file extension identifies the markup language.
-        let note_path_ext = note_path
+        let note_path_ext = self
+            .rendered_filename
             .extension()
             .unwrap_or_default()
             .to_str()
-            .unwrap_or_default();
+            .unwrap_or_default()
+            .to_string();
 
         // Check where to dump output.
         if html_path
@@ -289,15 +287,63 @@ impl Note {
             let mut handle = stdout.lock();
 
             // Write HTML rendition.
-            handle.write_all(self.render_content(note_path_ext, template, "")?.as_bytes())?;
+            handle.write_all(
+                self.render_content(&note_path_ext, html_template, "")?
+                    .as_bytes(),
+            )?;
         } else {
             let mut handle = OpenOptions::new()
                 .write(true)
                 .create(true)
                 .open(&html_path)?;
             // Write HTML rendition.
-            handle.write_all(self.render_content(note_path_ext, template, "")?.as_bytes())?;
+            handle.write_all(
+                self.render_content(&note_path_ext, html_template, "")?
+                    .as_bytes(),
+            )?;
         };
+        Ok(())
+    }
+
+    /// Checks if `self.rendered_filename` is taken already.
+    /// If yes, some copy counter is appended/incremented.
+    pub fn set_next_unused_rendered_filename(&mut self) -> Result<(), NoteError> {
+        self.rendered_filename.set_next_unused()?;
+        Ok(())
+    }
+
+    /// Writes the note to disk using the note's `content` and the note's `rendered_filename`.
+    /// If the target file exists already, a copy counter is appended/incremented to
+    /// `self.rendered_filename`.
+    pub fn save(&self) -> Result<(), NoteError> {
+        log::trace!(
+            "Writing the note's content to file: {:?}",
+            self.rendered_filename
+        );
+        self.content.write_to_disk(&self.rendered_filename)?;
+        Ok(())
+    }
+
+    /// Find the next free spot `rendered_copy_counter` appending a copy counter.
+    /// Then rename the file `from_path` to that name.
+    /// Silently fails is source and target are identical.
+    pub fn rename_file_from(&self, from_path: &Path) -> Result<(), NoteError> {
+        if !from_path.exclude_copy_counter_eq(&*self.rendered_filename) {
+            // rename file
+            fs::rename(from_path, &self.rendered_filename)?;
+            log::trace!("File renamed to {:?}", self.rendered_filename);
+        }
+        Ok(())
+    }
+
+    /// Write the note to disk and remove the file at the previous location.
+    /// Similar to `rename_from()`, but the target is replaced by `self.content`.
+    pub fn save_and_delete_from(&mut self, from_path: &Path) -> Result<(), NoteError> {
+        self.save()?;
+        if from_path != self.rendered_filename {
+            log::trace!("Deleting file: {:?}", from_path);
+            fs::remove_file(from_path)?;
+        }
         Ok(())
     }
 

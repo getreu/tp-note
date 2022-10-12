@@ -13,6 +13,7 @@ use tpnote_lib::template::TemplateKind;
 /// Returns the template that will be used in the further workflow.
 /// If `path` points to an existing Tp-Note file (with or without header),
 /// `Some<Content>` is the content to the file.
+#[allow(dead_code)] // TODO
 pub(crate) fn get_template_content(path: &Path) -> (TemplateKind, Option<Content>) {
     let stdin_is_empty = STDIN.is_empty();
     let stdin_has_header = !STDIN.borrow_dependent().header.is_empty();

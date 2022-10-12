@@ -10,7 +10,6 @@ use crate::settings::STDIN;
 #[cfg(feature = "viewer")]
 use crate::viewer::launch_viewer_thread;
 use std::env;
-use std::fs;
 #[cfg(not(target_family = "windows"))]
 use std::matches;
 use std::path::PathBuf;
@@ -29,8 +28,6 @@ use tpnote_lib::config::TMPL_VAR_STDIN_HEADER;
 use tpnote_lib::context::Context;
 use tpnote_lib::error::NoteError;
 use tpnote_lib::filename::MarkupLanguage;
-use tpnote_lib::filename::NotePath;
-use tpnote_lib::filename::NotePathBuf;
 use tpnote_lib::note::Note;
 
 /// Open the note file `path` on disk and read its YAML front matter.
@@ -72,42 +69,29 @@ fn synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
         );
     }
 
-    let new_file_path =
-        // Do not sync, if explicitly disabled.
-        if !no_filename_sync && !CFG.arg_default.no_filename_sync && !ARGS.no_filename_sync {
-            log::trace!("Applying template `[tmpl] sync_filename`.");
-            n.render_filename(&CFG.tmpl.sync_filename).map_err(|e| {
-                WorkflowError::Template {
-                    tmpl_name: "[tmpl] sync_filename".to_string(),
-                    source: e,
-                }
+    // Do not sync, if explicitly disabled.
+    if !no_filename_sync && !CFG.arg_default.no_filename_sync && !ARGS.no_filename_sync {
+        log::trace!("Applying template `[tmpl] sync_filename`.");
+        n.render_filename(&CFG.tmpl.sync_filename)
+            .map_err(|e| WorkflowError::Template {
+                tmpl_name: "[tmpl] sync_filename".to_string(),
+                source: e,
             })?;
 
-            if !n.context.path.exclude_copy_counter_eq(&n.rendered_filename) {
-                let mut new_file_path = n.rendered_filename.clone();
-                new_file_path.set_next_unused()?;
-
-                // rename file
-                fs::rename(&n.context.path, &new_file_path)?;
-                log::trace!("File renamed to {:?}", new_file_path);
-                new_file_path
-            } else {
-                n.context.path.clone()
-            }
-        } else {
-            n.context.path.clone()
-        };
+        // Silently fails is source and target are identical.
+        n.rename_file_from(&n.context.path)?;
+    }
 
     // Print HTML rendition.
     if let Some(dir) = &ARGS.export {
-        n.render_and_write_content(&new_file_path, &CFG.html_tmpl.exporter_tmpl, dir)
+        n.export(&CFG.html_tmpl.exporter_tmpl, dir)
             .map_err(|e| WorkflowError::Template {
                 tmpl_name: "[exporter] rendition_tmpl".to_string(),
                 source: e,
             })?;
     }
 
-    Ok(new_file_path)
+    Ok(n.rendered_filename)
 }
 
 #[inline]
@@ -127,7 +111,7 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
             return Err(WorkflowError::ExportNeedsNoteFile);
         };
 
-        let n = if STDIN.is_empty() && CLIPBOARD.is_empty() {
+        let mut n = if STDIN.is_empty() && CLIPBOARD.is_empty() {
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
             log::trace!("Applying templates `[tmpl] new_content` and `[tmpl] new_filename`.");
             let mut n =
@@ -182,13 +166,12 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
         };
 
         // Check if the filename is not taken already
-        let mut new_file_path = n.rendered_filename.clone();
-        new_file_path.set_next_unused()?;
+        n.set_next_unused_rendered_filename()?;
 
         // Write new note on disk.
-        n.content.write_to_disk(&new_file_path)?;
+        n.save()?;
 
-        Ok(new_file_path)
+        Ok(n.rendered_filename)
     } else {
         // The first positional paramter `path` points to a file.
 
@@ -224,17 +207,12 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
                             source: e,
                         })?;
                     // Check if the filename is not taken already
-                    let mut new_file_path = n.rendered_filename.clone();
-                    new_file_path.set_next_unused()?;
+                    n.set_next_unused_rendered_filename()?;
 
-                    // Assert that source and target destination are different.
-                    if n.context.path != new_file_path {
-                        // Write new note on disk.
-                        n.content.write_to_disk(&new_file_path)?;
-                        log::trace!("Deleting file: {:?}", n.context.path);
-                        fs::remove_file(&n.context.path)?;
-                    }
-                    Ok(new_file_path)
+                    // Save new note.
+                    let context_path = n.context.path.clone();
+                    n.save_and_delete_from(&context_path)?;
+                    Ok(n.rendered_filename)
                 }
                 (Err(e), _) => Err(e),
             }
@@ -262,13 +240,12 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
                 })?;
 
             // Check if the filename is not taken already
-            let mut new_file_path = n.rendered_filename.clone();
-            new_file_path.set_next_unused()?;
+            n.set_next_unused_rendered_filename()?;
 
             // Write new note on disk.
-            n.content.write_to_disk(&new_file_path)?;
+            n.save()?;
 
-            Ok(new_file_path)
+            Ok(n.rendered_filename)
         }
     }
 }
