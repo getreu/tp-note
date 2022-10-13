@@ -66,7 +66,7 @@ pub enum FileError {
 /// Macro to construct a `NoteError::TeraTemplate from a `Tera::Error` .
 #[macro_export]
 macro_rules! note_error_tera_template {
-    ($e:ident) => {
+    ($e:ident, $t:expr) => {
         NoteError::TeraTemplate {
             source_str: std::error::Error::source(&$e)
                 .unwrap_or(&tera::Error::msg(""))
@@ -74,6 +74,7 @@ macro_rules! note_error_tera_template {
                 // Remove useless information.
                 .trim_end_matches("in context while rendering '__tera_one_off'")
                 .to_string(),
+            template_str: $t,
         }
     };
 }
@@ -90,8 +91,13 @@ pub enum NoteError {
     CannotPrependHeader { existing_header: String },
 
     /// Remedy: check the syntax of the Tera template in the configuration file.
-    #[error("Tera template error: {source_str}")]
-    TeraTemplate { source_str: String },
+    #[error(
+        "Tera template error in configuration file variable \"{template_str}\":\n {source_str}"
+    )]
+    TeraTemplate {
+        source_str: String,
+        template_str: String,
+    },
 
     /// Remedy: restart with `--debug trace`.
     #[error(

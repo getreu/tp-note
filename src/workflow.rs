@@ -72,13 +72,7 @@ fn synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
 
     // Do not sync, if explicitly disabled.
     if !no_filename_sync && !CFG.arg_default.no_filename_sync && !ARGS.no_filename_sync {
-        n.render_filename(TemplateKind::SyncFilename)
-            .map_err(|e| WorkflowError::Template {
-                tmpl_name: TemplateKind::SyncFilename
-                    .get_filename_template_name()
-                    .to_string(),
-                source: e,
-            })?;
+        n.render_filename(TemplateKind::SyncFilename)?;
 
         // Silently fails is source and target are identical.
         n.rename_file_from(&n.context.path)?;
@@ -86,11 +80,7 @@ fn synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
 
     // Print HTML rendition.
     if let Some(dir) = &ARGS.export {
-        n.export(&CFG.html_tmpl.exporter_tmpl, dir)
-            .map_err(|e| WorkflowError::Template {
-                tmpl_name: "[exporter] rendition_tmpl".to_string(),
-                source: e,
-            })?;
+        n.export(&CFG.html_tmpl.exporter_tmpl, dir)?;
     }
 
     Ok(n.rendered_filename)
@@ -115,17 +105,8 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
 
         let mut n = if STDIN.is_empty() && CLIPBOARD.is_empty() {
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
-            let mut n = Note::from_content_template(context, TemplateKind::New).map_err(|e| {
-                WorkflowError::Template {
-                    tmpl_name: TemplateKind::New.get_content_template_name().to_string(),
-                    source: e,
-                }
-            })?;
-            n.render_filename(TemplateKind::New)
-                .map_err(|e| WorkflowError::Template {
-                    tmpl_name: TemplateKind::New.get_filename_template_name().to_string(),
-                    source: e,
-                })?;
+            let mut n = Note::from_content_template(context, TemplateKind::New)?;
+            n.render_filename(TemplateKind::New)?;
             n
         // The first positional parameter points to an existing file.
         } else if !STDIN.borrow_dependent().header.is_empty()
@@ -133,41 +114,13 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
         {
             // There is a valid YAML front matter in the `CLIPBOARD` or `STDIN`.
             // Create a new note based on clipboard or input stream.
-            let mut n = Note::from_content_template(context, TemplateKind::FromClipboardYaml)
-                .map_err(|e| WorkflowError::Template {
-                    tmpl_name: TemplateKind::FromClipboardYaml
-                        .get_content_template_name()
-                        .to_string(),
-                    source: e,
-                })?;
-
-            n.render_filename(TemplateKind::FromClipboardYaml)
-                .map_err(|e| WorkflowError::Template {
-                    tmpl_name: TemplateKind::FromClipboardYaml
-                        .get_filename_template_name()
-                        .to_string(),
-                    source: e,
-                })?;
+            let mut n = Note::from_content_template(context, TemplateKind::FromClipboardYaml)?;
+            n.render_filename(TemplateKind::FromClipboardYaml)?;
             n
         } else {
             // Create a new note based on clipboard or input stream without header.
-            let mut n =
-                Note::from_content_template(context, TemplateKind::FromClipboard).map_err(|e| {
-                    WorkflowError::Template {
-                        tmpl_name: TemplateKind::FromClipboard
-                            .get_content_template_name()
-                            .to_string(),
-                        source: e,
-                    }
-                })?;
-
-            n.render_filename(TemplateKind::FromClipboard)
-                .map_err(|e| WorkflowError::Template {
-                    tmpl_name: TemplateKind::FromClipboard
-                        .get_filename_template_name()
-                        .to_string(),
-                    source: e,
-                })?;
+            let mut n = Note::from_content_template(context, TemplateKind::FromClipboard)?;
+            n.render_filename(TemplateKind::FromClipboard)?;
             n
         };
 
@@ -205,14 +158,7 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
                 ) => {
                     let mut n = Note::from_text_file(context, TemplateKind::FromTextFile)?;
                     // Render filename.
-                    n.render_filename(TemplateKind::FromTextFile).map_err(|e| {
-                        WorkflowError::Template {
-                            tmpl_name: TemplateKind::FromTextFile
-                                .get_filename_template_name()
-                                .to_string(),
-                            source: e,
-                        }
-                    })?;
+                    n.render_filename(TemplateKind::FromTextFile)?;
                     // Check if the filename is not taken already
                     n.set_next_unused_rendered_filename()?;
 
@@ -231,23 +177,8 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
 
             // ANNOTATE FILE: CREATE NEW NOTE WITH TMPL_ANNOTATE_CONTENT TEMPLATE
             // `path` points to a foreign file type that will be annotated.
-            let mut n =
-                Note::from_content_template(context, TemplateKind::AnnotateFile).map_err(|e| {
-                    WorkflowError::Template {
-                        tmpl_name: TemplateKind::AnnotateFile
-                            .get_content_template_name()
-                            .to_string(),
-                        source: e,
-                    }
-                })?;
-
-            n.render_filename(TemplateKind::AnnotateFile)
-                .map_err(|e| WorkflowError::Template {
-                    tmpl_name: TemplateKind::AnnotateFile
-                        .get_filename_template_name()
-                        .to_string(),
-                    source: e,
-                })?;
+            let mut n = Note::from_content_template(context, TemplateKind::AnnotateFile)?;
+            n.render_filename(TemplateKind::AnnotateFile)?;
 
             // Check if the filename is not taken already
             n.set_next_unused_rendered_filename()?;

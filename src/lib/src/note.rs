@@ -173,7 +173,12 @@ impl Note {
             tera.extend(&TERA)?;
 
             tera.render_str(&template_kind.get_content_template(), &context)
-                .map_err(|e| note_error_tera_template!(e))?
+                .map_err(|e| {
+                    note_error_tera_template!(
+                        e,
+                        template_kind.get_content_template_name().to_string()
+                    )
+                })?
         });
 
         log::debug!(
@@ -219,7 +224,10 @@ impl Note {
                 file_path.push(filename.trim());
             }
             Err(e) => {
-                return Err(note_error_tera_template!(e));
+                return Err(note_error_tera_template!(
+                    e,
+                    template_kind.get_filename_template_name().to_string()
+                ));
             }
         }
 
@@ -406,9 +414,9 @@ impl Note {
 
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
-        let html = tera
-            .render_str(tmpl, &self.context)
-            .map_err(|e| note_error_tera_template!(e))?;
+        let html = tera.render_str(tmpl, &self.context).map_err(|e| {
+            note_error_tera_template!(e, "[html_tmpl] viewer/exporter_tmpl ".to_string())
+        })?;
         Ok(html)
     }
 
@@ -483,9 +491,9 @@ impl Note {
         // Apply template.
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
-        let html = tera
-            .render_str(template, &context)
-            .map_err(|e| note_error_tera_template!(e))?;
+        let html = tera.render_str(template, &context).map_err(|e| {
+            note_error_tera_template!(e, "[html_tmpl] viewer_error_tmpl".to_string())
+        })?;
         Ok(html)
     }
 }
