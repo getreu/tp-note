@@ -25,6 +25,7 @@ use crate::filename::NotePathBuf;
 use crate::filter::TERA;
 use crate::front_matter::FrontMatter;
 use crate::note_error_tera_template;
+use crate::template::TemplateKind;
 use parse_hyperlinks::renderer::text_links2html;
 #[cfg(feature = "viewer")]
 use parse_hyperlinks::renderer::text_rawlinks2html;
@@ -112,7 +113,10 @@ impl Note {
 
     /// Constructor that prepends a YAML header to an existing text file.
     /// Throws an error if the file has a header.
-    pub fn from_text_file(mut context: Context, template: &str) -> Result<Self, NoteError> {
+    pub fn from_text_file(
+        mut context: Context,
+        template_kind: TemplateKind,
+    ) -> Result<Self, NoteError> {
         {
             let mut file = File::open(&context.path)?;
             // Get the file's content.
@@ -145,24 +149,30 @@ impl Note {
                 );
             }
         }
-        Self::from_content_template(context, template)
+        Self::from_content_template(context, template_kind)
     }
 
     /// Constructor that creates a new note by filling in the content template `template`.
-    pub fn from_content_template(mut context: Context, template: &str) -> Result<Self, NoteError> {
+    pub fn from_content_template(
+        mut context: Context,
+        template_kind: TemplateKind,
+    ) -> Result<Self, NoteError> {
         log::trace!(
             "Available substitution variables for content template:\n{:#?}",
             *context
         );
 
-        log::trace!("Applying content template:\n{}", template);
+        log::trace!(
+            "Applying content template: {:?}",
+            template_kind.get_content_template_name()
+        );
 
         // render template
         let content = Content::from({
             let mut tera = Tera::default();
             tera.extend(&TERA)?;
 
-            tera.render_str(template, &context)
+            tera.render_str(&template_kind.get_content_template(), &context)
                 .map_err(|e| note_error_tera_template!(e))?
         });
 
@@ -188,19 +198,22 @@ impl Note {
     /// Applies a Tera template to the notes context in order to generate a
     /// sanitized filename that is in sync with the note's meta data stored in
     /// its front matter.
-    pub fn render_filename(&mut self, template: &str) -> Result<(), NoteError> {
+    pub fn render_filename(&mut self, template_kind: TemplateKind) -> Result<(), NoteError> {
         log::trace!(
             "Available substitution variables for the filename template:\n{:#?}",
             *self.context
         );
-        log::trace!("Applying the filename template:\n{}", template);
+        log::trace!(
+            "Applying the filename template: {:?}",
+            template_kind.get_filename_template_name()
+        );
 
         // render template
         let mut file_path = self.context.dir_path.to_owned();
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
 
-        match tera.render_str(template, &self.context) {
+        match tera.render_str(&template_kind.get_filename_template(), &self.context) {
             Ok(filename) => {
                 log::debug!("Rendered filename template:\n{:?}", filename.trim());
                 file_path.push(filename.trim());

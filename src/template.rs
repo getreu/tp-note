@@ -48,7 +48,7 @@ pub(crate) fn get_template_content(path: &Path) -> (TemplateKind, Option<Content
         (true, false, _, false, _, _) => TemplateKind::New,
         (true, true, false, false, _, _) => TemplateKind::FromClipboard,
         (true, true, true, false, _, _) => TemplateKind::FromClipboardYaml,
-        (false, _, _, true, true, true) => TemplateKind::Sync,
+        (false, _, _, true, true, true) => TemplateKind::SyncFilename,
         (false, _, _, true, true, false) => TemplateKind::FromTextFile,
         (false, _, _, true, false, _) => TemplateKind::AnnotateFile,
         (_, _, _, _, _, _) => TemplateKind::None,
