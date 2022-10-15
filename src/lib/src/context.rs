@@ -38,12 +38,12 @@ pub struct Context {
 /// information.
 ///
 impl Context {
-    /// `path` is the first positional command line paramter `<path>` (see
+    /// `path` is the first positional command line parameter `<path>` (see
     ///   man page).
     /// The `path` parameter must be a canonicalized fully qualified file name.
     /// ```rust
     /// use std::path::Path;
-    /// use tpnote_lib::context::Context;    
+    /// use tpnote_lib::context::Context;
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     ///
     /// assert_eq!(context.path, Path::new("/path/to/mynote.md"));
@@ -75,8 +75,8 @@ impl Context {
     ///
     /// ```rust
     /// use std::path::Path;
-    /// use tpnote_lib::context::Context;     
-    /// use tpnote_lib::front_matter::FrontMatter;     
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::front_matter::FrontMatter;
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     /// context.insert_front_matter(
     ///      &FrontMatter::try_from("title: \"My Stdin.\"").unwrap());
@@ -122,8 +122,8 @@ impl Context {
     ///
     /// ```rust
     /// use std::path::Path;
-    /// use tpnote_lib::context::Context;    
-    /// use tpnote_lib::content::Content;    
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::content::Content;
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     ///
     /// context.insert_content("clipboard", "clipboard_header",

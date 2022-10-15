@@ -1,4 +1,4 @@
-//! Creates a memory representations of the note by inserting _Tp-Note_'s
+//! Creates a memory representation of the note by inserting _Tp-Note_'s
 //! environment data in some templates. If the note exists on disk already,
 //! the memory representation is established be reading the note file with
 //! its front matter.
@@ -105,7 +105,7 @@ impl Note {
 
         if matches!(template_kind, TemplateKind::FromTextFile) {
             if !header.is_empty() {
-                // If the text file is suposed to have no header and there is one,
+                // If the text file is supposed to have no header and there is one,
                 // then return error.
                 return Err(NoteError::CannotPrependHeader {
                     existing_header: header

@@ -1,5 +1,5 @@
-//! Deals with the note's content string.
-
+//! Self referencing data structures to store the note's
+//! raw string.
 use crate::error::FileError;
 use self_cell::self_cell;
 use std::fmt;
@@ -47,7 +47,7 @@ self_cell!(
 impl<'a> Content {
     /// Constructor that parses a _Tp-Note_ document.
     /// A valid document is UTF-8 encoded and starts with an optional
-    /// BOM (byte order mark) followed by `---`. When the startmarker
+    /// BOM (byte order mark) followed by `---`. When the start marker
     /// `---` does not follow directly the BOM, it must be prepended
     /// by an empty line. In this case all text before is ignored:
     /// BOM + ignored text + empty line + `---`.
@@ -58,6 +58,12 @@ impl<'a> Content {
     ///
     /// assert_eq!(c.borrow_dependent().header, r#"title: "My note""#);
     /// assert_eq!(c.borrow_dependent().body, r#"My body"#);
+    ///
+    /// // A test without front matter leads to an empty header:
+    /// let c = Content::from(String::from("No header"));
+    ///
+    /// assert_eq!(c.borrow_dependent().header, "");
+    /// assert_eq!(c.borrow_dependent().body, r#"No header"#);
     /// ```
     pub fn from(input: String) -> Self {
         Content::new(input, |owner: &String| {
@@ -77,13 +83,19 @@ impl<'a> Content {
     ///
     /// assert_eq!(c.borrow_dependent().header, r#"title: "My note""#);
     /// assert_eq!(c.borrow_dependent().body, "My\nbody\n");
+    ///
+    /// // A test without front matter leads to an empty header:
+    /// let c = Content::from(String::from("No header"));
+    ///
+    /// assert_eq!(c.borrow_dependent().header, "");
+    /// assert_eq!(c.borrow_dependent().body, r#"No header"#);
     /// ```
     pub fn from_input_with_cr(input: String) -> Self {
         let input = Self::remove_cr(input);
         Content::from(input)
     }
 
-    /// True if the underlaying owned `Content` string is empty.
+    /// True if the underlying owned `Content` string is empty.
     pub fn is_empty(&self) -> bool {
         self.borrow_owner().is_empty()
     }

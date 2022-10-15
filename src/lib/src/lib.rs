@@ -1,4 +1,6 @@
-//! _Tp-Note_ library. TODO documentation
+//! A library for the template tool _Tp-Note_ that abstracts notes, files and
+//! configurable templates. Is is designed to be included in text file
+//! editors. All default values are customizable at runtime.
 
 pub mod config;
 pub mod content;

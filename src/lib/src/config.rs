@@ -1,5 +1,5 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
-//! and exposes the configuration as `static` variable.
+//! and exposes the configuration as `static` variable behind a mutex.
 
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
@@ -76,7 +76,7 @@ pub const FILENAME_EXTENSION_DEFAULT: &str = "txt";
 #[cfg(all(target_family = "unix", target_vendor = "apple"))]
 pub const FILENAME_EXTENSION_DEFAULT: &str = "md";
 
-/// The variables `FILENAME_EXTENSIONSS_*` list file extensions that Tp-Note
+/// The variables `FILENAME_EXTENSIONS_*` list file extensions that Tp-Note
 /// considers as its own note files.
 /// Tp-Note opens these files, reads their their YAML header and
 /// launches an external file editor and an file viewer
@@ -425,7 +425,7 @@ pub const TMPL_SYNC_FILENAME: &str = "\
 ";
 
 /// HTML template variable containing the note's body.
-/// We could set  
+/// We could set
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
@@ -433,7 +433,7 @@ pub const TMPL_VAR_NOTE_BODY: &str = "note_body";
 
 /// HTML template variable containing the automatically generated JavaScript
 /// code to be included in the HTML rendition.
-/// We could set  
+/// We could set
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
@@ -441,7 +441,7 @@ pub const TMPL_VAR_NOTE_JS: &str = "note_js";
 
 /// HTML template variable used in the error page containing the error message
 /// explaining why this page could not be rendered.
-/// We could set  
+/// We could set
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
@@ -450,7 +450,7 @@ pub const TMPL_VAR_NOTE_ERROR: &str = "note_error";
 
 /// HTML template variable used in the error page containing a verbatim
 /// HTML rendition with hyperlinks of the erroneous note file.
-/// We could set  
+/// We could set
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
@@ -458,7 +458,7 @@ pub const TMPL_VAR_NOTE_ERROR: &str = "note_error";
 pub const TMPL_VAR_NOTE_ERRONEOUS_CONTENT: &str = "note_erroneous_content";
 
 /// HTML template to render regular viewer pages.
-/// We could set  
+/// We could set
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
@@ -527,7 +527,7 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 "#;
 
 /// HTML template to render the viewer-error page.
-/// We could set  
+/// We could set
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.

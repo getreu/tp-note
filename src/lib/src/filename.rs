@@ -8,17 +8,21 @@ use std::mem::swap;
 use std::path::Path;
 use std::path::PathBuf;
 
+/// Extents `PathBuf` with methods dealing with paths to Tp-Note files.
 pub trait NotePathBuf {
+    /// Concatenates the `sort_tag`, `stem`, `copy_counter`, `.` and `extension`.
     fn from_assembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self;
     /// Append a copy counter to the string.
     fn set_next_unused(&mut self) -> Result<(), FileError>;
+    /// When the path `p` exists on disk already, append some extension
+    /// with an incrementing counter to the sort-tag in `p` until
+    /// we find a free slot.
     fn shorten_filename(&mut self);
 }
 
 impl NotePathBuf for PathBuf {
     #[inline]
 
-    /// Concatenates the 3 parameters.
     fn from_assembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self {
         // Assemble path.
         let mut filename = sort_tag.to_string();
@@ -31,9 +35,6 @@ impl NotePathBuf for PathBuf {
         PathBuf::from(filename)
     }
 
-    /// When the path `p` exists on disk already, append some extension
-    /// with an incrementing counter to the sort-tag in `p` until
-    /// we find a free slot.
     fn set_next_unused(&mut self) -> Result<(), FileError> {
         if !&self.exists() {
             return Ok(());
@@ -140,13 +141,21 @@ impl NotePathBuf for PathBuf {
     }
 }
 
+/// Extents `Path` with methods dealing with paths to Tp-Note files.
 pub trait NotePath {
-    /// Append a copy counter to the string.
+    /// Append the copy counter `n` at the end to the filestem.
     fn append_copy_counter(stem: &str, n: usize) -> String;
+    /// Helper function that decomposes a fully qualified path name
+    /// into (`sort_tag`, `stem_copy_counter_ext`, `stem`, `copy_counter`, `ext`).
     fn disassemble(&self) -> (&str, &str, &str, &str, &str);
+    /// Compares with another `Path` to a Tp-Note file. They are considered equal
+    /// even when the copy counter is different.
     fn exclude_copy_counter_eq(&self, p2: &Path) -> bool;
+    /// Check if a `Path` points to a "wellformed" filename.
     fn has_wellformed_filename(&self) -> bool;
+    /// Removes the copy counter from the file stem.
     fn remove_copy_counter(tag: &str) -> &str;
+    /// Compare to all file extensions Tp-Note can open.
     fn has_tpnote_extension(&self) -> bool;
 }
 
@@ -161,8 +170,6 @@ impl NotePath for Path {
         stem
     }
 
-    /// Helper function that decomposes a fully qualified path name
-    /// into (`sort_tag`, `stem_copy_counter_ext`, `stem`, `copy_counter`, `ext`).
     fn disassemble(&self) -> (&str, &str, &str, &str, &str) {
         let lib_cfg = LIB_CFG.read().unwrap();
 
@@ -297,7 +304,7 @@ impl NotePath for Path {
         tag3
     }
 
-    /// True if the filename extension is considered as a tpnote file.
+    /// True if the filename extension is considered as a Tp-Note file.
     /// Checks if the filename extension is one of the following list
     /// taken from the configuration file:
     /// FILENAME_EXTENSIONS_MD, FILENAME_EXTENSIONS_RST, FILENAME_EXTENSIONS_HTML,

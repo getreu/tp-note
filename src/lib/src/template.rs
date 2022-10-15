@@ -1,13 +1,27 @@
+//!Abstractions for content templates and filename templates.
 use crate::config::LIB_CFG;
 
+/// Each workflow is related to one `TemplateKind`, which relates to one
+/// content template and one filename template.
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TemplateKind {
+    /// Templates used when Tp-Note is invoked with a directory path.
     New,
+    /// Templates used when the clipboard contains a text with a YAML header.
     FromClipboardYaml,
+    /// Templates used when the clipboard contains a text without header.
     FromClipboard,
+    /// Templates used when Tp-Note is invoked with a path pointing to a text file
+    /// does not contain a YAML header.
     FromTextFile,
+    /// Templates used when Tp-Note is invoked with a path pointing to a non text
+    /// file.
     AnnotateFile,
+    /// Templates used when Tp-Note is invoked with a path pointing to a Tp-Note
+    /// text file with YAML header.
     SyncFilename,
+    /// No templates are used when Tp-Note is launched with
+    /// `--view --no-filename-sync` in view only mode.
     #[default]
     None,
 }

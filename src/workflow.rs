@@ -74,7 +74,7 @@ fn synchronize_filename(context: Context, content: Option<Content>) -> Result<No
 /// to the filename and try to save it again. In case this does not succeed either,
 /// increment the `copy_counter` until a free filename is found.
 /// The return path points to the (new) note file on disk.
-/// If an exisiting note file was not moved, the return path equals to `context.path`.
+/// If an existing note file was not moved, the return path equals to `context.path`.
 fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
     // `template_type` will tell us what to do.
     let (template_kind, content) = crate::template::get_template_content(&context.path);

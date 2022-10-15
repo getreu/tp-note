@@ -1,8 +1,5 @@
-//! Creates a memory representations of the note by inserting _Tp-Note_'s
-//! environment data in some templates. If the note exists on disk already,
-//! the memory representation is established be reading the note file with
-//! its front matter.
-
+//! Creates a memory representation of the note's YAML header.
+//! Technically this is a wrapper around a `tera::Map`.
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
@@ -60,7 +57,7 @@ impl FrontMatter {
 
 impl TryFrom<&Content> for FrontMatter {
     type Error = NoteError;
-    /// Helper function deserializing the front-matter of the note file.
+    /// Helper function deserialising the front-matter of the note file.
     fn try_from(content: &Content) -> Result<FrontMatter, NoteError> {
         let header = content.borrow_dependent().header;
         Self::try_from(header)
@@ -69,7 +66,7 @@ impl TryFrom<&Content> for FrontMatter {
 
 impl TryFrom<&str> for FrontMatter {
     type Error = NoteError;
-    /// Helper function deserializing the front-matter of the note file.
+    /// Helper function deserialising the front-matter of the note file.
     fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
         let lib_cfg = LIB_CFG.read().unwrap();
 
