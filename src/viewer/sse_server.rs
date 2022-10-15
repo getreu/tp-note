@@ -585,7 +585,7 @@ impl ServerThread {
         // Render.
         let context = self.context.clone();
         // First decompose header and body, then deserialize header.
-        match Note::from_existing_note(context)
+        match Note::from_existing_note(context, None)
             // Now, try to render to html.
             .and_then(|mut note| {
                 note.render_content(file_path_ext, &CFG.html_tmpl.viewer_tmpl, &js)

@@ -66,16 +66,22 @@ use std::fs;
 impl Note {
     /// Constructor that creates a memory representation of an existing note on
     /// disk.
-    pub fn from_existing_note(mut context: Context) -> Result<Self, NoteError> {
+    pub fn from_existing_note(
+        mut context: Context,
+        content: Option<Content>,
+    ) -> Result<Self, NoteError> {
         let lib_cfg = LIB_CFG.read().unwrap();
 
-        let content =
-            Content::from_input_with_cr(fs::read_to_string(&context.path).map_err(|e| {
-                NoteError::Read {
+        let content = match content {
+            Some(c) => c,
+            None => {
+                let s = fs::read_to_string(&context.path).map_err(|e| NoteError::Read {
                     path: context.path.to_path_buf(),
                     source: e,
-                }
-            })?);
+                })?;
+                Content::from_input_with_cr(s)
+            }
+        };
 
         // Deserialize the note read from disk.
         let fm = FrontMatter::try_from(&content)?;

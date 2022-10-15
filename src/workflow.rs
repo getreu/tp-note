@@ -25,6 +25,7 @@ use tpnote_lib::config::TMPL_VAR_FM_FILENAME_SYNC;
 use tpnote_lib::config::TMPL_VAR_FM_NO_FILENAME_SYNC;
 use tpnote_lib::config::TMPL_VAR_STDIN;
 use tpnote_lib::config::TMPL_VAR_STDIN_HEADER;
+use tpnote_lib::content::Content;
 use tpnote_lib::context::Context;
 use tpnote_lib::error::NoteError;
 use tpnote_lib::filename::MarkupLanguage;
@@ -35,9 +36,12 @@ use tpnote_lib::template::TemplateKind;
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk and return
 /// the new filename.
-fn synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
+fn synchronize_filename(
+    context: Context,
+    content: Option<Content>,
+) -> Result<PathBuf, WorkflowError> {
     // parse file again to check for synchronicity with filename
-    let mut n = Note::from_existing_note(context)?;
+    let mut n = Note::from_existing_note(context, content)?;
 
     let no_filename_sync = match (
         n.context.get(TMPL_VAR_FM_FILENAME_SYNC),
@@ -92,6 +96,8 @@ fn synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
 /// to the filename and try to save it again. In case this does not succeed either,
 /// increment the `copy_counter` until a free filename is found.
 fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
+    // `template_type` will tell us what to do.
+    let (_template_type, content) = crate::template::get_template_content(&context.path);
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
     // Does the first positional parameter point to a directory?
@@ -143,7 +149,7 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
             // Check if in sync with its filename.
             // If the note file has no header, we prepend one if wished for.
             match (
-                synchronize_filename(context.clone()),
+                synchronize_filename(context.clone(), content),
                 // Shall we prepend a header, in case it is missing?
                 (ARGS.add_header || CFG.arg_default.add_header)
                     && !CFG.arg_default.no_filename_sync
@@ -287,7 +293,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
         let mut context = Context::from(&path);
         context.insert_environment()?;
 
-        match synchronize_filename(context) {
+        match synchronize_filename(context, None) {
             // `path` has changed!
             Ok(p) => path = p,
             Err(e) => {
