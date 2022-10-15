@@ -233,6 +233,48 @@ impl Note {
         Ok(())
     }
 
+    /// Checks if `self.rendered_filename` is taken already.
+    /// If yes, some copy counter is appended/incremented.
+    pub fn set_next_unused_rendered_filename(&mut self) -> Result<(), NoteError> {
+        self.rendered_filename.set_next_unused()?;
+        Ok(())
+    }
+
+    /// Writes the note to disk using the note's `content` and the note's `rendered_filename`.
+    /// If the target file exists already, a copy counter is appended/incremented to
+    /// `self.rendered_filename`.
+    pub fn save(&self) -> Result<(), NoteError> {
+        log::trace!(
+            "Writing the note's content to file: {:?}",
+            self.rendered_filename
+        );
+        self.content.write_to_disk(&self.rendered_filename)?;
+        Ok(())
+    }
+
+    /// Find the next free spot `rendered_copy_counter` appending a copy counter.
+    /// Then rename the file `from_path` to that name.
+    /// Silently fails is source and target are identical.
+    pub fn rename_file_from(&self, from_path: &Path) -> Result<(), NoteError> {
+        if !from_path.exclude_copy_counter_eq(&*self.rendered_filename) {
+            // rename file
+            fs::rename(from_path, &self.rendered_filename)?;
+            log::trace!("File renamed to {:?}", self.rendered_filename);
+        }
+        Ok(())
+    }
+
+    /// Write the note to disk and remove the file at the previous location.
+    /// Similar to `rename_from()`, but the target is replaced by `self.content`.
+    pub fn save_and_delete_from(&mut self, from_path: &Path) -> Result<(), NoteError> {
+        self.save()?;
+        if from_path != self.rendered_filename {
+            log::trace!("Deleting file: {:?}", from_path);
+            fs::remove_file(from_path)?;
+        }
+        Ok(())
+    }
+
     /// Renders `self` into HTML and saves the result in `export_dir`. If
     /// `export_dir` is the empty string, the directory of `note_path` is
     /// used. `-` dumps the rendition to STDOUT.
@@ -320,48 +362,6 @@ impl Note {
                     .as_bytes(),
             )?;
         };
-        Ok(())
-    }
-
-    /// Checks if `self.rendered_filename` is taken already.
-    /// If yes, some copy counter is appended/incremented.
-    pub fn set_next_unused_rendered_filename(&mut self) -> Result<(), NoteError> {
-        self.rendered_filename.set_next_unused()?;
-        Ok(())
-    }
-
-    /// Writes the note to disk using the note's `content` and the note's `rendered_filename`.
-    /// If the target file exists already, a copy counter is appended/incremented to
-    /// `self.rendered_filename`.
-    pub fn save(&self) -> Result<(), NoteError> {
-        log::trace!(
-            "Writing the note's content to file: {:?}",
-            self.rendered_filename
-        );
-        self.content.write_to_disk(&self.rendered_filename)?;
-        Ok(())
-    }
-
-    /// Find the next free spot `rendered_copy_counter` appending a copy counter.
-    /// Then rename the file `from_path` to that name.
-    /// Silently fails is source and target are identical.
-    pub fn rename_file_from(&self, from_path: &Path) -> Result<(), NoteError> {
-        if !from_path.exclude_copy_counter_eq(&*self.rendered_filename) {
-            // rename file
-            fs::rename(from_path, &self.rendered_filename)?;
-            log::trace!("File renamed to {:?}", self.rendered_filename);
-        }
-        Ok(())
-    }
-
-    /// Write the note to disk and remove the file at the previous location.
-    /// Similar to `rename_from()`, but the target is replaced by `self.content`.
-    pub fn save_and_delete_from(&mut self, from_path: &Path) -> Result<(), NoteError> {
-        self.save()?;
-        if from_path != self.rendered_filename {
-            log::trace!("Deleting file: {:?}", from_path);
-            fs::remove_file(from_path)?;
-        }
         Ok(())
     }
 
