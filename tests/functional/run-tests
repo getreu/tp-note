@@ -309,7 +309,7 @@ fi
 
 
 
-## Test 12: Do not synchronize meta data and filename
+## Test 12: Add header
 INPUT_FILENAME="$PWD/20220312-abc-- edf.md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 Only body
