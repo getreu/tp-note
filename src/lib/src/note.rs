@@ -3,7 +3,6 @@
 //! the memory representation is established be reading the note file with
 //! its front matter.
 
-use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_FM_ALL_YAML;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::config::TMPL_VAR_NOTE_BODY;
@@ -39,7 +38,6 @@ use std::default::Default;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io;
-use std::io::prelude::*;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::str;
@@ -64,14 +62,21 @@ pub struct Note {
 
 use std::fs;
 impl Note {
-    /// Constructor that creates a memory representation of an existing note on
-    /// disk.
-    pub fn from_existing_note(
+    /// Constructor, that creates a memory representation of an existing note
+    /// on disk.
+    /// The `Content` is inserted in the `Context` map as value for the key
+    /// "text_file".
+    /// `self.content` is rendered with the template
+    /// `template_kind.get_content_template()` which is typically
+    /// "from_text_file_content".
+    /// It prepends a YAML header to its `content`, by inserting `TMP`
+    /// Throws an error if the file has a header.
+    pub fn from_text_file(
         mut context: Context,
         content: Option<Content>,
+        template_kind: TemplateKind,
     ) -> Result<Self, NoteError> {
-        let lib_cfg = LIB_CFG.read().unwrap();
-
+        // If no content was provided, we read it ourself.
         let content = match content {
             Some(c) => c,
             None => {
@@ -83,55 +88,31 @@ impl Note {
             }
         };
 
-        // Deserialize the note read from disk.
-        let fm = FrontMatter::try_from(&content)?;
+        // Register context variables:
+        // Register the raw serialized header text.
+        let header = &content.borrow_dependent().header;
+        (*context).insert(TMPL_VAR_FM_ALL_YAML, &header);
+        //We also keep the body.
+        let body = &content.borrow_dependent().body;
+        (*context).insert(TMPL_VAR_PATH_FILE_TEXT, &body);
 
-        if !(*lib_cfg).tmpl.compulsory_header_field.is_empty() {
-            if let Some(tera::Value::String(header_field)) =
-                fm.map.get(&(*lib_cfg).tmpl.compulsory_header_field)
-            {
-                if header_field.is_empty() {
-                    return Err(NoteError::CompulsoryFrontMatterFieldIsEmpty {
-                        field_name: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
-                    });
-                };
-            } else {
-                return Err(NoteError::MissingFrontMatterField {
-                    field_name: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
-                });
-            }
+        // Get the file's creation date.
+        let file = File::open(&context.path)?;
+        let metadata = file.metadata()?;
+        if let Ok(time) = metadata.created() {
+            (*context).insert(
+                TMPL_VAR_PATH_FILE_DATE,
+                &time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs(),
+            );
         }
 
-        // Register the raw serialized header text.
-        (*context).insert(TMPL_VAR_FM_ALL_YAML, &content.borrow_dependent().header);
-
-        context.insert_front_matter(&fm);
-
-        // Return new note.
-        Ok(Self {
-            // Reserved for future use:
-            //     front_matter: fm,
-            context,
-            content,
-            rendered_filename: PathBuf::new(),
-        })
-    }
-
-    /// Constructor that prepends a YAML header to an existing text file.
-    /// Throws an error if the file has a header.
-    pub fn from_text_file(
-        mut context: Context,
-        template_kind: TemplateKind,
-    ) -> Result<Self, NoteError> {
-        {
-            let mut file = File::open(&context.path)?;
-            // Get the file's content.
-            let mut raw_text = String::new();
-            file.read_to_string(&mut raw_text)?;
-            //We keep only the body, if ever there is a header.
-            let content = Content::from_input_with_cr(raw_text);
-            let header = &content.borrow_dependent().header;
-            if !header.is_empty() {
+        if !header.is_empty() {
+            // If the text file is suposed to have no header and there is one,
+            // then return error.
+            if matches!(template_kind, TemplateKind::FromTextFile) {
                 return Err(NoteError::CannotPrependHeader {
                     existing_header: header
                         .lines()
@@ -140,22 +121,32 @@ impl Note {
                         .collect::<String>(),
                 });
             };
-            //We keep the body.
-            (*context).insert(TMPL_VAR_PATH_FILE_TEXT, &content.borrow_dependent().body);
+        }
 
-            // Get the file's creation date.
-            let metadata = file.metadata()?;
-            if let Ok(time) = metadata.created() {
-                (*context).insert(
-                    TMPL_VAR_PATH_FILE_DATE,
-                    &time
-                        .duration_since(SystemTime::UNIX_EPOCH)
-                        .unwrap_or_default()
-                        .as_secs(),
-                );
+        // Check if the compulsory field is present.
+        // Deserialize the note's header read from disk.
+        let fm = FrontMatter::try_from(&content)?;
+        context.insert_front_matter(&fm);
+
+        match template_kind {
+            TemplateKind::None | TemplateKind::SyncFilename =>
+            // No rendering is required. `content` is read from disk and left untouched.
+            {
+                // Store front matter in context for later use in filename templates.
+                context.insert_front_matter(&fm);
+                Ok(Self {
+                    context,
+                    content,
+                    rendered_filename: PathBuf::new(),
+                })
+            }
+            _ =>
+            // `content` will be generated with a content template.
+            // Remember: body is also in `context` if needed.
+            {
+                Self::from_content_template(context, template_kind)
             }
         }
-        Self::from_content_template(context, template_kind)
     }
 
     /// Constructor that creates a new note by filling in the content template `template`.
@@ -245,7 +236,7 @@ impl Note {
     /// Renders `self` into HTML and saves the result in `export_dir`. If
     /// `export_dir` is the empty string, the directory of `note_path` is
     /// used. `-` dumps the rendition to STDOUT.
-    pub fn export(&mut self, html_template: &str, export_dir: &Path) -> Result<(), NoteError> {
+    pub fn export(&self, html_template: &str, export_dir: &Path) -> Result<(), NoteError> {
         // Determine filename of html-file.
         let mut html_path = PathBuf::new();
         if export_dir
@@ -381,7 +372,7 @@ impl Note {
     /// Finally the result is rendered with the `HTML_VIEWER_TMPL`
     /// template.
     pub fn render_content(
-        &mut self,
+        &self,
         // We need the file extension to determine the
         // markup language.
         file_ext: &str,
@@ -412,15 +403,17 @@ impl Note {
             _ => Self::render_txt_content(input),
         };
 
+        let mut html_context = self.context.clone();
+
         // Register rendered body.
-        self.context.insert(TMPL_VAR_NOTE_BODY, &html_output);
+        html_context.insert(TMPL_VAR_NOTE_BODY, &html_output);
 
         // Java Script
-        self.context.insert(TMPL_VAR_NOTE_JS, java_script_insert);
+        html_context.insert(TMPL_VAR_NOTE_JS, java_script_insert);
 
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
-        let html = tera.render_str(tmpl, &self.context).map_err(|e| {
+        let html = tera.render_str(tmpl, &html_context).map_err(|e| {
             note_error_tera_template!(e, "[html_tmpl] viewer/exporter_tmpl ".to_string())
         })?;
         Ok(html)
@@ -562,7 +555,7 @@ mod tests {
         // Is empty.
         let input = "";
 
-        assert!(FrontMatter::try_from(input).is_err());
+        assert!(FrontMatter::try_from(input).is_ok());
 
         //
         // forbidden character `x` in `tag`.

@@ -585,9 +585,9 @@ impl ServerThread {
         // Render.
         let context = self.context.clone();
         // First decompose header and body, then deserialize header.
-        match Note::from_existing_note(context, None)
+        match Note::from_text_file(context, None, tpnote_lib::template::TemplateKind::None)
             // Now, try to render to html.
-            .and_then(|mut note| {
+            .and_then(|note| {
                 note.render_content(file_path_ext, &CFG.html_tmpl.viewer_tmpl, &js)
             })
             // Now scan the HTML result for links and store them in a HashMap

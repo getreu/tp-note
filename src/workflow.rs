@@ -28,7 +28,6 @@ use tpnote_lib::config::TMPL_VAR_STDIN_HEADER;
 use tpnote_lib::content::Content;
 use tpnote_lib::context::Context;
 use tpnote_lib::error::NoteError;
-use tpnote_lib::filename::MarkupLanguage;
 use tpnote_lib::note::Note;
 use tpnote_lib::template::TemplateKind;
 
@@ -36,12 +35,9 @@ use tpnote_lib::template::TemplateKind;
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk and return
 /// the new filename.
-fn synchronize_filename(
-    context: Context,
-    content: Option<Content>,
-) -> Result<PathBuf, WorkflowError> {
+fn synchronize_filename(context: Context, content: Option<Content>) -> Result<Note, WorkflowError> {
     // parse file again to check for synchronicity with filename
-    let mut n = Note::from_existing_note(context, content)?;
+    let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename)?;
 
     let no_filename_sync = match (
         n.context.get(TMPL_VAR_FM_FILENAME_SYNC),
@@ -82,12 +78,7 @@ fn synchronize_filename(
         n.rename_file_from(&n.context.path)?;
     }
 
-    // Print HTML rendition.
-    if let Some(dir) = &ARGS.export {
-        n.export(&CFG.html_tmpl.exporter_tmpl, dir)?;
-    }
-
-    Ok(n.rendered_filename)
+    Ok(n)
 }
 
 #[inline]
@@ -97,104 +88,51 @@ fn synchronize_filename(
 /// increment the `copy_counter` until a free filename is found.
 fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
     // `template_type` will tell us what to do.
-    let (_template_type, content) = crate::template::get_template_content(&context.path);
+    let (template_kind, content) = crate::template::get_template_content(&context.path);
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
     // Does the first positional parameter point to a directory?
-    if context.path == context.dir_path {
-        // Yes: create a new note.
 
-        // Error if we are supposed to export a directory.
-        if ARGS.export.is_some() {
-            return Err(WorkflowError::ExportNeedsNoteFile);
-        };
-
-        let mut n = if STDIN.is_empty() && CLIPBOARD.is_empty() {
+    let n = match template_kind {
+        TemplateKind::New
+        | TemplateKind::FromClipboardYaml
+        | TemplateKind::FromClipboard
+        | TemplateKind::AnnotateFile => {
             // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
-            let mut n = Note::from_content_template(context, TemplateKind::New)?;
-            n.render_filename(TemplateKind::New)?;
-            n
-        // The first positional parameter points to an existing file.
-        } else if !STDIN.borrow_dependent().header.is_empty()
-            || !CLIPBOARD.borrow_dependent().header.is_empty()
-        {
-            // There is a valid YAML front matter in the `CLIPBOARD` or `STDIN`.
-            // Create a new note based on clipboard or input stream.
-            let mut n = Note::from_content_template(context, TemplateKind::FromClipboardYaml)?;
-            n.render_filename(TemplateKind::FromClipboardYaml)?;
-            n
-        } else {
-            // Create a new note based on clipboard or input stream without header.
-            let mut n = Note::from_content_template(context, TemplateKind::FromClipboard)?;
-            n.render_filename(TemplateKind::FromClipboard)?;
-            n
-        };
-
-        // Check if the filename is not taken already
-        n.set_next_unused_rendered_filename()?;
-
-        // Write new note on disk.
-        n.save()?;
-
-        Ok(n.rendered_filename)
-    } else {
-        // The first positional paramter `path` points to a file.
-
-        let extension_is_known =
-            !matches!(MarkupLanguage::from(&*context.path), MarkupLanguage::None);
-
-        if extension_is_known {
-            // SYNCHRONIZE FILENAME
-            // `path` points to an existing Tp-Note file.
-            // Check if in sync with its filename.
-            // If the note file has no header, we prepend one if wished for.
-            match (
-                synchronize_filename(context.clone(), content),
-                // Shall we prepend a header, in case it is missing?
-                (ARGS.add_header || CFG.arg_default.add_header)
-                    && !CFG.arg_default.no_filename_sync
-                    && !ARGS.no_filename_sync,
-            ) {
-                (Ok(path), _) => Ok(path),
-                (
-                    Err(WorkflowError::Note {
-                        source: NoteError::MissingFrontMatter { .. },
-                    }),
-                    true,
-                ) => {
-                    let mut n = Note::from_text_file(context, TemplateKind::FromTextFile)?;
-                    // Render filename.
-                    n.render_filename(TemplateKind::FromTextFile)?;
-                    // Check if the filename is not taken already
-                    n.set_next_unused_rendered_filename()?;
-
-                    // Save new note.
-                    let context_path = n.context.path.clone();
-                    n.save_and_delete_from(&context_path)?;
-                    Ok(n.rendered_filename)
-                }
-                (Err(e), _) => Err(e),
-            }
-        } else {
-            // Error if we are supposed to export an unknown file type.
-            if ARGS.export.is_some() {
-                return Err(WorkflowError::ExportNeedsNoteFile);
-            };
-
-            // ANNOTATE FILE: CREATE NEW NOTE WITH TMPL_ANNOTATE_CONTENT TEMPLATE
-            // `path` points to a foreign file type that will be annotated.
-            let mut n = Note::from_content_template(context, TemplateKind::AnnotateFile)?;
-            n.render_filename(TemplateKind::AnnotateFile)?;
-
+            let mut n = Note::from_content_template(context, template_kind)?;
+            n.render_filename(template_kind)?;
             // Check if the filename is not taken already
             n.set_next_unused_rendered_filename()?;
-
-            // Write new note on disk.
             n.save()?;
-
-            Ok(n.rendered_filename)
+            n
         }
+
+        TemplateKind::FromTextFile | TemplateKind::None => {
+            if !((ARGS.add_header || CFG.arg_default.add_header)
+                && !CFG.arg_default.no_filename_sync
+                && !ARGS.no_filename_sync)
+            {
+                return Ok(context.path); //
+            }
+
+            let mut n = Note::from_text_file(context, content, template_kind)?;
+            // Render filename.
+            n.render_filename(template_kind)?;
+
+            // Save new note.
+            let context_path = n.context.path.clone();
+            n.save_and_delete_from(&context_path)?;
+            n
+        }
+        TemplateKind::SyncFilename => synchronize_filename(context, content)?,
+    };
+
+    // Export HTML rendition, if wanted.
+    if let Some(dir) = &ARGS.export {
+        n.export(&CFG.html_tmpl.exporter_tmpl, dir)?;
     }
+
+    Ok(n.rendered_filename)
 }
 
 /// Run Tp-Note and return the (modified) path to the (new) note file.
@@ -295,7 +233,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
 
         match synchronize_filename(context, None) {
             // `path` has changed!
-            Ok(p) => path = p,
+            Ok(n) => path = n.rendered_filename,
             Err(e) => {
                 let missing_header = matches!(
                     e,
