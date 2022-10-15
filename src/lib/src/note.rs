@@ -56,8 +56,8 @@ pub struct Note {
     /// 1. The `Content`'s header is deserialized into `FrontMatter`.
     /// 2. `FrontMatter` is stored in `Context` with some environment data.
     /// 3. `Context` data is filled in some filename template.
-    /// 4. The result is stored in `rendered_filename`.
-    /// This field equals to `PathBuf::new()` until `self.render_filename` is called.
+    /// 4. The result is stored in `rendered_filename`. This field equals to
+    ///    `PathBuf::new()` until `self.render_filename` is called.
     pub rendered_filename: PathBuf,
 }
 
@@ -103,10 +103,10 @@ impl Note {
             );
         }
 
-        if !header.is_empty() {
-            // If the text file is suposed to have no header and there is one,
-            // then return error.
-            if matches!(template_kind, TemplateKind::FromTextFile) {
+        if matches!(template_kind, TemplateKind::FromTextFile) {
+            if !header.is_empty() {
+                // If the text file is suposed to have no header and there is one,
+                // then return error.
                 return Err(NoteError::CannotPrependHeader {
                     existing_header: header
                         .lines()
@@ -115,7 +115,7 @@ impl Note {
                         .collect::<String>(),
                 });
             };
-        }
+        };
 
         // Check if the compulsory field is present.
         // Deserialize the note's header read from disk.
@@ -127,6 +127,8 @@ impl Note {
             // No rendering is required. `content` is read from disk and left untouched.
             {
                 // Store front matter in context for later use in filename templates.
+                fm.assert_not_empty()?;
+                fm.assert_compulsory_field()?;
                 context.insert_front_matter(&fm);
                 Ok(Self {
                     context,
@@ -134,10 +136,13 @@ impl Note {
                     rendered_filename: PathBuf::new(),
                 })
             }
+            TemplateKind::FromTextFile => Self::from_content_template(context, template_kind),
             _ =>
             // `content` will be generated with a content template.
             // Remember: body is also in `context` if needed.
             {
+                fm.assert_not_empty()?;
+                fm.assert_compulsory_field()?;
                 Self::from_content_template(context, template_kind)
             }
         }

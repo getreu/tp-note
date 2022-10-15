@@ -22,8 +22,8 @@ pub struct FrontMatter {
 
 impl FrontMatter {
     /// Checks if the front matter contains a field variable
-    /// with the name defined in the configuration file as:
-    /// "[tmpl] compulsory_header_field".
+    /// with the name defined in the configuration file:
+    /// as: "compulsory_header_field".
     pub fn assert_compulsory_field(&self) -> Result<(), NoteError> {
         let lib_cfg = LIB_CFG.read().unwrap();
 
