@@ -20,6 +20,44 @@ pub struct FrontMatter {
     pub map: tera::Map<String, tera::Value>,
 }
 
+impl FrontMatter {
+    /// Checks if the front matter contains a field variable
+    /// with the name defined in the configuration file as:
+    /// "[tmpl] compulsory_header_field".
+    pub fn assert_compulsory_field(&self) -> Result<(), NoteError> {
+        let lib_cfg = LIB_CFG.read().unwrap();
+
+        if !(*lib_cfg).tmpl.compulsory_header_field.is_empty() {
+            if let Some(tera::Value::String(header_field)) =
+                self.map.get(&(*lib_cfg).tmpl.compulsory_header_field)
+            {
+                if header_field.is_empty() {
+                    return Err(NoteError::CompulsoryFrontMatterFieldIsEmpty {
+                        field_name: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
+                    });
+                };
+            } else {
+                return Err(NoteError::MissingFrontMatterField {
+                    field_name: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
+                });
+            }
+        }
+        Ok(())
+    }
+
+    /// Are any variables registerd?
+    pub fn assert_not_empty(&self) -> Result<(), NoteError> {
+        if self.map.is_empty() {
+            let lib_cfg = LIB_CFG.read().unwrap();
+            Err(NoteError::MissingFrontMatter {
+                compulsory_field: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
+            })
+        } else {
+            Ok(())
+        }
+    }
+}
+
 impl TryFrom<&Content> for FrontMatter {
     type Error = NoteError;
     /// Helper function deserializing the front-matter of the note file.
@@ -34,12 +72,6 @@ impl TryFrom<&str> for FrontMatter {
     /// Helper function deserializing the front-matter of the note file.
     fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
         let lib_cfg = LIB_CFG.read().unwrap();
-        //fn deserialize_header(header: &str) -> Result<FrontMatter, NoteError> {
-        if header.is_empty() {
-            return Err(NoteError::MissingFrontMatter {
-                compulsory_field: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
-            });
-        };
 
         let map: tera::Map<String, tera::Value> =
             serde_yaml::from_str(header).map_err(|e| NoteError::InvalidFrontMatterYaml {
@@ -107,8 +139,8 @@ impl TryFrom<&str> for FrontMatter {
 
 #[cfg(test)]
 mod tests {
-    use crate::context::Context;
     use super::FrontMatter;
+    use crate::context::Context;
     use serde_json::json;
     use std::path::Path;
     use tera::Value;

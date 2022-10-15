@@ -15,6 +15,7 @@ use std::ops::Deref;
 use std::ops::DerefMut;
 use std::path::Path;
 use std::path::PathBuf;
+
 #[cfg(target_family = "windows")]
 use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
 #[cfg(target_family = "windows")]
@@ -154,11 +155,14 @@ impl Context {
         // unmodified input stream is our new note content.
         let input_fm = FrontMatter::try_from(input);
         match input_fm {
-            Ok(ref stdin_fm) => log::trace!(
-                "YAML front matter in the input stream \"{}\" stdin found:\n{:#?}",
-                tmpl_var,
-                &stdin_fm
-            ),
+            Ok(ref fm) => {
+                fm.assert_not_empty()?;
+                log::trace!(
+                    "YAML front matter in the input stream \"{}\" stdin found:\n{:#?}",
+                    tmpl_var,
+                    &fm
+                )
+            }
             Err(ref e) => {
                 if !input.borrow_dependent().header.is_empty() {
                     return Err(NoteError::InvalidInputYaml {
@@ -169,7 +173,7 @@ impl Context {
             }
         };
 
-        // Register stdin front matter.
+        // Register front matter.
         // The variables registered here can be overwrite the ones from the clipboard.
         if let Ok(fm) = input_fm {
             self.insert_front_matter(&fm);
