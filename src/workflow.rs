@@ -129,7 +129,7 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
 
     // Export HTML rendition, if wanted.
     if let Some(dir) = &ARGS.export {
-        n.export(&CFG.html_tmpl.exporter_tmpl, dir)?;
+        n.export_html(&CFG.html_tmpl.exporter_tmpl, dir)?;
     }
 
     Ok(n.rendered_filename)
