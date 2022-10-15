@@ -86,6 +86,8 @@ fn synchronize_filename(context: Context, content: Option<Content>) -> Result<No
 /// If the note to be created exists already, append a so called `copy_counter`
 /// to the filename and try to save it again. In case this does not succeed either,
 /// increment the `copy_counter` until a free filename is found.
+/// The return path points to the (new) note file on disk.
+/// If an exisiting note file was not moved, the return path equals to `context.path`.
 fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
     // `template_type` will tell us what to do.
     let (template_kind, content) = crate::template::get_template_content(&context.path);
@@ -112,7 +114,7 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
                 && !CFG.arg_default.no_filename_sync
                 && !ARGS.no_filename_sync)
             {
-                return Ok(context.path); //
+                return Ok(context.path); //TODO
             }
 
             let mut n = Note::from_text_file(context, content, template_kind)?;
@@ -132,7 +134,12 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
         n.export_html(&CFG.html_tmpl.exporter_tmpl, dir)?;
     }
 
-    Ok(n.rendered_filename)
+    // If no new filename was rendered, return the old one.
+    if n.rendered_filename != PathBuf::new() {
+        Ok(n.rendered_filename)
+    } else {
+        Ok(n.context.path)
+    }
 }
 
 /// Run Tp-Note and return the (modified) path to the (new) note file.
