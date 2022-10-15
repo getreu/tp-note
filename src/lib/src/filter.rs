@@ -84,7 +84,7 @@ fn sanit_filter<S: BuildHasher>(
         };
 
     // Check if this is a usual filename.
-    if p.starts_with(FILENAME_DOTFILE_MARKER) && PathBuf::from(&*p).is_well_formed_filename() {
+    if p.starts_with(FILENAME_DOTFILE_MARKER) && PathBuf::from(&*p).has_wellformed_filename() {
         p.to_mut()
             .insert(0, lib_cfg.filename.sort_tag_extra_separator);
     }

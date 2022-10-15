@@ -145,7 +145,7 @@ pub trait NotePath {
     fn append_copy_counter(stem: &str, n: usize) -> String;
     fn disassemble(&self) -> (&str, &str, &str, &str, &str);
     fn exclude_copy_counter_eq(&self, p2: &Path) -> bool;
-    fn is_well_formed_filename(&self) -> bool;
+    fn has_wellformed_filename(&self) -> bool;
     fn remove_copy_counter(tag: &str) -> &str;
     fn has_tpnote_extension(&self) -> bool;
 }
@@ -237,15 +237,15 @@ impl NotePath for Path {
     /// use tpnote_lib::filename::NotePath;
     ///
     /// let f = Path::new("tpnote.toml");
-    /// assert!(f.is_well_formed_filename());
+    /// assert!(f.has_wellformed_filename());
     ///
     /// let f = Path::new("dir/tpnote.toml");
-    /// assert!(!f.is_well_formed_filename());
+    /// assert!(f.has_wellformed_filename());
     ///
     /// let f = Path::new("tpnote.to ml");
-    /// assert!(!f.is_well_formed_filename());
+    /// assert!(!f.has_wellformed_filename());
     /// ```
-    fn is_well_formed_filename(&self) -> bool {
+    fn has_wellformed_filename(&self) -> bool {
         let filename = &self.file_name().unwrap_or_default();
         let ext = self
             .extension()
@@ -253,7 +253,7 @@ impl NotePath for Path {
             .to_str()
             .unwrap_or_default();
 
-        let is_filename = !filename.is_empty() && (filename == self);
+        let is_filename = !filename.is_empty();
 
         let filename = filename.to_str().unwrap_or_default();
         let is_dot_file = filename.starts_with(FILENAME_DOTFILE_MARKER)
@@ -303,7 +303,7 @@ impl NotePath for Path {
     /// FILENAME_EXTENSIONS_MD, FILENAME_EXTENSIONS_RST, FILENAME_EXTENSIONS_HTML,
     /// FILENAME_EXTENSIONS_TXT, FILENAME_EXTENSIONS_NO_VIEWER
     fn has_tpnote_extension(&self) -> bool {
-        self.is_well_formed_filename()
+        self.has_wellformed_filename()
             && !matches!(MarkupLanguage::from(self), MarkupLanguage::None)
     }
 }
@@ -420,35 +420,35 @@ mod tests {
     }
 
     #[test]
-    fn test_is_well_formed() {
+    fn test_has_wellformed() {
         use std::path::Path;
 
         // Test long filename.
-        assert!(&Path::new("long filename.ext").is_well_formed_filename());
+        assert!(&Path::new("long filename.ext").has_wellformed_filename());
 
         // Test long file path, this fails.
-        assert!(!&Path::new("long directory name/long filename.ext").is_well_formed_filename());
+        assert!(&Path::new("long directory name/long filename.ext").has_wellformed_filename());
 
-        // Test dot file.
-        assert!(&Path::new(".dotfile").is_well_formed_filename());
+        // Test dot file
+        assert!(&Path::new(".dotfile").has_wellformed_filename());
 
         // Test dot file with extension.
-        assert!(&Path::new(".dotfile.ext").is_well_formed_filename());
+        assert!(&Path::new(".dotfile.ext").has_wellformed_filename());
 
         // Test dot file with whitespace, this fails.
-        assert!(!&Path::new(".dot file").is_well_formed_filename());
+        assert!(!&Path::new(".dot file").has_wellformed_filename());
 
         // Test space in ext, this fails.
-        assert!(!&Path::new("filename.e xt").is_well_formed_filename());
+        assert!(!&Path::new("filename.e xt").has_wellformed_filename());
 
         // Test space in ext, this fails.
-        assert!(!&Path::new("filename. ext").is_well_formed_filename());
+        assert!(!&Path::new("filename. ext").has_wellformed_filename());
 
         // Test space in ext, this fails.
-        assert!(!&Path::new("filename.ext ").is_well_formed_filename());
+        assert!(!&Path::new("filename.ext ").has_wellformed_filename());
 
         // Test path.
-        assert!(!&Path::new("/path/to/filename.ext ").is_well_formed_filename());
+        assert!(&Path::new("/path/to/filename.ext").has_wellformed_filename());
     }
 
     #[test]
