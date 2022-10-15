@@ -446,6 +446,9 @@ mod tests {
 
         // Test space in ext, this fails.
         assert!(!&Path::new("filename.ext ").is_well_formed_filename());
+
+        // Test path.
+        assert!(!&Path::new("/path/to/filename.ext ").is_well_formed_filename());
     }
 
     #[test]

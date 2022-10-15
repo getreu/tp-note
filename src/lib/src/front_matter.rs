@@ -195,7 +195,7 @@ mod tests {
         // Is empty.
         let input = "";
 
-        assert!(FrontMatter::try_from(input).is_err());
+        assert!(FrontMatter::try_from(input).is_ok());
 
         //
         // forbidden character `x` in `tag`.

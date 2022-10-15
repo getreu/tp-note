@@ -156,12 +156,13 @@ impl Context {
         let input_fm = FrontMatter::try_from(input);
         match input_fm {
             Ok(ref fm) => {
-                fm.assert_not_empty()?;
-                log::trace!(
-                    "YAML front matter in the input stream \"{}\" stdin found:\n{:#?}",
-                    tmpl_var,
-                    &fm
-                )
+                if fm.assert_not_empty().is_ok() {
+                    log::trace!(
+                        "YAML front matter in the input stream \"{}\" stdin found:\n{:#?}",
+                        tmpl_var,
+                        &fm
+                    )
+                }
             }
             Err(ref e) => {
                 if !input.borrow_dependent().header.is_empty() {
