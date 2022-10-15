@@ -588,7 +588,7 @@ impl ServerThread {
         match Note::from_text_file(context, None, tpnote_lib::template::TemplateKind::None)
             // Now, try to render to html.
             .and_then(|note| {
-                note.render_content(file_path_ext, &CFG.html_tmpl.viewer_tmpl, &js)
+                note.render_content_to_html(file_path_ext, &CFG.html_tmpl.viewer_tmpl, &js)
             })
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.

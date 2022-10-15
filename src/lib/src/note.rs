@@ -348,7 +348,7 @@ impl Note {
 
             // Write HTML rendition.
             handle.write_all(
-                self.render_content(&note_path_ext, html_template, "")?
+                self.render_content_to_html(&note_path_ext, html_template, "")?
                     .as_bytes(),
             )?;
         } else {
@@ -358,7 +358,7 @@ impl Note {
                 .open(&html_path)?;
             // Write HTML rendition.
             handle.write_all(
-                self.render_content(&note_path_ext, html_template, "")?
+                self.render_content_to_html(&note_path_ext, html_template, "")?
                     .as_bytes(),
             )?;
         };
@@ -371,7 +371,7 @@ impl Note {
     /// Then calls the appropriate markup renderer.
     /// Finally the result is rendered with the `HTML_VIEWER_TMPL`
     /// template.
-    pub fn render_content(
+    pub fn render_content_to_html(
         &self,
         // We need the file extension to determine the
         // markup language.
