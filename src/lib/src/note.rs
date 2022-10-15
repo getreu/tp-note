@@ -57,6 +57,7 @@ pub struct Note {
     /// 2. `FrontMatter` is stored in `Context` with some environment data.
     /// 3. `Context` data is filled in some filename template.
     /// 4. The result is stored in `rendered_filename`.
+    /// This field equals to `PathBuf::new()` until `self.render_filename` is called.
     pub rendered_filename: PathBuf,
 }
 
@@ -64,13 +65,6 @@ use std::fs;
 impl Note {
     /// Constructor, that creates a memory representation of an existing note
     /// on disk.
-    /// The `Content` is inserted in the `Context` map as value for the key
-    /// "text_file".
-    /// `self.content` is rendered with the template
-    /// `template_kind.get_content_template()` which is typically
-    /// "from_text_file_content".
-    /// It prepends a YAML header to its `content`, by inserting `TMP`
-    /// Throws an error if the file has a header.
     pub fn from_text_file(
         mut context: Context,
         content: Option<Content>,
@@ -235,15 +229,18 @@ impl Note {
 
     /// Checks if `self.rendered_filename` is taken already.
     /// If yes, some copy counter is appended/incremented.
+    /// Contract: `render_filename` must have been executed before.
     pub fn set_next_unused_rendered_filename(&mut self) -> Result<(), NoteError> {
+        assert_ne!(self.rendered_filename, PathBuf::new());
+
         self.rendered_filename.set_next_unused()?;
         Ok(())
     }
 
     /// Writes the note to disk using the note's `content` and the note's `rendered_filename`.
-    /// If the target file exists already, a copy counter is appended/incremented to
-    /// `self.rendered_filename`.
     pub fn save(&self) -> Result<(), NoteError> {
+        assert_ne!(self.rendered_filename, PathBuf::new());
+
         log::trace!(
             "Writing the note's content to file: {:?}",
             self.rendered_filename
@@ -255,7 +252,10 @@ impl Note {
     /// Find the next free spot `rendered_copy_counter` appending a copy counter.
     /// Then rename the file `from_path` to that name.
     /// Silently fails is source and target are identical.
+    /// Contract: `render_filename` must have been executed before.
     pub fn rename_file_from(&self, from_path: &Path) -> Result<(), NoteError> {
+        assert_ne!(self.rendered_filename, PathBuf::new());
+
         if !from_path.exclude_copy_counter_eq(&*self.rendered_filename) {
             // rename file
             fs::rename(from_path, &self.rendered_filename)?;
@@ -266,7 +266,10 @@ impl Note {
 
     /// Write the note to disk and remove the file at the previous location.
     /// Similar to `rename_from()`, but the target is replaced by `self.content`.
+    /// Contract: `render_filename` must have been executed before.
     pub fn save_and_delete_from(&mut self, from_path: &Path) -> Result<(), NoteError> {
+        assert_ne!(self.rendered_filename, PathBuf::new());
+
         self.save()?;
         if from_path != self.rendered_filename {
             log::trace!("Deleting file: {:?}", from_path);
@@ -278,22 +281,28 @@ impl Note {
     /// Renders `self` into HTML and saves the result in `export_dir`. If
     /// `export_dir` is the empty string, the directory of `note_path` is
     /// used. `-` dumps the rendition to STDOUT.
+    /// This function reads `self.rendered_filename` or - if empty -
+    /// `self.context.path` to set the filename of the html rendition.
     pub fn export_html(&self, html_template: &str, export_dir: &Path) -> Result<(), NoteError> {
         // Determine filename of html-file.
         let mut html_path = PathBuf::new();
+        let current_path = if self.rendered_filename != PathBuf::new() {
+            &self.rendered_filename
+        } else {
+            &self.context.path
+        };
+
         if export_dir
             .as_os_str()
             .to_str()
             .unwrap_or_default()
             .is_empty()
         {
-            html_path = self
-                .rendered_filename
+            html_path = current_path
                 .parent()
                 .unwrap_or_else(|| Path::new(""))
                 .to_path_buf();
-            let mut html_filename = self
-                .rendered_filename
+            let mut html_filename = current_path
                 .file_name()
                 .unwrap_or_default()
                 .to_str()
@@ -303,8 +312,7 @@ impl Note {
             html_path.push(PathBuf::from(html_filename.as_str()));
         } else if export_dir.as_os_str().to_str().unwrap_or_default() != "-" {
             html_path = export_dir.to_owned();
-            let mut html_filename = self
-                .rendered_filename
+            let mut html_filename = current_path
                 .file_name()
                 .unwrap_or_default()
                 .to_str()
@@ -328,8 +336,7 @@ impl Note {
         };
 
         // The file extension identifies the markup language.
-        let note_path_ext = self
-            .rendered_filename
+        let note_path_ext = current_path
             .extension()
             .unwrap_or_default()
             .to_str()

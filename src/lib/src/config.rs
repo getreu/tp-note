@@ -178,15 +178,15 @@ pub const TMPL_VAR_USERNAME: &str = "username";
 /// (all operating systems).
 pub const TMPL_VAR_LANG: &str = "lang";
 
-///  Contains the body of the file the command line option `<path>`
-///  points to. Only available in the `TMPL_FROM_TEXT_FILE_CONTENT` template.
-///  Only available in the `TMPL_FROM_TEXT_FILE_CONTENT` template.
+/// Contains the body of the file the command line option `<path>`
+/// points to. Only available in the `TMPL_FROM_TEXT_FILE_CONTENT`,
+/// `TMPL_SYNC_FILENAME` and HTML templates.
 pub const TMPL_VAR_PATH_FILE_TEXT: &str = "path_file_text";
 
-///  Contains the date of the file the command line option `<path>` points to.
-///  The date is represented as an integer the way `std::time::SystemTime`
-///  resolves to on the platform. Only available in the
-///  `TMPL_FROM_TEXT_FILE_CONTENT` template.
+/// Contains the date of the file the command line option `<path>` points to.
+/// The date is represented as an integer the way `std::time::SystemTime`
+/// resolves to on the platform. Only available in the
+/// `TMPL_FROM_TEXT_FILE_CONTENT`, `TMPL_SYNC_FILENAME` and HTML templates.
 pub const TMPL_VAR_PATH_FILE_DATE: &str = "path_file_date";
 
 /// Prefix prepended to front matter field names when a template variable
@@ -194,7 +194,8 @@ pub const TMPL_VAR_PATH_FILE_DATE: &str = "path_file_date";
 pub const TMPL_VAR_FM_: &str = "fm_";
 
 /// Contains a Hash Map with all front matter fields. Lists are flattened
-/// into a strings.
+/// into a strings. Only available in the
+/// `TMPL_FROM_TEXT_FILE_CONTENT`, `TMPL_SYNC_FILENAME` and HTML templates.
 pub const TMPL_VAR_FM_ALL: &str = "fm_all";
 
 /// All the front matter fields serialized as text, exactly as they appear in
