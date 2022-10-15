@@ -1,6 +1,8 @@
 //! Helper functions to determine the right `TemplateKind` when Tp-Note
 //! starts.
 
+use crate::config::CFG;
+use crate::settings::ARGS;
 use crate::settings::CLIPBOARD;
 use crate::settings::STDIN;
 use std::fs;
@@ -13,7 +15,6 @@ use tpnote_lib::template::TemplateKind;
 /// Returns the template that will be used in the further workflow.
 /// If `path` points to an existing Tp-Note file (with or without header),
 /// `Some<Content>` is the content to the file.
-#[allow(dead_code)] // TODO
 pub(crate) fn get_template_content(path: &Path) -> (TemplateKind, Option<Content>) {
     let stdin_is_empty = STDIN.is_empty();
     let stdin_has_header = !STDIN.borrow_dependent().header.is_empty();
@@ -37,6 +38,7 @@ pub(crate) fn get_template_content(path: &Path) -> (TemplateKind, Option<Content
         (false, None)
     };
 
+    // This determines the workflow and what template will be applied.
     let template_kind = match (
         path_is_dir,
         input_stream_is_some,
@@ -52,6 +54,43 @@ pub(crate) fn get_template_content(path: &Path) -> (TemplateKind, Option<Content
         (false, _, _, true, true, false) => TemplateKind::FromTextFile,
         (false, _, _, true, false, _) => TemplateKind::AnnotateFile,
         (_, _, _, _, _, _) => TemplateKind::None,
+    };
+
+    // Treat inhibitors:
+    let template_kind = match template_kind {
+        TemplateKind::FromTextFile => {
+            if (ARGS.add_header || CFG.arg_default.add_header)
+                && !CFG.arg_default.no_filename_sync
+                && !ARGS.no_filename_sync
+            {
+                // No change, we do it.
+                template_kind
+            } else {
+                log::info!(
+                    "Not adding header to text file: \
+                     `add_header` is not enabled or `no_filename_sync`",
+                );
+                // We change to `None`.
+                TemplateKind::None
+            }
+        }
+        TemplateKind::SyncFilename => {
+            if ARGS.no_filename_sync {
+                log::info!("Filename synchronisation disabled with the flag: `--no-filename-sync`",);
+                TemplateKind::None
+            } else if CFG.arg_default.no_filename_sync {
+                log::info!(
+                    "Filename synchronisation disabled with the configuration file \
+             variable: `[arg_default] no_filename_sync = true`",
+                );
+                TemplateKind::None
+            } else {
+                // We do it, no change
+                template_kind
+            }
+        }
+        // Otherwise, there are no more inhibitors so far.
+        _ => template_kind,
     };
 
     log::debug!("Chosing the \"{:?}\" template.", template_kind);

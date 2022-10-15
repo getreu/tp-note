@@ -34,7 +34,8 @@ use tpnote_lib::template::TemplateKind;
 /// Open the note file `path` on disk and read its YAML front matter.
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk and return
-/// the new filename.
+/// the new filename in `note.rendered_filename`.
+/// If no filename was rendered, `note.rendered_filename == PathBuf::new()`
 fn synchronize_filename(context: Context, content: Option<Content>) -> Result<Note, WorkflowError> {
     // parse file again to check for synchronicity with filename
     let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename)?;
@@ -52,26 +53,12 @@ fn synchronize_filename(context: Context, content: Option<Content>) -> Result<No
     };
 
     if no_filename_sync {
-        log::trace!(
+        log::info!(
             "Filename synchronisation disabled with the front matter field: `{}: {}`",
             TMPL_VAR_FM_FILENAME_SYNC.trim_start_matches(TMPL_VAR_FM_),
             !no_filename_sync
         );
-    }
-
-    if ARGS.no_filename_sync {
-        log::trace!("Filename synchronisation disabled with the flag: `--no-filename-sync`",);
-    }
-
-    if CFG.arg_default.no_filename_sync {
-        log::trace!(
-            "Filename synchronisation disabled with the configuration file \
-             variable: `[arg_default] no_filename_sync = true`",
-        );
-    }
-
-    // Do not sync, if explicitly disabled.
-    if !no_filename_sync && !CFG.arg_default.no_filename_sync && !ARGS.no_filename_sync {
+    } else {
         n.render_filename(TemplateKind::SyncFilename)?;
 
         // Silently fails is source and target are identical.
@@ -109,14 +96,7 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
             n
         }
 
-        TemplateKind::FromTextFile | TemplateKind::None => {
-            if !((ARGS.add_header || CFG.arg_default.add_header)
-                && !CFG.arg_default.no_filename_sync
-                && !ARGS.no_filename_sync)
-            {
-                return Ok(context.path); //TODO
-            }
-
+        TemplateKind::FromTextFile => {
             let mut n = Note::from_text_file(context, content, template_kind)?;
             // Render filename.
             n.render_filename(template_kind)?;
@@ -127,6 +107,11 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
             n
         }
         TemplateKind::SyncFilename => synchronize_filename(context, content)?,
+        TemplateKind::None =>
+        // Early return, we do nothing here and continue.
+        {
+            return Ok(context.path)
+        }
     };
 
     // Export HTML rendition, if wanted.
