@@ -475,7 +475,7 @@ impl Note {
     /// "Error HTML page".
     #[inline]
     #[cfg(feature = "viewer")]
-    pub fn render_erroneous_content(
+    pub fn render_erroneous_content_to_html(
         doc_path: &Path,
         template: &str,
         java_script_insert: &str,

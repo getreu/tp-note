@@ -642,7 +642,7 @@ impl ServerThread {
             // special error page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
-                Note::render_erroneous_content(&self.context.path, &CFG.html_tmpl.viewer_error_tmpl, &js, e)
+                Note::render_erroneous_content_to_html(&self.context.path, &CFG.html_tmpl.viewer_error_tmpl, &js, e)
                     .map_err(|e| { ViewerError::RenderErrorPage {
                         tmpl: "[viewer] error_tmpl".to_string(),
                         source: e,
