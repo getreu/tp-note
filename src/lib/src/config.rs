@@ -178,6 +178,10 @@ pub const TMPL_VAR_USERNAME: &str = "username";
 /// (all operating systems).
 pub const TMPL_VAR_LANG: &str = "lang";
 
+/// All the front matter fields serialized as text, exactly as they appear in
+/// the front matter.
+pub const TMPL_VAR_NOTE_FM_TEXT: &str = "note_fm_text";
+
 /// Contains the body of the file the command line option `<path>`
 /// points to. Only available in the `TMPL_FROM_TEXT_FILE_CONTENT`,
 /// `TMPL_SYNC_FILENAME` and HTML templates.
@@ -197,10 +201,6 @@ pub const TMPL_VAR_FM_: &str = "fm_";
 /// into a strings. Only available in the
 /// `TMPL_FROM_TEXT_FILE_CONTENT`, `TMPL_SYNC_FILENAME` and HTML templates.
 pub const TMPL_VAR_FM_ALL: &str = "fm_all";
-
-/// All the front matter fields serialized as text, exactly as they appear in
-/// the front matter.
-pub const TMPL_VAR_FM_ALL_YAML: &str = "fm_all_yaml";
 
 /// By default, the template `TMPL_SYNC_FILENAME` defines the function of
 /// of this variable as follows:

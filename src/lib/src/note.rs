@@ -3,7 +3,6 @@
 //! the memory representation is established be reading the note file with
 //! its front matter.
 
-use crate::config::TMPL_VAR_FM_ALL_YAML;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::config::TMPL_VAR_NOTE_BODY;
 use crate::config::TMPL_VAR_NOTE_BODY_TEXT;
@@ -12,6 +11,7 @@ use crate::config::TMPL_VAR_NOTE_ERRONEOUS_CONTENT;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_VAR_NOTE_ERROR;
 use crate::config::TMPL_VAR_NOTE_FILE_DATE;
+use crate::config::TMPL_VAR_NOTE_FM_TEXT;
 use crate::config::TMPL_VAR_NOTE_JS;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_VAR_PATH;
@@ -85,7 +85,7 @@ impl Note {
         // Register context variables:
         // Register the raw serialized header text.
         let header = &content.borrow_dependent().header;
-        (*context).insert(TMPL_VAR_FM_ALL_YAML, &header);
+        (*context).insert(TMPL_VAR_NOTE_FM_TEXT, &header);
         //We also keep the body.
         let body = &content.borrow_dependent().body;
         (*context).insert(TMPL_VAR_NOTE_BODY_TEXT, &body);
