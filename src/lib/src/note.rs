@@ -6,6 +6,7 @@
 use crate::config::TMPL_VAR_FM_ALL_YAML;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::config::TMPL_VAR_NOTE_BODY;
+use crate::config::TMPL_VAR_NOTE_BODY_TEXT;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_VAR_NOTE_ERRONEOUS_CONTENT;
 #[cfg(feature = "viewer")]
@@ -14,7 +15,6 @@ use crate::config::TMPL_VAR_NOTE_JS;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_VAR_PATH;
 use crate::config::TMPL_VAR_PATH_FILE_DATE;
-use crate::config::TMPL_VAR_PATH_FILE_TEXT;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
@@ -88,7 +88,7 @@ impl Note {
         (*context).insert(TMPL_VAR_FM_ALL_YAML, &header);
         //We also keep the body.
         let body = &content.borrow_dependent().body;
-        (*context).insert(TMPL_VAR_PATH_FILE_TEXT, &body);
+        (*context).insert(TMPL_VAR_NOTE_BODY_TEXT, &body);
 
         // Get the file's creation date.
         let file = File::open(&context.path)?;

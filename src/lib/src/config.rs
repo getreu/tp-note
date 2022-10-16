@@ -181,7 +181,7 @@ pub const TMPL_VAR_LANG: &str = "lang";
 /// Contains the body of the file the command line option `<path>`
 /// points to. Only available in the `TMPL_FROM_TEXT_FILE_CONTENT`,
 /// `TMPL_SYNC_FILENAME` and HTML templates.
-pub const TMPL_VAR_PATH_FILE_TEXT: &str = "path_file_text";
+pub const TMPL_VAR_NOTE_BODY_TEXT: &str = "note_body_text";
 
 /// Contains the date of the file the command line option `<path>` points to.
 /// The date is represented as an integer the way `std::time::SystemTime`
@@ -367,7 +367,7 @@ orig_name:  {{ path | filename | json_encode }}
 lang:       {{ lang | json_encode }}
 ---
 
-{{ path_file_text }}
+{{ note_body_text }}
 ";
 
 /// Default filename template used when the input file (with a known
