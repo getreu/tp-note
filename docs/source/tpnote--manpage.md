@@ -1252,9 +1252,9 @@ rendition_tmpl = '''<!DOCTYPE html>
 <title>{{ fm_title }}</title>
   </head>
   <body>
-  <pre class="note-header">{{ fm_all_yaml }}</pre>
+  <pre class="note-header">{{ note_fm_text }}</pre>
   <hr>
-  <div class="note-body">{{ note_body }}</div>
+  <div class="note-body">{{ note_body_html }}</div>
   <script>{{ note_js }}</script>
 </body>
 </html>
@@ -1267,10 +1267,10 @@ Specifically:
   template variables and filters are available. See section _Template
   variables_ above.
 
-* '`{{ fm_all_yaml }}`' is the raw UTF-8 copy of the header. Not to be
+* '`{{ note_fm_text }}`' is the raw UTF-8 copy of the header. Not to be
   confounded with the dictionary variable '`{{ fm_all }}`'.
 
-* '`{{ note_body }}`' is the note's body as HTML rendition.
+* '`{{ note_body_html }}`' is the note's body as HTML rendition.
 
 * '`{{ note_js }}`' is the JavaScript browser code for
   live updates.
@@ -1291,7 +1291,7 @@ as a table:
 The error page template '`[html_tmpl] viewer_error_tmpl`' (see below)
 does not provide '`fm_*`' variables, because of possible header syntax
 errors. Instead, the variable '`{{ note_error }}`' contains the error
-message as raw UTF-8 and the variable '`{{ note_erroneous_content }}`'
+message as raw UTF-8 and the variable '`{{ note_erroneous_content_html }}`'
 the HTML rendition of the text source with clickable hyperlinks:
 
 ```html
@@ -1308,7 +1308,7 @@ error_tmpl = '''<!DOCTYPE html>
 <hr>
 <pre class="note-error">{{ note_error }}</pre>
 <hr>
-{{ note_erroneous_content }}
+{{ note_erroneous_content_html }}
 <script>{{ note_js }}</script>
 </body>
 </html>
@@ -1462,13 +1462,19 @@ In addition, Tp-Note defines the following variables:
   and only the directory path is retained. If '`{{ path }}`' points to a
   directory, '`{{ dir_path }}`' equals '`{{ path }}`'.
 
-* '`{{ path_file_text }}`': is the content of the file that '`{{ path }}`'
-  points to (only available in the templates '`from_text_file_*`').
+* '`{{ note_fm_text }}`': is the header as raw text of the file '`{{ path }}`'
+  points to.  Note, this variable is only available in the 
+  templates '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
-* '`{{ path_file_date }}`': is the file system creation date of the file
-  that '`{{ path }}`' points to (only available in the templates
-  '`from_text_file_*`').
+* '`{{ note_body_text }}`': is the content of the file '`{{ path }}`'
+  points to. If the file does not start with a front matter, this 
+  variable holds the whole content. Note, this variable is only available in the 
+  templates '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
+* '`{{ note_file_date }}`': is the file system creation date of the file
+  '`{{ path }}`' points to. Note, this variable is only available in the 
+  templates '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
+    
 * '`{{ clipboard }}`' is the complete clipboard text.  In case the clipboard's
   content starts with a YAML header, the latter does not appear in this
   variable.
