@@ -61,6 +61,7 @@ fn synchronize_filename(context: Context, content: Option<Content>) -> Result<No
     } else {
         n.render_filename(TemplateKind::SyncFilename)?;
 
+        n.set_next_unused_rendered_filename_or(&n.context.path.clone())?;
         // Silently fails is source and target are identical.
         n.rename_file_from(&n.context.path)?;
     }

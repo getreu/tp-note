@@ -242,7 +242,29 @@ impl Note {
         Ok(())
     }
 
-    /// Writes the note to disk using the note's `content` and the note's `rendered_filename`.
+    /// Checks if `alt_path` is equal to `self.rendered_filename`
+    /// without considering their copy counter.
+    /// If they are similar, `self.rendered_filename` becomes `alt_path`.
+    /// If they are different, then we continue incrementing the copy
+    /// counter in `self.rendered_filename` until we find a free spot.
+    /// (Same as in `set_next_unused_rendered_filename()`).
+    /// Contract: `render_filename` must have been executed before.
+    pub fn set_next_unused_rendered_filename_or(
+        &mut self,
+        alt_path: &Path,
+    ) -> Result<(), NoteError> {
+        assert_ne!(self.rendered_filename, PathBuf::new());
+
+        if self.rendered_filename.exclude_copy_counter_eq(alt_path) {
+            self.rendered_filename = alt_path.to_path_buf();
+        } else {
+            self.rendered_filename.set_next_unused()?;
+        }
+        Ok(())
+    }
+
+    /// Writes the note to disk using the note's `content` and the note's
+    /// `rendered_filename`.
     pub fn save(&self) -> Result<(), NoteError> {
         assert_ne!(self.rendered_filename, PathBuf::new());
 
@@ -254,8 +276,7 @@ impl Note {
         Ok(())
     }
 
-    /// Find the next free spot `rendered_copy_counter` appending a copy counter.
-    /// Then rename the file `from_path` to that name.
+    /// Rename the file `from_path` to `self.rendered_filename`.
     /// Silently fails is source and target are identical.
     /// Contract: `render_filename` must have been executed before.
     pub fn rename_file_from(&self, from_path: &Path) -> Result<(), NoteError> {
@@ -271,6 +292,7 @@ impl Note {
 
     /// Write the note to disk and remove the file at the previous location.
     /// Similar to `rename_from()`, but the target is replaced by `self.content`.
+    /// Silently fails is source and target are identical.
     /// Contract: `render_filename` must have been executed before.
     pub fn save_and_delete_from(&mut self, from_path: &Path) -> Result<(), NoteError> {
         assert_ne!(self.rendered_filename, PathBuf::new());
