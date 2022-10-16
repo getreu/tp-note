@@ -7,7 +7,7 @@ use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::config::TMPL_VAR_NOTE_BODY_HTML;
 use crate::config::TMPL_VAR_NOTE_BODY_TEXT;
 #[cfg(feature = "viewer")]
-use crate::config::TMPL_VAR_NOTE_ERRONEOUS_CONTENT;
+use crate::config::TMPL_VAR_NOTE_ERRONEOUS_CONTENT_HTML;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_VAR_NOTE_ERROR;
 use crate::config::TMPL_VAR_NOTE_FILE_DATE;
@@ -519,7 +519,10 @@ impl Note {
         // Render to HTML.
         let note_erroneous_content = text_rawlinks2html(note_erroneous_content);
         // Insert.
-        context.insert(TMPL_VAR_NOTE_ERRONEOUS_CONTENT, &note_erroneous_content);
+        context.insert(
+            TMPL_VAR_NOTE_ERRONEOUS_CONTENT_HTML,
+            &note_erroneous_content,
+        );
 
         // Apply template.
         let mut tera = Tera::default();

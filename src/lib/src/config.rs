@@ -455,7 +455,7 @@ pub const TMPL_VAR_NOTE_ERROR: &str = "note_error";
 /// but we prefer the same config file structure independent
 /// of the enabled features.
 #[allow(dead_code)]
-pub const TMPL_VAR_NOTE_ERRONEOUS_CONTENT: &str = "note_erroneous_content";
+pub const TMPL_VAR_NOTE_ERRONEOUS_CONTENT_HTML: &str = "note_erroneous_content_html";
 
 /// HTML template to render regular viewer pages.
 /// We could set
@@ -551,7 +551,7 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 <pre>{{ note_error }}</pre>
 <hr>
 </div>
-{{ note_erroneous_content }}
+{{ note_erroneous_content_html }}
 <script>{{ note_js }}</script>
 </body>
 </html>
