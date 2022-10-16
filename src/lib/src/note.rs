@@ -4,7 +4,7 @@
 //! its front matter.
 
 use crate::config::TMPL_VAR_FM_FILE_EXT;
-use crate::config::TMPL_VAR_NOTE_BODY;
+use crate::config::TMPL_VAR_NOTE_BODY_HTML;
 use crate::config::TMPL_VAR_NOTE_BODY_TEXT;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_VAR_NOTE_ERRONEOUS_CONTENT;
@@ -440,7 +440,7 @@ impl Note {
         let mut html_context = self.context.clone();
 
         // Register rendered body.
-        html_context.insert(TMPL_VAR_NOTE_BODY, &html_output);
+        html_context.insert(TMPL_VAR_NOTE_BODY_HTML, &html_output);
 
         // Java Script
         html_context.insert(TMPL_VAR_NOTE_JS, java_script_insert);

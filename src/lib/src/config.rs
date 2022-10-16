@@ -429,7 +429,7 @@ pub const TMPL_SYNC_FILENAME: &str = "\
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
-pub const TMPL_VAR_NOTE_BODY: &str = "note_body";
+pub const TMPL_VAR_NOTE_BODY_HTML: &str = "note_body_html";
 
 /// HTML template variable containing the automatically generated JavaScript
 /// code to be included in the HTML rendition.
@@ -520,7 +520,7 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
   </tr>
   {% endfor %}
   </table>
-  <div class="note-body">{{ note_body }}</div>
+  <div class="note-body">{{ note_body_html }}</div>
   <script>{{ note_js }}</script>
 </body>
 </html>
@@ -618,7 +618,7 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
   </tr>
   {% endfor %}
   </table>
-  <div class="note-body">{{ note_body }}</div>
+  <div class="note-body">{{ note_body_html }}</div>
 </body>
 </html>
 "#;
