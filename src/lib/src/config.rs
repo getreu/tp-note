@@ -187,7 +187,7 @@ pub const TMPL_VAR_NOTE_BODY_TEXT: &str = "note_body_text";
 /// The date is represented as an integer the way `std::time::SystemTime`
 /// resolves to on the platform. Only available in the
 /// `TMPL_FROM_TEXT_FILE_CONTENT`, `TMPL_SYNC_FILENAME` and HTML templates.
-pub const TMPL_VAR_PATH_FILE_DATE: &str = "path_file_date";
+pub const TMPL_VAR_NOTE_FILE_DATE: &str = "note_file_date";
 
 /// Prefix prepended to front matter field names when a template variable
 /// is generated with the same name.
@@ -362,7 +362,7 @@ pub const TMPL_FROM_TEXT_FILE_CONTENT: &str = "\
 title:      {{ path | stem | split(pat='--') | first | cut | json_encode }}
 subtitle:   {{ path | stem | split(pat='--') | nth(n=1) | cut | json_encode }}
 author:     {{ username | json_encode }}
-date:       {{ path_file_date | date(format='%Y-%m-%d') | json_encode }}
+date:       {{ note_file_date | date(format='%Y-%m-%d') | json_encode }}
 orig_name:  {{ path | filename | json_encode }}
 lang:       {{ lang | json_encode }}
 ---
@@ -374,7 +374,7 @@ lang:       {{ lang | json_encode }}
 /// file extension) is missing a YAML front matter section.
 /// The text file's sort-tag and file extension are preserved.
 pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
-{% if path | tag == '' %}{{ path_file_date | date(format='%Y%m%d-') }}\
+{% if path | tag == '' %}{{ note_file_date | date(format='%Y%m%d-') }}\
 {% else %}{{ path | tag }}{% endif %}\
 {{ fm_title | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\

@@ -11,10 +11,10 @@ use crate::config::TMPL_VAR_NOTE_BODY_TEXT;
 use crate::config::TMPL_VAR_NOTE_ERRONEOUS_CONTENT;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_VAR_NOTE_ERROR;
+use crate::config::TMPL_VAR_NOTE_FILE_DATE;
 use crate::config::TMPL_VAR_NOTE_JS;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_VAR_PATH;
-use crate::config::TMPL_VAR_PATH_FILE_DATE;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
@@ -95,7 +95,7 @@ impl Note {
         let metadata = file.metadata()?;
         if let Ok(time) = metadata.created() {
             (*context).insert(
-                TMPL_VAR_PATH_FILE_DATE,
+                TMPL_VAR_NOTE_FILE_DATE,
                 &time
                     .duration_since(SystemTime::UNIX_EPOCH)
                     .unwrap_or_default()
