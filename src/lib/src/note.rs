@@ -123,13 +123,25 @@ impl Note {
         context.insert_front_matter(&fm);
 
         match template_kind {
-            TemplateKind::None | TemplateKind::SyncFilename =>
+            TemplateKind::SyncFilename =>
             // No rendering is required. `content` is read from disk and left untouched.
             {
                 // Store front matter in context for later use in filename templates.
                 fm.assert_not_empty()?;
                 fm.assert_compulsory_field()?;
                 context.insert_front_matter(&fm);
+                Ok(Self {
+                    context,
+                    content,
+                    rendered_filename: PathBuf::new(),
+                })
+            }
+            TemplateKind::None =>
+            // No rendering is required. `content` is read from disk and left untouched.
+            {
+                // Do not store front matter, because no template will follow.
+                fm.assert_not_empty()?;
+                fm.assert_compulsory_field()?;
                 Ok(Self {
                     context,
                     content,

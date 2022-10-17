@@ -3,6 +3,7 @@ use crate::config::LIB_CFG;
 
 /// Each workflow is related to one `TemplateKind`, which relates to one
 /// content template and one filename template.
+#[non_exhaustive]
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TemplateKind {
     /// Templates used when Tp-Note is invoked with a directory path.
@@ -20,8 +21,8 @@ pub enum TemplateKind {
     /// Templates used when Tp-Note is invoked with a path pointing to a Tp-Note
     /// text file with YAML header.
     SyncFilename,
-    /// No templates are used when Tp-Note is launched with
-    /// `--view --no-filename-sync` in view only mode.
+    /// No templates are used, but the file is still parsed in order to render it
+    /// later to HTML.
     #[default]
     None,
 }
@@ -55,7 +56,7 @@ impl TemplateKind {
             Self::FromTextFile => "[tmpl] from_text_file_content",
             Self::AnnotateFile => "[tmpl] annotate_file_content",
             Self::SyncFilename => "error: there is no `sync_content` template",
-            Self::None => "error: no content template defined yet",
+            Self::None => "error: no content template should be used",
         }
     }
 

@@ -95,7 +95,7 @@ pub(crate) fn get_template_content(path: &Path) -> (TemplateKind, Option<Content
 
     log::debug!("Chosing the \"{:?}\" template.", template_kind);
     log::trace!(
-        "Template choice is based on: 
+        "Template choice is based on:
         path=\"{}\",
         path_is_dir={},
         input_stream_is_some={},
