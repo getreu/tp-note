@@ -248,7 +248,7 @@ impl Note {
     /// If yes, some copy counter is appended/incremented.
     /// Contract: `render_filename` must have been executed before.
     pub fn set_next_unused_rendered_filename(&mut self) -> Result<(), NoteError> {
-        assert_ne!(self.rendered_filename, PathBuf::new());
+        debug_assert_ne!(self.rendered_filename, PathBuf::new());
 
         self.rendered_filename.set_next_unused()?;
         Ok(())
@@ -265,7 +265,7 @@ impl Note {
         &mut self,
         alt_path: &Path,
     ) -> Result<(), NoteError> {
-        assert_ne!(self.rendered_filename, PathBuf::new());
+        debug_assert_ne!(self.rendered_filename, PathBuf::new());
 
         if self.rendered_filename.exclude_copy_counter_eq(alt_path) {
             self.rendered_filename = alt_path.to_path_buf();
@@ -278,7 +278,7 @@ impl Note {
     /// Writes the note to disk using the note's `content` and the note's
     /// `rendered_filename`.
     pub fn save(&self) -> Result<(), NoteError> {
-        assert_ne!(self.rendered_filename, PathBuf::new());
+        debug_assert_ne!(self.rendered_filename, PathBuf::new());
 
         log::trace!(
             "Writing the note's content to file: {:?}",
@@ -292,7 +292,7 @@ impl Note {
     /// Silently fails is source and target are identical.
     /// Contract: `render_filename` must have been executed before.
     pub fn rename_file_from(&self, from_path: &Path) -> Result<(), NoteError> {
-        assert_ne!(self.rendered_filename, PathBuf::new());
+        debug_assert_ne!(self.rendered_filename, PathBuf::new());
 
         if !from_path.exclude_copy_counter_eq(&*self.rendered_filename) {
             // rename file
@@ -307,7 +307,7 @@ impl Note {
     /// Silently fails is source and target are identical.
     /// Contract: `render_filename` must have been executed before.
     pub fn save_and_delete_from(&mut self, from_path: &Path) -> Result<(), NoteError> {
-        assert_ne!(self.rendered_filename, PathBuf::new());
+        debug_assert_ne!(self.rendered_filename, PathBuf::new());
 
         self.save()?;
         if from_path != self.rendered_filename {
@@ -321,7 +321,8 @@ impl Note {
     /// `export_dir` is the empty string, the directory of `note_path` is
     /// used. `-` dumps the rendition to STDOUT.
     /// This function reads `self.rendered_filename` or - if empty -
-    /// `self.context.path` to set the filename of the html rendition.
+    /// `self.context.path` is used to determine the filename of the
+    /// html rendition.
     pub fn export_html(&self, html_template: &str, export_dir: &Path) -> Result<(), NoteError> {
         // Determine filename of html-file.
         let mut html_path = PathBuf::new();
