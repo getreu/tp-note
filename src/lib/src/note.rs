@@ -105,18 +105,16 @@ impl Note {
             );
         }
 
-        if matches!(template_kind, TemplateKind::FromTextFile) {
-            if !header.is_empty() {
-                // If the text file is supposed to have no header and there is one,
-                // then return error.
-                return Err(NoteError::CannotPrependHeader {
-                    existing_header: header
-                        .lines()
-                        .take(5)
-                        .map(|s| s.to_string())
-                        .collect::<String>(),
-                });
-            };
+        if matches!(template_kind, TemplateKind::FromTextFile) && !header.is_empty() {
+            // If the text file is supposed to have no header and there is one,
+            // then return error.
+            return Err(NoteError::CannotPrependHeader {
+                existing_header: header
+                    .lines()
+                    .take(5)
+                    .map(|s| s.to_string())
+                    .collect::<String>(),
+            });
         };
 
         // Check if the compulsory field is present.
