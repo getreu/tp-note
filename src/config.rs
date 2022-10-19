@@ -19,8 +19,8 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::RwLock;
 use tpnote_lib::config::Filename;
-use tpnote_lib::config::HtmlTmpl;
 use tpnote_lib::config::Tmpl;
+use tpnote_lib::config::TmplHtml;
 #[cfg(not(test))]
 use tpnote_lib::config::FILENAME_DOTFILE_MARKER;
 #[cfg(not(test))]
@@ -286,7 +286,7 @@ pub struct Cfg {
     pub tmpl: Tmpl,
     pub app_args: AppArgs,
     pub viewer: Viewer,
-    pub html_tmpl: HtmlTmpl,
+    pub tmpl_html: TmplHtml,
 }
 
 /// Command line arguments, deserialized form configuration file.
@@ -346,7 +346,7 @@ impl ::std::default::Default for Cfg {
             clipboard: Clipboard::default(),
             filename: Filename::default(),
             viewer: Viewer::default(),
-            html_tmpl: HtmlTmpl::default(),
+            tmpl_html: TmplHtml::default(),
         }
     }
 }
@@ -471,7 +471,7 @@ fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
             let mut lib_cfg = LIB_CFG.write().unwrap();
             (*lib_cfg).filename = config.filename.clone();
             (*lib_cfg).tmpl = config.tmpl.clone();
-            (*lib_cfg).html_tmpl = config.html_tmpl.clone();
+            (*lib_cfg).tmpl_html = config.tmpl_html.clone();
         }
 
         // First check passed.

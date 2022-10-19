@@ -462,7 +462,7 @@ pub const TMPL_VAR_NOTE_ERRONEOUS_CONTENT_HTML: &str = "note_erroneous_content_h
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
-pub const HTML_VIEWER_TMPL: &str = r#"<!DOCTYPE html>
+pub const TMPL_HTML_VIEWER: &str = r#"<!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
 <meta charset="UTF-8">
@@ -531,7 +531,7 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
-pub const HTML_VIEWER_ERROR_TMPL: &str = r#"<!DOCTYPE html>
+pub const TMPL_HTML_VIEWER_ERROR: &str = r#"<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -560,7 +560,7 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 /// HTML template used to render a note into html when the
 /// rendition is saved to disk. Similar to `HTML_VIEWER_TMPL`
 /// but does not inject JavaScript code.
-pub const HTML_EXPORTER_TMPL: &str = r#"<!DOCTYPE html>
+pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
 <meta charset="utf-8">
@@ -636,7 +636,7 @@ pub struct LibCfg {
     /// configuration file.
     pub filename: Filename,
     pub tmpl: Tmpl,
-    pub html_tmpl: HtmlTmpl,
+    pub tmpl_html: TmplHtml,
 }
 
 /// Configuration of filename parsing, deserialized from the
@@ -676,10 +676,10 @@ pub struct Tmpl {
 /// Configuration for the HTML exporter feature, deserialized from the
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct HtmlTmpl {
-    pub viewer_tmpl: String,
-    pub viewer_error_tmpl: String,
-    pub exporter_tmpl: String,
+pub struct TmplHtml {
+    pub viewer: String,
+    pub viewer_error: String,
+    pub exporter: String,
 }
 
 /// Default values for copy counter.
@@ -737,12 +737,12 @@ impl ::std::default::Default for Tmpl {
 }
 
 /// Default values for the exporter feature.
-impl ::std::default::Default for HtmlTmpl {
+impl ::std::default::Default for TmplHtml {
     fn default() -> Self {
-        HtmlTmpl {
-            viewer_tmpl: HTML_VIEWER_TMPL.to_string(),
-            viewer_error_tmpl: HTML_VIEWER_ERROR_TMPL.to_string(),
-            exporter_tmpl: HTML_EXPORTER_TMPL.to_string(),
+        TmplHtml {
+            viewer: TMPL_HTML_VIEWER.to_string(),
+            viewer_error: TMPL_HTML_VIEWER_ERROR.to_string(),
+            exporter: TMPL_HTML_EXPORTER.to_string(),
         }
     }
 }

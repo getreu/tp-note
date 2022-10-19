@@ -117,7 +117,7 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
 
     // Export HTML rendition, if wanted.
     if let Some(dir) = &ARGS.export {
-        n.export_html(&CFG.html_tmpl.exporter_tmpl, dir)?;
+        n.export_html(&CFG.tmpl_html.exporter, dir)?;
     }
 
     // If no new filename was rendered, return the old one.

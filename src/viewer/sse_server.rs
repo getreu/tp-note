@@ -588,7 +588,7 @@ impl ServerThread {
         match Note::from_text_file(context, None, tpnote_lib::template::TemplateKind::None)
             // Now, try to render to html.
             .and_then(|note| {
-                note.render_content_to_html(file_path_ext, &CFG.html_tmpl.viewer_tmpl, &js)
+                note.render_content_to_html(file_path_ext, &CFG.tmpl_html.viewer, &js)
             })
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
@@ -642,7 +642,7 @@ impl ServerThread {
             // special error page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
-                Note::render_erroneous_content_to_html(&self.context.path, &CFG.html_tmpl.viewer_error_tmpl, &js, e)
+                Note::render_erroneous_content_to_html(&self.context.path, &CFG.tmpl_html.viewer_error, &js, e)
                     .map_err(|e| { ViewerError::RenderErrorPage {
                         tmpl: "[viewer] error_tmpl".to_string(),
                         source: e,
