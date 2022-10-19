@@ -489,6 +489,7 @@ th.val{
 th.keygrey{ color:grey; text-align:right; }
 th.valgrey{ color:grey; text-align:left; }
 pre { white-space: pre-wrap; }
+code u { text-decoration: none; }
 em { color: #523626; }
 a { color: #316128; }
 h1 { font-size: 150% }
@@ -587,6 +588,7 @@ th.val{
 th.keygrey{ color:grey; text-align:right; }
 th.valgrey{ color:grey; text-align:left; }
 pre { white-space: pre-wrap; }
+code u { text-decoration: none; }
 em { color: #523626; }
 a { color: #316128; }
 h1 { font-size: 150% }
