@@ -1,5 +1,5 @@
 //! Self referencing data structures to store the note's
-//! raw string.
+//! content as a raw string.
 use crate::error::FileError;
 use self_cell::self_cell;
 use std::fmt;
