@@ -108,10 +108,7 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
             n
         }
         TemplateKind::SyncFilename => synchronize_filename(context, content)?,
-        TemplateKind::None => {
-            let n = Note::from_text_file(context, content, template_kind)?;
-            n
-        }
+        TemplateKind::None => Note::from_text_file(context, content, template_kind)?,
         _ =>
         // Early return, we do nothing here and continue.
         {
