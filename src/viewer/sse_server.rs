@@ -612,7 +612,7 @@ impl ServerThread {
                     };
                     let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8()?);
                     // Ignore leading "./" in `path`.
-                    let path = path.iter().skip_while(|s|s == &Path::new("./")).collect::<PathBuf>();
+                    let path = path.iter().skip_while(|s|s == Path::new("./")).collect::<PathBuf>();
                     // Save the hyperlinks for other threads to check against.
                     doc_local_links.insert(path);
                 }
