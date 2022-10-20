@@ -2,7 +2,7 @@
 
 # Unit testing
 
-if cargo test
+if cargo test --all
 then
   echo Cargo test succeeded.
 else
