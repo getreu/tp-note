@@ -14,12 +14,11 @@ repository = "https://gitlab.com/getreu/tp-note"
 [features]
 default = ["renderer", "viewer"]
 viewer = []
-renderer = ["pulldown-cmark", "cmark-syntax", "latex2mathml", "rst_parser", "rst_renderer"]
+renderer = ["pulldown-cmark", "cmark-syntax", "rst_parser", "rst_renderer"]
 
 [dependencies]
 cmark-syntax = { version = "0.3.1", features = ["latex2mathml"], optional = true }
 lazy_static = "1.4.0"
-latex2mathml = { version = "0.2.3", optional = true }
 log = { version = "0.4.17", features = ["serde"] }
 parse-hyperlinks = "0.23.4"
 # parse-hyperlinks = { path = "../parse-hyperlinks/parse-hyperlinks" }
@@ -28,12 +27,25 @@ rst_parser = { version = "0.4.0", optional = true }
 rst_renderer = { version = "0.4.0", optional = true }
 sanitize-filename-reader-friendly = "2.2.1"
 self_cell = "0.10.2"
-serde = { version = "1.0.143", features = ["derive"] }
-serde_yaml = "0.9.9"
-serde_json = "*"
+serde = { version = "1.0.145", features = ["derive"] }
+serde_yaml = "0.9.13"
+serde_json = "1.0.86"
 substring = "1.4.5"
-tera = { version = "1.17.0", default-features = true }
-thiserror = "1.0.32"
+tera = { version = "1.17.1", default-features = true }
+thiserror = "1.0.37"
 toml = "0.5.9"
 
 
+[target.'cfg(windows)'.dependencies]
+win32job = "1.0.2"
+
+[dependencies.windows-sys]
+version = "0.42.0"
+features = [
+    #"Win32_Foundation",
+    #"Win32_Security",
+    #"Win32_System_Threading",
+    #"Win32_UI_WindowsAndMessaging",
+    "Win32_Globalization",
+    "Win32_System_SystemServices",
+]
