@@ -184,8 +184,8 @@ fn main() {
         features.push("viewer".to_string());
         #[cfg(feature = "renderer")]
         features.push("renderer".to_string());
-        #[cfg(feature = "clipboard")]
-        features.push("clipboard".to_string());
+        #[cfg(feature = "read-clipboard")]
+        features.push("read-clipboard".to_string());
 
         let about = About {
             version: VERSION.unwrap_or("unknown").to_string(),
