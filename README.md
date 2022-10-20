@@ -73,6 +73,8 @@ Developer documentation:
 * API documentation
 
   _Tp-Note_'s program code documentation targets mainly software developers.
+  The code is split into a library [tpnote-lib] and the command line 
+  application [tpnote].
   The advanced user may consult the [Tp-Note's config module documentation]
   which explains the default templates and setting. Many of them can be
   customized through _Tp-Note_'s configuration file.
@@ -276,8 +278,10 @@ Copyright:
 [Tp-Note manual page - html]: https://blog.getreu.net/projects/tp-note/tpnote--manpage.html
 [Tp-Note manual page - pdf]: https://blog.getreu.net/_downloads/tpnote--manpage.pdf
 [Blogposts about Tp-Note]: https://blog.getreu.net/tags/tp-note/
-[Tp-Note's config module documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tpnote/config/
-[Constants in API documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tpnote/config/index.html#constants
+[Tp-Note's config module documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tpnote_lib/config/
+[tpnote]: https://crates.io/crates/tp-note
+[tpnote-lib]: https://crates.io/crates/tpnote-lib
+[Constants in API documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tpnote_lib/config/index.html#constants
 [Tp-Note on Gitlab]: https://gitlab.com/getreu/tp-note
 [Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
