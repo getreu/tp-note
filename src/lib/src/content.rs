@@ -95,9 +95,9 @@ impl<'a> Content {
         Content::from(input)
     }
 
-    /// True if the underlying owned `Content` string is empty.
+    /// True if the header and body is empty.
     pub fn is_empty(&self) -> bool {
-        self.borrow_owner().is_empty()
+        self.borrow_dependent().header.is_empty() && self.borrow_dependent().body.is_empty()
     }
 
     /// Converts all `\r\n` to `\n` if there are any.
