@@ -58,6 +58,22 @@ impl FrontMatter {
 impl TryFrom<&Content> for FrontMatter {
     type Error = NoteError;
     /// Helper function deserialising the front-matter of the note file.
+    ///
+    /// ```rust
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::front_matter::FrontMatter;
+    /// use serde_json::json;
+
+    /// // Create existing note.
+    /// let raw = "\u{feff}---\ntitle: \"My day\"\nsubtitle: \"Note\"\n---\nBody";
+    /// let content = Content::from(raw.to_string());
+    /// assert!(!content.is_empty());
+    /// assert!(!content.borrow_dependent().header.is_empty());
+    ///
+    /// let front_matter = FrontMatter::try_from(&content).unwrap();
+    /// assert_eq!(front_matter.map.get("title"), Some(&json!("My day")));
+    /// assert_eq!(front_matter.map.get("subtitle"), Some(&json!("Note")));
+    /// ```
     fn try_from(content: &Content) -> Result<FrontMatter, NoteError> {
         let header = content.borrow_dependent().header;
         Self::try_from(header)

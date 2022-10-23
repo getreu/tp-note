@@ -12,11 +12,43 @@ use std::path::PathBuf;
 pub trait NotePathBuf {
     /// Concatenates the `sort_tag`, `stem`, `copy_counter`, `.` and `extension`.
     fn from_assembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self;
-    /// Append a copy counter to the string.
-    fn set_next_unused(&mut self) -> Result<(), FileError>;
+    /// Append/increment a copy counter.
     /// When the path `p` exists on disk already, append some extension
     /// with an incrementing counter to the sort-tag in `p` until
-    /// we find a free slot.
+    /// we find a free unused filename.
+    fn set_next_unused(&mut self) -> Result<(), FileError>;
+    /// Shortens the stem of a filename so that
+    /// `filename.len() <= FILENAME_LEN_MAX`.
+    /// If stem ends with a pattern similar to a copy counter,
+    /// append `-` to stem (cf. unit test in the source code).
+    ///
+    /// ```rust
+    /// use std::ffi::OsString;
+    /// use std::path::PathBuf;
+    /// use tpnote_lib::filename::NotePathBuf;
+    /// use tpnote_lib::config::FILENAME_LEN_MAX;
+    ///
+    /// // Test short filename.
+    /// let mut input = PathBuf::from("short filename.md");
+    /// input.shorten_filename();
+    /// let output = input;
+    /// assert_eq!(OsString::from("short filename.md"),
+    ///            output.into_os_string());
+    ///
+    /// // Test too long filename.
+    /// let mut input = String::from("some/path/");
+    /// for _ in 0..(FILENAME_LEN_MAX - "long fil.ext".len()) {
+    ///     input.push('x');
+    /// }
+    /// let mut expected = input.clone();
+    /// input.push_str("long filename to be cut.ext");
+    /// let mut input = PathBuf::from(input);
+    /// expected.push_str("long fil.ext");
+    ///
+    /// input.shorten_filename();
+    /// let output = input.into_os_string();
+    /// assert_eq!(OsString::from(expected), output);
+    /// ```
     fn shorten_filename(&mut self);
 }
 
@@ -65,38 +97,6 @@ impl NotePathBuf for PathBuf {
         Ok(())
     }
 
-    /// Shortens the stem of a filename so that
-    /// `filename.len() <= FILENAME_LEN_MAX`.
-    /// If stem ends with a pattern similar to a copy counter,
-    /// append `-` to stem (cf. unit test in the source code).
-    ///
-    /// ```rust
-    /// use std::ffi::OsString;
-    /// use std::path::PathBuf;
-    /// use tpnote_lib::filename::NotePathBuf;
-    /// use tpnote_lib::config::FILENAME_LEN_MAX;
-    ///
-    /// // Test short filename.
-    /// let mut input = PathBuf::from("short filename.md");
-    /// input.shorten_filename();
-    /// let output = input;
-    /// assert_eq!(OsString::from("short filename.md"),
-    ///            output.into_os_string());
-    ///
-    /// // Test too long filename.
-    /// let mut input = String::from("some/path/");
-    /// for _ in 0..(FILENAME_LEN_MAX - "long fil.ext".len()) {
-    ///     input.push('x');
-    /// }
-    /// let mut expected = input.clone();
-    /// input.push_str("long filename to be cut.ext");
-    /// let mut input = PathBuf::from(input);
-    /// expected.push_str("long fil.ext");
-    ///
-    /// input.shorten_filename();
-    /// let output = input.into_os_string();
-    /// assert_eq!(OsString::from(expected), output);
-    /// ```
     fn shorten_filename(&mut self) {
         // Determine length of file-extension.
         let note_extension = self

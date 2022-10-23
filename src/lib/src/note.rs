@@ -65,8 +65,134 @@ pub struct Note {
 
 use std::fs;
 impl Note {
-    /// Constructor, that creates a memory representation of an existing note
+    /// Constructor creating a memory representation of the existing note
     /// on disk.
+    /// If `Some<Content>` is supplied, the content is not read from the file
+    /// system again and `<Content>` is stored directly in `Self`.
+    /// `template_kind` should be one of:
+    /// `TemplateKind::SyncFilename`,
+    /// `TemplateKind::None` or
+    /// `TemplateKind::FromTextFile`.
+    ///
+    ///
+    /// 1. Example with `TemplateKind::SyncFilename`
+    ///
+    /// ```rust
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::note::Note;
+    /// use tpnote_lib::template::TemplateKind;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    ///  
+    /// // Create existing note.
+    /// let raw = r#"
+    ///
+    /// ---
+    /// title: "My day"
+    /// subtitle: "Note"
+    /// ---
+    /// Body text
+    /// "#;
+    /// let notefile = temp_dir().join("20221030-hello.md");
+    /// fs::write(&notefile, raw.as_bytes()).unwrap();
+    ///
+    /// let expected = temp_dir().join("20221030-My day--Note.md");
+    /// let _ = fs::remove_file(&expected);
+    /// let mut context = Context::from(&notefile);
+    /// context.insert_environment().unwrap();
+    ///
+    /// // Create note object.
+    /// let mut n = Note::from_text_file(context, None, TemplateKind::SyncFilename).unwrap();
+    /// n.render_filename(TemplateKind::SyncFilename).unwrap();
+    /// n.set_next_unused_rendered_filename_or(&n.context.path.clone())
+    ///     .unwrap();
+    /// assert_eq!(n.rendered_filename, expected);
+    /// // Rename file on the disk.
+    /// n.rename_file_from(&n.context.path).unwrap();
+    /// assert!(n.rendered_filename.is_file());
+    /// ```
+    ///
+    ///
+    /// 2. Example with `TemplateKind::None`
+    ///
+    /// This constructor is called, when `Note` is solely created for
+    /// HTML rendering and no templates will be applied.
+    ///
+    /// ```rust
+    /// use tpnote_lib::config::LIB_CFG;
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::note::Note;
+    /// use tpnote_lib::template::TemplateKind;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    ///
+    /// // Create existing note file.
+    /// let raw = r#"---
+    /// title: "My day"
+    /// subtitle: "Note"
+    /// ---
+    /// Body text
+    /// "#;
+    /// let notefile = temp_dir().join("20221030-My day--Note.md");
+    /// fs::write(&notefile, raw.as_bytes()).unwrap();
+    ///
+    /// // Only minimal context is needed, because no templates are applied later.
+    /// let mut context = Context::from(&notefile);
+    /// context.insert_environment().unwrap();
+    /// // Create note object.
+    /// let n = Note::from_text_file(context, None, TemplateKind::None).unwrap();
+    ///
+    /// // Check the HTML rendition.
+    /// let html = n
+    ///     .render_content_to_html(&"md", &LIB_CFG.read().unwrap().tmpl_html.viewer, "")
+    ///     .unwrap();
+    /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
+    /// ```
+    ///
+    ///
+    /// 3. Example with `TemplateKind::FromTextFile`
+    ///
+    /// ```rust
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::note::Note;
+    /// use tpnote_lib::template::TemplateKind;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    ///
+    /// // Create existing note file without header.
+    /// let raw = "Body text without header";
+    /// let notefile = temp_dir().join("20221030-hello -- world.md");
+    /// let _ = fs::write(&notefile, raw.as_bytes());
+    /// let expected = temp_dir().join("20221030-hello--world.md");
+    /// let _ = fs::remove_file(&expected);
+    ///
+    /// // Create note object.
+    /// let mut context = Context::from(&notefile);
+    /// context.insert_environment().unwrap();
+    /// let mut n = Note::from_text_file(context.clone(),
+    ///                 None,
+    ///                 TemplateKind::FromTextFile)
+    ///     .unwrap();
+    ///
+    /// assert!(!n.content.borrow_dependent().header.is_empty());
+    /// assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("hello "));
+    /// assert_eq!(
+    ///     n.context.get("fm_subtitle").unwrap().as_str(),
+    ///     Some(" world")
+    /// );
+    /// assert_eq!(n.content.borrow_dependent().body.trim(), raw);
+    ///
+    /// n.render_filename(TemplateKind::FromTextFile).unwrap();
+    /// n.set_next_unused_rendered_filename().unwrap();
+    /// n.save_and_delete_from(&context.path).unwrap();
+    ///
+    /// // Check the new file with header
+    /// assert_eq!(&n.rendered_filename, &expected);
+    /// assert!(n.rendered_filename.is_file());
+    /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+    /// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"hello \""));
+    /// ```
+
     pub fn from_text_file(
         mut context: Context,
         content: Option<Content>,
@@ -160,7 +286,157 @@ impl Note {
         }
     }
 
-    /// Constructor that creates a new note by filling in the content template `template`.
+    /// Constructor that creates a new note by filling in the content
+    /// template `template`.
+    /// `template_kind` should be on of `TemplateKind::New`,
+    /// `TemplateKind::FromClipboardYaml`,
+    /// `TemplateKind::FromClipboard`, or
+    /// `TemplateKind::AnnotateFile`
+
+    /// 1. Example with `TemplateKind::New`
+    ///
+    /// ```rust
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::note::Note;
+    /// use tpnote_lib::template::TemplateKind;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+
+    /// // Create a directory for the new note.
+    /// let notedir = temp_dir().join("123-my dir/");
+    /// fs::create_dir_all(&notedir).unwrap();
+
+    /// // Store the path in `context`.
+    /// let mut context = Context::from(&notedir);
+    /// context.insert_environment().unwrap();
+
+    /// // Create the `Note` object.
+    /// let mut n = Note::from_content_template(context, TemplateKind::New).unwrap();
+    /// assert!(n
+    ///     .content
+    ///     .borrow_dependent()
+    ///     .header
+    ///     .starts_with("title:      \"my dir\""));
+    /// assert_eq!(n.content.borrow_dependent().body, "\n\n");
+    ///
+    /// // Check the title and subtitle in the note's header.
+    /// assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("my dir"));
+    /// assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
+    /// n.render_filename(TemplateKind::New).unwrap();
+    /// n.set_next_unused_rendered_filename().unwrap();
+    /// n.save().unwrap();
+
+    /// // Check the created new note file.
+    /// assert!(n.rendered_filename.is_file());
+    /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+    /// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"my dir\""));
+    /// ```
+
+    ///
+    /// 2. Example with `TemplateKind::FromClipboard`
+    ///
+    /// ```rust
+    /// use tpnote_lib::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
+    /// use tpnote_lib::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::note::Note;
+    /// use tpnote_lib::template::TemplateKind;
+    /// use std::env::temp_dir;
+    /// use std::path::PathBuf;
+    /// use std::fs;
+
+    /// // Directory for the new note.
+    /// let notedir = temp_dir();
+
+    /// // Store the path in `context`.
+    /// let mut context = Context::from(&notedir);
+    /// context.insert_environment().unwrap();
+    /// let clipboard = Content::from_input_with_cr("my clipboard\n".to_string());
+    /// context
+    ///     .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
+    ///     .unwrap();
+    /// let stdin = Content::from_input_with_cr("my stdin\n".to_string());
+    /// context
+    ///     .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
+    ///     .unwrap();
+
+    /// // Create the `Note` object.
+    /// let mut n = Note::from_content_template(context, TemplateKind::FromClipboard).unwrap();
+    /// let expected_body = "\nmy stdin\nmy clipboard\n\n\n";
+    /// assert_eq!(n.content.borrow_dependent().body, expected_body);
+    /// // Check the title and subtitle in the note's header.
+    /// assert_eq!(
+    ///     n.context.get("fm_title").unwrap().as_str(),
+    ///     Some("my stdin\nmy clipboard\n")
+    /// );
+    ///
+    /// assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
+    /// n.render_filename(TemplateKind::FromClipboard).unwrap();
+    /// n.set_next_unused_rendered_filename().unwrap();
+    /// n.save().unwrap();
+
+    /// // Check the new note file.
+    /// assert!(n.rendered_filename.as_os_str().to_str().unwrap()
+    ///    .contains("my stdin-my clipboard--Note"));
+    /// assert!(n.rendered_filename.is_file());
+    /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+    /// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"my stdin\\nmy clipboard\\n\""));
+    /// ```
+
+    ///
+    /// 3. Example with `TemplateKind::AnnotateFile`
+    ///
+    /// ```rust
+    /// use tpnote_lib::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
+    /// use tpnote_lib::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::note::Note;
+    /// use tpnote_lib::template::TemplateKind;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+
+    /// // Create some non-Tp-Note-file.
+    /// let raw = "This simulates a non tp-note file";
+    /// let non_notefile = temp_dir().join("20221030-some.pdf");
+    /// fs::write(&non_notefile, raw.as_bytes()).unwrap();
+
+    /// let expected = temp_dir().join("20221030-some.pdf--Note.md");
+    /// let _ = fs::remove_file(&expected);
+    /// // Store the path in `context`.
+    /// let mut context = Context::from(&non_notefile);
+    /// context.insert_environment().unwrap();
+    /// let clipboard = Content::from_input_with_cr("my clipboard\n".to_string());
+    /// context
+    ///     .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
+    ///     .unwrap();
+    /// let stdin = Content::from_input_with_cr("my stdin\n".to_string());
+    /// context
+    ///     .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
+    ///     .unwrap();
+
+    /// // Create the `Note` object.
+    /// let mut n = Note::from_content_template(context, TemplateKind::AnnotateFile).unwrap();
+    /// let expected_body =
+    ///     "\n[20221030-some.pdf](<20221030-some.pdf>)\n\nmy stdin\nmy clipboard\n\n\n";
+    /// assert_eq!(n.content.borrow_dependent().body, expected_body);
+    /// // Check the title and subtitle in the note's header.
+    /// assert_eq!(
+    ///     n.context.get("fm_title").unwrap().as_str(),
+    ///     Some("some.pdf")
+    /// );
+    /// assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
+    ///
+    /// n.render_filename(TemplateKind::AnnotateFile).unwrap();
+    /// n.set_next_unused_rendered_filename().unwrap();
+    /// n.save().unwrap();
+
+    /// // Check the new note file.
+    /// assert_eq!(n.rendered_filename, expected);
+    /// assert!(n.rendered_filename.is_file());
+    /// ```
+
     pub fn from_content_template(
         mut context: Context,
         template_kind: TemplateKind,
