@@ -104,6 +104,7 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
 
             // Save new note.
             let context_path = n.context.path.clone();
+            n.set_next_unused_rendered_filename()?;
             n.save_and_delete_from(&context_path)?;
             n
         }
