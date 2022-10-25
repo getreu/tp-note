@@ -1,5 +1,7 @@
 //! Creates a memory representation of the note's YAML header.
-//! Technically this is a wrapper around a `tera::Map`.
+//! In this documentation, the terms “YAML header”, ”header” and ”front matter"
+//! are used as synonyms for the note's meta data block at the beginning
+//! of the text file. Technically this is a wrapper around a `tera::Map`.
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_FILE_EXT;

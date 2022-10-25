@@ -612,7 +612,10 @@ standard '`\n`' or the Windows standard '`\r\n`' is accepted. Tp-Note writes
 out newlines according the operating system it runs on.
 
 Tp-Note is designed to be compatible with '`Pandoc`'s and '`RMarkdown`s
-document structure as shown in the figure below.
+document structure as shown in the figure below. In this documentation
+the terms "YAML header", "header" and "front matter" are used as 
+synonyms to designate to document's meta data block at the beginning
+of the text file:
 
 ```
 ---

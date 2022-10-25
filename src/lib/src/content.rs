@@ -15,10 +15,8 @@ use substring::Substring;
 /// must start within the first `BEFORE_HEADER_MAX_IGNORED_CHARS`.
 const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 
-/// The content of a note is stored as UTF-8 string with
-/// one `\n` character as newline. If present, a Byte Order Mark
-/// BOM is removed while reading with `new()`.
 #[derive(Debug, Eq, PartialEq)]
+/// Pointers belonging to the self referential struct `Content`.
 pub struct ContentRef<'a> {
     /// Skip optional BOM and `"---" `in `s` until next `"---"`.
     /// When no `---` is found, this is empty.
@@ -29,8 +27,13 @@ pub struct ContentRef<'a> {
 }
 
 self_cell!(
-/// This is a newtype and thin wrapper around the note's content.
+/// Holds the notes content in a string and two string slices
+/// `header`  and `body`.
+/// This struct is self referencial.
 /// It deals with operating system specific handling of newlines.
+/// The content of a note is stored as UTF-8 string with
+/// one `\n` character as newline. If present, a Byte Order Mark
+/// BOM is removed while reading with `new()`.
     pub struct Content {
         owner: String,
 
