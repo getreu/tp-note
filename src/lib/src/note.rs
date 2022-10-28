@@ -874,7 +874,7 @@ mod tests {
         expected.insert("flag".to_string(), json!(true)); // Bool()
         expected.insert("numbers".to_string(), json!([1, 3, 5])); // Array()
 
-        let expected_front_matter = FrontMatter { map: expected };
+        let expected_front_matter = FrontMatter(expected);
 
         assert_eq!(expected_front_matter, FrontMatter::try_from(input).unwrap());
 
@@ -918,7 +918,7 @@ mod tests {
         let mut tmp2 = tmp.clone();
 
         let mut input1 = Context::from(Path::new("a/b/test.md"));
-        let input2 = FrontMatter { map: tmp };
+        let input2 = FrontMatter(tmp);
 
         let mut expected = Context::from(Path::new("a/b/test.md"));
         (*expected).insert("fm_file_ext".to_string(), &json!("md")); // String

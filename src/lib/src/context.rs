@@ -87,7 +87,7 @@ impl Context {
     pub fn insert_front_matter(&mut self, fm: &FrontMatter) {
         let mut tera_map = tera::Map::new();
 
-        for (name, value) in &fm.map {
+        for (name, value) in fm.iter() {
             // Flatten all types.
             let val = match value {
                 tera::Value::String(_) => value.to_owned(),
