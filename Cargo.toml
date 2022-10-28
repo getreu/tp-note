@@ -1,6 +1,6 @@
 [package]
 name = "tp-note"
-version = "1.18.0"
+version = "1.18.1"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2021"
 readme = "README.md"
@@ -89,16 +89,16 @@ percent-encoding = { version = "2.2.0", optional = true }
 sanitize-filename-reader-friendly = "2.2.1"
 # sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
 semver = "1.0.14"
-serde = { version = "1.0.145", features = ["derive"] }
-serde_json = "1.0.86"
-serde_yaml = "0.9.13"
+serde = { version = "1.0.147", features = ["derive"] }
+serde_json = "1.0.87"
+serde_yaml = "0.9.14"
 structopt = "0.3.26"
 tera = { version = "1.17.1", default-features = true }
 thiserror = "1.0.37"
-time = "0.3.15"
+time = "0.3.16"
 toml = "0.5.9"
 # tpnote-lib = { path = "src/lib", default-features = false, features = ["renderer", "viewer"] }
-tpnote-lib = { version = "0.7.0", default-features = false, features = ["renderer", "viewer"] }
+tpnote-lib = { version = "0.8.0", default-features = false, features = ["renderer", "viewer"] }
 url = { version = "2.3.1", optional = true }
 webbrowser = { version = "0.8.0", optional = true }
 windows-sys = { version = "0.42.0", features = [
@@ -108,7 +108,7 @@ windows-sys = { version = "0.42.0", features = [
          #"Win32_UI_WindowsAndMessaging",
          "Win32_Globalization",
          "Win32_System_SystemServices",
-     ]}
+     ] }
 
 [target.'cfg(windows)'.dependencies]
 win32job = "1.0.2"
