@@ -3,14 +3,14 @@
 use crate::config::CFG;
 use crate::viewer::error::ViewerError;
 use crate::viewer::sse_server::SseToken;
-use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{RecommendedWatcher, RecursiveMode};
+use notify_debouncer_mini::{new_debouncer, DebouncedEvent, Debouncer};
 use std::panic::panic_any;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::TrySendError;
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, SyncSender};
 use std::sync::{Arc, Mutex};
-use std::thread::sleep;
 use std::time::Duration;
 use std::time::Instant;
 
@@ -19,12 +19,6 @@ use std::time::Instant;
 /// subscribers connected.
 const WATCHER_TIMEOUT: u64 = 10;
 
-/// Some file editors do not modify the file on disk, they move the old version
-/// away and write a new file with the same name. As this takes some time,
-/// the watcher waits a bit before trying to access the new file.
-/// The delay is in milliseconds.
-const WAIT_EDITOR_WRITING_NEW_FILE: u64 = 200;
-
 /// Delay while `update()` with no subscribers silently ignored. This avoids
 /// a race condition, when a file has already changed on disk, but the browser
 /// has not connected yet.
@@ -32,9 +26,11 @@ const WATCHER_MIN_UPTIME: u128 = 3000;
 /// The `watcher` notifies about changes through `rx`.
 pub struct FileWatcher {
     /// Receiver for file changed messages.
-    rx: Receiver<DebouncedEvent>,
-    /// File watcher.
-    watcher: RecommendedWatcher,
+    rx: Receiver<Result<Vec<DebouncedEvent>, Vec<notify::Error>>>,
+    /// We must store the `Debouncer` because it hold
+    /// the sender of the channel.
+    #[allow(dead_code)]
+    debouncer: Debouncer<RecommendedWatcher>,
     /// List of subscribers to inform when the file is changed.
     event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
     /// Send additional periodic update events to detect when
@@ -54,14 +50,15 @@ impl FileWatcher {
     ) -> Result<Self, ViewerError> {
         let notify_period = CFG.viewer.notify_period;
         let (tx, rx) = channel();
-        let mut watcher = watcher(tx, Duration::from_millis(notify_period))?;
-        watcher.watch(&file, RecursiveMode::Recursive)?;
+        // Max value for `notify_period` is 2 seconds.
+        let mut debouncer = new_debouncer(Duration::from_millis(notify_period), None, tx)?;
+        debouncer.watcher().watch(&file, RecursiveMode::Recursive)?;
 
         log::debug!("File watcher started.");
 
         Ok(Self {
             rx,
-            watcher,
+            debouncer,
             event_tx_list,
             start_time: Instant::now(),
             terminate_on_browser_disconnect,
@@ -106,39 +103,14 @@ impl FileWatcher {
                 // The  sending half of a channel (or sync_channel) is `Disconnected`,
                 // implies that no further messages will ever be received.
                 // As this should never happen, we panic this thread then.
-                Err(RecvTimeoutError::Disconnected) => panic_any(()),
+                Err(RecvTimeoutError::Disconnected) => panic_any("RecvTimeoutError::Disconnected"),
             };
 
             log::trace!("File watcher event: {:?}", evnt);
 
             match evnt {
-                DebouncedEvent::NoticeRemove(path) | DebouncedEvent::Remove(path) => {
-                    // Some text editors e.g. Neovim and Gedit rename first the existing file
-                    // and then write a new one with the same name.
-                    // First we give same time to finish writing the new file.
-                    sleep(Duration::from_millis(WAIT_EDITOR_WRITING_NEW_FILE));
-                    // Then we have to set up the watcher again.
-                    self.watcher
-                        .watch(path.clone(), RecursiveMode::NonRecursive)
-                        .map_err(|e| e.into())
-                        .and_then(|_| self.update(SseToken::Update))?
-                }
-
-                // These we can ignore.
-                DebouncedEvent::NoticeWrite(_) | DebouncedEvent::Rescan => {}
-
-                // This is what most text editors do, the modify the existing file.
-                DebouncedEvent::Write(_) | DebouncedEvent::Chmod(_) | DebouncedEvent::Create(_) =>
-                // Inform web clients.
-                {
-                    self.update(SseToken::Update)?
-                }
-
-                // Here we better restart the whole watcher again, if possible. Seems fatal.
-                DebouncedEvent::Rename(_path, _) => return Err(ViewerError::LostRenamedFile),
-
-                // Dito.
-                DebouncedEvent::Error(err, _path) => return Err(err.into()),
+                Ok(_) => self.update(SseToken::Update)?,
+                Err(mut e) => return Err(e.remove(1).into()),
             }
         }
     }

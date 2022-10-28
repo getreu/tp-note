@@ -227,7 +227,7 @@ const VIEWER_STARTUP_DELAY: isize = 500;
 const VIEWER_MISSING_HEADER_DISABLES: bool = false;
 
 /// How often should the file watcher check for changes?
-/// Delay in milliseconds.
+/// Delay in milliseconds. Maximum value is 2000.
 const VIEWER_NOTIFY_PERIOD: u64 = 1000;
 
 /// The maximum number of TCP connections the HTTP server can handle at the same

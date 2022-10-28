@@ -16,10 +16,6 @@ pub enum ViewerError {
     #[error("All subscribers have disconnected.")]
     AllSubscriberDiconnected,
 
-    /// The watched file was moved by another process.
-    #[error("Watcher: lost observed file. File was renamed.")]
-    LostRenamedFile,
-
     /// Should not happen. Please report a bug.
     #[error("Can not view non-text files.")]
     MarkupLanguageNone,
