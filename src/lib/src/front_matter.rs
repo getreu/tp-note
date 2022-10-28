@@ -11,10 +11,13 @@ use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::filename::MarkupLanguage;
 use std::matches;
+use std::ops::Deref;
+use std::ops::DerefMut;
 use std::str;
 
 #[derive(Debug, Eq, PartialEq)]
-/// Represents the front matter of the note.
+/// Represents the front matter of the note. This is a newtype
+/// for `tera::Map<String, tera::Value>`.
 pub struct FrontMatter {
     pub map: tera::Map<String, tera::Value>,
 }
@@ -73,8 +76,8 @@ impl TryFrom<&Content> for FrontMatter {
     /// assert!(!content.borrow_dependent().header.is_empty());
     ///
     /// let front_matter = FrontMatter::try_from(&content).unwrap();
-    /// assert_eq!(front_matter.map.get("title"), Some(&json!("My day")));
-    /// assert_eq!(front_matter.map.get("subtitle"), Some(&json!("Note")));
+    /// assert_eq!(front_matter.get("title"), Some(&json!("My day")));
+    /// assert_eq!(front_matter.get("subtitle"), Some(&json!("Note")));
     /// ```
     fn try_from(content: &Content) -> Result<FrontMatter, NoteError> {
         let header = content.borrow_dependent().header;
@@ -149,6 +152,22 @@ impl TryFrom<&str> for FrontMatter {
             }
         }
         Ok(fm)
+    }
+}
+
+/// Auto-dereference for convenient access to `tera::Map`.
+impl Deref for FrontMatter {
+    type Target = tera::Map<String, tera::Value>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.map
+    }
+}
+
+/// Auto-dereference for convenient access to `tera::Map`.
+impl DerefMut for FrontMatter {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.map
     }
 }
 
