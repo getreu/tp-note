@@ -34,7 +34,7 @@ self_cell!(
 /// The content of a note is stored as UTF-8 string with
 /// one `\n` character as newline. If present, a Byte Order Mark
 /// BOM is removed while reading with `new()`.
-    pub struct Content {
+    pub struct ContentString {
         owner: String,
 
         #[covariant]
@@ -47,7 +47,7 @@ self_cell!(
 /// The content of a note is stored as UTF-8 string with
 /// one `\n` character as newline. If present, a Byte Order Mark
 /// BOM is removed while reading with `new()`.
-impl<'a> Content {
+impl<'a> ContentString {
     /// Constructor that parses a _Tp-Note_ document.
     /// A valid document is UTF-8 encoded and starts with an optional
     /// BOM (byte order mark) followed by `---`. When the start marker
@@ -56,21 +56,21 @@ impl<'a> Content {
     /// BOM + ignored text + empty line + `---`.
     ///
     /// ```rust
-    /// use tpnote_lib::content::Content;
-    /// let c = Content::from(String::from("---\ntitle: \"My note\"\n---\nMy body"));
+    /// use tpnote_lib::content::ContentString;
+    /// let c = ContentString::from(String::from("---\ntitle: \"My note\"\n---\nMy body"));
     ///
     /// assert_eq!(c.borrow_dependent().header, r#"title: "My note""#);
     /// assert_eq!(c.borrow_dependent().body, r#"My body"#);
     ///
     /// // A test without front matter leads to an empty header:
-    /// let c = Content::from(String::from("No header"));
+    /// let c = ContentString::from(String::from("No header"));
     ///
     /// assert_eq!(c.borrow_dependent().header, "");
     /// assert_eq!(c.borrow_dependent().body, r#"No header"#);
     /// ```
     pub fn from(input: String) -> Self {
-        Content::new(input, |owner: &String| {
-            let (header, body) = Content::split(owner);
+        ContentString::new(input, |owner: &String| {
+            let (header, body) = ContentString::split(owner);
             ContentRef { header, body }
         })
     }
@@ -80,22 +80,22 @@ impl<'a> Content {
     /// If not, no memory allocation occurs and the buffer remains untouched.
     ///
     /// ```rust
-    /// use tpnote_lib::content::Content;
-    /// let c = Content::from_input_with_cr(String::from(
+    /// use tpnote_lib::content::ContentString;
+    /// let c = ContentString::from_input_with_cr(String::from(
     ///     "---\r\ntitle: \"My note\"\r\n---\r\nMy\nbody\r\n"));
     ///
     /// assert_eq!(c.borrow_dependent().header, r#"title: "My note""#);
     /// assert_eq!(c.borrow_dependent().body, "My\nbody\n");
     ///
     /// // A test without front matter leads to an empty header:
-    /// let c = Content::from(String::from("No header"));
+    /// let c = ContentString::from(String::from("No header"));
     ///
     /// assert_eq!(c.borrow_dependent().header, "");
     /// assert_eq!(c.borrow_dependent().body, r#"No header"#);
     /// ```
     pub fn from_input_with_cr(input: String) -> Self {
         let input = Self::remove_cr(input);
-        Content::from(input)
+        ContentString::from(input)
     }
 
     /// True if the header and body is empty.
@@ -223,8 +223,8 @@ impl<'a> Content {
     /// use std::path::Path;
     /// use std::env::temp_dir;
     /// use std::fs;
-    /// use tpnote_lib::content::Content;
-    /// let c = Content::from(
+    /// use tpnote_lib::content::ContentString;
+    /// let c = ContentString::from(
     ///      String::from("prelude\n\n---\ntitle: \"My note\"\n---\nMy body"));
     /// let outfile = temp_dir().join("mynote.md");
     /// #[cfg(not(target_family = "windows"))]
@@ -300,7 +300,7 @@ impl<'a> fmt::Display for ContentRef<'a> {
 }
 
 /// Delegates the printing to `Display for ContentRef`.
-impl fmt::Display for Content {
+impl fmt::Display for ContentString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.borrow_dependent().fmt(f)
     }
@@ -313,40 +313,40 @@ mod tests {
     #[test]
     fn test_from_input_with_cr() {
         // Test windows string.
-        let content = Content::from_input_with_cr("first\r\nsecond\r\nthird".to_string());
+        let content = ContentString::from_input_with_cr("first\r\nsecond\r\nthird".to_string());
         assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test Unix string.
-        let content = Content::from_input_with_cr("first\nsecond\nthird".to_string());
+        let content = ContentString::from_input_with_cr("first\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test BOM removal.
-        let content = Content::from_input_with_cr("\u{feff}first\nsecond\nthird".to_string());
+        let content = ContentString::from_input_with_cr("\u{feff}first\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
     }
 
     #[test]
     fn test_new() {
         // Test Unix string.
-        let content = Content::from("first\nsecond\nthird".to_string());
+        let content = ContentString::from("first\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test BOM removal.
-        let content = Content::from("\u{feff}first\nsecond\nthird".to_string());
+        let content = ContentString::from("\u{feff}first\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test header extraction.
-        let content = Content::from("\u{feff}---\nfirst\n---\nsecond\nthird".to_string());
+        let content = ContentString::from("\u{feff}---\nfirst\n---\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().header, "first");
         assert_eq!(content.borrow_dependent().body, "second\nthird");
 
         // Test header extraction without `\n` at the end.
-        let content = Content::from("\u{feff}---\nfirst\n---".to_string());
+        let content = ContentString::from("\u{feff}---\nfirst\n---".to_string());
         assert_eq!(content.borrow_dependent().header, "first");
         assert_eq!(content.borrow_dependent().body, "");
 
         // Some skipped bytes.
-        let content = Content::from("\u{feff}ignored\n\n---\nfirst\n---".to_string());
+        let content = ContentString::from("\u{feff}ignored\n\n---\nfirst\n---".to_string());
         assert_eq!(content.borrow_dependent().header, "first");
         assert_eq!(content.borrow_dependent().body, "");
 
@@ -355,7 +355,7 @@ mod tests {
         s.push_str(&String::from_utf8(vec![b'X'; BEFORE_HEADER_MAX_IGNORED_CHARS]).unwrap());
         s.push_str("\n\n---\nfirst\n---\nsecond");
         let s_ = s.clone();
-        let content = Content::from(s);
+        let content = ContentString::from(s);
         assert_eq!(content.borrow_dependent().header, "");
         assert_eq!(content.borrow_dependent().body, &s_[3..]);
 
@@ -369,7 +369,7 @@ mod tests {
             .unwrap(),
         );
         s.push_str("\n\n---\nfirst\n---\nsecond");
-        let content = Content::from(s);
+        let content = ContentString::from(s);
         assert_eq!(content.borrow_dependent().header, "first");
         assert_eq!(content.borrow_dependent().body, "second");
     }
@@ -379,93 +379,93 @@ mod tests {
         // Document start marker is not followed by whitespace.
         let input_stream = String::from("---first\n---\nsecond\nthird");
         let expected = ("", "---first\n---\nsecond\nthird");
-        let result = Content::split(&input_stream);
+        let result = ContentString::split(&input_stream);
         assert_eq!(result, expected);
 
         // Document start marker is followed by whitespace.
         let input_stream = String::from("---\nfirst\n---\nsecond\nthird");
         let expected = ("first", "second\nthird");
-        let result = Content::split(&input_stream);
+        let result = ContentString::split(&input_stream);
         assert_eq!(result, expected);
 
         // Document start marker is followed by whitespace.
         let input_stream = String::from("---\tfirst\n---\nsecond\nthird");
         let expected = ("first", "second\nthird");
-        let result = Content::split(&input_stream);
+        let result = ContentString::split(&input_stream);
         assert_eq!(result, expected);
 
         // Document start marker is followed by whitespace.
         let input_stream = String::from("--- first\n---\nsecond\nthird");
         let expected = ("first", "second\nthird");
-        let result = Content::split(&input_stream);
+        let result = ContentString::split(&input_stream);
         assert_eq!(result, expected);
 
         // Header is trimmed.
         let input_stream = String::from("---\n\nfirst\n\n---\nsecond\nthird");
         let expected = ("first", "second\nthird");
-        let result = Content::split(&input_stream);
+        let result = ContentString::split(&input_stream);
         assert_eq!(result, expected);
 
         // Body is kept as it is (not trimmed).
         let input_stream = String::from("---\nfirst\n---\n\nsecond\nthird\n");
         let expected = ("first", "\nsecond\nthird\n");
-        let result = Content::split(&input_stream);
+        let result = ContentString::split(&input_stream);
         assert_eq!(result, expected);
 
         // Header end marker line is trimmed right.
         let input_stream = String::from("---\nfirst\n--- \t \n\nsecond\nthird\n");
         let expected = ("first", "\nsecond\nthird\n");
-        let result = Content::split(&input_stream);
+        let result = ContentString::split(&input_stream);
         assert_eq!(result, expected);
 
         let input_stream = String::from("\nsecond\nthird");
         let expected = ("", "\nsecond\nthird");
-        let result = Content::split(&input_stream);
+        let result = ContentString::split(&input_stream);
         assert_eq!(result, expected);
 
         let input_stream = String::from("");
         let expected = ("", "");
-        let result = Content::split(&input_stream);
+        let result = ContentString::split(&input_stream);
         assert_eq!(result, expected);
 
         let input_stream = String::from("\u{feff}\nsecond\nthird");
         let expected = ("", "\nsecond\nthird");
-        let result = Content::split(&input_stream);
+        let result = ContentString::split(&input_stream);
         assert_eq!(result, expected);
 
         let input_stream = String::from("\u{feff}");
         let expected = ("", "");
-        let result = Content::split(&input_stream);
+        let result = ContentString::split(&input_stream);
         assert_eq!(result, expected);
 
         let input_stream = String::from("[📽 2 videos]");
         let expected = ("", "[📽 2 videos]");
-        let result = Content::split(&input_stream);
+        let result = ContentString::split(&input_stream);
         assert_eq!(result, expected);
 
         let input_stream = "my prelude\n\n---\nmy header\n--- \nmy body\n";
         let expected = ("my header", "my body\n");
-        let result = Content::split(input_stream);
+        let result = ContentString::split(input_stream);
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_display_for_content() {
         let expected = "\u{feff}---\nfirst\n---\n\nsecond\nthird\n".to_string();
-        let input = Content::from(expected.clone());
+        let input = ContentString::from(expected.clone());
         assert_eq!(input.to_string(), expected);
 
         let expected = "\nsecond\nthird\n".to_string();
-        let input = Content::from(expected.clone());
+        let input = ContentString::from(expected.clone());
         assert_eq!(input.to_string(), expected);
 
         let expected = "".to_string();
-        let input = Content::from(expected.clone());
+        let input = ContentString::from(expected.clone());
         assert_eq!(input.to_string(), expected);
 
         let expected = "\u{feff}---\nfirst\n---\n\nsecond\nthird\n".to_string();
         let input =
-            Content::from("\u{feff}ignored\n\n---\nfirst\n---\n\nsecond\nthird\n".to_string());
+            ContentString::from("\u{feff}ignored\n\n---\nfirst\n---\n\nsecond\nthird\n".to_string());
         assert_eq!(input.to_string(), expected);
     }
 }

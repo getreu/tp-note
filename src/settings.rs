@@ -14,7 +14,7 @@ use std::io;
 use std::io::Read;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use tpnote_lib::content::Content;
+use tpnote_lib::content::ContentString;
 
 #[derive(Debug, Eq, PartialEq, StructOpt)]
 #[structopt(
@@ -143,7 +143,7 @@ lazy_static! {
 
 lazy_static! {
     /// Reads the input stream stdin if there is any.
-    pub static ref STDIN: Content = {
+    pub static ref STDIN: ContentString = {
         let mut buffer = String::new();
 
         // Read stdin().
@@ -156,13 +156,13 @@ lazy_static! {
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
 
-        Content::from_input_with_cr(buffer)
+        ContentString::from_input_with_cr(buffer)
     };
 }
 
 lazy_static! {
     /// Reads the clipboard, if there is any and empties it.
-    pub static ref CLIPBOARD: Content = {
+    pub static ref CLIPBOARD: ContentString = {
         let mut buffer = String::new();
 
         // Concatenate clipboard content.
@@ -178,6 +178,6 @@ lazy_static! {
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
 
-        Content::from_input_with_cr(buffer)
+        ContentString::from_input_with_cr(buffer)
     };
 }

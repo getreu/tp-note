@@ -6,7 +6,7 @@ use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::config::TMPL_VAR_FM_SORT_TAG;
-use crate::content::Content;
+use crate::content::ContentString;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::filename::MarkupLanguage;
@@ -58,18 +58,18 @@ impl FrontMatter {
     }
 }
 
-impl TryFrom<&Content> for FrontMatter {
+impl TryFrom<&ContentString> for FrontMatter {
     type Error = NoteError;
     /// Helper function deserialising the front-matter of the note file.
     ///
     /// ```rust
-    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::front_matter::FrontMatter;
     /// use serde_json::json;
 
     /// // Create existing note.
     /// let raw = "\u{feff}---\ntitle: \"My day\"\nsubtitle: \"Note\"\n---\nBody";
-    /// let content = Content::from(raw.to_string());
+    /// let content = ContentString::from(raw.to_string());
     /// assert!(!content.is_empty());
     /// assert!(!content.borrow_dependent().header.is_empty());
     ///
@@ -77,7 +77,7 @@ impl TryFrom<&Content> for FrontMatter {
     /// assert_eq!(front_matter.get("title"), Some(&json!("My day")));
     /// assert_eq!(front_matter.get("subtitle"), Some(&json!("Note")));
     /// ```
-    fn try_from(content: &Content) -> Result<FrontMatter, NoteError> {
+    fn try_from(content: &ContentString) -> Result<FrontMatter, NoteError> {
         let header = content.borrow_dependent().header;
         Self::try_from(header)
     }

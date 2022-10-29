@@ -25,7 +25,7 @@ use tpnote_lib::config::TMPL_VAR_FM_FILENAME_SYNC;
 use tpnote_lib::config::TMPL_VAR_FM_NO_FILENAME_SYNC;
 use tpnote_lib::config::TMPL_VAR_STDIN;
 use tpnote_lib::config::TMPL_VAR_STDIN_HEADER;
-use tpnote_lib::content::Content;
+use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
 use tpnote_lib::error::NoteError;
 use tpnote_lib::note::Note;
@@ -36,7 +36,7 @@ use tpnote_lib::template::TemplateKind;
 /// be in sync. If it is different, rename the note on disk and return
 /// the new filename in `note.rendered_filename`.
 /// If no filename was rendered, `note.rendered_filename == PathBuf::new()`
-fn synchronize_filename(context: Context, content: Option<Content>) -> Result<Note, WorkflowError> {
+fn synchronize_filename(context: Context, content: Option<ContentString>) -> Result<Note, WorkflowError> {
     // parse file again to check for synchronicity with filename
     let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename)?;
 

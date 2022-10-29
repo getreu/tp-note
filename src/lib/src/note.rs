@@ -15,7 +15,7 @@ use crate::config::TMPL_VAR_NOTE_FM_TEXT;
 use crate::config::TMPL_VAR_NOTE_JS;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_VAR_PATH;
-use crate::content::Content;
+use crate::content::ContentString;
 use crate::context::Context;
 use crate::error::NoteError;
 use crate::filename::MarkupLanguage;
@@ -54,8 +54,8 @@ pub struct Note {
     pub context: Context,
     /// The full text content of the note, including
     /// its front matter.
-    pub content: Content,
-    /// 1. The `Content`'s header is deserialized into `FrontMatter`.
+    pub content: ContentString,
+    /// 1. The `ContentString`'s header is deserialized into `FrontMatter`.
     /// 2. `FrontMatter` is stored in `Context` with some environment data.
     /// 3. `Context` data is filled in some filename template.
     /// 4. The result is stored in `rendered_filename`. This field equals to
@@ -67,8 +67,8 @@ use std::fs;
 impl Note {
     /// Constructor creating a memory representation of the existing note
     /// on disk.
-    /// If `Some<Content>` is supplied, the content is not read from the file
-    /// system again and `<Content>` is stored directly in `Self`.
+    /// If `Some<ContentString>` is supplied, the content is not read from the file
+    /// system again and `<ContentString>` is stored directly in `Self`.
     /// `template_kind` should be one of:
     /// `TemplateKind::SyncFilename`,
     /// `TemplateKind::None` or
@@ -195,7 +195,7 @@ impl Note {
 
     pub fn from_text_file(
         mut context: Context,
-        content: Option<Content>,
+        content: Option<ContentString>,
         template_kind: TemplateKind,
     ) -> Result<Self, NoteError> {
         // If no content was provided, we read it ourself.
@@ -206,7 +206,7 @@ impl Note {
                     path: context.path.to_path_buf(),
                     source: e,
                 })?;
-                Content::from_input_with_cr(s)
+                ContentString::from_input_with_cr(s)
             }
         };
 
@@ -338,7 +338,7 @@ impl Note {
     /// ```rust
     /// use tpnote_lib::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
     /// use tpnote_lib::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
-    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::context::Context;
     /// use tpnote_lib::note::Note;
     /// use tpnote_lib::template::TemplateKind;
@@ -352,11 +352,11 @@ impl Note {
     /// // Store the path in `context`.
     /// let mut context = Context::from(&notedir);
     /// context.insert_environment().unwrap();
-    /// let clipboard = Content::from_input_with_cr("my clipboard\n".to_string());
+    /// let clipboard = ContentString::from_input_with_cr("my clipboard\n".to_string());
     /// context
     ///     .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
     ///     .unwrap();
-    /// let stdin = Content::from_input_with_cr("my stdin\n".to_string());
+    /// let stdin = ContentString::from_input_with_cr("my stdin\n".to_string());
     /// context
     ///     .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
     ///     .unwrap();
@@ -390,7 +390,7 @@ impl Note {
     /// ```rust
     /// use tpnote_lib::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
     /// use tpnote_lib::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
-    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::context::Context;
     /// use tpnote_lib::note::Note;
     /// use tpnote_lib::template::TemplateKind;
@@ -407,11 +407,11 @@ impl Note {
     /// // Store the path in `context`.
     /// let mut context = Context::from(&non_notefile);
     /// context.insert_environment().unwrap();
-    /// let clipboard = Content::from_input_with_cr("my clipboard\n".to_string());
+    /// let clipboard = ContentString::from_input_with_cr("my clipboard\n".to_string());
     /// context
     ///     .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
     ///     .unwrap();
-    /// let stdin = Content::from_input_with_cr("my stdin\n".to_string());
+    /// let stdin = ContentString::from_input_with_cr("my stdin\n".to_string());
     /// context
     ///     .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
     ///     .unwrap();
@@ -452,7 +452,7 @@ impl Note {
         );
 
         // render template
-        let content = Content::from({
+        let content = ContentString::from({
             let mut tera = Tera::default();
             tera.extend(&TERA)?;
 
