@@ -3,6 +3,7 @@
 use crate::error::FileError;
 use self_cell::self_cell;
 use std::fmt;
+use std::fmt::Debug;
 use std::fs::create_dir_all;
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -14,6 +15,49 @@ use substring::Substring;
 /// before the header starts. In other words: the header
 /// must start within the first `BEFORE_HEADER_MAX_IGNORED_CHARS`.
 const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
+
+/// Provides cheap access to the header with `header()`, the body
+/// with `body()`, and the whole raw text with `as_str()`.
+///
+/// ```rust
+/// use tpnote_lib::content::Content;
+/// use tpnote_lib::content::ContentString;
+/// let input = "---\ntitle: \"My note\"\n---\nMy body";
+/// let c = ContentString::from(String::from(input));
+///
+/// assert_eq!(c.header(), r#"title: "My note""#);
+/// assert_eq!(c.body(), r#"My body"#);
+/// assert_eq!(c.as_str(), input);
+///
+/// // A test without front matter leads to an empty header:
+/// let c = ContentString::from(String::from("No header"));
+///
+/// assert_eq!(c.header(), "");
+/// assert_eq!(c.body(), "No header");
+/// assert_eq!(c.as_str(), "No header");
+/// ```
+pub trait Content: AsRef<str> + Debug + Eq + PartialEq {
+    /// Cheap access to the header between `---` and `---`.
+    fn header(&self) -> &str;
+    /// Cheap access to the body after the second `---`.
+    fn body(&self) -> &str;
+    /// Accesses the whole content with all `---`.
+    /// Contract: The content does not contain any `\r\n`.
+    /// Make sure to replace all `\r\n` with `\n`.
+    fn as_str(&self) -> &str {
+        self.as_ref()
+    }
+}
+
+impl Content for ContentString {
+    fn header(&self) -> &str {
+        self.borrow_dependent().header
+    }
+
+    fn body(&self) -> &str {
+        self.borrow_dependent().body
+    }
+}
 
 #[derive(Debug, Eq, PartialEq)]
 /// Pointers belonging to the self referential struct `Content`.
@@ -285,6 +329,14 @@ impl<'a> ContentString {
     }
 }
 
+/// Returns the whole raw content with header and body.
+/// Possible `\r\n` in the input are replaced by `\n`.
+impl AsRef<str> for ContentString {
+    fn as_ref(&self) -> &str {
+        self.borrow_owner()
+    }
+}
+
 /// Concatenates the header and the body and prints the content.
 /// This function is expensive as it involves copying the
 /// whole content.
@@ -302,7 +354,7 @@ impl<'a> fmt::Display for ContentRef<'a> {
 /// Delegates the printing to `Display for ContentRef`.
 impl fmt::Display for ContentString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.borrow_dependent().fmt(f)
+        std::fmt::Display::fmt(&self.borrow_dependent(), f)
     }
 }
 
@@ -464,8 +516,9 @@ mod tests {
         assert_eq!(input.to_string(), expected);
 
         let expected = "\u{feff}---\nfirst\n---\n\nsecond\nthird\n".to_string();
-        let input =
-            ContentString::from("\u{feff}ignored\n\n---\nfirst\n---\n\nsecond\nthird\n".to_string());
+        let input = ContentString::from(
+            "\u{feff}ignored\n\n---\nfirst\n---\n\nsecond\nthird\n".to_string(),
+        );
         assert_eq!(input.to_string(), expected);
     }
 }
