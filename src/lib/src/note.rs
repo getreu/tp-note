@@ -245,7 +245,7 @@ impl Note {
 
         // Check if the compulsory field is present.
         // Deserialize the note's header read from disk.
-        let fm = FrontMatter::try_from(&content)?;
+        let fm = FrontMatter::try_from_content(&content)?;
         context.insert_front_matter(&fm);
 
         match template_kind {
@@ -472,7 +472,7 @@ impl Note {
         );
 
         // deserialize the rendered template
-        let fm = FrontMatter::try_from(&content)?;
+        let fm = FrontMatter::try_from_content(&content)?;
 
         context.insert_front_matter(&fm);
 

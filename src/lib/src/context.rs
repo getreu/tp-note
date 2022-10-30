@@ -153,7 +153,7 @@ impl Context {
 
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
-        let input_fm = FrontMatter::try_from(input);
+        let input_fm = FrontMatter::try_from_content(input);
         match input_fm {
             Ok(ref fm) => {
                 if fm.assert_not_empty().is_ok() {
