@@ -131,6 +131,108 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     fn as_str(&self) -> &str {
         self.as_ref()
     }
+
+    /// True if the header and body is empty.
+    fn is_empty(&self) -> bool {
+        self.header().is_empty() && self.body().is_empty()
+    }
+
+    /// Helper function that splits the content into header and body.
+    /// The header, if present, is trimmed (`trim()`), the body
+    /// is kept as it is.
+    /// Any BOM (byte order mark) at the beginning is ignored.
+    ///
+    /// 1. The document must start with `"---"`
+    /// 2. followed by header bytes,
+    /// 3. optionally followed by `"\n",
+    /// 4. followed by `"---"` or `"..."`,
+    /// 5. optionally followed by some `"\t"` and/or some `" "`,
+    /// 5. optionally followed by `"\n"`.
+    /// The remaining bytes are "content".
+    ///
+    /// Alternatively, a YAML metadata block may occur anywhere in the document, but if it is not
+    /// at the beginning, it must be preceded by a blank line:
+    /// 1. skip all text (BEFORE_HEADER_MAX_IGNORED_CHARS) until you find `"\n\n---"`
+    /// 2. followed by header bytes,
+    /// 3. same as above ...
+    fn split(content: &str) -> (&str, &str) {
+        // Remove BOM
+        let content = content.trim_start_matches('\u{feff}');
+
+        if content.is_empty() {
+            return ("", "");
+        };
+
+        const HEADER_START_TAG: &str = "---";
+        let fm_start = if content.starts_with(HEADER_START_TAG) {
+            // Found at first byte.
+            HEADER_START_TAG.len()
+        } else {
+            const HEADER_START_TAG: &str = "\n\n---";
+            if let Some(start) = content
+                .substring(0, BEFORE_HEADER_MAX_IGNORED_CHARS)
+                .find(HEADER_START_TAG)
+                .map(|x| x + HEADER_START_TAG.len())
+            {
+                // Found just before `start`!
+                start
+            } else {
+                // Not found.
+                return ("", content);
+            }
+        };
+
+        // The first character after the document start marker
+        // must be a whitespace.
+        if !content[fm_start..]
+            .chars()
+            .next()
+            // If none, make test fail.
+            .unwrap_or('x')
+            .is_whitespace()
+        {
+            return ("", content);
+        };
+
+        // No need to search for an additional `\n` here, as we trim the
+        // header anyway.
+
+        const HEADER_END_TAG1: &str = "\n---";
+        // Contract: next pattern must have the same length!
+        const HEADER_END_TAG2: &str = "\n...";
+        debug_assert_eq!(HEADER_END_TAG1.len(), HEADER_END_TAG2.len());
+        const TAG_LEN: usize = HEADER_END_TAG1.len();
+
+        let fm_end = content[fm_start..]
+            .find(HEADER_END_TAG1)
+            .or_else(|| content[fm_start..].find(HEADER_END_TAG2))
+            .map(|x| x + fm_start);
+
+        let fm_end = if let Some(n) = fm_end {
+            n
+        } else {
+            return ("", content);
+        };
+
+        // We advance 4 because `"\n---"` has 4 bytes.
+        let mut body_start = fm_end + TAG_LEN;
+
+        // Skip spaces and tabs followed by one optional newline.
+        while let Some(c) = content[body_start..].chars().next() {
+            if c == ' ' || c == '\t' {
+                body_start += 1;
+            } else {
+                // Skip exactly one newline, if there is at least one.
+                if c == '\n' {
+                    body_start += 1;
+                }
+                // Exit loop.
+                break;
+            };
+        }
+
+        (content[fm_start..fm_end].trim(), &content[body_start..])
+    }
 }
 
 impl Content for ContentString {
@@ -273,113 +375,6 @@ self_cell!(
 
     impl {Debug, Eq, PartialEq}
 );
-
-/// The content of a note is stored as UTF-8 string with
-/// one `\n` character as newline. If present, a Byte Order Mark
-/// BOM is removed while reading with `new()`.
-impl<'a> ContentString {
-    /// True if the header and body is empty.
-    pub fn is_empty(&self) -> bool {
-        self.borrow_dependent().header.is_empty() && self.borrow_dependent().body.is_empty()
-    }
-
-    /// Helper function that splits the content into header and body.
-    /// The header, if present, is trimmed (`trim()`), the body
-    /// is kept as it is.
-    /// Any BOM (byte order mark) at the beginning is ignored.
-    ///
-    /// 1. The document must start with `"---"`
-    /// 2. followed by header bytes,
-    /// 3. optionally followed by `"\n",
-    /// 4. followed by `"---"` or `"..."`,
-    /// 5. optionally followed by some `"\t"` and/or some `" "`,
-    /// 5. optionally followed by `"\n"`.
-    /// The remaining bytes are "content".
-    ///
-    /// Alternatively, a YAML metadata block may occur anywhere in the document, but if it is not
-    /// at the beginning, it must be preceded by a blank line:
-    /// 1. skip all text (BEFORE_HEADER_MAX_IGNORED_CHARS) until you find `"\n\n---"`
-    /// 2. followed by header bytes,
-    /// 3. same as above ...
-    fn split(content: &'a str) -> (&'a str, &'a str) {
-        // Remove BOM
-        let content = content.trim_start_matches('\u{feff}');
-
-        if content.is_empty() {
-            return ("", "");
-        };
-
-        const HEADER_START_TAG: &str = "---";
-        let fm_start = if content.starts_with(HEADER_START_TAG) {
-            // Found at first byte.
-            HEADER_START_TAG.len()
-        } else {
-            const HEADER_START_TAG: &str = "\n\n---";
-            if let Some(start) = content
-                .substring(0, BEFORE_HEADER_MAX_IGNORED_CHARS)
-                .find(HEADER_START_TAG)
-                .map(|x| x + HEADER_START_TAG.len())
-            {
-                // Found just before `start`!
-                start
-            } else {
-                // Not found.
-                return ("", content);
-            }
-        };
-
-        // The first character after the document start marker
-        // must be a whitespace.
-        if !content[fm_start..]
-            .chars()
-            .next()
-            // If none, make test fail.
-            .unwrap_or('x')
-            .is_whitespace()
-        {
-            return ("", content);
-        };
-
-        // No need to search for an additional `\n` here, as we trim the
-        // header anyway.
-
-        const HEADER_END_TAG1: &str = "\n---";
-        // Contract: next pattern must have the same length!
-        const HEADER_END_TAG2: &str = "\n...";
-        debug_assert_eq!(HEADER_END_TAG1.len(), HEADER_END_TAG2.len());
-        const TAG_LEN: usize = HEADER_END_TAG1.len();
-
-        let fm_end = content[fm_start..]
-            .find(HEADER_END_TAG1)
-            .or_else(|| content[fm_start..].find(HEADER_END_TAG2))
-            .map(|x| x + fm_start);
-
-        let fm_end = if let Some(n) = fm_end {
-            n
-        } else {
-            return ("", content);
-        };
-
-        // We advance 4 because `"\n---"` has 4 bytes.
-        let mut body_start = fm_end + TAG_LEN;
-
-        // Skip spaces and tabs followed by one optional newline.
-        while let Some(c) = content[body_start..].chars().next() {
-            if c == ' ' || c == '\t' {
-                body_start += 1;
-            } else {
-                // Skip exactly one newline, if there is at least one.
-                if c == '\n' {
-                    body_start += 1;
-                }
-                // Exit loop.
-                break;
-            };
-        }
-
-        (content[fm_start..fm_end].trim(), &content[body_start..])
-    }
-}
 
 /// Returns the whole raw content with header and body.
 /// Possible `\r\n` in the input are replaced by `\n`.

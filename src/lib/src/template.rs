@@ -27,7 +27,6 @@ pub enum TemplateKind {
     None,
 }
 
-/// TODO
 impl TemplateKind {
     /// Returns the content template string as it is defined in the configuration file.
     pub fn get_content_template(&self) -> String {
