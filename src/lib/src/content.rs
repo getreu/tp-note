@@ -127,7 +127,8 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
 
     /// Accesses the whole content with all `---`.
     /// Contract: The content does not contain any `\r\n`.
-    /// Make sure to replace all `\r\n` with `\n`.
+    /// If your content contains `\r\n` use the
+    /// `from_string_with_cr()` constructor.
     fn as_str(&self) -> &str {
         self.as_ref()
     }
@@ -142,13 +143,14 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     /// is kept as it is.
     /// Any BOM (byte order mark) at the beginning is ignored.
     ///
-    /// 1. The document must start with `"---"`
-    /// 2. followed by header bytes,
-    /// 3. optionally followed by `"\n",
-    /// 4. followed by `"---"` or `"..."`,
-    /// 5. optionally followed by some `"\t"` and/or some `" "`,
-    /// 5. optionally followed by `"\n"`.
-    /// The remaining bytes are "content".
+    /// 1. Ignore `\u{feff}` if present
+    /// 2. Ignore `---\n` or ignore all bytes until`\n\n---\n`,
+    /// 3. followed by header bytes,
+    /// 4. optionally followed by `\n`,
+    /// 5. followed by `\n---\n` or `\n...\n`,
+    /// 6. optionally followed by some `\t` and/or some ` `,
+    /// 7. optionally followed by `\n`.
+    /// The remaining bytes are the "body".
     ///
     /// Alternatively, a YAML metadata block may occur anywhere in the document, but if it is not
     /// at the beginning, it must be preceded by a blank line:
