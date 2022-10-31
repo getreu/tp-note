@@ -111,7 +111,7 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     fn body(&self) -> &str;
 
     /// Write `Content` to disk
-    fn write_to_disk(&self, new_file_path: &Path) -> Result<(), std::io::Error>;
+    fn save_as(&self, new_file_path: &Path) -> Result<(), std::io::Error>;
 
     /// Accesses the whole content with all `---`.
     /// Contract: The content does not contain any `\r\n`.
@@ -207,13 +207,13 @@ impl Content for ContentString {
     /// #[cfg(target_family = "windows")]
     /// let expected = "\u{feff}---\r\ntitle: \"My note\"\r\n---\r\nMy body\r\n";
     ///
-    /// c.write_to_disk(&outfile).unwrap();
+    /// c.save_as(&outfile).unwrap();
     /// let result = fs::read_to_string(&outfile).unwrap();
     ///
     /// assert_eq!(result, expected);
     /// fs::remove_file(&outfile);
     /// ```
-    fn write_to_disk(&self, new_file_path: &Path) -> Result<(), std::io::Error> {
+    fn save_as(&self, new_file_path: &Path) -> Result<(), std::io::Error> {
         // Create missing directories, if there are any.
         create_dir_all(new_file_path.parent().unwrap_or_else(|| Path::new("")))?;
 

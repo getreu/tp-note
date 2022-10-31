@@ -570,7 +570,7 @@ impl<T: Content> Note<T> {
             "Writing the note's content to file: {:?}",
             self.rendered_filename
         );
-        self.content.write_to_disk(&self.rendered_filename)?;
+        self.content.save_as(&self.rendered_filename)?;
         Ok(())
     }
 
