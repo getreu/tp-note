@@ -40,6 +40,23 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     /// Reads the file at `path` and stores the content
     /// `Content`. Possible `\r\n` are replaced by `\n`.
     /// This trait has a default implementation, the empty content.
+    ///
+    /// ```rust
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// use std::env::temp_dir;
+    ///
+    /// // Prepare test.
+    /// let raw = "---\ntitle: \"My note\"\n---\nMy body";
+    /// let notefile = temp_dir().join("20221030-hello -- world.md");
+    /// let _ = std::fs::write(&notefile, raw.as_bytes());
+    ///
+    /// // Start test.
+    /// let c = ContentString::open(&notefile).unwrap();
+    ///
+    /// assert_eq!(c.header(), r#"title: "My note""#);
+    /// assert_eq!(c.body(), "My body");
+    /// ```
     fn open(path: &Path) -> Result<Self, std::io::Error>
     where
         Self: Sized;
