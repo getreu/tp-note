@@ -86,7 +86,7 @@ impl<T: Content> Note<T> {
     /// use std::env::temp_dir;
     /// use std::fs;
     ///  
-    /// // Create existing note.
+    /// // Prepare test: create existing note.
     /// let raw = r#"
     ///
     /// ---
@@ -100,11 +100,13 @@ impl<T: Content> Note<T> {
     ///
     /// let expected = temp_dir().join("20221030-My day--Note.md");
     /// let _ = fs::remove_file(&expected);
+    ///
+    /// // Start test.
     /// let mut context = Context::from(&notefile);
     /// context.insert_environment().unwrap();
     ///
     /// // Create note object.
-    /// let content = <ContentString as Content>::from_string(raw.to_string());
+    /// let content = <ContentString as Content>::open(&notefile).unwrap();
     /// // You can plug in your own type (must impl. `Content`).
     /// let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename).unwrap();
     /// n.render_filename(TemplateKind::SyncFilename).unwrap();
@@ -132,7 +134,7 @@ impl<T: Content> Note<T> {
     /// use std::env::temp_dir;
     /// use std::fs;
     ///
-    /// // Create existing note file.
+    /// // Prepare test: create existing note file.
     /// let raw = r#"---
     /// title: "My day"
     /// subtitle: "Note"
@@ -142,11 +144,12 @@ impl<T: Content> Note<T> {
     /// let notefile = temp_dir().join("20221030-My day--Note.md");
     /// fs::write(&notefile, raw.as_bytes()).unwrap();
     ///
+    /// // Start test
     /// // Only minimal context is needed, because no templates are applied later.
     /// let mut context = Context::from(&notefile);
     /// context.insert_environment().unwrap();
     /// // Create note object.
-    /// let content = <ContentString as Content>::from_string(raw.to_string());
+    /// let content = <ContentString as Content>::open(&notefile).unwrap();
     /// // You can plug in your own type (must impl. `Content`).
     /// let n = Note::from_text_file(context, content, TemplateKind::None).unwrap();
     ///
@@ -169,17 +172,18 @@ impl<T: Content> Note<T> {
     /// use std::env::temp_dir;
     /// use std::fs;
     ///
-    /// // Create existing note file without header.
+    /// // Prepare test: create existing note file without header.
     /// let raw = "Body text without header";
     /// let notefile = temp_dir().join("20221030-hello -- world.md");
     /// let _ = fs::write(&notefile, raw.as_bytes());
     /// let expected = temp_dir().join("20221030-hello--world.md");
     /// let _ = fs::remove_file(&expected);
     ///
-    /// // Create note object.
+    /// // Start test.
     /// let mut context = Context::from(&notefile);
     /// context.insert_environment().unwrap();
-    /// let content = <ContentString as Content>::from_string(raw.to_string());
+    /// // Create note object.
+    /// let content = <ContentString as Content>::open(&notefile).unwrap();
     /// // You can plug in your own type (must impl. `Content`).
     /// let mut n = Note::from_text_file(
     ///         context.clone(), content, TemplateKind::FromTextFile).unwrap();

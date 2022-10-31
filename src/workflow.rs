@@ -11,7 +11,6 @@ use crate::template::get_template_content;
 #[cfg(feature = "viewer")]
 use crate::viewer::launch_viewer_thread;
 use std::env;
-use std::fs;
 #[cfg(not(target_family = "windows"))]
 use std::matches;
 use std::path::PathBuf;
@@ -235,9 +234,8 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
         let mut context = Context::from(&path);
         context.insert_environment()?;
 
-        let content = <ContentString as Content>::from_input_with_cr(
-            fs::read_to_string(&path).unwrap_or_default(),
-        );
+        let content = <ContentString as Content>::open(&path).unwrap_or_default();
+
         match synchronize_filename(context, content) {
             // `path` has changed!
             Ok(n) => path = n.rendered_filename,

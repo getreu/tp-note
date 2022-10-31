@@ -587,9 +587,7 @@ impl ServerThread {
         // Render.
         let context = self.context.clone();
         // First decompose header and body, then deserialize header.
-        let content = ContentString::from_input_with_cr(
-            fs::read_to_string(&self.context.path).unwrap_or_default(),
-        );
+        let content = ContentString::open(&self.context.path).unwrap_or_default();
         match Note::from_text_file(context, content, tpnote_lib::template::TemplateKind::None)
             // Now, try to render to html.
             .and_then(|note| {

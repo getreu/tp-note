@@ -4,6 +4,7 @@ use self_cell::self_cell;
 use std::fmt;
 use std::fmt::Debug;
 use std::fs::create_dir_all;
+use std::fs::read_to_string;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
@@ -35,7 +36,14 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 /// assert_eq!(c.body(), "No header");
 /// assert_eq!(c.as_str(), "No header");
 /// ```
-pub trait Content: AsRef<str> + Debug + Eq + PartialEq {
+pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
+    /// Reads the file at `path` and stores the content
+    /// `Content`. Possible `\r\n` are replaced by `\n`.
+    /// This trait has a default implementation, the empty content.
+    fn open(path: &Path) -> Result<Self, std::io::Error>
+    where
+        Self: Sized;
+
     /// Constructor that parses a _Tp-Note_ document.
     /// A valid document is UTF-8 encoded and starts with an optional
     /// BOM (byte order mark) followed by `---`. When the start marker
@@ -114,6 +122,12 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq {
 }
 
 impl Content for ContentString {
+    fn open(path: &Path) -> Result<Self, std::io::Error>
+    where
+        Self: Sized,
+    {
+        Ok(ContentString::from_input_with_cr(read_to_string(path)?))
+    }
     /// Constructor that parses a _Tp-Note_ document.
     /// A valid document is UTF-8 encoded and starts with an optional
     /// BOM (byte order mark) followed by `---`. When the start marker
@@ -234,6 +248,12 @@ impl Content for ContentString {
         }
 
         Ok(())
+    }
+}
+
+impl Default for ContentString {
+    fn default() -> Self {
+        Self::from_string(String::new())
     }
 }
 
