@@ -68,21 +68,6 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     /// ```
     fn from_string(input: String) -> Self;
 
-    /// Converts all `\r\n` to `\n` if there are any.
-    /// If not, the buffer remains untouched and no memory allocation
-    /// occurs.
-    #[inline]
-    fn remove_cr(input: String) -> String {
-        // Avoid allocating when there is nothing to do.
-        if input.find('\r').is_none() {
-            // Forward without allocating.
-            input
-        } else {
-            // We allocate here and do a lot of copying.
-            input.replace("\r\n", "\n")
-        }
-    }
-
     /// Constructor that reads a structured document with a YAML header
     /// and body. All `\r\n` are converted to `\n` if there are any.
     /// If not, no memory allocation occurs and the buffer remains untouched.
@@ -102,7 +87,17 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     /// assert_eq!(c.borrow_dependent().header, "");
     /// assert_eq!(c.borrow_dependent().body, r#"No header"#);
     /// ```
-    fn from_input_with_cr(input: String) -> Self;
+    fn from_input_with_cr(input: String) -> Self {
+        // Avoid allocating when there is nothing to do.
+        let input = if input.find('\r').is_none() {
+            // Forward without allocating.
+            input
+        } else {
+            // We allocate here and do a lot of copying.
+            input.replace("\r\n", "\n")
+        };
+        Self::from_string(input)
+    }
 
     /// Cheap access to the header between `---` and `---`.
     fn header(&self) -> &str;
@@ -155,30 +150,6 @@ impl Content for ContentString {
             let (header, body) = ContentString::split(owner);
             ContentRef { header, body }
         })
-    }
-
-    /// Constructor that reads a structured document with a YAML header
-    /// and body. All `\r\n` are converted to `\n` if there are any.
-    /// If not, no memory allocation occurs and the buffer remains untouched.
-    ///
-    /// ```rust
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// let c = ContentString::from_input_with_cr(String::from(
-    ///     "---\r\ntitle: \"My note\"\r\n---\r\nMy\nbody\r\n"));
-    ///
-    /// assert_eq!(c.header(), r#"title: "My note""#);
-    /// assert_eq!(c.body(), "My\nbody\n");
-    ///
-    /// // A test without front matter leads to an empty header:
-    /// let c = ContentString::from_string(String::from("No header"));
-    ///
-    /// assert_eq!(c.header(), "");
-    /// assert_eq!(c.body(), r#"No header"#);
-    /// ```
-    fn from_input_with_cr(input: String) -> Self {
-        let input = Self::remove_cr(input);
-        <ContentString as Content>::from_string(input)
     }
 
     fn header(&self) -> &str {
