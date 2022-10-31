@@ -92,7 +92,7 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     /// ```rust
     /// use tpnote_lib::content::Content;
     /// use tpnote_lib::content::ContentString;
-    /// let c = ContentString::from_input_with_cr(String::from(
+    /// let c = ContentString::from_string_with_cr(String::from(
     ///     "---\r\ntitle: \"My note\"\r\n---\r\nMy\nbody\r\n"));
     ///
     /// assert_eq!(c.header(), r#"title: "My note""#);
@@ -104,7 +104,7 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     /// assert_eq!(c.borrow_dependent().header, "");
     /// assert_eq!(c.borrow_dependent().body, r#"No header"#);
     /// ```
-    fn from_input_with_cr(input: String) -> Self {
+    fn from_string_with_cr(input: String) -> Self {
         // Avoid allocating when there is nothing to do.
         let input = if input.find('\r').is_none() {
             // Forward without allocating.
@@ -138,7 +138,7 @@ impl Content for ContentString {
     where
         Self: Sized,
     {
-        Ok(ContentString::from_input_with_cr(read_to_string(path)?))
+        Ok(ContentString::from_string_with_cr(read_to_string(path)?))
     }
     /// Constructor that parses a _Tp-Note_ document.
     /// A valid document is UTF-8 encoded and starts with an optional
@@ -415,17 +415,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_from_input_with_cr() {
+    fn test_from_string_with_cr() {
         // Test windows string.
-        let content = ContentString::from_input_with_cr("first\r\nsecond\r\nthird".to_string());
+        let content = ContentString::from_string_with_cr("first\r\nsecond\r\nthird".to_string());
         assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test Unix string.
-        let content = ContentString::from_input_with_cr("first\nsecond\nthird".to_string());
+        let content = ContentString::from_string_with_cr("first\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test BOM removal.
-        let content = ContentString::from_input_with_cr("\u{feff}first\nsecond\nthird".to_string());
+        let content =
+            ContentString::from_string_with_cr("\u{feff}first\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
     }
 

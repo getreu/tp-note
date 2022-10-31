@@ -357,11 +357,11 @@ impl<T: Content> Note<T> {
     /// // Store the path in `context`.
     /// let mut context = Context::from(&notedir);
     /// context.insert_environment().unwrap();
-    /// let clipboard = ContentString::from_input_with_cr("my clipboard\n".to_string());
+    /// let clipboard = ContentString::from_string_with_cr("my clipboard\n".to_string());
     /// context
     ///     .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
     ///     .unwrap();
-    /// let stdin = ContentString::from_input_with_cr("my stdin\n".to_string());
+    /// let stdin = ContentString::from_string_with_cr("my stdin\n".to_string());
     /// context
     ///     .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
     ///     .unwrap();
@@ -415,11 +415,11 @@ impl<T: Content> Note<T> {
     /// // Store the path in `context`.
     /// let mut context = Context::from(&non_notefile);
     /// context.insert_environment().unwrap();
-    /// let clipboard = ContentString::from_input_with_cr("my clipboard\n".to_string());
+    /// let clipboard = ContentString::from_string_with_cr("my clipboard\n".to_string());
     /// context
     ///     .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
     ///     .unwrap();
-    /// let stdin = ContentString::from_input_with_cr("my stdin\n".to_string());
+    /// let stdin = ContentString::from_string_with_cr("my stdin\n".to_string());
     /// context
     ///     .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
     ///     .unwrap();
