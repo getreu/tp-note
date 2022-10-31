@@ -60,13 +60,14 @@ impl FrontMatter {
     /// Helper function deserialising the front-matter of the note file.
     ///
     /// ```rust
+    /// use tpnote_lib::content::Content;
     /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::front_matter::FrontMatter;
     /// use serde_json::json;
 
     /// // Create existing note.
     /// let raw = "\u{feff}---\ntitle: \"My day\"\nsubtitle: \"Note\"\n---\nBody";
-    /// let content = ContentString::from(raw.to_string());
+    /// let content = ContentString::from_string(raw.to_string());
     /// assert!(!content.is_empty());
     /// assert!(!content.borrow_dependent().header.is_empty());
     ///

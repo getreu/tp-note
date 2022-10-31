@@ -14,6 +14,7 @@ use std::io;
 use std::io::Read;
 use std::path::PathBuf;
 use structopt::StructOpt;
+use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 
 #[derive(Debug, Eq, PartialEq, StructOpt)]
@@ -156,7 +157,7 @@ lazy_static! {
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
 
-        ContentString::from_input_with_cr(buffer)
+        <ContentString as Content>::from_input_with_cr(buffer)
     };
 }
 
@@ -178,6 +179,6 @@ lazy_static! {
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
 
-        ContentString::from_input_with_cr(buffer)
+        <ContentString as Content>::from_input_with_cr(buffer)
     };
 }

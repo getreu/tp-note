@@ -7,7 +7,7 @@ use crate::config::TMPL_VAR_FM_ALL;
 use crate::config::TMPL_VAR_LANG;
 use crate::config::TMPL_VAR_PATH;
 use crate::config::TMPL_VAR_USERNAME;
-use crate::content::ContentString;
+use crate::content::Content;
 use crate::error::NoteError;
 use crate::front_matter::FrontMatter;
 use std::env;
@@ -123,16 +123,17 @@ impl Context {
     /// ```rust
     /// use std::path::Path;
     /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::content::Content;
     /// use tpnote_lib::content::ContentString;
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     ///
     /// context.insert_content("clipboard", "clipboard_header",
-    ///      &ContentString::from(String::from("Data from clipboard.")));
+    ///      &ContentString::from_string(String::from("Data from clipboard.")));
     /// assert_eq!(&context.get("clipboard").unwrap().to_string(),
     ///     "\"Data from clipboard.\"");
     ///
     /// context.insert_content("stdin", "stdin_header",
-    ///      &ContentString::from(String::from("---\ntitle: \"My Stdin.\"\n---\nbody")));
+    ///      &ContentString::from_string("---\ntitle: \"My Stdin.\"\n---\nbody".to_string()));
     /// assert_eq!(&context.get("stdin").unwrap().to_string(),
     ///     r#""body""#);
     /// assert_eq!(&context.get("stdin_header").unwrap().to_string(),
@@ -145,11 +146,11 @@ impl Context {
         &mut self,
         tmpl_var: &str,
         tmpl_var_header: &str,
-        input: &ContentString,
+        input: &impl Content,
     ) -> Result<(), NoteError> {
         // Register input .
-        (*self).insert(tmpl_var_header, input.borrow_dependent().header);
-        (*self).insert(tmpl_var, input.borrow_dependent().body);
+        (*self).insert(tmpl_var_header, input.header());
+        (*self).insert(tmpl_var, input.body());
 
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
@@ -165,7 +166,7 @@ impl Context {
                 }
             }
             Err(ref e) => {
-                if !input.borrow_dependent().header.is_empty() {
+                if !input.header().is_empty() {
                     return Err(NoteError::InvalidInputYaml {
                         tmpl_var: tmpl_var.to_string(),
                         source_str: e.to_string(),

@@ -7,9 +7,11 @@ use crate::settings::CLIPBOARD;
 use crate::settings::LAUNCH_EDITOR;
 use crate::settings::LAUNCH_VIEWER;
 use crate::settings::STDIN;
+use crate::template::get_template_content;
 #[cfg(feature = "viewer")]
 use crate::viewer::launch_viewer_thread;
 use std::env;
+use std::fs;
 #[cfg(not(target_family = "windows"))]
 use std::matches;
 use std::path::PathBuf;
@@ -25,6 +27,7 @@ use tpnote_lib::config::TMPL_VAR_FM_FILENAME_SYNC;
 use tpnote_lib::config::TMPL_VAR_FM_NO_FILENAME_SYNC;
 use tpnote_lib::config::TMPL_VAR_STDIN;
 use tpnote_lib::config::TMPL_VAR_STDIN_HEADER;
+use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
 use tpnote_lib::error::NoteError;
@@ -36,8 +39,12 @@ use tpnote_lib::template::TemplateKind;
 /// be in sync. If it is different, rename the note on disk and return
 /// the new filename in `note.rendered_filename`.
 /// If no filename was rendered, `note.rendered_filename == PathBuf::new()`
-fn synchronize_filename(context: Context, content: Option<ContentString>) -> Result<Note, WorkflowError> {
+fn synchronize_filename<T: Content>(
+    context: Context,
+    content: T,
+) -> Result<Note<T>, WorkflowError> {
     // parse file again to check for synchronicity with filename
+
     let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename)?;
 
     let no_filename_sync = match (
@@ -76,9 +83,11 @@ fn synchronize_filename(context: Context, content: Option<ContentString>) -> Res
 /// increment the `copy_counter` until a free filename is found.
 /// The return path points to the (new) note file on disk.
 /// If an existing note file was not moved, the return path equals to `context.path`.
-fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, WorkflowError> {
+fn create_new_note_or_synchronize_filename<T: Content>(
+    context: Context,
+) -> Result<PathBuf, WorkflowError> {
     // `template_type` will tell us what to do.
-    let (template_kind, content) = crate::template::get_template_content(&context.path);
+    let (template_kind, content) = get_template_content(&context.path);
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
     // Does the first positional parameter point to a directory?
@@ -98,7 +107,7 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
         }
 
         TemplateKind::FromTextFile => {
-            let mut n = Note::from_text_file(context, content, template_kind)?;
+            let mut n = Note::from_text_file(context, content.unwrap(), template_kind)?;
             // Render filename.
             n.render_filename(template_kind)?;
 
@@ -108,8 +117,8 @@ fn create_new_note_or_synchronize_filename(context: Context) -> Result<PathBuf, 
             n.save_and_delete_from(&context_path)?;
             n
         }
-        TemplateKind::SyncFilename => synchronize_filename(context, content)?,
-        TemplateKind::None => Note::from_text_file(context, content, template_kind)?,
+        TemplateKind::SyncFilename => synchronize_filename(context, content.unwrap())?,
+        TemplateKind::None => Note::from_text_file(context, content.unwrap(), template_kind)?,
         _ =>
         // Early return, we do nothing here and continue.
         {
@@ -148,14 +157,14 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
     // Collect input data for templates.
     let mut context = Context::from(&path);
     context.insert_environment()?;
-    context.insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &CLIPBOARD)?;
-    context.insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &STDIN)?;
+    context.insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &*CLIPBOARD)?;
+    context.insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &*STDIN)?;
 
     // Depending on this we might not show the viewer later or
     // log an error as WARN level instead of ERROR level.
     let launch_viewer;
 
-    match create_new_note_or_synchronize_filename(context) {
+    match create_new_note_or_synchronize_filename::<ContentString>(context) {
         // Use the new `path` from now on.
         Ok(p) => {
             path = p;
@@ -226,7 +235,10 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
         let mut context = Context::from(&path);
         context.insert_environment()?;
 
-        match synchronize_filename(context, None) {
+        let content = <ContentString as Content>::from_input_with_cr(
+            fs::read_to_string(&path).unwrap_or_default(),
+        );
+        match synchronize_filename(context, content) {
             // `path` has changed!
             Ok(n) => path = n.rendered_filename,
             Err(e) => {

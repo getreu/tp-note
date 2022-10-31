@@ -49,10 +49,6 @@ pub enum FileError {
     )]
     NoFreeFileName { directory: PathBuf },
 
-    /// Remedy: check file permission.
-    #[error("Can not write file:\n{path:?}\n{source_str}")]
-    Write { path: PathBuf, source_str: String },
-
     #[error(transparent)]
     Io(#[from] std::io::Error),
 

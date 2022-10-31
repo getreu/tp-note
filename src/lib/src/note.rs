@@ -15,7 +15,7 @@ use crate::config::TMPL_VAR_NOTE_FM_TEXT;
 use crate::config::TMPL_VAR_NOTE_JS;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_VAR_PATH;
-use crate::content::ContentString;
+use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
 use crate::filename::MarkupLanguage;
@@ -48,13 +48,13 @@ use tera::Tera;
 
 #[derive(Debug, PartialEq)]
 /// Represents a note.
-pub struct Note {
+pub struct Note<T> {
     /// Captured environment of _Tp-Note_ that
     /// is used to fill in templates.
     pub context: Context,
     /// The full text content of the note, including
     /// its front matter.
-    pub content: ContentString,
+    pub content: T,
     /// 1. The `ContentString`'s header is deserialized into `FrontMatter`.
     /// 2. `FrontMatter` is stored in `Context` with some environment data.
     /// 3. `Context` data is filled in some filename template.
@@ -64,7 +64,7 @@ pub struct Note {
 }
 
 use std::fs;
-impl Note {
+impl<T: Content> Note<T> {
     /// Constructor creating a memory representation of the existing note
     /// on disk.
     /// If `Some<ContentString>` is supplied, the content is not read from the file
@@ -78,6 +78,8 @@ impl Note {
     /// 1. Example with `TemplateKind::SyncFilename`
     ///
     /// ```rust
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::context::Context;
     /// use tpnote_lib::note::Note;
     /// use tpnote_lib::template::TemplateKind;
@@ -102,7 +104,9 @@ impl Note {
     /// context.insert_environment().unwrap();
     ///
     /// // Create note object.
-    /// let mut n = Note::from_text_file(context, None, TemplateKind::SyncFilename).unwrap();
+    /// let content = <ContentString as Content>::from_string(raw.to_string());
+    /// // You can plug in your own type (must impl. `Content`).
+    /// let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename).unwrap();
     /// n.render_filename(TemplateKind::SyncFilename).unwrap();
     /// n.set_next_unused_rendered_filename_or(&n.context.path.clone())
     ///     .unwrap();
@@ -120,6 +124,8 @@ impl Note {
     ///
     /// ```rust
     /// use tpnote_lib::config::LIB_CFG;
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::context::Context;
     /// use tpnote_lib::note::Note;
     /// use tpnote_lib::template::TemplateKind;
@@ -140,7 +146,9 @@ impl Note {
     /// let mut context = Context::from(&notefile);
     /// context.insert_environment().unwrap();
     /// // Create note object.
-    /// let n = Note::from_text_file(context, None, TemplateKind::None).unwrap();
+    /// let content = <ContentString as Content>::from_string(raw.to_string());
+    /// // You can plug in your own type (must impl. `Content`).
+    /// let n = Note::from_text_file(context, content, TemplateKind::None).unwrap();
     ///
     /// // Check the HTML rendition.
     /// let html = n
@@ -154,6 +162,8 @@ impl Note {
     ///
     /// ```rust
     /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::note::Note;
     /// use tpnote_lib::template::TemplateKind;
     /// use std::env::temp_dir;
@@ -169,18 +179,18 @@ impl Note {
     /// // Create note object.
     /// let mut context = Context::from(&notefile);
     /// context.insert_environment().unwrap();
-    /// let mut n = Note::from_text_file(context.clone(),
-    ///                 None,
-    ///                 TemplateKind::FromTextFile)
-    ///     .unwrap();
+    /// let content = <ContentString as Content>::from_string(raw.to_string());
+    /// // You can plug in your own type (must impl. `Content`).
+    /// let mut n = Note::from_text_file(
+    ///         context.clone(), content, TemplateKind::FromTextFile).unwrap();
     ///
-    /// assert!(!n.content.borrow_dependent().header.is_empty());
+    /// assert!(!n.content.header().is_empty());
     /// assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("hello "));
     /// assert_eq!(
     ///     n.context.get("fm_subtitle").unwrap().as_str(),
     ///     Some(" world")
     /// );
-    /// assert_eq!(n.content.borrow_dependent().body.trim(), raw);
+    /// assert_eq!(n.content.body().trim(), raw);
     ///
     /// n.render_filename(TemplateKind::FromTextFile).unwrap();
     /// n.set_next_unused_rendered_filename().unwrap();
@@ -192,30 +202,17 @@ impl Note {
     /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
     /// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"hello \""));
     /// ```
-
     pub fn from_text_file(
         mut context: Context,
-        content: Option<ContentString>,
+        content: T,
         template_kind: TemplateKind,
     ) -> Result<Self, NoteError> {
-        // If no content was provided, we read it ourself.
-        let content = match content {
-            Some(c) => c,
-            None => {
-                let s = fs::read_to_string(&context.path).map_err(|e| NoteError::Read {
-                    path: context.path.to_path_buf(),
-                    source: e,
-                })?;
-                ContentString::from_input_with_cr(s)
-            }
-        };
-
         // Register context variables:
         // Register the raw serialized header text.
-        let header = &content.borrow_dependent().header;
+        let header = &content.header();
         (*context).insert(TMPL_VAR_NOTE_FM_TEXT, &header);
         //We also keep the body.
-        let body = &content.borrow_dependent().body;
+        let body = &content.body();
         (*context).insert(TMPL_VAR_NOTE_BODY_TEXT, &body);
 
         // Get the file's creation date.
@@ -296,6 +293,8 @@ impl Note {
     /// 1. Example with `TemplateKind::New`
     ///
     /// ```rust
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::context::Context;
     /// use tpnote_lib::note::Note;
     /// use tpnote_lib::template::TemplateKind;
@@ -311,11 +310,12 @@ impl Note {
     /// context.insert_environment().unwrap();
 
     /// // Create the `Note` object.
-    /// let mut n = Note::from_content_template(context, TemplateKind::New).unwrap();
+    /// // You can plug in your own type (must impl. `Content`).
+    /// let mut n:Note<ContentString> = Note::from_content_template(
+    ///          context, TemplateKind::New).unwrap();
     /// assert!(n
     ///     .content
-    ///     .borrow_dependent()
-    ///     .header
+    ///     .header()
     ///     .starts_with("title:      \"my dir\""));
     /// assert_eq!(n.content.borrow_dependent().body, "\n\n");
     ///
@@ -338,6 +338,7 @@ impl Note {
     /// ```rust
     /// use tpnote_lib::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
     /// use tpnote_lib::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
+    /// use tpnote_lib::content::Content;
     /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::context::Context;
     /// use tpnote_lib::note::Note;
@@ -362,9 +363,11 @@ impl Note {
     ///     .unwrap();
 
     /// // Create the `Note` object.
-    /// let mut n = Note::from_content_template(context, TemplateKind::FromClipboard).unwrap();
+    /// // You can plug in your own type (must impl. `Content`).
+    /// let mut n: Note<ContentString> = Note::from_content_template(
+    ///          context, TemplateKind::FromClipboard).unwrap();
     /// let expected_body = "\nmy stdin\nmy clipboard\n\n\n";
-    /// assert_eq!(n.content.borrow_dependent().body, expected_body);
+    /// assert_eq!(n.content.body(), expected_body);
     /// // Check the title and subtitle in the note's header.
     /// assert_eq!(
     ///     n.context.get("fm_title").unwrap().as_str(),
@@ -390,6 +393,7 @@ impl Note {
     /// ```rust
     /// use tpnote_lib::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
     /// use tpnote_lib::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
+    /// use tpnote_lib::content::Content;
     /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::context::Context;
     /// use tpnote_lib::note::Note;
@@ -417,10 +421,12 @@ impl Note {
     ///     .unwrap();
 
     /// // Create the `Note` object.
-    /// let mut n = Note::from_content_template(context, TemplateKind::AnnotateFile).unwrap();
+    /// // You can plug in your own type (must impl. `Content`).
+    /// let mut n: Note<ContentString> = Note::from_content_template(
+    ///         context, TemplateKind::AnnotateFile).unwrap();
     /// let expected_body =
     ///     "\n[20221030-some.pdf](<20221030-some.pdf>)\n\nmy stdin\nmy clipboard\n\n\n";
-    /// assert_eq!(n.content.borrow_dependent().body, expected_body);
+    /// assert_eq!(n.content.body(), expected_body);
     /// // Check the title and subtitle in the note's header.
     /// assert_eq!(
     ///     n.context.get("fm_title").unwrap().as_str(),
@@ -436,11 +442,10 @@ impl Note {
     /// assert_eq!(n.rendered_filename, expected);
     /// assert!(n.rendered_filename.is_file());
     /// ```
-
     pub fn from_content_template(
         mut context: Context,
         template_kind: TemplateKind,
-    ) -> Result<Self, NoteError> {
+    ) -> Result<Note<T>, NoteError> {
         log::trace!(
             "Available substitution variables for content template:\n{:#?}",
             *context
@@ -452,7 +457,8 @@ impl Note {
         );
 
         // render template
-        let content = ContentString::from({
+
+        let content: T = Content::from_string({
             let mut tera = Tera::default();
             tera.extend(&TERA)?;
 
@@ -467,8 +473,8 @@ impl Note {
 
         log::debug!(
             "Rendered content template:\n---\n{}\n---\n{}",
-            content.borrow_dependent().header,
-            content.borrow_dependent().body.trim()
+            content.header(),
+            content.body().trim()
         );
 
         // deserialize the rendered template
@@ -477,9 +483,9 @@ impl Note {
         context.insert_front_matter(&fm);
 
         // Return new note.
-        Ok(Self {
+        Ok(Note {
             context,
-            content,
+            content: content,
             rendered_filename: PathBuf::new(),
         })
     }
@@ -707,7 +713,7 @@ impl Note {
         // Deserialize.
 
         // Render Body.
-        let input = self.content.borrow_dependent().body;
+        let input = self.content.body();
 
         // If this variable is set, overwrite `file_ext`
         let fm_file_ext = match self.context.get(TMPL_VAR_FM_FILE_EXT) {

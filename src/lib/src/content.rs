@@ -1,6 +1,5 @@
 //! Self referencing data structures to store the note's
 //! content as a raw string.
-use crate::error::FileError;
 use self_cell::self_cell;
 use std::fmt;
 use std::fmt::Debug;
@@ -23,24 +22,89 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 /// use tpnote_lib::content::Content;
 /// use tpnote_lib::content::ContentString;
 /// let input = "---\ntitle: \"My note\"\n---\nMy body";
-/// let c = ContentString::from(String::from(input));
+/// let c = ContentString::from_string(String::from(input));
 ///
 /// assert_eq!(c.header(), r#"title: "My note""#);
 /// assert_eq!(c.body(), r#"My body"#);
 /// assert_eq!(c.as_str(), input);
 ///
 /// // A test without front matter leads to an empty header:
-/// let c = ContentString::from(String::from("No header"));
+/// let c = ContentString::from_string(String::from("No header"));
 ///
 /// assert_eq!(c.header(), "");
 /// assert_eq!(c.body(), "No header");
 /// assert_eq!(c.as_str(), "No header");
 /// ```
 pub trait Content: AsRef<str> + Debug + Eq + PartialEq {
+    /// Constructor that parses a _Tp-Note_ document.
+    /// A valid document is UTF-8 encoded and starts with an optional
+    /// BOM (byte order mark) followed by `---`. When the start marker
+    /// `---` does not follow directly the BOM, it must be prepended
+    /// by an empty line. In this case all text before is ignored:
+    /// BOM + ignored text + empty line + `---`.
+    ///
+    /// ```rust
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// let input = "---\ntitle: \"My note\"\n---\nMy body";
+    /// let c = ContentString::from_string(input.to_string());
+    ///
+    /// assert_eq!(c.header(), r#"title: "My note""#);
+    /// assert_eq!(c.body(), "My body");
+    ///
+    /// // A test without front matter leads to an empty header:
+    /// let c = ContentString::from_string("No header".to_string());
+    ///
+    /// assert_eq!(c.header(), "");
+    /// assert_eq!(c.body(), "No header");
+    /// ```
+    fn from_string(input: String) -> Self;
+
+    /// Converts all `\r\n` to `\n` if there are any.
+    /// If not, the buffer remains untouched and no memory allocation
+    /// occurs.
+    #[inline]
+    fn remove_cr(input: String) -> String {
+        // Avoid allocating when there is nothing to do.
+        if input.find('\r').is_none() {
+            // Forward without allocating.
+            input
+        } else {
+            // We allocate here and do a lot of copying.
+            input.replace("\r\n", "\n")
+        }
+    }
+
+    /// Constructor that reads a structured document with a YAML header
+    /// and body. All `\r\n` are converted to `\n` if there are any.
+    /// If not, no memory allocation occurs and the buffer remains untouched.
+    ///
+    /// ```rust
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// let c = ContentString::from_input_with_cr(String::from(
+    ///     "---\r\ntitle: \"My note\"\r\n---\r\nMy\nbody\r\n"));
+    ///
+    /// assert_eq!(c.header(), r#"title: "My note""#);
+    /// assert_eq!(c.body(), "My\nbody\n");
+    ///
+    /// // A test without front matter leads to an empty header:
+    /// let c = ContentString::from_string(String::from("No header"));
+    ///
+    /// assert_eq!(c.borrow_dependent().header, "");
+    /// assert_eq!(c.borrow_dependent().body, r#"No header"#);
+    /// ```
+    fn from_input_with_cr(input: String) -> Self;
+
     /// Cheap access to the header between `---` and `---`.
     fn header(&self) -> &str;
+
     /// Cheap access to the body after the second `---`.
     fn body(&self) -> &str;
+
+    /// Write `Content` to disk
+    fn write_to_disk(&self, new_file_path: &Path) -> Result<(), std::io::Error>;
+
     /// Accesses the whole content with all `---`.
     /// Contract: The content does not contain any `\r\n`.
     /// Make sure to replace all `\r\n` with `\n`.
@@ -50,12 +114,126 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq {
 }
 
 impl Content for ContentString {
+    /// Constructor that parses a _Tp-Note_ document.
+    /// A valid document is UTF-8 encoded and starts with an optional
+    /// BOM (byte order mark) followed by `---`. When the start marker
+    /// `---` does not follow directly the BOM, it must be prepended
+    /// by an empty line. In this case all text before is ignored:
+    /// BOM + ignored text + empty line + `---`.
+    ///
+    /// ```rust
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// let input = "---\ntitle: \"My note\"\n---\nMy body";
+    /// let c = ContentString::from_string(input.to_string());
+    ///
+    /// assert_eq!(c.header(), r#"title: "My note""#);
+    /// assert_eq!(c.body(), "My body");
+    ///
+    /// // A test without front matter leads to an empty header:
+    /// let c = ContentString::from_string("No header".to_string());
+    ///
+    /// assert_eq!(c.header(), "");
+    /// assert_eq!(c.body(), "No header");
+    /// ```
+    fn from_string(input: String) -> Self {
+        ContentString::new(input, |owner: &String| {
+            let (header, body) = ContentString::split(owner);
+            ContentRef { header, body }
+        })
+    }
+
+    /// Constructor that reads a structured document with a YAML header
+    /// and body. All `\r\n` are converted to `\n` if there are any.
+    /// If not, no memory allocation occurs and the buffer remains untouched.
+    ///
+    /// ```rust
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// let c = ContentString::from_input_with_cr(String::from(
+    ///     "---\r\ntitle: \"My note\"\r\n---\r\nMy\nbody\r\n"));
+    ///
+    /// assert_eq!(c.header(), r#"title: "My note""#);
+    /// assert_eq!(c.body(), "My\nbody\n");
+    ///
+    /// // A test without front matter leads to an empty header:
+    /// let c = ContentString::from_string(String::from("No header"));
+    ///
+    /// assert_eq!(c.header(), "");
+    /// assert_eq!(c.body(), r#"No header"#);
+    /// ```
+    fn from_input_with_cr(input: String) -> Self {
+        let input = Self::remove_cr(input);
+        <ContentString as Content>::from_string(input)
+    }
+
     fn header(&self) -> &str {
         self.borrow_dependent().header
     }
 
     fn body(&self) -> &str {
         self.borrow_dependent().body
+    }
+
+    /// Writes the note to disk with `new_file_path` as filename.
+    /// If `new_file_path` contains missing directories, they will be
+    /// created on the fly.
+    ///
+    /// ```rust
+    /// use std::path::Path;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// let c = ContentString::from_string(
+    ///      String::from("prelude\n\n---\ntitle: \"My note\"\n---\nMy body"));
+    /// let outfile = temp_dir().join("mynote.md");
+    /// #[cfg(not(target_family = "windows"))]
+    /// let expected = "\u{feff}---\ntitle: \"My note\"\n---\nMy body\n";
+    /// #[cfg(target_family = "windows")]
+    /// let expected = "\u{feff}---\r\ntitle: \"My note\"\r\n---\r\nMy body\r\n";
+    ///
+    /// c.write_to_disk(&outfile).unwrap();
+    /// let result = fs::read_to_string(&outfile).unwrap();
+    ///
+    /// assert_eq!(result, expected);
+    /// fs::remove_file(&outfile);
+    /// ```
+    fn write_to_disk(&self, new_file_path: &Path) -> Result<(), std::io::Error> {
+        // Create missing directories, if there are any.
+        create_dir_all(new_file_path.parent().unwrap_or_else(|| Path::new("")))?;
+
+        let mut outfile = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&new_file_path)?;
+
+        log::trace!("Creating file: {:?}", new_file_path);
+        write!(outfile, "\u{feff}")?;
+        if !self.borrow_dependent().header.is_empty() {
+            write!(outfile, "---")?;
+            #[cfg(target_family = "windows")]
+            write!(outfile, "\r")?;
+            writeln!(outfile)?;
+            for l in self.borrow_dependent().header.lines() {
+                write!(outfile, "{}", l)?;
+                #[cfg(target_family = "windows")]
+                write!(outfile, "\r")?;
+                writeln!(outfile)?;
+            }
+            write!(outfile, "---")?;
+            #[cfg(target_family = "windows")]
+            write!(outfile, "\r")?;
+            writeln!(outfile)?;
+        };
+        for l in self.borrow_dependent().body.lines() {
+            write!(outfile, "{}", l)?;
+            #[cfg(target_family = "windows")]
+            write!(outfile, "\r")?;
+            writeln!(outfile)?;
+        }
+
+        Ok(())
     }
 }
 
@@ -92,74 +270,9 @@ self_cell!(
 /// one `\n` character as newline. If present, a Byte Order Mark
 /// BOM is removed while reading with `new()`.
 impl<'a> ContentString {
-    /// Constructor that parses a _Tp-Note_ document.
-    /// A valid document is UTF-8 encoded and starts with an optional
-    /// BOM (byte order mark) followed by `---`. When the start marker
-    /// `---` does not follow directly the BOM, it must be prepended
-    /// by an empty line. In this case all text before is ignored:
-    /// BOM + ignored text + empty line + `---`.
-    ///
-    /// ```rust
-    /// use tpnote_lib::content::ContentString;
-    /// let c = ContentString::from(String::from("---\ntitle: \"My note\"\n---\nMy body"));
-    ///
-    /// assert_eq!(c.borrow_dependent().header, r#"title: "My note""#);
-    /// assert_eq!(c.borrow_dependent().body, r#"My body"#);
-    ///
-    /// // A test without front matter leads to an empty header:
-    /// let c = ContentString::from(String::from("No header"));
-    ///
-    /// assert_eq!(c.borrow_dependent().header, "");
-    /// assert_eq!(c.borrow_dependent().body, r#"No header"#);
-    /// ```
-    pub fn from(input: String) -> Self {
-        ContentString::new(input, |owner: &String| {
-            let (header, body) = ContentString::split(owner);
-            ContentRef { header, body }
-        })
-    }
-
-    /// Constructor that reads a structured document with a YAML header
-    /// and body. All `\r\n` are converted to `\n` if there are any.
-    /// If not, no memory allocation occurs and the buffer remains untouched.
-    ///
-    /// ```rust
-    /// use tpnote_lib::content::ContentString;
-    /// let c = ContentString::from_input_with_cr(String::from(
-    ///     "---\r\ntitle: \"My note\"\r\n---\r\nMy\nbody\r\n"));
-    ///
-    /// assert_eq!(c.borrow_dependent().header, r#"title: "My note""#);
-    /// assert_eq!(c.borrow_dependent().body, "My\nbody\n");
-    ///
-    /// // A test without front matter leads to an empty header:
-    /// let c = ContentString::from(String::from("No header"));
-    ///
-    /// assert_eq!(c.borrow_dependent().header, "");
-    /// assert_eq!(c.borrow_dependent().body, r#"No header"#);
-    /// ```
-    pub fn from_input_with_cr(input: String) -> Self {
-        let input = Self::remove_cr(input);
-        ContentString::from(input)
-    }
-
     /// True if the header and body is empty.
     pub fn is_empty(&self) -> bool {
         self.borrow_dependent().header.is_empty() && self.borrow_dependent().body.is_empty()
-    }
-
-    /// Converts all `\r\n` to `\n` if there are any.
-    /// If not, the buffer remains untouched and no memory allocation
-    /// occurs.
-    #[inline]
-    fn remove_cr(input: String) -> String {
-        // Avoid allocating when there is nothing to do.
-        if input.find('\r').is_none() {
-            // Forward without allocating.
-            input
-        } else {
-            // We allocate here and do a lot of copying.
-            input.replace("\r\n", "\n")
-        }
     }
 
     /// Helper function that splits the content into header and body.
@@ -258,75 +371,6 @@ impl<'a> ContentString {
 
         (content[fm_start..fm_end].trim(), &content[body_start..])
     }
-
-    /// Writes the note to disk with `new_file_path` as filename.
-    /// If `new_file_path` contains missing directories, they will be
-    /// created on the fly.
-    ///
-    /// ```rust
-    /// use std::path::Path;
-    /// use std::env::temp_dir;
-    /// use std::fs;
-    /// use tpnote_lib::content::ContentString;
-    /// let c = ContentString::from(
-    ///      String::from("prelude\n\n---\ntitle: \"My note\"\n---\nMy body"));
-    /// let outfile = temp_dir().join("mynote.md");
-    /// #[cfg(not(target_family = "windows"))]
-    /// let expected = "\u{feff}---\ntitle: \"My note\"\n---\nMy body\n";
-    /// #[cfg(target_family = "windows")]
-    /// let expected = "\u{feff}---\r\ntitle: \"My note\"\r\n---\r\nMy body\r\n";
-    ///
-    /// c.write_to_disk(&outfile).unwrap();
-    /// let result = fs::read_to_string(&outfile).unwrap();
-    ///
-    /// assert_eq!(result, expected);
-    /// fs::remove_file(&outfile);
-    /// ```
-    pub fn write_to_disk(&self, new_file_path: &Path) -> Result<(), FileError> {
-        // Create missing directories, if there are any.
-        create_dir_all(new_file_path.parent().unwrap_or_else(|| Path::new("")))?;
-
-        let outfile = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open(&new_file_path);
-        match outfile {
-            Ok(mut outfile) => {
-                log::trace!("Creating file: {:?}", new_file_path);
-                write!(outfile, "\u{feff}")?;
-                if !self.borrow_dependent().header.is_empty() {
-                    write!(outfile, "---")?;
-                    #[cfg(target_family = "windows")]
-                    write!(outfile, "\r")?;
-                    writeln!(outfile)?;
-                    for l in self.borrow_dependent().header.lines() {
-                        write!(outfile, "{}", l)?;
-                        #[cfg(target_family = "windows")]
-                        write!(outfile, "\r")?;
-                        writeln!(outfile)?;
-                    }
-                    write!(outfile, "---")?;
-                    #[cfg(target_family = "windows")]
-                    write!(outfile, "\r")?;
-                    writeln!(outfile)?;
-                };
-                for l in self.borrow_dependent().body.lines() {
-                    write!(outfile, "{}", l)?;
-                    #[cfg(target_family = "windows")]
-                    write!(outfile, "\r")?;
-                    writeln!(outfile)?;
-                }
-            }
-            Err(e) => {
-                return Err(FileError::Write {
-                    path: new_file_path.to_path_buf(),
-                    source_str: e.to_string(),
-                });
-            }
-        }
-
-        Ok(())
-    }
 }
 
 /// Returns the whole raw content with header and body.
@@ -380,25 +424,26 @@ mod tests {
     #[test]
     fn test_new() {
         // Test Unix string.
-        let content = ContentString::from("first\nsecond\nthird".to_string());
+        let content = ContentString::from_string("first\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test BOM removal.
-        let content = ContentString::from("\u{feff}first\nsecond\nthird".to_string());
+        let content = ContentString::from_string("\u{feff}first\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test header extraction.
-        let content = ContentString::from("\u{feff}---\nfirst\n---\nsecond\nthird".to_string());
+        let content =
+            ContentString::from_string("\u{feff}---\nfirst\n---\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().header, "first");
         assert_eq!(content.borrow_dependent().body, "second\nthird");
 
         // Test header extraction without `\n` at the end.
-        let content = ContentString::from("\u{feff}---\nfirst\n---".to_string());
+        let content = ContentString::from_string("\u{feff}---\nfirst\n---".to_string());
         assert_eq!(content.borrow_dependent().header, "first");
         assert_eq!(content.borrow_dependent().body, "");
 
         // Some skipped bytes.
-        let content = ContentString::from("\u{feff}ignored\n\n---\nfirst\n---".to_string());
+        let content = ContentString::from_string("\u{feff}ignored\n\n---\nfirst\n---".to_string());
         assert_eq!(content.borrow_dependent().header, "first");
         assert_eq!(content.borrow_dependent().body, "");
 
@@ -407,7 +452,7 @@ mod tests {
         s.push_str(&String::from_utf8(vec![b'X'; BEFORE_HEADER_MAX_IGNORED_CHARS]).unwrap());
         s.push_str("\n\n---\nfirst\n---\nsecond");
         let s_ = s.clone();
-        let content = ContentString::from(s);
+        let content = ContentString::from_string(s);
         assert_eq!(content.borrow_dependent().header, "");
         assert_eq!(content.borrow_dependent().body, &s_[3..]);
 
@@ -421,7 +466,7 @@ mod tests {
             .unwrap(),
         );
         s.push_str("\n\n---\nfirst\n---\nsecond");
-        let content = ContentString::from(s);
+        let content = ContentString::from_string(s);
         assert_eq!(content.borrow_dependent().header, "first");
         assert_eq!(content.borrow_dependent().body, "second");
     }
@@ -504,19 +549,19 @@ mod tests {
     #[test]
     fn test_display_for_content() {
         let expected = "\u{feff}---\nfirst\n---\n\nsecond\nthird\n".to_string();
-        let input = ContentString::from(expected.clone());
+        let input = ContentString::from_string(expected.clone());
         assert_eq!(input.to_string(), expected);
 
         let expected = "\nsecond\nthird\n".to_string();
-        let input = ContentString::from(expected.clone());
+        let input = ContentString::from_string(expected.clone());
         assert_eq!(input.to_string(), expected);
 
         let expected = "".to_string();
-        let input = ContentString::from(expected.clone());
+        let input = ContentString::from_string(expected.clone());
         assert_eq!(input.to_string(), expected);
 
         let expected = "\u{feff}---\nfirst\n---\n\nsecond\nthird\n".to_string();
-        let input = ContentString::from(
+        let input = ContentString::from_string(
             "\u{feff}ignored\n\n---\nfirst\n---\n\nsecond\nthird\n".to_string(),
         );
         assert_eq!(input.to_string(), expected);

@@ -21,6 +21,8 @@ use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::time::SystemTime;
+use tpnote_lib::content::Content;
+use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
 use tpnote_lib::note::Note;
 use url::Url;
@@ -585,7 +587,10 @@ impl ServerThread {
         // Render.
         let context = self.context.clone();
         // First decompose header and body, then deserialize header.
-        match Note::from_text_file(context, None, tpnote_lib::template::TemplateKind::None)
+        let content = ContentString::from_input_with_cr(
+            fs::read_to_string(&self.context.path).unwrap_or_default(),
+        );
+        match Note::from_text_file(context, content, tpnote_lib::template::TemplateKind::None)
             // Now, try to render to html.
             .and_then(|note| {
                 note.render_content_to_html(file_path_ext, &CFG.tmpl_html.viewer, &js)
@@ -642,7 +647,7 @@ impl ServerThread {
             // special error page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
-                Note::render_erroneous_content_to_html(&self.context.path, &CFG.tmpl_html.viewer_error, &js, e)
+                Note::<ContentString>::render_erroneous_content_to_html(&self.context.path, &CFG.tmpl_html.viewer_error, &js, e)
                     .map_err(|e| { ViewerError::RenderErrorPage {
                         tmpl: "[viewer] error_tmpl".to_string(),
                         source: e,

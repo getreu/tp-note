@@ -7,6 +7,7 @@ use crate::settings::CLIPBOARD;
 use crate::settings::STDIN;
 use std::fs;
 use std::path::Path;
+use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::filename::NotePath;
 use tpnote_lib::template::TemplateKind;
@@ -32,8 +33,9 @@ pub(crate) fn get_template_content(path: &Path) -> (TemplateKind, Option<Content
     let path_is_tpnote_file = path_is_file && path_has_tpnote_extension;
 
     let (path_is_tpnote_file_and_has_header, content) = if path_is_tpnote_file {
-        let content = ContentString::from_input_with_cr(fs::read_to_string(path).unwrap_or_default());
-        (!content.borrow_dependent().header.is_empty(), Some(content))
+        let content =
+            ContentString::from_input_with_cr(fs::read_to_string(path).unwrap_or_default());
+        (!content.header().is_empty(), Some(content))
     } else {
         (false, None)
     };
