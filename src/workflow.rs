@@ -18,9 +18,7 @@ use std::path::PathBuf;
 use std::thread;
 #[cfg(feature = "viewer")]
 use std::time::Duration;
-use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
-use tpnote_lib::context::Context;
 use tpnote_lib::error::NoteError;
 use tpnote_lib::workflow::create_new_note_or_synchronize_filename;
 use tpnote_lib::workflow::synchronize_filename;
@@ -52,8 +50,8 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
         ARGS.export.as_deref(),
     ) {
         // Use the new `path` from now on.
-        Ok(p) => {
-            path = p;
+        Ok(n) => {
+            path = n.rendered_filename;
             #[cfg(feature = "viewer")]
             {
                 launch_viewer = *LAUNCH_VIEWER;
@@ -115,13 +113,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
     };
 
     if *LAUNCH_EDITOR {
-        // Collect input data for templates.
-        let mut context = Context::from(&path);
-        context.insert_environment()?;
-
-        let content = <ContentString as Content>::open(&path).unwrap_or_default();
-
-        match synchronize_filename(context, content) {
+        match synchronize_filename::<ContentString>(&path) {
             // `path` has changed!
             Ok(n) => path = n.rendered_filename,
             Err(e) => {

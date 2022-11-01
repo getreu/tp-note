@@ -18,42 +18,15 @@ use tera::Value;
 
 /// Open the note file `path` on disk and read its YAML front matter.
 /// Then calculate from the front matter how the filename should be to
-/// be in sync. If it is different, rename the note on disk and return
-/// the new filename in `note.rendered_filename`.
-/// If no filename was rendered, `note.rendered_filename == PathBuf::new()`
-pub fn synchronize_filename<T: Content>(
-    context: Context,
-    content: T,
-) -> Result<Note<T>, NoteError> {
-    // parse file again to check for synchronicity with filename
+/// be in sync. If it is different, rename the note on disk.
+/// Returns the note's new or existing filename in `<Note>.rendered_filename`.
+pub fn synchronize_filename<T: Content>(path: &Path) -> Result<Note<T>, NoteError> {
+    // Collect input data for templates.
+    let mut context = Context::from(&path);
+    context.insert_environment()?;
 
-    let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename)?;
-
-    let no_filename_sync = match (
-        n.context.get(TMPL_VAR_FM_FILENAME_SYNC),
-        n.context.get(TMPL_VAR_FM_NO_FILENAME_SYNC),
-    ) {
-        // By default we sync.
-        (None, None) => false,
-        (None, Some(Value::Bool(nsync))) => *nsync,
-        (None, Some(_)) => true,
-        (Some(Value::Bool(sync)), None) => !*sync,
-        _ => false,
-    };
-
-    if no_filename_sync {
-        log::info!(
-            "Filename synchronisation disabled with the front matter field: `{}: {}`",
-            TMPL_VAR_FM_FILENAME_SYNC.trim_start_matches(TMPL_VAR_FM_),
-            !no_filename_sync
-        );
-    } else {
-        n.render_filename(TemplateKind::SyncFilename)?;
-
-        n.set_next_unused_rendered_filename_or(&n.context.path.clone())?;
-        // Silently fails is source and target are identical.
-        n.rename_file_from(&n.context.path)?;
-    }
+    let content = <T>::open(&path).unwrap_or_default();
+    let n = synchronize::<T>(context, content)?;
 
     Ok(n)
 }
@@ -64,15 +37,14 @@ pub fn synchronize_filename<T: Content>(
 /// to the filename and try to save it again. In case this does not succeed either,
 /// increment the `copy_counter` until a free filename is found.
 /// The return path points to the (new) note file on disk.
-/// If an existing note file was not moved, the return path equals to `context.path`.
-///
+/// Returns the note's new or existing filename in `<Note>.rendered_filename`.
 pub fn create_new_note_or_synchronize_filename<T, F>(
     path: &Path,
     clipboard: &T,
     stdin: &T,
     tk_filter: F,
     args_export: Option<&Path>,
-) -> Result<PathBuf, NoteError>
+) -> Result<Note<T>, NoteError>
 where
     T: Content,
     F: Fn(TemplateKind) -> TemplateKind,
@@ -115,14 +87,8 @@ where
             n.save_and_delete_from(&context_path)?;
             n
         }
-        TemplateKind::SyncFilename => synchronize_filename(context, content.unwrap())?,
+        TemplateKind::SyncFilename => synchronize(context, content.unwrap())?,
         TemplateKind::None => Note::from_text_file(context, content.unwrap(), template_kind)?,
-        #[allow(unreachable_patterns)]
-        _ =>
-        // Early return, we do nothing here and continue.
-        {
-            return Ok(context.path)
-        }
     };
 
     // Export HTML rendition, if wanted.
@@ -131,9 +97,45 @@ where
     }
 
     // If no new filename was rendered, return the old one.
-    if n.rendered_filename != PathBuf::new() {
-        Ok(n.rendered_filename)
-    } else {
-        Ok(n.context.path)
+    let mut n = n;
+    if n.rendered_filename == PathBuf::new() {
+        n.rendered_filename = n.context.path.clone();
     }
+
+    Ok(n)
+}
+
+/// Helper function.
+fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, NoteError> {
+    // parse file again to check for synchronicity with filename
+
+    let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename)?;
+
+    let no_filename_sync = match (
+        n.context.get(TMPL_VAR_FM_FILENAME_SYNC),
+        n.context.get(TMPL_VAR_FM_NO_FILENAME_SYNC),
+    ) {
+        // By default we sync.
+        (None, None) => false,
+        (None, Some(Value::Bool(nsync))) => *nsync,
+        (None, Some(_)) => true,
+        (Some(Value::Bool(sync)), None) => !*sync,
+        _ => false,
+    };
+
+    if no_filename_sync {
+        log::info!(
+            "Filename synchronisation disabled with the front matter field: `{}: {}`",
+            TMPL_VAR_FM_FILENAME_SYNC.trim_start_matches(TMPL_VAR_FM_),
+            !no_filename_sync
+        );
+    } else {
+        n.render_filename(TemplateKind::SyncFilename)?;
+
+        n.set_next_unused_rendered_filename_or(&n.context.path.clone())?;
+        // Silently fails is source and target are identical.
+        n.rename_file_from(&n.context.path)?;
+    }
+
+    Ok(n)
 }
