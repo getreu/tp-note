@@ -14,7 +14,7 @@ use tpnote_lib::template::TemplateKind;
 /// Returns the template that will be used in the further workflow.
 /// If `path` points to an existing Tp-Note file (with or without header),
 /// `Some<Content>` is the content to the file.
-pub(crate) fn get_template_content<T: Content>(path: &Path) -> (TemplateKind, Option<T>) {
+pub(crate) fn get_template_and_content<T: Content>(path: &Path) -> (TemplateKind, Option<T>) {
     let stdin_is_empty = STDIN.is_empty();
     let stdin_has_header = !STDIN.header().is_empty();
 

@@ -7,7 +7,7 @@ use crate::settings::CLIPBOARD;
 use crate::settings::LAUNCH_EDITOR;
 use crate::settings::LAUNCH_VIEWER;
 use crate::settings::STDIN;
-use crate::template::get_template_content;
+use crate::template::get_template_and_content;
 #[cfg(feature = "viewer")]
 use crate::viewer::launch_viewer_thread;
 use std::env;
@@ -86,7 +86,7 @@ fn create_new_note_or_synchronize_filename<T: Content>(
     context: Context,
 ) -> Result<PathBuf, WorkflowError> {
     // `template_type` will tell us what to do.
-    let (template_kind, content) = get_template_content::<T>(&context.path);
+    let (template_kind, content) = get_template_and_content::<T>(&context.path);
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
     // Does the first positional parameter point to a directory?
