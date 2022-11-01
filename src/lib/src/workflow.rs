@@ -111,7 +111,7 @@ where
 
             // Save new note.
             let context_path = n.context.path.clone();
-            n.set_next_unused_rendered_filename()?;
+            n.set_next_unused_rendered_filename_or(&context_path)?;
             n.save_and_delete_from(&context_path)?;
             n
         }
