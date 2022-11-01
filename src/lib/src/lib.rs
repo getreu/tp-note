@@ -10,9 +10,9 @@
 //! is designed around. In `note` you will find some Rustdoc tests illustrating
 //! the usage of this API. Most other modules :ware not called directly and might
 //! change to `private` in the future.
-//! 
+//!
 //! The main consumer of this API is the module `workflow` in the crate `tpnote`.
-//! In addition to the above-mentioned Rustdoc tests, the source code of 
+//! In addition to the above-mentioned Rustdoc tests, the source code of
 //! `workflow` showcases its usage the best.
 
 pub mod config;
@@ -24,3 +24,4 @@ pub mod filter;
 pub mod front_matter;
 pub mod note;
 pub mod template;
+pub mod workflow;

@@ -18,125 +18,16 @@ use std::path::PathBuf;
 use std::thread;
 #[cfg(feature = "viewer")]
 use std::time::Duration;
-use tera::Value;
 use tpnote_lib::config::TMPL_VAR_CLIPBOARD;
 use tpnote_lib::config::TMPL_VAR_CLIPBOARD_HEADER;
-use tpnote_lib::config::TMPL_VAR_FM_;
-use tpnote_lib::config::TMPL_VAR_FM_FILENAME_SYNC;
-use tpnote_lib::config::TMPL_VAR_FM_NO_FILENAME_SYNC;
 use tpnote_lib::config::TMPL_VAR_STDIN;
 use tpnote_lib::config::TMPL_VAR_STDIN_HEADER;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
 use tpnote_lib::error::NoteError;
-use tpnote_lib::note::Note;
-use tpnote_lib::template::TemplateKind;
-
-/// Open the note file `path` on disk and read its YAML front matter.
-/// Then calculate from the front matter how the filename should be to
-/// be in sync. If it is different, rename the note on disk and return
-/// the new filename in `note.rendered_filename`.
-/// If no filename was rendered, `note.rendered_filename == PathBuf::new()`
-fn synchronize_filename<T: Content>(
-    context: Context,
-    content: T,
-) -> Result<Note<T>, WorkflowError> {
-    // parse file again to check for synchronicity with filename
-
-    let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename)?;
-
-    let no_filename_sync = match (
-        n.context.get(TMPL_VAR_FM_FILENAME_SYNC),
-        n.context.get(TMPL_VAR_FM_NO_FILENAME_SYNC),
-    ) {
-        // By default we sync.
-        (None, None) => false,
-        (None, Some(Value::Bool(nsync))) => *nsync,
-        (None, Some(_)) => true,
-        (Some(Value::Bool(sync)), None) => !*sync,
-        _ => false,
-    };
-
-    if no_filename_sync {
-        log::info!(
-            "Filename synchronisation disabled with the front matter field: `{}: {}`",
-            TMPL_VAR_FM_FILENAME_SYNC.trim_start_matches(TMPL_VAR_FM_),
-            !no_filename_sync
-        );
-    } else {
-        n.render_filename(TemplateKind::SyncFilename)?;
-
-        n.set_next_unused_rendered_filename_or(&n.context.path.clone())?;
-        // Silently fails is source and target are identical.
-        n.rename_file_from(&n.context.path)?;
-    }
-
-    Ok(n)
-}
-
-#[inline]
-/// Create a new note by inserting `Tp-Note`'s environment in a template.
-/// If the note to be created exists already, append a so called `copy_counter`
-/// to the filename and try to save it again. In case this does not succeed either,
-/// increment the `copy_counter` until a free filename is found.
-/// The return path points to the (new) note file on disk.
-/// If an existing note file was not moved, the return path equals to `context.path`.
-fn create_new_note_or_synchronize_filename<T: Content>(
-    context: Context,
-) -> Result<PathBuf, WorkflowError> {
-    // `template_type` will tell us what to do.
-    let (template_kind, content) = get_template_and_content::<T>(&context.path);
-    // First generate a new note (if it does not exist), then parse its front_matter
-    // and finally rename the file, if it is not in sync with its front matter.
-    // Does the first positional parameter point to a directory?
-
-    let n = match template_kind {
-        TemplateKind::New
-        | TemplateKind::FromClipboardYaml
-        | TemplateKind::FromClipboard
-        | TemplateKind::AnnotateFile => {
-            // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
-            let mut n = Note::from_content_template(context, template_kind)?;
-            n.render_filename(template_kind)?;
-            // Check if the filename is not taken already
-            n.set_next_unused_rendered_filename()?;
-            n.save()?;
-            n
-        }
-
-        TemplateKind::FromTextFile => {
-            let mut n = Note::from_text_file(context, content.unwrap(), template_kind)?;
-            // Render filename.
-            n.render_filename(template_kind)?;
-
-            // Save new note.
-            let context_path = n.context.path.clone();
-            n.set_next_unused_rendered_filename()?;
-            n.save_and_delete_from(&context_path)?;
-            n
-        }
-        TemplateKind::SyncFilename => synchronize_filename(context, content.unwrap())?,
-        TemplateKind::None => Note::from_text_file(context, content.unwrap(), template_kind)?,
-        _ =>
-        // Early return, we do nothing here and continue.
-        {
-            return Ok(context.path)
-        }
-    };
-
-    // Export HTML rendition, if wanted.
-    if let Some(dir) = &ARGS.export {
-        n.export_html(&CFG.tmpl_html.exporter, dir)?;
-    }
-
-    // If no new filename was rendered, return the old one.
-    if n.rendered_filename != PathBuf::new() {
-        Ok(n.rendered_filename)
-    } else {
-        Ok(n.context.path)
-    }
-}
+use tpnote_lib::workflow::create_new_note_or_synchronize_filename;
+use tpnote_lib::workflow::synchronize_filename;
 
 /// Run Tp-Note and return the (modified) path to the (new) note file.
 /// 1. Create a new note by inserting `Tp-Note`'s environment in a template.
@@ -163,7 +54,14 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
     // log an error as WARN level instead of ERROR level.
     let launch_viewer;
 
-    match create_new_note_or_synchronize_filename::<ContentString>(context) {
+    // `template_kind` will tell us what to do.
+    let (template_kind, content) = get_template_and_content::<ContentString>(&context.path);
+    match create_new_note_or_synchronize_filename::<ContentString>(
+        context,
+        template_kind,
+        content,
+        ARGS.export.as_deref(),
+    ) {
         // Use the new `path` from now on.
         Ok(p) => {
             path = p;
@@ -172,7 +70,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                 launch_viewer = *LAUNCH_VIEWER;
             }
         }
-        Err(WorkflowError::Note { source: e }) => {
+        Err(e) => {
             if (matches!(e, NoteError::InvalidFrontMatterYaml { .. })
                 || matches!(e, NoteError::MissingFrontMatter { .. })
                 || matches!(e, NoteError::MissingFrontMatterField { .. })
@@ -203,11 +101,9 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
                 };
             } else {
                 // This is a fatal error, so we quit.
-                return Err(WorkflowError::Note { source: e });
+                return Err(e.into());
             }
         }
-        // This is a fatal error, so we quit.
-        Err(e) => return Err(e),
     };
 
     #[cfg(feature = "viewer")]
@@ -240,24 +136,15 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
             // `path` has changed!
             Ok(n) => path = n.rendered_filename,
             Err(e) => {
-                let missing_header = matches!(
-                    e,
-                    WorkflowError::Note {
-                        source: NoteError::MissingFrontMatter { .. }
-                    }
-                ) || matches!(
-                    e,
-                    WorkflowError::Note {
-                        source: NoteError::MissingFrontMatterField { .. }
-                    }
-                );
+                let missing_header = matches!(e, NoteError::MissingFrontMatter { .. })
+                    || matches!(e, NoteError::MissingFrontMatterField { .. });
 
                 if missing_header {
                     // Silently ignore error.
                     log::warn!("{}", e);
                 } else {
                     // Report all other errors.
-                    return Err(e);
+                    return Err(e.into());
                 }
             }
         };
