@@ -1,5 +1,14 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
 //! and exposes the configuration as `static` variable behind a mutex.
+//! This makes it possible to modify all configuration defaults (and templates)
+//! at runtime.
+//!
+//! ```rust
+//! use tpnote_lib::config::LIB_CFG;
+//!
+//! let mut lib_cfg = LIB_CFG.write().unwrap();
+//! (*lib_cfg).filename.copy_counter_extra_separator = '@'.to_string();
+//! ```
 
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
