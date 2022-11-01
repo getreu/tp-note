@@ -247,9 +247,7 @@ fn main() {
     if (*LAUNCH_EDITOR && !ARGS.batch && CFG.clipboard.read_enabled && CFG.clipboard.empty_enabled)
         || matches!(
             &res,
-            Err(WorkflowError::Note {
-                source: NoteError::InvalidInputYaml { .. },
-            })
+            Err(WorkflowError::Note(NoteError::InvalidInputYaml { .. }))
         )
     {
         if let Ok(mut ctx) = ClipboardContext::new() {

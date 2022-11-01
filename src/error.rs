@@ -21,10 +21,7 @@ pub enum WorkflowError {
     },
 
     #[error(transparent)]
-    Note {
-        #[from]
-        source: NoteError,
-    },
+    Note(#[from] NoteError),
 
     #[error(transparent)]
     ConfigFile(#[from] ConfigFileError),
