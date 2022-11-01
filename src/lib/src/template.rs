@@ -1,5 +1,7 @@
 //!Abstractions for content templates and filename templates.
-use crate::config::LIB_CFG;
+use crate::filename::NotePath;
+use crate::{config::LIB_CFG, content::Content};
+use std::path::Path;
 
 /// Each workflow is related to one `TemplateKind`, which relates to one
 /// content template and one filename template.
@@ -28,6 +30,79 @@ pub enum TemplateKind {
 }
 
 impl TemplateKind {
+    /// Constructor.
+    /// TODO
+    ///
+    /// Contract: If `template_kind` is one of:
+    /// * `TemplateKind::New`
+    /// * `TemplateKind::FromClipboardYaml`
+    /// * `TemplateKind::FromClipboard`
+    /// * `TemplateKind::AnnotateFile`
+    /// `content` is `None` because it is not used. Otherwise the file's content from the
+    /// is read from the disk and returned as `Some(..)`.
+    pub fn from<T: Content>(path: &Path, clipboard: &T, stdin: &T) -> (Self, Option<T>) {
+        let stdin_is_empty = stdin.is_empty();
+        let stdin_has_header = !stdin.header().is_empty();
+
+        let clipboard_is_empty = clipboard.is_empty();
+        let clipboard_has_header = !clipboard.header().is_empty();
+
+        let input_stream_is_some = !stdin_is_empty || !clipboard_is_empty;
+        let input_stream_has_header = stdin_has_header || clipboard_has_header;
+
+        let path_is_dir = path.is_dir();
+        let path_is_file = path.is_file();
+
+        let path_has_tpnote_extension = path.has_tpnote_extension();
+        let path_is_tpnote_file = path_is_file && path_has_tpnote_extension;
+
+        let (path_is_tpnote_file_and_has_header, content) = if path_is_tpnote_file {
+            let content: T = Content::open(path).unwrap_or_default();
+            (!content.header().is_empty(), Some(content))
+        } else {
+            (false, None)
+        };
+
+        // This determines the workflow and what template will be applied.
+        let template_kind = match (
+            path_is_dir,
+            input_stream_is_some,
+            input_stream_has_header,
+            path_is_file,
+            path_is_tpnote_file,
+            path_is_tpnote_file_and_has_header,
+        ) {
+            (true, false, _, false, _, _) => TemplateKind::New,
+            (true, true, false, false, _, _) => TemplateKind::FromClipboard,
+            (true, true, true, false, _, _) => TemplateKind::FromClipboardYaml,
+            (false, _, _, true, true, true) => TemplateKind::SyncFilename,
+            (false, _, _, true, true, false) => TemplateKind::FromTextFile,
+            (false, _, _, true, false, _) => TemplateKind::AnnotateFile,
+            (_, _, _, _, _, _) => TemplateKind::None,
+        };
+
+        log::debug!("Chosing the \"{:?}\" template.", template_kind);
+
+        log::trace!(
+            "Template choice is based on:
+             path=\"{}\",
+             path_is_dir={},
+             input_stream_is_some={},
+             input_stream_has_header={},
+             path_is_file={},
+             path_is_tpnote_file={},
+             path_is_tpnote_file_and_has_header={}",
+            path.to_str().unwrap(),
+            path_is_dir,
+            input_stream_is_some,
+            input_stream_has_header,
+            path_is_file,
+            path_is_tpnote_file,
+            path_is_tpnote_file_and_has_header,
+        );
+        (template_kind, content)
+    }
+
     /// Returns the content template string as it is defined in the configuration file.
     pub fn get_content_template(&self) -> String {
         match self {

@@ -7,7 +7,7 @@ use crate::settings::CLIPBOARD;
 use crate::settings::LAUNCH_EDITOR;
 use crate::settings::LAUNCH_VIEWER;
 use crate::settings::STDIN;
-use crate::template::get_template_and_content;
+use crate::template::template_kind_filter;
 #[cfg(feature = "viewer")]
 use crate::viewer::launch_viewer_thread;
 use std::env;
@@ -18,10 +18,6 @@ use std::path::PathBuf;
 use std::thread;
 #[cfg(feature = "viewer")]
 use std::time::Duration;
-use tpnote_lib::config::TMPL_VAR_CLIPBOARD;
-use tpnote_lib::config::TMPL_VAR_CLIPBOARD_HEADER;
-use tpnote_lib::config::TMPL_VAR_STDIN;
-use tpnote_lib::config::TMPL_VAR_STDIN_HEADER;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
@@ -44,22 +40,15 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
         env::current_dir()?
     };
 
-    // Collect input data for templates.
-    let mut context = Context::from(&path);
-    context.insert_environment()?;
-    context.insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &*CLIPBOARD)?;
-    context.insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &*STDIN)?;
-
     // Depending on this we might not show the viewer later or
     // log an error as WARN level instead of ERROR level.
     let launch_viewer;
 
-    // `template_kind` will tell us what to do.
-    let (template_kind, content) = get_template_and_content::<ContentString>(&context.path);
-    match create_new_note_or_synchronize_filename::<ContentString>(
-        context,
-        template_kind,
-        content,
+    match create_new_note_or_synchronize_filename::<ContentString, _>(
+        &path,
+        &*CLIPBOARD,
+        &*STDIN,
+        template_kind_filter,
         ARGS.export.as_deref(),
     ) {
         // Use the new `path` from now on.

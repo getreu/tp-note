@@ -1,8 +1,12 @@
 //! High level API. TODO
 use crate::config::LIB_CFG;
+use crate::config::TMPL_VAR_CLIPBOARD;
+use crate::config::TMPL_VAR_CLIPBOARD_HEADER;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_FILENAME_SYNC;
 use crate::config::TMPL_VAR_FM_NO_FILENAME_SYNC;
+use crate::config::TMPL_VAR_STDIN;
+use crate::config::TMPL_VAR_STDIN_HEADER;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
@@ -62,22 +66,30 @@ pub fn synchronize_filename<T: Content>(
 /// The return path points to the (new) note file on disk.
 /// If an existing note file was not moved, the return path equals to `context.path`.
 ///
-/// Contract: If `template_kind` is one of:
-/// * `TemplateKind::New`
-/// * `TemplateKind::FromClipboardYaml`
-/// * `TemplateKind::FromClipboard`
-/// * `TemplateKind::AnnotateFile`
-/// `content` can be `None` because it is not used. Otherwise it must be `Some(..)`.
-pub fn create_new_note_or_synchronize_filename<T: Content>(
-    context: Context,
-    template_kind: TemplateKind,
-    content: Option<T>,
+pub fn create_new_note_or_synchronize_filename<T, F>(
+    path: &Path,
+    clipboard: &T,
+    stdin: &T,
+    tk_filter: F,
     args_export: Option<&Path>,
-) -> Result<PathBuf, NoteError> {
+) -> Result<PathBuf, NoteError>
+where
+    T: Content,
+    F: Fn(TemplateKind) -> TemplateKind,
+{
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
 
+    // Collect input data for templates.
+    let mut context = Context::from(path);
+    context.insert_environment()?;
+    context.insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, clipboard)?;
+    context.insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, stdin)?;
+
     // `template_king` will tell us what to do.
+    let (template_kind, content) = TemplateKind::from::<T>(path, clipboard, stdin);
+    let template_kind = tk_filter(template_kind);
+
     let n = match template_kind {
         TemplateKind::New
         | TemplateKind::FromClipboardYaml
