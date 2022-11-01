@@ -554,7 +554,7 @@ impl<T: Content> Note<T> {
         // Return new note.
         Ok(Note {
             context,
-            content: content,
+            content,
             rendered_filename: PathBuf::new(),
         })
     }

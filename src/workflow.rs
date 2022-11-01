@@ -86,7 +86,7 @@ fn create_new_note_or_synchronize_filename<T: Content>(
     context: Context,
 ) -> Result<PathBuf, WorkflowError> {
     // `template_type` will tell us what to do.
-    let (template_kind, content) = get_template_content(&context.path);
+    let (template_kind, content) = get_template_content::<T>(&context.path);
     // First generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
     // Does the first positional parameter point to a directory?
