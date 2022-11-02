@@ -1,9 +1,9 @@
-//! Tp-Note's low level API. The high level API is in the module
-//! `tpnote_lib::workflow`.
-//! Creates a memory representation of the note by inserting _Tp-Note_'s
+//! Tp-Note's low level API, creating a memory representation of a  
+//! note file by inserting _Tp-Note_'s
 //! environment data in some templates. If the note exists on disk already,
-//! the memory representation is established be reading the note file with
-//! its front matter.
+//! the memory representation is established be reading the note file and
+//! parsing its front matter.
+//! NB: The high level API is in the module `tpnote_lib::workflow`.
 
 use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::config::TMPL_VAR_NOTE_BODY_HTML;
@@ -295,7 +295,7 @@ impl<T: Content> Note<T> {
     /// `TemplateKind::FromClipboardYaml`,
     /// `TemplateKind::FromClipboard`, or
     /// `TemplateKind::AnnotateFile`
-
+    ///
     /// ## Example with `TemplateKind::New`
     ///
     /// ```rust
@@ -306,15 +306,15 @@ impl<T: Content> Note<T> {
     /// use tpnote_lib::template::TemplateKind;
     /// use std::env::temp_dir;
     /// use std::fs;
-
+    ///
     /// // Create a directory for the new note.
     /// let notedir = temp_dir().join("123-my dir/");
     /// fs::create_dir_all(&notedir).unwrap();
-
+    ///
     /// // Store the path in `context`.
     /// let mut context = Context::from(&notedir);
     /// context.insert_environment().unwrap();
-
+    ///
     /// // Create the `Note` object.
     /// // You can plug in your own type (must impl. `Content`).
     /// let mut n:Note<ContentString> = Note::from_content_template(
@@ -331,7 +331,7 @@ impl<T: Content> Note<T> {
     /// n.render_filename(TemplateKind::New).unwrap();
     /// n.set_next_unused_rendered_filename().unwrap();
     /// n.save().unwrap();
-
+    ///
     /// // Check the created new note file.
     /// assert!(n.rendered_filename.is_file());
     /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
@@ -352,10 +352,10 @@ impl<T: Content> Note<T> {
     /// use std::env::temp_dir;
     /// use std::path::PathBuf;
     /// use std::fs;
-
+    ///
     /// // Directory for the new note.
     /// let notedir = temp_dir();
-
+    ///
     /// // Store the path in `context`.
     /// let mut context = Context::from(&notedir);
     /// context.insert_environment().unwrap();
@@ -369,7 +369,8 @@ impl<T: Content> Note<T> {
     ///     .unwrap();
     /// // This is the condition to choose: `TemplateKind::FromClipboard`:
     /// assert!(clipboard.header().is_empty() && stdin.header().is_empty());
-
+    /// assert!(!clipboard.body().is_empty() || !stdin.body().is_empty());
+    ///
     /// // Create the `Note` object.
     /// // You can plug in your own type (must impl. `Content`).
     /// let mut n: Note<ContentString> = Note::from_content_template(
@@ -386,7 +387,7 @@ impl<T: Content> Note<T> {
     /// n.render_filename(TemplateKind::FromClipboard).unwrap();
     /// n.set_next_unused_rendered_filename().unwrap();
     /// n.save().unwrap();
-
+    ///
     /// // Check the new note file.
     /// assert!(n.rendered_filename.as_os_str().to_str().unwrap()
     ///    .contains("my stdin-my clipboard--Note"));
@@ -409,11 +410,11 @@ impl<T: Content> Note<T> {
     /// use std::env::temp_dir;
     /// use std::path::PathBuf;
     /// use std::fs;
-
+    ///
     /// // Prepare test.
     /// // Directory for the new note.
     /// let notedir = temp_dir().join("123-my dir/");
-
+    ///
     /// // Run test.
     /// // Store the path in `context`.
     /// let mut context = Context::from(&notedir);
@@ -429,7 +430,7 @@ impl<T: Content> Note<T> {
     ///     .unwrap();
     /// // This is the condition to choose: `TemplateKind::FromClipboardYaml`:
     /// assert!(!clipboard.header().is_empty() || !stdin.header().is_empty());
-
+    ///
     /// // Create the `Note` object.
     /// // You can plug in your own type (must impl. `Content`).
     /// let mut n: Note<ContentString> = Note::from_content_template(
@@ -447,7 +448,7 @@ impl<T: Content> Note<T> {
     /// n.render_filename(TemplateKind::FromClipboardYaml).unwrap();
     /// n.set_next_unused_rendered_filename().unwrap();
     /// n.save().unwrap();
-
+    ///
     /// // Check the new note file.
     /// assert!(n.rendered_filename.as_os_str().to_str().unwrap()
     ///    .contains("my dir--this overwrites"));
@@ -469,7 +470,7 @@ impl<T: Content> Note<T> {
     /// use tpnote_lib::template::TemplateKind;
     /// use std::env::temp_dir;
     /// use std::fs;
-
+    ///
     /// // Prepare the test.
     /// // Create some non-Tp-Note-file.
     /// let raw = "This simulates a non tp-note file";
@@ -477,7 +478,7 @@ impl<T: Content> Note<T> {
     /// fs::write(&non_notefile, raw.as_bytes()).unwrap();
     /// let expected = temp_dir().join("20221030-some.pdf--Note.md");
     /// let _ = fs::remove_file(&expected);
-
+    ///
     /// // Run the test.
     /// // Store the path in `context`.
     /// let mut context = Context::from(&non_notefile);
@@ -490,7 +491,7 @@ impl<T: Content> Note<T> {
     /// context
     ///     .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
     ///     .unwrap();
-
+    ///
     /// // Create the `Note` object.
     /// // You can plug in your own type (must impl. `Content`).
     /// let mut n: Note<ContentString> = Note::from_content_template(
@@ -508,7 +509,7 @@ impl<T: Content> Note<T> {
     /// n.render_filename(TemplateKind::AnnotateFile).unwrap();
     /// n.set_next_unused_rendered_filename().unwrap();
     /// n.save().unwrap();
-
+    ///
     /// // Check the new note file.
     /// assert_eq!(n.rendered_filename, expected);
     /// assert!(n.rendered_filename.is_file());

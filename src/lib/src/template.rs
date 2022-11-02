@@ -15,16 +15,17 @@ pub enum TemplateKind {
     /// Templates used when the clipboard contains a text without header.
     FromClipboard,
     /// Templates used when Tp-Note is invoked with a path pointing to a text file
-    /// does not contain a YAML header.
+    /// that does not contain a YAML header.
     FromTextFile,
     /// Templates used when Tp-Note is invoked with a path pointing to a non text
     /// file.
     AnnotateFile,
     /// Templates used when Tp-Note is invoked with a path pointing to a Tp-Note
-    /// text file with YAML header.
+    /// text file with a valid YAML header (containing as `title:` field).
     SyncFilename,
     /// No templates are used, but the file is still parsed in order to render it
-    /// later to HTML.
+    /// later to HTML (c.f. `<Note>.render_content_to_html()` and
+    /// `<Note>.export_html()`).
     #[default]
     None,
 }
@@ -38,7 +39,7 @@ impl TemplateKind {
     /// * `TemplateKind::FromClipboardYaml`
     /// * `TemplateKind::FromClipboard`
     /// * `TemplateKind::AnnotateFile`
-    /// `content` is `None` because it is not used. Otherwise the file's content from the
+    /// `content` is `None` because it is not used. Otherwise, the file's content from the
     /// is read from the disk and returned as `Some(..)`.
     pub fn from<T: Content>(path: &Path, clipboard: &T, stdin: &T) -> (Self, Option<T>) {
         let stdin_is_empty = stdin.is_empty();

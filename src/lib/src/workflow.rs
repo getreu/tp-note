@@ -1,5 +1,14 @@
 //! Tp-Note's high level API. The low level API is documented
 //! in the module `tpnote_lib::note`.
+//! 
+//! How to integrate this in your text editor code?
+//! First, call `create_new_note_or_synchronize_filename()`
+//! with the first positional command line parameter `<path>`.
+//! Then open the text file `<Note>.rendered_filename` in your
+//! text editor or alternatively, load the string 
+//! `<Note>.content.as_str()` directly into your text editor.
+//! After saving the text file, call `synchronize_filename()`
+//! and update your file path with `<Note>.rendered_filename`.
 
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_CLIPBOARD;
@@ -100,6 +109,7 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<Note<T>, NoteErro
 /// let stdin = ContentString::from_string("my stdin\n".to_string());
 /// // This is the condition to choose: `TemplateKind::FromClipboard`:
 /// assert!(clipboard.header().is_empty() && stdin.header().is_empty());
+/// assert!(!clipboard.body().is_empty() || !stdin.body().is_empty());
 /// let template_kind_filer = |tk|tk;
 ///
 /// // Start test.
@@ -124,7 +134,7 @@ where
     T: Content,
     F: Fn(TemplateKind) -> TemplateKind,
 {
-    // First generate a new note (if it does not exist), then parse its front_matter
+    // First, generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
 
     // Collect input data for templates.
