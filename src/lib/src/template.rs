@@ -30,8 +30,8 @@ pub enum TemplateKind {
 }
 
 impl TemplateKind {
-    /// Constructor.
-    /// TODO
+    /// Constructor encoding the logic under what circumstances what template.
+    /// should be used.
     ///
     /// Contract: If `template_kind` is one of:
     /// * `TemplateKind::New`

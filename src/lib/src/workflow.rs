@@ -1,4 +1,6 @@
-//! High level API. TODO
+//! Tp-Note's high level API. The low level API is documented
+//! in the module `tpnote_lib::note`.
+
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_CLIPBOARD;
 use crate::config::TMPL_VAR_CLIPBOARD_HEADER;
@@ -20,6 +22,42 @@ use tera::Value;
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk.
 /// Returns the note's new or existing filename in `<Note>.rendered_filename`.
+///
+/// ## Example with `TemplateKind::SyncFilename`
+///
+/// ```rust
+/// use tpnote_lib::content::ContentString;
+/// use tpnote_lib::workflow::synchronize_filename;
+/// use std::env::temp_dir;
+/// use std::fs;
+/// use std::path::Path;
+///
+/// // Prepare test: create existing note.
+/// let raw = r#"
+///
+/// ---
+/// title: "My day"
+/// subtitle: "Note"
+/// ---
+/// Body text
+/// "#;
+/// let notefile = temp_dir().join("20221030-hello.md");
+/// fs::write(&notefile, raw.as_bytes()).unwrap();
+///
+/// let expected = temp_dir().join("20221030-My day--Note.md");
+/// let _ = fs::remove_file(&expected);
+///
+/// // Start test.
+/// // You can plug in your own type (must impl. `Content`).
+/// let n = synchronize_filename::<ContentString>(&notefile).unwrap();
+/// let res_fn = n.rendered_filename;
+///
+/// // Check result
+/// assert_eq!(res_fn, expected);
+/// assert!(res_fn.is_file());
+/// let res_raw = fs::read_to_string(&res_fn).unwrap();
+/// assert_eq!(res_raw, raw);
+/// ```
 pub fn synchronize_filename<T: Content>(path: &Path) -> Result<Note<T>, NoteError> {
     // Collect input data for templates.
     let mut context = Context::from(&path);
@@ -36,8 +74,45 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<Note<T>, NoteErro
 /// If the note to be created exists already, append a so called `copy_counter`
 /// to the filename and try to save it again. In case this does not succeed either,
 /// increment the `copy_counter` until a free filename is found.
-/// The return path points to the (new) note file on disk.
+/// The return path in `<Note>.rendered_filename` points to the (new) note file on disk.
+/// Depending on the context, Tp-Note chooses one `TemplateKind` to operate
+/// (c.f. `tpnote_lib::template::TemplateKind::from()`).
+/// The `tk-filter` allows to overwrite this choice, e.g. you may set
+/// `TemplateKind::None` under certain circumstances. This way the caller
+/// can inject command line parameters like `--no-filename-sync`.
+///
 /// Returns the note's new or existing filename in `<Note>.rendered_filename`.
+///
+/// ## Example with `TemplateKind::FromClipboard`
+///
+/// ```rust
+/// use tpnote_lib::content::Content;
+/// use tpnote_lib::content::ContentString;
+/// use tpnote_lib::workflow::create_new_note_or_synchronize_filename;
+/// use std::env::temp_dir;
+/// use std::path::PathBuf;
+/// use std::fs;
+///
+/// // Prepare test.
+/// let notedir = temp_dir();
+///
+/// let clipboard = ContentString::from_string("my clipboard\n".to_string());
+/// let stdin = ContentString::from_string("my stdin\n".to_string());
+/// // This is the condition to choose: `TemplateKind::FromClipboard`:
+/// assert!(clipboard.header().is_empty() && stdin.header().is_empty());
+/// let template_kind_filer = |tk|tk;
+///
+/// // Start test.
+/// // You can plug in your own type (must impl. `Content`).
+/// let n = create_new_note_or_synchronize_filename::<ContentString, _>(
+///        &notedir, &clipboard, &stdin, template_kind_filer, None).unwrap();
+/// // Check result.
+/// assert!(n.rendered_filename.as_os_str().to_str().unwrap()
+///    .contains("my stdin-my clipboard--Note"));
+/// assert!(n.rendered_filename.is_file());
+/// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+/// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"my stdin\\nmy clipboard\\n\""));
+/// ```
 pub fn create_new_note_or_synchronize_filename<T, F>(
     path: &Path,
     clipboard: &T,

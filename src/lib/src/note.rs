@@ -1,3 +1,5 @@
+//! Tp-Note's low level API. The high level API is in the module
+//! `tpnote_lib::workflow`.
 //! Creates a memory representation of the note by inserting _Tp-Note_'s
 //! environment data in some templates. If the note exists on disk already,
 //! the memory representation is established be reading the note file with
@@ -75,7 +77,7 @@ impl<T: Content> Note<T> {
     /// `TemplateKind::FromTextFile`.
     ///
     ///
-    /// 1. Example with `TemplateKind::SyncFilename`
+    /// ## Example with `TemplateKind::SyncFilename`
     ///
     /// ```rust
     /// use tpnote_lib::content::Content;
@@ -85,7 +87,7 @@ impl<T: Content> Note<T> {
     /// use tpnote_lib::template::TemplateKind;
     /// use std::env::temp_dir;
     /// use std::fs;
-    ///  
+    ///
     /// // Prepare test: create existing note.
     /// let raw = r#"
     ///
@@ -119,7 +121,7 @@ impl<T: Content> Note<T> {
     /// ```
     ///
     ///
-    /// 2. Example with `TemplateKind::None`
+    /// ## Example with `TemplateKind::None`
     ///
     /// This constructor is called, when `Note` is solely created for
     /// HTML rendering and no templates will be applied.
@@ -161,7 +163,7 @@ impl<T: Content> Note<T> {
     /// ```
     ///
     ///
-    /// 3. Example with `TemplateKind::FromTextFile`
+    /// ## Example with `TemplateKind::FromTextFile`
     ///
     /// ```rust
     /// use tpnote_lib::context::Context;
@@ -294,7 +296,7 @@ impl<T: Content> Note<T> {
     /// `TemplateKind::FromClipboard`, or
     /// `TemplateKind::AnnotateFile`
 
-    /// 1. Example with `TemplateKind::New`
+    /// ## Example with `TemplateKind::New`
     ///
     /// ```rust
     /// use tpnote_lib::content::Content;
@@ -337,7 +339,7 @@ impl<T: Content> Note<T> {
     /// ```
 
     ///
-    /// 2. Example with `TemplateKind::FromClipboard`
+    /// ## Example with `TemplateKind::FromClipboard`
     ///
     /// ```rust
     /// use tpnote_lib::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
@@ -394,7 +396,7 @@ impl<T: Content> Note<T> {
     /// ```
 
     ///
-    /// 3. Example with `TemplateKind::FromClipboardYaml`
+    /// ## Example with `TemplateKind::FromClipboardYaml`
     ///
     /// ```rust
     /// use tpnote_lib::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
@@ -455,7 +457,7 @@ impl<T: Content> Note<T> {
     /// ```
 
     ///
-    /// 4. Example with `TemplateKind::AnnotateFile`
+    /// ## Example with `TemplateKind::AnnotateFile`
     ///
     /// ```rust
     /// use tpnote_lib::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
