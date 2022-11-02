@@ -36,6 +36,35 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 /// assert_eq!(c.body(), "No header");
 /// assert_eq!(c.as_str(), "No header");
 /// ```
+///
+/// The `Content` trait allows to plug in you own storage back end
+/// `ContentString` does not suit you.
+///
+/// ```rust
+/// use tpnote_lib::content::Content;
+/// use std::string::String;
+///
+/// #[derive(Debug, Eq, PartialEq, Default)]
+/// struct MyString(String);
+/// impl Content for MyString {
+///     fn from_string(input: String) -> Self {
+///         MyString(input)    
+///     }
+/// }
+///
+/// impl AsRef<str> for MyString {
+///     fn as_ref(&self) -> &str {
+///         &self.0
+///     }
+/// }
+///
+/// let input = "---\ntitle: \"My note\"\n---\nMy body";
+/// let s = MyString::from_string(input.to_string());
+///
+/// assert_eq!(s.header(), r#"title: "My note""#);
+/// assert_eq!(s.body(), r#"My body"#);
+/// assert_eq!(s.as_str(), input);
+/// ```
 pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     /// Reads the file at `path` and stores the content
     /// `Content`. Possible `\r\n` are replaced by `\n`.
@@ -59,7 +88,10 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     /// ```
     fn open(path: &Path) -> Result<Self, std::io::Error>
     where
-        Self: Sized;
+        Self: Sized,
+    {
+        Ok(Self::from_string_with_cr(read_to_string(path)?))
+    }
 
     /// Constructor that parses a _Tp-Note_ document.
     /// A valid document is UTF-8 encoded and starts with an optional
@@ -116,14 +148,80 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
         Self::from_string(input)
     }
 
-    /// Cheap access to the header between `---` and `---`.
-    fn header(&self) -> &str;
+    /// Provides cheap access to the header between `---` and `---`.
+    /// The default implementation is very expensive. Overwrite this.
+    fn header(&self) -> &str {
+        let (header, _) = Self::split(&self.as_str());
+        header
+    }
 
-    /// Cheap access to the body after the second `---`.
-    fn body(&self) -> &str;
+    /// Provides cheap access to the body after the second `---`.
+    /// The default implementation is very expensive. Overwrite this.
+    fn body(&self) -> &str {
+        let (_, body) = Self::split(&self.as_str());
+        body
+    }
 
-    /// Write `Content` to disk
-    fn save_as(&self, new_file_path: &Path) -> Result<(), std::io::Error>;
+    /// Writes the note to disk with `new_file_path` as filename.
+    /// If `new_file_path` contains missing directories, they will be
+    /// created on the fly.
+    ///
+    /// ```rust
+    /// use std::path::Path;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// let c = ContentString::from_string(
+    ///      String::from("prelude\n\n---\ntitle: \"My note\"\n---\nMy body"));
+    /// let outfile = temp_dir().join("mynote.md");
+    /// #[cfg(not(target_family = "windows"))]
+    /// let expected = "\u{feff}---\ntitle: \"My note\"\n---\nMy body\n";
+    /// #[cfg(target_family = "windows")]
+    /// let expected = "\u{feff}---\r\ntitle: \"My note\"\r\n---\r\nMy body\r\n";
+    ///
+    /// c.save_as(&outfile).unwrap();
+    /// let result = fs::read_to_string(&outfile).unwrap();
+    ///
+    /// assert_eq!(result, expected);
+    /// fs::remove_file(&outfile);
+    /// ```
+    fn save_as(&self, new_file_path: &Path) -> Result<(), std::io::Error> {
+        // Create missing directories, if there are any.
+        create_dir_all(new_file_path.parent().unwrap_or_else(|| Path::new("")))?;
+
+        let mut outfile = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&new_file_path)?;
+
+        log::trace!("Creating file: {:?}", new_file_path);
+        write!(outfile, "\u{feff}")?;
+        if !self.header().is_empty() {
+            write!(outfile, "---")?;
+            #[cfg(target_family = "windows")]
+            write!(outfile, "\r")?;
+            writeln!(outfile)?;
+            for l in self.header().lines() {
+                write!(outfile, "{}", l)?;
+                #[cfg(target_family = "windows")]
+                write!(outfile, "\r")?;
+                writeln!(outfile)?;
+            }
+            write!(outfile, "---")?;
+            #[cfg(target_family = "windows")]
+            write!(outfile, "\r")?;
+            writeln!(outfile)?;
+        };
+        for l in self.body().lines() {
+            write!(outfile, "{}", l)?;
+            #[cfg(target_family = "windows")]
+            write!(outfile, "\r")?;
+            writeln!(outfile)?;
+        }
+
+        Ok(())
+    }
 
     /// Accesses the whole content with all `---`.
     /// Contract: The content does not contain any `\r\n`.
@@ -238,34 +336,8 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
 }
 
 impl Content for ContentString {
-    fn open(path: &Path) -> Result<Self, std::io::Error>
-    where
-        Self: Sized,
-    {
-        Ok(ContentString::from_string_with_cr(read_to_string(path)?))
-    }
-    /// Constructor that parses a _Tp-Note_ document.
-    /// A valid document is UTF-8 encoded and starts with an optional
-    /// BOM (byte order mark) followed by `---`. When the start marker
-    /// `---` does not follow directly the BOM, it must be prepended
-    /// by an empty line. In this case all text before is ignored:
-    /// BOM + ignored text + empty line + `---`.
-    ///
-    /// ```rust
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// let input = "---\ntitle: \"My note\"\n---\nMy body";
-    /// let c = ContentString::from_string(input.to_string());
-    ///
-    /// assert_eq!(c.header(), r#"title: "My note""#);
-    /// assert_eq!(c.body(), "My body");
-    ///
-    /// // A test without front matter leads to an empty header:
-    /// let c = ContentString::from_string("No header".to_string());
-    ///
-    /// assert_eq!(c.header(), "");
-    /// assert_eq!(c.body(), "No header");
-    /// ```
+    /// Self referential. The constructor splits the content
+    /// in header and body.
     fn from_string(input: String) -> Self {
         ContentString::new(input, |owner: &String| {
             let (header, body) = ContentString::split(owner);
@@ -273,77 +345,19 @@ impl Content for ContentString {
         })
     }
 
+    /// Cheap access to the note's header.
     fn header(&self) -> &str {
         self.borrow_dependent().header
     }
 
+    /// Cheap access to the note's body.
     fn body(&self) -> &str {
         self.borrow_dependent().body
-    }
-
-    /// Writes the note to disk with `new_file_path` as filename.
-    /// If `new_file_path` contains missing directories, they will be
-    /// created on the fly.
-    ///
-    /// ```rust
-    /// use std::path::Path;
-    /// use std::env::temp_dir;
-    /// use std::fs;
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// let c = ContentString::from_string(
-    ///      String::from("prelude\n\n---\ntitle: \"My note\"\n---\nMy body"));
-    /// let outfile = temp_dir().join("mynote.md");
-    /// #[cfg(not(target_family = "windows"))]
-    /// let expected = "\u{feff}---\ntitle: \"My note\"\n---\nMy body\n";
-    /// #[cfg(target_family = "windows")]
-    /// let expected = "\u{feff}---\r\ntitle: \"My note\"\r\n---\r\nMy body\r\n";
-    ///
-    /// c.save_as(&outfile).unwrap();
-    /// let result = fs::read_to_string(&outfile).unwrap();
-    ///
-    /// assert_eq!(result, expected);
-    /// fs::remove_file(&outfile);
-    /// ```
-    fn save_as(&self, new_file_path: &Path) -> Result<(), std::io::Error> {
-        // Create missing directories, if there are any.
-        create_dir_all(new_file_path.parent().unwrap_or_else(|| Path::new("")))?;
-
-        let mut outfile = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open(&new_file_path)?;
-
-        log::trace!("Creating file: {:?}", new_file_path);
-        write!(outfile, "\u{feff}")?;
-        if !self.borrow_dependent().header.is_empty() {
-            write!(outfile, "---")?;
-            #[cfg(target_family = "windows")]
-            write!(outfile, "\r")?;
-            writeln!(outfile)?;
-            for l in self.borrow_dependent().header.lines() {
-                write!(outfile, "{}", l)?;
-                #[cfg(target_family = "windows")]
-                write!(outfile, "\r")?;
-                writeln!(outfile)?;
-            }
-            write!(outfile, "---")?;
-            #[cfg(target_family = "windows")]
-            write!(outfile, "\r")?;
-            writeln!(outfile)?;
-        };
-        for l in self.borrow_dependent().body.lines() {
-            write!(outfile, "{}", l)?;
-            #[cfg(target_family = "windows")]
-            write!(outfile, "\r")?;
-            writeln!(outfile)?;
-        }
-
-        Ok(())
     }
 }
 
 impl Default for ContentString {
+    /// Default is the empty string.
     fn default() -> Self {
         Self::from_string(String::new())
     }
