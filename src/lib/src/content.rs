@@ -23,14 +23,14 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 /// use tpnote_lib::content::Content;
 /// use tpnote_lib::content::ContentString;
 /// let input = "---\ntitle: \"My note\"\n---\nMy body";
-/// let c = ContentString::from_string(String::from(input));
+/// let c = ContentString::from(String::from(input));
 ///
 /// assert_eq!(c.header(), r#"title: "My note""#);
 /// assert_eq!(c.body(), r#"My body"#);
 /// assert_eq!(c.as_str(), input);
 ///
 /// // A test without front matter leads to an empty header:
-/// let c = ContentString::from_string(String::from("No header"));
+/// let c = ContentString::from(String::from("No header"));
 ///
 /// assert_eq!(c.header(), "");
 /// assert_eq!(c.body(), "No header");
@@ -61,7 +61,7 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 /// }
 ///
 /// let input = "---\ntitle: \"My note\"\n---\nMy body";
-/// let s = MyString::from_string(input.to_string());
+/// let s = MyString::from(input.to_string());
 ///
 /// assert_eq!(s.header(), r#"title: "My note""#);
 /// assert_eq!(s.body(), r#"My body"#);
@@ -95,32 +95,6 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
         Ok(Self::from_string_with_cr(read_to_string(path)?))
     }
 
-    /// Constructor that parses a _Tp-Note_ document.
-    /// A valid document is UTF-8 encoded and starts with an optional
-    /// BOM (byte order mark) followed by `---`. When the start marker
-    /// `---` does not follow directly the BOM, it must be prepended
-    /// by an empty line. In this case all text before is ignored:
-    /// BOM + ignored text + empty line + `---`.
-    ///
-    /// ```rust
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// let input = "---\ntitle: \"My note\"\n---\nMy body";
-    /// let c = ContentString::from_string(input.to_string());
-    ///
-    /// assert_eq!(c.header(), r#"title: "My note""#);
-    /// assert_eq!(c.body(), "My body");
-    ///
-    /// // A test without front matter leads to an empty header:
-    /// let c = ContentString::from_string("No header".to_string());
-    ///
-    /// assert_eq!(c.header(), "");
-    /// assert_eq!(c.body(), "No header");
-    /// ```
-    fn from_string(input: String) -> Self {
-        Self::from(input)
-    }
-
     /// Constructor that reads a structured document with a YAML header
     /// and body. All `\r\n` are converted to `\n` if there are any.
     /// If not, no memory allocation occurs and the buffer remains untouched.
@@ -135,7 +109,7 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
     /// assert_eq!(c.body(), "My\nbody\n");
     ///
     /// // A test without front matter leads to an empty header:
-    /// let c = ContentString::from_string(String::from("No header"));
+    /// let c = ContentString::from(String::from("No header"));
     ///
     /// assert_eq!(c.borrow_dependent().header, "");
     /// assert_eq!(c.borrow_dependent().body, r#"No header"#);
@@ -149,7 +123,7 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
             // We allocate here and do a lot of copying.
             input.replace("\r\n", "\n")
         };
-        Self::from_string(input)
+        Self::from(input)
     }
 
     /// Provides cheap access to the header between `---` and `---`.
@@ -176,7 +150,7 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
     /// use std::fs;
     /// use tpnote_lib::content::Content;
     /// use tpnote_lib::content::ContentString;
-    /// let c = ContentString::from_string(
+    /// let c = ContentString::from(
     ///      String::from("prelude\n\n---\ntitle: \"My note\"\n---\nMy body"));
     /// let outfile = temp_dir().join("mynote.md");
     /// #[cfg(not(target_family = "windows"))]
@@ -354,7 +328,7 @@ impl Content for ContentString {
 impl Default for ContentString {
     /// Default is the empty string.
     fn default() -> Self {
-        Self::from_string(String::new())
+        Self::from(String::new())
     }
 }
 
@@ -369,13 +343,13 @@ impl Default for ContentString {
 /// use tpnote_lib::content::Content;
 /// use tpnote_lib::content::ContentString;
 /// let input = "---\ntitle: \"My note\"\n---\nMy body";
-/// let c = ContentString::from_string(input.to_string());
+/// let c = ContentString::from(input.to_string());
 ///
 /// assert_eq!(c.header(), r#"title: "My note""#);
 /// assert_eq!(c.body(), "My body");
 ///
 /// // A test without front matter leads to an empty header:
-/// let c = ContentString::from_string("No header".to_string());
+/// let c = ContentString::from("No header".to_string());
 ///
 /// assert_eq!(c.header(), "");
 /// assert_eq!(c.body(), "No header");
@@ -472,26 +446,25 @@ mod tests {
     #[test]
     fn test_new() {
         // Test Unix string.
-        let content = ContentString::from_string("first\nsecond\nthird".to_string());
+        let content = ContentString::from("first\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test BOM removal.
-        let content = ContentString::from_string("\u{feff}first\nsecond\nthird".to_string());
+        let content = ContentString::from("\u{feff}first\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
 
         // Test header extraction.
-        let content =
-            ContentString::from_string("\u{feff}---\nfirst\n---\nsecond\nthird".to_string());
+        let content = ContentString::from("\u{feff}---\nfirst\n---\nsecond\nthird".to_string());
         assert_eq!(content.borrow_dependent().header, "first");
         assert_eq!(content.borrow_dependent().body, "second\nthird");
 
         // Test header extraction without `\n` at the end.
-        let content = ContentString::from_string("\u{feff}---\nfirst\n---".to_string());
+        let content = ContentString::from("\u{feff}---\nfirst\n---".to_string());
         assert_eq!(content.borrow_dependent().header, "first");
         assert_eq!(content.borrow_dependent().body, "");
 
         // Some skipped bytes.
-        let content = ContentString::from_string("\u{feff}ignored\n\n---\nfirst\n---".to_string());
+        let content = ContentString::from("\u{feff}ignored\n\n---\nfirst\n---".to_string());
         assert_eq!(content.borrow_dependent().header, "first");
         assert_eq!(content.borrow_dependent().body, "");
 
@@ -500,7 +473,7 @@ mod tests {
         s.push_str(&String::from_utf8(vec![b'X'; BEFORE_HEADER_MAX_IGNORED_CHARS]).unwrap());
         s.push_str("\n\n---\nfirst\n---\nsecond");
         let s_ = s.clone();
-        let content = ContentString::from_string(s);
+        let content = ContentString::from(s);
         assert_eq!(content.borrow_dependent().header, "");
         assert_eq!(content.borrow_dependent().body, &s_[3..]);
 
@@ -514,7 +487,7 @@ mod tests {
             .unwrap(),
         );
         s.push_str("\n\n---\nfirst\n---\nsecond");
-        let content = ContentString::from_string(s);
+        let content = ContentString::from(s);
         assert_eq!(content.borrow_dependent().header, "first");
         assert_eq!(content.borrow_dependent().body, "second");
     }
@@ -597,19 +570,19 @@ mod tests {
     #[test]
     fn test_display_for_content() {
         let expected = "\u{feff}---\nfirst\n---\n\nsecond\nthird\n".to_string();
-        let input = ContentString::from_string(expected.clone());
+        let input = ContentString::from(expected.clone());
         assert_eq!(input.to_string(), expected);
 
         let expected = "\nsecond\nthird\n".to_string();
-        let input = ContentString::from_string(expected.clone());
+        let input = ContentString::from(expected.clone());
         assert_eq!(input.to_string(), expected);
 
         let expected = "".to_string();
-        let input = ContentString::from_string(expected.clone());
+        let input = ContentString::from(expected.clone());
         assert_eq!(input.to_string(), expected);
 
         let expected = "\u{feff}---\nfirst\n---\n\nsecond\nthird\n".to_string();
-        let input = ContentString::from_string(
+        let input = ContentString::from(
             "\u{feff}ignored\n\n---\nfirst\n---\n\nsecond\nthird\n".to_string(),
         );
         assert_eq!(input.to_string(), expected);

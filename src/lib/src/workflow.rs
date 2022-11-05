@@ -1,11 +1,11 @@
 //! Tp-Note's high level API. The low level API is documented
 //! in the module `tpnote_lib::note`.
-//! 
+//!
 //! How to integrate this in your text editor code?
 //! First, call `create_new_note_or_synchronize_filename()`
 //! with the first positional command line parameter `<path>`.
 //! Then open the text file `<Note>.rendered_filename` in your
-//! text editor or alternatively, load the string 
+//! text editor or alternatively, load the string
 //! `<Note>.content.as_str()` directly into your text editor.
 //! After saving the text file, call `synchronize_filename()`
 //! and update your file path with `<Note>.rendered_filename`.
@@ -105,8 +105,8 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<Note<T>, NoteErro
 /// // Prepare test.
 /// let notedir = temp_dir();
 ///
-/// let clipboard = ContentString::from_string("my clipboard\n".to_string());
-/// let stdin = ContentString::from_string("my stdin\n".to_string());
+/// let clipboard = ContentString::from("my clipboard\n".to_string());
+/// let stdin = ContentString::from("my stdin\n".to_string());
 /// // This is the condition to choose: `TemplateKind::FromClipboard`:
 /// assert!(clipboard.header().is_empty() && stdin.header().is_empty());
 /// assert!(!clipboard.body().is_empty() || !stdin.body().is_empty());

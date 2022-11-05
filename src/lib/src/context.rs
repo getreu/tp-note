@@ -128,12 +128,12 @@ impl Context {
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     ///
     /// context.insert_content("clipboard", "clipboard_header",
-    ///      &ContentString::from_string(String::from("Data from clipboard.")));
+    ///      &ContentString::from(String::from("Data from clipboard.")));
     /// assert_eq!(&context.get("clipboard").unwrap().to_string(),
     ///     "\"Data from clipboard.\"");
     ///
     /// context.insert_content("stdin", "stdin_header",
-    ///      &ContentString::from_string("---\ntitle: \"My Stdin.\"\n---\nbody".to_string()));
+    ///      &ContentString::from("---\ntitle: \"My Stdin.\"\n---\nbody".to_string()));
     /// assert_eq!(&context.get("stdin").unwrap().to_string(),
     ///     r#""body""#);
     /// assert_eq!(&context.get("stdin_header").unwrap().to_string(),

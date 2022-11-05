@@ -359,11 +359,11 @@ impl<T: Content> Note<T> {
     /// // Store the path in `context`.
     /// let mut context = Context::from(&notedir);
     /// context.insert_environment().unwrap();
-    /// let clipboard = ContentString::from_string("my clipboard\n".to_string());
+    /// let clipboard = ContentString::from("my clipboard\n".to_string());
     /// context
     ///     .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
     ///     .unwrap();
-    /// let stdin = ContentString::from_string("my stdin\n".to_string());
+    /// let stdin = ContentString::from("my stdin\n".to_string());
     /// context
     ///     .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
     ///     .unwrap();
@@ -419,11 +419,11 @@ impl<T: Content> Note<T> {
     /// // Store the path in `context`.
     /// let mut context = Context::from(&notedir);
     /// context.insert_environment().unwrap();
-    /// let clipboard = ContentString::from_string("my clipboard\n".to_string());
+    /// let clipboard = ContentString::from("my clipboard\n".to_string());
     /// context
     ///     .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
     ///     .unwrap();
-    /// let stdin = ContentString::from_string(
+    /// let stdin = ContentString::from(
     ///      "---\nsubtitle: \"this overwrites\"\n---\nstdin body".to_string());
     /// context
     ///     .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
@@ -530,7 +530,7 @@ impl<T: Content> Note<T> {
 
         // render template
 
-        let content: T = Content::from_string({
+        let content: T = T::from({
             let mut tera = Tera::default();
             tera.extend(&TERA)?;
 
