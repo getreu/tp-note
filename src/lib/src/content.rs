@@ -46,9 +46,11 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 ///
 /// #[derive(Debug, Eq, PartialEq, Default)]
 /// struct MyString(String);
-/// impl Content for MyString {
-///     fn from_string(input: String) -> Self {
-///         MyString(input)    
+/// impl Content for MyString {}
+///
+/// impl From<String> for MyString {
+///     fn from(input: String) -> Self {
+///         Self(input)    
 ///     }
 /// }
 ///
@@ -65,7 +67,7 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 /// assert_eq!(s.body(), r#"My body"#);
 /// assert_eq!(s.as_str(), input);
 /// ```
-pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
+pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> {
     /// Reads the file at `path` and stores the content
     /// `Content`. Possible `\r\n` are replaced by `\n`.
     /// This trait has a default implementation, the empty content.
@@ -115,7 +117,9 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     /// assert_eq!(c.header(), "");
     /// assert_eq!(c.body(), "No header");
     /// ```
-    fn from_string(input: String) -> Self;
+    fn from_string(input: String) -> Self {
+        Self::from(input)
+    }
 
     /// Constructor that reads a structured document with a YAML header
     /// and body. All `\r\n` are converted to `\n` if there are any.
@@ -336,15 +340,6 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
 }
 
 impl Content for ContentString {
-    /// Self referential. The constructor splits the content
-    /// in header and body.
-    fn from_string(input: String) -> Self {
-        ContentString::new(input, |owner: &String| {
-            let (header, body) = ContentString::split(owner);
-            ContentRef { header, body }
-        })
-    }
-
     /// Cheap access to the note's header.
     fn header(&self) -> &str {
         self.borrow_dependent().header
@@ -360,6 +355,39 @@ impl Default for ContentString {
     /// Default is the empty string.
     fn default() -> Self {
         Self::from_string(String::new())
+    }
+}
+
+/// Constructor that parses a _Tp-Note_ document.
+/// A valid document is UTF-8 encoded and starts with an optional
+/// BOM (byte order mark) followed by `---`. When the start marker
+/// `---` does not follow directly the BOM, it must be prepended
+/// by an empty line. In this case all text before is ignored:
+/// BOM + ignored text + empty line + `---`.
+///
+/// ```rust
+/// use tpnote_lib::content::Content;
+/// use tpnote_lib::content::ContentString;
+/// let input = "---\ntitle: \"My note\"\n---\nMy body";
+/// let c = ContentString::from_string(input.to_string());
+///
+/// assert_eq!(c.header(), r#"title: "My note""#);
+/// assert_eq!(c.body(), "My body");
+///
+/// // A test without front matter leads to an empty header:
+/// let c = ContentString::from_string("No header".to_string());
+///
+/// assert_eq!(c.header(), "");
+/// assert_eq!(c.body(), "No header");
+/// ```
+impl From<String> for ContentString {
+    /// Self referential. The constructor splits the content
+    /// in header and body.
+    fn from(input: String) -> Self {
+        ContentString::new(input, |owner: &String| {
+            let (header, body) = ContentString::split(owner);
+            ContentRef { header, body }
+        })
     }
 }
 
