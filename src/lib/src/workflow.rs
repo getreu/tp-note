@@ -9,6 +9,112 @@
 //! `<Note>.content.as_str()` directly into your text editor.
 //! After saving the text file, call `synchronize_filename()`
 //! and update your file path with `<Note>.rendered_filename`.
+//!
+//! ## Example with `TemplateKind::New`
+//!
+//! ```rust
+//! use tpnote_lib::content::Content;
+//! use tpnote_lib::content::ContentString;
+//! use tpnote_lib::workflow::synchronize_filename;
+//! use tpnote_lib::workflow::create_new_note_or_synchronize_filename;
+//! use std::env::temp_dir;
+//! use std::fs;
+//! use std::path::Path;
+//!
+//! // Prepare test.
+//! let notedir = temp_dir();
+//!
+//! let clipboard = ContentString::default();
+//! let stdin = ContentString::default();
+//! // This is the condition to choose: `TemplateKind::New`:
+//! assert!(clipboard.is_empty() || stdin.is_empty());
+//! let template_kind_filer = |tk|tk;
+//!
+//! // Start test.
+//! // You can plug in your own type (must impl. `Content`).
+//! let n = create_new_note_or_synchronize_filename::<ContentString, _>(
+//!        &notedir, &clipboard, &stdin, template_kind_filer, None).unwrap();
+//! // Check result.
+//! assert!(n.rendered_filename.as_os_str().to_str().unwrap()
+//!    .contains("--Note"));
+//! assert!(n.rendered_filename.is_file());
+//! let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+//! assert!(raw_note.starts_with("\u{feff}---\ntitle:"));
+//! ```
+//!
+//! The internal data storage for the note's content is `ContentString`
+//! which implements the `Content` trait. Now we modify slightly  
+//! the above example to showcases, how to overwrite
+//! one of the trait's methods.
+//!
+//! ```rust
+//! use std::path::Path;
+//! use tpnote_lib::content::Content;
+//! use tpnote_lib::content::ContentString;
+//! use tpnote_lib::workflow::create_new_note_or_synchronize_filename;
+//! use std::env::temp_dir;
+//! use std::path::PathBuf;
+//! use std::fs;
+//! use std::fs::OpenOptions;
+//! use std::io::Write;
+//! use std::ops::Deref;
+//!
+//! #[derive(Default, Debug, Eq, PartialEq)]
+//! // We need a newtype because of the orphan.
+//! pub struct MyContentString(ContentString);
+//!
+//! impl From<String> for MyContentString {
+//!     fn from(input: String) -> Self {
+//!         MyContentString(ContentString::from(input))
+//!     }
+//! }
+//!
+//! impl AsRef<str> for MyContentString {
+//!     fn as_ref(&self) -> &str {
+//!         self.0.as_ref()
+//!     }
+//! }
+//!
+//! impl Content for MyContentString {
+//!     // Now we overwrite one method to show how to plugin custom code.
+//!     fn save_as(&self, new_file_path: &Path) -> Result<(), std::io::Error> {
+//!         let mut outfile = OpenOptions::new()
+//!             .write(true)
+//!             .create(true)
+//!             .open(&new_file_path)?;
+//!         write!(outfile, "Simulation")?;
+//!         Ok(())
+//!     }
+//!    fn header(&self) -> &str {
+//!        self.0.header()
+//!    }
+//!
+//!    fn body(&self) -> &str {
+//!        self.0.header()
+//!    }
+//!         
+//! }
+//!
+//! // Prepare test.
+//! let notedir = temp_dir();
+//!
+//! let clipboard = MyContentString::default();
+//! let stdin = MyContentString::default();
+//! // This is the condition to choose: `TemplateKind::New`:
+//! assert!(clipboard.is_empty() || stdin.is_empty());
+//! let template_kind_filer = |tk|tk;
+//!
+//! // Start test.
+//! // Here we plugin our own type (must implement `Content`).
+//! let n = create_new_note_or_synchronize_filename::<MyContentString, _>(
+//!        &notedir, &clipboard, &stdin, template_kind_filer, None).unwrap();
+//! // Check result.
+//! assert!(n.rendered_filename.as_os_str().to_str().unwrap()
+//!    .contains("--Note"));
+//! assert!(n.rendered_filename.is_file());
+//! let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+//! assert_eq!(raw_note, "Simulation");
+//! ```
 
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_CLIPBOARD;
@@ -31,6 +137,7 @@ use tera::Value;
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk.
 /// Returns the note's new or existing filename in `<Note>.rendered_filename`.
+///
 ///
 /// ## Example with `TemplateKind::SyncFilename`
 ///

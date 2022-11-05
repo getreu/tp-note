@@ -37,7 +37,7 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 /// assert_eq!(c.as_str(), "No header");
 /// ```
 ///
-/// The `Content` trait allows to plug in you own storage back end
+/// The `Content` trait allows to plug in you own storage back end if
 /// `ContentString` does not suit you.
 ///
 /// ```rust
@@ -46,7 +46,15 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 ///
 /// #[derive(Debug, Eq, PartialEq, Default)]
 /// struct MyString(String);
-/// impl Content for MyString {}
+/// impl Content for MyString {
+///     /// This sample implementation is too expensive.
+///     fn header(&self) -> &str {
+///         Self::split(&self.as_str()).0
+///     }
+///     fn body(&self) -> &str {
+///         Self::split(&self.as_str()).1
+///     }
+/// }
 ///
 /// impl From<String> for MyString {
 ///     fn from(input: String) -> Self {
@@ -126,19 +134,11 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
         Self::from(input)
     }
 
-    /// Provides cheap access to the header between `---` and `---`.
-    /// The default implementation is very expensive. Overwrite this.
-    fn header(&self) -> &str {
-        let (header, _) = Self::split(&self.as_str());
-        header
-    }
+    /// We assume, that `Self` == `Newtype<ContentString>`
+    fn header(&self) -> &str;
 
-    /// Provides cheap access to the body after the second `---`.
-    /// The default implementation is very expensive. Overwrite this.
-    fn body(&self) -> &str {
-        let (_, body) = Self::split(&self.as_str());
-        body
-    }
+    /// We assume, that `Self` == `Newtype<ContentString>`
+    fn body(&self) -> &str;
 
     /// Writes the note to disk with `new_file_path` as filename.
     /// If `new_file_path` contains missing directories, they will be
