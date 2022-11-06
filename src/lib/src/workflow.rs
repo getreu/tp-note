@@ -1,5 +1,5 @@
-//! Tp-Note's high level API. The low level API is documented
-//! in the module `tpnote_lib::note`.
+//! Tp-Note's high level API.<!-- The low level API is documented
+//! in the module `tpnote_lib::note`. -->
 //!
 //! How to integrate this in your text editor code?
 //! First, call `create_new_note_or_synchronize_filename()`
