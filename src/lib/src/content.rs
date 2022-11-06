@@ -298,24 +298,34 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
     }
 }
 
-impl Content for ContentString {
-    /// Cheap access to the note's header.
-    fn header(&self) -> &str {
-        self.borrow_dependent().header
-    }
-
-    /// Cheap access to the note's body.
-    fn body(&self) -> &str {
-        self.borrow_dependent().body
-    }
+#[derive(Debug, Eq, PartialEq)]
+/// Pointers belonging to the self referential struct `Content`.
+pub struct ContentRef<'a> {
+    /// Skip optional BOM and `"---" `in `s` until next `"---"`.
+    /// When no `---` is found, this is empty.
+    /// `header` is always trimmed.
+    pub header: &'a str,
+    /// Skip optional BOM and optional header and keep the rest.
+    pub body: &'a str,
 }
 
-impl Default for ContentString {
-    /// Default is the empty string.
-    fn default() -> Self {
-        Self::from(String::new())
+self_cell!(
+/// Holds the notes content in a string and two string slices
+/// `header`  and `body`.
+/// This struct is self referencial.
+/// It deals with operating system specific handling of newlines.
+/// The content of a note is stored as UTF-8 string with
+/// one `\n` character as newline. If present, a Byte Order Mark
+/// BOM is removed while reading with `new()`.
+    pub struct ContentString {
+        owner: String,
+
+        #[covariant]
+        dependent: ContentRef,
     }
-}
+
+    impl {Debug, Eq, PartialEq}
+);
 
 /// Constructor that parses a _Tp-Note_ document.
 /// A valid document is UTF-8 encoded and starts with an optional
@@ -350,34 +360,25 @@ impl From<String> for ContentString {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
-/// Pointers belonging to the self referential struct `Content`.
-pub struct ContentRef<'a> {
-    /// Skip optional BOM and `"---" `in `s` until next `"---"`.
-    /// When no `---` is found, this is empty.
-    /// `header` is always trimmed.
-    pub header: &'a str,
-    /// Skip optional BOM and optional header and keep the rest.
-    pub body: &'a str,
-}
-
-self_cell!(
-/// Holds the notes content in a string and two string slices
-/// `header`  and `body`.
-/// This struct is self referencial.
-/// It deals with operating system specific handling of newlines.
-/// The content of a note is stored as UTF-8 string with
-/// one `\n` character as newline. If present, a Byte Order Mark
-/// BOM is removed while reading with `new()`.
-    pub struct ContentString {
-        owner: String,
-
-        #[covariant]
-        dependent: ContentRef,
+/// Add `header()` and `body()` implementation.
+impl Content for ContentString {
+    /// Cheap access to the note's header.
+    fn header(&self) -> &str {
+        self.borrow_dependent().header
     }
 
-    impl {Debug, Eq, PartialEq}
-);
+    /// Cheap access to the note's body.
+    fn body(&self) -> &str {
+        self.borrow_dependent().body
+    }
+}
+
+/// Default is the empty string.
+impl Default for ContentString {
+    fn default() -> Self {
+        Self::from(String::new())
+    }
+}
 
 /// Returns the whole raw content with header and body.
 /// Possible `\r\n` in the input are replaced by `\n`.
