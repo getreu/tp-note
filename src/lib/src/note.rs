@@ -206,7 +206,10 @@ impl<T: Content> Note<T> {
     /// assert_eq!(&n.rendered_filename, &expected);
     /// assert!(n.rendered_filename.is_file());
     /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+    /// #[cfg(not(target_family = "windows"))]
     /// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"hello \""));
+    /// #[cfg(target_family = "windows")]
+    /// assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      \"hello \""));
     /// ```
     pub fn from_text_file(
         mut context: Context,
@@ -335,7 +338,10 @@ impl<T: Content> Note<T> {
     /// // Check the created new note file.
     /// assert!(n.rendered_filename.is_file());
     /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+    /// #[cfg(not(target_family = "windows"))]
     /// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"my dir\""));
+    /// #[cfg(target_family = "windows")]
+    /// assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      \"my dir\""));
     /// ```
 
     ///
@@ -393,7 +399,12 @@ impl<T: Content> Note<T> {
     ///    .contains("my stdin-my clipboard--Note"));
     /// assert!(n.rendered_filename.is_file());
     /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
-    /// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"my stdin\\nmy clipboard\\n\""));
+    /// #[cfg(not(target_family = "windows"))]
+    /// assert!(raw_note.starts_with(
+    ///            "\u{feff}---\ntitle:      \"my stdin\\nmy clipboard\\n\""));
+    /// #[cfg(target_family = "windows")]
+    /// assert!(raw_note.starts_with(
+    ///            "\u{feff}---\r\ntitle:      \"my stdin"));
     /// ```
 
     ///
@@ -454,7 +465,10 @@ impl<T: Content> Note<T> {
     ///    .contains("my dir--this overwrites"));
     /// assert!(n.rendered_filename.is_file());
     /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+    /// #[cfg(not(target_family = "windows"))]
     /// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"my dir\""));
+    /// #[cfg(target_family = "windows")]
+    /// assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      \"my dir\""));
     /// ```
 
     ///

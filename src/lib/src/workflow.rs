@@ -39,7 +39,10 @@
 //!    .contains("--Note"));
 //! assert!(n.rendered_filename.is_file());
 //! let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+//! #[cfg(not(target_family = "windows"))]
 //! assert!(raw_note.starts_with("\u{feff}---\ntitle:"));
+//! #[cfg(target_family = "windows")]
+//! assert!(raw_note.starts_with("\u{feff}---\r\ntitle:"));
 //! ```
 //!
 //! The internal data storage for the note's content is `ContentString`
@@ -171,8 +174,6 @@ use tera::Value;
 /// // Check result
 /// assert_eq!(res_fn, expected);
 /// assert!(res_fn.is_file());
-/// let res_raw = fs::read_to_string(&res_fn).unwrap();
-/// assert_eq!(res_raw, raw);
 /// ```
 pub fn synchronize_filename<T: Content>(path: &Path) -> Result<Note<T>, NoteError> {
     // Collect input data for templates.
@@ -228,7 +229,13 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<Note<T>, NoteErro
 ///    .contains("my stdin-my clipboard--Note"));
 /// assert!(n.rendered_filename.is_file());
 /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
-/// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"my stdin\\nmy clipboard\\n\""));
+///
+/// #[cfg(not(target_family = "windows"))]
+/// assert!(raw_note.starts_with(
+///            "\u{feff}---\ntitle:      \"my stdin\\nmy clipboard\\n\""));
+/// #[cfg(target_family = "windows")]
+/// assert!(raw_note.starts_with(
+///            "\u{feff}---\r\ntitle:      \"my stdin"));
 /// ```
 pub fn create_new_note_or_synchronize_filename<T, F>(
     path: &Path,
