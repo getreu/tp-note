@@ -8,15 +8,8 @@
 use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::config::TMPL_VAR_NOTE_BODY_HTML;
 use crate::config::TMPL_VAR_NOTE_BODY_TEXT;
-#[cfg(feature = "viewer")]
-use crate::config::TMPL_VAR_NOTE_ERRONEOUS_CONTENT_HTML;
-#[cfg(feature = "viewer")]
-use crate::config::TMPL_VAR_NOTE_ERROR;
 use crate::config::TMPL_VAR_NOTE_FILE_DATE;
 use crate::config::TMPL_VAR_NOTE_FM_TEXT;
-use crate::config::TMPL_VAR_NOTE_JS;
-#[cfg(feature = "viewer")]
-use crate::config::TMPL_VAR_PATH;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
@@ -30,8 +23,6 @@ use crate::template::TemplateKind;
 #[cfg(feature = "renderer")]
 use cmark_syntax::SyntaxPreprocessor;
 use parse_hyperlinks::renderer::text_links2html;
-#[cfg(feature = "viewer")]
-use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
 use pulldown_cmark::{html, Options, Parser};
 #[cfg(feature = "renderer")]
@@ -128,6 +119,7 @@ impl<T: Content> Note<T> {
     ///
     /// ```rust
     /// use tpnote_lib::config::LIB_CFG;
+    /// use tpnote_lib::config::TMPL_VAR_NOTE_JS;
     /// use tpnote_lib::content::Content;
     /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::context::Context;
@@ -150,6 +142,8 @@ impl<T: Content> Note<T> {
     /// // Only minimal context is needed, because no templates are applied later.
     /// let mut context = Context::from(&notefile);
     /// context.insert_environment().unwrap();
+    /// // We do not inject any JavaScript.
+    /// context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
     /// // Create note object.
     /// let content = <ContentString as Content>::open(&notefile).unwrap();
     /// // You can plug in your own type (must impl. `Content`).
@@ -157,7 +151,7 @@ impl<T: Content> Note<T> {
     ///
     /// // Check the HTML rendition.
     /// let html = n
-    ///     .render_content_to_html(&"md", &LIB_CFG.read().unwrap().tmpl_html.viewer, "")
+    ///     .render_content_to_html(&"md", &LIB_CFG.read().unwrap().tmpl_html.viewer)
     ///     .unwrap();
     /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
     /// ```
@@ -763,7 +757,7 @@ impl<T: Content> Note<T> {
 
             // Write HTML rendition.
             handle.write_all(
-                self.render_content_to_html(&note_path_ext, html_template, "")?
+                self.render_content_to_html(&note_path_ext, html_template)?
                     .as_bytes(),
             )?;
         } else {
@@ -773,7 +767,7 @@ impl<T: Content> Note<T> {
                 .open(&html_path)?;
             // Write HTML rendition.
             handle.write_all(
-                self.render_content_to_html(&note_path_ext, html_template, "")?
+                self.render_content_to_html(&note_path_ext, html_template)?
                     .as_bytes(),
             )?;
         };
@@ -785,7 +779,8 @@ impl<T: Content> Note<T> {
     /// the `fm_file_ext` YAML variable, if present.
     /// Then calls the appropriate markup renderer.
     /// Finally the result is rendered with the `HTML_VIEWER_TMPL`
-    /// template.
+    /// template. This template expects the template variable
+    /// `TMPL_VAR_NOTE_JS` in `self.context` to be set.
     pub fn render_content_to_html(
         &self,
         // We need the file extension to determine the
@@ -793,8 +788,6 @@ impl<T: Content> Note<T> {
         file_ext: &str,
         // HTML template for this rendition.
         tmpl: &str,
-        // If not empty, Javascript code to inject in output.
-        java_script_insert: &str,
     ) -> Result<String, NoteError> {
         // Deserialize.
 
@@ -822,9 +815,6 @@ impl<T: Content> Note<T> {
 
         // Register rendered body.
         html_context.insert(TMPL_VAR_NOTE_BODY_HTML, &html_output);
-
-        // Java Script
-        html_context.insert(TMPL_VAR_NOTE_JS, java_script_insert);
 
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
@@ -873,46 +863,6 @@ impl<T: Content> Note<T> {
     /// Renderer for markup languages other than the above.
     fn render_txt_content(other_input: &str) -> String {
         text_links2html(other_input)
-    }
-
-    /// When the header can not be deserialized, the content is rendered as
-    /// "Error HTML page".
-    #[inline]
-    #[cfg(feature = "viewer")]
-    pub fn render_erroneous_content_to_html(
-        doc_path: &Path,
-        template: &str,
-        java_script_insert: &str,
-        err: NoteError,
-    ) -> Result<String, NoteError> {
-        // Render error page providing all information we have.
-
-        let mut context = tera::Context::new();
-        let err = err.to_string();
-        context.insert(TMPL_VAR_NOTE_ERROR, &err);
-        context.insert(TMPL_VAR_PATH, &doc_path.to_str().unwrap_or_default());
-        // Java Script
-        context.insert(TMPL_VAR_NOTE_JS, &java_script_insert);
-
-        // Read from file.
-        let note_erroneous_content = fs::read_to_string(&doc_path).unwrap_or_default();
-        // Trim BOM.
-        let note_erroneous_content = note_erroneous_content.trim_start_matches('\u{feff}');
-        // Render to HTML.
-        let note_erroneous_content = text_rawlinks2html(note_erroneous_content);
-        // Insert.
-        context.insert(
-            TMPL_VAR_NOTE_ERRONEOUS_CONTENT_HTML,
-            &note_erroneous_content,
-        );
-
-        // Apply template.
-        let mut tera = Tera::default();
-        tera.extend(&TERA)?;
-        let html = tera.render_str(template, &context).map_err(|e| {
-            note_error_tera_template!(e, "[html_tmpl] viewer_error_tmpl".to_string())
-        })?;
-        Ok(html)
     }
 }
 

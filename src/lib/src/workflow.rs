@@ -125,15 +125,22 @@ use crate::config::TMPL_VAR_CLIPBOARD_HEADER;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_FILENAME_SYNC;
 use crate::config::TMPL_VAR_FM_NO_FILENAME_SYNC;
+#[cfg(feature = "viewer")]
+use crate::config::TMPL_VAR_NOTE_ERRONEOUS_CONTENT_HTML;
 use crate::config::TMPL_VAR_STDIN;
 use crate::config::TMPL_VAR_STDIN_HEADER;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
+use crate::filter::TERA;
 use crate::note::Note;
+use crate::note_error_tera_template;
 use crate::template::TemplateKind;
+#[cfg(feature = "viewer")]
+use parse_hyperlinks::renderer::text_rawlinks2html;
 use std::path::Path;
 use std::path::PathBuf;
+use tera::Tera;
 use tera::Value;
 
 /// Open the note file `path` on disk and read its YAML front matter.
@@ -177,10 +184,10 @@ use tera::Value;
 /// ```
 pub fn synchronize_filename<T: Content>(path: &Path) -> Result<Note<T>, NoteError> {
     // Collect input data for templates.
-    let mut context = Context::from(&path);
+    let mut context = Context::from(path);
     context.insert_environment()?;
 
-    let content = <T>::open(&path).unwrap_or_default();
+    let content = <T>::open(path).unwrap_or_default();
     let n = synchronize::<T>(context, content)?;
 
     Ok(n)
@@ -337,4 +344,131 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
     }
 
     Ok(n)
+}
+
+/// Returns the HTML rendition of the note file located in
+/// `context.path` with the template `TMPL_HTML_VIEWER` (can be replaced
+/// at runtime).
+///
+/// ```rust
+/// use tpnote_lib::config::LIB_CFG;
+/// use tpnote_lib::config::TMPL_VAR_NOTE_JS;
+/// use tpnote_lib::content::Content;
+/// use tpnote_lib::content::ContentString;
+/// use tpnote_lib::context::Context;
+/// use tpnote_lib::workflow::open_and_render_html;
+/// use std::env::temp_dir;
+/// use std::fs;
+///
+/// // Prepare test: create existing note file.
+/// let raw = r#"---
+/// title: "My day"
+/// subtitle: "Note"
+/// ---
+/// Body text
+/// "#;
+/// let notefile = temp_dir().join("20221030-My day--Note.md");
+/// fs::write(&notefile, raw.as_bytes()).unwrap();
+///
+/// // Start test
+/// // Only minimal context is needed, because no templates are applied later.
+/// let mut context = Context::from(&notefile);
+/// context.insert_environment().unwrap();
+/// // We do not inject any JavaScript.
+/// context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
+/// // Render.
+/// // You can plug in your own type (must impl. `Content`).
+/// let html = open_and_render_html::<ContentString>(context).unwrap();
+/// // Check the HTML rendition.
+/// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
+/// ```
+pub fn open_and_render_html<T: Content>(context: Context) -> Result<String, NoteError> {
+    let file_path_ext = &context
+        .path
+        .extension()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap_or_default();
+
+    let tmpl_html = &LIB_CFG.read().unwrap().tmpl_html.viewer;
+    let content = <T>::open(&context.path).unwrap_or_default();
+    Note::from_text_file(context.clone(), content, TemplateKind::None)
+        // Now, try to render to html.
+        .and_then(|note| note.render_content_to_html(file_path_ext, tmpl_html))
+}
+
+/// When the header can not be deserialized, the file located in
+/// `context.path` is rendered as "Error HTML page".
+/// The erronous content is rendered to html with
+/// `parse_hyperlinks::renderer::text_rawlinks2html` and inserted in
+/// the `TMPL_HTML_VIEWER_ERROR` template (can be replace at runtime).
+/// This template expects the template variables `TMPL_VAR_PATH`
+/// and `TMPL_VAR_NOTE_JS` and `TMPL_VAR_NOTE_ERROR` in `context` to be set.
+/// NB: The value of `TMPL_VAR_PATH` equals `context.path`.
+///
+/// ```rust
+/// use tpnote_lib::config::LIB_CFG;
+/// use tpnote_lib::config::TMPL_VAR_NOTE_ERROR;
+/// use tpnote_lib::config::TMPL_VAR_NOTE_JS;
+/// use tpnote_lib::content::Content;
+/// use tpnote_lib::content::ContentString;
+/// use tpnote_lib::context::Context;
+/// use tpnote_lib::workflow::open_and_render_erroneous_content_html;
+/// use tpnote_lib::workflow::open_and_render_html;
+/// use std::env::temp_dir;
+/// use std::fs;
+///
+/// // Prepare test: create existing errorneous note file.
+/// let raw_error = r#"---
+/// title: "My day"
+/// subtitle: "Note"
+/// --
+/// Body text
+/// "#;
+/// let notefile = temp_dir().join("20221030-My day--Note.md");
+/// fs::write(&notefile, raw_error.as_bytes()).unwrap();
+/// let mut context = Context::from(&notefile);
+/// context.insert_environment().unwrap();
+/// context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
+/// let e = open_and_render_html::<ContentString>(context).unwrap_err();
+///
+/// // Start test
+/// // Only minimal context is needed, (see `tmpl_html.viewer_error`).
+/// let mut context = Context::from(&notefile);
+/// context.insert_environment().unwrap();
+/// // We do not inject any JavaScript.
+/// context.insert(TMPL_VAR_NOTE_JS, &e.to_string());
+/// // We simulate an error;
+/// context.insert(TMPL_VAR_NOTE_ERROR, &e.to_string());
+/// // Render.
+/// // You can plug in your own type (must impl. `Content`).
+/// let html = open_and_render_erroneous_content_html::<ContentString>(context).unwrap();
+/// // Check the HTML rendition.
+/// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
+/// ```
+#[cfg(feature = "viewer")]
+pub fn open_and_render_erroneous_content_html<T: Content>(
+    mut context: Context,
+) -> Result<String, NoteError> {
+    // Render error page providing all information we have.
+
+    // Read from file.
+    let note_erroneous_content = <T>::open(&context.path)?;
+    // Render to HTML.
+    let note_erroneous_content = text_rawlinks2html(note_erroneous_content.as_str());
+    // Insert.
+    context.insert(
+        TMPL_VAR_NOTE_ERRONEOUS_CONTENT_HTML,
+        &note_erroneous_content,
+    );
+
+    let tmpl_html = &LIB_CFG.read().unwrap().tmpl_html.viewer_error;
+
+    // Apply template.
+    let mut tera = Tera::default();
+    tera.extend(&TERA)?;
+    let html = tera
+        .render_str(tmpl_html, &context)
+        .map_err(|e| note_error_tera_template!(e, "[html_tmpl] viewer_error".to_string()))?;
+    Ok(html)
 }

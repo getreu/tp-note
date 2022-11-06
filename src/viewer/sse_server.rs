@@ -21,10 +21,12 @@ use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::time::SystemTime;
-use tpnote_lib::content::Content;
+use tpnote_lib::config::TMPL_VAR_NOTE_ERROR;
+use tpnote_lib::config::TMPL_VAR_NOTE_JS;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
-use tpnote_lib::note::Note;
+use tpnote_lib::workflow::open_and_render_erroneous_content_html;
+use tpnote_lib::workflow::open_and_render_html;
 use url::Url;
 
 /// The TCP stream is read in chunks. This is the read buffer size.
@@ -121,14 +123,16 @@ struct ServerThread {
     /// Byte stream coming from a TCP connection.
     stream: TcpStream,
     /// The TCP port this stream comes from.
-    sse_port: u16,
+    _sse_port: u16,
     /// A list of in the not referenced local links to images or other
     /// documents.
     doc_local_links: Arc<RwLock<HashSet<PathBuf>>>,
     /// We do not store anything here, instead we use the ARC pointing to
     /// `conn_counter` to count the number of instances of `ServerThread`.
     conn_counter: Arc<()>,
-    /// We store the path of the note document in `context`.
+    /// The constructor stores the path of the note document in `context.path`
+    /// and in the Tera variable `TMPL_VAR_PATH`.
+    /// Both are needed for rendering to HTML.
     context: Context,
 }
 
@@ -142,11 +146,24 @@ impl ServerThread {
         doc_local_links: Arc<RwLock<HashSet<PathBuf>>>,
         conn_counter: Arc<()>,
     ) -> Self {
-        let context = Context::from(&doc_path);
+        // Store `doc_path` in the `context.path` and
+        // in the Tera variable `TMPL_VAR_PATH`.
+        let mut context = Context::from(&doc_path);
+        // Enrich `context`
+        let _ = context.insert_environment();
+        // Deserialize.
+        let note_js = format!(
+            "{}{}:{}{}",
+            SSE_CLIENT_CODE1, LOCALHOST, sse_port, SSE_CLIENT_CODE2
+        );
+
+        // Java Script
+        context.insert(TMPL_VAR_NOTE_JS, &note_js);
+
         Self {
             rx,
             stream,
-            sse_port,
+            _sse_port: sse_port,
             doc_local_links,
             conn_counter,
             context,
@@ -569,30 +586,8 @@ impl ServerThread {
     #[inline]
     /// Renders the error page with the `HTML_VIEWER_ERROR_TMPL`.
     fn render_content_and_error(&self) -> Result<String, ViewerError> {
-        // Deserialize.
-        let js = format!(
-            "{}{}:{}{}",
-            SSE_CLIENT_CODE1, LOCALHOST, self.sse_port, SSE_CLIENT_CODE2
-        );
-
-        // Extension determines markup language when rendering.
-        let file_path_ext = self
-            .context
-            .path
-            .extension()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default();
-
-        // Render.
-        let context = self.context.clone();
         // First decompose header and body, then deserialize header.
-        let content = ContentString::open(&self.context.path).unwrap_or_default();
-        match Note::from_text_file(context, content, tpnote_lib::template::TemplateKind::None)
-            // Now, try to render to html.
-            .and_then(|note| {
-                note.render_content_to_html(file_path_ext, &CFG.tmpl_html.viewer, &js)
-            })
+        match open_and_render_html::<ContentString>(self.context.clone())
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
             .and_then(|html| {
@@ -645,10 +640,12 @@ impl ServerThread {
             // special error page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
-                Note::<ContentString>::render_erroneous_content_to_html(&self.context.path, &CFG.tmpl_html.viewer_error, &js, e)
-                    .map_err(|e| { ViewerError::RenderErrorPage {
-                        tmpl: "[viewer] error_tmpl".to_string(),
-                        source: e,
+                let mut context = self.context.clone();
+                context.insert(TMPL_VAR_NOTE_ERROR, &e.to_string());
+                open_and_render_erroneous_content_html::<ContentString>(context)
+                        .map_err(|e| { ViewerError::RenderErrorPage {
+                            tmpl: "[tmpl_html] viewer_error".to_string(),
+                            source: e,
                     }})
             }
         }

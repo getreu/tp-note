@@ -1278,6 +1278,12 @@ Specifically:
 * '`{{ note_js }}`' is the JavaScript browser code for
   live updates.
 
+* '`{{ extension_default }}`' (c.f. section _Template variables_).
+
+* '`{{ username }}`' (c.f. section _Template variables_).
+
+* '`{{ lang }}`' (c.f. section _Template variables_).
+
 Alternatively, the header enclosed by '`<pre>...</pre>`' can also be rendered
 as a table:
 
