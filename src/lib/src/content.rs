@@ -154,9 +154,9 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
     ///      String::from("prelude\n\n---\ntitle: \"My note\"\n---\nMy body"));
     /// let outfile = temp_dir().join("mynote.md");
     /// #[cfg(not(target_family = "windows"))]
-    /// let expected = "\u{feff}---\ntitle: \"My note\"\n---\nMy body\n";
+    /// let expected = "\u{feff}prelude\n\n---\ntitle: \"My note\"\n---\nMy body\n";
     /// #[cfg(target_family = "windows")]
-    /// let expected = "\u{feff}---\r\ntitle: \"My note\"\r\n---\r\nMy body\r\n";
+    /// let expected = "\u{feff}prelude\r\n\r\n---\r\ntitle: \"My note\"\r\n---\r\nMy body\r\n";
     ///
     /// c.save_as(&outfile).unwrap();
     /// let result = fs::read_to_string(&outfile).unwrap();
@@ -175,23 +175,8 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
 
         log::trace!("Creating file: {:?}", new_file_path);
         write!(outfile, "\u{feff}")?;
-        if !self.header().is_empty() {
-            write!(outfile, "---")?;
-            #[cfg(target_family = "windows")]
-            write!(outfile, "\r")?;
-            writeln!(outfile)?;
-            for l in self.header().lines() {
-                write!(outfile, "{}", l)?;
-                #[cfg(target_family = "windows")]
-                write!(outfile, "\r")?;
-                writeln!(outfile)?;
-            }
-            write!(outfile, "---")?;
-            #[cfg(target_family = "windows")]
-            write!(outfile, "\r")?;
-            writeln!(outfile)?;
-        };
-        for l in self.body().lines() {
+
+        for l in self.as_str().lines() {
             write!(outfile, "{}", l)?;
             #[cfg(target_family = "windows")]
             write!(outfile, "\r")?;
