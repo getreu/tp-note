@@ -13,11 +13,11 @@ use crate::config::TMPL_VAR_NOTE_FM_TEXT;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
-use crate::filename::MarkupLanguage;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 use crate::filter::TERA;
 use crate::front_matter::FrontMatter;
+use crate::markup_language::MarkupLanguage;
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
 #[cfg(feature = "renderer")]

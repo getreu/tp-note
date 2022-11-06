@@ -18,7 +18,7 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::Duration;
 use std::time::Instant;
-use tpnote_lib::filename::MarkupLanguage;
+use tpnote_lib::markup_language::MarkupLanguage;
 
 /// Minimum uptime in milliseconds we expect a real browser instance to run.
 /// When starting a second browser instance, only a signal is sent to the

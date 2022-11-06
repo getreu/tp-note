@@ -9,7 +9,7 @@ use crate::config::TMPL_VAR_FM_SORT_TAG;
 use crate::content::Content;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
-use crate::filename::MarkupLanguage;
+use crate::markup_language::MarkupLanguage;
 use std::matches;
 use std::ops::Deref;
 use std::ops::DerefMut;
