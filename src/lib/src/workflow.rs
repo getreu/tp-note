@@ -35,10 +35,10 @@
 //! let n = create_new_note_or_synchronize_filename::<ContentString, _>(
 //!        &notedir, &clipboard, &stdin, template_kind_filer, None).unwrap();
 //! // Check result.
-//! assert!(n.rendered_filename.as_os_str().to_str().unwrap()
+//! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
-//! assert!(n.rendered_filename.is_file());
-//! let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+//! assert!(n.is_file());
+//! let raw_note = fs::read_to_string(n).unwrap();
 //! #[cfg(not(target_family = "windows"))]
 //! assert!(raw_note.starts_with("\u{feff}---\ntitle:"));
 //! #[cfg(target_family = "windows")]
@@ -112,10 +112,10 @@
 //! let n = create_new_note_or_synchronize_filename::<MyContentString, _>(
 //!        &notedir, &clipboard, &stdin, template_kind_filer, None).unwrap();
 //! // Check result.
-//! assert!(n.rendered_filename.as_os_str().to_str().unwrap()
+//! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
-//! assert!(n.rendered_filename.is_file());
-//! let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+//! assert!(n.is_file());
+//! let raw_note = fs::read_to_string(n).unwrap();
 //! assert_eq!(raw_note, "Simulation");
 //! ```
 
@@ -146,7 +146,7 @@ use tera::Value;
 /// Open the note file `path` on disk and read its YAML front matter.
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk.
-/// Returns the note's new or existing filename in `<Note>.rendered_filename`.
+/// Returns the note's new or existing filename.
 ///
 ///
 /// ## Example with `TemplateKind::SyncFilename`
@@ -176,13 +176,12 @@ use tera::Value;
 /// // Start test.
 /// // You can plug in your own type (must impl. `Content`).
 /// let n = synchronize_filename::<ContentString>(&notefile).unwrap();
-/// let res_fn = n.rendered_filename;
 ///
 /// // Check result
-/// assert_eq!(res_fn, expected);
-/// assert!(res_fn.is_file());
+/// assert_eq!(n, expected);
+/// assert!(n.is_file());
 /// ```
-pub fn synchronize_filename<T: Content>(path: &Path) -> Result<Note<T>, NoteError> {
+pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteError> {
     // Collect input data for templates.
     let mut context = Context::from(path);
     context.insert_environment()?;
@@ -190,7 +189,7 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<Note<T>, NoteErro
     let content = <T>::open(path).unwrap_or_default();
     let n = synchronize::<T>(context, content)?;
 
-    Ok(n)
+    Ok(n.rendered_filename)
 }
 
 #[inline]
@@ -198,7 +197,7 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<Note<T>, NoteErro
 /// If the note to be created exists already, append a so called `copy_counter`
 /// to the filename and try to save it again. In case this does not succeed either,
 /// increment the `copy_counter` until a free filename is found.
-/// The return path in `<Note>.rendered_filename` points to the (new) note file on disk.
+/// The returned path points to the (new) note file on disk.
 /// Depending on the context, Tp-Note chooses one `TemplateKind` to operate
 /// (c.f. `tpnote_lib::template::TemplateKind::from()`).
 /// The `tk-filter` allows to overwrite this choice, e.g. you may set
@@ -232,10 +231,10 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<Note<T>, NoteErro
 /// let n = create_new_note_or_synchronize_filename::<ContentString, _>(
 ///        &notedir, &clipboard, &stdin, template_kind_filer, None).unwrap();
 /// // Check result.
-/// assert!(n.rendered_filename.as_os_str().to_str().unwrap()
+/// assert!(n.as_os_str().to_str().unwrap()
 ///    .contains("my stdin-my clipboard--Note"));
-/// assert!(n.rendered_filename.is_file());
-/// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+/// assert!(n.is_file());
+/// let raw_note = fs::read_to_string(n).unwrap();
 ///
 /// #[cfg(not(target_family = "windows"))]
 /// assert!(raw_note.starts_with(
@@ -250,7 +249,7 @@ pub fn create_new_note_or_synchronize_filename<T, F>(
     stdin: &T,
     tk_filter: F,
     args_export: Option<&Path>,
-) -> Result<Note<T>, NoteError>
+) -> Result<PathBuf, NoteError>
 where
     T: Content,
     F: Fn(TemplateKind) -> TemplateKind,
@@ -308,7 +307,7 @@ where
         n.rendered_filename = n.context.path.clone();
     }
 
-    Ok(n)
+    Ok(n.rendered_filename)
 }
 
 /// Helper function.

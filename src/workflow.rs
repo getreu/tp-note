@@ -50,8 +50,8 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
         ARGS.export.as_deref(),
     ) {
         // Use the new `path` from now on.
-        Ok(n) => {
-            path = n.rendered_filename;
+        Ok(p) => {
+            path = p;
             #[cfg(feature = "viewer")]
             {
                 launch_viewer = *LAUNCH_VIEWER;
@@ -115,7 +115,7 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
     if *LAUNCH_EDITOR {
         match synchronize_filename::<ContentString>(&path) {
             // `path` has changed!
-            Ok(n) => path = n.rendered_filename,
+            Ok(p) => path = p,
             Err(e) => {
                 let missing_header = matches!(e, NoteError::MissingFrontMatter { .. })
                     || matches!(e, NoteError::MissingFrontMatterField { .. });
