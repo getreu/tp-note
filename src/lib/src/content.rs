@@ -190,8 +190,9 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
     /// Contract: The content does not contain any `\r\n`.
     /// If your content contains `\r\n` use the
     /// `from_string_with_cr()` constructor.
+    /// Possible BOM at the first position is not returned.
     fn as_str(&self) -> &str {
-        self.as_ref()
+        self.as_ref().trim_start_matches('\u{feff}')
     }
 
     /// True if the header and body is empty.
@@ -333,6 +334,8 @@ self_cell!(
 /// `---` does not follow directly the BOM, it must be prepended
 /// by an empty line. In this case all text before is ignored:
 /// BOM + ignored text + empty line + `---`.
+/// Contract: the imput string does not contain `\r\n`. If
+/// it may, use `Content::from_string_with_cr()` instead.
 ///
 /// ```rust
 /// use tpnote_lib::content::Content;
