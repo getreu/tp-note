@@ -4,11 +4,10 @@
 //! How to integrate this in your text editor code?
 //! First, call `create_new_note_or_synchronize_filename()`
 //! with the first positional command line parameter `<path>`.
-//! Then open the text file `<Note>.rendered_filename` in your
-//! text editor or alternatively, load the string
-//! `<Note>.content.as_str()` directly into your text editor.
-//! After saving the text file, call `synchronize_filename()`
-//! and update your file path with `<Note>.rendered_filename`.
+//! Then open the new text file with the returned path in your
+//! text editor. After modifying the text, saving it and closing your
+//! text editor, call `synchronize_filename()`.
+//! The returned path points to the possibly renamed note file.
 //!
 //! ## Example with `TemplateKind::New`
 //!
@@ -47,7 +46,7 @@
 //!
 //! The internal data storage for the note's content is `ContentString`
 //! which implements the `Content` trait. Now we modify slightly  
-//! the above example to showcases, how to overwrite
+//! the above example to showcase, how to overwrite
 //! one of the trait's methods.
 //!
 //! ```rust
@@ -133,6 +132,7 @@ use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
 use crate::filter::TERA;
+use crate::front_matter::FrontMatter;
 use crate::note::Note;
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
@@ -355,7 +355,39 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// use tpnote_lib::content::Content;
 /// use tpnote_lib::content::ContentString;
 /// use tpnote_lib::context::Context;
-/// use tpnote_lib::workflow::open_and_render_html;
+/// use tpnote_lib::workflow::render_html;
+/// use std::env::temp_dir;
+/// use std::fs;
+/// use std::path::Path;
+///
+/// // Prepare test: create existing note file.
+/// let raw = String::from(r#"---
+/// title: "My day"
+/// subtitle: "Note"
+/// ---
+/// Body text
+/// "#);
+///
+/// // Start test
+/// // Only minimal context is needed, because no templates are applied later.
+/// let mut context = Context::from(Path::new("/path/to/note.md"));
+/// // We do not inject any JavaScript.
+/// context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
+/// // Render.
+/// let html = render_html::<ContentString>(context, raw.into()).unwrap();
+/// // Check the HTML rendition.
+/// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
+/// ```
+///
+/// A more elaborated example that reads from disk:
+///
+/// ```rust
+/// use tpnote_lib::config::LIB_CFG;
+/// use tpnote_lib::config::TMPL_VAR_NOTE_JS;
+/// use tpnote_lib::content::Content;
+/// use tpnote_lib::content::ContentString;
+/// use tpnote_lib::context::Context;
+/// use tpnote_lib::workflow::render_html;
 /// use std::env::temp_dir;
 /// use std::fs;
 ///
@@ -372,28 +404,37 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// // Start test
 /// // Only minimal context is needed, because no templates are applied later.
 /// let mut context = Context::from(&notefile);
-/// context.insert_environment().unwrap();
 /// // We do not inject any JavaScript.
 /// context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
 /// // Render.
+/// let content = ContentString::open(&context.path).unwrap();
 /// // You can plug in your own type (must impl. `Content`).
-/// let html = open_and_render_html::<ContentString>(context).unwrap();
+/// let html = render_html(context, content).unwrap();
 /// // Check the HTML rendition.
 /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
 /// ```
-pub fn open_and_render_html<T: Content>(context: Context) -> Result<String, NoteError> {
+pub fn render_html<T: Content>(mut context: Context, content: T) -> Result<String, NoteError> {
+    // deserialize the rendered template
+    let fm = FrontMatter::try_from_content(&content)?;
+    context.insert_front_matter(&fm);
+    context.insert_environment()?;
+
     let file_path_ext = &context
         .path
         .extension()
         .unwrap_or_default()
         .to_str()
-        .unwrap_or_default();
+        .unwrap_or_default()
+        .to_owned();
 
     let tmpl_html = &LIB_CFG.read().unwrap().tmpl_html.viewer;
-    let content = <T>::open(&context.path).unwrap_or_default();
-    Note::from_text_file(context.clone(), content, TemplateKind::None)
-        // Now, try to render to html.
-        .and_then(|note| note.render_content_to_html(file_path_ext, tmpl_html))
+
+    let note = Note {
+        context,
+        content,
+        rendered_filename: PathBuf::new(),
+    };
+    note.render_content_to_html(file_path_ext, tmpl_html)
 }
 
 /// When the header can not be deserialized, the file located in
@@ -412,8 +453,9 @@ pub fn open_and_render_html<T: Content>(context: Context) -> Result<String, Note
 /// use tpnote_lib::content::Content;
 /// use tpnote_lib::content::ContentString;
 /// use tpnote_lib::context::Context;
-/// use tpnote_lib::workflow::open_and_render_erroneous_content_html;
-/// use tpnote_lib::workflow::open_and_render_html;
+/// use tpnote_lib::error::NoteError;
+/// use tpnote_lib::workflow::render_erroneous_content_html;
+/// use tpnote_lib::workflow::render_html;
 /// use std::env::temp_dir;
 /// use std::fs;
 ///
@@ -427,32 +469,31 @@ pub fn open_and_render_html<T: Content>(context: Context) -> Result<String, Note
 /// let notefile = temp_dir().join("20221030-My day--Note.md");
 /// fs::write(&notefile, raw_error.as_bytes()).unwrap();
 /// let mut context = Context::from(&notefile);
-/// context.insert_environment().unwrap();
-/// context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
-/// let e = open_and_render_html::<ContentString>(context).unwrap_err();
+/// let e = NoteError::MissingFrontMatterField { field_name: "title".to_string() };
 ///
 /// // Start test
 /// // Only minimal context is needed, (see `tmpl_html.viewer_error`).
 /// let mut context = Context::from(&notefile);
-/// context.insert_environment().unwrap();
 /// // We do not inject any JavaScript.
 /// context.insert(TMPL_VAR_NOTE_JS, &e.to_string());
 /// // We simulate an error;
 /// context.insert(TMPL_VAR_NOTE_ERROR, &e.to_string());
 /// // Render.
+/// // Read from file.
 /// // You can plug in your own type (must impl. `Content`).
-/// let html = open_and_render_erroneous_content_html::<ContentString>(context).unwrap();
+/// let content = ContentString::open(&context.path).unwrap();
+/// let html = render_erroneous_content_html(
+///               context, content).unwrap();
 /// // Check the HTML rendition.
 /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
 /// ```
 #[cfg(feature = "viewer")]
-pub fn open_and_render_erroneous_content_html<T: Content>(
+pub fn render_erroneous_content_html<T: Content>(
     mut context: Context,
+    note_erroneous_content: T,
 ) -> Result<String, NoteError> {
     // Render error page providing all information we have.
-
-    // Read from file.
-    let note_erroneous_content = <T>::open(&context.path)?;
+    context.insert_environment()?;
     // Render to HTML.
     let note_erroneous_content = text_rawlinks2html(note_erroneous_content.as_str());
     // Insert.

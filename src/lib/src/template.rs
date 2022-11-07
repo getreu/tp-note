@@ -21,7 +21,7 @@ pub enum TemplateKind {
     /// file.
     AnnotateFile,
     /// Templates used when Tp-Note is invoked with a path pointing to a Tp-Note
-    /// text file with a valid YAML header (containing as `title:` field).
+    /// text file with a valid YAML header (with a `title:` field).
     SyncFilename,
     /// No templates are used, but the file is still parsed in order to render it
     /// later to HTML (c.f. `<Note>.render_content_to_html()` and

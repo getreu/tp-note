@@ -73,18 +73,7 @@ impl Context {
     /// Inserts the YAML front header variables in the context for later use
     /// with templates.
     ///
-    /// ```rust
-    /// use std::path::Path;
-    /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::front_matter::FrontMatter;
-    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
-    /// context.insert_front_matter(
-    ///      &FrontMatter::try_from("title: \"My Stdin.\"").unwrap());
-    ///
-    /// assert_eq!(&context.get("fm_title").unwrap().to_string(),
-    ///     r#""My Stdin.""#);
-    /// ```
-    pub fn insert_front_matter(&mut self, fm: &FrontMatter) {
+    pub(crate) fn insert_front_matter(&mut self, fm: &FrontMatter) {
         let mut tera_map = tera::Map::new();
 
         for (name, value) in fm.iter() {
@@ -277,5 +266,23 @@ impl Deref for Context {
 impl DerefMut for Context {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.ct
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_insert_front_matter() {
+        use crate::context::Context;
+        use crate::front_matter::FrontMatter;
+        use std::path::Path;
+        let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+        context.insert_front_matter(&FrontMatter::try_from("title: \"My Stdin.\"").unwrap());
+
+        assert_eq!(
+            &context.get("fm_title").unwrap().to_string(),
+            r#""My Stdin.""#
+        );
     }
 }

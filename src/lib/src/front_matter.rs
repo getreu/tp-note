@@ -58,23 +58,6 @@ impl FrontMatter {
     }
 
     /// Helper function deserialising the front-matter of the note file.
-    ///
-    /// ```rust
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// use tpnote_lib::front_matter::FrontMatter;
-    /// use serde_json::json;
-
-    /// // Create existing note.
-    /// let raw = "\u{feff}---\ntitle: \"My day\"\nsubtitle: \"Note\"\n---\nBody";
-    /// let content = ContentString::from(raw.to_string());
-    /// assert!(!content.is_empty());
-    /// assert!(!content.borrow_dependent().header.is_empty());
-    ///
-    /// let front_matter = FrontMatter::try_from_content(&content).unwrap();
-    /// assert_eq!(front_matter.get("title"), Some(&json!("My day")));
-    /// assert_eq!(front_matter.get("subtitle"), Some(&json!("Note")));
-    /// ```
     pub fn try_from_content(content: &impl Content) -> Result<FrontMatter, NoteError> {
         let header = content.header();
         Self::try_from(header)
@@ -167,14 +150,12 @@ impl DerefMut for FrontMatter {
 
 #[cfg(test)]
 mod tests {
-    use super::FrontMatter;
-    use crate::context::Context;
-    use serde_json::json;
-    use std::path::Path;
-    use tera::Value;
 
     #[test]
     fn test_deserialize() {
+        use super::FrontMatter;
+        use serde_json::json;
+        use tera::Value;
         let input = "# document start
         title:     The book
         subtitle:  you always wanted
@@ -249,6 +230,12 @@ mod tests {
 
     #[test]
     fn test_register_front_matter() {
+        use super::FrontMatter;
+        use crate::context::Context;
+        use serde_json::json;
+        use std::path::Path;
+        use tera::Value;
+
         let mut tmp = tera::Map::new();
         tmp.insert("file_ext".to_string(), Value::String("md".to_string())); // String
         tmp.insert("height".to_string(), json!(1.23)); // Number()
@@ -276,5 +263,23 @@ mod tests {
         let result = input1;
 
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_try_from_content() {
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::front_matter::FrontMatter;
+        use serde_json::json;
+
+        // Create existing note.
+        let raw = "\u{feff}---\ntitle: \"My day\"\nsubtitle: \"Note\"\n---\nBody";
+        let content = ContentString::from(raw.to_string());
+        assert!(!content.is_empty());
+        assert!(!content.borrow_dependent().header.is_empty());
+
+        let front_matter = FrontMatter::try_from_content(&content).unwrap();
+        assert_eq!(front_matter.get("title"), Some(&json!("My day")));
+        assert_eq!(front_matter.get("subtitle"), Some(&json!("Note")));
     }
 }

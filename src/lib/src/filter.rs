@@ -19,7 +19,7 @@ use tera::{to_value, try_get_value, Result as TeraResult, Tera, Value};
 #[cfg(not(test))]
 const CUT_LEN_MAX: usize = 200;
 #[cfg(test)]
-const CUT_LEN_MAX: usize = 10;
+pub const CUT_LEN_MAX: usize = 10;
 
 lazy_static! {
 /// Tera object with custom functions registered.

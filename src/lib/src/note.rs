@@ -72,144 +72,6 @@ impl<T: Content> Note<T> {
     /// * `TMPL_VAR_NOTE_FILE_DATE` (only if file can be opened),
     /// * all front matter variables (see `FrontMatter::try_from_content()`)
     ///
-    ///
-    /// ## Example with `TemplateKind::SyncFilename`
-    ///
-    /// ```rust
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::note::Note;
-    /// use tpnote_lib::template::TemplateKind;
-    /// use std::env::temp_dir;
-    /// use std::fs;
-    ///
-    /// // Prepare test: create existing note.
-    /// let raw = r#"
-    ///
-    /// ---
-    /// title: "My day"
-    /// subtitle: "Note"
-    /// ---
-    /// Body text
-    /// "#;
-    /// let notefile = temp_dir().join("20221030-hello.md");
-    /// fs::write(&notefile, raw.as_bytes()).unwrap();
-    ///
-    /// let expected = temp_dir().join("20221030-My day--Note.md");
-    /// let _ = fs::remove_file(&expected);
-    ///
-    /// // Start test.
-    /// let mut context = Context::from(&notefile);
-    /// context.insert_environment().unwrap();
-    ///
-    /// // Create note object.
-    /// let content = <ContentString as Content>::open(&notefile).unwrap();
-    /// // You can plug in your own type (must impl. `Content`).
-    /// let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename).unwrap();
-    /// n.render_filename(TemplateKind::SyncFilename).unwrap();
-    /// n.set_next_unused_rendered_filename_or(&n.context.path.clone())
-    ///     .unwrap();
-    /// assert_eq!(n.rendered_filename, expected);
-    /// // Rename file on the disk.
-    /// n.rename_file_from(&n.context.path).unwrap();
-    /// assert!(n.rendered_filename.is_file());
-    /// ```
-    ///
-    ///
-    /// ## Example with `TemplateKind::None`
-    ///
-    /// This constructor is called, when `Note` is solely created for
-    /// HTML rendering and no templates will be applied.
-    ///
-    /// ```rust
-    /// use tpnote_lib::config::LIB_CFG;
-    /// use tpnote_lib::config::TMPL_VAR_NOTE_JS;
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::note::Note;
-    /// use tpnote_lib::template::TemplateKind;
-    /// use std::env::temp_dir;
-    /// use std::fs;
-    ///
-    /// // Prepare test: create existing note file.
-    /// let raw = r#"---
-    /// title: "My day"
-    /// subtitle: "Note"
-    /// ---
-    /// Body text
-    /// "#;
-    /// let notefile = temp_dir().join("20221030-My day--Note.md");
-    /// fs::write(&notefile, raw.as_bytes()).unwrap();
-    ///
-    /// // Start test
-    /// // Only minimal context is needed, because no templates are applied later.
-    /// let mut context = Context::from(&notefile);
-    /// context.insert_environment().unwrap();
-    /// // We do not inject any JavaScript.
-    /// context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
-    /// // Create note object.
-    /// let content = <ContentString as Content>::open(&notefile).unwrap();
-    /// // You can plug in your own type (must impl. `Content`).
-    /// let n = Note::from_text_file(context, content, TemplateKind::None).unwrap();
-    ///
-    /// // Check the HTML rendition.
-    /// let html = n
-    ///     .render_content_to_html(&"md", &LIB_CFG.read().unwrap().tmpl_html.viewer)
-    ///     .unwrap();
-    /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
-    /// ```
-    ///
-    ///
-    /// ## Example with `TemplateKind::FromTextFile`
-    ///
-    /// ```rust
-    /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// use tpnote_lib::note::Note;
-    /// use tpnote_lib::template::TemplateKind;
-    /// use std::env::temp_dir;
-    /// use std::fs;
-    ///
-    /// // Prepare test: create existing note file without header.
-    /// let raw = "Body text without header";
-    /// let notefile = temp_dir().join("20221030-hello -- world.md");
-    /// let _ = fs::write(&notefile, raw.as_bytes());
-    /// let expected = temp_dir().join("20221030-hello--world.md");
-    /// let _ = fs::remove_file(&expected);
-    ///
-    /// // Start test.
-    /// let mut context = Context::from(&notefile);
-    /// context.insert_environment().unwrap();
-    /// // Create note object.
-    /// let content = <ContentString as Content>::open(&notefile).unwrap();
-    /// // You can plug in your own type (must impl. `Content`).
-    /// let mut n = Note::from_text_file(
-    ///         context.clone(), content, TemplateKind::FromTextFile).unwrap();
-    ///
-    /// assert!(!n.content.header().is_empty());
-    /// assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("hello "));
-    /// assert_eq!(
-    ///     n.context.get("fm_subtitle").unwrap().as_str(),
-    ///     Some(" world")
-    /// );
-    /// assert_eq!(n.content.body().trim(), raw);
-    ///
-    /// n.render_filename(TemplateKind::FromTextFile).unwrap();
-    /// n.set_next_unused_rendered_filename().unwrap();
-    /// n.save_and_delete_from(&context.path).unwrap();
-    ///
-    /// // Check the new file with header
-    /// assert_eq!(&n.rendered_filename, &expected);
-    /// assert!(n.rendered_filename.is_file());
-    /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
-    /// #[cfg(not(target_family = "windows"))]
-    /// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"hello \""));
-    /// #[cfg(target_family = "windows")]
-    /// assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      \"hello \""));
-    /// ```
     pub fn from_text_file(
         mut context: Context,
         content: T,
@@ -304,235 +166,6 @@ impl<T: Content> Note<T> {
     /// * `TemplateKind::FromClipboard`, or
     /// * `TemplateKind::AnnotateFile`
     ///
-    /// ## Example with `TemplateKind::New`
-    ///
-    /// ```rust
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::note::Note;
-    /// use tpnote_lib::template::TemplateKind;
-    /// use std::env::temp_dir;
-    /// use std::fs;
-    ///
-    /// // Create a directory for the new note.
-    /// let notedir = temp_dir().join("123-my dir/");
-    /// fs::create_dir_all(&notedir).unwrap();
-    ///
-    /// // Store the path in `context`.
-    /// let mut context = Context::from(&notedir);
-    /// context.insert_environment().unwrap();
-    ///
-    /// // Create the `Note` object.
-    /// // You can plug in your own type (must impl. `Content`).
-    /// let mut n:Note<ContentString> = Note::from_content_template(
-    ///          context, TemplateKind::New).unwrap();
-    /// assert!(n
-    ///     .content
-    ///     .header()
-    ///     .starts_with("title:      \"my dir\""));
-    /// assert_eq!(n.content.borrow_dependent().body, "\n\n");
-    ///
-    /// // Check the title and subtitle in the note's header.
-    /// assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("my dir"));
-    /// assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
-    /// n.render_filename(TemplateKind::New).unwrap();
-    /// n.set_next_unused_rendered_filename().unwrap();
-    /// n.save().unwrap();
-    ///
-    /// // Check the created new note file.
-    /// assert!(n.rendered_filename.is_file());
-    /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
-    /// #[cfg(not(target_family = "windows"))]
-    /// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"my dir\""));
-    /// #[cfg(target_family = "windows")]
-    /// assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      \"my dir\""));
-    /// ```
-
-    ///
-    /// ## Example with `TemplateKind::FromClipboard`
-    ///
-    /// ```rust
-    /// use tpnote_lib::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
-    /// use tpnote_lib::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::note::Note;
-    /// use tpnote_lib::template::TemplateKind;
-    /// use std::env::temp_dir;
-    /// use std::path::PathBuf;
-    /// use std::fs;
-    ///
-    /// // Directory for the new note.
-    /// let notedir = temp_dir();
-    ///
-    /// // Store the path in `context`.
-    /// let mut context = Context::from(&notedir);
-    /// context.insert_environment().unwrap();
-    /// let clipboard = ContentString::from("my clipboard\n".to_string());
-    /// context
-    ///     .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
-    ///     .unwrap();
-    /// let stdin = ContentString::from("my stdin\n".to_string());
-    /// context
-    ///     .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
-    ///     .unwrap();
-    /// // This is the condition to choose: `TemplateKind::FromClipboard`:
-    /// assert!(clipboard.header().is_empty() && stdin.header().is_empty());
-    /// assert!(!clipboard.body().is_empty() || !stdin.body().is_empty());
-    ///
-    /// // Create the `Note` object.
-    /// // You can plug in your own type (must impl. `Content`).
-    /// let mut n: Note<ContentString> = Note::from_content_template(
-    ///          context, TemplateKind::FromClipboard).unwrap();
-    /// let expected_body = "\nmy stdin\nmy clipboard\n\n\n";
-    /// assert_eq!(n.content.body(), expected_body);
-    /// // Check the title and subtitle in the note's header.
-    /// assert_eq!(
-    ///     n.context.get("fm_title").unwrap().as_str(),
-    ///     Some("my stdin\nmy clipboard\n")
-    /// );
-    ///
-    /// assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
-    /// n.render_filename(TemplateKind::FromClipboard).unwrap();
-    /// n.set_next_unused_rendered_filename().unwrap();
-    /// n.save().unwrap();
-    ///
-    /// // Check the new note file.
-    /// assert!(n.rendered_filename.as_os_str().to_str().unwrap()
-    ///    .contains("my stdin-my clipboard--Note"));
-    /// assert!(n.rendered_filename.is_file());
-    /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
-    /// #[cfg(not(target_family = "windows"))]
-    /// assert!(raw_note.starts_with(
-    ///            "\u{feff}---\ntitle:      \"my stdin\\nmy clipboard\\n\""));
-    /// #[cfg(target_family = "windows")]
-    /// assert!(raw_note.starts_with(
-    ///            "\u{feff}---\r\ntitle:      \"my stdin"));
-    /// ```
-
-    ///
-    /// ## Example with `TemplateKind::FromClipboardYaml`
-    ///
-    /// ```rust
-    /// use tpnote_lib::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
-    /// use tpnote_lib::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::note::Note;
-    /// use tpnote_lib::template::TemplateKind;
-    /// use std::env::temp_dir;
-    /// use std::path::PathBuf;
-    /// use std::fs;
-    ///
-    /// // Prepare test.
-    /// // Directory for the new note.
-    /// let notedir = temp_dir().join("123-my dir/");
-    ///
-    /// // Run test.
-    /// // Store the path in `context`.
-    /// let mut context = Context::from(&notedir);
-    /// context.insert_environment().unwrap();
-    /// let clipboard = ContentString::from("my clipboard\n".to_string());
-    /// context
-    ///     .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
-    ///     .unwrap();
-    /// let stdin = ContentString::from(
-    ///      "---\nsubtitle: \"this overwrites\"\n---\nstdin body".to_string());
-    /// context
-    ///     .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
-    ///     .unwrap();
-    /// // This is the condition to choose: `TemplateKind::FromClipboardYaml`:
-    /// assert!(!clipboard.header().is_empty() || !stdin.header().is_empty());
-    ///
-    /// // Create the `Note` object.
-    /// // You can plug in your own type (must impl. `Content`).
-    /// let mut n: Note<ContentString> = Note::from_content_template(
-    ///          context, TemplateKind::FromClipboardYaml).unwrap();
-    /// let expected_body = "\nstdin bodymy clipboard\n\n\n";
-    /// assert_eq!(n.content.body(), expected_body);
-    /// // Check the title and subtitle in the note's header.
-    /// assert_eq!(
-    ///     n.context.get("fm_title").unwrap().as_str(),
-    ///     Some("my dir")
-    /// );
-    ///
-    /// assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(),
-    ///            Some("this overwrites"));
-    /// n.render_filename(TemplateKind::FromClipboardYaml).unwrap();
-    /// n.set_next_unused_rendered_filename().unwrap();
-    /// n.save().unwrap();
-    ///
-    /// // Check the new note file.
-    /// assert!(n.rendered_filename.as_os_str().to_str().unwrap()
-    ///    .contains("my dir--this overwrites"));
-    /// assert!(n.rendered_filename.is_file());
-    /// let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
-    /// #[cfg(not(target_family = "windows"))]
-    /// assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"my dir\""));
-    /// #[cfg(target_family = "windows")]
-    /// assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      \"my dir\""));
-    /// ```
-
-    ///
-    /// ## Example with `TemplateKind::AnnotateFile`
-    ///
-    /// ```rust
-    /// use tpnote_lib::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
-    /// use tpnote_lib::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::note::Note;
-    /// use tpnote_lib::template::TemplateKind;
-    /// use std::env::temp_dir;
-    /// use std::fs;
-    ///
-    /// // Prepare the test.
-    /// // Create some non-Tp-Note-file.
-    /// let raw = "This simulates a non tp-note file";
-    /// let non_notefile = temp_dir().join("20221030-some.pdf");
-    /// fs::write(&non_notefile, raw.as_bytes()).unwrap();
-    /// let expected = temp_dir().join("20221030-some.pdf--Note.md");
-    /// let _ = fs::remove_file(&expected);
-    ///
-    /// // Run the test.
-    /// // Store the path in `context`.
-    /// let mut context = Context::from(&non_notefile);
-    /// context.insert_environment().unwrap();
-    /// let clipboard = ContentString::from_string_with_cr("my clipboard\n".to_string());
-    /// context
-    ///     .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
-    ///     .unwrap();
-    /// let stdin = ContentString::from_string_with_cr("my stdin\n".to_string());
-    /// context
-    ///     .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
-    ///     .unwrap();
-    ///
-    /// // Create the `Note` object.
-    /// // You can plug in your own type (must impl. `Content`).
-    /// let mut n: Note<ContentString> = Note::from_content_template(
-    ///         context, TemplateKind::AnnotateFile).unwrap();
-    /// let expected_body =
-    ///     "\n[20221030-some.pdf](<20221030-some.pdf>)\n\nmy stdin\nmy clipboard\n\n\n";
-    /// assert_eq!(n.content.body(), expected_body);
-    /// // Check the title and subtitle in the note's header.
-    /// assert_eq!(
-    ///     n.context.get("fm_title").unwrap().as_str(),
-    ///     Some("some.pdf")
-    /// );
-    /// assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
-    ///
-    /// n.render_filename(TemplateKind::AnnotateFile).unwrap();
-    /// n.set_next_unused_rendered_filename().unwrap();
-    /// n.save().unwrap();
-    ///
-    /// // Check the new note file.
-    /// assert_eq!(n.rendered_filename, expected);
-    /// assert!(n.rendered_filename.is_file());
-    /// ```
     pub fn from_content_template(
         mut context: Context,
         template_kind: TemplateKind,
@@ -988,5 +621,367 @@ mod tests {
         let result = input1;
 
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_from_text_file1() {
+        //
+        // Example with `TemplateKind::SyncFilename`
+        //
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::note::Note;
+        use crate::template::TemplateKind;
+        use std::env::temp_dir;
+        use std::fs;
+        // Prepare test: create existing note.
+        let raw = r#"---
+title: "My day"
+subtitle: "Note"
+---
+Body text
+"#;
+        let notefile = temp_dir().join("20221031-hello.md");
+        fs::write(&notefile, raw.as_bytes()).unwrap();
+        let expected = temp_dir().join("20221031-My day--Note.md");
+        let _ = fs::remove_file(&expected);
+        // Start test.
+        let mut context = Context::from(&notefile);
+        context.insert_environment().unwrap();
+        // Create note object.
+        let content = <ContentString as Content>::open(&notefile).unwrap();
+        // You can plug in your own type (must impl. `Content`).
+        let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename).unwrap();
+        n.render_filename(TemplateKind::SyncFilename).unwrap();
+        n.set_next_unused_rendered_filename_or(&n.context.path.clone())
+            .unwrap();
+        assert_eq!(n.rendered_filename, expected);
+        // Rename file on the disk.
+        n.rename_file_from(&n.context.path).unwrap();
+        assert!(n.rendered_filename.is_file());
+    }
+
+    #[test]
+    fn test_from_text_file2() {
+        // Example with `TemplateKind::None`
+        //
+        //    This constructor is called, when `Note` is solely created for
+        // HTML rendering and no templates will be applied.
+        //
+        use crate::config::LIB_CFG;
+        use crate::config::TMPL_VAR_NOTE_JS;
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::note::Note;
+        use crate::template::TemplateKind;
+        use std::env::temp_dir;
+        use std::fs;
+        // Prepare test: create existing note file.
+        let raw = r#"---
+title: "My day"
+subtitle: "Note"
+---
+Body text
+"#;
+        let notefile = temp_dir().join("20221030-My day--Note.md");
+        fs::write(&notefile, raw.as_bytes()).unwrap();
+        // Start test
+        // Only minimal context is needed, because no templates are applied later.
+        let mut context = Context::from(&notefile);
+        context.insert_environment().unwrap();
+        // We do not inject any JavaScript.
+        context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
+        // Create note object.
+        let content = <ContentString as Content>::open(&notefile).unwrap();
+        // You can plug in your own type (must impl. `Content`).
+        let n = Note::from_text_file(context, content, TemplateKind::None).unwrap();
+        // Check the HTML rendition.
+        let html = n
+            .render_content_to_html(&"md", &LIB_CFG.read().unwrap().tmpl_html.viewer)
+            .unwrap();
+        assert!(html.starts_with("<!DOCTYPE html>\n<html"))
+    }
+
+    #[test]
+    fn test_from_text_file3() {
+        //
+        // Example with `TemplateKind::FromTextFile`
+        //
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::note::Note;
+        use crate::template::TemplateKind;
+        use std::env::temp_dir;
+        use std::fs;
+
+        // Prepare test: create existing note file without header.
+        let raw = "Body text without header";
+        let notefile = temp_dir().join("20221030-hello -- world.md");
+        let _ = fs::write(&notefile, raw.as_bytes());
+        let expected = temp_dir().join("20221030-hello--world.md");
+        let _ = fs::remove_file(&expected);
+        // Start test.
+        let mut context = Context::from(&notefile);
+        context.insert_environment().unwrap();
+        // Create note object.
+        let content = <ContentString as Content>::open(&notefile).unwrap();
+        // You can plug in your own type (must impl. `Content`).
+        let mut n =
+            Note::from_text_file(context.clone(), content, TemplateKind::FromTextFile).unwrap();
+        assert!(!n.content.header().is_empty());
+        assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("hello "));
+        assert_eq!(
+            n.context.get("fm_subtitle").unwrap().as_str(),
+            Some(" world")
+        );
+        assert_eq!(n.content.body().trim(), raw);
+        n.render_filename(TemplateKind::FromTextFile).unwrap();
+        n.set_next_unused_rendered_filename().unwrap();
+        n.save_and_delete_from(&context.path).unwrap();
+        // Check the new file with header
+        assert_eq!(&n.rendered_filename, &expected);
+        assert!(n.rendered_filename.is_file());
+        let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+        #[cfg(not(target_family = "windows"))]
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"hello \""));
+        #[cfg(target_family = "windows")]
+        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      \"hello \""));
+    }
+
+    #[test]
+    fn test_from_content_template1() {
+        // Example with `TemplateKind::New`
+        //
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::note::Note;
+        use crate::template::TemplateKind;
+        use std::env::temp_dir;
+        use std::fs;
+
+        // Create a directory for the new note.
+        let notedir = temp_dir().join("123-my dir/");
+        fs::create_dir_all(&notedir).unwrap();
+
+        // Store the path in `context`.
+        let mut context = Context::from(&notedir);
+        context.insert_environment().unwrap();
+
+        // Create the `Note` object.
+        // You can plug in your own type (must impl. `Content`).
+        let mut n: Note<ContentString> =
+            Note::from_content_template(context, TemplateKind::New).unwrap();
+        assert!(n.content.header().starts_with("title:      \"my dir\""));
+        assert_eq!(n.content.borrow_dependent().body, "\n\n");
+
+        // Check the title and subtitle in the note's header.
+        assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("my dir"));
+        assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
+        n.render_filename(TemplateKind::New).unwrap();
+        n.set_next_unused_rendered_filename().unwrap();
+        n.save().unwrap();
+
+        // Check the created new note file.
+        assert!(n.rendered_filename.is_file());
+        let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+        #[cfg(not(target_family = "windows"))]
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"my dir\""));
+        #[cfg(target_family = "windows")]
+        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      \"my dir\""));
+    }
+
+    #[test]
+    fn test_from_content_template2() {
+        // Example with `TemplateKind::FromClipboard`
+
+        use crate::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
+        use crate::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::note::Note;
+        use crate::template::TemplateKind;
+        use std::env::temp_dir;
+        use std::fs;
+
+        // Directory for the new note.
+        let notedir = temp_dir();
+
+        // Store the path in `context`.
+        let mut context = Context::from(&notedir);
+        context.insert_environment().unwrap();
+        let clipboard = ContentString::from("clp\n".to_string());
+        context
+            .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
+            .unwrap();
+        let stdin = ContentString::from("std\n".to_string());
+        context
+            .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
+            .unwrap();
+        // This is the condition to choose: `TemplateKind::FromClipboard`:
+        assert!(clipboard.header().is_empty() && stdin.header().is_empty());
+        assert!(!clipboard.body().is_empty() || !stdin.body().is_empty());
+
+        // Create the `Note` object.
+        // You can plug in your own type (must impl. `Content`).
+        let mut n: Note<ContentString> =
+            Note::from_content_template(context, TemplateKind::FromClipboard).unwrap();
+        let expected_body = "\nstd\nclp\n\n\n";
+        assert_eq!(n.content.body(), expected_body);
+        // Check the title and subtitle in the note's header.
+        assert_eq!(
+            n.context.get("fm_title").unwrap().as_str(),
+            Some("std\nclp\n")
+        );
+
+        assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
+        n.render_filename(TemplateKind::FromClipboard).unwrap();
+        n.set_next_unused_rendered_filename().unwrap();
+        n.save().unwrap();
+
+        // Check the new note file.
+        assert!(n
+            .rendered_filename
+            .as_os_str()
+            .to_str()
+            .unwrap()
+            .contains("std-clp--Note"));
+        assert!(n.rendered_filename.is_file());
+        let raw_note = fs::read_to_string(&n.rendered_filename).unwrap();
+        #[cfg(not(target_family = "windows"))]
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"std\\nclp\\n\""));
+        #[cfg(target_family = "windows")]
+        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      \"std"));
+    }
+
+    #[test]
+    fn test_from_content_template3() {
+        // Example with `TemplateKind::FromClipboardYaml`
+
+        use crate::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
+        use crate::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::filter::CUT_LEN_MAX;
+        use crate::note::Note;
+        use crate::template::TemplateKind;
+        use std::env::temp_dir;
+        use std::fs;
+
+        // Prepare test.
+        // Directory for the new note.
+        let notedir = temp_dir().join("123-my dir/");
+
+        // Run test.
+        // Store the path in `context`.
+        let mut context = Context::from(&notedir);
+        context.insert_environment().unwrap();
+        let clipboard = ContentString::from("my clipboard\n".to_string());
+        context
+            .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
+            .unwrap();
+        let stdin =
+            ContentString::from("---\nsubtitle: \"this overwrites\"\n---\nstdin body".to_string());
+        context
+            .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
+            .unwrap();
+        // This is the condition to choose: `TemplateKind::FromClipboardYaml`:
+        assert!(!clipboard.header().is_empty() || !stdin.header().is_empty());
+
+        // Create the `Note` object.
+        // You can plug in your own type (must impl. `Content`).
+        let mut n: Note<ContentString> =
+            Note::from_content_template(context, TemplateKind::FromClipboardYaml).unwrap();
+        let expected_body = "\nstdin bodymy clipboard\n\n\n";
+        assert_eq!(n.content.body(), expected_body);
+        // Check the title and subtitle in the note's header.
+        assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("my dir"));
+
+        assert_eq!(
+            n.context.get("fm_subtitle").unwrap().as_str(),
+            // Remember: in debug titles are very short. The code only works,
+            // because the string is pure ASCII (not UTF-8).
+            Some(&"this overwrites"[..CUT_LEN_MAX - 1])
+        );
+        n.render_filename(TemplateKind::FromClipboardYaml).unwrap();
+        n.set_next_unused_rendered_filename().unwrap();
+        n.save().unwrap();
+
+        // Check the new note file.
+        assert!(n
+            .rendered_filename
+            .as_os_str()
+            .to_str()
+            .unwrap()
+            .contains(&"my dir--this overwrites"[..CUT_LEN_MAX - 1]));
+        assert!(n.rendered_filename.is_file());
+        let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+        #[cfg(not(target_family = "windows"))]
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:      \"my dir\""));
+        #[cfg(target_family = "windows")]
+        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      \"my dir\""));
+    }
+
+    #[test]
+    fn test_from_content_template4() {
+        // Example with `TemplateKind::AnnotateFile`
+
+        use crate::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
+        use crate::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::note::Note;
+        use crate::template::TemplateKind;
+        use std::env::temp_dir;
+        use std::fs;
+
+        // Prepare the test.
+        // Create some non-Tp-Note-file.
+        let raw = "This simulates a non tp-note file";
+        let non_notefile = temp_dir().join("20221030-some.pdf");
+        fs::write(&non_notefile, raw.as_bytes()).unwrap();
+        let expected = temp_dir().join("20221030-some.pdf--Note.md");
+        let _ = fs::remove_file(&expected);
+
+        // Run the test.
+        // Store the path in `context`.
+        let mut context = Context::from(&non_notefile);
+        context.insert_environment().unwrap();
+        let clipboard = ContentString::from_string_with_cr("my clipboard\n".to_string());
+        context
+            .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
+            .unwrap();
+        let stdin = ContentString::from_string_with_cr("my stdin\n".to_string());
+        context
+            .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
+            .unwrap();
+
+        // Create the `Note` object.
+        // You can plug in your own type (must impl. `Content`).
+        let mut n: Note<ContentString> =
+            Note::from_content_template(context, TemplateKind::AnnotateFile).unwrap();
+        let expected_body =
+            "\n[20221030-some.pdf](<20221030-some.pdf>)\n\nmy stdin\nmy clipboard\n\n\n";
+        assert_eq!(n.content.body(), expected_body);
+        // Check the title and subtitle in the note's header.
+        assert_eq!(
+            n.context.get("fm_title").unwrap().as_str(),
+            Some("some.pdf")
+        );
+        assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
+
+        n.render_filename(TemplateKind::AnnotateFile).unwrap();
+        n.set_next_unused_rendered_filename().unwrap();
+        n.save().unwrap();
+
+        // Check the new note file.
+        assert_eq!(n.rendered_filename, expected);
+        assert!(n.rendered_filename.is_file());
     }
 }

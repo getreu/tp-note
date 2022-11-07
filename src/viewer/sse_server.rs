@@ -23,10 +23,11 @@ use std::thread;
 use std::time::SystemTime;
 use tpnote_lib::config::TMPL_VAR_NOTE_ERROR;
 use tpnote_lib::config::TMPL_VAR_NOTE_JS;
+use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
-use tpnote_lib::workflow::open_and_render_erroneous_content_html;
-use tpnote_lib::workflow::open_and_render_html;
+use tpnote_lib::workflow::render_erroneous_content_html;
+use tpnote_lib::workflow::render_html;
 use url::Url;
 
 /// The TCP stream is read in chunks. This is the read buffer size.
@@ -587,7 +588,8 @@ impl ServerThread {
     /// Renders the error page with the `HTML_VIEWER_ERROR_TMPL`.
     fn render_content_and_error(&self) -> Result<String, ViewerError> {
         // First decompose header and body, then deserialize header.
-        match open_and_render_html::<ContentString>(self.context.clone())
+        let content = ContentString::open(&self.context.path.clone())?;
+        match render_html::<ContentString>(self.context.clone(), content)
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
             .and_then(|html| {
@@ -639,10 +641,11 @@ impl ServerThread {
             // We could not render the note properly. Instead we will render a
             // special error page and return this instead.
             Err(e) => {
-                // Render error page providing all information we have.
+                // Render error page providing all information we havStringe.
                 let mut context = self.context.clone();
                 context.insert(TMPL_VAR_NOTE_ERROR, &e.to_string());
-                open_and_render_erroneous_content_html::<ContentString>(context)
+                let note_erroneous_content = <ContentString as Content>::open(&context.path)?;
+                render_erroneous_content_html::<ContentString>(context, note_erroneous_content )
                         .map_err(|e| { ViewerError::RenderErrorPage {
                             tmpl: "[tmpl_html] viewer_error".to_string(),
                             source: e,
