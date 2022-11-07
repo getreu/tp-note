@@ -17,7 +17,42 @@ pub trait NotePathBuf {
     /// When the path `p` exists on disk already, append some extension
     /// with an incrementing counter to the sort-tag in `p` until
     /// we find a free unused filename.
+    /// ```rust
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    /// use tpnote_lib::filename::NotePathBuf;
+    ///
+    /// // Prepare test: create existing note file.
+    /// let raw = "some content";
+    /// let mut notefile = temp_dir().join("20221101-My day--Note.md");
+    /// fs::write(&notefile, raw.as_bytes()).unwrap();
+    /// let expected = temp_dir().join("20221101-My day--Note(1).md");
+    /// let _ = fs::remove_file(&expected);
+    ///
+    /// // Start test
+    /// notefile.set_next_unused();
+    /// assert_eq!(notefile, expected);
+    /// ```
+    ///
+    /// When the filename is not used, keep it.
+    /// ```rust
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    /// use tpnote_lib::filename::NotePathBuf;
+    ///
+    /// // Prepare test: make sure that there is no note file.
+    /// let mut notefile = temp_dir().join("20221101-My day--Note.md");
+    /// let _ = fs::remove_file(&notefile);
+    /// // The name should not change.
+    /// let expected = notefile.clone();
+    ///
+    /// // Start test
+    /// notefile.set_next_unused();
+    /// assert_eq!(notefile, expected);
+    /// ```
+
     fn set_next_unused(&mut self) -> Result<(), FileError>;
+
     /// Shortens the stem of a filename so that
     /// `filename.len() <= FILENAME_LEN_MAX`.
     /// If stem ends with a pattern similar to a copy counter,
