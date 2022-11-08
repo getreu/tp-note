@@ -371,7 +371,7 @@ pub const TMPL_FROM_TEXT_FILE_CONTENT: &str = "\
 title:      {{ path | stem | split(pat='--') | first | cut | json_encode }}
 subtitle:   {{ path | stem | split(pat='--') | nth(n=1) | cut | json_encode }}
 author:     {{ username | json_encode }}
-date:       {{ note_file_date | date(format='%Y-%m-%d') | json_encode }}
+date:       {{ note_file_date | default(value=now()) | date(format='%Y-%m-%d') | json_encode }}
 orig_name:  {{ path | filename | json_encode }}
 lang:       {{ lang | json_encode }}
 ---

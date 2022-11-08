@@ -60,12 +60,17 @@ use std::fs;
 impl<T: Content> Note<T> {
     /// Constructor creating a memory representation of the existing note
     /// on disk.
-    /// If `Some<ContentString>` is supplied, the content is not read from the file
-    /// system again and `<ContentString>` is stored directly in `Self`.
-    /// `template_kind` should be one of:
-    /// `TemplateKind::SyncFilename`,
-    /// `TemplateKind::None` or
-    /// `TemplateKind::FromTextFile`.
+    ///
+    /// Contract: `template_kind` should be one of:
+    /// * `TemplateKind::SyncFilename`,
+    /// * `TemplateKind::None` or
+    /// * `TemplateKind::FromTextFile`.
+    ///
+    /// This adds the following variables to the context:
+    /// * `TMPL_VAR_NOTE_FM_TEXT`,
+    /// * `TMPL_VAR_NOTE_BODY_TEXT`,    
+    /// * `TMPL_VAR_NOTE_FILE_DATE` (only if file can be opened),
+    /// * all front matter variables (see `FrontMatter::try_from_content()`)
     ///
     ///
     /// ## Example with `TemplateKind::SyncFilename`
@@ -218,17 +223,19 @@ impl<T: Content> Note<T> {
         let body = &content.body();
         (*context).insert(TMPL_VAR_NOTE_BODY_TEXT, &body);
 
-        // Get the file's creation date.
-        let file = File::open(&context.path)?;
-        let metadata = file.metadata()?;
-        if let Ok(time) = metadata.created() {
-            (*context).insert(
-                TMPL_VAR_NOTE_FILE_DATE,
-                &time
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_secs(),
-            );
+        // Get the file's creation date. Fail silently.
+        if let Ok(file) = File::open(&context.path) {
+            if let Ok(metadata) = file.metadata() {
+                if let Ok(time) = metadata.created() {
+                    (*context).insert(
+                        TMPL_VAR_NOTE_FILE_DATE,
+                        &time
+                            .duration_since(SystemTime::UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_secs(),
+                    );
+                }
+            }
         }
 
         if matches!(template_kind, TemplateKind::FromTextFile) && !header.is_empty() {
@@ -243,19 +250,18 @@ impl<T: Content> Note<T> {
             });
         };
 
-        // Check if the compulsory field is present.
         // Deserialize the note's header read from disk.
+        // Store the front matter in the context for later use in templates.
         let fm = FrontMatter::try_from_content(&content)?;
         context.insert_front_matter(&fm);
 
         match template_kind {
             TemplateKind::SyncFilename =>
-            // No rendering is required. `content` is read from disk and left untouched.
+            // No rendering to markdown is required. `content` is read from disk and left untouched.
             {
-                // Store front matter in context for later use in filename templates.
                 fm.assert_not_empty()?;
+                // Check if the compulsory field is present.
                 fm.assert_compulsory_field()?;
-                context.insert_front_matter(&fm);
                 Ok(Self {
                     context,
                     content,
@@ -263,10 +269,11 @@ impl<T: Content> Note<T> {
                 })
             }
             TemplateKind::None =>
-            // No rendering is required. `content` is read from disk and left untouched.
+            // No rendering to markdown is required. `content` is read from disk and left untouched.
+            // A rendition to HTML may follow.
             {
-                // Do not store front matter, because no template will follow.
                 fm.assert_not_empty()?;
+                // Check if the compulsory field is present.
                 fm.assert_compulsory_field()?;
                 Ok(Self {
                     context,
@@ -276,10 +283,12 @@ impl<T: Content> Note<T> {
             }
             TemplateKind::FromTextFile => Self::from_content_template(context, template_kind),
             _ =>
-            // `content` will be generated with a content template.
-            // Remember: body is also in `context` if needed.
+            // `content` will be rendered to markdown with a content template.
+            // Remember: the raw text is in `TMPL_VAR_NOTE_BODY_TEXT` is also in
+            // `context`.
             {
                 fm.assert_not_empty()?;
+                // Check if the compulsory field is present.
                 fm.assert_compulsory_field()?;
                 Self::from_content_template(context, template_kind)
             }
@@ -288,10 +297,12 @@ impl<T: Content> Note<T> {
 
     /// Constructor that creates a new note by filling in the content
     /// template `template`.
-    /// `template_kind` should be on of `TemplateKind::New`,
-    /// `TemplateKind::FromClipboardYaml`,
-    /// `TemplateKind::FromClipboard`, or
-    /// `TemplateKind::AnnotateFile`
+    ///
+    /// Contract: `template_kind` should be one of:
+    /// * `TemplateKind::New`,
+    /// * `TemplateKind::FromClipboardYaml`,
+    /// * `TemplateKind::FromClipboard`, or
+    /// * `TemplateKind::AnnotateFile`
     ///
     /// ## Example with `TemplateKind::New`
     ///
