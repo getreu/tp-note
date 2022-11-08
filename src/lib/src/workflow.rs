@@ -132,7 +132,6 @@ use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
 use crate::filter::TERA;
-use crate::front_matter::FrontMatter;
 use crate::note::Note;
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
@@ -411,11 +410,7 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// // Check the HTML rendition.
 /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
 /// ```
-pub fn render_html<T: Content>(mut context: Context, content: T) -> Result<String, NoteError> {
-    // deserialize the rendered template
-    let fm = FrontMatter::try_from_content(&content)?;
-    context.insert_front_matter(&fm);
-
+pub fn render_html<T: Content>(context: Context, content: T) -> Result<String, NoteError> {
     let file_path_ext = &context
         .path
         .extension()
@@ -424,13 +419,9 @@ pub fn render_html<T: Content>(mut context: Context, content: T) -> Result<Strin
         .unwrap_or_default()
         .to_owned();
 
+    let note = Note::from_text_file(context, content, TemplateKind::None)?;
     let tmpl_html = &LIB_CFG.read().unwrap().tmpl_html.viewer;
 
-    let note = Note {
-        context,
-        content,
-        rendered_filename: PathBuf::new(),
-    };
     note.render_content_to_html(file_path_ext, tmpl_html)
 }
 
