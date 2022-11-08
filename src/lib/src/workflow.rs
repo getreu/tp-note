@@ -183,8 +183,7 @@ use tera::Value;
 /// ```
 pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteError> {
     // Collect input data for templates.
-    let mut context = Context::from(path);
-    context.insert_environment()?;
+    let context = Context::from(path);
 
     let content = <T>::open(path).unwrap_or_default();
     let n = synchronize::<T>(context, content)?;
@@ -259,7 +258,6 @@ where
 
     // Collect input data for templates.
     let mut context = Context::from(path);
-    context.insert_environment()?;
     context.insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, clipboard)?;
     context.insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, stdin)?;
 
@@ -417,7 +415,6 @@ pub fn render_html<T: Content>(mut context: Context, content: T) -> Result<Strin
     // deserialize the rendered template
     let fm = FrontMatter::try_from_content(&content)?;
     context.insert_front_matter(&fm);
-    context.insert_environment()?;
 
     let file_path_ext = &context
         .path
@@ -492,8 +489,6 @@ pub fn render_erroneous_content_html<T: Content>(
     mut context: Context,
     note_erroneous_content: T,
 ) -> Result<String, NoteError> {
-    // Render error page providing all information we have.
-    context.insert_environment()?;
     // Render to HTML.
     let note_erroneous_content = text_rawlinks2html(note_erroneous_content.as_str());
     // Insert.

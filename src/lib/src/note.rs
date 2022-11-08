@@ -647,8 +647,7 @@ Body text
         let expected = temp_dir().join("20221031-My day--Note.md");
         let _ = fs::remove_file(&expected);
         // Start test.
-        let mut context = Context::from(&notefile);
-        context.insert_environment().unwrap();
+        let context = Context::from(&notefile);
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
@@ -690,7 +689,6 @@ Body text
         // Start test
         // Only minimal context is needed, because no templates are applied later.
         let mut context = Context::from(&notefile);
-        context.insert_environment().unwrap();
         // We do not inject any JavaScript.
         context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
         // Create note object.
@@ -724,8 +722,7 @@ Body text
         let expected = temp_dir().join("20221030-hello--world.md");
         let _ = fs::remove_file(&expected);
         // Start test.
-        let mut context = Context::from(&notefile);
-        context.insert_environment().unwrap();
+        let context = Context::from(&notefile);
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
@@ -741,6 +738,7 @@ Body text
         n.render_filename(TemplateKind::FromTextFile).unwrap();
         n.set_next_unused_rendered_filename().unwrap();
         n.save_and_delete_from(&context.path).unwrap();
+
         // Check the new file with header
         assert_eq!(&n.rendered_filename, &expected);
         assert!(n.rendered_filename.is_file());
@@ -768,8 +766,7 @@ Body text
         fs::create_dir_all(&notedir).unwrap();
 
         // Store the path in `context`.
-        let mut context = Context::from(&notedir);
-        context.insert_environment().unwrap();
+        let context = Context::from(&notedir);
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -813,7 +810,6 @@ Body text
 
         // Store the path in `context`.
         let mut context = Context::from(&notedir);
-        context.insert_environment().unwrap();
         let clipboard = ContentString::from("clp\n".to_string());
         context
             .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
@@ -880,7 +876,6 @@ Body text
         // Run test.
         // Store the path in `context`.
         let mut context = Context::from(&notedir);
-        context.insert_environment().unwrap();
         let clipboard = ContentString::from("my clipboard\n".to_string());
         context
             .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
@@ -952,7 +947,6 @@ Body text
         // Run the test.
         // Store the path in `context`.
         let mut context = Context::from(&non_notefile);
-        context.insert_environment().unwrap();
         let clipboard = ContentString::from_string_with_cr("my clipboard\n".to_string());
         context
             .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)

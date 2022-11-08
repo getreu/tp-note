@@ -150,8 +150,6 @@ impl ServerThread {
         // Store `doc_path` in the `context.path` and
         // in the Tera variable `TMPL_VAR_PATH`.
         let mut context = Context::from(&doc_path);
-        // Enrich `context`
-        let _ = context.insert_environment();
         // Deserialize.
         let note_js = format!(
             "{}{}:{}{}",
