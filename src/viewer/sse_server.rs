@@ -27,7 +27,7 @@ use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
 use tpnote_lib::workflow::render_erroneous_content_html;
-use tpnote_lib::workflow::render_html;
+use tpnote_lib::workflow::render_viewer_html;
 use url::Url;
 
 /// The TCP stream is read in chunks. This is the read buffer size.
@@ -587,7 +587,7 @@ impl ServerThread {
     fn render_content_and_error(&self) -> Result<String, ViewerError> {
         // First decompose header and body, then deserialize header.
         let content = ContentString::open(&self.context.path.clone())?;
-        match render_html::<ContentString>(self.context.clone(), content)
+        match render_viewer_html::<ContentString>(self.context.clone(), content)
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
             .and_then(|html| {

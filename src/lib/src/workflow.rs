@@ -347,12 +347,11 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// at runtime).
 ///
 /// ```rust
-/// use tpnote_lib::config::LIB_CFG;
 /// use tpnote_lib::config::TMPL_VAR_NOTE_JS;
 /// use tpnote_lib::content::Content;
 /// use tpnote_lib::content::ContentString;
 /// use tpnote_lib::context::Context;
-/// use tpnote_lib::workflow::render_html;
+/// use tpnote_lib::workflow::render_viewer_html;
 /// use std::env::temp_dir;
 /// use std::fs;
 /// use std::path::Path;
@@ -371,7 +370,8 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// // We do not inject any JavaScript.
 /// context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
 /// // Render.
-/// let html = render_html::<ContentString>(context, raw.into()).unwrap();
+/// let html = render_viewer_html::<ContentString>(context, raw.into())
+///            .unwrap();
 /// // Check the HTML rendition.
 /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
 /// ```
@@ -384,7 +384,7 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// use tpnote_lib::content::Content;
 /// use tpnote_lib::content::ContentString;
 /// use tpnote_lib::context::Context;
-/// use tpnote_lib::workflow::render_html;
+/// use tpnote_lib::workflow::render_viewer_html;
 /// use std::env::temp_dir;
 /// use std::fs;
 ///
@@ -406,11 +406,58 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// // Render.
 /// let content = ContentString::open(&context.path).unwrap();
 /// // You can plug in your own type (must impl. `Content`).
-/// let html = render_html(context, content).unwrap();
+/// let html = render_viewer_html(context, content).unwrap();
 /// // Check the HTML rendition.
 /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
 /// ```
-pub fn render_html<T: Content>(context: Context, content: T) -> Result<String, NoteError> {
+pub fn render_viewer_html<T: Content>(context: Context, content: T) -> Result<String, NoteError> {
+    let tmpl_html = &LIB_CFG.read().unwrap().tmpl_html.viewer;
+    render_html(context, content, tmpl_html)
+}
+
+/// Returns the HTML rendition of the note file located in
+/// `context.path` with the template `TMPL_HTML_VIEWER` (can be replaced
+/// at runtime).
+///
+/// ```rust
+/// use tpnote_lib::config::TMPL_VAR_NOTE_JS;
+/// use tpnote_lib::content::Content;
+/// use tpnote_lib::content::ContentString;
+/// use tpnote_lib::context::Context;
+/// use tpnote_lib::workflow::render_exporter_html;
+/// use std::env::temp_dir;
+/// use std::fs;
+/// use std::path::Path;
+///
+/// // Prepare test: create existing note file.
+/// let raw = String::from(r#"---
+/// title: "My day"
+/// subtitle: "Note"
+/// ---
+/// Body text
+/// "#);
+///
+/// // Start test
+/// // Only minimal context is needed, because no templates are applied later.
+/// let mut context = Context::from(Path::new("/path/to/note.md"));
+/// // The exporter template does not inject any JavaScript.
+/// // Render.
+/// let html = render_exporter_html::<ContentString>(context, raw.into())
+///            .unwrap();
+/// // Check the HTML rendition.
+/// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
+/// ```
+pub fn render_exporter_html<T: Content>(context: Context, content: T) -> Result<String, NoteError> {
+    let tmpl_html = &LIB_CFG.read().unwrap().tmpl_html.exporter;
+    render_html(context, content, tmpl_html)
+}
+
+/// Helper function.
+fn render_html<T: Content>(
+    context: Context,
+    content: T,
+    tmpl_html: &str,
+) -> Result<String, NoteError> {
     let file_path_ext = &context
         .path
         .extension()
@@ -420,7 +467,6 @@ pub fn render_html<T: Content>(context: Context, content: T) -> Result<String, N
         .to_owned();
 
     let note = Note::from_text_file(context, content, TemplateKind::None)?;
-    let tmpl_html = &LIB_CFG.read().unwrap().tmpl_html.viewer;
 
     note.render_content_to_html(file_path_ext, tmpl_html)
 }
@@ -443,7 +489,6 @@ pub fn render_html<T: Content>(context: Context, content: T) -> Result<String, N
 /// use tpnote_lib::context::Context;
 /// use tpnote_lib::error::NoteError;
 /// use tpnote_lib::workflow::render_erroneous_content_html;
-/// use tpnote_lib::workflow::render_html;
 /// use std::env::temp_dir;
 /// use std::fs;
 ///
