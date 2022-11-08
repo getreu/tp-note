@@ -365,7 +365,6 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// "#);
 ///
 /// // Start test
-/// // Only minimal context is needed, because no templates are applied later.
 /// let mut context = Context::from(Path::new("/path/to/note.md"));
 /// // We do not inject any JavaScript.
 /// context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
@@ -399,7 +398,6 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// fs::write(&notefile, raw.as_bytes()).unwrap();
 ///
 /// // Start test
-/// // Only minimal context is needed, because no templates are applied later.
 /// let mut context = Context::from(&notefile);
 /// // We do not inject any JavaScript.
 /// context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
@@ -438,7 +436,6 @@ pub fn render_viewer_html<T: Content>(context: Context, content: T) -> Result<St
 /// "#);
 ///
 /// // Start test
-/// // Only minimal context is needed, because no templates are applied later.
 /// let mut context = Context::from(Path::new("/path/to/note.md"));
 /// // The exporter template does not inject any JavaScript.
 /// // Render.
@@ -505,7 +502,6 @@ fn render_html<T: Content>(
 /// let e = NoteError::MissingFrontMatterField { field_name: "title".to_string() };
 ///
 /// // Start test
-/// // Only minimal context is needed, (see `tmpl_html.viewer_error`).
 /// let mut context = Context::from(&notefile);
 /// // We do not inject any JavaScript.
 /// context.insert(TMPL_VAR_NOTE_JS, &e.to_string());

@@ -187,7 +187,7 @@ pub trait NotePath {
     /// Compares with another `Path` to a Tp-Note file. They are considered equal
     /// even when the copy counter is different.
     fn exclude_copy_counter_eq(&self, p2: &Path) -> bool;
-    /// Check if a `Path` points to a "wellformed" filename.
+    /// Check if a `Path` points to a file with a "wellformed" filename.
     fn has_wellformed_filename(&self) -> bool;
     /// Removes the copy counter from the file stem.
     fn remove_copy_counter(tag: &str) -> &str;
@@ -266,7 +266,8 @@ impl NotePath for Path {
         sort_tag1 == sort_tag2 && stem1 == stem2 && ext1 == ext2
     }
 
-    /// Check if a `path` is a "well formed" filename.
+    /// Check if a `path` points to a file with a
+    /// "well formed" filename.
     /// We consider it well formed,
     /// * if `path` has no directory components, only
     ///   a filename, and

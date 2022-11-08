@@ -38,7 +38,8 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 /// ```
 ///
 /// The `Content` trait allows to plug in you own storage back end if
-/// `ContentString` does not suit you.
+/// `ContentString` does not suit you. Note: you can overwrite
+/// `Content::open()` and `Content::save_as()` also (note shown).
 ///
 /// ```rust
 /// use tpnote_lib::content::Content;
@@ -47,7 +48,8 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 /// #[derive(Debug, Eq, PartialEq, Default)]
 /// struct MyString(String);
 /// impl Content for MyString {
-///     /// This sample implementation is too expensive.
+///     /// This sample implementation may be too expensive.
+///     /// Better precalculate this in `Self::from()`.
 ///     fn header(&self) -> &str {
 ///         Self::split(&self.as_str()).0
 ///     }
@@ -134,10 +136,10 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
         Self::from(input)
     }
 
-    /// We assume, that `Self` == `Newtype<ContentString>`
+    /// Return a reference to theader part in between `---`
     fn header(&self) -> &str;
 
-    /// We assume, that `Self` == `Newtype<ContentString>`
+    /// Return the body below the second `---`.
     fn body(&self) -> &str;
 
     /// Writes the note to disk with `new_file_path` as filename.
