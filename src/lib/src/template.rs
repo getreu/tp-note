@@ -31,16 +31,9 @@ pub enum TemplateKind {
 }
 
 impl TemplateKind {
-    /// Constructor encoding the logic under what circumstances what template.
+    /// Constructor encoding the logic under what circumstances what template
     /// should be used.
     ///
-    /// Contract: If `template_kind` is one of:
-    /// * `TemplateKind::New`
-    /// * `TemplateKind::FromClipboardYaml`
-    /// * `TemplateKind::FromClipboard`
-    /// * `TemplateKind::AnnotateFile`
-    /// `content` is `None` because it is not used. Otherwise, the file's content from the
-    /// is read from the disk and returned as `Some(..)`.
     pub fn from<T: Content>(path: &Path, clipboard: &T, stdin: &T) -> (Self, Option<T>) {
         let stdin_is_empty = stdin.is_empty();
         let stdin_has_header = !stdin.header().is_empty();
@@ -105,6 +98,7 @@ impl TemplateKind {
     }
 
     /// Returns the content template string as it is defined in the configuration file.
+    /// Panics for `TemplateKind::SyncFilename` and `TemplateKind::None`.
     pub fn get_content_template(&self) -> String {
         match self {
             Self::New => LIB_CFG.read().unwrap().tmpl.new_content.clone(),
@@ -117,8 +111,10 @@ impl TemplateKind {
             Self::FromClipboard => LIB_CFG.read().unwrap().tmpl.from_clipboard_content.clone(),
             Self::FromTextFile => LIB_CFG.read().unwrap().tmpl.from_text_file_content.clone(),
             Self::AnnotateFile => LIB_CFG.read().unwrap().tmpl.annotate_file_content.clone(),
-            Self::SyncFilename => String::new(),
-            Self::None => String::new(),
+            Self::SyncFilename => {
+                panic!("`TemplateKind::SyncFilename` has no content template")
+            }
+            Self::None => panic!("`TemplateKind::None` has no content template"),
         }
     }
 
@@ -130,12 +126,13 @@ impl TemplateKind {
             Self::FromClipboard => "[tmpl] from_clipboard_content",
             Self::FromTextFile => "[tmpl] from_text_file_content",
             Self::AnnotateFile => "[tmpl] annotate_file_content",
-            Self::SyncFilename => "error: there is no `sync_content` template",
-            Self::None => "error: no content template should be used",
+            Self::SyncFilename => "`TemplateKind::SyncFilename` has no content template",
+            Self::None => "`TemplateKind::None` has no content template",
         }
     }
 
     /// Returns the file template string as it is defined in the configuration file.
+    /// Panics for `TemplateKind::None`.
     pub fn get_filename_template(&self) -> String {
         match self {
             Self::New => LIB_CFG.read().unwrap().tmpl.new_filename.clone(),
@@ -149,7 +146,7 @@ impl TemplateKind {
             Self::FromTextFile => LIB_CFG.read().unwrap().tmpl.from_text_file_filename.clone(),
             Self::AnnotateFile => LIB_CFG.read().unwrap().tmpl.annotate_file_filename.clone(),
             Self::SyncFilename => LIB_CFG.read().unwrap().tmpl.sync_filename.clone(),
-            Self::None => String::new(),
+            Self::None => panic!("`TemplateKind::None` has no filename template"),
         }
     }
 
@@ -162,7 +159,7 @@ impl TemplateKind {
             Self::FromTextFile => "[tmpl] from_text_file_filename",
             Self::AnnotateFile => "[tmpl] annotate_file_filename",
             Self::SyncFilename => "[tmpl] sync_filename",
-            Self::None => "error: no filename template defined yet",
+            Self::None => "`TemplateKind::None` has no filename template",
         }
     }
 }

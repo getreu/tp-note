@@ -66,6 +66,8 @@ impl<T: Content> Note<T> {
     /// * `TemplateKind::None` or
     /// * `TemplateKind::FromTextFile`.
     ///
+    /// Panics otherwise. Use `Note::from_content_template()` in those cases.
+    ///
     /// This adds the following variables to the context:
     /// * `TMPL_VAR_NOTE_FM_TEXT`,
     /// * `TMPL_VAR_NOTE_BODY_TEXT`,    
@@ -144,15 +146,12 @@ impl<T: Content> Note<T> {
                 })
             }
             TemplateKind::FromTextFile => Self::from_content_template(context, template_kind),
-            _ =>
-            // `content` will be rendered to markdown with a content template.
-            // Remember: the raw text is in `TMPL_VAR_NOTE_BODY_TEXT` is also in
-            // `context`.
-            {
-                fm.assert_not_empty()?;
-                // Check if the compulsory field is present.
-                fm.assert_compulsory_field()?;
-                Self::from_content_template(context, template_kind)
+            // This should not happen. Use `Self::from_content_template()` instead.
+            _ => {
+                panic!(
+                    "Contract violation: `template_kind=={:?}` is not acceptable here.",
+                    template_kind
+                );
             }
         }
     }
@@ -160,11 +159,11 @@ impl<T: Content> Note<T> {
     /// Constructor that creates a new note by filling in the content
     /// template `template`.
     ///
-    /// Contract: `template_kind` should be one of:
-    /// * `TemplateKind::New`,
-    /// * `TemplateKind::FromClipboardYaml`,
-    /// * `TemplateKind::FromClipboard`, or
-    /// * `TemplateKind::AnnotateFile`
+    /// Contract: `template_kind` should be NOT one of:
+    /// * `TemplateKind::SyncFilename`,
+    /// * `TemplateKind::None`
+    ///
+    /// Panics if this is the case.
     ///
     pub fn from_content_template(
         mut context: Context,
@@ -186,6 +185,8 @@ impl<T: Content> Note<T> {
             let mut tera = Tera::default();
             tera.extend(&TERA)?;
 
+            // Panics, if the content template does not exist (see contract).
+            // Returns an error, when the rendition goes wrong.
             tera.render_str(&template_kind.get_content_template(), &context)
                 .map_err(|e| {
                     note_error_tera_template!(

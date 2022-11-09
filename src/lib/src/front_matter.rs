@@ -58,6 +58,7 @@ impl FrontMatter {
     }
 
     /// Helper function deserialising the front-matter of the note file.
+    /// An empty header leads to an empty `tera::Map`; no error.
     pub fn try_from_content(content: &impl Content) -> Result<FrontMatter, NoteError> {
         let header = content.header();
         Self::try_from(header)
@@ -67,6 +68,7 @@ impl FrontMatter {
 impl TryFrom<&str> for FrontMatter {
     type Error = NoteError;
     /// Helper function deserialising the front-matter of the note file.
+    /// An empty header leads to an empty `tera::Map`; no error.
     fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
         let lib_cfg = LIB_CFG.read().unwrap();
 
