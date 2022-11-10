@@ -104,6 +104,16 @@ impl NotePathBuf for PathBuf {
     }
 
     fn set_next_unused(&mut self) -> Result<(), FileError> {
+        #[inline]
+        fn append_copy_counter(stem: &str, n: usize) -> String {
+            let lib_cfg = LIB_CFG.read().unwrap();
+            let mut stem = stem.to_string();
+            stem.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
+            stem.push_str(&n.to_string());
+            stem.push_str(&lib_cfg.filename.copy_counter_closing_brackets);
+            stem
+        }
+
         if !&self.exists() {
             return Ok(());
         };
@@ -114,7 +124,7 @@ impl NotePathBuf for PathBuf {
 
         // Try up to 99 sort tag extensions, then give up.
         for n in 1..FILENAME_COPY_COUNTER_MAX {
-            let stem_copy_counter = Path::append_copy_counter(stem, n);
+            let stem_copy_counter = append_copy_counter(stem, n);
             let filename = Self::from_assembled(sort_tag, &stem_copy_counter, "", ext);
             new_path.set_file_name(filename);
 
@@ -151,7 +161,7 @@ impl NotePathBuf for PathBuf {
             .to_string();
 
         // Does this stem ending look similar to a copy counter?
-        if note_stem.len() != Path::remove_copy_counter(&note_stem).len() {
+        if note_stem.len() != Path::trim_copy_counter(&note_stem).len() {
             // Add an additional separator.
             let lib_cfg = LIB_CFG.read().unwrap();
             note_stem.push_str(&lib_cfg.filename.copy_counter_extra_separator);
@@ -179,8 +189,6 @@ impl NotePathBuf for PathBuf {
 
 /// Extents `Path` with methods dealing with paths to Tp-Note files.
 pub trait NotePath {
-    /// Append the copy counter `n` at the end to the filestem.
-    fn append_copy_counter(stem: &str, n: usize) -> String;
     /// Helper function that decomposes a fully qualified path name
     /// into (`sort_tag`, `stem_copy_counter_ext`, `stem`, `copy_counter`, `ext`).
     fn disassemble(&self) -> (&str, &str, &str, &str, &str);
@@ -189,23 +197,13 @@ pub trait NotePath {
     fn exclude_copy_counter_eq(&self, p2: &Path) -> bool;
     /// Check if a `Path` points to a file with a "wellformed" filename.
     fn has_wellformed_filename(&self) -> bool;
-    /// Removes the copy counter from the file stem.
-    fn remove_copy_counter(tag: &str) -> &str;
+    /// Helper function: Removes the copy counter from the file stem.
+    fn trim_copy_counter(tag: &str) -> &str;
     /// Compare to all file extensions Tp-Note can open.
     fn has_tpnote_extension(&self) -> bool;
 }
 
 impl NotePath for Path {
-    #[inline]
-    fn append_copy_counter(stem: &str, n: usize) -> String {
-        let lib_cfg = LIB_CFG.read().unwrap();
-        let mut stem = stem.to_string();
-        stem.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
-        stem.push_str(&n.to_string());
-        stem.push_str(&lib_cfg.filename.copy_counter_closing_brackets);
-        stem
-    }
-
     fn disassemble(&self) -> (&str, &str, &str, &str, &str) {
         let lib_cfg = LIB_CFG.read().unwrap();
 
@@ -246,7 +244,7 @@ impl NotePath for Path {
             ""
         };
 
-        let stem = Self::remove_copy_counter(stem_copy_counter);
+        let stem = Self::trim_copy_counter(stem_copy_counter);
 
         let copy_counter = &stem_copy_counter[stem.len()..];
 
@@ -316,7 +314,7 @@ impl NotePath for Path {
     /// Helper function that trims the copy counter at the end of string.
     /// If there is none, return the same.
     #[inline]
-    fn remove_copy_counter(tag: &str) -> &str {
+    fn trim_copy_counter(tag: &str) -> &str {
         let lib_cfg = LIB_CFG.read().unwrap();
         // Strip closing brackets at the end.
         let tag1 =
@@ -367,9 +365,12 @@ mod tests {
         let lib_cfg = LIB_CFG.read().unwrap();
 
         // Test concatenation of extra `-` if it ends with a copy counter pattern.
-        let input = "fn";
+        let mut input = "fn".to_string();
         // This makes the filename problematic
-        let mut input = Path::append_copy_counter(input, 1);
+        input.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
+        input.push('0');
+        input.push_str(&lib_cfg.filename.copy_counter_closing_brackets);
+
         // We expect this to be corrected.
         let mut expected = input.clone();
         // Append '-'.
@@ -476,40 +477,34 @@ mod tests {
     }
 
     #[test]
-    fn test_remove_copy_counter() {
+    fn test_trim_copy_counter() {
         // Pattern found and removed.
         let expected = "my_stem";
-        let result = Path::remove_copy_counter("my_stem(78)");
+        let result = Path::trim_copy_counter("my_stem(78)");
         assert_eq!(expected, result);
 
         // Pattern found and removed.
         let expected = "my_stem-";
-        let result = Path::remove_copy_counter("my_stem-(78)");
+        let result = Path::trim_copy_counter("my_stem-(78)");
         assert_eq!(expected, result);
 
         // Pattern found and removed.
         let expected = "my_stem_";
-        let result = Path::remove_copy_counter("my_stem_(78)");
+        let result = Path::trim_copy_counter("my_stem_(78)");
         assert_eq!(expected, result);
 
         // Pattern not found.
         assert_eq!(expected, result);
         let expected = "my_stem_(78))";
-        let result = Path::remove_copy_counter("my_stem_(78))");
+        let result = Path::trim_copy_counter("my_stem_(78))");
         assert_eq!(expected, result);
 
         // Pattern not found.
         let expected = "my_stem_)78)";
-        let result = Path::remove_copy_counter("my_stem_)78)");
+        let result = Path::trim_copy_counter("my_stem_)78)");
         assert_eq!(expected, result);
     }
 
-    #[test]
-    fn test_append_sort_tag_extension() {
-        let expected = "my_stem(987)";
-        let result = Path::append_copy_counter("my_stem", 987);
-        assert_eq!(expected, result);
-    }
     #[test]
     fn test_filename_exclude_copy_counter_eq() {
         let p1 = PathBuf::from("/mypath/123-title(1).md");
