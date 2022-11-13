@@ -27,6 +27,7 @@
 //! let stdin = ContentString::default();
 //! // This is the condition to choose: `TemplateKind::New`:
 //! assert!(clipboard.is_empty() || stdin.is_empty());
+//! // There are no inhibitor rules to change the `TemplateKind`.
 //! let template_kind_filer = |tk|tk;
 //!
 //! // Start test.
@@ -62,7 +63,7 @@
 //! use std::ops::Deref;
 //!
 //! #[derive(Default, Debug, Eq, PartialEq)]
-//! // We need a newtype because of the orphan.
+//! // We need a newtype because of the orphan rule.
 //! pub struct MyContentString(ContentString);
 //!
 //! impl From<String> for MyContentString {
@@ -84,6 +85,7 @@
 //!             .write(true)
 //!             .create(true)
 //!             .open(&new_file_path)?;
+//!         // We do not save the content to disk, we write intstead:
 //!         write!(outfile, "Simulation")?;
 //!         Ok(())
 //!     }
@@ -104,6 +106,7 @@
 //! let stdin = MyContentString::default();
 //! // This is the condition to choose: `TemplateKind::New`:
 //! assert!(clipboard.is_empty() || stdin.is_empty());
+//! // There are no inhibitor rules to change the `TemplateKind`.
 //! let template_kind_filer = |tk|tk;
 //!
 //! // Start test.
