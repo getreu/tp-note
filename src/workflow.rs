@@ -30,14 +30,7 @@ use tpnote_lib::workflow::synchronize_filename;
 /// 3. Open the new note in an external editor (configurable).
 /// 4. Read the front matter again and resynchronize the filename if necessary.
 #[inline]
-pub fn run() -> Result<PathBuf, WorkflowError> {
-    // process arg = <path>
-    let mut path = if let Some(p) = &ARGS.path {
-        p.canonicalize()?
-    } else {
-        env::current_dir()?
-    };
-
+pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
     // Depending on this we might not show the viewer later or
     // log an error as WARN level instead of ERROR level.
     let launch_viewer;
@@ -137,4 +130,14 @@ pub fn run() -> Result<PathBuf, WorkflowError> {
     };
 
     Ok(path)
+}
+
+pub(crate) fn run() -> Result<PathBuf, WorkflowError> {
+    // process arg = <path>
+    let path = if let Some(p) = &ARGS.path {
+        p.canonicalize()?
+    } else {
+        env::current_dir()?
+    };
+    run_workflow(path)
 }
