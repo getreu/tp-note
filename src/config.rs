@@ -246,6 +246,8 @@ const VIEWER_TCP_CONNECTIONS_MAX: usize = 16;
 /// here are silently ignored.  Note, that image files must be located in the
 /// same or in the note's parent directory.
 const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
+    &["md", "text/x-markdown"],
+    &["txt", "text/plain"],
     &["apng", "image/apng"],
     &["avif", "image/avif"],
     &["bmp", "image/bmp"],
