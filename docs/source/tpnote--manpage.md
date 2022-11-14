@@ -1,5 +1,14 @@
-% TP-NOTE(1) Version 1.18.2 | Tp-Note documentation
+% TP-NOTE(1) Version 1.18.3 | Tp-Note documentation
 
+---
+title:      "tpnote"
+subtitle:   "manpage"
+author:     "Jens Getreu"
+date:       "2022-11-08"
+orig_name:  "tpnote--manpage.md"
+sort_tag:   ""
+lang:       "en-US"
+---
 
 
 # NAME
@@ -17,7 +26,7 @@ _Tp-Note_ - save and edit your clipboard content as a note file.
 
 # DESCRIPTION
 
-Tp-Note is a note taking tool and a template system, that synchronizes the
+Tp-Note is a note-taking tool and a template system, that synchronizes the
 note's metadata with its filename. Tp-Note analyses its environment and the
 clipboard content and stores the result in variables. New notes are
 created by filling these variables in predefined and customizable
@@ -1200,13 +1209,14 @@ and in '`[tmpl] annotate_file_content`':
 
 with:
 
-    [{{ path | filename }}](<ParentDir../{{ path | filename }}>)
+    [{{ path | filename }}](<../{{ path | filename }}>)
 
-Please note that web browsers usually ignore leading '`../`' in URL paths. To
-work around this limitation, Tp-Note's built-in viewer interprets the string
-'`ParentDir..`' as an alias of '`..`'. It is also worth mentioning that
-Tp-Note automatically creates the subdirectory '`Notes/`' in case it does not
-exist.
+Please note that web browsers usually ignore leading '`../`' in relative
+URL paths. To work around this limitation, Tp-Note's built-in viewer
+first relaces '`../`' with the string '`ParentDir`'. When the user clicks
+on this relative URL, the '`ParentDir`' string in the HTTP request replaced
+back with '`..`'.  It is also worth mentioning that Tp-Note automatically
+creates the subdirectory '`Notes/`' in case it does not exist.
 
 
 
@@ -1707,16 +1717,27 @@ As discussed above, Tp-Note's built-in viewer sets up an HTTP server on the
 as the as long as the launched web browser window is open. It should be
 remembered, that the HTTP server not only exposes the rendered note, but also
 some other (image) files starting from the parent directory (and all
-subdirectories) of the note file. For security reasons symbolic links to files
-outside the note's parent directory are not followed. Furthermore, Tp-Note's
-built-in HTTP server only serves files that are explicitly referenced in the
-note document and whose file extensions are registered with the
-'`[viewer] served_mime_type`' configuration file variable. As Tp-Note's built-in
-viewer binds to the '`localhost`' interface, the exposed files are in principle
-accessible to all processes running on the computer. As long as only one user is
-logged into the computer at a given time, no privacy concern is raised: any
-potential note reader must be logged in, in order to access the `localhost` HTTP
-server.
+subdirectories) of the note file. For security reasons relative links to image files
+outside the note's parent directory are not followed. The only exception to this
+restriction is the so-called _follow relative links to other Tp-Note files_ 
+feature. By default, the viewer follows relative links to Tp-Note files everywhere 
+in the file system.
+
+However, Tp-Note's built-in HTTP server only serves files that are
+explicitly referenced in the note document and whose file extensions
+are registered with the '`[viewer] served_mime_type`' configuration
+file variable.  The latter allows to disable the _follow Tp-Note links_ feature: 
+First, identify all file extension that Tp-Note considers as its own files.
+These extensions are listed in the '`[filename] extensions_*`' configuration
+file variables. Then, remove all entries in '`[viewer] served_mime_type`' that
+start with a Tp-Note file extension. This should remove all '`text/*`' 
+mime types from that list also.
+
+As Tp-Note's built-in viewer binds to the '`localhost`' interface, the
+exposed files are in principle accessible to all processes running on
+the computer. As long as only one user is logged into the computer at
+a given time, no privacy concern is raised: any potential note reader
+must be logged in, in order to access the `localhost` HTTP server.
 
 This is why on systems where multiple users are logged in at the same time, it
 is recommended to disable Tp-Note's viewer feature by setting the
@@ -1799,4 +1820,5 @@ Licence.
 # AUTHORS
 
 Jens Getreu <getreu@web.de>
+
 

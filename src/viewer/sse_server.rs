@@ -5,6 +5,7 @@ use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::viewer::error::ViewerError;
 use crate::viewer::init::LOCALHOST;
+use crate::viewer::launch_viewer_thread;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
 use percent_encoding::percent_decode_str;
 use std::collections::HashSet;
@@ -26,6 +27,7 @@ use tpnote_lib::config::TMPL_VAR_NOTE_JS;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
+use tpnote_lib::markup_language::MarkupLanguage;
 use tpnote_lib::workflow::render_erroneous_content_html;
 use tpnote_lib::workflow::render_viewer_html;
 use url::Url;
@@ -55,8 +57,9 @@ pub const SSE_CLIENT_CODE2: &str = r#"/events");
     "#;
 
 /// String alias that can be used in paths instead of `../` which is ignored by web
-/// browsers in leading position.
-const PATH_UPDIR_ALIAS: &str = "ParentDir..";
+/// browsers in leading position. String must contain only ASCII letters, no space
+/// and end with `/`.
+const PATH_UPDIR_ALIAS: &str = "ParentDir/";
 
 /// URL path for Server-Sent-Events.
 const SSE_EVENT_PATH: &str = "/events";
@@ -363,17 +366,22 @@ impl ServerThread {
                     let doc_dir = doc_path.parent().unwrap_or_else(|| Path::new(""));
 
                     // Strip `/` and convert to `Path`.
-                    let path = Path::new(
-                        path.strip_prefix('/')
-                            .ok_or(ViewerError::UrlMustStartWithSlash)?,
-                    );
+
+                    let path = path
+                        .strip_prefix('/')
+                        .ok_or(ViewerError::UrlMustStartWithSlash)?
+                        .to_string();
                     // Replace `PATH_UPDIR_ALIAS` with `..`.
+                    let path = path.replace(PATH_UPDIR_ALIAS, "../");
+                    let path = Path::new(&path);
+
+                    // Process relative links: concat  `doc_dir` and `path`.
                     let mut reqpath = doc_dir.to_owned();
                     for p in path.iter() {
                         if p == "." {
                             continue;
                         }
-                        if p == PATH_UPDIR_ALIAS || p == ".." {
+                        if p == ".." {
                             reqpath.pop();
                         } else {
                             reqpath.push(p);
@@ -428,8 +436,31 @@ impl ServerThread {
                     // Release the `RwLockReadGuard`.
                     drop(doc_local_links);
 
-                    // Condition 3.: Only serve resources in the same or under the document's
-                    // parent directory.
+                    // Condition 3 : Return early if this is another Tp-Note file.
+                    if !matches!(extension.into(), MarkupLanguage::None) {
+                        if reqpath.is_file() {
+                            log::info!(
+                                "Open another viewer for Tp-Note file: {}",
+                                reqpath.to_str().unwrap_or_default()
+                            );
+                            // Instead of returning the document,
+                            // we open another viewer instance.
+                            launch_viewer_thread(&reqpath);
+                            // We return nothing.
+                            self.respond_no_content_ok()?;
+                            continue 'tcp_connection;
+                        } else {
+                            log::info!(
+                                "Referenced Tp-Note file not found: {}",
+                                reqpath.to_str().unwrap_or_default()
+                            );
+                            self.respond_not_found(&reqpath)?;
+                            continue 'tcp_connection;
+                        }
+                    }
+
+                    // Condition 4.: Only serve resources in the same or under
+                    // the document's parent directory.
                     #[allow(clippy::or_fun_call)]
                     let doc_parent_dir = doc_dir.parent().unwrap_or(Path::new(""));
                     if !reqpath.starts_with(doc_parent_dir) {
@@ -444,8 +475,8 @@ impl ServerThread {
                         continue 'tcp_connection;
                     }
 
-                    // Condition 4.: Is the file readable?
-                    if fs::metadata(&reqpath)?.is_file() {
+                    // Condition 5.: Is the file readable?
+                    if reqpath.is_file() {
                         self.respond_file_ok(&reqpath, mime_type)?;
                     } else {
                         self.respond_not_found(&reqpath)?;
@@ -482,6 +513,18 @@ impl ServerThread {
 
         log::debug!(
             "TCP peer port {}: 200 OK, served event header, \
+            keeping event connection open ...",
+            self.stream.peer_addr()?.port(),
+        );
+        Ok(())
+    }
+
+    /// Write HTTP event response.
+    fn respond_no_content_ok(&mut self) -> Result<(), ViewerError> {
+        self.stream
+            .write_all(b"HTTP/1.1 204\r\nContent-Length: 0\r\n\r\n")?;
+        log::debug!(
+            "TCP peer port {}: 204 OK, served header, \
             keeping event connection open ...",
             self.stream.peer_addr()?.port(),
         );
@@ -597,24 +640,34 @@ impl ServerThread {
                     .write()
                     .expect("Can not write `doc_local_links`. RwLock is poisoned. Panic.");
 
-                // Populate the list from scratch.
+                // Populate the list from scratch.               
                 doc_local_links.clear();
 
                 // Search for hyperlinks and inline images in the HTML rendition
                 // of this note.
-                for ((_, _, _), link) in HyperlinkInlineImage::new(&html) {
+                let mut rest = &*html;
+                let mut html_out = String::new();
+                for ((skipped, consumed, remaining), link) in HyperlinkInlineImage::new(&html) {
+                    html_out.push_str(&skipped);
+                    rest = remaining;
                     // We skip absolute URLs.
                     if let Ok(url) = Url::parse(&link) {
                         if url.has_host() {
+                            html_out.push_str(&consumed);
                             continue;
                         };
                     };
+                    // URL is relativ.
+                    html_out.push_str(&consumed.replace("../", PATH_UPDIR_ALIAS));
+
                     let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8()?);
                     // Ignore leading "./" in `path`.
                     let path = path.iter().skip_while(|s|s == Path::new("./")).collect::<PathBuf>();
                     // Save the hyperlinks for other threads to check against.
                     doc_local_links.insert(path);
                 }
+                // Add the last `remaining`.
+                html_out.push_str(&rest);
 
                 if doc_local_links.is_empty() {
                     log::debug!(
@@ -632,7 +685,7 @@ impl ServerThread {
                         }).collect::<String>()
                     );
                 }
-                Ok(html)
+                Ok(html_out)
                 // The `RwLockWriteGuard` is released here.
             }) {
             // If the rendition went well, return the HTML.

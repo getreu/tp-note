@@ -9,7 +9,10 @@ pub enum MarkupLanguage {
     RestructuredText,
     Html,
     Txt,
+    /// We can not determine the markup language, but confirm that this
+    /// is a Tp-Note file.
     Unknown,
+    /// This is not a Tp-Note file.
     None,
 }
 
