@@ -554,7 +554,8 @@ impl ServerThread {
 
     /// Write HTTP not found response.
     fn respond_not_found(&mut self, reqpath: &Path) -> Result<(), ViewerError> {
-        self.stream.write_all(b"HTTP/1.1 404 Not Found\r\n\r\n")?;
+        self.stream
+            .write_all(b"HTTP/1.1 404\r\nContent-Length: 0\r\n\r\n")?;
         log::debug!(
             "TCP peer port {}: 404 \"Not found\" served: '{}'",
             self.stream.peer_addr()?.port(),
@@ -566,7 +567,7 @@ impl ServerThread {
     /// Write HTTP not found response.
     fn respond_method_not_allowed(&mut self, path: &str) -> Result<(), ViewerError> {
         self.stream
-            .write_all(b"HTTP/1.1 405 Method Not Allowed\r\n\r\n")?;
+            .write_all(b"HTTP/1.1 405\r\nContent-Length: 0\r\n\r\n")?;
         log::debug!(
             "TCP peer port {}: 405 \"Method Not Allowed\" served: '{}'",
             self.stream.peer_addr()?.port(),
@@ -578,7 +579,7 @@ impl ServerThread {
     /// Write HTTP service unavailable response.
     fn respond_service_unavailable(&mut self) -> Result<(), ViewerError> {
         self.stream
-            .write_all(b"HTTP/1.1 503 Service Unavailable\r\n\r\n")?;
+            .write_all(b"HTTP/1.1 503\r\nContent-Length: 0\r\n\r\n")?;
         Ok(())
     }
 
