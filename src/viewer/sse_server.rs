@@ -376,20 +376,20 @@ impl ServerThread {
                     let path = Path::new(&path);
 
                     // Process relative links: concat  `doc_dir` and `path`.
-                    let mut reqpath = doc_dir.to_owned();
+                    let mut abspath = doc_dir.to_owned();
                     for p in path.iter() {
                         if p == "." {
                             continue;
                         }
                         if p == ".." {
-                            reqpath.pop();
+                            abspath.pop();
                         } else {
-                            reqpath.push(p);
+                            abspath.push(p);
                         }
                     }
 
                     // Condition 1.: Check if we serve this kind of extension
-                    let extension = &*reqpath
+                    let extension = &*abspath
                         .extension()
                         .unwrap_or_default()
                         .to_str()
@@ -404,14 +404,14 @@ impl ServerThread {
                                 "TCP peer port {}: \
                                 files with extension '{}' are not served. Rejecting: '{}'",
                                 self.stream.peer_addr()?.port(),
-                                reqpath
+                                abspath
                                     .extension()
                                     .unwrap_or_default()
                                     .to_str()
                                     .unwrap_or_default(),
-                                reqpath.to_str().unwrap_or_default(),
+                                abspath.to_str().unwrap_or_default(),
                             );
-                            self.respond_not_found(&reqpath)?;
+                            self.respond_not_found(&abspath)?;
                             continue 'tcp_connection;
                         }
                     };
@@ -430,7 +430,7 @@ impl ServerThread {
                             path.to_str().unwrap_or(""),
                         );
                         drop(doc_local_links);
-                        self.respond_not_found(&reqpath)?;
+                        self.respond_not_found(&abspath)?;
                         continue 'tcp_connection;
                     }
                     // Release the `RwLockReadGuard`.
@@ -438,23 +438,23 @@ impl ServerThread {
 
                     // Condition 3 : Return early if this is another Tp-Note file.
                     if !matches!(extension.into(), MarkupLanguage::None) {
-                        if reqpath.is_file() {
+                        if abspath.is_file() {
                             log::info!(
                                 "Open another viewer for Tp-Note file: {}",
-                                reqpath.to_str().unwrap_or_default()
+                                abspath.to_str().unwrap_or_default()
                             );
                             // Instead of returning the document,
                             // we open another viewer instance.
-                            launch_viewer_thread(&reqpath);
+                            launch_viewer_thread(&abspath);
                             // We return nothing.
                             self.respond_no_content_ok()?;
                             continue 'tcp_connection;
                         } else {
                             log::info!(
                                 "Referenced Tp-Note file not found: {}",
-                                reqpath.to_str().unwrap_or_default()
+                                abspath.to_str().unwrap_or_default()
                             );
-                            self.respond_not_found(&reqpath)?;
+                            self.respond_not_found(&abspath)?;
                             continue 'tcp_connection;
                         }
                     }
@@ -463,23 +463,23 @@ impl ServerThread {
                     // the document's parent directory.
                     #[allow(clippy::or_fun_call)]
                     let doc_parent_dir = doc_dir.parent().unwrap_or(Path::new(""));
-                    if !reqpath.starts_with(doc_parent_dir) {
+                    if !abspath.starts_with(doc_parent_dir) {
                         log::warn!(
                             "TCP peer port {}:\
                                 file '{}' is not in directory '{}', rejecting.",
                             self.stream.peer_addr()?.port(),
-                            reqpath.to_str().unwrap_or_default(),
+                            abspath.to_str().unwrap_or_default(),
                             doc_parent_dir.to_str().unwrap_or_default()
                         );
-                        self.respond_not_found(&reqpath)?;
+                        self.respond_not_found(&abspath)?;
                         continue 'tcp_connection;
                     }
 
                     // Condition 5.: Is the file readable?
-                    if reqpath.is_file() {
-                        self.respond_file_ok(&reqpath, mime_type)?;
+                    if abspath.is_file() {
+                        self.respond_file_ok(&abspath, mime_type)?;
                     } else {
-                        self.respond_not_found(&reqpath)?;
+                        self.respond_not_found(&abspath)?;
                     }
                 }
             }; // end of match path
