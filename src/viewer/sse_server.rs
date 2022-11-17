@@ -5,9 +5,9 @@ use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::viewer::error::ViewerError;
 use crate::viewer::init::LOCALHOST;
-use crate::viewer::launch_viewer_thread;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
 use percent_encoding::percent_decode_str;
+use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use std::collections::HashSet;
 use std::fs;
 use std::io::{ErrorKind, Read, Write};
@@ -55,11 +55,6 @@ pub const SSE_CLIENT_CODE2: &str = r#"/events");
             window.scrollTo(0, localStorage.getItem('scrollPosition'));
     });
     "#;
-
-/// String alias that can be used in paths instead of `../` which is ignored by web
-/// browsers in leading position. String must contain only ASCII letters, no space
-/// and end with `/`.
-const PATH_UPDIR_ALIAS: &str = "ParentDir/";
 
 /// URL path for Server-Sent-Events.
 const SSE_EVENT_PATH: &str = "/events";
@@ -304,7 +299,7 @@ impl ServerThread {
                     // Tera template errors.
                     // The contains Javascript code to subscribe to `EVENT_PATH`, which
                     // reloads this document on request of `self.rx`.
-                    let html = Self::render_content_and_error(self)?;
+                    let html = self.render_content_and_error(&self.context.path)?;
 
                     self.respond_content_ok(Path::new("/"), "text/html", html.as_bytes())?;
                     // `self.rx` was not used and is dropped here.
@@ -373,31 +368,10 @@ impl ServerThread {
 
                 // Serve all other documents.
                 _ => {
-                    // Concatenate document directory and URL path.
-                    let doc_path = &self.context.path;
-                    let doc_dir = doc_path.parent().unwrap_or_else(|| Path::new(""));
-
-                    // Strip `/` and convert to `Path`.
-
-                    let path = path
-                        .strip_prefix('/')
-                        .ok_or(ViewerError::UrlMustStartWithSlash)?
-                        .to_string();
-                    // Replace `PATH_UPDIR_ALIAS` with `..`.
-                    let path = path.replace(PATH_UPDIR_ALIAS, "../");
-                    let path = Path::new(&path);
-
-                    // Process relative links: concat  `doc_dir` and `path`.
-                    let mut abspath = doc_dir.to_owned();
-                    for p in path.iter() {
-                        if p == "." {
-                            continue;
-                        }
-                        if p == ".." {
-                            abspath.pop();
-                        } else {
-                            abspath.push(p);
-                        }
+                    // Assert starting with `/`.
+                    let abspath = Path::new(&*path);
+                    if !abspath.is_absolute() {
+                        return Err(ViewerError::UrlMustStartWithSlash);
                     }
 
                     // Condition 1.: Check if we serve this kind of extension
@@ -407,6 +381,7 @@ impl ServerThread {
                         .to_str()
                         .unwrap_or_default()
                         .to_lowercase();
+
                     // Find the corresponding mime type of this file extension.
                     let mime_type = match VIEWER_SERVED_MIME_TYPES_HMAP.get(extension) {
                         Some(mt) => mt,
@@ -436,12 +411,12 @@ impl ServerThread {
                         .read()
                         .expect("Can not read `doc_local_links`! RwLock is poisoned. Panic.");
 
-                    if !doc_local_links.contains(path) {
+                    if !doc_local_links.contains(&*abspath) {
                         log::warn!(
                             "TCP port local {} to peer {}: target not referenced in note file, rejecting: '{}'",
                             self.stream.local_addr()?.port(),
                             self.stream.peer_addr()?.port(),
-                            path.to_str().unwrap_or(""),
+                            abspath.to_str().unwrap_or(""),
                         );
                         drop(doc_local_links);
                         self.respond_not_found(&abspath)?;
@@ -453,11 +428,9 @@ impl ServerThread {
                     // Condition 3 : Return early if this is another Tp-Note file.
                     if !matches!(extension.into(), MarkupLanguage::None) {
                         if abspath.is_file() {
-                            // Instead of returning the document,
-                            // we open another viewer instance.
-                            let _ = launch_viewer_thread(&abspath);
-                            // We return nothing.
-                            self.respond_no_content_ok()?;
+                            let html = self.render_content_and_error(&abspath)?;
+
+                            self.respond_content_ok(&abspath, "text/html", html.as_bytes())?;
                             continue 'tcp_connection;
                         } else {
                             log::info!(
@@ -469,24 +442,7 @@ impl ServerThread {
                         }
                     }
 
-                    // Condition 4.: Only serve resources in the same or under
-                    // the document's parent directory.
-                    #[allow(clippy::or_fun_call)]
-                    let doc_parent_dir = doc_dir.parent().unwrap_or(Path::new(""));
-                    if !abspath.starts_with(doc_parent_dir) {
-                        log::warn!(
-                            "TCP port local {} to peer {}:\
-                                file '{}' is not in directory '{}', rejecting.",
-                            self.stream.local_addr()?.port(),
-                            self.stream.peer_addr()?.port(),
-                            abspath.to_str().unwrap_or_default(),
-                            doc_parent_dir.to_str().unwrap_or_default()
-                        );
-                        self.respond_not_found(&abspath)?;
-                        continue 'tcp_connection;
-                    }
-
-                    // Condition 5.: Is the file readable?
+                    // Condition 4.: Is the file readable?
                     if abspath.is_file() {
                         self.respond_file_ok(&abspath, mime_type)?;
                     } else {
@@ -533,6 +489,7 @@ impl ServerThread {
     }
 
     /// Write HTTP event response.
+    #[allow(dead_code)]
     fn respond_no_content_ok(&mut self) -> Result<(), ViewerError> {
         self.stream
             .write_all(b"HTTP/1.1 204\r\nContent-Length: 0\r\n\r\n")?;
@@ -616,7 +573,7 @@ impl ServerThread {
         self.stream
             .write_all(b"HTTP/1.1 404\r\nContent-Length: 0\r\n\r\n")?;
         log::debug!(
-            "TCP port local {} to peer {}: 404 \"Not found\" served: '{}'",
+            "TCP port local {} to peer {}: 404 \"Not found\" request was: '{}'",
             self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
             reqpath.to_str().unwrap_or_default()
@@ -629,7 +586,7 @@ impl ServerThread {
         self.stream
             .write_all(b"HTTP/1.1 405\r\nContent-Length: 0\r\n\r\n")?;
         log::debug!(
-            "TCP port local {} to peer {}: 405 \"Method Not Allowed\" served: '{}'",
+            "TCP port local {} to peer {}: 405 \"Method Not Allowed\" request was: '{}'",
             self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
             path,
@@ -646,20 +603,20 @@ impl ServerThread {
 
     #[inline]
     /// Renders the error page with the `HTML_VIEWER_ERROR_TMPL`.
-    fn render_content_and_error(&self) -> Result<String, ViewerError> {
+    /// `abspath` points to the document with markup that should be rendered to HTML.
+    /// The function injects `self.context` before rendering the template.
+    fn render_content_and_error(&self, abspath_doc: &Path) -> Result<String, ViewerError> {
         // First decompose header and body, then deserialize header.
-        let content = ContentString::open(&self.context.path.clone())?;
+        let content = ContentString::open(abspath_doc)?;
         match render_viewer_html::<ContentString>(self.context.clone(), content)
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
+            // Secondly, convert all relative links to absoulute links.
             .and_then(|html| {
                 let mut doc_local_links = self
                     .doc_local_links
                     .write()
                     .expect("Can not write `doc_local_links`. RwLock is poisoned. Panic.");
-
-                // Populate the list from scratch.               
-                doc_local_links.clear();
 
                 // Search for hyperlinks and inline images in the HTML rendition
                 // of this note.
@@ -675,14 +632,31 @@ impl ServerThread {
                             continue;
                         };
                     };
-                    // URL is relativ.
-                    html_out.push_str(&consumed.replace("../", PATH_UPDIR_ALIAS));
 
-                    let path = PathBuf::from(&*percent_decode_str(&link).decode_utf8()?);
-                    // Ignore leading "./" in `path`.
-                    let path = path.iter().skip_while(|s|s == Path::new("./")).collect::<PathBuf>();
+                    let relpath_link = PathBuf::from(&*percent_decode_str(&link).decode_utf8()?);
+                    // Calculate `abspath_link` form `relpath_link` and `abspath` to markdown doc.
+                    let mut abspath_link = abspath_doc.parent().unwrap_or(Path::new("/")).to_owned();
+                    for p in relpath_link.iter() {
+                        if p == "." {
+                            continue;
+                        }
+                        if p == ".." {
+                            abspath_link.pop();
+                        } else {
+                            abspath_link.push(p);
+                        }
+                    }
                     // Save the hyperlinks for other threads to check against.
-                    doc_local_links.insert(path);
+                    doc_local_links.insert(abspath_link.clone());
+                    // URL is .
+
+                    let abspath_link = abspath_link.to_str().unwrap_or_default();
+                    const ASCIISET: percent_encoding::AsciiSet = NON_ALPHANUMERIC
+                        .remove(b'/').remove(b'.').remove(b'_').remove(b'-');
+                    let abspath_link = utf8_percent_encode(abspath_link, &ASCIISET).to_string();
+                    let new_consumed = consumed.replace(link.as_ref(), &*abspath_link);
+
+                    html_out.push_str(&new_consumed);
                 }
                 // Add the last `remaining`.
                 html_out.push_str(&rest);
