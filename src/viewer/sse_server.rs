@@ -179,7 +179,14 @@ impl ServerThread {
             Ok(_) => (),
             Err(e) => {
                 log::debug!(
-                    "TCP peer port {}: Closed connection because of error: {}",
+                    "TCP port local {} to peer {}: Closed connection because of error: {}",
+                    self.stream
+                        .local_addr()
+                        .unwrap_or_else(|_| SocketAddr::V4(SocketAddrV4::new(
+                            Ipv4Addr::new(0, 0, 0, 0),
+                            0
+                        )))
+                        .port(),
                     self.stream
                         .peer_addr()
                         .unwrap_or_else(|_| SocketAddr::V4(SocketAddrV4::new(
@@ -201,7 +208,8 @@ impl ServerThread {
         // This is why we subtract 1.
         let open_connections = Arc::<()>::strong_count(&self.conn_counter) - 1;
         log::trace!(
-            "TCP peer port {}: New incoming TCP connection ({} open).",
+            "TCP port local {} to peer {}: New incoming TCP connection ({} open).",
+            self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
             open_connections
         );
@@ -225,7 +233,8 @@ impl ServerThread {
                 match self.stream.read(&mut read_buffer) {
                     Ok(0) => {
                         log::trace!(
-                            "TCP peer port {}: Connection closed by peer.",
+                            "TCP port local {} to peer {}: Connection closed by peer.",
+                            self.stream.local_addr()?.port(),
                             self.stream.peer_addr()?.port()
                         );
                         // Connection by peer.
@@ -239,7 +248,8 @@ impl ServerThread {
                         // Successful read.
                         buffer.extend_from_slice(&read_buffer[..n]);
                         log::trace!(
-                            "TCP peer port {}: chunk: {:?} ...",
+                            "TCP port local {} to peer {}: chunk: {:?} ...",
+                            self.stream.local_addr()?.port(),
                             self.stream.peer_addr()?.port(),
                             std::str::from_utf8(&read_buffer)
                                 .unwrap_or_default()
@@ -322,7 +332,8 @@ impl ServerThread {
                             // Connection closed.
                             Ok(0) => {
                                 log::trace!(
-                                    "TCP peer port {}: Event connection closed by peer.",
+                                    "TCP port local {} to peer {}: Event connection closed by peer.",
+                                    self.stream.local_addr()?.port(),
                                     self.stream.peer_addr()?.port()
                                 );
                                 // Our peer closed this connection, we finish also then.
@@ -346,7 +357,8 @@ impl ServerThread {
                         };
                         self.stream.write_all(event.as_bytes())?;
                         log::debug!(
-                            "TCP peer port {} ({} open TCP conn.): pushed '{:?}' in event connection to web browser.",
+                            "TCP port local {} to peer {} ({} open TCP conn.): pushed '{:?}' in event connection to web browser.",
+                            self.stream.local_addr()?.port(),
                             self.stream.peer_addr()?.port(),
                             Arc::<()>::strong_count(&self.conn_counter) - 1,
                             msg,
@@ -401,8 +413,9 @@ impl ServerThread {
                         None => {
                             // Reject all files with extensions not listed.
                             log::warn!(
-                                "TCP peer port {}: \
+                                "TCP port local {} to peer {}: \
                                 files with extension '{}' are not served. Rejecting: '{}'",
+                                self.stream.local_addr()?.port(),
                                 self.stream.peer_addr()?.port(),
                                 abspath
                                     .extension()
@@ -425,7 +438,8 @@ impl ServerThread {
 
                     if !doc_local_links.contains(path) {
                         log::warn!(
-                            "TCP peer port {}: target not referenced in note file, rejecting: '{}'",
+                            "TCP port local {} to peer {}: target not referenced in note file, rejecting: '{}'",
+                            self.stream.local_addr()?.port(),
                             self.stream.peer_addr()?.port(),
                             path.to_str().unwrap_or(""),
                         );
@@ -439,13 +453,9 @@ impl ServerThread {
                     // Condition 3 : Return early if this is another Tp-Note file.
                     if !matches!(extension.into(), MarkupLanguage::None) {
                         if abspath.is_file() {
-                            log::info!(
-                                "Open another viewer for Tp-Note file: {}",
-                                abspath.to_str().unwrap_or_default()
-                            );
                             // Instead of returning the document,
                             // we open another viewer instance.
-                            launch_viewer_thread(&abspath);
+                            let _ = launch_viewer_thread(&abspath);
                             // We return nothing.
                             self.respond_no_content_ok()?;
                             continue 'tcp_connection;
@@ -465,8 +475,9 @@ impl ServerThread {
                     let doc_parent_dir = doc_dir.parent().unwrap_or(Path::new(""));
                     if !abspath.starts_with(doc_parent_dir) {
                         log::warn!(
-                            "TCP peer port {}:\
+                            "TCP port local {} to peer {}:\
                                 file '{}' is not in directory '{}', rejecting.",
+                            self.stream.local_addr()?.port(),
                             self.stream.peer_addr()?.port(),
                             abspath.to_str().unwrap_or_default(),
                             doc_parent_dir.to_str().unwrap_or_default()
@@ -486,7 +497,8 @@ impl ServerThread {
         } // Go to 'tcp_connection loop start
 
         log::trace!(
-            "TCP peer port {}: ({} open). Closing this TCP connection.",
+            "TCP port local {} to peer {}: ({} open). Closing this TCP connection.",
+            self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
             // We subtract 1 for the `manage connection()` thread, and
             // 1 for the thread we will close in a moment.
@@ -512,8 +524,9 @@ impl ServerThread {
         self.stream.write_all(response.as_bytes())?;
 
         log::debug!(
-            "TCP peer port {}: 200 OK, served event header, \
+            "TCP port local {} to peer {}: 200 OK, served event header, \
             keeping event connection open ...",
+            self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
         );
         Ok(())
@@ -524,8 +537,9 @@ impl ServerThread {
         self.stream
             .write_all(b"HTTP/1.1 204\r\nContent-Length: 0\r\n\r\n")?;
         log::debug!(
-            "TCP peer port {}: 204 OK, served header, \
+            "TCP port local {} to peer {}: 204 OK, served header, \
             keeping event connection open ...",
+            self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
         );
         Ok(())
@@ -558,7 +572,8 @@ impl ServerThread {
         }
 
         log::debug!(
-            "TCP peer port {}: 200 OK, served file: '{}'",
+            "TCP port local {} to peer {}: 200 OK, served file: '{}'",
+            self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
             reqpath.to_str().unwrap_or_default()
         );
@@ -587,7 +602,8 @@ impl ServerThread {
         self.stream.write_all(response.as_bytes())?;
         self.stream.write_all(content)?;
         log::debug!(
-            "TCP peer port {}: 200 OK, served file: '{}'",
+            "TCP port local {} to peer {}: 200 OK, served file: '{}'",
+            self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
             reqpath.to_str().unwrap_or_default()
         );
@@ -600,7 +616,8 @@ impl ServerThread {
         self.stream
             .write_all(b"HTTP/1.1 404\r\nContent-Length: 0\r\n\r\n")?;
         log::debug!(
-            "TCP peer port {}: 404 \"Not found\" served: '{}'",
+            "TCP port local {} to peer {}: 404 \"Not found\" served: '{}'",
+            self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
             reqpath.to_str().unwrap_or_default()
         );
@@ -612,7 +629,8 @@ impl ServerThread {
         self.stream
             .write_all(b"HTTP/1.1 405\r\nContent-Length: 0\r\n\r\n")?;
         log::debug!(
-            "TCP peer port {}: 405 \"Method Not Allowed\" served: '{}'",
+            "TCP port local {} to peer {}: 405 \"Method Not Allowed\" served: '{}'",
+            self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
             path,
         );
