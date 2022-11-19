@@ -125,7 +125,7 @@ struct ServerThread {
     _sse_port: u16,
     /// A list of in the not referenced local links to images or other
     /// documents.
-    doc_local_links: Arc<RwLock<HashSet<PathBuf>>>,
+    relative_url_list: Arc<RwLock<HashSet<PathBuf>>>,
     /// We do not store anything here, instead we use the ARC pointing to
     /// `conn_counter` to count the number of instances of `ServerThread`.
     conn_counter: Arc<()>,
@@ -161,7 +161,7 @@ impl ServerThread {
             rx,
             stream,
             _sse_port: sse_port,
-            doc_local_links,
+            relative_url_list: doc_local_links,
             conn_counter,
             context,
         }
@@ -407,7 +407,7 @@ impl ServerThread {
                     // Condition 2.: Only serve files that explicitly appear in
                     // `self.doc_local_links`.
                     let doc_local_links = self
-                        .doc_local_links
+                        .relative_url_list
                         .read()
                         .expect("Can not read `doc_local_links`! RwLock is poisoned. Panic.");
 
@@ -604,7 +604,7 @@ impl ServerThread {
     /// Write HTTP event response.
     fn respond_too_many_requests(&mut self) -> Result<(), ViewerError> {
         let doc_local_links = self
-            .doc_local_links
+            .relative_url_list
             .read()
             .expect("Can not read `doc_local_links`! RwLock is poisoned. Panic.");
 
@@ -674,7 +674,7 @@ impl ServerThread {
             // Secondly, convert all relative links to absoulute links.
             .and_then(|html| {
                 let mut doc_local_links = self
-                    .doc_local_links
+                    .relative_url_list
                     .write()
                     .expect("Can not write `doc_local_links`. RwLock is poisoned. Panic.");
 
