@@ -1712,44 +1712,41 @@ out when it appears in leading or trailing position. For this reason no
 
 # SECURITY AND PRIVACY CONSIDERATIONS
 
-As discussed above, Tp-Note's built-in viewer sets up an HTTP server on the
-'`localhost`' interface with a random port number. This HTTP server runs as long
-as the as long as the launched web browser window is open. It should be
-remembered, that the HTTP server not only exposes the rendered note, but also
-some other (image) files starting from the parent directory (and all
-subdirectories) of the note file. For security reasons relative links to image files
-outside the note's parent directory are not followed. The only exception to this
-restriction is the so-called _follow relative links to other Tp-Note files_ 
-feature. By default, the viewer follows relative links to Tp-Note files everywhere 
-in the file system.
+As discussed above, Tp-Note's built-in viewer sets up an HTTP server on
+the '`localhost`' interface with a random port number. This HTTP server
+runs as long as the launched web browser window is open. Note, that the
+server not only exposes the displayed note file, but also all referenced
+relative inline images and relative URLs to other TP-Note
+files. Internally, the viewer maintains a list of _referenced relative
+URLs_. For security reasons, only listed files are served.  To limit
+data exfiltration in case an attacker gains local credentials, the
+number of _relative URL list_ entries is limited by a configurable maximum
+list size. This maximum list size can be adjusted with the 
+'`[viewer] relative_url_count_max`' configuration file variable.
 
-However, Tp-Note's built-in HTTP server only serves files that are
-explicitly referenced in the note document and whose file extensions
-are registered with the '`[viewer] served_mime_type`' configuration
-file variable.  The latter allows to disable the _follow Tp-Note links_ feature: 
-First, identify all file extension that Tp-Note considers as its own files.
-These extensions are listed in the '`[filename] extensions_*`' configuration
-file variables. Then, remove all entries in '`[viewer] served_mime_type`' that
-start with a Tp-Note file extension. This should remove all '`text/*`' 
-mime types from that list also.
+In addition to the above quantitative restriction, Tp-Note's built-in
+viewer serves only files whose file extensions are registered with the
+'`[viewer] served_mime_type`' configuration file variable.  The latter
+allows among other things to disable the _follow Tp-Note links_ feature
+by removing all '`text/*`' mime types from that list.
 
 As Tp-Note's built-in viewer binds to the '`localhost`' interface, the
 exposed files are in principle accessible to all processes running on
 the computer. As long as only one user is logged into the computer at
-a given time, no privacy concern is raised: any potential note reader
+a given time, no privacy concern is raised: any potential attacker
 must be logged in, in order to access the `localhost` HTTP server.
 
 This is why on systems where multiple users are logged in at the same time, it
 is recommended to disable Tp-Note's viewer feature by setting the
 configuration file variable '`[arg_default] edit = true`'. Alternatively, you can
-also compile Tp-Note without the '`viewer`' feature. Note, that even with the
-viewer feature disabled, one can still render the note manually with the
-'`--export`' option.
+also compile Tp-Note without the '`viewer`' feature. Note, that even when the
+viewer feature disabled, one can still render the note manually to HTML by 
+using the '`--export`' command line option.
 
 **Summary**: As long as Tp-Note's built-in note viewer is running, the note
 file and all its referenced (image) files are exposed to all users logged into
 the computer at that given time. This concerns only local users, Tp-Note
-never exposes any information to the network.
+never exposes any information to the network or to the Internet.
 
 
 
