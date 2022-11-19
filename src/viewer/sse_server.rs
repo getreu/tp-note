@@ -84,7 +84,7 @@ pub fn manage_connections(
 ) {
     // A list of in the not referenced local links to images or other documents.
     // Every thread gets an (ARC) reference to it.
-    let doc_local_links = Arc::new(RwLock::new(HashSet::new()));
+    let relative_url_list = Arc::new(RwLock::new(HashSet::new()));
     // We use an ARC to count the number of running threads.
     let conn_counter = Arc::new(());
 
@@ -94,14 +94,14 @@ pub fn manage_connections(
                 let (event_tx, event_rx) = sync_channel(0);
                 event_tx_list.lock().unwrap().push(event_tx);
                 let doc_path = doc_path.clone();
-                let doc_local_links = doc_local_links.clone();
+                let relative_url_list = relative_url_list.clone();
                 let conn_counter = conn_counter.clone();
                 thread::spawn(move || {
                     let mut st = ServerThread::new(
                         event_rx,
                         stream,
                         doc_path,
-                        doc_local_links,
+                        relative_url_list,
                         conn_counter,
                     );
                     st.serve_connection()
