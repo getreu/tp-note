@@ -276,6 +276,13 @@ const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
     &["ogx", "application/ogg"],
 ];
 
+/// For security reasons, Tp-Note's internal viewer only allows to
+/// reference and to serve a limited number of files. The viewer maintains
+/// a list of relative URLs that it collects form the note files it displays.
+/// Only URLs on this list are followed. This variable limits the number of
+/// files that the viewer delivers.   
+const VIEWER_RELATIVE_URL_COUNT_MAX: usize = 30;
+
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cfg {
@@ -329,6 +336,7 @@ pub struct Viewer {
     pub notify_period: u64,
     pub tcp_connections_max: usize,
     pub served_mime_types: Vec<Vec<String>>,
+    pub relative_url_count_max: usize,
 }
 
 /// When no configuration file is found, defaults are set here from built-in
@@ -410,6 +418,7 @@ impl ::std::default::Default for Viewer {
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
+            relative_url_count_max: VIEWER_RELATIVE_URL_COUNT_MAX,
         }
     }
 }

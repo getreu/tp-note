@@ -399,7 +399,7 @@ impl ServerThread {
                                     .unwrap_or_default(),
                                 abspath.to_str().unwrap_or_default(),
                             );
-                            self.respond_not_found(&abspath)?;
+                            self.respond_not_found(abspath)?;
                             continue 'tcp_connection;
                         }
                     };
@@ -411,42 +411,50 @@ impl ServerThread {
                         .read()
                         .expect("Can not read `doc_local_links`! RwLock is poisoned. Panic.");
 
-                    if !doc_local_links.contains(&*abspath) {
+                    if !doc_local_links.contains(abspath) {
                         log::warn!(
                             "TCP port local {} to peer {}: target not referenced in note file, rejecting: '{}'",
                             self.stream.local_addr()?.port(),
                             self.stream.peer_addr()?.port(),
                             abspath.to_str().unwrap_or(""),
                         );
+                        // Release the `RwLockReadGuard`.
                         drop(doc_local_links);
-                        self.respond_not_found(&abspath)?;
+                        self.respond_not_found(abspath)?;
                         continue 'tcp_connection;
                     }
+
+                    let serve_tpnote_files =
+                        doc_local_links.len() <= CFG.viewer.relative_url_count_max;
                     // Release the `RwLockReadGuard`.
                     drop(doc_local_links);
 
                     // Condition 3 : Return early if this is another Tp-Note file.
                     if !matches!(extension.into(), MarkupLanguage::None) {
                         if abspath.is_file() {
-                            let html = self.render_content_and_error(&abspath)?;
+                            let html = self.render_content_and_error(abspath)?;
 
-                            self.respond_content_ok(&abspath, "text/html", html.as_bytes())?;
+                            if serve_tpnote_files {
+                                self.respond_content_ok(abspath, "text/html", html.as_bytes())?;
+                            } else {
+                                self.respond_too_many_requests()?;
+                            }
                             continue 'tcp_connection;
                         } else {
                             log::info!(
                                 "Referenced Tp-Note file not found: {}",
                                 abspath.to_str().unwrap_or_default()
                             );
-                            self.respond_not_found(&abspath)?;
+                            self.respond_not_found(abspath)?;
                             continue 'tcp_connection;
                         }
                     }
 
                     // Condition 4.: Is the file readable?
                     if abspath.is_file() {
-                        self.respond_file_ok(&abspath, mime_type)?;
+                        self.respond_file_ok(abspath, mime_type)?;
                     } else {
-                        self.respond_not_found(&abspath)?;
+                        self.respond_not_found(abspath)?;
                     }
                 }
             }; // end of match path
@@ -489,18 +497,17 @@ impl ServerThread {
     }
 
     /// Write HTTP event response.
-    #[allow(dead_code)]
-    fn respond_no_content_ok(&mut self) -> Result<(), ViewerError> {
-        self.stream
-            .write_all(b"HTTP/1.1 204\r\nContent-Length: 0\r\n\r\n")?;
-        log::debug!(
-            "TCP port local {} to peer {}: 204 OK, served header, \
-            keeping event connection open ...",
-            self.stream.local_addr()?.port(),
-            self.stream.peer_addr()?.port(),
-        );
-        Ok(())
-    }
+    // fn respond_no_content_ok(&mut self) -> Result<(), ViewerError> {
+    //     self.stream
+    //         .write_all(b"HTTP/1.1 204\r\nContent-Length: 0\r\n\r\n")?;
+    //     log::debug!(
+    //         "TCP port local {} to peer {}: 204 OK, served header, \
+    //         keeping event connection open ...",
+    //         self.stream.local_addr()?.port(),
+    //         self.stream.peer_addr()?.port(),
+    //     );
+    //     Ok(())
+    // }
 
     /// Write HTTP OK response with content.
     fn respond_file_ok(&mut self, reqpath: &Path, mime_type: &str) -> Result<(), ViewerError> {
@@ -581,7 +588,7 @@ impl ServerThread {
         Ok(())
     }
 
-    /// Write HTTP not found response.
+    /// Write HTTP method not allowed response.
     fn respond_method_not_allowed(&mut self, path: &str) -> Result<(), ViewerError> {
         self.stream
             .write_all(b"HTTP/1.1 405\r\nContent-Length: 0\r\n\r\n")?;
@@ -591,6 +598,59 @@ impl ServerThread {
             self.stream.peer_addr()?.port(),
             path,
         );
+        Ok(())
+    }
+
+    /// Write HTTP event response.
+    fn respond_too_many_requests(&mut self) -> Result<(), ViewerError> {
+        let doc_local_links = self
+            .doc_local_links
+            .read()
+            .expect("Can not read `doc_local_links`! RwLock is poisoned. Panic.");
+
+        let reference_count = doc_local_links.len();
+        let mut content = format!(
+            "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head>
+             <body><h2>Too many requests</h2>
+             <p>For security reasons, Tp-Note's internal viewer only allows to
+             reference and to serve a limited number of files. The limit is
+             set by the configuration file variable: 
+             <pre>[viewer] reference_count_max = {}</pre>
+             Your current <i>reference count</i> value is: {}</p>
+             <p>Restart Tp-Note or increase the reference count limit by adjusting the
+             above configuration file variable. Here the list of your currently
+             referenced files:</p>
+             </body></html>
+             ",
+            CFG.viewer.relative_url_count_max, reference_count
+        );
+
+        content.push_str("<ul>");
+        for p in doc_local_links.iter() {
+            content.push_str("<li><pre>");
+            content.push_str(p.to_str().unwrap_or_default());
+            content.push_str("</pre></li>");
+        }
+        content.push_str("</ul>");
+
+        let response = format!(
+            "HTTP/1.1 429\r\n\
+             Date: {}\r\n\
+             Cache-Control: private, max-age={}\r\n\
+             Content-Type: text/html\r\n\
+             Content-Length: {}\r\n\r\n",
+            httpdate::fmt_http_date(SystemTime::now()),
+            MAX_AGE,
+            content.len(),
+        );
+        self.stream.write_all(response.as_bytes())?;
+        self.stream.write_all(content.as_bytes())?;
+        log::debug!(
+            "TCP port local {} to peer {}: 429 \"Too many requests\"",
+            self.stream.local_addr()?.port(),
+            self.stream.peer_addr()?.port(),
+        );
+
         Ok(())
     }
 
@@ -623,19 +683,19 @@ impl ServerThread {
                 let mut rest = &*html;
                 let mut html_out = String::new();
                 for ((skipped, consumed, remaining), link) in HyperlinkInlineImage::new(&html) {
-                    html_out.push_str(&skipped);
+                    html_out.push_str(skipped);
                     rest = remaining;
                     // We skip absolute URLs.
                     if let Ok(url) = Url::parse(&link) {
                         if url.has_host() {
-                            html_out.push_str(&consumed);
+                            html_out.push_str(consumed);
                             continue;
                         };
                     };
 
                     let relpath_link = PathBuf::from(&*percent_decode_str(&link).decode_utf8()?);
                     // Calculate `abspath_link` form `relpath_link` and `abspath` to markdown doc.
-                    let mut abspath_link = abspath_doc.parent().unwrap_or(Path::new("/")).to_owned();
+                    let mut abspath_link = abspath_doc.parent().unwrap_or_else(|| Path::new("/")).to_owned();
                     for p in relpath_link.iter() {
                         if p == "." {
                             continue;
@@ -659,7 +719,7 @@ impl ServerThread {
                     html_out.push_str(&new_consumed);
                 }
                 // Add the last `remaining`.
-                html_out.push_str(&rest);
+                html_out.push_str(rest);
 
                 if doc_local_links.is_empty() {
                     log::debug!(
