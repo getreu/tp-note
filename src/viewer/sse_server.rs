@@ -82,8 +82,6 @@ pub fn manage_connections(
     listener: TcpListener,
     doc_path: PathBuf,
 ) {
-    // `unwrap()` is Ok here here, because we just did it before successfully.
-    let sse_port = listener.local_addr().unwrap().port();
     // A list of in the not referenced local links to images or other documents.
     // Every thread gets an (ARC) reference to it.
     let doc_local_links = Arc::new(RwLock::new(HashSet::new()));
@@ -102,7 +100,6 @@ pub fn manage_connections(
                     let mut st = ServerThread::new(
                         event_rx,
                         stream,
-                        sse_port,
                         doc_path,
                         doc_local_links,
                         conn_counter,
@@ -121,8 +118,6 @@ struct ServerThread {
     rx: Receiver<SseToken>,
     /// Byte stream coming from a TCP connection.
     stream: TcpStream,
-    /// The TCP port this stream comes from.
-    _sse_port: u16,
     /// A list of in the not referenced local links to images or other
     /// documents.
     relative_url_list: Arc<RwLock<HashSet<PathBuf>>>,
@@ -140,28 +135,34 @@ impl ServerThread {
     fn new(
         rx: Receiver<SseToken>,
         stream: TcpStream,
-        sse_port: u16,
         doc_path: PathBuf,
-        doc_local_links: Arc<RwLock<HashSet<PathBuf>>>,
+        relative_url_list: Arc<RwLock<HashSet<PathBuf>>>,
         conn_counter: Arc<()>,
     ) -> Self {
         // Store `doc_path` in the `context.path` and
         // in the Tera variable `TMPL_VAR_PATH`.
         let mut context = Context::from(&doc_path);
-        // Deserialize.
-        let note_js = format!(
-            "{}{}:{}{}",
-            SSE_CLIENT_CODE1, LOCALHOST, sse_port, SSE_CLIENT_CODE2
-        );
+        let local_addr = stream.local_addr();
 
-        // Java Script
+        // Compose JavaScript code.
+        let note_js = match local_addr {
+            Ok(addr) => format!(
+                "{}{}:{}{}",
+                SSE_CLIENT_CODE1,
+                LOCALHOST,
+                addr.port(),
+                SSE_CLIENT_CODE2
+            ),
+            Err(_) => String::new(),
+        };
+
+        // Save JavaScript code.
         context.insert(TMPL_VAR_NOTE_JS, &note_js);
 
         Self {
             rx,
             stream,
-            _sse_port: sse_port,
-            relative_url_list: doc_local_links,
+            relative_url_list,
             conn_counter,
             context,
         }
