@@ -2173,7 +2173,6 @@ dependencies = [
  "time",
  "toml",
  "tpnote-lib",
- "url",
  "webbrowser",
  "win32job",
  "windows-sys",

@@ -5,7 +5,9 @@ use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::viewer::error::ViewerError;
 use crate::viewer::init::LOCALHOST;
+use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
+use parse_hyperlinks_extras::parser::parse_html::take_link;
 use percent_encoding::percent_decode_str;
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use std::collections::HashSet;
@@ -30,7 +32,6 @@ use tpnote_lib::context::Context;
 use tpnote_lib::markup_language::MarkupLanguage;
 use tpnote_lib::workflow::render_erroneous_content_html;
 use tpnote_lib::workflow::render_viewer_html;
-use url::Url;
 
 /// The TCP stream is read in chunks. This is the read buffer size.
 const TCP_READ_BUFFER_SIZE: usize = 0x400;
@@ -681,102 +682,172 @@ impl ServerThread {
     }
 
     #[inline]
+    /// Helper function that converts relative local HTML link to absolute
+    /// local HTML link. Returns `(converted_anchor_tag, target)`.
+    fn rel_link_to_abs_link(&self, link: &str, abspath_dir: &Path) -> Option<(String, PathBuf)> {
+        //
+        const ASCIISET: percent_encoding::AsciiSet = NON_ALPHANUMERIC
+            .remove(b'/')
+            .remove(b'.')
+            .remove(b'_')
+            .remove(b'-');
+
+        let mut abspath_link = abspath_dir.to_owned();
+        match take_link(link) {
+            Ok((_, (_, Link::Text2Dest(text, dest, title)))) => {
+                // Ignore absolute URLs
+                if dest.starts_with("http://") || dest.starts_with("https://") {
+                    return None;
+                }
+
+                // Local ones are ok. Trim URL scheme.
+                let dest = dest
+                    .trim_start_matches("http:")
+                    .trim_start_matches("https:");
+
+                // Improves pretty printing:
+                let text = text
+                    .trim_start_matches("http:")
+                    .trim_start_matches("https:");
+                let text = text.replace("%20", " ");
+
+                // Concat `abspath` and `relpath`.
+                let relpath_link =
+                    PathBuf::from(&*percent_decode_str(&dest).decode_utf8().unwrap());
+                for p in relpath_link.iter() {
+                    if p == "." {
+                        continue;
+                    }
+                    if p == ".." {
+                        abspath_link.pop();
+                    } else {
+                        abspath_link.push(p);
+                    }
+                }
+                let abspath_link_encoded =
+                    utf8_percent_encode(abspath_link.to_str().unwrap_or_default(), &ASCIISET)
+                        .to_string();
+                Some((
+                    format!("<a href=\"{abspath_link_encoded}\" title=\"{title}\">{text}</a>"),
+                    abspath_link,
+                ))
+            }
+            Ok((_, (_, Link::Image(text, dest)))) => {
+                // Concat `abspath` and `relpath`.
+                let relpath_link =
+                    PathBuf::from(&*percent_decode_str(&dest).decode_utf8().unwrap());
+                for p in relpath_link.iter() {
+                    if p == "." {
+                        continue;
+                    }
+                    if p == ".." {
+                        abspath_link.pop();
+                    } else {
+                        abspath_link.push(p);
+                    }
+                }
+                let abspath_link_encoded =
+                    utf8_percent_encode(abspath_link.to_str().unwrap_or_default(), &ASCIISET)
+                        .to_string();
+                Some((
+                    format!("<img src=\"{abspath_link_encoded}\" alt=\"{text}\">"),
+                    abspath_link,
+                ))
+            }
+            Ok((_, (_, _))) | Err(_) => None,
+        }
+    }
+
+    #[inline]
+    /// Helper function that scans the imput `html` and converts all relative
+    /// local HTML links to absolute local HTML links. The absolute links are
+    /// added to `self.allowed_urls`.
+    fn rel_links_to_abs_links(&self, html: String, abspath_dir: &Path) -> String {
+        let mut allowed_urls = self
+            .allowed_urls
+            .write()
+            .expect("Can not write `allowed_urls`. RwLock is poisoned. Panic.");
+
+        // Search for hyperlinks and inline images in the HTML rendition
+        // of this note.
+        let mut rest = &*html;
+        let mut html_out = String::new();
+        for ((skipped, consumed, remaining), link) in HyperlinkInlineImage::new(&html) {
+            html_out.push_str(skipped);
+            rest = remaining;
+
+            // We skip absolute URLs.
+            if link.starts_with("http://") || link.starts_with("https://") {
+                continue;
+            }
+
+            // Todo
+            if let Some((consumed_new, url)) = self.rel_link_to_abs_link(consumed, abspath_dir) {
+                //let new_consumed = consumed.replace(link.as_ref(), &*abspath_link);
+                html_out.push_str(&consumed_new);
+                allowed_urls.insert(url);
+            } else {
+                html_out.push_str("<i>INVALID URL</i>");
+            }
+        }
+        // Add the last `remaining`.
+        html_out.push_str(rest);
+
+        if allowed_urls.is_empty() {
+            log::debug!(
+                "Viewer: note file has no local hyperlinks. No additional local files are served.",
+            );
+        } else {
+            log::debug!(
+                "Viewer: referenced allowed local files: {}",
+                allowed_urls
+                    .iter()
+                    .map(|p| {
+                        let mut s = "\n    '".to_string();
+                        s.push_str(p.as_path().to_str().unwrap_or_default());
+                        s
+                    })
+                    .collect::<String>()
+            );
+        }
+
+        html_out
+        // The `RwLockWriteGuard` is released here.
+    }
+
     /// Renders the error page with the `HTML_VIEWER_ERROR_TMPL`.
     /// `abspath` points to the document with markup that should be rendered to HTML.
     /// The function injects `self.context` before rendering the template.
     fn render_content_and_error(&self, abspath_doc: &Path) -> Result<String, ViewerError> {
         // First decompose header and body, then deserialize header.
         let content = ContentString::open(abspath_doc)?;
+        let abspath_dir = abspath_doc.parent().unwrap_or_else(|| Path::new("/"));
         match render_viewer_html::<ContentString>(self.context.clone(), content)
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
             // Secondly, convert all relative links to absolute links.
-            .and_then(|html| {
-                let mut allowed_urls = self
-                    .allowed_urls
-                    .write()
-                    .expect("Can not write `allowed_urls`. RwLock is poisoned. Panic.");
-
-                // Search for hyperlinks and inline images in the HTML rendition
-                // of this note.
-                let mut rest = &*html;
-                let mut html_out = String::new();
-                for ((skipped, consumed, remaining), link) in HyperlinkInlineImage::new(&html) {
-                    html_out.push_str(skipped);
-                    rest = remaining;
-                    // We skip absolute URLs.
-                    if let Ok(url) = Url::parse(&link) {
-                        if url.has_host() {
-                            html_out.push_str(consumed);
-                            continue;
-                        };
-                    };
-
-                    let relpath_link = PathBuf::from(&*percent_decode_str(&link).decode_utf8()?);
-                    // Calculate `abspath_link` form `relpath_link` and `abspath` to markdown doc.
-                    let mut abspath_link = abspath_doc.parent().unwrap_or_else(|| Path::new("/")).to_owned();
-                    for p in relpath_link.iter() {
-                        if p == "." {
-                            continue;
-                        }
-                        if p == ".." {
-                            abspath_link.pop();
-                        } else {
-                            abspath_link.push(p);
-                        }
-                    }
-                    // Save the hyperlinks for other threads to check against.
-                    allowed_urls.insert(abspath_link.clone());
-                    // URL is .
-
-                    let abspath_link = abspath_link.to_str().unwrap_or_default();
-                    const ASCIISET: percent_encoding::AsciiSet = NON_ALPHANUMERIC
-                        .remove(b'/').remove(b'.').remove(b'_').remove(b'-');
-                    let abspath_link = utf8_percent_encode(abspath_link, &ASCIISET).to_string();
-                    let new_consumed = consumed.replace(link.as_ref(), &*abspath_link);
-
-                    html_out.push_str(&new_consumed);
-                }
-                // Add the last `remaining`.
-                html_out.push_str(rest);
-
-                if allowed_urls.is_empty() {
-                    log::debug!(
-                        "Viewer: note file has no local hyperlinks. No additional local files are served.",
-                    );
-                } else {
-                    log::debug!(
-                        "Viewer: referenced local files: {}",
-                        allowed_urls
-                        .iter()
-                        .map(|p|{
-                            let mut s = "\n    '".to_string();
-                            s.push_str(p.as_path().to_str().unwrap_or_default());
-                            s
-                        }).collect::<String>()
-                    );
-                }
-                Ok(html_out)
-                // The `RwLockWriteGuard` is released here.
-            }) {
+            .and_then(|html| Ok(self.rel_links_to_abs_links(html, abspath_dir)))
+        {
             // If the rendition went well, return the HTML.
             Ok(html) => {
                 let mut delivered_tpnote_docs = self
                     .delivered_tpnote_docs
                     .write()
                     .expect("Can not write `delivered_tpnote_docs`. RwLock is poisoned. Panic.");
-                 delivered_tpnote_docs.insert(abspath_doc.to_owned());
-                    log::info!(
-                        "Viewer: displayed Tp-Note documents: {}",
-                        delivered_tpnote_docs
+                delivered_tpnote_docs.insert(abspath_doc.to_owned());
+                log::info!(
+                    "Viewer: displayed Tp-Note documents: {}",
+                    delivered_tpnote_docs
                         .iter()
-                        .map(|p|{
+                        .map(|p| {
                             let mut s = "\n    '".to_string();
                             s.push_str(p.as_path().to_str().unwrap_or_default());
                             s
-                        }).collect::<String>()
-                    );
-                 Ok(html)},
+                        })
+                        .collect::<String>()
+                );
+                Ok(html)
+            }
             // We could not render the note properly. Instead we will render a
             // special error page and return this instead.
             Err(e) => {
@@ -784,11 +855,11 @@ impl ServerThread {
                 let mut context = self.context.clone();
                 context.insert(TMPL_VAR_NOTE_ERROR, &e.to_string());
                 let note_erroneous_content = <ContentString as Content>::open(&context.path)?;
-                render_erroneous_content_html::<ContentString>(context, note_erroneous_content )
-                        .map_err(|e| { ViewerError::RenderErrorPage {
-                            tmpl: "[tmpl_html] viewer_error".to_string(),
-                            source: e,
-                    }})
+                render_erroneous_content_html::<ContentString>(context, note_erroneous_content)
+                    .map_err(|e| ViewerError::RenderErrorPage {
+                        tmpl: "[tmpl_html] viewer_error".to_string(),
+                        source: e,
+                    })
             }
         }
     }
