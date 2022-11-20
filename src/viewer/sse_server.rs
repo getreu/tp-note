@@ -82,9 +82,12 @@ pub fn manage_connections(
     listener: TcpListener,
     doc_path: PathBuf,
 ) {
-    // A list of in the not referenced local links to images or other documents.
+    // A list of referenced local links to images or other documents as
+    // they appeared in the displayed documents.
     // Every thread gets an (ARC) reference to it.
     let relative_url_list = Arc::new(RwLock::new(HashSet::new()));
+    // Subset of the above list containing only displayed Tp-Note documents.
+    let delivered_docs_url_list = Arc::new(RwLock::new(HashSet::new()));
     // We use an ARC to count the number of running threads.
     let conn_counter = Arc::new(());
 
@@ -95,6 +98,7 @@ pub fn manage_connections(
                 event_tx_list.lock().unwrap().push(event_tx);
                 let doc_path = doc_path.clone();
                 let relative_url_list = relative_url_list.clone();
+                let delivered_docs_url_list = delivered_docs_url_list.clone();
                 let conn_counter = conn_counter.clone();
                 thread::spawn(move || {
                     let mut st = ServerThread::new(
@@ -102,6 +106,7 @@ pub fn manage_connections(
                         stream,
                         doc_path,
                         relative_url_list,
+                        delivered_docs_url_list,
                         conn_counter,
                     );
                     st.serve_connection()
@@ -118,9 +123,14 @@ struct ServerThread {
     rx: Receiver<SseToken>,
     /// Byte stream coming from a TCP connection.
     stream: TcpStream,
-    /// A list of in the not referenced local links to images or other
-    /// documents.
+    /// A list of referenced local URLs to images or other
+    /// documents as they appear in the delivered Tp-Note documents.
+    /// This list contains URLs that may or may not have been displayed.
     relative_url_list: Arc<RwLock<HashSet<PathBuf>>>,
+    /// Subset of `relative_url_list` containing only URLs that
+    /// have been actually delivered. The list only contains URLs to Tp-Note
+    /// documents.
+    delivered_docs_url_list: Arc<RwLock<HashSet<PathBuf>>>,
     /// We do not store anything here, instead we use the ARC pointing to
     /// `conn_counter` to count the number of instances of `ServerThread`.
     conn_counter: Arc<()>,
@@ -137,6 +147,7 @@ impl ServerThread {
         stream: TcpStream,
         doc_path: PathBuf,
         relative_url_list: Arc<RwLock<HashSet<PathBuf>>>,
+        delivered_docs_url_list: Arc<RwLock<HashSet<PathBuf>>>,
         conn_counter: Arc<()>,
     ) -> Self {
         // Store `doc_path` in the `context.path` and
@@ -153,7 +164,9 @@ impl ServerThread {
                 addr.port(),
                 SSE_CLIENT_CODE2
             ),
-            Err(_) => String::new(),
+            Err(_) => {
+                panic!("No TCP connection: socket address of local half is missing.")
+            }
         };
 
         // Save JavaScript code.
@@ -163,6 +176,7 @@ impl ServerThread {
             rx,
             stream,
             relative_url_list,
+            delivered_docs_url_list,
             conn_counter,
             context,
         }
@@ -298,7 +312,7 @@ impl ServerThread {
                 "/" => {
                     // Renders a content page or an error page for the current note.
                     // Tera template errors.
-                    // The contains Javascript code to subscribe to `EVENT_PATH`, which
+                    // The contains JavaScript code to subscribe to `EVENT_PATH`, which
                     // reloads this document on request of `self.rx`.
                     let html = self.render_content_and_error(&self.context.path)?;
 
@@ -375,7 +389,7 @@ impl ServerThread {
                         return Err(ViewerError::UrlMustStartWithSlash);
                     }
 
-                    // Condition 1.: Check if we serve this kind of extension
+                    // Condition 1: Check if we serve this kind of extension
                     let extension = &*abspath
                         .extension()
                         .unwrap_or_default()
@@ -405,7 +419,7 @@ impl ServerThread {
                         }
                     };
 
-                    // Condition 2.: Only serve files that explicitly appear in
+                    // Condition 2: Only serve files that explicitly appear in
                     // `self.doc_local_links`.
                     let doc_local_links = self
                         .relative_url_list
@@ -425,17 +439,20 @@ impl ServerThread {
                         continue 'tcp_connection;
                     }
 
-                    let serve_tpnote_files =
-                        doc_local_links.len() <= CFG.viewer.relative_url_count_max;
                     // Release the `RwLockReadGuard`.
                     drop(doc_local_links);
 
-                    // Condition 3 : Return early if this is another Tp-Note file.
+                    // Condition 3: If this is a Tp-Note file, check the maximum
+                    // of delivered documents.
                     if !matches!(extension.into(), MarkupLanguage::None) {
                         if abspath.is_file() {
-                            let html = self.render_content_and_error(abspath)?;
-
-                            if serve_tpnote_files {
+                            let delivered_docs_count = self
+                                .delivered_docs_url_list
+                                .read()
+                                .expect("Can not read `delivered_docs_url_list`. RwLock is poisoned. Panic.")
+                                .len();
+                            if delivered_docs_count < CFG.viewer.displayed_tpnote_count_max {
+                                let html = self.render_content_and_error(abspath)?;
                                 self.respond_content_ok(abspath, "text/html", html.as_bytes())?;
                             } else {
                                 self.respond_too_many_requests()?;
@@ -451,7 +468,7 @@ impl ServerThread {
                         }
                     }
 
-                    // Condition 4.: Is the file readable?
+                    // Condition 4: Is the file readable?
                     if abspath.is_file() {
                         self.respond_file_ok(abspath, mime_type)?;
                     } else {
@@ -604,35 +621,36 @@ impl ServerThread {
 
     /// Write HTTP event response.
     fn respond_too_many_requests(&mut self) -> Result<(), ViewerError> {
-        let doc_local_links = self
-            .relative_url_list
+        let delivered_docs_url_list = self
+            .delivered_docs_url_list
             .read()
-            .expect("Can not read `doc_local_links`! RwLock is poisoned. Panic.");
+            .expect("Can not read `delivered_docs_url_list`! RwLock is poisoned. Panic.");
 
-        let reference_count = doc_local_links.len();
-        let mut content = format!(
+        // Prepare the log entry.
+        let mut log_msg = format!(
+            "Error: too many requests. You have exceeded \n\
+            `[viewer] displayed_tpnote_count_max = {}` by browsing:\n",
+            CFG.viewer.displayed_tpnote_count_max
+        );
+        for p in delivered_docs_url_list.iter() {
+            log_msg.push_str("- ");
+            log_msg.push_str(p.to_str().unwrap_or_default());
+            log_msg.push('\n');
+        }
+        log::warn!("{}", log_msg);
+
+        // Prepare the HTML output.
+        let content = format!(
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head>
              <body><h2>Too many requests</h2>
-             <p>For security reasons, Tp-Note's internal viewer only allows to
-             reference and to serve a limited number of files. The limit is
-             set by the configuration file variable: 
-             <pre>[viewer] reference_count_max = {}</pre>
-             Your current <i>reference count</i> value is: {}</p>
-             <p>Restart Tp-Note or increase the reference count limit by adjusting the
-             above configuration file variable. Here the list of your currently
-             referenced files:</p>
+             <p>For security reasons, Tp-Note's internal viewer only displays
+             a limited number ({}) of Tp-Note files. This limit can be raised
+             by setting the configuration file variable:</p>
+            <p> <pre>[viewer] displayed_tpnote_count_max</pre></p>
              </body></html>
              ",
-            CFG.viewer.relative_url_count_max, reference_count
+            CFG.viewer.displayed_tpnote_count_max
         );
-
-        content.push_str("<ul>");
-        for p in doc_local_links.iter() {
-            content.push_str("<li><pre>");
-            content.push_str(p.to_str().unwrap_or_default());
-            content.push_str("</pre></li>");
-        }
-        content.push_str("</ul>");
 
         let response = format!(
             "HTTP/1.1 429\r\n\
@@ -672,7 +690,7 @@ impl ServerThread {
         match render_viewer_html::<ContentString>(self.context.clone(), content)
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
-            // Secondly, convert all relative links to absoulute links.
+            // Secondly, convert all relative links to absolute links.
             .and_then(|html| {
                 let mut doc_local_links = self
                     .relative_url_list
@@ -727,7 +745,7 @@ impl ServerThread {
                         "Viewer: note file has no local hyperlinks. No additional local files are served.",
                     );
                 } else {
-                    log::info!(
+                    log::debug!(
                         "Viewer: referenced local files: {}",
                         doc_local_links
                         .iter()
@@ -742,7 +760,23 @@ impl ServerThread {
                 // The `RwLockWriteGuard` is released here.
             }) {
             // If the rendition went well, return the HTML.
-            Ok(html) => Ok(html),
+            Ok(html) => {
+                let mut delivered_docs_url_list = self
+                    .delivered_docs_url_list
+                    .write()
+                    .expect("Can not write `delivered_docs_url_list`. RwLock is poisoned. Panic.");
+                 delivered_docs_url_list.insert(abspath_doc.to_owned());
+                    log::info!(
+                        "Viewer: displayed Tp-Note documents: {}",
+                        delivered_docs_url_list
+                        .iter()
+                        .map(|p|{
+                            let mut s = "\n    '".to_string();
+                            s.push_str(p.as_path().to_str().unwrap_or_default());
+                            s
+                        }).collect::<String>()
+                    );
+                 Ok(html)},
             // We could not render the note properly. Instead we will render a
             // special error page and return this instead.
             Err(e) => {

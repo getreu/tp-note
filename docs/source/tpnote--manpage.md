@@ -1720,9 +1720,8 @@ relative inline images and relative URLs to other TP-Note
 files. Internally, the viewer maintains a list of _referenced relative
 URLs_. For security reasons, only listed files are served.  To limit
 data exfiltration in case an attacker gains local credentials, the
-number of _relative URL list_ entries is limited by a configurable maximum
-list size. This maximum list size can be adjusted with the 
-'`[viewer] relative_url_count_max`' configuration file variable.
+number of served Tp-Note files is limited by the configurable value 
+'`[viewer] displayed_tpnote_count_max`'.
 
 In addition to the above quantitative restriction, Tp-Note's built-in
 viewer serves only files whose file extensions are registered with the
