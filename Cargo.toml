@@ -13,7 +13,7 @@ repository = "https://gitlab.com/getreu/tp-note"
 build =  "build.rs"
 
 [build-dependencies]
-winres = "0.1.12"
+winresource = "0.1"
 
 [[bin]]
 name = "tpnote"
