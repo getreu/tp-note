@@ -21,6 +21,7 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
         .remove(b'-');
 
     let mut abspath_link = abspath_dir.to_owned();
+
     match take_link(link) {
         Ok((_, (_, Link::Text2Dest(text, dest, title)))) => {
             // Ignore absolute URLs
@@ -33,11 +34,22 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
                 .trim_start_matches("http:")
                 .trim_start_matches("https:");
 
-            // Improves pretty printing:
-            let text = text
-                .trim_start_matches("http:")
-                .trim_start_matches("https:");
-            let text = text.replace("%20", " ");
+            let mut short_text = text.to_string();
+
+            // Example: display `my text` for the local relative URL: `<http:my%20text.md>`.
+            if text.starts_with("http:") || text.starts_with("https:") {
+                // Improves pretty printing:
+                let text = text
+                    .trim_start_matches("http:")
+                    .trim_start_matches("https:");
+                let text = PathBuf::from(&*percent_decode_str(&text).decode_utf8().unwrap());
+                let text = text
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_str()
+                    .unwrap_or_default();
+                short_text = text.to_string();
+            }
 
             // Concat `abspath` and `relpath`.
             let relpath_link = PathBuf::from(&*percent_decode_str(&dest).decode_utf8().unwrap());
@@ -55,7 +67,7 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
                 utf8_percent_encode(abspath_link.to_str().unwrap_or_default(), &ASCIISET)
                     .to_string();
             Some((
-                format!("<a href=\"{abspath_link_encoded}\" title=\"{title}\">{text}</a>"),
+                format!("<a href=\"{abspath_link_encoded}\" title=\"{title}\">{short_text}</a>"),
                 abspath_link,
             ))
         }
