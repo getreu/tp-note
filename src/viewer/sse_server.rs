@@ -4,12 +4,9 @@
 use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::viewer::error::ViewerError;
+use crate::viewer::html::rel_links_to_abs_links;
 use crate::viewer::init::LOCALHOST;
-use parse_hyperlinks::parser::Link;
-use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
-use parse_hyperlinks_extras::parser::parse_html::take_link;
 use percent_encoding::percent_decode_str;
-use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use std::collections::HashSet;
 use std::fs;
 use std::io::{ErrorKind, Read, Write};
@@ -681,140 +678,6 @@ impl ServerThread {
         Ok(())
     }
 
-    #[inline]
-    /// Helper function that converts relative local HTML link to absolute
-    /// local HTML link. Returns `(converted_anchor_tag, target)`.
-    fn rel_link_to_abs_link(&self, link: &str, abspath_dir: &Path) -> Option<(String, PathBuf)> {
-        //
-        const ASCIISET: percent_encoding::AsciiSet = NON_ALPHANUMERIC
-            .remove(b'/')
-            .remove(b'.')
-            .remove(b'_')
-            .remove(b'-');
-
-        let mut abspath_link = abspath_dir.to_owned();
-        match take_link(link) {
-            Ok((_, (_, Link::Text2Dest(text, dest, title)))) => {
-                // Ignore absolute URLs
-                if dest.starts_with("http://") || dest.starts_with("https://") {
-                    return None;
-                }
-
-                // Local ones are ok. Trim URL scheme.
-                let dest = dest
-                    .trim_start_matches("http:")
-                    .trim_start_matches("https:");
-
-                // Improves pretty printing:
-                let text = text
-                    .trim_start_matches("http:")
-                    .trim_start_matches("https:");
-                let text = text.replace("%20", " ");
-
-                // Concat `abspath` and `relpath`.
-                let relpath_link =
-                    PathBuf::from(&*percent_decode_str(&dest).decode_utf8().unwrap());
-                for p in relpath_link.iter() {
-                    if p == "." {
-                        continue;
-                    }
-                    if p == ".." {
-                        abspath_link.pop();
-                    } else {
-                        abspath_link.push(p);
-                    }
-                }
-                let abspath_link_encoded =
-                    utf8_percent_encode(abspath_link.to_str().unwrap_or_default(), &ASCIISET)
-                        .to_string();
-                Some((
-                    format!("<a href=\"{abspath_link_encoded}\" title=\"{title}\">{text}</a>"),
-                    abspath_link,
-                ))
-            }
-            Ok((_, (_, Link::Image(text, dest)))) => {
-                // Concat `abspath` and `relpath`.
-                let relpath_link =
-                    PathBuf::from(&*percent_decode_str(&dest).decode_utf8().unwrap());
-                for p in relpath_link.iter() {
-                    if p == "." {
-                        continue;
-                    }
-                    if p == ".." {
-                        abspath_link.pop();
-                    } else {
-                        abspath_link.push(p);
-                    }
-                }
-                let abspath_link_encoded =
-                    utf8_percent_encode(abspath_link.to_str().unwrap_or_default(), &ASCIISET)
-                        .to_string();
-                Some((
-                    format!("<img src=\"{abspath_link_encoded}\" alt=\"{text}\">"),
-                    abspath_link,
-                ))
-            }
-            Ok((_, (_, _))) | Err(_) => None,
-        }
-    }
-
-    #[inline]
-    /// Helper function that scans the imput `html` and converts all relative
-    /// local HTML links to absolute local HTML links. The absolute links are
-    /// added to `self.allowed_urls`.
-    fn rel_links_to_abs_links(&self, html: String, abspath_dir: &Path) -> String {
-        let mut allowed_urls = self
-            .allowed_urls
-            .write()
-            .expect("Can not write `allowed_urls`. RwLock is poisoned. Panic.");
-
-        // Search for hyperlinks and inline images in the HTML rendition
-        // of this note.
-        let mut rest = &*html;
-        let mut html_out = String::new();
-        for ((skipped, consumed, remaining), link) in HyperlinkInlineImage::new(&html) {
-            html_out.push_str(skipped);
-            rest = remaining;
-
-            // We skip absolute URLs.
-            if link.starts_with("http://") || link.starts_with("https://") {
-                continue;
-            }
-
-            // Todo
-            if let Some((consumed_new, url)) = self.rel_link_to_abs_link(consumed, abspath_dir) {
-                //let new_consumed = consumed.replace(link.as_ref(), &*abspath_link);
-                html_out.push_str(&consumed_new);
-                allowed_urls.insert(url);
-            } else {
-                html_out.push_str("<i>INVALID URL</i>");
-            }
-        }
-        // Add the last `remaining`.
-        html_out.push_str(rest);
-
-        if allowed_urls.is_empty() {
-            log::debug!(
-                "Viewer: note file has no local hyperlinks. No additional local files are served.",
-            );
-        } else {
-            log::debug!(
-                "Viewer: referenced allowed local files: {}",
-                allowed_urls
-                    .iter()
-                    .map(|p| {
-                        let mut s = "\n    '".to_string();
-                        s.push_str(p.as_path().to_str().unwrap_or_default());
-                        s
-                    })
-                    .collect::<String>()
-            );
-        }
-
-        html_out
-        // The `RwLockWriteGuard` is released here.
-    }
-
     /// Renders the error page with the `HTML_VIEWER_ERROR_TMPL`.
     /// `abspath` points to the document with markup that should be rendered to HTML.
     /// The function injects `self.context` before rendering the template.
@@ -826,8 +689,13 @@ impl ServerThread {
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
             // Secondly, convert all relative links to absolute links.
-            .and_then(|html| Ok(self.rel_links_to_abs_links(html, abspath_dir)))
-        {
+            .and_then(|html| {
+                Ok(rel_links_to_abs_links(
+                    html,
+                    abspath_dir,
+                    self.allowed_urls.clone(),
+                ))
+            }) {
             // If the rendition went well, return the HTML.
             Ok(html) => {
                 let mut delivered_tpnote_docs = self
