@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.19.3 | Tp-Note documentation
+% TP-NOTE(1) Version 1.19.4 | Tp-Note documentation
 
 ---
 title:      "tpnote"
