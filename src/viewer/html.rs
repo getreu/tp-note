@@ -1,7 +1,8 @@
 //! Helper functions dealing with HTML conversion.
 
-use parse_hyperlinks::parser::{parse::take_link, Link};
+use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
+use parse_hyperlinks_extras::parser::parse_html::take_link;
 use percent_encoding::{percent_decode_str, utf8_percent_encode, NON_ALPHANUMERIC};
 use std::{
     collections::HashSet,
@@ -11,7 +12,9 @@ use std::{
 
 #[inline]
 /// Helper function that converts relative local HTML link to absolute
-/// local HTML link. Returns `(converted_anchor_tag, target)`.
+/// local HTML link. If successful, it returns `Some(converted_anchor_tag, target)`.
+/// In case of error, it returns `None`.
+/// Contract: Links must be relative and local. They may have a scheme.
 fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathBuf)> {
     //
     const ASCIISET: percent_encoding::AsciiSet = NON_ALPHANUMERIC
@@ -23,11 +26,9 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
     let mut abspath_link = abspath_dir.to_owned();
 
     match take_link(link) {
-        Ok((_, (_, Link::Text2Dest(text, dest, title)))) => {
-            // Ignore absolute URLs
-            if dest.starts_with("http://") || dest.starts_with("https://") {
-                return None;
-            }
+        Ok(("", ("", Link::Text2Dest(text, dest, title)))) => {
+            // Check contract. Panic if link is absolute.
+            debug_assert!(!link.contains("://"));
 
             // Local ones are ok. Trim URL scheme.
             let dest = dest
@@ -71,7 +72,8 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
                 abspath_link,
             ))
         }
-        Ok((_, (_, Link::Image(text, dest)))) => {
+
+        Ok(("", ("", Link::Image(text, dest)))) => {
             // Concat `abspath` and `relpath`.
             let relpath_link = PathBuf::from(&*percent_decode_str(&dest).decode_utf8().unwrap());
             for p in relpath_link.iter() {
@@ -97,7 +99,7 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
 }
 
 #[inline]
-/// Helper function that scans the imput `html` and converts all relative
+/// Helper function that scans the input `html` and converts all relative
 /// local HTML links to absolute local HTML links. The absolute links are
 /// added to `allowed_urls`.
 pub(crate) fn rel_links_to_abs_links(
@@ -118,16 +120,16 @@ pub(crate) fn rel_links_to_abs_links(
         rest = remaining;
 
         // We skip absolute URLs.
-        if link.starts_with("http://") || link.starts_with("https://") {
+        if link.contains("://") {
+            html_out.push_str(consumed);
             continue;
         }
 
-        // Todo
         if let Some((consumed_new, url)) = rel_link_to_abs_link(consumed, abspath_dir) {
-            //let new_consumed = consumed.replace(link.as_ref(), &*abspath_link);
             html_out.push_str(&consumed_new);
             allowed_urls.insert(url);
         } else {
+            log::debug!("Viewer: can not parse URL: {}", consumed);
             html_out.push_str("<i>INVALID URL</i>");
         }
     }
