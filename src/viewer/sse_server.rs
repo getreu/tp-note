@@ -4,7 +4,7 @@
 use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::viewer::error::ViewerError;
-use crate::viewer::html::rel_links_to_abs_links;
+use crate::viewer::html::rewrite_links;
 use crate::viewer::init::LOCALHOST;
 use percent_encoding::percent_decode_str;
 use std::collections::HashSet;
@@ -689,7 +689,7 @@ impl ServerThread {
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
             // Secondly, convert all relative links to absolute links.
-            .map(|html| rel_links_to_abs_links(html, abspath_dir, self.allowed_urls.clone()))
+            .map(|html| rewrite_links(html, abspath_dir, self.allowed_urls.clone()))
         {
             // If the rendition went well, return the HTML.
             Ok(html) => {

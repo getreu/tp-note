@@ -102,7 +102,7 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
 /// Helper function that scans the input `html` and converts all relative
 /// local HTML links to absolute local HTML links. The absolute links are
 /// added to `allowed_urls`.
-pub(crate) fn rel_links_to_abs_links(
+pub(crate) fn rewrite_links(
     html: String,
     abspath_dir: &Path,
     allowed_urls: Arc<RwLock<HashSet<PathBuf>>>,
@@ -168,7 +168,7 @@ mod tests {
     };
 
     use crate::viewer::html::rel_link_to_abs_link;
-    use crate::viewer::html::rel_links_to_abs_links;
+    use crate::viewer::html::rewrite_links;
 
     #[test]
     #[should_panic(expected = "assertion failed: !link.contains(\\\"://\\\")")]
@@ -204,13 +204,13 @@ mod tests {
     }
 
     #[test]
-    fn test_rel_links_to_abs_links1() {
+    fn test_rewrite_links1() {
         let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
         let input = "abc<a href=\"/down/../down/my%20note%201.md\">my note 1</a>efg".to_string();
         let absdir = Path::new("/my/abs/note path/");
         let expected = "abc<i>INVALID URL</i>efg".to_string();
 
-        let output = rel_links_to_abs_links(input, absdir, allowed_urls.clone());
+        let output = rewrite_links(input, absdir, allowed_urls.clone());
         let url = allowed_urls.read().unwrap();
 
         assert_eq!(output, expected);
@@ -218,7 +218,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rel_links_to_abs_links2() {
+    fn test_rewrite_abs_links2() {
         let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
         let input = "abc<a href=\"ftp://getreu.net\">Blog</a>\
             def<a href=\"https://getreu.net\">https://getreu.net</a>\
@@ -235,7 +235,7 @@ mod tests {
             mno<a href=\"/my/abs/note%20path/dir/my%20note.md\" title=\"\">my note</a>"
             .to_string();
 
-        let output = rel_links_to_abs_links(input, absdir, allowed_urls.clone());
+        let output = rewrite_links(input, absdir, allowed_urls.clone());
         let url = allowed_urls.read().unwrap();
 
         assert_eq!(output, expected);
