@@ -1,6 +1,5 @@
 //! Modules implementing the note content renderer and viewer feature.
 mod error;
-mod html;
 pub mod init;
 mod sse_server;
 mod watcher;

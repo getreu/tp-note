@@ -19,6 +19,7 @@ pub mod error;
 pub mod filename;
 mod filter;
 mod front_matter;
+pub mod html;
 pub mod markup_language;
 mod note;
 pub mod template;

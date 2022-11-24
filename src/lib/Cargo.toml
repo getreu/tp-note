@@ -13,7 +13,7 @@ repository = "https://gitlab.com/getreu/tp-note"
 
 [features]
 default = ["renderer", "viewer"]
-viewer = []
+viewer = ["percent-encoding"]
 renderer = ["pulldown-cmark", "cmark-syntax", "rst_parser", "rst_renderer"]
 
 [dependencies]
@@ -22,6 +22,8 @@ lazy_static = "1.4.0"
 log = { version = "0.4.17", features = ["serde"] }
 parse-hyperlinks = "0.23.4"
 # parse-hyperlinks = { path = "../parse-hyperlinks/parse-hyperlinks" }
+parse-hyperlinks-extras = "0.23.4"
+percent-encoding = { version = "2.2.0", optional = true }
 pulldown-cmark = { version = "0.9.2", default-features = false, features = ["simd"], optional = true }
 rst_parser = { version = "0.4.0", optional = true }
 rst_renderer = { version = "0.4.0", optional = true }

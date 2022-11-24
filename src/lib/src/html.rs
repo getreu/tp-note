@@ -15,7 +15,7 @@ use std::{
 /// local HTML link. If successful, it returns `Some(converted_anchor_tag, target)`.
 /// In case of error, it returns `None`.
 /// Contract: Links must be local. They may have a scheme.
-fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathBuf)> {
+fn rel_link_to_abs_link(link: &str, prepend_dirpath: &Path) -> Option<(String, PathBuf)> {
     //
     const ASCIISET: percent_encoding::AsciiSet = NON_ALPHANUMERIC
         .remove(b'/')
@@ -23,7 +23,7 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
         .remove(b'_')
         .remove(b'-');
 
-    let mut abspath_link = abspath_dir.to_owned();
+    let mut dirpath_link = prepend_dirpath.to_owned();
 
     match take_link(link) {
         Ok(("", ("", Link::Text2Dest(text, dest, title)))) => {
@@ -59,17 +59,17 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
                     continue;
                 }
                 if p == ".." {
-                    abspath_link.pop();
+                    dirpath_link.pop();
                 } else {
-                    abspath_link.push(p);
+                    dirpath_link.push(p);
                 }
             }
             let abspath_link_encoded =
-                utf8_percent_encode(abspath_link.to_str().unwrap_or_default(), &ASCIISET)
+                utf8_percent_encode(dirpath_link.to_str().unwrap_or_default(), &ASCIISET)
                     .to_string();
             Some((
                 format!("<a href=\"{abspath_link_encoded}\" title=\"{title}\">{short_text}</a>"),
-                abspath_link,
+                dirpath_link,
             ))
         }
 
@@ -81,17 +81,17 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
                     continue;
                 }
                 if p == ".." {
-                    abspath_link.pop();
+                    dirpath_link.pop();
                 } else {
-                    abspath_link.push(p);
+                    dirpath_link.push(p);
                 }
             }
             let abspath_link_encoded =
-                utf8_percent_encode(abspath_link.to_str().unwrap_or_default(), &ASCIISET)
+                utf8_percent_encode(dirpath_link.to_str().unwrap_or_default(), &ASCIISET)
                     .to_string();
             Some((
                 format!("<img src=\"{abspath_link_encoded}\" alt=\"{text}\">"),
-                abspath_link,
+                dirpath_link,
             ))
         }
         Ok((_, (_, _))) | Err(_) => None,
@@ -102,9 +102,9 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
 /// Helper function that scans the input `html` and converts all relative
 /// local HTML links to absolute local HTML links with `prepend_path`.
 /// The rewritten links are then added to `allowed_urls`.
-pub(crate) fn rewrite_links(
+pub fn rewrite_links(
     html: String,
-    prepend_path: &Path,
+    prepend_dirpath: &Path,
     allowed_urls: Arc<RwLock<HashSet<PathBuf>>>,
 ) -> String {
     let mut allowed_urls = allowed_urls
@@ -125,7 +125,7 @@ pub(crate) fn rewrite_links(
             continue;
         }
 
-        if let Some((consumed_new, url)) = rel_link_to_abs_link(consumed, prepend_path) {
+        if let Some((consumed_new, url)) = rel_link_to_abs_link(consumed, prepend_dirpath) {
             html_out.push_str(&consumed_new);
             allowed_urls.insert(url);
         } else {
@@ -167,8 +167,8 @@ mod tests {
         sync::{Arc, RwLock},
     };
 
-    use crate::viewer::html::rel_link_to_abs_link;
-    use crate::viewer::html::rewrite_links;
+    use crate::html::rel_link_to_abs_link;
+    use crate::html::rewrite_links;
 
     #[test]
     #[should_panic(expected = "assertion failed: !link.contains(\\\"://\\\")")]
@@ -204,21 +204,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rewrite_links1() {
-        let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
-        let input = "abc<a href=\"/down/../down/my%20note%201.md\">my note 1</a>efg".to_string();
-        let absdir = Path::new("/my/abs/note path/");
-        let expected = "abc<i>INVALID URL</i>efg".to_string();
-
-        let output = rewrite_links(input, absdir, allowed_urls.clone());
-        let url = allowed_urls.read().unwrap();
-
-        assert_eq!(output, expected);
-        assert!(url.is_empty());
-    }
-
-    #[test]
-    fn test_rewrite_abs_links2() {
+    fn test_rewrite_abs_links() {
         let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
         let input = "abc<a href=\"ftp://getreu.net\">Blog</a>\
             def<a href=\"https://getreu.net\">https://getreu.net</a>\

@@ -4,7 +4,6 @@
 use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::viewer::error::ViewerError;
-use crate::viewer::html::rewrite_links;
 use crate::viewer::init::LOCALHOST;
 use percent_encoding::percent_decode_str;
 use std::collections::HashSet;
@@ -26,6 +25,7 @@ use tpnote_lib::config::TMPL_VAR_NOTE_JS;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
+use tpnote_lib::html::rewrite_links;
 use tpnote_lib::markup_language::MarkupLanguage;
 use tpnote_lib::workflow::render_erroneous_content_html;
 use tpnote_lib::workflow::render_viewer_html;
