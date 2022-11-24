@@ -76,16 +76,23 @@ fn rel_link_to_abs_link(link: &str, prepend_dirpath: &Path) -> Option<(String, P
         Ok(("", ("", Link::Image(text, dest)))) => {
             // Concat `abspath` and `relpath`.
             let relpath_link = PathBuf::from(&*percent_decode_str(&dest).decode_utf8().unwrap());
-            for p in relpath_link.iter() {
-                if p == "." {
-                    continue;
-                }
-                if p == ".." {
-                    dirpath_link.pop();
-                } else {
-                    dirpath_link.push(p);
+
+            // If `dirpath_link` is empty, use relpath_link instead.
+            if dirpath_link.to_str().unwrap_or_default().is_empty() {
+                dirpath_link = relpath_link;
+            } else {
+                for p in relpath_link.iter() {
+                    if p == "." {
+                        continue;
+                    }
+                    if p == ".." {
+                        dirpath_link.pop();
+                    } else {
+                        dirpath_link.push(p);
+                    }
                 }
             }
+
             let abspath_link_encoded =
                 utf8_percent_encode(dirpath_link.to_str().unwrap_or_default(), &ASCIISET)
                     .to_string();
@@ -100,7 +107,7 @@ fn rel_link_to_abs_link(link: &str, prepend_dirpath: &Path) -> Option<(String, P
 
 #[inline]
 /// Helper function that scans the input `html` and converts all relative
-/// local HTML links to absolute local HTML links with `prepend_path`.
+/// local HTML links to absolute local HTML links with `prepend_dirpath`.
 /// The rewritten links are then added to `allowed_urls`.
 pub fn rewrite_links(
     html: String,
@@ -193,6 +200,14 @@ mod tests {
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("/my/abs/note path/t m p.jpg"));
 
+        // Check relative path to image, with empty prepend path.
+        let input = "<img src=\"down/./../../t%20m%20p.jpg\" alt=\"Image\" />";
+        let expected = "<img src=\"down/./../../t%20m%20p.jpg\" alt=\"Image\">";
+        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("")).unwrap();
+
+        assert_eq!(outhtml, expected);
+        assert_eq!(outpath, PathBuf::from("down/./../../t m p.jpg"));
+
         // Check relative path to note file.
         let input = "<a href=\"./down/./../my%20note%201.md\">my note 1</a>";
         let expected = "<a href=\"/my/abs/note%20path/my%20note%201.md\" \
@@ -201,6 +216,41 @@ mod tests {
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("/my/abs/note path/my note 1.md"));
+
+        // Check absolute path to note file.
+        let input = "<a href=\"/dir/./down/../my%20note%201.md\">my note 1</a>";
+        let expected = "<a href=\"/dir/my%20note%201.md\" \
+            title=\"\">my note 1</a>";
+        let (outhtml, outpath) = rel_link_to_abs_link(input, absdir).unwrap();
+
+        assert_eq!(outhtml, expected);
+        assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
+
+        // Check relative path to note file, with `./` for prepend path.
+        let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
+        let expected = "<a href=\"./dir/my%20note%201.md\" \
+            title=\"\">my note 1</a>";
+        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("./")).unwrap();
+
+        assert_eq!(outhtml, expected);
+        assert_eq!(outpath, PathBuf::from("./dir/my note 1.md"));
+
+        // Check `rewrite_ext=true`.
+        let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
+        let expected = "<a href=\"./dir/my%20note%201.md.html\" \
+            title=\"\">my note 1</a>";
+        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("./")).unwrap();
+
+        assert_eq!(outhtml, expected);
+        assert_eq!(outpath, PathBuf::from("./dir/my note 1.md.html"));
+
+        // Check relative path to note file, with `/` prepend path.
+        let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
+        let expected = "<a href=\"/dir/my%20note%201.md\" title=\"\">my note 1</a>";
+        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("/")).unwrap();
+
+        assert_eq!(outhtml, expected);
+        assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
     }
 
     #[test]

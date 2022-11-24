@@ -17,6 +17,7 @@ use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 use crate::filter::TERA;
 use crate::front_matter::FrontMatter;
+use crate::html::rewrite_links;
 use crate::markup_language::MarkupLanguage;
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
@@ -29,6 +30,7 @@ use pulldown_cmark::{html, Options, Parser};
 use rst_parser::parse;
 #[cfg(feature = "renderer")]
 use rst_renderer::render_html;
+use std::collections::HashSet;
 use std::default::Default;
 use std::fs::File;
 use std::fs::OpenOptions;
@@ -36,6 +38,7 @@ use std::io;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::str;
+use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 use tera::Tera;
 
@@ -402,7 +405,10 @@ impl<T: Content> Note<T> {
 
             // Write HTML rendition.
             handle.write_all(
-                self.render_content_to_html(&note_path_ext, html_template)?
+                self.render_content_to_html(&note_path_ext, html_template)
+                    .map(|html| {
+                        rewrite_links(html, Path::new("./"), Arc::new(RwLock::new(HashSet::new())))
+                    })?
                     .as_bytes(),
             )?;
         } else {
@@ -412,7 +418,10 @@ impl<T: Content> Note<T> {
                 .open(&html_path)?;
             // Write HTML rendition.
             handle.write_all(
-                self.render_content_to_html(&note_path_ext, html_template)?
+                self.render_content_to_html(&note_path_ext, html_template)
+                    .map(|html| {
+                        rewrite_links(html, Path::new("./"), Arc::new(RwLock::new(HashSet::new())))
+                    })?
                     .as_bytes(),
             )?;
         };
@@ -466,6 +475,7 @@ impl<T: Content> Note<T> {
         let html = tera.render_str(tmpl, &html_context).map_err(|e| {
             note_error_tera_template!(e, "[html_tmpl] viewer/exporter_tmpl ".to_string())
         })?;
+
         Ok(html)
     }
 
