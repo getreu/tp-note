@@ -14,7 +14,7 @@ use std::{
 /// Helper function that converts relative local HTML link to absolute
 /// local HTML link. If successful, it returns `Some(converted_anchor_tag, target)`.
 /// In case of error, it returns `None`.
-/// Contract: Links must be relative and local. They may have a scheme.
+/// Contract: Links must be local. They may have a scheme.
 fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathBuf)> {
     //
     const ASCIISET: percent_encoding::AsciiSet = NON_ALPHANUMERIC
@@ -27,7 +27,7 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
 
     match take_link(link) {
         Ok(("", ("", Link::Text2Dest(text, dest, title)))) => {
-            // Check contract. Panic if link is absolute.
+            // Check contract. Panic if link is not local.
             debug_assert!(!link.contains("://"));
 
             // Local ones are ok. Trim URL scheme.
@@ -156,4 +156,91 @@ pub(crate) fn rel_links_to_abs_links(
 
     html_out
     // The `RwLockWriteGuard` is released here.
+}
+
+#[cfg(test)]
+mod tests {
+
+    use std::{
+        collections::HashSet,
+        path::{Path, PathBuf},
+        sync::{Arc, RwLock},
+    };
+
+    use crate::viewer::html::rel_link_to_abs_link;
+    use crate::viewer::html::rel_links_to_abs_links;
+
+    #[test]
+    #[should_panic(expected = "assertion failed: !link.contains(\\\"://\\\")")]
+    fn test_rel_link_to_abs_link1() {
+        let absdir = Path::new("/my/abs/note path/");
+
+        // Should panic: this is not a relative path.
+        let input = "<a href=\"ftp://getreu.net\">Blog</a>";
+        let _ = rel_link_to_abs_link(input, absdir).unwrap();
+    }
+
+    #[test]
+    fn test_rel_link_to_abs_link2() {
+        // Check relative path to image.
+        let absdir = Path::new("/my/abs/note path/");
+
+        let input = "<img src=\"down/./down/../../t%20m%20p.jpg\" alt=\"Image\" />";
+        let expected = "<img src=\"/my/abs/note%20path/t%20m%20p.jpg\" \
+            alt=\"Image\">";
+        let (outhtml, outpath) = rel_link_to_abs_link(input, absdir).unwrap();
+
+        assert_eq!(outhtml, expected);
+        assert_eq!(outpath, PathBuf::from("/my/abs/note path/t m p.jpg"));
+
+        // Check relative path to note file.
+        let input = "<a href=\"./down/./../my%20note%201.md\">my note 1</a>";
+        let expected = "<a href=\"/my/abs/note%20path/my%20note%201.md\" \
+            title=\"\">my note 1</a>";
+        let (outhtml, outpath) = rel_link_to_abs_link(input, absdir).unwrap();
+
+        assert_eq!(outhtml, expected);
+        assert_eq!(outpath, PathBuf::from("/my/abs/note path/my note 1.md"));
+    }
+
+    #[test]
+    fn test_rel_links_to_abs_links1() {
+        let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
+        let input = "abc<a href=\"/down/../down/my%20note%201.md\">my note 1</a>efg".to_string();
+        let absdir = Path::new("/my/abs/note path/");
+        let expected = "abc<i>INVALID URL</i>efg".to_string();
+
+        let output = rel_links_to_abs_links(input, absdir, allowed_urls.clone());
+        let url = allowed_urls.read().unwrap();
+
+        assert_eq!(output, expected);
+        assert!(url.is_empty());
+    }
+
+    #[test]
+    fn test_rel_links_to_abs_links2() {
+        let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
+        let input = "abc<a href=\"ftp://getreu.net\">Blog</a>\
+            def<a href=\"https://getreu.net\">https://getreu.net</a>\
+            ghi<img src=\"t%20m%20p.jpg\" alt=\"test 1\" />\
+            jkl<a href=\"down/../down/my%20note%201.md\">my note 1</a>\
+            mno<a href=\"http:./down/../dir/my%20note.md\">\
+            http:./down/../dir/my%20note.md</a>"
+            .to_string();
+        let absdir = Path::new("/my/abs/note path/");
+        let expected = "abc<a href=\"ftp://getreu.net\">Blog</a>\
+            def<a href=\"https://getreu.net\">https://getreu.net</a>\
+            ghi<img src=\"/my/abs/note%20path/t%20m%20p.jpg\" alt=\"test 1\">\
+            jkl<a href=\"/my/abs/note%20path/down/my%20note%201.md\" title=\"\">my note 1</a>\
+            mno<a href=\"/my/abs/note%20path/dir/my%20note.md\" title=\"\">my note</a>"
+            .to_string();
+
+        let output = rel_links_to_abs_links(input, absdir, allowed_urls.clone());
+        let url = allowed_urls.read().unwrap();
+
+        assert_eq!(output, expected);
+        assert!(url.contains(&PathBuf::from("/my/abs/note path/t m p.jpg")));
+        assert!(url.contains(&PathBuf::from("/my/abs/note path/dir/my note.md")));
+        assert!(url.contains(&PathBuf::from("/my/abs/note path/down/my note 1.md")));
+    }
 }
