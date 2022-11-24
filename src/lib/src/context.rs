@@ -307,7 +307,7 @@ mod tests {
         use crate::context::Context;
         use crate::front_matter::FrontMatter;
         use std::path::Path;
-        let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+        let mut context = Context::from(Path::new("/path/to/mynote.md"));
         context.insert_front_matter(&FrontMatter::try_from("title: \"My Stdin.\"").unwrap());
 
         assert_eq!(

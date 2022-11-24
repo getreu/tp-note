@@ -698,7 +698,7 @@ Body text
         let n = Note::from_text_file(context, content, TemplateKind::None).unwrap();
         // Check the HTML rendition.
         let html = n
-            .render_content_to_html(&"md", &LIB_CFG.read().unwrap().tmpl_html.viewer)
+            .render_content_to_html("md", &LIB_CFG.read().unwrap().tmpl_html.viewer)
             .unwrap();
         assert!(html.starts_with("<!DOCTYPE html>\n<html"))
     }
