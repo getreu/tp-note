@@ -100,11 +100,11 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
 
 #[inline]
 /// Helper function that scans the input `html` and converts all relative
-/// local HTML links to absolute local HTML links. The absolute links are
-/// added to `allowed_urls`.
+/// local HTML links to absolute local HTML links with `prepend_path`.
+/// The rewritten links are then added to `allowed_urls`.
 pub(crate) fn rewrite_links(
     html: String,
-    abspath_dir: &Path,
+    prepend_path: &Path,
     allowed_urls: Arc<RwLock<HashSet<PathBuf>>>,
 ) -> String {
     let mut allowed_urls = allowed_urls
@@ -125,7 +125,7 @@ pub(crate) fn rewrite_links(
             continue;
         }
 
-        if let Some((consumed_new, url)) = rel_link_to_abs_link(consumed, abspath_dir) {
+        if let Some((consumed_new, url)) = rel_link_to_abs_link(consumed, prepend_path) {
             html_out.push_str(&consumed_new);
             allowed_urls.insert(url);
         } else {
