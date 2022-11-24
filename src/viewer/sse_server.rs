@@ -689,13 +689,8 @@ impl ServerThread {
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
             // Secondly, convert all relative links to absolute links.
-            .and_then(|html| {
-                Ok(rel_links_to_abs_links(
-                    html,
-                    abspath_dir,
-                    self.allowed_urls.clone(),
-                ))
-            }) {
+            .map(|html| rel_links_to_abs_links(html, abspath_dir, self.allowed_urls.clone()))
+        {
             // If the rendition went well, return the HTML.
             Ok(html) => {
                 let mut delivered_tpnote_docs = self

@@ -43,7 +43,7 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
                 let text = text
                     .trim_start_matches("http:")
                     .trim_start_matches("https:");
-                let text = PathBuf::from(&*percent_decode_str(&text).decode_utf8().unwrap());
+                let text = PathBuf::from(&*percent_decode_str(text).decode_utf8().unwrap());
                 let text = text
                     .file_stem()
                     .unwrap_or_default()
@@ -53,7 +53,7 @@ fn rel_link_to_abs_link(link: &str, abspath_dir: &Path) -> Option<(String, PathB
             }
 
             // Concat `abspath` and `relpath`.
-            let relpath_link = PathBuf::from(&*percent_decode_str(&dest).decode_utf8().unwrap());
+            let relpath_link = PathBuf::from(&*percent_decode_str(dest).decode_utf8().unwrap());
             for p in relpath_link.iter() {
                 if p == "." {
                     continue;
