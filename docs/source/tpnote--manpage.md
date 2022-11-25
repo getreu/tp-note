@@ -616,14 +616,18 @@ Tp-Note considers a text file to be a valid note file, if its:
 * the YAML header contains a key whose name is defined in the configuration
   file variable '`[tmpl] compulsory_header_field`' (default '`title`').
 
-A Tp-Note-note file is always UTF-8 encoded. As newline, either the Unix
+A Tp-Note note file is always UTF-8 encoded. As newline, either the Unix
 standard '`\n`' or the Windows standard '`\r\n`' is accepted. Tp-Note writes
 out newlines according the operating system it runs on.
+
+
+
+## The document's header and body
 
 Tp-Note is designed to be compatible with '`Pandoc`'s and '`RMarkdown`s
 document structure as shown in the figure below. In this documentation
 the terms "YAML header", "header" and "front matter" are used as 
-synonyms to designate to document's meta data block at the beginning
+synonyms to designate to document's metadata block at the beginning
 of the text file:
 
 ```
@@ -660,7 +664,36 @@ body. However, the default templates assume Markdown and the file extension
 Besides the requirements concerning its header, a valid Tp-Note file must have
 a filename extension that is listed in one of the configuration file variables:
 '`[filename] extension_*`'. The latter also determine which internal markup
-language render is called for Tp-Note's renderer feature.
+language render is called for Tp-Note's internal viewer.
+
+
+
+## Links to resources and other documents
+
+The document's body often contains (inline) links to resources e.g. images and
+links to other documents. The link syntax depends on the markup language used
+in the Tp-Note file.
+
+Here some example links written in Markdown:
+
+* Website: '`[blog](https://blog.getreu.net)`'
+* Inline image with relative local URL: '`![Alt text](<images/my logo.png>)`'.
+* Link to another Tp-Note document with relative local URL: 
+  '`[my doc](<../../notes/my doc.md>)`'
+* The same as above, but using the short autolink syntax:
+  '`<http:../../notes/my%20doc.md>`'
+* Link to another Tp-Note document with absolute local URL:
+  '`[my doc](</home/kanban/documents/my note.md)`'
+
+Although Tp-Note's built in viewer follows absolute and relative URLs, usually
+the latter are preferred, because it allows you to move more easily documents
+and its resources in the file system.
+
+Tp-Note's exporter function '`--export`' converts a given Tp-Note file into
+HTML and adds '`.html`' to the output filename. Links in the documents
+content to other Tp-Note files are hereby rewritten by appending '`.html`' to their
+URLs. This way you can convert groups of documents to HTML and later browse
+from document to document in you web browser.
 
 
 
@@ -1712,35 +1745,34 @@ out when it appears in leading or trailing position. For this reason no
 
 # SECURITY AND PRIVACY CONSIDERATIONS
 
-As discussed above, Tp-Note's built-in viewer sets up an HTTP server on
-the '`localhost`' interface with a random port number. This HTTP server
-runs as long as the launched web browser window is open. Note, that the
-server not only exposes the displayed note file, but also all referenced
-relative inline images and relative URLs to other TP-Note
-files. Internally, the viewer maintains a list of _referenced relative
-URLs_. For security reasons, only listed files are served.  To limit
-data exfiltration in case an attacker gains local credentials, the
-number of served Tp-Note files is limited by the configurable value 
+As discussed above, Tp-Note's built-in viewer sets up an HTTP server on the
+'`localhost`' interface with a random port number. This HTTP server runs as
+long as the launched web browser window is open. Note, that the server not
+only exposes the displayed note file, but also all referenced inline images
+and URLs to other TP-Note files. Internally, the viewer maintains a list of
+_referenced local URLs_. For security reasons, only listed files are served.
+To limit data exfiltration in case an attacker gains local credentials, the
+number of served Tp-Note files is limited by the configurable value
 '`[viewer] displayed_tpnote_count_max`'.
 
-In addition to the above quantitative restriction, Tp-Note's built-in
-viewer serves only files whose file extensions are registered with the
-'`[viewer] served_mime_type`' configuration file variable.  The latter
-allows among other things to disable the _follow Tp-Note links_ feature
-by removing all '`text/*`' mime types from that list.
+In addition to the above quantitative restriction, Tp-Note's built-in viewer
+serves only files whose file extensions are registered with the
+'`[viewer] served_mime_type`' configuration file variable.  The latter allows
+to disable the _follow links to other Tp-Note files_ feature by removing all
+'`text/*`' mime types from that list.
 
-As Tp-Note's built-in viewer binds to the '`localhost`' interface, the
-exposed files are in principle accessible to all processes running on
-the computer. As long as only one user is logged into the computer at
-a given time, no privacy concern is raised: any potential attacker
-must be logged in, in order to access the `localhost` HTTP server.
+As Tp-Note's built-in viewer binds to the '`localhost`' interface, the exposed
+files are in principle accessible to all processes running on the computer. As
+long as only one user is logged into the computer at a given time, no privacy
+concern is raised: any potential attacker must be logged in, in order to access
+the `localhost` HTTP server.
 
 This is why on systems where multiple users are logged in at the same time, it
-is recommended to disable Tp-Note's viewer feature by setting the
-configuration file variable '`[arg_default] edit = true`'. Alternatively, you can
-also compile Tp-Note without the '`viewer`' feature. Note, that even when the
-viewer feature disabled, one can still render the note manually to HTML by 
-using the '`--export`' command line option.
+is recommended to disable Tp-Note's viewer feature by setting the configuration
+file variable '`[arg_default] edit = true`'. Alternatively, you can also
+compile Tp-Note without the '`viewer`' feature. Note, that even when the viewer
+feature disabled, one can still render the note manually to HTML by  using the
+'`--export`' command line option.
 
 **Summary**: As long as Tp-Note's built-in note viewer is running, the note
 file and all its referenced (image) files are exposed to all users logged into
