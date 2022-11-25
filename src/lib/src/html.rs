@@ -130,7 +130,7 @@ fn rel_link_to_abs_link(
                 utf8_percent_encode(dirpath_link.to_str().unwrap_or_default(), &ASCIISET)
                     .to_string();
             Some((
-                format!("<img src=\"{abspath_link_encoded}\" alt=\"{text}\">"),
+                format!("<img src=\"{abspath_link_encoded}\" alt=\"{text}\" />"),
                 dirpath_link,
             ))
         }
@@ -235,7 +235,7 @@ mod tests {
 
         let input = "<img src=\"down/./down/../../t%20m%20p.jpg\" alt=\"Image\" />";
         let expected = "<img src=\"/my/abs/note%20path/t%20m%20p.jpg\" \
-            alt=\"Image\">";
+            alt=\"Image\" />";
         let (outhtml, outpath) = rel_link_to_abs_link(input, absdir, false).unwrap();
 
         assert_eq!(outhtml, expected);
@@ -243,7 +243,7 @@ mod tests {
 
         // Check relative path to image, with empty prepend path.
         let input = "<img src=\"down/./../../t%20m%20p.jpg\" alt=\"Image\" />";
-        let expected = "<img src=\"down/./../../t%20m%20p.jpg\" alt=\"Image\">";
+        let expected = "<img src=\"down/./../../t%20m%20p.jpg\" alt=\"Image\" />";
         let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new(""), false).unwrap();
 
         assert_eq!(outhtml, expected);
@@ -315,7 +315,7 @@ mod tests {
         let absdir = Path::new("/my/abs/note path/");
         let expected = "abc<a href=\"ftp://getreu.net\">Blog</a>\
             def<a href=\"https://getreu.net\">https://getreu.net</a>\
-            ghi<img src=\"/my/abs/note%20path/t%20m%20p.jpg\" alt=\"test 1\">\
+            ghi<img src=\"/my/abs/note%20path/t%20m%20p.jpg\" alt=\"test 1\" />\
             jkl<a href=\"/my/abs/note%20path/down/my%20note%201.md\" title=\"\">my note 1</a>\
             mno<a href=\"/my/abs/note%20path/dir/my%20note.md\" title=\"\">my note</a>"
             .to_string();
