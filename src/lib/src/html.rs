@@ -1,5 +1,6 @@
 //! Helper functions dealing with HTML conversion.
 
+use crate::markup_language::MarkupLanguage;
 use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
 use parse_hyperlinks_extras::parser::parse_html::take_link;
@@ -10,12 +11,21 @@ use std::{
     sync::{Arc, RwLock},
 };
 
+pub const HTML_EXT: &str = ".html";
+
 #[inline]
-/// Helper function that converts relative local HTML link to absolute
-/// local HTML link. If successful, it returns `Some(converted_anchor_tag, target)`.
-/// In case of error, it returns `None`.
+/// Helper function that converts relative local HTML links to absolute
+/// links. If successful, we return `Some(converted_anchor_tag, target)`. If
+/// `prepend_dirpath` is empty, no convertion is perfomed. Local absolute links
+/// and external URLs always remain untouched. If `rewrite_ext` is true and
+/// the link points to a known Tp-Note file extension, then `.html` is appended
+/// to the converted link. In case of error, we return `None`.
 /// Contract: Links must be local. They may have a scheme.
-fn rel_link_to_abs_link(link: &str, prepend_dirpath: &Path) -> Option<(String, PathBuf)> {
+fn rel_link_to_abs_link(
+    link: &str,
+    prepend_dirpath: &Path,
+    rewrite_ext: bool,
+) -> Option<(String, PathBuf)> {
     //
     const ASCIISET: percent_encoding::AsciiSet = NON_ALPHANUMERIC
         .remove(b'/')
@@ -29,6 +39,13 @@ fn rel_link_to_abs_link(link: &str, prepend_dirpath: &Path) -> Option<(String, P
         Ok(("", ("", Link::Text2Dest(text, dest, title)))) => {
             // Check contract. Panic if link is not local.
             debug_assert!(!link.contains("://"));
+
+            // Only rewrite file extensions for Tp-Note files.
+            let rewrite_ext = rewrite_ext
+                && !matches!(
+                    MarkupLanguage::from(Path::new(&*dest)),
+                    MarkupLanguage::None
+                );
 
             // Local ones are ok. Trim URL scheme.
             let dest = dest
@@ -53,17 +70,33 @@ fn rel_link_to_abs_link(link: &str, prepend_dirpath: &Path) -> Option<(String, P
             }
 
             // Concat `abspath` and `relpath`.
-            let relpath_link = PathBuf::from(&*percent_decode_str(dest).decode_utf8().unwrap());
-            for p in relpath_link.iter() {
-                if p == "." {
-                    continue;
-                }
-                if p == ".." {
-                    dirpath_link.pop();
-                } else {
-                    dirpath_link.push(p);
+            let relpath_link = &*percent_decode_str(dest).decode_utf8().unwrap();
+
+            // Append ".html" if `rewrite_ext`.
+            let relpath_link = if rewrite_ext {
+                let mut relpath_link = relpath_link.to_string();
+                relpath_link.push_str(HTML_EXT);
+                PathBuf::from(relpath_link)
+            } else {
+                PathBuf::from(relpath_link)
+            };
+
+            // If `dirpath_link` is empty, use relpath_link instead.
+            if dirpath_link.to_str().unwrap_or_default().is_empty() {
+                dirpath_link = relpath_link;
+            } else {
+                for p in relpath_link.iter() {
+                    if p == "." {
+                        continue;
+                    }
+                    if p == ".." {
+                        dirpath_link.pop();
+                    } else {
+                        dirpath_link.push(p);
+                    }
                 }
             }
+
             let abspath_link_encoded =
                 utf8_percent_encode(dirpath_link.to_str().unwrap_or_default(), &ASCIISET)
                     .to_string();
@@ -106,12 +139,18 @@ fn rel_link_to_abs_link(link: &str, prepend_dirpath: &Path) -> Option<(String, P
 }
 
 #[inline]
-/// Helper function that scans the input `html` and converts all relative
-/// local HTML links to absolute local HTML links with `prepend_dirpath`.
-/// The rewritten links are then added to `allowed_urls`.
+/// Helper function that scans the input `html` string and converts
+/// all relative local HTML links to absolute links by prepending
+/// `prepend_dirpath`. If `prepend_dirpath` is empty, no convertion is
+/// perfomed. Local absolute links and external URLs always remain untouched.
+/// If `rewrite_ext` is true and  the link points to a known Tp-Note file
+/// extension, then `.html` is appended to the converted link. The resulting
+/// HTML string contains all rewritten links, whose targets are finally added
+/// to the `allowed_urls`.
 pub fn rewrite_links(
     html: String,
     prepend_dirpath: &Path,
+    rewrite_ext: bool,
     allowed_urls: Arc<RwLock<HashSet<PathBuf>>>,
 ) -> String {
     let mut allowed_urls = allowed_urls
@@ -132,7 +171,9 @@ pub fn rewrite_links(
             continue;
         }
 
-        if let Some((consumed_new, url)) = rel_link_to_abs_link(consumed, prepend_dirpath) {
+        if let Some((consumed_new, url)) =
+            rel_link_to_abs_link(consumed, prepend_dirpath, rewrite_ext)
+        {
             html_out.push_str(&consumed_new);
             allowed_urls.insert(url);
         } else {
@@ -184,7 +225,7 @@ mod tests {
 
         // Should panic: this is not a relative path.
         let input = "<a href=\"ftp://getreu.net\">Blog</a>";
-        let _ = rel_link_to_abs_link(input, absdir).unwrap();
+        let _ = rel_link_to_abs_link(input, absdir, false).unwrap();
     }
 
     #[test]
@@ -195,7 +236,7 @@ mod tests {
         let input = "<img src=\"down/./down/../../t%20m%20p.jpg\" alt=\"Image\" />";
         let expected = "<img src=\"/my/abs/note%20path/t%20m%20p.jpg\" \
             alt=\"Image\">";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, absdir).unwrap();
+        let (outhtml, outpath) = rel_link_to_abs_link(input, absdir, false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("/my/abs/note path/t m p.jpg"));
@@ -203,7 +244,7 @@ mod tests {
         // Check relative path to image, with empty prepend path.
         let input = "<img src=\"down/./../../t%20m%20p.jpg\" alt=\"Image\" />";
         let expected = "<img src=\"down/./../../t%20m%20p.jpg\" alt=\"Image\">";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("")).unwrap();
+        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new(""), false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("down/./../../t m p.jpg"));
@@ -212,7 +253,7 @@ mod tests {
         let input = "<a href=\"./down/./../my%20note%201.md\">my note 1</a>";
         let expected = "<a href=\"/my/abs/note%20path/my%20note%201.md\" \
             title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, absdir).unwrap();
+        let (outhtml, outpath) = rel_link_to_abs_link(input, absdir, false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("/my/abs/note path/my note 1.md"));
@@ -221,7 +262,7 @@ mod tests {
         let input = "<a href=\"/dir/./down/../my%20note%201.md\">my note 1</a>";
         let expected = "<a href=\"/dir/my%20note%201.md\" \
             title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, absdir).unwrap();
+        let (outhtml, outpath) = rel_link_to_abs_link(input, absdir, false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
@@ -230,7 +271,7 @@ mod tests {
         let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
         let expected = "<a href=\"./dir/my%20note%201.md\" \
             title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("./")).unwrap();
+        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("./"), false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("./dir/my note 1.md"));
@@ -239,15 +280,23 @@ mod tests {
         let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
         let expected = "<a href=\"./dir/my%20note%201.md.html\" \
             title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("./")).unwrap();
+        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("./"), true).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("./dir/my note 1.md.html"));
 
+        // Check relative path to note file, with empty prepend path.
+        let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
+        let expected = "<a href=\"./down/./../dir/my%20note%201.md\" title=\"\">my note 1</a>";
+        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new(""), false).unwrap();
+
+        assert_eq!(outhtml, expected);
+        assert_eq!(outpath, PathBuf::from("./down/./../dir/my note 1.md"));
+
         // Check relative path to note file, with `/` prepend path.
         let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
         let expected = "<a href=\"/dir/my%20note%201.md\" title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("/")).unwrap();
+        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("/"), false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
@@ -271,7 +320,7 @@ mod tests {
             mno<a href=\"/my/abs/note%20path/dir/my%20note.md\" title=\"\">my note</a>"
             .to_string();
 
-        let output = rewrite_links(input, absdir, allowed_urls.clone());
+        let output = rewrite_links(input, absdir, false, allowed_urls.clone());
         let url = allowed_urls.read().unwrap();
 
         assert_eq!(output, expected);

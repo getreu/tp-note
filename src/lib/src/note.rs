@@ -18,6 +18,7 @@ use crate::filename::NotePathBuf;
 use crate::filter::TERA;
 use crate::front_matter::FrontMatter;
 use crate::html::rewrite_links;
+use crate::html::HTML_EXT;
 use crate::markup_language::MarkupLanguage;
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
@@ -368,7 +369,7 @@ impl<T: Content> Note<T> {
                 .to_str()
                 .unwrap_or_default()
                 .to_string();
-            html_filename.push_str(".html");
+            html_filename.push_str(HTML_EXT);
             html_path.push(PathBuf::from(html_filename.as_str()));
         } else {
             // `export_dir` points to `-` and `html_path` is empty.
@@ -407,7 +408,12 @@ impl<T: Content> Note<T> {
             handle.write_all(
                 self.render_content_to_html(&note_path_ext, html_template)
                     .map(|html| {
-                        rewrite_links(html, Path::new("./"), Arc::new(RwLock::new(HashSet::new())))
+                        rewrite_links(
+                            html,
+                            Path::new(""),
+                            true,
+                            Arc::new(RwLock::new(HashSet::new())),
+                        )
                     })?
                     .as_bytes(),
             )?;
@@ -420,7 +426,12 @@ impl<T: Content> Note<T> {
             handle.write_all(
                 self.render_content_to_html(&note_path_ext, html_template)
                     .map(|html| {
-                        rewrite_links(html, Path::new("./"), Arc::new(RwLock::new(HashSet::new())))
+                        rewrite_links(
+                            html,
+                            Path::new(""),
+                            true,
+                            Arc::new(RwLock::new(HashSet::new())),
+                        )
                     })?
                     .as_bytes(),
             )?;

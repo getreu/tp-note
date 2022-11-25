@@ -689,7 +689,7 @@ impl ServerThread {
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
             // Secondly, convert all relative links to absolute links.
-            .map(|html| rewrite_links(html, abspath_dir, self.allowed_urls.clone()))
+            .map(|html| rewrite_links(html, abspath_dir, false, self.allowed_urls.clone()))
         {
             // If the rendition went well, return the HTML.
             Ok(html) => {
