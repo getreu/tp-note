@@ -1,4 +1,5 @@
 //! Extends the built-in Tera filters.
+use crate::config::FILENAME_ROOT_PATH_MARKER;
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_DIR_PATH;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
@@ -6,6 +7,7 @@ use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_ALL;
 use crate::config::TMPL_VAR_LANG;
 use crate::config::TMPL_VAR_PATH;
+use crate::config::TMPL_VAR_ROOT_PATH;
 use crate::config::TMPL_VAR_USERNAME;
 use crate::content::Content;
 use crate::error::NoteError;
@@ -32,6 +34,11 @@ pub struct Context {
     /// command line argument. The is our working directory and
     /// the directory where the note file is (will be) located.
     pub dir_path: PathBuf,
+    /// Contains the root directory of the current note. This is the first
+    /// directory, that upwards from `dir_path`, contains a file named
+    /// `FILENAME_ROOT_PATH_MARKER`. The root directory is used by Tp-Note's viewer
+    /// as base directory
+    pub root_path: PathBuf,
 }
 
 /// A thin wrapper around `tera::Context` storing some additional
@@ -93,12 +100,35 @@ impl Context {
                 .to_path_buf()
         };
 
+        // Get the root dir.
+        let mut root_path = dir_path.clone();
+
+        loop {
+            root_path.push(Path::new(FILENAME_ROOT_PATH_MARKER));
+            if root_path.is_file() {
+                let _ = root_path.pop();
+                break;
+            } else {
+                let _ = root_path.pop();
+            }
+            if !root_path.pop() {
+                root_path = PathBuf::from("/");
+                break;
+            }
+        }
+
         // Register the canonicalized fully qualified file name.
         ct.insert(TMPL_VAR_PATH, &path);
         ct.insert(TMPL_VAR_DIR_PATH, &dir_path);
+        ct.insert(TMPL_VAR_ROOT_PATH, &root_path);
 
         // Insert invironment.
-        let mut context = Self { ct, path, dir_path };
+        let mut context = Self {
+            ct,
+            path,
+            dir_path,
+            root_path,
+        };
         context.insert_environment();
         context
     }

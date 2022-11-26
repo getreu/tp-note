@@ -132,13 +132,19 @@ pub const FILENAME_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t"];
 /// This a dot by definition.
 pub const FILENAME_DOTFILE_MARKER: char = '.';
 
-/// As all application logic is encoded in Tp-Note's templates, it does not know about field names.
-/// Nevertheless it is useful to identify at least one field as _the_ field that identifies a note
-/// the most.  When `TMPL_COMPULSORY_HEADER_FIELD` is not empty, Tp-Note will not synchronize the
-/// note's filename and will pop up an error message, unless it finds the field in the note's
-/// header.  When `TMPL_COMPULSORY_HEADER_FIELD` is empty, all files are synchronized without any
-/// further field check. Make sure to define a default value with `fm_* | default(value=*)`
-/// in case the variable `fm_*` does not exist in the note's front matter.
+/// The apperance of a file with this filename marks the position of
+/// `TMPL_VAR_ROOT_PATH`.
+pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnoteroot";
+
+/// As all application logic is encoded in Tp-Note's templates, it does
+/// not know about field names. Nevertheless it is useful to identify at
+/// least one field as _the_ field that identifies a note the most.  When
+/// `TMPL_COMPULSORY_HEADER_FIELD` is not empty, Tp-Note will not synchronize
+/// the note's filename and will pop up an error message, unless it finds the
+/// field in the note's header.  When `TMPL_COMPULSORY_HEADER_FIELD` is empty,
+/// all files are synchronized without any further field check. Make sure to
+/// define a default value with `fm_* | default(value=*)` in case the variable
+/// `fm_*` does not exist in the note's front matter.
 const TMPL_COMPULSORY_HEADER_FIELD: &str = "title";
 
 /// The template variable contains the fully qualified path of the `<path>`
@@ -153,6 +159,12 @@ pub const TMPL_VAR_PATH: &str = "path";
 /// If it points to a directory, the content of this variable is identical to
 /// `TMPL_VAR_PATH`,
 pub const TMPL_VAR_DIR_PATH: &str = "dir_path";
+
+/// Contains the root directory of the current note. This is the first
+/// directory, that upwards from `TMPL_VAR_DIR_PATH`, contains a file named
+/// `FILENAME_ROOT_PATH_MARKER`. The root directory is used by Tp-Note's viewer
+/// as base directory
+pub const TMPL_VAR_ROOT_PATH: &str = "root_path";
 
 /// Contains the YAML header (if any) of the clipboard content.
 /// Otherwise the empty string.
