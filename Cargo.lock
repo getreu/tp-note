@@ -1477,9 +1477,9 @@ checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
 
 [[package]]
 name = "pest"
-version = "2.4.1"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a528564cc62c19a7acac4d81e01f39e53e25e17b934878f4c6d25cc2836e62f8"
+checksum = "5f400b0f7905bf702f9f3dc3df5a121b16c54e9e8012c082905fdf09a931861a"
 dependencies = [
  "thiserror",
  "ucd-trie",
@@ -1487,9 +1487,9 @@ dependencies = [
 
 [[package]]
 name = "pest_derive"
-version = "2.4.1"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5fd9bc6500181952d34bd0b2b0163a54d794227b498be0b7afa7698d0a7b18f"
+checksum = "423c2ba011d6e27b02b482a3707c773d19aec65cc024637aec44e19652e66f63"
 dependencies = [
  "pest",
  "pest_generator",
@@ -1497,9 +1497,9 @@ dependencies = [
 
 [[package]]
 name = "pest_generator"
-version = "2.4.1"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2610d5ac5156217b4ff8e46ddcef7cdf44b273da2ac5bca2ecbfa86a330e7c4"
+checksum = "3e64e6c2c85031c02fdbd9e5c72845445ca0a724d419aa0bc068ac620c9935c1"
 dependencies = [
  "pest",
  "pest_meta",
@@ -1510,9 +1510,9 @@ dependencies = [
 
 [[package]]
 name = "pest_meta"
-version = "2.4.1"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "824749bf7e21dd66b36fbe26b3f45c713879cccd4a009a917ab8e045ca8246fe"
+checksum = "57959b91f0a133f89a68be874a5c88ed689c19cd729ecdb5d762ebf16c64d662"
 dependencies = [
  "once_cell",
  "pest",
@@ -2147,7 +2147,7 @@ dependencies = [
 
 [[package]]
 name = "tp-note"
-version = "1.19.4"
+version = "1.19.5"
 dependencies = [
  "atty",
  "copypasta",
@@ -2159,16 +2159,12 @@ dependencies = [
  "msgbox",
  "notify",
  "notify-debouncer-mini",
- "parse-hyperlinks",
- "parse-hyperlinks-extras",
  "percent-encoding",
  "sanitize-filename-reader-friendly",
  "semver 1.0.14",
  "serde",
- "serde_json",
  "serde_yaml",
  "structopt",
- "tera",
  "thiserror",
  "time",
  "toml",
@@ -2181,14 +2177,16 @@ dependencies = [
 
 [[package]]
 name = "tpnote-lib"
-version = "0.10.1"
+version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae74b06ac0f3ae55ba3ea568ffdb384d85ab49306777690a3d6301ba626f6b03"
+checksum = "8f357498332797ed046079566f96b1de08c41ba4533673fadb8f2cf46f066b42"
 dependencies = [
  "cmark-syntax",
  "lazy_static",
  "log",
  "parse-hyperlinks",
+ "parse-hyperlinks-extras",
+ "percent-encoding",
  "pulldown-cmark",
  "rst_parser",
  "rst_renderer",
