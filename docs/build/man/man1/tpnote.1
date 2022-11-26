@@ -721,17 +721,18 @@ the YAML header contains a key whose name is defined in the
 configuration file variable `\f[C][tmpl] compulsory_header_field\f[R]'
 (default `\f[C]title\f[R]').
 .PP
-A Tp-Note-note file is always UTF-8 encoded.
+A Tp-Note note file is always UTF-8 encoded.
 As newline, either the Unix standard `\f[C]\[rs]n\f[R]' or the Windows
 standard `\f[C]\[rs]r\[rs]n\f[R]' is accepted.
 Tp-Note writes out newlines according the operating system it runs on.
+.SS The document\[cq]s header and body
 .PP
 Tp-Note is designed to be compatible with `\f[C]Pandoc\f[R]\[cq]s
 and'\f[C]RMarkdown\f[R]s document structure as shown in the figure
 below.
 In this documentation the terms \[lq]YAML header\[rq], \[lq]header\[rq]
 and \[lq]front matter\[rq] are used as synonyms to designate to
-document\[cq]s meta data block at the beginning of the text file:
+document\[cq]s metadata block at the beginning of the text file:
 .IP
 .nf
 \f[C]
@@ -778,7 +779,53 @@ Besides the requirements concerning its header, a valid Tp-Note file
 must have a filename extension that is listed in one of the
 configuration file variables: `\f[C][filename] extension_*\f[R]'.
 The latter also determine which internal markup language render is
-called for Tp-Note\[cq]s renderer feature.
+called for Tp-Note\[cq]s internal viewer.
+.SS Links to resources and other documents
+.PP
+The document\[cq]s body often contains (inline) links to resources
+e.g.\ images and links to other documents.
+The link syntax depends on the markup language used in the Tp-Note file.
+.PP
+Here some example links written in Markdown:
+.IP \[bu] 2
+Website: `\f[C][blog](https://blog.getreu.net)\f[R]'
+.IP \[bu] 2
+Inline image with relative local URL:
+`\f[C]![Alt text](<images/my logo.png>)\f[R]'.
+.IP \[bu] 2
+Link to another Tp-Note document with relative local URL:
+`\f[C][my doc](<../../notes/my doc.md>)\f[R]'
+.IP \[bu] 2
+The same as above, but using the short autolink syntax:
+`\f[C]<http:../../notes/my%20doc.md>\f[R]'
+.IP \[bu] 2
+Link to another Tp-Note document with absolute local URL:
+`\f[C][my doc](</home/kanban/documents/my note.md)\f[R]'
+.PP
+Although Tp-Note\[cq]s built in viewer follows absolute and relative
+URLs, usually the latter are preferred, because it allows you to move
+more easily documents and its resources in the file system.
+.PP
+Tp-Note\[cq]s exporter function `\f[C]--export\f[R]' converts a given
+Tp-Note file into HTML and adds `\f[C].html\f[R]' to the output
+filename.
+Links in the documents content to other Tp-Note files are hereby
+rewritten by appending `\f[C].html\f[R]' to their URLs.
+This way you can convert groups of documents to HTML and later browse
+from document to document in you web browser.
+.PP
+Tp-Note\[cq]s viewer and HTML exporter always display links as they
+appear in the note file\[cq]s content.
+In other words, the \f[I]links\[cq]s text property\f[R] is never
+changed.
+However, there is one exception: when the text contains a URL starting
+with `\f[C]http:\f[R]' or `\f[C]https:\f[R]' only the file stem is kept.
+Example, the link:
+`\f[C][http:dir/my file.md](<http:dir/my file.md>)\f[R]' is rewritten
+into `\f[C][my file](<http:dir/my file.md>)\f[R]' before being
+displayed.
+This is why the autolink `\f[C]<http:dir/my file.md>.\f[R]' appears as
+`\f[C]my file\f[R]' in the browser.
 .SH METADATA FILENAME SYNCHRONIZATION
 .PP
 Consider the following Tp-Note file:
@@ -2080,9 +2127,8 @@ on the `\f[C]localhost\f[R]' interface with a random port number.
 This HTTP server runs as long as the launched web browser window is
 open.
 Note, that the server not only exposes the displayed note file, but also
-all referenced relative inline images and relative URLs to other TP-Note
-files.
-Internally, the viewer maintains a list of \f[I]referenced relative
+all referenced inline images and URLs to other TP-Note files.
+Internally, the viewer maintains a list of \f[I]referenced local
 URLs\f[R].
 For security reasons, only listed files are served.
 To limit data exfiltration in case an attacker gains local credentials,
@@ -2093,8 +2139,8 @@ In addition to the above quantitative restriction, Tp-Note\[cq]s
 built-in viewer serves only files whose file extensions are registered
 with the `\f[C][viewer] served_mime_type\f[R]' configuration file
 variable.
-The latter allows among other things to disable the \f[I]follow Tp-Note
-links\f[R] feature by removing all `\f[C]text/*\f[R]' mime types from
+The latter allows to disable the \f[I]follow links to other Tp-Note
+files\f[R] feature by removing all `\f[C]text/*\f[R]' mime types from
 that list.
 .PP
 As Tp-Note\[cq]s built-in viewer binds to the `\f[C]localhost\f[R]'

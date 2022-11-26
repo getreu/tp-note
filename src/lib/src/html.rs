@@ -20,6 +20,10 @@ pub const HTML_EXT: &str = ".html";
 /// and external URLs always remain untouched. If `rewrite_ext` is true and
 /// the link points to a known Tp-Note file extension, then `.html` is appended
 /// to the converted link. In case of error, we return `None`.
+/// Remark: The _anchor's text property_ is never changed. However, there is
+/// one exception: when the text contains a URL starting with `http:` or
+/// `https:`, only the file stem is kept. Example, the anchor text property:
+/// `<a ...>http:dir/my file.md</a>` is rewritten into `<a ...>my file</a>`.
 /// Contract: Links must be local. They may have a scheme.
 fn rel_link_to_abs_link(
     link: &str,
@@ -147,6 +151,10 @@ fn rel_link_to_abs_link(
 /// extension, then `.html` is appended to the converted link. The resulting
 /// HTML string contains all rewritten links, whose targets are finally added
 /// to the `allowed_urls`.
+/// Remark: The _anchor's text property_ is never changed. However, there is
+/// one exception: when the text contains a URL starting with `http:` or
+/// `https:`, only the file stem is kept. Example, the anchor text property:
+/// `<a ...>http:dir/my file.md</a>` is rewritten into `<a ...>my file</a>`.
 pub fn rewrite_links(
     html: String,
     prepend_dirpath: &Path,

@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.19.4 | Tp-Note documentation
+% TP-NOTE(1) Version 1.19.5 | Tp-Note documentation
 
 ---
 title:      "tpnote"
@@ -695,6 +695,14 @@ content to other Tp-Note files are hereby rewritten by appending '`.html`' to th
 URLs. This way you can convert groups of documents to HTML and later browse
 from document to document in you web browser.
 
+Tp-Note's viewer and HTML exporter always display links as they appear in
+the note file's content. In other words, the _links's text property_ is never
+changed. However, there is one exception: when the text contains a URL starting
+with '`http:`' or '`https:`' only the file stem is kept. Example, the link: 
+'`[http:dir/my file.md](<http:dir/my file.md>)`' is rewritten into 
+'`[my file](<http:dir/my file.md>)`' before being displayed. This is why
+the autolink '`<http:dir/my file.md>.`' appears as '`my file`' in the 
+browser.
 
 
 
