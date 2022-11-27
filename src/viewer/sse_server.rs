@@ -382,7 +382,7 @@ impl ServerThread {
                 // Serve all other documents.
                 _ => {
                     // Assert starting with `/`.
-                    let abspath = Path::new(&*path);
+                    let abspath = Path::new(path.as_ref());
                     if !abspath.is_absolute() {
                         return Err(ViewerError::UrlMustStartWithSlash);
                     }
@@ -440,7 +440,20 @@ impl ServerThread {
                     // Release the `RwLockReadGuard`.
                     drop(allowed_urls);
 
-                    // Condition 3: If this is a Tp-Note file, check the maximum
+                    // Condition 3: Is the file a child of `root_path`?
+                    if !abspath.starts_with(&self.context.root_path) {
+                        self.respond_forbidden(abspath)?;
+                        log::warn!(
+                            "TCP port local {} to peer {}: target path does not start with '{}', rejecting: '{}'",
+                            self.stream.local_addr()?.port(),
+                            self.stream.peer_addr()?.port(),
+                            self.context.root_path.to_str().unwrap_or(""),
+                            abspath.to_str().unwrap_or(""),
+                        );
+                        continue 'tcp_connection;
+                    }
+
+                    // Condition 4: If this is a Tp-Note file, check the maximum
                     // of delivered documents.
                     if !matches!(extension.into(), MarkupLanguage::None) {
                         if abspath.is_file() {
@@ -466,7 +479,7 @@ impl ServerThread {
                         }
                     }
 
-                    // Condition 4: Is the file readable?
+                    // Condition 5: Is the file readable?
                     if abspath.is_file() {
                         self.respond_file_ok(abspath, mime_type)?;
                     } else {
@@ -592,6 +605,19 @@ impl ServerThread {
     }
 
     /// Write HTTP not found response.
+    fn respond_forbidden(&mut self, reqpath: &Path) -> Result<(), ViewerError> {
+        self.stream
+            .write_all(b"HTTP/1.1 403\r\nContent-Length: 0\r\n\r\n")?;
+        log::debug!(
+            "TCP port local {} to peer {}: 403 \"Forbidden\" request was: '{}'",
+            self.stream.local_addr()?.port(),
+            self.stream.peer_addr()?.port(),
+            reqpath.to_str().unwrap_or_default()
+        );
+        Ok(())
+    }
+
+    /// Write HTTP not found response.
     fn respond_not_found(&mut self, reqpath: &Path) -> Result<(), ViewerError> {
         self.stream
             .write_all(b"HTTP/1.1 404\r\nContent-Length: 0\r\n\r\n")?;
@@ -685,12 +711,29 @@ impl ServerThread {
         // First decompose header and body, then deserialize header.
         let content = ContentString::open(abspath_doc)?;
         let abspath_dir = abspath_doc.parent().unwrap_or_else(|| Path::new("/"));
-        match render_viewer_html::<ContentString>(self.context.clone(), content)
+        let root_path = &self.context.root_path;
+
+        // Only the first base document is live updated.
+        let mut context = self.context.clone();
+        if context.path != abspath_doc {
+            context.insert(TMPL_VAR_NOTE_JS, "");
+        }
+        match render_viewer_html::<ContentString>(context, content)
             // Now scan the HTML result for links and store them in a HashMap
             // accessible to all threads.
             // Secondly, convert all relative links to absolute links.
-            .map(|html| rewrite_links(html, abspath_dir, false, self.allowed_urls.clone()))
-        {
+            .map(|html| {
+                rewrite_links(
+                    html,
+                    root_path,
+                    abspath_dir,
+                    // Do convert rel. to abs. links.
+                    true,
+                    // Do not append `.html` to `.md` links.
+                    false,
+                    self.allowed_urls.clone(),
+                )
+            }) {
             // If the rendition went well, return the HTML.
             Ok(html) => {
                 let mut delivered_tpnote_docs = self

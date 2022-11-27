@@ -15,21 +15,92 @@ pub const HTML_EXT: &str = ".html";
 
 #[inline]
 /// Helper function that converts relative local HTML links to absolute
-/// links. If successful, we return `Some(converted_anchor_tag, target)`. If
-/// `prepend_dirpath` is empty, no convertion is perfomed. Local absolute links
-/// and external URLs always remain untouched. If `rewrite_ext` is true and
-/// the link points to a known Tp-Note file extension, then `.html` is appended
-/// to the converted link. In case of error, we return `None`.
+/// links. If successful, we return `Some(converted_anchor_tag, target)`.
+///
+/// The base path for this conversion (usually where the HTML file resides),
+/// is `docdir`.
+/// If not `rewrite_rel_links`, relative local links are not converted.
+/// Furthermore, all local _absolute_ (not converted) links are prepended with
+/// `root_path`. All external URLs always remain untouched.
+/// If `rewrite_ext` is true and the link points to a known Tp-Note file
+/// extension, then `.html` is appended to the converted link.
 /// Remark: The _anchor's text property_ is never changed. However, there is
 /// one exception: when the text contains a URL starting with `http:` or
 /// `https:`, only the file stem is kept. Example, the anchor text property:
 /// `<a ...>http:dir/my file.md</a>` is rewritten into `<a ...>my file</a>`.
-/// Contract: Links must be local. They may have a scheme.
-fn rel_link_to_abs_link(
+///
+/// Contract 1: `link` must be local. It may have a scheme.
+/// Contract 2: `root_path` and `docdir` are absolute paths to directories.
+/// Contract 3: `root_path` is never empty `""`. It can be `"/"`.
+/// Contract 4: The returned link is guaranteed to be a child of `root_path`, or
+/// `None`.
+
+fn rewrite_link(
     link: &str,
-    prepend_dirpath: &Path,
+    root_path: &Path,
+    docdir: &Path,
+    rewrite_rel_links: bool,
     rewrite_ext: bool,
 ) -> Option<(String, PathBuf)> {
+    /// Concatenate `path` and `append`.
+    /// The `append` portion of the output is always canonicalized.
+    /// In case of underflow, returned path starts with `/..`.
+    fn append(path: &mut PathBuf, append: &Path) {
+        // Append `dest` to `link` and canonicalize.
+        for dir in append.iter() {
+            // `/` filtered because it resets the path.
+            if dir == "." || dir == "/" {
+                continue;
+            }
+            if dir == ".." {
+                if !path.pop() {
+                    path.push(dir);
+                };
+            } else {
+                path.push(dir);
+            }
+        }
+    }
+
+    /// If `rewrite_rel_links`  and `dest` is relative,
+    /// concat and return `docdir` and `dest`.
+    /// If not `rewrite_rel_links` and `dest` is relative, return `dest`.
+    /// If `dest` is absolute, concat and return `root_path` and `dest`.
+    /// The `dest` portion of the output is always canonicalized.
+    /// Return the assembled path, when in `root_path`, or `None` otherwise.
+    /// Asserts in debug mode, that `doc_dir` is in `root_path`.
+    fn assemble_link(
+        root_path: &Path,
+        docdir: &Path,
+        dest: &Path,
+        rewrite_rel_links: bool,
+    ) -> Option<PathBuf> {
+        //
+        debug_assert!(docdir.starts_with(root_path));
+        // Check if the link points into `root_path`, reject otherwise.
+        let mut abslink = if dest.is_relative() {
+            docdir.to_path_buf()
+        } else {
+            root_path.to_path_buf()
+        };
+        append(&mut abslink, dest);
+
+        if !abslink.starts_with(root_path) || abslink.starts_with("/..") {
+            return None;
+        };
+
+        // Caculate the output.
+        let mut link = match (rewrite_rel_links, dest.is_relative()) {
+            (true, true) => docdir.to_path_buf(),
+            (false, true) => PathBuf::new(),
+            (_, false) => root_path.to_path_buf(),
+        };
+        append(&mut link, dest);
+
+        Some(link)
+    }
+
+    //
     //
     const ASCIISET: percent_encoding::AsciiSet = NON_ALPHANUMERIC
         .remove(b'/')
@@ -37,11 +108,9 @@ fn rel_link_to_abs_link(
         .remove(b'_')
         .remove(b'-');
 
-    let mut dirpath_link = prepend_dirpath.to_owned();
-
     match take_link(link) {
         Ok(("", ("", Link::Text2Dest(text, dest, title)))) => {
-            // Check contract. Panic if link is not local.
+            // Check contract 1. Panic if link is not local.
             debug_assert!(!link.contains("://"));
 
             // Only rewrite file extensions for Tp-Note files.
@@ -51,7 +120,7 @@ fn rel_link_to_abs_link(
                     MarkupLanguage::None
                 );
 
-            // Local ones are ok. Trim URL scheme.
+            // Local ones are Ok. Trim URL scheme.
             let dest = dest
                 .trim_start_matches("http:")
                 .trim_start_matches("https:");
@@ -73,95 +142,76 @@ fn rel_link_to_abs_link(
                 short_text = text.to_string();
             }
 
-            // Concat `abspath` and `relpath`.
-            let relpath_link = &*percent_decode_str(dest).decode_utf8().unwrap();
-
             // Append ".html" if `rewrite_ext`.
-            let relpath_link = if rewrite_ext {
-                let mut relpath_link = relpath_link.to_string();
-                relpath_link.push_str(HTML_EXT);
-                PathBuf::from(relpath_link)
+            let dest = &*percent_decode_str(dest).decode_utf8().unwrap();
+            let dest = if rewrite_ext {
+                let mut dest = dest.to_string();
+                dest.push_str(HTML_EXT);
+                PathBuf::from(dest)
             } else {
-                PathBuf::from(relpath_link)
+                PathBuf::from(dest)
             };
 
-            // If `dirpath_link` is empty, use relpath_link instead.
-            if dirpath_link.to_str().unwrap_or_default().is_empty() {
-                dirpath_link = relpath_link;
-            } else {
-                for p in relpath_link.iter() {
-                    if p == "." {
-                        continue;
-                    }
-                    if p == ".." {
-                        dirpath_link.pop();
-                    } else {
-                        dirpath_link.push(p);
-                    }
-                }
-            }
+            let destout = assemble_link(root_path, docdir, &dest, rewrite_rel_links)?;
 
-            let abspath_link_encoded =
-                utf8_percent_encode(dirpath_link.to_str().unwrap_or_default(), &ASCIISET)
-                    .to_string();
+            let destout_encoded =
+                utf8_percent_encode(destout.to_str().unwrap_or_default(), &ASCIISET).to_string();
             Some((
-                format!("<a href=\"{abspath_link_encoded}\" title=\"{title}\">{short_text}</a>"),
-                dirpath_link,
+                format!(
+                    "<a href=\"{}\" title=\"{}\">{}</a>",
+                    destout_encoded, title, short_text
+                ),
+                destout,
             ))
         }
 
         Ok(("", ("", Link::Image(text, dest)))) => {
             // Concat `abspath` and `relpath`.
-            let relpath_link = PathBuf::from(&*percent_decode_str(&dest).decode_utf8().unwrap());
+            let dest = PathBuf::from(&*percent_decode_str(&dest).decode_utf8().unwrap());
 
-            // If `dirpath_link` is empty, use relpath_link instead.
-            if dirpath_link.to_str().unwrap_or_default().is_empty() {
-                dirpath_link = relpath_link;
-            } else {
-                for p in relpath_link.iter() {
-                    if p == "." {
-                        continue;
-                    }
-                    if p == ".." {
-                        dirpath_link.pop();
-                    } else {
-                        dirpath_link.push(p);
-                    }
-                }
-            }
+            let destout = assemble_link(root_path, docdir, &dest, rewrite_rel_links)?;
 
-            let abspath_link_encoded =
-                utf8_percent_encode(dirpath_link.to_str().unwrap_or_default(), &ASCIISET)
-                    .to_string();
+            let destout_encoded =
+                utf8_percent_encode(destout.to_str().unwrap_or_default(), &ASCIISET).to_string();
             Some((
-                format!("<img src=\"{abspath_link_encoded}\" alt=\"{text}\" />"),
-                dirpath_link,
+                format!("<img src=\"{}\" alt=\"{}\" />", destout_encoded, text),
+                destout,
             ))
         }
+
         Ok((_, (_, _))) | Err(_) => None,
     }
 }
 
 #[inline]
 /// Helper function that scans the input `html` string and converts
-/// all relative local HTML links to absolute links by prepending
-/// `prepend_dirpath`. If `prepend_dirpath` is empty, no convertion is
-/// perfomed. Local absolute links and external URLs always remain untouched.
-/// If `rewrite_ext` is true and  the link points to a known Tp-Note file
-/// extension, then `.html` is appended to the converted link. The resulting
-/// HTML string contains all rewritten links, whose targets are finally added
-/// to the `allowed_urls`.
+/// all relative local HTML links to absolute links.
+///
+/// The base path for this conversion (usually where the HTML file resides),
+/// is `docdir`.
+/// If not `rewrite_rel_links`, relative local links are not converted.
+/// Furthermore, all local _absolute_ (not converted) links are prepended with
+/// `root_path`. All external URLs always remain untouched.
+/// If `rewrite_ext` is true and the link points to a known Tp-Note file
+/// extension, then `.html` is appended to the converted link.
 /// Remark: The _anchor's text property_ is never changed. However, there is
 /// one exception: when the text contains a URL starting with `http:` or
 /// `https:`, only the file stem is kept. Example, the anchor text property:
 /// `<a ...>http:dir/my file.md</a>` is rewritten into `<a ...>my file</a>`.
+///
+/// It is guaranteed, that all local links in the converted `html` point inside
+/// `root_path`. If not, the link is displayed as `INVALID LOCAL LINK` and
+/// discarded. All valid local links are inserted in `allowed_local_links`
+/// the same way as their destination appears in the resulting HTML.
 pub fn rewrite_links(
     html: String,
-    prepend_dirpath: &Path,
+    root_path: &Path,
+    docdir: &Path,
+    rewrite_rel_links: bool,
     rewrite_ext: bool,
-    allowed_urls: Arc<RwLock<HashSet<PathBuf>>>,
+    allowed_local_links: Arc<RwLock<HashSet<PathBuf>>>,
 ) -> String {
-    let mut allowed_urls = allowed_urls
+    let mut allowed_urls = allowed_local_links
         .write()
         .expect("Can not write `allowed_urls`. RwLock is poisoned. Panic.");
 
@@ -179,14 +229,21 @@ pub fn rewrite_links(
             continue;
         }
 
-        if let Some((consumed_new, url)) =
-            rel_link_to_abs_link(consumed, prepend_dirpath, rewrite_ext)
+        if let Some((consumed_new, dest)) =
+            rewrite_link(consumed, root_path, docdir, rewrite_rel_links, rewrite_ext)
         {
             html_out.push_str(&consumed_new);
-            allowed_urls.insert(url);
+            if dest.starts_with(root_path) {
+                log::debug!(
+                    "Viewer: URL {} not in {}, rejected.",
+                    dest.to_str().unwrap_or(""),
+                    root_path.to_str().unwrap_or(""),
+                );
+                allowed_urls.insert(dest);
+            }
         } else {
-            log::debug!("Viewer: can not parse URL: {}", consumed);
-            html_out.push_str("<i>INVALID URL</i>");
+            log::debug!("Viewer: invalid_local_links: {}", consumed);
+            html_out.push_str("<i>INVALID LOCAL LINK</i>");
         }
     }
     // Add the last `remaining`.
@@ -223,91 +280,121 @@ mod tests {
         sync::{Arc, RwLock},
     };
 
-    use crate::html::rel_link_to_abs_link;
+    use crate::html::rewrite_link;
     use crate::html::rewrite_links;
 
     #[test]
     #[should_panic(expected = "assertion failed: !link.contains(\\\"://\\\")")]
-    fn test_rel_link_to_abs_link1() {
-        let absdir = Path::new("/my/abs/note path/");
+    fn test_rewrite_link1() {
+        let root_path = Path::new("/my/");
+        let docdir = Path::new("/my/abs/note path/");
 
         // Should panic: this is not a relative path.
         let input = "<a href=\"ftp://getreu.net\">Blog</a>";
-        let _ = rel_link_to_abs_link(input, absdir, false).unwrap();
+        let _ = rewrite_link(input, root_path, docdir, true, false).unwrap();
     }
 
     #[test]
-    fn test_rel_link_to_abs_link2() {
-        // Check relative path to image.
-        let absdir = Path::new("/my/abs/note path/");
+    fn test_rewrite_link2() {
+        let root_path = Path::new("/my/");
+        let doc_path = Path::new("/my/abs/note path/");
 
+        // Check relative path to image.
         let input = "<img src=\"down/./down/../../t%20m%20p.jpg\" alt=\"Image\" />";
         let expected = "<img src=\"/my/abs/note%20path/t%20m%20p.jpg\" \
             alt=\"Image\" />";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, absdir, false).unwrap();
+        let (outhtml, outpath) = rewrite_link(input, root_path, doc_path, true, false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("/my/abs/note path/t m p.jpg"));
 
-        // Check relative path to image, with empty prepend path.
+        // Check relative path to image. Canonicalized?
         let input = "<img src=\"down/./../../t%20m%20p.jpg\" alt=\"Image\" />";
-        let expected = "<img src=\"down/./../../t%20m%20p.jpg\" alt=\"Image\" />";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new(""), false).unwrap();
+        let expected = "<img src=\"../t%20m%20p.jpg\" alt=\"Image\" />";
+        let (outhtml, outpath) = rewrite_link(input, root_path, doc_path, false, false).unwrap();
 
         assert_eq!(outhtml, expected);
-        assert_eq!(outpath, PathBuf::from("down/./../../t m p.jpg"));
+        assert_eq!(outpath, PathBuf::from("../t m p.jpg"));
 
         // Check relative path to note file.
         let input = "<a href=\"./down/./../my%20note%201.md\">my note 1</a>";
         let expected = "<a href=\"/my/abs/note%20path/my%20note%201.md\" \
             title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, absdir, false).unwrap();
+        let (outhtml, outpath) = rewrite_link(input, root_path, doc_path, true, false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("/my/abs/note path/my note 1.md"));
 
         // Check absolute path to note file.
         let input = "<a href=\"/dir/./down/../my%20note%201.md\">my note 1</a>";
-        let expected = "<a href=\"/dir/my%20note%201.md\" \
+        let expected = "<a href=\"/my/dir/my%20note%201.md\" \
             title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, absdir, false).unwrap();
+        let (outhtml, outpath) = rewrite_link(input, root_path, doc_path, true, false).unwrap();
 
         assert_eq!(outhtml, expected);
-        assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
+        assert_eq!(outpath, PathBuf::from("/my/dir/my note 1.md"));
 
-        // Check relative path to note file, with `./` for prepend path.
+        // Check relative path to note file. Canonicalized?
         let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
-        let expected = "<a href=\"./dir/my%20note%201.md\" \
+        let expected = "<a href=\"dir/my%20note%201.md\" \
             title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("./"), false).unwrap();
+        let (outhtml, outpath) = rewrite_link(input, root_path, doc_path, false, false).unwrap();
 
         assert_eq!(outhtml, expected);
-        assert_eq!(outpath, PathBuf::from("./dir/my note 1.md"));
+        assert_eq!(outpath, PathBuf::from("dir/my note 1.md"));
 
         // Check `rewrite_ext=true`.
         let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
-        let expected = "<a href=\"./dir/my%20note%201.md.html\" \
+        let expected = "<a href=\"dir/my%20note%201.md.html\" \
             title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("./"), true).unwrap();
+        let (outhtml, outpath) = rewrite_link(input, root_path, doc_path, false, true).unwrap();
+        assert_eq!(outpath, PathBuf::from("dir/my note 1.md.html"));
 
         assert_eq!(outhtml, expected);
-        assert_eq!(outpath, PathBuf::from("./dir/my note 1.md.html"));
 
-        // Check relative path to note file, with empty prepend path.
+        // Check relative link in input.
         let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
-        let expected = "<a href=\"./down/./../dir/my%20note%201.md\" title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new(""), false).unwrap();
+        let expected = "<a href=\"/my/notepath/dir/my%20note%201.md\" title=\"\">my note 1</a>";
+        let (outhtml, outpath) =
+            rewrite_link(input, root_path, Path::new("/my/notepath/"), true, false).unwrap();
 
         assert_eq!(outhtml, expected);
-        assert_eq!(outpath, PathBuf::from("./down/./../dir/my note 1.md"));
+        assert_eq!(outpath, PathBuf::from("/my/notepath/dir/my note 1.md"));
 
-        // Check relative path to note file, with `/` prepend path.
-        let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
-        let expected = "<a href=\"/dir/my%20note%201.md\" title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rel_link_to_abs_link(input, Path::new("/"), false).unwrap();
+        // Check absolute link in input.
+        let input = "<a href=\"/down/./../dir/my%20note%201.md\">my note 1</a>";
+        let expected = "<a href=\"/my/dir/my%20note%201.md\" title=\"\">my note 1</a>";
+        let (outhtml, outpath) =
+            rewrite_link(input, root_path, Path::new("/my/ignored/"), true, false).unwrap();
 
         assert_eq!(outhtml, expected);
-        assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
+        assert_eq!(outpath, PathBuf::from("/my/dir/my note 1.md"));
+
+        // Check absolute link in input, not in `root_path`.
+        let input = "<a href=\"/down/../../dir/my%20note%201.md\">my note 1</a>";
+        let output = rewrite_link(input, root_path, Path::new("/my/notepath/"), true, false);
+
+        assert_eq!(output, None);
+
+        // Check relative link in input, not in `root_path`.
+        let input = "<a href=\"../../dir/my%20note%201.md\">my note 1</a>";
+        let output = rewrite_link(input, root_path, Path::new("/my/notepath/"), true, false);
+
+        assert_eq!(output, None);
+
+        // Check relative link in input, with underflow.
+        let root_path = Path::new("/");
+        let input = "<a href=\"../../dir/my%20note%201.md\">my note 1</a>";
+        let output = rewrite_link(input, root_path, Path::new("/my/"), true, false);
+
+        assert_eq!(output, None);
+
+        // Check relative link in input, not in `root_path`.
+        let root_path = Path::new("/my");
+        let input = "<a href=\"../../dir/my%20note%201.md\">my note 1</a>";
+        let output = rewrite_link(input, root_path, Path::new("/my/notepath"), true, false);
+
+        assert_eq!(output, None);
     }
 
     #[test]
@@ -318,17 +405,27 @@ mod tests {
             ghi<img src=\"t%20m%20p.jpg\" alt=\"test 1\" />\
             jkl<a href=\"down/../down/my%20note%201.md\">my note 1</a>\
             mno<a href=\"http:./down/../dir/my%20note.md\">\
-            http:./down/../dir/my%20note.md</a>"
+            http:./down/../dir/my%20note.md</a>\
+            pqr<a href=\"http:/down/../dir/my%20note.md\">\
+            http:./down/../dir/my%20note.md</a>\
+            stu<a href=\"http:/../dir/underflow/my%20note.md\">\
+            not allowed dir</a>\
+            vwx<a href=\"http:../../../not allowed dir/my%20note.md\">\
+            not allowed</a>"
             .to_string();
-        let absdir = Path::new("/my/abs/note path/");
         let expected = "abc<a href=\"ftp://getreu.net\">Blog</a>\
             def<a href=\"https://getreu.net\">https://getreu.net</a>\
             ghi<img src=\"/my/abs/note%20path/t%20m%20p.jpg\" alt=\"test 1\" />\
             jkl<a href=\"/my/abs/note%20path/down/my%20note%201.md\" title=\"\">my note 1</a>\
-            mno<a href=\"/my/abs/note%20path/dir/my%20note.md\" title=\"\">my note</a>"
+            mno<a href=\"/my/abs/note%20path/dir/my%20note.md\" title=\"\">my note</a>\
+            pqr<a href=\"/my/dir/my%20note.md\" title=\"\">my note</a>\
+            stu<i>INVALID LOCAL LINK</i>\
+            vwx<i>INVALID LOCAL LINK</i>"
             .to_string();
 
-        let output = rewrite_links(input, absdir, false, allowed_urls.clone());
+        let root_path = Path::new("/my/");
+        let docdir = Path::new("/my/abs/note path/");
+        let output = rewrite_links(input, root_path, docdir, true, false, allowed_urls.clone());
         let url = allowed_urls.read().unwrap();
 
         assert_eq!(output, expected);

@@ -343,6 +343,8 @@ impl<T: Content> Note<T> {
             &self.context.path
         };
 
+        let current_dir_path = current_path.parent().unwrap_or_else(|| Path::new(""));
+
         if export_dir
             .as_os_str()
             .to_str()
@@ -410,7 +412,11 @@ impl<T: Content> Note<T> {
                     .map(|html| {
                         rewrite_links(
                             html,
-                            Path::new(""),
+                            &self.context.root_path,
+                            current_dir_path,
+                            // Do not convert rel. links to abs. link.
+                            false,
+                            // Do append `.html` to `.md` in links.
                             true,
                             Arc::new(RwLock::new(HashSet::new())),
                         )
@@ -428,7 +434,11 @@ impl<T: Content> Note<T> {
                     .map(|html| {
                         rewrite_links(
                             html,
-                            Path::new(""),
+                            &self.context.root_path,
+                            current_dir_path,
+                            // Do not convert rel. links to abs. link.
+                            false,
+                            // Do append `.html` to `.md` in links.
                             true,
                             Arc::new(RwLock::new(HashSet::new())),
                         )
