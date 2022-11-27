@@ -62,10 +62,10 @@ fn rewrite_link(
         }
     }
 
-    /// If `rewrite_rel_links`  and `dest` is relative,
-    /// concat and return `docdir` and `dest`.
+    /// If `rewrite_rel_links` and `dest` is relative, concat `docdir`  and
+    /// `dest`, then strip `root_path` from the left before returning.
     /// If not `rewrite_rel_links` and `dest` is relative, return `dest`.
-    /// If `dest` is absolute, concat and return `root_path` and `dest`.
+    /// If `dest` is absolute  and return `dest`.
     /// The `dest` portion of the output is always canonicalized.
     /// Return the assembled path, when in `root_path`, or `None` otherwise.
     /// Asserts in debug mode, that `doc_dir` is in `root_path`.
@@ -91,9 +91,15 @@ fn rewrite_link(
 
         // Caculate the output.
         let mut link = match (rewrite_rel_links, dest.is_relative()) {
-            (true, true) => docdir.to_path_buf(),
+            (true, true) => {
+                // Result: "/" + docdir.strip(root_path) + dest
+                let link = PathBuf::from("/");
+                link.join(docdir.strip_prefix(root_path).ok()?)
+            }
+            // Result: dest
             (false, true) => PathBuf::new(),
-            (_, false) => root_path.to_path_buf(),
+            // Result: "/" + dest.strip(root_path)
+            (_, false) => PathBuf::from("/"),
         };
         append(&mut link, dest);
 
@@ -233,14 +239,7 @@ pub fn rewrite_links(
             rewrite_link(consumed, root_path, docdir, rewrite_rel_links, rewrite_ext)
         {
             html_out.push_str(&consumed_new);
-            if dest.starts_with(root_path) {
-                log::debug!(
-                    "Viewer: URL {} not in {}, rejected.",
-                    dest.to_str().unwrap_or(""),
-                    root_path.to_str().unwrap_or(""),
-                );
-                allowed_urls.insert(dest);
-            }
+            allowed_urls.insert(dest);
         } else {
             log::debug!("Viewer: invalid_local_links: {}", consumed);
             html_out.push_str("<i>INVALID LOCAL LINK</i>");
@@ -301,12 +300,12 @@ mod tests {
 
         // Check relative path to image.
         let input = "<img src=\"down/./down/../../t%20m%20p.jpg\" alt=\"Image\" />";
-        let expected = "<img src=\"/my/abs/note%20path/t%20m%20p.jpg\" \
+        let expected = "<img src=\"/abs/note%20path/t%20m%20p.jpg\" \
             alt=\"Image\" />";
         let (outhtml, outpath) = rewrite_link(input, root_path, doc_path, true, false).unwrap();
 
         assert_eq!(outhtml, expected);
-        assert_eq!(outpath, PathBuf::from("/my/abs/note path/t m p.jpg"));
+        assert_eq!(outpath, PathBuf::from("/abs/note path/t m p.jpg"));
 
         // Check relative path to image. Canonicalized?
         let input = "<img src=\"down/./../../t%20m%20p.jpg\" alt=\"Image\" />";
@@ -318,21 +317,21 @@ mod tests {
 
         // Check relative path to note file.
         let input = "<a href=\"./down/./../my%20note%201.md\">my note 1</a>";
-        let expected = "<a href=\"/my/abs/note%20path/my%20note%201.md\" \
+        let expected = "<a href=\"/abs/note%20path/my%20note%201.md\" \
             title=\"\">my note 1</a>";
         let (outhtml, outpath) = rewrite_link(input, root_path, doc_path, true, false).unwrap();
 
         assert_eq!(outhtml, expected);
-        assert_eq!(outpath, PathBuf::from("/my/abs/note path/my note 1.md"));
+        assert_eq!(outpath, PathBuf::from("/abs/note path/my note 1.md"));
 
         // Check absolute path to note file.
         let input = "<a href=\"/dir/./down/../my%20note%201.md\">my note 1</a>";
-        let expected = "<a href=\"/my/dir/my%20note%201.md\" \
+        let expected = "<a href=\"/dir/my%20note%201.md\" \
             title=\"\">my note 1</a>";
         let (outhtml, outpath) = rewrite_link(input, root_path, doc_path, true, false).unwrap();
 
         assert_eq!(outhtml, expected);
-        assert_eq!(outpath, PathBuf::from("/my/dir/my note 1.md"));
+        assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
 
         // Check relative path to note file. Canonicalized?
         let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
@@ -345,30 +344,39 @@ mod tests {
 
         // Check `rewrite_ext=true`.
         let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
-        let expected = "<a href=\"dir/my%20note%201.md.html\" \
+        let expected = "<a href=\"/abs/note%20path/dir/my%20note%201.md.html\" \
             title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rewrite_link(input, root_path, doc_path, false, true).unwrap();
-        assert_eq!(outpath, PathBuf::from("dir/my note 1.md.html"));
+        let (outhtml, outpath) = rewrite_link(input, root_path, doc_path, true, true).unwrap();
 
         assert_eq!(outhtml, expected);
+        assert_eq!(
+            outpath,
+            PathBuf::from("/abs/note path/dir/my note 1.md.html")
+        );
 
         // Check relative link in input.
         let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
-        let expected = "<a href=\"/my/notepath/dir/my%20note%201.md\" title=\"\">my note 1</a>";
-        let (outhtml, outpath) =
-            rewrite_link(input, root_path, Path::new("/my/notepath/"), true, false).unwrap();
+        let expected = "<a href=\"/path/dir/my%20note%201.md\" title=\"\">my note 1</a>";
+        let (outhtml, outpath) = rewrite_link(
+            input,
+            Path::new("/my/note/"),
+            Path::new("/my/note/path/"),
+            true,
+            false,
+        )
+        .unwrap();
 
         assert_eq!(outhtml, expected);
-        assert_eq!(outpath, PathBuf::from("/my/notepath/dir/my note 1.md"));
+        assert_eq!(outpath, PathBuf::from("/path/dir/my note 1.md"));
 
         // Check absolute link in input.
         let input = "<a href=\"/down/./../dir/my%20note%201.md\">my note 1</a>";
-        let expected = "<a href=\"/my/dir/my%20note%201.md\" title=\"\">my note 1</a>";
+        let expected = "<a href=\"/dir/my%20note%201.md\" title=\"\">my note 1</a>";
         let (outhtml, outpath) =
             rewrite_link(input, root_path, Path::new("/my/ignored/"), true, false).unwrap();
 
         assert_eq!(outhtml, expected);
-        assert_eq!(outpath, PathBuf::from("/my/dir/my note 1.md"));
+        assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
 
         // Check absolute link in input, not in `root_path`.
         let input = "<a href=\"/down/../../dir/my%20note%201.md\">my note 1</a>";
@@ -415,10 +423,10 @@ mod tests {
             .to_string();
         let expected = "abc<a href=\"ftp://getreu.net\">Blog</a>\
             def<a href=\"https://getreu.net\">https://getreu.net</a>\
-            ghi<img src=\"/my/abs/note%20path/t%20m%20p.jpg\" alt=\"test 1\" />\
-            jkl<a href=\"/my/abs/note%20path/down/my%20note%201.md\" title=\"\">my note 1</a>\
-            mno<a href=\"/my/abs/note%20path/dir/my%20note.md\" title=\"\">my note</a>\
-            pqr<a href=\"/my/dir/my%20note.md\" title=\"\">my note</a>\
+            ghi<img src=\"/abs/note%20path/t%20m%20p.jpg\" alt=\"test 1\" />\
+            jkl<a href=\"/abs/note%20path/down/my%20note%201.md\" title=\"\">my note 1</a>\
+            mno<a href=\"/abs/note%20path/dir/my%20note.md\" title=\"\">my note</a>\
+            pqr<a href=\"/dir/my%20note.md\" title=\"\">my note</a>\
             stu<i>INVALID LOCAL LINK</i>\
             vwx<i>INVALID LOCAL LINK</i>"
             .to_string();
@@ -429,8 +437,8 @@ mod tests {
         let url = allowed_urls.read().unwrap();
 
         assert_eq!(output, expected);
-        assert!(url.contains(&PathBuf::from("/my/abs/note path/t m p.jpg")));
-        assert!(url.contains(&PathBuf::from("/my/abs/note path/dir/my note.md")));
-        assert!(url.contains(&PathBuf::from("/my/abs/note path/down/my note 1.md")));
+        assert!(url.contains(&PathBuf::from("/abs/note path/t m p.jpg")));
+        assert!(url.contains(&PathBuf::from("/abs/note path/dir/my note.md")));
+        assert!(url.contains(&PathBuf::from("/abs/note path/down/my note 1.md")));
     }
 }

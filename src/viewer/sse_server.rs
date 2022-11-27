@@ -123,11 +123,13 @@ struct ServerThread {
     stream: TcpStream,
     /// A list of referenced relative URLs to images or other
     /// documents as they appear in the delivered Tp-Note documents.
-    /// This list contains URLs that may or may not have been displayed.
+    /// This list contains local links that may or may not have been displayed.
+    /// The local links in this list are relative to `self.context.root_path`
     allowed_urls: Arc<RwLock<HashSet<PathBuf>>>,
     /// Subset of `allowed_urls` containing only URLs that
     /// have been actually delivered. The list only contains URLs to Tp-Note
     /// documents.
+    /// The local links in this list are absolute.
     delivered_tpnote_docs: Arc<RwLock<HashSet<PathBuf>>>,
     /// We do not store anything here, instead we use the ARC pointing to
     /// `conn_counter` to count the number of instances of `ServerThread`.
@@ -382,13 +384,13 @@ impl ServerThread {
                 // Serve all other documents.
                 _ => {
                     // Assert starting with `/`.
-                    let abspath = Path::new(path.as_ref());
-                    if !abspath.is_absolute() {
+                    let relpath = Path::new(path.as_ref());
+                    if !relpath.is_absolute() {
                         return Err(ViewerError::UrlMustStartWithSlash);
                     }
 
                     // Condition 1: Check if we serve this kind of extension
-                    let extension = &*abspath
+                    let extension = &*relpath
                         .extension()
                         .unwrap_or_default()
                         .to_str()
@@ -405,14 +407,14 @@ impl ServerThread {
                                 files with extension '{}' are not served. Rejecting: '{}'",
                                 self.stream.local_addr()?.port(),
                                 self.stream.peer_addr()?.port(),
-                                abspath
+                                relpath
                                     .extension()
                                     .unwrap_or_default()
                                     .to_str()
                                     .unwrap_or_default(),
-                                abspath.display(),
+                                relpath.display(),
                             );
-                            self.respond_not_found(abspath)?;
+                            self.respond_not_found(relpath)?;
                             continue 'tcp_connection;
                         }
                     };
@@ -424,37 +426,31 @@ impl ServerThread {
                         .read()
                         .expect("Can not read `allowed_urls`! RwLock is poisoned. Panic.");
 
-                    if !allowed_urls.contains(abspath) {
+                    if !allowed_urls.contains(relpath) {
                         log::warn!(
                             "TCP port local {} to peer {}: target not referenced in note file, rejecting: '{}'",
                             self.stream.local_addr()?.port(),
                             self.stream.peer_addr()?.port(),
-                            abspath.to_str().unwrap_or(""),
+                            relpath.to_str().unwrap_or(""),
                         );
                         // Release the `RwLockReadGuard`.
                         drop(allowed_urls);
-                        self.respond_not_found(abspath)?;
+                        self.respond_not_found(relpath)?;
                         continue 'tcp_connection;
                     }
 
                     // Release the `RwLockReadGuard`.
                     drop(allowed_urls);
 
-                    // Condition 3: Is the file a child of `root_path`?
-                    if !abspath.starts_with(&self.context.root_path) {
-                        self.respond_forbidden(abspath)?;
-                        log::warn!(
-                            "TCP port local {} to peer {}: target path does not start with '{}', rejecting: '{}'",
-                            self.stream.local_addr()?.port(),
-                            self.stream.peer_addr()?.port(),
-                            self.context.root_path.to_str().unwrap_or(""),
-                            abspath.to_str().unwrap_or(""),
-                        );
-                        continue 'tcp_connection;
-                    }
+                    // We prepend `root_path` to `abspath` before accessing the file system.
+                    let abspath = self
+                        .context
+                        .root_path
+                        .join(relpath.strip_prefix("/").unwrap_or(relpath));
+                    let abspath = abspath.as_path();
 
-                    // Condition 4: If this is a Tp-Note file, check the maximum
-                    // of delivered documents.
+                    // Condition 3: If this is a Tp-Note file, check the maximum
+                    // of delivered documents, then deliver.
                     if !matches!(extension.into(), MarkupLanguage::None) {
                         if abspath.is_file() {
                             let delivered_docs_count = self
@@ -476,7 +472,7 @@ impl ServerThread {
                         }
                     }
 
-                    // Condition 5: Is the file readable?
+                    // Condition 4: Is the file readable?
                     if abspath.is_file() {
                         self.respond_file_ok(abspath, mime_type)?;
                     } else {
@@ -600,20 +596,20 @@ impl ServerThread {
 
         Ok(())
     }
-
-    /// Write HTTP not found response.
-    fn respond_forbidden(&mut self, reqpath: &Path) -> Result<(), ViewerError> {
-        self.stream
-            .write_all(b"HTTP/1.1 403\r\nContent-Length: 0\r\n\r\n")?;
-        log::debug!(
-            "TCP port local {} to peer {}: 403 \"Forbidden\" request was: '{}'",
-            self.stream.local_addr()?.port(),
-            self.stream.peer_addr()?.port(),
-            reqpath.display()
-        );
-        Ok(())
-    }
-
+    /*
+        /// Write HTTP not found response.
+        fn respond_forbidden(&mut self, reqpath: &Path) -> Result<(), ViewerError> {
+            self.stream
+                .write_all(b"HTTP/1.1 403\r\nContent-Length: 0\r\n\r\n")?;
+            log::debug!(
+                "TCP port local {} to peer {}: 403 \"Forbidden\" request was: '{}'",
+                self.stream.local_addr()?.port(),
+                self.stream.peer_addr()?.port(),
+                reqpath.display()
+            );
+            Ok(())
+        }
+    */
     /// Write HTTP not found response.
     fn respond_not_found(&mut self, reqpath: &Path) -> Result<(), ViewerError> {
         self.stream
@@ -728,6 +724,7 @@ impl ServerThread {
                     true,
                     // Do not append `.html` to `.md` links.
                     false,
+                    // We clone only the RWlock, not the data.
                     self.allowed_urls.clone(),
                 )
             }) {
