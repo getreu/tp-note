@@ -279,8 +279,51 @@ mod tests {
         sync::{Arc, RwLock},
     };
 
+    use crate::html::assemble_link;
     use crate::html::rewrite_link;
     use crate::html::rewrite_links;
+
+    #[test]
+    fn test_assemble_link() {
+        // `rewrite_rel_links=true`
+        let output = assemble_link(
+            Path::new("/my"),
+            Path::new("/my/doc/path"),
+            Path::new("../local/link to/note.md"),
+            true,
+        )
+        .unwrap();
+        assert_eq!(output, Path::new("/doc/local/link to/note.md"));
+
+        // `rewrite_rel_links=false`
+        let output = assemble_link(
+            Path::new("/my"),
+            Path::new("/my/doc/path"),
+            Path::new("../local/link to/note.md"),
+            false,
+        )
+        .unwrap();
+        assert_eq!(output, Path::new("../local/link to/note.md"));
+
+        // Absolute `dest`.
+        let output = assemble_link(
+            Path::new("/my"),
+            Path::new("/my/doc/path"),
+            Path::new("/test/../abs/local/link to/note.md"),
+            false,
+        )
+        .unwrap();
+        assert_eq!(output, Path::new("/abs/local/link to/note.md"));
+
+        // Underflow.
+        let output = assemble_link(
+            Path::new("/my"),
+            Path::new("/my/doc/path"),
+            Path::new("/../local/link to/note.md"),
+            false,
+        );
+        assert_eq!(output, None);
+    }
 
     #[test]
     #[should_panic(expected = "assertion failed: !link.contains(\\\"://\\\")")]
