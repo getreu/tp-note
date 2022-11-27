@@ -88,24 +88,27 @@ pub fn manage_connections(
     let delivered_tpnote_docs = Arc::new(RwLock::new(HashSet::new()));
     // We use an ARC to count the number of running threads.
     let conn_counter = Arc::new(());
+    // Store `doc_path` in the `context.path` and
+    // in the Tera variable `TMPL_VAR_PATH`.
+    let context = Context::from(&doc_path);
 
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
                 let (event_tx, event_rx) = sync_channel(0);
                 event_tx_list.lock().unwrap().push(event_tx);
-                let doc_path = doc_path.clone();
                 let allowed_urls = allowed_urls.clone();
                 let delivered_tpnote_docs = delivered_tpnote_docs.clone();
                 let conn_counter = conn_counter.clone();
+                let context = context.clone();
                 thread::spawn(move || {
                     let mut st = ServerThread::new(
                         event_rx,
                         stream,
-                        doc_path,
                         allowed_urls,
                         delivered_tpnote_docs,
                         conn_counter,
+                        context,
                     );
                     st.serve_connection()
                 });
@@ -145,14 +148,11 @@ impl ServerThread {
     fn new(
         rx: Receiver<SseToken>,
         stream: TcpStream,
-        doc_path: PathBuf,
         allowed_urls: Arc<RwLock<HashSet<PathBuf>>>,
         delivered_tpnote_docs: Arc<RwLock<HashSet<PathBuf>>>,
         conn_counter: Arc<()>,
+        mut context: Context,
     ) -> Self {
-        // Store `doc_path` in the `context.path` and
-        // in the Tera variable `TMPL_VAR_PATH`.
-        let mut context = Context::from(&doc_path);
         let local_addr = stream.local_addr();
 
         // Compose JavaScript code.
