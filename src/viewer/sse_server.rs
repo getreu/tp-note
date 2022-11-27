@@ -518,19 +518,6 @@ impl ServerThread {
         Ok(())
     }
 
-    /// Write HTTP event response.
-    // fn respond_no_content_ok(&mut self) -> Result<(), ViewerError> {
-    //     self.stream
-    //         .write_all(b"HTTP/1.1 204\r\nContent-Length: 0\r\n\r\n")?;
-    //     log::debug!(
-    //         "TCP port local {} to peer {}: 204 OK, served header, \
-    //         keeping event connection open ...",
-    //         self.stream.local_addr()?.port(),
-    //         self.stream.peer_addr()?.port(),
-    //     );
-    //     Ok(())
-    // }
-
     /// Write HTTP OK response with content.
     fn respond_file_ok(&mut self, reqpath: &Path, mime_type: &str) -> Result<(), ViewerError> {
         let response = format!(
@@ -596,66 +583,47 @@ impl ServerThread {
 
         Ok(())
     }
-    /*
-        /// Write HTTP not found response.
-        fn respond_forbidden(&mut self, reqpath: &Path) -> Result<(), ViewerError> {
-            self.stream
-                .write_all(b"HTTP/1.1 403\r\nContent-Length: 0\r\n\r\n")?;
-            log::debug!(
-                "TCP port local {} to peer {}: 403 \"Forbidden\" request was: '{}'",
-                self.stream.local_addr()?.port(),
-                self.stream.peer_addr()?.port(),
-                reqpath.display()
-            );
-            Ok(())
-        }
-    */
+
+    // /// Write HTTP not found response.
+    // fn respond_forbidden(&mut self, reqpath: &Path) -> Result<(), ViewerError> {
+    //     self.respond_http_error(403, "Forbidden", &reqpath.display().to_string())
+    // }
+
+    // fn respond_no_content_ok(&mut self) -> Result<(), ViewerError> {
+    //     self.respond_http_error(204, "", "Ok, served header")
+    // }
+
     /// Write HTTP not found response.
     fn respond_not_found(&mut self, reqpath: &Path) -> Result<(), ViewerError> {
-        self.stream
-            .write_all(b"HTTP/1.1 404\r\nContent-Length: 0\r\n\r\n")?;
-        log::debug!(
-            "TCP port local {} to peer {}: 404 \"Not found\" request was: '{}'",
-            self.stream.local_addr()?.port(),
-            self.stream.peer_addr()?.port(),
-            reqpath.display()
-        );
-        Ok(())
+        self.respond_http_error(404, "Not found", &reqpath.display().to_string())
     }
 
     /// Write HTTP method not allowed response.
-    fn respond_method_not_allowed(&mut self, path: &str) -> Result<(), ViewerError> {
-        self.stream
-            .write_all(b"HTTP/1.1 405\r\nContent-Length: 0\r\n\r\n")?;
-        log::debug!(
-            "TCP port local {} to peer {}: 405 \"Method Not Allowed\" request was: '{}'",
-            self.stream.local_addr()?.port(),
-            self.stream.peer_addr()?.port(),
-            path,
-        );
-        Ok(())
+    fn respond_method_not_allowed(&mut self, method: &str) -> Result<(), ViewerError> {
+        self.respond_http_error(405, "Method Not Allowed", method)
     }
 
     /// Write HTTP event response.
     fn respond_too_many_requests(&mut self) -> Result<(), ViewerError> {
-        let delivered_tpnote_docs = self
-            .delivered_tpnote_docs
-            .read()
-            .expect("Can not read `delivered_tpnote_docs`! RwLock is poisoned. Panic.");
+        let mut log_msg;
+        {
+            let delivered_tpnote_docs = self
+                .delivered_tpnote_docs
+                .read()
+                .expect("Can not read `delivered_tpnote_docs`! RwLock is poisoned. Panic.");
 
-        // Prepare the log entry.
-        let mut log_msg = format!(
-            "Error: too many requests. You have exceeded \n\
+            // Prepare the log entry.
+            log_msg = format!(
+                "Error: too many requests. You have exceeded \n\
             `[viewer] displayed_tpnote_count_max = {}` by browsing:\n",
-            CFG.viewer.displayed_tpnote_count_max
-        );
-        for p in delivered_tpnote_docs.iter() {
-            log_msg.push_str("- ");
-            log_msg.push_str(&p.display().to_string());
-            log_msg.push('\n');
+                CFG.viewer.displayed_tpnote_count_max
+            );
+            for p in delivered_tpnote_docs.iter() {
+                log_msg.push_str("- ");
+                log_msg.push_str(&p.display().to_string());
+                log_msg.push('\n');
+            }
         }
-        log::warn!("{}", log_msg);
-
         // Prepare the HTML output.
         let content = format!(
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head>
@@ -669,31 +637,42 @@ impl ServerThread {
             CFG.viewer.displayed_tpnote_count_max
         );
 
-        let response = format!(
-            "HTTP/1.1 429\r\n\
-             Date: {}\r\n\
-             Cache-Control: private, max-age={}\r\n\
-             Content-Type: text/html\r\n\
-             Content-Length: {}\r\n\r\n",
-            httpdate::fmt_http_date(SystemTime::now()),
-            MAX_AGE,
-            content.len(),
-        );
-        self.stream.write_all(response.as_bytes())?;
-        self.stream.write_all(content.as_bytes())?;
-        log::debug!(
-            "TCP port local {} to peer {}: 429 \"Too many requests\"",
-            self.stream.local_addr()?.port(),
-            self.stream.peer_addr()?.port(),
-        );
-
-        Ok(())
+        self.respond_http_error(439, &content, &log_msg)
     }
 
     /// Write HTTP service unavailable response.
     fn respond_service_unavailable(&mut self) -> Result<(), ViewerError> {
-        self.stream
-            .write_all(b"HTTP/1.1 503\r\nContent-Length: 0\r\n\r\n")?;
+        self.respond_http_error(503, "Service unavailable", "")
+    }
+
+    fn respond_http_error(
+        &mut self,
+        http_error_code: u16,
+        html_msg: &str,
+        log_msg: &str,
+    ) -> Result<(), ViewerError> {
+        let response = format!(
+            "HTTP/1.1 {}\r\n\
+             Date: {}\r\n\
+             Cache-Control: private, max-age={}\r\n\
+             Content-Type: text/html\r\n\
+             Content-Length: {}\r\n\r\n",
+            http_error_code,
+            httpdate::fmt_http_date(SystemTime::now()),
+            MAX_AGE,
+            html_msg.len(),
+        );
+        self.stream.write_all(response.as_bytes())?;
+        self.stream.write_all(html_msg.as_bytes())?;
+        log::debug!(
+            "TCP port local {} to peer {}: {} {}: {}",
+            self.stream.local_addr()?.port(),
+            self.stream.peer_addr()?.port(),
+            http_error_code,
+            html_msg,
+            log_msg
+        );
+
         Ok(())
     }
 
