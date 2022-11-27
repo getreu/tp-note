@@ -92,6 +92,23 @@ pub fn manage_connections(
     // in the Tera variable `TMPL_VAR_PATH`.
     let context = Context::from(&doc_path);
 
+    log::info!(
+        "Viewer notice:\n\
+         only files under the directory: {}\n\
+         with the following extensions:\n\
+         {}\n\
+         are served!",
+        context.root_path.display(),
+        &VIEWER_SERVED_MIME_TYPES_HMAP
+            .keys()
+            .map(|s| {
+                let mut s = s.to_string();
+                s.push_str(", ");
+                s
+            })
+            .collect::<String>()
+    );
+
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
@@ -714,8 +731,8 @@ impl ServerThread {
                     .write()
                     .expect("Can not write `delivered_tpnote_docs`. RwLock is poisoned. Panic.");
                 delivered_tpnote_docs.insert(abspath_doc.to_owned());
-                log::info!(
-                    "Viewer: displayed Tp-Note documents: {}",
+                log::debug!(
+                    "Viewer: so far served Tp-Note documents: {}",
                     delivered_tpnote_docs
                         .iter()
                         .map(|p| {

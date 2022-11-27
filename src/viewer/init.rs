@@ -81,19 +81,6 @@ impl Viewer {
 
         // We only serve files with `VIEWER_SERVED_MIME_TYPES_HMAP` file extensions.
         lazy_static::initialize(&VIEWER_SERVED_MIME_TYPES_HMAP);
-        log::debug!(
-            "Viewer::run(): \
-                 Besides the note's HTML rendition, we only serve files with the following\
-                 listed extensions: \n{}",
-            &VIEWER_SERVED_MIME_TYPES_HMAP
-                .keys()
-                .map(|s| {
-                    let mut s = s.to_string();
-                    s.push_str(", ");
-                    s
-                })
-                .collect::<String>()
-        );
 
         // Launch a background HTTP server thread to manage Server-Sent-Event subscribers
         // and to serve the rendered html.
@@ -118,7 +105,6 @@ impl Viewer {
 
         // Launch web browser.
         let url = format!("http://{}:{}", LOCALHOST, localport);
-        log::info!("Viewer::run(): launching browser with URL: {}", url);
 
         // Shall the browser be started a little later?
         if CFG.viewer.startup_delay > 0 {
