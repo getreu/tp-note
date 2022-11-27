@@ -718,6 +718,8 @@ impl ServerThread {
                     abspath_dir,
                     // Do convert rel. to abs. links.
                     true,
+                    // Do not convert abs. links.
+                    false,
                     // Do not append `.html` to `.md` links.
                     false,
                     // We clone only the RWlock, not the data.

@@ -414,8 +414,10 @@ impl<T: Content> Note<T> {
                             html,
                             &self.context.root_path,
                             current_dir_path,
-                            // Do not convert rel. links to abs. link.
-                            false,
+                            // Do convert rel. links to abs. link.
+                            true,
+                            // Do exend abs. links to "/".
+                            true,
                             // Do append `.html` to `.md` in links.
                             true,
                             Arc::new(RwLock::new(HashSet::new())),
@@ -436,8 +438,10 @@ impl<T: Content> Note<T> {
                             html,
                             &self.context.root_path,
                             current_dir_path,
-                            // Do not convert rel. links to abs. link.
-                            false,
+                            // Do convert rel. links to abs. link.
+                            true,
+                            // Do exend abs. links to "/".
+                            true,
                             // Do append `.html` to `.md` in links.
                             true,
                             Arc::new(RwLock::new(HashSet::new())),
