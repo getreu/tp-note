@@ -230,11 +230,11 @@ fn main() {
         // Print `path` unless `--export=-`.
         Ok(ref path) => {
             if let Some(p) = &ARGS.export {
-                if p.as_os_str().to_str().unwrap_or_default() != "-" {
-                    println!("{}", path.to_str().unwrap_or_default());
+                if p.display().to_string() != "-" {
+                    println!("{}", path.display());
                 }
             } else {
-                println!("{}", path.to_str().unwrap_or_default());
+                println!("{}", path.display());
             }
         }
     };

@@ -410,7 +410,7 @@ impl ServerThread {
                                     .unwrap_or_default()
                                     .to_str()
                                     .unwrap_or_default(),
-                                abspath.to_str().unwrap_or_default(),
+                                abspath.display(),
                             );
                             self.respond_not_found(abspath)?;
                             continue 'tcp_connection;
@@ -470,10 +470,7 @@ impl ServerThread {
                             }
                             continue 'tcp_connection;
                         } else {
-                            log::info!(
-                                "Referenced Tp-Note file not found: {}",
-                                abspath.to_str().unwrap_or_default()
-                            );
+                            log::info!("Referenced Tp-Note file not found: {}", abspath.display());
                             self.respond_not_found(abspath)?;
                             continue 'tcp_connection;
                         }
@@ -568,7 +565,7 @@ impl ServerThread {
             "TCP port local {} to peer {}: 200 OK, served file: '{}'",
             self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
-            reqpath.to_str().unwrap_or_default()
+            reqpath.display()
         );
 
         Ok(())
@@ -598,7 +595,7 @@ impl ServerThread {
             "TCP port local {} to peer {}: 200 OK, served file: '{}'",
             self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
-            reqpath.to_str().unwrap_or_default()
+            reqpath.display()
         );
 
         Ok(())
@@ -612,7 +609,7 @@ impl ServerThread {
             "TCP port local {} to peer {}: 403 \"Forbidden\" request was: '{}'",
             self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
-            reqpath.to_str().unwrap_or_default()
+            reqpath.display()
         );
         Ok(())
     }
@@ -625,7 +622,7 @@ impl ServerThread {
             "TCP port local {} to peer {}: 404 \"Not found\" request was: '{}'",
             self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
-            reqpath.to_str().unwrap_or_default()
+            reqpath.display()
         );
         Ok(())
     }
@@ -658,7 +655,7 @@ impl ServerThread {
         );
         for p in delivered_tpnote_docs.iter() {
             log_msg.push_str("- ");
-            log_msg.push_str(p.to_str().unwrap_or_default());
+            log_msg.push_str(&p.display().to_string());
             log_msg.push('\n');
         }
         log::warn!("{}", log_msg);
@@ -747,7 +744,7 @@ impl ServerThread {
                         .iter()
                         .map(|p| {
                             let mut s = "\n    '".to_string();
-                            s.push_str(p.as_path().to_str().unwrap_or_default());
+                            s.push_str(&p.as_path().display().to_string());
                             s
                         })
                         .collect::<String>()

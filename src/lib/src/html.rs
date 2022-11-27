@@ -260,7 +260,7 @@ pub fn rewrite_links(
                 .iter()
                 .map(|p| {
                     let mut s = "\n    '".to_string();
-                    s.push_str(p.as_path().to_str().unwrap_or_default());
+                    s.push_str(&p.display().to_string());
                     s
                 })
                 .collect::<String>()

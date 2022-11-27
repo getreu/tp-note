@@ -363,7 +363,7 @@ impl<T: Content> Note<T> {
                 .to_string();
             html_filename.push_str(".html");
             html_path.push(PathBuf::from(html_filename.as_str()));
-        } else if export_dir.as_os_str().to_str().unwrap_or_default() != "-" {
+        } else if export_dir.display().to_string() != "-" {
             html_path = export_dir.to_owned();
             let mut html_filename = current_path
                 .file_name()
