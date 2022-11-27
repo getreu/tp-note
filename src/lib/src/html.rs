@@ -42,26 +42,6 @@ fn rewrite_link(
     rewrite_rel_links: bool,
     rewrite_ext: bool,
 ) -> Option<(String, PathBuf)> {
-    /// Concatenate `path` and `append`.
-    /// The `append` portion of the output is always canonicalized.
-    /// In case of underflow, returned path starts with `/..`.
-    fn append(path: &mut PathBuf, append: &Path) {
-        // Append `dest` to `link` and canonicalize.
-        for dir in append.iter() {
-            // `/` filtered because it resets the path.
-            if dir == "." || dir == "/" {
-                continue;
-            }
-            if dir == ".." {
-                if !path.pop() {
-                    path.push(dir);
-                };
-            } else {
-                path.push(dir);
-            }
-        }
-    }
-
     /// If `rewrite_rel_links` and `dest` is relative, concat `docdir`  and
     /// `dest`, then strip `root_path` from the left before returning.
     /// If not `rewrite_rel_links` and `dest` is relative, return `dest`.
@@ -75,6 +55,27 @@ fn rewrite_link(
         dest: &Path,
         rewrite_rel_links: bool,
     ) -> Option<PathBuf> {
+        ///
+        /// Concatenate `path` and `append`.
+        /// The `append` portion of the output is always canonicalized.
+        /// In case of underflow, returned path starts with `/..`.
+        fn append(path: &mut PathBuf, append: &Path) {
+            // Append `dest` to `link` and canonicalize.
+            for dir in append.iter() {
+                // `/` filtered because it resets the path.
+                if dir == "." || dir == "/" {
+                    continue;
+                }
+                if dir == ".." {
+                    if !path.pop() {
+                        path.push(dir);
+                    };
+                } else {
+                    path.push(dir);
+                }
+            }
+        }
+
         //
         debug_assert!(docdir.starts_with(root_path));
         // Check if the link points into `root_path`, reject otherwise.
