@@ -677,7 +677,7 @@ Note, that debug level `\f[C]error\f[R]' conditions will always trigger
 popup messages, regardless of \f[B]--popup\f[R] and \f[B]--debug\f[R]
 (unless `\f[C]--debug off\f[R]').
 Popup alert windows are queued and will never interrupt
-\f[I]Tp-note\f[R].
+\f[I]Tp-Note\f[R].
 To better associate a particular action with its log events, read
 through all upcoming popup alert windows until they fail to appear.
 .TP
@@ -708,6 +708,31 @@ resides.
 No external text editor or viewer is launched.
 Can be combined with `\f[C]--batch\f[R]' to avoid popup error alert
 windows.
+.TP
+\f[B]--export-link-rewriting\f[R]=\f[I]MODE\f[R]
+Choose how local links in the exported HTML file are written out:
+`\f[C]off\f[R]', `\f[C]short\f[R]' or `\f[C]long\f[R]' (default).
+No link rewriting occurs, for the \f[I]MODE\f[R] `\f[C]off\f[R]'.
+The \f[I]MODE\f[R] `\f[C]short\f[R]' rewrites all local relative links
+to absolute links, whose base is the first parent directory containing
+the marker file `\f[C].tpnoteroot\f[R]' (filename customizable).
+The marker file designates also the base for absolute local links in the
+note file.
+The mode `\f[C]long\f[R]' rewrites \f[I]all\f[R] local links to absolute
+links whose base is the system\[cq]s root directory `\f[C]/\f[R]'.
+For relative local links this is performed by prepending the path to the
+note file.
+Absolute local links get the path to the marker file
+`\f[C].tpnoteroot\f[R]' prepended.
+In case you do not place a `\f[C].tpnoteroot\f[R]' file in a parent
+directory, the base for absolute local links in your note file is
+interpreted as `\f[C]/\f[R]'.
+The right mode to choose depends on how you view the resulting HTML: if
+you publish on a web server, then `\f[C]short\f[R]' is a good choice.
+If you view the HTML file directly in your web browser, better choose
+`\f[C]long\f[R]'.
+NB: You can also set this option via Tp-Note\[cq]s configuration file
+under `\f[C][arg_default] export_link_rewriting\f[R]'.
 .SH THE NOTE\[cq]S DOCUMENT STRUCTURE
 .PP
 Tp-Note considers a text file to be a valid note file, if its:
@@ -793,14 +818,18 @@ Website: `\f[C][blog](https://blog.getreu.net)\f[R]'
 Inline image with relative local URL:
 `\f[C]![Alt text](<images/my logo.png>)\f[R]'.
 .IP \[bu] 2
-Link to another Tp-Note document with relative local URL:
+Link to another Tp-Note document with relative local link:
 `\f[C][my doc](<../../notes/my doc.md>)\f[R]'
 .IP \[bu] 2
 The same as above, but using the short autolink syntax:
 `\f[C]<http:../../notes/my%20doc.md>\f[R]'
 .IP \[bu] 2
-Link to another Tp-Note document with absolute local URL:
-`\f[C][my doc](</home/kanban/documents/my note.md)\f[R]'
+Link to another Tp-Note document with absolute local link:
+`\f[C][my doc](</home/kanban/documents/my note.md)\f[R]' The base for
+absolute local links is the first parent directory containing the marker
+file `\f[C].tpnoteroot\f[R]'.
+If absent, absolute local links refer to the root directory
+`\f[C]/\f[R]'.
 .PP
 Although Tp-Note\[cq]s built in viewer follows absolute and relative
 URLs, usually the latter are preferred, because it allows you to move
@@ -813,19 +842,68 @@ Links in the documents content to other Tp-Note files are hereby
 rewritten by appending `\f[C].html\f[R]' to their URLs.
 This way you can convert groups of documents to HTML and later browse
 from document to document in you web browser.
+The option `\f[C]--export-link-rewriting\f[R]' allows you to finetune
+how local links are written out.
+Valid values are: `\f[C]off\f[R]', `\f[C]short\f[R]' and
+`\f[C]long\f[R]'.
 .PP
-Tp-Note\[cq]s viewer and HTML exporter always display links as they
-appear in the note file\[cq]s content.
-In other words, the \f[I]links\[cq]s text property\f[R] is never
-changed.
+In order to achieve this, the user must respect the following convention
+concerning absolute local links in Tp-Note documents: The base of
+absolute local links in Tp-Note documents must be the directory where
+the marker file `\f[C].tpnoteroot\f[R]' resides (or `\f[C]/\f[R]' in non
+exists).
+The option `\f[C]--export-link- rewriting\f[R]' decides how local links
+in the Tp-Note document are converted when the HTML is generated.
+If its value is `\f[C]short\f[R]', then relative local links are
+converted to absolute links.
+The base of the resulting links is where the \f[C].tpnoteroot\f[R] file
+resides (or \f[C]/\f[R] if none exists).
+Consider the following example:
+.IP \[bu] 2
+The Tp-Note file `\f[C]/my/docs/car/bill.md\f[R]' contains
+.IP \[bu] 2
+the absolute link `\f[C]/car/scan.jpg\f[R]'.
+.IP \[bu] 2
+and the relative link `\f[C]./photo.jpg\f[R]'.
+.IP \[bu] 2
+The document root marker is: `\f[C]/my/docs/.tpnoteroot\f[R]'.
+.PP
+The images in the resulting HTML will appear as
+.IP \[bu] 2
+`\f[C]/car/scan.jpg\f[R]'.
+.IP \[bu] 2
+`\f[C]/car/photo.jpg\f[R]'.
+.PP
+For `\f[C]--export-link-rewriting=long\f[R]', in addition to the above,
+all absolute local links are rebased to `\f[C]/\f[R]'\[cq].
+Consider the following example:
+.IP \[bu] 2
+The Tp-Note file `\f[C]/my/docs/car/bill.md\f[R]' contains
+.IP \[bu] 2
+the absolute link `\f[C]/car/scan.jpg\f[R]'.
+.IP \[bu] 2
+and the relative link `\f[C]./photo.jpg\f[R]'.
+.IP \[bu] 2
+The document root marker is: `\f[C]/my/docs/.tpnoteroot\f[R]'.
+.PP
+The images in the resulting HTML will appear as
+.IP \[bu] 2
+`\f[C]/my/docs/car/scan.jpg\f[R]'.
+.IP \[bu] 2
+`\f[C]/my/docs/car/photo.jpg\f[R]'.
+.PP
+So far we have seen how Tp-Note\[cq]s viewer and HTML exporter converts
+the \f[I]target\f[R] of local links `\f[C][text](target)\f[R]'.
+For the \f[I]text\f[R] property the situation is simpler as it never
+changes.
 However, there is one exception: when the text contains a URL starting
-with `\f[C]http:\f[R]' or `\f[C]https:\f[R]' only the file stem is kept.
-Example, the link:
-`\f[C][http:dir/my file.md](<http:dir/my file.md>)\f[R]' is rewritten
-into `\f[C][my file](<http:dir/my file.md>)\f[R]' before being
+with `\f[C]http:\f[R]' or `\f[C]https:\f[R]' only the file stem is
 displayed.
-This is why the autolink `\f[C]<http:dir/my file.md>.\f[R]' appears as
-`\f[C]my file\f[R]' in the browser.
+For example, the link:
+`\f[C][http:dir/my file.md](<http:dir/my file.md>)\f[R]' is rewritten
+into `\f[C][my file](<http:dir/my file.md>)\f[R]' before being rendered.
+This explains why the autolink `\f[C]<http:dir/my file.md>.\f[R]'
+appears as `\f[C]my file\f[R]' in the browser.
 .SH METADATA FILENAME SYNCHRONIZATION
 .PP
 Consider the following Tp-Note file:
@@ -1078,7 +1156,7 @@ necessary.
 \f[C]
 editor = [
   [
-    \[aq]kate\[aq], 
+    \[aq]kate\[aq],
     \[aq]--block\[aq]
   ]
 ]
@@ -1526,7 +1604,7 @@ with:
 Please note that web browsers usually ignore leading `\f[C]../\f[R]' in
 relative URL paths.
 To work around this limitation, Tp-Note\[cq]s built-in viewer first
-relaces `\f[C]../\f[R]' with the string `\f[C]ParentDir\f[R]'.
+replaces `\f[C]../\f[R]' with the string `\f[C]ParentDir\f[R]'.
 When the user clicks on this relative URL, the `\f[C]ParentDir\f[R]'
 string in the HTTP request replaced back with `\f[C]..\f[R]'.
 It is also worth mentioning that Tp-Note automatically creates the
@@ -2124,15 +2202,31 @@ For this reason no `\f[C]sanit\f[R]'-filter is not allowed with
 .PP
 As discussed above, Tp-Note\[cq]s built-in viewer sets up an HTTP server
 on the `\f[C]localhost\f[R]' interface with a random port number.
-This HTTP server runs as long as the launched web browser window is
-open.
+.PP
+For security reasons, Tp-Note limits the set of files the viewer is able
+to publish.
+To summarize, a file is only served:
+.IP "1." 3
+when it is referenced in one of the currently viewed Tp-Note files,
+.IP "2." 3
+when its file extension is registered with the
+`\f[C][viewer] served_mime_type\f[R]' list,
+.IP "3." 3
+if the number of so far viewed Tp-Note files,
+`\f[C][viewer] displayed_tpnote_count_max\f[R]' is not exceeded,
+.IP "4." 3
+when it\[cq]s located under a directory containing a marker file named
+`\f[C].tpnoteroot\f[R]' (without marker file this condition is void).
+.PP
+The HTTP server runs as long as the launched web browser window is open.
 Note, that the server not only exposes the displayed note file, but also
-all referenced inline images and URLs to other TP-Note files.
+all referenced inline images and other linked TP-Note files.
 Internally, the viewer maintains a list of \f[I]referenced local
 URLs\f[R].
 For security reasons, only listed files are served.
-To limit data exfiltration in case an attacker gains local credentials,
-the number of served Tp-Note files is limited by the configurable value
+To limit data exfiltration in case an attacker gains access to an
+account on your machine, the number of served Tp-Note files is limited
+by the configurable value
 `\f[C][viewer] displayed_tpnote_count_max\f[R]'.
 .PP
 In addition to the above quantitative restriction, Tp-Note\[cq]s
@@ -2143,6 +2237,14 @@ The latter allows to disable the \f[I]follow links to other Tp-Note
 files\f[R] feature by removing all `\f[C]text/*\f[R]' mime types from
 that list.
 .PP
+Another security feature is the `\f[C].tpnoteroot\f[R]' marker file.
+When Tp-Note opens a note file, it checks all directories above, one by
+one, until it finds the marker file `\f[C]tpnoteroot\f[R]'.
+Tp-Note\[cq]s viewer will never serve a file located outside the root
+directory and its children.
+When no `\f[C].tpnoteroot\f[R]' file is found, the root directory is set
+to `\f[C]/\f[R]', which disables this security feature.
+.PP
 As Tp-Note\[cq]s built-in viewer binds to the `\f[C]localhost\f[R]'
 interface, the exposed files are in principle accessible to all
 processes running on the computer.
@@ -2151,20 +2253,20 @@ privacy concern is raised: any potential attacker must be logged in, in
 order to access the \f[C]localhost\f[R] HTTP server.
 .PP
 This is why on systems where multiple users are logged in at the same
-time, it is recommended to disable Tp-Note\[cq]s viewer feature by
+time, it is recommended to disable Tp-Note\[cq]s internal HTTP server by
 setting the configuration file variable
 `\f[C][arg_default] edit = true\f[R]'.
 Alternatively, you can also compile Tp-Note without the
 `\f[C]viewer\f[R]' feature.
-Note, that even when the viewer feature disabled, one can still render
-the note manually to HTML by using the `\f[C]--export\f[R]' command line
-option.
+Note, that even if the viewer feature disabled, the `\f[C]--export\f[R]'
+command line option still works: This allows the authorized user to
+render the note to HTML manually.
 .PP
 \f[B]Summary\f[R]: As long as Tp-Note\[cq]s built-in note viewer is
 running, the note file and all its referenced (image) files are exposed
 to all users logged into the computer at that given time.
 This concerns only local users, Tp-Note never exposes any information to
-the network or to the Internet.
+the network or on the Internet.
 .SH ENVIRONMENT VARIABLES
 .TP
 TPNOTELANG

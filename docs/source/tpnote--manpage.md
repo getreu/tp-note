@@ -571,7 +571,7 @@ synchronization).
     with the **\--debug** option to have an effect. Note, that debug level
     '`error`' conditions will always trigger popup messages, regardless of
     **\--popup** and **\--debug** (unless '`--debug off`'). Popup alert windows
-    are queued and will never interrupt _Tp-note_. To better associate a
+    are queued and will never interrupt _Tp-Note_. To better associate a
     particular action with its log events, read through all upcoming popup alert
     windows until they fail to appear.
 
@@ -601,6 +601,24 @@ synchronization).
     viewer is launched. Can be combined with '`--batch`' to avoid popup
     error alert windows.
 
+**\--export-link-rewriting**=*MODE*
+
+:   Choose how local links in the exported HTML file are written out: '`off`',
+    '`short`' or '`long`' (default). No link rewriting occurs, for the *MODE*
+    '`off`'. The *MODE* '`short`' rewrites all local relative links to absolute
+    links, whose base is the first parent directory containing the marker
+    file '`.tpnoteroot`' (filename customizable). The marker file designates
+    also the base for absolute local links in the note file. The mode '`long`'
+    rewrites *all* local links to absolute links whose base is the system's
+    root directory '`/`'. For relative local links this is performed by
+    prepending the path to the note file. Absolute local links get the path
+    to the marker file '`.tpnoteroot`' prepended. In case you do not place a
+    '`.tpnoteroot`' file in a parent directory, the base for absolute local
+    links in your note file is interpreted as '`/`'. The right mode to choose
+    depends on how you view the resulting HTML: if you publish on a web server,
+    then '`short`' is a good choice. If you view the HTML file directly in your
+    web browser, better choose '`long`'. NB: You can also set this option via
+    Tp-Note's configuration file under '`[arg_default] export_link_rewriting`'.
 
 
 
@@ -626,7 +644,7 @@ out newlines according the operating system it runs on.
 
 Tp-Note is designed to be compatible with '`Pandoc`'s and '`RMarkdown`s
 document structure as shown in the figure below. In this documentation
-the terms "YAML header", "header" and "front matter" are used as 
+the terms "YAML header", "header" and "front matter" are used as
 synonyms to designate to document's metadata block at the beginning
 of the text file:
 
@@ -678,12 +696,15 @@ Here some example links written in Markdown:
 
 * Website: '`[blog](https://blog.getreu.net)`'
 * Inline image with relative local URL: '`![Alt text](<images/my logo.png>)`'.
-* Link to another Tp-Note document with relative local URL: 
+* Link to another Tp-Note document with relative local link:
   '`[my doc](<../../notes/my doc.md>)`'
 * The same as above, but using the short autolink syntax:
   '`<http:../../notes/my%20doc.md>`'
-* Link to another Tp-Note document with absolute local URL:
+* Link to another Tp-Note document with absolute local link:
   '`[my doc](</home/kanban/documents/my note.md)`'
+  The base for absolute local links is the first parent directory containing
+  the marker file '`.tpnoteroot`'. If absent, absolute local links refer
+  to the root directory '`/`'.
 
 Although Tp-Note's built in viewer follows absolute and relative URLs, usually
 the latter are preferred, because it allows you to move more easily documents
@@ -693,16 +714,52 @@ Tp-Note's exporter function '`--export`' converts a given Tp-Note file into
 HTML and adds '`.html`' to the output filename. Links in the documents
 content to other Tp-Note files are hereby rewritten by appending '`.html`' to their
 URLs. This way you can convert groups of documents to HTML and later browse
-from document to document in you web browser.
+from document to document in you web browser. The option
+'`--export-link-rewriting`' allows you to finetune how local links are written
+out. Valid values are: '`off`', '`short`' and '`long`'.
 
-Tp-Note's viewer and HTML exporter always display links as they appear in
-the note file's content. In other words, the _links's text property_ is never
-changed. However, there is one exception: when the text contains a URL starting
-with '`http:`' or '`https:`' only the file stem is kept. Example, the link: 
+In order to achieve this, the user must respect  the following convention
+concerning absolute local links in Tp-Note documents:  The base of absolute
+local links in Tp-Note documents must be the directory where the marker file
+'`.tpnoteroot`' resides (or '`/`' in non exists). The option '`--export-link-
+rewriting`' decides how local links in the Tp-Note  document are converted when
+the HTML is generated.  If its value is '`short`', then relative local links
+are converted to absolute links. The base of the resulting links is where the
+`.tpnoteroot` file resides (or `/` if none exists). Consider the following
+example:
+
+* The Tp-Note file '`/my/docs/car/bill.md`' contains
+* the absolute link '`/car/scan.jpg`'.
+* and the relative link '`./photo.jpg`'.
+* The document root marker is: '`/my/docs/.tpnoteroot`'.
+
+The images in the resulting HTML will appear as
+
+* '`/car/scan.jpg`'.
+* '`/car/photo.jpg`'.
+
+For '`--export-link-rewriting=long`', in addition to the above, all absolute
+local links are rebased to '`/`''. Consider the following example:
+
+* The Tp-Note file '`/my/docs/car/bill.md`' contains
+* the absolute link '`/car/scan.jpg`'.
+* and the relative link '`./photo.jpg`'.
+* The document root marker is: '`/my/docs/.tpnoteroot`'.
+
+The images in the resulting HTML will appear as
+
+* '`/my/docs/car/scan.jpg`'.
+* '`/my/docs/car/photo.jpg`'.
+
+So far we have seen how Tp-Note's viewer and HTML exporter converts the
+_target_ of local links '`[text](target)`'. For the _text_ property the
+situation is simpler as it never changes. However, there is one exception:
+when the text contains a URL starting with '`http:`' or '`https:`' only
+the file stem is displayed. For example, the link: 
 '`[http:dir/my file.md](<http:dir/my file.md>)`' is rewritten into 
-'`[my file](<http:dir/my file.md>)`' before being displayed. This is why
-the autolink '`<http:dir/my file.md>.`' appears as '`my file`' in the 
-browser.
+'`[my file](<http:dir/my file.md>)`' before being rendered. This explains 
+why the autolink '`<http:dir/my file.md>.`' appears as '`my file`' in 
+the browser.
 
 
 
@@ -900,7 +957,7 @@ and renames the note file if necessary.
 ```toml
 editor = [
   [
-    'kate', 
+    'kate',
     '--block'
   ]
 ]
@@ -1254,7 +1311,7 @@ with:
 
 Please note that web browsers usually ignore leading '`../`' in relative
 URL paths. To work around this limitation, Tp-Note's built-in viewer
-first relaces '`../`' with the string '`ParentDir`'. When the user clicks
+first replaces '`../`' with the string '`ParentDir`'. When the user clicks
 on this relative URL, the '`ParentDir`' string in the HTTP request replaced
 back with '`..`'.  It is also worth mentioning that Tp-Note automatically
 creates the subdirectory '`Notes/`' in case it does not exist.
@@ -1383,7 +1440,7 @@ The role of the '`[tmpl_html] viewer`' template - discussed above - is
 taken over by the '`[tmpl_html] exporter`' template. In this template the
 same _Tera_ variables are available, except '`{{ note_js }}`' which does not
 make sense in this context. As the exporter prints possible rendition error
-messages on the console, there is no equivalent to the 
+messages on the console, there is no equivalent to the
 '`[tmpl_html] viewer_error`' template.
 
 
@@ -1523,18 +1580,18 @@ In addition, Tp-Note defines the following variables:
   directory, '`{{ dir_path }}`' equals '`{{ path }}`'.
 
 * '`{{ note_fm_text }}`': is the header as raw text of the file '`{{ path }}`'
-  points to.  Note, this variable is only available in the 
+  points to.  Note, this variable is only available in the
   templates '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
 * '`{{ note_body_text }}`': is the content of the file '`{{ path }}`'
-  points to. If the file does not start with a front matter, this 
-  variable holds the whole content. Note, this variable is only available in the 
+  points to. If the file does not start with a front matter, this
+  variable holds the whole content. Note, this variable is only available in the
   templates '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
 * '`{{ note_file_date }}`': is the file system creation date of the file
-  '`{{ path }}`' points to. Note, this variable is only available in the 
+  '`{{ path }}`' points to. Note, this variable is only available in the
   templates '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
-    
+
 * '`{{ clipboard }}`' is the complete clipboard text.  In case the clipboard's
   content starts with a YAML header, the latter does not appear in this
   variable.
@@ -1754,14 +1811,26 @@ out when it appears in leading or trailing position. For this reason no
 # SECURITY AND PRIVACY CONSIDERATIONS
 
 As discussed above, Tp-Note's built-in viewer sets up an HTTP server on the
-'`localhost`' interface with a random port number. This HTTP server runs as
-long as the launched web browser window is open. Note, that the server not
-only exposes the displayed note file, but also all referenced inline images
-and URLs to other TP-Note files. Internally, the viewer maintains a list of
-_referenced local URLs_. For security reasons, only listed files are served.
-To limit data exfiltration in case an attacker gains local credentials, the
-number of served Tp-Note files is limited by the configurable value
-'`[viewer] displayed_tpnote_count_max`'.
+'`localhost`' interface with a random port number.
+
+For security reasons, Tp-Note limits the set of files the viewer is
+able to publish. To summarize, a file is only served:
+
+1. when it is referenced in one of the currently viewed Tp-Note files,
+2. when its file extension is registered with the '`[viewer] served_mime_type`'
+   list,
+3. if the number of so far viewed Tp-Note files,
+   '`[viewer] displayed_tpnote_count_max`' is not exceeded,
+4. when it's located under a directory containing a marker file named
+   '`.tpnoteroot`' (without marker file this condition is void).
+
+The HTTP server runs as long as the launched web browser window is open.
+Note, that the server not only exposes the displayed note file, but also all
+referenced inline images and other linked TP-Note files. Internally, the
+viewer maintains a list of _referenced local URLs_. For security reasons,
+only listed files are served. To limit data exfiltration in case an attacker
+gains access to an account on your machine, the number of served Tp-Note files
+is limited by the configurable value '`[viewer] displayed_tpnote_count_max`'.
 
 In addition to the above quantitative restriction, Tp-Note's built-in viewer
 serves only files whose file extensions are registered with the
@@ -1769,23 +1838,30 @@ serves only files whose file extensions are registered with the
 to disable the _follow links to other Tp-Note files_ feature by removing all
 '`text/*`' mime types from that list.
 
+Another security feature is the '`.tpnoteroot`' marker file. When Tp-Note
+opens a note file, it checks all directories above, one by one, until it
+finds the marker file '`tpnoteroot`'. Tp-Note's viewer will never serve a file
+located outside the root directory and its children. When no '`.tpnoteroot`'
+file is found, the root directory is set to '`/`', which disables this
+security feature.
+
 As Tp-Note's built-in viewer binds to the '`localhost`' interface, the exposed
 files are in principle accessible to all processes running on the computer. As
 long as only one user is logged into the computer at a given time, no privacy
 concern is raised: any potential attacker must be logged in, in order to access
 the `localhost` HTTP server.
 
-This is why on systems where multiple users are logged in at the same time, it
-is recommended to disable Tp-Note's viewer feature by setting the configuration
-file variable '`[arg_default] edit = true`'. Alternatively, you can also
-compile Tp-Note without the '`viewer`' feature. Note, that even when the viewer
-feature disabled, one can still render the note manually to HTML by  using the
-'`--export`' command line option.
+This is why on systems where multiple users are logged in at the same time,
+it is recommended to disable Tp-Note's internal HTTP server by setting the
+configuration file variable '`[arg_default] edit = true`'. Alternatively, you
+can also compile Tp-Note without the '`viewer`' feature. Note, that even if
+the viewer feature disabled, the '`--export`' command line option still works:
+This allows the authorized user to render the note to HTML manually.
 
 **Summary**: As long as Tp-Note's built-in note viewer is running, the note
 file and all its referenced (image) files are exposed to all users logged into
 the computer at that given time. This concerns only local users, Tp-Note
-never exposes any information to the network or to the Internet.
+never exposes any information to the network or on the Internet.
 
 
 
