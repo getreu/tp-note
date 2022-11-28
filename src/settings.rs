@@ -3,6 +3,7 @@
 
 #[cfg(any(feature = "read-clipboard", feature = "viewer"))]
 use crate::config::CFG;
+use crate::error::ArgsError;
 use atty::{is, Stream};
 #[cfg(feature = "read-clipboard")]
 use copypasta::ClipboardContext;
@@ -10,9 +11,12 @@ use copypasta::ClipboardContext;
 use copypasta::ClipboardProvider;
 use lazy_static::lazy_static;
 use log::LevelFilter;
+use serde::Deserialize;
+use serde::Serialize;
 use std::io;
 use std::io::Read;
 use std::path::PathBuf;
+use std::str::FromStr;
 use structopt::StructOpt;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
@@ -79,6 +83,9 @@ pub struct Args {
     /// dir, the note's dir if '' or stdout if '-'.
     #[structopt(long, short = "x", parse(from_os_str))]
     pub export: Option<PathBuf>,
+    /// Exporter local link rewriting: "off", "short", "long (default)"
+    #[structopt(long)]
+    pub export_link_rewriting: Option<LocalLinkKind>,
 }
 
 lazy_static! {
@@ -180,5 +187,56 @@ lazy_static! {
         buffer.truncate(buffer.trim_end().len());
 
         <ContentString as Content>::from_string_with_cr(buffer)
+    };
+}
+
+/// Defines the way the HTML exporter rewrites local links.
+#[derive(Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize)]
+pub enum LocalLinkKind {
+    /// Do not rewrite links.
+    Off,
+    /// Rewrite rel. local links. Base: ".tpnoteroot"
+    Short,
+    /// Rewrite all local links. Base: "/"
+    Long,
+}
+
+impl FromStr for LocalLinkKind {
+    type Err = ArgsError;
+    fn from_str(level: &str) -> Result<LocalLinkKind, Self::Err> {
+        match &*level.to_ascii_lowercase() {
+            "off" => Ok(LocalLinkKind::Off),
+            "short" => Ok(LocalLinkKind::Short),
+            "long" => Ok(LocalLinkKind::Long),
+            _ => Err(ArgsError::ParseLocalLinkKind {}),
+        }
+    }
+}
+
+lazy_static! {
+    /// Shall the exporter rewrite relative links to absolute links?
+    pub static ref REWRITE_REL_LINKS: bool = {
+        match (&ARGS.export_link_rewriting, &CFG.arg_default.export_link_rewriting){
+            (Some(LocalLinkKind::Off),_) => false,
+            (Some(LocalLinkKind::Short),_) => true,
+            (Some(LocalLinkKind::Long),_) => true,
+            (None, LocalLinkKind::Off) => false,
+            (None, LocalLinkKind::Short) => true,
+            (None, LocalLinkKind::Long) => true,
+        }
+    };
+}
+
+lazy_static! {
+    /// Shall the exporter rewrite short absolute links to long absolute links?
+    pub static ref REWRITE_ABS_LINKS: bool = {
+        match (&ARGS.export_link_rewriting, &CFG.arg_default.export_link_rewriting){
+            (Some(LocalLinkKind::Off),_) => false,
+            (Some(LocalLinkKind::Short),_) => false,
+            (Some(LocalLinkKind::Long),_) => true,
+            (None, LocalLinkKind::Off) => false,
+            (None, LocalLinkKind::Short) => false,
+            (None, LocalLinkKind::Long) => true,
+        }
     };
 }

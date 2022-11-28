@@ -334,7 +334,13 @@ impl<T: Content> Note<T> {
     /// This function reads `self.rendered_filename` or - if empty -
     /// `self.context.path` is used to determine the filename of the
     /// html rendition.
-    pub fn export_html(&self, html_template: &str, export_dir: &Path) -> Result<(), NoteError> {
+    pub fn export_html(
+        &self,
+        html_template: &str,
+        export_dir: &Path,
+        rewrite_rel_links: bool,
+        rewrite_abs_links: bool,
+    ) -> Result<(), NoteError> {
         // Determine filename of html-file.
         let mut html_path = PathBuf::new();
         let current_path = if self.rendered_filename != PathBuf::new() {
@@ -415,9 +421,9 @@ impl<T: Content> Note<T> {
                             &self.context.root_path,
                             current_dir_path,
                             // Do convert rel. links to abs. link.
-                            true,
+                            rewrite_rel_links,
                             // Do exend abs. links to "/".
-                            true,
+                            rewrite_abs_links,
                             // Do append `.html` to `.md` in links.
                             true,
                             Arc::new(RwLock::new(HashSet::new())),
@@ -439,9 +445,9 @@ impl<T: Content> Note<T> {
                             &self.context.root_path,
                             current_dir_path,
                             // Do convert rel. links to abs. link.
-                            true,
+                            rewrite_rel_links,
                             // Do exend abs. links to "/".
-                            true,
+                            rewrite_abs_links,
                             // Do append `.html` to `.md` in links.
                             true,
                             Arc::new(RwLock::new(HashSet::new())),

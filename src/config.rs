@@ -1,5 +1,6 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
 //! and exposes the configuration as `static` variable.
+use crate::settings::LocalLinkKind;
 use crate::settings::ARGS;
 use crate::VERSION;
 use directories::ProjectDirs;
@@ -306,6 +307,7 @@ pub struct ArgDefault {
     pub popup: bool,
     pub tty: bool,
     pub add_header: bool,
+    pub export_link_rewriting: LocalLinkKind,
 }
 
 /// Configuration of clipboard behaviour, deserialized from the
@@ -370,6 +372,7 @@ impl ::std::default::Default for ArgDefault {
             popup: ARG_DEFAULT_POPUP,
             tty: ARG_DEFAULT_TTY,
             add_header: ARG_DEFAULT_ADD_HEADER,
+            export_link_rewriting: LocalLinkKind::Long,
         }
     }
 }

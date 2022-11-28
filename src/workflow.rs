@@ -6,6 +6,8 @@ use crate::settings::ARGS;
 use crate::settings::CLIPBOARD;
 use crate::settings::LAUNCH_EDITOR;
 use crate::settings::LAUNCH_VIEWER;
+use crate::settings::REWRITE_ABS_LINKS;
+use crate::settings::REWRITE_REL_LINKS;
 use crate::settings::STDIN;
 use crate::template::template_kind_filter;
 #[cfg(feature = "viewer")]
@@ -41,6 +43,8 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
         &*STDIN,
         template_kind_filter,
         ARGS.export.as_deref(),
+        *REWRITE_REL_LINKS,
+        *REWRITE_ABS_LINKS,
     ) {
         // Use the new `path` from now on.
         Ok(p) => {

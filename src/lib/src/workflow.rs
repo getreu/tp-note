@@ -33,7 +33,8 @@
 //! // Start test.
 //! // You can plug in your own type (must impl. `Content`).
 //! let n = create_new_note_or_synchronize_filename::<ContentString, _>(
-//!        &notedir, &clipboard, &stdin, template_kind_filer, None).unwrap();
+//!        &notedir, &clipboard, &stdin, template_kind_filer,
+//!        None, false, false).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -112,7 +113,8 @@
 //! // Start test.
 //! // Here we plugin our own type (must implement `Content`).
 //! let n = create_new_note_or_synchronize_filename::<MyContentString, _>(
-//!        &notedir, &clipboard, &stdin, template_kind_filer, None).unwrap();
+//!        &notedir, &clipboard, &stdin, template_kind_filer,
+//!        None, false, false).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -230,7 +232,8 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// // Start test.
 /// // You can plug in your own type (must impl. `Content`).
 /// let n = create_new_note_or_synchronize_filename::<ContentString, _>(
-///        &notedir, &clipboard, &stdin, template_kind_filer, None).unwrap();
+///        &notedir, &clipboard, &stdin, template_kind_filer,
+///        None, false, false).unwrap();
 /// // Check result.
 /// assert!(n.as_os_str().to_str().unwrap()
 ///    .contains("my stdin-my clipboard--Note"));
@@ -250,6 +253,8 @@ pub fn create_new_note_or_synchronize_filename<T, F>(
     stdin: &T,
     tk_filter: F,
     args_export: Option<&Path>,
+    export_rewrite_rel_links: bool,
+    export_rewrite_abs_links: bool,
 ) -> Result<PathBuf, NoteError>
 where
     T: Content,
@@ -298,7 +303,12 @@ where
 
     // Export HTML rendition, if wanted.
     if let Some(dir) = args_export {
-        n.export_html(&LIB_CFG.read().unwrap().tmpl_html.exporter, dir)?;
+        n.export_html(
+            &LIB_CFG.read().unwrap().tmpl_html.exporter,
+            dir,
+            export_rewrite_rel_links,
+            export_rewrite_abs_links,
+        )?;
     }
 
     // If no new filename was rendered, return the old one.

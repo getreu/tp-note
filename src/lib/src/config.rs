@@ -26,6 +26,10 @@ pub const FILENAME_LEN_MAX: usize =
     // Extra spare bytes, in case the user's copy counter is longer.
     - 6;
 
+/// The apperance of a file with this filename marks the position of
+/// `TMPL_VAR_ROOT_PATH`.
+pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnoteroot";
+
 /// List of characters that can be part of a _sort tag_.
 /// This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
 /// The first character in the filename which is not
@@ -131,10 +135,6 @@ pub const FILENAME_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t"];
 
 /// This a dot by definition.
 pub const FILENAME_DOTFILE_MARKER: char = '.';
-
-/// The apperance of a file with this filename marks the position of
-/// `TMPL_VAR_ROOT_PATH`.
-pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnoteroot";
 
 /// As all application logic is encoded in Tp-Note's templates, it does
 /// not know about field names. Nevertheless it is useful to identify at
@@ -666,6 +666,7 @@ pub struct LibCfg {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Filename {
+    pub root_path_marker: String,
     pub sort_tag_chars: String,
     pub sort_tag_extra_separator: char,
     pub copy_counter_extra_separator: String,
@@ -709,6 +710,7 @@ pub struct TmplHtml {
 impl ::std::default::Default for Filename {
     fn default() -> Self {
         Filename {
+            root_path_marker: FILENAME_ROOT_PATH_MARKER.to_string(),
             sort_tag_chars: FILENAME_SORT_TAG_CHARS.to_string(),
             sort_tag_extra_separator: FILENAME_SORT_TAG_EXTRA_SEPARATOR,
             copy_counter_extra_separator: FILENAME_COPY_COUNTER_EXTRA_SEPARATOR.to_string(),

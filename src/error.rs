@@ -14,7 +14,10 @@ pub enum WorkflowError {
     ExportNeedsNoteFile,
 
     /// Remedy: restart with `--debug trace`.
-    #[error("Failed to render template (cf. `{tmpl_name}` in configuration file)!\n{source}")]
+    #[error(
+        "Failed to render template (cf. `{tmpl_name}`\
+         in configuration file)!\n{source}"
+    )]
     Template {
         tmpl_name: String,
         source: NoteError,
@@ -112,4 +115,12 @@ pub enum ConfigFileError {
 
     #[error(transparent)]
     Deserialize(#[from] toml::de::Error),
+}
+
+/// Error related to the filesystem and to invoking external applications.
+#[derive(Debug, Error)]
+pub enum ArgsError {
+    /// Remedy: check the configuration file variable `[app_args] editor`.
+    #[error("choose one of: `off`, `short` or `long`")]
+    ParseLocalLinkKind {},
 }
