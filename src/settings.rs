@@ -1,7 +1,6 @@
 //! Reads the command line parameters and clipboard and exposes them as `static`
 //! variables.
 
-#[cfg(any(feature = "read-clipboard", feature = "viewer"))]
 use crate::config::CFG;
 use crate::error::ArgsError;
 use atty::{is, Stream};
