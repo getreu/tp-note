@@ -1,6 +1,6 @@
 [package]
 name = "tpnote-lib"
-version = "0.10.2"
+version = "0.11.0"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2021"
 readme = "README.md"
