@@ -37,14 +37,17 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
     // log an error as WARN level instead of ERROR level.
     let launch_viewer;
 
+    let html_export = ARGS
+        .export
+        .as_deref()
+        .map(|export_dir| (export_dir, *REWRITE_REL_LINKS, *REWRITE_ABS_LINKS));
+
     match create_new_note_or_synchronize_filename::<ContentString, _>(
         &path,
         &*CLIPBOARD,
         &*STDIN,
         template_kind_filter,
-        ARGS.export.as_deref(),
-        *REWRITE_REL_LINKS,
-        *REWRITE_ABS_LINKS,
+        html_export,
     ) {
         // Use the new `path` from now on.
         Ok(p) => {

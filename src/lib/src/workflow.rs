@@ -34,7 +34,7 @@
 //! // You can plug in your own type (must impl. `Content`).
 //! let n = create_new_note_or_synchronize_filename::<ContentString, _>(
 //!        &notedir, &clipboard, &stdin, template_kind_filer,
-//!        None, false, false).unwrap();
+//!        None).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -47,7 +47,7 @@
 //! ```
 //!
 //! The internal data storage for the note's content is `ContentString`
-//! which implements the `Content` trait. Now we modify slightly  
+//! which implements the `Content` trait. Now we modify slightly
 //! the above example to showcase, how to overwrite
 //! one of the trait's methods.
 //!
@@ -97,7 +97,7 @@
 //!    fn body(&self) -> &str {
 //!        self.0.header()
 //!    }
-//!         
+//!
 //! }
 //!
 //! // Prepare test.
@@ -114,7 +114,7 @@
 //! // Here we plugin our own type (must implement `Content`).
 //! let n = create_new_note_or_synchronize_filename::<MyContentString, _>(
 //!        &notedir, &clipboard, &stdin, template_kind_filer,
-//!        None, false, false).unwrap();
+//!        None).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -207,7 +207,44 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// `TemplateKind::None` under certain circumstances. This way the caller
 /// can inject command line parameters like `--no-filename-sync`.
 ///
+/// If the last parameter `html_export` is
+/// `Some(dir, rewrite_rel_links, rewrite_abs_links)` Tp-Note renders the note
+/// to HTML and saves it in `dir`. In order to achieve this, the user must
+/// respect the following convention concerning absolute local links in Tp-
+/// Note documents: The base of absolute local links must be the directory
+/// where the marker file '`.tpnoteroot`' resides (or '`/`' in non exists).
+/// The two boolean variables decide how local links in the Tp-Note document
+/// are converted when the HTML redition is generated. If `rewrite_rel_links`,
+/// then relative local links are converted to absolute links. The base of the
+/// resulting links is where the `.tpnoteroot` file resides (or `/` if none
+/// exists).
+/// Consider the following example:
+///
+/// * The Tp-Note file '`/my/docs/car/bill.md`' contains
+/// * the absolute link '`/car/scan.jpg`'.
+/// * and the relative link '`./photo.jpg`'.
+/// * The document root marker is: '`/my/docs/.tpnoteroot`'.
+///
+/// The images in the resulting HTML will appear as
+///
+/// * '`/car/scan.jpg`'.
+/// * '`/car/photo.jpg`'.
+///
+/// If `rewrite_abs_links`, in addition to the above, all absolute local links
+/// are rebased to `/`. Consider the following example:
+///
+/// * The Tp-Note file '`/my/docs/car/bill.md`' contains
+/// * the absolute link '`/car/scan.jpg`'.
+/// * and the relative link '`./photo.jpg`'.
+/// * The document root marker is: '`/my/docs/.tpnoteroot`'.
+///
+/// The images in the resulting HTML will appear as
+///
+/// * '`/my/docs/car/scan.jpg`'.
+/// * '`/my/docs/car/photo.jpg`'.
+///
 /// Returns the note's new or existing filename in `<Note>.rendered_filename`.
+///
 ///
 /// ## Example with `TemplateKind::FromClipboard`
 ///
@@ -233,7 +270,7 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// // You can plug in your own type (must impl. `Content`).
 /// let n = create_new_note_or_synchronize_filename::<ContentString, _>(
 ///        &notedir, &clipboard, &stdin, template_kind_filer,
-///        None, false, false).unwrap();
+///        None).unwrap();
 /// // Check result.
 /// assert!(n.as_os_str().to_str().unwrap()
 ///    .contains("my stdin-my clipboard--Note"));
@@ -252,9 +289,7 @@ pub fn create_new_note_or_synchronize_filename<T, F>(
     clipboard: &T,
     stdin: &T,
     tk_filter: F,
-    html_export: Option<&Path>,
-    export_rewrite_rel_links: bool,
-    export_rewrite_abs_links: bool,
+    html_export: Option<(&Path, bool, bool)>,
 ) -> Result<PathBuf, NoteError>
 where
     T: Content,
@@ -302,7 +337,7 @@ where
     };
 
     // Export HTML rendition, if wanted.
-    if let Some(dir) = html_export {
+    if let Some((dir, export_rewrite_rel_links, export_rewrite_abs_links)) = html_export {
         n.export_html(
             &LIB_CFG.read().unwrap().tmpl_html.exporter,
             dir,
@@ -483,7 +518,7 @@ fn render_html<T: Content>(
 
 /// When the header can not be deserialized, the file located in
 /// `context.path` is rendered as "Error HTML page".
-/// The erronous content is rendered to html with
+/// The erroneous content is rendered to html with
 /// `parse_hyperlinks::renderer::text_rawlinks2html` and inserted in
 /// the `TMPL_HTML_VIEWER_ERROR` template (can be replace at runtime).
 /// This template expects the template variables `TMPL_VAR_PATH`
