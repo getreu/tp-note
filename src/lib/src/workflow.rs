@@ -252,7 +252,7 @@ pub fn create_new_note_or_synchronize_filename<T, F>(
     clipboard: &T,
     stdin: &T,
     tk_filter: F,
-    args_export: Option<&Path>,
+    html_export: Option<&Path>,
     export_rewrite_rel_links: bool,
     export_rewrite_abs_links: bool,
 ) -> Result<PathBuf, NoteError>
@@ -302,7 +302,7 @@ where
     };
 
     // Export HTML rendition, if wanted.
-    if let Some(dir) = args_export {
+    if let Some(dir) = html_export {
         n.export_html(
             &LIB_CFG.read().unwrap().tmpl_html.exporter,
             dir,
