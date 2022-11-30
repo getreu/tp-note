@@ -34,7 +34,7 @@
 //! // You can plug in your own type (must impl. `Content`).
 //! let n = create_new_note_or_synchronize_filename::<ContentString, _>(
 //!        &notedir, &clipboard, &stdin, template_kind_filer,
-//!        None).unwrap();
+//!        &None).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -114,7 +114,7 @@
 //! // Here we plugin our own type (must implement `Content`).
 //! let n = create_new_note_or_synchronize_filename::<MyContentString, _>(
 //!        &notedir, &clipboard, &stdin, template_kind_filer,
-//!        None).unwrap();
+//!        &None).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -123,6 +123,7 @@
 //! assert_eq!(raw_note, "Simulation");
 //! ```
 
+use crate::config::LocalLinkKind;
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_CLIPBOARD;
 use crate::config::TMPL_VAR_CLIPBOARD_HEADER;
@@ -206,6 +207,10 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// The `tk-filter` allows to overwrite this choice, e.g. you may set
 /// `TemplateKind::None` under certain circumstances. This way the caller
 /// can inject command line parameters like `--no-filename-sync`.
+/// If `html_export = Some((dir, local_link_kind))`, the function renders
+/// the note's content into HTML and saves the `.html` file in the
+/// directory `dir`. This optional HTML rendition is performed just before
+/// returning and does not affect any above described operation.
 ///
 /// Returns the note's new or existing filename in `<Note>.rendered_filename`.
 ///
@@ -234,7 +239,7 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// // You can plug in your own type (must impl. `Content`).
 /// let n = create_new_note_or_synchronize_filename::<ContentString, _>(
 ///        &notedir, &clipboard, &stdin, template_kind_filer,
-///        None).unwrap();
+///        &None).unwrap();
 /// // Check result.
 /// assert!(n.as_os_str().to_str().unwrap()
 ///    .contains("my stdin-my clipboard--Note"));
@@ -253,7 +258,7 @@ pub fn create_new_note_or_synchronize_filename<T, F>(
     clipboard: &T,
     stdin: &T,
     tk_filter: F,
-    html_export: Option<(&Path, bool, bool)>,
+    html_export: &Option<(PathBuf, LocalLinkKind)>,
 ) -> Result<PathBuf, NoteError>
 where
     T: Content,
@@ -301,12 +306,11 @@ where
     };
 
     // Export HTML rendition, if wanted.
-    if let Some((dir, export_rewrite_rel_links, export_rewrite_abs_links)) = html_export {
+    if let Some((dir, local_link_kind)) = html_export {
         n.export_html(
             &LIB_CFG.read().unwrap().tmpl_html.exporter,
             dir,
-            export_rewrite_rel_links,
-            export_rewrite_abs_links,
+            *local_link_kind,
         )?;
     }
 

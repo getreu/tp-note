@@ -4,10 +4,9 @@ use crate::error::WorkflowError;
 use crate::file_editor::launch_editor;
 use crate::settings::ARGS;
 use crate::settings::CLIPBOARD;
+use crate::settings::HTML_EXPORT;
 use crate::settings::LAUNCH_EDITOR;
 use crate::settings::LAUNCH_VIEWER;
-use crate::settings::REWRITE_ABS_LINKS;
-use crate::settings::REWRITE_REL_LINKS;
 use crate::settings::STDIN;
 use crate::template::template_kind_filter;
 #[cfg(feature = "viewer")]
@@ -37,17 +36,12 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
     // log an error as WARN level instead of ERROR level.
     let launch_viewer;
 
-    let html_export = ARGS
-        .export
-        .as_deref()
-        .map(|export_dir| (export_dir, *REWRITE_REL_LINKS, *REWRITE_ABS_LINKS));
-
     match create_new_note_or_synchronize_filename::<ContentString, _>(
         &path,
         &*CLIPBOARD,
         &*STDIN,
         template_kind_filter,
-        html_export,
+        &*HTML_EXPORT,
     ) {
         // Use the new `path` from now on.
         Ok(p) => {

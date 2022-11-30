@@ -1,5 +1,6 @@
 //! Helper functions dealing with HTML conversion.
 
+use crate::config::LocalLinkKind;
 use crate::markup_language::MarkupLanguage;
 use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
@@ -242,11 +243,16 @@ pub fn rewrite_links(
     html: String,
     root_path: &Path,
     docdir: &Path,
-    rewrite_rel_links: bool,
-    rewrite_abs_links: bool,
+    local_link_kind: LocalLinkKind,
     rewrite_ext: bool,
     allowed_local_links: Arc<RwLock<HashSet<PathBuf>>>,
 ) -> String {
+    let (rewrite_rel_links, rewrite_abs_links) = match local_link_kind {
+        LocalLinkKind::Off => (false, false),
+        LocalLinkKind::Short => (true, false),
+        LocalLinkKind::Long => (true, true),
+    };
+
     let mut allowed_urls = allowed_local_links
         .write()
         .expect("Can not write `allowed_urls`. RwLock is poisoned. Panic.");
@@ -556,6 +562,8 @@ mod tests {
 
     #[test]
     fn test_rewrite_abs_links() {
+        use crate::config::LocalLinkKind;
+
         let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
         let input = "abc<a href=\"ftp://getreu.net\">Blog</a>\
             def<a href=\"https://getreu.net\">https://getreu.net</a>\
@@ -586,8 +594,7 @@ mod tests {
             input,
             root_path,
             docdir,
-            true,
-            false,
+            LocalLinkKind::Short,
             false,
             allowed_urls.clone(),
         );

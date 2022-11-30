@@ -187,29 +187,12 @@ lazy_static! {
 }
 
 lazy_static! {
-    /// Shall the exporter rewrite relative links to absolute links?
-    pub static ref REWRITE_REL_LINKS: bool = {
-        match (&ARGS.export_link_rewriting, &CFG.arg_default.export_link_rewriting){
-            (Some(LocalLinkKind::Off),_) => false,
-            (Some(LocalLinkKind::Short),_) => true,
-            (Some(LocalLinkKind::Long),_) => true,
-            (None, LocalLinkKind::Off) => false,
-            (None, LocalLinkKind::Short) => true,
-            (None, LocalLinkKind::Long) => true,
-        }
-    };
-}
+/// Shall the exporter rewrite relative links to absolute links?
+pub static ref HTML_EXPORT: Option<(PathBuf, LocalLinkKind)> = ARGS.export
+    // The expression after `or_else` is always `Some`, therefore it is
+    // save to `unwrap()`.
+    .as_ref().map(|dir| (dir.to_path_buf(), ARGS.export_link_rewriting
+            .unwrap_or(CFG.arg_default.export_link_rewriting))
 
-lazy_static! {
-    /// Shall the exporter rewrite short absolute links to long absolute links?
-    pub static ref REWRITE_ABS_LINKS: bool = {
-        match (&ARGS.export_link_rewriting, &CFG.arg_default.export_link_rewriting){
-            (Some(LocalLinkKind::Off),_) => false,
-            (Some(LocalLinkKind::Short),_) => false,
-            (Some(LocalLinkKind::Long),_) => true,
-            (None, LocalLinkKind::Off) => false,
-            (None, LocalLinkKind::Short) => false,
-            (None, LocalLinkKind::Long) => true,
-        }
-    };
+    );
 }

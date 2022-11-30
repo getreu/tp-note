@@ -20,6 +20,7 @@ use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::time::SystemTime;
+use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::TMPL_VAR_NOTE_ERROR;
 use tpnote_lib::config::TMPL_VAR_NOTE_JS;
 use tpnote_lib::content::Content;
@@ -717,9 +718,8 @@ impl ServerThread {
                     root_path,
                     abspath_dir,
                     // Do convert rel. to abs. links.
-                    true,
                     // Do not convert abs. links.
-                    false,
+                    LocalLinkKind::Short,
                     // Do not append `.html` to `.md` links.
                     false,
                     // We clone only the RWlock, not the data.

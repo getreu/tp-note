@@ -5,6 +5,7 @@
 //! parsing its front matter.
 //! NB: The high level API is in the module `tpnote_lib::workflow`.
 
+use crate::config::LocalLinkKind;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::config::TMPL_VAR_NOTE_BODY_HTML;
 use crate::config::TMPL_VAR_NOTE_BODY_TEXT;
@@ -338,8 +339,7 @@ impl<T: Content> Note<T> {
         &self,
         html_template: &str,
         export_dir: &Path,
-        rewrite_rel_links: bool,
-        rewrite_abs_links: bool,
+        local_link_kind: LocalLinkKind,
     ) -> Result<(), NoteError> {
         // Determine filename of html-file.
         let mut html_path = PathBuf::new();
@@ -420,10 +420,7 @@ impl<T: Content> Note<T> {
                             html,
                             &self.context.root_path,
                             current_dir_path,
-                            // Do convert rel. links to abs. link.
-                            rewrite_rel_links,
-                            // Do exend abs. links to "/".
-                            rewrite_abs_links,
+                            local_link_kind,
                             // Do append `.html` to `.md` in links.
                             true,
                             Arc::new(RwLock::new(HashSet::new())),
@@ -444,10 +441,7 @@ impl<T: Content> Note<T> {
                             html,
                             &self.context.root_path,
                             current_dir_path,
-                            // Do convert rel. links to abs. link.
-                            rewrite_rel_links,
-                            // Do exend abs. links to "/".
-                            rewrite_abs_links,
+                            local_link_kind,
                             // Do append `.html` to `.md` in links.
                             true,
                             Arc::new(RwLock::new(HashSet::new())),
