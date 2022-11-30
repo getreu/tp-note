@@ -2,7 +2,6 @@
 //! variables.
 
 use crate::config::CFG;
-use crate::error::ArgsError;
 use atty::{is, Stream};
 #[cfg(feature = "read-clipboard")]
 use copypasta::ClipboardContext;
@@ -10,13 +9,11 @@ use copypasta::ClipboardContext;
 use copypasta::ClipboardProvider;
 use lazy_static::lazy_static;
 use log::LevelFilter;
-use serde::Deserialize;
-use serde::Serialize;
 use std::io;
 use std::io::Read;
 use std::path::PathBuf;
-use std::str::FromStr;
 use structopt::StructOpt;
+use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 
@@ -187,29 +184,6 @@ lazy_static! {
 
         <ContentString as Content>::from_string_with_cr(buffer)
     };
-}
-
-/// Defines the way the HTML exporter rewrites local links.
-#[derive(Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize)]
-pub enum LocalLinkKind {
-    /// Do not rewrite links.
-    Off,
-    /// Rewrite rel. local links. Base: ".tpnoteroot"
-    Short,
-    /// Rewrite all local links. Base: "/"
-    Long,
-}
-
-impl FromStr for LocalLinkKind {
-    type Err = ArgsError;
-    fn from_str(level: &str) -> Result<LocalLinkKind, Self::Err> {
-        match &*level.to_ascii_lowercase() {
-            "off" => Ok(LocalLinkKind::Off),
-            "short" => Ok(LocalLinkKind::Short),
-            "long" => Ok(LocalLinkKind::Long),
-            _ => Err(ArgsError::ParseLocalLinkKind {}),
-        }
-    }
 }
 
 lazy_static! {

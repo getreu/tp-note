@@ -10,9 +10,10 @@
 //! (*lib_cfg).filename.copy_counter_extra_separator = '@'.to_string();
 //! ```
 
+use crate::error::ArgsError;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use std::sync::RwLock;
+use std::{str::FromStr, sync::RwLock};
 
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
@@ -768,6 +769,65 @@ impl ::std::default::Default for TmplHtml {
             viewer: TMPL_HTML_VIEWER.to_string(),
             viewer_error: TMPL_HTML_VIEWER_ERROR.to_string(),
             exporter: TMPL_HTML_EXPORTER.to_string(),
+        }
+    }
+}
+
+/// Defines the way the HTML exporter rewrites local links.
+///
+/// The enum `LocalLinkKind` allows you to finetune how local links are written
+/// out. Valid variants are: `off`, `short` and `long`.
+/// In order to achieve this, the user must respect  the following convention
+/// concerning absolute local links in Tp-Note documents:  The base of absolute
+/// local links in Tp-Note documents must be the directory where the marker file
+/// `.tpnoteroot` resides (or `/` in non exists). The option `--export-link-
+/// rewriting` decides how local links in the Tp-Note  document are converted when
+/// the HTML is generated.  If its value is `short`, then relative local links
+/// are converted to absolute links. The base of the resulting links is where the
+/// `.tpnoteroot` file resides (or `/` if none exists). Consider the following
+/// example:
+///
+/// * The Tp-Note file `/my/docs/car/bill.md` contains
+/// * the absolute link `/car/scan.jpg`.
+/// * and the relative link `./photo.jpg`.
+/// * The document root marker is: `/my/docs/.tpnoteroot`.
+///
+/// The images in the resulting HTML will appear as
+///
+/// * `/car/scan.jpg`.
+/// * `/car/photo.jpg`.
+///
+/// For `LocalLinkKind::long`, in addition to the above, all absolute
+/// local links are rebased to `/`'. Consider the following example:
+///
+/// * The Tp-Note file `/my/docs/car/bill.md` contains
+/// * the absolute link `/car/scan.jpg`.
+/// * and the relative link `./photo.jpg`.
+/// * The document root marker is: `/my/docs/.tpnoteroot`.
+///
+/// The images in the resulting HTML will appear as
+///
+/// * `/my/docs/car/scan.jpg`.
+/// * `/my/docs/car/photo.jpg`.
+///
+#[derive(Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
+pub enum LocalLinkKind {
+    /// Do not rewrite links.
+    Off,
+    /// Rewrite rel. local links. Base: ".tpnoteroot"
+    Short,
+    /// Rewrite all local links. Base: "/"
+    Long,
+}
+
+impl FromStr for LocalLinkKind {
+    type Err = ArgsError;
+    fn from_str(level: &str) -> Result<LocalLinkKind, Self::Err> {
+        match &*level.to_ascii_lowercase() {
+            "off" => Ok(LocalLinkKind::Off),
+            "short" => Ok(LocalLinkKind::Short),
+            "long" => Ok(LocalLinkKind::Long),
+            _ => Err(ArgsError::ParseLocalLinkKind {}),
         }
     }
 }

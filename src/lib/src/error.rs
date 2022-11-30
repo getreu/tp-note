@@ -3,8 +3,12 @@
 use std::io;
 use std::path::PathBuf;
 use thiserror::Error;
-/// Error related to the filesystem and to invoking external applications.
 
+/// The error `InvalidFrontMatterYaml` prints the front matter section of the
+/// note file. This constant limits the number of text lines that are printed.
+pub const FRONT_MATTER_ERROR_MAX_LINES: usize = 20;
+
+/// Error related to the filesystem and to invoking external applications.
 #[derive(Debug, Error)]
 pub enum FileError {
     /// Remedy: restart.
@@ -223,6 +227,10 @@ pub enum NoteError {
     Io(#[from] std::io::Error),
 }
 
-/// The error `InvalidFrontMatterYaml` prints the front matter section of the
-/// note file. This constant limits the number of text lines that are printed.
-pub const FRONT_MATTER_ERROR_MAX_LINES: usize = 20;
+/// Error related to the filesystem and to invoking external applications.
+#[derive(Debug, Error)]
+pub enum ArgsError {
+    /// Remedy: check the configuration file variable `[app_args] editor`.
+    #[error("choose one of: `off`, `short` or `long`")]
+    ParseLocalLinkKind {},
+}

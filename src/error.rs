@@ -116,11 +116,3 @@ pub enum ConfigFileError {
     #[error(transparent)]
     Deserialize(#[from] toml::de::Error),
 }
-
-/// Error related to the filesystem and to invoking external applications.
-#[derive(Debug, Error)]
-pub enum ArgsError {
-    /// Remedy: check the configuration file variable `[app_args] editor`.
-    #[error("choose one of: `off`, `short` or `long`")]
-    ParseLocalLinkKind {},
-}

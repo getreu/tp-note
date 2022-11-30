@@ -207,42 +207,6 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// `TemplateKind::None` under certain circumstances. This way the caller
 /// can inject command line parameters like `--no-filename-sync`.
 ///
-/// If the last parameter `html_export` is
-/// `Some(dir, rewrite_rel_links, rewrite_abs_links)` Tp-Note renders the note
-/// to HTML and saves it in `dir`. In order to achieve this, the user must
-/// respect the following convention concerning absolute local links in Tp-
-/// Note documents: The base of absolute local links must be the directory
-/// where the marker file '`.tpnoteroot`' resides (or '`/`' in non exists).
-/// The two boolean variables decide how local links in the Tp-Note document
-/// are converted when the HTML redition is generated. If `rewrite_rel_links`,
-/// then relative local links are converted to absolute links. The base of the
-/// resulting links is where the `.tpnoteroot` file resides (or `/` if none
-/// exists).
-/// Consider the following example:
-///
-/// * The Tp-Note file '`/my/docs/car/bill.md`' contains
-/// * the absolute link '`/car/scan.jpg`'.
-/// * and the relative link '`./photo.jpg`'.
-/// * The document root marker is: '`/my/docs/.tpnoteroot`'.
-///
-/// The images in the resulting HTML will appear as
-///
-/// * '`/car/scan.jpg`'.
-/// * '`/car/photo.jpg`'.
-///
-/// If `rewrite_abs_links`, in addition to the above, all absolute local links
-/// are rebased to `/`. Consider the following example:
-///
-/// * The Tp-Note file '`/my/docs/car/bill.md`' contains
-/// * the absolute link '`/car/scan.jpg`'.
-/// * and the relative link '`./photo.jpg`'.
-/// * The document root marker is: '`/my/docs/.tpnoteroot`'.
-///
-/// The images in the resulting HTML will appear as
-///
-/// * '`/my/docs/car/scan.jpg`'.
-/// * '`/my/docs/car/photo.jpg`'.
-///
 /// Returns the note's new or existing filename in `<Note>.rendered_filename`.
 ///
 ///

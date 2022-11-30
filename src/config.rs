@@ -1,6 +1,5 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
 //! and exposes the configuration as `static` variable.
-use crate::settings::LocalLinkKind;
 use crate::settings::ARGS;
 use crate::VERSION;
 use directories::ProjectDirs;
@@ -20,6 +19,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::RwLock;
 use tpnote_lib::config::Filename;
+use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::Tmpl;
 use tpnote_lib::config::TmplHtml;
 #[cfg(not(test))]
