@@ -265,12 +265,13 @@ pub fn rewrite_links(
         html_out.push_str(skipped);
         rest = remaining;
 
-        // We skip absolute URLs.
-        if link.contains("://") {
+        // We skip absolute URLs and `mailto:` links.
+        if link.contains("://") || link.starts_with("mailto:") {
             html_out.push_str(consumed);
             continue;
         }
 
+        // Rewrite the link.
         if let Some((consumed_new, dest)) = rewrite_link(
             consumed,
             root_path,
