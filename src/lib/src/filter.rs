@@ -28,7 +28,7 @@ lazy_static! {
         tera.register_filter("sanit", sanit_filter);
         tera.register_filter("linkname", linkname_filter);
         tera.register_filter("linktarget", linktarget_filter);
-        tera.register_filter("linktitle", linktitle_filter);
+        tera.register_filter("link_title", link_title_filter);
         tera.register_filter("heading", heading_filter);
         tera.register_filter("cut", cut_filter);
         tera.register_filter("trim_tag", trim_tag_filter);
@@ -134,11 +134,11 @@ fn linktarget_filter<S: BuildHasher>(
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's title.
-fn linktitle_filter<S: BuildHasher>(
+fn link_title_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("linktitle", "value", String, value);
+    let p = try_get_value!("link_title", "value", String, value);
 
     let hyperlink = Hyperlink::from(&p).unwrap_or_default();
 
@@ -410,7 +410,7 @@ mod tests {
         assert_eq!(result.unwrap(), to_value(&"'.pdf").unwrap());
     }
     #[test]
-    fn test_linkname_linktarget_linktitle_filter() {
+    fn test_linkname_linktarget_link_title_filter() {
         let args = HashMap::new();
         // Test Markdown link in clipboard.
         let input = r#"xxx[Jens Getreu's blog](https://blog.getreu.net "My blog")"#;
@@ -418,7 +418,7 @@ mod tests {
         assert_eq!("Jens Getreu's blog", output_ln);
         let output_lta = linktarget_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("https://blog.getreu.net", output_lta);
-        let output_lti = linktitle_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_lti = link_title_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("My blog", output_lti);
 
         // Test non-link string in clipboard.
@@ -428,7 +428,7 @@ mod tests {
         assert_eq!("", output_ln);
         let output_lta = linktarget_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_lta);
-        let output_lti = linktitle_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_lti = link_title_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_lti);
     }
     #[test]
