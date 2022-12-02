@@ -1726,9 +1726,9 @@ A filter is always used together with a variable. Here are some examples:
 * '`{{ clipboard | linktitle }}`' is the title of the first Markdown or
   ReStruncturedText formatted link in the clipboard.
 
-* '`{{ username | json_encode }}`' is the username JSON encoded. As all YAML
-  front-matter is JSON encoded, this filter code must be appended to any
-  template variable placed in the front-matter block.
+* '`{{ username | capitalize | json_encode }}`' is the capitalized JSON encoded
+  username. As all YAML front-matter is JSON encoded, this filter code must be
+  appended to any template variable placed in the front-matter block.
 
 * '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its
   front-matter, sanitized in a file system friendly form. Special characters are
