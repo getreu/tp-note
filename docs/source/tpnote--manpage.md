@@ -110,7 +110,7 @@ When '`<path>`' is a directory and the clipboard is not empty, the clipboard's
 content is stored in the variable '`{{ clipboard }}`'. In addition, if the
 content contains an hyperlink in Markdown format, the hyperlink's name can be
 accessed with '`{{ clipboard | link_text }}`', its URL with
-'`{{ clipboard | linktarget }}`' and its title with
+'`{{ clipboard | link_dest }}`' and its title with
 '`{{ clipboard | link_title }}`'. The new note is then created with the
 '`[tmpl] from_clipboard_content`' and the '`[tmpl] from_clipboard_filename`'
 templates. Finally, the newly created note file is opened again with some
@@ -1675,7 +1675,7 @@ consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
 some additional filters, e.g.: '`tag`', '`trim_tag`', '`stem`', '`cut`', '`heading`',
-'`link_text`', '`linktarget`', '`link_title`' and '`ext`'.
+'`link_text`', '`link_dest`', '`link_title`' and '`ext`'.
 
 A filter is always used together with a variable. Here are some examples:
 
@@ -1720,7 +1720,7 @@ A filter is always used together with a variable. Here are some examples:
 * '`{{ clipboard | link_text }}`' is the name of the first Markdown or
   ReStructuredText formatted link in the clipboard.
 
-* '`{{ clipboard | linktarget }}`' is the URL of the first Markdown or
+* '`{{ clipboard | link_dest }}`' is the URL of the first Markdown or
   ReStruncturedText formatted link in the clipboard.
 
 * '`{{ clipboard | link_title }}`' is the title of the first Markdown or

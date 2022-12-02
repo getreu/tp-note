@@ -27,7 +27,7 @@ lazy_static! {
         let mut tera = Tera::default();
         tera.register_filter("sanit", sanit_filter);
         tera.register_filter("link_text", link_text_filter);
-        tera.register_filter("linktarget", linktarget_filter);
+        tera.register_filter("link_dest", link_dest_filter);
         tera.register_filter("link_title", link_title_filter);
         tera.register_filter("heading", heading_filter);
         tera.register_filter("cut", cut_filter);
@@ -121,7 +121,7 @@ fn link_text_filter<S: BuildHasher>(
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's URL.
-fn linktarget_filter<S: BuildHasher>(
+fn link_dest_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
@@ -410,13 +410,13 @@ mod tests {
         assert_eq!(result.unwrap(), to_value(&"'.pdf").unwrap());
     }
     #[test]
-    fn test_link_text_linktarget_link_title_filter() {
+    fn test_link_text_link_dest_link_title_filter() {
         let args = HashMap::new();
         // Test Markdown link in clipboard.
         let input = r#"xxx[Jens Getreu's blog](https://blog.getreu.net "My blog")"#;
         let output_ln = link_text_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("Jens Getreu's blog", output_ln);
-        let output_lta = linktarget_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_lta = link_dest_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("https://blog.getreu.net", output_lta);
         let output_lti = link_title_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("My blog", output_lti);
@@ -426,7 +426,7 @@ mod tests {
             started writing notes.";
         let output_ln = link_text_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_ln);
-        let output_lta = linktarget_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_lta = link_dest_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_lta);
         let output_lti = link_title_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_lti);

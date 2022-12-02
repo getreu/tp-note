@@ -341,7 +341,7 @@ pub const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
 /// }}`, its truncated version in `{{ clipboard | heading }}` When the clipboard contains a
 /// hyperlink in Markdown or reStruncturedText format. See crate `parse-hyperlinks` for details.
 /// For example: `[<link-name>](<link-url> "link-title")`, can be accessed with the variables:
-/// `{{ clipboard | link_text }}`, `{{ clipboard | linktarget }}` and `{{ clipboard | linkttitle }}`.
+/// `{{ clipboard | link_text }}`, `{{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
 pub const TMPL_FROM_CLIPBOARD_CONTENT: &str = "\
 {%- set lname = stdin ~ clipboard | link_text -%}
 {%- set ok_link_text = lname !=''\
