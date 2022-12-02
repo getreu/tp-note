@@ -109,9 +109,9 @@ lang:       "en-GB"
 When '`<path>`' is a directory and the clipboard is not empty, the clipboard's
 content is stored in the variable '`{{ clipboard }}`'. In addition, if the
 content contains an hyperlink in Markdown format, the hyperlink's name can be
-accessed with '`{{ clipboard | linkname }}`', its URL with
+accessed with '`{{ clipboard | link_text }}`', its URL with
 '`{{ clipboard | linktarget }}`' and its title with
-'`{{ clipboard | linktitle }}`'. The new note is then created with the
+'`{{ clipboard | link_title }}`'. The new note is then created with the
 '`[tmpl] from_clipboard_content`' and the '`[tmpl] from_clipboard_filename`'
 templates. Finally, the newly created note file is opened again with some
 external text editor. When the user closes the text editor, Tp-Note
@@ -1675,7 +1675,7 @@ consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
 some additional filters, e.g.: '`tag`', '`trim_tag`', '`stem`', '`cut`', '`heading`',
-'`linkname`', '`linktarget`', '`linktitle`' and '`ext`'.
+'`link_text`', '`linktarget`', '`link_title`' and '`ext`'.
 
 A filter is always used together with a variable. Here are some examples:
 
@@ -1717,13 +1717,13 @@ A filter is always used together with a variable. Here are some examples:
 * '`{{ clipboard | heading }}`' is the clipboard's content until the
   end of the first sentence, or the first newline.
 
-* '`{{ clipboard | linkname }}`' is the name of the first Markdown or
+* '`{{ clipboard | link_text }}`' is the name of the first Markdown or
   ReStructuredText formatted link in the clipboard.
 
 * '`{{ clipboard | linktarget }}`' is the URL of the first Markdown or
   ReStruncturedText formatted link in the clipboard.
 
-* '`{{ clipboard | linktitle }}`' is the title of the first Markdown or
+* '`{{ clipboard | link_title }}`' is the title of the first Markdown or
   ReStruncturedText formatted link in the clipboard.
 
 * '`{{ username | capitalize | json_encode }}`' is the capitalized JSON encoded

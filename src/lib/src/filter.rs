@@ -26,7 +26,7 @@ lazy_static! {
     pub static ref TERA: Tera = {
         let mut tera = Tera::default();
         tera.register_filter("sanit", sanit_filter);
-        tera.register_filter("linkname", linkname_filter);
+        tera.register_filter("link_text", link_text_filter);
         tera.register_filter("linktarget", linktarget_filter);
         tera.register_filter("link_title", link_title_filter);
         tera.register_filter("heading", heading_filter);
@@ -108,11 +108,11 @@ fn sanit_filter<S: BuildHasher>(
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's name.
-fn linkname_filter<S: BuildHasher>(
+fn link_text_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("linkname", "value", String, value);
+    let p = try_get_value!("link_text", "value", String, value);
 
     let hyperlink = Hyperlink::from(&p).unwrap_or_default();
 
@@ -125,7 +125,7 @@ fn linktarget_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("linkname", "value", String, value);
+    let p = try_get_value!("link_text", "value", String, value);
 
     let hyperlink = Hyperlink::from(&p).unwrap_or_default();
 
@@ -410,11 +410,11 @@ mod tests {
         assert_eq!(result.unwrap(), to_value(&"'.pdf").unwrap());
     }
     #[test]
-    fn test_linkname_linktarget_link_title_filter() {
+    fn test_link_text_linktarget_link_title_filter() {
         let args = HashMap::new();
         // Test Markdown link in clipboard.
         let input = r#"xxx[Jens Getreu's blog](https://blog.getreu.net "My blog")"#;
-        let output_ln = linkname_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_ln = link_text_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("Jens Getreu's blog", output_ln);
         let output_lta = linktarget_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("https://blog.getreu.net", output_lta);
@@ -424,7 +424,7 @@ mod tests {
         // Test non-link string in clipboard.
         let input = "Tp-Note helps you to quickly get\
             started writing notes.";
-        let output_ln = linkname_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_ln = link_text_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_ln);
         let output_lta = linktarget_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_lta);

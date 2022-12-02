@@ -341,19 +341,19 @@ pub const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
 /// }}`, its truncated version in `{{ clipboard | heading }}` When the clipboard contains a
 /// hyperlink in Markdown or reStruncturedText format. See crate `parse-hyperlinks` for details.
 /// For example: `[<link-name>](<link-url> "link-title")`, can be accessed with the variables:
-/// `{{ clipboard | linkname }}`, `{{ clipboard | linktarget }}` and `{{ clipboard | linkttitle }}`.
+/// `{{ clipboard | link_text }}`, `{{ clipboard | linktarget }}` and `{{ clipboard | linkttitle }}`.
 pub const TMPL_FROM_CLIPBOARD_CONTENT: &str = "\
-{%- set lname = stdin ~ clipboard | linkname -%}
-{%- set ok_linkname = lname !=''\
+{%- set lname = stdin ~ clipboard | link_text -%}
+{%- set ok_link_text = lname !=''\
     and not lname is starting_with(\"http\")\
     and not lname is starting_with(\"HTTP\") -%}
 ---
-{% if ok_linkname %}\
-title:      {{ stdin ~ clipboard | linkname | cut | json_encode }}
+{% if ok_link_text %}\
+title:      {{ stdin ~ clipboard | link_text | cut | json_encode }}
 {% else %}\
 title:      {{ stdin ~ clipboard | heading | cut | json_encode }}
 {% endif %}\
-{% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut %}\
+{% if stdin ~ clipboard | link_text !='' and stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut %}\
 subtitle:   {{ 'URL' | json_encode }}
 {% else %}\
 subtitle:   {{ 'Note' | json_encode }}
@@ -409,7 +409,7 @@ pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 pub const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
 ---
 title:      {{ path | trim_tag | json_encode }}
-{% if stdin ~ clipboard | linkname !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}\
+{% if stdin ~ clipboard | link_text !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}\
 subtitle:   {{ 'URL' | json_encode }}
 {% else %}\
 subtitle:   {{ 'Note' | json_encode }}
