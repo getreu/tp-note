@@ -265,8 +265,8 @@ pub fn rewrite_links(
         html_out.push_str(skipped);
         rest = remaining;
 
-        // We skip absolute URLs and `mailto:` links.
-        if link.contains("://") || link.starts_with("mailto:") {
+        // We skip absolute URLs, `mailto:` and `tel:` links.
+        if link.contains("://") || link.starts_with("mailto:") || link.starts_with("tel:") {
             html_out.push_str(consumed);
             continue;
         }
