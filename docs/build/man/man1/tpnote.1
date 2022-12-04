@@ -114,9 +114,9 @@ the clipboard\[cq]s content is stored in the variable
 `\f[C]{{ clipboard }}\f[R]'.
 In addition, if the content contains an hyperlink in Markdown format,
 the hyperlink\[cq]s name can be accessed with
-`\f[C]{{ clipboard | linkname }}\f[R]', its URL with
-`\f[C]{{ clipboard | linktarget }}\f[R]' and its title with
-`\f[C]{{ clipboard | linktitle }}\f[R]'.
+`\f[C]{{ clipboard | link_text }}\f[R]', its URL with
+`\f[C]{{ clipboard | link_dest }}\f[R]' and its title with
+`\f[C]{{ clipboard | link_title }}\f[R]'.
 The new note is then created with the
 `\f[C][tmpl] from_clipboard_content\f[R]' and the
 `\f[C][tmpl] from_clipboard_filename\f[R]' templates.
@@ -2044,8 +2044,8 @@ In addition to \f[I]Tera\f[R]\[cq]s built-in
 filters (https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes
 with some additional filters, e.g.: `\f[C]tag\f[R]',
 `\f[C]trim_tag\f[R]', `\f[C]stem\f[R]', `\f[C]cut\f[R]',
-`\f[C]heading\f[R]', `\f[C]linkname\f[R]', `\f[C]linktarget\f[R]',
-`\f[C]linktitle\f[R]' and `\f[C]ext\f[R]'.
+`\f[C]heading\f[R]', `\f[C]link_text\f[R]', `\f[C]link_dest\f[R]',
+`\f[C]link_title\f[R]' and `\f[C]ext\f[R]'.
 .PP
 A filter is always used together with a variable.
 Here are some examples:
@@ -2100,16 +2100,17 @@ clipboard.
 `\f[C]{{ clipboard | heading }}\f[R]' is the clipboard\[cq]s content
 until the end of the first sentence, or the first newline.
 .IP \[bu] 2
-`\f[C]{{ clipboard | linkname }}\f[R]' is the name of the first Markdown
-or ReStructuredText formatted link in the clipboard.
+`\f[C]{{ clipboard | link_text }}\f[R]' is the name of the first
+Markdown or ReStructuredText formatted link in the clipboard.
 .IP \[bu] 2
-`\f[C]{{ clipboard | linktarget }}\f[R]' is the URL of the first
+`\f[C]{{ clipboard | link_dest }}\f[R]' is the URL of the first Markdown
+or ReStruncturedText formatted link in the clipboard.
+.IP \[bu] 2
+`\f[C]{{ clipboard | link_title }}\f[R]' is the title of the first
 Markdown or ReStruncturedText formatted link in the clipboard.
 .IP \[bu] 2
-`\f[C]{{ clipboard | linktitle }}\f[R]' is the title of the first
-Markdown or ReStruncturedText formatted link in the clipboard.
-.IP \[bu] 2
-`\f[C]{{ username | json_encode }}\f[R]' is the username JSON encoded.
+`\f[C]{{ username | capitalize | json_encode }}\f[R]' is the capitalized
+JSON encoded username.
 As all YAML front-matter is JSON encoded, this filter code must be
 appended to any template variable placed in the front-matter block.
 .IP \[bu] 2
