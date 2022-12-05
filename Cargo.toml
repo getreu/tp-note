@@ -1,6 +1,10 @@
-[package]
-name = "tp-note"
-version = "1.19.7"
+# [PROJECT_DIR]/Cargo.toml
+[workspace]
+members = ["tpnote", "tpnote-lib"]
+default-members = ["tpnote", "tpnote-lib"]
+
+[workspace.package]
+version = "1.19.8"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2021"
 readme = "README.md"
@@ -10,100 +14,14 @@ categories = ["command-line-utilities", "template-engine", "text-processing"]
 documentation = "https://blog.getreu.net/projects/tp-note/tpnote--manual.html"
 homepage = "https://blog.getreu.net/projects/tp-note/"
 repository = "https://gitlab.com/getreu/tp-note"
-build =  "build.rs"
-
-[build-dependencies]
-winresource = "0.1.14"
-
-[[bin]]
-name = "tpnote"
-path = "src/main.rs"
 
 [profile.release]
 strip = "symbols"
 
-[package.metadata.deb]
-name = "tpnote"
-maintainer = "Jens Getreu, <getreu@web.de>"
-copyright = "2015-2020, Jens Getreu <getreu@web.de>"
-depends = "$auto"
-extended-description = '''
-_Tp-Note_ is a note taking tool and a template system, that synchronizes the
-note's metadata with its filename. _Tp-Note_ collects various information
-about its environment and the clipboard and stores it in variables. New
-notes are created by filling these variables in predefined and customizable
-`Tera`-templates. In case `<path>` points to an existing _Tp-Note_-file, the
-note's metadata is analysed and, if necessary, its filename is adjusted.
-For all other file types, _Tp-Note_ creates a new note annotating the
-file `<path>` points to. If `<path>` is a directory (or, when omitted the
-current working directory), a new note is created in that directory. After
-creation, _Tp-Note_ launches an external editor of your choice. Although the
-templates are written for Markdown, _Tp-Note_ is not tied to
-any specific markup language. However, _Tp-Note_ comes with an optional
-viewer feature, that currently renders only Markdown, ReStructuredText and
-HTML. Note, that there is also some limited support for Asciidoc and
-WikiText. The note's rendition with its hyperlinks is live updated and
-displayed in the user's webbrowser.
-'''
-assets = [
-    ["docs/build/html/index.html", "usr/share/doc/tpnote/", "644"],
-    ["docs/build/pdf/tpnote--manpage.pdf", "usr/share/doc/tpnote/", "644"],
-    ["docs/build/pdf/tpnote--manual.pdf", "usr/share/doc/tpnote/", "644"],
-    ["docs/build/man/man1/tpnote.1.gz", "usr/share/man/man1/", "644"],
-    ["target/release/tpnote", "usr/bin/tpnote", "755"],
-    ["assets/tpnote.svg", "usr/share/pixmaps/", "644"]
-]
-
-[workspace]
-
-[features]
-default = ["read-clipboard", "message-box", "viewer", "renderer"]
-
-# To disable features: `cargo build --no-default-features`
-# If you can do away with error message popup boxes (for example on a headless
-# system), no GTK is required. In this case all error messages will appear on
-# the console from where you started _Tp-Note_ in `stderr` only.
-# Disable this feature if you do not want error message boxes.
-message-box = ["msgbox"]
-read-clipboard = ["copypasta"]
-viewer = ["notify", "httparse", "webbrowser", "httpdate", "percent-encoding"]
-renderer = []
-
-[dependencies]
-atty = "0.2.14"
-# clipboard: On Debian Linux you need to: sudo apt-get install xorg-dev
-copypasta = { version = "0.8.1", optional = true }
-directories = "4.0.1"
-httparse = { version = "1.8.0", optional = true }
-httpdate = { version = "1.0.2", optional = true }
+[workspace.dependencies]
 lazy_static = "1.4.0"
 log = { version = "0.4.17", features = ["serde"] }
-# msgbox: On Debian Linux you need to: sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
-msgbox = { version = "0.7.0", optional = true }
-notify = { version = "5.0.0", optional = true }
-notify-debouncer-mini = "0.2.1"
-percent-encoding = { version = "2.2.0", optional = true }
 sanitize-filename-reader-friendly = "2.2.1"
-# sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
-semver = "1.0.14"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_yaml = "0.9.14"
-structopt = "0.3.26"
 thiserror = "1.0.37"
-time = "0.3.17"
-toml = "0.5.9"
-#tpnote-lib = { path = "src/lib", default-features = false, features = ["renderer", "viewer"] }
-tpnote-lib = { version = "0.13.0", default-features = false, features = ["renderer", "viewer"] }
-webbrowser = { version = "0.8.2", optional = true }
-windows-sys = { version = "0.42.0", features = [
-         #"Win32_Foundation",
-         #"Win32_Security",
-         #"Win32_System_Threading",
-         #"Win32_UI_WindowsAndMessaging",
-         "Win32_Globalization",
-         "Win32_System_SystemServices",
-     ] }
-
-[target.'cfg(windows)'.dependencies]
-win32job = "1.0.2"
-

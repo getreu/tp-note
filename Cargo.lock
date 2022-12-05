@@ -2146,8 +2146,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "tp-note"
-version = "1.19.7"
+name = "tpnote"
+version = "1.19.8"
 dependencies = [
  "atty",
  "copypasta",
@@ -2178,8 +2178,6 @@ dependencies = [
 [[package]]
 name = "tpnote-lib"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0dc69056fb48d8821b302523d78cdaf3febd4fb0b5ea04fd06809eb1be434c73"
 dependencies = [
  "cmark-syntax",
  "lazy_static",
