@@ -4,17 +4,17 @@ members = ["tpnote", "tpnote-lib"]
 default-members = ["tpnote", "tpnote-lib"]
 
 [workspace.package]
-version = "1.19.8"
 authors = ["Jens Getreu <getreu@web.de>"]
-edition = "2021"
-rust-version = "1.64.0"
-readme = "README.md"
-description = "Minimalistic note taking: save and edit your clipboard content as a note file"
-license = "MIT/Apache-2.0"
 categories = ["command-line-utilities", "template-engine", "text-processing"]
+description = "Minimalistic note taking: save and edit your clipboard content as a note file"
 documentation = "https://blog.getreu.net/projects/tp-note/tpnote--manual.html"
+edition = "2021"
 homepage = "https://blog.getreu.net/projects/tp-note/"
+license = "MIT/Apache-2.0"
+readme = "README.md"
 repository = "https://gitlab.com/getreu/tp-note"
+rust-version = "1.64.0"
+version = "1.19.8"
 
 [profile.release]
 strip = "symbols"
