@@ -23,7 +23,7 @@ use crate::html::HTML_EXT;
 use crate::markup_language::MarkupLanguage;
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
-#[cfg(feature = "renderer")]
+#[cfg(feature = "renderer-extras")]
 use cmark_syntax::SyntaxPreprocessor;
 use parse_hyperlinks::renderer::text_links2html;
 #[cfg(feature = "renderer")]
@@ -512,11 +512,12 @@ impl<T: Content> Note<T> {
         // we enable some useful extras.
         let options = Options::all();
         let parser = Parser::new_ext(markdown_input, options);
-        let processed = SyntaxPreprocessor::new(parser);
+        #[cfg(feature = "renderer-extras")]
+        let parser = SyntaxPreprocessor::new(parser);
 
         // Write to String buffer.
         let mut html_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
-        html::push_html(&mut html_output, processed);
+        html::push_html(&mut html_output, parser);
         html_output
     }
 

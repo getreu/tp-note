@@ -265,8 +265,20 @@ Author:
 
 Copyright:
 
-* Apache 2 licence or MIT licence
+* Apache 2 license or MIT license. There is one dependency, the crate
+  `cmark-syntax`, that requires _GPL-3.0-or-later_.  I am looking for a
+  replacement for this crate. In the meanwhile, you can opt out of _GPL-3.0_ by
+  changing the line: 
 
+```toml
+default = ["renderer", "viewer", "renderer-extras"]
+```
+
+in `tpnote-lib/Cargo.toml` to:
+
+```toml
+default = ["renderer", "viewer"]
+```
 
 [Tp-Note’s user manual]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html
 [Download Tp-Note]: https://blog.getreu.net/projects/tp-note/index.html#distribution

@@ -13,8 +13,11 @@ rust-version.workspace = true
 version = "0.13.0"
 
 [features]
-default = ["renderer", "viewer"]
+# Exclude "renderer-extras" to stay in _MIT/Apache_ license and the avoid additional
+# _GPL-3.0-or-laterGPL-3.0-or-later_ license.
+default = ["renderer", "viewer", "renderer-extras"]
 renderer = ["pulldown-cmark", "cmark-syntax", "rst_parser", "rst_renderer"]
+renderer-extras = ["cmark-syntax"]
 viewer = ["percent-encoding"]
 
 [dependencies]
