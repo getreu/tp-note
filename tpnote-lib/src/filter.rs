@@ -230,7 +230,7 @@ fn tag_filter<S: BuildHasher>(
     let p = PathBuf::from(p);
     let (tag, _, _, _, _) = p.disassemble();
 
-    Ok(to_value(&tag)?)
+    Ok(to_value(tag)?)
 }
 
 /// A Tera filter that takes a path and extracts its last element.
@@ -243,7 +243,7 @@ fn trim_tag_filter<S: BuildHasher>(
     let p = PathBuf::from(p);
     let (_, fname, _, _, _) = p.disassemble();
 
-    Ok(to_value(&fname)?)
+    Ok(to_value(fname)?)
 }
 
 /// A Tera filter that takes a path and extracts its file stem,
@@ -257,7 +257,7 @@ fn stem_filter<S: BuildHasher>(
     let p = PathBuf::from(p);
     let (_, _, stem, _, _) = p.disassemble();
 
-    Ok(to_value(&stem)?)
+    Ok(to_value(stem)?)
 }
 
 /// A Tera filter that takes a path and extracts its copy counter,
@@ -271,7 +271,7 @@ fn copy_counter_filter<S: BuildHasher>(
     let p = PathBuf::from(p);
     let (_, _, _, copy_counter, _) = p.disassemble();
 
-    Ok(to_value(&copy_counter)?)
+    Ok(to_value(copy_counter)?)
 }
 
 /// A Tera filter that takes a path and extracts its filename.
@@ -287,7 +287,7 @@ fn filename_filter<S: BuildHasher>(
         .to_str()
         .unwrap_or_default();
 
-    Ok(to_value(&filename)?)
+    Ok(to_value(filename)?)
 }
 
 /// A Tera filter that prepends a dot when stream not empty.
@@ -304,7 +304,7 @@ fn prepend_dot_filter<S: BuildHasher>(
         prepend_dot.push_str(&p);
     };
 
-    Ok(to_value(&prepend_dot)?)
+    Ok(to_value(prepend_dot)?)
 }
 
 /// A Tera filter that takes a path and extracts its file extension.
@@ -320,7 +320,7 @@ fn ext_filter<S: BuildHasher>(
         .to_str()
         .unwrap_or_default();
 
-    Ok(to_value(&ext)?)
+    Ok(to_value(ext)?)
 }
 
 /// A Tera filter that takes a list of variables and removes
@@ -369,20 +369,20 @@ mod tests {
     #[test]
     fn test_sanit_filter() {
         let result = sanit_filter(
-            &to_value(&".# Strange filename? Yes.").unwrap(),
+            &to_value(".# Strange filename? Yes.").unwrap(),
             &HashMap::new(),
         );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value(&"Strange filename_ Yes").unwrap());
+        assert_eq!(result.unwrap(), to_value("Strange filename_ Yes").unwrap());
     }
 
     #[test]
     fn test_sanit_filter_alpha() {
         let mut args = HashMap::new();
         args.insert("alpha".to_string(), to_value(true).unwrap());
-        let result = sanit_filter(&to_value(&"1. My first: chapter").unwrap(), &args);
+        let result = sanit_filter(&to_value("1. My first: chapter").unwrap(), &args);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value(&"'1. My first_ chapter").unwrap());
+        assert_eq!(result.unwrap(), to_value("'1. My first_ chapter").unwrap());
 
         let mut args = HashMap::new();
         args.insert("alpha".to_string(), to_value(true).unwrap());
@@ -392,43 +392,43 @@ mod tests {
 
         let mut args = HashMap::new();
         args.insert("alpha".to_string(), to_value(true).unwrap());
-        let result = sanit_filter(&to_value(&r#"a"b'c'b"a"#).unwrap(), &args);
+        let result = sanit_filter(&to_value(r#"a"b'c'b"a"#).unwrap(), &args);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value(&r#"a b'c'b a"#).unwrap());
+        assert_eq!(result.unwrap(), to_value(r#"a b'c'b a"#).unwrap());
 
         let mut args = HashMap::new();
         args.insert("alpha".to_string(), to_value(true).unwrap());
         let result = sanit_filter(&to_value(123.4).unwrap(), &args);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value(&"\'123.4").unwrap());
+        assert_eq!(result.unwrap(), to_value("\'123.4").unwrap());
 
         let mut args = HashMap::new();
         args.insert("alpha".to_string(), to_value(true).unwrap());
         // Note: the dot is trimmed by the `sanitize_filename_reader_friendly` lib.
-        let result = sanit_filter(&to_value(&".pdf").unwrap(), &args);
+        let result = sanit_filter(&to_value(".pdf").unwrap(), &args);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value(&"'.pdf").unwrap());
+        assert_eq!(result.unwrap(), to_value("'.pdf").unwrap());
     }
     #[test]
     fn test_link_text_link_dest_link_title_filter() {
         let args = HashMap::new();
         // Test Markdown link in clipboard.
         let input = r#"xxx[Jens Getreu's blog](https://blog.getreu.net "My blog")"#;
-        let output_ln = link_text_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_ln = link_text_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("Jens Getreu's blog", output_ln);
-        let output_lta = link_dest_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_lta = link_dest_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("https://blog.getreu.net", output_lta);
-        let output_lti = link_title_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_lti = link_title_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("My blog", output_lti);
 
         // Test non-link string in clipboard.
         let input = "Tp-Note helps you to quickly get\
             started writing notes.";
-        let output_ln = link_text_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_ln = link_text_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_ln);
-        let output_lta = link_dest_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_lta = link_dest_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_lta);
-        let output_lti = link_title_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output_lti = link_title_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_lti);
     }
     #[test]
@@ -436,13 +436,13 @@ mod tests {
         let args = HashMap::new();
         // Test Markdown link in clipboard.
         let input = "Jens Getreu's blog";
-        let output = cut_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = cut_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("Jens Getr", output);
 
         let args = HashMap::new();
         // Test Markdown link in clipboard.
         let input = 222; // Number type.
-        let output = cut_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = cut_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!(222, output);
     }
     #[test]
@@ -453,7 +453,7 @@ mod tests {
         // Test find first sentence.
         let input = "N.ote.\nIt helps. Get quickly\
             started writing notes.";
-        let output = heading_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         // This string is shortened.
         assert_eq!("N.ote", output);
 
@@ -461,7 +461,7 @@ mod tests {
         // Test find first sentence (Windows)
         let input = "N.ote.\r\nIt helps. Get quickly\
             started writing notes.";
-        let output = heading_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         // This string is shortened.
         assert_eq!("N.ote", output);
 
@@ -469,7 +469,7 @@ mod tests {
         // Test find heading
         let input = "N.ote\n\nIt helps. Get quickly\
             started writing notes.";
-        let output = heading_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         // This string is shortened.
         assert_eq!("N.ote", output);
 
@@ -477,7 +477,7 @@ mod tests {
         // Test find heading (Windows)
         let input = "N.ote\r\n\r\nIt helps. Get quickly\
             started writing notes.";
-        let output = heading_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         // This string is shortened.
         assert_eq!("N.ote", output);
 
@@ -485,7 +485,7 @@ mod tests {
         // Test trim whitespace
         let input = "\r\n\r\n  \tIt helps. Get quickly\
             started writing notes.";
-        let output = heading_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         // This string is shortened.
         assert_eq!("It helps", output);
     }
@@ -497,70 +497,70 @@ mod tests {
         // Test file stem.
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.md";
-        let output = stem_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = stem_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("My file", output);
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = stem_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = stem_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("My dir", output);
         //
         //
         // Test file tag.
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.md";
-        let output = tag_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = tag_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("20200908-", output);
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = tag_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = tag_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("20200908-", output);
         //
         //
         // Test `prepend_dot`.
         let input = "md";
-        let output = prepend_dot_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = prepend_dot_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!(".md", output);
 
         let input = "";
-        let output = prepend_dot_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = prepend_dot_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
         //
         //
         // Test file extension.
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.md";
-        let output = ext_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("md", output);
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = ext_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
         //
         //
         // Test copy counter filter.
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
-        let output = copy_counter_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = copy_counter_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("(123)", output);
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = ext_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
         //
         //
         // Test filename .
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
-        let output = filename_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = filename_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("20200908-My file(123).md", output);
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = ext_filter(&to_value(&input).unwrap(), &args).unwrap_or_default();
+        let output = ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
     }
 

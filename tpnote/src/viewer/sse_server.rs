@@ -547,13 +547,13 @@ impl ServerThread {
             httpdate::fmt_http_date(SystemTime::now()),
             MAX_AGE,
             mime_type,
-            fs::metadata(&reqpath)?.len(),
+            fs::metadata(reqpath)?.len(),
         );
         self.stream.write_all(response.as_bytes())?;
 
         // Serve file in chunks.
         let mut buffer = [0; TCP_WRITE_BUFFER_SIZE];
-        let mut file = fs::File::open(&reqpath)?;
+        let mut file = fs::File::open(reqpath)?;
 
         while let Ok(n) = file.read(&mut buffer[..]) {
             if n == 0 {

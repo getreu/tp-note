@@ -173,7 +173,7 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
         let mut outfile = OpenOptions::new()
             .write(true)
             .create(true)
-            .open(&new_file_path)?;
+            .open(new_file_path)?;
 
         log::trace!("Creating file: {:?}", new_file_path);
         write!(outfile, "\u{feff}")?;

@@ -69,7 +69,7 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
         {
             // Check if the flatpak is installed on this system with `flatpak info <app>`.
             if let Ok(ecode) = Command::new(executable_list[i])
-                .args(&["info", args_list[i][1]])
+                .args(["info", args_list[i][1]])
                 .stderr(Stdio::null())
                 .stdout(Stdio::null())
                 .status()
@@ -97,7 +97,7 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
         #[cfg(target_family = "windows")]
         let (config_stdin, config_stdout) = (Stdio::null(), Stdio::null());
 
-        let mut command = Command::new(&executable_list[i]);
+        let mut command = Command::new(executable_list[i]);
 
         command
             .args(&args_list[i])
