@@ -36,7 +36,7 @@ lazy_static! {
 /// Blocks until the user closes the window.
 #[cfg(feature = "message-box")]
 fn popup_alert(msg: &str) {
-    let _ = msgbox::create(&*ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
+    let _ = msgbox::create(&ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
 }
 
 lazy_static! {

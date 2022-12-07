@@ -482,9 +482,9 @@ fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
         {
             // Copy the parts of `config` into `LIB_CFG`.
             let mut lib_cfg = LIB_CFG.write().unwrap();
-            (*lib_cfg).filename = config.filename.clone();
-            (*lib_cfg).tmpl = config.tmpl.clone();
-            (*lib_cfg).tmpl_html = config.tmpl_html.clone();
+            lib_cfg.filename = config.filename.clone();
+            lib_cfg.tmpl = config.tmpl.clone();
+            lib_cfg.tmpl_html = config.tmpl_html.clone();
         }
 
         // First check passed.
@@ -572,7 +572,7 @@ pub fn backup_config_file() -> Result<PathBuf, FileError> {
             let mut config_path_bak = config_path.clone();
             config_path_bak.set_next_unused()?;
 
-            fs::rename(&config_path.as_path(), &config_path_bak)?;
+            fs::rename(config_path.as_path(), &config_path_bak)?;
 
             config_write(&Cfg::default(), config_path)?;
 

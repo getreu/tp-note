@@ -305,7 +305,7 @@ impl ServerThread {
                 };
                 // We quit with error. There is nothing more we can do here.
                 return Err(ViewerError::StreamParse {
-                    source_str: std::str::from_utf8(&*buffer)
+                    source_str: std::str::from_utf8(&buffer)
                         .unwrap_or_default()
                         .chars()
                         .take(60)

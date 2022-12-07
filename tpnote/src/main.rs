@@ -115,7 +115,7 @@ fn main() {
     let cfg_file_loading_err = cfg_file_loading.as_ref().err().map(|e| e.to_string());
 
     // Check if we can parse the version number in there.
-    let cfg_file_version = Version::parse(&*CFG.version);
+    let cfg_file_version = Version::parse(&CFG.version);
     let cfg_file_version_err = cfg_file_version.as_ref().err().map(|e| e.to_string());
 
     // This is `Some::String` if one of them is `Err`.

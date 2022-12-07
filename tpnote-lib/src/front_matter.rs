@@ -27,18 +27,18 @@ impl FrontMatter {
     pub fn assert_compulsory_field(&self) -> Result<(), NoteError> {
         let lib_cfg = LIB_CFG.read().unwrap();
 
-        if !(*lib_cfg).tmpl.compulsory_header_field.is_empty() {
+        if !lib_cfg.tmpl.compulsory_header_field.is_empty() {
             if let Some(tera::Value::String(header_field)) =
-                self.get(&(*lib_cfg).tmpl.compulsory_header_field)
+                self.get(&lib_cfg.tmpl.compulsory_header_field)
             {
                 if header_field.is_empty() {
                     return Err(NoteError::CompulsoryFrontMatterFieldIsEmpty {
-                        field_name: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
+                        field_name: lib_cfg.tmpl.compulsory_header_field.to_owned(),
                     });
                 };
             } else {
                 return Err(NoteError::MissingFrontMatterField {
-                    field_name: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
+                    field_name: lib_cfg.tmpl.compulsory_header_field.to_owned(),
                 });
             }
         }
@@ -50,7 +50,7 @@ impl FrontMatter {
         if self.is_empty() {
             let lib_cfg = LIB_CFG.read().unwrap();
             Err(NoteError::MissingFrontMatter {
-                compulsory_field: (*lib_cfg).tmpl.compulsory_header_field.to_owned(),
+                compulsory_field: lib_cfg.tmpl.compulsory_header_field.to_owned(),
             })
         } else {
             Ok(())

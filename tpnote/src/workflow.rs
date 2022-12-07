@@ -41,7 +41,7 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
         &*CLIPBOARD,
         &*STDIN,
         template_kind_filter,
-        &*HTML_EXPORT,
+        &HTML_EXPORT,
     ) {
         // Use the new `path` from now on.
         Ok(p) => {

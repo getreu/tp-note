@@ -306,7 +306,7 @@ impl<T: Content> Note<T> {
     pub fn rename_file_from(&self, from_path: &Path) -> Result<(), NoteError> {
         debug_assert_ne!(self.rendered_filename, PathBuf::new());
 
-        if !from_path.exclude_copy_counter_eq(&*self.rendered_filename) {
+        if !from_path.exclude_copy_counter_eq(&self.rendered_filename) {
             // rename file
             fs::rename(from_path, &self.rendered_filename)?;
             log::trace!("File renamed to {:?}", self.rendered_filename);
