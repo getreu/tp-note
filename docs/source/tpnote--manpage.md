@@ -1361,6 +1361,7 @@ viewer = '''<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <title>{{ fm_title }}</title>
+<link rel="stylesheet" href="{{ note_css_path }}">
   </head>
   <body>
   <pre class="note-header">{{ note_fm_text }}</pre>
@@ -1377,6 +1378,10 @@ Specifically:
 * '`{{ fm_* }}`' are the deserialized header variables. All content
   template variables and filters are available. See section _Template
   variables_ above.
+
+* '`{{ note_css_path }}`' is the CSS stylesheet path required to 
+  highlight embedded source code. This path is hard-wired and
+  understood by Tp-Note's internal web server.
 
 * '`{{ note_fm_text }}`' is the raw UTF-8 copy of the header. Not to be
   confounded with the dictionary variable '`{{ fm_all }}`'.
@@ -1441,8 +1446,9 @@ taken over by the '`[tmpl_html] exporter`' template. In this template the
 same _Tera_ variables are available, except '`{{ note_js }}`' which does not
 make sense in this context. As the exporter prints possible rendition error
 messages on the console, there is no equivalent to the
-'`[tmpl_html] viewer_error`' template.
-
+'`[tmpl_html] viewer_error`' template. Note, in contrast to the previous 
+template '`[tmpl_html] viewer`' example, the source code highlighting CSS 
+code is now embedded in the HTML output with '`<style>{{ note_css }}</style>`'
 
 
 ## Choose your favorite web browser as note viewer
@@ -1471,7 +1477,7 @@ invoke Tp-Note with '`tpnote --debug info --popup --view`'.
 All _TP-Note_'s workflows are customizable through its templates which
 are grouped in the '`[tmpl]`' section of _Tp-Nots_'s configuration file.
 Configuration file variables ending with '`[tmpl] *_content`' and
-'`[tmpl] *_filename`' are _Tera-Template_-strings (see:
+'`[tmpl] *_filename`' are _Tera_ template strings (see:
 <https://tera.netlify.com/docs/#templates>).
 
 Tp-Note captures and stores its environment in _Tera variables_. For example,
