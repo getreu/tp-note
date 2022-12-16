@@ -1665,6 +1665,7 @@ viewer = \[aq]\[aq]\[aq]<!DOCTYPE html>
 <head>
 <meta charset=\[dq]utf-8\[dq]>
 <title>{{ fm_title }}</title>
+<link rel=\[dq]stylesheet\[dq] href=\[dq]{{ note_css_path }}\[dq]>
   </head>
   <body>
   <pre class=\[dq]note-header\[dq]>{{ note_fm_text }}</pre>
@@ -1682,6 +1683,11 @@ Specifically:
 `\f[C]{{ fm_* }}\f[R]' are the deserialized header variables.
 All content template variables and filters are available.
 See section \f[I]Template variables\f[R] above.
+.IP \[bu] 2
+`\f[C]{{ note_css_path }}\f[R]' is the CSS stylesheet path required to
+highlight embedded source code.
+This path is hard-wired and understood by Tp-Note\[cq]s internal web
+server.
 .IP \[bu] 2
 `\f[C]{{ note_fm_text }}\f[R]' is the raw UTF-8 copy of the header.
 Not to be confounded with the dictionary variable
@@ -1760,6 +1766,10 @@ In this template the same \f[I]Tera\f[R] variables are available, except
 As the exporter prints possible rendition error messages on the console,
 there is no equivalent to the `\f[C][tmpl_html] viewer_error\f[R]'
 template.
+Note, in contrast to the previous template
+`\f[C][tmpl_html] viewer\f[R]' example, the source code highlighting CSS
+code is now embedded in the HTML output with
+`\f[C]<style>{{ note_css }}</style>\f[R]'
 .SS Choose your favorite web browser as note viewer
 .PP
 Once the note is rendered into HTML, Tp-Note\[cq]s internal HTTP server
@@ -1789,7 +1799,7 @@ All \f[I]TP-Note\f[R]\[cq]s workflows are customizable through its
 templates which are grouped in the `\f[C][tmpl]\f[R]' section of
 \f[I]Tp-Nots\f[R]\[cq]s configuration file.
 Configuration file variables ending with `\f[C][tmpl] *_content\f[R]'
-and `\f[C][tmpl] *_filename\f[R]' are \f[I]Tera-Template\f[R]-strings
+and `\f[C][tmpl] *_filename\f[R]' are \f[I]Tera\f[R] template strings
 (see: <https://tera.netlify.com/docs/#templates>).
 .PP
 Tp-Note captures and stores its environment in \f[I]Tera variables\f[R].

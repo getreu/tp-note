@@ -274,7 +274,7 @@
         -->
         <!--<Icon Id='TpNoteICO' SourceFile='wix\Product.ico'/>-->
         <!--<Property Id='ARPPRODUCTICON' Value='TpNoteICO' />-->
-    <Icon Id='TpNoteLogo.ico' SourceFile='tpnote.ico'/>
+    <Icon Id='TpNoteLogo.ico' SourceFile='./tpnote.ico'/>
     <Property Id='ARPPRODUCTICON' Value='TpNoteLogo.ico' />
         <Property Id='ARPHELPLINK' Value='https://blog.getreu.net/projects/tp-note/tpnote--manpage.html'/>
     <!--

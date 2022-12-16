@@ -1,7 +1,7 @@
 # [PROJECT_DIR]/Cargo.toml
 [workspace]
-members = ["tpnote", "tpnote-lib"]
-default-members = ["tpnote", "tpnote-lib"]
+members = ["tp-note", "tpnote-lib"]
+default-members = ["tp-note"]
 
 [workspace.package]
 authors = ["Jens Getreu <getreu@web.de>"]

@@ -210,7 +210,7 @@ compile _Tp-Note_ yourself.
 
    **Building for Linux**
 
-       sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
+       sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev musl-tools
        cargo install tp-note
        sudo cp ~/.cargo/bin/tpnote /usr/local/bin
 

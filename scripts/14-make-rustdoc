@@ -1,4 +1,4 @@
 #!/bin/sh
 
-cargo doc --no-deps --package tp-note --package tpnote-lib --
+cargo doc --no-deps --package tp-note --
 
