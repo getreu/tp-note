@@ -10,7 +10,7 @@
 //! (*lib_cfg).filename.copy_counter_extra_separator = '@'.to_string();
 //! ```
 
-use crate::error::ArgsError;
+use crate::{error::ArgsError, highlight::get_css};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::{str::FromStr, sync::RwLock};
@@ -31,7 +31,7 @@ pub const FILENAME_LEN_MAX: usize =
 /// `TMPL_VAR_ROOT_PATH`.
 pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnoteroot";
 
-/// List of characters that can be part of a _sort tag_.
+/// List of charnote_error_tera_templateacters that can be part of a _sort tag_.
 /// This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
 /// The first character in the filename which is not
 /// in this list, marks the end of the sort tag.
@@ -461,6 +461,26 @@ pub const TMPL_VAR_NOTE_BODY_HTML: &str = "note_body_html";
 /// of the enabled features.
 pub const TMPL_VAR_NOTE_JS: &str = "note_js";
 
+/// HTML template variable name. The value contains the highlighting CSS code
+/// to be included in the HTML rendition produced by the exporter.
+pub const TMPL_VAR_NOTE_CSS: &str = "note_css";
+
+/// HTML template variable name. The value contains the path, for which
+/// the viewer delievers CSS code. Note, the viewer delivers the same CSS code
+/// which is stored as value for `TMPL_VAR_NOTE_CSS`.
+pub const TMPL_VAR_NOTE_CSS_PATH: &str = "note_css_path";
+
+/// The constant URL for which Tp-Note's internal web server delivers the CSS
+/// stylesheet. In HTML templates, this constant can be accessed as value of
+/// the  `TMPL_VAR_NOTE_CSS_PATH` variable.
+pub const CSS_PATH: &str = "/tpnote.css";
+
+lazy_static! {
+/// A constant holding the raw CSS code. In HTML templates this constant can be
+/// accessed as value of the `TMPL_VAR_NOTE_CSS` variable.
+    pub static ref TEXT_CSS: String = get_css();
+}
+
 /// HTML template variable used in the error page containing the error message
 /// explaining why this page could not be rendered.
 /// We could set
@@ -489,6 +509,7 @@ pub const TMPL_HTML_VIEWER: &str = r#"<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <title>{{ fm_title }}</title>
+<link rel="stylesheet" href="{{ note_css_path }}">
 <style>
 table, th, td { font-weight: normal; }
 table.center {
@@ -618,7 +639,7 @@ h2 { font-size: 132% }
 h3 { font-size: 115% }
 h4, h5, h6 { font-size: 100% }
 h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
-
+{{ note_css }}
 </style>
   </head>
   <body>
