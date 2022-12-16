@@ -1,6 +1,0 @@
----
-title: "xxx"
-subtitle: "yyy"
-sort_tag: "111-"
-file_ext: "md"
-...
