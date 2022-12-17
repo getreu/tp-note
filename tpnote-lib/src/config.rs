@@ -234,7 +234,7 @@ pub const TMPL_VAR_FM_ALL: &str = "fm_all";
 /// of the current note. As all front matter variables, it's value is copied as
 /// it is without modification.  Here, the only special treatment is, when
 /// analyzing the front matter, it is verified, that the value of this variable
-/// is registered in one of the `[filename] extensions_*` variables.
+/// is registered in one of the `filename.extensions_*` variables.
 pub const TMPL_VAR_FM_FILE_EXT: &str = "fm_file_ext";
 
 /// By default, the template `TMPL_SYNC_FILENAME` defines the function of
@@ -247,7 +247,7 @@ pub const TMPL_VAR_FM_FILE_EXT: &str = "fm_file_ext";
 /// of the current note. As all front matter variables, it's value is copied as
 /// it is without modification.  Here, the only special treatment is, when
 /// analyzing the front matter, it is verified, that all the characters of the
-/// value of this variable are listed in `[filename] sort_tag_chars`.
+/// value of this variable are listed in `filename.sort_tag_chars`.
 pub const TMPL_VAR_FM_SORT_TAG: &str = "fm_sort_tag";
 
 /// Contains the value of the front matter field `no_filename_sync`.  When set

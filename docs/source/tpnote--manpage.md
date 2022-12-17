@@ -317,7 +317,7 @@ lang:       "en-GB"
 [Classic Shell Scripting.pdf](<Classic Shell Scripting.pdf>)
 ```
 
-The configuration file variables '`[filename] extensions_*`' list all the file
+The configuration file variables '`filename.extensions_*`' list all the file
 extensions that Tp-Note recognizes as own file types. Only foreign file types
 can be annotated.
 
@@ -628,7 +628,7 @@ synchronization).
 Tp-Note considers a text file to be a valid note file, if its:
 
 * file extension is listed in one of the configuration file variables
-  '`[filename] extension_*`'; if its
+  '`filename.extension_*`'; if its
 
 * content has a valid YAML header and
 
@@ -682,7 +682,7 @@ body. However, the default templates assume Markdown and the file extension
 '`.md`'. Both can be changed easily by adapting Tp-Note's configuration file.
 Besides the requirements concerning its header, a valid Tp-Note file must have
 a filename extension that is listed in one of the configuration file variables:
-'`[filename] extension_*`'. The latter also determine which internal markup
+'`filename.extension_*`'. The latter also determine which internal markup
 language render is called for Tp-Note's internal viewer.
 
 
@@ -879,7 +879,7 @@ This will change the file extension from '`.md`' to '`.rst`. The resulting
 filename becomes "`20211101-'1. The Beginning--Note.rst`".
 
 Important: '`rst`' must be one of the registered file extensions
-listed in the '`[filename] extensions_rst`' variables in Tp-Note's configuration
+listed in the '`filename.extensions_rst`' variables in Tp-Note's configuration
 file. If needed you can add more extensions there. If the new filename extension
 is not listed in one of these variables, Tp-Note will not be able to
 recognize the note file as such and will not open it in the external text editor
@@ -1149,8 +1149,8 @@ Examples, adjust to your needs and taste:
 ## Change the file extension for new note files
 
 Tp-Note identifies the note's markup language by its file extension and
-renders the content accordingly (see '`[filename] extensions_*`' variables).
-For example: the variable '`[filename] extensions_md`' lists all file
+renders the content accordingly (see '`filename.extensions_*`' variables).
+For example: the variable '`filename.extensions_md`' lists all file
 extensions, that are regarded as Markdown files:
 
 ```toml
@@ -1174,7 +1174,7 @@ extension_default = 'md'
 
 This modification does not change how the note file's content is interpreted -
 in this case as Markdown - because both file extensions '`.txt`' and '`.md`'
-belong to the same extension group defined in '`[filename] extensions_md`'.
+belong to the same extension group defined in '`filename.extensions_md`'.
 
 
 
@@ -1185,7 +1185,7 @@ filenames, is markup language agnostic. However, there is one content template
 '`[tmpl] from_clipboard_content`' that generates a hyperlink. The hyperlink
 syntax varies depending on the markup language. Hence, you should not forget to
 modify the '`[tmpl] from_clipboard_content`' content template, when you
-change the default markup language defined in '`[filename] extension_default`'.
+change the default markup language defined in '`filename.extension_default`'.
 
 
 ### Change default markup language to ReStructuredText
@@ -1250,7 +1250,7 @@ By default, the characters '`_`', '`-`', _space_, '`\t`' and '`.`' are
 recognized as being part of a *sort tag* when they appear at the beginning of a
 filename.  This set of characters can be modified with the '`[filename]
 sort_tag_chars`' configuration variable. In addition, one special character
-'`[filename] sort_tag_extra_separator`' (by default '`'`') is sometimes used as
+'`filename.sort_tag_extra_separator`' (by default '`'`') is sometimes used as
 "end of sort tag marker" to avoid ambiguity.
 
 
@@ -1273,7 +1273,7 @@ variable with the '`sanit(force_alpha=true)`' filter set, e.g.:
     {{ path | tag }}{{ fm_title | sanit(force_alpha=true) }}
 
 The first expression guarantees, that it resolves only to characters defined in
-the '`[filename] sort_tag_chars`' set, while the second expression is known
+the '`filename.sort_tag_chars`' set, while the second expression is known
 to not start with such a character. This way Tp-Note is able to separate
 _sort tags_ in filenames and avoids cyclic filename change. Or, in other words:
 the '`[tmpl] sync_filname`' template should always give the same result, even
@@ -1333,18 +1333,18 @@ editor window.  A negative value delays the start of the text editor instead.
 
 Besides its core function, Tp-Note comes with several built-in markup
 renderer and viewer, allowing to work with different markup languages at the
-same time. The configuration file variables '`[filename] extensions_*`' determine
+same time. The configuration file variables '`filename.extensions_*`' determine
 which markup renderer is used for which note file extension. Depending on the
 markup language, this feature is more or less advanced and complete: _Markdown_
-(cf. '`[filename] extensions_md`') is best supported and feature complete: It
+(cf. '`filename.extensions_md`') is best supported and feature complete: It
 complies with the _Common Mark_ specification. The _ReStructuredText_ renderer
-(cf.  '`[filename] extensions_rst`') is quite new and still in experimental state.
+(cf.  '`filename.extensions_rst`') is quite new and still in experimental state.
 For all other supported markup languages Tp-Note provides a built-in markup
-source text viewer (cf.  '`[filename] extensions_txt`') that shows the note as
+source text viewer (cf.  '`filename.extensions_txt`') that shows the note as
 typed (without markup), but renders all hyperlinks to make them clickable.  In
 case none of the above rendition engines suit you, it is possible to disable
 the viewer feature selectively for some particular note file extensions: just
-place these extensions in the '`[filename] extensions_no_viewer`' variable. If
+place these extensions in the '`filename.extensions_no_viewer`' variable. If
 you wish to disable the viewer feature overall, set the variable
 `arg_default.edit = true`.
 
@@ -1797,7 +1797,7 @@ characters.  For this purpose Tp-Note provides the additional Tera filters
   assembling the new filename, e.g. '`{{ title | sanit(force_alpha=true )}`'. This
   way, it is always possible to distinguish the sort tag from the actual
   filename. The default sort tag separator '`'`' can be changed with the
-  configuration variable '`[filename] sort_tag_extra_separator`'.
+  configuration variable '`filename.sort_tag_extra_separator`'.
 
 In filename templates most variables must pass either the '`sanit`' or the
 '`sanit(force_alpha=true)`' filter. Exception to this rule are the sort tag variables

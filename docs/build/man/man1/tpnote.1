@@ -368,7 +368,7 @@ lang:       \[dq]en-GB\[dq]
 \f[R]
 .fi
 .PP
-The configuration file variables `\f[C][filename] extensions_*\f[R]'
+The configuration file variables `\f[C]filename.extensions_*\f[R]'
 list all the file extensions that Tp-Note recognizes as own file types.
 Only foreign file types can be annotated.
 .PP
@@ -742,7 +742,7 @@ under `\f[C]arg_default.export_link_rewriting\f[R]'.
 Tp-Note considers a text file to be a valid note file, if its:
 .IP \[bu] 2
 file extension is listed in one of the configuration file variables
-`\f[C][filename] extension_*\f[R]'; if its
+`\f[C]filename.extension_*\f[R]'; if its
 .IP \[bu] 2
 content has a valid YAML header and
 .IP \[bu] 2
@@ -806,7 +806,7 @@ However, the default templates assume Markdown and the file extension
 Both can be changed easily by adapting Tp-Note\[cq]s configuration file.
 Besides the requirements concerning its header, a valid Tp-Note file
 must have a filename extension that is listed in one of the
-configuration file variables: `\f[C][filename] extension_*\f[R]'.
+configuration file variables: `\f[C]filename.extension_*\f[R]'.
 The latter also determine which internal markup language render is
 called for Tp-Note\[cq]s internal viewer.
 .SS Links to resources and other documents
@@ -1068,7 +1068,7 @@ The resulting filename becomes
 \[lq]\f[C]20211101-\[aq]1. The Beginning--Note.rst\f[R]\[rq].
 .PP
 Important: `\f[C]rst\f[R]' must be one of the registered file extensions
-listed in the `\f[C][filename] extensions_rst\f[R]' variables in
+listed in the `\f[C]filename.extensions_rst\f[R]' variables in
 Tp-Note\[cq]s configuration file.
 If needed you can add more extensions there.
 If the new filename extension is not listed in one of these variables,
@@ -1391,8 +1391,8 @@ editor = [
 .PP
 Tp-Note identifies the note\[cq]s markup language by its file extension
 and renders the content accordingly (see
-`\f[C][filename] extensions_*\f[R]' variables).
-For example: the variable `\f[C][filename] extensions_md\f[R]' lists all
+`\f[C]filename.extensions_*\f[R]' variables).
+For example: the variable `\f[C]filename.extensions_md\f[R]' lists all
 file extensions, that are regarded as Markdown files:
 .IP
 .nf
@@ -1425,7 +1425,7 @@ extension_default = \[aq]md\[aq]
 This modification does not change how the note file\[cq]s content is
 interpreted - in this case as Markdown - because both file extensions
 `\f[C].txt\f[R]' and `\f[C].md\f[R]' belong to the same extension group
-defined in `\f[C][filename] extensions_md\f[R]'.
+defined in `\f[C]filename.extensions_md\f[R]'.
 .SS Change the default markup language
 .PP
 Tp-Note\[cq]s core functionality, the management of note file headers
@@ -1436,7 +1436,7 @@ The hyperlink syntax varies depending on the markup language.
 Hence, you should not forget to modify the
 `\f[C][tmpl] from_clipboard_content\f[R]' content template, when you
 change the default markup language defined in
-`\f[C][filename] extension_default\f[R]'.
+`\f[C]filename.extension_default\f[R]'.
 .SS Change default markup language to ReStructuredText
 .PP
 Tp-Note\[cq]s core function is a template system and as such it depends
@@ -1517,9 +1517,9 @@ By default, the characters `\f[C]_\f[R]', `\f[C]-\f[R]',
 being part of a \f[I]sort tag\f[R] when they appear at the beginning of
 a filename.
 This set of characters can be modified with the
-`\f[C][filename] sort_tag_chars\f[R]' configuration variable.
+`\f[C]filename.sort_tag_chars\f[R]' configuration variable.
 In addition, one special character
-`\f[C][filename] sort_tag_extra_separator\f[R]' (by default
+`\f[C]filename.sort_tag_extra_separator\f[R]' (by default
 `\f[C]\[aq]\f[R]') is sometimes used as \[lq]end of sort tag marker\[rq]
 to avoid ambiguity.
 .SS Customize the filename synchronization scheme
@@ -1548,7 +1548,7 @@ variable with the `\f[C]sanit(force_alpha=true)\f[R]' filter set, e.g.:
 .fi
 .PP
 The first expression guarantees, that it resolves only to characters
-defined in the `\f[C][filename] sort_tag_chars\f[R]' set, while the
+defined in the `\f[C]filename.sort_tag_chars\f[R]' set, while the
 second expression is known to not start with such a character.
 This way Tp-Note is able to separate \f[I]sort tags\f[R] in filenames
 and avoids cyclic filename change.
@@ -1631,24 +1631,24 @@ A negative value delays the start of the text editor instead.
 Besides its core function, Tp-Note comes with several built-in markup
 renderer and viewer, allowing to work with different markup languages at
 the same time.
-The configuration file variables `\f[C][filename] extensions_*\f[R]'
+The configuration file variables `\f[C]filename.extensions_*\f[R]'
 determine which markup renderer is used for which note file extension.
 Depending on the markup language, this feature is more or less advanced
 and complete: \f[I]Markdown\f[R]
-(cf.\ `\f[C][filename] extensions_md\f[R]') is best supported and
+(cf.\ `\f[C]filename.extensions_md\f[R]') is best supported and
 feature complete: It complies with the \f[I]Common Mark\f[R]
 specification.
 The \f[I]ReStructuredText\f[R] renderer
-(cf.\ `\f[C][filename] extensions_rst\f[R]') is quite new and still in
+(cf.\ `\f[C]filename.extensions_rst\f[R]') is quite new and still in
 experimental state.
 For all other supported markup languages Tp-Note provides a built-in
-markup source text viewer (cf.\ `\f[C][filename] extensions_txt\f[R]')
+markup source text viewer (cf.\ `\f[C]filename.extensions_txt\f[R]')
 that shows the note as typed (without markup), but renders all
 hyperlinks to make them clickable.
 In case none of the above rendition engines suit you, it is possible to
 disable the viewer feature selectively for some particular note file
 extensions: just place these extensions in the
-`\f[C][filename] extensions_no_viewer\f[R]' variable.
+`\f[C]filename.extensions_no_viewer\f[R]' variable.
 If you wish to disable the viewer feature overall, set the variable
 \f[C]arg_default.edit = true\f[R].
 .PP
@@ -2198,7 +2198,7 @@ e.g.\ `\f[C]{{ title | sanit(force_alpha=true )}\f[R]'.
 This way, it is always possible to distinguish the sort tag from the
 actual filename.
 The default sort tag separator `\f[C]\[aq]\f[R]' can be changed with the
-configuration variable `\f[C][filename] sort_tag_extra_separator\f[R]'.
+configuration variable `\f[C]filename.sort_tag_extra_separator\f[R]'.
 .PP
 In filename templates most variables must pass either the
 `\f[C]sanit\f[R]' or the `\f[C]sanit(force_alpha=true)\f[R]' filter.
