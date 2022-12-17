@@ -607,18 +607,19 @@ synchronization).
     '`short`' or '`long`' (default). No link rewriting occurs, for the *MODE*
     '`off`'. The *MODE* '`short`' rewrites all local relative links to absolute
     links, whose base is the first parent directory containing the marker
-    file '`.tpnoteroot`' (filename customizable). The marker file designates
-    also the base for absolute local links in the note file. The mode '`long`'
-    rewrites *all* local links to absolute links whose base is the system's
-    root directory '`/`'. For relative local links this is performed by
-    prepending the path to the note file. Absolute local links get the path
-    to the marker file '`.tpnoteroot`' prepended. In case you do not place a
-    '`.tpnoteroot`' file in a parent directory, the base for absolute local
-    links in your note file is interpreted as '`/`'. The right mode to choose
-    depends on how you view the resulting HTML: if you publish on a web server,
-    then '`short`' is a good choice. If you view the HTML file directly in your
-    web browser, better choose '`long`'. NB: You can also set this option via
-    Tp-Note's configuration file under '`[arg_default] export_link_rewriting`'.
+    file '`.tpnoteroot`' (filename customizable). NB, the directory of the
+    marker file defines the base for all absolute local links in your Tp-Note
+    file! The mode '`long`' rewrites *all* local links to absolute links whose
+    base is the system's root directory '`/`'. For relative local links this
+    is performed by prepending the path to the note file. Absolute local links
+    get the path to the marker file '`.tpnoteroot`' prepended. In case you
+    do not place a '`.tpnoteroot`' file in a parent directory, the base for
+    absolute local links in your note file is interpreted as '`/`'. The right
+    mode to choose depends on how you view the resulting HTML: if you publish
+    on a web server, then '`short`' is a good choice. If you view the HTML
+    file directly in your web browser, better choose '`long`'. NB: You can
+    also set this option via Tp-Note's configuration file with the key 
+    '`[arg_default] export_link_rewriting`'.
 
 
 

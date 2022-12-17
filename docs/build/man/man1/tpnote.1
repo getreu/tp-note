@@ -716,10 +716,10 @@ No link rewriting occurs, for the \f[I]MODE\f[R] `\f[C]off\f[R]'.
 The \f[I]MODE\f[R] `\f[C]short\f[R]' rewrites all local relative links
 to absolute links, whose base is the first parent directory containing
 the marker file `\f[C].tpnoteroot\f[R]' (filename customizable).
-The marker file designates also the base for absolute local links in the
-note file.
-The mode `\f[C]long\f[R]' rewrites \f[I]all\f[R] local links to absolute
-links whose base is the system\[cq]s root directory `\f[C]/\f[R]'.
+NB, the directory of the marker file defines the base for all absolute
+local links in your Tp-Note file! The mode `\f[C]long\f[R]' rewrites
+\f[I]all\f[R] local links to absolute links whose base is the
+system\[cq]s root directory `\f[C]/\f[R]'.
 For relative local links this is performed by prepending the path to the
 note file.
 Absolute local links get the path to the marker file
@@ -732,7 +732,7 @@ you publish on a web server, then `\f[C]short\f[R]' is a good choice.
 If you view the HTML file directly in your web browser, better choose
 `\f[C]long\f[R]'.
 NB: You can also set this option via Tp-Note\[cq]s configuration file
-under `\f[C][arg_default] export_link_rewriting\f[R]'.
+with the key `\f[C][arg_default] export_link_rewriting\f[R]'.
 .SH THE NOTE\[cq]S DOCUMENT STRUCTURE
 .PP
 Tp-Note considers a text file to be a valid note file, if its:
