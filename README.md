@@ -109,7 +109,7 @@ Repository:
 
 ### Tp-Note Debian/Ubuntu installer package
 
-* Package compiled for Debian 10+ (Buster):
+* Package compiled for Debian:
 
   [x86_64-unknown-linux-gnu/debian/tpnote_latest_amd64.deb]
 
@@ -131,7 +131,7 @@ Repository:
 
     * [x86_64-pc-windows-gnu/release/tpnote.exe]
 
-* Universal Linux binary (compiled with Debian 10 Buster):
+* Universal Linux binary (compiled with Debian):
 
     * [x86_64-unknown-linux-gnu/release/tpnote]
 
@@ -290,10 +290,10 @@ default = ["renderer", "viewer"]
 [Tp-Note manual page - html]: https://blog.getreu.net/projects/tp-note/tpnote--manpage.html
 [Tp-Note manual page - pdf]: https://blog.getreu.net/_downloads/tpnote--manpage.pdf
 [Blogposts about Tp-Note]: https://blog.getreu.net/tags/tp-note/
-[Tp-Note's config module documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tpnote_lib/config/
+[Tp-Note's config module documentation]: https://docs.rs/tpnote-lib/latest/tpnote_lib/config/
 [tpnote]: https://crates.io/crates/tp-note
 [tpnote-lib]: https://crates.io/crates/tpnote-lib
-[Constants in API documentation]: https://blog.getreu.net/projects/tp-note/_downloads/doc/tpnote_lib/config/index.html#constants
+[Constants in API documentation]: https://docs.rs/tpnote-lib/latest/tpnote_lib/config/index.html#constants
 [Tp-Note on Gitlab]: https://gitlab.com/getreu/tp-note
 [Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
