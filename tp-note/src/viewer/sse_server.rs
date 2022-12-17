@@ -644,7 +644,7 @@ impl ServerThread {
             // Prepare the log entry.
             log_msg = format!(
                 "Error: too many requests. You have exceeded \n\
-            `[viewer] displayed_tpnote_count_max = {}` by browsing:\n",
+            `viewer.displayed_tpnote_count_max = {}` by browsing:\n",
                 CFG.viewer.displayed_tpnote_count_max
             );
             for p in delivered_tpnote_docs.iter() {
@@ -660,7 +660,7 @@ impl ServerThread {
              <p>For security reasons, Tp-Note's internal viewer only displays
              a limited number ({}) of Tp-Note files. This limit can be raised
              by setting the configuration file variable:</p>
-            <p> <pre>[viewer] displayed_tpnote_count_max</pre></p>
+            <p> <pre>viewer.displayed_tpnote_count_max</pre></p>
              </body></html>
              ",
             CFG.viewer.displayed_tpnote_count_max

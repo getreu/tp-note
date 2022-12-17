@@ -1325,7 +1325,7 @@ creates the subdirectory '`Notes/`' in case it does not exist.
 
 By default, Tp-Note launches two external programs: some text editor and a
 web browser. If wished for, the configuration variable
-'`[viewer] startup_delay`' allows to delay the launch of the web browser some
+'`viewer.startup_delay`' allows to delay the launch of the web browser some
 milliseconds.  This way the web browser window will always appear on top of the
 editor window.  A negative value delays the start of the text editor instead.
 
@@ -1824,10 +1824,10 @@ For security reasons, Tp-Note limits the set of files the viewer is
 able to publish. To summarize, a file is only served:
 
 1. when it is referenced in one of the currently viewed Tp-Note files,
-2. when its file extension is registered with the '`[viewer] served_mime_type`'
+2. when its file extension is registered with the '`viewer.served_mime_type`'
    list,
 3. if the number of so far viewed Tp-Note files,
-   '`[viewer] displayed_tpnote_count_max`' is not exceeded,
+   '`viewer.displayed_tpnote_count_max`' is not exceeded,
 4. when it's located under a directory containing a marker file named
    '`.tpnoteroot`' (without marker file this condition is void).
 
@@ -1837,11 +1837,11 @@ referenced inline images and other linked TP-Note files. Internally, the
 viewer maintains a list of _referenced local URLs_. For security reasons,
 only listed files are served. To limit data exfiltration in case an attacker
 gains access to an account on your machine, the number of served Tp-Note files
-is limited by the configurable value '`[viewer] displayed_tpnote_count_max`'.
+is limited by the configurable value '`viewer.displayed_tpnote_count_max`'.
 
 In addition to the above quantitative restriction, Tp-Note's built-in viewer
 serves only files whose file extensions are registered with the
-'`[viewer] served_mime_type`' configuration file variable.  The latter allows
+'`viewer.served_mime_type`' configuration file variable.  The latter allows
 to disable the _follow links to other Tp-Note files_ feature by removing all
 '`text/*`' mime types from that list.
 

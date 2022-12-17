@@ -1620,7 +1620,7 @@ subdirectory `\f[C]Notes/\f[R]' in case it does not exist.
 By default, Tp-Note launches two external programs: some text editor and
 a web browser.
 If wished for, the configuration variable
-`\f[C][viewer] startup_delay\f[R]' allows to delay the launch of the web
+`\f[C]viewer.startup_delay\f[R]' allows to delay the launch of the web
 browser some milliseconds.
 This way the web browser window will always appear on top of the editor
 window.
@@ -2225,10 +2225,10 @@ To summarize, a file is only served:
 when it is referenced in one of the currently viewed Tp-Note files,
 .IP "2." 3
 when its file extension is registered with the
-`\f[C][viewer] served_mime_type\f[R]' list,
+`\f[C]viewer.served_mime_type\f[R]' list,
 .IP "3." 3
 if the number of so far viewed Tp-Note files,
-`\f[C][viewer] displayed_tpnote_count_max\f[R]' is not exceeded,
+`\f[C]viewer.displayed_tpnote_count_max\f[R]' is not exceeded,
 .IP "4." 3
 when it\[cq]s located under a directory containing a marker file named
 `\f[C].tpnoteroot\f[R]' (without marker file this condition is void).
@@ -2242,11 +2242,11 @@ For security reasons, only listed files are served.
 To limit data exfiltration in case an attacker gains access to an
 account on your machine, the number of served Tp-Note files is limited
 by the configurable value
-`\f[C][viewer] displayed_tpnote_count_max\f[R]'.
+`\f[C]viewer.displayed_tpnote_count_max\f[R]'.
 .PP
 In addition to the above quantitative restriction, Tp-Note\[cq]s
 built-in viewer serves only files whose file extensions are registered
-with the `\f[C][viewer] served_mime_type\f[R]' configuration file
+with the `\f[C]viewer.served_mime_type\f[R]' configuration file
 variable.
 The latter allows to disable the \f[I]follow links to other Tp-Note
 files\f[R] feature by removing all `\f[C]text/*\f[R]' mime types from
