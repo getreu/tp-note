@@ -766,7 +766,7 @@ impl ServerThread {
                 let note_erroneous_content = <ContentString as Content>::open(&context.path)?;
                 render_erroneous_content_html::<ContentString>(context, note_erroneous_content)
                     .map_err(|e| ViewerError::RenderErrorPage {
-                        tmpl: "[tmpl_html] viewer_error".to_string(),
+                        tmpl: "tmpl_html.viewer_error".to_string(),
                         source: e,
                     })
             }

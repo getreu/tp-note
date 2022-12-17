@@ -1656,9 +1656,9 @@ If you wish to disable the viewer feature overall, set the variable
 .PP
 After the markup rendition process, Tp-Note\[cq]s built-in viewer
 generates its final HTML rendition through the customizable HTML
-templates `\f[C][tmpl_html] viewer\f[R]' and
-`\f[C][tmpl_html] viewer_error\f[R]'.
-The following code example taken from `\f[C][tmpl_html] viewer\f[R]'
+templates `\f[C]tmpl_html.viewer\f[R]' and
+`\f[C]tmpl_html.viewer_error\f[R]'.
+The following code example taken from `\f[C]tmpl_html.viewer\f[R]'
 illustrates the available variables:
 .IP
 .nf
@@ -1727,7 +1727,7 @@ also be rendered as a table:
 \f[R]
 .fi
 .PP
-The error page template `\f[C][tmpl_html] viewer_error\f[R]' (see below)
+The error page template `\f[C]tmpl_html.viewer_error\f[R]' (see below)
 does not provide `\f[C]fm_*\f[R]' variables, because of possible header
 syntax errors.
 Instead, the variable `\f[C]{{ note_error }}\f[R]' contains the error
@@ -1763,15 +1763,15 @@ error = \[aq]\[aq]\[aq]<!DOCTYPE html>
 Customizing Tp-Note\[cq]s HTML export function works the same way as
 customizing the built-in viewer.
 There are some slight differences though: The role of the
-`\f[C][tmpl_html] viewer\f[R]' template - discussed above - is taken
-over by the `\f[C][tmpl_html] exporter\f[R]' template.
+`\f[C]tmpl_html.viewer\f[R]' template - discussed above - is taken
+over by the `\f[C]tmpl_html.exporter\f[R]' template.
 In this template the same \f[I]Tera\f[R] variables are available, except
 `\f[C]{{ note_js }}\f[R]' which does not make sense in this context.
 As the exporter prints possible rendition error messages on the console,
-there is no equivalent to the `\f[C][tmpl_html] viewer_error\f[R]'
+there is no equivalent to the `\f[C]tmpl_html.viewer_error\f[R]'
 template.
 Note, in contrast to the previous template
-`\f[C][tmpl_html] viewer\f[R]' example, the source code highlighting CSS
+`\f[C]tmpl_html.viewer\f[R]' example, the source code highlighting CSS
 code is now embedded in the HTML output with
 `\f[C]<style>{{ note_css }}</style>\f[R]'
 .SS Choose your favorite web browser as note viewer

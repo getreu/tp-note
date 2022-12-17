@@ -1352,8 +1352,8 @@ you wish to disable the viewer feature overall, set the variable
 
 After the markup rendition process, Tp-Note's built-in viewer generates its
 final HTML rendition through the customizable HTML templates
-'`[tmpl_html] viewer`' and '`[tmpl_html] viewer_error`'. The following code
-example taken from '`[tmpl_html] viewer`' illustrates the available variables:
+'`tmpl_html.viewer`' and '`tmpl_html.viewer_error`'. The following code
+example taken from '`tmpl_html.viewer`' illustrates the available variables:
 
 ```toml
 [tmpl_html]
@@ -1411,7 +1411,7 @@ as a table:
   </table>
 ```
 
-The error page template '`[tmpl_html] viewer_error`' (see below)
+The error page template '`tmpl_html.viewer_error`' (see below)
 does not provide '`fm_*`' variables, because of possible header syntax
 errors. Instead, the variable '`{{ note_error }}`' contains the error
 message as raw UTF-8 and the variable '`{{ note_erroneous_content_html }}`'
@@ -1442,13 +1442,13 @@ error = '''<!DOCTYPE html>
 
 Customizing Tp-Note's HTML export function works the same way as
 customizing the built-in viewer. There are some slight differences though:
-The role of the '`[tmpl_html] viewer`' template - discussed above - is
-taken over by the '`[tmpl_html] exporter`' template. In this template the
+The role of the '`tmpl_html.viewer`' template - discussed above - is
+taken over by the '`tmpl_html.exporter`' template. In this template the
 same _Tera_ variables are available, except '`{{ note_js }}`' which does not
 make sense in this context. As the exporter prints possible rendition error
 messages on the console, there is no equivalent to the
-'`[tmpl_html] viewer_error`' template. Note, in contrast to the previous 
-template '`[tmpl_html] viewer`' example, the source code highlighting CSS 
+'`tmpl_html.viewer_error`' template. Note, in contrast to the previous 
+template '`tmpl_html.viewer`' example, the source code highlighting CSS 
 code is now embedded in the HTML output with '`<style>{{ note_css }}</style>`'
 
 
