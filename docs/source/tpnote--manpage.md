@@ -341,7 +341,7 @@ To convert the text file into a Tp-Note file type:
 
 NB: the '`--add-header`' flag is actually not necessary, as it is enabled by
 default through the configuration file variable
-'`[arg_default] add_header = true`'.
+'`arg_default.add_header = true`'.
 
 As a result of the above command, Tp-Note converts the filename into:
 
@@ -471,7 +471,7 @@ synchronization).
     remain untouched. In case the filename is lacking a _sort-tag_,
     the file creation date in numerical format is prepended.
     As this option is activated by default, it has no effect unless
-    you set '`[arg_default] add_header = false`' in the configuration
+    you set '`arg_default.add_header = false`' in the configuration
     file.
 
 
@@ -528,7 +528,7 @@ synchronization).
         debug = 'info'
         popup = true
 
-    The value for '`[arg_default] debug`' must be one out of '`trace`',
+    The value for '`arg_default.debug`' must be one out of '`trace`',
     '`debug`', '`info`', '`warn`', '`error`' (default) and '`off`'. They have
     the same meaning as the corresponding command line options.
 
@@ -537,9 +537,9 @@ synchronization).
 :   Edit only mode: opens the external text editor, but not the file
     viewer. This disables Tp-Note's internal file watcher and web server,
     unless '`-v`' is given. Another way to permanently disable the web server
-    is to set the configuration variable '`[arg_default] edit=true`'.
+    is to set the configuration variable '`arg_default.edit=true`'.
     When '`--edit --view`' appear together, both the editor and the viewer
-    will open and the `[arg_default] edit` variable is ignored.
+    will open and the `arg_default.edit` variable is ignored.
 
 **-p**, **\--port**=*PORT*
 
@@ -580,9 +580,9 @@ synchronization).
 :   View only mode: do not open the external text editor. This flag instructs
     Tp-Note to start an internal file watcher and web server and connect
     the system's default web browser to view the note file and to observe live
-    file modifications. The configuration setting '`[arg_default] edit=true`'
+    file modifications. The configuration setting '`arg_default.edit=true`'
     disables the viewer. However, with '`--view`' given at the command line,
-    the viewer appears, regardless of the value of '`[arg_default] edit`'.
+    the viewer appears, regardless of the value of '`arg_default.edit`'.
 
 :   As most users do not expect the viewed file to change, '`--view`'
     is usually used together with '`--no-filename-sync`'.
@@ -619,7 +619,7 @@ synchronization).
     on a web server, then '`short`' is a good choice. If you view the HTML
     file directly in your web browser, better choose '`long`'. NB: You can
     also set this option via Tp-Note's configuration file with the key 
-    '`[arg_default] export_link_rewriting`'.
+    '`arg_default.export_link_rewriting`'.
 
 
 
@@ -894,7 +894,7 @@ The same applies to the '`file_ext`' variable.
 
 The metadata filename synchronization feature can be disabled permanently
 by setting the configuration file variable
-'`[arg_default] no_filename_sync = true`'. To disable this feature for one time
+'`arg_default.no_filename_sync = true`'. To disable this feature for one time
 only, invoke Tp-Note with '`--no-filename-sync`'. To exclude a particular note
 from filename synchronization, add the YAML header field '`filename_sync:
 false`'.
@@ -1346,7 +1346,7 @@ case none of the above rendition engines suit you, it is possible to disable
 the viewer feature selectively for some particular note file extensions: just
 place these extensions in the '`[filename] extensions_no_viewer`' variable. If
 you wish to disable the viewer feature overall, set the variable
-`[arg_default] edit = true`.
+`arg_default.edit = true`.
 
 **Change the HTML rendition template**
 
@@ -1558,8 +1558,8 @@ slight filename modification due to its sanitization filters (cf. '`sanit()`'
 in the section _Template filters_).
 
 You can disable the _prepend header_ feature by setting the configuration file
-variable '`[arg_default] add_header = false`'. To disable all filename
-synchronization, set '`[arg_default] no_filename_sync = true`'. This guarantees,
+variable '`arg_default.add_header = false`'. To disable all filename
+synchronization, set '`arg_default.no_filename_sync = true`'. This guarantees,
 that Tp-Note will never change neither the filename nor the YAML header of an
 existing file.
 
@@ -1860,7 +1860,7 @@ the `localhost` HTTP server.
 
 This is why on systems where multiple users are logged in at the same time,
 it is recommended to disable Tp-Note's internal HTTP server by setting the
-configuration file variable '`[arg_default] edit = true`'. Alternatively, you
+configuration file variable '`arg_default.edit = true`'. Alternatively, you
 can also compile Tp-Note without the '`viewer`' feature. Note, that even if
 the viewer feature disabled, the '`--export`' command line option still works:
 This allows the authorized user to render the note to HTML manually.

@@ -637,7 +637,7 @@ files.
 
 `Tp-Note`'s logging feature is controlled with the command line-options:
 `--debug` and `--popup` or by the corresponding configuration file variables:
-`[arg_default] debug` and `[arg_default] popup`.
+`arg_default.debug` and `arg_default.popup`.
 
 Please consult _Tp-Note_'s manual page for more information about the
 debugging options `--debug` and `--popup` and how to use them.

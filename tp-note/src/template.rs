@@ -34,7 +34,7 @@ pub(crate) fn template_kind_filter(template_kind: TemplateKind) -> TemplateKind 
             } else if CFG.arg_default.no_filename_sync {
                 log::info!(
                     "Filename synchronisation disabled with the configuration file \
-             variable: `[arg_default] no_filename_sync = true`",
+             variable: `arg_default.no_filename_sync = true`",
                 );
                 log::debug!("Changing the template to \"TemplateKind::None\"");
                 TemplateKind::None
