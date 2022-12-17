@@ -124,7 +124,7 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
                 .into_iter()
                 .map(|s| s.to_owned())
                 .collect::<Vec<String>>(),
-            var_name: "[app_args] browser".to_string(),
+            var_name: "app_args.browser".to_string(),
         }
         .into());
     };

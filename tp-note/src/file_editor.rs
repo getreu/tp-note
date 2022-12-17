@@ -113,9 +113,9 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
                     return Err(ConfigFileError::ApplicationReturn {
                         code: ecode,
                         var_name: if *RUNS_ON_CONSOLE {
-                            "[app_args] editor_console".to_string()
+                            "app_args.editor_console".to_string()
                         } else {
-                            "[app_args] editor".to_string()
+                            "app_args.editor".to_string()
                         },
                         args: (*editor_args[i]).to_vec(),
                     });
@@ -138,8 +138,8 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
                 .collect::<Vec<String>>(),
             // Choose the right parameter list.
             var_name: match *RUNS_ON_CONSOLE {
-                true => "[app_args] editor_console".to_string(),
-                false => "[app_args] editor".to_string(),
+                true => "app_args.editor_console".to_string(),
+                false => "app_args.editor".to_string(),
             },
         });
     };

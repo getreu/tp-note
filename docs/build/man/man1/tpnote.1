@@ -666,7 +666,7 @@ For example, under Linux, the `\f[C]DISPLAY\f[R]' environment variable
 is evaluated.
 The `\f[C]--tty\f[R]' flag disables the automatic detection and sets
 Tp-Note into \[lq]console only\[rq] mode: now only the non GUI editor
-(see configuration variable: `\f[C][app_args] editor_console\f[R]') and
+(see configuration variable: `\f[C]app_args.editor_console\f[R]') and
 no viewer is launched.
 .TP
 \f[B]-u\f[R], \f[B]--popup\f[R]
@@ -1130,16 +1130,16 @@ code file `\f[C]config.rs\f[R]' The configuration file is encoded
 according to the TOML standard.
 .SS Register your own text editor
 .PP
-The configuration file variables `\f[C][app_args] editor\f[R]' and
-`\f[C][app_args] editor_console\f[R]' define lists of external text
+The configuration file variables `\f[C]app_args.editor\f[R]' and
+`\f[C]app_args.editor_console\f[R]' define lists of external text
 editors to be launched for editing.
 The lists contain by default well-known text editor names and their
 command line arguments.
 Tp-Note tries to launch every text editor in
-`\f[C][app_args] editor\f[R]' from the beginning of the list until it
+`\f[C]app_args.editor\f[R]' from the beginning of the list until it
 finds an installed text editor.
 When Tp-Note is started on a Linux console, the list
-`\f[C][app_args] editor_console\f[R]' is used instead.
+`\f[C]app_args.editor_console\f[R]' is used instead.
 Here you can register text editors that do not require a graphical
 environment, e.g.\ `\f[C]vim\f[R]' or `\f[C]nano\f[R]'.
 In order to use your own text editor, just place it at the top of the
@@ -1230,7 +1230,7 @@ To test, run \f[I]Mark Text\f[R] from the command line:
 .fi
 .PP
 Then open Tp-Note\[cq]s configuration file \f[C]tpnote.toml\f[R] and
-search for the `\f[C][app_args] editor\f[R]' variable, quoted shortened
+search for the `\f[C]app_args.editor\f[R]' variable, quoted shortened
 below:
 .IP
 .nf
@@ -1780,12 +1780,12 @@ Once the note is rendered into HTML, Tp-Note\[cq]s internal HTTP server
 connects to a random port at the `\f[C]localhost\f[R]' interface where
 the rendition is served to be viewed with a web browser.
 Tp-Note\[cq]s configuration file contains a list
-`\f[C][app_args] browser\f[R]' with common web browsers and their usual
+`\f[C]app_args.browser\f[R]' with common web browsers and their usual
 location on disk.
 This list is executed top down until a web browser is found and
 launched.
 If you want to view your notes with a different web browser, simply
-modify the `\f[C][app_args] browser\f[R]' list and put your favorite web
+modify the `\f[C]app_args.browser\f[R]' list and put your favorite web
 browser on top.
 .PP
 In case none of the listed browsers can be found, Tp-Note switches into

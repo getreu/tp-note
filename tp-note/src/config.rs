@@ -61,7 +61,7 @@ const ARG_DEFAULT_POPUP: bool = true;
 /// example, under Linux, the '`DISPLAY`' environment variable is evaluated. The
 /// '`--tty`' flag disables the automatic detection and sets _Tp-Note_ in
 /// "console" mode, where only the non GUI editor (see configuration variable:
-/// '`[app_args] editor_console`') and no viewer is launched. If this is set
+/// '`app_args.editor_console`') and no viewer is launched. If this is set
 /// to `true` _Tp-Note_ starts in console mode permanently.
 const ARG_DEFAULT_TTY: bool = false;
 

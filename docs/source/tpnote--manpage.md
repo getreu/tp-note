@@ -562,7 +562,7 @@ synchronization).
     is available or not. For example, under Linux, the '`DISPLAY`' environment
     variable is evaluated. The '`--tty`' flag disables the automatic detection
     and sets Tp-Note into "console only" mode: now only the non GUI editor
-    (see configuration variable: '`[app_args] editor_console`') and no viewer
+    (see configuration variable: '`app_args.editor_console`') and no viewer
     is launched.
 
 **-u**, **\--popup**
@@ -937,13 +937,13 @@ The configuration file is encoded according to the TOML standard.
 
 ## Register your own text editor
 
-The configuration file variables '`[app_args] editor`' and
-'`[app_args] editor_console`' define lists of external text editors to be
+The configuration file variables '`app_args.editor`' and
+'`app_args.editor_console`' define lists of external text editors to be
 launched for editing. The lists contain by default well-known text editor names
 and their command line arguments.  Tp-Note tries to launch every text editor
-in '`[app_args] editor`' from the beginning of the list until it finds an
+in '`app_args.editor`' from the beginning of the list until it finds an
 installed text editor. When Tp-Note is started on a Linux console, the list
-'`[app_args] editor_console`' is used instead. Here you can register text
+'`app_args.editor_console`' is used instead. Here you can register text
 editors that do not require a graphical environment, e.g. '`vim`' or '`nano`'.
 In order to use your own text editor, just place it at the top of the list. To
 debug your changes invoke Tp-Note with '`tpnote --debug info --popup --edit`'
@@ -1014,7 +1014,7 @@ To test, run _Mark Text_ from the command line:
     > flatpak run com.github.marktext.marktext
 
 Then open Tp-Note's configuration file `tpnote.toml` and search for the
-'`[app_args] editor`' variable, quoted shortened below:
+'`app_args.editor`' variable, quoted shortened below:
 
 ```toml
 [app_args]
@@ -1457,10 +1457,10 @@ code is now embedded in the HTML output with '`<style>{{ note_css }}</style>`'
 Once the note is rendered into HTML, Tp-Note's internal HTTP server connects
 to a random port at the '`localhost`' interface where the rendition is served to
 be viewed with a web browser. Tp-Note's configuration file contains a list
-'`[app_args] browser`' with common web browsers and their usual location on disk.
+'`app_args.browser`' with common web browsers and their usual location on disk.
 This list is executed top down until a web browser is found and launched. If
 you want to view your notes with a different web browser, simply modify the
-'`[app_args] browser`' list and put your favorite web browser on top.
+'`app_args.browser`' list and put your favorite web browser on top.
 
 In case none of the listed browsers can be found, Tp-Note switches into a
 fall back mode with limited functionality, where it tries to open the system's

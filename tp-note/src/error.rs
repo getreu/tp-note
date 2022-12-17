@@ -79,7 +79,7 @@ pub enum ConfigFileError {
     #[error("Can not convert path to UFT8:\n{path:?}")]
     PathNotUtf8 { path: PathBuf },
 
-    /// Remedy: check the configuration file variable `[app_args] editor`.
+    /// Remedy: check the configuration file variable `app_args.editor`.
     #[error(
         "The external application did not terminate gracefully: {code}\n\
          \n\
@@ -93,7 +93,7 @@ pub enum ConfigFileError {
         args: Vec<String>,
     },
 
-    /// Remedy: check the configuration file variable `[app_args] editor`.
+    /// Remedy: check the configuration file variable `app_args.editor`.
     #[error(
         "None of the following external applications can be found on your system:\n\
         \t{app_list:?}\n\
