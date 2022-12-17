@@ -121,11 +121,11 @@ impl TemplateKind {
     /// Returns the content template variable name as it is used in the configuration file.
     pub fn get_content_template_name(&self) -> &str {
         match self {
-            Self::New => "[tmpl] new_content",
-            Self::FromClipboardYaml => "[tmpl] from_clipboard_yaml_content",
-            Self::FromClipboard => "[tmpl] from_clipboard_content",
-            Self::FromTextFile => "[tmpl] from_text_file_content",
-            Self::AnnotateFile => "[tmpl] annotate_file_content",
+            Self::New => "tmpl.new_content",
+            Self::FromClipboardYaml => "tmpl.from_clipboard_yaml_content",
+            Self::FromClipboard => "tmpl.from_clipboard_content",
+            Self::FromTextFile => "tmpl.from_text_file_content",
+            Self::AnnotateFile => "tmpl.annotate_file_content",
             Self::SyncFilename => "`TemplateKind::SyncFilename` has no content template",
             Self::None => "`TemplateKind::None` has no content template",
         }
@@ -153,12 +153,12 @@ impl TemplateKind {
     /// Returns the content template variable name as it is used in the configuration file.
     pub fn get_filename_template_name(&self) -> &str {
         match self {
-            Self::New => "[tmpl] new_filename",
-            Self::FromClipboardYaml => "[tmpl] from_clipboard_yaml_filename",
-            Self::FromClipboard => "[tmpl] from_clipboard_filename",
-            Self::FromTextFile => "[tmpl] from_text_file_filename",
-            Self::AnnotateFile => "[tmpl] annotate_file_filename",
-            Self::SyncFilename => "[tmpl] sync_filename",
+            Self::New => "tmpl.new_filename",
+            Self::FromClipboardYaml => "tmpl.from_clipboard_yaml_filename",
+            Self::FromClipboard => "tmpl.from_clipboard_filename",
+            Self::FromTextFile => "tmpl.from_text_file_filename",
+            Self::AnnotateFile => "tmpl.annotate_file_filename",
+            Self::SyncFilename => "tmpl.sync_filename",
             Self::None => "`TemplateKind::None` has no filename template",
         }
     }

@@ -67,12 +67,12 @@ one filename template.
 ## Create a new note with empty clipboard
 
 In case the clipboard is empty while starting, the new note is created
-with the templates: '`[tmpl] new_content`' and '`[tmpl] new_filename`'.  By
+with the templates: '`tmpl.new_content`' and '`tmpl.new_filename`'.  By
 default, the new note's title is the parent's directory name. The newly created
 file is then opened with an external text editor, allowing it to change the
 proposed title and add other content. When the text editor closes, Tp-Note
 synchronizes the note's metadata and its filename. This operation is performed
-with the '`[tmpl] sync_filename`' template.
+with the '`tmpl.sync_filename`' template.
 
 Example: the clipboard is empty and `<path>` is a directory (or empty):
 
@@ -112,11 +112,11 @@ content contains an hyperlink in Markdown format, the hyperlink's name can be
 accessed with '`{{ clipboard | link_text }}`', its URL with
 '`{{ clipboard | link_dest }}`' and its title with
 '`{{ clipboard | link_title }}`'. The new note is then created with the
-'`[tmpl] from_clipboard_content`' and the '`[tmpl] from_clipboard_filename`'
+'`tmpl.from_clipboard_content`' and the '`tmpl.from_clipboard_filename`'
 templates. Finally, the newly created note file is opened again with some
 external text editor. When the user closes the text editor, Tp-Note
 synchronizes the note's metadata and its filename with the template
-'`[tmpl] sync_filename`'.
+'`tmpl.sync_filename`'.
 
 > Note: this operation mode also empties the clipboard (configurable feature).
 
@@ -170,13 +170,13 @@ Who Moved My Cheese?
 Chapter 2
 ```
 
-We see from the above example, how the '`[tmpl] from_clipboard_content`' content
+We see from the above example, how the '`tmpl.from_clipboard_content`' content
 template extracts the first line of the clipboards content and inserts it into
 the header's '`title:`' field. Then, it copies the entire clipboard content into
 the body of the document.  However, if desired or necessary, it is possible to
 modify all templates in Tp-Note's configuration file. Note, that not only the
 note's content is created with a template, but also its filename: The
-'`[tmpl] from_clipboard_filename`' filename template concatenates the current date,
+'`tmpl.from_clipboard_filename`' filename template concatenates the current date,
 the note's title and subtitle.
 
 
@@ -189,8 +189,8 @@ the string: "`I recommend:\n[The Rust Book](https://doc.rust-lang.org/book/)`".
 > tpnote './doc/Lecture 1'
 ```
 
-Tp-Note's templates '`[tmpl] from_clipboard_content`' and
-'`[tmpl] from_clipboard_filename`' create the following document:
+Tp-Note's templates '`tmpl.from_clipboard_content`' and
+'`tmpl.from_clipboard_filename`' create the following document:
 
     ./doc/Lecture 1/20211031-The Rust Book--Notes.md
 
@@ -243,8 +243,8 @@ using the YAML header variables: '`{{ fm_title }}`',
 '`{{ fm_subtitle }}`', '`{{ fm_author }}`', '`{{ fm_date }}`',
 '`{{ fm_lang }}`', '`{{ fm_sort_tag }}`' and
 '`{{ fm_file_ext }}`' which are evaluated with the
-'`[tmpl] from_clipboard_yaml_content`' and the
-'`[tmpl] from_clipboard_yaml_filename`' templates.
+'`tmpl.from_clipboard_yaml_content`' and the
+'`tmpl.from_clipboard_yaml_filename`' templates.
 
 Note, that the same result can also be achieved without clipboard input by
 typing in a terminal:
@@ -288,8 +288,8 @@ When '`<path>`' points to an existing file, whose file extension is other than
 '`.md`', a new note is created with a similar filename and a reference to the
 original file is copied into the new note's body. If the clipboard contains some
 text, it is appended there also. The logic of this is implemented in the
-templates: '`[tmpl] annotate_file_content`' and
-'`[tmpl] annotate_file_filename`'. Once the file is created, it is opened with
+templates: '`tmpl.annotate_file_content`' and
+'`tmpl.annotate_file_filename`'. Once the file is created, it is opened with
 an external text editor. After editing the file, it will be - if necessary -
 renamed to be in sync with the note's metadata.
 
@@ -405,7 +405,7 @@ A little game designed for primary kids to revise vocabulary in classroom.
   a valid YAML header or not:
 
   * A YAML header is present and valid: the header fields might update
-    the filename (see template '`[tmpl] sync_filename`'). A possible _sort-tag_
+    the filename (see template '`tmpl.sync_filename`'). A possible _sort-tag_
     at the beginning of the filename remains untouched.
 
   * No YAML header: a new header is prepended (see template
@@ -445,7 +445,7 @@ Example:
 ```
 
 The way how Tp-Note synchronizes the note's metadata and filename is defined
-in the template '`[tmpl] sync_filename`'.
+in the template '`tmpl.sync_filename`'.
 
 Once Tp-Note opens the file in an text editor, the person taking notes may
 decide updating the title in the note's YAML metadata section from '`title:
@@ -633,7 +633,7 @@ Tp-Note considers a text file to be a valid note file, if its:
 * content has a valid YAML header and
 
 * the YAML header contains a key whose name is defined in the configuration
-  file variable '`[tmpl] compulsory_header_field`' (default '`title`').
+  file variable '`tmpl.compulsory_header_field`' (default '`title`').
 
 A Tp-Note note file is always UTF-8 encoded. As newline, either the Unix
 standard '`\n`' or the Windows standard '`\r\n`' is accepted. Tp-Note writes
@@ -660,7 +660,7 @@ The YAML front-matter starts at the beginning of the document with '`---`'
 and ends with '`...`' or '`---`'. Note that according to the YAML standard,
 string literals are always encoded as JSON strings. By convention, a valid
 Tp-Note file has at least one YAML field named '`title:`' (the name of this
-compulsory field is defined by the '`[tmpl] compulsory_header_field`'
+compulsory field is defined by the '`tmpl.compulsory_header_field`'
 variable in the configuration file and can be changed there).
 
 Note that prepended text, placed before the YAML front-matter, is ignored. There
@@ -1182,9 +1182,9 @@ belong to the same extension group defined in '`filename.extensions_md`'.
 
 Tp-Note's core functionality, the management of note file headers and
 filenames, is markup language agnostic. However, there is one content template
-'`[tmpl] from_clipboard_content`' that generates a hyperlink. The hyperlink
+'`tmpl.from_clipboard_content`' that generates a hyperlink. The hyperlink
 syntax varies depending on the markup language. Hence, you should not forget to
-modify the '`[tmpl] from_clipboard_content`' content template, when you
+modify the '`tmpl.from_clipboard_content`' content template, when you
 change the default markup language defined in '`filename.extension_default`'.
 
 
@@ -1210,7 +1210,7 @@ affect the way new notes are created:
    extension_default='rst'
    ```
 
-2. Replace the following line in the template '`[tmpl] from_clipboard_content`'
+2. Replace the following line in the template '`tmpl.from_clipboard_content`'
    that defines a hyperlink in Markdown format:
 
        [{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}](<{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}>)
@@ -1259,14 +1259,14 @@ sort_tag_chars`' configuration variable. In addition, one special character
 
 The filename synchronization scheme is fully customizable through _Tp-Note's
 filename templates_. To design such a custom scheme, start to set up your
-synchronization rules in the '`[tmpl] sync_filename`' template. Then adjust all
-'`[tmpl] *_filename`' templates to comply with these rules. In order to verify
+synchronization rules in the '`tmpl.sync_filename`' template. Then adjust all
+'`tmpl.*_filename`' templates to comply with these rules. In order to verify
 your design, check that the following holds for any sequential application of
-one '`[tmpl] *_filename`' template followed directly by the
-'`[tmpl] sync_filename`' template: The latter should never change the filename
-initially set up by any '`[tmpl] *_filename`' template.
+one '`tmpl.*_filename`' template followed directly by the
+'`tmpl.sync_filename`' template: The latter should never change the filename
+initially set up by any '`tmpl.*_filename`' template.
 
-Secondly, make sure that the expression in '`[tmpl] sync_filename`' describing
+Secondly, make sure that the expression in '`tmpl.sync_filename`' describing
 the filename's _sort tag_ e.g. '`{{ path | tag }}`' is always followed by a
 variable with the '`sanit(force_alpha=true)`' filter set, e.g.:
 
@@ -1276,10 +1276,10 @@ The first expression guarantees, that it resolves only to characters defined in
 the '`filename.sort_tag_chars`' set, while the second expression is known
 to not start with such a character. This way Tp-Note is able to separate
 _sort tags_ in filenames and avoids cyclic filename change. Or, in other words:
-the '`[tmpl] sync_filname`' template should always give the same result, even
+the '`tmpl.sync_filname`' template should always give the same result, even
 after repeated application.
 
-To debug your '`[tmpl] sync_filename`' template, create a test note file
+To debug your '`tmpl.sync_filename`' template, create a test note file
 '`test.md`' and invoke Tp-Note with '`--debug trace`' and '`--batch`':
 
     tpnote --batch --debug trace test.md
@@ -1291,10 +1291,10 @@ To debug your '`[tmpl] sync_filename`' template, create a test note file
 When you are annotating an existing file on disk, the new note file is
 placed in the same directory by default. To configure Tp-Note to
 store the new note file in a subdirectory, let's say '`Notes/`', instead, you
-need to modify the templates '`[tmpl] annotate_file_filename`' and
-'`[tmpl] annotate_file_content`':
+need to modify the templates '`tmpl.annotate_file_filename`' and
+'`tmpl.annotate_file_content`':
 
-Replace in '`[tmpl] annotate_file_filename`' the string:
+Replace in '`tmpl.annotate_file_filename`' the string:
 
     {{ path | tag }}
 
@@ -1302,7 +1302,7 @@ with:
 
     Notes/{{ path | tag }}
 
-and in '`[tmpl] annotate_file_content`':
+and in '`tmpl.annotate_file_content`':
 
     [{{ path | filename }}](<{{ path | filename }}>)
 
@@ -1477,8 +1477,8 @@ invoke Tp-Note with '`tpnote --debug info --popup --view`'.
 
 All _TP-Note_'s workflows are customizable through its templates which
 are grouped in the '`[tmpl]`' section of _Tp-Nots_'s configuration file.
-Configuration file variables ending with '`[tmpl] *_content`' and
-'`[tmpl] *_filename`' are _Tera_ template strings (see:
+Configuration file variables ending with '`tmpl.*_content`' and
+'`tmpl.*_filename`' are _Tera_ template strings (see:
 <https://tera.netlify.com/docs/#templates>).
 
 Tp-Note captures and stores its environment in _Tera variables_. For example,
@@ -1496,16 +1496,16 @@ The content of a new note is composed by one of Tp-Note's internal customizable
 templates, hence the name Tp-Note, where _Tp_ stands for “template”. Which of
 the internal templates is applied depends on the context in which Tp-Note is
 invoked: e.g. the template for clipboard text input is called
-'`[tmpl] from_clipboard_content`'. If the clipboard contains text with a YAML
-header, the template '`[tmpl] from_clipboard_yaml_content`' is used.
+'`tmpl.from_clipboard_content`'. If the clipboard contains text with a YAML
+header, the template '`tmpl.from_clipboard_yaml_content`' is used.
 
-In total, there are 5 different '`[tmpl] *_content`' templates:
+In total, there are 5 different '`tmpl.*_content`' templates:
 
-* '`[tmpl] new_content`'
-* '`[tmpl] from_clipboard_content`'
-* '`[tmpl] from_clipboard_yaml_content`'
-* '`[tmpl] from_text_file_content`'
-* '`[tmpl] annotate_file_content`'
+* '`tmpl.new_content`'
+* '`tmpl.from_clipboard_content`'
+* '`tmpl.from_clipboard_yaml_content`'
+* '`tmpl.from_text_file_content`'
+* '`tmpl.annotate_file_content`'
 
 In general, the templates are designed in a way, that the text input
 stream -usually originating from the clipboard- ends up in the body of the
@@ -1516,12 +1516,12 @@ Once the content of the new note is set by one of the content templates,
 another template type comes into play: the so-called _filename template_.
 Each content template has a corresponding filename template, e.g.:
 
-* '`[tmpl] new_filename`'
-* '`[tmpl] from_clipboard_filename`'
-* '`[tmpl] from_clipboard_yaml_filename`'
-* '`[tmpl] from_text_file_filename`'
-* '`[tmpl] annotate_file_filename`'
-* '`[tmpl] sync_filename`' (no corresponding content template)
+* '`tmpl.new_filename`'
+* '`tmpl.from_clipboard_filename`'
+* '`tmpl.from_clipboard_yaml_filename`'
+* '`tmpl.from_text_file_filename`'
+* '`tmpl.annotate_file_filename`'
+* '`tmpl.sync_filename`' (no corresponding content template)
 
 As the name suggests, the role of a filename template is to determine the
 filename of the new note. This is done by evaluating (deserializing) it's YAML
@@ -1539,21 +1539,21 @@ and _synchronize filename_:
   opens a regular text file without a YAML header, a new header is prepended
   automatically. It's data origins mainly form the filename of the
   text file. The templates applied in this use case are:
-  '`[tmpl] from_text_file_content`' and '`[tmpl] from_text_file_filename`'.
+  '`tmpl.from_text_file_content`' and '`tmpl.from_text_file_filename`'.
 
 * _Synchronize filename_: This function mode is invoked when [Tp-Note] opens an
   existing note file, after it's YAML header is evaluated. The extracted header
-  information is then applied to the '`[tmpl] sync_filename`' template and the
+  information is then applied to the '`tmpl.sync_filename`' template and the
   resulting filename is compared to the actual filename on disk. If they differ,
-  [Tp-Note] renames the note file. The '`[tmpl] sync_filename`' template operates on
+  [Tp-Note] renames the note file. The '`tmpl.sync_filename`' template operates on
   its own without a corresponding content template.
 
 Note, that in the operation mode _synchronize filename_, the header data
 overwrites the filename of the note, whereas in the operation mode _prepend
 header_ the filename data is copied into the new prepended header. Keep in mind,
 that even in the latter mode the filename might change slightly. This is because
-after the header creation with the '`[tmpl] from_text_file_content`' template,
-the '`[tmpl] from_text_file_filename`' template is applied, which might cause a
+after the header creation with the '`tmpl.from_text_file_content`' template,
+the '`tmpl.from_text_file_filename`' template is applied, which might cause a
 slight filename modification due to its sanitization filters (cf. '`sanit()`'
 in the section _Template filters_).
 
@@ -1630,15 +1630,15 @@ In addition, Tp-Note defines the following variables:
 
 The following '`{{ fm_* }}`' variables are typically generated, _after_ a
 content template was filled in with data: For example a field named '`title:`'
-in the content template '`[tmpl] new_content`' will generate the variable
-'`fm_title`' which can then be used in the corresponding '`[tmpl] new_filename`'
+in the content template '`tmpl.new_content`' will generate the variable
+'`fm_title`' which can then be used in the corresponding '`tmpl.new_filename`'
 filename template. '`{{ fm_* }}`' variables are generated dynamically. This
 means, a YAML front-matter variable '`foo:`' in a note will generate a
 '`{{ fm_foo }}`' template variable. On the other hand, a missing '`foo:`'
 will cause '`{{ fm_foo }}`' to be undefined.
 
 Please note that '`{{ fm_* }}`' variables are available in all filename
-templates and in the '`[tmpl] from_clipboard_yaml_content`' content template only.
+templates and in the '`tmpl.from_clipboard_yaml_content`' content template only.
 
 * '`{{ fm_title }}`' is the '`title:`' as indicated in the YAML front-matter of
   the note.
@@ -1659,7 +1659,7 @@ templates and in the '`[tmpl] from_clipboard_yaml_content`' content template onl
   matter of this note (e.g. '`sort_tag: "20200312-"`').
 
 * '`{{ fm_all }}`': is a collection (map) of all defined '`{{ fm_* }}`'
-  variables.  It is used in the '`[tmpl] from_clipboard_yaml_content`' template,
+  variables.  It is used in the '`tmpl.from_clipboard_yaml_content`' template,
   typically in a loop like:
 
   ```yaml
@@ -1755,9 +1755,9 @@ A filter is always used together with a variable. Here are some examples:
 
 Tp-Note distinguishes two template types: content templates are used to create
 the note's content (front-matter and body) and the corresponding
-filename templates '`[tmpl] *_filename`' are used to calculate the note's
+filename templates '`tmpl.*_filename`' are used to calculate the note's
 filename.  By convention, content templates appear in the configuration file in
-variables named '`[tmpl] *_content`'.
+variables named '`tmpl.*_content`'.
 
 Strings in the YAML front-matter of content templates are JSON encoded.
 Therefore, all variables used in the front-matter must pass an additional
@@ -1770,10 +1770,10 @@ becomes '`{{ dir_path | stem() | json_encode() }}`' or just
 ## Filename template conventions
 
 By convention, filename templates appear in the configuration file in variables
-named '`[tmpl] *_filename`'.  When a content template creates a new note, the
+named '`tmpl.*_filename`'.  When a content template creates a new note, the
 corresponding filename template is called afterwards to calculate the filename
 of the new note. Please note that, the filename template
-'`[tmpl] sync_filename`' has a special role as it synchronizes the filename
+'`tmpl.sync_filename`' has a special role as it synchronizes the filename
 of existing note files. Besides this, as we are dealing with filenames we must
 guarantee, that the filename templates produce only file system friendly
 characters.  For this purpose Tp-Note provides the additional Tera filters
@@ -1782,7 +1782,7 @@ characters.  For this purpose Tp-Note provides the additional Tera filters
 * The '`sanit()`' filter transforms a string in a file system friendly from. This
   is done by replacing forbidden characters like '`?`' and '`\\`' with '`_`'
   or space. This filter can be used with any variable, but is most useful with
-  filename templates. For example, in the '`[tmpl] sync_filename`'
+  filename templates. For example, in the '`tmpl.sync_filename`'
   template, we find the expression '`{{ subtitle | sanit }}`'.
   Note that the filter recognizes strings that represent a so-called dot file
   name and treats them a little differently by prepending them with an

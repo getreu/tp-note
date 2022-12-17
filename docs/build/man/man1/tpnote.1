@@ -58,14 +58,14 @@ template.
 .SS Create a new note with empty clipboard
 .PP
 In case the clipboard is empty while starting, the new note is created
-with the templates: `\f[C][tmpl] new_content\f[R]' and
-`\f[C][tmpl] new_filename\f[R]'.
+with the templates: `\f[C]tmpl.new_content\f[R]' and
+`\f[C]tmpl.new_filename\f[R]'.
 By default, the new note\[cq]s title is the parent\[cq]s directory name.
 The newly created file is then opened with an external text editor,
 allowing it to change the proposed title and add other content.
 When the text editor closes, Tp-Note synchronizes the note\[cq]s
 metadata and its filename.
-This operation is performed with the `\f[C][tmpl] sync_filename\f[R]'
+This operation is performed with the `\f[C]tmpl.sync_filename\f[R]'
 template.
 .PP
 Example: the clipboard is empty and \f[C]<path>\f[R] is a directory (or
@@ -118,13 +118,13 @@ the hyperlink\[cq]s name can be accessed with
 `\f[C]{{ clipboard | link_dest }}\f[R]' and its title with
 `\f[C]{{ clipboard | link_title }}\f[R]'.
 The new note is then created with the
-`\f[C][tmpl] from_clipboard_content\f[R]' and the
-`\f[C][tmpl] from_clipboard_filename\f[R]' templates.
+`\f[C]tmpl.from_clipboard_content\f[R]' and the
+`\f[C]tmpl.from_clipboard_filename\f[R]' templates.
 Finally, the newly created note file is opened again with some external
 text editor.
 When the user closes the text editor, Tp-Note synchronizes the
 note\[cq]s metadata and its filename with the template
-`\f[C][tmpl] sync_filename\f[R]'.
+`\f[C]tmpl.sync_filename\f[R]'.
 .RS
 .PP
 Note: this operation mode also empties the clipboard (configurable
@@ -192,7 +192,7 @@ Chapter 2
 .fi
 .PP
 We see from the above example, how the
-`\f[C][tmpl] from_clipboard_content\f[R]' content template extracts the
+`\f[C]tmpl.from_clipboard_content\f[R]' content template extracts the
 first line of the clipboards content and inserts it into the
 header\[cq]s `\f[C]title:\f[R]' field.
 Then, it copies the entire clipboard content into the body of the
@@ -200,7 +200,7 @@ document.
 However, if desired or necessary, it is possible to modify all templates
 in Tp-Note\[cq]s configuration file.
 Note, that not only the note\[cq]s content is created with a template,
-but also its filename: The `\f[C][tmpl] from_clipboard_filename\f[R]'
+but also its filename: The `\f[C]tmpl.from_clipboard_filename\f[R]'
 filename template concatenates the current date, the note\[cq]s title
 and subtitle.
 .SS The clipboard contains a hyperlink
@@ -215,8 +215,8 @@ it contains the string:
 \f[R]
 .fi
 .PP
-Tp-Note\[cq]s templates `\f[C][tmpl] from_clipboard_content\f[R]' and
-`\f[C][tmpl] from_clipboard_filename\f[R]' create the following
+Tp-Note\[cq]s templates `\f[C]tmpl.from_clipboard_content\f[R]' and
+`\f[C]tmpl.from_clipboard_filename\f[R]' create the following
 document:
 .IP
 .nf
@@ -279,8 +279,8 @@ header variables: `\f[C]{{ fm_title }}\f[R]',
 `\f[C]{{ fm_subtitle }}\f[R]', `\f[C]{{ fm_author }}\f[R]',
 `\f[C]{{ fm_date }}\f[R]', `\f[C]{{ fm_lang }}\f[R]',
 `\f[C]{{ fm_sort_tag }}\f[R]' and `\f[C]{{ fm_file_ext }}\f[R]' which
-are evaluated with the `\f[C][tmpl] from_clipboard_yaml_content\f[R]'
-and the `\f[C][tmpl] from_clipboard_yaml_filename\f[R]' templates.
+are evaluated with the `\f[C]tmpl.from_clipboard_yaml_content\f[R]'
+and the `\f[C]tmpl.from_clipboard_yaml_filename\f[R]' templates.
 .PP
 Note, that the same result can also be achieved without clipboard input
 by typing in a terminal:
@@ -330,8 +330,8 @@ filename and a reference to the original file is copied into the new
 note\[cq]s body.
 If the clipboard contains some text, it is appended there also.
 The logic of this is implemented in the templates:
-`\f[C][tmpl] annotate_file_content\f[R]' and
-`\f[C][tmpl] annotate_file_filename\f[R]'.
+`\f[C]tmpl.annotate_file_content\f[R]' and
+`\f[C]tmpl.annotate_file_filename\f[R]'.
 Once the file is created, it is opened with an external text editor.
 After editing the file, it will be - if necessary - renamed to be in
 sync with the note\[cq]s metadata.
@@ -479,7 +479,7 @@ The direction of the synchronization depends on whether the
 `\f[C].md\f[R]' file has a valid YAML header or not:
 .IP \[bu] 2
 A YAML header is present and valid: the header fields might update the
-filename (see template `\f[C][tmpl] sync_filename\f[R]').
+filename (see template `\f[C]tmpl.sync_filename\f[R]').
 A possible \f[I]sort-tag\f[R] at the beginning of the filename remains
 untouched.
 .IP \[bu] 2
@@ -525,7 +525,7 @@ Example:
 .fi
 .PP
 The way how Tp-Note synchronizes the note\[cq]s metadata and filename is
-defined in the template `\f[C][tmpl] sync_filename\f[R]'.
+defined in the template `\f[C]tmpl.sync_filename\f[R]'.
 .PP
 Once Tp-Note opens the file in an text editor, the person taking notes
 may decide updating the title in the note\[cq]s YAML metadata section
@@ -747,7 +747,7 @@ file extension is listed in one of the configuration file variables
 content has a valid YAML header and
 .IP \[bu] 2
 the YAML header contains a key whose name is defined in the
-configuration file variable `\f[C][tmpl] compulsory_header_field\f[R]'
+configuration file variable `\f[C]tmpl.compulsory_header_field\f[R]'
 (default `\f[C]title\f[R]').
 .PP
 A Tp-Note note file is always UTF-8 encoded.
@@ -778,7 +778,7 @@ Note that according to the YAML standard, string literals are always
 encoded as JSON strings.
 By convention, a valid Tp-Note file has at least one YAML field named
 `\f[C]title:\f[R]' (the name of this compulsory field is defined by the
-`\f[C][tmpl] compulsory_header_field\f[R]' variable in the configuration
+`\f[C]tmpl.compulsory_header_field\f[R]' variable in the configuration
 file and can be changed there).
 .PP
 Note that prepended text, placed before the YAML front-matter, is
@@ -1431,10 +1431,10 @@ defined in `\f[C]filename.extensions_md\f[R]'.
 Tp-Note\[cq]s core functionality, the management of note file headers
 and filenames, is markup language agnostic.
 However, there is one content template
-`\f[C][tmpl] from_clipboard_content\f[R]' that generates a hyperlink.
+`\f[C]tmpl.from_clipboard_content\f[R]' that generates a hyperlink.
 The hyperlink syntax varies depending on the markup language.
 Hence, you should not forget to modify the
-`\f[C][tmpl] from_clipboard_content\f[R]' content template, when you
+`\f[C]tmpl.from_clipboard_content\f[R]' content template, when you
 change the default markup language defined in
 `\f[C]filename.extension_default\f[R]'.
 .SS Change default markup language to ReStructuredText
@@ -1468,7 +1468,7 @@ extension_default=\[aq]rst\[aq]
 .RE
 .IP "2." 3
 Replace the following line in the template
-`\f[C][tmpl] from_clipboard_content\f[R]' that defines a hyperlink in
+`\f[C]tmpl.from_clipboard_content\f[R]' that defines a hyperlink in
 Markdown format:
 .RS 4
 .IP
@@ -1527,17 +1527,17 @@ to avoid ambiguity.
 The filename synchronization scheme is fully customizable through
 \f[I]Tp-Note\[cq]s filename templates\f[R].
 To design such a custom scheme, start to set up your synchronization
-rules in the `\f[C][tmpl] sync_filename\f[R]' template.
-Then adjust all `\f[C][tmpl] *_filename\f[R]' templates to comply with
+rules in the `\f[C]tmpl.sync_filename\f[R]' template.
+Then adjust all `\f[C]tmpl.*_filename\f[R]' templates to comply with
 these rules.
 In order to verify your design, check that the following holds for any
-sequential application of one `\f[C][tmpl] *_filename\f[R]' template
-followed directly by the `\f[C][tmpl] sync_filename\f[R]' template: The
+sequential application of one `\f[C]tmpl.*_filename\f[R]' template
+followed directly by the `\f[C]tmpl.sync_filename\f[R]' template: The
 latter should never change the filename initially set up by any
-`\f[C][tmpl] *_filename\f[R]' template.
+`\f[C]tmpl.*_filename\f[R]' template.
 .PP
 Secondly, make sure that the expression in
-`\f[C][tmpl] sync_filename\f[R]' describing the filename\[cq]s \f[I]sort
+`\f[C]tmpl.sync_filename\f[R]' describing the filename\[cq]s \f[I]sort
 tag\f[R] e.g.\ `\f[C]{{ path | tag }}\f[R]' is always followed by a
 variable with the `\f[C]sanit(force_alpha=true)\f[R]' filter set, e.g.:
 .IP
@@ -1552,10 +1552,10 @@ defined in the `\f[C]filename.sort_tag_chars\f[R]' set, while the
 second expression is known to not start with such a character.
 This way Tp-Note is able to separate \f[I]sort tags\f[R] in filenames
 and avoids cyclic filename change.
-Or, in other words: the `\f[C][tmpl] sync_filname\f[R]' template should
+Or, in other words: the `\f[C]tmpl.sync_filname\f[R]' template should
 always give the same result, even after repeated application.
 .PP
-To debug your `\f[C][tmpl] sync_filename\f[R]' template, create a test
+To debug your `\f[C]tmpl.sync_filename\f[R]' template, create a test
 note file `\f[C]test.md\f[R]' and invoke Tp-Note with
 `\f[C]--debug trace\f[R]' and `\f[C]--batch\f[R]':
 .IP
@@ -1570,10 +1570,10 @@ When you are annotating an existing file on disk, the new note file is
 placed in the same directory by default.
 To configure Tp-Note to store the new note file in a subdirectory,
 let\[cq]s say `\f[C]Notes/\f[R]', instead, you need to modify the
-templates `\f[C][tmpl] annotate_file_filename\f[R]' and
-`\f[C][tmpl] annotate_file_content\f[R]':
+templates `\f[C]tmpl.annotate_file_filename\f[R]' and
+`\f[C]tmpl.annotate_file_content\f[R]':
 .PP
-Replace in `\f[C][tmpl] annotate_file_filename\f[R]' the string:
+Replace in `\f[C]tmpl.annotate_file_filename\f[R]' the string:
 .IP
 .nf
 \f[C]
@@ -1589,7 +1589,7 @@ Notes/{{ path | tag }}
 \f[R]
 .fi
 .PP
-and in `\f[C][tmpl] annotate_file_content\f[R]':
+and in `\f[C]tmpl.annotate_file_content\f[R]':
 .IP
 .nf
 \f[C]
@@ -1802,8 +1802,8 @@ invoke Tp-Note with `\f[C]tpnote --debug info --popup --view\f[R]'.
 All \f[I]TP-Note\f[R]\[cq]s workflows are customizable through its
 templates which are grouped in the `\f[C][tmpl]\f[R]' section of
 \f[I]Tp-Nots\f[R]\[cq]s configuration file.
-Configuration file variables ending with `\f[C][tmpl] *_content\f[R]'
-and `\f[C][tmpl] *_filename\f[R]' are \f[I]Tera\f[R] template strings
+Configuration file variables ending with `\f[C]tmpl.*_content\f[R]'
+and `\f[C]tmpl.*_filename\f[R]' are \f[I]Tera\f[R] template strings
 (see: <https://tera.netlify.com/docs/#templates>).
 .PP
 Tp-Note captures and stores its environment in \f[I]Tera variables\f[R].
@@ -1821,21 +1821,21 @@ customizable templates, hence the name Tp-Note, where \f[I]Tp\f[R]
 stands for \[lq]template\[rq].
 Which of the internal templates is applied depends on the context in
 which Tp-Note is invoked: e.g.\ the template for clipboard text input is
-called `\f[C][tmpl] from_clipboard_content\f[R]'.
+called `\f[C]tmpl.from_clipboard_content\f[R]'.
 If the clipboard contains text with a YAML header, the template
-`\f[C][tmpl] from_clipboard_yaml_content\f[R]' is used.
+`\f[C]tmpl.from_clipboard_yaml_content\f[R]' is used.
 .PP
-In total, there are 5 different `\f[C][tmpl] *_content\f[R]' templates:
+In total, there are 5 different `\f[C]tmpl.*_content\f[R]' templates:
 .IP \[bu] 2
-`\f[C][tmpl] new_content\f[R]'
+`\f[C]tmpl.new_content\f[R]'
 .IP \[bu] 2
-`\f[C][tmpl] from_clipboard_content\f[R]'
+`\f[C]tmpl.from_clipboard_content\f[R]'
 .IP \[bu] 2
-`\f[C][tmpl] from_clipboard_yaml_content\f[R]'
+`\f[C]tmpl.from_clipboard_yaml_content\f[R]'
 .IP \[bu] 2
-`\f[C][tmpl] from_text_file_content\f[R]'
+`\f[C]tmpl.from_text_file_content\f[R]'
 .IP \[bu] 2
-`\f[C][tmpl] annotate_file_content\f[R]'
+`\f[C]tmpl.annotate_file_content\f[R]'
 .PP
 In general, the templates are designed in a way, that the text input
 stream -usually originating from the clipboard- ends up in the body of
@@ -1847,17 +1847,17 @@ another template type comes into play: the so-called \f[I]filename
 template\f[R].
 Each content template has a corresponding filename template, e.g.:
 .IP \[bu] 2
-`\f[C][tmpl] new_filename\f[R]'
+`\f[C]tmpl.new_filename\f[R]'
 .IP \[bu] 2
-`\f[C][tmpl] from_clipboard_filename\f[R]'
+`\f[C]tmpl.from_clipboard_filename\f[R]'
 .IP \[bu] 2
-`\f[C][tmpl] from_clipboard_yaml_filename\f[R]'
+`\f[C]tmpl.from_clipboard_yaml_filename\f[R]'
 .IP \[bu] 2
-`\f[C][tmpl] from_text_file_filename\f[R]'
+`\f[C]tmpl.from_text_file_filename\f[R]'
 .IP \[bu] 2
-`\f[C][tmpl] annotate_file_filename\f[R]'
+`\f[C]tmpl.annotate_file_filename\f[R]'
 .IP \[bu] 2
-`\f[C][tmpl] sync_filename\f[R]' (no corresponding content template)
+`\f[C]tmpl.sync_filename\f[R]' (no corresponding content template)
 .PP
 As the name suggests, the role of a filename template is to determine
 the filename of the new note.
@@ -1879,17 +1879,17 @@ When Tp-Note opens a regular text file without a YAML header, a new
 header is prepended automatically.
 It\[cq]s data origins mainly form the filename of the text file.
 The templates applied in this use case are:
-`\f[C][tmpl] from_text_file_content\f[R]' and
-`\f[C][tmpl] from_text_file_filename\f[R]'.
+`\f[C]tmpl.from_text_file_content\f[R]' and
+`\f[C]tmpl.from_text_file_filename\f[R]'.
 .IP \[bu] 2
 \f[I]Synchronize filename\f[R]: This function mode is invoked when
 [Tp-Note] opens an existing note file, after it\[cq]s YAML header is
 evaluated.
 The extracted header information is then applied to the
-`\f[C][tmpl] sync_filename\f[R]' template and the resulting filename is
+`\f[C]tmpl.sync_filename\f[R]' template and the resulting filename is
 compared to the actual filename on disk.
 If they differ, [Tp-Note] renames the note file.
-The `\f[C][tmpl] sync_filename\f[R]' template operates on its own
+The `\f[C]tmpl.sync_filename\f[R]' template operates on its own
 without a corresponding content template.
 .PP
 Note, that in the operation mode \f[I]synchronize filename\f[R], the
@@ -1899,8 +1899,8 @@ the new prepended header.
 Keep in mind, that even in the latter mode the filename might change
 slightly.
 This is because after the header creation with the
-`\f[C][tmpl] from_text_file_content\f[R]' template, the
-`\f[C][tmpl] from_text_file_filename\f[R]' template is applied, which
+`\f[C]tmpl.from_text_file_content\f[R]' template, the
+`\f[C]tmpl.from_text_file_filename\f[R]' template is applied, which
 might cause a slight filename modification due to its sanitization
 filters (cf.\ `\f[C]sanit()\f[R]' in the section \f[I]Template
 filters\f[R]).
@@ -1996,9 +1996,9 @@ the value of `\f[C]{{ lang }}\f[R]' (all operating systems).
 The following `\f[C]{{ fm_* }}\f[R]' variables are typically generated,
 \f[I]after\f[R] a content template was filled in with data: For example
 a field named `\f[C]title:\f[R]' in the content template
-`\f[C][tmpl] new_content\f[R]' will generate the variable
+`\f[C]tmpl.new_content\f[R]' will generate the variable
 `\f[C]fm_title\f[R]' which can then be used in the corresponding
-`\f[C][tmpl] new_filename\f[R]' filename template.
+`\f[C]tmpl.new_filename\f[R]' filename template.
 `\f[C]{{ fm_* }}\f[R]' variables are generated dynamically.
 This means, a YAML front-matter variable `\f[C]foo:\f[R]' in a note will
 generate a `\f[C]{{ fm_foo }}\f[R]' template variable.
@@ -2007,7 +2007,7 @@ On the other hand, a missing `\f[C]foo:\f[R]' will cause
 .PP
 Please note that `\f[C]{{ fm_* }}\f[R]' variables are available in all
 filename templates and in the
-`\f[C][tmpl] from_clipboard_yaml_content\f[R]' content template only.
+`\f[C]tmpl.from_clipboard_yaml_content\f[R]' content template only.
 .IP \[bu] 2
 `\f[C]{{ fm_title }}\f[R]' is the `\f[C]title:\f[R]' as indicated in the
 YAML front-matter of the note.
@@ -2031,7 +2031,7 @@ YAML front matter of this note
 .IP \[bu] 2
 `\f[C]{{ fm_all }}\f[R]': is a collection (map) of all defined
 `\f[C]{{ fm_* }}\f[R]' variables.
-It is used in the `\f[C][tmpl] from_clipboard_yaml_content\f[R]'
+It is used in the `\f[C]tmpl.from_clipboard_yaml_content\f[R]'
 template, typically in a loop like:
 .RS 2
 .IP
@@ -2147,10 +2147,10 @@ variable `\f[C]fm_title\f[R]'.
 .PP
 Tp-Note distinguishes two template types: content templates are used to
 create the note\[cq]s content (front-matter and body) and the
-corresponding filename templates `\f[C][tmpl] *_filename\f[R]' are used
+corresponding filename templates `\f[C]tmpl.*_filename\f[R]' are used
 to calculate the note\[cq]s filename.
 By convention, content templates appear in the configuration file in
-variables named `\f[C][tmpl] *_content\f[R]'.
+variables named `\f[C]tmpl.*_content\f[R]'.
 .PP
 Strings in the YAML front-matter of content templates are JSON encoded.
 Therefore, all variables used in the front-matter must pass an
@@ -2161,10 +2161,10 @@ For example, the variable `\f[C]{{ dir_path | stem }}\f[R]' becomes
 .SS Filename template conventions
 .PP
 By convention, filename templates appear in the configuration file in
-variables named `\f[C][tmpl] *_filename\f[R]'.
+variables named `\f[C]tmpl.*_filename\f[R]'.
 When a content template creates a new note, the corresponding filename
 template is called afterwards to calculate the filename of the new note.
-Please note that, the filename template `\f[C][tmpl] sync_filename\f[R]'
+Please note that, the filename template `\f[C]tmpl.sync_filename\f[R]'
 has a special role as it synchronizes the filename of existing note
 files.
 Besides this, as we are dealing with filenames we must guarantee, that
@@ -2178,7 +2178,7 @@ This is done by replacing forbidden characters like `\f[C]?\f[R]' and
 `\f[C]\[rs]\[rs]\f[R]' with `\f[C]_\f[R]' or space.
 This filter can be used with any variable, but is most useful with
 filename templates.
-For example, in the `\f[C][tmpl] sync_filename\f[R]' template, we find
+For example, in the `\f[C]tmpl.sync_filename\f[R]' template, we find
 the expression `\f[C]{{ subtitle | sanit }}\f[R]'.
 Note that the filter recognizes strings that represent a so-called dot
 file name and treats them a little differently by prepending them with
