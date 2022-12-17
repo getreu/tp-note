@@ -216,8 +216,7 @@ it contains the string:
 .fi
 .PP
 Tp-Note\[cq]s templates `\f[C]tmpl.from_clipboard_content\f[R]' and
-`\f[C]tmpl.from_clipboard_filename\f[R]' create the following
-document:
+`\f[C]tmpl.from_clipboard_filename\f[R]' create the following document:
 .IP
 .nf
 \f[C]
@@ -279,8 +278,8 @@ header variables: `\f[C]{{ fm_title }}\f[R]',
 `\f[C]{{ fm_subtitle }}\f[R]', `\f[C]{{ fm_author }}\f[R]',
 `\f[C]{{ fm_date }}\f[R]', `\f[C]{{ fm_lang }}\f[R]',
 `\f[C]{{ fm_sort_tag }}\f[R]' and `\f[C]{{ fm_file_ext }}\f[R]' which
-are evaluated with the `\f[C]tmpl.from_clipboard_yaml_content\f[R]'
-and the `\f[C]tmpl.from_clipboard_yaml_filename\f[R]' templates.
+are evaluated with the `\f[C]tmpl.from_clipboard_yaml_content\f[R]' and
+the `\f[C]tmpl.from_clipboard_yaml_filename\f[R]' templates.
 .PP
 Note, that the same result can also be achieved without clipboard input
 by typing in a terminal:
@@ -368,8 +367,8 @@ lang:       \[dq]en-GB\[dq]
 \f[R]
 .fi
 .PP
-The configuration file variables `\f[C]filename.extensions_*\f[R]'
-list all the file extensions that Tp-Note recognizes as own file types.
+The configuration file variables `\f[C]filename.extensions_*\f[R]' list
+all the file extensions that Tp-Note recognizes as own file types.
 Only foreign file types can be annotated.
 .PP
 Note that the file annotation mode also reads the clipboard\[cq]s
@@ -641,8 +640,7 @@ This disables Tp-Note\[cq]s internal file watcher and web server, unless
 Another way to permanently disable the web server is to set the
 configuration variable `\f[C]arg_default.edit=true\f[R]'.
 When `\f[C]--edit --view\f[R]' appear together, both the editor and the
-viewer will open and the \f[C]arg_default.edit\f[R] variable is
-ignored.
+viewer will open and the \f[C]arg_default.edit\f[R] variable is ignored.
 .TP
 \f[B]-p\f[R], \f[B]--port\f[R]=\f[I]PORT\f[R]
 Sets the server port that the web browser connects to, to the specified
@@ -666,8 +664,8 @@ For example, under Linux, the `\f[C]DISPLAY\f[R]' environment variable
 is evaluated.
 The `\f[C]--tty\f[R]' flag disables the automatic detection and sets
 Tp-Note into \[lq]console only\[rq] mode: now only the non GUI editor
-(see configuration variable: `\f[C]app_args.editor_console\f[R]') and
-no viewer is launched.
+(see configuration variable: `\f[C]app_args.editor_console\f[R]') and no
+viewer is launched.
 .TP
 \f[B]-u\f[R], \f[B]--popup\f[R]
 Redirect log file entries into popup alert windows.
@@ -686,8 +684,8 @@ View only mode: do not open the external text editor.
 This flag instructs Tp-Note to start an internal file watcher and web
 server and connect the system\[cq]s default web browser to view the note
 file and to observe live file modifications.
-The configuration setting `\f[C]arg_default.edit=true\f[R]' disables
-the viewer.
+The configuration setting `\f[C]arg_default.edit=true\f[R]' disables the
+viewer.
 However, with `\f[C]--view\f[R]' given at the command line, the viewer
 appears, regardless of the value of `\f[C]arg_default.edit\f[R]'.
 As most users do not expect the viewed file to change,
@@ -732,11 +730,7 @@ you publish on a web server, then `\f[C]short\f[R]' is a good choice.
 If you view the HTML file directly in your web browser, better choose
 `\f[C]long\f[R]'.
 NB: You can also set this option via Tp-Note\[cq]s configuration file
-<<<<<<< HEAD
-with the key `\f[C][arg_default] export_link_rewriting\f[R]'.
-=======
-under `\f[C]arg_default.export_link_rewriting\f[R]'.
->>>>>>> 9aed27a (Doc: use . referencing `[arg_default]`)
+with the key `\f[C]arg_default.export_link_rewriting\f[R]'.
 .SH THE NOTE\[cq]S DOCUMENT STRUCTURE
 .PP
 Tp-Note considers a text file to be a valid note file, if its:
@@ -1135,9 +1129,8 @@ The configuration file variables `\f[C]app_args.editor\f[R]' and
 editors to be launched for editing.
 The lists contain by default well-known text editor names and their
 command line arguments.
-Tp-Note tries to launch every text editor in
-`\f[C]app_args.editor\f[R]' from the beginning of the list until it
-finds an installed text editor.
+Tp-Note tries to launch every text editor in `\f[C]app_args.editor\f[R]'
+from the beginning of the list until it finds an installed text editor.
 When Tp-Note is started on a Linux console, the list
 `\f[C]app_args.editor_console\f[R]' is used instead.
 Here you can register text editors that do not require a graphical
@@ -1517,7 +1510,7 @@ By default, the characters `\f[C]_\f[R]', `\f[C]-\f[R]',
 being part of a \f[I]sort tag\f[R] when they appear at the beginning of
 a filename.
 This set of characters can be modified with the
-`\f[C]filename.sort_tag_chars\f[R]' configuration variable.
+`\f[C][filename] sort_tag_chars\f[R]' configuration variable.
 In addition, one special character
 `\f[C]filename.sort_tag_extra_separator\f[R]' (by default
 `\f[C]\[aq]\f[R]') is sometimes used as \[lq]end of sort tag marker\[rq]
@@ -1548,8 +1541,8 @@ variable with the `\f[C]sanit(force_alpha=true)\f[R]' filter set, e.g.:
 .fi
 .PP
 The first expression guarantees, that it resolves only to characters
-defined in the `\f[C]filename.sort_tag_chars\f[R]' set, while the
-second expression is known to not start with such a character.
+defined in the `\f[C]filename.sort_tag_chars\f[R]' set, while the second
+expression is known to not start with such a character.
 This way Tp-Note is able to separate \f[I]sort tags\f[R] in filenames
 and avoids cyclic filename change.
 Or, in other words: the `\f[C]tmpl.sync_filname\f[R]' template should
@@ -1635,9 +1628,8 @@ The configuration file variables `\f[C]filename.extensions_*\f[R]'
 determine which markup renderer is used for which note file extension.
 Depending on the markup language, this feature is more or less advanced
 and complete: \f[I]Markdown\f[R]
-(cf.\ `\f[C]filename.extensions_md\f[R]') is best supported and
-feature complete: It complies with the \f[I]Common Mark\f[R]
-specification.
+(cf.\ `\f[C]filename.extensions_md\f[R]') is best supported and feature
+complete: It complies with the \f[I]Common Mark\f[R] specification.
 The \f[I]ReStructuredText\f[R] renderer
 (cf.\ `\f[C]filename.extensions_rst\f[R]') is quite new and still in
 experimental state.
@@ -1763,17 +1755,16 @@ error = \[aq]\[aq]\[aq]<!DOCTYPE html>
 Customizing Tp-Note\[cq]s HTML export function works the same way as
 customizing the built-in viewer.
 There are some slight differences though: The role of the
-`\f[C]tmpl_html.viewer\f[R]' template - discussed above - is taken
-over by the `\f[C]tmpl_html.exporter\f[R]' template.
+`\f[C]tmpl_html.viewer\f[R]' template - discussed above - is taken over
+by the `\f[C]tmpl_html.exporter\f[R]' template.
 In this template the same \f[I]Tera\f[R] variables are available, except
 `\f[C]{{ note_js }}\f[R]' which does not make sense in this context.
 As the exporter prints possible rendition error messages on the console,
 there is no equivalent to the `\f[C]tmpl_html.viewer_error\f[R]'
 template.
-Note, in contrast to the previous template
-`\f[C]tmpl_html.viewer\f[R]' example, the source code highlighting CSS
-code is now embedded in the HTML output with
-`\f[C]<style>{{ note_css }}</style>\f[R]'
+Note, in contrast to the previous template `\f[C]tmpl_html.viewer\f[R]'
+example, the source code highlighting CSS code is now embedded in the
+HTML output with `\f[C]<style>{{ note_css }}</style>\f[R]'
 .SS Choose your favorite web browser as note viewer
 .PP
 Once the note is rendered into HTML, Tp-Note\[cq]s internal HTTP server
@@ -1802,9 +1793,9 @@ invoke Tp-Note with `\f[C]tpnote --debug info --popup --view\f[R]'.
 All \f[I]TP-Note\f[R]\[cq]s workflows are customizable through its
 templates which are grouped in the `\f[C][tmpl]\f[R]' section of
 \f[I]Tp-Nots\f[R]\[cq]s configuration file.
-Configuration file variables ending with `\f[C]tmpl.*_content\f[R]'
-and `\f[C]tmpl.*_filename\f[R]' are \f[I]Tera\f[R] template strings
-(see: <https://tera.netlify.com/docs/#templates>).
+Configuration file variables ending with `\f[C]tmpl.*_content\f[R]' and
+`\f[C]tmpl.*_filename\f[R]' are \f[I]Tera\f[R] template strings (see:
+<https://tera.netlify.com/docs/#templates>).
 .PP
 Tp-Note captures and stores its environment in \f[I]Tera variables\f[R].
 For example, the variable `\f[C]{{ dir_path }}\f[R]' is initialized with
@@ -1889,8 +1880,8 @@ The extracted header information is then applied to the
 `\f[C]tmpl.sync_filename\f[R]' template and the resulting filename is
 compared to the actual filename on disk.
 If they differ, [Tp-Note] renames the note file.
-The `\f[C]tmpl.sync_filename\f[R]' template operates on its own
-without a corresponding content template.
+The `\f[C]tmpl.sync_filename\f[R]' template operates on its own without
+a corresponding content template.
 .PP
 Note, that in the operation mode \f[I]synchronize filename\f[R], the
 header data overwrites the filename of the note, whereas in the
@@ -1906,8 +1897,7 @@ filters (cf.\ `\f[C]sanit()\f[R]' in the section \f[I]Template
 filters\f[R]).
 .PP
 You can disable the \f[I]prepend header\f[R] feature by setting the
-configuration file variable
-`\f[C]arg_default.add_header = false\f[R]'.
+configuration file variable `\f[C]arg_default.add_header = false\f[R]'.
 To disable all filename synchronization, set
 `\f[C]arg_default.no_filename_sync = true\f[R]'.
 This guarantees, that Tp-Note will never change neither the filename nor
@@ -2031,8 +2021,8 @@ YAML front matter of this note
 .IP \[bu] 2
 `\f[C]{{ fm_all }}\f[R]': is a collection (map) of all defined
 `\f[C]{{ fm_* }}\f[R]' variables.
-It is used in the `\f[C]tmpl.from_clipboard_yaml_content\f[R]'
-template, typically in a loop like:
+It is used in the `\f[C]tmpl.from_clipboard_yaml_content\f[R]' template,
+typically in a loop like:
 .RS 2
 .IP
 .nf
@@ -2147,8 +2137,8 @@ variable `\f[C]fm_title\f[R]'.
 .PP
 Tp-Note distinguishes two template types: content templates are used to
 create the note\[cq]s content (front-matter and body) and the
-corresponding filename templates `\f[C]tmpl.*_filename\f[R]' are used
-to calculate the note\[cq]s filename.
+corresponding filename templates `\f[C]tmpl.*_filename\f[R]' are used to
+calculate the note\[cq]s filename.
 By convention, content templates appear in the configuration file in
 variables named `\f[C]tmpl.*_content\f[R]'.
 .PP
@@ -2178,8 +2168,8 @@ This is done by replacing forbidden characters like `\f[C]?\f[R]' and
 `\f[C]\[rs]\[rs]\f[R]' with `\f[C]_\f[R]' or space.
 This filter can be used with any variable, but is most useful with
 filename templates.
-For example, in the `\f[C]tmpl.sync_filename\f[R]' template, we find
-the expression `\f[C]{{ subtitle | sanit }}\f[R]'.
+For example, in the `\f[C]tmpl.sync_filename\f[R]' template, we find the
+expression `\f[C]{{ subtitle | sanit }}\f[R]'.
 Note that the filter recognizes strings that represent a so-called dot
 file name and treats them a little differently by prepending them with
 an apostrophe: a dot file is a file whose name starts with `\f[C].\f[R]'
@@ -2241,8 +2231,7 @@ URLs\f[R].
 For security reasons, only listed files are served.
 To limit data exfiltration in case an attacker gains access to an
 account on your machine, the number of served Tp-Note files is limited
-by the configurable value
-`\f[C]viewer.displayed_tpnote_count_max\f[R]'.
+by the configurable value `\f[C]viewer.displayed_tpnote_count_max\f[R]'.
 .PP
 In addition to the above quantitative restriction, Tp-Note\[cq]s
 built-in viewer serves only files whose file extensions are registered
