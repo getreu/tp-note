@@ -24,7 +24,7 @@ use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::CSS_PATH;
 use tpnote_lib::config::TEXT_CSS;
 use tpnote_lib::config::TMPL_HTML_VAR_NOTE_ERROR;
-use tpnote_lib::config::TMPL_VAR_NOTE_JS;
+use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
@@ -190,7 +190,7 @@ impl ServerThread {
         };
 
         // Save JavaScript code.
-        context.insert(TMPL_VAR_NOTE_JS, &note_js);
+        context.insert(TMPL_HTML_VAR_NOTE_JS, &note_js);
 
         Self {
             rx,
@@ -717,7 +717,7 @@ impl ServerThread {
         // Only the first base document is live updated.
         let mut context = self.context.clone();
         if context.path != abspath_doc {
-            context.insert(TMPL_VAR_NOTE_JS, "");
+            context.insert(TMPL_HTML_VAR_NOTE_JS, "");
         }
         match render_viewer_html::<ContentString>(context, content)
             // Now scan the HTML result for links and store them in a HashMap

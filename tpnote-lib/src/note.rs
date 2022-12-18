@@ -715,7 +715,7 @@ Body text
         // HTML rendering and no templates will be applied.
         //
         use crate::config::LIB_CFG;
-        use crate::config::TMPL_VAR_NOTE_JS;
+        use crate::config::TMPL_HTML_VAR_NOTE_JS;
         use crate::content::Content;
         use crate::content::ContentString;
         use crate::context::Context;
@@ -736,7 +736,7 @@ Body text
         // Only minimal context is needed, because no templates are applied later.
         let mut context = Context::from(&notefile);
         // We do not inject any JavaScript.
-        context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
+        context.insert(TMPL_HTML_VAR_NOTE_JS, &"".to_string());
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
