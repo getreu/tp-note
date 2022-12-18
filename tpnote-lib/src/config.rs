@@ -488,7 +488,7 @@ lazy_static! {
 /// but we prefer the same config file structure independent
 /// of the enabled features.
 #[allow(dead_code)]
-pub const TMPL_VAR_NOTE_ERROR: &str = "note_error";
+pub const TMPL_HTML_VAR_NOTE_ERROR: &str = "note_error";
 
 /// HTML template variable used in the error page containing a verbatim
 /// HTML rendition with hyperlinks of the erroneous note file.

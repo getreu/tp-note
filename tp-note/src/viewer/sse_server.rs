@@ -23,7 +23,7 @@ use std::time::SystemTime;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::CSS_PATH;
 use tpnote_lib::config::TEXT_CSS;
-use tpnote_lib::config::TMPL_VAR_NOTE_ERROR;
+use tpnote_lib::config::TMPL_HTML_VAR_NOTE_ERROR;
 use tpnote_lib::config::TMPL_VAR_NOTE_JS;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
@@ -762,7 +762,7 @@ impl ServerThread {
             Err(e) => {
                 // Render error page providing all information we havStringe.
                 let mut context = self.context.clone();
-                context.insert(TMPL_VAR_NOTE_ERROR, &e.to_string());
+                context.insert(TMPL_HTML_VAR_NOTE_ERROR, &e.to_string());
                 let note_erroneous_content = <ContentString as Content>::open(&context.path)?;
                 render_erroneous_content_html::<ContentString>(context, note_erroneous_content)
                     .map_err(|e| ViewerError::RenderErrorPage {
