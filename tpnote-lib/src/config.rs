@@ -451,7 +451,7 @@ pub const TMPL_SYNC_FILENAME: &str = "\
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
-pub const TMPL_VAR_NOTE_BODY_HTML: &str = "note_body_html";
+pub const TMPL_HTML_VAR_NOTE_BODY_HTML: &str = "note_body_html";
 
 /// HTML template variable containing the automatically generated JavaScript
 /// code to be included in the HTML rendition.
