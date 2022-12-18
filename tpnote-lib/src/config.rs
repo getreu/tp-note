@@ -699,7 +699,8 @@ pub struct TmplHtml {
     pub exporter: String,
     /// Configuration variable holding the source code highlighter CSS code
     /// concatenated with `TMPL_HTML_CSS_COMMON`. In HTML templates this
-    /// constant can be accessed as value of the `TMPL_HTML_VAR_NOTE_CSS` variable.
+    /// constant can be accessed as value of the `TMPL_HTML_VAR_NOTE_CSS`
+    /// variable.
     pub css: String,
 }
 
