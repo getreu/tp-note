@@ -70,12 +70,8 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
         html.push_str(lang.as_ref());
         html.push_str("\">");
 
-        // Load these once at the start of your program
+        // Use default syntax styling.
         let ss = SyntaxSet::load_defaults_newlines();
-        // let ts = ThemeSet::load_defaults();
-
-        println!("lang={}", lang.as_ref());
-        //let sr = ss.find_syntax_by_extension("rs").unwrap();
         let sr = ss.find_syntax_by_token(lang.as_ref()).unwrap();
         let mut html_generator =
             ClassedHTMLGenerator::new_with_class_style(sr, &ss, ClassStyle::Spaced);
