@@ -640,17 +640,6 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 "#;
 
 lazy_static! {
-/// A constant holding the source code highlighter CSS code concatenated with
-/// `TMPL_HTML_CSS_COMMON`. In HTML templates
-/// this constant can be accessed as value of the `TMPL_VAR_NOTE_CSS` variable.
-    pub static ref TEXT_CSS: String = {
-        let mut css = get_css();
-        css.push_str(TMPL_HTML_CSS_COMMON);
-        css
-    };
-}
-
-lazy_static! {
 /// Global variable containing the filename related configuration data.
     pub static ref LIB_CFG: RwLock<LibCfg> = RwLock::new(LibCfg::default());
 }
@@ -708,6 +697,10 @@ pub struct TmplHtml {
     pub viewer: String,
     pub viewer_error: String,
     pub exporter: String,
+    /// Configuration variable holding the source code highlighter CSS code
+    /// concatenated with `TMPL_HTML_CSS_COMMON`. In HTML templates this
+    /// constant can be accessed as value of the `TMPL_HTML_VAR_NOTE_CSS` variable.
+    pub css: String,
 }
 
 /// Default values for copy counter.
@@ -772,6 +765,11 @@ impl ::std::default::Default for TmplHtml {
             viewer: TMPL_HTML_VIEWER.to_string(),
             viewer_error: TMPL_HTML_VIEWER_ERROR.to_string(),
             exporter: TMPL_HTML_EXPORTER.to_string(),
+            css: {
+                let mut css = get_css();
+                css.push_str(TMPL_HTML_CSS_COMMON);
+                css
+            },
         }
     }
 }

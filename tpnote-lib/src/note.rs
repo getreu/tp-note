@@ -6,7 +6,7 @@
 //! NB: The high level API is in the module `tpnote_lib::workflow`.
 
 use crate::config::LocalLinkKind;
-use crate::config::TEXT_CSS;
+use crate::config::LIB_CFG;
 use crate::config::TMPL_HTML_VAR_NOTE_BODY_HTML;
 use crate::config::TMPL_HTML_VAR_NOTE_CSS;
 use crate::config::TMPL_HTML_VAR_NOTE_CSS_PATH;
@@ -500,7 +500,10 @@ impl<T: Content> Note<T> {
         html_context.insert(TMPL_HTML_VAR_NOTE_BODY_HTML, &html_output);
 
         // Insert the raw CSS
-        html_context.insert(TMPL_HTML_VAR_NOTE_CSS, &*TEXT_CSS);
+        html_context.insert(
+            TMPL_HTML_VAR_NOTE_CSS,
+            &LIB_CFG.read().unwrap().tmpl_html.css,
+        );
         // Insert the web server path to get the CSS loaded.
         html_context.insert(
             TMPL_HTML_VAR_NOTE_CSS_PATH,
