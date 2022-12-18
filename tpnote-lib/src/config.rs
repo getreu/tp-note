@@ -475,12 +475,6 @@ pub const TMPL_HTML_VAR_NOTE_CSS_PATH: &str = "note_css_path";
 /// the  `TMPL_VAR_NOTE_CSS_PATH` variable.
 pub const TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE: &str = "/tpnote.css";
 
-lazy_static! {
-/// A constant holding the raw CSS code. In HTML templates this constant can be
-/// accessed as value of the `TMPL_VAR_NOTE_CSS` variable.
-    pub static ref TEXT_CSS: String = get_css();
-}
-
 /// HTML template variable used in the error page containing the error message
 /// explaining why this page could not be rendered.
 /// We could set
@@ -511,36 +505,7 @@ pub const TMPL_HTML_VIEWER: &str = r#"<!DOCTYPE html>
 <title>{{ fm_title }}</title>
 <link rel="stylesheet" href="{{ note_css_path }}">
 <style>
-table, th, td { font-weight: normal; }
-table.center {
-  margin-left: auto;
-  margin-right: auto;
-  background-color: #f3f2e4;
-  border:1px solid grey;
-}
-th, td {
-  padding: 3px;
-  padding-left:15px;
-  padding-right:15px;
-}
-th.key{ color:#444444; text-align:right; }
-th.val{
-  color:#316128;
-  text-align:left;
-  font-family:sans-serif;
-}
-th.keygrey{ color:grey; text-align:right; }
-th.valgrey{ color:grey; text-align:left; }
-pre { white-space: pre-wrap; }
-code u { text-decoration: none; }
-em { color: #523626; }
-a { color: #316128; }
-h1 { font-size: 150% }
-h2 { font-size: 132% }
-h3 { font-size: 115% }
-h4, h5, h6 { font-size: 100% }
-h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
-
+<!-- Customize the viewer CSS here -->
 </style>
   </head>
   <body>
@@ -610,36 +575,8 @@ pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
 <meta charset="utf-8">
 <title>{{ fm_title }}</title>
 <style>
-table, th, td { font-weight: normal; }
-table.center {
-  margin-left: auto;
-  margin-right: auto;
-  background-color: #f3f2e4;
-  border:1px solid grey;
-}
-th, td {
-  padding: 3px;
-  padding-left:15px;
-  padding-right:15px;
-}
-th.key{ color:#444444; text-align:right; }
-th.val{
-  color:#316128;
-  text-align:left;
-  font-family:sans-serif;
-}
-th.keygrey{ color:grey; text-align:right; }
-th.valgrey{ color:grey; text-align:left; }
-pre { white-space: pre-wrap; }
-code u { text-decoration: none; }
-em { color: #523626; }
-a { color: #316128; }
-h1 { font-size: 150% }
-h2 { font-size: 132% }
-h3 { font-size: 115% }
-h4, h5, h6 { font-size: 100% }
-h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 {{ note_css }}
+<!-- Customize the exporter CSS here -->
 </style>
   </head>
   <body>
@@ -667,6 +604,51 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 </body>
 </html>
 "#;
+
+/// A constant holding common CSS code, used as embedded code in the
+/// `TMPL_HTML_EXPORTER` template and as referenced code in the `TMPL_HTML_VIEWER`
+/// template.
+pub const TMPL_HTML_CSS_COMMON: &str = r#"/* Tp-Note's CSS */
+table, th, td { font-weight: normal; }
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+  background-color: #f3f2e4;
+  border:1px solid grey;
+}
+th, td {
+  padding: 3px;
+  padding-left:15px;
+  padding-right:15px;
+}
+th.key{ color:#444444; text-align:right; }
+th.val{
+  color:#316128;
+  text-align:left;
+  font-family:sans-serif;
+}
+th.keygrey{ color:grey; text-align:right; }
+th.valgrey{ color:grey; text-align:left; }
+pre { white-space: pre-wrap; }
+em { color: #523626; }
+a { color: #316128; }
+h1 { font-size: 150% }
+h2 { font-size: 132% }
+h3 { font-size: 115% }
+h4, h5, h6 { font-size: 100% }
+h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
+"#;
+
+lazy_static! {
+/// A constant holding the source code highlighter CSS code concatenated with
+/// `TMPL_HTML_CSS_COMMON`. In HTML templates
+/// this constant can be accessed as value of the `TMPL_VAR_NOTE_CSS` variable.
+    pub static ref TEXT_CSS: String = {
+        let mut css = get_css();
+        css.push_str(TMPL_HTML_CSS_COMMON);
+        css
+    };
+}
 
 lazy_static! {
 /// Global variable containing the filename related configuration data.
