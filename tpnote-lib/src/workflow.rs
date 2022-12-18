@@ -125,13 +125,13 @@
 
 use crate::config::LocalLinkKind;
 use crate::config::LIB_CFG;
+#[cfg(feature = "viewer")]
+use crate::config::TMPL_HTML_VAR_NOTE_ERRONEOUS_CONTENT_HTML;
 use crate::config::TMPL_VAR_CLIPBOARD;
 use crate::config::TMPL_VAR_CLIPBOARD_HEADER;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_FILENAME_SYNC;
 use crate::config::TMPL_VAR_FM_NO_FILENAME_SYNC;
-#[cfg(feature = "viewer")]
-use crate::config::TMPL_VAR_NOTE_ERRONEOUS_CONTENT_HTML;
 use crate::config::TMPL_VAR_STDIN;
 use crate::config::TMPL_VAR_STDIN_HEADER;
 use crate::content::Content;
@@ -541,7 +541,7 @@ pub fn render_erroneous_content_html<T: Content>(
     let note_erroneous_content = text_rawlinks2html(note_erroneous_content.as_str());
     // Insert.
     context.insert(
-        TMPL_VAR_NOTE_ERRONEOUS_CONTENT_HTML,
+        TMPL_HTML_VAR_NOTE_ERRONEOUS_CONTENT_HTML,
         &note_erroneous_content,
     );
 

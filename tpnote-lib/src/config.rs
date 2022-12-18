@@ -497,7 +497,7 @@ pub const TMPL_HTML_VAR_NOTE_ERROR: &str = "note_error";
 /// but we prefer the same config file structure independent
 /// of the enabled features.
 #[allow(dead_code)]
-pub const TMPL_VAR_NOTE_ERRONEOUS_CONTENT_HTML: &str = "note_erroneous_content_html";
+pub const TMPL_HTML_VAR_NOTE_ERRONEOUS_CONTENT_HTML: &str = "note_erroneous_content_html";
 
 /// HTML template to render regular viewer pages.
 /// We could set
