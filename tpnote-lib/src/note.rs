@@ -10,9 +10,9 @@ use crate::config::CSS_PATH;
 use crate::config::TEXT_CSS;
 use crate::config::TMPL_HTML_VAR_NOTE_BODY_HTML;
 use crate::config::TMPL_HTML_VAR_NOTE_CSS;
+use crate::config::TMPL_HTML_VAR_NOTE_CSS_PATH;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::config::TMPL_VAR_NOTE_BODY_TEXT;
-use crate::config::TMPL_VAR_NOTE_CSS_PATH;
 use crate::config::TMPL_VAR_NOTE_FILE_DATE;
 use crate::config::TMPL_VAR_NOTE_FM_TEXT;
 use crate::content::Content;
@@ -502,7 +502,7 @@ impl<T: Content> Note<T> {
         // Insert the raw CSS
         html_context.insert(TMPL_HTML_VAR_NOTE_CSS, &*TEXT_CSS);
         // Insert the web server path to get the CSS loaded.
-        html_context.insert(TMPL_VAR_NOTE_CSS_PATH, CSS_PATH);
+        html_context.insert(TMPL_HTML_VAR_NOTE_CSS_PATH, CSS_PATH);
 
         let mut tera = Tera::default();
         tera.extend(&TERA)?;

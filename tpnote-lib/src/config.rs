@@ -468,7 +468,7 @@ pub const TMPL_HTML_VAR_NOTE_CSS: &str = "note_css";
 /// HTML template variable name. The value contains the path, for which
 /// the viewer delievers CSS code. Note, the viewer delivers the same CSS code
 /// which is stored as value for `TMPL_VAR_NOTE_CSS`.
-pub const TMPL_VAR_NOTE_CSS_PATH: &str = "note_css_path";
+pub const TMPL_HTML_VAR_NOTE_CSS_PATH: &str = "note_css_path";
 
 /// The constant URL for which Tp-Note's internal web server delivers the CSS
 /// stylesheet. In HTML templates, this constant can be accessed as value of
