@@ -21,8 +21,8 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::time::SystemTime;
 use tpnote_lib::config::LocalLinkKind;
-use tpnote_lib::config::CSS_PATH;
 use tpnote_lib::config::TEXT_CSS;
+use tpnote_lib::config::TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE;
 use tpnote_lib::config::TMPL_HTML_VAR_NOTE_ERROR;
 use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
 use tpnote_lib::content::Content;
@@ -402,9 +402,9 @@ impl ServerThread {
                 }
 
                 // Serve CSS file.
-                CSS_PATH => {
+                TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE => {
                     self.respond_content_ok(
-                        Path::new(&CSS_PATH),
+                        Path::new(&TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE),
                         "text/css",
                         (*TEXT_CSS).as_bytes(),
                     )?;

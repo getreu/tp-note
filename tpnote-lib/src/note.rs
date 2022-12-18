@@ -6,11 +6,11 @@
 //! NB: The high level API is in the module `tpnote_lib::workflow`.
 
 use crate::config::LocalLinkKind;
-use crate::config::CSS_PATH;
 use crate::config::TEXT_CSS;
 use crate::config::TMPL_HTML_VAR_NOTE_BODY_HTML;
 use crate::config::TMPL_HTML_VAR_NOTE_CSS;
 use crate::config::TMPL_HTML_VAR_NOTE_CSS_PATH;
+use crate::config::TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::config::TMPL_VAR_NOTE_BODY_TEXT;
 use crate::config::TMPL_VAR_NOTE_FILE_DATE;
@@ -502,7 +502,10 @@ impl<T: Content> Note<T> {
         // Insert the raw CSS
         html_context.insert(TMPL_HTML_VAR_NOTE_CSS, &*TEXT_CSS);
         // Insert the web server path to get the CSS loaded.
-        html_context.insert(TMPL_HTML_VAR_NOTE_CSS_PATH, CSS_PATH);
+        html_context.insert(
+            TMPL_HTML_VAR_NOTE_CSS_PATH,
+            TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE,
+        );
 
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
