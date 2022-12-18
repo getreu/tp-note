@@ -463,7 +463,7 @@ pub const TMPL_HTML_VAR_NOTE_JS: &str = "note_js";
 
 /// HTML template variable name. The value contains the highlighting CSS code
 /// to be included in the HTML rendition produced by the exporter.
-pub const TMPL_VAR_NOTE_CSS: &str = "note_css";
+pub const TMPL_HTML_VAR_NOTE_CSS: &str = "note_css";
 
 /// HTML template variable name. The value contains the path, for which
 /// the viewer delievers CSS code. Note, the viewer delivers the same CSS code
