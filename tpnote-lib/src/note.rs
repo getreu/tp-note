@@ -463,7 +463,7 @@ impl<T: Content> Note<T> {
     /// Then calls the appropriate markup renderer.
     /// Finally the result is rendered with the `HTML_VIEWER_TMPL`
     /// template. This template expects the template variable
-    /// `TMPL_VAR_NOTE_JS` in `self.context` to be set.
+    /// `TMPL_HTML_VAR_NOTE_JS` in `self.context` to be set.
     pub fn render_content_to_html(
         &self,
         // We need the file extension to determine the

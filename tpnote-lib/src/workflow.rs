@@ -363,7 +363,7 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// at runtime).
 ///
 /// ```rust
-/// use tpnote_lib::config::TMPL_VAR_NOTE_JS;
+/// use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
 /// use tpnote_lib::content::Content;
 /// use tpnote_lib::content::ContentString;
 /// use tpnote_lib::context::Context;
@@ -383,7 +383,7 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// // Start test
 /// let mut context = Context::from(Path::new("/path/to/note.md"));
 /// // We do not inject any JavaScript.
-/// context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
+/// context.insert(TMPL_HTML_VAR_NOTE_JS, &"".to_string());
 /// // Render.
 /// let html = render_viewer_html::<ContentString>(context, raw.into())
 ///            .unwrap();
@@ -395,7 +395,7 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 ///
 /// ```rust
 /// use tpnote_lib::config::LIB_CFG;
-/// use tpnote_lib::config::TMPL_VAR_NOTE_JS;
+/// use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
 /// use tpnote_lib::content::Content;
 /// use tpnote_lib::content::ContentString;
 /// use tpnote_lib::context::Context;
@@ -416,7 +416,7 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// // Start test
 /// let mut context = Context::from(&notefile);
 /// // We do not inject any JavaScript.
-/// context.insert(TMPL_VAR_NOTE_JS, &"".to_string());
+/// context.insert(TMPL_HTML_VAR_NOTE_JS, &"".to_string());
 /// // Render.
 /// let content = ContentString::open(&context.path).unwrap();
 /// // You can plug in your own type (must impl. `Content`).
@@ -434,7 +434,7 @@ pub fn render_viewer_html<T: Content>(context: Context, content: T) -> Result<St
 /// at runtime).
 ///
 /// ```rust
-/// use tpnote_lib::config::TMPL_VAR_NOTE_JS;
+/// use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
 /// use tpnote_lib::content::Content;
 /// use tpnote_lib::content::ContentString;
 /// use tpnote_lib::context::Context;
@@ -490,13 +490,14 @@ fn render_html<T: Content>(
 /// `parse_hyperlinks::renderer::text_rawlinks2html` and inserted in
 /// the `TMPL_HTML_VIEWER_ERROR` template (can be replace at runtime).
 /// This template expects the template variables `TMPL_VAR_PATH`
-/// and `TMPL_VAR_NOTE_JS` and `TMPL_VAR_NOTE_ERROR` in `context` to be set.
+/// and `TMPL_HTML_VAR_NOTE_JS` and `TMPL_HTML_VAR_NOTE_ERROR` in `context` to
+/// be set.
 /// NB: The value of `TMPL_VAR_PATH` equals `context.path`.
 ///
 /// ```rust
 /// use tpnote_lib::config::LIB_CFG;
-/// use tpnote_lib::config::TMPL_VAR_NOTE_ERROR;
-/// use tpnote_lib::config::TMPL_VAR_NOTE_JS;
+/// use tpnote_lib::config::TMPL_HTML_VAR_NOTE_ERROR;
+/// use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
 /// use tpnote_lib::content::Content;
 /// use tpnote_lib::content::ContentString;
 /// use tpnote_lib::context::Context;
@@ -520,9 +521,9 @@ fn render_html<T: Content>(
 /// // Start test
 /// let mut context = Context::from(&notefile);
 /// // We do not inject any JavaScript.
-/// context.insert(TMPL_VAR_NOTE_JS, &e.to_string());
+/// context.insert(TMPL_HTML_VAR_NOTE_JS, &e.to_string());
 /// // We simulate an error;
-/// context.insert(TMPL_VAR_NOTE_ERROR, &e.to_string());
+/// context.insert(TMPL_HTML_VAR_NOTE_ERROR, &e.to_string());
 /// // Render.
 /// // Read from file.
 /// // You can plug in your own type (must impl. `Content`).
