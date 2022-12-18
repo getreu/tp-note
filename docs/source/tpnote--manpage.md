@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.19.7 | Tp-Note documentation
+% TP-NOTE(1) Version 1.19.9 | Tp-Note documentation
 
 ---
 title:      "tpnote"
@@ -7,6 +7,7 @@ author:     "Jens Getreu"
 date:       "2022-11-08"
 orig_name:  "tpnote--manpage.md"
 sort_tag:   ""
+version:    "1.19.9"
 lang:       "en-US"
 ---
 

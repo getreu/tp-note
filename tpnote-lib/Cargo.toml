@@ -34,13 +34,13 @@ rst_parser = { version = "0.4.0", optional = true }
 rst_renderer = { version = "0.4.0", optional = true }
 sanitize-filename-reader-friendly.workspace = true
 self_cell = "0.10.2"
-serde_json = "1.0.89"
+serde_json = "1.0.90"
 serde.workspace = true
 serde_yaml.workspace = true
 substring = "1.4.5"
 tera = { version = "1.17.1", default-features = true }
 thiserror.workspace = true
-toml = "0.5.9"
+toml = "0.5.10"
 
 
 [target.'cfg(windows)'.dependencies]
