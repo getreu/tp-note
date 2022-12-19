@@ -1,16 +1,5 @@
 % TP-NOTE(1) Version 1.19.9 | Tp-Note documentation
 
----
-title:      "tpnote"
-subtitle:   "manpage"
-author:     "Jens Getreu"
-date:       "2022-11-08"
-orig_name:  "tpnote--manpage.md"
-sort_tag:   ""
-version:    "1.19.9"
-lang:       "en-US"
----
-
 
 # NAME
 
@@ -723,7 +712,7 @@ out. Valid values are: '`off`', '`short`' and '`long`'.
 In order to achieve this, the user must respect  the following convention
 concerning absolute local links in Tp-Note documents:  The base of absolute
 local links in Tp-Note documents must be the directory where the marker file
-'`.tpnoteroot`' resides (or '`/`' in non exists). The option '`--export-link-
+'`.tpnoteroot`' resides (or '`/`' if none exists). The option '`--export-link-
 rewriting`' decides how local links in the Tp-Note  document are converted when
 the HTML is generated.  If its value is '`short`', then relative local links
 are converted to absolute links. The base of the resulting links is where the
@@ -754,7 +743,7 @@ The images in the resulting HTML will appear as
 * '`/my/docs/car/photo.jpg`'.
 
 So far we have seen how Tp-Note's viewer and HTML exporter converts the
-_target_ of local links '`[text](target)`'. For the _text_ property the
+_destination_ of local links '`[text](destination)`'. For the _text_ property the
 situation is simpler as it never changes. However, there is one exception:
 when the text contains a URL starting with '`http:`' or '`https:`' only
 the file stem is displayed. For example, the link: 
