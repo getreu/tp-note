@@ -138,26 +138,23 @@ const APP_ARGS_BROWSER: &[&[&str]] = &[];
 /// Can be changed in config file.
 #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
 const APP_ARGS_EDITOR: &[&[&str]] = &[
+    &["alacritty", "-e", "hx"],
+    &["alacritty", "-e", "nvim"],
+    &["codium", "-w", "-n"],
+    &["flatpak", "run", "com.vscodium.codium", "-w", "-n"],
     &["code", "-w", "-n"],
     &["flatpak", "run", "com.visualstudio.code", "-w", "-n"],
-    &["atom", "-w"],
-    &["marktext", "--no-sandbox", "--new-window"],
-    &[
-        "flatpak",
-        "run",
-        "com.github.marktext.marktext",
-        "--new-window",
-    ],
     // Disable Typora until bug fix:
     // https://github.com/typora/typora-issues/issues/4633
     //    &["typora"],
+    &["nvim-qt", "--nofork"],
+    &["gvim", "--nofork"],
     &["retext"],
     &["geany", "-s", "-i", "-m"],
     &["gedit", "-w"],
+    &["flatpak", "run", "org.gnome.gitlab.somas.Apostrophe"],
     &["mousepad", "--disable-server"],
     &["leafpad"],
-    &["nvim-qt", "--nofork"],
-    &["gvim", "--nofork"],
 ];
 #[cfg(target_family = "windows")]
 const APP_ARGS_EDITOR: &[&[&str]] = &[
@@ -180,9 +177,8 @@ const APP_ARGS_EDITOR: &[&[&str]] = &[
 #[cfg(all(target_family = "unix", target_vendor = "apple"))]
 const APP_ARGS_EDITOR: &[&[&str]] = &[
     &["code", "-w", "-n"],
-    &["atom", "-w"],
-    &["marktext", "--no-sandbox"],
     &["typora"],
+    &["marktext", "--no-sandbox"],
     &["gvim", "--nofork"],
     &["mate"],
     &["open", "-a", "TextEdit"],
