@@ -63,7 +63,7 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
 
         // Check if this is a `flatpak run <app>` command.
         #[cfg(target_family = "unix")]
-        if executable_list[i].starts_with("flatpak")
+        if executable_list[i].ends_with("flatpak")
             && args_list[i].len() >= 3
             && args_list[i][0] == "run"
         {
@@ -110,6 +110,24 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
                 let ecode = child.wait_subprocess()?;
 
                 if !ecode.success() {
+                    // Check if this is a console command running in a terminal
+                    // emulator.
+                    #[cfg(target_family = "unix")]
+                    if executable_list[i].ends_with("alacritty")
+                        && args_list[i].len() >= 3
+                        && (args_list[i][args_list[i].len() - 2] == "-e"
+                            || args_list[i][args_list[i].len() - 2] == "--command")
+                    {
+                        // This is a teminal emulator command, but the
+                        // application is not installed on this system.
+                        // Silently ignore this flatpak command.
+                        log::info!(
+                            "Console file editor executable \"{}\" not found.",
+                            args_list[i][args_list[i].len() - 2]
+                        );
+                        continue;
+                    };
+
                     return Err(ConfigFileError::ApplicationReturn {
                         code: ecode,
                         var_name: if *RUNS_ON_CONSOLE {
@@ -128,7 +146,7 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
                 log::info!("File editor \"{}\" not found: {}", executable_list[i], e);
             }
         }
-    }
+    } // All executables in the list are launched, without success.
 
     if !executable_found {
         return Err(ConfigFileError::NoApplicationFound {
