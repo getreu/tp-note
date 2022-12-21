@@ -323,6 +323,7 @@ font-weight: bold;
 .variable.other.readwrite.js, .variable.other.object.js, .variable.other.constant.js {
  color: #657b83;
 }
+/* Tp-Note's CSS */
 table, th, td { font-weight: normal; }
 table.center {
   margin-left: auto;
@@ -343,7 +344,6 @@ th.val{
 }
 th.keygrey{ color:grey; text-align:right; }
 th.valgrey{ color:grey; text-align:left; }
-
 pre { white-space: pre-wrap; }
 em { color: #523626; }
 a { color: #316128; }
@@ -352,6 +352,8 @@ h2 { font-size: 132% }
 h3 { font-size: 115% }
 h4, h5, h6 { font-size: 100% }
 h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
+
+<!-- Customize the exporter CSS here -->
 </style>
   </head>
   <body>
