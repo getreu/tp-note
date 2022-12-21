@@ -10,7 +10,7 @@ name = "tpnote-lib"
 readme.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-version = "0.15.1"
+version = "0.15.2"
 
 [features]
 # Exclude "renderer-extras" to stay in _MIT/Apache_ license and the avoid additional
@@ -34,7 +34,7 @@ rst_parser = { version = "0.4.0", optional = true }
 rst_renderer = { version = "0.4.0", optional = true }
 sanitize-filename-reader-friendly.workspace = true
 self_cell = "0.10.2"
-serde_json = "1.0.90"
+serde_json = "1.0.91"
 serde.workspace = true
 serde_yaml.workspace = true
 substring = "1.4.5"
