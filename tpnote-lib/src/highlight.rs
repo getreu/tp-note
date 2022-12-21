@@ -48,18 +48,18 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
             other => return Some(other),
         };
 
-        let next_events = (self.parent.next(), self.parent.next());
-        let code = if let (Some(Event::Text(ref code)), Some(Event::End(Tag::CodeBlock(_)))) =
-            next_events
-        {
-            code
-        } else {
-            return Some(Event::Text(format!("Error: {:#?}", next_events).into()));
-        };
+        let mut code = String::new();
+        let mut event = self.parent.next();
+        while let Some(Event::Text(ref code_block)) = event {
+            code.push_str(code_block);
+            event = self.parent.next();
+        }
+
+        debug_assert!(matches!(event, Some(Event::End(Tag::CodeBlock(_))),));
 
         if lang.as_ref() == "math" {
             return Some(Event::Html(
-                latex2mathml::latex_to_mathml(code, latex2mathml::DisplayStyle::Block)
+                latex2mathml::latex_to_mathml(&code, latex2mathml::DisplayStyle::Block)
                     .unwrap_or_else(|e| e.to_string())
                     .into(),
             ));
@@ -87,7 +87,7 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
         };
         let mut html_generator =
             ClassedHTMLGenerator::new_with_class_style(sr, &ss, ClassStyle::Spaced);
-        for line in LinesWithEndings::from(code) {
+        for line in LinesWithEndings::from(&code) {
             html_generator
                 .parse_html_for_line_which_includes_newline(line)
                 .unwrap_or_default();
@@ -196,7 +196,7 @@ mod test {
     #[test]
     fn test_md() {
         let markdown_input = "# Titel\n\nBody";
-        let expect = "<h1>Titel</h1>\n<p>Body</p>\n";
+        let expected = "<h1>Titel</h1>\n<p>Body</p>\n";
 
         let options = Options::all();
         let parser = Parser::new_ext(markdown_input, options);
@@ -205,6 +205,32 @@ mod test {
         // Write to String buffer.
         let mut html_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
         html::push_html(&mut html_output, parser);
-        assert_eq!(html_output, expect);
+        assert_eq!(html_output, expected);
+    }
+
+    #[test]
+    fn test_indented() {
+        let markdown_input = r#"
+1. test
+
+   ```bash
+   wget getreu.net
+   echo test
+   ```
+"#;
+
+        let expected = "<ol>\n<li>\n<p>test</p>\n<pre>\
+            <code class=\"language-bash\">\
+            <span class=\"source shell bash\">\
+            <span class=\"meta function-call shell\">\
+            <span class=\"variable function shell\">wget</span></span>";
+        let options = Options::all();
+        let parser = Parser::new_ext(markdown_input, options);
+        let parser = SyntaxPreprocessor::new(parser);
+
+        // Write to String buffer.
+        let mut html_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
+        html::push_html(&mut html_output, parser);
+        assert!(html_output.starts_with(expected));
     }
 }
