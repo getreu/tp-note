@@ -14,7 +14,7 @@ license = "MIT/Apache-2.0"
 readme = "README.md"
 repository = "https://gitlab.com/getreu/tp-note"
 rust-version = "1.64.0"
-version = "1.19.9"
+version = "1.19.10"
 
 [profile.release]
 strip = "symbols"
