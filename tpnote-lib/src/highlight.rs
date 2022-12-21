@@ -65,20 +65,32 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
             ));
         }
 
-        let mut html = String::with_capacity(code.len() + code.len() / 4 + 60);
-        html.push_str("<pre><code class=\"language-");
-        html.push_str(lang.as_ref());
-        html.push_str("\">");
+        let mut html = String::with_capacity(code.len() + code.len() * 3 / 2 + 20);
 
         // Use default syntax styling.
         let ss = SyntaxSet::load_defaults_newlines();
-        let sr = ss.find_syntax_by_token(lang.as_ref()).unwrap();
+        let sr = match ss.find_syntax_by_token(lang.as_ref()) {
+            Some(sr) => {
+                html.push_str("<pre><code class=\"language-");
+                html.push_str(lang.as_ref());
+                html.push_str("\">");
+                sr
+            }
+            None => {
+                log::debug!(
+                    "renderer: no syntax definition found for: `{}`",
+                    lang.as_ref()
+                );
+                html.push_str("<pre><code>");
+                ss.find_syntax_plain_text()
+            }
+        };
         let mut html_generator =
             ClassedHTMLGenerator::new_with_class_style(sr, &ss, ClassStyle::Spaced);
         for line in LinesWithEndings::from(code) {
             html_generator
                 .parse_html_for_line_which_includes_newline(line)
-                .unwrap();
+                .unwrap_or_default();
         }
         html.push_str(html_generator.finalize().as_str());
 
@@ -138,6 +150,40 @@ mod test {
 
         let expected = "<pre><code class=\"language-rust\">\
             <span class=\"source rust\">";
+
+        let parser = Parser::new(input);
+        let processed = SyntaxPreprocessor::new(parser);
+
+        let mut rendered = String::new();
+        html::push_html(&mut rendered, processed);
+        assert!(rendered.starts_with(expected));
+    }
+
+    #[test]
+    fn test_plain_text() {
+        let input: &str = "```\nSome\nText\n```";
+
+        let expected = "<pre><code><span class=\"text plain\">\
+            Some\nText\n</span></code></pre>";
+
+        let parser = Parser::new(input);
+        let processed = SyntaxPreprocessor::new(parser);
+
+        let mut rendered = String::new();
+        html::push_html(&mut rendered, processed);
+        assert_eq!(rendered, expected);
+    }
+
+    #[test]
+    fn test_unkown_source() {
+        let input: &str = "```abc\n\
+            fn main() {\n\
+                println!(\"Hello, world!\");\n\
+            }\n\
+            ```";
+
+        let expected = "<pre><code>\
+            <span class=\"text plain\">fn main()";
 
         let parser = Parser::new(input);
         let processed = SyntaxPreprocessor::new(parser);
