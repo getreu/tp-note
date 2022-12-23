@@ -147,12 +147,12 @@ const APP_ARGS_EDITOR: &[&[&str]] = &[
     // Disable Typora until bug fix:
     // https://github.com/typora/typora-issues/issues/4633
     //    &["typora"],
+    &["flatpak", "run", "org.gnome.gitlab.somas.Apostrophe"],
+    &["retext"],
     &["nvim-qt", "--nofork"],
     &["gvim", "--nofork"],
-    &["retext"],
     &["geany", "-s", "-i", "-m"],
     &["gedit", "-w"],
-    &["flatpak", "run", "org.gnome.gitlab.somas.Apostrophe"],
     &["mousepad", "--disable-server"],
     &["leafpad"],
 ];
@@ -226,7 +226,7 @@ const VIEWER_MISSING_HEADER_DISABLES: bool = false;
 
 /// How often should the file watcher check for changes?
 /// Delay in milliseconds. Maximum value is 2000.
-const VIEWER_NOTIFY_PERIOD: u64 = 1000;
+const VIEWER_NOTIFY_PERIOD: u64 = 200;
 
 /// The maximum number of TCP connections the HTTP server can handle at the same
 /// time. In general, the serving and live update of the HTML rendition of the

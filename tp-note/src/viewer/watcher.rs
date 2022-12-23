@@ -59,7 +59,9 @@ impl FileWatcher {
         let notify_period = CFG.viewer.notify_period;
         let (tx, rx) = channel();
         // Max value for `notify_period` is 2 seconds.
-        let mut debouncer = new_debouncer(Duration::from_millis(notify_period), None, tx)?;
+        // We use the same value for `timeout` and `Some(tick_rate)`.
+        let period = Duration::from_millis(notify_period);
+        let mut debouncer = new_debouncer(period, Some(period), tx)?;
         // In theory watching only `file` is enough. Unfortunately some file
         // editors do not modify files directly. They first rename the existing
         // file on disk and then  create a new file with the same filename. As
