@@ -2232,7 +2232,7 @@ dependencies = [
 
 [[package]]
 name = "tp-note"
-version = "1.19.11"
+version = "1.19.12"
 dependencies = [
  "atty",
  "copypasta",

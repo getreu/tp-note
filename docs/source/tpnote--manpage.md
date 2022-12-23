@@ -1,4 +1,4 @@
-% TP-NOTE(1) Version 1.19.11 | Tp-Note documentation
+% TP-NOTE(1) Version 1.19.12 | Tp-Note documentation
 
 
 # NAME
