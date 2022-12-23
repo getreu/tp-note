@@ -5,8 +5,9 @@ use crate::viewer::error::ViewerError;
 use crate::viewer::sse_server::SseToken;
 use notify::{RecommendedWatcher, RecursiveMode};
 use notify_debouncer_mini::{new_debouncer, DebouncedEvent, Debouncer};
+use std::ffi::{OsStr, OsString};
 use std::panic::panic_any;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::TrySendError;
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, SyncSender};
@@ -15,16 +16,20 @@ use std::time::Duration;
 use std::time::Instant;
 
 /// Even if there is no file modification, after `WATCHER_TIMEOUT` seconds,
-/// the watcher sends an `update` request to check if there are still
-/// subscribers connected.
+/// the watcher sends an `update` request to the connected web browsers in
+/// oder to check if there are still subscribers connected. The value's unit
+/// is seconds.
 const WATCHER_TIMEOUT: u64 = 10;
 
 /// Delay while `update()` with no subscribers silently ignored. This avoids
 /// a race condition, when a file has already changed on disk, but the browser
-/// has not connected yet.
-const WATCHER_MIN_UPTIME: u128 = 3000;
+/// has not connected yet. The value's unit is seconds.
+const WATCHER_MIN_UPTIME: u64 = 5;
 /// The `watcher` notifies about changes through `rx`.
 pub struct FileWatcher {
+    /// File to watch and render into HTML. We watch only one directory, so it
+    /// is enough to store only the filename for later comparison.
+    watched_file: OsString,
     /// Receiver for file changed messages.
     rx: Receiver<Result<Vec<DebouncedEvent>, Vec<notify::Error>>>,
     /// We must store the `Debouncer` because it hold
@@ -44,7 +49,10 @@ pub struct FileWatcher {
 impl FileWatcher {
     /// Constructor. `file` is the file to watch.
     pub fn new(
-        file: PathBuf,
+        // The file path of the file being watched.
+        watched_file: PathBuf,
+        // A list of subscribers, that shall be informed when the watched
+        // file has been changed.
         event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
         terminate_on_browser_disconnect: Arc<AtomicBool>,
     ) -> Result<Self, ViewerError> {
@@ -52,11 +60,23 @@ impl FileWatcher {
         let (tx, rx) = channel();
         // Max value for `notify_period` is 2 seconds.
         let mut debouncer = new_debouncer(Duration::from_millis(notify_period), None, tx)?;
-        debouncer.watcher().watch(&file, RecursiveMode::Recursive)?;
+        // In theory watching only `file` is enough. Unfortunately some file
+        // editors do not modify files directly. They first rename the existing
+        // file on disk and then  create a new file with the same filename. As
+        // a workaround, we watch the whole directory where the file resides.
+        // False positives, there could be other changes in this directory
+        // which are not related to `file`, are detected, as we only trigger
+        // the rendition to HTML when `debounced_event.path` corresponds to our
+        // watched file.
+        debouncer.watcher().watch(
+            watched_file.parent().unwrap_or_else(|| Path::new("./")),
+            RecursiveMode::NonRecursive,
+        )?;
 
         log::debug!("File watcher started.");
 
         Ok(Self {
+            watched_file: watched_file.file_name().unwrap_or_default().to_owned(),
             rx,
             debouncer,
             event_tx_list,
@@ -85,15 +105,15 @@ impl FileWatcher {
                 Err(RecvTimeoutError::Timeout) => {
                     // Push something to detect disconnected TCP channels.
                     self.update(SseToken::Ping)?;
-                    // When empty all TCP connections have disconnected.
 
+                    // When empty all TCP connections have disconnected.
                     let tx_list = &mut *self.event_tx_list.lock().unwrap();
                     // log::trace!(
                     //     "File watcher timeout: {} open TCP connections.",
                     //     tx_list.len()
                     // );
                     if tx_list.is_empty()
-                        && self.start_time.elapsed().as_millis() > WATCHER_MIN_UPTIME
+                        && self.start_time.elapsed().as_secs() > WATCHER_MIN_UPTIME
                         && self.terminate_on_browser_disconnect.load(Ordering::SeqCst)
                     {
                         return Err(ViewerError::AllSubscriberDiconnected);
@@ -109,7 +129,19 @@ impl FileWatcher {
             log::trace!("File watcher event: {:?}", evnt);
 
             match evnt {
-                Ok(_) => self.update(SseToken::Update)?,
+                Ok(events) => {
+                    for e in events {
+                        if e.path
+                            .file_name()
+                            // Make this fail if the filename is unavailable.
+                            .unwrap_or_else(|| OsStr::new("***unknown filename***"))
+                            == self.watched_file
+                        {
+                            self.update(SseToken::Update)?;
+                            break; // Igonre all remaining events.
+                        }
+                    }
+                }
                 Err(mut e) => return Err(e.remove(1).into()),
             }
         }
