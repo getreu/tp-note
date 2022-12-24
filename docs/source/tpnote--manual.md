@@ -248,11 +248,11 @@ preferences and configuration:
 
 * [Tp-Note](https://blog.getreu.net/projects/tp-note/)
 * Addon for Firefox: [Copy Selection as Markdown]
-* Markdown editor : [Mark Text](https://marktext.app/)
+* Markdown editor : [Apostrophe]
   <!--or [Typora](https://typora.io/)-->
 * Integration with the file manager (start entry in context menue) as described below.
 
-My favourite Markdown editor at the moment is [Mark Text](https://marktext.app/).
+My favourite Markdown editor at the moment is [Apostrophe].
 I like its clean and simple interface helping me to stay focused on the content
 while writing.[^3]
 
@@ -281,6 +281,7 @@ Note, no content or filename was edited manually in this example. _Tp-Note_
 takes care of interpreting the clipboard's content and generating the file on
 disk.
 
+[Apostrophe]: https://apps.gnome.org/en-GB/app/org.gnome.gitlab.somas.Apostrophe/
 [Copy Selection as Markdown]: https://addons.mozilla.org/en-GB/firefox/addon/copy-selection-as-markdown/?src=search
 
 
