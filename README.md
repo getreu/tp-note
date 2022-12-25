@@ -210,14 +210,17 @@ compile _Tp-Note_ yourself.
 
    **Building for Linux**
 
-       sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev musl-tools
-       cargo install tp-note
-       sudo cp ~/.cargo/bin/tpnote /usr/local/bin
-
-   In case you experience compilation errors in dependent crates, replace
-   `cargo install tp-note` with the following:
-
-       cargo install --locked tp-note
+   ```sh
+   # Libraries needed for optional feature `message-box`.
+   sudo apt install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev 
+   # Needed for target `x86_64-unknown-linux-musl`.
+   sudo apt install musl-toolsy 
+   # Needed for target `armv7-unknown-linux-gnueabihf`.
+   sudo apt install gcc-arm-linux-gnueabihf
+   # Compile Tp-Note.
+   cargo install tp-note
+   sudo cp ~/.cargo/bin/tpnote /usr/local/bin
+   ```
 
    If - under Linux - you need to reduce the binary size and you can do without
    error message popup boxes (for example on a headless system), no GTK is
@@ -239,7 +242,7 @@ compile _Tp-Note_ yourself.
 
    **Building for Windows**
 
-   Build the full featured version with:
+   Build the full-featured version with:
 
        cargo install tp-note
 
