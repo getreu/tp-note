@@ -388,7 +388,7 @@ A little game designed for primary kids to revise vocabulary in classroom.
   header data.
 
   ```shell
-  > TPNOTEUSER="John" find . -type f -name '*.md' -exec tpnote -a -b {} > /dev/null \;
+  > TPNOTE_USER="John" find . -type f -name '*.md' -exec tpnote -a -b {} > /dev/null \;
   ```
 
   The direction of the synchronization depends on whether the '`.md`' file has
@@ -1608,7 +1608,7 @@ In addition, Tp-Note defines the following variables:
   (can be changed in the configuration file),
 
 * '`{{ username }}`' is the content of the first non-empty environment
-  variable: '`TPNOTEUSER`', '`LOGNAME`', '`USER`' or '`USERNAME`'.
+  variable: '`TPNOTE_USER`', '`LOGNAME`', '`USER`' or '`USERNAME`'.
 
 * '`{{ lang }}`' contains the user's language tag as defined in
   [RFC 5646](http://www.rfc-editor.org/rfc/rfc5646.txt).
@@ -1870,10 +1870,10 @@ TPNOTELANG
 :   Tp-Note stores the user's locale settings in the template variable
     '`{{ lang }}`'. When set, '`TPNOTELANG`' overwrites the locale settings.
 
-TPNOTEUSER
+TPNOTE\_USER
 
 :   The template variable '`{{ username }}`' is the content of the first
-    non-empty variable: '`TPNOTEUSER`', '`LOGNAME`', '`USER`' or '`USERNAME`'.
+    non-empty variable: '`TPNOTE_USER`', '`LOGNAME`', '`USER`' or '`USERNAME`'.
 
 
 
