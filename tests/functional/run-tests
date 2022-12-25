@@ -2,7 +2,7 @@
 
 TESTOUTPUT="test_output"
 PWD="$(pwd)/$TESTOUTPUT"
-unset TPNOTELANG
+unset TPNOTE_LANG
 
 # Tidy up
 rm -r "$PWD"

@@ -1615,7 +1615,7 @@ In addition, Tp-Note defines the following variables:
   Not to be confused with the UNIX '`LANG`' environment variable from which
   this value is derived under Linux/MacOS.
   Under Windows, the user's language tag is queried through the WinAPI.
-  If defined, the environment variable '`TPNOTELANG`' overwrites the value
+  If defined, the environment variable '`TPNOTE_LANG`' overwrites the value
   of '`{{ lang }}`' (all operating systems).
 
 The following '`{{ fm_* }}`' variables are typically generated, _after_ a
@@ -1865,10 +1865,10 @@ never exposes any information to the network or on the Internet.
 
 # ENVIRONMENT VARIABLES
 
-TPNOTELANG
+TPNOTE\_LANG
 
 :   Tp-Note stores the user's locale settings in the template variable
-    '`{{ lang }}`'. When set, '`TPNOTELANG`' overwrites the locale settings.
+    '`{{ lang }}`'. When set, '`TPNOTE_LANG`' overwrites the locale settings.
 
 TPNOTE\_USER
 

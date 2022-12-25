@@ -196,7 +196,7 @@ pub const TMPL_VAR_USERNAME: &str = "username";
 /// Not to be confused with the UNIX `LANG` environment variable from which
 /// this value is derived under Linux/MacOS.
 /// Under Windows, the user's language tag is queried through the WinAPI.
-/// If defined, the environment variable `TPNOTELANG` overwrites this value
+/// If defined, the environment variable `TPNOTE_LANG` overwrites this value
 /// (all operating systems).
 pub const TMPL_VAR_LANG: &str = "lang";
 

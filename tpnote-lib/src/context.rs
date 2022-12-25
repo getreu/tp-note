@@ -271,7 +271,7 @@ impl Context {
         (*self).insert(TMPL_VAR_USERNAME, &author);
 
         // Get the user's language tag.
-        let tpnotelang = env::var("TPNOTELANG").ok();
+        let tpnotelang = env::var("TPNOTE_LANG").ok();
         // Unix/MacOS version.
         #[cfg(not(target_family = "windows"))]
         if let Some(tpnotelang) = tpnotelang {
