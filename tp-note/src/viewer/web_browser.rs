@@ -4,6 +4,8 @@ use crate::config::CFG;
 use crate::error::ConfigFileError;
 use crate::process_ext::ChildExt;
 use crate::viewer::error::ViewerError;
+use percent_encoding::percent_decode_str;
+use std::env;
 use std::process::Command;
 use std::process::Stdio;
 use webbrowser::{open_browser, Browser};
@@ -14,8 +16,12 @@ use webbrowser::{open_browser, Browser};
 /// closes the browser window.
 pub fn launch_web_browser(url: &str) -> Result<(), ViewerError> {
     if let Err(e) = launch_listed_browser(url) {
-        log::warn!("{}", e);
-        log::warn!("As fall back workaround, trying to launch the system's default web browser.");
+        log::warn!(
+            "{}\n\
+            As fall back workaround, trying to launch the\n\
+            system's default web browser.",
+            e
+        );
         // This might not block in all circumstances.
         open_browser(Browser::Default, url)?;
     };
@@ -30,7 +36,16 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
     let mut executable_list = Vec::new();
 
     // Choose the right parameter list.
-    let browser_args = &CFG.app_args.browser;
+    let vv: Vec<Vec<String>>;
+    let browser_args = if let Ok(s) = env::var("TPNOTE_BROWSER") {
+        vv = vec![s
+            .split_ascii_whitespace()
+            .map(|s| percent_decode_str(s).decode_utf8_lossy().to_string())
+            .collect::<Vec<String>>()];
+        &vv
+    } else {
+        &CFG.app_args.browser
+    };
 
     // Prepare launch of browser/viewer.
     for app in browser_args {
@@ -120,10 +135,7 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
 
     if !executable_found {
         return Err(ConfigFileError::NoApplicationFound {
-            app_list: executable_list
-                .into_iter()
-                .map(|s| s.to_owned())
-                .collect::<Vec<String>>(),
+            app_list: browser_args.to_owned(),
             var_name: "app_args.browser".to_string(),
         }
         .into());
