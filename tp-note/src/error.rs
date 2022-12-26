@@ -95,15 +95,15 @@ pub enum ConfigFileError {
 
     /// Remedy: check the configuration file variable `app_args.editor`.
     #[error(
-        "None of the following external applications can be found on your system:\n\
+        "Can not find any file editor listend in `{var_name}`:\n\
         \t{app_list:?}\n\
         \n\
         Install one of the listed applications on your system -or-\n\
-        register some already installed application in the variable \n\
-        `{var_name}` in Tp-Note's configuration file."
+        register some already installed application in Tp-Note's \n\
+        configuration file or in the environment variable."
     )]
     NoApplicationFound {
-        app_list: Vec<String>,
+        app_list: Vec<Vec<String>>,
         var_name: String,
     },
 

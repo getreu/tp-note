@@ -4,6 +4,8 @@ use crate::config::CFG;
 use crate::error::ConfigFileError;
 use crate::process_ext::ChildExt;
 use crate::settings::RUNS_ON_CONSOLE;
+use percent_encoding::percent_decode_str;
+use std::env;
 #[cfg(not(target_family = "windows"))]
 use std::fs::File;
 use std::path::Path;
@@ -22,9 +24,19 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
     let mut executable_list = Vec::new();
 
     // Choose the right parameter list.
-    let editor_args = match *RUNS_ON_CONSOLE {
-        true => &CFG.app_args.editor_console,
-        false => &CFG.app_args.editor,
+    let env_var = env::var("TPNOTE_EDITOR").ok();
+    let vv: Vec<Vec<String>>;
+    let editor_args = match (&env_var, *RUNS_ON_CONSOLE) {
+        // If the environment variable is defined, it has precedence.
+        (Some(s), false) => {
+            vv = vec![s
+                .split_ascii_whitespace()
+                .map(|s| percent_decode_str(s).decode_utf8_lossy().to_string())
+                .collect::<Vec<String>>()];
+            &vv
+        }
+        (None, false) => &CFG.app_args.editor,
+        (_, true) => &CFG.app_args.editor_console,
     };
 
     // Prepare launch of editor/viewer.
@@ -150,14 +162,12 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
 
     if !executable_found {
         return Err(ConfigFileError::NoApplicationFound {
-            app_list: executable_list
-                .into_iter()
-                .map(|s| s.to_owned())
-                .collect::<Vec<String>>(),
+            app_list: editor_args.to_owned(),
             // Choose the right parameter list.
-            var_name: match *RUNS_ON_CONSOLE {
-                true => "app_args.editor_console".to_string(),
-                false => "app_args.editor".to_string(),
+            var_name: match (&env_var, *RUNS_ON_CONSOLE) {
+                (Some(_), false) => "TPNOTE_EDITOR".to_string(),
+                (_, true) => "app_args.editor_console".to_string(),
+                (None, false) => "app_args.editor".to_string(),
             },
         });
     };
