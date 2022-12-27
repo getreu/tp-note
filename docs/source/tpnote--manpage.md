@@ -1,4 +1,12 @@
-% TP-NOTE(1) Version 1.19.12 | Tp-Note documentation
+---
+title:      "TP-NOTE(1) Version 1.19.12 | Tp-Note documentation"
+subtitle:   "manpage"
+author:     "Jens Getreu"
+version:    "1.19.12"
+filename_sync: false
+date:       "2022-12-26"
+lang:       "en-GB"
+---
 
 
 # NAME
@@ -67,14 +75,14 @@ with the '`tmpl.sync_filename`' template.
 Example: the clipboard is empty and `<path>` is a directory (or empty):
 
 ``` sh
-> tpnote "./03-Favorite Readings/"
+tpnote "./03-Favorite Readings/"
 ```
 
 or
 
 ``` sh
-> cd "./03-Favorite Readings"
-> tpnote
+cd "./03-Favorite Readings"
+tpnote
 ```
 
 creates the document:
@@ -87,7 +95,7 @@ with the content:
 ---
 title:      "Favorite Readings"
 subtitle:   "Note"
-author:     "getreu"
+author:     "Getreu"
 date:       "2021-10-31"
 lang:       "en-GB"
 ---
@@ -108,7 +116,7 @@ external text editor. When the user closes the text editor, Tp-Note
 synchronizes the note's metadata and its filename with the template
 '`tmpl.sync_filename`'.
 
-> Note: this operation mode also empties the clipboard (configurable feature).
+Note: this operation mode also empties the clipboard (configurable feature).
 
 **Clipboard simulation**
 
@@ -116,7 +124,7 @@ When no mouse and clipboard is available, the clipboard feature can be
 simulated by feeding the clipboard data into `stdin`:
 
 ```sh
-> echo "[The Rust Book](<https://doc.rust-lang.org/book/>)" | tpnote
+echo "[The Rust Book](<https://doc.rust-lang.org/book/>)" | tpnote
 ```
 
 Tp-Note behaves here as if the clipboard contained the string:
@@ -130,14 +138,14 @@ Example: While launching Tp-Note the clipboard contains the string:
 "`Who Moved My Cheese?\n\nChapter 2`" and `<path>` is a directory.
 
 ``` sh
-> tpnote "./03-Favorite Readings/"
+tpnote "./03-Favorite Readings/"
 ```
 
 or
 
 ``` sh
-> cd "./03-Favorite Readings/"
-> tpnote
+cd "./03-Favorite Readings/"
+tpnote
 ```
 
 This creates the document:
@@ -150,7 +158,7 @@ with the content:
 ---
 title:      "Who Moved My Cheese"
 subtitle:   "Note"
-author:     "getreu"
+author:     "Getreu"
 date:       "2021-10-31"
 lang:       "en-GB"
 ---
@@ -176,7 +184,7 @@ Example: `<path>` is a directory, the clipboard is not empty and it contains
 the string: "`I recommend:\n[The Rust Book](https://doc.rust-lang.org/book/)`".
 
 ```sh
-> tpnote './doc/Lecture 1'
+tpnote './doc/Lecture 1'
 ```
 
 Tp-Note's templates '`tmpl.from_clipboard_content`' and
@@ -188,7 +196,7 @@ Tp-Note's templates '`tmpl.from_clipboard_content`' and
 ---
 title:      "The Rust Book"
 subtitle:   "URL"
-author:     "getreu"
+author:     "Getreu"
 date:       "2021-10-31"
 lang:       "en-GB"
 ---
@@ -209,7 +217,7 @@ Example: '`<path>`' is a directory, the clipboard is not empty and contains
 the string: "`---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing`".
 
 ```sh
-> tpnote
+tpnote
 ```
 
 This creates the note: '`20211031-Todo.mdtxt`' with the following
@@ -219,7 +227,7 @@ content:
 ---
 title:      "Todo"
 subtitle:   ""
-author:     "getreu"
+author:     "Getreu"
 date:       "2021-10-31"
 lang:       "en-GB"
 file_ext:   "mdtxt"
@@ -240,7 +248,7 @@ Note, that the same result can also be achieved without clipboard input by
 typing in a terminal:
 
 ```sh
-> echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tpnote
+echo -e "---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing" | tpnote
 ```
 
 Furthermore, this operation mode is very handy with pipes in general, as shows the
@@ -286,7 +294,7 @@ renamed to be in sync with the note's metadata.
 Example:
 
 ``` sh
-> tpnote "Classic Shell Scripting.pdf"
+tpnote "Classic Shell Scripting.pdf"
 ```
 
 creates the note:
@@ -325,8 +333,8 @@ Consider the content of the following text file
 
 To convert the text file into a Tp-Note file type:
 
-```bash
-> tpnote --add-header --batch "Ascii-Hangman--A game for children.md"
+```sh
+tpnote --add-header --batch "Ascii-Hangman--A game for children.md"
 ```
 
 NB: the '`--add-header`' flag is actually not necessary, as it is enabled by
@@ -359,8 +367,8 @@ A little game designed for primary kids to revise vocabulary in classroom.
 
   Using the method displayed above you can save time and create a script with:
 
-  ```
-  > sudo nano /usr/local/bin/download
+  ```sh
+  sudo nano /usr/local/bin/download
   ```
 
   Insert the following content:
@@ -372,14 +380,14 @@ A little game designed for primary kids to revise vocabulary in classroom.
 
   and make it executable:
 
-  ```
-  > sudo chmod a+x /usr/local/bin/download
+  ```sh
+  sudo chmod a+x /usr/local/bin/download
   ```
 
   To execute the script type:
 
-  ```shell
-  > download 'https://blog.getreu.net'
+  ```sh
+  download 'https://blog.getreu.net'
   ```
 
 * **Use case: synchronize recursively filenames and metadata**
@@ -387,8 +395,8 @@ A little game designed for primary kids to revise vocabulary in classroom.
   The following synchronizes bidirectionally all filenames with the note's YAML
   header data.
 
-  ```shell
-  > TPNOTE_USER="John" find . -type f -name '*.md' -exec tpnote -a -b {} > /dev/null \;
+  ```sh
+  TPNOTE_USER="John" find . -type f -name '*.md' -exec tpnote -a -b {} > /dev/null \;
   ```
 
   The direction of the synchronization depends on whether the '`.md`' file has
@@ -415,8 +423,8 @@ to an existing '`.md`'-file.
 Example: edit the note from the previous example:
 
 ``` bash
-> cd "./03-Favorite Readings"
-> tpnote 20211031-Favorite Readings--Note.md
+cd "./03-Favorite Readings"
+tpnote 20211031-Favorite Readings--Note.md
 ```
 
 
@@ -430,8 +438,8 @@ to retrieve your notes in large data pools.
 
 Example:
 
-``` sh
-> tpnote "20200306-Favorite Readings--Note.md"
+```sh
+tpnote "20200306-Favorite Readings--Note.md"
 ```
 
 The way how Tp-Note synchronizes the note's metadata and filename is defined
@@ -455,7 +463,7 @@ synchronization).
 
 **-a**, **\--add-header**
 
-:   Prepend a YAML header in case the text file does not have one.
+>   Prepend a YAML header in case the text file does not have one.
     The default template, deduces the '`title:`' and '`subtitle:`'
     header field from the filename. It's sort-tag and file extension
     remain untouched. In case the filename is lacking a _sort-tag_,
@@ -467,27 +475,27 @@ synchronization).
 
 **-b**, **\--batch**
 
-:   Do not launch the external text editor or viewer. All other operations
+>   Do not launch the external text editor or viewer. All other operations
     are available and are executed in the same way. In batch mode, error
     messages are dumped on the console only and no alert windows pop up.
 
-:   Tp-Note ignores the clipboard when run in batch mode with '`--batch`'.
+>   Tp-Note ignores the clipboard when run in batch mode with '`--batch`'.
     Instead, if available, it reads the `stdin` stream as if the data came
     from the clipboard.
 
 **-c** *FILE*, **\--config**=*FILE*
 
-:   Load the alternative config file *FILE* instead of the default one.
+>   Load the alternative config file *FILE* instead of the default one.
 
 **-d** *LEVEL*, **\--debug**=*LEVEL*
 
-:   Print additional log messages.  The debug level *LEVEL* must be one out of
+>   Print additional log messages.  The debug level *LEVEL* must be one out of
     '`trace`', '`debug`', '`info`', '`warn`', '`error`' (default) or '`off`'.
     The level '`trace`' reports the most detailed information, while '`error`'
     informs you only about failures.  A '`warn`' level message means, that not
     all functionality might be available or work as expected.
 
-:   Use '`-b -d trace`' for debugging templates. If the HTTP server
+>   Use '`-b -d trace`' for debugging templates. If the HTTP server
     (viewer) does not work as expected: '`-n -d debug`'. If your text editor
     does not open as expected: '`-n -d info --edit`'. Or, to observe the
     launch of the web browser: '`-n -d info --view`'. The option
@@ -497,34 +505,34 @@ synchronization).
     '`-d off`' silences all error message reporting and also suppresses the
     error popup windows.
 
-:   All error messages are dumped in the error stream `stderr` and appear
+>   All error messages are dumped in the error stream `stderr` and appear
     on the console from where Tp-Note was launched:
 
         tpnote.exe --debug info my_note.md
 
-    On Windows the output must be redirected into a file to see it:
+>   On Windows the output must be redirected into a file to see it:
 
         tpnote.exe --debug info my_note.md >debug.md 2>&1
 
-    Alternatively, you can redirect all log file entries into popup alert
+>   Alternatively, you can redirect all log file entries into popup alert
     windows.
 
         tpnote.exe --popup --debug info my_note.md
 
-    The same can be achieved by setting following configuration file
+>   The same can be achieved by setting following configuration file
     variables (especially useful with Windows):
 
         [arg_default]
         debug = 'info'
         popup = true
 
-    The value for '`arg_default.debug`' must be one out of '`trace`',
+>   The value for '`arg_default.debug`' must be one out of '`trace`',
     '`debug`', '`info`', '`warn`', '`error`' (default) and '`off`'. They have
     the same meaning as the corresponding command line options.
 
 **-e**, **\--edit**
 
-:   Edit only mode: opens the external text editor, but not the file
+>   Edit only mode: opens the external text editor, but not the file
     viewer. This disables Tp-Note's internal file watcher and web server,
     unless '`-v`' is given. Another way to permanently disable the web server
     is to set the configuration variable '`arg_default.edit=true`'.
@@ -533,13 +541,13 @@ synchronization).
 
 **-p**, **\--port**=*PORT*
 
-:   Sets the server port that the web browser connects to, to the specified
+>   Sets the server port that the web browser connects to, to the specified
     value *PORT*.
     If not given, a random available port is chosen automatically.
 
 **-n**, **\--no-filename-sync**
 
-:   Whenever Tp-Note opens a note file, it synchronizes its YAML-metadata with
+>   Whenever Tp-Note opens a note file, it synchronizes its YAML-metadata with
     its filename. '`--no-filename-sync`' disables the synchronization.  In
     addition, the "flag in scripts" can be especially useful for testing
     '`.md`'-files.  See section EXIT STATUS for more details.  The section
@@ -548,7 +556,7 @@ synchronization).
 
 **-t**, **\--tty**
 
-:   Tp-Note tries different heuristics to detect whether a graphic environment
+>   Tp-Note tries different heuristics to detect whether a graphic environment
     is available or not. For example, under Linux, the '`DISPLAY`' environment
     variable is evaluated. The '`--tty`' flag disables the automatic detection
     and sets Tp-Note into "console only" mode: now only the non GUI editor
@@ -557,7 +565,7 @@ synchronization).
 
 **-u**, **\--popup**
 
-:   Redirect log file entries into popup alert windows. Must be used together
+>   Redirect log file entries into popup alert windows. Must be used together
     with the **\--debug** option to have an effect. Note, that debug level
     '`error`' conditions will always trigger popup messages, regardless of
     **\--popup** and **\--debug** (unless '`--debug off`'). Popup alert windows
@@ -567,25 +575,25 @@ synchronization).
 
 **-v**, **\--view**
 
-:   View only mode: do not open the external text editor. This flag instructs
+>   View only mode: do not open the external text editor. This flag instructs
     Tp-Note to start an internal file watcher and web server and connect
     the system's default web browser to view the note file and to observe live
     file modifications. The configuration setting '`arg_default.edit=true`'
     disables the viewer. However, with '`--view`' given at the command line,
     the viewer appears, regardless of the value of '`arg_default.edit`'.
 
-:   As most users do not expect the viewed file to change, '`--view`'
+>   As most users do not expect the viewed file to change, '`--view`'
     is usually used together with '`--no-filename-sync`'.
 
 **-V**, **\--version**
 
-:   Print Tp-Note's version, its built-in features and the path to the
+>   Print Tp-Note's version, its built-in features and the path to the
     sourced configuration file. The output is YAML formatted for further
     automatic processing.
 
 **-x** *DIRECTORY*, **\--export**=*DIRECTORY*
 
-:   Print the note as HTML rendition into _DIRECTORY_. '`-x -`' prints to
+>   Print the note as HTML rendition into _DIRECTORY_. '`-x -`' prints to
     _stdout_. The empty string, e.g. '`--export= `' or '`-x ""`', defaults to
     the directory where the note file resides. No external text editor or
     viewer is launched. Can be combined with '`--batch`' to avoid popup
@@ -593,7 +601,7 @@ synchronization).
 
 **\--export-link-rewriting**=*MODE*
 
-:   Choose how local links in the exported HTML file are written out: '`off`',
+>   Choose how local links in the exported HTML file are written out: '`off`',
     '`short`' or '`long`' (default). No link rewriting occurs, for the *MODE*
     '`off`'. The *MODE* '`short`' rewrites all local relative links to absolute
     links, whose base is the first parent directory containing the marker
@@ -793,7 +801,7 @@ parent directory name omitting its own *sort tag*.
 A note's filename is in sync with its meta data, when the following is true
 (slightly simplified, see the configuration file for the complete definition):
 
-> filename on disk without *sort tag* == '`{{ fm_title }}--{{ fm_subtitle }}.md`'
+filename on disk without *sort tag* == '`{{ fm_title }}--{{ fm_subtitle }}.md`'
   ^[The variables '`{{ fm_title }}`' and '`{{ fm_subtitle }}`' reflect the values in
   the note's metadata.]
 
@@ -807,7 +815,7 @@ and the content:
 ---
 title:      "1. The Beginning"
 subtitle:   "Note"
-author:     "getreu"
+author:     "Getreu"
 date:       "2021-10-31"
 lang:       "en-GB"
 ---
@@ -927,6 +935,12 @@ The configuration file is encoded according to the TOML standard.
 
 ## Register your own text editor
 
+There are two ways to modify the default file editor, Tp-Note launches
+when it starts: either you can modify the  configuration file variables
+'`app_args.editor`' and '`app_args.editor_console`', or alternatively, you can
+set the '`TPNOTE_EDITOR`' environment variable  (cf. examples in the capter
+_ENVIRONMENT_VARIABLES_ below).
+
 The configuration file variables '`app_args.editor`' and
 '`app_args.editor_console`' define lists of external text editors to be
 launched for editing. The lists contain by default well-known text editor names
@@ -936,7 +950,7 @@ installed text editor. When Tp-Note is started on a Linux console, the list
 '`app_args.editor_console`' is used instead. Here you can register text
 editors that do not require a graphical environment, e.g. '`vim`' or '`nano`'.
 In order to use your own text editor, just place it at the top of the list. To
-debug your changes invoke Tp-Note with '`tpnote --debug info --popup --edit`'
+debug your changes invoke Tp-Note with '`tpnote --debug info --popup --edit`'.
 
 The following example showcases the configuration for the _Kate_
 file editor.  The entry '`kate`' launches the binary, while the command
@@ -965,19 +979,12 @@ _VScode_-editor can be launched with the '`--wait`' option, _Vim_ with
 Tp-Note also works with forking text editors. Although this should be
 avoided, there is a possible workaround:
 
-```shell
-> FILE=$(tpnote --batch) # Create the new note.
-> mytexteditor "$FILE"    # The prompt returns immediatly as the editor forks.
-> tpnote --view "$FILE"  # Launch Tp-Note's viewer.
->                         # After the editing is done...
-> tpnote --batch "$FILE" # Synchronize the note's filename.
-```
-
-Remark for the advanced console user: In a similar way, you can launch a
-different text editor than the one configured in Tp-Note's configuration file:
-
-```shell
-> FILE=$(tpnote --batch); vi "$FILE"; tpnote --batch "$FILE"
+```sh
+FILE=$(tpnote --batch) # Create the new note.
+mytexteditor "$FILE"   # The prompt returns immediatly as the editor forks.
+tpnote --view "$FILE"  # Launch Tp-Note's viewer.
+                       # After the editing is done...
+tpnote --batch "$FILE" # Synchronize the note's filename.
 ```
 
 Whereby '`FILE=$(tpnote --batch)`' creates the note file, '`vi "$FILE"`' opens the
@@ -997,11 +1004,15 @@ the application with:
 [Flatpak package]: https://www.flathub.org/apps/details/com.github.marktext.marktext
 [set up Flatpack]: https://flatpak.org/setup/
 
-    > sudo flatpak install flathub com.github.marktext.marktext
+```sh
+sudo flatpak install flathub com.github.marktext.marktext
+```
 
 To test, run _Mark Text_ from the command line:
 
-    > flatpak run com.github.marktext.marktext
+```sh
+flatpak run com.github.marktext.marktext
+```
 
 Then open Tp-Note's configuration file `tpnote.toml` and search for the
 '`app_args.editor`' variable, quoted shortened below:
@@ -1272,8 +1283,9 @@ after repeated application.
 To debug your '`tmpl.sync_filename`' template, create a test note file
 '`test.md`' and invoke Tp-Note with '`--debug trace`' and '`--batch`':
 
-    tpnote --batch --debug trace test.md
-
+```sh
+tpnote --batch --debug trace test.md
+```
 
 
 ## Store new note files by default in a subdirectory
@@ -1451,6 +1463,8 @@ be viewed with a web browser. Tp-Note's configuration file contains a list
 This list is executed top down until a web browser is found and launched. If
 you want to view your notes with a different web browser, simply modify the
 '`app_args.browser`' list and put your favorite web browser on top.
+Alternatively, you can set the '`TPNOTE_BROWSER`' environment variable  (cf.
+examples in the capter _ENVIRONMENT_VARIABLES_ below).
 
 In case none of the listed browsers can be found, Tp-Note switches into a
 fall back mode with limited functionality, where it tries to open the system's
@@ -1867,17 +1881,60 @@ never exposes any information to the network or on the Internet.
 
 TPNOTE\_LANG
 
-:   Tp-Note stores the user's locale settings in the template variable
-    '`{{ lang }}`'. When set, '`TPNOTE_LANG`' overwrites the locale settings.
+>   Tp-Note stores the user's locale settings in the template variable
+    '`{{ lang }}`'. When set, '`TPNOTE_LANG`' overwrites this locale 
+    settings.
 
 TPNOTE\_USER
 
-:   The template variable '`{{ username }}`' is the content of the first
-    non-empty variable: '`TPNOTE_USER`', '`LOGNAME`', '`USER`' or '`USERNAME`'.
+>   The template variable '`{{ username }}`' is the content of the first
+    non-empty environment variable: '`TPNOTE_USER`', '`LOGNAME`', 
+    '`USER`' or '`USERNAME`'.
+
+TPNOTE\_EDITOR
+
+>   If set, this variable takes precedence over the configuration file
+    variable '`app_args.editor`'. While the latter is a list describing
+    how to invoke various file editors, '`TPNOTE_EDITOR`' contains a 
+    string invoking one particular file editor, exactly as one would do
+    on a shell: the whitespace separated tokens list contains: the path 
+    name of the application, and all its flags and options. For example:
+
+>   ```sh        
+>   TPNOTE_EDITOR="geany -sim" tpnote
+>   ```
+
+>   The above instructs Tp-Note to start the editor "`geany`" with the 
+    flags '`-sim`'. Unlike with shell tokens, the backslash and 
+    quote characters have no special meaning. Instead, all tokens
+    are _percent encoded_. Consider the following example where
+    the space character is expressed as '`%20`':
+        
+>   ```sh
+>   TPNOTE_EDITOR="geany -sim -c ~/my%20config/" tpnote    
+>   ```
+
+TPNOTE\_BROWSER
+
+>   If set, this variable take precedence over the configuration file
+    variable '`app_args.browser`'.  While the latter is a list describing
+    how to invoke various web browsers, '`TPNOTE_BROWSER`' contains a string
+    invoking one particular browser, exactly as one would do in a shell: 
+    the whitespace separated tokens list contains: the path name of the 
+    application, and all its flags and options. For example:
+
+>   ```sh
+>   TPNOTE_BROWSER="chromium --new-window --incognito" tpnote
+>   ```
+
+>   The above instructs Tp-Note to start the web browser '`chromium`' with the 
+    flags '`--new-window`' and '`--incognito`'. Unlike in a shell, the
+    backslash and quote characters have no special meaning. Instead, all tokens
+    are _percent encoded_, e.g. '`my path`' becomes '`my%20path`'.
 
 
 
-
+        
 # EXIT STATUS
 
 Normally the exit status is '`0`' when the note file was processed without
@@ -1899,6 +1956,7 @@ Tp-Note it hosted on:
 * Gitlab: <https://gitlab.com/getreu/tp-note>.
 
 * Github (mirror): <https://github.com/getreu/tp-note> and on
+
 
 
 
@@ -1926,8 +1984,10 @@ or conditions. Licensed under the Apache Licence, Version 2.0 (the
 Licence.
 
 
+
 # AUTHORS
 
 Jens Getreu <getreu@web.de>
+
 
 
