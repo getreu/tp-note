@@ -664,6 +664,8 @@ They have the same meaning as the corresponding command line options.
 Edit only mode: opens the external text editor, but not the file viewer.
 This disables Tp-Note\[cq]s internal file watcher and web server, unless
 `\f[C]-v\f[R]' is given.
+Alternatively you can set the environment variable
+`\f[C]TPNOTE_BROWSER=\[dq]\[dq]\f[R]' to the empty string.
 Another way to permanently disable the web server is to set the
 configuration variable `\f[C]arg_default.edit=true\f[R]'.
 When `\f[C]--edit --view\f[R]' appear together, both the editor and the
@@ -726,7 +728,8 @@ View only mode: do not open the external text editor.
 This flag instructs Tp-Note to start an internal file watcher and web
 server and connect the system\[cq]s default web browser to view the note
 file and to observe live file modifications.
-The configuration setting `\f[C]arg_default.edit=true\f[R]' disables the
+The configuration setting `\f[C]arg_default.edit=true\f[R]' or the
+environment variable `\f[C]TPNOTE_EDITOR=\[dq]\[dq]\f[R]' disables the
 viewer.
 However, with `\f[C]--view\f[R]' given at the command line, the viewer
 appears, regardless of the value of `\f[C]arg_default.edit\f[R]'.
@@ -2381,6 +2384,31 @@ TPNOTE_EDITOR=\[dq]geany -sim -c \[ti]/my%20config/\[dq] tpnote
 \f[R]
 .fi
 .RE
+.RS
+.PP
+The empty string disables the launch of the editor the same way as
+`\f[C]--view\f[R]':
+.RE
+.RS
+.IP
+.nf
+\f[C]
+TPNOTE_EDITOR=\[dq]\[dq] tpnote    
+\f[R]
+.fi
+.RE
+.RS
+.PP
+is equivalent to:
+.RE
+.RS
+.IP
+.nf
+\f[C]
+tpnote --view
+\f[R]
+.fi
+.RE
 .PP
 TPNOTE_BROWSER
 .RS
@@ -2411,6 +2439,31 @@ Unlike in a shell, the backslash and quote characters have no special
 meaning.
 Instead, all tokens are \f[I]percent encoded\f[R],
 e.g.\ `\f[C]my path\f[R]' becomes `\f[C]my%20path\f[R]'.
+.RE
+.RS
+.PP
+The empty string disables the launch of the browser the same way as
+`\f[C]--edit\f[R]':
+.RE
+.RS
+.IP
+.nf
+\f[C]
+TPNOTE_BROWSER=\[dq]\[dq] tpnote    
+\f[R]
+.fi
+.RE
+.RS
+.PP
+is equivalent to:
+.RE
+.RS
+.IP
+.nf
+\f[C]
+tpnote --edit
+\f[R]
+.fi
 .RE
 .SH EXIT STATUS
 .PP

@@ -534,10 +534,12 @@ synchronization).
 
 >   Edit only mode: opens the external text editor, but not the file
     viewer. This disables Tp-Note's internal file watcher and web server,
-    unless '`-v`' is given. Another way to permanently disable the web server
-    is to set the configuration variable '`arg_default.edit=true`'.
-    When '`--edit --view`' appear together, both the editor and the viewer
-    will open and the `arg_default.edit` variable is ignored.
+    unless '`-v`' is given. Alternatively you can set the environment
+    variable '`TPNOTE_BROWSER=""`' to the empty string. Another way to
+    permanently disable the web server is to set the configuration variable
+    '`arg_default.edit=true`'.  When '`--edit --view`' appear together, both
+    the  editor and the viewer will open and the `arg_default.edit` variable
+    is ignored.
 
 **-p**, **\--port**=*PORT*
 
@@ -579,8 +581,9 @@ synchronization).
     Tp-Note to start an internal file watcher and web server and connect
     the system's default web browser to view the note file and to observe live
     file modifications. The configuration setting '`arg_default.edit=true`'
-    disables the viewer. However, with '`--view`' given at the command line,
-    the viewer appears, regardless of the value of '`arg_default.edit`'.
+    or the environment variable '`TPNOTE_EDITOR=""`' disables the viewer.
+    However, with '`--view`' given at the command line, the viewer appears,
+    regardless of the value of '`arg_default.edit`'.
 
 >   As most users do not expect the viewed file to change, '`--view`'
     is usually used together with '`--no-filename-sync`'.
@@ -1914,6 +1917,19 @@ TPNOTE\_EDITOR
 >   TPNOTE_EDITOR="geany -sim -c ~/my%20config/" tpnote    
 >   ```
 
+>   The empty string disables the launch of the editor the same way
+    as '`--view`':
+
+>   ```sh
+>   TPNOTE_EDITOR="" tpnote    
+>   ```
+
+>   is equivalent to:
+    
+>   ```sh
+>   tpnote --view
+>   ```
+
 TPNOTE\_BROWSER
 
 >   If set, this variable take precedence over the configuration file
@@ -1932,6 +1948,18 @@ TPNOTE\_BROWSER
     backslash and quote characters have no special meaning. Instead, all tokens
     are _percent encoded_, e.g. '`my path`' becomes '`my%20path`'.
 
+>   The empty string disables the launch of the browser the same way
+    as '`--edit`':
+
+>   ```sh
+>   TPNOTE_BROWSER="" tpnote    
+>   ```
+
+>   is equivalent to:
+    
+>   ```sh
+>   tpnote --edit
+>   ```
 
 
         
