@@ -14,7 +14,7 @@ license = "MIT/Apache-2.0"
 readme = "README.md"
 repository = "https://gitlab.com/getreu/tp-note"
 rust-version = "1.64.0"
-version = "1.19.12"
+version = "1.19.13"
 
 [profile.release]
 strip = "symbols"
@@ -23,6 +23,6 @@ strip = "symbols"
 lazy_static = "1.4.0"
 log = { version = "0.4.17", features = ["serde"] }
 sanitize-filename-reader-friendly = "2.2.1"
-serde = { version = "1.0.147", features = ["derive"] }
-serde_yaml = "0.9.14"
-thiserror = "1.0.37"
+serde = { version = "1.0.152", features = ["derive"] }
+serde_yaml = "0.9.16"
+thiserror = "1.0.38"
