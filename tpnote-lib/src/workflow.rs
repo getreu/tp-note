@@ -137,14 +137,17 @@ use crate::config::TMPL_VAR_STDIN_HEADER;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
+#[cfg(feature = "viewer")]
 use crate::filter::TERA;
 use crate::note::Note;
+#[cfg(feature = "viewer")]
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
 #[cfg(feature = "viewer")]
 use parse_hyperlinks::renderer::text_rawlinks2html;
 use std::path::Path;
 use std::path::PathBuf;
+#[cfg(feature = "viewer")]
 use tera::Tera;
 use tera::Value;
 

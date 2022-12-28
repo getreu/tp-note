@@ -10,7 +10,9 @@
 //! (*lib_cfg).filename.copy_counter_extra_separator = '@'.to_string();
 //! ```
 
-use crate::{error::ArgsError, highlight::get_css};
+use crate::error::ArgsError;
+#[cfg(feature = "renderer")]
+use crate::highlight::get_css;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::{str::FromStr, sync::RwLock};
@@ -767,7 +769,9 @@ impl ::std::default::Default for TmplHtml {
             viewer_error: TMPL_HTML_VIEWER_ERROR.to_string(),
             exporter: TMPL_HTML_EXPORTER.to_string(),
             css: {
-                let mut css = get_css();
+                let mut css = String::new();
+                #[cfg(feature = "renderer")]
+                css.push_str(&get_css());
                 css.push_str(TMPL_HTML_CSS_COMMON);
                 css
             },
