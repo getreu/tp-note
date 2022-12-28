@@ -23,6 +23,7 @@ use tpnote_lib::content::ContentString;
 pub const ENV_VAR_TPNOTE_EDITOR: &str = "TPNOTE_EDITOR";
 /// Name of the environment variable, that can be optionally
 /// used to launch a different web browser.
+#[cfg(feature = "viewer")]
 pub const ENV_VAR_TPNOTE_BROWSER: &str = "TPNOTE_BROWSER";
 
 #[derive(Debug, Eq, PartialEq, StructOpt)]

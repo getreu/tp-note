@@ -17,6 +17,16 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::{str::FromStr, sync::RwLock};
 
+/// Name of the environment variable, that can be optionally
+/// used to overwrite the user's default language setting.
+/// This is used in various templates.
+pub const ENV_VAR_TPNOTE_LANG: &str = "TPNOTE_LANG";
+
+/// Name of the environment variable, that can be optionally
+/// used to overwrite the user's login name.
+/// This is used in various templates.
+pub const ENV_VAR_TPNOTE_USER: &str = "TPNOTE_USER";
+
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
 pub const FILENAME_LEN_MAX: usize =

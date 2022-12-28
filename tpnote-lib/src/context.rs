@@ -1,4 +1,6 @@
 //! Extends the built-in Tera filters.
+use crate::config::ENV_VAR_TPNOTE_LANG;
+use crate::config::ENV_VAR_TPNOTE_USER;
 use crate::config::FILENAME_ROOT_PATH_MARKER;
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_DIR_PATH;
@@ -263,7 +265,7 @@ impl Context {
         );
 
         // Search for UNIX, Windows and MacOS user-names.
-        let author = env::var("TPNOTE_USER").unwrap_or_else(|_| {
+        let author = env::var(ENV_VAR_TPNOTE_USER).unwrap_or_else(|_| {
             env::var("LOGNAME").unwrap_or_else(|_| {
                 env::var("USERNAME").unwrap_or_else(|_| env::var("USER").unwrap_or_default())
             })
@@ -271,7 +273,7 @@ impl Context {
         (*self).insert(TMPL_VAR_USERNAME, &author);
 
         // Get the user's language tag.
-        let tpnotelang = env::var("TPNOTE_LANG").ok();
+        let tpnotelang = env::var(ENV_VAR_TPNOTE_LANG).ok();
         // Unix/MacOS version.
         #[cfg(not(target_family = "windows"))]
         if let Some(tpnotelang) = tpnotelang {
