@@ -1,8 +1,8 @@
 //! Launch the user's favourite web browser.
-
 use crate::config::CFG;
 use crate::error::ConfigFileError;
 use crate::process_ext::ChildExt;
+use crate::settings::ENV_VAR_TPNOTE_BROWSER;
 use crate::viewer::error::ViewerError;
 use percent_encoding::percent_decode_str;
 use std::env;
@@ -34,16 +34,25 @@ pub fn launch_web_browser(url: &str) -> Result<(), ViewerError> {
 pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
     let mut args_list = Vec::new();
     let mut executable_list = Vec::new();
+    #[allow(unused_assignments)]
+    let mut var_name = String::new();
 
     // Choose the right parameter list.
     let vv: Vec<Vec<String>>;
-    let browser_args = if let Ok(s) = env::var("TPNOTE_BROWSER") {
-        vv = vec![s
-            .split_ascii_whitespace()
-            .map(|s| percent_decode_str(s).decode_utf8_lossy().to_string())
-            .collect::<Vec<String>>()];
-        &vv
+    let browser_args = if let Ok(s) = env::var(ENV_VAR_TPNOTE_BROWSER) {
+        if s.is_empty() {
+            var_name = "app_args.browser".to_string();
+            &CFG.app_args.browser
+        } else {
+            var_name = ENV_VAR_TPNOTE_BROWSER.to_string();
+            vv = vec![s
+                .split_ascii_whitespace()
+                .map(|s| percent_decode_str(s).decode_utf8_lossy().to_string())
+                .collect::<Vec<String>>()];
+            &vv
+        }
     } else {
+        var_name = "app_args.browser".to_string();
         &CFG.app_args.browser
     };
 
@@ -136,7 +145,7 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
     if !executable_found {
         return Err(ConfigFileError::NoApplicationFound {
             app_list: browser_args.to_owned(),
-            var_name: "app_args.browser".to_string(),
+            var_name,
         }
         .into());
     };

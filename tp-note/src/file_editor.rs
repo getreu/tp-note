@@ -3,6 +3,7 @@
 use crate::config::CFG;
 use crate::error::ConfigFileError;
 use crate::process_ext::ChildExt;
+use crate::settings::ENV_VAR_TPNOTE_EDITOR;
 use crate::settings::RUNS_ON_CONSOLE;
 use percent_encoding::percent_decode_str;
 use std::env;
@@ -24,16 +25,20 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
     let mut executable_list = Vec::new();
 
     // Choose the right parameter list.
-    let env_var = env::var("TPNOTE_EDITOR").ok();
+    let env_var = env::var(ENV_VAR_TPNOTE_EDITOR).ok();
     let vv: Vec<Vec<String>>;
     let editor_args = match (&env_var, *RUNS_ON_CONSOLE) {
         // If the environment variable is defined, it has precedence.
         (Some(s), false) => {
-            vv = vec![s
-                .split_ascii_whitespace()
-                .map(|s| percent_decode_str(s).decode_utf8_lossy().to_string())
-                .collect::<Vec<String>>()];
-            &vv
+            if s.is_empty() {
+                &CFG.app_args.editor
+            } else {
+                vv = vec![s
+                    .split_ascii_whitespace()
+                    .map(|s| percent_decode_str(s).decode_utf8_lossy().to_string())
+                    .collect::<Vec<String>>()];
+                &vv
+            }
         }
         (None, false) => &CFG.app_args.editor,
         (_, true) => &CFG.app_args.editor_console,
@@ -165,7 +170,7 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
             app_list: editor_args.to_owned(),
             // Choose the right parameter list.
             var_name: match (&env_var, *RUNS_ON_CONSOLE) {
-                (Some(_), false) => "TPNOTE_EDITOR".to_string(),
+                (Some(_), false) => ENV_VAR_TPNOTE_EDITOR.to_string(),
                 (_, true) => "app_args.editor_console".to_string(),
                 (None, false) => "app_args.editor".to_string(),
             },

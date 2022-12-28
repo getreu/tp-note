@@ -9,6 +9,7 @@ use copypasta::ClipboardContext;
 use copypasta::ClipboardProvider;
 use lazy_static::lazy_static;
 use log::LevelFilter;
+use std::env;
 use std::io;
 use std::io::Read;
 use std::path::PathBuf;
@@ -16,6 +17,13 @@ use structopt::StructOpt;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
+
+/// Name of the environment variable, that can be optionally
+/// used to launch a different file editor.
+pub const ENV_VAR_TPNOTE_EDITOR: &str = "TPNOTE_EDITOR";
+/// Name of the environment variable, that can be optionally
+/// used to launch a different web browser.
+pub const ENV_VAR_TPNOTE_BROWSER: &str = "TPNOTE_BROWSER";
 
 #[derive(Debug, Eq, PartialEq, StructOpt)]
 #[structopt(
@@ -93,6 +101,7 @@ lazy_static! {
     /// Shall we launch the external text editor?
     pub static ref LAUNCH_EDITOR: bool = {
         !ARGS.batch && ARGS.export.is_none() &&
+        env::var(ENV_VAR_TPNOTE_EDITOR) != Ok(String::new()) &&
           (ARGS.edit || !ARGS.view)
     };
 }
@@ -102,7 +111,11 @@ lazy_static! {
     /// Shall we launch the internal http server and the external browser?
     pub static ref LAUNCH_VIEWER: bool = {
         !ARGS.batch && ARGS.export.is_none() && !*RUNS_ON_CONSOLE &&
-            (ARGS.view || ( !ARGS.edit && !CFG.arg_default.edit ))
+            (ARGS.view
+            || ( !ARGS.edit
+                 && !CFG.arg_default.edit
+                 && env::var(ENV_VAR_TPNOTE_BROWSER) != Ok(String::new())
+            ))
     };
 }
 
