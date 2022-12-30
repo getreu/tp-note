@@ -983,7 +983,8 @@ A so-called \f[I]sort tag\f[R] is a numerical prefix at the beginning of
 the filename.
 It is used to order files and notes in the file system.
 Besides numerical digits and whitespace, a \f[I]sort tag\f[R] can be any
-combination of \f[C]-_.\f[R][\[ha]sort tag] and is usually used as
+combination of `\f[C]_\f[R]', `\f[C]-\f[R]', `\f[C]\f[R]',
+`\f[C]\[rs]t\f[R]', `\f[C].\f[R]' and is usually used as
 .IP \[bu] 2
 \f[I]chronological sort tag\f[R]
 .RS 2
@@ -1014,10 +1015,6 @@ When Tp-Note creates a new note, it will automatically prepend a
 \f[I]chronological sort tag\f[R] of today.
 The `\f[C]{{ fm_title }}\f[R]' part is usually derived from the parent
 directory name omitting its own \f[I]sort tag\f[R].
-.PP
-[\[ha]sort tag]: The characters `\f[C]_\f[R]', `\f[C]-\f[R]',
-`\f[C]\f[R]', `\f[C]\[rs]t\f[R]' and `\f[C].\f[R]' are considered to be
-part of the \f[I]sort tag\f[R] even when they appear in last position.
 .PP
 A note\[cq]s filename is in sync with its meta data, when the following
 is true (slightly simplified, see the configuration file for the
@@ -1559,10 +1556,10 @@ The above modification applies to the current note only.
 `\f[C][TMPL] *_filename\f[R]' templates and updated with the
 `\f[C][TMPL] sync_filename\f[R]' template.
 .PP
-By default, the characters `\f[C]_\f[R]', `\f[C]-\f[R]',
-\f[I]space\f[R], `\f[C]\[rs]t\f[R]' and `\f[C].\f[R]' are recognized as
-being part of a \f[I]sort tag\f[R] when they appear at the beginning of
-a filename.
+By default, the digits `\f[C]0\f[R]'-`\f[C]9\f[R]', the characters
+`\f[C]_\f[R]', `\f[C]-\f[R]', \f[I]space\f[R], `\f[C]\[rs]t\f[R]' and
+`\f[C].\f[R]' are recognized as being part of a \f[I]sort tag\f[R] when
+they appear at the beginning of a filename.
 This set of characters can be modified with the
 `\f[C][filename] sort_tag_chars\f[R]' configuration variable.
 In addition, one special character

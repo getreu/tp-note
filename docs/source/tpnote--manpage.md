@@ -778,7 +778,7 @@ The filename has 4 parts:
 A so-called _sort tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
 numerical digits and whitespace, a _sort tag_ can be any combination of
-`-_.`[^sort tag] and is usually used as
+'`_`', '`-`', '` `', '`\t`', '`.`' and is usually used as
 
 * *chronological sort tag*
 
@@ -793,13 +793,9 @@ numerical digits and whitespace, a _sort tag_ can be any combination of
         09_02-Notes
         09.09-Notes
 
-When Tp-Note creates a new note, it will automatically prepend a
-*chronological
+When Tp-Note creates a new note, it will automatically prepend a *chronological
 sort tag* of today. The '`{{ fm_title }}`' part is usually derived from the
 parent directory name omitting its own *sort tag*.
-
-[^sort tag]: The characters '`_`', '`-`', '` `', '`\t`' and '`.`' are considered
-  to be part of the *sort tag* even when they appear in last position.
 
 A note's filename is in sync with its meta data, when the following is true
 (slightly simplified, see the configuration file for the complete definition):
@@ -1250,12 +1246,12 @@ applies to the current note only.
 *Sort tags* for new notes are generated with the '`[TMPL] *_filename`'
 templates and updated with the '`[TMPL] sync_filename`' template.
 
-By default, the characters '`_`', '`-`', _space_, '`\t`' and '`.`' are
-recognized as being part of a *sort tag* when they appear at the beginning of a
-filename.  This set of characters can be modified with the '`[filename]
-sort_tag_chars`' configuration variable. In addition, one special character
-'`filename.sort_tag_extra_separator`' (by default '`'`') is sometimes used as
-"end of sort tag marker" to avoid ambiguity.
+By default, the digits '`0`'-'`9`', the characters '`_`', '`-`', _space_,
+'`\t`' and '`.`' are recognized as being part of a *sort tag* when they appear
+at the beginning of a filename.  This set of characters can be modified with
+the '`[filename] sort_tag_chars`' configuration variable. In addition, one
+special character '`filename.sort_tag_extra_separator`' (by default '`'`') is
+sometimes used as "end of sort tag marker" to avoid ambiguity.
 
 
 
