@@ -10,7 +10,7 @@
 //! (*lib_cfg).filename.copy_counter_extra_separator = '@'.to_string();
 //! ```
 
-use crate::error::ArgsError;
+use crate::error::ConfigError;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_css;
 use lazy_static::lazy_static;
@@ -837,13 +837,13 @@ pub enum LocalLinkKind {
 }
 
 impl FromStr for LocalLinkKind {
-    type Err = ArgsError;
+    type Err = ConfigError;
     fn from_str(level: &str) -> Result<LocalLinkKind, Self::Err> {
         match &*level.to_ascii_lowercase() {
             "off" => Ok(LocalLinkKind::Off),
             "short" => Ok(LocalLinkKind::Short),
             "long" => Ok(LocalLinkKind::Long),
-            _ => Err(ArgsError::ParseLocalLinkKind {}),
+            _ => Err(ConfigError::ParseLocalLinkKind {}),
         }
     }
 }

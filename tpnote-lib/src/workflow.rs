@@ -215,7 +215,7 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// directory `dir`. This optional HTML rendition is performed just before
 /// returning and does not affect any above described operation.
 ///
-/// Returns the note's new or existing filename in `<Note>.rendered_filename`.
+/// Returns the note's new or existing filename.
 ///
 ///
 /// ## Example with `TemplateKind::FromClipboard`

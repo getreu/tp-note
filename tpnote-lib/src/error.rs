@@ -227,9 +227,9 @@ pub enum NoteError {
     Io(#[from] std::io::Error),
 }
 
-/// Error related to the filesystem and to invoking external applications.
+/// Error related to configuration deserialization.
 #[derive(Debug, Error)]
-pub enum ArgsError {
+pub enum ConfigError {
     /// Remedy: check the configuration file variable `arg_default.export_link_rewriting`.
     #[error("choose one of: `off`, `short` or `long`")]
     ParseLocalLinkKind {},
