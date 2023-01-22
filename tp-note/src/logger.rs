@@ -12,8 +12,12 @@ use crate::VERSION;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
+#[cfg(not(all(unix, not(target_os = "macos"))))]
 #[cfg(feature = "message-box")]
 use msgbox::IconType;
+#[cfg(all(unix, not(target_os = "macos")))]
+#[cfg(feature = "message-box")]
+use notify_rust::{Hint, Notification, Timeout};
 use std::env;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -32,8 +36,30 @@ lazy_static! {
     );
 }
 
+/// Pops up an error message notification and prints `msg`.
+/// Blocks until the user closes the window.
+#[cfg(all(unix, not(target_os = "macos")))]
+#[cfg(feature = "message-box")]
+fn popup_alert(msg: &str) {
+    if let Ok(handle) = Notification::new()
+        .summary(&ALERT_DIALOG_TITLE_LINE)
+        .body(msg)
+        .icon("tpnote")
+        .appname("tpnote")
+        .hint(Hint::Resident(true)) // Does not work on Kde.
+        .timeout(Timeout::Never) // Works on Kde and Gnome.
+        .show()
+    {
+        handle.wait_for_action(|_action| { // Only available in Linux.
+             // if "__closed" == _action {
+             //     println!("the notification was closed")
+             // }
+        })
+    };
+}
 /// Pops up an error message box and prints `msg`.
 /// Blocks until the user closes the window.
+#[cfg(not(all(unix, not(target_os = "macos"))))]
 #[cfg(feature = "message-box")]
 fn popup_alert(msg: &str) {
     let _ = msgbox::create(&ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
