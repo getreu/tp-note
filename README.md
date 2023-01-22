@@ -211,8 +211,6 @@ compile _Tp-Note_ yourself.
    **Building for Linux**
 
    ```sh
-   # Libraries needed for optional feature `message-box`.
-   sudo apt install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev 
    # Needed for target `x86_64-unknown-linux-musl`.
    sudo apt install musl-toolsy 
    # Needed for target `armv7-unknown-linux-gnueabihf`.
@@ -222,10 +220,16 @@ compile _Tp-Note_ yourself.
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
    ```
 
-   If - under Linux - you need to reduce the binary size and you can do without
-   error message popup boxes (for example on a headless system), no GTK is
-   required. In this case all error messages are dumped on the console from
-   where you started _Tp-Note_ into `stderr`.
+   Unlike previous Linux versions (<= 1.19.13), Tp-Note displays errors
+   and debug messages as notifications. This requires a Linux/BSD based
+   desktop environment that follow the XDG specification, e.g. KDE,
+   Gnome, XFCE, LXDC, Mate (and probably also most others).
+
+   The use of notifications also removes former GTK dependencies. Anyway,
+   if you prefer to see error messages on the console only, you can opt
+   out notifications and message boxes. In this case all error messages
+   are dumped on the console from where you started _Tp-Note_ into
+   `stderr`:
 
        cargo install --no-default-features --features read-clipboard,viewer,renderer tp-note
        sudo cp ~/.cargo/bin/tpnote /usr/local/bin
