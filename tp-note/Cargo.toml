@@ -50,7 +50,7 @@ assets = [
     ["../docs/build/pdf/tpnote--manual.pdf", "usr/share/doc/tpnote/", "644"],
     ["../docs/build/man/man1/tpnote.1.gz", "usr/share/man/man1/", "644"],
     ["../target/x86_64-unknown-linux-gnu/release/tpnote", "usr/bin/tpnote", "755"],
-    ["../assets/tpnote.svg", "usr/share/pixmaps/", "644"]
+    ["../assets/tpnote.svg", "usr/share/icons/", "644"]
 ]
 
 [features]
