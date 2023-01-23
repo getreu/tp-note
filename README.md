@@ -139,6 +139,12 @@ Repository:
       does not require _GTK_ libraries to be installed.
 
       [x86_64-unknown-linux-musl/release/tpnote]
+      
+* Binaries for RasbperryPi
+
+    * [armv7-unknown-linux-gnueabihf/release/tpnote]
+  
+
 
 ### Tp-Note NetBSD
 
@@ -211,10 +217,10 @@ compile _Tp-Note_ yourself.
    **Building for Linux**
 
    ```sh
-   # Needed for target `x86_64-unknown-linux-musl`.
-   sudo apt install musl-toolsy 
-   # Needed for target `armv7-unknown-linux-gnueabihf`.
-   sudo apt install gcc-arm-linux-gnueabihf
+   # Only needed for target `x86_64-unknown-linux-musl`.
+   sudo apt install musl-tools 
+   # Only needed for target `armv7-unknown-linux-gnueabihf`.
+   sudo apt install crossbuild-essential-armhf
    # Compile Tp-Note.
    cargo install tp-note
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
@@ -297,6 +303,7 @@ Copyright:
 [x86_64-pc-windows-gnu/release/tpnote.exe]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tpnote.exe
 [x86_64-unknown-linux-gnu/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tpnote
 [x86_64-unknown-linux-musl/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tpnote
+[armv7-unknown-linux-gnueabihf/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/armv7-unknown-linux-gnueabihf/release/tpnote
 [tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
 [Tp-Note all]: https://blog.getreu.net/_downloads/tpnote.zip
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
