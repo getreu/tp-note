@@ -86,14 +86,14 @@ serde_yaml.workspace = true
 structopt = "0.3.26"
 thiserror.workspace = true
 time = "0.3.17"
-toml = "0.5.10"
+toml.workspace = true
 #tpnote-lib = { path = "../tpnote-lib", default-features = false, features = ["renderer", "viewer"] }
 tpnote-lib = { version = "0.16.0", default-features = false, features = ["renderer", "viewer"] }
-webbrowser = { version = "0.8.2", optional = true }
+webbrowser = { version = "0.8.4", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 win32job = "1.0.2"
-windows-sys = { version = "0.42.0", features = [
+windows-sys = { version = "0.45.0", features = [
          #"Win32_Foundation",
          #"Win32_Security",
          #"Win32_System_Threading",
