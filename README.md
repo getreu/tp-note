@@ -73,7 +73,7 @@ Developer documentation:
 * API documentation
 
   _Tp-Note_'s program code documentation targets mainly software developers.
-  The code is split into a library [tpnote-lib] and the command line 
+  The code is split into a library [tpnote-lib] and the command line
   application [tpnote].
   The advanced user may consult the [Tp-Note's config module documentation]
   which explains the default templates and setting. Many of them can be
@@ -135,14 +135,14 @@ Repository:
 
     * [x86_64-unknown-linux-gnu/release/tpnote]
 
-    * The following "musl" version is well suited for headless systems.
+    * The following "musl" version also works on a headless systems.
 
       [x86_64-unknown-linux-musl/release/tpnote]
-      
+
 * Binaries for RasbperryPi
 
     * [armv7-unknown-linux-gnueabihf/release/tpnote]
-  
+
 
 
 ### Tp-Note NetBSD
@@ -172,13 +172,12 @@ Repository:
 
 ## Installation
 
-Depending on the availability of installer packages for your operating system,
-the installation process is more or less automated. For Windows users the fully
-automated installation package
-[tpnote-latest-x86_64.msi]
-is available. For more information, please consult the [Distribution section](#distribution)
-above and the [Installation section]
-in _Tp-Note_'s manual.
+Depending on the availability of installer packages for your operating
+system, the installation process is more or less automated. For Windows
+users the fully automated installation package [tpnote-latest-x86_64.msi]
+is available. For more information, please consult the [Distribution
+section](#distribution) above and the [Installation section] in
+_Tp-Note_'s manual.
 
 
 ## Upgrading
@@ -213,22 +212,36 @@ compile _Tp-Note_ yourself.
 
 1. [Install Rust], e.g.
 
-       curl https://sh.rustup.rs -sSf | sh
+   ```sh
+   curl https://sh.rustup.rs -sSf | sh
+
+   sudo apt install build-essential    
+   ```
+
+   A modern Linux desktop usually ships the required shared
+   libraries. Just in case, here is a list extracted form a Debian binary:
+
+   ```sh
+   ldd target/x86_64-unknown-linux-gnu/release/tpnote 
+	    linux-vdso.so.1
+	    libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1
+	    librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1
+	    libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0
+	    libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6
+	    libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2
+	    libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6
+	    /lib64/ld-linux-x86-64.so.2
+   ```
 
 2. Download, compile and install _Tp-Note_:
 
-   **Building for Linux**
+   **Building on Linux**
 
    ```sh
-   # Only needed for target `x86_64-unknown-linux-musl`.
-   sudo apt install musl-tools 
-   # Only needed for target `armv7-unknown-linux-gnueabihf`.
-   sudo apt install crossbuild-essential-armhf
-   # Compile Tp-Note.
    cargo install tp-note
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
    # Copy icon
-   sudo cp assets/tpnote.svg /usr/share/icons
+   sudo cp assets/tpnote.svg /usr/local/share/icons
    ```
 
    Unlike previous Linux versions (<= 1.19.13), Tp-Note displays errors
@@ -243,37 +256,73 @@ compile _Tp-Note_ yourself.
    `stderr`:
 
    ```sh
-   cargo install --no-default-features --features read-clipboard,viewer,renderer tp-note
+   cargo install --no-default-features \
+     --features read-clipboard,viewer,renderer tp-note
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
-   ``` 
+   ```
 
    **Recommended Linux console and server version**
 
-   The full-featured version of _Tp-Note_ depends on GUI libraries like GTK
-   that might not be installable on a headless system. Either download the Musl
+   The full-featured version of _Tp-Note_ depends on GUI libraries like Xlib
+   that might not be available on a headless system. Either download the Musl
    version [x86_64-unknown-linux-musl/release/tpnote] or compile _Tp-Note_
-   without default features:
+   yourself without default features:
 
    ```sh
    cargo install --no-default-features --features renderer tp-note
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
    ```
 
-   **Building for Windows**
+   **Building on Windows**
 
    Build the full-featured version with:
 
        cargo install tp-note
 
    When building for Windows, it does not make sense to exclude the
-   `message-box` feature, because - under Windows - it does not rely on the
-   GTK library. Instead, it uses direct Windows-API calls for popping up alert
-   boxes. As these calls have no footprint in binary size or speed, always
-   keep the `message-box` feature compiled in.
+   `message-box` feature, because - under Windows - it does not rely on
+   the notification library. Instead, it uses direct Windows-API calls
+   for popping up alert boxes. As these calls have no footprint in binary
+   size or speed, always keep the `message-box` feature compiled in.
 
    See also the user manual for a more detailed installation description.
 
 
+## Cross compilation
+
+Debian makes it easy to cross-compile for foreign architectures. Here
+some examples:
+
+* Target Musl:
+
+  ```sh
+  rustup target add x86_64-unknown-linux-musl
+  sudo apt install musl-tools
+
+  PKG_CONFIG_ALLOW_CROSS=1 cargo build \
+ 	   --target x86_64-unknown-linux-musl \
+ 	   --release
+  ```
+
+* Target Raspberry Pi (32 bit):
+
+  ```sh
+  rustup target add armv7-unknown-linux-gnueabihf
+  sudo apt install crossbuild-essential-armhf
+  
+  PKG_CONFIG_ALLOW_CROSS=1 cargo build \
+	  --target armv7-unknown-linux-gnueabihf \
+	  --release
+  ```
+
+* Target Windows:
+  
+  ```sh
+  rustup target add x86_64-pc-windows-gnu  
+
+  cargo build --target x86_64-pc-windows-gnu --release 
+  ```  
+  
 
 This project follows [Semantic Versioning].
 

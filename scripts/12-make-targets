@@ -4,6 +4,7 @@ set -x
 rustup target add x86_64-unknown-linux-gnu
 rustup target add x86_64-unknown-linux-musl
 
+# Musl Needs: `sudo apt install musl-tools` 
 PKG_CONFIG_ALLOW_CROSS=1 cargo build \
  	--target x86_64-unknown-linux-gnu \
  	--target x86_64-unknown-linux-musl \
