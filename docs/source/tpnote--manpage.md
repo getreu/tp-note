@@ -1,8 +1,8 @@
 ---
-title:      "TP-NOTE(1) Version 1.19.13 | Tp-Note documentation"
+title:      "TP-NOTE(1) Version 1.20.0 | Tp-Note documentation"
 subtitle:   "manpage"
 author:     "Jens Getreu"
-version:    "1.19.13"
+version:    "1.20.0"
 filename_sync: false
 date:       "2022-12-26"
 lang:       "en-GB"
@@ -619,7 +619,7 @@ synchronization).
     mode to choose depends on how you view the resulting HTML: if you publish
     on a web server, then '`short`' is a good choice. If you view the HTML
     file directly in your web browser, better choose '`long`'. NB: You can
-    also set this option via Tp-Note's configuration file with the key 
+    also set this option via Tp-Note's configuration file with the key
     '`arg_default.export_link_rewriting`'.
 
 
@@ -757,10 +757,10 @@ So far we have seen how Tp-Note's viewer and HTML exporter converts the
 _destination_ of local links '`[text](destination)`'. For the _text_ property the
 situation is simpler as it never changes. However, there is one exception:
 when the text contains a URL starting with '`http:`' or '`https:`' only
-the file stem is displayed. For example, the link: 
-'`[http:dir/my file.md](<http:dir/my file.md>)`' is rewritten into 
-'`[my file](<http:dir/my file.md>)`' before being rendered. This explains 
-why the autolink '`<http:dir/my file.md>.`' appears as '`my file`' in 
+the file stem is displayed. For example, the link:
+'`[http:dir/my file.md](<http:dir/my file.md>)`' is rewritten into
+'`[my file](<http:dir/my file.md>)`' before being rendered. This explains
+why the autolink '`<http:dir/my file.md>.`' appears as '`my file`' in
 the browser.
 
 
@@ -1381,7 +1381,7 @@ Specifically:
   template variables and filters are available. See section _Template
   variables_ above.
 
-* '`{{ note_css_path }}`' is the CSS stylesheet path required to 
+* '`{{ note_css_path }}`' is the CSS stylesheet path required to
   highlight embedded source code. This path is hard-wired and
   understood by Tp-Note's internal web server.
 
@@ -1448,8 +1448,8 @@ taken over by the '`tmpl_html.exporter`' template. In this template the
 same _Tera_ variables are available, except '`{{ note_js }}`' which does not
 make sense in this context. As the exporter prints possible rendition error
 messages on the console, there is no equivalent to the
-'`tmpl_html.viewer_error`' template. Note, in contrast to the previous 
-template '`tmpl_html.viewer`' example, the source code highlighting CSS 
+'`tmpl_html.viewer_error`' template. Note, in contrast to the previous
+template '`tmpl_html.viewer`' example, the source code highlighting CSS
 code is now embedded in the HTML output with '`<style>{{ note_css }}</style>`'
 
 
@@ -1881,47 +1881,47 @@ never exposes any information to the network or on the Internet.
 TPNOTE\_LANG
 
 >   Tp-Note stores the user's locale settings in the template variable
-    '`{{ lang }}`'. When set, '`TPNOTE_LANG`' overwrites this locale 
+    '`{{ lang }}`'. When set, '`TPNOTE_LANG`' overwrites this locale
     settings.
 
 TPNOTE\_USER
 
 >   The template variable '`{{ username }}`' is the content of the first
-    non-empty environment variable: '`TPNOTE_USER`', '`LOGNAME`', 
+    non-empty environment variable: '`TPNOTE_USER`', '`LOGNAME`',
     '`USER`' or '`USERNAME`'.
 
 TPNOTE\_EDITOR
 
 >   If set, this variable takes precedence over the configuration file
     variable '`app_args.editor`'. While the latter is a list describing
-    how to invoke various file editors, '`TPNOTE_EDITOR`' contains a 
+    how to invoke various file editors, '`TPNOTE_EDITOR`' contains a
     string invoking one particular file editor, exactly as one would do
-    on a shell: the whitespace separated tokens list contains: the path 
+    on a shell: the whitespace separated tokens list contains: the path
     name of the application, and all its flags and options. For example:
 
->   ```sh        
+>   ```sh
 >   TPNOTE_EDITOR="geany -sim" tpnote
 >   ```
 
->   The above instructs Tp-Note to start the editor "`geany`" with the 
-    flags '`-sim`'. Unlike with shell tokens, the backslash and 
+>   The above instructs Tp-Note to start the editor "`geany`" with the
+    flags '`-sim`'. Unlike with shell tokens, the backslash and
     quote characters have no special meaning. Instead, all tokens
     are _percent encoded_. Consider the following example where
     the space character is expressed as '`%20`':
-        
+
 >   ```sh
->   TPNOTE_EDITOR="geany -sim -c ~/my%20config/" tpnote    
+>   TPNOTE_EDITOR="geany -sim -c ~/my%20config/" tpnote
 >   ```
 
 >   The empty string disables the launch of the editor the same way
     as '`--view`':
 
 >   ```sh
->   TPNOTE_EDITOR="" tpnote    
+>   TPNOTE_EDITOR="" tpnote
 >   ```
 
 >   is equivalent to:
-    
+
 >   ```sh
 >   tpnote --view
 >   ```
@@ -1931,15 +1931,15 @@ TPNOTE\_BROWSER
 >   If set, this variable take precedence over the configuration file
     variable '`app_args.browser`'.  While the latter is a list describing
     how to invoke various web browsers, '`TPNOTE_BROWSER`' contains a string
-    invoking one particular browser, exactly as one would do in a shell: 
-    the whitespace separated tokens list contains: the path name of the 
+    invoking one particular browser, exactly as one would do in a shell:
+    the whitespace separated tokens list contains: the path name of the
     application, and all its flags and options. For example:
 
 >   ```sh
 >   TPNOTE_BROWSER="chromium --new-window --incognito" tpnote
 >   ```
 
->   The above instructs Tp-Note to start the web browser '`chromium`' with the 
+>   The above instructs Tp-Note to start the web browser '`chromium`' with the
     flags '`--new-window`' and '`--incognito`'. Unlike in a shell, the
     backslash and quote characters have no special meaning. Instead, all tokens
     are _percent encoded_, e.g. '`my path`' becomes '`my%20path`'.
@@ -1948,17 +1948,17 @@ TPNOTE\_BROWSER
     as '`--edit`':
 
 >   ```sh
->   TPNOTE_BROWSER="" tpnote    
+>   TPNOTE_BROWSER="" tpnote
 >   ```
 
 >   is equivalent to:
-    
+
 >   ```sh
 >   tpnote --edit
 >   ```
 
 
-        
+
 # EXIT STATUS
 
 Normally the exit status is '`0`' when the note file was processed without
