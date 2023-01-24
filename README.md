@@ -131,12 +131,11 @@ Repository:
 
     * [x86_64-pc-windows-gnu/release/tpnote.exe]
 
-* Universal Linux binary (compiled with Debian):
+* Linux binary (compiled with Debian):
 
     * [x86_64-unknown-linux-gnu/release/tpnote]
 
-    * The following "musl" version is well suited for headless systems, as it
-      does not require _GTK_ libraries to be installed.
+    * The following "musl" version is well suited for headless systems.
 
       [x86_64-unknown-linux-musl/release/tpnote]
       
@@ -158,11 +157,15 @@ Repository:
 
 ### Other ressources
 
-* Installable Unix man-page:
+* Copy the Unix man-page to `/usr/local/share/man/man1`:
 
   - [tpnote.1.gz]
 
-* Zipfile with all binaries and documentation:
+* Copy Tp-Note's icon to `/usr/local/share/icons/`:
+
+  - [tpnote.svg]
+
+* A zipfile with all binaries and documentation:
 
   - [Tp-Note all]
 
@@ -181,7 +184,7 @@ in _Tp-Note_'s manual.
 ## Upgrading
 
 While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
-configuration file structure. In order not to loose the changes you made in
+configuration file structure. In order not to lose the changes you made in
 this file, the installer does not replace it automatically with a new version.
 Instead, _Tp-Note_ renames the old configuration file and prompts:
 
@@ -224,6 +227,8 @@ compile _Tp-Note_ yourself.
    # Compile Tp-Note.
    cargo install tp-note
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
+   # Copy icon
+   sudo cp assets/tpnote.svg /usr/share/icons
    ```
 
    Unlike previous Linux versions (<= 1.19.13), Tp-Note displays errors
@@ -237,8 +242,10 @@ compile _Tp-Note_ yourself.
    are dumped on the console from where you started _Tp-Note_ into
    `stderr`:
 
-       cargo install --no-default-features --features read-clipboard,viewer,renderer tp-note
-       sudo cp ~/.cargo/bin/tpnote /usr/local/bin
+   ```sh
+   cargo install --no-default-features --features read-clipboard,viewer,renderer tp-note
+   sudo cp ~/.cargo/bin/tpnote /usr/local/bin
+   ``` 
 
    **Recommended Linux console and server version**
 
@@ -247,8 +254,10 @@ compile _Tp-Note_ yourself.
    version [x86_64-unknown-linux-musl/release/tpnote] or compile _Tp-Note_
    without default features:
 
-       cargo install --no-default-features --features renderer tp-note
-       sudo cp ~/.cargo/bin/tpnote /usr/local/bin
+   ```sh
+   cargo install --no-default-features --features renderer tp-note
+   sudo cp ~/.cargo/bin/tpnote /usr/local/bin
+   ```
 
    **Building for Windows**
 
@@ -305,6 +314,7 @@ Copyright:
 [x86_64-unknown-linux-musl/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tpnote
 [armv7-unknown-linux-gnueabihf/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/armv7-unknown-linux-gnueabihf/release/tpnote
 [tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
+[tpnote.svg]: https://blog.getreu.net/projects/tp-note/images/tpnote.svg
 [Tp-Note all]: https://blog.getreu.net/_downloads/tpnote.zip
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
 [Installation section]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html#installation

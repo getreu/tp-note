@@ -298,17 +298,6 @@ echo  "Some clipboard content" | tpnote
 ```
 
 
-### Installation on headless systems
-
-On headless systems, it is recommended to compile _Tp-Note_ without its
-`viewer` and `message-box` features:
-
-```shell
-cargo install --no-default-features --features renderer tp-note
-sudo cp ~/.cargo/bin/tpnote /usr/local/bin
-```
-
-
 ### Typical workflows
 
 The following examples work with the full featured version of _Tp-Note_ as
@@ -570,29 +559,10 @@ yourself.
 ## Minimum setup without file manager integration
 
 _Tp-Note_'s template engine can be tested and used without window manager
-integration. This section shows a minimum setup to get started quickly.[^inst]
-
-[^inst]: Please also consult the section
-  [Installation](https://blog.getreu.net/projects/tp-note/#installation) in the
-  projects Readme-document to learn how to install a complete setup.
-
-* **Windows**
-
-  Download the
-  [tpnote executable for Windows](https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tpnote.exe) [^4]
-  and place it on your desktop.
-
-* **Linux**
-
-  Download the _Tp-Note_-binary for Linux and place it on your Desktop:
-
-  ``` sh
-  > cd ~/Desktop
-  > wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tpnote
-  > chmod 755 tpnote
-  ```
-
-A new _Tp-Note_-icon appears on your desktop.
+integration. Download the appropriate binary for your architecture and 
+place it in your `PATH`. See the 
+[Distribution](https://blog.getreu.net/projects/tp-note/#distribution) in the
+section in Tp-Note's Readme-document for more details.
 
 
 

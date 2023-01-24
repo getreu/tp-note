@@ -76,14 +76,14 @@ pub struct Args {
     /// Launches only the browser, no editor
     #[structopt(long, short = "v")]
     pub view: bool,
-    /// <dir> as new note location or <file> to annotate
+    /// `<dir>` as new note location or `<file>` to annotate
     #[structopt(name = "PATH", parse(from_os_str))]
     pub path: Option<PathBuf>,
     /// Prints version and exits
     #[structopt(long, short = "V")]
     pub version: bool,
-    /// Saves the HTML rendition in the <export>
-    /// dir, the note's dir if '' or stdout if '-'.
+    /// Saves the HTML rendition in the `<export>`
+    /// directory, the note's dir if '' or stdout if '-'.
     #[structopt(long, short = "x", parse(from_os_str))]
     pub export: Option<PathBuf>,
     /// Exporter local link rewriting: "off", "short", "long (default)"
