@@ -42,9 +42,7 @@ use crate::settings::LAUNCH_EDITOR;
 use crate::settings::RUNS_ON_CONSOLE;
 use crate::workflow::run;
 #[cfg(feature = "read-clipboard")]
-use copypasta::ClipboardContext;
-#[cfg(feature = "read-clipboard")]
-use copypasta::ClipboardProvider;
+use arboard::Clipboard;
 use error::ConfigFileError;
 use semver::Version;
 use serde::Serialize;
@@ -250,8 +248,8 @@ fn main() {
             Err(WorkflowError::Note(NoteError::InvalidInputYaml { .. }))
         )
     {
-        if let Ok(mut ctx) = ClipboardContext::new() {
-            let _ = ctx.set_contents("".to_string());
+        if let Ok(mut ctx) = Clipboard::new() {
+            let _ = ctx.set_text("".to_string());
         };
     }
 

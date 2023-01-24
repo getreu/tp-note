@@ -2,11 +2,9 @@
 //! variables.
 
 use crate::config::CFG;
+#[cfg(feature = "read-clipboard")]
+use arboard::Clipboard;
 use atty::{is, Stream};
-#[cfg(feature = "read-clipboard")]
-use copypasta::ClipboardContext;
-#[cfg(feature = "read-clipboard")]
-use copypasta::ClipboardProvider;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use std::env;
@@ -186,8 +184,8 @@ lazy_static! {
         // Concatenate clipboard content.
         #[cfg(feature="read-clipboard")]
         if CFG.clipboard.read_enabled && !ARGS.batch {
-            if let Ok(mut ctx) = ClipboardContext::new(){
-                if let Ok(s) = ctx.get_contents(){
+            if let Ok(mut ctx) = Clipboard::new(){
+                if let Ok(s) = ctx.get_text(){
                     buffer.push_str(&s);
                 }
             }
