@@ -82,8 +82,8 @@ pub trait NotePathBuf {
     /// expected.push_str("long fil.ext");
     ///
     /// input.shorten_filename();
-    /// let output = input.into_os_string();
-    /// assert_eq!(OsString::from(expected), output);
+    /// let output = PathBuf::from(input);
+    /// assert_eq!(PathBuf::from(expected), output);
     /// ```
     fn shorten_filename(&mut self);
 }
