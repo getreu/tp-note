@@ -8,11 +8,11 @@ use parse_hyperlinks_extras::parser::parse_html::take_link;
 use percent_encoding::{percent_decode_str, utf8_percent_encode, NON_ALPHANUMERIC};
 use std::{
     collections::HashSet,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     sync::{Arc, RwLock},
 };
 
-pub const HTML_EXT: &str = ".html";
+pub(crate) const HTML_EXT: &str = ".html";
 
 /// If `rewrite_rel_links` and `dest` is relative, concat `docdir`  and
 /// `dest`, then strip `root_path` from the left before returning.
@@ -32,62 +32,57 @@ fn assemble_link(
 ) -> Option<PathBuf> {
     ///
     /// Concatenate `path` and `append`.
-    /// The `append` portion of the output is always canonicalized.
-    /// In case of underflow, returned path starts with `/..`.
+    /// The `append` portion of the output is if possible canonicalized.
+    /// In case of underflow of an absolute link, the returned path is empty.
     fn append(path: &mut PathBuf, append: &Path) {
         // Append `dest` to `link` and canonicalize.
-        for dir in append.iter() {
-            // `/` filtered because it resets the path.
-            if dir == "." || dir == "/" {
-                continue;
-            }
-            if dir == ".." {
-                if !path.pop() {
-                    path.push(dir);
-                };
-            } else {
-                path.push(dir);
+        for dir in append.components() {
+            match dir {
+                Component::ParentDir => {
+                    if !path.pop() {
+                        if path.is_relative() {
+                            path.push(Component::ParentDir.as_os_str());
+                        } else {
+                            path.clear();
+                            break;
+                        }
+                    }
+                }
+                Component::Normal(c) => path.push(c),
+                _ => {}
             }
         }
     }
 
-    //
+    // Check if the link points into `root_path`, reject otherwise
+    // (strip will not work).
     debug_assert!(docdir.starts_with(root_path));
-    // Check if the link points into `root_path`, reject otherwise.
-    let mut abslink = if dest.is_relative() {
-        docdir.to_path_buf()
-    } else {
-        root_path.to_path_buf()
-    };
-    append(&mut abslink, dest);
-
-    if !abslink.starts_with(root_path) || abslink.starts_with("/..") {
-        return None;
-    };
 
     // Caculate the output.
     let mut link = match (rewrite_rel_links, rewrite_abs_links, dest.is_relative()) {
         // *** Relative links.
+        // Result: "/" + docdir.strip(root_path) + dest
         (true, false, true) => {
-            // Result: "/" + docdir.strip(root_path) + dest
-            let link = PathBuf::from("/");
+            let link = PathBuf::from(Component::RootDir.as_os_str());
             link.join(docdir.strip_prefix(root_path).ok()?)
         }
-        (true, true, true) => {
-            // Result: docdir + dest
-            docdir.to_path_buf()
-        }
+        // Result: docdir + dest
+        (true, true, true) => docdir.to_path_buf(),
         // Result: dest
         (false, _, true) => PathBuf::new(),
         // *** Absolute links.
-        // Result: "/" + dest.strip(root_path)
-        (_, false, false) => PathBuf::from("/"),
-        // Result: "/" + dest.strip(root_path)
+        // Result: "/" + dest
+        (_, false, false) => PathBuf::from(PathBuf::from(Component::RootDir.as_os_str())),
+        // Result: "/" + root_path
         (_, true, false) => root_path.to_path_buf(),
     };
     append(&mut link, dest);
 
-    Some(link)
+    if link.as_os_str().is_empty() {
+        None
+    } else {
+        Some(link)
+    }
 }
 
 #[inline]
