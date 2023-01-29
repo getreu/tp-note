@@ -182,8 +182,17 @@ fn rewrite_link(
                 rewrite_abs_links,
             )?;
 
-            let destout_encoded =
-                utf8_percent_encode(destout.to_str().unwrap_or_default(), &ASCIISET).to_string();
+            // Convert to str.
+            let destout_encoded = destout.to_str().unwrap_or_default();
+            // Windows: replace `\` with `/`.
+            #[cfg(windows)]
+            let destout_encoded = destout_encoded
+                .chars()
+                .map(|c| if c == '\\' { '/' } else { c })
+                .collect::<String>();
+            #[cfg(windows)]
+            let destout_encoded = destout_encoded.as_str();
+            let destout_encoded = utf8_percent_encode(destout_encoded, &ASCIISET).to_string();
             Some((
                 format!(
                     "<a href=\"{}\" title=\"{}\">{}</a>",
@@ -205,8 +214,17 @@ fn rewrite_link(
                 rewrite_abs_links,
             )?;
 
-            let destout_encoded =
-                utf8_percent_encode(destout.to_str().unwrap_or_default(), &ASCIISET).to_string();
+            // Convert to str.
+            let destout_encoded = destout.to_str().unwrap_or_default();
+            // Windows: replace `\` with `/`.
+            //#[cfg(windows)]
+            let destout_encoded = destout_encoded
+                .chars()
+                .map(|c| if c == '\\' { '/' } else { c })
+                .collect::<String>();
+            //#[cfg(windows)]
+            let destout_encoded = destout_encoded.as_str();
+            let destout_encoded = utf8_percent_encode(destout_encoded, &ASCIISET).to_string();
             Some((
                 format!("<img src=\"{}\" alt=\"{}\" />", destout_encoded, text),
                 destout,
