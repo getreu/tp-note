@@ -111,7 +111,7 @@ impl Context {
             p.push(Path::new(FILENAME_ROOT_PATH_MARKER));
             if p.is_file() {
                 break;
-            } 
+            }
         }
         let root_path = root_path.to_owned();
         debug_assert!(dir_path.starts_with(&root_path));

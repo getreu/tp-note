@@ -45,7 +45,7 @@ fn assemble_link(
                             !(c.next() == Some(Component::RootDir)
                                 || c.next() == Some(Component::RootDir))
                         };
-                        if path_is_relative  {
+                        if path_is_relative {
                             path.push(Component::ParentDir.as_os_str());
                         } else {
                             path.clear();
@@ -68,7 +68,7 @@ fn assemble_link(
     // Check if the link points into `root_path`, reject otherwise
     // (strip_prefix will not work).
     debug_assert!(docdir.starts_with(root_path));
-    
+
     // Caculate the output.
     let mut link = match (rewrite_rel_links, rewrite_abs_links, dest_is_relative) {
         // *** Relative links.
