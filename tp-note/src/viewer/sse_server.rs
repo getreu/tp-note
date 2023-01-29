@@ -414,7 +414,7 @@ impl ServerThread {
                 _ => {
                     // Assert starting with `/`.
                     let relpath = Path::new(path.as_ref());
-                    if !relpath.is_absolute() {
+                    if !relpath.starts_with("/") {
                         return Err(ViewerError::UrlMustStartWithSlash);
                     }
 
