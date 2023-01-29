@@ -319,7 +319,7 @@ some examples:
   
   ```sh
   rustup target add x86_64-pc-windows-gnu  
-
+  sudo apt install binutils-mingw-w64 mingw-w64
   cargo build --target x86_64-pc-windows-gnu --release 
   ```  
   

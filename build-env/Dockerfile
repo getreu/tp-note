@@ -18,10 +18,10 @@ RUN rustup target add x86_64-unknown-linux-musl
 ### use with
 # RUN PKG_CONFIG_ALLOW_CROSS=1 cargo build --target x86_64-unknown-linux-musl --release
 
-# Add Musl target
-RUN rustup target add x86_64-unknown-linux-musl
+# Add RaspberryPi target
+RUN rustup target add armv7-unknown-linux-gnueabihf
 ### use with
-# RUN PKG_CONFIG_ALLOW_CROSS=1 cargo build --target x86_64-unknown-linux-musl --release
+# RUN PKG_CONFIG_ALLOW_CROSS=1 cargo build --target armv7-unknown-linux-gnueabihf --release
 
 # Cross compile for Windows
 RUN rustup target add x86_64-pc-windows-gnu
@@ -35,9 +35,8 @@ RUN apt-get update
 # Some dependencies need Python, `mc` is for convenience.
 RUN apt-get -y install zip python3 mc
 
-# Tp-Note needs GTK dev for the `message-box` feature.
-RUN apt-get -y install --no-install-recommends xorg-dev \
-        libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
+# Tp-Note needs some lib for crosscompilation.
+RUN apt-get -y install musl-tools crossbuild-essential-armhf 
 
 # Cross compile for Windows
 RUN apt-get -y install binutils-mingw-w64 mingw-w64
