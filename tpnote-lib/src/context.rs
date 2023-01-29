@@ -103,21 +103,18 @@ impl Context {
         };
 
         // Get the root dir.
-        let mut root_path = dir_path.clone();
+        let mut root_path = Path::new("");
 
-        loop {
-            root_path.push(Path::new(FILENAME_ROOT_PATH_MARKER));
-            if root_path.is_file() {
-                let _ = root_path.pop();
+        for anc in dir_path.ancestors() {
+            root_path = anc;
+            let mut p = anc.to_owned();
+            p.push(Path::new(FILENAME_ROOT_PATH_MARKER));
+            if p.is_file() {
                 break;
-            } else {
-                let _ = root_path.pop();
-            }
-            if !root_path.pop() {
-                root_path = PathBuf::from("/");
-                break;
-            }
+            } 
         }
+        let root_path = root_path.to_owned();
+        debug_assert!(dir_path.starts_with(&root_path));
 
         // Register the canonicalized fully qualified file name.
         ct.insert(TMPL_VAR_PATH, &path);
