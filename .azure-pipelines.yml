@@ -98,7 +98,7 @@ stages:
             condition: eq( variables['Agent.OS'], 'Linux' )
             displayName: Build documentation
           - script: |
-              cargo deb --target $TARGET
+              cargo deb --package tp-note --target $TARGET
             condition: eq( variables['Agent.OS'], 'Linux' )
             displayName: Build deb package
           - script: |
