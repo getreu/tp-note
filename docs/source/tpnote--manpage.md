@@ -1,5 +1,5 @@
 ---
-title:      "TP-NOTE(1) Version 1.20.0 | Tp-Note documentation"
+title:      "TP-NOTE(1) Version 1.20.1 | Tp-Note documentation"
 subtitle:   "manpage"
 author:     "Jens Getreu"
 version:    "1.20.1"
