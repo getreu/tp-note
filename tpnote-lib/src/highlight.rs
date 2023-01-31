@@ -6,8 +6,9 @@ use syntect::html::{css_for_theme_with_class_style, ClassStyle, ClassedHTMLGener
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
-/// Get the corresponding `CSS`, which can be inlined or stored in a file.
-/// TODO: make this configurable.
+/// Get the syntax highlighting CSS defaults. Together with other CSS used
+/// by Tp-Note's HTML renderer, the result can be cusomized through Tp-Note's
+/// configuration file variable `tmpl_html.css`.
 pub fn get_css() -> String {
     let ts = ThemeSet::load_defaults();
     let light_theme = &ts.themes["Solarized (light)"];

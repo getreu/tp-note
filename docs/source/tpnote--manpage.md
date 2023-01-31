@@ -1311,14 +1311,12 @@ with:
 
     [{{ path | filename }}](<../{{ path | filename }}>)
 
-Please note that web browsers usually ignore leading '`../`' in relative
-URL paths. To work around this limitation, Tp-Note's built-in viewer
-first replaces '`../`' with the string '`ParentDir`'. When the user clicks
-on this relative URL, the '`ParentDir`' string in the HTTP request replaced
-back with '`..`'.  It is also worth mentioning that Tp-Note automatically
-creates the subdirectory '`Notes/`' in case it does not exist.
-
-
+Unlike early versions of Tp-Note, relative links can now start with
+`../`. This became possible with the introduction of link rewriting in
+the HTML rendition code of the viewer feature. Relative links are now
+always converted into absolute links before being sent to the browser.
+See subsection _Links to resources and other documents_ for more details
+about link rewriting.
 
 ## Customize the built-in note viewer
 

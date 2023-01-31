@@ -1649,14 +1649,14 @@ with:
 \f[R]
 .fi
 .PP
-Please note that web browsers usually ignore leading `\f[C]../\f[R]' in
-relative URL paths.
-To work around this limitation, Tp-Note\[cq]s built-in viewer first
-replaces `\f[C]../\f[R]' with the string `\f[C]ParentDir\f[R]'.
-When the user clicks on this relative URL, the `\f[C]ParentDir\f[R]'
-string in the HTTP request replaced back with `\f[C]..\f[R]'.
-It is also worth mentioning that Tp-Note automatically creates the
-subdirectory `\f[C]Notes/\f[R]' in case it does not exist.
+Unlike early versions of Tp-Note, relative links can now start with
+\f[C]../\f[R].
+This became possible with the introduction of link rewriting in the HTML
+rendition code of the viewer feature.
+Relative links are now always converted into absolute links before being
+sent to the browser.
+See subsection \f[I]Links to resources and other documents\f[R] for more
+details about link rewriting.
 .SS Customize the built-in note viewer
 .PP
 \f[B]Delay the launch of the web browser\f[R]

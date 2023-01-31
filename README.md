@@ -22,13 +22,14 @@ _TP-Note's_ default templates are written in Markdown and can be easily adapted
 to any other markup language if needed. After creating a new note, _TP-Note_
 launches the system file editor (or any other of your choice, e.g. _MarkText_
 or _Typora_) and connects the default web browser to _Tp-Note_'s
-internal Markdown/RestructuredText renderer and web server.
+internal Markdown/RestructuredText renderer and web server. The viewer detects
+note file changes and updates the rendition accordingly.
 
 * Read more in [Tp-Note’s user manual]
 
 * [Download Tp-Note]
 
-* Project page: [Tp-Note - fast note-taking with templates and filename synchronization]
+* Project page: [Tp-Note - Minimalistic note taking: save and edit your clipboard content as a note file]
 
 
 ---
@@ -135,11 +136,11 @@ Repository:
 
     * [x86_64-unknown-linux-gnu/release/tpnote]
 
-    * The following "musl" version also works on a headless systems.
+    * The following "musl" version also works on a headless system.
 
       [x86_64-unknown-linux-musl/release/tpnote]
 
-* Binaries for RasbperryPi
+* Binaries for Raspberry Pi:
 
     * [armv7-unknown-linux-gnueabihf/release/tpnote]
 
@@ -246,7 +247,7 @@ compile _Tp-Note_ yourself.
 
    Unlike previous Linux versions (<= 1.19.13), Tp-Note displays errors
    and debug messages as notifications. This requires a Linux/BSD based
-   desktop environment that follow the XDG specification, e.g. KDE,
+   desktop environment that follows the XDG specification, e.g. KDE,
    Gnome, XFCE, LXDC, Mate (and probably also most others).
 
    The use of notifications also removes former GTK dependencies. Anyway,
@@ -340,7 +341,7 @@ Copyright:
 
 [Tp-Note’s user manual]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html
 [Download Tp-Note]: https://blog.getreu.net/projects/tp-note/index.html#distribution
-[Tp-Note - fast note-taking with templates and filename synchronization]: https://blog.getreu.net/projects/tp-note/
+[Tp-Note - Minimalistic note taking: save and edit your clipboard content as a note file]: https://blog.getreu.net/projects/tp-note/
 [Tp-Note - Most common use cases - YouTube]: https://www.youtube.com/watch?v=ODhPytPFtYY
 [Tp-Note's project page]: https://blog.getreu.net/projects/tp-note/
 [Tp-Note user manual - html]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html

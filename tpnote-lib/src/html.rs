@@ -19,7 +19,7 @@ pub(crate) const HTML_EXT: &str = ".html";
 /// If not `rewrite_rel_links` and `dest` is relative, return `dest`.
 /// If `rewrite_abs_links` and `dest` is absolute, concatenate and return
 /// `root_path` and `dest`.
-/// If not `rewrite_abs_links` and dest` is absolute, return `dest`.
+/// If not `rewrite_abs_links` and `dest` is absolute, return `dest`.
 /// The `dest` portion of the output is always canonicalized.
 /// Return the assembled path, when in `root_path`, or `None` otherwise.
 /// Asserts in debug mode, that `doc_dir` is in `root_path`.
