@@ -12,7 +12,7 @@ use std::path::PathBuf;
 /// Extents `PathBuf` with methods dealing with paths to Tp-Note files.
 pub trait NotePathBuf {
     /// Concatenates the `sort_tag`, `stem`, `copy_counter`, `.` and `extension`.
-    fn from_assembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self;
+    fn from_disassembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self;
     /// Append/increment a copy counter.
     /// When the path `p` exists on disk already, append some extension
     /// with an incrementing counter to the sort-tag in `p` until
@@ -91,7 +91,7 @@ pub trait NotePathBuf {
 impl NotePathBuf for PathBuf {
     #[inline]
 
-    fn from_assembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self {
+    fn from_disassembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self {
         // Assemble path.
         let mut filename = sort_tag.to_string();
         filename.push_str(stem);
@@ -125,7 +125,7 @@ impl NotePathBuf for PathBuf {
         // Try up to 99 sort tag extensions, then give up.
         for n in 1..FILENAME_COPY_COUNTER_MAX {
             let stem_copy_counter = append_copy_counter(stem, n);
-            let filename = Self::from_assembled(sort_tag, &stem_copy_counter, "", ext);
+            let filename = Self::from_disassembled(sort_tag, &stem_copy_counter, "", ext);
             new_path.set_file_name(filename);
 
             if !new_path.exists() {
@@ -472,7 +472,7 @@ mod tests {
     #[test]
     fn test_assemble_filename() {
         let expected = PathBuf::from("1_2_3-my_file-1-.md");
-        let result = PathBuf::from_assembled("1_2_3-", "my_file", "-1-", "md");
+        let result = PathBuf::from_disassembled("1_2_3-", "my_file", "-1-", "md");
         assert_eq!(expected, result);
     }
 
