@@ -116,7 +116,7 @@ fn link_text_filter<S: BuildHasher>(
 
     let hyperlink = Hyperlink::from(&p).unwrap_or_default();
 
-    Ok(to_value(&hyperlink.name)?)
+    Ok(to_value(hyperlink.name)?)
 }
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
@@ -129,7 +129,7 @@ fn link_dest_filter<S: BuildHasher>(
 
     let hyperlink = Hyperlink::from(&p).unwrap_or_default();
 
-    Ok(to_value(&hyperlink.target)?)
+    Ok(to_value(hyperlink.target)?)
 }
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
@@ -142,7 +142,7 @@ fn link_title_filter<S: BuildHasher>(
 
     let hyperlink = Hyperlink::from(&p).unwrap_or_default();
 
-    Ok(to_value(&hyperlink.title)?)
+    Ok(to_value(hyperlink.title)?)
 }
 
 /// A Tera filter that truncates the input stream and returns the

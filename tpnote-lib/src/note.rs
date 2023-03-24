@@ -93,7 +93,7 @@ impl<T: Content> Note<T> {
         let header = &content.header();
         (*context).insert(TMPL_VAR_NOTE_FM_TEXT, &header);
         //We also keep the body.
-        let body = &content.body();
+        let body = content.body();
         (*context).insert(TMPL_VAR_NOTE_BODY_TEXT, &body);
 
         // Get the file's creation date. Fail silently.
