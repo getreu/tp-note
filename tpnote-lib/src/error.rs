@@ -201,12 +201,12 @@ pub enum NoteError {
         `filename.extensions_*` variables in your configuration file."
     )]
     FileExtNotRegistered {
-        extension: String,
-        md_ext: Vec<String>,
-        rst_ext: Vec<String>,
-        html_ext: Vec<String>,
-        txt_ext: Vec<String>,
-        no_viewer_ext: Vec<String>,
+        extension: Box<String>,
+        md_ext: Box<Vec<String>>,
+        rst_ext: Box<Vec<String>>,
+        html_ext: Box<Vec<String>>,
+        txt_ext: Box<Vec<String>>,
+        no_viewer_ext: Box<Vec<String>>,
     },
 
     /// Remedy: check reStructuredText syntax.

@@ -121,12 +121,12 @@ impl TryFrom<&str> for FrontMatter {
                 matches!(MarkupLanguage::from(&**file_ext), MarkupLanguage::None);
             if extension_is_unknown {
                 return Err(NoteError::FileExtNotRegistered {
-                    extension: file_ext.to_owned(),
-                    md_ext: lib_cfg.filename.extensions_md.to_owned(),
-                    rst_ext: lib_cfg.filename.extensions_rst.to_owned(),
-                    html_ext: lib_cfg.filename.extensions_html.to_owned(),
-                    txt_ext: lib_cfg.filename.extensions_txt.to_owned(),
-                    no_viewer_ext: lib_cfg.filename.extensions_no_viewer.to_owned(),
+                    extension: Box::new(file_ext.to_owned()),
+                    md_ext: Box::new(lib_cfg.filename.extensions_md.to_owned()),
+                    rst_ext: Box::new(lib_cfg.filename.extensions_rst.to_owned()),
+                    html_ext: Box::new(lib_cfg.filename.extensions_html.to_owned()),
+                    txt_ext: Box::new(lib_cfg.filename.extensions_txt.to_owned()),
+                    no_viewer_ext: Box::new(lib_cfg.filename.extensions_no_viewer.to_owned()),
                 });
             }
         }
