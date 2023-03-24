@@ -83,7 +83,7 @@ fn assemble_link(
         (false, _, true) => PathBuf::new(),
         // *** Absolute links.
         // Result: "/" + dest
-        (_, false, false) => PathBuf::from(PathBuf::from(Component::RootDir.as_os_str())),
+        (_, false, false) => PathBuf::from(Component::RootDir.as_os_str()),
         // Result: "/" + root_path
         (_, true, false) => root_path.to_path_buf(),
     };
