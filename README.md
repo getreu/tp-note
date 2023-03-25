@@ -136,7 +136,7 @@ Repository:
 
     * [x86_64-unknown-linux-gnu/release/tpnote]
 
-    * The following "musl" version also works on a headless system.
+    * The following "musl" version also works on headless system.
 
       [x86_64-unknown-linux-musl/release/tpnote]
 

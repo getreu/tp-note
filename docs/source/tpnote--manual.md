@@ -534,7 +534,7 @@ directory's name omitting its own *sort-tag*.
 Depending on the operating system, the installation process is more
 or less automated and can be divided into two steps:
 
-1. [Minimum setup with no file manager integration]\
+1. [Minimum setup without file manager integration]\
    This step consists of downloading _Tp-Note_'s binary and copying it to your hard-disk.
    See section [Distribution](https://blog.getreu.net/projects/tp-note/#distribution)
    on _Tp-Note_'s [project page](https://blog.getreu.net/projects/tp-note/#distribution)
