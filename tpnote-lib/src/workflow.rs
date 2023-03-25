@@ -408,12 +408,12 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 ///
 /// // Prepare test: create existing note file.
 /// let raw = r#"---
-/// title: "My day"
+/// title: "My day2"
 /// subtitle: "Note"
 /// ---
 /// Body text
 /// "#;
-/// let notefile = temp_dir().join("20221030-My day--Note.md");
+/// let notefile = temp_dir().join("20221030-My day2--Note.md");
 /// fs::write(&notefile, raw.as_bytes()).unwrap();
 ///
 /// // Start test
@@ -511,12 +511,12 @@ fn render_html<T: Content>(
 ///
 /// // Prepare test: create existing errorneous note file.
 /// let raw_error = r#"---
-/// title: "My day"
+/// title: "My day3"
 /// subtitle: "Note"
 /// --
 /// Body text
 /// "#;
-/// let notefile = temp_dir().join("20221030-My day--Note.md");
+/// let notefile = temp_dir().join("20221030-My day3--Note.md");
 /// fs::write(&notefile, raw_error.as_bytes()).unwrap();
 /// let mut context = Context::from(&notefile);
 /// let e = NoteError::MissingFrontMatterField { field_name: "title".to_string() };
