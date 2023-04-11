@@ -281,12 +281,13 @@ pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
 /// In addition all environment variables can be used, e.g.  `{{ get_env(name=\"LOGNAME\") }}`
 /// When placed in YAML front matter, the filter `| json_encode` must be appended to each variable.
 pub const TMPL_NEW_CONTENT: &str = "\
+{%- set title_text = dir_path | trim_tag -%}
 ---
-title:      {{ dir_path | trim_tag | cut | json_encode }}
+title:      {{ title_text | cut | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | capitalize | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ lang | json_encode }}
+lang:       {{ title_text | get_lang | json_encode }}
 ---
 
 
@@ -356,23 +357,15 @@ pub const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
 /// `{{ clipboard | link_text }}`, `{{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
 pub const TMPL_FROM_CLIPBOARD_CONTENT: &str = "\
 {%- set lname = stdin ~ clipboard | link_text -%}
-{%- set ok_link_text = lname !=''\
-    and not lname is starting_with(\"http\")\
-    and not lname is starting_with(\"HTTP\") -%}
+{%- set is_link_text = lname !=''and not lname is starting_with(\"http\")and not lname is starting_with(\"HTTP\") -%}
+{%- if is_link_text %}{% set title_text = stdin ~ clipboard | link_text %}{% else %}{% set title_text = stdin ~ clipboard | heading %}{% endif -%}
 ---
-{% if ok_link_text %}\
-title:      {{ stdin ~ clipboard | link_text | cut | json_encode }}
-{% else %}\
-title:      {{ stdin ~ clipboard | heading | cut | json_encode }}
-{% endif %}\
-{% if stdin ~ clipboard | link_text !='' and stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut %}\
-subtitle:   {{ 'URL' | json_encode }}
-{% else %}\
-subtitle:   {{ 'Note' | json_encode }}
-{% endif %}\
-author:     {{ username | capitalize | json_encode }}
+title:      {{ title_text | cut | json_encode }}
+{% if stdin ~ clipboard | link_text !='' and stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut %}subtitle:   {{ 'URL' | json_encode }}
+{% else %}subtitle:   {{ 'Note' | json_encode }}
+{% endif %}author:     {{ username | capitalize | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ lang | json_encode }}
+lang:       {{ title_text | get_lang | json_encode }}
 ---
 
 {{ stdin ~ clipboard }}
@@ -398,7 +391,7 @@ subtitle:   {{ path | stem | split(pat='--') | nth(n=1) | cut | json_encode }}
 author:     {{ username | capitalize | json_encode }}
 date:       {{ note_file_date | default(value='') | date(format='%Y-%m-%d') | json_encode }}
 orig_name:  {{ path | filename | json_encode }}
-lang:       {{ lang | json_encode }}
+lang:       {{ note_body_text | get_lang | json_encode }}
 ---
 
 {{ note_body_text }}
@@ -419,16 +412,14 @@ pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 /// Default template used when the command line <path> parameter points to an existing
 /// non-`.md`-file. Can be modified through editing the configuration file.
 pub const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
+{%- set title_text = path | trim_tag -%}
 ---
-title:      {{ path | trim_tag | json_encode }}
-{% if stdin ~ clipboard | link_text !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}\
-subtitle:   {{ 'URL' | json_encode }}
-{% else %}\
-subtitle:   {{ 'Note' | json_encode }}
-{% endif %}\
-author:     {{ username | capitalize | json_encode }}
+title:      {{ title_text | json_encode }}
+{% if stdin ~ clipboard | link_text !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}subtitle:   {{ 'URL' | json_encode }}
+{% else %}subtitle:   {{ 'Note' | json_encode }}
+{% endif %}author:     {{ username | capitalize | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ lang | json_encode }}
+lang:       {{ title_text | get_lang | json_encode }}
 ---
 
 [{{ path | filename }}](<{{ path | filename }}>)
