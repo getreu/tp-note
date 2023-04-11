@@ -36,10 +36,11 @@ pub struct Context {
     /// command line argument. The is our working directory and
     /// the directory where the note file is (will be) located.
     pub dir_path: PathBuf,
-    /// Contains the root directory of the current note. This is the first
-    /// directory, that upwards from `dir_path`, contains a file named
-    /// `FILENAME_ROOT_PATH_MARKER`. The root directory is used by Tp-Note's viewer
-    /// as base directory
+    /// `dir_path` is a subdirectory of `root_path`. `root_path` is the
+    /// first directory, that upwards from `dir_path`, contains a file named
+    /// `FILENAME_ROOT_PATH_MARKER`. The root directory is interpreted by Tp-
+    /// Note's viewer as its base directory: only files within this directory
+    /// are served.
     pub root_path: PathBuf,
 }
 

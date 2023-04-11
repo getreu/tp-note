@@ -3,6 +3,8 @@ use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
 use crate::filename::NotePath;
 use lazy_static::lazy_static;
+#[cfg(feature = "lang-detection")]
+use lingua::{IsoCode639_1, LanguageDetector, LanguageDetectorBuilder};
 use parse_hyperlinks::iterator::first_hyperlink;
 use sanitize_filename_reader_friendly::sanitize;
 use std::borrow::Cow;
@@ -39,6 +41,7 @@ lazy_static! {
         tera.register_filter("ext", ext_filter);
         tera.register_filter("prepend_dot", prepend_dot_filter);
         tera.register_filter("remove", remove_filter);
+        tera.register_filter("get_lang", get_lang_filter);
         tera
     };
 }
@@ -341,6 +344,46 @@ fn remove_filter<S: BuildHasher>(
     Ok(to_value(&map).unwrap_or_default())
 }
 
+/// A Tera filter telling which natural language some provided textual data
+/// is written in. Returns the ISO 639-1 code representations of the detected
+/// language./// This filter only acts on `String` types. All other types are
+/// passed through.
+/// Returns the empty string in case the language can not be detected reliably.
+fn get_lang_filter<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let p = try_get_value!("cut", "value", tera::Value, value);
+
+    match p {
+        tera::Value::String(sv) => {
+            #[cfg(feature = "lang-detection")]
+            let detector: LanguageDetector = LanguageDetectorBuilder::from_iso_codes_639_1(&[
+                IsoCode639_1::EN,
+                IsoCode639_1::DE,
+                IsoCode639_1::FR,
+                IsoCode639_1::ET,
+            ])
+            //LanguageDetectorBuilder::from_all_languages()
+            .build();
+            #[cfg(feature = "lang-detection")]
+            // let detected_language = detector
+            //     .detect_language_of(&sv)
+            //     .map(|l| format!("{}", l.iso_code_639_1()))
+            //     .unwrap_or_default();
+            let detected_language = detector
+                .detect_language_of(sv)
+                .map(|l| format!("{}", l.iso_code_639_1()))
+                .unwrap_or_default();
+            #[cfg(not(feature = "lang-detection"))]
+            let detected_language = "";
+
+            Ok(to_value(detected_language)?)
+        }
+        _ => Ok(p),
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Default)]
 /// Represents a hyperlink.
 struct Hyperlink {
@@ -561,6 +604,39 @@ mod tests {
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
         let output = ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("", output);
+    }
+
+    #[test]
+    fn test_get_lang_filter() {
+        let args = HashMap::new();
+        // Test Markdown link in clipboard.
+        let input = "Das große Haus";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("de", output);
+
+        let args = HashMap::new();
+        // Test Markdown link in clipboard.
+        let input = 222; // Number type.
+        let output = cut_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!(222, output);
+
+        let args = HashMap::new();
+        // Test Markdown link in clipboard.
+        let input = "Il est venu trop tard";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("fr", output);
+
+        let args = HashMap::new();
+        // Test Markdown link in clipboard.
+        let input = "How to set up a roof rack";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("en", output);
+
+        let args = HashMap::new();
+        // Test Markdown link in clipboard.
+        let input = "1917039480 50198%-328470";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
     }
 

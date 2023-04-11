@@ -184,6 +184,8 @@ fn main() {
         features.push("renderer".to_string());
         #[cfg(feature = "read-clipboard")]
         features.push("read-clipboard".to_string());
+        #[cfg(feature = "lang-detection")]
+        features.push("lang-detection".to_string());
 
         let about = About {
             version: VERSION.unwrap_or("unknown").to_string(),

@@ -15,13 +15,14 @@ version = "0.16.1"
 [features]
 # Exclude "renderer-extras" to stay in _MIT/Apache_ license and the avoid additional
 # _GPL-3.0-or-laterGPL-3.0-or-later_ license.
-# default = ["renderer", "viewer", "renderer-extras"]
-default = ["renderer", "viewer"]
+default = ["renderer", "viewer", "lang-detection"]
 renderer = ["pulldown-cmark", "rst_parser", "rst_renderer", "latex2mathml", "syntect"]
+lang-detection = ["lingua"]
 viewer = []
 
 [dependencies]
 lazy_static.workspace = true
+lingua = { version = "1.4.0", optional = true }
 log.workspace = true
 parse-hyperlinks = "0.23.4"
 parse-hyperlinks-extras = "0.23.4"
