@@ -324,15 +324,15 @@ title:      {{ fm_title | default(value = path|trim_tag) | cut | json_encode }}
 subtitle:   {{ fm_subtitle | default(value = 'Note') | cut | json_encode }}
 author:     {{ fm_author | default(value=username | capitalize) | json_encode }}
 date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
+{% for k, v in fm_all|\
+ remove(var='fm_title')|\
+ remove(var='fm_subtitle')|\
+ remove(var='fm_author')|\
+ remove(var='fm_date')|\
+ remove(var='fm_lang')\
+ %}{{ k }}:\t\t{{ v | json_encode }}
+{% endfor -%}
 lang:       {{ fm_lang | default(value = lang) | json_encode }}
-{% for k, v in fm_all\
- | remove(var='fm_title')\
- | remove(var='fm_subtitle')\
- | remove(var='fm_author')\
- | remove(var='fm_date')\
- | remove(var='fm_lang') %}\
-{{ k }}:\t\t{{ v | json_encode }}
-{% endfor %}\
 ---
 
 {{ stdin ~ clipboard }}
