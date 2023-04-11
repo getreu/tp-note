@@ -15,7 +15,7 @@ use crate::error::ConfigError;
 use crate::highlight::get_css;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use std::{str::FromStr, sync::RwLock};
+use std::{env, str::FromStr, sync::RwLock};
 
 /// Name of the environment variable, that can be optionally
 /// used to overwrite the user's default language setting.
@@ -641,6 +641,55 @@ h3 { font-size: 115% }
 h4, h5, h6 { font-size: 100% }
 h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 "#;
+
+lazy_static! {
+/// Global variable containing the user's language tag from the `LANG`
+/// environment variable (UNIX) or from the operation system (Windows).
+    pub static ref LANG: String = {
+        // Get the user's language tag.
+        // [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
+        let mut lang;
+        // Get the environment variable if it exists.
+        let tpnotelang = env::var(ENV_VAR_TPNOTE_LANG).ok();
+        // Unix/MacOS version.
+        #[cfg(not(target_family = "windows"))]
+        if let Some(tpnotelang) = tpnotelang {
+            lang = tpnotelang;
+        } else {
+            // [Linux: Define Locale and Language Settings - ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
+            let lang_env = env::var("LANG").unwrap_or_default();
+            // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
+            let mut language = "";
+            // [ISO 3166](https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes) country code.
+            let mut territory = "";
+            if let Some((l, lang_env)) = lang_env.split_once('_') {
+                language = l;
+                if let Some((t, _codeset)) = lang_env.split_once('.') {
+                    territory = t;
+                }
+            }
+            lang = language.to_string();
+            lang.push('-');
+            lang.push_str(territory);
+        }
+
+        // Get the user's language tag.
+        // Windows version.
+        #[cfg(target_family = "windows")]
+        if let Some(tpnotelang) = tpnotelang {
+            lang = tpnotelang;
+        } else {
+            let mut buf = [0u16; LOCALE_NAME_MAX_LENGTH as usize];
+            let len = unsafe { GetUserDefaultLocaleName(buf.as_mut_ptr(), buf.len() as i32) };
+            if len > 0 {
+                lang = String::from_utf16_lossy(&buf[..((len - 1) as usize)]);
+            }
+        };
+
+        // Return value.
+        lang
+    };
+}
 
 lazy_static! {
 /// Global variable containing the filename related configuration data.

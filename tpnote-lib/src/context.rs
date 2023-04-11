@@ -1,7 +1,7 @@
 //! Extends the built-in Tera filters.
-use crate::config::ENV_VAR_TPNOTE_LANG;
 use crate::config::ENV_VAR_TPNOTE_USER;
 use crate::config::FILENAME_ROOT_PATH_MARKER;
+use crate::config::LANG;
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_DIR_PATH;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
@@ -271,45 +271,7 @@ impl Context {
         (*self).insert(TMPL_VAR_USERNAME, &author);
 
         // Get the user's language tag.
-        let tpnotelang = env::var(ENV_VAR_TPNOTE_LANG).ok();
-        // Unix/MacOS version.
-        #[cfg(not(target_family = "windows"))]
-        if let Some(tpnotelang) = tpnotelang {
-            (*self).insert(TMPL_VAR_LANG, &tpnotelang);
-        } else {
-            // [Linux: Define Locale and Language Settings - ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
-            let lang_env = env::var("LANG").unwrap_or_default();
-            // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
-            let mut language = "";
-            // [ISO 3166](https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes) country code.
-            let mut territory = "";
-            if let Some((l, lang_env)) = lang_env.split_once('_') {
-                language = l;
-                if let Some((t, _codeset)) = lang_env.split_once('.') {
-                    territory = t;
-                }
-            }
-            // [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
-            let mut lang = language.to_string();
-            lang.push('-');
-            lang.push_str(territory);
-            (*self).insert(TMPL_VAR_LANG, &lang);
-        }
-
-        // Get the user's language tag.
-        // Windows version.
-        #[cfg(target_family = "windows")]
-        if let Some(tpnotelang) = tpnotelang {
-            (*self).insert(TMPL_VAR_LANG, &tpnotelang);
-        } else {
-            let mut lang = String::new();
-            let mut buf = [0u16; LOCALE_NAME_MAX_LENGTH as usize];
-            let len = unsafe { GetUserDefaultLocaleName(buf.as_mut_ptr(), buf.len() as i32) };
-            if len > 0 {
-                lang = String::from_utf16_lossy(&buf[..((len - 1) as usize)]);
-            }
-            (*self).insert(TMPL_VAR_LANG, &lang);
-        }
+        (*self).insert(TMPL_VAR_LANG, &*LANG);
     }
 }
 
