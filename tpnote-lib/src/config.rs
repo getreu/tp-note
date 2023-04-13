@@ -272,14 +272,15 @@ pub const TMPL_VAR_FM_NO_FILENAME_SYNC: &str = "fm_no_filename_sync";
 /// `filename_sync: false`, the filename synchronisation mechanism is
 /// disabled for this note file. Default value is `true`.
 pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
-/// Default content template used when the command line argument <sanit> is a directory. Can be
 
-/// changed through editing the configuration file.
-/// The following variables are  defined:
-/// `{{ sanit | stem }}`, `{{ path | stem }}`, `{{ path | ext }}`, `{{ extension_default }}` `{{
-/// file | tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`, `{{ dir_path }}`.
-/// In addition all environment variables can be used, e.g.  `{{ get_env(name=\"LOGNAME\") }}`
-/// When placed in YAML front matter, the filter `| json_encode` must be appended to each variable.
+/// Default content template used when the command line argument <sanit>
+/// is a directory. Can be changed through editing the configuration
+/// file. The following variables are  defined: `{{ sanit | stem }}
+/// `, `{{ path | stem }}`, `{{ path | ext }}`, `{{ extension_default }}
+/// ` `{{ file | tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`,
+/// `{{ dir_path }}`. In addition all environment variables can be used, e.g.
+/// `{{ get_env(name=\"LOGNAME\") }}` When placed in YAML front matter, the
+/// filter `| json_encode` must be appended to each variable.
 pub const TMPL_NEW_CONTENT: &str = "\
 {%- set title_text = dir_path | trim_tag -%}
 ---
@@ -293,29 +294,31 @@ lang:       {{ title_text | get_lang | json_encode }}
 
 ";
 
-/// Default filename template for a new note file on disk. It implements the sync criteria for
-/// note metadata in front matter and filename.
+/// Default filename template for a new note file on disk. It implements the
+/// sync criteria for note metadata in front matter and filename.
 /// Useful variables in this context are:
-/// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}`,
-/// All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in case its value starts
-/// with a number, the string is prepended with `'`.  The first non-numerical variable must be some
-/// `{{ <var>| sanit(alpha) }}` variant.
-/// Note, as this is filename template, all variables (except `now` and `extension_default` must be
-/// filtered by a `sanit` or `sanit(force_alpha=true)` filter.
+/// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}
+/// `, All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in
+/// case its value starts with a number, the string is prepended with `'`.
+/// The first non-numerical variable must be some `{{ <var>| sanit(alpha) }}
+/// ` variant. Note, as this is filename template, all variables (except
+/// `now` and `extension_default` must be filtered by a `sanit` or
+/// `sanit(force_alpha=true)` filter.
 pub const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
 {{ fm_title | sanit(force_alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
 ";
 
-/// Default template used, when the clipboard or the input stream `stdin` contains a string and one
-/// the of these strings contains a valid YAML front matter section.
-/// The clipboards body is in `{{ clipboard }}`, the header is in `{{ clipboard_header }}`.  The
-/// stdin's body is in `{{ stdin }}`, the header is in `{{ stdin_header }}`.
-/// First all variables defined in the clipboard's front matter are registered, the ones
-/// defined in the input stream `stdin`. The latter can overwrite the former.  One of the front
-/// matters must define the `title` variable, which is then available in this template as `{{
-/// fm_title }}`.
+/// Default template used, when the clipboard or the input stream `stdin`
+/// contains a string and one the of these strings contains a valid YAML front
+/// matter section. The clipboards body is in `{{ clipboard }}`, the header
+/// is in `{{ clipboard_header }}`.  The stdin's body is in `{{ stdin }}`,
+/// the header is in `{{ stdin_header }}`. First all variables defined in the
+/// clipboard's front matter are registered, the ones defined in the input
+/// stream `stdin`. The latter can overwrite the former.  One of the front
+/// matters must define the `title` variable, which is then available in this
+/// template as `{{ fm_title }}`.
 /// When placed in YAML front matter, the filter `| json_encode` must be
 /// appended to each variable.
 pub const TMPL_FROM_CLIPBOARD_YAML_CONTENT: &str = "\
@@ -339,8 +342,8 @@ lang:       {{ fm_lang | default(value = lang) | json_encode }}
 
 ";
 
-/// Default filename template used when the stdin or the clipboard contains a string and one of
-/// them has a valid YAML header.
+/// Default filename template used when the stdin or the clipboard contains a
+/// string and one of them has a valid YAML header.
 pub const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
 {{ fm_sort_tag | default(value = now() | date(format='%Y%m%d-')) }}\
 {{ fm_title | sanit(force_alpha=true) }}\
@@ -349,12 +352,14 @@ pub const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
 {{ fm_file_ext | default(value = extension_default ) | prepend_dot }}\
 ";
 
-/// Default template used, when the clipboard or the input stream `stdin` contains a string and
-/// this string has no valid YAML front matter section.  The clipboards content is in `{{ clipboard
-/// }}`, its truncated version in `{{ clipboard | heading }}` When the clipboard contains a
-/// hyperlink in Markdown or reStruncturedText format. See crate `parse-hyperlinks` for details.
-/// For example: `[<link-name>](<link-url> "link-title")`, can be accessed with the variables:
-/// `{{ clipboard | link_text }}`, `{{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
+/// Default template used, when the clipboard or the input stream `stdin`
+/// contains a string and this string has no valid YAML front matter section.
+/// The clipboards content is in `{{ clipboard }}`, its truncated version in
+/// `{{ clipboard | heading }}` When the clipboard contains a hyperlink in
+/// Markdown or reStruncturedText format. See crate `parse-hyperlinks` for
+/// details. For example: `[<link-name>](<link-url> "link-title")`, can be
+/// accessed with the variables: `{{ clipboard | link_text }}`, `
+/// {{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
 pub const TMPL_FROM_CLIPBOARD_CONTENT: &str = "\
 {%- set lname = stdin ~ clipboard | link_text -%}
 {%- set is_link_text = lname !=''and not lname is starting_with(\"http\")and not lname is starting_with(\"HTTP\") -%}
@@ -409,8 +414,9 @@ pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 {{ path | ext | prepend_dot }}\
 ";
 
-/// Default template used when the command line <path> parameter points to an existing
-/// non-`.md`-file. Can be modified through editing the configuration file.
+/// Default template used when the command line <path> parameter points to an
+/// existing non-`.md`-file. Can be modified through editing the configuration
+/// file.
 pub const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
 {%- set title_text = path | trim_tag -%}
 ---
@@ -438,9 +444,10 @@ pub const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
 {{ fm_subtitle | default(value='') | sanit }}{{ extension_default | prepend_dot }}\
 ";
 
-/// Default filename template to test, if the filename of an existing note file on disk,
-/// corresponds to the note's meta data stored in its front matter. If it is not the case, the
-/// note's filename will be renamed.  Can be modified through editing the configuration file.
+/// Default filename template to test, if the filename of an existing note file
+/// on disk, corresponds to the note's meta data stored in its front matter. If
+/// it is not the case, the note's filename will be renamed.  Can be modified
+/// through editing the configuration file.
 pub const TMPL_SYNC_FILENAME: &str = "\
 {{ fm_sort_tag | default(value = path | tag) }}\
 {{ fm_title | default(value='No title') | sanit(force_alpha=true) }}\
@@ -608,9 +615,9 @@ pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
 </html>
 "#;
 
-/// A constant holding common CSS code, used as embedded code in the
-/// `TMPL_HTML_EXPORTER` template and as referenced code in the `TMPL_HTML_VIEWER`
-/// template.
+/// A constant holding common CSS code, used as embedded code in
+/// the `TMPL_HTML_EXPORTER` template and as referenced code in the
+/// `TMPL_HTML_VIEWER` template.
 pub const TMPL_HTML_CSS_COMMON: &str = r#"/* Tp-Note's CSS */
 table, th, td { font-weight: normal; }
 table.center {
@@ -656,7 +663,8 @@ lazy_static! {
         if let Some(tpnotelang) = tpnotelang {
             lang = tpnotelang;
         } else {
-            // [Linux: Define Locale and Language Settings - ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
+            // [Linux: Define Locale and Language Settings -
+            // ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
             let lang_env = env::var("LANG").unwrap_or_default();
             // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
             let mut language = "";
@@ -725,7 +733,8 @@ pub struct Filename {
     pub extensions_no_viewer: Vec<String>,
 }
 
-/// Filename templates and content templates, deserialized from the configuration file.
+/// Filename templates and content templates, deserialized from the
+/// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tmpl {
     pub compulsory_header_field: String,
@@ -832,14 +841,14 @@ impl ::std::default::Default for TmplHtml {
 /// Defines the way the HTML exporter rewrites local links.
 ///
 /// The enum `LocalLinkKind` allows you to finetune how local links are written
-/// out. Valid variants are: `off`, `short` and `long`.
-/// In order to achieve this, the user must respect  the following convention
-/// concerning absolute local links in Tp-Note documents:  The base of absolute
-/// local links in Tp-Note documents must be the directory where the marker file
-/// `.tpnoteroot` resides (or `/` in non exists). The option `--export-link-
-/// rewriting` decides how local links in the Tp-Note  document are converted when
-/// the HTML is generated.  If its value is `short`, then relative local links
-/// are converted to absolute links. The base of the resulting links is where the
+/// out. Valid variants are: `off`, `short` and `long`. In order to achieve
+/// this, the user must respect  the following convention concerning absolute
+/// local links in Tp-Note documents:  The base of absolute local links in Tp-
+/// Note documents must be the directory where the marker file `.tpnoteroot`
+/// resides (or `/` in non exists). The option `--export-link- rewriting`
+/// decides how local links in the Tp-Note  document are converted when the
+/// HTML is generated.  If its value is `short`, then relative local links are
+/// converted to absolute links. The base of the resulting links is where the
 /// `.tpnoteroot` file resides (or `/` if none exists). Consider the following
 /// example:
 ///
