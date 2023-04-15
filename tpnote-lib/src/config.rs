@@ -84,7 +84,7 @@ pub const FILENAME_COPY_COUNTER_MAX: usize = 400;
 
 /// File extension of new _Tp-Note_ files.
 ///
-/// For Unix-like systems this defaults to `.md` because all the
+/// For UNIX like systems this defaults to `.md` because all the
 /// listed file editors (see `APP_ARGS_EDITOR`) support it. The
 /// Windows default is `.txt` to ensure that the _Notepad_ editor can
 /// handle these files properly.
@@ -273,14 +273,39 @@ pub const TMPL_VAR_FM_NO_FILENAME_SYNC: &str = "fm_no_filename_sync";
 /// disabled for this note file. Default value is `true`.
 pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
 
+/// A list of language tags, defining languages TP-Note tries to recognize in
+/// the filter input. The user's default language subtag, as reported from
+/// the operation system, is automatically added to the present list.
+/// The language recognition feature is disabled, when the list is empty.
+/// It is also disabled, when the user's default language, as reported from
+/// the operating system, is not supported by the external language guessing
+/// library _Lingua_. In both cases the filter returns the empty string.
+pub const TMPL_FILTER_GET_LANG: &[&str] = &["en", "fr", "de", "et"];
+
+/// Default values for the `map_lang` hash map filter, that is used to post
+/// process the language recognition subtag as defined in `TMPL_GET_LANG`. The
+/// key is the language subtag, the corresponding value adds a region subtag
+/// completing the language tag. The default region subtags are chosen to be
+/// compatible with the _LanguageTool_ grammar checker. In case a language
+/// subtag has no key in the present hash map, the filter forward the input
+/// unchanged, e.g. the filter input `fr` results in `fr`.
+/// One entry, derived from the user's default language - as reported from the
+/// operation system - is automatically added to the present list. For example,
+/// the user's default language `fr_CA.UTF-8` is added as `&["fr", "fr-CA"]`.
+/// Note that, the empty input string results in the user's default language
+/// tag - here `fr-CA` - as well.
+pub const TMPL_FILTER_MAP_LANG: &[&[&str]] =
+    &[&["de", "de-DE"], &["et", "et-ET"]];
+
 /// Default content template used when the command line argument <sanit>
 /// is a directory. Can be changed through editing the configuration
 /// file. The following variables are  defined: `{{ sanit | stem }}
-/// `, `{{ path | stem }}`, `{{ path | ext }}`, `{{ extension_default }}
-/// ` `{{ file | tag }}`, `{{ username }}`, `{{ date }}`, `{{ lang }}`,
-/// `{{ dir_path }}`. In addition all environment variables can be used, e.g.
-/// `{{ get_env(name=\"LOGNAME\") }}` When placed in YAML front matter, the
-/// filter `| json_encode` must be appended to each variable.
+/// `, `{{ path | stem }}`, `{{ path | ext }}`, `{{ extension_default }}`
+/// `{{ file | tag }}`, `{{ username }}`, `{{ date }}`,
+/// `{{ title_text | lang }}`, `{{ dir_path }}`. In addition all environment
+/// variables can be used, e.g. `{{ get_env(name=\"LOGNAME\") }}` When placed
+/// in YAML front matter, the filter `| json_encode` must be appended to each
+/// variable.
 pub const TMPL_NEW_CONTENT: &str = "\
 {%- set title_text = dir_path | trim_tag -%}
 ---
@@ -737,6 +762,8 @@ pub struct Filename {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tmpl {
+    pub filter_get_lang: Vec<String>,
+    pub filter_map_lang: Vec<Vec<String>>,
     pub compulsory_header_field: String,
     pub new_content: String,
     pub new_filename: String,
@@ -804,6 +831,14 @@ impl ::std::default::Default for Filename {
 impl ::std::default::Default for Tmpl {
     fn default() -> Self {
         Tmpl {
+            filter_get_lang: TMPL_FILTER_GET_LANG
+                .iter()
+                .map(|a| (*a).to_string())
+                .collect(),
+            filter_map_lang: TMPL_FILTER_MAP_LANG
+                .iter()
+                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
+                .collect(),
             compulsory_header_field: TMPL_COMPULSORY_HEADER_FIELD.to_string(),
             new_content: TMPL_NEW_CONTENT.to_string(),
             new_filename: TMPL_NEW_FILENAME.to_string(),
