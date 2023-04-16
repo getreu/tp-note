@@ -15,6 +15,7 @@ use crate::error::ConfigError;
 use crate::highlight::get_css;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::{env, str::FromStr, sync::RwLock};
 
 /// Name of the environment variable, that can be optionally
@@ -853,6 +854,24 @@ impl ::std::default::Default for Tmpl {
             sync_filename: TMPL_SYNC_FILENAME.to_string(),
         }
     }
+}
+
+lazy_static! {
+    /// Store the extension as key and mime type as value in HashMap.
+    pub static ref TMP_FILTER_MAP_LANG_HMAP: HashMap<String, String> = {
+        let mut hm = HashMap::new();
+        let lib_cfg = LIB_CFG.read().unwrap();
+        for l in &lib_cfg.tmpl.filter_map_lang {
+            if l.len() >= 2 {
+                hm.insert(l[0].to_string(), l[1].to_string());
+            };
+        };
+        // Insert the user's default language and region in hashmap.
+        if let Some((lang_subtag, _)) = &LANG.split_once('-'){
+            hm.insert(lang_subtag.to_string(), LANG.to_string() );
+        };
+        hm
+    };
 }
 
 /// Default values for the exporter feature.
