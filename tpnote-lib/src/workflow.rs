@@ -28,12 +28,12 @@
 //! // This is the condition to choose: `TemplateKind::New`:
 //! assert!(clipboard.is_empty() || stdin.is_empty());
 //! // There are no inhibitor rules to change the `TemplateKind`.
-//! let template_kind_filer = |tk|tk;
+//! let template_kind_filter = |tk|tk;
 //!
 //! // Start test.
 //! // You can plug in your own type (must impl. `Content`).
 //! let n = create_new_note_or_synchronize_filename::<ContentString, _>(
-//!        &notedir, &clipboard, &stdin, template_kind_filer,
+//!        &notedir, &clipboard, &stdin, template_kind_filter,
 //!        &None).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
@@ -108,12 +108,12 @@
 //! // This is the condition to choose: `TemplateKind::New`:
 //! assert!(clipboard.is_empty() || stdin.is_empty());
 //! // There are no inhibitor rules to change the `TemplateKind`.
-//! let template_kind_filer = |tk|tk;
+//! let template_kind_filter = |tk|tk;
 //!
 //! // Start test.
 //! // Here we plugin our own type (must implement `Content`).
 //! let n = create_new_note_or_synchronize_filename::<MyContentString, _>(
-//!        &notedir, &clipboard, &stdin, template_kind_filer,
+//!        &notedir, &clipboard, &stdin, template_kind_filter,
 //!        &None).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
@@ -236,12 +236,12 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// // This is the condition to choose: `TemplateKind::FromClipboard`:
 /// assert!(clipboard.header().is_empty() && stdin.header().is_empty());
 /// assert!(!clipboard.body().is_empty() || !stdin.body().is_empty());
-/// let template_kind_filer = |tk|tk;
+/// let template_kind_filter = |tk|tk;
 ///
 /// // Start test.
 /// // You can plug in your own type (must impl. `Content`).
 /// let n = create_new_note_or_synchronize_filename::<ContentString, _>(
-///        &notedir, &clipboard, &stdin, template_kind_filer,
+///        &notedir, &clipboard, &stdin, template_kind_filter,
 ///        &None).unwrap();
 /// // Check result.
 /// assert!(n.as_os_str().to_str().unwrap()
