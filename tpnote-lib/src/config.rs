@@ -14,8 +14,17 @@ use crate::error::ConfigError;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_css;
 use lazy_static::lazy_static;
+#[cfg(feature = "lang-detection")]
+use lingua::IsoCode639_1;
+#[cfg(feature = "lang-detection")]
+use serde::de::{self, Visitor};
+#[cfg(feature = "lang-detection")]
+use serde::Deserializer;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+#[cfg(feature = "lang-detection")]
+use std::fmt;
+use std::ops::Deref;
 use std::{env, str::FromStr, sync::RwLock};
 
 /// Name of the environment variable, that can be optionally
@@ -281,7 +290,17 @@ pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
 /// It is also disabled, when the user's default language, as reported from
 /// the operating system, is not supported by the external language guessing
 /// library _Lingua_. In both cases the filter returns the empty string.
-pub const TMPL_FILTER_GET_LANG: &[&str] = &["en", "fr", "de", "et"];
+#[cfg(feature = "lang-detection")]
+pub const TMPL_FILTER_GET_LANG: &[DetectableLanguage<IsoCode639_1>] = &[
+    DetectableLanguage(IsoCode639_1::EN),
+    DetectableLanguage(IsoCode639_1::FR),
+    DetectableLanguage(IsoCode639_1::DE),
+    DetectableLanguage(IsoCode639_1::ET),
+];
+
+/// Ignored placeholder when the feature `lang-detection` is disabled.
+#[cfg(not(feature = "lang-detection"))]
+pub const TMPL_FILTER_GET_LANG: &[DetectableLanguage<String>] = &[];
 
 /// Default values for the `map_lang` hash map filter, that is used to post
 /// process the language recognition subtag as defined in `TMPL_GET_LANG`. The
@@ -763,7 +782,10 @@ pub struct Filename {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tmpl {
-    pub filter_get_lang: Vec<String>,
+    #[cfg(feature = "lang-detection")]
+    pub filter_get_lang: Vec<DetectableLanguage<IsoCode639_1>>,
+    #[cfg(not(feature = "lang-detection"))]
+    pub filter_get_lang: Vec<DetectableLanguage<String>>,
     pub filter_map_lang: Vec<Vec<String>>,
     pub compulsory_header_field: String,
     pub new_content: String,
@@ -832,10 +854,7 @@ impl ::std::default::Default for Filename {
 impl ::std::default::Default for Tmpl {
     fn default() -> Self {
         Tmpl {
-            filter_get_lang: TMPL_FILTER_GET_LANG
-                .iter()
-                .map(|a| (*a).to_string())
-                .collect(),
+            filter_get_lang: TMPL_FILTER_GET_LANG.iter().map(|l| l.to_owned()).collect(),
             filter_map_lang: TMPL_FILTER_MAP_LANG
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
@@ -948,5 +967,78 @@ impl FromStr for LocalLinkKind {
             "long" => Ok(LocalLinkKind::Long),
             _ => Err(ConfigError::ParseLocalLinkKind {}),
         }
+    }
+}
+
+/// A wrapper around the `IsoCode639_1` type which enables us to implement
+/// the missing `Clone`, `Serialize` and `Deserialize` traits here.
+#[cfg(feature = "lang-detection")]
+#[derive(Debug, Eq, PartialEq)]
+pub struct DetectableLanguage<T>(pub T);
+
+/// A wrapper type around `&str`, which is used as a placeholder
+/// When the `IsoCode639` was not pulled in.
+#[cfg(not(feature = "lang-detection"))]
+#[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
+pub struct DetectableLanguage<T>(pub T);
+
+impl<T> Deref for DetectableLanguage<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[cfg(feature = "lang-detection")]
+impl Serialize for DetectableLanguage<IsoCode639_1> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        format!("{}", &self.0).serialize(serializer)
+    }
+}
+
+/// Helper type required when implementing `Deserialize` for `IsoCode639`.
+#[cfg(feature = "lang-detection")]
+struct DetectableLanguageVisitor;
+
+#[cfg(feature = "lang-detection")]
+impl<'de> Visitor<'de> for DetectableLanguageVisitor {
+    type Value = DetectableLanguage<IsoCode639_1>;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("an IsoCode639_1 supported by the Lingua crate")
+    }
+
+    fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        match IsoCode639_1::from_str(s) {
+            Ok(iso) => Ok(DetectableLanguage(iso)),
+            Err(e) => Err(E::custom(format!(
+                "ISO 639-1 language code is not supported by the Lingua crate: {}",
+                e
+            ))),
+        }
+    }
+}
+
+#[cfg(feature = "lang-detection")]
+impl<'de> Deserialize<'de> for DetectableLanguage<IsoCode639_1> {
+    fn deserialize<D>(deserializer: D) -> Result<DetectableLanguage<IsoCode639_1>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_i32(DetectableLanguageVisitor)
+    }
+}
+
+#[cfg(feature = "lang-detection")]
+impl Clone for DetectableLanguage<IsoCode639_1> {
+    fn clone(&self) -> Self {
+        Self(IsoCode639_1::from_str(&format!("{}", &self.0)).unwrap())
     }
 }
