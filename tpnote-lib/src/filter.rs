@@ -358,6 +358,8 @@ fn get_lang_filter<S: BuildHasher>(
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     // Early return when there are not at least 2 languages to choose from.
+
+    use std::str::FromStr;
     let lib_cfg = LIB_CFG.read().unwrap();
     if lib_cfg.tmpl.filter_get_lang.len() < 2 {
         return Ok(to_value("").unwrap());
@@ -369,18 +371,29 @@ fn get_lang_filter<S: BuildHasher>(
         tera::Value::String(sv) => {
             // Type conversion from `Vec<DetectableLanguage<IsoCode639_1>>`
             // to `&[IsoCode639_1]`.
-            let iso_codes = &*lib_cfg
+            let mut iso_codes = lib_cfg
                 .tmpl
                 .filter_get_lang
                 .iter()
                 .map(|l| (l.clone()).0)
                 .collect::<Vec<IsoCode639_1>>();
+
+            // Add the user's language subtag as reported from the OS.
+            if let Some((lang_subtag, _)) = &LANG.split_once('-') {
+                if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
+                    if !iso_codes.contains(&iso_code) {
+                        iso_codes.push(iso_code);
+                    }
+                }
+            }
+
             log::debug!(
                 "Trying to identify one of the following languages: {:?}",
                 iso_codes,
             );
+
             let detector: LanguageDetector =
-                LanguageDetectorBuilder::from_iso_codes_639_1(iso_codes).build();
+                LanguageDetectorBuilder::from_iso_codes_639_1(&*iso_codes).build();
 
             //TodoLanguageDetectorBuilder::from_all_languages()
 
