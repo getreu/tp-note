@@ -1,6 +1,8 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_DOTFILE_MARKER;
+use crate::config::LANG;
 use crate::config::LIB_CFG;
+use crate::config::TMP_FILTER_MAP_LANG_HMAP;
 use crate::filename::NotePath;
 use lazy_static::lazy_static;
 #[cfg(feature = "lang-detection")]
@@ -42,6 +44,7 @@ lazy_static! {
         tera.register_filter("prepend_dot", prepend_dot_filter);
         tera.register_filter("remove", remove_filter);
         tera.register_filter("get_lang", get_lang_filter);
+        tera.register_filter("map_lang", map_lang_filter);
         tera
     };
 }
@@ -346,9 +349,9 @@ fn remove_filter<S: BuildHasher>(
 
 /// A Tera filter telling which natural language some provided textual data
 /// is written in. Returns the ISO 639-1 code representations of the detected
-/// language./// This filter only acts on `String` types. All other types are
-/// passed through.
-/// Returns the empty string in case the language can not be detected reliably.
+/// language. This filter only acts on `String` types. All other types are
+/// passed through. Returns the empty string in case the language can not be
+/// detected reliably.
 #[cfg(feature = "lang-detection")]
 fn get_lang_filter<S: BuildHasher>(
     value: &Value,
@@ -399,6 +402,29 @@ fn get_lang_filter<S: BuildHasher>(
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     Ok(to_value("").unwrap())
+}
+
+/// A mapper for ISO 639 codes adding some region information, e.g.
+/// `en` to `en-US` or `de` to `de-DE`. The mapping is configurable.
+fn map_lang_filter<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let p = try_get_value!("map_lang", "value", tera::Value, value);
+
+    match p {
+        tera::Value::String(input) => {
+            if input.is_empty() {
+                return Ok(to_value(&*LANG)?);
+            };
+
+            match TMP_FILTER_MAP_LANG_HMAP.get(&input) {
+                None => Ok(to_value(&input)?),
+                Some(tag) => Ok(to_value(tag)?),
+            }
+        }
+        _ => Ok(p),
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Default)]
