@@ -161,16 +161,14 @@ impl Context {
     }
 
     /// Inserts clipboard or stdin data into the context. The data may
-    /// contain some copied text with or without a YAML header.
-    /// The latter usually carries front matter variable.
-    /// These are added separately via `insert_front_matter()`.
-    /// The `input` data below is registered with the key name given
-    /// by `tmpl_var`. Typical names are `"clipboard"` or `"stdin"`.
-    /// If the below `input` contains a valid YAML header, it will
-    /// be registered in the context with the key name given by
-    /// `tmpl_var_header`. This string is typically one of
-    /// `clipboard_header` or `std_header`.
-    /// The raw data that will be inserted into the context.
+    /// contain some copied text with or without a YAML header. The latter
+    /// usually carries front matter variable. These are added separately via
+    /// `insert_front_matter()`. The `input` data below is registered with
+    /// the key name given by `tmpl_var`. Typical names are `"clipboard"` or
+    /// `"stdin"`. If the below `input` contains a valid YAML header, it will be
+    /// registered in the context with the key name given by `tmpl_var_header`.
+    /// This string is typically one of `clipboard_header` or `std_header`. The
+    /// raw data that will be inserted into the context.
     ///
     /// ```rust
     /// use std::path::Path;

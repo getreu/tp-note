@@ -37,9 +37,9 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 /// assert_eq!(c.as_str(), "No header");
 /// ```
 ///
-/// The `Content` trait allows to plug in you own storage back end if
-/// `ContentString` does not suit you. Note: you can overwrite
-/// `Content::open()` and `Content::save_as()` also (note shown).
+/// The `Content` trait allows to plug in your own storage back end if
+/// `ContentString` does not suit you. In addtion to the example shown below,
+/// you can overwrite `Content::open()` and `Content::save_as()` as well.
 ///
 /// ```rust
 /// use tpnote_lib::content::Content;

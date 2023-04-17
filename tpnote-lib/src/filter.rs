@@ -16,10 +16,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use tera::{to_value, try_get_value, Result as TeraResult, Tera, Value};
 
-/// Filter parameter of the `cut_filter()` that limits the maximum length of template variables,
-/// which are usually used to in the note's front matter as title. For example: the title should
-/// not be too long, because it will end up as part of the filename when the note is saved to
-/// disk. Filenames of some operating systems are limited to 255 bytes.
+/// Filter parameter of the `cut_filter()` limiting the maximum length of
+/// template variables. The filter is usually used to in the note's front matter
+/// as title. For example: the title should not be too long, because it will end
+/// up as part of the filename when the note is saved to disk. Filenames of some
+/// operating systems are limited to 255 bytes.
 #[cfg(not(test))]
 const CUT_LEN_MAX: usize = 200;
 #[cfg(test)]
@@ -50,16 +51,16 @@ lazy_static! {
 }
 
 /// Adds a new filter to Tera templates:
-/// `sanit` or `sanit()` sanitizes a string so that it can be used
-/// to assemble filenames or paths.
-/// In addition, `sanit(alpha=true)` prepends the `sort_tag_extra_separator`
-/// when the result starts with one of `sort_tag_chars`, usually a number. This
-/// way we guaranty that the filename never starts with a number. We do not
-/// allow this, to be able to distinguish reliably the sort tag from the
-/// filename. In addition to the above, the filter checks if the string
-/// represents a "well formed" filename. If it is the case, and the filename
-/// starts with a dot, the file is prepended by `sort_tag_extra_separator`.
-/// Note, this filter converts all input types to `tera::String`.
+/// `sanit` or `sanit()` sanitizes a string so that it can be used to
+/// assemble filenames or paths. In addition, `sanit(alpha=true)` prepends
+/// the `sort_tag_extra_separator` when the result starts with one of
+/// `sort_tag_chars`, usually a number. This way we guaranty that the filename
+/// never starts with a number. We do not allow this, to be able to distinguish
+/// reliably the sort tag from the filename. In addition to the above, the
+/// filter checks if the string represents a "well-formed" filename. If it
+/// is the case, and the filename starts with a dot, the file is prepended by
+/// `sort_tag_extra_separator`. Note, this filter converts all input types to
+/// `tera::String`.
 fn sanit_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
@@ -176,7 +177,8 @@ fn cut_filter<S: BuildHasher>(
     }
 }
 
-/// A Tera filter that return the first line or the first sentence of the input stream.
+/// A Tera filter that returns the first line or the first sentence of the input
+/// stream.
 fn heading_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -347,8 +349,8 @@ fn remove_filter<S: BuildHasher>(
     Ok(to_value(&map).unwrap_or_default())
 }
 
-/// A Tera filter telling which natural language some provided textual data
-/// is written in. Returns the ISO 639-1 code representations of the detected
+/// A Tera filter telling which natural language some provided textual data is
+/// written in. It returns the ISO 639-1 code representations of the detected
 /// language. This filter only acts on `String` types. All other types are
 /// passed through. Returns the empty string in case the language can not be
 /// detected reliably.

@@ -113,45 +113,38 @@ pub const FILENAME_EXTENSION_DEFAULT: &str = "txt";
 pub const FILENAME_EXTENSION_DEFAULT: &str = "md";
 
 /// The variables `FILENAME_EXTENSIONS_*` list file extensions that Tp-Note
-/// considers as its own note files.
-/// Tp-Note opens these files, reads their their YAML header and
-/// launches an external file editor and an file viewer
-/// (web browser).
-/// According to the markup language used, the appropriate
-/// renderer is called to convert the note's content into HTML.
-/// The rendered HTML is then shown to the user with his
-/// web browser.
+/// considers as its own note files. Tp-Note opens these files, reads their
+/// YAML header and launches an external file editor and an file viewer (web
+/// browser). According to the markup language used, the appropriate renderer
+/// is called to convert the note's content into HTML. The rendered HTML is then
+/// shown to the user with his web browser.
 ///
-/// The present list contains file extensions of
-/// Markdown encoded Tp-Note files.
+/// The present list contains file extensions of Markdown encoded Tp-Note files.
 pub const FILENAME_EXTENSIONS_MD: &[&str] = &["txt", "md", "markdown", "markdn", "mdown", "mdtxt"];
 
-/// The present list contains file extensions of
-/// RestructuredText encoded Tp-Note files.
+/// The present list contains file extensions of RestructuredText encoded Tp-
+/// Note files.
 ///
 /// See also `FILENAME_EXTENSIONS_MD`.
 pub const FILENAME_EXTENSIONS_RST: &[&str] = &["rst", "rest"];
 
-/// The present list contains file extensions of
-/// HTML encoded Tp-Note files. For these
-/// file types their content is forwarded to the web browser
-/// without modification.
+/// The present list contains file extensions of HTML encoded Tp-Note files.
+/// For these file types the content is forwarded to the web browser without
+/// modification.
 ///
 /// See also `FILENAME_EXTENSIONS_MD`.
 pub const FILENAME_EXTENSIONS_HTML: &[&str] = &["htmlnote"];
 
-/// The present list contains file extensions of
-/// Text encoded Tp-Note files that the viewer shows
-/// literally without (almost) any additional rendering.
+/// The present list contains file extensions of Text encoded Tp-Note files
+/// that the viewer shows literally without (almost) any additional rendering.
 /// Only hyperlinks in _Markdown_, _reStructuredText_, _Asciidoc_ and _HTML_ are
 /// rendered, thus clickable.
 ///
 /// See also `FILENAME_EXTENSIONS_MD`.
 pub const FILENAME_EXTENSIONS_TXT: &[&str] = &["txtnote", "adoc", "asciidoc", "mediawiki", "mw"];
 
-/// The present list contains file extensions of
-/// Tp-Note files for which no viewer is opened
-/// (unless Tp-Note is invoked with `--view`).
+/// The present list contains file extensions of Tp-Note files for which no
+/// viewer is opened (unless Tp-Note is invoked with `--view`).
 ///
 /// See also `FILENAME_EXTENSIONS_MD`.
 pub const FILENAME_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t"];
@@ -183,8 +176,8 @@ pub const TMPL_VAR_PATH: &str = "path";
 /// `TMPL_VAR_PATH`,
 pub const TMPL_VAR_DIR_PATH: &str = "dir_path";
 
-/// Contains the root directory of the current note. This is the first
-/// directory, that upwards from `TMPL_VAR_DIR_PATH`, contains a file named
+/// The root directory of the current note. This is the first directory,
+/// that upwards from `TMPL_VAR_DIR_PATH`, contains a file named
 /// `FILENAME_ROOT_PATH_MARKER`. The root directory is used by Tp-Note's viewer
 /// as base directory
 pub const TMPL_VAR_ROOT_PATH: &str = "root_path";
@@ -242,7 +235,7 @@ pub const TMPL_VAR_NOTE_FILE_DATE: &str = "note_file_date";
 pub const TMPL_VAR_FM_: &str = "fm_";
 
 /// Contains a Hash Map with all front matter fields. Lists are flattened
-/// into a strings. Only available in the
+/// into strings. These variables are only available in the
 /// `TMPL_FROM_TEXT_FILE_CONTENT`, `TMPL_SYNC_FILENAME` and HTML templates.
 pub const TMPL_VAR_FM_ALL: &str = "fm_all";
 
@@ -253,7 +246,7 @@ pub const TMPL_VAR_FM_ALL: &str = "fm_all";
 /// markup language is derived from the note's filename extension.
 ///
 /// This is a dynamically generated variable originating from the front matter
-/// of the current note. As all front matter variables, it's value is copied as
+/// of the current note. As all front matter variables, its value is copied as
 /// it is without modification.  Here, the only special treatment is, when
 /// analyzing the front matter, it is verified, that the value of this variable
 /// is registered in one of the `filename.extensions_*` variables.
@@ -285,7 +278,7 @@ pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
 
 /// A list of language tags, defining languages TP-Note tries to recognize in
 /// the filter input. The user's default language subtag, as reported from
-/// the operation system, is automatically added to the present list.
+/// the operating system, is automatically added to the present list.
 /// The language recognition feature is disabled, when the list is empty.
 /// It is also disabled, when the user's default language, as reported from
 /// the operating system, is not supported by the external language guessing
@@ -310,7 +303,7 @@ pub const TMPL_FILTER_GET_LANG: &[DetectableLanguage<String>] = &[];
 /// subtag has no key in the present hash map, the filter forward the input
 /// unchanged, e.g. the filter input `fr` results in `fr`.
 /// One entry, derived from the user's default language - as reported from the
-/// operation system - is automatically added to the present list. For example,
+/// operating system - is automatically added to the present list. For example,
 /// the user's default language `fr_CA.UTF-8` is added as `&["fr", "fr-CA"]`.
 /// Note that, the empty input string results in the user's default language
 /// tag - here `fr-CA` - as well.
@@ -523,13 +516,13 @@ pub const TMPL_HTML_VAR_NOTE_JS: &str = "note_js";
 pub const TMPL_HTML_VAR_NOTE_CSS: &str = "note_css";
 
 /// HTML template variable name. The value contains the path, for which
-/// the viewer delievers CSS code. Note, the viewer delivers the same CSS code
+/// the viewer delivers CSS code. Note, the viewer delivers the same CSS code
 /// which is stored as value for `TMPL_VAR_NOTE_CSS`.
 pub const TMPL_HTML_VAR_NOTE_CSS_PATH: &str = "note_css_path";
 
 /// The constant URL for which Tp-Note's internal web server delivers the CSS
 /// stylesheet. In HTML templates, this constant can be accessed as value of
-/// the  `TMPL_VAR_NOTE_CSS_PATH` variable.
+/// the `TMPL_VAR_NOTE_CSS_PATH` variable.
 pub const TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE: &str = "/tpnote.css";
 
 /// HTML template variable used in the error page containing the error message
@@ -915,7 +908,7 @@ impl ::std::default::Default for TmplHtml {
 
 /// Defines the way the HTML exporter rewrites local links.
 ///
-/// The enum `LocalLinkKind` allows you to finetune how local links are written
+/// The enum `LocalLinkKind` allows you to fine tune how local links are written
 /// out. Valid variants are: `off`, `short` and `long`. In order to achieve
 /// this, the user must respect  the following convention concerning absolute
 /// local links in Tp-Note documents:  The base of absolute local links in Tp-
