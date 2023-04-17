@@ -333,7 +333,7 @@ title:      {{ title_text | cut | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
 author:     {{ username | capitalize | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ title_text | get_lang | json_encode }}
+lang:       {{ title_text | get_lang | map_lang | json_encode }}
 ---
 
 
@@ -380,7 +380,9 @@ date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_e
  remove(var='fm_lang')\
  %}{{ k }}:\t\t{{ v | json_encode }}
 {% endfor -%}
-lang:       {{ fm_lang | default(value = lang) | json_encode }}
+lang:       {{ fm_lang | default(value = fm_title|\
+                           default(value=stdin~clipboard|heading)|\
+                 get_lang | map_lang ) | json_encode }}
 ---
 
 {{ stdin ~ clipboard }}
@@ -415,7 +417,7 @@ title:      {{ title_text | cut | json_encode }}
 {% else %}subtitle:   {{ 'Note' | json_encode }}
 {% endif %}author:     {{ username | capitalize | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ title_text | get_lang | json_encode }}
+lang:       {{ title_text | get_lang | map_lang | json_encode }}
 ---
 
 {{ stdin ~ clipboard }}
@@ -441,7 +443,7 @@ subtitle:   {{ path | stem | split(pat='--') | nth(n=1) | cut | json_encode }}
 author:     {{ username | capitalize | json_encode }}
 date:       {{ note_file_date | default(value='') | date(format='%Y-%m-%d') | json_encode }}
 orig_name:  {{ path | filename | json_encode }}
-lang:       {{ note_body_text | get_lang | json_encode }}
+lang:       {{ note_body_text | get_lang | map_lang | json_encode }}
 ---
 
 {{ note_body_text }}
@@ -470,7 +472,7 @@ title:      {{ title_text | json_encode }}
 {% else %}subtitle:   {{ 'Note' | json_encode }}
 {% endif %}author:     {{ username | capitalize | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ title_text | get_lang | json_encode }}
+lang:       {{ title_text | get_lang | map_lang | json_encode }}
 ---
 
 [{{ path | filename }}](<{{ path | filename }}>)
