@@ -349,39 +349,56 @@ fn remove_filter<S: BuildHasher>(
 /// language./// This filter only acts on `String` types. All other types are
 /// passed through.
 /// Returns the empty string in case the language can not be detected reliably.
+#[cfg(feature = "lang-detection")]
 fn get_lang_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("cut", "value", tera::Value, value);
+    // Early return when there are not at least 2 languages to choose from.
+    let lib_cfg = LIB_CFG.read().unwrap();
+    if lib_cfg.tmpl.filter_get_lang.len() < 2 {
+        return Ok(to_value("").unwrap());
+    }
 
+    let p = try_get_value!("get_lang", "value", tera::Value, value);
     match p {
+        #[allow(unused_variables)]
         tera::Value::String(sv) => {
-            #[cfg(feature = "lang-detection")]
-            let detector: LanguageDetector = LanguageDetectorBuilder::from_iso_codes_639_1(&[
-                IsoCode639_1::EN,
-                IsoCode639_1::DE,
-                IsoCode639_1::FR,
-                IsoCode639_1::ET,
-            ])
-            //LanguageDetectorBuilder::from_all_languages()
-            .build();
-            #[cfg(feature = "lang-detection")]
-            // let detected_language = detector
-            //     .detect_language_of(&sv)
-            //     .map(|l| format!("{}", l.iso_code_639_1()))
-            //     .unwrap_or_default();
+            // Type conversion from `Vec<DetectableLanguage<IsoCode639_1>>`
+            // to `&[IsoCode639_1]`.
+            let iso_codes = &*lib_cfg
+                .tmpl
+                .filter_get_lang
+                .iter()
+                .map(|l| (l.clone()).0)
+                .collect::<Vec<IsoCode639_1>>();
+            log::debug!(
+                "Trying to identify one of the following languages: {:?}",
+                iso_codes,
+            );
+            let detector: LanguageDetector =
+                LanguageDetectorBuilder::from_iso_codes_639_1(iso_codes).build();
+
+            //TodoLanguageDetectorBuilder::from_all_languages()
+
             let detected_language = detector
                 .detect_language_of(sv)
                 .map(|l| format!("{}", l.iso_code_639_1()))
                 .unwrap_or_default();
-            #[cfg(not(feature = "lang-detection"))]
-            let detected_language = "";
+            log::info!("Language '{}' in input detected.", detected_language);
 
             Ok(to_value(detected_language)?)
         }
         _ => Ok(p),
     }
+}
+
+#[cfg(not(feature = "lang-detection"))]
+fn get_lang_filter<S: BuildHasher>(
+    _value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    Ok(to_value("").unwrap())
 }
 
 #[derive(Debug, Eq, PartialEq, Default)]
