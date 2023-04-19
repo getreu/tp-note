@@ -872,7 +872,7 @@ impl ::std::default::Default for Tmpl {
 
 lazy_static! {
     /// Store the extension as key and mime type as value in HashMap.
-    pub static ref TMP_FILTER_MAP_LANG_HMAP: HashMap<String, String> = {
+    pub(crate) static ref TMP_FILTER_MAP_LANG_HMAP: HashMap<String, String> = {
         let mut hm = HashMap::new();
         let lib_cfg = LIB_CFG.read().unwrap();
         for l in &lib_cfg.tmpl.filter_map_lang {
