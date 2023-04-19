@@ -310,7 +310,7 @@ pub const TMPL_FILTER_GET_LANG: &[DetectableLanguage<String>] = &[];
 pub const TMPL_FILTER_MAP_LANG: &[&[&str]] =
     &[&["de", "de-DE"], &["et", "et-ET"]];
 
-/// Default content template used when the command line argument <sanit>
+/// Default content template used when the command line argument `<sanit>`
 /// is a directory. Can be changed through editing the configuration
 /// file. The following variables are  defined: `{{ sanit | stem }}
 /// `, `{{ path | stem }}`, `{{ path | ext }}`, `{{ extension_default }}`
@@ -454,7 +454,7 @@ pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 {{ path | ext | prepend_dot }}\
 ";
 
-/// Default template used when the command line <path> parameter points to an
+/// Default template used when the command line `<path>` parameter points to an
 /// existing non-`.md`-file. Can be modified through editing the configuration
 /// file.
 pub const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
@@ -477,7 +477,7 @@ lang:       {{ title_text | get_lang | map_lang | json_encode }}
 ";
 
 /// Filename of a new note, that annotates an existing file on disk given in
-/// <path>.
+/// `<path>`.
 pub const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
 {{ path | tag }}{{ fm_title | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
