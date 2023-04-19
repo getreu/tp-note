@@ -1,12 +1,13 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_DOTFILE_MARKER;
+use crate::config::FILTER_GET_LANG_CONFIG;
 use crate::config::LANG;
 use crate::config::LIB_CFG;
 use crate::config::TMP_FILTER_MAP_LANG_HMAP;
 use crate::filename::NotePath;
 use lazy_static::lazy_static;
 #[cfg(feature = "lang-detection")]
-use lingua::{IsoCode639_1, LanguageDetector, LanguageDetectorBuilder};
+use lingua::{LanguageDetector, LanguageDetectorBuilder};
 use parse_hyperlinks::iterator::first_hyperlink;
 use sanitize_filename_reader_friendly::sanitize;
 use std::borrow::Cow;
@@ -361,7 +362,6 @@ fn get_lang_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     // Early return when there are not at least 2 languages to choose from.
 
-    use std::str::FromStr;
     let lib_cfg = LIB_CFG.read().unwrap();
     if lib_cfg.tmpl.filter_get_lang.len() < 2 {
         return Ok(to_value("").unwrap());
@@ -373,21 +373,9 @@ fn get_lang_filter<S: BuildHasher>(
         tera::Value::String(sv) => {
             // Type conversion from `Vec<DetectableLanguage<IsoCode639_1>>`
             // to `&[IsoCode639_1]`.
-            let mut iso_codes = lib_cfg
-                .tmpl
-                .filter_get_lang
-                .iter()
-                .map(|l| (l.clone()).0)
-                .collect::<Vec<IsoCode639_1>>();
-
-            // Add the user's language subtag as reported from the OS.
-            if let Some((lang_subtag, _)) = &LANG.split_once('-') {
-                if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
-                    if !iso_codes.contains(&iso_code) {
-                        iso_codes.push(iso_code);
-                    }
-                }
-            }
+            let iso_codes = (*FILTER_GET_LANG_CONFIG)
+                .as_ref()
+                .map_err(|e| tera::Error::from(e.to_string()))?;
 
             log::debug!(
                 "Trying to identify one of the following languages: {:?}",

@@ -225,12 +225,25 @@ pub enum NoteError {
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
+
+    #[error(transparent)]
+    ParseLanguageCode(#[from] ConfigError),
 }
 
 /// Error related to configuration deserialization.
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Clone)]
 pub enum ConfigError {
     /// Remedy: check the configuration file variable `arg_default.export_link_rewriting`.
     #[error("choose one of: `off`, `short` or `long`")]
     ParseLocalLinkKind {},
+
+    /// Remedy: check the ISO 639-1 codes in the configuration variable
+    /// `tmpl.filter_get_lang` and make sure that they are supported, by
+    /// checking `tpnote -V`.
+    #[error(
+        "The ISO 639-1 language code `{language_code}` in the configuration \
+         file variable `tmpl.filter_get_lang` is not supported. \
+         Check also `tpnote -V`."
+    )]
+    ParseLanguageCode { language_code: String },
 }

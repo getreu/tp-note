@@ -124,6 +124,7 @@
 //! ```
 
 use crate::config::LocalLinkKind;
+use crate::config::FILTER_GET_LANG_CONFIG;
 use crate::config::LIB_CFG;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_HTML_VAR_NOTE_ERRONEOUS_CONTENT_HTML;
@@ -267,6 +268,11 @@ where
     T: Content,
     F: Fn(TemplateKind) -> TemplateKind,
 {
+    // Check if filter configuration is Ok.
+    if let Err(e) = (*FILTER_GET_LANG_CONFIG).as_ref() {
+        return Err((*e).clone().into());
+    }
+
     // First, generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
 
