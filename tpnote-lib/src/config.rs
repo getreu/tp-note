@@ -692,7 +692,7 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 lazy_static! {
 /// Global variable containing the user's language tag from the `LANG`
 /// environment variable (UNIX) or from the operation system (Windows).
-    pub static ref LANG: String = {
+    pub(crate) static ref LANG: String = {
         // Get the user's language tag.
         // [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
         let mut lang;
