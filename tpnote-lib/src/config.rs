@@ -284,7 +284,7 @@ pub const TMPL_FILTER_GET_LANG: &[&str] = &["en", "fr", "de"];
 /// key is the language subtag, the corresponding value adds a region subtag
 /// completing the language tag. The default region subtags are chosen to be
 /// compatible with the _LanguageTool_ grammar checker. In case a language
-/// subtag has no key in the present hash map, the filter forward the input
+/// subtag has no key in the present hash map, the filter forwards the input
 /// unchanged, e.g. the filter input `fr` results in `fr`.
 /// One entry, derived from the user's default language - as reported from the
 /// operating system - is automatically added to the present list. For example,

@@ -9,6 +9,10 @@
 //! text editor, call `synchronize_filename()`.
 //! The returned path points to the possibly renamed note file.
 //!
+//! Tp-Note is customizable at runtime by modifying its configuration stored in
+//! `crate::config::LIB_CFG` before executing the functions in this
+//! module (see type definition and documentation in `crate::config::LibCfg`). 
+//!
 //! ## Example with `TemplateKind::New`
 //!
 //! ```rust
@@ -201,9 +205,9 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 }
 
 #[inline]
-/// Create a new note by inserting `Tp-Note`'s environment in a template.
-/// If the note to be created exists already, append a so called `copy_counter`
-/// to the filename and try to save it again. In case this does not succeed either,
+/// Create a new note by inserting `Tp-Note`'s environment in a template. If
+/// the note to be created exists already, append a so called `copy_counter` to
+/// the filename and try to save it again. In case this does not succeed either,
 /// increment the `copy_counter` until a free filename is found.
 /// The returned path points to the (new) note file on disk.
 /// Depending on the context, Tp-Note chooses one `TemplateKind` to operate
@@ -211,7 +215,8 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// The `tk-filter` allows to overwrite this choice, e.g. you may set
 /// `TemplateKind::None` under certain circumstances. This way the caller
 /// can inject command line parameters like `--no-filename-sync`.
-/// If `html_export = Some((dir, local_link_kind))`, the function renders
+/// If `html_export = Some((dir, local_link_kind))`, the function acts like
+/// like described above, but in addition it renders
 /// the note's content into HTML and saves the `.html` file in the
 /// directory `dir`. This optional HTML rendition is performed just before
 /// returning and does not affect any above described operation.
@@ -439,8 +444,7 @@ pub fn render_viewer_html<T: Content>(context: Context, content: T) -> Result<St
 }
 
 /// Returns the HTML rendition of the note file located in
-/// `context.path` with the template `TMPL_HTML_VIEWER` (can be replaced
-/// at runtime).
+/// `context.path` with the template `TMPL_HTML_VIEWER`.
 ///
 /// ```rust
 /// use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
