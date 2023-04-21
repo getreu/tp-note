@@ -73,6 +73,10 @@ pub struct Args {
     /// Disables filename synchronization
     #[structopt(long, short = "n")]
     pub no_filename_sync: bool,
+    /// Disables automatic language detection and use `<lang>` instead;
+    /// or, if `-` use `TPNOTE_LANG` or `LANG`
+    #[structopt(long, short = "l")]
+    pub lang: Option<String>,
     /// Launches only the browser, no editor
     #[structopt(long, short = "v")]
     pub view: bool,
