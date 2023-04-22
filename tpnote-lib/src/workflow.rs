@@ -11,7 +11,7 @@
 //!
 //! Tp-Note is customizable at runtime by modifying its configuration stored in
 //! `crate::config::LIB_CFG` before executing the functions in this
-//! module (see type definition and documentation in `crate::config::LibCfg`). 
+//! module (see type definition and documentation in `crate::config::LibCfg`).
 //!
 //! ## Example with `TemplateKind::New`
 //!
@@ -220,6 +220,7 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// the note's content into HTML and saves the `.html` file in the
 /// directory `dir`. This optional HTML rendition is performed just before
 /// returning and does not affect any above described operation.
+/// `force_lang` is the command line option `force_lang`.
 ///
 /// Returns the note's new or existing filename.
 ///
@@ -268,6 +269,7 @@ pub fn create_new_note_or_synchronize_filename<T, F>(
     stdin: &T,
     tk_filter: F,
     html_export: &Option<(PathBuf, LocalLinkKind)>,
+    force_lang: Option<String>,
 ) -> Result<PathBuf, NoteError>
 where
     T: Content,

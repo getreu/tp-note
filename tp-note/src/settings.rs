@@ -76,7 +76,7 @@ pub struct Args {
     /// Disables automatic language detection and use `<lang>` instead;
     /// or, if `-` use `TPNOTE_LANG` or `LANG`
     #[structopt(long, short = "l")]
-    pub lang: Option<String>,
+    pub force_lang: Option<String>,
     /// Launches only the browser, no editor
     #[structopt(long, short = "v")]
     pub view: bool,
