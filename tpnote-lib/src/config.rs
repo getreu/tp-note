@@ -975,3 +975,11 @@ lazy_static! {
         Ok(iso_codes)
     };
 }
+
+#[cfg(not(feature = "lang-detection"))]
+lazy_static! {
+    /// Disable `get_lang_filter()`.
+    pub(crate) static ref FILTER_GET_LANG_CONFIG: Result<Vec<String>, ConfigError> = {
+        Ok(vec![])
+    };
+}
