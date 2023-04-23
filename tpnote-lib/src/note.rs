@@ -179,7 +179,7 @@ impl<T: Content> Note<T> {
         template_kind: TemplateKind,
     ) -> Result<Note<T>, NoteError> {
         log::trace!(
-            "Available substitution variables for content template:\n{:#?}",
+            "Available substitution variables for the content template:\n{:#?}",
             *context
         );
 
