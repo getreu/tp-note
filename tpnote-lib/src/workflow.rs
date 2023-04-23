@@ -13,6 +13,7 @@
 //! `crate::config::LIB_CFG` before executing the functions in this
 //! module (see type definition and documentation in `crate::config::LibCfg`).
 //!
+//!
 //! ## Example with `TemplateKind::New`
 //!
 //! ```rust
@@ -38,7 +39,7 @@
 //! // You can plug in your own type (must impl. `Content`).
 //! let n = create_new_note_or_synchronize_filename::<ContentString, _>(
 //!        &notedir, &clipboard, &stdin, template_kind_filter,
-//!        &None).unwrap();
+//!        &None, None).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -118,7 +119,7 @@
 //! // Here we plugin our own type (must implement `Content`).
 //! let n = create_new_note_or_synchronize_filename::<MyContentString, _>(
 //!        &notedir, &clipboard, &stdin, template_kind_filter,
-//!        &None).unwrap();
+//!        &None, None).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -127,8 +128,9 @@
 //! assert_eq!(raw_note, "Simulation");
 //! ```
 
+use crate::config::force_lang_setting;
+use crate::config::update_settings;
 use crate::config::LocalLinkKind;
-use crate::config::FILTER_GET_LANG_CONFIG;
 use crate::config::LIB_CFG;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_HTML_VAR_NOTE_ERRONEOUS_CONTENT_HTML;
@@ -160,6 +162,8 @@ use tera::Value;
 /// Then calculate from the front matter how the filename should be to
 /// be in sync. If it is different, rename the note on disk.
 /// Returns the note's new or existing filename.
+/// Repeated calls, will reload the environment variables, but not
+/// the configuration file.
 ///
 ///
 /// ## Example with `TemplateKind::SyncFilename`
@@ -195,6 +199,8 @@ use tera::Value;
 /// assert!(n.is_file());
 /// ```
 pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteError> {
+    // Initialize settings.
+    update_settings()?;
     // Collect input data for templates.
     let context = Context::from(path);
 
@@ -223,6 +229,8 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// `force_lang` is the command line option `force_lang`.
 ///
 /// Returns the note's new or existing filename.
+/// Repeated calls, will reload the environment variables, but not
+/// the configuration file.
 ///
 ///
 /// ## Example with `TemplateKind::FromClipboard`
@@ -249,7 +257,7 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// // You can plug in your own type (must impl. `Content`).
 /// let n = create_new_note_or_synchronize_filename::<ContentString, _>(
 ///        &notedir, &clipboard, &stdin, template_kind_filter,
-///        &None).unwrap();
+///        &None, None).unwrap();
 /// // Check result.
 /// assert!(n.as_os_str().to_str().unwrap()
 ///    .contains("my stdin-my clipboard--Note"));
@@ -275,9 +283,11 @@ where
     T: Content,
     F: Fn(TemplateKind) -> TemplateKind,
 {
-    // Check if filter configuration is Ok.
-    if let Err(e) = (*FILTER_GET_LANG_CONFIG).as_ref() {
-        return Err((*e).clone().into());
+    // Initialize settings.
+    update_settings()?;
+
+    if let Some(lang) = force_lang {
+        force_lang_setting(&lang);
     }
 
     // First, generate a new note (if it does not exist), then parse its front_matter

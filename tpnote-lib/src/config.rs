@@ -9,7 +9,6 @@
 //! let mut lib_cfg = LIB_CFG.write().unwrap();
 //! (*lib_cfg).filename.copy_counter_extra_separator = '@'.to_string();
 //! ```
-
 use crate::error::ConfigError;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_css;
@@ -18,8 +17,7 @@ use lazy_static::lazy_static;
 use lingua::IsoCode639_1;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-#[cfg(feature = "lang-detection")]
-use std::{env, str::FromStr, sync::RwLock};
+use std::{env, mem, str::FromStr, sync::RwLock, sync::RwLockWriteGuard};
 
 /// Name of the environment variable, that can be optionally
 /// used to overwrite the user's default language setting.
@@ -287,9 +285,14 @@ pub const TMPL_FILTER_GET_LANG: &[&str] = &["en", "fr", "de"];
 /// subtag has no key in the present hash map, the filter forwards the input
 /// unchanged, e.g. the filter input `fr` results in `fr`.
 /// One entry, derived from the user's default language - as reported from the
-/// operating system - is automatically added to the present list. For example,
-/// the user's default language `fr_CA.UTF-8` is added as `&["fr", "fr-CA"]`.
-/// Note that, the empty input string results in the user's default language
+/// operating system - is automatically added to the present list. This
+/// happens only when this language is not listed yet. For example,
+/// consider the list `TMPL_FILTER_MAP_LANG = &[&["en", "en-US"]]`: In this
+/// case, the user's default language `fr_CA.UTF-8` is added as
+/// `&["fr", "fr-CA"]`. But, if the user's default language were
+/// `en_GB.UTF-8`, then it is _not_ added because an entry `&["en", "en-US"]`
+/// exists already.
+/// Note,  that the empty input string results in the user's default language
 /// tag - here `fr-CA` - as well.
 pub const TMPL_FILTER_MAP_LANG: &[&[&str]] =
     &[&["de", "de-DE"], &["et", "et-ET"]];
@@ -674,56 +677,6 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 "#;
 
 lazy_static! {
-/// Global variable containing the user's language tag from the `LANG`
-/// environment variable (UNIX) or from the operation system (Windows).
-    pub(crate) static ref LANG: String = {
-        // Get the user's language tag.
-        // [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
-        let mut lang;
-        // Get the environment variable if it exists.
-        let tpnotelang = env::var(ENV_VAR_TPNOTE_LANG).ok();
-        // Unix/MacOS version.
-        #[cfg(not(target_family = "windows"))]
-        if let Some(tpnotelang) = tpnotelang {
-            lang = tpnotelang;
-        } else {
-            // [Linux: Define Locale and Language Settings -
-            // ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
-            let lang_env = env::var("LANG").unwrap_or_default();
-            // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
-            let mut language = "";
-            // [ISO 3166](https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes) country code.
-            let mut territory = "";
-            if let Some((l, lang_env)) = lang_env.split_once('_') {
-                language = l;
-                if let Some((t, _codeset)) = lang_env.split_once('.') {
-                    territory = t;
-                }
-            }
-            lang = language.to_string();
-            lang.push('-');
-            lang.push_str(territory);
-        }
-
-        // Get the user's language tag.
-        // Windows version.
-        #[cfg(target_family = "windows")]
-        if let Some(tpnotelang) = tpnotelang {
-            lang = tpnotelang;
-        } else {
-            let mut buf = [0u16; LOCALE_NAME_MAX_LENGTH as usize];
-            let len = unsafe { GetUserDefaultLocaleName(buf.as_mut_ptr(), buf.len() as i32) };
-            if len > 0 {
-                lang = String::from_utf16_lossy(&buf[..((len - 1) as usize)]);
-            }
-        };
-
-        // Return value.
-        lang
-    };
-}
-
-lazy_static! {
 /// Global variable containing the filename related configuration data.
     pub static ref LIB_CFG: RwLock<LibCfg> = RwLock::new(LibCfg::default());
 }
@@ -761,7 +714,6 @@ pub struct Filename {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tmpl {
-    #[cfg(feature = "lang-detection")]
     pub filter_get_lang: Vec<String>,
     pub filter_map_lang: Vec<Vec<String>>,
     pub compulsory_header_field: String,
@@ -855,24 +807,6 @@ impl ::std::default::Default for Tmpl {
     }
 }
 
-lazy_static! {
-    /// Store the extension as key and mime type as value in HashMap.
-    pub(crate) static ref TMP_FILTER_MAP_LANG_HMAP: HashMap<String, String> = {
-        let mut hm = HashMap::new();
-        let lib_cfg = LIB_CFG.read().unwrap();
-        for l in &lib_cfg.tmpl.filter_map_lang {
-            if l.len() >= 2 {
-                hm.insert(l[0].to_string(), l[1].to_string());
-            };
-        };
-        // Insert the user's default language and region in hashmap.
-        if let Some((lang_subtag, _)) = &LANG.split_once('-'){
-            hm.insert(lang_subtag.to_string(), LANG.to_string() );
-        };
-        hm
-    };
-}
-
 /// Default values for the exporter feature.
 impl ::std::default::Default for TmplHtml {
     fn default() -> Self {
@@ -951,35 +885,177 @@ impl FromStr for LocalLinkKind {
 }
 
 #[cfg(feature = "lang-detection")]
-lazy_static! {
-    /// Convert the `get_lang_filter()` configuration from the config file.
-    pub(crate) static ref FILTER_GET_LANG_CONFIG: Result<Vec<IsoCode639_1>, ConfigError> = {
-        let lib_cfg = LIB_CFG.read().unwrap();
-        let mut iso_codes: Vec<IsoCode639_1> = lib_cfg.tmpl
-            .filter_get_lang
-            .iter()
-            .map(|l|IsoCode639_1::from_str(l)
-                        .map_err(|_|{
-                ConfigError::ParseLanguageCode{language_code: l.into()}}))
-            .collect::<Result<Vec<IsoCode639_1>, ConfigError>>()?;
-
-         // Add the user's language subtag as reported from the OS.
-         if let Some((lang_subtag, _)) = &LANG.split_once('-') {
-             if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
-                 if !iso_codes.contains(&iso_code) {
-                     iso_codes.push(iso_code);
-                 }
-             }
-         }
-
-        Ok(iso_codes)
-    };
+#[derive(Debug)]
+/// Struct containing additional user configuration mostly read from
+/// environment variables.
+pub(crate) struct Settings {
+    pub author: String,
+    pub lang: String,
+    pub filter_get_lang: Result<Vec<IsoCode639_1>, ConfigError>,
+    pub filter_map_lang_hmap: Option<HashMap<String, String>>,
 }
 
 #[cfg(not(feature = "lang-detection"))]
-lazy_static! {
-    /// Disable `get_lang_filter()`.
-    pub(crate) static ref FILTER_GET_LANG_CONFIG: Result<Vec<String>, ConfigError> = {
-        Ok(vec![])
+#[derive(Debug)]
+/// TODO
+pub(crate) struct Settings {
+    pub author: String,
+    pub lang: String,
+    pub filter_get_lang: Result<Vec<String>, ConfigError>,
+    pub filter_map_lang_hmap: Option<HashMap<String, String>>,
+}
+
+/// Global mutable varible of type `Settings`.
+pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(Settings {
+    author: String::new(),
+    lang: String::new(),
+    filter_get_lang: Ok(vec![]),
+    filter_map_lang_hmap: None,
+});
+
+/// (Re)read environment variables and store them in the global `SETTINGS`
+/// object. Some data originates from `LIB_CFG`.
+pub fn update_settings() -> Result<(), ConfigError> {
+    let mut settings = SETTINGS.write().unwrap();
+    update_author_setting(&mut settings);
+    update_lang_setting(&mut settings);
+    update_filter_get_lang_setting(&mut settings);
+    update_filter_map_lang_hmap_setting(&mut settings);
+
+    if let Err(e) = &settings.filter_get_lang {
+        Err(e.clone())
+    } else {
+        Ok(())
+    }
+}
+
+/// Overwrite `SETTINGS.lang` with `lang`.
+pub(crate) fn force_lang_setting(lang: &str) {
+    let lang = lang.trim();
+    let mut settings = SETTINGS.write().unwrap();
+    // Overwrite environment setting.
+    if lang != "-" {
+        let _ = mem::replace(&mut settings.lang, lang.to_string());
+    }
+    // Disable the `get_lang` Tera filter.
+    let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
+}
+
+fn update_author_setting(settings: &mut RwLockWriteGuard<Settings>) {
+    let author = env::var(ENV_VAR_TPNOTE_USER).unwrap_or_else(|_| {
+        env::var("LOGNAME").unwrap_or_else(|_| {
+            env::var("USERNAME").unwrap_or_else(|_| env::var("USER").unwrap_or_default())
+        })
+    });
+
+    // Store result.
+    let _ = mem::replace(&mut settings.author, author);
+}
+
+fn update_filter_map_lang_hmap_setting(settings: &mut RwLockWriteGuard<Settings>) {
+    let mut hm = HashMap::new();
+    let lib_cfg = LIB_CFG.read().unwrap();
+    for l in &lib_cfg.tmpl.filter_map_lang {
+        if l.len() >= 2 {
+            hm.insert(l[0].to_string(), l[1].to_string());
+        };
+    }
+    // Insert the user's default language and region in hashmap.
+    if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
+        // Do not overwrite existing languages.
+        if !hm.contains_key(lang_subtag) {
+            hm.insert(lang_subtag.to_string(), settings.lang.to_string());
+        }
     };
+
+    // Store result.
+    let _ = mem::replace(&mut settings.filter_map_lang_hmap, Some(hm));
+}
+
+fn update_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
+    // Get the user's language tag.
+    // [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
+    let mut lang;
+    // Get the environment variable if it exists.
+    let tpnotelang = env::var(ENV_VAR_TPNOTE_LANG).ok();
+    // Unix/MacOS version.
+    #[cfg(not(target_family = "windows"))]
+    if let Some(tpnotelang) = tpnotelang {
+        lang = tpnotelang;
+    } else {
+        // [Linux: Define Locale and Language Settings -
+        // ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
+        let lang_env = env::var("LANG").unwrap_or_default();
+        // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
+        let mut language = "";
+        // [ISO 3166](https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes) country code.
+        let mut territory = "";
+        if let Some((l, lang_env)) = lang_env.split_once('_') {
+            language = l;
+            if let Some((t, _codeset)) = lang_env.split_once('.') {
+                territory = t;
+            }
+        }
+        lang = language.to_string();
+        lang.push('-');
+        lang.push_str(territory);
+    }
+
+    // Get the user's language tag.
+    // Windows version.
+    #[cfg(target_family = "windows")]
+    if let Some(tpnotelang) = tpnotelang {
+        lang = tpnotelang;
+    } else {
+        let mut buf = [0u16; LOCALE_NAME_MAX_LENGTH as usize];
+        let len = unsafe { GetUserDefaultLocaleName(buf.as_mut_ptr(), buf.len() as i32) };
+        if len > 0 {
+            lang = String::from_utf16_lossy(&buf[..((len - 1) as usize)]);
+        }
+    };
+
+    // Store result.
+    let _ = mem::replace(&mut settings.lang, lang);
+}
+
+#[cfg(feature = "lang-detection")]
+/// Convert the `get_lang_filter()` configuration from the config file.
+fn update_filter_get_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
+    let lib_cfg = LIB_CFG.read().unwrap();
+    // Read and convert ISO codes from config object.
+    match lib_cfg
+        .tmpl
+        .filter_get_lang
+        .iter()
+        .map(|l| {
+            IsoCode639_1::from_str(l).map_err(|_| ConfigError::ParseLanguageCode {
+                language_code: l.into(),
+            })
+        })
+        .collect::<Result<Vec<IsoCode639_1>, ConfigError>>()
+    {
+        Ok(mut iso_codes) => {
+            // Add the user's language subtag as reported from the OS.
+            if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
+                if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
+                    if !iso_codes.contains(&iso_code) {
+                        iso_codes.push(iso_code);
+                    }
+                }
+            }
+            // Store result.
+            let _ = mem::replace(&mut settings.filter_get_lang, Ok(iso_codes));
+        }
+        Err(e) =>
+        // Store error.
+        {
+            let _ = mem::replace(&mut settings.filter_get_lang, Err(e));
+        }
+    }
+}
+
+#[cfg(not(feature = "lang-detection"))]
+/// Reset to empty default.
+fn update_filter_get_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
+    let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
 }

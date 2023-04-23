@@ -1,8 +1,7 @@
 //! Extends the built-in Tera filters.
-use crate::config::ENV_VAR_TPNOTE_USER;
 use crate::config::FILENAME_ROOT_PATH_MARKER;
-use crate::config::LANG;
 use crate::config::LIB_CFG;
+use crate::config::SETTINGS;
 use crate::config::TMPL_VAR_DIR_PATH;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
@@ -14,7 +13,6 @@ use crate::config::TMPL_VAR_USERNAME;
 use crate::content::Content;
 use crate::error::NoteError;
 use crate::front_matter::FrontMatter;
-use std::env;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::path::Path;
@@ -253,6 +251,7 @@ impl Context {
     /// ```
     fn insert_environment(&mut self) {
         let lib_cfg = LIB_CFG.read().unwrap();
+        let settings = SETTINGS.read().unwrap();
 
         // Default extension for new notes as defined in the configuration file.
         (*self).insert(
@@ -261,15 +260,10 @@ impl Context {
         );
 
         // Search for UNIX, Windows and MacOS user-names.
-        let author = env::var(ENV_VAR_TPNOTE_USER).unwrap_or_else(|_| {
-            env::var("LOGNAME").unwrap_or_else(|_| {
-                env::var("USERNAME").unwrap_or_else(|_| env::var("USER").unwrap_or_default())
-            })
-        });
-        (*self).insert(TMPL_VAR_USERNAME, &author);
+        (*self).insert(TMPL_VAR_USERNAME, &settings.author);
 
         // Get the user's language tag.
-        (*self).insert(TMPL_VAR_LANG, &*LANG);
+        (*self).insert(TMPL_VAR_LANG, &settings.lang);
     }
 }
 

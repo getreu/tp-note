@@ -1,9 +1,7 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_DOTFILE_MARKER;
-use crate::config::FILTER_GET_LANG_CONFIG;
-use crate::config::LANG;
 use crate::config::LIB_CFG;
-use crate::config::TMP_FILTER_MAP_LANG_HMAP;
+use crate::config::SETTINGS;
 use crate::filename::NotePath;
 use lazy_static::lazy_static;
 #[cfg(feature = "lang-detection")]
@@ -361,19 +359,27 @@ fn get_lang_filter<S: BuildHasher>(
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     // Early return when there are not at least 2 languages to choose from.
-
-    let lib_cfg = LIB_CFG.read().unwrap();
-    if lib_cfg.tmpl.filter_get_lang.len() < 2 {
-        return Ok(to_value("").unwrap());
+    let settings = SETTINGS.read().unwrap();
+    if let Ok(languages) = &settings.filter_get_lang {
+        if languages.len() < 2 {
+            return Ok(to_value("").unwrap());
+        }
     }
 
     let p = try_get_value!("get_lang", "value", tera::Value, value);
     match p {
         #[allow(unused_variables)]
-        tera::Value::String(sv) => {
+        tera::Value::String(input) => {
+            let input = input.trim();
+            // Return early if there is no input text.
+            if input.is_empty() {
+                return Ok(to_value("").unwrap());
+            }
+
             // Type conversion from `Vec<DetectableLanguage<IsoCode639_1>>`
             // to `&[IsoCode639_1]`.
-            let iso_codes = (*FILTER_GET_LANG_CONFIG)
+            let iso_codes = settings
+                .filter_get_lang
                 .as_ref()
                 .map_err(|e| tera::Error::from(e.to_string()))?;
 
@@ -383,12 +389,12 @@ fn get_lang_filter<S: BuildHasher>(
             );
 
             let detector: LanguageDetector =
-                LanguageDetectorBuilder::from_iso_codes_639_1(&*iso_codes).build();
+                LanguageDetectorBuilder::from_iso_codes_639_1(iso_codes).build();
 
             //TodoLanguageDetectorBuilder::from_all_languages()
 
             let detected_language = detector
-                .detect_language_of(sv)
+                .detect_language_of(input)
                 .map(|l| format!("{}", l.iso_code_639_1()))
                 .unwrap_or_default();
             log::info!("Language '{}' in input detected.", detected_language);
@@ -414,16 +420,21 @@ fn map_lang_filter<S: BuildHasher>(
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let p = try_get_value!("map_lang", "value", tera::Value, value);
+    let settings = SETTINGS.read().unwrap();
 
     match p {
         tera::Value::String(input) => {
+            let input = input.trim();
             if input.is_empty() {
-                return Ok(to_value(&*LANG)?);
+                return Ok(to_value(&settings.lang)?);
             };
-
-            match TMP_FILTER_MAP_LANG_HMAP.get(&input) {
-                None => Ok(to_value(&input)?),
-                Some(tag) => Ok(to_value(tag)?),
+            if let Some(hm) = &settings.filter_map_lang_hmap {
+                match hm.get(input) {
+                    None => Ok(to_value(input)?),
+                    Some(tag) => Ok(to_value(tag)?),
+                }
+            } else {
+                Ok(to_value(input)?)
             }
         }
         _ => Ok(p),
@@ -452,6 +463,7 @@ impl Hyperlink {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::update_settings;
     use std::collections::HashMap;
     use tera::to_value;
 
@@ -655,6 +667,9 @@ mod tests {
 
     #[test]
     fn test_get_lang_filter() {
+        // The `get_lang` filter requires an initialized `SETTINGS` object.
+        update_settings().unwrap();
+
         let args = HashMap::new();
         // Test Markdown link in clipboard.
         let input = "Das große Haus";
@@ -684,6 +699,37 @@ mod tests {
         let input = "1917039480 50198%-328470";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
+
+        let args = HashMap::new();
+        // Test Markdown link in clipboard.
+        let input = " \t\n ";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("", output);
+    }
+
+    #[test]
+    fn test_map_lang_filter() {
+        // The `get_lang` filter requires an initialized `SETTINGS` object.
+        update_settings().unwrap();
+        let settings = SETTINGS.read().unwrap();
+
+        let args = HashMap::new();
+        // Test Markdown link in clipboard.
+        let input = "de";
+        let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("de-DE", output);
+
+        let args = HashMap::new();
+        // Test Markdown link in clipboard.
+        let input = "xyz";
+        let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("xyz", output);
+
+        let args = HashMap::new();
+        // Test Markdown link in clipboard.
+        let input = " \t\n ";
+        let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!(*settings.lang, output);
     }
 
     #[test]
