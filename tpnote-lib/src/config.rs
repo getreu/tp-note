@@ -923,11 +923,16 @@ pub(crate) struct Settings {
 
 #[cfg(not(feature = "lang-detection"))]
 #[derive(Debug)]
-/// TODO
+/// Structure holding various settings from environment varialbes.
+/// Some member variables also insert data from `LIB_CFG`.
 pub(crate) struct Settings {
+    /// Cf. documentation for `update_author_setting()`.
     pub author: String,
+    /// Cf. documentation for `update_lang_setting()`.
     pub lang: String,
+    /// Cf. documentation for `update_filter_get_lang_setting()`.
     pub filter_get_lang: Result<Vec<String>, ConfigError>,
+    /// Cf. documentation for `update_filter_map_lang_hmap_setting()`.
     pub filter_map_lang_hmap: Option<HashMap<String, String>>,
 }
 
@@ -948,6 +953,8 @@ pub fn update_settings() -> Result<(), ConfigError> {
     update_filter_get_lang_setting(&mut settings);
     update_filter_map_lang_hmap_setting(&mut settings);
 
+    log::trace!("`SETTINGS` updated:\n{:#?}", settings);
+    
     if let Err(e) = &settings.filter_get_lang {
         Err(e.clone())
     } else {
@@ -955,7 +962,9 @@ pub fn update_settings() -> Result<(), ConfigError> {
     }
 }
 
-/// Overwrite `SETTINGS.lang` with `lang`.
+/// When `lang` is not `-`, overwrite `SETTINGS.lang` with `lang`.
+/// In any case, disable the `get_lang` filter by deleting all languages
+/// in `SETTINGS.filter_get_lang`.
 pub(crate) fn force_lang_setting(lang: &str) {
     let lang = lang.trim();
     let mut settings = SETTINGS.write().unwrap();
@@ -967,6 +976,8 @@ pub(crate) fn force_lang_setting(lang: &str) {
     let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
 }
 
+/// Set `SETTINGS.author` to content of the first not empty environment
+/// variable: `TPNOTE_USER`, `LOGNAME` or `USER`.
 fn update_author_setting(settings: &mut RwLockWriteGuard<Settings>) {
     let author = env::var(ENV_VAR_TPNOTE_USER).unwrap_or_else(|_| {
         env::var("LOGNAME").unwrap_or_else(|_| {
@@ -978,6 +989,8 @@ fn update_author_setting(settings: &mut RwLockWriteGuard<Settings>) {
     let _ = mem::replace(&mut settings.author, author);
 }
 
+/// Read keys and values from `LIB_CFG.tmpl.filter_map_lang` into HashMap.
+/// Add the user's default language and region.
 fn update_filter_map_lang_hmap_setting(settings: &mut RwLockWriteGuard<Settings>) {
     let mut hm = HashMap::new();
     let lib_cfg = LIB_CFG.read().unwrap();
@@ -986,7 +999,7 @@ fn update_filter_map_lang_hmap_setting(settings: &mut RwLockWriteGuard<Settings>
             hm.insert(l[0].to_string(), l[1].to_string());
         };
     }
-    // Insert the user's default language and region in hashmap.
+    // Insert the user's default language and region in the HashMap.
     if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
         // Do not overwrite existing languages.
         if !hm.contains_key(lang_subtag) {
@@ -998,6 +1011,8 @@ fn update_filter_map_lang_hmap_setting(settings: &mut RwLockWriteGuard<Settings>
     let _ = mem::replace(&mut settings.filter_map_lang_hmap, Some(hm));
 }
 
+/// Read the environment variable `TPNOTE_LANG` or -if empty- `LANG` into
+/// `SETTINGS.lang`.
 fn update_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
     // Get the user's language tag.
     // [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
@@ -1044,6 +1059,8 @@ fn update_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
     let _ = mem::replace(&mut settings.lang, lang);
 }
 
+/// Read language list from `LIB_CFG.tmpl.filter_get_lang`, add the user's
+/// default language subtag and store them in `SETTINGS.filter_get_lang`.
 #[cfg(feature = "lang-detection")]
 /// Convert the `get_lang_filter()` configuration from the config file.
 fn update_filter_get_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {

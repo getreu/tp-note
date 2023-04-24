@@ -12,6 +12,7 @@
 //! Tp-Note is customizable at runtime by modifying its configuration stored in
 //! `crate::config::LIB_CFG` before executing the functions in this
 //! module (see type definition and documentation in `crate::config::LibCfg`).
+//! All functions in this API are stateless.
 //!
 //!
 //! ## Example with `TemplateKind::New`
