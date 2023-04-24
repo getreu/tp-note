@@ -503,14 +503,17 @@ synchronization).
     used and the rendered result of the substitution. This is
     particularly useful for debugging new templates. The option
     '`-d off`' silences all error message reporting and also suppresses the
-    error popup windows.
+    error pop-up windows.
+
+>   Note, under Linux, when `-d trace` is given, no pop-up messages appear.
+    Instead, the logs are dumped to the console from where you started Tp-Note.
 
 >   All error messages are dumped in the error stream `stderr` and appear
     on the console from where Tp-Note was launched:
 
         tpnote.exe --debug info my_note.md
 
->   On Windows the output must be redirected into a file to see it:
+>   Under Windows the output must be redirected into a file to see it:
 
         tpnote.exe --debug info my_note.md >debug.md 2>&1
 
@@ -529,6 +532,7 @@ synchronization).
 >   The value for '`arg_default.debug`' must be one out of '`trace`',
     '`debug`', '`info`', '`warn`', '`error`' (default) and '`off`'. They have
     the same meaning as the corresponding command line options.
+
 
 **-e**, **\--edit**
 

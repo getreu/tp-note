@@ -54,7 +54,7 @@ assets = [
 ]
 
 [features]
-default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detection"]
+default = ["read-clipboard", "message-box", "viewer", "renderer"]
 
 # To disable features: `cargo build --no-default-features`
 # If you can do away with error message popup boxes (for example on a headless
@@ -65,7 +65,6 @@ message-box = ["msgbox", "notify-rust"]
 read-clipboard = ["arboard"]
 viewer = ["notify", "httparse", "webbrowser", "httpdate"]
 renderer = []
-lang-detection = []
 
 [dependencies]
 # arboard: when cross compiling for `armv7-unknown-linux-gnueabihf`: `apt install crossbuild-essential-armhf`

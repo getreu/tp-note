@@ -46,6 +46,7 @@ use arboard::Clipboard;
 use error::ConfigFileError;
 use semver::Version;
 use serde::Serialize;
+use settings::CLIPBOARD;
 use std::path::PathBuf;
 use std::process;
 #[cfg(feature = "read-clipboard")]
@@ -93,6 +94,9 @@ struct About {
 /// Exit prematurely if the configuration file version does
 /// not match the program version.
 fn main() {
+    // Read the clipboard before starting the logger.
+    lazy_static::initialize(&CLIPBOARD);
+
     // Setup logger.
     AppLogger::init();
 

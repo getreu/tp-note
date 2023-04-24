@@ -38,9 +38,14 @@ lazy_static! {
 
 /// Pops up an error message notification and prints `msg`.
 /// Blocks until the user closes the window.
+/// Under Linux no notifications will be shown when
+/// `log::max_level=Level::Trace`.
 #[cfg(all(unix, not(target_os = "macos")))]
 #[cfg(feature = "message-box")]
 fn popup_alert(msg: &str) {
+    if log::max_level() == Level::Trace {
+        return;
+    }
     if let Ok(handle) = Notification::new()
         .summary(&ALERT_DIALOG_TITLE_LINE)
         .body(msg)
@@ -142,11 +147,13 @@ impl AppLogger {
     /// Blocks until the `AlertService` is not busy any more. This should be
     /// executed before quitting the application because there might be still
     /// queued error messages the uses has not seen yet.
+    /// Once flushed, no more logs are recorded.
     pub fn flush() {
         #[cfg(feature = "message-box")]
         if !*RUNS_ON_CONSOLE && !ARGS.batch {
             // If ever there is still a message window open, this will block.
             AlertService::flush();
+            log::set_max_level(LevelFilter::Off);
         }
     }
 }
