@@ -37,7 +37,9 @@ pub const FILENAME_LEN_MAX: usize =
     // Additional separator.
     - 1
     // Additional copy counter.
-    - FILENAME_COPY_COUNTER_OPENING_BRACKETS.len() - 2 - FILENAME_COPY_COUNTER_CLOSING_BRACKETS.len()
+    - FILENAME_COPY_COUNTER_OPENING_BRACKETS.len()
+    - 2 
+    - FILENAME_COPY_COUNTER_CLOSING_BRACKETS.len()
     // Extra spare bytes, in case the user's copy counter is longer.
     - 6;
 
@@ -331,7 +333,8 @@ lang:       {{ title_text | get_lang | map_lang | json_encode }}
 /// `sanit(force_alpha=true)` filter.
 pub const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
-{{ fm_title | sanit(force_alpha=true) }}{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
+{{ fm_title | sanit(force_alpha=true) }}\
+{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
 ";
 
@@ -360,8 +363,8 @@ date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_e
  remove(var='fm_lang')\
  %}{{ k }}:\t\t{{ v | json_encode }}
 {% endfor -%}
-lang:       {{ fm_lang | default(value = fm_title|\
-                           default(value=stdin~clipboard|heading)|\
+lang:       {{ fm_lang | default(value = fm_title| \
+                           default(value=stdin~clipboard|heading)| \
                  get_lang | map_lang ) | json_encode }}
 ---
 
@@ -389,13 +392,24 @@ pub const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
 /// {{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
 pub const TMPL_FROM_CLIPBOARD_CONTENT: &str = "\
 {%- set lname = stdin ~ clipboard | link_text -%}
-{%- set is_link_text = lname !=''and not lname is starting_with(\"http\")and not lname is starting_with(\"HTTP\") -%}
-{%- if is_link_text %}{% set title_text = stdin ~ clipboard | link_text %}{% else %}{% set title_text = stdin ~ clipboard | heading %}{% endif -%}
+{%- set is_link_text = 
+        lname !='' and 
+        not lname is starting_with(\"http\") 
+        and not lname is starting_with(\"HTTP\") -%}
+{%- if is_link_text -%}
+    {%- set title_text = stdin ~ clipboard | link_text -%}
+{%- else -%}
+    {%- set title_text = stdin ~ clipboard | heading -%}
+{% endif -%}
 ---
 title:      {{ title_text | cut | json_encode }}
-{% if stdin ~ clipboard | link_text !='' and stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut %}subtitle:   {{ 'URL' | json_encode }}
-{% else %}subtitle:   {{ 'Note' | json_encode }}
-{% endif %}author:     {{ username | capitalize | json_encode }}
+{% if stdin ~ clipboard | link_text !='' and 
+      stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut -%}
+  subtitle:   {{ 'URL' | json_encode -}}
+{%- else -%}
+  subtitle:   {{ 'Note' | json_encode -}}
+{%- endif %}
+author:     {{ username | capitalize | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ title_text | get_lang | map_lang | json_encode }}
 ---
@@ -409,8 +423,7 @@ pub const TMPL_FROM_CLIPBOARD_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
 {{ fm_title | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
-";
+{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}";
 
 /// Default template used, when the opened text file (with a known file
 /// extension) is missing a YAML front matter section. This template prepends
@@ -421,7 +434,8 @@ pub const TMPL_FROM_TEXT_FILE_CONTENT: &str = "\
 title:      {{ path | stem | split(pat='--') | first | cut | json_encode }}
 subtitle:   {{ path | stem | split(pat='--') | nth(n=1) | cut | json_encode }}
 author:     {{ username | capitalize | json_encode }}
-date:       {{ note_file_date | default(value='') | date(format='%Y-%m-%d') | json_encode }}
+date:       {{ note_file_date | default(value='') | date(format='%Y-%m-%d') | \
+               json_encode }}
 orig_name:  {{ path | filename | json_encode }}
 lang:       {{ note_body_text | get_lang | map_lang | json_encode }}
 ---
@@ -445,21 +459,26 @@ pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 /// existing non-`.md`-file. Can be modified through editing the configuration
 /// file.
 pub const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
-{%- set title_text = path | trim_tag -%}
+{%- set body_text = stdin ~ clipboard -%}
 ---
-title:      {{ title_text | json_encode }}
-{% if stdin ~ clipboard | link_text !='' and stdin ~ clipboard | heading == stdin ~ clipboard %}subtitle:   {{ 'URL' | json_encode }}
-{% else %}subtitle:   {{ 'Note' | json_encode }}
-{% endif %}author:     {{ username | capitalize | json_encode }}
+title:      {{ path | trim_tag | json_encode }}
+{% if body_text | link_text !='' and 
+      body_text | heading == body_text -%}
+  subtitle:   {{ 'URL' | json_encode -}}
+{%- else -%} 
+  subtitle:   {{ 'Note' | json_encode -}}
+{%- endif %}
+author:     {{ username | capitalize | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ title_text | get_lang | map_lang | json_encode }}
+lang:       {{ body_text | cut | get_lang | map_lang | json_encode }}
 ---
 
 [{{ path | filename }}](<{{ path | filename }}>)
-{% if stdin ~ clipboard != '' %}{% if stdin ~ clipboard != stdin ~ clipboard | heading %}
+{% if body_text != '' -%}
+{%- if body_text != body_text | heading %}
 ---
 {% endif %}
-{{ stdin ~ clipboard }}
+{{ body_text }}
 {% endif %}
 ";
 
@@ -559,7 +578,10 @@ pub const TMPL_HTML_VIEWER: &str = r#"<!DOCTYPE html>
     <th class="keygrey">date:</th>
     <th class="valgrey">{{ fm_date | default(value='') }}</th>
   </tr>
-  {% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle')| remove(var='fm_date') %}
+  {% for k, v in fm_all| remove(var='fm_title')| 
+                         remove(var='fm_subtitle')|
+                         remove(var='fm_date') 
+  %}
     <tr>
     <th class="keygrey">{{ k }}:</th>
     <th class="valgrey">{{ v }}</th>
@@ -630,7 +652,11 @@ pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
     <th class="keygrey">date:</th>
     <th class="valgrey">{{ fm_date | default(value='') }}</th>
   </tr>
-  {% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle')| remove(var='fm_date') %}
+  {% for k, v in fm_all|
+        remove(var='fm_title')|
+        remove(var='fm_subtitle')|
+        remove(var='fm_date') 
+    %}
     <tr>
     <th class="keygrey">{{ k }}:</th>
     <th class="valgrey">{{ v }}</th>
