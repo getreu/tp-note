@@ -15,6 +15,7 @@ use crate::highlight::get_css;
 use lazy_static::lazy_static;
 #[cfg(feature = "lang-detection")]
 use lingua::IsoCode639_1;
+use lingua;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::{env, mem, str::FromStr, sync::RwLock, sync::RwLockWriteGuard};
@@ -1071,9 +1072,21 @@ fn update_filter_get_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
         .filter_get_lang
         .iter()
         .map(|l| {
-            IsoCode639_1::from_str(l).map_err(|_| ConfigError::ParseLanguageCode {
+            IsoCode639_1::from_str(l).map_err(|_| {
+                // Produce list of all available langugages.
+                let mut all_langs = lingua::Language::all().iter().map(|l|{
+                    let mut s = l.iso_code_639_1().to_string();
+                    s.push_str(", ");
+                    s
+                }).collect::<Vec<String>>();
+                all_langs.sort();
+                let mut all_langs = all_langs.into_iter().collect::<String>();
+                all_langs.truncate(all_langs.len()-", ".len());
+                // Insert data into error object.
+                ConfigError::ParseLanguageCode {
                 language_code: l.into(),
-            })
+                all_langs
+            }})
         })
         .collect::<Result<Vec<IsoCode639_1>, ConfigError>>()
     {

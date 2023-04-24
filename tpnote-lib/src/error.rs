@@ -241,9 +241,13 @@ pub enum ConfigError {
     /// `tmpl.filter_get_lang` and make sure that they are supported, by
     /// checking `tpnote -V`.
     #[error(
-        "The ISO 639-1 language code `{language_code}` in the configuration \
-         file variable `tmpl.filter_get_lang` is not supported. \
-         Check also `tpnote -V`."
+        "The ISO 639-1 language code `{language_code}` in the configuration\n\
+         file variable `tmpl.filter_get_lang` is not supported.\n\
+         The listed codes must be a subset of:\n\
+         {all_langs}."
     )]
-    ParseLanguageCode { language_code: String },
+    ParseLanguageCode {
+        language_code: String,
+        all_langs: String,
+    },
 }
