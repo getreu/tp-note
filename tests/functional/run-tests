@@ -70,7 +70,7 @@ INPUT_FILENAME="$PWD/test3-annotate+clipboard-input-dummy.pdf"
 
 echo '[ab:cd"ef](https://getreu.net)' | \
 LANG="en_US.UTF-8" LOGNAME="myuser" \
-	cargo run -- --batch \
+	cargo run -- --batch --force-lang=- \
 	    --config "$TP_NOTE_TEST_TOML" \
 	    "$INPUT_FILENAME" >/dev/null 2>&1
 
@@ -345,7 +345,7 @@ EOF
 OUTPUT_FILENAME=$(LANG="en_US.UTF-8" LOGNAME="myuser" \
 	cargo run -- --batch --add-header --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME"| tail -n 1)  >/dev/null 2>&1
-        
+
 if [ "$INPUT_FILENAME" = "$OUTPUT_FILENAME" ]
 then
     echo Commandline test 13 succeeded.
