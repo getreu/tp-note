@@ -18,11 +18,6 @@ use std::ops::DerefMut;
 use std::path::Path;
 use std::path::PathBuf;
 
-#[cfg(target_family = "windows")]
-use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
-#[cfg(target_family = "windows")]
-use windows_sys::Win32::System::SystemServices::LOCALE_NAME_MAX_LENGTH;
-
 /// Tiny wrapper around "Tera context" with some additional information.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Context {

@@ -19,6 +19,10 @@ use lingua;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::{env, mem, str::FromStr, sync::RwLock, sync::RwLockWriteGuard};
+#[cfg(target_family = "windows")]
+use windows_sys::Win32::System::SystemServices::LOCALE_NAME_MAX_LENGTH;
+#[cfg(target_family = "windows")]
+use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
 
 /// Name of the environment variable, that can be optionally
 /// used to overwrite the user's default language setting.
@@ -1049,6 +1053,7 @@ fn update_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
     if let Some(tpnotelang) = tpnotelang {
         lang = tpnotelang;
     } else {
+        lang = String::new();
         let mut buf = [0u16; LOCALE_NAME_MAX_LENGTH as usize];
         let len = unsafe { GetUserDefaultLocaleName(buf.as_mut_ptr(), buf.len() as i32) };
         if len > 0 {
