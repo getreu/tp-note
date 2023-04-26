@@ -73,14 +73,14 @@ pub struct Args {
     /// Disables filename synchronization
     #[structopt(long, short = "n")]
     pub no_filename_sync: bool,
-    /// Disables automatic language detection and use `<lang>` instead;
+    /// Disables the automatic language detection and uses `<force-lang>` instead;
     /// or, if `-` use `TPNOTE_LANG` or `LANG`
     #[structopt(long, short = "l")]
     pub force_lang: Option<String>,
     /// Launches only the browser, no editor
     #[structopt(long, short = "v")]
     pub view: bool,
-    /// `<dir>` as new note location or `<file>` to annotate
+    /// `<dir>` as new note location or `<file>` to open or to annotate
     #[structopt(name = "PATH", parse(from_os_str))]
     pub path: Option<PathBuf>,
     /// Prints version and exits

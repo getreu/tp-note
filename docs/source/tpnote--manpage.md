@@ -545,6 +545,14 @@ synchronization).
     the  editor and the viewer will open and the `arg_default.edit` variable
     is ignored.
 
+**-l**, **\--force-lang*=*LANG*
+
+>   Disable automatic language detection when creating a new note file and use
+    *LANG* instead. *LANG* is formatted as IETF BCP 47 language tag, e.g. 
+    '`en_US`'. If *LANG* is '`-`', the environment variable '`TPNOTE_LANG`'
+    or - if not defined - the user's default language as reported from
+    the operating system is used.
+
 **-p**, **\--port**=*PORT*
 
 >   Sets the server port that the web browser connects to, to the specified
@@ -752,20 +760,20 @@ local links are rebased to '`/`''. Consider the following example:
 * and the relative link '`./photo.jpg`'.
 * The document root marker is: '`/my/docs/.tpnoteroot`'.
 
-The images in the resulting HTML will appear as
+The image paths in the resulting HTML will appear as
 
 * '`/my/docs/car/scan.jpg`'.
 * '`/my/docs/car/photo.jpg`'.
 
-So far we have seen how Tp-Note's viewer and HTML exporter converts the
-_destination_ of local links '`[text](destination)`'. For the _text_ property the
-situation is simpler as it never changes. However, there is one exception:
-when the text contains a URL starting with '`http:`' or '`https:`' only
-the file stem is displayed. For example, the link:
-'`[http:dir/my file.md](<http:dir/my file.md>)`' is rewritten into
-'`[my file](<http:dir/my file.md>)`' before being rendered. This explains
-why the autolink '`<http:dir/my file.md>.`' appears as '`my file`' in
-the browser.
+So far, we have seen how Tp-Note's viewer and HTML exporter converts the
+_destination_ of local links '`[text](destination)`'. 
+Concerning the link's _text_ property, the situation is simpler as the _text_
+property never changes. However, there is one exception: when the
+text property contains a URL starting with '`http:`' or '`https:`' only the file
+stem is displayed. For example, the link: '`[http:dir/my file.md](<http:dir/my
+file.md>)`' is rewritten into '`[my file](<http:dir/my file.md>)`' during the
+rendition process. This explains why the autolink '`<http:dir/my file.md>.`'
+appears as '`my file`' in the browser.
 
 
 
@@ -907,7 +915,7 @@ filename_sync: false
 ---
 ```
 
-Note, that in the above described examples, the information flow goes always
+Note, that in the above described examples, the information flow always goes
 from the YAML note header towards the note's filename. However, when Tp-Note
 opens a text file without a YAML header, a new header is added automatically.
 In this case the information flow goes from the filename towards the header,
@@ -915,8 +923,8 @@ namely in the opposite direction. Once the new header is prepended to the text
 file, a regular filename synchronization - as described above - is triggered and
 executed as described above.
 
-Technically, all rules and logic of how the synchronisation is executed, are
-encoded in customizable so called filename templates (cf. section _Templates_).
+Technically, all rules and logic of how the synchronization is executed, are
+encoded in customizable so-called filename templates (cf. section _Templates_).
 
 
 
@@ -977,7 +985,7 @@ the command line: if the command prompt returns immediately, then the file
 editor forks the process. On the other hand everything is OK, when the command
 prompt only comes back at the moment the text editor is closed. Many text
 editors provide an option to restrain from forking: for example the
-_VScode_-editor can be launched with the '`--wait`' option, _Vim_ with
+_VScode_ file editor can be launched with the '`--wait`' option, _Vim_ with
 '`--nofork`' or _Kate_ with '`--block`' (see example above). However,
 Tp-Note also works with forking text editors. Although this should be
 avoided, there is a possible workaround:
@@ -1179,6 +1187,66 @@ extension_default = 'md'
 This modification does not change how the note file's content is interpreted -
 in this case as Markdown - because both file extensions '`.txt`' and '`.md`'
 belong to the same extension group defined in '`filename.extensions_md`'.
+
+
+
+## Configure the natural language detection algorithm
+
+When creating a new header for a new or an existing note file, a linguistic
+language detection algorithm tries to determine in what natural language the
+note file was written. Depending on the context, the algorithm processes as
+input: the header field '`title:`' or the first sentence of the text body.
+The natural language detection algorithm is implemented as a template filter
+named '`get_lang`', which is used in various Tera content templates
+'`tmpl.*_content`' in Tp-Note's configuration file. The filter '`get_lang`'
+is parametrized by the configuration variable '`tmpl.filter_get_lang`'
+containing a list of ISO 639-1 encoded languages, the algorithm considers as
+potential detection candidates, e.g.:
+
+```toml
+[tmpl]
+filter_get_lang = [
+    'en',
+    'fr',
+    'de',
+    'et'
+]
+```
+
+This above list is always completed by the user's default language as
+reported from the operating system. Please refer to the documentation of
+the configuration file variable '`lang`' for further details.
+
+Once the language is detected with the filter '`get_lang`', it passes another
+filter called '`map_lang`'. This filter maps the result of '`get_lang`' - which
+is an ISO 639-1 code - to an IETF language tag. For example, '`en`' is replaced
+with '`en-US`' or '`de`' with '`de-DE`'. The corresponding configuration looks
+like this:
+
+
+```toml
+[tmpl]
+filter_map_lang = [
+    [
+    'en',
+    'en-US',
+],
+    [
+    'de',
+    'de-DE',
+],
+]
+```
+
+This additional filtering is useful, because the detection algorithm can not
+figure out the region code (e.g. '`US`' or '`DE`') by itself. Instead, the
+region code is appended in a separate processing step. Spell checker or grammar
+checker like _LanguageTool_ rely on this region information, to work properly.
+Note, when the user's region setting - as reported from the operating
+system - does not exist in above list, it is automatically appended. When
+the filter '`map_lang`' encounters a language code for which no mapping
+is configured, the input language code is forwarded as it is without
+modification, e.g. the input '`fr`' results in the output '`fr`'.
 
 
 
@@ -1513,8 +1581,8 @@ In total, there are 5 different '`tmpl.*_content`' templates:
 * '`tmpl.annotate_file_content`'
 
 In general, the templates are designed in a way, that the text input
-stream -usually originating from the clipboard- ends up in the body of the
-note file, whereas the environment -such as the username- ends up in
+stream - usually originating from the clipboard - ends up in the body of the
+note file, whereas the environment - such as the username - ends up in
 the header of the note file.
 
 Once the content of the new note is set by one of the content templates,
@@ -1686,8 +1754,8 @@ consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 
 In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
-some additional filters, e.g.: '`tag`', '`trim_tag`', '`stem`', '`cut`', '`heading`',
-'`link_text`', '`link_dest`', '`link_title`' and '`ext`'.
+some additional filters, e.g.: '`tag`', '`trim_tag`', '`stem`', '`cut`',
+'`heading`', '`link_text`', '`link_dest`', '`link_title`' and '`ext`'.
 
 A filter is always used together with a variable. Here are some examples:
 
@@ -1742,17 +1810,35 @@ A filter is always used together with a variable. Here are some examples:
   username. As all YAML front-matter is JSON encoded, this filter code must be
   appended to any template variable placed in the front-matter block.
 
-* '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its
-  front-matter, sanitized in a file system friendly form. Special characters are
+* '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its  front
+  matter, sanitized in a file system friendly form. Special characters are
   omitted or replaced by '`-`' and '`_`'. See the section _Filename template
   convention_ for more details about this filter.
 
-* '`{{ fm_title | sanit(force_alpha=true) }}`' is the note's title as defined in its
-  front-matter.  Same as above, but strings starting with a sort tag are
+* '`{{ fm_title | sanit(force_alpha=true) }}`' is the note's title as defined
+  in its front-matter. Same as above, but strings starting with a sort tag are
   prepended by an apostrophe to avoid ambiguity.
 
 * '`{{ fm_all | remove(var='fm_title') }}`' represents a collection (map) of
   all '`fm_*`' variables, exclusive of the variable '`fm_title`'.
+
+* '`{{ note_body_text | get_lang }}`' determines the natural language of 
+  '`{{ note_body_text }}` and returns the result as ISO 639-1 language code.
+  The template filter '`{{ get_lang }}`' is configurable by adjusting the
+  configuration file variable '`tmpl.filter_get_lang`' which defines a list
+  of ISO 639-1 codes the detection algorithm considers as possible language
+  candidates. Keep this list as small as possible, because language detection
+  is computationally expensive. A long candidate list may slow down the note
+  file creation workflow.
+
+* '`{{ note_body_text | get_lang | map_lang}}`' maps the detected ISO 638-1 
+  language code to a complete IETF BCP 47 language tag, usually containing the
+  region subtag. For example the input '`en`' results in '`en-US`'. This
+  additional mapping is useful because the detection algorithm can not
+  determine the region automatically. The mapping is configurable by
+  adjusting the configuration file variable '`tmpl.filter_map_lang`'.
+  If a language is not listed in the '`tmpl.filter_map_lang`' filter
+  configuration, the input is passed through, e.g. '`fr`' results in '`fr`'.
 
 
 
@@ -1882,10 +1968,12 @@ never exposes any information to the network or on the Internet.
 
 TPNOTE\_LANG
 
->   Tp-Note stores the user's locale settings in the template variable
+>   Tp-Note stores the user's locale settings - originating from the 
+    environment variable '`LANG`' - in the template variable
     '`{{ lang }}`'. When set, '`TPNOTE_LANG`' overwrites this locale
-    settings.
-
+    settings. Unlike '`LANG`', the environment variable '`TPNOTE_LANG`' is
+    encoded as IETF BCP 47 language tag, e.g. '`en-US`'.
+    
 TPNOTE\_USER
 
 >   The template variable '`{{ username }}`' is the content of the first
@@ -1963,7 +2051,7 @@ TPNOTE\_BROWSER
 
 # EXIT STATUS
 
-Normally the exit status is '`0`' when the note file was processed without
+The exit status is '`0`' when the note file was processed without
 error or '`1`' otherwise. If Tp-Note can not read or write its
 configuration file, the exit status is '`5`'.
 

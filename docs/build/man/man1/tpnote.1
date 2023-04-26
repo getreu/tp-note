@@ -603,7 +603,14 @@ The option `\f[C]-d trace\f[R]' shows all available template variables,
 the templates used and the rendered result of the substitution.
 This is particularly useful for debugging new templates.
 The option `\f[C]-d off\f[R]' silences all error message reporting and
-also suppresses the error popup windows.
+also suppresses the error pop-up windows.
+.RE
+.RS
+.PP
+Note, under Linux, when \f[C]-d trace\f[R] is given, no pop-up messages
+appear.
+Instead, the logs are dumped to the console from where you started
+Tp-Note.
 .RE
 .RS
 .PP
@@ -618,7 +625,7 @@ appear on the console from where Tp-Note was launched:
 .fi
 .RS
 .PP
-On Windows the output must be redirected into a file to see it:
+Under Windows the output must be redirected into a file to see it:
 .RE
 .IP
 .nf
@@ -670,6 +677,18 @@ Another way to permanently disable the web server is to set the
 configuration variable `\f[C]arg_default.edit=true\f[R]'.
 When `\f[C]--edit --view\f[R]' appear together, both the editor and the
 viewer will open and the \f[C]arg_default.edit\f[R] variable is ignored.
+.RE
+.PP
+\f[B]-l\f[R], **--force-lang\f[I]=\f[R]LANG*
+.RS
+.PP
+Disable automatic language detection when creating a new note file and
+use \f[I]LANG\f[R] instead.
+\f[I]LANG\f[R] is formatted as IETF BCP 47 language tag, e.g.\ 
+`\f[C]en_US\f[R]'.
+If \f[I]LANG\f[R] is `\f[C]-\f[R]', the environment variable
+`\f[C]TPNOTE_LANG\f[R]' or - if not defined - the user\[cq]s default
+language as reported from the operating system is used.
 .RE
 .PP
 \f[B]-p\f[R], \f[B]--port\f[R]=\f[I]PORT\f[R]
@@ -942,23 +961,24 @@ and the relative link `\f[C]./photo.jpg\f[R]'.
 .IP \[bu] 2
 The document root marker is: `\f[C]/my/docs/.tpnoteroot\f[R]'.
 .PP
-The images in the resulting HTML will appear as
+The image paths in the resulting HTML will appear as
 .IP \[bu] 2
 `\f[C]/my/docs/car/scan.jpg\f[R]'.
 .IP \[bu] 2
 `\f[C]/my/docs/car/photo.jpg\f[R]'.
 .PP
-So far we have seen how Tp-Note\[cq]s viewer and HTML exporter converts
+So far, we have seen how Tp-Note\[cq]s viewer and HTML exporter converts
 the \f[I]destination\f[R] of local links
 `\f[C][text](destination)\f[R]'.
-For the \f[I]text\f[R] property the situation is simpler as it never
-changes.
-However, there is one exception: when the text contains a URL starting
-with `\f[C]http:\f[R]' or `\f[C]https:\f[R]' only the file stem is
-displayed.
+Concerning the link\[cq]s \f[I]text\f[R] property, the situation is
+simpler as the \f[I]text\f[R] property never changes.
+However, there is one exception: when the text property contains a URL
+starting with `\f[C]http:\f[R]' or `\f[C]https:\f[R]' only the file stem
+is displayed.
 For example, the link:
 `\f[C][http:dir/my file.md](<http:dir/my file.md>)\f[R]' is rewritten
-into `\f[C][my file](<http:dir/my file.md>)\f[R]' before being rendered.
+into `\f[C][my file](<http:dir/my file.md>)\f[R]' during the rendition
+process.
 This explains why the autolink `\f[C]<http:dir/my file.md>.\f[R]'
 appears as `\f[C]my file\f[R]' in the browser.
 .SH METADATA FILENAME SYNCHRONIZATION
@@ -1148,8 +1168,8 @@ filename_sync: false
 \f[R]
 .fi
 .PP
-Note, that in the above described examples, the information flow goes
-always from the YAML note header towards the note\[cq]s filename.
+Note, that in the above described examples, the information flow always
+goes from the YAML note header towards the note\[cq]s filename.
 However, when Tp-Note opens a text file without a YAML header, a new
 header is added automatically.
 In this case the information flow goes from the filename towards the
@@ -1158,8 +1178,8 @@ Once the new header is prepended to the text file, a regular filename
 synchronization - as described above - is triggered and executed as
 described above.
 .PP
-Technically, all rules and logic of how the synchronisation is executed,
-are encoded in customizable so called filename templates (cf.\ section
+Technically, all rules and logic of how the synchronization is executed,
+are encoded in customizable so-called filename templates (cf.\ section
 \f[I]Templates\f[R]).
 .SH CUSTOMIZATION
 .PP
@@ -1228,7 +1248,7 @@ immediately, then the file editor forks the process.
 On the other hand everything is OK, when the command prompt only comes
 back at the moment the text editor is closed.
 Many text editors provide an option to restrain from forking: for
-example the \f[I]VScode\f[R]-editor can be launched with the
+example the \f[I]VScode\f[R] file editor can be launched with the
 `\f[C]--wait\f[R]' option, \f[I]Vim\f[R] with `\f[C]--nofork\f[R]' or
 \f[I]Kate\f[R] with `\f[C]--block\f[R]' (see example above).
 However, Tp-Note also works with forking text editors.
@@ -1470,6 +1490,76 @@ This modification does not change how the note file\[cq]s content is
 interpreted - in this case as Markdown - because both file extensions
 `\f[C].txt\f[R]' and `\f[C].md\f[R]' belong to the same extension group
 defined in `\f[C]filename.extensions_md\f[R]'.
+.SS Configure the natural language detection algorithm
+.PP
+When creating a new header for a new or an existing note file, a
+linguistic language detection algorithm tries to determine in what
+natural language the note file was written.
+Depending on the context, the algorithm processes as input: the header
+field `\f[C]title:\f[R]' or the first sentence of the text body.
+The natural language detection algorithm is implemented as a template
+filter named `\f[C]get_lang\f[R]', which is used in various Tera content
+templates `\f[C]tmpl.*_content\f[R]' in Tp-Note\[cq]s configuration
+file.
+The filter `\f[C]get_lang\f[R]' is parametrized by the configuration
+variable `\f[C]tmpl.filter_get_lang\f[R]' containing a list of ISO 639-1
+encoded languages, the algorithm considers as potential detection
+candidates, e.g.:
+.IP
+.nf
+\f[C]
+[tmpl]
+filter_get_lang = [
+    \[aq]en\[aq],
+    \[aq]fr\[aq],
+    \[aq]de\[aq],
+    \[aq]et\[aq]
+]
+\f[R]
+.fi
+.PP
+This above list is always completed by the user\[cq]s default language
+as reported from the operating system.
+Please refer to the documentation of the configuration file variable
+`\f[C]lang\f[R]' for further details.
+.PP
+Once the language is detected with the filter `\f[C]get_lang\f[R]', it
+passes another filter called `\f[C]map_lang\f[R]'.
+This filter maps the result of `\f[C]get_lang\f[R]' - which is an ISO
+639-1 code - to an IETF language tag.
+For example, `\f[C]en\f[R]' is replaced with `\f[C]en-US\f[R]' or
+`\f[C]de\f[R]' with `\f[C]de-DE\f[R]'.
+The corresponding configuration looks like this:
+.IP
+.nf
+\f[C]
+[tmpl]
+filter_map_lang = [
+    [
+    \[aq]en\[aq],
+    \[aq]en-US\[aq],
+],
+    [
+    \[aq]de\[aq],
+    \[aq]de-DE\[aq],
+],
+]
+\f[R]
+.fi
+.PP
+This additional filtering is useful, because the detection algorithm can
+not figure out the region code (e.g.\ `\f[C]US\f[R]' or `\f[C]DE\f[R]')
+by itself.
+Instead, the region code is appended in a separate processing step.
+Spell checker or grammar checker like \f[I]LanguageTool\f[R] rely on
+this region information, to work properly.
+Note, when the user\[cq]s region setting - as reported from the
+operating system - does not exist in above list, it is automatically
+appended.
+When the filter `\f[C]map_lang\f[R]' encounters a language code for
+which no mapping is configured, the input language code is forwarded as
+it is without modification, e.g.\ the input `\f[C]fr\f[R]' results in
+the output `\f[C]fr\f[R]'.
 .SS Change the default markup language
 .PP
 Tp-Note\[cq]s core functionality, the management of note file headers
@@ -1883,9 +1973,9 @@ In total, there are 5 different `\f[C]tmpl.*_content\f[R]' templates:
 `\f[C]tmpl.annotate_file_content\f[R]'
 .PP
 In general, the templates are designed in a way, that the text input
-stream -usually originating from the clipboard- ends up in the body of
-the note file, whereas the environment -such as the username- ends up in
-the header of the note file.
+stream - usually originating from the clipboard - ends up in the body of
+the note file, whereas the environment - such as the username - ends up
+in the header of the note file.
 .PP
 Once the content of the new note is set by one of the content templates,
 another template type comes into play: the so-called \f[I]filename
@@ -2173,7 +2263,7 @@ As all YAML front-matter is JSON encoded, this filter code must be
 appended to any template variable placed in the front-matter block.
 .IP \[bu] 2
 `\f[C]{{ fm_subtitle | sanit }}\f[R]' is the note\[cq]s subtitle as
-defined in its front-matter, sanitized in a file system friendly form.
+defined in its front matter, sanitized in a file system friendly form.
 Special characters are omitted or replaced by `\f[C]-\f[R]' and
 `\f[C]_\f[R]'.
 See the section \f[I]Filename template convention\f[R] for more details
@@ -2187,6 +2277,29 @@ apostrophe to avoid ambiguity.
 `\f[C]{{ fm_all | remove(var=\[aq]fm_title\[aq]) }}\f[R]' represents a
 collection (map) of all `\f[C]fm_*\f[R]' variables, exclusive of the
 variable `\f[C]fm_title\f[R]'.
+.IP \[bu] 2
+`\f[C]{{ note_body_text | get_lang }}\f[R]' determines the natural
+language of `\f[C]{{ note_body_text }}\f[R] and returns the result as
+ISO 639-1 language code. The template
+filter'\f[C]{{ get_lang }}\f[R]\[cq] is configurable by adjusting the
+configuration file variable `\f[C]tmpl.filter_get_lang\f[R]' which
+defines a list of ISO 639-1 codes the detection algorithm considers as
+possible language candidates.
+Keep this list as small as possible, because language detection is
+computationally expensive.
+A long candidate list may slow down the note file creation workflow.
+.IP \[bu] 2
+`\f[C]{{ note_body_text | get_lang | map_lang}}\f[R]' maps the detected
+ISO 638-1 language code to a complete IETF BCP 47 language tag, usually
+containing the region subtag.
+For example the input `\f[C]en\f[R]' results in `\f[C]en-US\f[R]'.
+This additional mapping is useful because the detection algorithm can
+not determine the region automatically.
+The mapping is configurable by adjusting the configuration file variable
+`\f[C]tmpl.filter_map_lang\f[R]'.
+If a language is not listed in the `\f[C]tmpl.filter_map_lang\f[R]'
+filter configuration, the input is passed through, e.g.\ `\f[C]fr\f[R]'
+results in `\f[C]fr\f[R]'.
 .SS Content template conventions
 .PP
 Tp-Note distinguishes two template types: content templates are used to
@@ -2330,9 +2443,13 @@ the network or on the Internet.
 TPNOTE_LANG
 .RS
 .PP
-Tp-Note stores the user\[cq]s locale settings in the template variable
+Tp-Note stores the user\[cq]s locale settings - originating from the
+environment variable `\f[C]LANG\f[R]' - in the template variable
 `\f[C]{{ lang }}\f[R]'.
 When set, `\f[C]TPNOTE_LANG\f[R]' overwrites this locale settings.
+Unlike `\f[C]LANG\f[R]', the environment variable
+`\f[C]TPNOTE_LANG\f[R]' is encoded as IETF BCP 47 language tag,
+e.g.\ `\f[C]en-US\f[R]'.
 .RE
 .PP
 TPNOTE_USER
@@ -2464,8 +2581,8 @@ tpnote --edit
 .RE
 .SH EXIT STATUS
 .PP
-Normally the exit status is `\f[C]0\f[R]' when the note file was
-processed without error or `\f[C]1\f[R]' otherwise.
+The exit status is `\f[C]0\f[R]' when the note file was processed
+without error or `\f[C]1\f[R]' otherwise.
 If Tp-Note can not read or write its configuration file, the exit status
 is `\f[C]5\f[R]'.
 .PP

@@ -164,7 +164,7 @@ use tera::Value;
 /// be in sync. If it is different, rename the note on disk.
 /// Returns the note's new or existing filename.
 /// Repeated calls, will reload the environment variables, but not
-/// the configuration file.
+/// the configuration file. This function is stateless.
 ///
 ///
 /// ## Example with `TemplateKind::SyncFilename`
@@ -227,11 +227,14 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// the note's content into HTML and saves the `.html` file in the
 /// directory `dir`. This optional HTML rendition is performed just before
 /// returning and does not affect any above described operation.
-/// `force_lang` is the command line option `force_lang`.
+/// `force_lang` disables the automatic language detection and uses `force_lang`
+/// instead; or, if `-` use the environment variable `TPNOTE_LANG` or, - if not
+/// defined - use the user's default language as reported from the operating
+/// system.
 ///
 /// Returns the note's new or existing filename.
 /// Repeated calls, will reload the environment variables, but not
-/// the configuration file.
+/// the configuration file. This function is stateless.
 ///
 ///
 /// ## Example with `TemplateKind::FromClipboard`
@@ -387,7 +390,7 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 
 /// Returns the HTML rendition of the note file located in
 /// `context.path` with the template `TMPL_HTML_VIEWER` (can be replaced
-/// at runtime).
+/// at runtime). This function is stateless.
 ///
 /// ```rust
 /// use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
@@ -457,7 +460,8 @@ pub fn render_viewer_html<T: Content>(context: Context, content: T) -> Result<St
 }
 
 /// Returns the HTML rendition of the note file located in
-/// `context.path` with the template `TMPL_HTML_VIEWER`.
+/// `context.path` with the template `TMPL_HTML_VIEWER`. This function is
+/// stateless.
 ///
 /// ```rust
 /// use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
