@@ -87,9 +87,8 @@ structopt = "0.3.26"
 thiserror.workspace = true
 time = "0.3.20"
 toml.workspace = true
-tpnote-lib = { path = "../tpnote-lib", default-features = true }
-#tpnote-lib = { path = "../tpnote-lib", default-features = false }
-#tpnote-lib = { version = "0.16.1", default-features = true }
+#tpnote-lib = { path = "../tpnote-lib", default-features = true }
+tpnote-lib = { version = "0.17.0", default-features = true }
 webbrowser = { version = "0.8.9", optional = true }
 
 [target.'cfg(windows)'.dependencies]
