@@ -11,14 +11,17 @@ stages:
         strategy:
           matrix:
             windows-stable:
-              imageName: 'windows-2019'
+              imageName: 'windows-latest'
               rustup_toolchain: stable
+              target: 'x86_64-pc-windows-msvc'
             mac-stable:
-              imageName: 'macOS-11'
+              imageName: 'macOS-latest'
               rustup_toolchain: stable
+              target: 'x86_64-apple-darwin'
             linux-stable:
-              imageName: 'ubuntu-20.04'
+              imageName: 'ubuntu-latest'
               rustup_toolchain: stable
+              target: 'x86_64-unknown-linux-gnu'
         pool:
           vmImage: $(imageName)
         steps:
@@ -51,15 +54,15 @@ stages:
         strategy:
           matrix:
             windows-stable:
-              imageName: 'windows-2019'
+              imageName: 'windows-latest'
               rustup_toolchain: stable
               target: 'x86_64-pc-windows-msvc'
             mac-stable:
-              imageName: 'macOS-10.15'
+              imageName: 'macOS-latest'
               rustup_toolchain: stable
               target: 'x86_64-apple-darwin'
             linux-stable:
-              imageName: 'ubuntu-18.04'
+              imageName: 'ubuntu-latest'
               rustup_toolchain: stable
               target: 'x86_64-unknown-linux-gnu'
         pool:
