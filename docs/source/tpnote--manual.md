@@ -647,6 +647,26 @@ text editor, update Windows to the latest version or install
   learn how to configure your file manager's context menu to launch _Tp-Note_.
 
 
+### Multilingual customization
+
+* Do you write your notes in multiple languages?
+
+  _Tp-Note_ integrates complex linguistic heuristics to determine in what
+  natural language a new note is authored and stores the result in the `lang:`
+  header variable of the new note.
+
+  This process can be configured in various ways. The most important is to
+  provide _Tp-Note_ with a list of language candidates you write your notes.
+  C.f. the variable `tmpl.filter_get_lang` in Tp-Note's configuration file.
+
+  You may also want to indicate the default region codes of your preferred
+  languages. C.f. the variable `tmpl.filter_map_lang` in Tp-Note's
+  configuration file.
+
+  Please refer to _customization_ section in [Tp-Note's man-page] to learn
+  how to configure _Tp-Note_'s natural language processing.
+  
+
 ### Choose the web browser for note viewing and make it your default
 
 * Is your preferred web browser is not *Firefox*? Change it![^1]

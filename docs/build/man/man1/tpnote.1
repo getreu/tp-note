@@ -679,7 +679,7 @@ When `\f[C]--edit --view\f[R]' appear together, both the editor and the
 viewer will open and the \f[C]arg_default.edit\f[R] variable is ignored.
 .RE
 .PP
-\f[B]-l\f[R], **--force-lang\f[I]=\f[R]LANG*
+\f[B]-l\f[R] \f[I]LANG\f[R], \f[B]--force-lang\f[R]=\f[I]LANG\f[R]
 .RS
 .PP
 Disable automatic language detection when creating a new note file and
@@ -688,10 +688,11 @@ use \f[I]LANG\f[R] instead.
 `\f[C]en_US\f[R]'.
 If \f[I]LANG\f[R] is `\f[C]-\f[R]', the environment variable
 `\f[C]TPNOTE_LANG\f[R]' or - if not defined - the user\[cq]s default
-language as reported from the operating system is used.
+language, as reported from the operating system\[cq]s locale setting, is
+used.
 .RE
 .PP
-\f[B]-p\f[R], \f[B]--port\f[R]=\f[I]PORT\f[R]
+\f[B]-p\f[R] \f[I]PORT\f[R], \f[B]--port\f[R]=\f[I]PORT\f[R]
 .RS
 .PP
 Sets the server port that the web browser connects to, to the specified
@@ -1494,7 +1495,7 @@ defined in `\f[C]filename.extensions_md\f[R]'.
 .PP
 When creating a new header for a new or an existing note file, a
 linguistic language detection algorithm tries to determine in what
-natural language the note file was written.
+natural language the note file is authored.
 Depending on the context, the algorithm processes as input: the header
 field `\f[C]title:\f[R]' or the first sentence of the text body.
 The natural language detection algorithm is implemented as a template
@@ -1518,14 +1519,27 @@ filter_get_lang = [
 \f[R]
 .fi
 .PP
-This above list is always completed by the user\[cq]s default language
-as reported from the operating system.
-Please refer to the documentation of the configuration file variable
-`\f[C]lang\f[R]' for further details.
+Note, that the above list is internally completed by the user\[cq]s
+default language as reported from the operating system.
+Therefore, manual configuration is only required when you write your
+notes also in other languages than the one defined by your locale
+setting.
+Please refer to the documentation of the environment variable
+`\f[C]TPNOTE_LANG\f[R]' for further details.
+.PP
+If wished for, you can disable Tp-Note\[cq]s language detection feature,
+by deleting all entries in the above array:
+.IP
+.nf
+\f[C]
+[tmpl]
+filter_get_lang = []
+\f[R]
+.fi
 .PP
 Once the language is detected with the filter `\f[C]get_lang\f[R]', it
 passes another filter called `\f[C]map_lang\f[R]'.
-This filter maps the result of `\f[C]get_lang\f[R]' - which is an ISO
+This filter maps the result of `\f[C]get_lang\f[R]' - encoded as ISO
 639-1 code - to an IETF language tag.
 For example, `\f[C]en\f[R]' is replaced with `\f[C]en-US\f[R]' or
 `\f[C]de\f[R]' with `\f[C]de-DE\f[R]'.
@@ -1548,18 +1562,19 @@ filter_map_lang = [
 .fi
 .PP
 This additional filtering is useful, because the detection algorithm can
-not figure out the region code (e.g.\ `\f[C]US\f[R]' or `\f[C]DE\f[R]')
-by itself.
-Instead, the region code is appended in a separate processing step.
-Spell checker or grammar checker like \f[I]LanguageTool\f[R] rely on
-this region information, to work properly.
+not figure out the region code (e.g.\ \f[C]-US\f[R] or \f[C]-DE\f[R]) by
+itself.
+Instead, the region code is appended in the above described, separate
+processing step.
+Spell checker or grammar checker like [LTEX] rely on this region
+information, to work properly.
 Note, when the user\[cq]s region setting - as reported from the
-operating system - does not exist in above list, it is automatically
-appended.
-When the filter `\f[C]map_lang\f[R]' encounters a language code for
-which no mapping is configured, the input language code is forwarded as
-it is without modification, e.g.\ the input `\f[C]fr\f[R]' results in
-the output `\f[C]fr\f[R]'.
+operating system\[cq]s locale setting - does not exist in above list, it
+is automatically appended as additional internal mapping.
+When the filter \f[C]map_lang\f[R] encounters a language code for which
+no mapping is configured, the input language code is forwarded as it is
+without modification, e.g.\ the input \f[C]fr\f[R] results in the output
+\f[C]fr\f[R].
 .SS Change the default markup language
 .PP
 Tp-Note\[cq]s core functionality, the management of note file headers
@@ -2444,9 +2459,10 @@ TPNOTE_LANG
 .RS
 .PP
 Tp-Note stores the user\[cq]s locale settings - originating from the
-environment variable `\f[C]LANG\f[R]' - in the template variable
-`\f[C]{{ lang }}\f[R]'.
-When set, `\f[C]TPNOTE_LANG\f[R]' overwrites this locale settings.
+environment variable `\f[C]LANG\f[R]' (or the Windows registry) - in the
+template variable `\f[C]{{ lang }}\f[R]'.
+When set, the environment variable `\f[C]TPNOTE_LANG\f[R]' overwrites
+this locale setting.
 Unlike `\f[C]LANG\f[R]', the environment variable
 `\f[C]TPNOTE_LANG\f[R]' is encoded as IETF BCP 47 language tag,
 e.g.\ `\f[C]en-US\f[R]'.

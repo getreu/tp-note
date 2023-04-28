@@ -545,15 +545,15 @@ synchronization).
     the  editor and the viewer will open and the `arg_default.edit` variable
     is ignored.
 
-**-l**, **\--force-lang*=*LANG*
+**-l** *LANG*, **\--force-lang**=*LANG*
 
 >   Disable automatic language detection when creating a new note file and use
     *LANG* instead. *LANG* is formatted as IETF BCP 47 language tag, e.g. 
     '`en_US`'. If *LANG* is '`-`', the environment variable '`TPNOTE_LANG`'
-    or - if not defined - the user's default language as reported from
-    the operating system is used.
+    or - if not defined - the user's default language, as reported from
+    the operating system's locale setting, is used.
 
-**-p**, **\--port**=*PORT*
+**-p** *PORT*, **\--port**=*PORT*
 
 >   Sets the server port that the web browser connects to, to the specified
     value *PORT*.
@@ -1194,7 +1194,7 @@ belong to the same extension group defined in '`filename.extensions_md`'.
 
 When creating a new header for a new or an existing note file, a linguistic
 language detection algorithm tries to determine in what natural language the
-note file was written. Depending on the context, the algorithm processes as
+note file is authored. Depending on the context, the algorithm processes as
 input: the header field '`title:`' or the first sentence of the text body.
 The natural language detection algorithm is implemented as a template filter
 named '`get_lang`', which is used in various Tera content templates
@@ -1213,15 +1213,26 @@ filter_get_lang = [
 ]
 ```
 
-This above list is always completed by the user's default language as
-reported from the operating system. Please refer to the documentation of
-the configuration file variable '`lang`' for further details.
+Note, that the above list is internally completed by the user's
+default language as reported from the operating system. Therefore,
+manual configuration is only required when you write your notes also
+in other languages than the one defined by your locale setting. Please
+refer to the documentation of the environment variable '`TPNOTE_LANG`'
+for further details.
 
-Once the language is detected with the filter '`get_lang`', it passes another
-filter called '`map_lang`'. This filter maps the result of '`get_lang`' - which
-is an ISO 639-1 code - to an IETF language tag. For example, '`en`' is replaced
-with '`en-US`' or '`de`' with '`de-DE`'. The corresponding configuration looks
-like this:
+If wished for, you can disable Tp-Note's language detection feature, by 
+deleting all entries in the above array:
+
+```toml
+[tmpl]
+filter_get_lang = []
+```
+
+Once the language is detected with the filter '`get_lang`', it passes
+another filter called '`map_lang`'. This filter maps the result of
+'`get_lang`' - encoded as ISO 639-1 code - to an IETF language tag. For
+example, '`en`' is replaced with '`en-US`' or '`de`' with '`de-DE`'. The
+corresponding configuration looks like this:
 
 
 ```toml
@@ -1239,14 +1250,15 @@ filter_map_lang = [
 ```
 
 This additional filtering is useful, because the detection algorithm can not
-figure out the region code (e.g. '`US`' or '`DE`') by itself. Instead, the
-region code is appended in a separate processing step. Spell checker or grammar
-checker like _LanguageTool_ rely on this region information, to work properly.
-Note, when the user's region setting - as reported from the operating
-system - does not exist in above list, it is automatically appended. When
-the filter '`map_lang`' encounters a language code for which no mapping
-is configured, the input language code is forwarded as it is without
-modification, e.g. the input '`fr`' results in the output '`fr`'.
+figure out the region code (e.g. `-US` or `-DE`) by itself. Instead, the
+region code is appended in the above described, separate processing
+step. Spell checker or grammar checker like [LTEX] rely on this region
+information, to work properly.  Note, when the user's region setting
+- as reported from the operating system's locale setting - does not
+exist in above list, it is automatically appended as additional internal
+mapping. When the filter `map_lang` encounters a language code for which
+no mapping is configured, the input language code is forwarded as it is
+without modification, e.g. the input `fr` results in the output `fr`.
 
 
 
@@ -1968,12 +1980,13 @@ never exposes any information to the network or on the Internet.
 
 TPNOTE\_LANG
 
->   Tp-Note stores the user's locale settings - originating from the 
-    environment variable '`LANG`' - in the template variable
-    '`{{ lang }}`'. When set, '`TPNOTE_LANG`' overwrites this locale
-    settings. Unlike '`LANG`', the environment variable '`TPNOTE_LANG`' is
-    encoded as IETF BCP 47 language tag, e.g. '`en-US`'.
-    
+>   Tp-Note stores the user's locale settings - originating from the
+    environment variable '`LANG`' (or the Windows registry) - in the template
+    variable '`{{ lang }}`'. When set, the environment variable
+    '`TPNOTE_LANG`' overwrites this locale setting. Unlike '`LANG`',
+    the environment variable '`TPNOTE_LANG`' is encoded as IETF BCP 47
+    language tag, e.g. '`en-US`'.
+
 TPNOTE\_USER
 
 >   The template variable '`{{ username }}`' is the content of the first
