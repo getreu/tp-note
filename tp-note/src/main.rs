@@ -1,7 +1,11 @@
 #![windows_subsystem = "windows"]
 #![allow(clippy::vec_init_then_push)]
 //! _Tp-Note_ is a note taking tool and a template system, that consistently
-//! synchronizes the note's metadata with its filename. _Tp-Note_ collects
+//! synchronizes the note's metadata with its filename.
+//! _Tp-Note_'s main design goal is to convert some input text -
+//! usually provided by the system's clipboard - into a Markdown note file, with
+//! a descriptive YAML header and meaningful filename.
+//! _Tp-Note_ collects
 //! various information about its environment and the clipboard and stores them
 //! in variables. New notes are created by filling these variables in predefined
 //! and customizable `Tera`-templates. In case `<path>` points to an existing
@@ -10,8 +14,8 @@
 //! that annotates the file `<path>` points to. If `<path>` is a directory (or,
 //! when omitted the current working directory), a new note is created in that
 //! directory. After creation, _Tp-Note_ launches an external editor of your
-//! choice. Although the note's structure follows _Pandoc_'s conventions, it is not
-//! tied to any specific Markup language.
+//! choice. Although the note's structure follows _Pandoc_'s conventions, it is
+//! not tied to any specific Markup language.
 
 #[cfg(feature = "message-box")]
 mod alert_service;
