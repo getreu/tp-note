@@ -630,17 +630,10 @@ text editor, update Windows to the latest version or install
   text editor, although any Unicode text editor will do (even Notepad >=
   Windows 10-update 1903). _Tp-Note_ is preconfigured to work with:
 
-  - [Mark Text](https://marktext.app/) — a simple and elegant Markdown editor
-    focused on speed and usability.
-  <!-- [Typora — a Markdown editor, Markdown reader.](https://typora.io/)
-    Make sure that you have at least version 0.9.89 installed, as this version
-    contains a [bugfix](https://github.com/typora/typora-issues/issues/3348)
-    required to work properly with _Tp-Note_.
-   -->
-
+  - [Apostrophe| Flathub](https://flathub.org/en-GB/apps/org.gnome.gitlab.somas.Apostrophe)
+  - [VSCodium | Flathub](https://flathub.org/en-GB/apps/com.vscodium.codium)
+  - [Visual Studio Code | Flathub](https://flathub.org/en-GB/apps/com.visualstudio.code)
   - [ReText — Simple but powerful editor for Markdown and reStructuredText](https://github.com/retext-project/retext)
-
-  - _VS-Code_, _Atom_ ...
 
   Please refer to [Tp-Note's man-page] to learn how to register your text
   editor with _Tp-Note_'s configuration file.
