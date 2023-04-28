@@ -6,8 +6,8 @@ filename_sync: false
 
 [![Cargo](https://img.shields.io/crates/v/tp-note.svg)](
 https://crates.io/crates/tp-note)
-[![Documentation](https://docs.rs/tp-note/badge.svg)](
-https://docs.rs/tp-note)
+[![Documentation](https://docs.rs/tpnote-lib/badge.svg)](
+https://docs.rs/tpnote-lib)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](
 https://gitlab.com/getreu/tp-note)
 
