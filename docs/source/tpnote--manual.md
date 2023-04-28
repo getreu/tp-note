@@ -622,25 +622,6 @@ text editor, update Windows to the latest version or install
 ## Optional customization
 
 
-### Change the default markup language
-
-* Your preferred markup language is not *Markdown*, but ReStructuredText*,
-  *Asciidoc*, *T2t*, *Textile*, *Wiki* or *Mediawiki*? Change it!
-
-  _Tp-Note_'s core function is a template system and as such it is
-  markup language agnostic. The default templates largely abstain from
-  markup specific code, which makes it easy to switch the default new note's
-  markup language. Please refer to [Tp-Note's man-page] to learn how to
-  change its templates in the configuration file.
-
-  In addition, _Tp-Note_ comes with a build in note viewer which is optional and
-  independent from its core functionality. When _Tp-Note_ opens a note file, it
-  detects the markup language through the note file extension and launches the
-  associated builtin markup renderer. The whole process can be customized in
-  _Tp-Note_'s configuration file. Please refer to [Tp-Note's man-page] for
-  details.
-
-
 ### Chose your favourite text editor and make it default
 
 * Your preferred text editor is not *Notepad*? Change it![^1]
@@ -687,6 +668,7 @@ text editor, update Windows to the latest version or install
   Please refer to [Tp-Note's man-page] to learn how change which web browser
   _Tp-Note_ launches as note viewer.
 
+
 ### Customize the way how _Tp-Note_'s viewer renders the note's content
 
 The way the note will appear in your web browser depends on:
@@ -699,6 +681,26 @@ The way the note will appear in your web browser depends on:
 Please refer to [Tp-Note's man-page] to learn how to register a file
 extension with a particular markup renderer or to learn
 how to change the HTML-template that renders the note's content.
+
+
+### Change the default markup language
+
+* Your preferred markup language is not *Markdown*, but ReStructuredText*,
+  *Asciidoc*, *T2t*, *Textile*, *Wiki* or *Mediawiki*? Change it!
+
+  _Tp-Note_'s core function is a template system and as such it is
+  markup language agnostic. The default templates largely abstain from
+  markup specific code, which makes it easy to switch the default new note's
+  markup language. Please refer to [Tp-Note's man-page] to learn how to
+  change its templates in the configuration file.
+
+  In addition, _Tp-Note_ comes with a build in note viewer which is optional and
+  independent from its core functionality. When _Tp-Note_ opens a note file, it
+  detects the markup language through the note file extension and launches the
+  associated builtin markup renderer. The whole process can be customized in
+  _Tp-Note_'s configuration file. Please refer to [Tp-Note's man-page] for
+  details.
+
 
 
 
