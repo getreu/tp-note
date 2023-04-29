@@ -1835,23 +1835,30 @@ A filter is always used together with a variable. Here are some examples:
   all '`fm_*`' variables, exclusive of the variable '`fm_title`'.
 
 * '`{{ note_body_text | get_lang }}`' determines the natural language of 
-  '`{{ note_body_text }}` and returns the result as ISO 639-1 language code.
-  The template filter '`{{ get_lang }}`' is configurable by adjusting the
-  configuration file variable '`tmpl.filter_get_lang`' which defines a list
-  of ISO 639-1 codes the detection algorithm considers as possible language
-  candidates. Keep this list as small as possible, because language detection
-  is computationally expensive. A long candidate list may slow down the note
-  file creation workflow.
+  the variable '`{{ note_body_text }}` and returns the result as ISO 639-1 
+  language code. The template filter '`{{ get_lang }}`' can be configured with
+  the configuration file variable '`tmpl.filter_get_lang`'. The latter
+  defines a list of ISO 639-1 codes, the detection algorithm considers as
+  possible language candidates. Keep this list as small as possible, because
+  language detection is computationally expensive. A long candidate list may
+  slow down the note file creation workflow. If the detection algorithm can not
+  determine the language of '`{{ note_body_text }}`', the filter '`get_lang`'
+  returns the empty string. 
 
-* '`{{ note_body_text | get_lang | map_lang}}`' maps the detected ISO 638-1 
+* '`{{ note_body_text | get_lang | map_lang }}`' maps the detected ISO 638-1 
   language code to a complete IETF BCP 47 language tag, usually containing the
   region subtag. For example the input '`en`' results in '`en-US`'. This
   additional mapping is useful because the detection algorithm can not
-  determine the region automatically. The mapping is configurable by
+  determine the region automatically. The mapping can be configured by
   adjusting the configuration file variable '`tmpl.filter_map_lang`'.
   If a language is not listed in the '`tmpl.filter_map_lang`' filter
-  configuration, the input is passed through, e.g. '`fr`' results in '`fr`'.
+  configuration, the input is passed through, e.g. '`fr`' results in '`fr`', or,
+  the empty string results in an empty string.
 
+* '`{{ note_body_text | get_lang | map_lang(default=lang) }}`' adds an 
+  extra mapping for the '`map_lang`' filter: when the input of the
+  '`map_lang`' filter is the empty string, then it's output becomes the value
+  of the '`{{ lang }}`' variable.
 
 
 ## Content template conventions
