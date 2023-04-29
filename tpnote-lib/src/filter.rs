@@ -414,10 +414,14 @@ fn get_lang_filter<S: BuildHasher>(
 }
 
 /// A mapper for ISO 639 codes adding some region information, e.g.
-/// `en` to `en-US` or `de` to `de-DE`. The mapping is configurable.
+/// `en` to `en-US` or `de` to `de-DE`. Configure the mapping with
+/// `tmpl.filter_map_lang`.
+/// An input value without mapping definition is passed through.
+/// When the optional parameter `default` is given, e.g.
+/// `map_lang(default=val)`, an empty input string is mapped to `val`.  
 fn map_lang_filter<S: BuildHasher>(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let p = try_get_value!("map_lang", "value", tera::Value, value);
     let settings = SETTINGS.read().unwrap();
@@ -426,7 +430,11 @@ fn map_lang_filter<S: BuildHasher>(
         tera::Value::String(input) => {
             let input = input.trim();
             if input.is_empty() {
-                return Ok(to_value(&settings.lang)?);
+                if let Some(val) = args.get("default") {
+                    return Ok(to_value(val)?);
+                } else {
+                    return Ok(to_value("")?);
+                };
             };
             if let Some(hm) = &settings.filter_map_lang_hmap {
                 match hm.get(input) {
