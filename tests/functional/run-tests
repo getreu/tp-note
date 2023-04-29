@@ -1,5 +1,6 @@
 #!/bin/sh
 
+cd `realpath .`
 TESTOUTPUT="test_output"
 PWD="$(pwd)/$TESTOUTPUT"
 unset TPNOTE_LANG
