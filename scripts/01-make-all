@@ -13,4 +13,3 @@ set -x
 ./18-make-deb-package
 ./19-symlink-installer
 ./20-clear-targets-keep-binaries
-./21-make-dist

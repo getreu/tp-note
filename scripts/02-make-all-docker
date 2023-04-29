@@ -16,4 +16,3 @@ set -x
 ../build-env/run-script          ./18-make-deb-package
 ../build-env/run-script          ./19-symlink-installer
 ../build-env/run-script          ./20-clear-targets-keep-binaries
-../build-env/run-script          ./21-make-dist
