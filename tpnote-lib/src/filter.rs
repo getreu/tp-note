@@ -717,10 +717,6 @@ mod tests {
 
     #[test]
     fn test_map_lang_filter() {
-        // The `get_lang` filter requires an initialized `SETTINGS` object.
-        update_settings().unwrap();
-        let settings = SETTINGS.read().unwrap();
-
         let args = HashMap::new();
         // Test Markdown link in clipboard.
         let input = "de";
@@ -737,7 +733,14 @@ mod tests {
         // Test Markdown link in clipboard.
         let input = " \t\n ";
         let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(*settings.lang, output);
+        assert_eq!(to_value("").unwrap(), output);
+
+        let mut args = HashMap::new();
+        args.insert("default".to_string(), to_value("test").unwrap());
+        // Test Markdown link in clipboard.
+        let input = " \t\n ";
+        let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("test".to_string(), output);
     }
 
     #[test]
