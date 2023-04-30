@@ -129,8 +129,6 @@
 //! assert_eq!(raw_note, "Simulation");
 //! ```
 
-use crate::config::force_lang_setting;
-use crate::config::update_settings;
 use crate::config::LocalLinkKind;
 use crate::config::LIB_CFG;
 #[cfg(feature = "viewer")]
@@ -150,6 +148,8 @@ use crate::filter::TERA;
 use crate::note::Note;
 #[cfg(feature = "viewer")]
 use crate::note_error_tera_template;
+use crate::settings::force_lang_setting;
+use crate::settings::update_settings;
 use crate::template::TemplateKind;
 #[cfg(feature = "viewer")]
 use parse_hyperlinks::renderer::text_rawlinks2html;

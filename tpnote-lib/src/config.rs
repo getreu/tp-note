@@ -1,7 +1,7 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
-//! and exposes the configuration as `static` variable behind a mutex.
-//! This makes it possible to modify all configuration defaults (and templates)
-//! at runtime.
+//! and exposes the configuration as the `static` variable `LIB_CFG` behind a 
+//! mutex. This makes it possible to modify all configuration defaults 
+//! (and templates) at runtime.
 //!
 //! ```rust
 //! use tpnote_lib::config::LIB_CFG;
@@ -9,30 +9,16 @@
 //! let mut lib_cfg = LIB_CFG.write().unwrap();
 //! (*lib_cfg).filename.copy_counter_extra_separator = '@'.to_string();
 //! ```
+//!
+//! Contract: although `LIB_CFG` is mutable at runtime, it is sourced only
+//! once at the start of Tp-Note. All modification terminates before accessing
+//! the high-level API in the `workflow` module of this crate.
 use crate::error::ConfigError;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_css;
 use lazy_static::lazy_static;
-#[cfg(feature = "lang-detection")]
-use lingua::IsoCode639_1;
-use lingua;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::{env, mem, str::FromStr, sync::RwLock, sync::RwLockWriteGuard};
-#[cfg(target_family = "windows")]
-use windows_sys::Win32::System::SystemServices::LOCALE_NAME_MAX_LENGTH;
-#[cfg(target_family = "windows")]
-use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
-
-/// Name of the environment variable, that can be optionally
-/// used to overwrite the user's default language setting.
-/// This is used in various templates.
-pub const ENV_VAR_TPNOTE_LANG: &str = "TPNOTE_LANG";
-
-/// Name of the environment variable, that can be optionally
-/// used to overwrite the user's login name.
-/// This is used in various templates.
-pub const ENV_VAR_TPNOTE_USER: &str = "TPNOTE_USER";
+use std::{str::FromStr, sync::RwLock};
 
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
@@ -52,7 +38,7 @@ pub const FILENAME_LEN_MAX: usize =
 /// `TMPL_VAR_ROOT_PATH`.
 pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnoteroot";
 
-/// List of charnote_error_tera_templateacters that can be part of a _sort tag_.
+/// List of characters that can be part of a _sort tag_.
 /// This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
 /// The first character in the filename which is not
 /// in this list, marks the end of the sort tag.
@@ -152,7 +138,7 @@ pub const FILENAME_EXTENSIONS_NO_VIEWER: &[&str] = &["t2t"];
 pub const FILENAME_DOTFILE_MARKER: char = '.';
 
 /// As all application logic is encoded in Tp-Note's templates, it does
-/// not know about field names. Nevertheless it is useful to identify at
+/// not know about field names. Nevertheless, it is useful to identify at
 /// least one field as _the_ field that identifies a note the most.  When
 /// `TMPL_COMPULSORY_HEADER_FIELD` is not empty, Tp-Note will not synchronize
 /// the note's filename and will pop up an error message, unless it finds the
@@ -163,9 +149,9 @@ pub const FILENAME_DOTFILE_MARKER: char = '.';
 const TMPL_COMPULSORY_HEADER_FIELD: &str = "title";
 
 /// The template variable contains the fully qualified path of the `<path>`
-/// command line argument. If `<path>` points to a file, the variable contains the
-/// file path. If it points to a directory, it contains the directory path, or -
-/// if no `path` is given - the current working directory.
+/// command line argument. If `<path>` points to a file, the variable contains
+/// the file path. If it points to a directory, it contains the directory path,
+/// or - if no `path` is given - the current working directory.
 pub const TMPL_VAR_PATH: &str = "path";
 
 /// Contains the fully qualified directory path of the `<path>` command line
@@ -258,7 +244,7 @@ pub const TMPL_VAR_FM_FILE_EXT: &str = "fm_file_ext";
 /// defined, the sort tag of the filename is never changed.
 ///
 /// This is a dynamically generated variable originating from the front matter
-/// of the current note. As all front matter variables, it's value is copied as
+/// of the current note. As all front matter variables, its value is copied as
 /// it is without modification.  Here, the only special treatment is, when
 /// analyzing the front matter, it is verified, that all the characters of the
 /// value of this variable are listed in `filename.sort_tag_chars`.
@@ -271,7 +257,7 @@ pub const TMPL_VAR_FM_SORT_TAG: &str = "fm_sort_tag";
 pub const TMPL_VAR_FM_NO_FILENAME_SYNC: &str = "fm_no_filename_sync";
 
 /// Contains the value of the front matter field `filename_sync`.  When set to
-/// `filename_sync: false`, the filename synchronisation mechanism is
+/// `filename_sync: false`, the filename synchronization mechanism is
 /// disabled for this note file. Default value is `true`.
 pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
 
@@ -309,7 +295,7 @@ pub const TMPL_FILTER_MAP_LANG: &[&[&str]] =
 /// file. The following variables are  defined: `{{ sanit | stem }}
 /// `, `{{ path | stem }}`, `{{ path | ext }}`, `{{ extension_default }}`
 /// `{{ file | tag }}`, `{{ username }}`, `{{ date }}`,
-/// `{{ title_text | lang }}`, `{{ dir_path }}`. In addition all environment
+/// `{{ title_text | lang }}`, `{{ dir_path }}`. In addition, all environment
 /// variables can be used, e.g. `{{ get_env(name=\"LOGNAME\") }}` When placed
 /// in YAML front matter, the filter `| json_encode` must be appended to each
 /// variable.
@@ -916,208 +902,3 @@ impl FromStr for LocalLinkKind {
     }
 }
 
-#[cfg(feature = "lang-detection")]
-#[derive(Debug)]
-/// Struct containing additional user configuration mostly read from
-/// environment variables.
-pub(crate) struct Settings {
-    pub author: String,
-    pub lang: String,
-    pub filter_get_lang: Result<Vec<IsoCode639_1>, ConfigError>,
-    pub filter_map_lang_hmap: Option<HashMap<String, String>>,
-}
-
-#[cfg(not(feature = "lang-detection"))]
-#[derive(Debug)]
-/// Structure holding various settings from environment varialbes.
-/// Some member variables also insert data from `LIB_CFG`.
-pub(crate) struct Settings {
-    /// Cf. documentation for `update_author_setting()`.
-    pub author: String,
-    /// Cf. documentation for `update_lang_setting()`.
-    pub lang: String,
-    /// Cf. documentation for `update_filter_get_lang_setting()`.
-    pub filter_get_lang: Result<Vec<String>, ConfigError>,
-    /// Cf. documentation for `update_filter_map_lang_hmap_setting()`.
-    pub filter_map_lang_hmap: Option<HashMap<String, String>>,
-}
-
-/// Global mutable varible of type `Settings`.
-pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(Settings {
-    author: String::new(),
-    lang: String::new(),
-    filter_get_lang: Ok(vec![]),
-    filter_map_lang_hmap: None,
-});
-
-/// (Re)read environment variables and store them in the global `SETTINGS`
-/// object. Some data originates from `LIB_CFG`.
-pub fn update_settings() -> Result<(), ConfigError> {
-    let mut settings = SETTINGS.write().unwrap();
-    update_author_setting(&mut settings);
-    update_lang_setting(&mut settings);
-    update_filter_get_lang_setting(&mut settings);
-    update_filter_map_lang_hmap_setting(&mut settings);
-
-    log::trace!("`SETTINGS` updated:\n{:#?}", settings);
-    
-    if let Err(e) = &settings.filter_get_lang {
-        Err(e.clone())
-    } else {
-        Ok(())
-    }
-}
-
-/// When `lang` is not `-`, overwrite `SETTINGS.lang` with `lang`.
-/// In any case, disable the `get_lang` filter by deleting all languages
-/// in `SETTINGS.filter_get_lang`.
-pub(crate) fn force_lang_setting(lang: &str) {
-    let lang = lang.trim();
-    let mut settings = SETTINGS.write().unwrap();
-    // Overwrite environment setting.
-    if lang != "-" {
-        let _ = mem::replace(&mut settings.lang, lang.to_string());
-    }
-    // Disable the `get_lang` Tera filter.
-    let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
-}
-
-/// Set `SETTINGS.author` to content of the first not empty environment
-/// variable: `TPNOTE_USER`, `LOGNAME` or `USER`.
-fn update_author_setting(settings: &mut RwLockWriteGuard<Settings>) {
-    let author = env::var(ENV_VAR_TPNOTE_USER).unwrap_or_else(|_| {
-        env::var("LOGNAME").unwrap_or_else(|_| {
-            env::var("USERNAME").unwrap_or_else(|_| env::var("USER").unwrap_or_default())
-        })
-    });
-
-    // Store result.
-    let _ = mem::replace(&mut settings.author, author);
-}
-
-/// Read keys and values from `LIB_CFG.tmpl.filter_map_lang` into HashMap.
-/// Add the user's default language and region.
-fn update_filter_map_lang_hmap_setting(settings: &mut RwLockWriteGuard<Settings>) {
-    let mut hm = HashMap::new();
-    let lib_cfg = LIB_CFG.read().unwrap();
-    for l in &lib_cfg.tmpl.filter_map_lang {
-        if l.len() >= 2 {
-            hm.insert(l[0].to_string(), l[1].to_string());
-        };
-    }
-    // Insert the user's default language and region in the HashMap.
-    if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
-        // Do not overwrite existing languages.
-        if !hm.contains_key(lang_subtag) {
-            hm.insert(lang_subtag.to_string(), settings.lang.to_string());
-        }
-    };
-
-    // Store result.
-    let _ = mem::replace(&mut settings.filter_map_lang_hmap, Some(hm));
-}
-
-/// Read the environment variable `TPNOTE_LANG` or -if empty- `LANG` into
-/// `SETTINGS.lang`.
-fn update_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
-    // Get the user's language tag.
-    // [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
-    let mut lang;
-    // Get the environment variable if it exists.
-    let tpnotelang = env::var(ENV_VAR_TPNOTE_LANG).ok();
-    // Unix/MacOS version.
-    #[cfg(not(target_family = "windows"))]
-    if let Some(tpnotelang) = tpnotelang {
-        lang = tpnotelang;
-    } else {
-        // [Linux: Define Locale and Language Settings -
-        // ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
-        let lang_env = env::var("LANG").unwrap_or_default();
-        // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
-        let mut language = "";
-        // [ISO 3166](https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes) country code.
-        let mut territory = "";
-        if let Some((l, lang_env)) = lang_env.split_once('_') {
-            language = l;
-            if let Some((t, _codeset)) = lang_env.split_once('.') {
-                territory = t;
-            }
-        }
-        lang = language.to_string();
-        lang.push('-');
-        lang.push_str(territory);
-    }
-
-    // Get the user's language tag.
-    // Windows version.
-    #[cfg(target_family = "windows")]
-    if let Some(tpnotelang) = tpnotelang {
-        lang = tpnotelang;
-    } else {
-        lang = String::new();
-        let mut buf = [0u16; LOCALE_NAME_MAX_LENGTH as usize];
-        let len = unsafe { GetUserDefaultLocaleName(buf.as_mut_ptr(), buf.len() as i32) };
-        if len > 0 {
-            lang = String::from_utf16_lossy(&buf[..((len - 1) as usize)]);
-        }
-    };
-
-    // Store result.
-    let _ = mem::replace(&mut settings.lang, lang);
-}
-
-/// Read language list from `LIB_CFG.tmpl.filter_get_lang`, add the user's
-/// default language subtag and store them in `SETTINGS.filter_get_lang`.
-#[cfg(feature = "lang-detection")]
-/// Convert the `get_lang_filter()` configuration from the config file.
-fn update_filter_get_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
-    let lib_cfg = LIB_CFG.read().unwrap();
-    // Read and convert ISO codes from config object.
-    match lib_cfg
-        .tmpl
-        .filter_get_lang
-        .iter()
-        .map(|l| {
-            IsoCode639_1::from_str(l).map_err(|_| {
-                // Produce list of all available langugages.
-                let mut all_langs = lingua::Language::all().iter().map(|l|{
-                    let mut s = l.iso_code_639_1().to_string();
-                    s.push_str(", ");
-                    s
-                }).collect::<Vec<String>>();
-                all_langs.sort();
-                let mut all_langs = all_langs.into_iter().collect::<String>();
-                all_langs.truncate(all_langs.len()-", ".len());
-                // Insert data into error object.
-                ConfigError::ParseLanguageCode {
-                language_code: l.into(),
-                all_langs
-            }})
-        })
-        .collect::<Result<Vec<IsoCode639_1>, ConfigError>>()
-    {
-        Ok(mut iso_codes) => {
-            // Add the user's language subtag as reported from the OS.
-            if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
-                if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
-                    if !iso_codes.contains(&iso_code) {
-                        iso_codes.push(iso_code);
-                    }
-                }
-            }
-            // Store result.
-            let _ = mem::replace(&mut settings.filter_get_lang, Ok(iso_codes));
-        }
-        Err(e) =>
-        // Store error.
-        {
-            let _ = mem::replace(&mut settings.filter_get_lang, Err(e));
-        }
-    }
-}
-
-#[cfg(not(feature = "lang-detection"))]
-/// Reset to empty default.
-fn update_filter_get_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
-    let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
-}

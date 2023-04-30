@@ -1,7 +1,6 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_ROOT_PATH_MARKER;
 use crate::config::LIB_CFG;
-use crate::config::SETTINGS;
 use crate::config::TMPL_VAR_DIR_PATH;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
@@ -13,6 +12,7 @@ use crate::config::TMPL_VAR_USERNAME;
 use crate::content::Content;
 use crate::error::NoteError;
 use crate::front_matter::FrontMatter;
+use crate::settings::SETTINGS;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::path::Path;

@@ -5,6 +5,9 @@
 //! provides a default configuration in the static variable `LIB_CFG` that can
 //! be customized at runtime. The defaults for the variables grouped in
 //! `LIB_CFG`, are defined as constants in the module `config` (see Rustdoc).
+//! While `LIB_CFG` is sourced only once at the start of Tp-Note, the
+//! `SETTINGS` may be sourced more often. The latter contains configuration
+//! data originating form environment variables.
 //!
 //! Tp-Note's high-level API, c.f. module `workflow`, abstracts most
 //! implementation details. Roughly speaking, the input path correspond to
@@ -25,5 +28,6 @@ pub mod highlight;
 pub mod html;
 pub mod markup_language;
 mod note;
+pub mod settings;
 pub mod template;
 pub mod workflow;

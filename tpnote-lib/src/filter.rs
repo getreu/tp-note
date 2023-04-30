@@ -1,8 +1,8 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
-use crate::config::SETTINGS;
 use crate::filename::NotePath;
+use crate::settings::SETTINGS;
 use lazy_static::lazy_static;
 #[cfg(feature = "lang-detection")]
 use lingua::{LanguageDetector, LanguageDetectorBuilder};
@@ -471,7 +471,7 @@ impl Hyperlink {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::update_settings;
+    use crate::settings::update_settings;
     use std::collections::HashMap;
     use tera::to_value;
 
