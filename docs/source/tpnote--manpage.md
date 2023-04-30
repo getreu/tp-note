@@ -1991,56 +1991,29 @@ never exposes any information to the network or on the Internet.
 
 # ENVIRONMENT VARIABLES
 
-TPNOTE\_LANG
-
+LANG
+   
 >   Tp-Note stores the user's locale settings - originating from the
     environment variable '`LANG`' (or the Windows registry) - in the template
-    variable '`{{ lang }}`'. When set, the environment variable
-    '`TPNOTE_LANG`' overwrites this locale setting. Unlike '`LANG`',
-    the environment variable '`TPNOTE_LANG`' is encoded as IETF BCP 47
-    language tag, e.g. '`en-US`'.
+    variable '`{{ lang }}`'. When the environment variable '`TPNOTE_LANG`' is 
+    set, it overwrites the locale setting stored in '`{{ lang }}`'. 
+    '`man locale`' describes the data format of '`LANG`', a typical value
+    is '`en_GB.UTF-8`'. 
 
-TPNOTE\_USER
+LOGNAME
 
 >   The template variable '`{{ username }}`' is the content of the first
     non-empty environment variable: '`TPNOTE_USER`', '`LOGNAME`',
     '`USER`' or '`USERNAME`'.
 
-TPNOTE\_EDITOR
+TPNOTE\_LANG
 
->   If set, this variable takes precedence over the configuration file
-    variable '`app_args.editor`'. While the latter is a list describing
-    how to invoke various file editors, '`TPNOTE_EDITOR`' contains a
-    string invoking one particular file editor, exactly as one would do
-    on a shell: the whitespace separated tokens list contains: the path
-    name of the application, and all its flags and options. For example:
-
->   ```sh
->   TPNOTE_EDITOR="geany -sim" tpnote
->   ```
-
->   The above instructs Tp-Note to start the editor "`geany`" with the
-    flags '`-sim`'. Unlike with shell tokens, the backslash and
-    quote characters have no special meaning. Instead, all tokens
-    are _percent encoded_. Consider the following example where
-    the space character is expressed as '`%20`':
-
->   ```sh
->   TPNOTE_EDITOR="geany -sim -c ~/my%20config/" tpnote
->   ```
-
->   The empty string disables the launch of the editor the same way
-    as '`--view`':
-
->   ```sh
->   TPNOTE_EDITOR="" tpnote
->   ```
-
->   is equivalent to:
-
->   ```sh
->   tpnote --view
->   ```
+>   Tp-Note stores the user's locale settings - originating from the environment
+    variable '`LANG`' (or the Windows registry) - in the template variable
+    '`{{ lang }}`'. When the environment variable '`TPNOTE_LANG`' is set, it
+    overwrites the locale setting stored in '`{{ lang }}`'. Unlike '`LANG`', the
+    environment variable '`TPNOTE_LANG`' is encoded as IETF BCP 47 language tag,
+    e.g. '`en-US`'.
 
 TPNOTE\_BROWSER
 
@@ -2072,6 +2045,54 @@ TPNOTE\_BROWSER
 >   ```sh
 >   tpnote --edit
 >   ```
+
+TPNOTE\_EDITOR
+
+>   If set, this variable takes precedence over the configuration file
+    variable '`app_args.editor`'. While the latter is a list describing
+    how to invoke various file editors, '`TPNOTE_EDITOR`' contains a
+    string invoking one particular file editor, exactly as one would do
+    on a shell: the whitespace separated tokens list contains: the path
+    name of the application, and all its flags and options. For example:
+
+>   ```sh
+>   TPNOTE_EDITOR="geany -sim" tpnote
+>   ```
+
+>   The above instructs Tp-Note to start the editor "`geany`" with the
+    flags '`-sim`'. Unlike with shell tokens, the backslash and
+    quote characters have no special meaning. Instead, all tokens
+    are _percent encoded_. Consider the following example where
+    the space character is expressed as '`%20`':
+
+>   ```sh
+>   TPNOTE_EDITOR="geany -sim -c ~/my%20config/" tpnote
+>   ```
+
+>   The empty string disables the launch of the editor the same way
+    as the command line option '`--view`' does:
+
+>   ```sh
+>   TPNOTE_EDITOR="" tpnote
+>   ```
+
+>   is equivalent to:
+
+>   ```sh
+>   tpnote --view
+>   ```
+
+TPNOTE\_USER
+
+>   The template variable '`{{ username }}`' is the content of the first
+    non-empty environment variable: '`TPNOTE_USER`', '`LOGNAME`',
+    '`USER`' or '`USERNAME`'.
+
+TPNOTE\_USERNAME
+
+>   The template variable '`{{ username }}`' is the content of the first
+    non-empty environment variable: '`TPNOTE_USER`', '`LOGNAME`',
+    '`USER`' or '`USERNAME`'.
 
 
 
