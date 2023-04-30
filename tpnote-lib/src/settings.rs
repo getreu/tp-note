@@ -25,6 +25,18 @@ pub const ENV_VAR_TPNOTE_LANG: &str = "TPNOTE_LANG";
 /// This is used in various templates.
 pub const ENV_VAR_TPNOTE_USER: &str = "TPNOTE_USER";
 
+/// Name of the `LOGNAME` environment variable.
+const ENV_VAR_LOGNAME: &str = "LOGNAME";
+
+/// Name of the `USERNAME` environment variable.
+const ENV_VAR_USERNAME: &str = "USERNAME";
+
+/// Name of the `USER` environment variable.
+const ENV_VAR_USER: &str = "USER";
+
+/// Name of the `LANG` environment variable.
+const ENV_VAR_LANG: &str = "LANG";
+
 #[cfg(feature = "lang-detection")]
 #[derive(Debug)]
 /// Struct containing additional user configuration mostly read from
@@ -95,8 +107,9 @@ pub(crate) fn force_lang_setting(lang: &str) {
 /// variable: `TPNOTE_USER`, `LOGNAME` or `USER`.
 fn update_author_setting(settings: &mut RwLockWriteGuard<Settings>) {
     let author = env::var(ENV_VAR_TPNOTE_USER).unwrap_or_else(|_| {
-        env::var("LOGNAME").unwrap_or_else(|_| {
-            env::var("USERNAME").unwrap_or_else(|_| env::var("USER").unwrap_or_default())
+        env::var(ENV_VAR_LOGNAME).unwrap_or_else(|_| {
+            env::var(ENV_VAR_USERNAME)
+                .unwrap_or_else(|_| env::var(ENV_VAR_USER).unwrap_or_default())
         })
     });
 
@@ -141,7 +154,7 @@ fn update_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
     } else {
         // [Linux: Define Locale and Language Settings -
         // ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
-        let lang_env = env::var("LANG").unwrap_or_default();
+        let lang_env = env::var(ENV_VAR_LANG).unwrap_or_default();
         // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
         let mut language = "";
         // [ISO 3166](https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes) country code.
