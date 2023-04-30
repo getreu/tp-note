@@ -76,7 +76,7 @@ pub enum ConfigFileError {
     },
 
     /// Should not happen. Please report this bug.
-    #[error("Can not convert path to UFT8:\n{path:?}")]
+    #[error("Can not convert path to UTF-8:\n{path:?}")]
     PathNotUtf8 { path: PathBuf },
 
     /// Remedy: check the configuration file variable `app_args.editor`.
@@ -93,14 +93,15 @@ pub enum ConfigFileError {
         args: Vec<String>,
     },
 
-    /// Remedy: check the configuration file variable `app_args.editor`.
+    /// Remedy: check the configuration file variable `app_args.editor`
+    /// or `app_args.browser` depending on the displayed variable name.
     #[error(
-        "Can not find any file editor listend in `{var_name}`:\n\
+        "Can not find any external application listend in `{var_name}`:\n\
         \t{app_list:?}\n\
         \n\
         Install one of the listed applications on your system -or-\n\
         register some already installed application in Tp-Note's \n\
-        configuration file or in the environment variable."
+        configuration file or in the corresponding environment variable."
     )]
     NoApplicationFound {
         app_list: Vec<Vec<String>>,
