@@ -412,7 +412,7 @@ A little game designed for primary kids to revise vocabulary in classroom.
     '`from_text_file_content`') and the filename might change slightly
     (see template '`from_text_file_filename`'). A possible _sort-tag_
     at the beginning of the filename remains untouched. If the filename
-    does not start with a sort tag, the current date is prepended.
+    does not start with a sort tag, the file's creation date is prepended.
 
 
 
@@ -1833,8 +1833,8 @@ A filter is always used together with a variable. Here are some examples:
   convention_ for more details about this filter.
 
 * '`{{ fm_title | sanit(force_alpha=true) }}`' is the note's title as defined
-  in its front-matter. Same as above, but strings starting with a sort tag are
-  prepended by an apostrophe to avoid ambiguity.
+  in its front-matter. Same as above, but results starting with a sort tag
+  character are prepended with an apostrophe to avoid ambiguity.
 
 * '`{{ fm_all | remove(var='fm_title') }}`' represents a collection (map) of
   all '`fm_*`' variables, exclusive of the variable '`fm_title`'.
@@ -2000,12 +2000,6 @@ LANG
     '`man locale`' describes the data format of '`LANG`', a typical value
     is '`en_GB.UTF-8`'. 
 
-LOGNAME
-
->   The template variable '`{{ username }}`' is the content of the first
-    non-empty environment variable: '`TPNOTE_USER`', '`LOGNAME`',
-    '`USER`' or '`USERNAME`'.
-
 TPNOTE\_LANG
 
 >   Tp-Note stores the user's locale settings - originating from the environment
@@ -2082,13 +2076,7 @@ TPNOTE\_EDITOR
 >   tpnote --view
 >   ```
 
-TPNOTE\_USER
-
->   The template variable '`{{ username }}`' is the content of the first
-    non-empty environment variable: '`TPNOTE_USER`', '`LOGNAME`',
-    '`USER`' or '`USERNAME`'.
-
-TPNOTE\_USERNAME
+TPNOTE\_USER, LOGNAME, USER, USERNAME
 
 >   The template variable '`{{ username }}`' is the content of the first
     non-empty environment variable: '`TPNOTE_USER`', '`LOGNAME`',

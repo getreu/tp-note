@@ -295,7 +295,9 @@ The procedure preserves the webpage\[cq]s title in the note\[cq]s title:
 .IP
 .nf
 \f[C]
-curl \[aq]https://blog.getreu.net\[aq] | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tpnote
+curl \[aq]https://blog.getreu.net\[aq] \[rs]
+| pandoc --standalone -f html -t markdown_strict+yaml_metadata_block \[rs]
+| tpnote
 \f[R]
 .fi
 .PP
@@ -485,8 +487,8 @@ No YAML header: a new header is prepended (see template
 slightly (see template `\f[C]from_text_file_filename\f[R]').
 A possible \f[I]sort-tag\f[R] at the beginning of the filename remains
 untouched.
-If the filename does not start with a sort tag, the current date is
-prepended.
+If the filename does not start with a sort tag, the file\[cq]s creation
+date is prepended.
 .RE
 .SS Editing notes
 .PP
@@ -1019,7 +1021,7 @@ combination of `\f[C]_\f[R]', `\f[C]-\f[R]', `\f[C]\f[R]',
 .fi
 .RE
 .IP \[bu] 2
-or as a \f[I]sequence number sort tag\f[R].
+or, as a \f[I]sequence number sort tag\f[R].
 .RS 2
 .IP
 .nf
@@ -1037,12 +1039,16 @@ When Tp-Note creates a new note, it will automatically prepend a
 The `\f[C]{{ fm_title }}\f[R]' part is usually derived from the parent
 directory name omitting its own \f[I]sort tag\f[R].
 .PP
-A note\[cq]s filename is in sync with its meta data, when the following
+A note\[cq]s filename is in sync with its metadata, when the following
 is true (slightly simplified, see the configuration file for the
 complete definition):
+.RS
 .PP
 filename on disk without \f[I]sort tag\f[R] ==
-`\f[C]{{ fm_title }}--{{ fm_subtitle }}.md\f[R]' [1]
+`\f[C]{{ fm_title }}--{{ fm_subtitle }}.md\f[R]'
+.RE
+.PP
+[1]
 .PP
 Consider the following document with the filename:
 .IP
@@ -1623,7 +1629,8 @@ Markdown format:
 .IP
 .nf
 \f[C]
-[{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}](<{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}>)
+[{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}]\[rs]
+(<{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}>)
 \f[R]
 .fi
 .PP
@@ -2068,8 +2075,8 @@ file `\f[C]note.rs\f[R]'.
 .SS Template variables
 .PP
 All Tera template variables and
-functions (https://tera.netlify.com/docs/#templates) can be used within
-Tp-Note\[cq]s templates.
+functions (https://tera.netlify.com/%20docs/#templates) can be used
+within Tp-Note\[cq]s templates.
 For example `\f[C]{{ get_env(name=\[aq]LANG\[aq]) }}\[aq]\f[R] gives you
 access to the'\f[C]LANG\f[R]\[cq] environment variable.
 .PP
@@ -2286,8 +2293,8 @@ about this filter.
 .IP \[bu] 2
 `\f[C]{{ fm_title | sanit(force_alpha=true) }}\f[R]' is the note\[cq]s
 title as defined in its front-matter.
-Same as above, but strings starting with a sort tag are prepended by an
-apostrophe to avoid ambiguity.
+Same as above, but results starting with a sort tag character are
+prepended with an apostrophe to avoid ambiguity.
 .IP \[bu] 2
 `\f[C]{{ fm_all | remove(var=\[aq]fm_title\[aq]) }}\f[R]' represents a
 collection (map) of all `\f[C]fm_*\f[R]' variables, exclusive of the
@@ -2373,10 +2380,10 @@ The apostrophe preserves the following dot from being filtered.
 exception: when a string starts with a digit `\f[C]0123456789\f[R]' or
 `\f[C]-_\f[R]', the whole string is prepended with \f[C]\[aq]\f[R].
 For example: \[lq]\f[C]1 The Show Begins\f[R]\[rq] becomes
-\[lq]\f[C]\[aq]1 The Show   Begins\f[R]\[rq].
+\[lq]\f[C]\[aq]1 The Show Begins\f[R]\[rq].
 This filter should always be applied to the first variable assembling
-the new filename,
-e.g.\ `\f[C]{{ title | sanit(force_alpha=true )}\f[R]'.
+the new filename, e.g.\ 
+`\f[C]{{ title | sanit(force_alpha=true )}\f[R]'.
 This way, it is always possible to distinguish the sort tag from the
 actual filename.
 The default sort tag separator `\f[C]\[aq]\f[R]' can be changed with the
@@ -2394,7 +2401,7 @@ needlessly restrict the value range of sort tags as they usually end
 with a `\f[C]-\f[R]', a character, which the `\f[C]sanit\f[R]'-filter
 screens out when it appears in leading or trailing position.
 For this reason no `\f[C]sanit\f[R]'-filter is not allowed with
-`\f[C]{{ path | tag }}\f[R]' and `\f[C]{{ dir_path | tag }}\f[R]'.
+`\f[C]{{ path | tag }}\f[R]' and `\f[C]{{ dir_path |tag }}\f[R]'.
 .SH SECURITY AND PRIVACY CONSIDERATIONS
 .PP
 As discussed above, Tp-Note\[cq]s built-in viewer sets up an HTTP server
@@ -2465,89 +2472,29 @@ This concerns only local users, Tp-Note never exposes any information to
 the network or on the Internet.
 .SH ENVIRONMENT VARIABLES
 .PP
+LANG
+.RS
+.PP
+Tp-Note stores the user\[cq]s locale settings - originating from the
+environment variable `\f[C]LANG\f[R]' (or the Windows registry) - in the
+template variable `\f[C]{{ lang }}\f[R]'.
+When the environment variable `\f[C]TPNOTE_LANG\f[R]' is set, it
+overwrites the locale setting stored in `\f[C]{{ lang }}\f[R]'.
+`\f[C]man locale\f[R]' describes the data format of `\f[C]LANG\f[R]', a
+typical value is `\f[C]en_GB.UTF-8\f[R]'.
+.RE
+.PP
 TPNOTE_LANG
 .RS
 .PP
 Tp-Note stores the user\[cq]s locale settings - originating from the
 environment variable `\f[C]LANG\f[R]' (or the Windows registry) - in the
 template variable `\f[C]{{ lang }}\f[R]'.
-When set, the environment variable `\f[C]TPNOTE_LANG\f[R]' overwrites
-this locale setting.
+When the environment variable `\f[C]TPNOTE_LANG\f[R]' is set, it
+overwrites the locale setting stored in `\f[C]{{ lang }}\f[R]'.
 Unlike `\f[C]LANG\f[R]', the environment variable
 `\f[C]TPNOTE_LANG\f[R]' is encoded as IETF BCP 47 language tag,
 e.g.\ `\f[C]en-US\f[R]'.
-.RE
-.PP
-TPNOTE_USER
-.RS
-.PP
-The template variable `\f[C]{{ username }}\f[R]' is the content of the
-first non-empty environment variable: `\f[C]TPNOTE_USER\f[R]',
-`\f[C]LOGNAME\f[R]', `\f[C]USER\f[R]' or `\f[C]USERNAME\f[R]'.
-.RE
-.PP
-TPNOTE_EDITOR
-.RS
-.PP
-If set, this variable takes precedence over the configuration file
-variable `\f[C]app_args.editor\f[R]'.
-While the latter is a list describing how to invoke various file
-editors, `\f[C]TPNOTE_EDITOR\f[R]' contains a string invoking one
-particular file editor, exactly as one would do on a shell: the
-whitespace separated tokens list contains: the path name of the
-application, and all its flags and options.
-For example:
-.RE
-.RS
-.IP
-.nf
-\f[C]
-TPNOTE_EDITOR=\[dq]geany -sim\[dq] tpnote
-\f[R]
-.fi
-.RE
-.RS
-.PP
-The above instructs Tp-Note to start the editor
-\[lq]\f[C]geany\f[R]\[rq] with the flags `\f[C]-sim\f[R]'.
-Unlike with shell tokens, the backslash and quote characters have no
-special meaning.
-Instead, all tokens are \f[I]percent encoded\f[R].
-Consider the following example where the space character is expressed as
-`\f[C]%20\f[R]':
-.RE
-.RS
-.IP
-.nf
-\f[C]
-TPNOTE_EDITOR=\[dq]geany -sim -c \[ti]/my%20config/\[dq] tpnote
-\f[R]
-.fi
-.RE
-.RS
-.PP
-The empty string disables the launch of the editor the same way as
-`\f[C]--view\f[R]':
-.RE
-.RS
-.IP
-.nf
-\f[C]
-TPNOTE_EDITOR=\[dq]\[dq] tpnote
-\f[R]
-.fi
-.RE
-.RS
-.PP
-is equivalent to:
-.RE
-.RS
-.IP
-.nf
-\f[C]
-tpnote --view
-\f[R]
-.fi
 .RE
 .PP
 TPNOTE_BROWSER
@@ -2604,6 +2551,78 @@ is equivalent to:
 tpnote --edit
 \f[R]
 .fi
+.RE
+.PP
+TPNOTE_EDITOR
+.RS
+.PP
+If set, this variable takes precedence over the configuration file
+variable `\f[C]app_args.editor\f[R]'.
+While the latter is a list describing how to invoke various file
+editors, `\f[C]TPNOTE_EDITOR\f[R]' contains a string invoking one
+particular file editor, exactly as one would do on a shell: the
+whitespace separated tokens list contains: the path name of the
+application, and all its flags and options.
+For example:
+.RE
+.RS
+.IP
+.nf
+\f[C]
+TPNOTE_EDITOR=\[dq]geany -sim\[dq] tpnote
+\f[R]
+.fi
+.RE
+.RS
+.PP
+The above instructs Tp-Note to start the editor
+\[lq]\f[C]geany\f[R]\[rq] with the flags `\f[C]-sim\f[R]'.
+Unlike with shell tokens, the backslash and quote characters have no
+special meaning.
+Instead, all tokens are \f[I]percent encoded\f[R].
+Consider the following example where the space character is expressed as
+`\f[C]%20\f[R]':
+.RE
+.RS
+.IP
+.nf
+\f[C]
+TPNOTE_EDITOR=\[dq]geany -sim -c \[ti]/my%20config/\[dq] tpnote
+\f[R]
+.fi
+.RE
+.RS
+.PP
+The empty string disables the launch of the editor the same way as the
+command line option `\f[C]--view\f[R]' does:
+.RE
+.RS
+.IP
+.nf
+\f[C]
+TPNOTE_EDITOR=\[dq]\[dq] tpnote
+\f[R]
+.fi
+.RE
+.RS
+.PP
+is equivalent to:
+.RE
+.RS
+.IP
+.nf
+\f[C]
+tpnote --view
+\f[R]
+.fi
+.RE
+.PP
+TPNOTE_USER, LOGNAME, USER, USERNAME
+.RS
+.PP
+The template variable `\f[C]{{ username }}\f[R]' is the content of the
+first non-empty environment variable: `\f[C]TPNOTE_USER\f[R]',
+`\f[C]LOGNAME\f[R]', `\f[C]USER\f[R]' or `\f[C]USERNAME\f[R]'.
 .RE
 .SH EXIT STATUS
 .PP
