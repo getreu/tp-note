@@ -708,18 +708,19 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 "#;
 
 lazy_static! {
-/// Global variable containing the filename related configuration data.
+/// Global variable containing the filename and template related configuration 
+/// data.
     pub static ref LIB_CFG: RwLock<LibCfg> = RwLock::new(LibCfg::default());
 }
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct LibCfg {
-    /// Version number of the config file as String -or-
-    /// a text message explaining why we could not load the
-    /// configuration file.
+    /// Configuration of filename parsing.
     pub filename: Filename,
+    /// Configuration of content and filename templates.
     pub tmpl: Tmpl,
+    /// Configuration of HTML templates.
     pub tmpl_html: TmplHtml,
 }
 
