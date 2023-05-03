@@ -128,12 +128,14 @@ fn update_filter_map_lang_hmap_setting(settings: &mut RwLockWriteGuard<Settings>
         };
     }
     // Insert the user's default language and region in the HashMap.
-    if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
-        // Do not overwrite existing languages.
-        if !hm.contains_key(lang_subtag) {
-            hm.insert(lang_subtag.to_string(), settings.lang.to_string());
-        }
-    };
+    if !settings.lang.is_empty() {
+        if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
+            // Do not overwrite existing languages.
+            if !lang_subtag.is_empty() && !hm.contains_key(lang_subtag) {
+                hm.insert(lang_subtag.to_string(), settings.lang.to_string());
+            }
+        };
+    }
 
     // Store result.
     let _ = mem::replace(&mut settings.filter_map_lang_hmap, Some(hm));
@@ -144,7 +146,7 @@ fn update_filter_map_lang_hmap_setting(settings: &mut RwLockWriteGuard<Settings>
 fn update_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
     // Get the user's language tag.
     // [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
-    let mut lang;
+    let mut lang = String::new();
     // Get the environment variable if it exists.
     let tpnotelang = env::var(ENV_VAR_TPNOTE_LANG).ok();
     // Unix/MacOS version.
@@ -154,20 +156,23 @@ fn update_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
     } else {
         // [Linux: Define Locale and Language Settings -
         // ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
-        let lang_env = env::var(ENV_VAR_LANG).unwrap_or_default();
-        // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
-        let mut language = "";
-        // [ISO 3166](https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes) country code.
-        let mut territory = "";
-        if let Some((l, lang_env)) = lang_env.split_once('_') {
-            language = l;
-            if let Some((t, _codeset)) = lang_env.split_once('.') {
-                territory = t;
+        if let Ok(lang_env) = env::var(ENV_VAR_LANG) {
+            if !lang_env.is_empty() {
+                // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
+                let mut language = "";
+                // [ISO 3166](https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes) country code.
+                let mut territory = "";
+                if let Some((l, lang_env)) = lang_env.split_once('_') {
+                    language = l;
+                    if let Some((t, _codeset)) = lang_env.split_once('.') {
+                        territory = t;
+                    }
+                }
+                lang = language.to_string();
+                lang.push('-');
+                lang.push_str(territory);
             }
         }
-        lang = language.to_string();
-        lang.push('-');
-        lang.push_str(territory);
     }
 
     // Get the user's language tag.
@@ -224,10 +229,12 @@ fn update_filter_get_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
     {
         Ok(mut iso_codes) => {
             // Add the user's language subtag as reported from the OS.
-            if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
-                if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
-                    if !iso_codes.contains(&iso_code) {
-                        iso_codes.push(iso_code);
+            if !settings.lang.is_empty() {
+                if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
+                    if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
+                        if !iso_codes.contains(&iso_code) {
+                            iso_codes.push(iso_code);
+                        }
                     }
                 }
             }
