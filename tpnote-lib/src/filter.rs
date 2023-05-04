@@ -397,7 +397,7 @@ fn get_lang_filter<S: BuildHasher>(
                 .detect_language_of(input)
                 .map(|l| format!("{}", l.iso_code_639_1()))
                 .unwrap_or_default();
-            log::info!("Language '{}' in input detected.", detected_language);
+            log::debug!("Language '{}' in input detected.", detected_language);
 
             Ok(to_value(detected_language)?)
         }
