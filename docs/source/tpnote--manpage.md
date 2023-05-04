@@ -1262,7 +1262,14 @@ exist in above list, it is automatically appended as additional internal
 mapping. When the filter `map_lang` encounters a language code for which
 no mapping is configured, the input language code is forwarded as it is
 without modification, e.g. the input `fr` results in the output `fr`.
+Subsequent entries that differ only in the region subtag, e.g. 
+'`['en', 'en-GB'], ['en', 'en-US']`' are ignored.
 
+For debugging observe the value of '`SETTINGS`' in the debug log:
+
+```sh
+tpnote -d trace -b
+```
 
 
 ## Change the default markup language
@@ -2008,6 +2015,25 @@ TPNOTE\_LANG
     overwrites the locale setting stored in '`{{ lang }}`'. Unlike '`LANG`', the
     environment variable '`TPNOTE_LANG`' is encoded as IETF BCP 47 language tag,
     e.g. '`en-US`'.
+
+TPNOTE\_LANG\_DETECTION
+
+>   If set, this variable overwrites the configuration file variables
+    '`tmpl.filter_get_lang`' and '`tmpl.filter_map_lang`', thus selecting 
+    potential language candidates for the automatic language detection. The
+    string contains a comma and space separated list of ISO 63901 codes, e.g.
+    '`fr`' or IETF BCP 47 tags, e.g. '`fr-FR`'. Here an example of a complete
+    string: '`de-DE, en, fr-FR, hu`'. The user's default locale '`{{ lang }}`' 
+    is automatically added to the list. Note, that the language detection
+    algorithm determines only the language subtag, e.g. '`en`'. The region
+    subtag will be added as indicated in your configuration. Subsequent entries
+    that differ only in the region subtag, e.g. '`en-GB, en-US`' are ignored.
+
+>   For debugging observe the value of '`SETTINGS`' in the debug log:
+
+>   ```sh
+>   TPNOTE_LANG_DETECTION="de-DE, en, fr_FR" tpnote -d trace -b
+>   ```
 
 TPNOTE\_BROWSER
 
