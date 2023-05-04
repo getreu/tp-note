@@ -90,25 +90,6 @@ pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(Settings {
     filter_map_lang_hmap: None,
 });
 
-/// (Re)read environment variables and store them in the global `SETTINGS`
-/// object. Some data originates from `LIB_CFG`.
-pub fn update_settings() -> Result<(), ConfigError> {
-    let mut settings = SETTINGS.write().unwrap();
-    update_author_setting(&mut settings);
-    update_lang_setting(&mut settings);
-    update_filter_get_lang_setting(&mut settings);
-    update_filter_map_lang_hmap_setting(&mut settings);
-    update_env_lang_detection(&mut settings);
-
-    log::trace!("`SETTINGS` updated:\n{:#?}", settings);
-
-    if let Err(e) = &settings.filter_get_lang {
-        Err(e.clone())
-    } else {
-        Ok(())
-    }
-}
-
 /// When `lang` is not `-`, overwrite `SETTINGS.lang` with `lang`.
 /// In any case, disable the `get_lang` filter by deleting all languages
 /// in `SETTINGS.filter_get_lang`.
@@ -137,28 +118,23 @@ fn update_author_setting(settings: &mut Settings) {
     let _ = mem::replace(&mut settings.author, author);
 }
 
-/// Read keys and values from `LIB_CFG.tmpl.filter_map_lang` into HashMap.
-/// Add the user's default language and region.
-fn update_filter_map_lang_hmap_setting(settings: &mut Settings) {
-    let mut hm = HashMap::new();
-    let lib_cfg = LIB_CFG.read().unwrap();
-    for l in &lib_cfg.tmpl.filter_map_lang {
-        if l.len() >= 2 {
-            hm.insert(l[0].to_string(), l[1].to_string());
-        };
-    }
-    // Insert the user's default language and region in the HashMap.
-    if !settings.lang.is_empty() {
-        if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
-            // Do not overwrite existing languages.
-            if !lang_subtag.is_empty() && !hm.contains_key(lang_subtag) {
-                hm.insert(lang_subtag.to_string(), settings.lang.to_string());
-            }
-        };
-    }
+/// (Re)read environment variables and store them in the global `SETTINGS`
+/// object. Some data originates from `LIB_CFG`.
+pub fn update_settings() -> Result<(), ConfigError> {
+    let mut settings = SETTINGS.write().unwrap();
+    update_author_setting(&mut settings);
+    update_lang_setting(&mut settings);
+    update_filter_get_lang_setting(&mut settings);
+    update_filter_map_lang_hmap_setting(&mut settings);
+    update_env_lang_detection(&mut settings);
 
-    // Store result.
-    let _ = mem::replace(&mut settings.filter_map_lang_hmap, Some(hm));
+    log::trace!("`SETTINGS` updated:\n{:#?}", settings);
+
+    if let Err(e) = &settings.filter_get_lang {
+        Err(e.clone())
+    } else {
+        Ok(())
+    }
 }
 
 /// Read the environment variable `TPNOTE_LANG` or -if empty- `LANG` into
@@ -273,6 +249,30 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
 /// Reset to empty default.
 fn update_filter_get_lang_setting(settings: &mut Settings) {
     let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
+}
+
+/// Read keys and values from `LIB_CFG.tmpl.filter_map_lang` into HashMap.
+/// Add the user's default language and region.
+fn update_filter_map_lang_hmap_setting(settings: &mut Settings) {
+    let mut hm = HashMap::new();
+    let lib_cfg = LIB_CFG.read().unwrap();
+    for l in &lib_cfg.tmpl.filter_map_lang {
+        if l.len() >= 2 {
+            hm.insert(l[0].to_string(), l[1].to_string());
+        };
+    }
+    // Insert the user's default language and region in the HashMap.
+    if !settings.lang.is_empty() {
+        if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
+            // Do not overwrite existing languages.
+            if !lang_subtag.is_empty() && !hm.contains_key(lang_subtag) {
+                hm.insert(lang_subtag.to_string(), settings.lang.to_string());
+            }
+        };
+    }
+
+    // Store result.
+    let _ = mem::replace(&mut settings.filter_map_lang_hmap, Some(hm));
 }
 
 /// Reads the environment variable `LANG_DETECTION`. If not empty,
