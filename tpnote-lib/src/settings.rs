@@ -16,13 +16,19 @@ use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
 use windows_sys::Win32::System::SystemServices::LOCALE_NAME_MAX_LENGTH;
 
 /// Name of the environment variable, that can be optionally
-/// used to overwrite the user's default language setting.
-/// This is used in various templates.
+/// used to overwrite the user's default language setting, which is
+/// accessible as `{{ lang }}` template variable and used in various
+/// templates.
 pub const ENV_VAR_TPNOTE_LANG: &str = "TPNOTE_LANG";
 
 /// Name of the environment variable, that can be optionally
-/// used to overwrite the user's login name.
-/// This is used in various templates.
+/// used to overwrite the user's `filter_get_lang` and `filter_map_lang`
+/// configuration file setting.
+pub const ENV_VAR_TPNOTE_LANG_DETECTION: &str = "TPNOTE_LANG_DETECTION";
+
+/// Name of the environment variable, that can be optionally
+/// used to overwrite the user's login name. The result is accessible as
+/// `{{ username }}` template variable and used in various templates.
 pub const ENV_VAR_TPNOTE_USER: &str = "TPNOTE_USER";
 
 /// Name of the `LOGNAME` environment variable.
@@ -79,6 +85,7 @@ pub fn update_settings() -> Result<(), ConfigError> {
     update_lang_setting(&mut settings);
     update_filter_get_lang_setting(&mut settings);
     update_filter_map_lang_hmap_setting(&mut settings);
+    update_env_lang_detection(&mut settings);
 
     log::trace!("`SETTINGS` updated:\n{:#?}", settings);
 
@@ -253,4 +260,99 @@ fn update_filter_get_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
 /// Reset to empty default.
 fn update_filter_get_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
     let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
+}
+
+/// Reads the environment variable `LANG_DETECTION`. If not empty,
+/// parse the  content and overwrite `settings.filter_get_lang` and
+/// `settings.filter_map_lang`.
+fn update_env_lang_detection(settings: &mut RwLockWriteGuard<Settings>) {
+    if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
+        if env_var == "" {
+            let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
+            let _ = mem::replace(&mut settings.filter_map_lang_hmap, None);
+            log::info!(
+                "Empty env. var. `{}` disables `lang-detection` feature.",
+                ENV_VAR_TPNOTE_LANG_DETECTION
+            );
+            return;
+        }
+
+        // Read and convert ISO codes from config object.
+        let mut hm: HashMap<String, String> = HashMap::new();
+        match env_var
+            // The happy path.
+            .split(',')
+            .map(|t| {
+                let t = t.trim();
+                if let Some((lang_subtag, _)) = t.split_once('-') {
+                    // Do not overwrite existing languages.
+                    if !lang_subtag.is_empty() && !hm.contains_key(lang_subtag) {
+                        hm.insert(lang_subtag.to_string(), t.to_string());
+                    };
+                    lang_subtag
+                } else {
+                    t
+                }
+            })
+            // The error path.
+            .map(|l| {
+                IsoCode639_1::from_str(l.trim()).map_err(|_| {
+                    // Produce list of all available langugages.
+                    let mut all_langs = lingua::Language::all()
+                        .iter()
+                        .map(|l| {
+                            let mut s = l.iso_code_639_1().to_string();
+                            s.push_str(", ");
+                            s
+                        })
+                        .collect::<Vec<String>>();
+                    all_langs.sort();
+                    let mut all_langs = all_langs.into_iter().collect::<String>();
+                    all_langs.truncate(all_langs.len() - ", ".len());
+                    // Insert data into error object.
+                    ConfigError::ParseLanguageCode {
+                        language_code: l.into(),
+                        all_langs,
+                    }
+                })
+            })
+            .collect::<Result<Vec<IsoCode639_1>, ConfigError>>()
+        {
+            Ok(mut iso_codes) => {
+                // Add the user's language subtag as reported from the OS.
+                // Continue the happy path.
+                if !settings.lang.is_empty() {
+                    if let Some(lang_subtag) = settings.lang.split('-').next() {
+                        if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
+                            if !iso_codes.contains(&iso_code) {
+                                iso_codes.push(iso_code);
+                            }
+                            // Check if there is a remainder (region code).
+                            if lang_subtag != settings.lang && !hm.contains_key(lang_subtag) {
+                                hm.insert(lang_subtag.to_string(), settings.lang.to_string());
+                            }
+                        }
+                    }
+                }
+                // Store result.
+                let _ = mem::replace(&mut settings.filter_get_lang, Ok(iso_codes));
+                let _ = mem::replace(&mut settings.filter_map_lang_hmap, Some(hm));
+            }
+            Err(e) =>
+            // Store error.
+            {
+                let _ = mem::replace(&mut settings.filter_get_lang, Err(e));
+            }
+        }
+    }
+}
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_update_env_lang_detection() {
+        todo!();
+    }
 }
