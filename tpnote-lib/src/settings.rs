@@ -9,7 +9,7 @@ use lingua;
 #[cfg(feature = "lang-detection")]
 use lingua::IsoCode639_1;
 use std::collections::HashMap;
-use std::{env, mem, str::FromStr, sync::RwLock, sync::RwLockWriteGuard};
+use std::{env, mem, str::FromStr, sync::RwLock};
 #[cfg(target_family = "windows")]
 use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
 #[cfg(target_family = "windows")]
@@ -112,7 +112,7 @@ pub(crate) fn force_lang_setting(lang: &str) {
 
 /// Set `SETTINGS.author` to content of the first not empty environment
 /// variable: `TPNOTE_USER`, `LOGNAME` or `USER`.
-fn update_author_setting(settings: &mut RwLockWriteGuard<Settings>) {
+fn update_author_setting(settings: &mut Settings) {
     let author = env::var(ENV_VAR_TPNOTE_USER).unwrap_or_else(|_| {
         env::var(ENV_VAR_LOGNAME).unwrap_or_else(|_| {
             env::var(ENV_VAR_USERNAME)
@@ -126,7 +126,7 @@ fn update_author_setting(settings: &mut RwLockWriteGuard<Settings>) {
 
 /// Read keys and values from `LIB_CFG.tmpl.filter_map_lang` into HashMap.
 /// Add the user's default language and region.
-fn update_filter_map_lang_hmap_setting(settings: &mut RwLockWriteGuard<Settings>) {
+fn update_filter_map_lang_hmap_setting(settings: &mut Settings) {
     let mut hm = HashMap::new();
     let lib_cfg = LIB_CFG.read().unwrap();
     for l in &lib_cfg.tmpl.filter_map_lang {
@@ -150,7 +150,7 @@ fn update_filter_map_lang_hmap_setting(settings: &mut RwLockWriteGuard<Settings>
 
 /// Read the environment variable `TPNOTE_LANG` or -if empty- `LANG` into
 /// `SETTINGS.lang`.
-fn update_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
+fn update_lang_setting(settings: &mut Settings) {
     // Get the user's language tag.
     // [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
     let mut lang = String::new();
@@ -204,7 +204,7 @@ fn update_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
 /// default language subtag and store them in `SETTINGS.filter_get_lang`.
 #[cfg(feature = "lang-detection")]
 /// Convert the `get_lang_filter()` configuration from the config file.
-fn update_filter_get_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
+fn update_filter_get_lang_setting(settings: &mut Settings) {
     let lib_cfg = LIB_CFG.read().unwrap();
     // Read and convert ISO codes from config object.
     match lib_cfg
@@ -258,14 +258,14 @@ fn update_filter_get_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
 
 #[cfg(not(feature = "lang-detection"))]
 /// Reset to empty default.
-fn update_filter_get_lang_setting(settings: &mut RwLockWriteGuard<Settings>) {
+fn update_filter_get_lang_setting(settings: &mut Settings) {
     let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
 }
 
 /// Reads the environment variable `LANG_DETECTION`. If not empty,
 /// parse the  content and overwrite `settings.filter_get_lang` and
 /// `settings.filter_map_lang`.
-fn update_env_lang_detection(settings: &mut RwLockWriteGuard<Settings>) {
+fn update_env_lang_detection(settings: &mut Settings) {
     if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
         if env_var == "" {
             let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
