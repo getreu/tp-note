@@ -69,7 +69,20 @@ pub(crate) struct Settings {
     pub filter_map_lang_hmap: Option<HashMap<String, String>>,
 }
 
+/// Default to empty lists and values.
+impl Default for Settings {
+    fn default() -> Self {
+        Settings {
+            author: String::new(),
+            lang: String::new(),
+            filter_get_lang: Ok(vec![]),
+            filter_map_lang_hmap: None,
+        }
+    }
+}
+
 /// Global mutable varible of type `Settings`.
+/// Todo: use `default()` when `impl const` is available.
 pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(Settings {
     author: String::new(),
     lang: String::new(),
@@ -346,13 +359,232 @@ fn update_env_lang_detection(settings: &mut Settings) {
         }
     }
 }
+
 #[cfg(test)]
 mod tests {
 
     use super::*;
 
+    /// Attention: as these test-functions run in parallel, make sure that
+    /// each environment variable appears in one function only!
+
+    #[test]
+    fn test_update_update_author_setting() {
+        let mut settings = Settings::default();
+        env::set_var(ENV_VAR_LOGNAME, "testauthor");
+        update_author_setting(&mut settings);
+        assert_eq!(settings.author, "testauthor");
+    }
+
+    #[test]
+    #[cfg(not(target_family = "windows"))]
+    fn test_update_lang_setting() {
+        // Test 1
+        let mut settings = Settings::default();
+        env::remove_var(ENV_VAR_TPNOTE_LANG);
+        env::set_var(ENV_VAR_LANG, "en_GB.UTF-8");
+        update_lang_setting(&mut settings);
+        assert_eq!(settings.lang, "en-GB");
+
+        // Test empty input.
+        let mut settings = Settings::default();
+        env::remove_var(ENV_VAR_TPNOTE_LANG);
+        env::set_var(ENV_VAR_LANG, "");
+        update_lang_setting(&mut settings);
+        assert_eq!(settings.lang, "");
+
+        // Test precedence of `TPNOTE_LANG`.
+        let mut settings = Settings::default();
+        env::set_var(ENV_VAR_TPNOTE_LANG, "it-IT");
+        env::set_var(ENV_VAR_LANG, "en_GB.UTF-8");
+        update_lang_setting(&mut settings);
+        assert_eq!(settings.lang, "it-IT");
+    }
+
+    #[test]
+    fn test_update_filter_get_lang_setting() {
+        // Test 1.
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        update_filter_get_lang_setting(&mut settings);
+
+        let output_filter_get_lang = settings
+            .filter_get_lang
+            .unwrap()
+            .iter()
+            .map(|l| {
+                let mut l = l.to_string();
+                l.push_str(" ");
+                l
+            })
+            .collect::<String>();
+        assert_eq!(output_filter_get_lang, "en fr de ");
+
+        //
+        // Test 2.
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "it-IT".to_string());
+        update_filter_get_lang_setting(&mut settings);
+
+        let output_filter_get_lang = settings
+            .filter_get_lang
+            .unwrap()
+            .iter()
+            .map(|l| {
+                let mut l = l.to_string();
+                l.push_str(" ");
+                l
+            })
+            .collect::<String>();
+        assert_eq!(output_filter_get_lang, "en fr de it ");
+    }
+
+    #[test]
+    fn test_update_filter_map_lang_hmap_setting() {
+        // Test 1.
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "it-IT".to_string());
+        update_filter_map_lang_hmap_setting(&mut settings);
+
+        let output_filter_map_lang = settings.filter_map_lang_hmap.unwrap();
+
+        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
+        assert_eq!(output_filter_map_lang.get("et").unwrap(), "et-ET");
+        assert_eq!(output_filter_map_lang.get("it").unwrap(), "it-IT");
+
+        //
+        // Test short `settings.lang`.
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "it".to_string());
+        update_filter_map_lang_hmap_setting(&mut settings);
+
+        let output_filter_map_lang = settings.filter_map_lang_hmap.unwrap();
+
+        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
+        assert_eq!(output_filter_map_lang.get("et").unwrap(), "et-ET");
+        assert_eq!(output_filter_map_lang.get("it"), None);
+    }
+
     #[test]
     fn test_update_env_lang_detection() {
-        todo!();
+        // Test 1.
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "fr-FR, de-DE, hu");
+        update_env_lang_detection(&mut settings);
+
+        let output_filter_get_lang = settings
+            .filter_get_lang
+            .unwrap()
+            .iter()
+            .map(|l| {
+                let mut l = l.to_string();
+                l.push_str(" ");
+                l
+            })
+            .collect::<String>();
+        assert_eq!(output_filter_get_lang, "fr de hu en ");
+        let output_filter_map_lang = settings.filter_map_lang_hmap.unwrap();
+        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
+        assert_eq!(output_filter_map_lang.get("fr").unwrap(), "fr-FR");
+        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
+
+        //
+        // Test 2.
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en-US");
+        update_env_lang_detection(&mut settings);
+
+        let output_filter_get_lang = settings
+            .filter_get_lang
+            .unwrap()
+            .iter()
+            .map(|l| {
+                let mut l = l.to_string();
+                l.push_str(" ");
+                l
+            })
+            .collect::<String>();
+        assert_eq!(output_filter_get_lang, "de de en ");
+        let output_filter_map_lang = settings.filter_map_lang_hmap.unwrap();
+        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
+        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-US");
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "".to_string());
+        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
+        update_env_lang_detection(&mut settings);
+
+        assert!(settings.filter_get_lang.unwrap().is_empty());
+        assert!(settings.filter_map_lang_hmap.is_none());
+
+        //
+        // Test 3.
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en");
+        update_env_lang_detection(&mut settings);
+
+        let output_filter_get_lang = settings
+            .filter_get_lang
+            .unwrap()
+            .iter()
+            .map(|l| {
+                let mut l = l.to_string();
+                l.push_str(" ");
+                l
+            })
+            .collect::<String>();
+        assert_eq!(output_filter_get_lang, "de de en ");
+        let output_filter_map_lang = settings.filter_map_lang_hmap.unwrap();
+        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
+        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "".to_string());
+        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
+        update_env_lang_detection(&mut settings);
+
+        assert!(settings.filter_get_lang.unwrap().is_empty());
+        assert!(settings.filter_map_lang_hmap.is_none());
+
+        //
+        // Test faulty `settings.lang`.
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "xy-XY".to_string());
+        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "en-GB");
+        update_env_lang_detection(&mut settings);
+
+        let output_filter_get_lang = settings
+            .filter_get_lang
+            .unwrap()
+            .iter()
+            .map(|l| {
+                let mut l = l.to_string();
+                l.push_str(" ");
+                l
+            })
+            .collect::<String>();
+        assert_eq!(output_filter_get_lang, "en ");
+        let output_filter_map_lang = settings.filter_map_lang_hmap.unwrap();
+        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
+
+        //
+        // Test faulty entry in list.
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, xy-XY");
+        update_env_lang_detection(&mut settings);
+
+        assert!(settings.filter_get_lang.is_err());
+        assert!(settings.filter_map_lang_hmap.is_none());
+        //
+        // Test empty list.
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
+        update_env_lang_detection(&mut settings);
+
+        assert_eq!(settings.filter_get_lang.unwrap(), vec![]);
+        assert!(settings.filter_map_lang_hmap.is_none());
     }
 }
