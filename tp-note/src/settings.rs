@@ -16,24 +16,32 @@ use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 
-/// Name of the environment variable, that can be optionally
-/// used to launch a different file editor.
+/// Name of the environment variable which can be optionally used to launch a
+/// different file editor.
 pub const ENV_VAR_TPNOTE_EDITOR: &str = "TPNOTE_EDITOR";
-/// Name of the environment variable, that can be optionally
-/// used to launch a different web browser.
+/// Name of the environment variable which can be optionally used to launch a
+/// different web browser.
 #[cfg(feature = "viewer")]
 pub const ENV_VAR_TPNOTE_BROWSER: &str = "TPNOTE_BROWSER";
+/// Name of the environment variable which Tp-Note checks under Unix, if it is
+/// invoked as `root`.
+#[cfg(target_family = "unix")]
+const ENV_VAR_USER: &str = "USER";
+/// Name of the environment variable which Tp-Note checks under Unix, if it is
+/// invoked on a graphical desktop.
+#[cfg(target_family = "unix")]
+const ENV_VAR_DISPLAY: &str = "DISPLAY";
 
 #[derive(Debug, Eq, PartialEq, StructOpt)]
 #[structopt(
     name = "Tp-Note",
     about = "Fast note taking with templates and filename synchronization."
 )]
-/// _Tp-Note_ is a note taking tool and a template system, that synchronizes the
+/// _Tp-Note_ is a note-taking tool and a template system, that synchronizes the
 /// note's metadata with its filename. _Tp-Note_ collects various information
 /// about its environment and the clipboard and stores it in variables. New
 /// notes are created by filling these variables in predefined and customizable
-/// `Tera`-templates. In case `<path>` points to an existing _Tp-Note_-file, the
+/// `Tera`-templates. In case `<path>` points to an existing _Tp-Note_ file, the
 /// note's metadata is analysed and, if necessary, its filename is adjusted.
 /// For all other file types, _Tp-Note_ creates a new note annotating the
 /// file `<path>` points to. If `<path>` is a directory (or, when omitted the
@@ -136,7 +144,7 @@ lazy_static! {
         use crate::CFG;
         // User `root` has usually no GUI.
         #[cfg(target_family = "unix")]
-        if let Some(user) = std::env::var("USER")
+        if let Some(user) = std::env::var(ENV_VAR_USER)
             // Map error to `None`.
             .ok()
             // A pattern mapping `Some("")` to `None`.
@@ -148,7 +156,7 @@ lazy_static! {
 
         // On Linux popup window only if DISPLAY is set.
         #[cfg(target_family = "unix")]
-        let display = std::env::var("DISPLAY")
+        let display = std::env::var(ENV_VAR_DISPLAY)
             // Map error to `None`.
             .ok()
             // A pattern mapping `Some("")` to `None`.
