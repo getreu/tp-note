@@ -118,8 +118,11 @@ fi
 
 #echo -n 'Good morning' | xclip -selection clipboard
 
+# Tp-Note can choose between `fi-Fi` and `en-US`. The latter should be 
+# found.
 echo 'Good morning' | \
-LANG="en_US.UTF-8" LOGNAME="myuser" \
+LANG="fi_FI.UTF-8" LOGNAME="myuser" \
+TPNOTE_LANG_DETECTION="en-US" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
