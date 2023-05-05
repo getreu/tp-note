@@ -41,6 +41,7 @@ const ENV_VAR_USERNAME: &str = "USERNAME";
 const ENV_VAR_USER: &str = "USER";
 
 /// Name of the `LANG` environment variable.
+#[cfg(not(target_family = "windows"))]
 const ENV_VAR_LANG: &str = "LANG";
 
 #[cfg(feature = "lang-detection")]
@@ -177,7 +178,6 @@ fn update_lang_setting(settings: &mut Settings) {
     if let Some(tpnotelang) = tpnotelang {
         lang = tpnotelang;
     } else {
-        lang = String::new();
         let mut buf = [0u16; LOCALE_NAME_MAX_LENGTH as usize];
         let len = unsafe { GetUserDefaultLocaleName(buf.as_mut_ptr(), buf.len() as i32) };
         if len > 0 {
