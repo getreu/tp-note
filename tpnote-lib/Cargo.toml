@@ -10,7 +10,7 @@ name = "tpnote-lib"
 readme.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-version = "0.18.2"
+version = "0.18.3"
 
 [features]
 # Exclude "renderer-extras" to stay in _MIT/Apache_ license and the avoid additional
