@@ -1581,6 +1581,18 @@ When the filter \f[C]map_lang\f[R] encounters a language code for which
 no mapping is configured, the input language code is forwarded as it is
 without modification, e.g.\ the input \f[C]fr\f[R] results in the output
 \f[C]fr\f[R].
+Subsequent entries that differ only in the region subtag, e.g.\ 
+`\f[C][\[aq]en\[aq], \[aq]en-GB\[aq]], [\[aq]en\[aq], \[aq]en-US\[aq]]\f[R]'
+are ignored.
+.PP
+For debugging observe the value of `\f[C]SETTINGS\f[R]' in the debug
+log:
+.IP
+.nf
+\f[C]
+tpnote -d trace -b
+\f[R]
+.fi
 .SS Change the default markup language
 .PP
 Tp-Note\[cq]s core functionality, the management of note file headers
@@ -2497,6 +2509,39 @@ Unlike `\f[C]LANG\f[R]', the environment variable
 e.g.\ `\f[C]en-US\f[R]'.
 .RE
 .PP
+TPNOTE_LANG_DETECTION
+.RS
+.PP
+If set, this variable overwrites the configuration file variables
+`\f[C]tmpl.filter_get_lang\f[R]' and `\f[C]tmpl.filter_map_lang\f[R]',
+thus selecting potential language candidates for the automatic language
+detection.
+The string contains a comma and space separated list of ISO 63901 codes,
+e.g.
+`\f[C]fr\f[R]' or IETF BCP 47 tags, e.g.\ `\f[C]fr-FR\f[R]'.
+Here an example of a complete string: `\f[C]de-DE, en, fr-FR, hu\f[R]'.
+The user\[cq]s default locale `\f[C]{{ lang }}\f[R]' is automatically
+added to the list.
+Note, that the language detection algorithm determines only the language
+subtag, e.g.\ `\f[C]en\f[R]'.
+The region subtag will be added as indicated in your configuration.
+Subsequent entries that differ only in the region subtag,
+e.g.\ `\f[C]en-GB, en-US\f[R]' are ignored.
+.RE
+.RS
+.PP
+For debugging observe the value of `\f[C]SETTINGS\f[R]' in the debug
+log:
+.RE
+.RS
+.IP
+.nf
+\f[C]
+TPNOTE_LANG_DETECTION=\[dq]de-DE, en, fr_FR\[dq] tpnote -d trace -b
+\f[R]
+.fi
+.RE
+.PP
 TPNOTE_BROWSER
 .RS
 .PP
@@ -2556,8 +2601,9 @@ tpnote --edit
 TPNOTE_EDITOR
 .RS
 .PP
-If set, this variable takes precedence over the configuration file
-variable `\f[C]app_args.editor\f[R]'.
+If set, and you are working on a graphical desktop, this variable takes
+precedence over the configuration file variable
+`\f[C]app_args.editor\f[R]'.
 While the latter is a list describing how to invoke various file
 editors, `\f[C]TPNOTE_EDITOR\f[R]' contains a string invoking one
 particular file editor, exactly as one would do on a shell: the
@@ -2613,6 +2659,27 @@ is equivalent to:
 .nf
 \f[C]
 tpnote --view
+\f[R]
+.fi
+.RE
+.PP
+TPNOTE_EDITOR_CONSOLE
+.RS
+.PP
+If set, and you are working on a virtual console, this variable takes
+precedence over the configuration file variable
+`\f[C]app_args.editor_console\f[R]', which defines the command line
+parameters for invoking a terminal based text editor, such as Emacs, Vim
+or Helix.
+Otherwise, the syntax and the operation are the same as with
+`\f[C]TPNOTE_EDITOR\f[R] hereinabove'.
+Example of use:
+.RE
+.RS
+.IP
+.nf
+\f[C]
+sudo TPNOTE_EDITOR_CONSOLE=\[dq]nvim\[dq] tpnote
 \f[R]
 .fi
 .RE

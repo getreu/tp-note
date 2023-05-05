@@ -2068,12 +2068,13 @@ TPNOTE\_BROWSER
 
 TPNOTE\_EDITOR
 
->   If set, this variable takes precedence over the configuration file
-    variable '`app_args.editor`'. While the latter is a list describing
-    how to invoke various file editors, '`TPNOTE_EDITOR`' contains a
-    string invoking one particular file editor, exactly as one would do
-    on a shell: the whitespace separated tokens list contains: the path
-    name of the application, and all its flags and options. For example:
+>   If set, and you are working on a graphical desktop, this variable
+    takes precedence over the configuration file variable '`app_args.editor`'.
+    While the latter is a list describing how to invoke various file editors,
+    '`TPNOTE_EDITOR`' contains a string invoking one particular file editor,
+    exactly as one would do on a shell: the whitespace separated tokens list
+    contains: the path name of the application, and all its flags and options.
+    For example:
 
 >   ```sh
 >   TPNOTE_EDITOR="geany -sim" tpnote
@@ -2102,6 +2103,18 @@ TPNOTE\_EDITOR
 >   tpnote --view
 >   ```
 
+TPNOTE\_EDITOR\_CONSOLE
+
+>   If set, and you are working on a virtual console, this variable takes 
+    precedence over the configuration file variable '`app_args.editor_console`',
+    which defines the command line parameters for invoking a terminal based text
+    editor, such as Emacs, Vim or Helix. Otherwise, the syntax and the operation
+    are the same as with '`TPNOTE_EDITOR` hereinabove'. Example of use:
+    
+>   ```sh
+>   sudo TPNOTE_EDITOR_CONSOLE="nvim" tpnote
+>   ```
+    
 TPNOTE\_USER, LOGNAME, USER, USERNAME
 
 >   The template variable '`{{ username }}`' is the content of the first
