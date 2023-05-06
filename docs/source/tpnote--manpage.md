@@ -19,7 +19,7 @@ _Tp-Note_ - save and edit your clipboard content as a note file.
 # SYNOPSIS
 
     tpnote [-a ] [-b] [-c <FILE>] [-d <LEVEL>] [-e] [-l <LANG>]
-           [-p <NUM>] [-n] [-t] [-u] [-v] [-V] [-x <DIR>|''|'-'] 
+           [-p <NUM>] [-n] [-t] [-u] [-v] [-V] [-x <DIR>|''|'-']
            [<DIR>|<FILE>]
 
 
@@ -553,7 +553,7 @@ synchronization).
 **-l** *LANG*, **\--force-lang**=*LANG*
 
 >   Disable automatic language detection when creating a new note file and use
-    *LANG* instead. *LANG* is formatted as IETF BCP 47 language tag, e.g. 
+    *LANG* instead. *LANG* is formatted as IETF BCP 47 language tag, e.g.
     '`en_US`'. If *LANG* is '`-`', the environment variable '`TPNOTE_LANG`'
     or - if not defined - the user's default language, as reported from
     the operating system's locale setting, is used.
@@ -711,44 +711,55 @@ The document's body often contains (inline) links to resources e.g. images and
 links to other documents. The link syntax depends on the markup language used
 in the Tp-Note file.
 
-Here some example links written in Markdown:
+Here some example links in Markdown notation:
 
-* Website: '`[blog](https://blog.getreu.net)`'
-* Inline image with relative local URL: '`![Alt text](<images/my logo.png>)`'.
-* Link to another Tp-Note document with relative local link:
+* A website: '`[blog](<https://blog.getreu.net>)`'
+* An inline image with relative local URL: 
+  '`![Alt text](<images/my logo.png>)`'.
+* A link to another Tp-Note document with a relative local link:
   '`[my doc](<../../notes/my doc.md>)`'
 * The same as above, but using the short autolink syntax:
   '`<http:../../notes/my%20doc.md>`'
-* Link to another Tp-Note document with absolute local link:
-  '`[my doc](</home/kanban/documents/my note.md)`'
+* A link to another Tp-Note document with an absolute local link:
+  '`[my doc](</home/kanban/docs/my note.md>)`'
   The base for absolute local links is the first parent directory containing
   the marker file '`.tpnoteroot`'. If absent, absolute local links refer
   to the root directory '`/`'.
+* A shorthand link to another Tp-Note document. Instead of writing out the full 
+  file name, only the first characters of the note's sort-tag '`20230508-`' are 
+  given, e.g. the link '`[my doc](<docs/20230508>)`' points to the file 
+  '`./docs/20230508-my note.md`'. Alternatively, the shorthand link can be
+  expressed as autolink as well: '`<http:docs/20230508>`'. If more than one
+  document with the same sort-tag exist, the viewer displays the first in 
+  alphabetical order. To set up a different order, you can extend the 
+  sort-tag until it becomes unique, e.g. rename the example document to 
+  '`./docs/20230508-1-my note.md`' to obtain the unique sort-tag 
+  '`20230508-1-`'.
 
 Although Tp-Note's built in viewer follows absolute and relative URLs, usually
-the latter are preferred, because it allows you to move more easily documents
-and its resources in the file system.
+the latter are preferred. They make moving documents easier, as relative links
+do not break when the source and the destination documents are moved together. 
 
 Tp-Note's exporter function '`--export`' converts a given Tp-Note file into
 HTML and adds '`.html`' to the output filename. Links in the documents content
 to other Tp-Note files are hereby rewritten by appending '`.html`' to their
 URLs. This way you can convert groups of documents to HTML and later browse from
 document to document in you web browser. The option '`--export-link-rewriting`'
-allows you to finetune how local links are written out. Valid values are:
+allows you to fine-tune how local links are written out. Valid values are:
 '`off`', '`short`' and '`long`'.
 
-In order to achieve this, the user must respect  the following convention
-concerning absolute local links in Tp-Note documents:  The base of absolute
-local links in Tp-Note documents must be the directory where the marker file
-'`.tpnoteroot`' resides (or '`/`' if none exists). The option '`--export-link-
-rewriting`' decides how local links in the Tp-Note  document are converted when
-the HTML is generated.  If its value is '`short`', then relative local links
-are converted to absolute links. The base of the resulting links is where the
-`.tpnoteroot` file resides (or `/` if none exists). Consider the following
+In order to achieve this, the author must respect the following convention
+concerning absolute local links: The base of absolute local links in Tp-Note
+documents is always the directory where the marker file '`.tpnoteroot`' resides
+(or '`/`' if none exists). The option '`--export-link-rewriting`' decides how
+local links in the Tp-Note document are converted when the HTML is generated.
+If its value is '`short`', then relative local links are converted to absolute
+links. The base of the resulting links is again the directory where the 
+`.tpnoteroot` file resides (or `/` if none exists). Consider the following 
 example:
 
 * The Tp-Note file '`/my/docs/car/bill.md`' contains
-* the absolute link '`/car/scan.jpg`'.
+* the absolute link '`/car/scan.jpg`',
 * and the relative link '`./photo.jpg`'.
 * The document root marker is: '`/my/docs/.tpnoteroot`'.
 
@@ -761,7 +772,7 @@ For '`--export-link-rewriting=long`', in addition to the above, all absolute
 local links are rebased to '`/`''. Consider the following example:
 
 * The Tp-Note file '`/my/docs/car/bill.md`' contains
-* the absolute link '`/car/scan.jpg`'.
+* the absolute link '`/car/scan.jpg`',
 * and the relative link '`./photo.jpg`'.
 * The document root marker is: '`/my/docs/.tpnoteroot`'.
 
@@ -771,7 +782,7 @@ The image paths in the resulting HTML will appear as
 * '`/my/docs/car/photo.jpg`'.
 
 So far, we have seen how Tp-Note's viewer and HTML exporter converts the
-_destination_ of local links '`[text](destination)`'. 
+_destination_ of local links '`[text](destination)`'.
 Concerning the link's _text_ property, the situation is simpler as the _text_
 property never changes. However, there is one exception: when the
 text property contains a URL starting with '`http:`' or '`https:`' only the file
@@ -818,7 +829,7 @@ A note's filename is in sync with its metadata, when the following is true
 (slightly simplified, see the configuration file for the complete definition):
 
 > filename on disk without *sort tag* == '`{{ fm_title }}--{{ fm_subtitle }}.md`'
-  
+
 ^[The variables '`{{ fm_title }}`' and '`{{ fm_subtitle }}`' reflect the values
 in the note's metadata.]
 
@@ -955,7 +966,7 @@ The configuration file is encoded according to the TOML standard.
 There are two ways to modify the default file editor, Tp-Note launches
 when it starts: either you can modify the  configuration file variables
 '`app_args.editor`' and '`app_args.editor_console`', or alternatively, you can
-set the '`TPNOTE_EDITOR`' environment variable  (cf. examples in the capter
+set the '`TPNOTE_EDITOR`' environment variable (cf. examples in the chapter
 _ENVIRONMENT_VARIABLES_ below).
 
 The configuration file variables '`app_args.editor`' and
@@ -1219,27 +1230,16 @@ filter_get_lang = [
 ]
 ```
 
-Note, that the above list is internally completed by the user's
-default language as reported from the operating system. Therefore,
-manual configuration is only required when you write your notes also
-in other languages than the one defined by your locale setting. Please
-refer to the documentation of the environment variable '`TPNOTE_LANG`'
-for further details.
+Once the language is detected with the filter '`get_lang`', it passes another
+filter called '`map_lang`'. This filter maps the result of '`get_lang`' -
+encoded as ISO 639-1 code - to an IETF language tag. For example, '`en`' is
+replaced with '`en-US`' or '`de`' with '`de-DE`'. This additional filtering
+is useful, because the detection algorithm can not figure out the region code
+(e.g. `-US` or `-DE`) by itself. Instead, the region code is appended in a 
+separate processing step. Spell checker or grammar checker like [LTeX] rely on
+this region information, to work properly. 
 
-If wished for, you can disable Tp-Note's language detection feature, by 
-deleting all entries in the above array:
-
-```toml
-[tmpl]
-filter_get_lang = []
-```
-
-Once the language is detected with the filter '`get_lang`', it passes
-another filter called '`map_lang`'. This filter maps the result of
-'`get_lang`' - encoded as ISO 639-1 code - to an IETF language tag. For
-example, '`en`' is replaced with '`en-US`' or '`de`' with '`de-DE`'. The
-corresponding configuration looks like this:
-
+The corresponding configuration looks like this:
 
 ```toml
 [tmpl]
@@ -1255,24 +1255,44 @@ filter_map_lang = [
 ]
 ```
 
-This additional filtering is useful, because the detection algorithm can not
-figure out the region code (e.g. `-US` or `-DE`) by itself. Instead, the
-region code is appended in the above described, separate processing
-step. Spell checker or grammar checker like [LTEX] rely on this region
-information, to work properly.  Note, when the user's region setting
-- as reported from the operating system's locale setting - does not
-exist in above list, it is automatically appended as additional internal
-mapping. When the filter `map_lang` encounters a language code for which
-no mapping is configured, the input language code is forwarded as it is
-without modification, e.g. the input `fr` results in the output `fr`.
+When the user's region setting - as reported from the operating system's
+locale setting - does not exist in above list, it is automatically appended as
+additional internal mapping. When the filter `map_lang` encounters a language
+code for which no mapping is configured, the input language code is forwarded
+as it is without modification, e.g. the input `fr` results in the output `fr`.
 Subsequent entries that differ only in the region subtag, e.g. 
-'`['en', 'en-GB'], ['en', 'en-US']`' are ignored.
+'`['en', 'en- GB'], ['en', 'en-US']`' are ignored.
+
+Note, that the environment variable '`TPNOTE_LANG_DETECTION`' - if set -
+takes precedence over the '`tmpl.filter_get_lang`' and '`tmpl.filter_map_lang`'
+settings. This allows to configure the language detection feature system-wide
+without touching Tp-Note's configuration file. The following example achieves
+the equivalent result to the configuration hereinabove:
+
+```sh
+TPNOTE_LANG_DETECTION="en-US, fr, de-DE, et" tpnote
+```
 
 For debugging observe the value of '`SETTINGS`' in the debug log:
 
 ```sh
 tpnote -d trace -b
 ```
+
+If wished for, you can disable Tp-Note's language detection feature, by
+deleting all entries in the '`tmpl.filter_get_lang`' variable:
+
+```toml
+[tmpl]
+filter_get_lang = []
+```
+
+Like above, you can achieve the same with:
+
+```sh
+TPNOTE_LANG_DETECTION="" tpnote
+```
+
 
 
 ## Change the default markup language
@@ -1849,8 +1869,8 @@ A filter is always used together with a variable. Here are some examples:
 * '`{{ fm_all | remove(var='fm_title') }}`' represents a collection (map) of
   all '`fm_*`' variables, exclusive of the variable '`fm_title`'.
 
-* '`{{ note_body_text | get_lang }}`' determines the natural language of 
-  the variable '`{{ note_body_text }}` and returns the result as ISO 639-1 
+* '`{{ note_body_text | get_lang }}`' determines the natural language of
+  the variable '`{{ note_body_text }}` and returns the result as ISO 639-1
   language code. The template filter '`{{ get_lang }}`' can be configured with
   the configuration file variable '`tmpl.filter_get_lang`'. The latter
   defines a list of ISO 639-1 codes, the detection algorithm considers as
@@ -1858,9 +1878,9 @@ A filter is always used together with a variable. Here are some examples:
   language detection is computationally expensive. A long candidate list may
   slow down the note file creation workflow. If the detection algorithm can not
   determine the language of '`{{ note_body_text }}`', the filter '`get_lang`'
-  returns the empty string. 
+  returns the empty string.
 
-* '`{{ note_body_text | get_lang | map_lang }}`' maps the detected ISO 638-1 
+* '`{{ note_body_text | get_lang | map_lang }}`' maps the detected ISO 638-1
   language code to a complete IETF BCP 47 language tag, usually containing the
   region subtag. For example the input '`en`' results in '`en-US`'. This
   additional mapping is useful because the detection algorithm can not
@@ -1870,7 +1890,7 @@ A filter is always used together with a variable. Here are some examples:
   configuration, the input is passed through, e.g. '`fr`' results in '`fr`', or,
   the empty string results in an empty string.
 
-* '`{{ note_body_text | get_lang | map_lang(default=lang) }}`' adds an 
+* '`{{ note_body_text | get_lang | map_lang(default=lang) }}`' adds an
   extra mapping for the '`map_lang`' filter: when the input of the
   '`map_lang`' filter is the empty string, then it's output becomes the value
   of the '`{{ lang }}`' variable.
@@ -1917,9 +1937,9 @@ characters.  For this purpose Tp-Note provides the additional Tera filters
 
 * '`sanit(force_alpha=true)`' is similar to the above, with one exception: when
   a string starts with a digit '`0123456789`' or '`-_ `', the whole string
-  is prepended with `'`. For example: "`1 The Show Begins`" becomes 
+  is prepended with `'`. For example: "`1 The Show Begins`" becomes
   "`'1 The Show Begins`". This filter should always be applied to
-  the first variable assembling the new filename, e.g. 
+  the first variable assembling the new filename, e.g.
   '`{{ title | sanit(force_alpha=true )} `'. This way, it is always possible to
   distinguish the sort tag from the actual filename. The default sort
   tag separator '`'`' can be changed with the configuration variable
@@ -1928,12 +1948,12 @@ characters.  For this purpose Tp-Note provides the additional Tera filters
 In filename templates most variables must pass either the '`sanit`' or the
 '`sanit(force_alpha=true)`' filter. Exception to this rule are the sort tag
 variables '`{{ path | tag }}`' and '`{{ dir_path | tag }}`'. As these are
-guaranteed to contain only the file system friendly characters 
+guaranteed to contain only the file system friendly characters
 '`0123456789 -_`', no additional filtering is required. Please note that in
 this case a '`sanit`'-filter would needlessly restrict the value range of sort
 tags as they usually end with a '`-`', a character, which the '`sanit`'-filter
 screens out when it appears in leading or trailing position. For this reason no
-'`sanit`'-filter is not allowed with '`{{ path | tag }}`' and 
+'`sanit`'-filter is not allowed with '`{{ path | tag }}`' and
 '`{{ dir_path |tag }}`'.
 
 
@@ -1973,7 +1993,7 @@ to disable the _follow links to other Tp-Note files_ feature by removing all
 
 Another security feature is the '`.tpnoteroot`' marker file. When Tp-Note
 opens a note file, it checks all directories above, one by one, until it
-finds the marker file '`tpnoteroot`'. Tp-Note's viewer will never serve a file
+finds the marker file '`.tpnoteroot`'. Tp-Note's viewer will never serve a file
 located outside the root directory and its children. When no '`.tpnoteroot`'
 file is found, the root directory is set to '`/`', which disables this
 security feature.
@@ -2002,13 +2022,13 @@ never exposes any information to the network or on the Internet.
 # ENVIRONMENT VARIABLES
 
 LANG
-   
+
 >   Tp-Note stores the user's locale settings - originating from the
     environment variable '`LANG`' (or the Windows registry) - in the template
-    variable '`{{ lang }}`'. When the environment variable '`TPNOTE_LANG`' is 
-    set, it overwrites the locale setting stored in '`{{ lang }}`'. 
+    variable '`{{ lang }}`'. When the environment variable '`TPNOTE_LANG`' is
+    set, it overwrites the locale setting stored in '`{{ lang }}`'.
     '`man locale`' describes the data format of '`LANG`', a typical value
-    is '`en_GB.UTF-8`'. 
+    is '`en_GB.UTF-8`'.
 
 TPNOTE\_LANG
 
@@ -2022,20 +2042,26 @@ TPNOTE\_LANG
 TPNOTE\_LANG\_DETECTION
 
 >   If set, this variable overwrites the configuration file variables
-    '`tmpl.filter_get_lang`' and '`tmpl.filter_map_lang`', thus selecting 
-    potential language candidates for the automatic language detection. The
+    '`tmpl.filter_get_lang`' and '`tmpl.filter_map_lang`', thus selecting
+    potential language candidates for Tp-Note's naturaul language detection. The
     string contains a comma and space separated list of ISO 63901 codes, e.g.
-    '`fr`' or IETF BCP 47 tags, e.g. '`fr-FR`'. Here an example of a complete
-    string: '`de-DE, en, fr-FR, hu`'. The user's default locale '`{{ lang }}`' 
+    '`fr`' or IETF BCP 47 tags, e.g. '`fr-FR`'. Here is an example of a complete
+    string: '`de-DE, en, fr-FR, hu`'. The user's default locale '`{{ lang }}`'
     is automatically added to the list. Note, that the language detection
     algorithm determines only the language subtag, e.g. '`en`'. The region
     subtag will be added as indicated in your configuration. Subsequent entries
     that differ only in the region subtag, e.g. '`en-GB, en-US`' are ignored.
 
+>   The empty string disables the automatic language detection.
+
+>   ```sh
+>   TPNOTE_LANG_DETECTION="" tpnote
+>   ```
+
 >   For debugging observe the value of '`SETTINGS`' in the debug log:
 
 >   ```sh
->   TPNOTE_LANG_DETECTION="de-DE, en, fr_FR" tpnote -d trace -b
+>   TPNOTE_LANG_DETECTION="de-DE, en, fr-FR" tpnote -d trace -b
 >   ```
 
 TPNOTE\_BROWSER
@@ -2108,16 +2134,16 @@ TPNOTE\_EDITOR
 
 TPNOTE\_EDITOR\_CONSOLE
 
->   If set, and you are working on a virtual console, this variable takes 
+>   If set, and you are working on a virtual console, this variable takes
     precedence over the configuration file variable '`app_args.editor_console`',
     which defines the command line parameters for invoking a terminal based text
     editor, such as Emacs, Vim or Helix. Otherwise, the syntax and the operation
     are the same as with '`TPNOTE_EDITOR` hereinabove'. Example of use:
-    
+
 >   ```sh
 >   sudo TPNOTE_EDITOR_CONSOLE="nvim" tpnote
 >   ```
-    
+
 TPNOTE\_USER, LOGNAME, USER, USERNAME
 
 >   The template variable '`{{ username }}`' is the content of the first

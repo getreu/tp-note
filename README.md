@@ -14,8 +14,8 @@ https://gitlab.com/getreu/tp-note)
 _Tp-Note_ is a note-taking-tool and a template system - freely available for
 Windows, MacOS and Linux - that consistently synchronizes the note’s meta-data
 with its filename. _Tp-Note_'s main design goal is to convert some input text -
-usually provided by the system's clipboard - into a Markdown note file, with
-a descriptive YAML header and meaningful filename.
+usually provided by the system's clipboard - into a Markdown note file with
+a descriptive YAML header and a meaningful filename.
 _Tp-Note_ collects various information about its environment
 and the clipboard and stores them in variables. New notes are created by
 filling these variables in predefined and customizable _Tera_-templates.

@@ -9,8 +9,9 @@
 .IP
 .nf
 \f[C]
-tpnote [-a ] [-b] [-c <FILE>] [-d] [-e] [-p <NUM>]
-        [-n] [-v] [-V] [-x <DIR>|\[aq]\[aq]|\[aq]-\[aq]] [<DIR>|<FILE>]
+tpnote [-a ] [-b] [-c <FILE>] [-d <LEVEL>] [-e] [-l <LANG>]
+       [-p <NUM>] [-n] [-t] [-u] [-v] [-V] [-x <DIR>|\[aq]\[aq]|\[aq]-\[aq]]
+       [<DIR>|<FILE>]
 \f[R]
 .fi
 .SH DESCRIPTION
@@ -686,7 +687,7 @@ viewer will open and the \f[C]arg_default.edit\f[R] variable is ignored.
 .PP
 Disable automatic language detection when creating a new note file and
 use \f[I]LANG\f[R] instead.
-\f[I]LANG\f[R] is formatted as IETF BCP 47 language tag, e.g.\ 
+\f[I]LANG\f[R] is formatted as IETF BCP 47 language tag, e.g.
 `\f[C]en_US\f[R]'.
 If \f[I]LANG\f[R] is `\f[C]-\f[R]', the environment variable
 `\f[C]TPNOTE_LANG\f[R]' or - if not defined - the user\[cq]s default
@@ -889,29 +890,44 @@ The document\[cq]s body often contains (inline) links to resources
 e.g.\ images and links to other documents.
 The link syntax depends on the markup language used in the Tp-Note file.
 .PP
-Here some example links written in Markdown:
+Here some example links in Markdown notation:
 .IP \[bu] 2
-Website: `\f[C][blog](https://blog.getreu.net)\f[R]'
+A website: `\f[C][blog](<https://blog.getreu.net>)\f[R]'
 .IP \[bu] 2
-Inline image with relative local URL:
+An inline image with relative local URL:
 `\f[C]![Alt text](<images/my logo.png>)\f[R]'.
 .IP \[bu] 2
-Link to another Tp-Note document with relative local link:
+A link to another Tp-Note document with a relative local link:
 `\f[C][my doc](<../../notes/my doc.md>)\f[R]'
 .IP \[bu] 2
 The same as above, but using the short autolink syntax:
 `\f[C]<http:../../notes/my%20doc.md>\f[R]'
 .IP \[bu] 2
-Link to another Tp-Note document with absolute local link:
-`\f[C][my doc](</home/kanban/documents/my note.md)\f[R]' The base for
+A link to another Tp-Note document with an absolute local link:
+`\f[C][my doc](</home/kanban/docs/my note.md>)\f[R]' The base for
 absolute local links is the first parent directory containing the marker
 file `\f[C].tpnoteroot\f[R]'.
 If absent, absolute local links refer to the root directory
 `\f[C]/\f[R]'.
+.IP \[bu] 2
+A shorthand link to another Tp-Note document.
+Instead of writing out the full file name, only the first characters of
+the note\[cq]s sort-tag `\f[C]20230508-\f[R]' are given, e.g.\ the link
+`\f[C][my doc](<docs/20230508>)\f[R]' points to the file
+`\f[C]./docs/20230508-my note.md\f[R]'.
+Alternatively, the shorthand link can be expressed as autolink as well:
+`\f[C]<http:docs/20230508>\f[R]'.
+If more than one document with the same sort-tag exist, the viewer
+displays the first in alphabetical order.
+To set up a different order, you can extend the sort-tag until it
+becomes unique, e.g.\ rename the example document to
+`\f[C]./docs/20230508-1-my note.md\f[R]' to obtain the unique sort-tag
+`\f[C]20230508-1-\f[R]'.
 .PP
 Although Tp-Note\[cq]s built in viewer follows absolute and relative
-URLs, usually the latter are preferred, because it allows you to move
-more easily documents and its resources in the file system.
+URLs, usually the latter are preferred.
+They make moving documents easier, as relative links do not break when
+the source and the destination documents are moved together.
 .PP
 Tp-Note\[cq]s exporter function `\f[C]--export\f[R]' converts a given
 Tp-Note file into HTML and adds `\f[C].html\f[R]' to the output
@@ -920,27 +936,26 @@ Links in the documents content to other Tp-Note files are hereby
 rewritten by appending `\f[C].html\f[R]' to their URLs.
 This way you can convert groups of documents to HTML and later browse
 from document to document in you web browser.
-The option `\f[C]--export-link-rewriting\f[R]' allows you to finetune
+The option `\f[C]--export-link-rewriting\f[R]' allows you to fine-tune
 how local links are written out.
 Valid values are: `\f[C]off\f[R]', `\f[C]short\f[R]' and
 `\f[C]long\f[R]'.
 .PP
-In order to achieve this, the user must respect the following convention
-concerning absolute local links in Tp-Note documents: The base of
-absolute local links in Tp-Note documents must be the directory where
-the marker file `\f[C].tpnoteroot\f[R]' resides (or `\f[C]/\f[R]' if
-none exists).
-The option `\f[C]--export-link- rewriting\f[R]' decides how local links
+In order to achieve this, the author must respect the following
+convention concerning absolute local links: The base of absolute local
+links in Tp-Note documents is always the directory where the marker file
+`\f[C].tpnoteroot\f[R]' resides (or `\f[C]/\f[R]' if none exists).
+The option `\f[C]--export-link-rewriting\f[R]' decides how local links
 in the Tp-Note document are converted when the HTML is generated.
 If its value is `\f[C]short\f[R]', then relative local links are
 converted to absolute links.
-The base of the resulting links is where the \f[C].tpnoteroot\f[R] file
-resides (or \f[C]/\f[R] if none exists).
+The base of the resulting links is again the directory where the
+\f[C].tpnoteroot\f[R] file resides (or \f[C]/\f[R] if none exists).
 Consider the following example:
 .IP \[bu] 2
 The Tp-Note file `\f[C]/my/docs/car/bill.md\f[R]' contains
 .IP \[bu] 2
-the absolute link `\f[C]/car/scan.jpg\f[R]'.
+the absolute link `\f[C]/car/scan.jpg\f[R]',
 .IP \[bu] 2
 and the relative link `\f[C]./photo.jpg\f[R]'.
 .IP \[bu] 2
@@ -958,7 +973,7 @@ Consider the following example:
 .IP \[bu] 2
 The Tp-Note file `\f[C]/my/docs/car/bill.md\f[R]' contains
 .IP \[bu] 2
-the absolute link `\f[C]/car/scan.jpg\f[R]'.
+the absolute link `\f[C]/car/scan.jpg\f[R]',
 .IP \[bu] 2
 and the relative link `\f[C]./photo.jpg\f[R]'.
 .IP \[bu] 2
@@ -1209,7 +1224,7 @@ There are two ways to modify the default file editor, Tp-Note launches
 when it starts: either you can modify the configuration file variables
 `\f[C]app_args.editor\f[R]' and `\f[C]app_args.editor_console\f[R]', or
 alternatively, you can set the `\f[C]TPNOTE_EDITOR\f[R]' environment
-variable (cf.\ examples in the capter \f[I]ENVIRONMENT_VARIABLES\f[R]
+variable (cf.\ examples in the chapter \f[I]ENVIRONMENT_VARIABLES\f[R]
 below).
 .PP
 The configuration file variables `\f[C]app_args.editor\f[R]' and
@@ -1525,30 +1540,19 @@ filter_get_lang = [
 \f[R]
 .fi
 .PP
-Note, that the above list is internally completed by the user\[cq]s
-default language as reported from the operating system.
-Therefore, manual configuration is only required when you write your
-notes also in other languages than the one defined by your locale
-setting.
-Please refer to the documentation of the environment variable
-`\f[C]TPNOTE_LANG\f[R]' for further details.
-.PP
-If wished for, you can disable Tp-Note\[cq]s language detection feature,
-by deleting all entries in the above array:
-.IP
-.nf
-\f[C]
-[tmpl]
-filter_get_lang = []
-\f[R]
-.fi
-.PP
 Once the language is detected with the filter `\f[C]get_lang\f[R]', it
 passes another filter called `\f[C]map_lang\f[R]'.
 This filter maps the result of `\f[C]get_lang\f[R]' - encoded as ISO
 639-1 code - to an IETF language tag.
 For example, `\f[C]en\f[R]' is replaced with `\f[C]en-US\f[R]' or
 `\f[C]de\f[R]' with `\f[C]de-DE\f[R]'.
+This additional filtering is useful, because the detection algorithm can
+not figure out the region code (e.g.\ \f[C]-US\f[R] or \f[C]-DE\f[R]) by
+itself.
+Instead, the region code is appended in a separate processing step.
+Spell checker or grammar checker like [LTeX] rely on this region
+information, to work properly.
+.PP
 The corresponding configuration looks like this:
 .IP
 .nf
@@ -1567,23 +1571,30 @@ filter_map_lang = [
 \f[R]
 .fi
 .PP
-This additional filtering is useful, because the detection algorithm can
-not figure out the region code (e.g.\ \f[C]-US\f[R] or \f[C]-DE\f[R]) by
-itself.
-Instead, the region code is appended in the above described, separate
-processing step.
-Spell checker or grammar checker like [LTEX] rely on this region
-information, to work properly.
-Note, when the user\[cq]s region setting - as reported from the
-operating system\[cq]s locale setting - does not exist in above list, it
-is automatically appended as additional internal mapping.
+When the user\[cq]s region setting - as reported from the operating
+system\[cq]s locale setting - does not exist in above list, it is
+automatically appended as additional internal mapping.
 When the filter \f[C]map_lang\f[R] encounters a language code for which
 no mapping is configured, the input language code is forwarded as it is
 without modification, e.g.\ the input \f[C]fr\f[R] results in the output
 \f[C]fr\f[R].
 Subsequent entries that differ only in the region subtag, e.g.\ 
-`\f[C][\[aq]en\[aq], \[aq]en-GB\[aq]], [\[aq]en\[aq], \[aq]en-US\[aq]]\f[R]'
+`\f[C][\[aq]en\[aq], \[aq]en- GB\[aq]], [\[aq]en\[aq], \[aq]en-US\[aq]]\f[R]'
 are ignored.
+.PP
+Note, that the environment variable `\f[C]TPNOTE_LANG_DETECTION\f[R]' -
+if set - takes precedence over the `\f[C]tmpl.filter_get_lang\f[R]' and
+`\f[C]tmpl.filter_map_lang\f[R]' settings.
+This allows to configure the language detection feature system-wide
+without touching Tp-Note\[cq]s configuration file.
+The following example achieves the equivalent result to the
+configuration hereinabove:
+.IP
+.nf
+\f[C]
+TPNOTE_LANG_DETECTION=\[dq]en-US, fr, de-DE, et\[dq] tpnote
+\f[R]
+.fi
 .PP
 For debugging observe the value of `\f[C]SETTINGS\f[R]' in the debug
 log:
@@ -1591,6 +1602,25 @@ log:
 .nf
 \f[C]
 tpnote -d trace -b
+\f[R]
+.fi
+.PP
+If wished for, you can disable Tp-Note\[cq]s language detection feature,
+by deleting all entries in the `\f[C]tmpl.filter_get_lang\f[R]'
+variable:
+.IP
+.nf
+\f[C]
+[tmpl]
+filter_get_lang = []
+\f[R]
+.fi
+.PP
+Like above, you can achieve the same with:
+.IP
+.nf
+\f[C]
+TPNOTE_LANG_DETECTION=\[dq]\[dq] tpnote
 \f[R]
 .fi
 .SS Change the default markup language
@@ -2394,7 +2424,7 @@ exception: when a string starts with a digit `\f[C]0123456789\f[R]' or
 For example: \[lq]\f[C]1 The Show Begins\f[R]\[rq] becomes
 \[lq]\f[C]\[aq]1 The Show Begins\f[R]\[rq].
 This filter should always be applied to the first variable assembling
-the new filename, e.g.\ 
+the new filename, e.g.
 `\f[C]{{ title | sanit(force_alpha=true )}\f[R]'.
 This way, it is always possible to distinguish the sort tag from the
 actual filename.
@@ -2454,7 +2484,7 @@ that list.
 .PP
 Another security feature is the `\f[C].tpnoteroot\f[R]' marker file.
 When Tp-Note opens a note file, it checks all directories above, one by
-one, until it finds the marker file `\f[C]tpnoteroot\f[R]'.
+one, until it finds the marker file `\f[C].tpnoteroot\f[R]'.
 Tp-Note\[cq]s viewer will never serve a file located outside the root
 directory and its children.
 When no `\f[C].tpnoteroot\f[R]' file is found, the root directory is set
@@ -2514,12 +2544,13 @@ TPNOTE_LANG_DETECTION
 .PP
 If set, this variable overwrites the configuration file variables
 `\f[C]tmpl.filter_get_lang\f[R]' and `\f[C]tmpl.filter_map_lang\f[R]',
-thus selecting potential language candidates for the automatic language
-detection.
+thus selecting potential language candidates for Tp-Note\[cq]s naturaul
+language detection.
 The string contains a comma and space separated list of ISO 63901 codes,
 e.g.
 `\f[C]fr\f[R]' or IETF BCP 47 tags, e.g.\ `\f[C]fr-FR\f[R]'.
-Here an example of a complete string: `\f[C]de-DE, en, fr-FR, hu\f[R]'.
+Here is an example of a complete string:
+`\f[C]de-DE, en, fr-FR, hu\f[R]'.
 The user\[cq]s default locale `\f[C]{{ lang }}\f[R]' is automatically
 added to the list.
 Note, that the language detection algorithm determines only the language
@@ -2530,6 +2561,18 @@ e.g.\ `\f[C]en-GB, en-US\f[R]' are ignored.
 .RE
 .RS
 .PP
+The empty string disables the automatic language detection.
+.RE
+.RS
+.IP
+.nf
+\f[C]
+TPNOTE_LANG_DETECTION=\[dq]\[dq] tpnote
+\f[R]
+.fi
+.RE
+.RS
+.PP
 For debugging observe the value of `\f[C]SETTINGS\f[R]' in the debug
 log:
 .RE
@@ -2537,7 +2580,7 @@ log:
 .IP
 .nf
 \f[C]
-TPNOTE_LANG_DETECTION=\[dq]de-DE, en, fr_FR\[dq] tpnote -d trace -b
+TPNOTE_LANG_DETECTION=\[dq]de-DE, en, fr-FR\[dq] tpnote -d trace -b
 \f[R]
 .fi
 .RE
