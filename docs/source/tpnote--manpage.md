@@ -15,10 +15,13 @@ _Tp-Note_ - save and edit your clipboard content as a note file.
 
 
 
+
 # SYNOPSIS
 
-    tpnote [-a ] [-b] [-c <FILE>] [-d] [-e] [-p <NUM>]
-            [-n] [-v] [-V] [-x <DIR>|''|'-'] [<DIR>|<FILE>]
+    tpnote [-a ] [-b] [-c <FILE>] [-d <LEVEL>] [-e] [-l <LANG>]
+           [-p <NUM>] [-n] [-t] [-u] [-v] [-V] [-x <DIR>|''|'-'] 
+           [<DIR>|<FILE>]
+
 
 
 
