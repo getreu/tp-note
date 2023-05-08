@@ -6,6 +6,7 @@ use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
 use crate::viewer::error::ViewerError;
 use crate::viewer::init::LOCALHOST;
 use percent_encoding::percent_decode_str;
+use std::borrow::Cow;
 use std::collections::HashSet;
 use std::fs;
 use std::io::{ErrorKind, Read, Write};
@@ -28,6 +29,7 @@ use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
+use tpnote_lib::filename::NotePath;
 use tpnote_lib::html::rewrite_links;
 use tpnote_lib::markup_language::MarkupLanguage;
 use tpnote_lib::workflow::render_erroneous_content_html;
@@ -418,8 +420,90 @@ impl ServerThread {
                         return Err(ViewerError::UrlMustStartWithSlash);
                     }
 
-                    // Condition 1: Check if we serve this kind of extension
-                    let extension = &*relpath
+                    //
+                    // Condition 1: Only serve files that explicitly appear in
+                    // `self.allowed_urls`.
+                    let allowed_urls = self
+                        .allowed_urls
+                        .read()
+                        .expect("Can not read `allowed_urls`! RwLock is poisoned. Panic.");
+                    // Is the request in our `allowed_urls` list?
+                    if !allowed_urls.contains(&*relpath) {
+                        log::warn!(
+                            "TCP port local {} to peer {}: target not referenced in note file, rejecting: '{}'",
+                            self.stream.local_addr()?.port(),
+                            self.stream.peer_addr()?.port(),
+                            relpath.to_str().unwrap_or(""),
+                        );
+                        // Release the `RwLockReadGuard`.
+                        drop(allowed_urls);
+                        self.respond_not_found(&relpath)?;
+                        continue 'tcp_connection;
+                    }
+                    // Release the `RwLockReadGuard`.
+                    drop(allowed_urls);
+
+                    // We prepend `root_path` to `abspath` before accessing the file system.
+                    let abspath = self
+                        .context
+                        .root_path
+                        .join(relpath.strip_prefix("/").unwrap_or(&relpath));
+                    let mut abspath = Cow::Borrowed(abspath.as_path());
+                    // From here on, we only work with `abspath`.
+                    drop(relpath);
+
+                    //
+                    // Condition 2: Does this link only contain a sort-tag?
+                    let (sort_tag, remainder, _, _, _) = abspath.disassemble();
+                    if !sort_tag.is_empty() && remainder.is_empty() {
+                        if let Some(dir) = abspath.parent() {
+                            if let Ok(files) = dir.read_dir() {
+                                // If more than one file starts with `sort_tag`, retain the
+                                // alphabetic first.
+                                let mut minimum = PathBuf::new();
+                                'file_loop: for file in files {
+                                    if let Ok(file) = file {
+                                        let file = file.path();
+                                        if matches!(
+                                            file.extension()
+                                                .unwrap_or_default()
+                                                .to_str()
+                                                .unwrap_or_default()
+                                                .into(),
+                                            MarkupLanguage::None
+                                        ) {
+                                            continue 'file_loop;
+                                        }
+                                        if file.parent() == abspath.parent()
+                                            // Compare sort-tags.
+                                            && file.disassemble().0.starts_with(sort_tag)
+                                        {
+                                            // Before the first assignment `minimum` is empty.
+                                            if minimum == Path::new("")                                                // Finds the minimum.
+                                                || minimum > file
+                                            {
+                                                minimum = file;
+                                            }
+                                        }
+                                    }
+                                } // End of loop.
+                                if minimum != Path::new("") {
+                                    log::info!(
+                                        "File `{}` referenced by sort-tag match `{}`.",
+                                        minimum.to_str().unwrap_or_default(),
+                                        sort_tag,
+                                    );
+                                    abspath = Cow::Owned(minimum);
+                                }
+                            };
+                        }
+                    };
+                    // From here on `abspath is immutable.`
+                    let abspath = abspath;
+
+                    //
+                    // Condition 3: Check if we serve this kind of extension
+                    let extension = &*abspath
                         .extension()
                         .unwrap_or_default()
                         .to_str()
@@ -436,49 +520,20 @@ impl ServerThread {
                                 files with extension '{}' are not served. Rejecting: '{}'",
                                 self.stream.local_addr()?.port(),
                                 self.stream.peer_addr()?.port(),
-                                relpath
+                                abspath
                                     .extension()
                                     .unwrap_or_default()
                                     .to_str()
                                     .unwrap_or_default(),
-                                relpath.display(),
+                                abspath.display(),
                             );
-                            self.respond_not_found(relpath)?;
+                            self.respond_not_found(&abspath)?;
                             continue 'tcp_connection;
                         }
                     };
 
-                    // Condition 2: Only serve files that explicitly appear in
-                    // `self.allowed_urls`.
-                    let allowed_urls = self
-                        .allowed_urls
-                        .read()
-                        .expect("Can not read `allowed_urls`! RwLock is poisoned. Panic.");
-
-                    if !allowed_urls.contains(relpath) {
-                        log::warn!(
-                            "TCP port local {} to peer {}: target not referenced in note file, rejecting: '{}'",
-                            self.stream.local_addr()?.port(),
-                            self.stream.peer_addr()?.port(),
-                            relpath.to_str().unwrap_or(""),
-                        );
-                        // Release the `RwLockReadGuard`.
-                        drop(allowed_urls);
-                        self.respond_not_found(relpath)?;
-                        continue 'tcp_connection;
-                    }
-
-                    // Release the `RwLockReadGuard`.
-                    drop(allowed_urls);
-
-                    // We prepend `root_path` to `abspath` before accessing the file system.
-                    let abspath = self
-                        .context
-                        .root_path
-                        .join(relpath.strip_prefix("/").unwrap_or(relpath));
-                    let abspath = abspath.as_path();
-
-                    // Condition 3: If this is a Tp-Note file, check the maximum
+                    //
+                    // Condition 4: If this is a Tp-Note file, check the maximum
                     // of delivered documents, then deliver.
                     if !matches!(extension.into(), MarkupLanguage::None) {
                         if abspath.is_file() {
@@ -488,24 +543,25 @@ impl ServerThread {
                                 .expect("Can not read `delivered_tpnote_docs`. RwLock is poisoned. Panic.")
                                 .len();
                             if delivered_docs_count < CFG.viewer.displayed_tpnote_count_max {
-                                let html = self.render_content_and_error(abspath)?;
-                                self.respond_content_ok(abspath, "text/html", html.as_bytes())?;
+                                let html = self.render_content_and_error(&abspath)?;
+                                self.respond_content_ok(&abspath, "text/html", html.as_bytes())?;
                             } else {
                                 self.respond_too_many_requests()?;
                             }
                             continue 'tcp_connection;
                         } else {
                             log::info!("Referenced Tp-Note file not found: {}", abspath.display());
-                            self.respond_not_found(abspath)?;
+                            self.respond_not_found(&abspath)?;
                             continue 'tcp_connection;
                         }
                     }
 
-                    // Condition 4: Is the file readable?
+                    //
+                    // Condition 5: Is the file readable?
                     if abspath.is_file() {
-                        self.respond_file_ok(abspath, mime_type)?;
+                        self.respond_file_ok(&abspath, mime_type)?;
                     } else {
-                        self.respond_not_found(abspath)?;
+                        self.respond_not_found(&abspath)?;
                     }
                 }
             }; // end of match path
@@ -548,7 +604,7 @@ impl ServerThread {
     }
 
     /// Write HTTP OK response with content.
-    fn respond_file_ok(&mut self, reqpath: &Path, mime_type: &str) -> Result<(), ViewerError> {
+    fn respond_file_ok(&mut self, abspath: &Path, mime_type: &str) -> Result<(), ViewerError> {
         let response = format!(
             "HTTP/1.1 200 OK\r\n\
              Date: {}\r\n\
@@ -558,13 +614,13 @@ impl ServerThread {
             httpdate::fmt_http_date(SystemTime::now()),
             MAX_AGE,
             mime_type,
-            fs::metadata(reqpath)?.len(),
+            fs::metadata(abspath)?.len(),
         );
         self.stream.write_all(response.as_bytes())?;
 
         // Serve file in chunks.
         let mut buffer = [0; TCP_WRITE_BUFFER_SIZE];
-        let mut file = fs::File::open(reqpath)?;
+        let mut file = fs::File::open(abspath)?;
 
         while let Ok(n) = file.read(&mut buffer[..]) {
             if n == 0 {
@@ -577,7 +633,7 @@ impl ServerThread {
             "TCP port local {} to peer {}: 200 OK, served file: '{}'",
             self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
-            reqpath.display()
+            abspath.display()
         );
 
         Ok(())
