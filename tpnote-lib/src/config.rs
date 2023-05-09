@@ -325,8 +325,8 @@ lang:       {{ title_text | get_lang | map_lang(default=lang) | json_encode }}
 pub const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
 {{ fm_title | sanit(force_alpha=true) }}\
-{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend(with='.') }}\
+{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ extension_default | prepend(with='.') }}\
 ";
 
 /// Default template used, when the clipboard or the input stream `stdin`
@@ -368,8 +368,7 @@ lang:       {{ fm_lang | default(value = fm_title| \
 pub const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
 {{ fm_sort_tag | default(value = now() | date(format='%Y%m%d-')) }}\
 {{ fm_title | sanit(force_alpha=true) }}\
-{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}\
+{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ fm_file_ext | default(value = extension_default ) | prepend(with='.') }}\
 ";
 
@@ -413,8 +412,8 @@ lang:       {{ title_text | get_lang | map_lang(default=lang) | json_encode }}
 pub const TMPL_FROM_CLIPBOARD_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
 {{ fm_title | sanit(force_alpha=true) }}\
-{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend(with='.') }}";
+{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ extension_default | prepend(with='.') }}";
 
 /// Default template used, when the opened text file (with a known file
 /// extension) is missing a YAML front matter section. This template prepends
@@ -441,8 +440,7 @@ pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 {% if path | tag == '' %}{{ note_file_date | date(format='%Y%m%d-') }}\
 {% else %}{{ path | tag }}{% endif %}\
 {{ fm_title | sanit(force_alpha=true) }}\
-{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}\
+{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ path | ext | prepend(with='.') }}\
 ";
 
@@ -477,8 +475,8 @@ lang:       {{ body_text | cut | get_lang | map_lang(default=lang) | json_encode
 /// `<path>`.
 pub const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
 {{ path | tag }}{{ fm_title | sanit(force_alpha=true) }}\
-{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit }}{{ extension_default | prepend(with='.') }}\
+{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ extension_default | prepend(with='.') }}\
 ";
 
 /// Default filename template to test, if the filename of an existing note file
@@ -488,8 +486,7 @@ pub const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
 pub const TMPL_SYNC_FILENAME: &str = "\
 {{ fm_sort_tag | default(value = path | tag) }}\
 {{ fm_title | default(value='No title') | sanit(force_alpha=true) }}\
-{% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}\
+{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ fm_file_ext | default(value = path | ext) | prepend(with='.') }}\
 ";
 
