@@ -1827,8 +1827,8 @@ A filter is always used together with a variable. Here are some examples:
 * '`{{ path | ext }}`' is '`{{ path }}`'’s file extension without
   dot (period), e.g. '`txt`' or '`md`'.
 
-* '`{{ path | ext | prepend_dot }}`' is '`{{ path }}`'’s file extension with
-  dot (period), e.g. '`.md`' or '`.md`'.
+* '`{{ path | ext | prepend(with='.') }}`' is '`{{ path }}`'’s file extension with
+  dot (period), e.g. '`.md`' or '`.md`'. 
 
 * '`{{ path | trim_tag }}`' returns the final component of '`path`' which might
   be a directory name or a file name. Unlike the '`filename`' filter (which also
