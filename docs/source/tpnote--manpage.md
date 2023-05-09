@@ -714,7 +714,7 @@ in the Tp-Note file.
 Here some example links in Markdown notation:
 
 * A website: '`[blog](<https://blog.getreu.net>)`'
-* An inline image with relative local URL: 
+* An inline image with relative local URL:
   '`![Alt text](<images/my logo.png>)`'.
 * A link to another Tp-Note document with a relative local link:
   '`[my doc](<../../notes/my doc.md>)`'
@@ -725,20 +725,20 @@ Here some example links in Markdown notation:
   The base for absolute local links is the first parent directory containing
   the marker file '`.tpnoteroot`'. If absent, absolute local links refer
   to the root directory '`/`'.
-* A shorthand link to another Tp-Note document. Instead of writing out the full 
-  file name, only the first characters of the note's sort-tag '`20230508-`' are 
-  given, e.g. the link '`[my doc](<docs/20230508>)`' points to the file 
+* A shorthand link to another Tp-Note document. Instead of writing out the full
+  file name, only the first characters of the note's sort-tag '`20230508-`' are
+  given, e.g. the link '`[my doc](<docs/20230508>)`' points to the file
   '`./docs/20230508-my note.md`'. Alternatively, the shorthand link can be
   expressed as autolink as well: '`<http:docs/20230508>`'. If more than one
-  document with the same sort-tag exist, the viewer displays the first in 
-  alphabetical order. To set up a different order, you can extend the 
-  sort-tag until it becomes unique, e.g. rename the example document to 
-  '`./docs/20230508-1-my note.md`' to obtain the unique sort-tag 
+  document with the same sort-tag exist, the viewer displays the first in
+  alphabetical order. To set up a different order, you can extend the
+  sort-tag until it becomes unique, e.g. rename the example document to
+  '`./docs/20230508-1-my note.md`' to obtain the unique sort-tag
   '`20230508-1-`'.
 
 Although Tp-Note's built in viewer follows absolute and relative URLs, usually
 the latter are preferred. They make moving documents easier, as relative links
-do not break when the source and the destination documents are moved together. 
+do not break when the source and the destination documents are moved together.
 
 Tp-Note's exporter function '`--export`' converts a given Tp-Note file into
 HTML and adds '`.html`' to the output filename. Links in the documents content
@@ -754,8 +754,8 @@ documents is always the directory where the marker file '`.tpnoteroot`' resides
 (or '`/`' if none exists). The option '`--export-link-rewriting`' decides how
 local links in the Tp-Note document are converted when the HTML is generated.
 If its value is '`short`', then relative local links are converted to absolute
-links. The base of the resulting links is again the directory where the 
-`.tpnoteroot` file resides (or `/` if none exists). Consider the following 
+links. The base of the resulting links is again the directory where the
+`.tpnoteroot` file resides (or `/` if none exists). Consider the following
 example:
 
 * The Tp-Note file '`/my/docs/car/bill.md`' contains
@@ -1235,9 +1235,9 @@ filter called '`map_lang`'. This filter maps the result of '`get_lang`' -
 encoded as ISO 639-1 code - to an IETF language tag. For example, '`en`' is
 replaced with '`en-US`' or '`de`' with '`de-DE`'. This additional filtering
 is useful, because the detection algorithm can not figure out the region code
-(e.g. `-US` or `-DE`) by itself. Instead, the region code is appended in a 
+(e.g. `-US` or `-DE`) by itself. Instead, the region code is appended in a
 separate processing step. Spell checker or grammar checker like [LTeX] rely on
-this region information, to work properly. 
+this region information, to work properly.
 
 The corresponding configuration looks like this:
 
@@ -1260,7 +1260,7 @@ locale setting - does not exist in above list, it is automatically appended as
 additional internal mapping. When the filter `map_lang` encounters a language
 code for which no mapping is configured, the input language code is forwarded
 as it is without modification, e.g. the input `fr` results in the output `fr`.
-Subsequent entries that differ only in the region subtag, e.g. 
+Subsequent entries that differ only in the region subtag, e.g.
 '`['en', 'en- GB'], ['en', 'en-US']`' are ignored.
 
 Note, that the environment variable '`TPNOTE_LANG_DETECTION`' - if set -
@@ -1828,7 +1828,7 @@ A filter is always used together with a variable. Here are some examples:
   dot (period), e.g. '`txt`' or '`md`'.
 
 * '`{{ path | ext | prepend(with='.') }}`' is '`{{ path }}`'’s file extension with
-  dot (period), e.g. '`.md`' or '`.md`'. 
+  dot (period), e.g. '`.md`' or '`.md`'.
 
 * '`{{ path | trim_tag }}`' returns the final component of '`path`' which might
   be a directory name or a file name. Unlike the '`filename`' filter (which also
@@ -2029,6 +2029,13 @@ LANG
     set, it overwrites the locale setting stored in '`{{ lang }}`'.
     '`man locale`' describes the data format of '`LANG`', a typical value
     is '`en_GB.UTF-8`'.
+
+TPNOTE\_CONFIG
+
+>   When set, the environment variable replaces the default path where Tp-Note
+    loads or stores its configuration file. It has the same effect as the
+    command line option '`--config`'. If both are present, that latter takes
+    precedence.
 
 TPNOTE\_LANG
 

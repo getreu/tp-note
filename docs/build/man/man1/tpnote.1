@@ -1578,7 +1578,7 @@ When the filter \f[C]map_lang\f[R] encounters a language code for which
 no mapping is configured, the input language code is forwarded as it is
 without modification, e.g.\ the input \f[C]fr\f[R] results in the output
 \f[C]fr\f[R].
-Subsequent entries that differ only in the region subtag, e.g.\ 
+Subsequent entries that differ only in the region subtag, e.g.
 `\f[C][\[aq]en\[aq], \[aq]en- GB\[aq]], [\[aq]en\[aq], \[aq]en-US\[aq]]\f[R]'
 are ignored.
 .PP
@@ -2524,6 +2524,15 @@ When the environment variable `\f[C]TPNOTE_LANG\f[R]' is set, it
 overwrites the locale setting stored in `\f[C]{{ lang }}\f[R]'.
 `\f[C]man locale\f[R]' describes the data format of `\f[C]LANG\f[R]', a
 typical value is `\f[C]en_GB.UTF-8\f[R]'.
+.RE
+.PP
+TPNOTE_CONFIG
+.RS
+.PP
+When set, the environment variable replaces the default path where
+Tp-Note loads or stores its configuration file.
+It has the same effect as the command line option `\f[C]--config\f[R]'.
+If both are present, that latter takes precedence.
 .RE
 .PP
 TPNOTE_LANG
