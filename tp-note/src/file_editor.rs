@@ -64,7 +64,7 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
 
     let mut executable_found = false;
     for i in 0..executable_list.len() {
-        log::info!(
+        log::debug!(
             "Trying to launch the file editor:\n\'{}\' {}",
             executable_list[i],
             args_list[i]

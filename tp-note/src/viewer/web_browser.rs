@@ -74,7 +74,7 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
     // Launch web browser.
     let mut executable_found = false;
     for i in 0..executable_list.len() {
-        log::info!(
+        log::debug!(
             "Trying to launch the web browser:\n'{}' {}",
             executable_list[i],
             args_list[i]
