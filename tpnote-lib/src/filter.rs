@@ -633,16 +633,6 @@ mod tests {
         assert_eq!("20200908-", output);
         //
         //
-        // Test `prepend_dot`.
-        let input = "md";
-        let output = prepend_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(".md", output);
-
-        let input = "";
-        let output = prepend_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("", output);
-        //
-        //
         // Test file extension.
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.md";
@@ -676,6 +666,18 @@ mod tests {
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
         let output = ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("", output);
+        //
+        //
+        // Test `prepend_dot`.
+        let mut args = HashMap::new();
+        args.insert("with".to_string(), to_value(".").unwrap());
+        let input = "md";
+        let output = prepend_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!(".md", output);
+
+        let input = "";
+        let output = prepend_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
     }
 
