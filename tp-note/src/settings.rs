@@ -16,19 +16,22 @@ use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 
-/// Name of the environment variable which can be optionally used to launch a
-/// different file editor.
+/// The name of the environment variable, that - when set - replaces the default
+/// path where Tp-Note loads or stores its configuration file.
+pub const ENV_VAR_TPNOTE_CONFIG: &str = "TPNOTE_CONFIG";
+/// The name of the environment variable which can be optionally used to launch
+/// a different file editor.
 pub const ENV_VAR_TPNOTE_EDITOR: &str = "TPNOTE_EDITOR";
-/// Name of the environment variable which can be optionally used to launch a
-/// different web browser.
+/// The name of the environment variable which can be optionally used to launch
+/// a different web browser.
 #[cfg(feature = "viewer")]
 pub const ENV_VAR_TPNOTE_BROWSER: &str = "TPNOTE_BROWSER";
-/// Name of the environment variable which Tp-Note checks under Unix, if it is
-/// invoked as `root`.
+/// The name of the environment variable which Tp-Note checks under Unix, if it
+/// is invoked as `root`.
 #[cfg(target_family = "unix")]
 const ENV_VAR_USER: &str = "USER";
-/// Name of the environment variable which Tp-Note checks under Unix, if it is
-/// invoked on a graphical desktop.
+/// The name of the environment variable which Tp-Note checks under Unix, if it
+/// is invoked on a graphical desktop.
 #[cfg(target_family = "unix")]
 const ENV_VAR_DISPLAY: &str = "DISPLAY";
 

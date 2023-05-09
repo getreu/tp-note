@@ -1,6 +1,7 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
 //! and exposes the configuration as `static` variable.
 use crate::settings::ARGS;
+use crate::settings::ENV_VAR_TPNOTE_CONFIG;
 use crate::VERSION;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
@@ -10,6 +11,7 @@ use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
+use std::env;
 use std::fs;
 #[cfg(not(test))]
 use std::fs::File;
@@ -551,6 +553,8 @@ lazy_static! {
 /// This is where the Tp-Note stores its configuration file.
     pub static ref CONFIG_PATH : Option<PathBuf> = {
         if let Some(c) = &ARGS.config {
+            Some(PathBuf::from(c))
+        } else if let Ok(c) = env::var(ENV_VAR_TPNOTE_CONFIG) {
             Some(PathBuf::from(c))
         } else {
             let config = ProjectDirs::from("rs", "", CARGO_BIN_NAME)?;
