@@ -41,7 +41,7 @@ lazy_static! {
         tera.register_filter("copy_counter", copy_counter_filter);
         tera.register_filter("filename", filename_filter);
         tera.register_filter("ext", ext_filter);
-        tera.register_filter("prepend_dot", prepend_dot_filter);
+        tera.register_filter("prepend", prepend_filter);
         tera.register_filter("remove", remove_filter);
         tera.register_filter("get_lang", get_lang_filter);
         tera.register_filter("map_lang", map_lang_filter);
@@ -297,21 +297,27 @@ fn filename_filter<S: BuildHasher>(
     Ok(to_value(filename)?)
 }
 
-/// A Tera filter that prepends a dot when stream not empty.
-fn prepend_dot_filter<S: BuildHasher>(
+/// A Tera filter that prepends the string parameter `with` only if the input
+/// stream is not empty.
+fn prepend_filter<S: BuildHasher>(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("prepend_dot", "value", String, value);
+    let input = try_get_value!("prepend", "value", String, value);
 
-    let mut prepend_dot = String::new();
-
-    if !p.is_empty() {
-        prepend_dot.push('.');
-        prepend_dot.push_str(&p);
+    let mut res = input;
+    if let Some(with) = args.get("with") {
+        if let Value::String(with) = with {
+            let mut s = String::new();
+            if !res.is_empty() {
+                s.push_str(with);
+                s.push_str(&res);
+                res = s;
+            };
+        }
     };
 
-    Ok(to_value(prepend_dot)?)
+    Ok(to_value(res)?)
 }
 
 /// A Tera filter that takes a path and extracts its file extension.
@@ -629,11 +635,11 @@ mod tests {
         //
         // Test `prepend_dot`.
         let input = "md";
-        let output = prepend_dot_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = prepend_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!(".md", output);
 
         let input = "";
-        let output = prepend_dot_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = prepend_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
         //
         //

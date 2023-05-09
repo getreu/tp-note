@@ -326,7 +326,7 @@ pub const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
 {{ fm_title | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}\
+{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend(with='.') }}\
 ";
 
 /// Default template used, when the clipboard or the input stream `stdin`
@@ -370,7 +370,7 @@ pub const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
 {{ fm_title | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}\
-{{ fm_file_ext | default(value = extension_default ) | prepend_dot }}\
+{{ fm_file_ext | default(value = extension_default ) | prepend(with='.') }}\
 ";
 
 /// Default template used, when the clipboard or the input stream `stdin`
@@ -414,7 +414,7 @@ pub const TMPL_FROM_CLIPBOARD_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
 {{ fm_title | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend_dot }}";
+{{ fm_subtitle | default(value='') | sanit  }}{{ extension_default | prepend(with='.') }}";
 
 /// Default template used, when the opened text file (with a known file
 /// extension) is missing a YAML front matter section. This template prepends
@@ -443,7 +443,7 @@ pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 {{ fm_title | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}\
-{{ path | ext | prepend_dot }}\
+{{ path | ext | prepend(with='.') }}\
 ";
 
 /// Default template used when the command line `<path>` parameter points to an
@@ -478,7 +478,7 @@ lang:       {{ body_text | cut | get_lang | map_lang(default=lang) | json_encode
 pub const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
 {{ path | tag }}{{ fm_title | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
-{{ fm_subtitle | default(value='') | sanit }}{{ extension_default | prepend_dot }}\
+{{ fm_subtitle | default(value='') | sanit }}{{ extension_default | prepend(with='.') }}\
 ";
 
 /// Default filename template to test, if the filename of an existing note file
@@ -490,7 +490,7 @@ pub const TMPL_SYNC_FILENAME: &str = "\
 {{ fm_title | default(value='No title') | sanit(force_alpha=true) }}\
 {% if fm_subtitle | default(value='') | sanit != '' %}--{% endif %}\
 {{ fm_subtitle | default(value='') | sanit  }}\
-{{ fm_file_ext | default(value = path | ext) | prepend_dot }}\
+{{ fm_file_ext | default(value = path | ext) | prepend(with='.') }}\
 ";
 
 /// HTML template variable containing the note's body.
