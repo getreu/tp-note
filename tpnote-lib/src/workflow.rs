@@ -321,7 +321,7 @@ where
         }
 
         TemplateKind::FromTextFile => {
-            let mut n = Note::from_text_file(context, content.unwrap(), template_kind)?;
+            let mut n = Note::from_raw_text(context, content.unwrap(), template_kind)?;
             // Render filename.
             n.render_filename(template_kind)?;
 
@@ -332,7 +332,7 @@ where
             n
         }
         TemplateKind::SyncFilename => synchronize(context, content.unwrap())?,
-        TemplateKind::None => Note::from_text_file(context, content.unwrap(), template_kind)?,
+        TemplateKind::None => Note::from_raw_text(context, content.unwrap(), template_kind)?,
     };
 
     // Export HTML rendition, if wanted.
@@ -357,7 +357,7 @@ where
 fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, NoteError> {
     // parse file again to check for synchronicity with filename
 
-    let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename)?;
+    let mut n = Note::from_raw_text(context, content, TemplateKind::SyncFilename)?;
 
     let no_filename_sync = match (
         n.context.get(TMPL_VAR_FM_FILENAME_SYNC),
@@ -513,7 +513,7 @@ fn render_html<T: Content>(
         .unwrap_or_default()
         .to_owned();
 
-    let note = Note::from_text_file(context, content, TemplateKind::None)?;
+    let note = Note::from_raw_text(context, content, TemplateKind::None)?;
 
     note.render_content_to_html(file_path_ext, tmpl_html)
 }

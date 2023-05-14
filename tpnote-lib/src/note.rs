@@ -87,7 +87,7 @@ impl<T: Content> Note<T> {
     ///   exists on disk),
     /// * all front matter variables (see `FrontMatter::try_from_content()`)
     ///
-    pub fn from_text_file(
+    pub fn from_raw_text(
         mut context: Context,
         content: T,
         template_kind: TemplateKind,
@@ -681,7 +681,7 @@ mod tests {
     }
 
     #[test]
-    fn test_from_text_file1() {
+    fn test_from_raw_text1() {
         //
         // Example with `TemplateKind::SyncFilename`
         //
@@ -708,7 +708,7 @@ Body text
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
-        let mut n = Note::from_text_file(context, content, TemplateKind::SyncFilename).unwrap();
+        let mut n = Note::from_raw_text(context, content, TemplateKind::SyncFilename).unwrap();
         n.render_filename(TemplateKind::SyncFilename).unwrap();
         n.set_next_unused_rendered_filename_or(&n.context.path.clone())
             .unwrap();
@@ -719,7 +719,7 @@ Body text
     }
 
     #[test]
-    fn test_from_text_file2() {
+    fn test_from_raw_text2() {
         // Example with `TemplateKind::None`
         //
         //    This constructor is called, when `Note` is solely created for
@@ -751,7 +751,7 @@ Body text
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
-        let n = Note::from_text_file(context, content, TemplateKind::None).unwrap();
+        let n = Note::from_raw_text(context, content, TemplateKind::None).unwrap();
         // Check the HTML rendition.
         let html = n
             .render_content_to_html("md", &LIB_CFG.read().unwrap().tmpl_html.viewer)
@@ -784,7 +784,7 @@ Body text
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
         let mut n =
-            Note::from_text_file(context.clone(), content, TemplateKind::FromTextFile).unwrap();
+            Note::from_raw_text(context.clone(), content, TemplateKind::FromTextFile).unwrap();
         assert!(!n.content.header().is_empty());
         assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("hello "));
         assert_eq!(
