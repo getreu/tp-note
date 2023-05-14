@@ -388,9 +388,11 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
     Ok(n)
 }
 
-/// Returns the HTML rendition of the note file located in
-/// `context.path` with the template `TMPL_HTML_VIEWER` (can be replaced
-/// at runtime). This function is stateless.
+/// Returns the HTML rendition of a `ContentString`. The markup rendition
+/// engine is determined, by the file extension of the variable `context.path`.
+/// The resulting HTML and other HTML template variables originating from
+/// `context` are inserted into the `TMPL_HTML_VIEWER` template (which can be
+/// replaced at runtime) before being returned. This function is stateless.
 ///
 /// ```rust
 /// use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
@@ -459,9 +461,11 @@ pub fn render_viewer_html<T: Content>(context: Context, content: T) -> Result<St
     render_html(context, content, tmpl_html)
 }
 
-/// Returns the HTML rendition of the note file located in
-/// `context.path` with the template `TMPL_HTML_VIEWER`. This function is
-/// stateless.
+/// Returns the HTML rendition of a `ContentString`. The markup rendition
+/// engine is determined, by the file extension of the variable `context.path`.
+/// The resulting HTML and other HTML template variables originating from
+/// `context` are inserted into the `TMPL_HTML_EXPORTER` template (which can be
+/// replaced at runtime) before being returned. This function is stateless.
 ///
 /// ```rust
 /// use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
@@ -483,7 +487,7 @@ pub fn render_viewer_html<T: Content>(context: Context, content: T) -> Result<St
 ///
 /// // Start test
 /// let mut context = Context::from(Path::new("/path/to/note.md"));
-/// // The exporter template does not inject any JavaScript.
+/// // The exporter template does not insert any JavaScript.
 /// // Render.
 /// let html = render_exporter_html::<ContentString>(context, raw.into())
 ///            .unwrap();

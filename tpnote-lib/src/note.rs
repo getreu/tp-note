@@ -1,4 +1,4 @@
-//! Tp-Note's low level API, creating a memory representation of a  
+//! Tp-Note's low level API, creating a memory representation of a
 //! note file by inserting _Tp-Note_'s
 //! environment data in some templates. If the note exists on disk already,
 //! the memory representation is established be reading the note file and
@@ -50,6 +50,10 @@ use tera::Tera;
 
 #[derive(Debug, PartialEq)]
 /// Represents a note.
+/// 1. The `ContentString`'s header is deserialized into `FrontMatter`.
+/// 2. `FrontMatter` is stored in `Context` with some environment data.
+/// 3. `Context` data is filled in some filename template.
+/// 4. The result is stored in `rendered_filename`.
 pub struct Note<T> {
     /// Captured environment of _Tp-Note_ that
     /// is used to fill in templates.
@@ -57,18 +61,17 @@ pub struct Note<T> {
     /// The full text content of the note, including
     /// its front matter.
     pub content: T,
-    /// 1. The `ContentString`'s header is deserialized into `FrontMatter`.
-    /// 2. `FrontMatter` is stored in `Context` with some environment data.
-    /// 3. `Context` data is filled in some filename template.
-    /// 4. The result is stored in `rendered_filename`. This field equals to
-    ///    `PathBuf::new()` until `self.render_filename` is called.
+    /// This field equals to `PathBuf::new()` until `self.render_filename()`
+    /// is called.
     pub rendered_filename: PathBuf,
 }
 
 use std::fs;
 impl<T: Content> Note<T> {
-    /// Constructor creating a memory representation of the existing note
-    /// on disk.
+    /// Constructor creating a `Note` memory representation from the raw text
+    /// provided by the `content` object. No file content is read from disk.
+    /// If `template_kind` is `TemplateKind::FromTextFile`, the raw text is
+    /// passed through the `tmp.from_text_file_content` template.
     ///
     /// Contract: `template_kind` should be one of:
     /// * `TemplateKind::SyncFilename`,
@@ -79,8 +82,9 @@ impl<T: Content> Note<T> {
     ///
     /// This adds the following variables to the context:
     /// * `TMPL_VAR_NOTE_FM_TEXT`,
-    /// * `TMPL_VAR_NOTE_BODY_TEXT`,    
-    /// * `TMPL_VAR_NOTE_FILE_DATE` (only if file can be opened),
+    /// * `TMPL_VAR_NOTE_BODY_TEXT`,
+    /// * `TMPL_VAR_NOTE_FILE_DATE` (optional: only if a file `context.path`
+    ///   exists on disk),
     /// * all front matter variables (see `FrontMatter::try_from_content()`)
     ///
     pub fn from_text_file(
@@ -166,7 +170,8 @@ impl<T: Content> Note<T> {
     }
 
     /// Constructor that creates a new note by filling in the content
-    /// template `template`.
+    /// template `template` with the data read from `context`.
+    /// The result is an initialized `self.content`.
     ///
     /// Contract: `template_kind` should be NOT one of:
     /// * `TemplateKind::SyncFilename`,
