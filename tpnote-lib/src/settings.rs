@@ -280,7 +280,7 @@ fn update_filter_map_lang_hmap_setting(settings: &mut Settings) {
 /// `settings.filter_map_lang`.
 fn update_env_lang_detection(settings: &mut Settings) {
     if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
-        if env_var == "" {
+        if env_var.is_empty() {
             let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
             let _ = mem::replace(&mut settings.filter_map_lang_hmap, None);
             log::info!(

@@ -306,15 +306,13 @@ fn prepend_filter<S: BuildHasher>(
     let input = try_get_value!("prepend", "value", String, value);
 
     let mut res = input;
-    if let Some(with) = args.get("with") {
-        if let Value::String(with) = with {
-            let mut s = String::new();
-            if !res.is_empty() {
-                s.push_str(with);
-                s.push_str(&res);
-                res = s;
-            };
-        }
+    if let Some(Value::String(with)) = args.get("with") {
+        let mut s = String::new();
+        if !res.is_empty() {
+            s.push_str(with);
+            s.push_str(&res);
+            res = s;
+        };
     };
 
     Ok(to_value(res)?)
