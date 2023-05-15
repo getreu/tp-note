@@ -1800,7 +1800,7 @@ consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 
 In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
-some additional filters, e.g.: '`tag`', '`trim_tag`', '`stem`', '`cut`',
+some additional filters, e.g.: '`tag`', '`trim_file_sort_tag`', '`stem`', '`cut`',
 '`heading`', '`link_text`', '`link_dest`', '`link_title`' and '`ext`'.
 
 A filter is always used together with a variable. Here are some examples:
@@ -1829,13 +1829,13 @@ A filter is always used together with a variable. Here are some examples:
 * '`{{ path | ext | prepend(with='.') }}`' is '`{{ path }}`'’s file extension with
   dot (period), e.g. '`.md`' or '`.md`'.
 
-* '`{{ path | trim_tag }}`' returns the final component of '`path`' which might
+* '`{{ path | trim_file_sort_tag }}`' returns the final component of '`path`' which might
   be a directory name or a file name. Unlike the '`file_name`' filter (which also
-  returns the final component), '`trim_tag`' trims the sort tag if there is one.
+  returns the final component), '`trim_file_sort_tag`' trims the sort tag if there is one.
 
-* '`{{ dir_path | trim_tag }}`' returns the final component of '`dir_path`'
+* '`{{ dir_path | trim_file_sort_tag }}`' returns the final component of '`dir_path`'
   (which is the final directory name in '`{{ path }}`'). Unlike the '`file_name`'
-  filter (which also returns the final component), '`trim_tag`' trims the sort
+  filter (which also returns the final component), '`trim_file_sort_tag`' trims the sort
   tag if there is one.
 
 * '`{{ clipboard | cut }}`' is the first 200 bytes from the clipboard.

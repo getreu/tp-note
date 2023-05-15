@@ -35,7 +35,7 @@ lazy_static! {
         tera.register_filter("link_title", link_title_filter);
         tera.register_filter("heading", heading_filter);
         tera.register_filter("cut", cut_filter);
-        tera.register_filter("trim_tag", trim_tag_filter);
+        tera.register_filter("trim_file_sort_tag", trim_file_sort_tag_filter);
         tera.register_filter("tag", tag_filter);
         tera.register_filter("stem", stem_filter);
         tera.register_filter("file_copy_counter", file_copy_counter_filter);
@@ -242,11 +242,11 @@ fn tag_filter<S: BuildHasher>(
 
 /// A Tera filter that takes a path and extracts its last element.
 /// This function trims the `sort_tag` if present.
-fn trim_tag_filter<S: BuildHasher>(
+fn trim_file_sort_tag_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("filename", "value", String, value);
+    let p = try_get_value!("trim_file_sort_tag", "value", String, value);
     let p = PathBuf::from(p);
     let (_, fname, _, _, _) = p.disassemble();
 

@@ -300,7 +300,7 @@ pub const TMPL_FILTER_MAP_LANG: &[&[&str]] =
 /// in YAML front matter, the filter `| json_encode` must be appended to each
 /// variable.
 pub const TMPL_NEW_CONTENT: &str = "\
-{%- set title_text = dir_path | trim_tag -%}
+{%- set title_text = dir_path | trim_file_sort_tag -%}
 ---
 title:      {{ title_text | cut | json_encode }}
 subtitle:   {{ 'Note' | json_encode }}
@@ -342,7 +342,7 @@ pub const TMPL_NEW_FILENAME: &str = "\
 /// appended to each variable.
 pub const TMPL_FROM_CLIPBOARD_YAML_CONTENT: &str = "\
 ---
-title:      {{ fm_title | default(value = path|trim_tag) | cut | json_encode }}
+title:      {{ fm_title | default(value = path|trim_file_sort_tag) | cut | json_encode }}
 subtitle:   {{ fm_subtitle | default(value = 'Note') | cut | json_encode }}
 author:     {{ fm_author | default(value=username | capitalize) | json_encode }}
 date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
@@ -455,7 +455,7 @@ pub const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
    {%- set lang_test_text = path | stem  -%}
 {%- endif -%}   
 ---
-title:      {{ path | trim_file_order_tag | json_encode }}
+title:      {{ path | trim_file_sort_tag | json_encode }}
 {% if body_text | link_text !='' and 
       body_text | heading == body_text -%}
   subtitle:   {{ 'URL' | json_encode -}}
