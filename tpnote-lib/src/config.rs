@@ -449,8 +449,13 @@ pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 /// file.
 pub const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
 {%- set body_text = stdin ~ clipboard -%}
+{%- if body_text != '' -%}
+   {%- set lang_test_text = body_text | cut -%}
+{%- else -%}
+   {%- set lang_test_text = path | stem  -%}
+{%- endif -%}   
 ---
-title:      {{ path | trim_tag | json_encode }}
+title:      {{ path | trim_file_order_tag | json_encode }}
 {% if body_text | link_text !='' and 
       body_text | heading == body_text -%}
   subtitle:   {{ 'URL' | json_encode -}}
@@ -459,7 +464,7 @@ title:      {{ path | trim_tag | json_encode }}
 {%- endif %}
 author:     {{ username | capitalize | json_encode }}
 date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ body_text | cut | get_lang | map_lang(default=lang) | json_encode }}
+lang:       {{ lang_test_text | get_lang | map_lang(default=lang) | json_encode }}
 ---
 
 [{{ path | filename }}](<{{ path | filename }}>)
