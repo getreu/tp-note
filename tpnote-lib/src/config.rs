@@ -293,7 +293,7 @@ pub const TMPL_FILTER_MAP_LANG: &[&[&str]] =
 /// Default content template used when the command line argument `<sanit>`
 /// is a directory. Can be changed through editing the configuration
 /// file. The following variables are  defined: `{{ sanit | file_stem }}
-/// `, `{{ path | file_stem }}`, `{{ path | ext }}`, `{{ extension_default }}`
+/// `, `{{ path | file_stem }}`, `{{ path | file_ext }}`, `{{ extension_default }}`
 /// `{{ file | tag }}`, `{{ username }}`, `{{ date }}`,
 /// `{{ title_text | lang }}`, `{{ dir_path }}`. In addition, all environment
 /// variables can be used, e.g. `{{ get_env(name=\"LOGNAME\") }}` When placed
@@ -441,7 +441,7 @@ pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 {% else %}{{ path | file_sort_tag }}{% endif %}\
 {{ fm_title | sanit(force_alpha=true) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
-{{ path | ext | prepend(with='.') }}\
+{{ path | file_ext | prepend(with='.') }}\
 ";
 
 /// Default template used when the command line `<path>` parameter points to an
@@ -492,7 +492,7 @@ pub const TMPL_SYNC_FILENAME: &str = "\
 {{ fm_sort_tag | default(value = path | file_sort_tag) }}\
 {{ fm_title | default(value='No title') | sanit(force_alpha=true) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
-{{ fm_file_ext | default(value = path | ext) | prepend(with='.') }}\
+{{ fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}\
 ";
 
 /// HTML template variable containing the note's body.

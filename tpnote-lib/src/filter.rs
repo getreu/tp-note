@@ -40,7 +40,7 @@ lazy_static! {
         tera.register_filter("file_stem", file_stem_filter);
         tera.register_filter("file_copy_counter", file_copy_counter_filter);
         tera.register_filter("file_name", file_name_filter);
-        tera.register_filter("ext", ext_filter);
+        tera.register_filter("file_ext", file_ext_filter);
         tera.register_filter("prepend", prepend_filter);
         tera.register_filter("remove", remove_filter);
         tera.register_filter("get_lang", get_lang_filter);
@@ -319,11 +319,11 @@ fn prepend_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that takes a path and extracts its file extension.
-fn ext_filter<S: BuildHasher>(
+fn file_ext_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("ext", "value", String, value);
+    let p = try_get_value!("file_ext", "value", String, value);
 
     let ext = Path::new(&p)
         .extension()
@@ -634,12 +634,12 @@ mod tests {
         // Test file extension.
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.md";
-        let output = ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("md", output);
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
         //
         //
@@ -651,7 +651,7 @@ mod tests {
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
         //
         //
@@ -663,7 +663,7 @@ mod tests {
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
         //
         //

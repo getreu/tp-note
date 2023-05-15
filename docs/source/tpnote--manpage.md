@@ -1823,10 +1823,10 @@ A filter is always used together with a variable. Here are some examples:
   without its sort tag, stem and extension. Only the copy counter of
   '`{{ path }}`''s last component is returned.
 
-* '`{{ path | ext }}`' is '`{{ path }}`'’s file extension without
+* '`{{ path | file_ext }}`' is '`{{ path }}`'’s file extension without
   dot (period), e.g. '`txt`' or '`md`'.
 
-* '`{{ path | ext | prepend(with='.') }}`' is '`{{ path }}`'’s file extension with
+* '`{{ path | file_ext | prepend(with='.') }}`' is '`{{ path }}`'’s file extension with
   dot (period), e.g. '`.md`' or '`.md`'.
 
 * '`{{ path | trim_file_sort_tag }}`' returns the final component of '`path`' which might
