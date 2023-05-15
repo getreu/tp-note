@@ -1806,21 +1806,21 @@ some additional filters, e.g.: '`tag`', '`trim_tag`', '`stem`', '`cut`',
 
 A filter is always used together with a variable. Here are some examples:
 
-* '`{{ path | filename }}`' returns the final component of '`{{ path }}`'.
+* '`{{ path | file_name }}`' returns the final component of '`{{ path }}`'.
   If '`{{ path }}`' points to a file, the filter returns the complete
   filename including its sort tag, stem, copy-counter, dot and extension. If the
   '`<path>`' points to a directory, the filter returns the final directory name.
 
 * '`{{ path | tag }}`' is the sort tag (numerical filename prefix) of the final
   component of '`{{ path }}`', e.g. '`01-23_9-`' or '`20191022-`'. It is similar
-  to '`{{ path | filename }}`' but without returning its stem, copy-counter and
+  to '`{{ path | file_name }}`' but without returning its stem, copy-counter and
   extension.
 
-* '`{{ path | stem }}`' is similar to '`{{ path | filename }}`' but without its
+* '`{{ path | stem }}`' is similar to '`{{ path | file_name }}`' but without its
   sort tag, copy-counter and extension. Only the stem of '`{{ path }}`''s last
   component is returned.
 
-* '`{{ path | copy_counter }}`' is similar to '`{{ path | filename }}`' but
+* '`{{ path | copy_counter }}`' is similar to '`{{ path | file_name }}`' but
   without its sort tag, stem and extension. Only the copy counter of
   '`{{ path }}`''s last component is returned.
 
@@ -1831,11 +1831,11 @@ A filter is always used together with a variable. Here are some examples:
   dot (period), e.g. '`.md`' or '`.md`'.
 
 * '`{{ path | trim_tag }}`' returns the final component of '`path`' which might
-  be a directory name or a file name. Unlike the '`filename`' filter (which also
+  be a directory name or a file name. Unlike the '`file_name`' filter (which also
   returns the final component), '`trim_tag`' trims the sort tag if there is one.
 
 * '`{{ dir_path | trim_tag }}`' returns the final component of '`dir_path`'
-  (which is the final directory name in '`{{ path }}`'). Unlike the '`filename`'
+  (which is the final directory name in '`{{ path }}`'). Unlike the '`file_name`'
   filter (which also returns the final component), '`trim_tag`' trims the sort
   tag if there is one.
 

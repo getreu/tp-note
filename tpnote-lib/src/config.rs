@@ -426,7 +426,7 @@ subtitle:   {{ path | stem | split(pat='--') | nth(n=1) | cut | json_encode }}
 author:     {{ username | capitalize | json_encode }}
 date:       {{ note_file_date | default(value='') | date(format='%Y-%m-%d') | \
                json_encode }}
-orig_name:  {{ path | filename | json_encode }}
+orig_name:  {{ path | file_name | json_encode }}
 lang:       {{ note_body_text | get_lang | map_lang(default=lang) | json_encode }}
 ---
 
@@ -467,7 +467,7 @@ date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
 lang:       {{ lang_test_text | get_lang | map_lang(default=lang) | json_encode }}
 ---
 
-[{{ path | filename }}](<{{ path | filename }}>)
+[{{ path | file_name }}](<{{ path | file_name }}>)
 {% if body_text != '' -%}
 {%- if body_text != body_text | heading %}
 ---

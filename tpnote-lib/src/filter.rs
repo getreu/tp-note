@@ -39,7 +39,7 @@ lazy_static! {
         tera.register_filter("tag", tag_filter);
         tera.register_filter("stem", stem_filter);
         tera.register_filter("copy_counter", copy_counter_filter);
-        tera.register_filter("filename", filename_filter);
+        tera.register_filter("file_name", file_name_filter);
         tera.register_filter("ext", ext_filter);
         tera.register_filter("prepend", prepend_filter);
         tera.register_filter("remove", remove_filter);
@@ -282,11 +282,11 @@ fn copy_counter_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that takes a path and extracts its filename.
-fn filename_filter<S: BuildHasher>(
+fn file_name_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("filename", "value", String, value);
+    let p = try_get_value!("file_name", "value", String, value);
 
     let filename = Path::new(&p)
         .file_name()
@@ -658,7 +658,7 @@ mod tests {
         // Test filename .
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
-        let output = filename_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = file_name_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("20200908-My file(123).md", output);
 
         let input =
