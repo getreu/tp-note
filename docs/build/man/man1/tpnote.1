@@ -1628,11 +1628,11 @@ TPNOTE_LANG_DETECTION=\[dq]\[dq] tpnote
 Tp-Note\[cq]s core functionality, the management of note file headers
 and filenames, is markup language agnostic.
 However, there is one content template
-`\f[C]tmpl.from_clipboard_content\f[R]' that generates a hyperlink.
+`\f[C]tmpl.annotate_file_content\f[R]' that generates a hyperlink.
 The hyperlink syntax varies depending on the markup language.
 Hence, you should not forget to modify the
-`\f[C]tmpl.from_clipboard_content\f[R]' content template, when you
-change the default markup language defined in
+`\f[C]tmpl.annotate_file_content\f[R]' content template, when you change
+the default markup language defined in
 `\f[C]filename.extension_default\f[R]'.
 .SS Change default markup language to ReStructuredText
 .PP
@@ -1665,14 +1665,13 @@ extension_default=\[aq]rst\[aq]
 .RE
 .IP "2." 3
 Replace the following line in the template
-`\f[C]tmpl.from_clipboard_content\f[R]' that defines a hyperlink in
+`\f[C]tmpl.annotate_file_content\f[R]' that defines a hyperlink in
 Markdown format:
 .RS 4
 .IP
 .nf
 \f[C]
-[{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}]\[rs]
-(<{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}>)
+[{{ path | file_name }}](<{{ path | file_name }}>)
 \f[R]
 .fi
 .PP
@@ -1680,7 +1679,7 @@ with the following line encoded in ReStructuredText syntax:
 .IP
 .nf
 \f[C]
-\[ga]<{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}>\[ga]_
+\[ga]<{{ path | file_name }}](<{{ path | file_name }}>\[ga]_
 \f[R]
 .fi
 .RE

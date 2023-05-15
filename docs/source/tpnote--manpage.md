@@ -1299,9 +1299,9 @@ TPNOTE_LANG_DETECTION="" tpnote
 
 Tp-Note's core functionality, the management of note file headers and
 filenames, is markup language agnostic. However, there is one content template
-'`tmpl.from_clipboard_content`' that generates a hyperlink. The hyperlink
+'`tmpl.annotate_file_content`' that generates a hyperlink. The hyperlink
 syntax varies depending on the markup language. Hence, you should not forget to
-modify the '`tmpl.from_clipboard_content`' content template, when you
+modify the '`tmpl.annotate_file_content`' content template, when you
 change the default markup language defined in '`filename.extension_default`'.
 
 
@@ -1327,15 +1327,14 @@ affect the way new notes are created:
    extension_default='rst'
    ```
 
-2. Replace the following line in the template '`tmpl.from_clipboard_content`'
+2. Replace the following line in the template '`tmpl.annotate_file_content`'
    that defines a hyperlink in Markdown format:
 
-       [{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}]\
-       (<{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}>)
+       [{{ path | file_name }}](<{{ path | file_name }}>)
 
    with the following line encoded in ReStructuredText syntax:
 
-       `<{{ path | tag }}{{ path | stem }}{{ path | ext | prepend_dot }}>`_
+       `<{{ path | file_name }}>`_
 
 As a result, all future notes are created as '`*.rst`' files.
 
