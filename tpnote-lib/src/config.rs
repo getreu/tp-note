@@ -292,8 +292,8 @@ pub const TMPL_FILTER_MAP_LANG: &[&[&str]] =
 
 /// Default content template used when the command line argument `<sanit>`
 /// is a directory. Can be changed through editing the configuration
-/// file. The following variables are  defined: `{{ sanit | stem }}
-/// `, `{{ path | stem }}`, `{{ path | ext }}`, `{{ extension_default }}`
+/// file. The following variables are  defined: `{{ sanit | file_stem }}
+/// `, `{{ path | file_stem }}`, `{{ path | ext }}`, `{{ extension_default }}`
 /// `{{ file | tag }}`, `{{ username }}`, `{{ date }}`,
 /// `{{ title_text | lang }}`, `{{ dir_path }}`. In addition, all environment
 /// variables can be used, e.g. `{{ get_env(name=\"LOGNAME\") }}` When placed
@@ -421,8 +421,8 @@ pub const TMPL_FROM_CLIPBOARD_FILENAME: &str = "\
 /// filename and its creation date.
 pub const TMPL_FROM_TEXT_FILE_CONTENT: &str = "\
 ---
-title:      {{ path | stem | split(pat='--') | first | cut | json_encode }}
-subtitle:   {{ path | stem | split(pat='--') | nth(n=1) | cut | json_encode }}
+title:      {{ path | file_stem | split(pat='--') | first | cut | json_encode }}
+subtitle:   {{ path | file_stem | split(pat='--') | nth(n=1) | cut | json_encode }}
 author:     {{ username | capitalize | json_encode }}
 date:       {{ note_file_date | default(value='') | date(format='%Y-%m-%d') | \
                json_encode }}
@@ -452,7 +452,7 @@ pub const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
 {%- if body_text != '' -%}
    {%- set lang_test_text = body_text | cut -%}
 {%- else -%}
-   {%- set lang_test_text = path | stem  -%}
+   {%- set lang_test_text = path | file_stem  -%}
 {%- endif -%}   
 ---
 title:      {{ path | trim_file_sort_tag | json_encode }}

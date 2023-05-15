@@ -37,7 +37,7 @@ lazy_static! {
         tera.register_filter("cut", cut_filter);
         tera.register_filter("trim_file_sort_tag", trim_file_sort_tag_filter);
         tera.register_filter("file_sort_tag", file_sort_tag_filter);
-        tera.register_filter("stem", stem_filter);
+        tera.register_filter("file_stem", file_stem_filter);
         tera.register_filter("file_copy_counter", file_copy_counter_filter);
         tera.register_filter("file_name", file_name_filter);
         tera.register_filter("ext", ext_filter);
@@ -256,11 +256,11 @@ fn trim_file_sort_tag_filter<S: BuildHasher>(
 /// A Tera filter that takes a path and extracts its file stem,
 /// in other words: the filename without `sort_tag`, `file_copy_counter`
 /// and `extension`.
-fn stem_filter<S: BuildHasher>(
+fn file_stem_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("stem", "value", String, value);
+    let p = try_get_value!("file_stem", "value", String, value);
     let p = PathBuf::from(p);
     let (_, _, stem, _, _) = p.disassemble();
 
@@ -268,7 +268,7 @@ fn stem_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that takes a path and extracts its copy counter,
-/// in other words: the filename without `sort_tag`, `stem`
+/// in other words: the filename without `sort_tag`, `file_stem`
 /// and `extension`.
 fn file_copy_counter_filter<S: BuildHasher>(
     value: &Value,
@@ -610,12 +610,12 @@ mod tests {
         // Test file stem.
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.md";
-        let output = stem_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = file_stem_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("My file", output);
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = stem_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = file_stem_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("My dir", output);
         //
         //
