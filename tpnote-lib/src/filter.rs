@@ -38,7 +38,7 @@ lazy_static! {
         tera.register_filter("trim_tag", trim_tag_filter);
         tera.register_filter("tag", tag_filter);
         tera.register_filter("stem", stem_filter);
-        tera.register_filter("copy_counter", copy_counter_filter);
+        tera.register_filter("file_copy_counter", file_copy_counter_filter);
         tera.register_filter("file_name", file_name_filter);
         tera.register_filter("ext", ext_filter);
         tera.register_filter("prepend", prepend_filter);
@@ -254,7 +254,7 @@ fn trim_tag_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that takes a path and extracts its file stem,
-/// in other words: the filename without `sort_tag`, `copy_counter`
+/// in other words: the filename without `sort_tag`, `file_copy_counter`
 /// and `extension`.
 fn stem_filter<S: BuildHasher>(
     value: &Value,
@@ -270,11 +270,11 @@ fn stem_filter<S: BuildHasher>(
 /// A Tera filter that takes a path and extracts its copy counter,
 /// in other words: the filename without `sort_tag`, `stem`
 /// and `extension`.
-fn copy_counter_filter<S: BuildHasher>(
+fn file_copy_counter_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("copy_counter", "value", String, value);
+    let p = try_get_value!("file_copy_counter", "value", String, value);
     let p = PathBuf::from(p);
     let (_, _, _, copy_counter, _) = p.disassemble();
 
@@ -646,7 +646,7 @@ mod tests {
         // Test copy counter filter.
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
-        let output = copy_counter_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = file_copy_counter_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("(123)", output);
 
         let input =

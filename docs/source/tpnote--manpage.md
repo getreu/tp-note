@@ -1819,7 +1819,7 @@ A filter is always used together with a variable. Here are some examples:
   sort tag, copy-counter and extension. Only the stem of '`{{ path }}`''s last
   component is returned.
 
-* '`{{ path | copy_counter }}`' is similar to '`{{ path | file_name }}`' but
+* '`{{ path | file_copy_counter }}`' is similar to '`{{ path | file_name }}`' but
   without its sort tag, stem and extension. Only the copy counter of
   '`{{ path }}`''s last component is returned.
 
