@@ -1,6 +1,6 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
-//! and exposes the configuration as the `static` variable `LIB_CFG` behind a 
-//! mutex. This makes it possible to modify all configuration defaults 
+//! and exposes the configuration as the `static` variable `LIB_CFG` behind a
+//! mutex. This makes it possible to modify all configuration defaults
 //! (and templates) at runtime.
 //!
 //! ```rust
@@ -29,7 +29,7 @@ pub const FILENAME_LEN_MAX: usize =
     - 1
     // Additional copy counter.
     - FILENAME_COPY_COUNTER_OPENING_BRACKETS.len()
-    - 2 
+    - 2
     - FILENAME_COPY_COUNTER_CLOSING_BRACKETS.len()
     // Extra spare bytes, in case the user's copy counter is longer.
     - 6;
@@ -287,18 +287,17 @@ pub const TMPL_FILTER_GET_LANG: &[&str] = &["en", "fr", "de"];
 /// exists already.
 /// Note,  that the empty input string results in the user's default language
 /// tag - here `fr-CA` - as well.
-pub const TMPL_FILTER_MAP_LANG: &[&[&str]] =
-    &[&["de", "de-DE"], &["et", "et-ET"]];
+pub const TMPL_FILTER_MAP_LANG: &[&[&str]] = &[&["de", "de-DE"], &["et", "et-ET"]];
 
 /// Default content template used when the command line argument `<sanit>`
 /// is a directory. Can be changed through editing the configuration
-/// file. The following variables are  defined: `{{ sanit | file_stem }}
-/// `, `{{ path | file_stem }}`, `{{ path | file_ext }}`, `{{ extension_default }}`
-/// `{{ file | tag }}`, `{{ username }}`, `{{ date }}`,
-/// `{{ title_text | lang }}`, `{{ dir_path }}`. In addition, all environment
-/// variables can be used, e.g. `{{ get_env(name=\"LOGNAME\") }}` When placed
-/// in YAML front matter, the filter `| json_encode` must be appended to each
-/// variable.
+/// file. The following variables are  defined:
+/// * `{{ path }}`: points to the directory where the new note will be
+///   created.
+/// * `{{ dir_path }}` is in this context identical to `{{ path }}`.
+///  In addition, all environment variables can be used, e.g.
+/// `{{ get_env(name=\"LOGNAME\") }}` When placed in YAML front matter, the
+/// filter `| json_encode` must be appended to each variable.
 pub const TMPL_NEW_CONTENT: &str = "\
 {%- set title_text = dir_path | trim_file_sort_tag -%}
 ---
@@ -315,12 +314,13 @@ lang:       {{ title_text | get_lang | map_lang(default=lang) | json_encode }}
 /// Default filename template for a new note file on disk. It implements the
 /// sync criteria for note metadata in front matter and filename.
 /// Useful variables in this context are:
-/// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}
-/// `, All variables also exist in a `{{ <var>| sanit(alpha) }}` variant: in
-/// case its value starts with a number, the string is prepended with `'`.
-/// The first non-numerical variable must be some `{{ <var>| sanit(alpha) }}
-/// ` variant. Note, as this is filename template, all variables (except
-/// `now` and `extension_default` must be filtered by a `sanit` or
+/// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}.
+/// All variables also can be used this way
+/// `{{ <var>| sanit(force_alpha=true) }}` to guarantee that the result does
+/// not start with `sort_tag_char`. If it does, the string is then prepended
+/// with `'`.
+/// In general, in filename template, all variables (except `now` and
+/// `extension_default` must be filtered by a `sanit` or
 /// `sanit(force_alpha=true)` filter.
 pub const TMPL_NEW_FILENAME: &str = "\
 {{ now() | date(format='%Y%m%d-') }}\
@@ -382,9 +382,9 @@ pub const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
 /// {{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
 pub const TMPL_FROM_CLIPBOARD_CONTENT: &str = "\
 {%- set lname = stdin ~ clipboard | link_text -%}
-{%- set is_link_text = 
-        lname !='' and 
-        not lname is starting_with(\"http\") 
+{%- set is_link_text =
+        lname !='' and
+        not lname is starting_with(\"http\")
         and not lname is starting_with(\"HTTP\") -%}
 {%- if is_link_text -%}
     {%- set title_text = stdin ~ clipboard | link_text -%}
@@ -393,7 +393,7 @@ pub const TMPL_FROM_CLIPBOARD_CONTENT: &str = "\
 {% endif -%}
 ---
 title:      {{ title_text | cut | json_encode }}
-{% if stdin ~ clipboard | link_text !='' and 
+{% if stdin ~ clipboard | link_text !='' and
       stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut -%}
   subtitle:   {{ 'URL' | json_encode -}}
 {%- else -%}
@@ -417,8 +417,9 @@ pub const TMPL_FROM_CLIPBOARD_FILENAME: &str = "\
 
 /// Default template used, when the opened text file (with a known file
 /// extension) is missing a YAML front matter section. This template prepends
-/// such a section. The template inserts information extracted from the input
-/// filename and its creation date.
+/// such a header. The template inserts information extracted from the input
+/// filename and its creation date. `{{ path }}` points to the text file,
+/// `{{ dir_path }}` to the directory where it is located.
 pub const TMPL_FROM_TEXT_FILE_CONTENT: &str = "\
 ---
 title:      {{ path | file_stem | split(pat='--') | first | cut | json_encode }}
@@ -448,21 +449,21 @@ pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 ";
 
 /// Default template used when the command line `<path>` parameter points to an
-/// existing non-`.md`-file. Can be modified through editing the configuration
-/// file.
+/// existing - to be annotated - non-`.md`-file. `{{ path}}` points to that
+/// file, `{{ dir_path }}` to the directory where it is located.
 pub const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
 {%- set body_text = stdin ~ clipboard -%}
 {%- if body_text != '' -%}
    {%- set lang_test_text = body_text | cut -%}
 {%- else -%}
    {%- set lang_test_text = path | file_stem  -%}
-{%- endif -%}   
+{%- endif -%}
 ---
 title:      {{ path | trim_file_sort_tag | json_encode }}
-{% if body_text | link_text !='' and 
+{% if body_text | link_text !='' and
       body_text | heading == body_text -%}
   subtitle:   {{ 'URL' | json_encode -}}
-{%- else -%} 
+{%- else -%}
   subtitle:   {{ 'Note' | json_encode -}}
 {%- endif %}
 author:     {{ username | capitalize | json_encode }}
@@ -489,8 +490,7 @@ pub const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
 
 /// Default filename template to test, if the filename of an existing note file
 /// on disk, corresponds to the note's meta data stored in its front matter. If
-/// it is not the case, the note's filename will be renamed.  Can be modified
-/// through editing the configuration file.
+/// it is not the case, the note's filename will be renamed.
 pub const TMPL_SYNC_FILENAME: &str = "\
 {{ fm_sort_tag | default(value = path | file_sort_tag) }}\
 {{ fm_title | default(value='No title') | sanit(force_alpha=true) }}\
@@ -574,9 +574,9 @@ pub const TMPL_HTML_VIEWER: &str = r#"<!DOCTYPE html>
     <th class="keygrey">date:</th>
     <th class="valgrey">{{ fm_date | default(value='') }}</th>
   </tr>
-  {% for k, v in fm_all| remove(var='fm_title')| 
+  {% for k, v in fm_all| remove(var='fm_title')|
                          remove(var='fm_subtitle')|
-                         remove(var='fm_date') 
+                         remove(var='fm_date')
   %}
     <tr>
     <th class="keygrey">{{ k }}:</th>
@@ -651,7 +651,7 @@ pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
   {% for k, v in fm_all|
         remove(var='fm_title')|
         remove(var='fm_subtitle')|
-        remove(var='fm_date') 
+        remove(var='fm_date')
     %}
     <tr>
     <th class="keygrey">{{ k }}:</th>
@@ -699,7 +699,7 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 "#;
 
 lazy_static! {
-/// Global variable containing the filename and template related configuration 
+/// Global variable containing the filename and template related configuration
 /// data.
     pub static ref LIB_CFG: RwLock<LibCfg> = RwLock::new(LibCfg::default());
 }
@@ -906,4 +906,3 @@ impl FromStr for LocalLinkKind {
         }
     }
 }
-

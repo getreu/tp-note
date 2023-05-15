@@ -1265,7 +1265,7 @@ Subsequent entries that differ only in the region subtag, e.g.
 
 Note, that the environment variable '`TPNOTE_LANG_DETECTION`' - if set -
 takes precedence over the '`tmpl.filter_get_lang`' and '`tmpl.filter_map_lang`'
-settings. This allows to configure the language detection feature system-wide
+settings. This allows configuring the language detection feature system-wide
 without touching Tp-Note's configuration file. The following example achieves
 the equivalent result to the configuration hereinabove:
 
@@ -1383,9 +1383,9 @@ one '`tmpl.*_filename`' template followed directly by the
 '`tmpl.sync_filename`' template: The latter should never change the filename
 initially set up by any '`tmpl.*_filename`' template.
 
-Secondly, make sure that the expression in '`tmpl.sync_filename`' describing
-the filename's _sort tag_ e.g. '`{{ path | file_sort_tag }}`' is always followed by a
-variable with the '`sanit(force_alpha=true)`' filter set, e.g.:
+Secondly, make sure that the expression in '`tmpl.sync_filename`' describing the
+filename's _sort tag_ e.g. '`{{ path | file_sort_tag }}`' is always followed by
+a variable with the '`sanit(force_alpha=true)`' filter set, e.g.:
 
     {{ path | file_sort_tag }}{{ fm_title | sanit(force_alpha=true) }}
 
@@ -1441,7 +1441,7 @@ about link rewriting.
 
 By default, Tp-Note launches two external programs: some text editor and a
 web browser. If wished for, the configuration variable
-'`viewer.startup_delay`' allows to delay the launch of the web browser some
+'`viewer.startup_delay`' allows delaying the launch of the web browser some
 milliseconds.  This way the web browser window will always appear on top of the
 editor window.  A negative value delays the start of the text editor instead.
 
@@ -1682,7 +1682,8 @@ that Tp-Note will never change neither the filename nor the YAML header of an
 existing file.
 
 For a more detailed description of templates and their defaults, please
-consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
+consult the '`const`' definitions in Tp-Note's source code files
+'`config.rs`' and '`note.rs`' in the directory '`tpnote-lib/src/`'.
 
 
 
@@ -1706,17 +1707,18 @@ In addition, Tp-Note defines the following variables:
   directory, '`{{ dir_path }}`' equals '`{{ path }}`'.
 
 * '`{{ note_fm_text }}`': is the header as raw text of the file '`{{ path }}`'
-  points to.  Note, this variable is only available in the
-  templates '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
+  points to.  Note, this variable is only available in the templates
+  '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
 * '`{{ note_body_text }}`': is the content of the file '`{{ path }}`'
-  points to. If the file does not start with a front matter, this
-  variable holds the whole content. Note, this variable is only available in the
-  templates '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
+  points to. If the file does not start with a front matter, this variable holds
+  the whole content. Note, this variable is only available in the templates
+  '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
 * '`{{ note_file_date }}`': is the file system creation date of the file
   '`{{ path }}`' points to. Note, this variable is only available in the
-  templates '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
+  templates '`from_text_file_*`', '`sync_filename`' and the HTML templates
+  below.
 
 * '`{{ clipboard }}`' is the complete clipboard text.  In case the clipboard's
   content starts with a YAML header, the latter does not appear in this
@@ -1800,43 +1802,45 @@ consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 
 In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
-some additional filters, e.g.: '`file_sort_tag`', '`trim_file_sort_tag`', '`file_stem`', '`cut`',
-'`heading`', '`link_text`', '`link_dest`', '`link_title`' and '`ext`'.
+some additional filters, e.g.: '`file_sort_tag`', '`trim_file_sort_tag`',
+'`file_stem`', '`cut`', '`heading`', '`link_text`', '`link_dest`',
+'`link_title`' and '`ext`'.
 
 A filter is always used together with a variable. Here are some examples:
 
 * '`{{ path | file_name }}`' returns the final component of '`{{ path }}`'.
-  If '`{{ path }}`' points to a file, the filter returns the complete
-  filename including its sort tag, stem, copy-counter, dot and extension. If the
+  If '`{{ path }}`' points to a file, the filter returns the complete filename
+  including its sort tag, stem, copy-counter, dot and extension. If the
   '`<path>`' points to a directory, the filter returns the final directory name.
 
-* '`{{ path | file_sort_tag }}`' is the sort tag (numerical filename prefix) of the final
-  component of '`{{ path }}`', e.g. '`01-23_9-`' or '`20191022-`'. It is similar
-  to '`{{ path | file_name }}`' but without returning its stem, copy-counter and
-  extension.
+* '`{{ path | file_sort_tag }}`' is the sort tag (numerical filename prefix) of
+  the final component of '`{{ path }}`', e.g. '`01-23_9-`' or '`20191022-`'. It
+  is similar to '`{{ path | file_name }}`' but without returning its stem, 
+  copy-counter and extension.
 
-* '`{{ path | file_stem }}`' is similar to '`{{ path | file_name }}`' but without its
-  sort tag, copy-counter and extension. Only the stem of '`{{ path }}`''s last
-  component is returned.
+* '`{{ path | file_stem }}`' is similar to '`{{ path | file_name }}`'
+  but without its sort tag, copy-counter and extension. Only the stem of
+  '`{{ path }}`''s last component is returned.
 
-* '`{{ path | file_copy_counter }}`' is similar to '`{{ path | file_name }}`' but
-  without its sort tag, stem and extension. Only the copy counter of
+* '`{{ path | file_copy_counter }}`' is similar to '`{{ path | file_name }}`'
+  but without its sort tag, stem and extension. Only the copy counter of
   '`{{ path }}`''s last component is returned.
 
 * '`{{ path | file_ext }}`' is '`{{ path }}`'’s file extension without
   dot (period), e.g. '`txt`' or '`md`'.
 
-* '`{{ path | file_ext | prepend(with='.') }}`' is '`{{ path }}`'’s file extension with
-  dot (period), e.g. '`.md`' or '`.md`'.
+* '`{{ path | file_ext | prepend(with='.') }}`' is '`{{ path }}`'’s file
+  extension with dot (period), e.g. '`.md`' or '`.md`'.
 
-* '`{{ path | trim_file_sort_tag }}`' returns the final component of '`path`' which might
-  be a directory name or a file name. Unlike the '`file_name`' filter (which also
-  returns the final component), '`trim_file_sort_tag`' trims the sort tag if there is one.
+* '`{{ path | trim_file_sort_tag }}`' returns the final component of '`path`'
+  which might be a directory name or a file name. Unlike the '`file_name`'
+  filter (which also returns the final component), '`trim_file_sort_tag`' trims
+  the sort tag if there is one.
 
-* '`{{ dir_path | trim_file_sort_tag }}`' returns the final component of '`dir_path`'
-  (which is the final directory name in '`{{ path }}`'). Unlike the '`file_name`'
-  filter (which also returns the final component), '`trim_file_sort_tag`' trims the sort
-  tag if there is one.
+* '`{{ dir_path | trim_file_sort_tag }}`' returns the final component
+  of '`dir_path`' (which is the final directory name in '`{{ path }}`').
+  Unlike the '`file_name`' filter (which also returns the final component),
+  '`trim_file_sort_tag`' trims the sort tag if there is one.
 
 * '`{{ clipboard | cut }}`' is the first 200 bytes from the clipboard.
 
@@ -1905,8 +1909,9 @@ variables named '`tmpl.*_content`'.
 
 Strings in the YAML front-matter of content templates are JSON encoded.
 Therefore, all variables used in the front-matter must pass an additional
-'`json_encode()`'-filter. For example, the variable '`{{ dir_path | file_stem }}`'
-becomes '`{{ dir_path | file_stem() | json_encode() }}`' or just
+'`json_encode()`'-filter. For example, the variable 
+'`{{ dir_path | file_stem }}`' becomes 
+'`{{ dir_path | file_stem() | json_encode() }}`' or just
 '`{{ dir_path | file_stem | json_encode }}`'.
 
 
@@ -1946,13 +1951,13 @@ characters.  For this purpose Tp-Note provides the additional Tera filters
 
 In filename templates most variables must pass either the '`sanit`' or the
 '`sanit(force_alpha=true)`' filter. Exception to this rule are the sort tag
-variables '`{{ path | file_sort_tag }}`' and '`{{ dir_path | file_sort_tag }}`'. As these are
-guaranteed to contain only the file system friendly characters
-'`0123456789 -_`', no additional filtering is required. Please note that in
+variables '`{{ path | file_sort_tag }}`' and '`{{ dir_path | file_sort_tag }}`'.
+As the latter are guaranteed to contain only the file system friendly characters
+'`0123456789 -_`', no additional filtering is required. Please note, that in
 this case a '`sanit`'-filter would needlessly restrict the value range of sort
 tags as they usually end with a '`-`', a character, which the '`sanit`'-filter
-screens out when it appears in leading or trailing position. For this reason no
-'`sanit`'-filter is not allowed with '`{{ path | file_sort_tag }}`' and
+screens out when it appears in leading or trailing position. For this reason
+no '`sanit`'-filter is not allowed with '`{{ path | file_sort_tag }}`' and
 '`{{ dir_path |file_sort_tag }}`'.
 
 
@@ -1987,7 +1992,7 @@ is limited by the configurable value '`viewer.displayed_tpnote_count_max`'.
 In addition to the above quantitative restriction, Tp-Note's built-in viewer
 serves only files whose file extensions are registered with the
 '`viewer.served_mime_type`' configuration file variable.  The latter allows
-to disable the _follow links to other Tp-Note files_ feature by removing all
+disabling the _follow links to other Tp-Note files_ feature by removing all
 '`text/*`' mime types from that list.
 
 Another security feature is the '`.tpnoteroot`' marker file. When Tp-Note

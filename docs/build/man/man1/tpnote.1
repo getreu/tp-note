@@ -1585,7 +1585,7 @@ are ignored.
 Note, that the environment variable `\f[C]TPNOTE_LANG_DETECTION\f[R]' -
 if set - takes precedence over the `\f[C]tmpl.filter_get_lang\f[R]' and
 `\f[C]tmpl.filter_map_lang\f[R]' settings.
-This allows to configure the language detection feature system-wide
+This allows configuring the language detection feature system-wide
 without touching Tp-Note\[cq]s configuration file.
 The following example achieves the equivalent result to the
 configuration hereinabove:
@@ -1679,7 +1679,7 @@ with the following line encoded in ReStructuredText syntax:
 .IP
 .nf
 \f[C]
-\[ga]<{{ path | file_name }}](<{{ path | file_name }}>\[ga]_
+\[ga]<{{ path | file_name }}>\[ga]_
 \f[R]
 .fi
 .RE
@@ -1735,12 +1735,13 @@ latter should never change the filename initially set up by any
 .PP
 Secondly, make sure that the expression in
 `\f[C]tmpl.sync_filename\f[R]' describing the filename\[cq]s \f[I]sort
-tag\f[R] e.g.\ `\f[C]{{ path | tag }}\f[R]' is always followed by a
-variable with the `\f[C]sanit(force_alpha=true)\f[R]' filter set, e.g.:
+tag\f[R] e.g.\ `\f[C]{{ path | file_sort_tag }}\f[R]' is always followed
+by a variable with the `\f[C]sanit(force_alpha=true)\f[R]' filter set,
+e.g.:
 .IP
 .nf
 \f[C]
-{{ path | tag }}{{ fm_title | sanit(force_alpha=true) }}
+{{ path | file_sort_tag }}{{ fm_title | sanit(force_alpha=true) }}
 \f[R]
 .fi
 .PP
@@ -1774,7 +1775,7 @@ Replace in `\f[C]tmpl.annotate_file_filename\f[R]' the string:
 .IP
 .nf
 \f[C]
-{{ path | tag }}
+{{ path | file_sort_tag }}
 \f[R]
 .fi
 .PP
@@ -1782,7 +1783,7 @@ with:
 .IP
 .nf
 \f[C]
-Notes/{{ path | tag }}
+Notes/{{ path | file_sort_tag }}
 \f[R]
 .fi
 .PP
@@ -1817,7 +1818,7 @@ details about link rewriting.
 By default, Tp-Note launches two external programs: some text editor and
 a web browser.
 If wished for, the configuration variable
-`\f[C]viewer.startup_delay\f[R]' allows to delay the launch of the web
+`\f[C]viewer.startup_delay\f[R]' allows delaying the launch of the web
 browser some milliseconds.
 This way the web browser window will always appear on top of the editor
 window.
@@ -2112,7 +2113,8 @@ the YAML header of an existing file.
 .PP
 For a more detailed description of templates and their defaults, please
 consult the `\f[C]const\f[R]' definitions in Tp-Note\[cq]s source code
-file `\f[C]note.rs\f[R]'.
+files `\f[C]config.rs\f[R]' and `\f[C]note.rs\f[R]' in the directory
+`\f[C]tpnote-lib/src/\f[R]'.
 .SS Template variables
 .PP
 All Tera template variables and
@@ -2253,15 +2255,15 @@ code file `\f[C]note.rs\f[R]'.
 .PP
 In addition to \f[I]Tera\f[R]\[cq]s built-in
 filters (https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes
-with some additional filters, e.g.: `\f[C]tag\f[R]',
-`\f[C]trim_tag\f[R]', `\f[C]stem\f[R]', `\f[C]cut\f[R]',
+with some additional filters, e.g.: `\f[C]file_sort_tag\f[R]',
+`\f[C]trim_file_sort_tag\f[R]', `\f[C]file_stem\f[R]', `\f[C]cut\f[R]',
 `\f[C]heading\f[R]', `\f[C]link_text\f[R]', `\f[C]link_dest\f[R]',
 `\f[C]link_title\f[R]' and `\f[C]ext\f[R]'.
 .PP
 A filter is always used together with a variable.
 Here are some examples:
 .IP \[bu] 2
-`\f[C]{{ path |\ filename }}\f[R]' returns the final component of
+`\f[C]{{ path |\ file_name }}\f[R]' returns the final component of
 `\f[C]{{ path }}\f[R]'.
 If `\f[C]{{ path }}\f[R]' points to a file, the filter returns the
 complete filename including its sort tag, stem, copy-counter, dot and
@@ -2269,41 +2271,43 @@ extension.
 If the `\f[C]<path>\f[R]' points to a directory, the filter returns the
 final directory name.
 .IP \[bu] 2
-`\f[C]{{ path | tag }}\f[R]' is the sort tag (numerical filename prefix)
-of the final component of `\f[C]{{ path }}\f[R]',
+`\f[C]{{ path | file_sort_tag }}\f[R]' is the sort tag (numerical
+filename prefix) of the final component of `\f[C]{{ path }}\f[R]',
 e.g.\ `\f[C]01-23_9-\f[R]' or `\f[C]20191022-\f[R]'.
-It is similar to `\f[C]{{ path |\ filename }}\f[R]' but without
+It is similar to `\f[C]{{ path |\ file_name }}\f[R]' but without
 returning its stem, copy-counter and extension.
 .IP \[bu] 2
-`\f[C]{{ path |\ stem }}\f[R]' is similar to
-`\f[C]{{ path |\ filename }}\f[R]' but without its sort tag,
+`\f[C]{{ path |\ file_stem }}\f[R]' is similar to
+`\f[C]{{ path |\ file_name }}\f[R]' but without its sort tag,
 copy-counter and extension.
 Only the stem of `\f[C]{{ path }}\f[R]'\[cq]s last component is
 returned.
 .IP \[bu] 2
-`\f[C]{{ path |\ copy_counter }}\f[R]' is similar to
-`\f[C]{{ path |\ filename }}\f[R]' but without its sort tag, stem and
+`\f[C]{{ path |\ file_copy_counter }}\f[R]' is similar to
+`\f[C]{{ path |\ file_name }}\f[R]' but without its sort tag, stem and
 extension.
 Only the copy counter of `\f[C]{{ path }}\f[R]'\[cq]s last component is
 returned.
 .IP \[bu] 2
-`\f[C]{{ path | ext }}\f[R]' is `\f[C]{{ path }}\f[R]'\[cq]s file
+`\f[C]{{ path | file_ext }}\f[R]' is `\f[C]{{ path }}\f[R]'\[cq]s file
 extension without dot (period), e.g.\ `\f[C]txt\f[R]' or `\f[C]md\f[R]'.
 .IP \[bu] 2
-`\f[C]{{ path | ext |\ prepend(with=\[aq].\[aq]) }}\f[R]' is
+`\f[C]{{ path | file_ext |\ prepend(with=\[aq].\[aq]) }}\f[R]' is
 `\f[C]{{ path }}\f[R]'\[cq]s file extension with dot (period),
 e.g.\ `\f[C].md\f[R]' or `\f[C].md\f[R]'.
 .IP \[bu] 2
-`\f[C]{{ path | trim_tag }}\f[R]' returns the final component of
-`\f[C]path\f[R]' which might be a directory name or a file name.
-Unlike the `\f[C]filename\f[R]' filter (which also returns the final
-component), `\f[C]trim_tag\f[R]' trims the sort tag if there is one.
+`\f[C]{{ path | trim_file_sort_tag }}\f[R]' returns the final component
+of `\f[C]path\f[R]' which might be a directory name or a file name.
+Unlike the `\f[C]file_name\f[R]' filter (which also returns the final
+component), `\f[C]trim_file_sort_tag\f[R]' trims the sort tag if there
+is one.
 .IP \[bu] 2
-`\f[C]{{ dir_path | trim_tag }}\f[R]' returns the final component of
-`\f[C]dir_path\f[R]' (which is the final directory name in
+`\f[C]{{ dir_path | trim_file_sort_tag }}\f[R]' returns the final
+component of `\f[C]dir_path\f[R]' (which is the final directory name in
 `\f[C]{{ path }}\f[R]').
-Unlike the `\f[C]filename\f[R]' filter (which also returns the final
-component), `\f[C]trim_tag\f[R]' trims the sort tag if there is one.
+Unlike the `\f[C]file_name\f[R]' filter (which also returns the final
+component), `\f[C]trim_file_sort_tag\f[R]' trims the sort tag if there
+is one.
 .IP \[bu] 2
 `\f[C]{{ clipboard | cut }}\f[R]' is the first 200 bytes from the
 clipboard.
@@ -2385,9 +2389,9 @@ variables named `\f[C]tmpl.*_content\f[R]'.
 Strings in the YAML front-matter of content templates are JSON encoded.
 Therefore, all variables used in the front-matter must pass an
 additional `\f[C]json_encode()\f[R]'-filter.
-For example, the variable `\f[C]{{ dir_path | stem }}\f[R]' becomes
-`\f[C]{{ dir_path | stem() | json_encode() }}\f[R]' or just
-`\f[C]{{ dir_path | stem | json_encode }}\f[R]'.
+For example, the variable `\f[C]{{ dir_path | file_stem }}\f[R]' becomes
+`\f[C]{{ dir_path | file_stem() | json_encode() }}\f[R]' or just
+`\f[C]{{ dir_path | file_stem | json_encode }}\f[R]'.
 .SS Filename template conventions
 .PP
 By convention, filename templates appear in the configuration file in
@@ -2433,16 +2437,18 @@ configuration variable `\f[C]filename.sort_tag_extra_separator\f[R]'.
 In filename templates most variables must pass either the
 `\f[C]sanit\f[R]' or the `\f[C]sanit(force_alpha=true)\f[R]' filter.
 Exception to this rule are the sort tag variables
-`\f[C]{{ path | tag }}\f[R]' and `\f[C]{{ dir_path | tag }}\f[R]'.
-As these are guaranteed to contain only the file system friendly
+`\f[C]{{ path | file_sort_tag }}\f[R]' and
+`\f[C]{{ dir_path | file_sort_tag }}\f[R]'.
+As the latter are guaranteed to contain only the file system friendly
 characters `\f[C]0123456789 -_\f[R]', no additional filtering is
 required.
-Please note that in this case a `\f[C]sanit\f[R]'-filter would
+Please note, that in this case a `\f[C]sanit\f[R]'-filter would
 needlessly restrict the value range of sort tags as they usually end
 with a `\f[C]-\f[R]', a character, which the `\f[C]sanit\f[R]'-filter
 screens out when it appears in leading or trailing position.
 For this reason no `\f[C]sanit\f[R]'-filter is not allowed with
-`\f[C]{{ path | tag }}\f[R]' and `\f[C]{{ dir_path |tag }}\f[R]'.
+`\f[C]{{ path | file_sort_tag }}\f[R]' and
+`\f[C]{{ dir_path |file_sort_tag }}\f[R]'.
 .SH SECURITY AND PRIVACY CONSIDERATIONS
 .PP
 As discussed above, Tp-Note\[cq]s built-in viewer sets up an HTTP server
@@ -2477,7 +2483,7 @@ In addition to the above quantitative restriction, Tp-Note\[cq]s
 built-in viewer serves only files whose file extensions are registered
 with the `\f[C]viewer.served_mime_type\f[R]' configuration file
 variable.
-The latter allows to disable the \f[I]follow links to other Tp-Note
+The latter allows disabling the \f[I]follow links to other Tp-Note
 files\f[R] feature by removing all `\f[C]text/*\f[R]' mime types from
 that list.
 .PP

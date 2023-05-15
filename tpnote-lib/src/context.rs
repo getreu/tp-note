@@ -31,9 +31,9 @@ pub struct Context {
     pub dir_path: PathBuf,
     /// `dir_path` is a subdirectory of `root_path`. `root_path` is the
     /// first directory, that upwards from `dir_path`, contains a file named
-    /// `FILENAME_ROOT_PATH_MARKER`. The root directory is interpreted by Tp-
-    /// Note's viewer as its base directory: only files within this directory
-    /// are served.
+    /// `FILENAME_ROOT_PATH_MARKER` (or, `/` if not marker file can be found).
+    /// The root directory is interpreted by Tp-Note's viewer as its base
+    /// directory: only files within this directory are served.
     pub root_path: PathBuf,
 }
 
