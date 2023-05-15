@@ -437,8 +437,8 @@ lang:       {{ note_body_text | get_lang | map_lang(default=lang) | json_encode 
 /// file extension) is missing a YAML front matter section.
 /// The text file's sort-tag and file extension are preserved.
 pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
-{% if path | tag == '' %}{{ note_file_date | date(format='%Y%m%d-') }}\
-{% else %}{{ path | tag }}{% endif %}\
+{% if path | file_sort_tag == '' %}{{ note_file_date | date(format='%Y%m%d-') }}\
+{% else %}{{ path | file_sort_tag }}{% endif %}\
 {{ fm_title | sanit(force_alpha=true) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ path | ext | prepend(with='.') }}\
@@ -479,7 +479,7 @@ lang:       {{ lang_test_text | get_lang | map_lang(default=lang) | json_encode 
 /// Filename of a new note, that annotates an existing file on disk given in
 /// `<path>`.
 pub const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
-{{ path | tag }}{{ fm_title | sanit(force_alpha=true) }}\
+{{ path | file_sort_tag }}{{ fm_title | sanit(force_alpha=true) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ extension_default | prepend(with='.') }}\
 ";
@@ -489,7 +489,7 @@ pub const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
 /// it is not the case, the note's filename will be renamed.  Can be modified
 /// through editing the configuration file.
 pub const TMPL_SYNC_FILENAME: &str = "\
-{{ fm_sort_tag | default(value = path | tag) }}\
+{{ fm_sort_tag | default(value = path | file_sort_tag) }}\
 {{ fm_title | default(value='No title') | sanit(force_alpha=true) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ fm_file_ext | default(value = path | ext) | prepend(with='.') }}\

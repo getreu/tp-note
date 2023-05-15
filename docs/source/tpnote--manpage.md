@@ -1384,10 +1384,10 @@ one '`tmpl.*_filename`' template followed directly by the
 initially set up by any '`tmpl.*_filename`' template.
 
 Secondly, make sure that the expression in '`tmpl.sync_filename`' describing
-the filename's _sort tag_ e.g. '`{{ path | tag }}`' is always followed by a
+the filename's _sort tag_ e.g. '`{{ path | file_sort_tag }}`' is always followed by a
 variable with the '`sanit(force_alpha=true)`' filter set, e.g.:
 
-    {{ path | tag }}{{ fm_title | sanit(force_alpha=true) }}
+    {{ path | file_sort_tag }}{{ fm_title | sanit(force_alpha=true) }}
 
 The first expression guarantees, that it resolves only to characters defined in
 the '`filename.sort_tag_chars`' set, while the second expression is known
@@ -1414,11 +1414,11 @@ need to modify the templates '`tmpl.annotate_file_filename`' and
 
 Replace in '`tmpl.annotate_file_filename`' the string:
 
-    {{ path | tag }}
+    {{ path | file_sort_tag }}
 
 with:
 
-    Notes/{{ path | tag }}
+    Notes/{{ path | file_sort_tag }}
 
 and in '`tmpl.annotate_file_content`':
 
@@ -1800,7 +1800,7 @@ consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 
 In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
-some additional filters, e.g.: '`tag`', '`trim_file_sort_tag`', '`stem`', '`cut`',
+some additional filters, e.g.: '`file_sort_tag`', '`trim_file_sort_tag`', '`stem`', '`cut`',
 '`heading`', '`link_text`', '`link_dest`', '`link_title`' and '`ext`'.
 
 A filter is always used together with a variable. Here are some examples:
@@ -1810,7 +1810,7 @@ A filter is always used together with a variable. Here are some examples:
   filename including its sort tag, stem, copy-counter, dot and extension. If the
   '`<path>`' points to a directory, the filter returns the final directory name.
 
-* '`{{ path | tag }}`' is the sort tag (numerical filename prefix) of the final
+* '`{{ path | file_sort_tag }}`' is the sort tag (numerical filename prefix) of the final
   component of '`{{ path }}`', e.g. '`01-23_9-`' or '`20191022-`'. It is similar
   to '`{{ path | file_name }}`' but without returning its stem, copy-counter and
   extension.
@@ -1946,14 +1946,14 @@ characters.  For this purpose Tp-Note provides the additional Tera filters
 
 In filename templates most variables must pass either the '`sanit`' or the
 '`sanit(force_alpha=true)`' filter. Exception to this rule are the sort tag
-variables '`{{ path | tag }}`' and '`{{ dir_path | tag }}`'. As these are
+variables '`{{ path | file_sort_tag }}`' and '`{{ dir_path | file_sort_tag }}`'. As these are
 guaranteed to contain only the file system friendly characters
 '`0123456789 -_`', no additional filtering is required. Please note that in
 this case a '`sanit`'-filter would needlessly restrict the value range of sort
 tags as they usually end with a '`-`', a character, which the '`sanit`'-filter
 screens out when it appears in leading or trailing position. For this reason no
-'`sanit`'-filter is not allowed with '`{{ path | tag }}`' and
-'`{{ dir_path |tag }}`'.
+'`sanit`'-filter is not allowed with '`{{ path | file_sort_tag }}`' and
+'`{{ dir_path |file_sort_tag }}`'.
 
 
 

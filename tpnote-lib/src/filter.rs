@@ -36,7 +36,7 @@ lazy_static! {
         tera.register_filter("heading", heading_filter);
         tera.register_filter("cut", cut_filter);
         tera.register_filter("trim_file_sort_tag", trim_file_sort_tag_filter);
-        tera.register_filter("tag", tag_filter);
+        tera.register_filter("file_sort_tag", file_sort_tag_filter);
         tera.register_filter("stem", stem_filter);
         tera.register_filter("file_copy_counter", file_copy_counter_filter);
         tera.register_filter("file_name", file_name_filter);
@@ -229,11 +229,11 @@ fn heading_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that takes a path and extracts the tag of the filename.
-fn tag_filter<S: BuildHasher>(
+fn file_sort_tag_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("tag", "value", String, value);
+    let p = try_get_value!("file_sort_tag", "value", String, value);
     let p = PathBuf::from(p);
     let (tag, _, _, _, _) = p.disassemble();
 
@@ -622,12 +622,12 @@ mod tests {
         // Test file tag.
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.md";
-        let output = tag_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = file_sort_tag_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("20200908-", output);
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = tag_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = file_sort_tag_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("20200908-", output);
         //
         //
