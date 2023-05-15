@@ -437,8 +437,11 @@ lang:       {{ note_body_text | get_lang | map_lang(default=lang) | json_encode 
 /// file extension) is missing a YAML front matter section.
 /// The text file's sort-tag and file extension are preserved.
 pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
-{% if path | file_sort_tag == '' %}{{ note_file_date | date(format='%Y%m%d-') }}\
-{% else %}{{ path | file_sort_tag }}{% endif %}\
+{%- if path | file_sort_tag != '' -%}
+  {{ path | file_sort_tag }}
+{%- else -%}
+  {{ note_file_date | date(format='%Y%m%d-') }}\
+{%- endif -%}\
 {{ fm_title | sanit(force_alpha=true) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ path | file_ext | prepend(with='.') }}\
