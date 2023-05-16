@@ -107,7 +107,7 @@ impl Context {
             dir_path,
             root_path,
         };
-        context.insert_environment();
+        context.insert_settings();
         context
     }
 
@@ -233,13 +233,14 @@ impl Context {
     /// std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
     /// update_settings().unwrap();
     ///
+    /// // The constructor calls `context.insert_settings()` before returning.
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     ///
     /// // For most platforms `context.get("extension_default")` is `md`
     /// assert_eq!(&context.get(TMPL_VAR_EXTENSION_DEFAULT).unwrap().to_string(),
     ///     &format!("\"{FILENAME_EXTENSION_DEFAULT}\""));
     /// ```
-    fn insert_environment(&mut self) {
+    fn insert_settings(&mut self) {
         let settings = SETTINGS.read().unwrap();
 
         // Default extension for new notes as defined in the configuration file.
