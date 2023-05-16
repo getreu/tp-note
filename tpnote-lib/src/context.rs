@@ -1,6 +1,5 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_ROOT_PATH_MARKER;
-use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_DIR_PATH;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
@@ -50,9 +49,14 @@ impl Context {
     ///
     /// ```rust
     /// use std::path::Path;
+    /// use tpnote_lib::settings::ENV_VAR_TPNOTE_EXTENSION_DEFAULT;
+    /// use tpnote_lib::settings::update_settings;
     /// use tpnote_lib::config::TMPL_VAR_DIR_PATH;
     /// use tpnote_lib::config::TMPL_VAR_PATH;
     /// use tpnote_lib::context::Context;
+    /// std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
+    /// update_settings().unwrap();
+    ///
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     ///
     /// assert_eq!(context.path, Path::new("/path/to/mynote.md"));
@@ -63,25 +67,6 @@ impl Context {
     ///             r#""/path/to""#);
     /// ```
     ///
-    /// Furthermore, the constructor captures _Tp-Note_'s environment
-    /// and stores it as variables in a
-    /// `context` collection. The variables are needed later to populate
-    /// a context template and a filename template.
-    ///
-    /// This function add the keys:
-    /// TMPL_VAR_EXTENSION_DEFAULT, TMPL_VAR_USERNAME and TMPL_VAR_LANG.
-    ///
-    /// ```
-    /// use std::path::Path;
-    /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::config::TMPL_VAR_EXTENSION_DEFAULT; // `extension_default`
-    /// use tpnote_lib::config::FILENAME_EXTENSION_DEFAULT; // usually `md`
-    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
-    ///
-    /// // For most platforms `context.get("extension_default")` is `md`
-    /// assert_eq!(&context.get(TMPL_VAR_EXTENSION_DEFAULT).unwrap().to_string(),
-    ///     &format!("\"{FILENAME_EXTENSION_DEFAULT}\""));
-    /// ```
     pub fn from(path: &Path) -> Self {
         let mut ct = tera::Context::new();
         let path = path.to_path_buf();
@@ -165,9 +150,14 @@ impl Context {
     ///
     /// ```rust
     /// use std::path::Path;
+    /// use tpnote_lib::settings::ENV_VAR_TPNOTE_EXTENSION_DEFAULT;
+    /// use tpnote_lib::settings::update_settings;
     /// use tpnote_lib::context::Context;
     /// use tpnote_lib::content::Content;
     /// use tpnote_lib::content::ContentString;
+    /// std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
+    /// update_settings().unwrap();
+    ///
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     ///
     /// context.insert_content("clipboard", "clipboard_header",
@@ -235,9 +225,14 @@ impl Context {
     ///
     /// ```
     /// use std::path::Path;
+    /// use tpnote_lib::settings::ENV_VAR_TPNOTE_EXTENSION_DEFAULT;
+    /// use tpnote_lib::settings::update_settings;
     /// use tpnote_lib::context::Context;
     /// use tpnote_lib::config::TMPL_VAR_EXTENSION_DEFAULT; // `extension_default`
     /// use tpnote_lib::config::FILENAME_EXTENSION_DEFAULT; // usually `md`
+    /// std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
+    /// update_settings().unwrap();
+    ///
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     ///
     /// // For most platforms `context.get("extension_default")` is `md`
@@ -245,13 +240,12 @@ impl Context {
     ///     &format!("\"{FILENAME_EXTENSION_DEFAULT}\""));
     /// ```
     fn insert_environment(&mut self) {
-        let lib_cfg = LIB_CFG.read().unwrap();
         let settings = SETTINGS.read().unwrap();
 
         // Default extension for new notes as defined in the configuration file.
         (*self).insert(
             TMPL_VAR_EXTENSION_DEFAULT,
-            lib_cfg.filename.extension_default.as_str(),
+            settings.extension_default.as_str(),
         );
 
         // Search for UNIX, Windows and MacOS user-names.

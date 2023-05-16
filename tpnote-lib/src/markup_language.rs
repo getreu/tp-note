@@ -1,5 +1,6 @@
 //! Helper functions dealing with markup languages.
 use crate::config::LIB_CFG;
+use crate::settings::SETTINGS;
 use std::path::Path;
 
 /// The Markup language of the note content.
@@ -47,6 +48,7 @@ impl From<&str> for MarkupLanguage {
     #[inline]
     fn from(file_extension: &str) -> Self {
         let lib_cfg = LIB_CFG.read().unwrap();
+        let settings = SETTINGS.read().unwrap();
 
         for e in &lib_cfg.filename.extensions_md {
             if e == file_extension {
@@ -77,7 +79,9 @@ impl From<&str> for MarkupLanguage {
         // one of the above lists, make sure that Tp-Note
         // recognizes its own files. Even without Markup
         // rendition.
-        if file_extension == lib_cfg.filename.extension_default {
+        if file_extension == lib_cfg.filename.extension_default
+            || file_extension == settings.extension_default
+        {
             return MarkupLanguage::Txt;
         }
         MarkupLanguage::None
