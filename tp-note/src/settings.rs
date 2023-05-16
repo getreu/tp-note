@@ -19,7 +19,7 @@ use tpnote_lib::content::ContentString;
 /// The name of the environment variable, that - when set - replaces the default
 /// path where Tp-Note loads or stores its configuration file.
 pub const ENV_VAR_TPNOTE_CONFIG: &str = "TPNOTE_CONFIG";
-/// The name of the environment variable which can be optionally used to launch
+/// The name of the environment variable which can be optionally set to launch
 /// a different file editor.
 pub const ENV_VAR_TPNOTE_EDITOR: &str = "TPNOTE_EDITOR";
 /// The name of the environment variable which can be optionally used to launch

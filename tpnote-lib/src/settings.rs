@@ -15,6 +15,9 @@ use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
 #[cfg(target_family = "windows")]
 use windows_sys::Win32::System::SystemServices::LOCALE_NAME_MAX_LENGTH;
 
+/// The name of the environment variable which can be optionally set to
+/// overwrite the `flename.extension_default` configuration file setting.
+pub const ENV_VAR_TPNOTE_EXTENSION_DEFAULT: &str = "TPNOTE_EXTENSION_DEFAULT";
 /// Name of the environment variable, that can be optionally
 /// used to overwrite the user's default language setting, which is
 /// accessible as `{{ lang }}` template variable and used in various
@@ -51,6 +54,7 @@ const ENV_VAR_LANG: &str = "LANG";
 pub(crate) struct Settings {
     pub author: String,
     pub lang: String,
+    pub extension_default: String,
     pub filter_get_lang: Result<Vec<IsoCode639_1>, ConfigError>,
     pub filter_map_lang_hmap: Option<HashMap<String, String>>,
 }
@@ -64,6 +68,8 @@ pub(crate) struct Settings {
     pub author: String,
     /// Cf. documentation for `update_lang_setting()`.
     pub lang: String,
+    /// Cf. documentation for `update_extension_default_setting()`.
+    pub extension_default: String,
     /// Cf. documentation for `update_filter_get_lang_setting()`.
     pub filter_get_lang: Result<Vec<String>, ConfigError>,
     /// Cf. documentation for `update_filter_map_lang_hmap_setting()`.
@@ -76,6 +82,7 @@ impl Default for Settings {
         Settings {
             author: String::new(),
             lang: String::new(),
+            extension_default: String::new(),
             filter_get_lang: Ok(vec![]),
             filter_map_lang_hmap: None,
         }
@@ -87,6 +94,7 @@ impl Default for Settings {
 pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(Settings {
     author: String::new(),
     lang: String::new(),
+    extension_default: String::new(),
     filter_get_lang: Ok(vec![]),
     filter_map_lang_hmap: None,
 });
@@ -105,6 +113,26 @@ pub(crate) fn force_lang_setting(lang: &str) {
     let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
 }
 
+/// (Re)read environment variables and store them in the global `SETTINGS`
+/// object. Some data originates from `LIB_CFG`.
+pub fn update_settings() -> Result<(), ConfigError> {
+    let mut settings = SETTINGS.write().unwrap();
+    update_author_setting(&mut settings);
+    update_extension_default_setting(&mut settings);
+    update_lang_setting(&mut settings);
+    update_filter_get_lang_setting(&mut settings);
+    update_filter_map_lang_hmap_setting(&mut settings);
+    update_env_lang_detection(&mut settings);
+
+    log::trace!("`SETTINGS` updated:\n{:#?}", settings);
+
+    if let Err(e) = &settings.filter_get_lang {
+        Err(e.clone())
+    } else {
+        Ok(())
+    }
+}
+
 /// Set `SETTINGS.author` to content of the first not empty environment
 /// variable: `TPNOTE_USER`, `LOGNAME` or `USER`.
 fn update_author_setting(settings: &mut Settings) {
@@ -119,23 +147,19 @@ fn update_author_setting(settings: &mut Settings) {
     let _ = mem::replace(&mut settings.author, author);
 }
 
-/// (Re)read environment variables and store them in the global `SETTINGS`
-/// object. Some data originates from `LIB_CFG`.
-pub fn update_settings() -> Result<(), ConfigError> {
-    let mut settings = SETTINGS.write().unwrap();
-    update_author_setting(&mut settings);
-    update_lang_setting(&mut settings);
-    update_filter_get_lang_setting(&mut settings);
-    update_filter_map_lang_hmap_setting(&mut settings);
-    update_env_lang_detection(&mut settings);
-
-    log::trace!("`SETTINGS` updated:\n{:#?}", settings);
-
-    if let Err(e) = &settings.filter_get_lang {
-        Err(e.clone())
-    } else {
-        Ok(())
-    }
+/// Read the environment variable `TPNOTE_EXTENSION_DEFAULT` or -if empty-
+/// the configuration file variable `filename.extension_default` into
+/// `SETTINGS.extension_default`.
+fn update_extension_default_setting(settings: &mut Settings) {
+    // Get the environment variable if it exists.
+    let ext = match env::var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT) {
+        Ok(ed_env) if !ed_env.is_empty() => ed_env,
+        Err(_) | Ok(_) => {
+            let lib_cfg = LIB_CFG.read().unwrap();
+            (*lib_cfg).filename.extension_default.to_string()
+        }
+    };
+    let _ = mem::replace(&mut settings.extension_default, ext);
 }
 
 /// Read the environment variable `TPNOTE_LANG` or -if empty- `LANG` into
@@ -363,17 +387,32 @@ fn update_env_lang_detection(settings: &mut Settings) {
 #[cfg(test)]
 mod tests {
 
+    use crate::config::FILENAME_EXTENSION_DEFAULT;
+
     use super::*;
 
     /// Attention: as these test-functions run in parallel, make sure that
     /// each environment variable appears in one function only!
 
     #[test]
-    fn test_update_update_author_setting() {
+    fn test_update_author_setting() {
         let mut settings = Settings::default();
         env::set_var(ENV_VAR_LOGNAME, "testauthor");
         update_author_setting(&mut settings);
         assert_eq!(settings.author, "testauthor");
+    }
+
+    #[test]
+    fn test_update_extension_default_setting() {
+        let mut settings = Settings::default();
+        env::set_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT, "markdown");
+        update_extension_default_setting(&mut settings);
+        assert_eq!(settings.extension_default, "markdown");
+
+        let mut settings = Settings::default();
+        std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
+        update_extension_default_setting(&mut settings);
+        assert_eq!(settings.extension_default, FILENAME_EXTENSION_DEFAULT);
     }
 
     #[test]
