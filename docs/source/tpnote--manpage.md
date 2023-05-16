@@ -1304,7 +1304,6 @@ syntax varies depending on the markup language. Hence, you should not forget to
 modify the '`tmpl.annotate_file_content`' content template, when you
 change the default markup language defined in '`filename.extension_default`'.
 
-
 ### Change default markup language to ReStructuredText
 
 Tp-Note's core function is a template system and as such it depends
@@ -1325,6 +1324,12 @@ affect the way new notes are created:
    ```toml
    [filename]
    extension_default='rst'
+   ```
+   Alternatively, the above can be achieved by setting the environment variable
+   '`TPNOTE_EXTENSION_DEFAULT`':
+
+   ```sh
+   TPNOTE_EXTENSION_DEFAULT="rst" tpnote
    ```
 
 2. Replace the following line in the template '`tmpl.annotate_file_content`'
@@ -2154,6 +2159,14 @@ TPNOTE\_EDITOR\_CONSOLE
 >   ```sh
 >   sudo TPNOTE_EDITOR_CONSOLE="nvim" tpnote
 >   ```
+
+TPNOTE\_EXTENSION\_DEFAULT
+
+>   If set, this variable takes precedence over the configuration file 
+    variable '`filename.extension_default`', which defines the file extension
+    of new note files. In order to activate the appropriate markup renderer
+    make sure, that the value given here is listed in one of the 
+    '`filename.extensions_*`' list. 
 
 TPNOTE\_USER, LOGNAME, USER, USERNAME
 

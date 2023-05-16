@@ -1662,6 +1662,15 @@ to:
 extension_default=\[aq]rst\[aq]
 \f[R]
 .fi
+.PP
+Alternatively, the above can be achieved by setting the environment
+variable `\f[C]TPNOTE_EXTENSION_DEFAULT\f[R]':
+.IP
+.nf
+\f[C]
+TPNOTE_EXTENSION_DEFAULT=\[dq]rst\[dq] tpnote
+\f[R]
+.fi
 .RE
 .IP "2." 3
 Replace the following line in the template
@@ -2739,6 +2748,17 @@ Example of use:
 sudo TPNOTE_EDITOR_CONSOLE=\[dq]nvim\[dq] tpnote
 \f[R]
 .fi
+.RE
+.PP
+TPNOTE_EXTENSION_DEFAULT
+.RS
+.PP
+If set, this variable takes precedence over the configuration file
+variable `\f[C]filename.extension_default\f[R]', which defines the file
+extension of new note files.
+In order to activate the appropriate markup renderer make sure, that the
+value given here is listed in one of the
+`\f[C]filename.extensions_*\f[R]' list.
 .RE
 .PP
 TPNOTE_USER, LOGNAME, USER, USERNAME
