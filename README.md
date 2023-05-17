@@ -36,6 +36,7 @@ note file changes and updates the rendition accordingly.
 ---
 
 
+
 ## Documentation
 
 User documentation:
@@ -94,7 +95,9 @@ Repository:
 * [Tp-Note on Github (mirror)]
 
 
+
 ## Distribution
+
 
 ### Tp-Note Microsoft Windows installer package
 
@@ -109,11 +112,13 @@ Repository:
   of where a program comes from, I recommend checking every installable
   file with [VirusTotal]
 
+
 ### Tp-Note Debian/Ubuntu installer package
 
 * Package compiled for Debian:
 
   [x86_64-unknown-linux-gnu/debian/tpnote_latest_amd64.deb]
+
 
 ### Various binaries for Windows, MacOS and Linux
 
@@ -146,7 +151,6 @@ Repository:
     * [armv7-unknown-linux-gnueabihf/release/tpnote]
 
 
-
 ### Tp-Note NetBSD
 
 * An official package is available on NetBSD and other "pkgsrc" supported platforms.
@@ -156,6 +160,7 @@ Repository:
   ```sh
   pkgin install tp-note
   ```
+
 
 ### Other ressources
 
@@ -167,9 +172,6 @@ Repository:
 
   - [tpnote.svg]
 
-* A zipfile with all binaries and documentation:
-
-  - [Tp-Note all]
 
 
 ## Installation
@@ -290,6 +292,7 @@ compile _Tp-Note_ yourself.
    See also the user manual for a more detailed installation description.
 
 
+
 ## Cross compilation
 
 Debian makes it easy to cross-compile for foreign architectures. Here
@@ -366,7 +369,6 @@ Copyright:
 [armv7-unknown-linux-gnueabihf/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/armv7-unknown-linux-gnueabihf/release/tpnote
 [tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
 [tpnote.svg]: https://blog.getreu.net/projects/tp-note/images/tpnote.svg
-[Tp-Note all]: https://blog.getreu.net/_downloads/tpnote.zip
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
 [Installation section]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html#installation
 [Customization section]: https://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization
