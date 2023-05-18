@@ -8,7 +8,6 @@ use notify_debouncer_mini::{new_debouncer, DebouncedEvent, Debouncer};
 use std::ffi::{OsStr, OsString};
 use std::panic::panic_any;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::TrySendError;
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, SyncSender};
 use std::sync::{Arc, Mutex};
@@ -40,7 +39,7 @@ pub struct FileWatcher {
     event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
     /// Send additional periodic update events to detect when
     /// the browser disconnects.
-    terminate_on_browser_disconnect: Arc<AtomicBool>,
+    terminate_on_browser_disconnect: Arc<Mutex<bool>>,
     /// Start time of this file-watcher.
     start_time: Instant,
 }
@@ -54,7 +53,7 @@ impl FileWatcher {
         // A list of subscribers, that shall be informed when the watched
         // file has been changed.
         event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
-        terminate_on_browser_disconnect: Arc<AtomicBool>,
+        terminate_on_browser_disconnect: Arc<Mutex<bool>>,
     ) -> Result<Self, ViewerError> {
         let notify_period = CFG.viewer.notify_period;
         let (tx, rx) = channel();
@@ -114,11 +113,14 @@ impl FileWatcher {
                     //     "File watcher timeout: {} open TCP connections.",
                     //     tx_list.len()
                     // );
-                    if tx_list.is_empty()
-                        && self.start_time.elapsed().as_secs() > WATCHER_MIN_UPTIME
-                        && self.terminate_on_browser_disconnect.load(Ordering::SeqCst)
                     {
-                        return Err(ViewerError::AllSubscriberDiconnected);
+                        if tx_list.is_empty()
+                            && self.start_time.elapsed().as_secs() > WATCHER_MIN_UPTIME
+                            // Release lock immediately.
+                            && *self.terminate_on_browser_disconnect.lock().unwrap()
+                        {
+                            return Err(ViewerError::AllSubscriberDiconnected);
+                        }
                     }
                     continue;
                 }
