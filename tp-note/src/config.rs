@@ -10,7 +10,7 @@ use log::LevelFilter;
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::Deserialize;
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::env;
 use std::fs;
 #[cfg(not(test))]
@@ -423,9 +423,9 @@ impl ::std::default::Default for Viewer {
 }
 
 lazy_static! {
-    /// Store the extension as key and mime type as value in HashMap.
-    pub static ref VIEWER_SERVED_MIME_TYPES_HMAP: HashMap<&'static str, &'static str> = {
-        let mut hm = HashMap::new();
+    /// Store the extension as key and mime type as value in Map.
+    pub static ref VIEWER_SERVED_MIME_TYPES_MAP: BTreeMap<&'static str, &'static str> = {
+        let mut hm = BTreeMap::new();
         for l in &CFG.viewer.served_mime_types {
             if l.len() >= 2
             {

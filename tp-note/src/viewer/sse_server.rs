@@ -2,7 +2,7 @@
 //! This module contains also the web browser Javascript client code.
 
 use crate::config::CFG;
-use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
+use crate::config::VIEWER_SERVED_MIME_TYPES_MAP;
 use crate::viewer::error::ViewerError;
 use crate::viewer::http_response::HttpResponse;
 use crate::viewer::init::LOCALHOST;
@@ -80,7 +80,7 @@ pub fn manage_connections(
          {}\n\
          are served!",
         context.root_path.display(),
-        &VIEWER_SERVED_MIME_TYPES_HMAP
+        &VIEWER_SERVED_MIME_TYPES_MAP
             .keys()
             .map(|s| {
                 let mut s = s.to_string();

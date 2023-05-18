@@ -3,7 +3,7 @@
 //! `sse_server`.
 
 use crate::config::CFG;
-use crate::config::VIEWER_SERVED_MIME_TYPES_HMAP;
+use crate::config::VIEWER_SERVED_MIME_TYPES_MAP;
 use crate::viewer::error::ViewerError;
 use std::borrow::Cow;
 use std::fs;
@@ -203,7 +203,7 @@ impl HttpResponse for ServerThread {
                     .to_lowercase();
 
                 // Find the corresponding mime type of this file extension.
-                let mime_type = match VIEWER_SERVED_MIME_TYPES_HMAP.get(extension) {
+                let mime_type = match VIEWER_SERVED_MIME_TYPES_MAP.get(extension) {
                     Some(mt) => mt,
                     None => {
                         // Reject all files with extensions not listed.
@@ -426,7 +426,7 @@ impl HttpResponse for ServerThread {
             context.insert(TMPL_HTML_VAR_NOTE_JS, "");
         }
         match render_viewer_html::<ContentString>(context, content)
-            // Now scan the HTML result for links and store them in a HashMap
+            // Now scan the HTML result for links and store them in a Map
             // accessible to all threads.
             // Secondly, convert all relative links to absolute links.
             .map(|html| {
