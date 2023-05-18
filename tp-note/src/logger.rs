@@ -20,7 +20,7 @@ use msgbox::IconType;
 use notify_rust::{Hint, Notification, Timeout};
 use std::env;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::RwLock;
 
 #[cfg(feature = "message-box")]
 /// Window title of the message alert box.
@@ -97,17 +97,12 @@ lazy_static! {
     };
 }
 
-pub struct AppLogger {
-    /// If `true`, all future log events will trigger the opening of a popup
-    /// alert window. Otherwise only `Level::Error` will do.
-    popup_always_enabled: AtomicBool,
-}
+/// If `true`, all future log events will trigger the opening of a popup
+/// alert window. Otherwise only `Level::Error` will do.
+static APP_LOGGER_ENABLE_POPUP: RwLock<bool> = RwLock::new(false);
 
-lazy_static! {
-    static ref APP_LOGGER: AppLogger = AppLogger {
-        popup_always_enabled: AtomicBool::new(false)
-    };
-}
+pub struct AppLogger;
+static APP_LOGGER: AppLogger = AppLogger;
 
 /// All methods here are stateless (without _self_). Instead, their state is
 /// stored in a global variable `APP_LOGGER` in order to simplify the API for
@@ -125,7 +120,7 @@ impl AppLogger {
         };
 
         // Setup console logger.
-        log::set_logger(&*APP_LOGGER).unwrap();
+        log::set_logger(&APP_LOGGER).unwrap();
         log::set_max_level(LevelFilter::Error);
     }
 
@@ -139,9 +134,8 @@ impl AppLogger {
     /// a popup alert window.
     #[allow(dead_code)]
     pub fn set_popup_always_enabled(popup: bool) {
-        APP_LOGGER
-            .popup_always_enabled
-            .store(popup, Ordering::SeqCst);
+        // Release lock immediately.
+        *APP_LOGGER_ENABLE_POPUP.write().unwrap() = popup;
     }
 
     /// Blocks until the `AlertService` is not busy any more. This should be
@@ -179,8 +173,8 @@ impl log::Log for AppLogger {
             if !*RUNS_ON_CONSOLE
                 && !ARGS.batch
                 && ((record.metadata().level() == LevelFilter::Error)
-                        // This lock can never get poisoned, so `unwrap()` is safe here.
-                        || APP_LOGGER.popup_always_enabled.load(Ordering::SeqCst))
+                        // Release lock immediately.
+                        || *APP_LOGGER_ENABLE_POPUP.read().unwrap())
             {
                 // We silently ignore failing pushes. We have printed the
                 // error message on the console already.
