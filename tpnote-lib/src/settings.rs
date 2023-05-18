@@ -8,7 +8,7 @@ use crate::error::ConfigError;
 use lingua;
 #[cfg(feature = "lang-detection")]
 use lingua::IsoCode639_1;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::{env, mem, str::FromStr, sync::RwLock};
 #[cfg(target_family = "windows")]
 use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
@@ -56,7 +56,7 @@ pub(crate) struct Settings {
     pub lang: String,
     pub extension_default: String,
     pub filter_get_lang: Result<Vec<IsoCode639_1>, ConfigError>,
-    pub filter_map_lang_hmap: Option<HashMap<String, String>>,
+    pub filter_map_lang_btmap: Option<BTreeMap<String, String>>,
 }
 
 #[cfg(not(feature = "lang-detection"))]
@@ -73,7 +73,7 @@ pub(crate) struct Settings {
     /// Cf. documentation for `update_filter_get_lang_setting()`.
     pub filter_get_lang: Result<Vec<String>, ConfigError>,
     /// Cf. documentation for `update_filter_map_lang_hmap_setting()`.
-    pub filter_map_lang_hmap: Option<HashMap<String, String>>,
+    pub filter_map_lang_btmap: Option<BTreeMap<String, String>>,
 }
 
 /// Default to empty lists and values.
@@ -84,7 +84,7 @@ impl Default for Settings {
             lang: String::new(),
             extension_default: String::new(),
             filter_get_lang: Ok(vec![]),
-            filter_map_lang_hmap: None,
+            filter_map_lang_btmap: None,
         }
     }
 }
@@ -96,7 +96,7 @@ pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(Settings {
     lang: String::new(),
     extension_default: String::new(),
     filter_get_lang: Ok(vec![]),
-    filter_map_lang_hmap: None,
+    filter_map_lang_btmap: None,
 });
 
 /// When `lang` is not `-`, overwrite `SETTINGS.lang` with `lang`.
@@ -121,7 +121,7 @@ pub fn update_settings() -> Result<(), ConfigError> {
     update_extension_default_setting(&mut settings);
     update_lang_setting(&mut settings);
     update_filter_get_lang_setting(&mut settings);
-    update_filter_map_lang_hmap_setting(&mut settings);
+    update_filter_map_lang_btmap_setting(&mut settings);
     update_env_lang_detection(&mut settings);
 
     log::trace!("`SETTINGS` updated:\n{:#?}", settings);
@@ -275,28 +275,28 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
     let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
 }
 
-/// Read keys and values from `LIB_CFG.tmpl.filter_map_lang` into HashMap.
+/// Read keys and values from `LIB_CFG.tmpl.filter_btmap_lang` in the BTreeMap.
 /// Add the user's default language and region.
-fn update_filter_map_lang_hmap_setting(settings: &mut Settings) {
-    let mut hm = HashMap::new();
+fn update_filter_map_lang_btmap_setting(settings: &mut Settings) {
+    let mut btm = BTreeMap::new();
     let lib_cfg = LIB_CFG.read().unwrap();
     for l in &lib_cfg.tmpl.filter_map_lang {
         if l.len() >= 2 {
-            hm.insert(l[0].to_string(), l[1].to_string());
+            btm.insert(l[0].to_string(), l[1].to_string());
         };
     }
-    // Insert the user's default language and region in the HashMap.
+    // Insert the user's default language and region in the Map.
     if !settings.lang.is_empty() {
         if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
             // Do not overwrite existing languages.
-            if !lang_subtag.is_empty() && !hm.contains_key(lang_subtag) {
-                hm.insert(lang_subtag.to_string(), settings.lang.to_string());
+            if !lang_subtag.is_empty() && !btm.contains_key(lang_subtag) {
+                btm.insert(lang_subtag.to_string(), settings.lang.to_string());
             }
         };
     }
 
     // Store result.
-    let _ = mem::replace(&mut settings.filter_map_lang_hmap, Some(hm));
+    let _ = mem::replace(&mut settings.filter_map_lang_btmap, Some(btm));
 }
 
 /// Reads the environment variable `LANG_DETECTION`. If not empty,
@@ -306,7 +306,7 @@ fn update_env_lang_detection(settings: &mut Settings) {
     if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
         if env_var.is_empty() {
             let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
-            let _ = mem::replace(&mut settings.filter_map_lang_hmap, None);
+            let _ = mem::replace(&mut settings.filter_map_lang_btmap, None);
             log::info!(
                 "Empty env. var. `{}` disables `lang-detection` feature.",
                 ENV_VAR_TPNOTE_LANG_DETECTION
@@ -315,7 +315,7 @@ fn update_env_lang_detection(settings: &mut Settings) {
         }
 
         // Read and convert ISO codes from config object.
-        let mut hm: HashMap<String, String> = HashMap::new();
+        let mut hm: BTreeMap<String, String> = BTreeMap::new();
         match env_var
             // The happy path.
             .split(',')
@@ -373,7 +373,7 @@ fn update_env_lang_detection(settings: &mut Settings) {
                 }
                 // Store result.
                 let _ = mem::replace(&mut settings.filter_get_lang, Ok(iso_codes));
-                let _ = mem::replace(&mut settings.filter_map_lang_hmap, Some(hm));
+                let _ = mem::replace(&mut settings.filter_map_lang_btmap, Some(hm));
             }
             Err(e) =>
             // Store error.
@@ -483,9 +483,9 @@ mod tests {
         // Test 1.
         let mut settings = Settings::default();
         let _ = mem::replace(&mut settings.lang, "it-IT".to_string());
-        update_filter_map_lang_hmap_setting(&mut settings);
+        update_filter_map_lang_btmap_setting(&mut settings);
 
-        let output_filter_map_lang = settings.filter_map_lang_hmap.unwrap();
+        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
 
         assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
         assert_eq!(output_filter_map_lang.get("et").unwrap(), "et-ET");
@@ -495,9 +495,9 @@ mod tests {
         // Test short `settings.lang`.
         let mut settings = Settings::default();
         let _ = mem::replace(&mut settings.lang, "it".to_string());
-        update_filter_map_lang_hmap_setting(&mut settings);
+        update_filter_map_lang_btmap_setting(&mut settings);
 
-        let output_filter_map_lang = settings.filter_map_lang_hmap.unwrap();
+        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
 
         assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
         assert_eq!(output_filter_map_lang.get("et").unwrap(), "et-ET");
@@ -523,7 +523,7 @@ mod tests {
             })
             .collect::<String>();
         assert_eq!(output_filter_get_lang, "fr de hu en ");
-        let output_filter_map_lang = settings.filter_map_lang_hmap.unwrap();
+        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
         assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
         assert_eq!(output_filter_map_lang.get("fr").unwrap(), "fr-FR");
         assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
@@ -546,7 +546,7 @@ mod tests {
             })
             .collect::<String>();
         assert_eq!(output_filter_get_lang, "de de en ");
-        let output_filter_map_lang = settings.filter_map_lang_hmap.unwrap();
+        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
         assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
         assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-US");
         let mut settings = Settings::default();
@@ -555,7 +555,7 @@ mod tests {
         update_env_lang_detection(&mut settings);
 
         assert!(settings.filter_get_lang.unwrap().is_empty());
-        assert!(settings.filter_map_lang_hmap.is_none());
+        assert!(settings.filter_map_lang_btmap.is_none());
 
         //
         // Test 3.
@@ -575,7 +575,7 @@ mod tests {
             })
             .collect::<String>();
         assert_eq!(output_filter_get_lang, "de de en ");
-        let output_filter_map_lang = settings.filter_map_lang_hmap.unwrap();
+        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
         assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
         assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
         let mut settings = Settings::default();
@@ -584,7 +584,7 @@ mod tests {
         update_env_lang_detection(&mut settings);
 
         assert!(settings.filter_get_lang.unwrap().is_empty());
-        assert!(settings.filter_map_lang_hmap.is_none());
+        assert!(settings.filter_map_lang_btmap.is_none());
 
         //
         // Test faulty `settings.lang`.
@@ -604,7 +604,7 @@ mod tests {
             })
             .collect::<String>();
         assert_eq!(output_filter_get_lang, "en ");
-        let output_filter_map_lang = settings.filter_map_lang_hmap.unwrap();
+        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
         assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
 
         //
@@ -615,7 +615,7 @@ mod tests {
         update_env_lang_detection(&mut settings);
 
         assert!(settings.filter_get_lang.is_err());
-        assert!(settings.filter_map_lang_hmap.is_none());
+        assert!(settings.filter_map_lang_btmap.is_none());
         //
         // Test empty list.
         let mut settings = Settings::default();
@@ -624,6 +624,6 @@ mod tests {
         update_env_lang_detection(&mut settings);
 
         assert_eq!(settings.filter_get_lang.unwrap(), vec![]);
-        assert!(settings.filter_map_lang_hmap.is_none());
+        assert!(settings.filter_map_lang_btmap.is_none());
     }
 }

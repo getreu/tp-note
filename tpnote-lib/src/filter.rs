@@ -440,8 +440,8 @@ fn map_lang_filter<S: BuildHasher>(
                     return Ok(to_value("")?);
                 };
             };
-            if let Some(hm) = &settings.filter_map_lang_hmap {
-                match hm.get(input) {
+            if let Some(btm) = &settings.filter_map_lang_btmap {
+                match btm.get(input) {
                     None => Ok(to_value(input)?),
                     Some(tag) => Ok(to_value(tag)?),
                 }
