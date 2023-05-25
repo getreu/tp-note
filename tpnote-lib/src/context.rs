@@ -100,7 +100,7 @@ impl Context {
         ct.insert(TMPL_VAR_DIR_PATH, &dir_path);
         ct.insert(TMPL_VAR_ROOT_PATH, &root_path);
 
-        // Insert invironment.
+        // Insert environment.
         let mut context = Self {
             ct,
             path,
