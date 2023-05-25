@@ -4,6 +4,7 @@ use crate::error::WorkflowError;
 use crate::file_editor::launch_editor;
 use crate::settings::ARGS;
 use crate::settings::CLIPBOARD;
+use crate::settings::DOC_PATH;
 use crate::settings::HTML_EXPORT;
 use crate::settings::LAUNCH_EDITOR;
 use crate::settings::LAUNCH_VIEWER;
@@ -11,7 +12,6 @@ use crate::settings::STDIN;
 use crate::template::template_kind_filter;
 #[cfg(feature = "viewer")]
 use crate::viewer::launch_viewer_thread;
-use std::env;
 #[cfg(not(target_family = "windows"))]
 use std::matches;
 use std::path::PathBuf;
@@ -134,12 +134,9 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
     Ok(path)
 }
 
+#[inline]
 pub(crate) fn run() -> Result<PathBuf, WorkflowError> {
     // process arg = <path>
-    let path = if let Some(p) = &ARGS.path {
-        p.canonicalize()?
-    } else {
-        env::current_dir()?
-    };
-    run_workflow(path)
+    let doc_path = DOC_PATH.as_deref()?;
+    run_workflow(doc_path.to_path_buf())
 }

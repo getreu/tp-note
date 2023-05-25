@@ -222,4 +222,15 @@ pub static ref HTML_EXPORT: Option<(PathBuf, LocalLinkKind)> = ARGS.export
             .unwrap_or(CFG.arg_default.export_link_rewriting))
 
     );
+
+}
+lazy_static! {
+/// Read and canonicalize the `<path>` from the command line. If no
+/// `<path>` was given, use the current directory.
+pub static ref DOC_PATH: Result<PathBuf, std::io::Error> =
+    if let Some(p) = &ARGS.path {
+        p.canonicalize()
+    } else {
+        env::current_dir()
+    };
 }

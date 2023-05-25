@@ -34,6 +34,9 @@ pub enum WorkflowError {
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
+
+    #[error(transparent)]
+    IoRef(#[from] &'static std::io::Error),
 }
 
 /// Error related to the filesystem and to invoking external applications.
@@ -110,6 +113,9 @@ pub enum ConfigFileError {
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
+
+    #[error(transparent)]
+    IoRef(#[from] &'static std::io::Error),
 
     #[error(transparent)]
     Serialize(#[from] toml::ser::Error),
