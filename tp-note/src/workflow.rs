@@ -115,7 +115,7 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
                 let missing_header = matches!(e, NoteError::MissingFrontMatter { .. })
                     || matches!(e, NoteError::MissingFrontMatterField { .. });
 
-                if missing_header {
+                if missing_header && *LAUNCH_VIEWER {
                     // Silently ignore error.
                     log::warn!("{}", e);
                 } else {
