@@ -1,6 +1,7 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
 //! and exposes the configuration as `static` variable.
 use crate::settings::ARGS;
+use crate::settings::DOC_PATH;
 use crate::settings::ENV_VAR_TPNOTE_CONFIG;
 use crate::VERSION;
 use directories::ProjectDirs;
@@ -26,8 +27,10 @@ use tpnote_lib::config::Tmpl;
 use tpnote_lib::config::TmplHtml;
 #[cfg(not(test))]
 use tpnote_lib::config::FILENAME_DOTFILE_MARKER;
+use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 #[cfg(not(test))]
 use tpnote_lib::config::LIB_CFG;
+use tpnote_lib::context::Context;
 use tpnote_lib::error::FileError;
 use tpnote_lib::filename::NotePathBuf;
 
@@ -550,19 +553,47 @@ lazy_static! {
 }
 
 lazy_static! {
-/// This is where the Tp-Note stores its configuration file.
+/// This is where the Tp-Note searches for its configuration file.
     pub static ref CONFIG_PATH : Option<PathBuf> = {
-        if let Some(c) = &ARGS.config {
-            Some(PathBuf::from(c))
-        } else if let Ok(c) = env::var(ENV_VAR_TPNOTE_CONFIG) {
-            Some(PathBuf::from(c))
+        use std::fs::File;
+        let config_path = if let Some(c) = &ARGS.config {
+                // Config path comes from command line.
+                Some(PathBuf::from(c))
         } else {
-            let config = ProjectDirs::from("rs", "", CARGO_BIN_NAME)?;
+            // Is there a `FILENAME_ROOT_PATH_MARKER` file?
+            let root_path = DOC_PATH.as_deref().ok()
+                .map(|doc_path| {
+                            let mut root_path = Context::from(doc_path).root_path;
+                            root_path.push(FILENAME_ROOT_PATH_MARKER);
+                            root_path
+                });
+            // Is this file empty?
+            root_path.as_ref()
+                .and_then(|root_path| File::open(root_path).ok())
+                .and_then(|file| file.metadata().ok())
+                .and_then(|metadata|
+                    if metadata.len() == 0 {
+                        // `FILENAME_ROOT_PATH_MARKER` is empty.
+                        None
+                    } else {
+                        // `FILENAME_ROOT_PATH_MARKER` contains config data.
+                        root_path
+                    })
+        };
 
-            let mut config = PathBuf::from(config.config_dir());
-            config.push(Path::new(CONFIG_FILENAME));
-            Some(config)
-        }
+        config_path.or_else(||
+            // Config path comes from the environment variable.
+            if let Ok(c) = env::var(ENV_VAR_TPNOTE_CONFIG) {
+               Some(PathBuf::from(c))
+            } else {
+                // Config comes from the standard config file location.
+                let config = ProjectDirs::from("rs", "", CARGO_BIN_NAME)?;
+
+                let mut config = PathBuf::from(config.config_dir());
+                config.push(Path::new(CONFIG_FILENAME));
+                Some(config)
+            }
+        )
     };
 }
 
