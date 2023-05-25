@@ -156,7 +156,7 @@ fn update_extension_default_setting(settings: &mut Settings) {
         Ok(ed_env) if !ed_env.is_empty() => ed_env,
         Err(_) | Ok(_) => {
             let lib_cfg = LIB_CFG.read().unwrap();
-            (*lib_cfg).filename.extension_default.to_string()
+            lib_cfg.filename.extension_default.to_string()
         }
     };
     let _ = mem::replace(&mut settings.extension_default, ext);
