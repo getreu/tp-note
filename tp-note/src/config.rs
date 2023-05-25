@@ -281,7 +281,7 @@ const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
 /// For security reasons, Tp-Note's internal viewer only displays a limited
 /// number number of Tp-Note files when browsing between files.
 /// This variable limits this number.
-const VIEWER_DISPLAYED_TPNOTE_COUNT_MAX: usize = 10;
+const VIEWER_DISPLAYED_TPNOTE_COUNT_MAX: usize = 20;
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
