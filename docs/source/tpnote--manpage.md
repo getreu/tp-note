@@ -950,15 +950,49 @@ encoded in customizable so-called filename templates (cf. section _Templates_).
 # CUSTOMIZATION
 
 Tp-Note's configuration file resides typically in
-'`~/.config/tpnote/tpnote.toml`' on Unix or in
-'`C:\Users\<LOGIN>\AppData\Roaming\tpnote\config\tpnote.toml>`' on Windows.
+'`~/.config/tpnote/tpnote.toml`' under Unix or in
+'`C:\Users\<LOGIN>\AppData\Roaming\tpnote\config\tpnote.toml>`' under Windows.
 '`tpnote --version`' prints the current configuration file path.
-When Tp-Note starts, it first tries to find its configuration file. If it
-fails, it writes a default configuration file. Tp-Note is best customized by
-starting it once, and then modifying its default configuration. For a detailed
-description of the available configuration variables, please consult the
-'`const`' definitions in Tp-Note's source code file '`config.rs`'
-The configuration file is encoded according to the TOML standard.
+
+Besides the standard configuration path, Tp-Note searches for its configuration
+data at the following locations:
+
+1. If the command line parameter '`--config <path>`' is given, '`<path>`'
+   indicates the location of the configuration file.
+2. If the environment variable '`TPNOTE_CONFIG="<path>"`' is set, 
+   '`<path>`' indicates the location of the configuration file.
+3. At startup all parent directories of the note file path are searched for
+   a file named '`.tpnoteroot`'. If present and its content is not empty,
+   Tp-Note interprets the file's content as configuration file.
+   Continue otherwise.
+4. Tp-Note tries to find its configuration data at the operating system's 
+   standard location indicated here above.
+
+When Tp-Note starts, it first tries to find its configuration file. Once found,
+the syntax of the configuration is checked. If not correct, the configuration
+file is renamed and replaced by a file with correct syntax and default values.
+If Tp-Note fails to find a configuration file at any of the above locations, it
+writes a default configuration file at the expected standard location.
+ 
+Tp-Note is best customized by starting it once, and then modifying its default
+configuration. 
+
+```sh
+tpnote -V -b
+```
+
+To create a configuration file in the current directory, invoke Tp-Note
+with '`-c`'.
+
+```sh
+tpnote -V -b -c .tpnoteroot
+```
+
+For a detailed description of the available configuration
+variables, please consult the '`const`' definitions in Tp-Note's source code
+file '`config.rs`' The configuration file is encoded according to the TOML
+standard.
+
 
 
 ## Register your own text editor
@@ -1171,7 +1205,7 @@ Examples, adjust to your needs and taste:
       'hx',
     ],
   ]
-  ```
+```
 
 
 
@@ -1304,6 +1338,7 @@ syntax varies depending on the markup language. Hence, you should not forget to
 modify the '`tmpl.annotate_file_content`' content template, when you
 change the default markup language defined in '`filename.extension_default`'.
 
+
 ### Change default markup language to ReStructuredText
 
 Tp-Note's core function is a template system and as such it depends
@@ -1359,7 +1394,6 @@ file_ext: "rst"
 When Tp-Note triggers the next filename synchronization, the filename
 extension of the note file will change to '`.rst`'. The above modification
 applies to the current note only.
-
 
 
 
