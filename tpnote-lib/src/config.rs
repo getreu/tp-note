@@ -36,7 +36,7 @@ pub const FILENAME_LEN_MAX: usize =
 
 /// The apperance of a file with this filename marks the position of
 /// `TMPL_VAR_ROOT_PATH`.
-pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnoteroot";
+pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnote.toml";
 
 /// List of characters that can be part of a _sort tag_.
 /// This list must not include `SORT_TAG_EXTRA_SEPARATOR`.

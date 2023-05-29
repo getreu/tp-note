@@ -625,13 +625,13 @@ synchronization).
     '`short`' or '`long`' (default). No link rewriting occurs, for the *MODE*
     '`off`'. The *MODE* '`short`' rewrites all local relative links to absolute
     links, whose base is the first parent directory containing the marker
-    file '`.tpnoteroot`' (filename customizable). NB, the directory of the
+    file '`.tpnote.toml`' (filename customizable). NB, the directory of the
     marker file defines the base for all absolute local links in your Tp-Note
     file! The mode '`long`' rewrites *all* local links to absolute links whose
     base is the system's root directory '`/`'. For relative local links this
     is performed by prepending the path to the note file. Absolute local links
-    get the path to the marker file '`.tpnoteroot`' prepended. In case you
-    do not place a '`.tpnoteroot`' file in a parent directory, the base for
+    get the path to the marker file '`.tpnote.toml`' prepended. In case you
+    do not place a '`.tpnote.toml`' file in a parent directory, the base for
     absolute local links in your note file is interpreted as '`/`'. The right
     mode to choose depends on how you view the resulting HTML: if you publish
     on a web server, then '`short`' is a good choice. If you view the HTML
@@ -723,7 +723,7 @@ Here some example links in Markdown notation:
 * A link to another Tp-Note document with an absolute local link:
   '`[my doc](</home/kanban/docs/my note.md>)`'
   The base for absolute local links is the first parent directory containing
-  the marker file '`.tpnoteroot`'. If absent, absolute local links refer
+  the marker file '`.tpnote.toml`'. If absent, absolute local links refer
   to the root directory '`/`'.
 * A shorthand link to another Tp-Note document. Instead of writing out the full
   file name, only the first characters of the note's sort-tag '`20230508-`' are
@@ -750,18 +750,18 @@ allows you to fine-tune how local links are written out. Valid values are:
 
 In order to achieve this, the author must respect the following convention
 concerning absolute local links: The base of absolute local links in Tp-Note
-documents is always the directory where the marker file '`.tpnoteroot`' resides
+documents is always the directory where the marker file '`.tpnote.toml`' resides
 (or '`/`' if none exists). The option '`--export-link-rewriting`' decides how
 local links in the Tp-Note document are converted when the HTML is generated.
 If its value is '`short`', then relative local links are converted to absolute
 links. The base of the resulting links is again the directory where the
-`.tpnoteroot` file resides (or `/` if none exists). Consider the following
+`.tpnote.toml` file resides (or `/` if none exists). Consider the following
 example:
 
 * The Tp-Note file '`/my/docs/car/bill.md`' contains
 * the absolute link '`/car/scan.jpg`',
 * and the relative link '`./photo.jpg`'.
-* The document root marker is: '`/my/docs/.tpnoteroot`'.
+* The document root marker is: '`/my/docs/.tpnote.toml`'.
 
 The images in the resulting HTML will appear as
 
@@ -774,7 +774,7 @@ local links are rebased to '`/`''. Consider the following example:
 * The Tp-Note file '`/my/docs/car/bill.md`' contains
 * the absolute link '`/car/scan.jpg`',
 * and the relative link '`./photo.jpg`'.
-* The document root marker is: '`/my/docs/.tpnoteroot`'.
+* The document root marker is: '`/my/docs/.tpnote.toml`'.
 
 The image paths in the resulting HTML will appear as
 
@@ -962,7 +962,7 @@ data at the following locations:
 2. If the environment variable '`TPNOTE_CONFIG="<path>"`' is set, 
    '`<path>`' indicates the location of the configuration file.
 3. At startup all parent directories of the note file path are searched for
-   a file named '`.tpnoteroot`'. If present and its content is not empty,
+   a file named '`.tpnote.toml`'. If present and its content is not empty,
    Tp-Note interprets the file's content as configuration file.
    Continue otherwise.
 4. Tp-Note tries to find its configuration data at the operating system's 
@@ -981,11 +981,11 @@ configuration.
 tpnote -V -b
 ```
 
-To create a configuration file in the current directory, invoke Tp-Note
+To create a configuration file in the current directory invoke Tp-Note
 with '`-c`'.
 
 ```sh
-tpnote -V -b -c .tpnoteroot
+tpnote -V -b -c .tpnote.toml
 ```
 
 For a detailed description of the available configuration
@@ -2018,7 +2018,7 @@ able to publish. To summarize, a file is only served:
 3. if the number of so far viewed Tp-Note files,
    '`viewer.displayed_tpnote_count_max`' is not exceeded,
 4. when it's located under a directory containing a marker file named
-   '`.tpnoteroot`' (without marker file this condition is void).
+   '`.tpnote.toml`' (without marker file this condition is void).
 
 The HTTP server runs as long as the launched web browser window is open.
 Note, that the server not only exposes the displayed note file, but also all
@@ -2034,10 +2034,10 @@ serves only files whose file extensions are registered with the
 disabling the _follow links to other Tp-Note files_ feature by removing all
 '`text/*`' mime types from that list.
 
-Another security feature is the '`.tpnoteroot`' marker file. When Tp-Note
+Another security feature is the '`.tpnote.toml`' marker file. When Tp-Note
 opens a note file, it checks all directories above, one by one, until it
-finds the marker file '`.tpnoteroot`'. Tp-Note's viewer will never serve a file
-located outside the root directory and its children. When no '`.tpnoteroot`'
+finds the marker file '`.tpnote.toml`'. Tp-Note's viewer will never serve a file
+located outside the root directory and its children. When no '`.tpnote.toml`'
 file is found, the root directory is set to '`/`', which disables this
 security feature.
 
