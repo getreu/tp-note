@@ -58,7 +58,8 @@ use tpnote_lib::error::NoteError;
 
 /// Use the version number defined in `../Cargo.toml`.
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
-/// Set the minimum required config file version that is compatible with this Tp-Note version.
+/// Set the minimum required config file version that is compatible with this
+/// Tp-Note version.
 ///
 /// Examples how to use this constant. Choose one of the following:
 /// 1. Require some minimum version of the config file.
@@ -80,7 +81,7 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
 ///    ```
 ///
-const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.21.4");
+const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
 /// Authors.
 const AUTHOR: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 /// Copyright.
