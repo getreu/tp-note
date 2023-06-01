@@ -2,6 +2,7 @@
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
 use crate::filename::NotePath;
+use crate::settings::FilterGetLang;
 use crate::settings::SETTINGS;
 use lazy_static::lazy_static;
 #[cfg(feature = "lang-detection")]
@@ -363,8 +364,9 @@ fn get_lang_filter<S: BuildHasher>(
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     // Early return when there are not at least 2 languages to choose from.
+    // TODO: move this check to `settings`.
     let settings = SETTINGS.read().unwrap();
-    if let Ok(languages) = &settings.filter_get_lang {
+    if let FilterGetLang::SomeLanguages(languages) = &settings.filter_get_lang {
         if languages.len() < 2 {
             return Ok(to_value("").unwrap());
         }
@@ -380,20 +382,23 @@ fn get_lang_filter<S: BuildHasher>(
                 return Ok(to_value("").unwrap());
             }
 
-            // Type conversion from `Vec<DetectableLanguage<IsoCode639_1>>`
-            // to `&[IsoCode639_1]`.
-            let iso_codes = settings
-                .filter_get_lang
-                .as_ref()
-                .map_err(|e| tera::Error::from(e.to_string()))?;
+            let detector: LanguageDetector = match &settings.filter_get_lang {
+                FilterGetLang::SomeLanguages(iso_codes) => {
+                    log::debug!(
+                        "Trying to identify one of the following languages: {:?}",
+                        iso_codes,
+                    );
 
-            log::debug!(
-                "Trying to identify one of the following languages: {:?}",
-                iso_codes,
-            );
-
-            let detector: LanguageDetector =
-                LanguageDetectorBuilder::from_iso_codes_639_1(iso_codes).build();
+                    LanguageDetectorBuilder::from_iso_codes_639_1(&iso_codes)
+                }
+                FilterGetLang::AllLanguages => {
+                    log::debug!("Trying to identify one of all available languages",);
+                    LanguageDetectorBuilder::from_all_languages()
+                }
+                FilterGetLang::Error(e) => return Err(tera::Error::from(e.to_string())),
+                _ => return Ok(to_value("").unwrap()),
+            }
+            .build();
 
             //TodoLanguageDetectorBuilder::from_all_languages()
 

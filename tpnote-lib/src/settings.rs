@@ -4,6 +4,7 @@
 //! changes in the related environment variables.
 
 use crate::config::LIB_CFG;
+use crate::config::TMPL_FILTER_GET_LANG_ALL;
 use crate::error::ConfigError;
 use lingua;
 #[cfg(feature = "lang-detection")]
@@ -47,7 +48,26 @@ const ENV_VAR_USER: &str = "USER";
 #[cfg(not(target_family = "windows"))]
 const ENV_VAR_LANG: &str = "LANG";
 
-#[cfg(feature = "lang-detection")]
+#[derive(Debug)]
+/// Indicates how the `get_lang` filter operates.
+pub(crate) enum FilterGetLang {
+    /// The filter is disabled and returns the empty string.
+    Disabled,
+    /// All available (about 76) languages are selected as search candidates.
+    /// This causes the filter execution to take some time (up to 5 seconds).
+    AllLanguages,
+    /// A list of language tags the algorithm considers as potential candidates
+    /// to determinate the natural language.
+    #[cfg(feature = "lang-detection")]
+    SomeLanguages(Vec<IsoCode639_1>),
+    /// A list of language tags the algorithm considers as potential candidates
+    /// to determinate the natural language.
+    #[cfg(not(feature = "lang-detection"))]
+    SomeLanguages(Vec<String>),
+    /// The filter configuration could not be read and converted properly.
+    Error(ConfigError),
+}
+
 #[derive(Debug)]
 /// Struct containing additional user configuration mostly read from
 /// environment variables.
@@ -55,49 +75,27 @@ pub(crate) struct Settings {
     pub author: String,
     pub lang: String,
     pub extension_default: String,
-    pub filter_get_lang: Result<Vec<IsoCode639_1>, ConfigError>,
+    pub filter_get_lang: FilterGetLang,
     pub filter_map_lang_btmap: Option<BTreeMap<String, String>>,
 }
 
-#[cfg(not(feature = "lang-detection"))]
-#[derive(Debug)]
-/// Structure holding various settings from environment varialbes.
-/// Some member variables also insert data from `LIB_CFG`.
-pub(crate) struct Settings {
-    /// Cf. documentation for `update_author_setting()`.
-    pub author: String,
-    /// Cf. documentation for `update_lang_setting()`.
-    pub lang: String,
-    /// Cf. documentation for `update_extension_default_setting()`.
-    pub extension_default: String,
-    /// Cf. documentation for `update_filter_get_lang_setting()`.
-    pub filter_get_lang: Result<Vec<String>, ConfigError>,
-    /// Cf. documentation for `update_filter_map_lang_hmap_setting()`.
-    pub filter_map_lang_btmap: Option<BTreeMap<String, String>>,
-}
+const DEFAULT_SETTINGS: Settings = Settings {
+    author: String::new(),
+    lang: String::new(),
+    extension_default: String::new(),
+    filter_get_lang: FilterGetLang::Disabled,
+    filter_map_lang_btmap: None,
+};
 
 /// Default to empty lists and values.
 impl Default for Settings {
     fn default() -> Self {
-        Settings {
-            author: String::new(),
-            lang: String::new(),
-            extension_default: String::new(),
-            filter_get_lang: Ok(vec![]),
-            filter_map_lang_btmap: None,
-        }
+        DEFAULT_SETTINGS
     }
 }
 
 /// Global mutable varible of type `Settings`.
-/// Todo: use `default()` when `impl const` is available.
-pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(Settings {
-    author: String::new(),
-    lang: String::new(),
-    extension_default: String::new(),
-    filter_get_lang: Ok(vec![]),
-    filter_map_lang_btmap: None,
-});
+pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(DEFAULT_SETTINGS);
 
 /// When `lang` is not `-`, overwrite `SETTINGS.lang` with `lang`.
 /// In any case, disable the `get_lang` filter by deleting all languages
@@ -110,7 +108,7 @@ pub(crate) fn force_lang_setting(lang: &str) {
         let _ = mem::replace(&mut settings.lang, lang.to_string());
     }
     // Disable the `get_lang` Tera filter.
-    let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
+    let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
 }
 
 /// (Re)read environment variables and store them in the global `SETTINGS`
@@ -126,7 +124,7 @@ pub fn update_settings() -> Result<(), ConfigError> {
 
     log::trace!("`SETTINGS` updated:\n{:#?}", settings);
 
-    if let Err(e) = &settings.filter_get_lang {
+    if let FilterGetLang::Error(e) = &settings.filter_get_lang {
         Err(e.clone())
     } else {
         Ok(())
@@ -214,16 +212,32 @@ fn update_lang_setting(settings: &mut Settings) {
 }
 
 /// Read language list from `LIB_CFG.tmpl.filter_get_lang`, add the user's
-/// default language subtag and store them in `SETTINGS.filter_get_lang`.
+/// default language subtag and store them in `SETTINGS.filter_get_lang`
+/// as `FilterGetLang::SomeLanguages(l)` `enum` variant.
+/// If `SETTINGS.filter_get_lang` contains a tag `TMPL_FILTER_GET_LANG_ALL`,
+/// all languages are selected by setting `FilterGetLang::AllLanguages`.
+/// Errors are stored in the `FilterGetLang::Error(e)` variant.
 #[cfg(feature = "lang-detection")]
-/// Convert the `get_lang_filter()` configuration from the config file.
 fn update_filter_get_lang_setting(settings: &mut Settings) {
     let lib_cfg = LIB_CFG.read().unwrap();
+
+    let mut all_languages_selected = false;
     // Read and convert ISO codes from config object.
     match lib_cfg
         .tmpl
         .filter_get_lang
         .iter()
+        // Skip if this is the pseudo tag for all languages.
+        .filter(|&l| {
+            if l == TMPL_FILTER_GET_LANG_ALL {
+                all_languages_selected = true;
+                // Skip this string.
+                false
+            } else {
+                // Continue.
+                true
+            }
+        })
         .map(|l| {
             IsoCode639_1::from_str(l).map_err(|_| {
                 // Produce list of all available langugages.
@@ -248,23 +262,31 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
         .collect::<Result<Vec<IsoCode639_1>, ConfigError>>()
     {
         Ok(mut iso_codes) => {
-            // Add the user's language subtag as reported from the OS.
-            if !settings.lang.is_empty() {
-                if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
-                    if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
-                        if !iso_codes.contains(&iso_code) {
-                            iso_codes.push(iso_code);
+            if all_languages_selected {
+                // Store result.
+                let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::AllLanguages);
+            } else {
+                // Add the user's language subtag as reported from the OS.
+                if !settings.lang.is_empty() {
+                    if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
+                        if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
+                            if !iso_codes.contains(&iso_code) {
+                                iso_codes.push(iso_code);
+                            }
                         }
                     }
                 }
+                // Store result.
+                let _ = mem::replace(
+                    &mut settings.filter_get_lang,
+                    FilterGetLang::SomeLanguages(iso_codes),
+                );
             }
-            // Store result.
-            let _ = mem::replace(&mut settings.filter_get_lang, Ok(iso_codes));
         }
         Err(e) =>
         // Store error.
         {
-            let _ = mem::replace(&mut settings.filter_get_lang, Err(e));
+            let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Error(e));
         }
     }
 }
@@ -272,10 +294,10 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
 #[cfg(not(feature = "lang-detection"))]
 /// Reset to empty default.
 fn update_filter_get_lang_setting(settings: &mut Settings) {
-    let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
+    let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
 }
 
-/// Read keys and values from `LIB_CFG.tmpl.filter_btmap_lang` in the BTreeMap.
+/// Read keys and values from `LIB_CFG.tmpl.filter_btmap_lang` in the `BTreeMap`.
 /// Add the user's default language and region.
 fn update_filter_map_lang_btmap_setting(settings: &mut Settings) {
     let mut btm = BTreeMap::new();
@@ -300,14 +322,15 @@ fn update_filter_map_lang_btmap_setting(settings: &mut Settings) {
 }
 
 /// Reads the environment variable `LANG_DETECTION`. If not empty,
-/// parse the  content and overwrite `settings.filter_get_lang` and
-/// `settings.filter_map_lang`.
+/// parse the content and overwrite the `settings.filter_get_lang` and
+/// the `settings.filter_map_lang` variables.
 fn update_env_lang_detection(settings: &mut Settings) {
     if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
         if env_var.is_empty() {
-            let _ = mem::replace(&mut settings.filter_get_lang, Ok(vec![]));
+            // Early return.
+            let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
             let _ = mem::replace(&mut settings.filter_map_lang_btmap, None);
-            log::info!(
+            log::debug!(
                 "Empty env. var. `{}` disables `lang-detection` feature.",
                 ENV_VAR_TPNOTE_LANG_DETECTION
             );
@@ -316,6 +339,7 @@ fn update_env_lang_detection(settings: &mut Settings) {
 
         // Read and convert ISO codes from config object.
         let mut hm: BTreeMap<String, String> = BTreeMap::new();
+        let mut all_languages_selected = false;
         match env_var
             // The happy path.
             .split(',')
@@ -329,6 +353,17 @@ fn update_env_lang_detection(settings: &mut Settings) {
                     lang_subtag
                 } else {
                     t
+                }
+            })
+            // Check if this is the pseudo tag `TMPL_FILTER_GET_LANG_ALL `.
+            .filter(|&l| {
+                if l == TMPL_FILTER_GET_LANG_ALL {
+                    all_languages_selected = true;
+                    // Skip this string.
+                    false
+                } else {
+                    // Continue.
+                    true
                 }
             })
             // The error path.
@@ -372,13 +407,21 @@ fn update_env_lang_detection(settings: &mut Settings) {
                     }
                 }
                 // Store result.
-                let _ = mem::replace(&mut settings.filter_get_lang, Ok(iso_codes));
+                if all_languages_selected {
+                    let _ =
+                        mem::replace(&mut settings.filter_get_lang, FilterGetLang::AllLanguages);
+                } else {
+                    let _ = mem::replace(
+                        &mut settings.filter_get_lang,
+                        FilterGetLang::SomeLanguages(iso_codes),
+                    );
+                }
                 let _ = mem::replace(&mut settings.filter_map_lang_btmap, Some(hm));
             }
             Err(e) =>
             // Store error.
             {
-                let _ = mem::replace(&mut settings.filter_get_lang, Err(e));
+                let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Error(e));
             }
         }
     }
@@ -386,10 +429,8 @@ fn update_env_lang_detection(settings: &mut Settings) {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::config::FILENAME_EXTENSION_DEFAULT;
-
     use super::*;
+    use crate::config::FILENAME_EXTENSION_DEFAULT;
 
     /// Attention: as these test-functions run in parallel, make sure that
     /// each environment variable appears in one function only!
@@ -447,17 +488,19 @@ mod tests {
         let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
         update_filter_get_lang_setting(&mut settings);
 
-        let output_filter_get_lang = settings
-            .filter_get_lang
-            .unwrap()
-            .iter()
-            .map(|l| {
-                let mut l = l.to_string();
-                l.push_str(" ");
-                l
-            })
-            .collect::<String>();
-        assert_eq!(output_filter_get_lang, "en fr de ");
+        if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
+            let output_filter_get_lang = ofgl
+                .iter()
+                .map(|l| {
+                    let mut l = l.to_string();
+                    l.push_str(" ");
+                    l
+                })
+                .collect::<String>();
+            assert_eq!(output_filter_get_lang, "en fr de ");
+        } else {
+            panic!("Wrong variant: {:?}", settings.filter_get_lang);
+        }
 
         //
         // Test 2.
@@ -465,17 +508,19 @@ mod tests {
         let _ = mem::replace(&mut settings.lang, "it-IT".to_string());
         update_filter_get_lang_setting(&mut settings);
 
-        let output_filter_get_lang = settings
-            .filter_get_lang
-            .unwrap()
-            .iter()
-            .map(|l| {
-                let mut l = l.to_string();
-                l.push_str(" ");
-                l
-            })
-            .collect::<String>();
-        assert_eq!(output_filter_get_lang, "en fr de it ");
+        if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
+            let output_filter_get_lang = ofgl
+                .iter()
+                .map(|l| {
+                    let mut l = l.to_string();
+                    l.push_str(" ");
+                    l
+                })
+                .collect::<String>();
+            assert_eq!(output_filter_get_lang, "en fr de it ");
+        } else {
+            panic!("Wrong variant: {:?}", settings.filter_get_lang);
+        }
     }
 
     #[test]
@@ -512,17 +557,20 @@ mod tests {
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "fr-FR, de-DE, hu");
         update_env_lang_detection(&mut settings);
 
-        let output_filter_get_lang = settings
-            .filter_get_lang
-            .unwrap()
-            .iter()
-            .map(|l| {
-                let mut l = l.to_string();
-                l.push_str(" ");
-                l
-            })
-            .collect::<String>();
-        assert_eq!(output_filter_get_lang, "fr de hu en ");
+        if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
+            let output_filter_get_lang = ofgl
+                .iter()
+                .map(|l| {
+                    let mut l = l.to_string();
+                    l.push_str(" ");
+                    l
+                })
+                .collect::<String>();
+            assert_eq!(output_filter_get_lang, "fr de hu en ");
+        } else {
+            panic!("Wrong variant: {:?}", settings.filter_get_lang);
+        }
+
         let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
         assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
         assert_eq!(output_filter_map_lang.get("fr").unwrap(), "fr-FR");
@@ -535,55 +583,85 @@ mod tests {
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en-US");
         update_env_lang_detection(&mut settings);
 
-        let output_filter_get_lang = settings
-            .filter_get_lang
-            .unwrap()
-            .iter()
-            .map(|l| {
-                let mut l = l.to_string();
-                l.push_str(" ");
-                l
-            })
-            .collect::<String>();
-        assert_eq!(output_filter_get_lang, "de de en ");
+        if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
+            let output_filter_get_lang = ofgl
+                .iter()
+                .map(|l| {
+                    let mut l = l.to_string();
+                    l.push_str(" ");
+                    l
+                })
+                .collect::<String>();
+            assert_eq!(output_filter_get_lang, "de de en ");
+        } else {
+            panic!("Wrong variant: {:?}", settings.filter_get_lang);
+        }
         let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
         assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
         assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-US");
-        let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "".to_string());
-        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
-        update_env_lang_detection(&mut settings);
-
-        assert!(settings.filter_get_lang.unwrap().is_empty());
-        assert!(settings.filter_map_lang_btmap.is_none());
 
         //
         // Test 3.
         let mut settings = Settings::default();
         let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, en-US");
+        update_env_lang_detection(&mut settings);
+
+        assert!(matches!(
+            settings.filter_get_lang,
+            FilterGetLang::AllLanguages
+        ));
+        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
+        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
+        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-US");
+
+        //
+        // Test 4.
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en");
         update_env_lang_detection(&mut settings);
 
-        let output_filter_get_lang = settings
-            .filter_get_lang
-            .unwrap()
-            .iter()
-            .map(|l| {
-                let mut l = l.to_string();
-                l.push_str(" ");
-                l
-            })
-            .collect::<String>();
-        assert_eq!(output_filter_get_lang, "de de en ");
+        if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
+            let output_filter_get_lang = ofgl
+                .iter()
+                .map(|l| {
+                    let mut l = l.to_string();
+                    l.push_str(" ");
+                    l
+                })
+                .collect::<String>();
+            assert_eq!(output_filter_get_lang, "de de en ");
+        } else {
+            panic!("Wrong variant: {:?}", settings.filter_get_lang);
+        }
         let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
         assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
         assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
+
+        //
+        // Test 5.
+        let mut settings = Settings::default();
+        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, de-AT, en");
+        update_env_lang_detection(&mut settings);
+
+        assert!(matches!(
+            settings.filter_get_lang,
+            FilterGetLang::AllLanguages
+        ));
+        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
+        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
+        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
+
+        //
+        // Test empty env. var.
         let mut settings = Settings::default();
         let _ = mem::replace(&mut settings.lang, "".to_string());
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
         update_env_lang_detection(&mut settings);
 
-        assert!(settings.filter_get_lang.unwrap().is_empty());
+        assert!(matches!(settings.filter_get_lang, FilterGetLang::Disabled));
         assert!(settings.filter_map_lang_btmap.is_none());
 
         //
@@ -593,17 +671,19 @@ mod tests {
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "en-GB");
         update_env_lang_detection(&mut settings);
 
-        let output_filter_get_lang = settings
-            .filter_get_lang
-            .unwrap()
-            .iter()
-            .map(|l| {
-                let mut l = l.to_string();
-                l.push_str(" ");
-                l
-            })
-            .collect::<String>();
-        assert_eq!(output_filter_get_lang, "en ");
+        if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
+            let output_filter_get_lang = ofgl
+                .iter()
+                .map(|l| {
+                    let mut l = l.to_string();
+                    l.push_str(" ");
+                    l
+                })
+                .collect::<String>();
+            assert_eq!(output_filter_get_lang, "en ");
+        } else {
+            panic!("Wrong variant: {:?}", settings.filter_get_lang);
+        }
         let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
         assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
 
@@ -614,7 +694,7 @@ mod tests {
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, xy-XY");
         update_env_lang_detection(&mut settings);
 
-        assert!(settings.filter_get_lang.is_err());
+        assert!(matches!(settings.filter_get_lang, FilterGetLang::Error(..)));
         assert!(settings.filter_map_lang_btmap.is_none());
         //
         // Test empty list.
@@ -623,7 +703,7 @@ mod tests {
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
         update_env_lang_detection(&mut settings);
 
-        assert_eq!(settings.filter_get_lang.unwrap(), vec![]);
+        assert!(matches!(settings.filter_get_lang, FilterGetLang::Disabled));
         assert!(settings.filter_map_lang_btmap.is_none());
     }
 }

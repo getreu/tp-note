@@ -270,6 +270,10 @@ pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
 /// library _Lingua_. In both cases the filter returns the empty string.
 pub const TMPL_FILTER_GET_LANG: &[&str] = &["en", "fr", "de"];
 
+/// A pseudo language tag for the `get_lang_filter`. When placed in the
+/// `TMP_FILTER_GET_LANG` list, all available languages are selected.
+pub const TMPL_FILTER_GET_LANG_ALL: &str = "+all";
+
 /// Default values for the `map_lang` hash map filter, that is used to post
 /// process the language recognition subtag as defined in `TMPL_GET_LANG`. The
 /// key is the language subtag, the corresponding value adds a region subtag
