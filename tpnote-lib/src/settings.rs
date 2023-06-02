@@ -69,8 +69,8 @@ pub(crate) enum FilterGetLang {
 }
 
 #[derive(Debug)]
-/// Struct containing additional user configuration mostly read from
-/// environment variables.
+/// Struct containing additional user configuration read from or depending
+/// on environment variables.
 pub(crate) struct Settings {
     pub author: String,
     pub lang: String,
@@ -267,6 +267,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
                 let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::AllLanguages);
             } else {
                 // Add the user's language subtag as reported from the OS.
+                // Silently ignore if anything goes wrong here.
                 if !settings.lang.is_empty() {
                     if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
                         if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
@@ -276,11 +277,21 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
                         }
                     }
                 }
-                // Store result.
-                let _ = mem::replace(
-                    &mut settings.filter_get_lang,
-                    FilterGetLang::SomeLanguages(iso_codes),
-                );
+
+                // Check if there are at least 2 languages in the list.
+                if iso_codes.len() >= 2 {
+                    // Store result.
+                    let _ = mem::replace(
+                        &mut settings.filter_get_lang,
+                        FilterGetLang::SomeLanguages(iso_codes),
+                    );
+                // Disable the filter otherwise.
+                } else {
+                    // There is not at least 2 languages to choose from.
+                    // This disables the filter meaning the filter returns
+                    // always the empty string.
+                    let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
+                }
             }
         }
         Err(e) =>

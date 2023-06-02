@@ -363,14 +363,7 @@ fn get_lang_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    // Early return when there are not at least 2 languages to choose from.
-    // TODO: move this check to `settings`.
     let settings = SETTINGS.read().unwrap();
-    if let FilterGetLang::SomeLanguages(languages) = &settings.filter_get_lang {
-        if languages.len() < 2 {
-            return Ok(to_value("").unwrap());
-        }
-    }
 
     let p = try_get_value!("get_lang", "value", tera::Value, value);
     match p {
@@ -400,11 +393,11 @@ fn get_lang_filter<S: BuildHasher>(
             }
             .build();
 
-            //TodoLanguageDetectorBuilder::from_all_languages()
-
             let detected_language = detector
                 .detect_language_of(input)
                 .map(|l| format!("{}", l.iso_code_639_1()))
+                // If not languages can be detected, this returns the empty
+                // string.
                 .unwrap_or_default();
             log::debug!("Language '{}' in input detected.", detected_language);
 
