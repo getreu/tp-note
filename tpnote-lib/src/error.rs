@@ -235,7 +235,7 @@ pub enum NoteError {
 pub enum ConfigError {
     /// Remedy: check the configuration file variable `arg_default.export_link_rewriting`.
     #[error("choose one of: `off`, `short` or `long`")]
-    ParseLocalLinkKind {},
+    ParseLocalLinkKind,
 
     /// Remedy: check the ISO 639-1 codes in the configuration variable
     /// `tmpl.filter_get_lang` and make sure that they are supported, by
