@@ -1582,6 +1582,26 @@ filter_get_lang = [
 \f[R]
 .fi
 .PP
+As natural language detection is CPU intensive, it is advised to limit
+the number of detection candidates to 5 or 6, depending on how fast your
+computer is.
+The more language candidates you include, the longer the note file
+creation takes time.
+As a rule of thumb, with all languages enabled the creation of new notes
+can take up to 4 seconds on my computer.
+Nevertheless, it is possible to enable all available detection
+candidates with the pseudo language code `\f[C]+all\f[R]' which stands
+for \[lq]add all languages\[rq]:
+.IP
+.nf
+\f[C]
+[tmpl]
+filter_get_lang = [
+    \[aq]+all\[aq],
+]
+\f[R]
+.fi
+.PP
 Once the language is detected with the filter `\f[C]get_lang\f[R]', it
 passes another filter called `\f[C]map_lang\f[R]'.
 This filter maps the result of `\f[C]get_lang\f[R]' - encoded as ISO
@@ -1638,8 +1658,22 @@ TPNOTE_LANG_DETECTION=\[dq]en-US, fr, de-DE, et\[dq] tpnote
 \f[R]
 .fi
 .PP
-For debugging observe the value of `\f[C]SETTINGS\f[R]' in the debug
-log:
+If you want to enable all language detection candidates, add the pseudo
+tag `\f[C]+all\f[R]' somewhere to the list:
+.IP
+.nf
+\f[C]
+TPNOTE_LANG_DETECTION=\[dq]en-US, de-DE, +all\[dq] tpnote
+\f[R]
+.fi
+.PP
+In the above example the IETF language tags `\f[C]en-US\f[R]' and
+`\f[C]de-DE\f[R]' are retained in order to configure the region codes
+`\f[C]US\f[R]' and `\f[C]DE\f[R]' used by the `\f[C]map_lang\f[R]'
+template filter.
+.PP
+For debugging observe the value of `\f[C]SETTINGS\f[R]' in the debug log
+with:
 .IP
 .nf
 \f[C]
@@ -2518,8 +2552,7 @@ if the number of so far viewed Tp-Note files,
 `\f[C]viewer.displayed_tpnote_count_max\f[R]' is not exceeded,
 .IP "4." 3
 when it\[cq]s located under a directory containing a marker file named
-`\f[C].tpnote.toml\f[R]' (without marker file this condition is
-void).
+`\f[C].tpnote.toml\f[R]' (without marker file this condition is void).
 .PP
 The HTTP server runs as long as the launched web browser window is open.
 Note, that the server not only exposes the displayed note file, but also

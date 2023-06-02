@@ -1264,6 +1264,21 @@ filter_get_lang = [
 ]
 ```
 
+As natural language detection is CPU intensive, it is advised to limit the
+number of detection candidates to 5 or 6, depending on how fast your computer
+is. The more language candidates you include, the longer the note file creation
+takes time. As a rule of thumb, with all languages enabled the creation of new
+notes can take up to 4 seconds on my computer. Nevertheless, it is possible to
+enable all available detection candidates with the pseudo language code '`+all`'
+which stands for “add all languages”:
+
+```toml
+[tmpl]
+filter_get_lang = [
+    '+all',
+]
+```
+
 Once the language is detected with the filter '`get_lang`', it passes another
 filter called '`map_lang`'. This filter maps the result of '`get_lang`' -
 encoded as ISO 639-1 code - to an IETF language tag. For example, '`en`' is
@@ -1307,7 +1322,18 @@ the equivalent result to the configuration hereinabove:
 TPNOTE_LANG_DETECTION="en-US, fr, de-DE, et" tpnote
 ```
 
-For debugging observe the value of '`SETTINGS`' in the debug log:
+If you want to enable all language detection candidates, add the pseudo tag
+'`+all`' somewhere to the list:
+
+```sh
+TPNOTE_LANG_DETECTION="en-US, de-DE, +all" tpnote
+```
+
+In the above example the IETF language tags '`en-US`' and '`de-DE`' are retained
+in order to configure the region codes '`US`' and '`DE`' used by the
+'`map_lang`' template filter.
+
+For debugging observe the value of '`SETTINGS`' in the debug log with:
 
 ```sh
 tpnote -d trace -b
