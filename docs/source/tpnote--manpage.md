@@ -547,7 +547,7 @@ synchronization).
     variable '`TPNOTE_BROWSER=""`' to the empty string. Another way to
     permanently disable the web server is to set the configuration variable
     '`arg_default.edit=true`'.  When '`--edit --view`' appear together, both
-    the  editor and the viewer will open and the `arg_default.edit` variable
+    the editor and the viewer will open and the `arg_default.edit` variable
     is ignored.
 
 **-l** *LANG*, **\--force-lang**=*LANG*
@@ -1012,7 +1012,7 @@ installed text editor. When Tp-Note is started on a Linux console, the list
 '`app_args.editor_console`' is used instead. Here you can register text
 editors that do not require a graphical environment, e.g. '`vim`' or '`nano`'.
 In order to use your own text editor, just place it at the top of the list. To
-debug your changes invoke Tp-Note with '`tpnote --debug info --popup --edit`'.
+debug your changes invoke Tp-Note with '`tpnote --debug debug --popup --edit`'.
 
 The following example showcases the configuration for the _Kate_
 file editor.  The entry '`kate`' launches the binary, while the command
@@ -1646,12 +1646,12 @@ Alternatively, you can set the '`TPNOTE_BROWSER`' environment variable  (cf.
 examples in the capter _ENVIRONMENT_VARIABLES_ below).
 
 In case none of the listed browsers can be found, Tp-Note switches into a
-fall back mode with limited functionality, where it tries to open the system's
+fallback mode with limited functionality, where it tries to open the system's
 default web browser. A disadvantage is, that in fall back mode Tp-Note is not
 able to detect when the user closes the web browser. This might lead to
 situations, where Tp-Note's internal HTTP server shuts down to early.
 In order to check if Tp-Note finds the selected web browser as intended,
-invoke Tp-Note with '`tpnote --debug info --popup --view`'.
+invoke Tp-Note with '`tpnote --debug debug --popup --view`'.
 
 
 
@@ -1809,7 +1809,7 @@ In addition, Tp-Note defines the following variables:
 * '`{{ lang }}`' contains the user's language tag as defined in
   [RFC 5646](http://www.rfc-editor.org/rfc/rfc5646.txt).
   Not to be confused with the UNIX '`LANG`' environment variable from which
-  this value is derived under Linux/MacOS.
+  this value is derived under Linux/macOS.
   Under Windows, the user's language tag is queried through the WinAPI.
   If defined, the environment variable '`TPNOTE_LANG`' overwrites the value
   of '`{{ lang }}`' (all operating systems).
@@ -2119,7 +2119,7 @@ TPNOTE\_LANG\_DETECTION
 
 >   If set, this variable overwrites the configuration file variables
     '`tmpl.filter_get_lang`' and '`tmpl.filter_map_lang`', thus selecting
-    potential language candidates for Tp-Note's naturaul language detection. The
+    potential language candidates for Tp-Note's natural language detection. The
     string contains a comma and space separated list of ISO 63901 codes, e.g.
     '`fr`' or IETF BCP 47 tags, e.g. '`fr-FR`'. Here is an example of a complete
     string: '`de-DE, en, fr-FR, hu`'. The user's default locale '`{{ lang }}`'
