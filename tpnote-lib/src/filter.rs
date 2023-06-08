@@ -2,6 +2,7 @@
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
 use crate::filename::NotePath;
+#[cfg(feature = "lang-detection")]
 use crate::settings::FilterGetLang;
 use crate::settings::SETTINGS;
 use lazy_static::lazy_static;

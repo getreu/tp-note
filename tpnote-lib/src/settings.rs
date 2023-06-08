@@ -4,13 +4,17 @@
 //! changes in the related environment variables.
 
 use crate::config::LIB_CFG;
+#[cfg(feature = "lang-detection")]
 use crate::config::TMPL_FILTER_GET_LANG_ALL;
 use crate::error::ConfigError;
+#[cfg(feature = "lang-detection")]
 use lingua;
 #[cfg(feature = "lang-detection")]
 use lingua::IsoCode639_1;
 use std::collections::BTreeMap;
-use std::{env, mem, str::FromStr, sync::RwLock};
+#[cfg(feature = "lang-detection")]
+use std::str::FromStr;
+use std::{env, mem, sync::RwLock};
 #[cfg(target_family = "windows")]
 use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
 #[cfg(target_family = "windows")]
@@ -49,6 +53,7 @@ const ENV_VAR_USER: &str = "USER";
 const ENV_VAR_LANG: &str = "LANG";
 
 #[derive(Debug)]
+#[allow(dead_code)]
 /// Indicates how the `get_lang` filter operates.
 pub(crate) enum FilterGetLang {
     /// The filter is disabled and returns the empty string.
@@ -240,6 +245,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
         })
         .map(|l| {
             IsoCode639_1::from_str(l).map_err(|_| {
+                // The error path.
                 // Produce list of all available langugages.
                 let mut all_langs = lingua::Language::all()
                     .iter()
@@ -261,6 +267,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
         })
         .collect::<Result<Vec<IsoCode639_1>, ConfigError>>()
     {
+        // The happy path.
         Ok(mut iso_codes) => {
             if all_languages_selected {
                 // Store result.
@@ -294,6 +301,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
                 }
             }
         }
+        // The error path.
         Err(e) =>
         // Store error.
         {
@@ -303,7 +311,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
 }
 
 #[cfg(not(feature = "lang-detection"))]
-/// Reset to empty default.
+/// Disable filter.
 fn update_filter_get_lang_setting(settings: &mut Settings) {
     let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
 }
@@ -335,6 +343,7 @@ fn update_filter_map_lang_btmap_setting(settings: &mut Settings) {
 /// Reads the environment variable `LANG_DETECTION`. If not empty,
 /// parse the content and overwrite the `settings.filter_get_lang` and
 /// the `settings.filter_map_lang` variables.
+#[cfg(feature = "lang-detection")]
 fn update_env_lang_detection(settings: &mut Settings) {
     if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
         if env_var.is_empty() {
@@ -342,7 +351,7 @@ fn update_env_lang_detection(settings: &mut Settings) {
             let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
             let _ = mem::replace(&mut settings.filter_map_lang_btmap, None);
             log::debug!(
-                "Empty env. var. `{}` disables `lang-detection` feature.",
+                "Empty env. var. `{}` disables the `lang-detection` feature.",
                 ENV_VAR_TPNOTE_LANG_DETECTION
             );
             return;
@@ -352,7 +361,6 @@ fn update_env_lang_detection(settings: &mut Settings) {
         let mut hm: BTreeMap<String, String> = BTreeMap::new();
         let mut all_languages_selected = false;
         match env_var
-            // The happy path.
             .split(',')
             .map(|t| {
                 let t = t.trim();
@@ -377,9 +385,9 @@ fn update_env_lang_detection(settings: &mut Settings) {
                     true
                 }
             })
-            // The error path.
             .map(|l| {
                 IsoCode639_1::from_str(l.trim()).map_err(|_| {
+                    // The error path.
                     // Produce list of all available langugages.
                     let mut all_langs = lingua::Language::all()
                         .iter()
@@ -401,6 +409,7 @@ fn update_env_lang_detection(settings: &mut Settings) {
             })
             .collect::<Result<Vec<IsoCode639_1>, ConfigError>>()
         {
+            // The happy path.
             Ok(mut iso_codes) => {
                 // Add the user's language subtag as reported from the OS.
                 // Continue the happy path.
@@ -429,11 +438,28 @@ fn update_env_lang_detection(settings: &mut Settings) {
                 }
                 let _ = mem::replace(&mut settings.filter_map_lang_btmap, Some(hm));
             }
+            // The error path.
             Err(e) =>
             // Store error.
             {
                 let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Error(e));
             }
+        }
+    }
+}
+
+/// Ignore the environment variable `LANG_DETECTION`.
+#[cfg(not(feature = "lang-detection"))]
+fn update_env_lang_detection(settings: &mut Settings) {
+    if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
+        if !env_var.is_empty() {
+            let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
+            let _ = mem::replace(&mut settings.filter_map_lang_btmap, None);
+            log::debug!(
+                "Ignoring the env. var. `{}`. The `lang-detection` feature \
+                 is not included in this build.",
+                ENV_VAR_TPNOTE_LANG_DETECTION
+            );
         }
     }
 }
