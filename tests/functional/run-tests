@@ -369,7 +369,7 @@ fi
 
 ## Test 14:  Compilation --no-default-features
 
-cargo check --no-default-features >/dev/null
+cargo check --workspace --no-default-features >/dev/null
 
 if [ $? -eq 0 ]
 then
@@ -382,7 +382,7 @@ fi
 
 
 ## Test 15:  Compilation --no-default-features --features renderer
-cargo check --no-default-features --features message-box >/dev/null
+cargo check --workspace --no-default-features --features renderer >/dev/null
 
 if [ $? -eq 0 ]
 then
@@ -428,6 +428,20 @@ then
     echo Commandline test 18 succeeded.
 else
     echo Commandline test 18 failed.
+    exit 1
+fi
+
+
+
+## Test 19:  Compilation --no-default-features --features lang-detection
+cargo check --package tpnote-lib --no-default-features \
+            --features lang-detection >/dev/null
+
+if [ $? -eq 0 ]
+then
+    echo Commandline test 19 succeeded.
+else
+    echo Commandline test 19 failed.
     exit 1
 fi
 
