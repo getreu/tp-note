@@ -550,13 +550,14 @@ synchronization).
     the editor and the viewer will open and the `arg_default.edit` variable
     is ignored.
 
-**-l** *LANG*, **\--force-lang**=*LANG*
+**-l** *LANGUAGE_TAG*, **\--force-lang**=*LANGUAGE_TAG*
 
 >   Disable automatic language detection when creating a new note file and use
-    *LANG* instead. *LANG* is formatted as IETF BCP 47 language tag, e.g.
-    '`en_US`'. If *LANG* is '`-`', the environment variable '`TPNOTE_LANG`'
-    or - if not defined - the user's default language, as reported from
-    the operating system's locale setting, is used.
+    *LANGUAGE_TAG* instead. *LANGUAGE_TAG* is formatted as IETF BCP 47 language
+    tag, e.g. '`en-US`'. If *LANGUAGE_TAG* equals '`-`', the environment
+    variable '`TPNOTE_LANG`' is used instead; or, if the latter is not defined,
+    the user's default language, as reported from the operating system's
+    locale setting, is used.
 
 **-p** *PORT*, **\--port**=*PORT*
 
@@ -959,13 +960,13 @@ data at the following locations:
 
 1. If the command line parameter '`--config <path>`' is given, '`<path>`'
    indicates the location of the configuration file.
-2. If the environment variable '`TPNOTE_CONFIG="<path>"`' is set, 
+2. If the environment variable '`TPNOTE_CONFIG="<path>"`' is set,
    '`<path>`' indicates the location of the configuration file.
 3. At startup all parent directories of the note file path are searched for
    a file named '`.tpnote.toml`'. If present and its content is not empty,
    Tp-Note interprets the file's content as configuration file.
    Continue otherwise.
-4. Tp-Note tries to find its configuration data at the operating system's 
+4. Tp-Note tries to find its configuration data at the operating system's
    standard location indicated here above.
 
 When Tp-Note starts, it first tries to find its configuration file. Once found,
@@ -973,9 +974,9 @@ the syntax of the configuration is checked. If not correct, the configuration
 file is renamed and replaced by a file with correct syntax and default values.
 If Tp-Note fails to find a configuration file at any of the above locations, it
 writes a default configuration file at the expected standard location.
- 
+
 Tp-Note is best customized by starting it once, and then modifying its default
-configuration. 
+configuration.
 
 ```sh
 tpnote -V -b
@@ -1880,7 +1881,7 @@ A filter is always used together with a variable. Here are some examples:
 
 * '`{{ path | file_sort_tag }}`' is the sort tag (numerical filename prefix) of
   the final component of '`{{ path }}`', e.g. '`01-23_9-`' or '`20191022-`'. It
-  is similar to '`{{ path | file_name }}`' but without returning its stem, 
+  is similar to '`{{ path | file_name }}`' but without returning its stem,
   copy-counter and extension.
 
 * '`{{ path | file_stem }}`' is similar to '`{{ path | file_name }}`'
@@ -1974,8 +1975,8 @@ variables named '`tmpl.*_content`'.
 
 Strings in the YAML front-matter of content templates are JSON encoded.
 Therefore, all variables used in the front-matter must pass an additional
-'`json_encode()`'-filter. For example, the variable 
-'`{{ dir_path | file_stem }}`' becomes 
+'`json_encode()`'-filter. For example, the variable
+'`{{ dir_path | file_stem }}`' becomes
 '`{{ dir_path | file_stem() | json_encode() }}`' or just
 '`{{ dir_path | file_stem | json_encode }}`'.
 
@@ -2222,11 +2223,11 @@ TPNOTE\_EDITOR\_CONSOLE
 
 TPNOTE\_EXTENSION\_DEFAULT
 
->   If set, this variable takes precedence over the configuration file 
+>   If set, this variable takes precedence over the configuration file
     variable '`filename.extension_default`', which defines the file extension
     of new note files. In order to activate the appropriate markup renderer
-    make sure, that the value given here is listed in one of the 
-    '`filename.extensions_*`' list. 
+    make sure, that the value given here is listed in one of the
+    '`filename.extensions_*`' list.
 
 TPNOTE\_USER, LOGNAME, USER, USERNAME
 

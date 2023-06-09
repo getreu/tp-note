@@ -465,9 +465,8 @@ well as with the `--no-default-features` console only version.
 * View and follow hyperlinks in a note file:
 
   When no graphical environment is available, _Tp-Note_ disables the viewer
-  feature with its internal HTTP server. However, in order to follow
-  comfortably hyperlinks in you notes, you can always use _Tp-Note_'s HTML
-  export.
+  feature with its internal HTTP server. As a workaround, use _Tp-Note_'s
+  HTML export flag and pipe the result into a text based web browser. 
 
   Install the text based web browser `lynx`:
 
@@ -482,7 +481,7 @@ well as with the `--no-default-features` console only version.
   tpnote -x - '20210122-my_note.md' | lynx --stdin
   ```
 
-  The above also works in case _Tp-Note_ was compiled with
+  Note, the above also works in case _Tp-Note_ was compiled with
   `--no-default-features` which is recommended for headless systems.
 
 
