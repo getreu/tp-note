@@ -223,7 +223,7 @@ compile _Tp-Note_ yourself.
    ```
 
    A modern Linux desktop usually ships the required shared
-   libraries. Just in case, here is a list extracted form a Debian binary:
+   libraries. Here is a list extracted form a Debian binary:
 
    ```sh
    ldd target/x86_64-unknown-linux-gnu/release/tpnote 
@@ -261,7 +261,7 @@ compile _Tp-Note_ yourself.
 
    ```sh
    cargo install --no-default-features \
-     --features read-clipboard,viewer,renderer tp-note
+     --features read-clipboard,viewer,renderer,lang-detection tp-note
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
    ```
 
@@ -273,21 +273,26 @@ compile _Tp-Note_ yourself.
    yourself without default features:
 
    ```sh
-   cargo install --no-default-features --features renderer tp-note
+   cargo install --no-default-features --features renderer,lang-detection tp-note
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
    ```
 
-   **Building on Windows**
+   If Tp-Note's binary size if of concern, omit the `lang-detection` feature
+   in the `cargo` invocation above. The `lang-detection` feature causes 95% 
+   of the final binary size because of its extensive language models.
+
+
+   **Building on Windows and macOS**
 
    Build the full-featured version with:
 
        cargo install tp-note
 
-   When building for Windows, it does not make sense to exclude the
-   `message-box` feature, because - under Windows - it does not rely on
-   the notification library. Instead, it uses direct Windows-API calls
-   for popping up alert boxes. As these calls have no footprint in binary
-   size or speed, always keep the `message-box` feature compiled in.
+   When building for Windows or macOS, it does not make sense to exclude the
+   `message-box` feature, because - under Windows and macOS - it does not rely
+   on the notification library. Instead, it uses direct OS-API calls for
+   popping up alert boxes. As these calls have no footprint in binary size or
+   speed, always keep the `message-box` feature compiled in.
 
    See also the user manual for a more detailed installation description.
 

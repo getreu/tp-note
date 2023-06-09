@@ -54,7 +54,7 @@ assets = [
 ]
 
 [features]
-default = ["read-clipboard", "message-box", "viewer", "renderer"]
+default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detection"]
 
 # To disable features: `cargo build --no-default-features`
 # If you can do away with error message popup boxes (for example on a headless
@@ -63,8 +63,13 @@ default = ["read-clipboard", "message-box", "viewer", "renderer"]
 # Disable this feature if you do not want error message boxes.
 message-box = ["dep:msgbox", "dep:notify-rust"]
 read-clipboard = ["dep:arboard"]
-viewer = ["dep:notify", "dep:httparse", "dep:webbrowser", "dep:httpdate"]
-renderer = []
+viewer = ["dep:notify", "dep:httparse", "dep:webbrowser", "dep:httpdate", "tpnote-lib/viewer"]
+# This feature declaration is forwarded to `tpnote_lib` and not used in this
+# crate.
+lang-detection = ["tpnote-lib/lang-detection"]
+# This feature declaration is used in this crate and also forwarded to 
+# `tpnote_lib`.
+renderer = ["tpnote-lib/renderer"]
 
 [dependencies]
 # arboard: when cross compiling for `armv7-unknown-linux-gnueabihf`: `apt install crossbuild-essential-armhf`
@@ -87,8 +92,8 @@ structopt = "0.3.26"
 thiserror.workspace = true
 time = "0.3.21"
 toml.workspace = true
-#tpnote-lib = { path = "../tpnote-lib", default-features = true }
-tpnote-lib = { version = "0.20.2", default-features = true }
+tpnote-lib = { path = "../tpnote-lib", default-features = false }
+#tpnote-lib = { version = "0.20.2", default-features = false}
 webbrowser = { version = "0.8.10", optional = true }
 
 [target.'cfg(windows)'.dependencies]

@@ -13,8 +13,6 @@ rust-version.workspace = true
 version = "0.20.2"
 
 [features]
-# Exclude "renderer-extras" to stay in _MIT/Apache_ license and the avoid additional
-# _GPL-3.0-or-laterGPL-3.0-or-later_ license.
 default = ["renderer", "viewer", "lang-detection"]
 renderer = ["dep:pulldown-cmark", "dep:rst_parser", "dep:rst_renderer", "dep:latex2mathml", "dep:syntect"]
 lang-detection = ["dep:lingua"]
