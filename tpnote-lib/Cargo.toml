@@ -25,7 +25,7 @@ log.workspace = true
 parse-hyperlinks = "0.23.4"
 parse-hyperlinks-extras = "0.23.4"
 # parse-hyperlinks = { path = "../parse-hyperlinks/parse-hyperlinks" }
-percent-encoding = "2.2.0"
+percent-encoding = "2.3.0"
 pulldown-cmark = { version = "0.9.3", default-features = false, features = ["simd"], optional = true }
 latex2mathml = { version = "0.2.3", optional = true }
 syntect = { version = "5.0.0", optional = true }
