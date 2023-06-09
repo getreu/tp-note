@@ -102,18 +102,22 @@ impl Default for Settings {
 /// Global mutable varible of type `Settings`.
 pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(DEFAULT_SETTINGS);
 
-/// When `lang` is not `-`, overwrite `SETTINGS.lang` with `lang`.
-/// In any case, disable the `get_lang` filter by deleting all languages
-/// in `SETTINGS.filter_get_lang`.
-pub(crate) fn force_lang_setting(lang: &str) {
-    let lang = lang.trim();
+/// When `lang` is `Some(l)`, overwrite `SETTINGS.lang` with `l`.
+/// In any case, disable the `get_lang` filter by setting `filter_get_lang`
+/// to `FilterGetLang::Disabled`.
+pub(crate) fn force_lang_setting(lang: Option<String>) {
     let mut settings = SETTINGS.write().unwrap();
     // Overwrite environment setting.
-    if lang != "-" {
-        let _ = mem::replace(&mut settings.lang, lang.to_string());
+    if let Some(l) = lang {
+        let _ = mem::replace(&mut settings.lang, l);
     }
     // Disable the `get_lang` Tera filter.
     let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
+
+    log::trace!(
+        "`SETTINGS` updated after `force_lang_setting()`:\n{:#?}",
+        settings
+    );
 }
 
 /// (Re)read environment variables and store them in the global `SETTINGS`
@@ -127,7 +131,10 @@ pub fn update_settings() -> Result<(), ConfigError> {
     update_filter_map_lang_btmap_setting(&mut settings);
     update_env_lang_detection(&mut settings);
 
-    log::trace!("`SETTINGS` updated:\n{:#?}", settings);
+    log::trace!(
+        "`SETTINGS` updated (reading config + env. vars.):\n{:#?}",
+        settings
+    );
 
     if let FilterGetLang::Error(e) = &settings.filter_get_lang {
         Err(e.clone())

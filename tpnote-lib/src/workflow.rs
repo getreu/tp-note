@@ -291,7 +291,14 @@ where
     update_settings()?;
 
     if let Some(lang) = force_lang {
-        force_lang_setting(&lang);
+        if lang == "-" {
+            // Only disable `get_lang` filter.
+            force_lang_setting(None)
+        } else {
+            // Overwrite `SETTINGS.lang` and disable `get_lang`
+            // filter.
+            force_lang_setting(Some(&lang));
+        }
     }
 
     // First, generate a new note (if it does not exist), then parse its front_matter
