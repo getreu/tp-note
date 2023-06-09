@@ -185,16 +185,16 @@ fn main() {
     if ARGS.version {
         #[allow(unused_mut)]
         let mut features = Vec::new();
-        #[cfg(feature = "message-box")]
-        features.push("message-box".to_string());
-        #[cfg(feature = "viewer")]
-        features.push("viewer".to_string());
-        #[cfg(feature = "renderer")]
-        features.push("renderer".to_string());
-        #[cfg(feature = "read-clipboard")]
-        features.push("read-clipboard".to_string());
         #[cfg(feature = "lang-detection")]
         features.push("lang-detection".to_string());
+        #[cfg(feature = "message-box")]
+        features.push("message-box".to_string());
+        #[cfg(feature = "read-clipboard")]
+        features.push("read-clipboard".to_string());
+        #[cfg(feature = "renderer")]
+        features.push("renderer".to_string());
+        #[cfg(feature = "viewer")]
+        features.push("viewer".to_string());
 
         let about = About {
             version: VERSION.unwrap_or("unknown").to_string(),
