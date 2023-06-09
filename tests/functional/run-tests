@@ -434,7 +434,7 @@ fi
 
 
 ## Test 19:  Compilation --no-default-features --features lang-detection
-cargo check --package tpnote-lib --no-default-features \
+cargo check --no-default-features \
             --features lang-detection >/dev/null
 
 if [ $? -eq 0 ]
