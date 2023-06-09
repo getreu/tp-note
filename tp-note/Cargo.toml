@@ -61,9 +61,9 @@ default = ["read-clipboard", "message-box", "viewer", "renderer"]
 # system), no GTK is required. In this case all error messages will appear on
 # the console from where you started _Tp-Note_ in `stderr` only.
 # Disable this feature if you do not want error message boxes.
-message-box = ["msgbox", "notify-rust"]
-read-clipboard = ["arboard"]
-viewer = ["notify", "httparse", "webbrowser", "httpdate"]
+message-box = ["dep:msgbox", "dep:notify-rust"]
+read-clipboard = ["dep:arboard"]
+viewer = ["dep:notify", "dep:httparse", "dep:webbrowser", "dep:httpdate"]
 renderer = []
 
 [dependencies]
