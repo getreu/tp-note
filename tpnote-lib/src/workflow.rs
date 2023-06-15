@@ -297,7 +297,7 @@ where
         } else {
             // Overwrite `SETTINGS.lang` and disable `get_lang`
             // filter.
-            force_lang_setting(Some(&lang));
+            force_lang_setting(Some(lang));
         }
     }
 
