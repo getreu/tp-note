@@ -292,8 +292,8 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
                     }
                 }
 
-                // Check if there are at least 2 languages in the list.
-                if iso_codes.len() >= 2 {
+                // Check if there is at least 1 language in the list.
+                if iso_codes.len() >= 1 {
                     // Store result.
                     let _ = mem::replace(
                         &mut settings.filter_get_lang,
@@ -301,9 +301,6 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
                     );
                 // Disable the filter otherwise.
                 } else {
-                    // There is not at least 2 languages to choose from.
-                    // This disables the filter meaning the filter returns
-                    // always the empty string.
                     let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
                 }
             }
