@@ -7,7 +7,7 @@ use crate::settings::FilterGetLang;
 use crate::settings::SETTINGS;
 use lazy_static::lazy_static;
 #[cfg(feature = "lang-detection")]
-use lingua::{LanguageDetector, LanguageDetectorBuilder};
+use lingua::{Language, LanguageDetectorBuilder};
 use parse_hyperlinks::iterator::first_hyperlink;
 use sanitize_filename_reader_friendly::sanitize;
 use std::borrow::Cow;
@@ -26,6 +26,11 @@ use tera::{to_value, try_get_value, Result as TeraResult, Tera, Value};
 const CUT_LEN_MAX: usize = 200;
 #[cfg(test)]
 pub const CUT_LEN_MAX: usize = 10;
+
+/// If only one language detection candidate is configured, require the
+/// following minium confidence.
+#[cfg(feature = "lang-detection")]
+const ONE_LANG_MIN_CONFIDENCE: f64 = 0.8;
 
 lazy_static! {
 /// Tera object with custom functions registered.
@@ -376,30 +381,41 @@ fn get_lang_filter<S: BuildHasher>(
                 return Ok(to_value("").unwrap());
             }
 
-            let detector: LanguageDetector = match &settings.filter_get_lang {
+            let (detector, exactly_one_lang) = match &settings.filter_get_lang {
                 FilterGetLang::SomeLanguages(iso_codes) => {
                     log::debug!(
                         "Trying to identify one of the following languages: {:?}",
                         iso_codes,
                     );
 
-                    LanguageDetectorBuilder::from_iso_codes_639_1(&iso_codes)
+                    (
+                        LanguageDetectorBuilder::from_iso_codes_639_1(&iso_codes).build(),
+                        (iso_codes.len() == 1)
+                            .then_some(Language::from_iso_code_639_1(&iso_codes[0])),
+                    )
                 }
                 FilterGetLang::AllLanguages => {
                     log::debug!("Trying to identify one of all available languages",);
-                    LanguageDetectorBuilder::from_all_languages()
+                    (LanguageDetectorBuilder::from_all_languages().build(), None)
                 }
                 FilterGetLang::Error(e) => return Err(tera::Error::from(e.to_string())),
                 _ => return Ok(to_value("").unwrap()),
-            }
-            .build();
+            };
 
-            let detected_language = detector
-                .detect_language_of(input)
+            let detected_language = if let Some(lang) = exactly_one_lang {
+                // There is only one language detection candidate.
+                let confidence = detector.compute_language_confidence(input, lang);
+                (confidence > ONE_LANG_MIN_CONFIDENCE).then_some(lang)
+            } else {
+                // Detect one out of the language candidates list.
+                detector.detect_language_of(input)
+            };
+
+            let detected_language = detected_language
                 .map(|l| format!("{}", l.iso_code_639_1()))
-                // If not languages can be detected, this returns the empty
-                // string.
+                // Represent "not found" with the empty string.
                 .unwrap_or_default();
+
             log::debug!("Language '{}' in input detected.", detected_language);
 
             Ok(to_value(detected_language)?)
