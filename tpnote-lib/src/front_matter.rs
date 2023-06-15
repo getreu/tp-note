@@ -25,7 +25,7 @@ impl FrontMatter {
     /// with the name defined in the configuration file:
     /// as: "compulsory_header_field".
     pub fn assert_compulsory_field(&self) -> Result<(), NoteError> {
-        let lib_cfg = LIB_CFG.read().unwrap();
+        let lib_cfg = LIB_CFG.read_recursive();
 
         if !lib_cfg.tmpl.compulsory_header_field.is_empty() {
             if let Some(tera::Value::String(header_field)) =
@@ -48,7 +48,7 @@ impl FrontMatter {
     /// Are any variables registerd?
     pub fn assert_not_empty(&self) -> Result<(), NoteError> {
         if self.is_empty() {
-            let lib_cfg = LIB_CFG.read().unwrap();
+            let lib_cfg = LIB_CFG.read_recursive();
             Err(NoteError::MissingFrontMatter {
                 compulsory_field: lib_cfg.tmpl.compulsory_header_field.to_owned(),
             })
@@ -70,7 +70,7 @@ impl TryFrom<&str> for FrontMatter {
     /// Helper function deserialising the front-matter of the note file.
     /// An empty header leads to an empty `tera::Map`; no error.
     fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
-        let lib_cfg = LIB_CFG.read().unwrap();
+        let lib_cfg = LIB_CFG.read_recursive();
 
         let map: tera::Map<String, tera::Value> =
             serde_yaml::from_str(header).map_err(|e| NoteError::InvalidFrontMatterYaml {

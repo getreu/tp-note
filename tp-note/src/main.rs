@@ -118,7 +118,7 @@ fn main() {
     AppLogger::set_popup_always_enabled(ARGS.popup || CFG.arg_default.popup);
 
     // Check if the config file loading was successful.
-    let cfg_file_loading = &*CFG_FILE_LOADING.read().unwrap();
+    let cfg_file_loading = &*CFG_FILE_LOADING.read();
     let cfg_file_loading_err = cfg_file_loading.as_ref().err().map(|e| e.to_string());
 
     // Check if we can parse the version number in there.

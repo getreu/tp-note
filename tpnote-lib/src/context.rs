@@ -241,7 +241,7 @@ impl Context {
     ///     &format!("\"{FILENAME_EXTENSION_DEFAULT}\""));
     /// ```
     fn insert_settings(&mut self) {
-        let settings = SETTINGS.read().unwrap();
+        let settings = SETTINGS.read_recursive();
 
         // Default extension for new notes as defined in the configuration file.
         (*self).insert(

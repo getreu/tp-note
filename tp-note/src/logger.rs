@@ -18,9 +18,9 @@ use msgbox::IconType;
 #[cfg(all(unix, not(target_os = "macos")))]
 #[cfg(feature = "message-box")]
 use notify_rust::{Hint, Notification, Timeout};
+use parking_lot::RwLock;
 use std::env;
 use std::path::PathBuf;
-use std::sync::RwLock;
 
 #[cfg(feature = "message-box")]
 /// Window title of the message alert box.
@@ -135,7 +135,7 @@ impl AppLogger {
     #[allow(dead_code)]
     pub fn set_popup_always_enabled(popup: bool) {
         // Release lock immediately.
-        *APP_LOGGER_ENABLE_POPUP.write().unwrap() = popup;
+        *APP_LOGGER_ENABLE_POPUP.write() = popup;
     }
 
     /// Blocks until the `AlertService` is not busy any more. This should be
@@ -174,7 +174,7 @@ impl log::Log for AppLogger {
                 && !ARGS.batch
                 && ((record.metadata().level() == LevelFilter::Error)
                         // Release lock immediately.
-                        || *APP_LOGGER_ENABLE_POPUP.read().unwrap())
+                        || *APP_LOGGER_ENABLE_POPUP.read())
             {
                 // We silently ignore failing pushes. We have printed the
                 // error message on the console already.

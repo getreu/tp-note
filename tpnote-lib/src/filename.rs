@@ -106,7 +106,7 @@ impl NotePathBuf for PathBuf {
     fn set_next_unused(&mut self) -> Result<(), FileError> {
         #[inline]
         fn append_copy_counter(stem: &str, n: usize) -> String {
-            let lib_cfg = LIB_CFG.read().unwrap();
+            let lib_cfg = LIB_CFG.read_recursive();
             let mut stem = stem.to_string();
             stem.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
             stem.push_str(&n.to_string());
@@ -163,7 +163,7 @@ impl NotePathBuf for PathBuf {
         // Does this stem ending look similar to a copy counter?
         if note_stem.len() != Path::trim_copy_counter(&note_stem).len() {
             // Add an additional separator.
-            let lib_cfg = LIB_CFG.read().unwrap();
+            let lib_cfg = LIB_CFG.read_recursive();
             note_stem.push_str(&lib_cfg.filename.copy_counter_extra_separator);
         };
 
@@ -205,7 +205,7 @@ pub trait NotePath {
 
 impl NotePath for Path {
     fn disassemble(&self) -> (&str, &str, &str, &str, &str) {
-        let lib_cfg = LIB_CFG.read().unwrap();
+        let lib_cfg = LIB_CFG.read_recursive();
 
         let sort_tag_stem_copy_counter_ext = &self
             .file_name()
@@ -315,7 +315,7 @@ impl NotePath for Path {
     /// If there is none, return the same.
     #[inline]
     fn trim_copy_counter(tag: &str) -> &str {
-        let lib_cfg = LIB_CFG.read().unwrap();
+        let lib_cfg = LIB_CFG.read_recursive();
         // Strip closing brackets at the end.
         let tag1 =
             if let Some(t) = tag.strip_suffix(&lib_cfg.filename.copy_counter_closing_brackets) {
@@ -362,7 +362,7 @@ mod tests {
     fn test_shorten_filename() {
         use std::ffi::OsString;
         use std::path::PathBuf;
-        let lib_cfg = LIB_CFG.read().unwrap();
+        let lib_cfg = LIB_CFG.read_recursive();
 
         // Test concatenation of extra `-` if it ends with a copy counter pattern.
         let mut input = "fn".to_string();

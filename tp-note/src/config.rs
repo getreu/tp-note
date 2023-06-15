@@ -7,6 +7,7 @@ use crate::VERSION;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use log::LevelFilter;
+use parking_lot::RwLock;
 #[cfg(not(test))]
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::Deserialize;
@@ -20,7 +21,6 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
-use std::sync::RwLock;
 use tpnote_lib::config::Filename;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::Tmpl;
@@ -482,7 +482,7 @@ fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
         }
         {
             // Copy the parts of `config` into `LIB_CFG`.
-            let mut lib_cfg = LIB_CFG.write().unwrap();
+            let mut lib_cfg = LIB_CFG.write();
             lib_cfg.filename = config.filename.clone();
             lib_cfg.tmpl = config.tmpl.clone();
             lib_cfg.tmpl_html = config.tmpl_html.clone();
@@ -532,7 +532,7 @@ lazy_static! {
                 Some(p) => p.as_path(),
                 None => {
                     // Remember that something went wrong.
-                    let mut cfg_file_loading = CFG_FILE_LOADING.write().unwrap();
+                    let mut cfg_file_loading = CFG_FILE_LOADING.write();
                     *cfg_file_loading = Err(FileError::PathToConfigFileNotFound);
                     return Cfg::default();
                 },
@@ -542,7 +542,7 @@ lazy_static! {
         config_load(config_path)
             .unwrap_or_else(|e|{
                 // Remember that something went wrong.
-                let mut cfg_file_loading = CFG_FILE_LOADING.write().unwrap();
+                let mut cfg_file_loading = CFG_FILE_LOADING.write();
                 *cfg_file_loading = Err(e);
 
                 // As we could not load the config file, we will use the default

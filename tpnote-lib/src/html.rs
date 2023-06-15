@@ -2,6 +2,7 @@
 
 use crate::config::LocalLinkKind;
 use crate::markup_language::MarkupLanguage;
+use parking_lot::RwLock;
 use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
 use parse_hyperlinks_extras::parser::parse_html::take_link;
@@ -9,7 +10,7 @@ use percent_encoding::{percent_decode_str, utf8_percent_encode, NON_ALPHANUMERIC
 use std::{
     collections::HashSet,
     path::{Component, Path, PathBuf},
-    sync::{Arc, RwLock},
+    sync::Arc,
 };
 
 pub(crate) const HTML_EXT: &str = ".html";
@@ -277,9 +278,7 @@ pub fn rewrite_links(
         LocalLinkKind::Long => (true, true),
     };
 
-    let mut allowed_urls = allowed_local_links
-        .write()
-        .expect("Can not write `allowed_urls`. RwLock is poisoned. Panic.");
+    let mut allowed_urls = allowed_local_links.write();
 
     // Search for hyperlinks and inline images in the HTML rendition
     // of this note.
@@ -339,10 +338,11 @@ pub fn rewrite_links(
 #[cfg(test)]
 mod tests {
 
+    use parking_lot::RwLock;
     use std::{
         collections::HashSet,
         path::{Path, PathBuf},
-        sync::{Arc, RwLock},
+        sync::Arc,
     };
 
     use crate::html::assemble_link;
@@ -623,7 +623,7 @@ mod tests {
             false,
             allowed_urls.clone(),
         );
-        let url = allowed_urls.read().unwrap();
+        let url = allowed_urls.read_recursive();
 
         assert_eq!(output, expected);
         assert!(url.contains(&PathBuf::from("/abs/note path/t m p.jpg")));

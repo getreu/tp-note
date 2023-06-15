@@ -6,7 +6,7 @@
 //! ```rust
 //! use tpnote_lib::config::LIB_CFG;
 //!
-//! let mut lib_cfg = LIB_CFG.write().unwrap();
+//! let mut lib_cfg = LIB_CFG.write();
 //! (*lib_cfg).filename.copy_counter_extra_separator = '@'.to_string();
 //! ```
 //!
@@ -17,8 +17,9 @@ use crate::error::ConfigError;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_css;
 use lazy_static::lazy_static;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use std::{str::FromStr, sync::RwLock};
+use std::str::FromStr;
 
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.

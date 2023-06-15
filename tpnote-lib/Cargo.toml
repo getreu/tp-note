@@ -28,6 +28,7 @@ parse-hyperlinks-extras = "0.23.4"
 percent-encoding = "2.3.0"
 pulldown-cmark = { version = "0.9.3", default-features = false, features = ["simd"], optional = true }
 latex2mathml = { version = "0.2.3", optional = true }
+parking_lot.workspace = true
 syntect = { version = "5.0.0", optional = true }
 rst_parser = { version = "0.4.0", optional = true }
 rst_renderer = { version = "0.4.0", optional = true }

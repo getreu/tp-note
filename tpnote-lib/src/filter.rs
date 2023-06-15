@@ -66,7 +66,7 @@ fn sanit_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let lib_cfg = LIB_CFG.read().unwrap();
+    let lib_cfg = LIB_CFG.read_recursive();
 
     let p = try_get_value!("sanit", "value", Value, value);
 
@@ -364,7 +364,7 @@ fn get_lang_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let settings = SETTINGS.read().unwrap();
+    let settings = SETTINGS.read_recursive();
 
     let p = try_get_value!("get_lang", "value", tera::Value, value);
     match p {
@@ -393,6 +393,7 @@ fn get_lang_filter<S: BuildHasher>(
                 _ => return Ok(to_value("").unwrap()),
             }
             .build();
+            drop(settings);
 
             let detected_language = detector
                 .detect_language_of(input)
@@ -427,7 +428,7 @@ fn map_lang_filter<S: BuildHasher>(
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let p = try_get_value!("map_lang", "value", tera::Value, value);
-    let settings = SETTINGS.read().unwrap();
+    let settings = SETTINGS.read_recursive();
 
     match p {
         tera::Value::String(input) => {
@@ -478,6 +479,7 @@ mod tests {
     use super::*;
 
     use lingua::IsoCode639_1;
+    use parking_lot::RwLockWriteGuard;
     use std::collections::{BTreeMap, HashMap};
     use std::mem;
     use tera::to_value;
@@ -525,6 +527,7 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), to_value("'.pdf").unwrap());
     }
+
     #[test]
     fn test_link_text_link_dest_link_title_filter() {
         let args = HashMap::new();
@@ -547,6 +550,7 @@ mod tests {
         let output_lti = link_title_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output_lti);
     }
+
     #[test]
     fn test_cut_filter() {
         let args = HashMap::new();
@@ -561,6 +565,7 @@ mod tests {
         let output = cut_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!(222, output);
     }
+
     #[test]
     fn test_heading_filter() {
         let args = HashMap::new();
@@ -605,6 +610,7 @@ mod tests {
         // This string is shortened.
         assert_eq!("It helps", output);
     }
+
     #[test]
     fn test_file_filter() {
         let args = HashMap::new();
@@ -683,7 +689,7 @@ mod tests {
     }
 
     #[test]
-    fn test_lang_filter() {
+    fn test_get_lang_filter() {
         //
         // Test `get_lang_filter()`
 
@@ -695,93 +701,78 @@ mod tests {
             IsoCode639_1::FR,
         ]);
 
-        let mut settings = SETTINGS.write().unwrap();
+        let mut settings = SETTINGS.write();
         *settings = Settings::default();
         let _ = mem::replace(&mut settings.filter_get_lang, filter_get_lang);
-        // Downgrade the lock.
-        drop(settings);
-        // Between these 2 lines a race-condition could occur.
         // This locks `SETTINGS` for further write access in this scope.
-        let _settings = SETTINGS.read().unwrap();
+        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
 
         let args = HashMap::new();
-        // Test Markdown link in clipboard.
         let input = "Das große Haus";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("de", output);
 
         let args = HashMap::new();
-        // Test Markdown link in clipboard.
-        let input = 222; // Number type.
-        let output = cut_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(222, output);
-
-        let args = HashMap::new();
-        // Test Markdown link in clipboard.
         let input = "Il est venu trop tard";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("fr", output);
 
         let args = HashMap::new();
-        // Test Markdown link in clipboard.
         let input = "How to set up a roof rack";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("en", output);
 
         let args = HashMap::new();
-        // Test Markdown link in clipboard.
         let input = "1917039480 50198%-328470";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
 
         let args = HashMap::new();
-        // Test Markdown link in clipboard.
         let input = " \t\n ";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
         // Release the lock.
         drop(_settings);
+    }
 
+    #[test]
+    fn test_map_lang_filter() {
         //
         // `Test `map_lang_filter()`
         let mut filter_map_lang_btmap = BTreeMap::new();
         filter_map_lang_btmap.insert("de".to_string(), "de-DE".to_string());
-        let mut settings = SETTINGS.write().unwrap();
+        let mut settings = SETTINGS.write();
         *settings = Settings::default();
         let _ = mem::replace(
             &mut settings.filter_map_lang_btmap,
             Some(filter_map_lang_btmap),
         );
-        // Downgrade the lock.
-        drop(settings);
-        // Between these 2 lines a race-condition could occur.
+
         // This locks `SETTINGS` for further write access in this scope.
-        let _settings = SETTINGS.read().unwrap();
+        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
 
         let args = HashMap::new();
-        // Test Markdown link in clipboard.
         let input = "de";
         let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("de-DE", output);
 
         let args = HashMap::new();
-        // Test Markdown link in clipboard.
         let input = "xyz";
         let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("xyz", output);
 
         let args = HashMap::new();
-        // Test Markdown link in clipboard.
         let input = " \t\n ";
         let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!(to_value("").unwrap(), output);
 
         let mut args = HashMap::new();
         args.insert("default".to_string(), to_value("test").unwrap());
-        // Test Markdown link in clipboard.
         let input = " \t\n ";
         let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("test".to_string(), output);
+
+        drop(_settings);
     }
 
     #[test]

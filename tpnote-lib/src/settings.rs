@@ -11,10 +11,11 @@ use crate::error::ConfigError;
 use lingua;
 #[cfg(feature = "lang-detection")]
 use lingua::IsoCode639_1;
+use parking_lot::RwLock;
 use std::collections::BTreeMap;
 #[cfg(feature = "lang-detection")]
 use std::str::FromStr;
-use std::{env, mem, sync::RwLock};
+use std::{env, mem};
 #[cfg(target_family = "windows")]
 use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
 #[cfg(target_family = "windows")]
@@ -106,7 +107,7 @@ pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(DEFAULT_SETTINGS);
 /// In any case, disable the `get_lang` filter by setting `filter_get_lang`
 /// to `FilterGetLang::Disabled`.
 pub(crate) fn force_lang_setting(lang: Option<String>) {
-    let mut settings = SETTINGS.write().unwrap();
+    let mut settings = SETTINGS.write();
     // Overwrite environment setting.
     if let Some(l) = lang {
         let _ = mem::replace(&mut settings.lang, l);
@@ -123,7 +124,7 @@ pub(crate) fn force_lang_setting(lang: Option<String>) {
 /// (Re)read environment variables and store them in the global `SETTINGS`
 /// object. Some data originates from `LIB_CFG`.
 pub fn update_settings() -> Result<(), ConfigError> {
-    let mut settings = SETTINGS.write().unwrap();
+    let mut settings = SETTINGS.write();
     update_author_setting(&mut settings);
     update_extension_default_setting(&mut settings);
     update_lang_setting(&mut settings);
@@ -165,7 +166,7 @@ fn update_extension_default_setting(settings: &mut Settings) {
     let ext = match env::var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT) {
         Ok(ed_env) if !ed_env.is_empty() => ed_env,
         Err(_) | Ok(_) => {
-            let lib_cfg = LIB_CFG.read().unwrap();
+            let lib_cfg = LIB_CFG.read_recursive();
             lib_cfg.filename.extension_default.to_string()
         }
     };
@@ -231,7 +232,7 @@ fn update_lang_setting(settings: &mut Settings) {
 /// Errors are stored in the `FilterGetLang::Error(e)` variant.
 #[cfg(feature = "lang-detection")]
 fn update_filter_get_lang_setting(settings: &mut Settings) {
-    let lib_cfg = LIB_CFG.read().unwrap();
+    let lib_cfg = LIB_CFG.read_recursive();
 
     let mut all_languages_selected = false;
     // Read and convert ISO codes from config object.
@@ -327,7 +328,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
 /// Add the user's default language and region.
 fn update_filter_map_lang_btmap_setting(settings: &mut Settings) {
     let mut btm = BTreeMap::new();
-    let lib_cfg = LIB_CFG.read().unwrap();
+    let lib_cfg = LIB_CFG.read_recursive();
     for l in &lib_cfg.tmpl.filter_map_lang {
         if l.len() >= 2 {
             btm.insert(l[0].to_string(), l[1].to_string());

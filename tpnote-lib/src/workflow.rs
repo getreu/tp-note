@@ -345,7 +345,7 @@ where
     // Export HTML rendition, if wanted.
     if let Some((dir, local_link_kind)) = html_export {
         n.export_html(
-            &LIB_CFG.read().unwrap().tmpl_html.exporter,
+            &LIB_CFG.read_recursive().tmpl_html.exporter,
             dir,
             *local_link_kind,
         )?;
@@ -464,7 +464,7 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
 /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
 /// ```
 pub fn render_viewer_html<T: Content>(context: Context, content: T) -> Result<String, NoteError> {
-    let tmpl_html = &LIB_CFG.read().unwrap().tmpl_html.viewer;
+    let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer;
     render_html(context, content, tmpl_html)
 }
 
@@ -502,7 +502,7 @@ pub fn render_viewer_html<T: Content>(context: Context, content: T) -> Result<St
 /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
 /// ```
 pub fn render_exporter_html<T: Content>(context: Context, content: T) -> Result<String, NoteError> {
-    let tmpl_html = &LIB_CFG.read().unwrap().tmpl_html.exporter;
+    let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.exporter;
     render_html(context, content, tmpl_html)
 }
 
@@ -587,7 +587,7 @@ pub fn render_erroneous_content_html<T: Content>(
         &note_erroneous_content,
     );
 
-    let tmpl_html = &LIB_CFG.read().unwrap().tmpl_html.viewer_error;
+    let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer_error;
 
     // Apply template.
     let mut tera = Tera::default();

@@ -29,6 +29,7 @@ use crate::html::HTML_EXT;
 use crate::markup_language::MarkupLanguage;
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
+use parking_lot::RwLock;
 use parse_hyperlinks::renderer::text_links2html;
 #[cfg(feature = "renderer")]
 use pulldown_cmark::{html, Options, Parser};
@@ -44,7 +45,7 @@ use std::io;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::str;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use std::time::SystemTime;
 use tera::Tera;
 
@@ -507,7 +508,7 @@ impl<T: Content> Note<T> {
         // Insert the raw CSS
         html_context.insert(
             TMPL_HTML_VAR_NOTE_CSS,
-            &LIB_CFG.read().unwrap().tmpl_html.css,
+            &LIB_CFG.read_recursive().tmpl_html.css,
         );
         // Insert the web server path to get the CSS loaded.
         html_context.insert(
@@ -754,7 +755,7 @@ Body text
         let n = Note::from_raw_text(context, content, TemplateKind::None).unwrap();
         // Check the HTML rendition.
         let html = n
-            .render_content_to_html("md", &LIB_CFG.read().unwrap().tmpl_html.viewer)
+            .render_content_to_html("md", &LIB_CFG.read_recursive().tmpl_html.viewer)
             .unwrap();
         assert!(html.starts_with("<!DOCTYPE html>\n<html"))
     }

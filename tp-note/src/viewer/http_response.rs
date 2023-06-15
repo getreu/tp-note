@@ -2,6 +2,7 @@
 //! The content type `text/event-stream` is generated in the module
 //! `sse_server`.
 
+use super::sse_server::ServerThread;
 use crate::config::CFG;
 use crate::config::VIEWER_SERVED_MIME_TYPES_MAP;
 use crate::viewer::error::ViewerError;
@@ -24,8 +25,6 @@ use tpnote_lib::html::rewrite_links;
 use tpnote_lib::markup_language::MarkupLanguage;
 use tpnote_lib::workflow::render_erroneous_content_html;
 use tpnote_lib::workflow::render_viewer_html;
-
-use super::sse_server::ServerThread;
 
 /// Content from files are served in chunks.
 const TCP_WRITE_BUFFER_SIZE: usize = 0x1000;
@@ -89,7 +88,7 @@ impl HttpResponse for ServerThread {
                 self.respond_content_ok(
                     Path::new(&TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE),
                     "text/css",
-                    LIB_CFG.read().unwrap().tmpl_html.css.as_bytes(),
+                    LIB_CFG.read_recursive().tmpl_html.css.as_bytes(),
                 )?;
             }
 
@@ -116,10 +115,7 @@ impl HttpResponse for ServerThread {
                 //
                 // Condition 1: Only serve files that explicitly appear in
                 // `self.allowed_urls`.
-                let allowed_urls = self
-                    .allowed_urls
-                    .read()
-                    .expect("Can not read `allowed_urls`! RwLock is poisoned. Panic.");
+                let allowed_urls = self.allowed_urls.read_recursive();
                 // Is the request in our `allowed_urls` list?
                 if !allowed_urls.contains(relpath) {
                     log::warn!(
@@ -229,13 +225,8 @@ impl HttpResponse for ServerThread {
                 // of delivered documents, then deliver.
                 if !matches!(extension.into(), MarkupLanguage::None) {
                     if abspath.is_file() {
-                        let delivered_docs_count = self
-                            .delivered_tpnote_docs
-                            .read()
-                            .expect(
-                                "Can not read `delivered_tpnote_docs`. RwLock is poisoned. Panic.",
-                            )
-                            .len();
+                        let delivered_docs_count =
+                            self.delivered_tpnote_docs.read_recursive().len();
                         if delivered_docs_count < CFG.viewer.displayed_tpnote_count_max {
                             let html = self.render_content_and_error(&abspath)?;
                             self.respond_content_ok(&abspath, "text/html", html.as_bytes())?;
@@ -346,10 +337,7 @@ impl HttpResponse for ServerThread {
     fn respond_too_many_requests(&mut self) -> Result<(), ViewerError> {
         let mut log_msg;
         {
-            let delivered_tpnote_docs = self
-                .delivered_tpnote_docs
-                .read()
-                .expect("Can not read `delivered_tpnote_docs`! RwLock is poisoned. Panic.");
+            let delivered_tpnote_docs = self.delivered_tpnote_docs.read_recursive();
 
             // Prepare the log entry.
             log_msg = format!(
@@ -445,10 +433,7 @@ impl HttpResponse for ServerThread {
             }) {
             // If the rendition went well, return the HTML.
             Ok(html) => {
-                let mut delivered_tpnote_docs = self
-                    .delivered_tpnote_docs
-                    .write()
-                    .expect("Can not write `delivered_tpnote_docs`. RwLock is poisoned. Panic.");
+                let mut delivered_tpnote_docs = self.delivered_tpnote_docs.write();
                 delivered_tpnote_docs.insert(abspath_doc.to_owned());
                 log::debug!(
                     "Viewer: so far served Tp-Note documents: {}",

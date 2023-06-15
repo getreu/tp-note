@@ -47,8 +47,8 @@ impl From<&str> for MarkupLanguage {
     /// lists?
     #[inline]
     fn from(file_extension: &str) -> Self {
-        let lib_cfg = LIB_CFG.read().unwrap();
-        let settings = SETTINGS.read().unwrap();
+        let lib_cfg = LIB_CFG.read_recursive();
+        let settings = SETTINGS.read_recursive();
 
         for e in &lib_cfg.filename.extensions_md {
             if e == file_extension {
