@@ -18,6 +18,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 
 [[package]]
+name = "ahash"
+version = "0.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c99f64d1e06488f620f932677e24bc6e2897582980441ae90a671415bd7ec2f"
+dependencies = [
+ "cfg-if",
+ "const-random",
+ "getrandom",
+ "once_cell",
+ "version_check",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "0.7.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -33,6 +46,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43f6cb1bf222025340178f382c426f13757b2960e89779dfcb319c32542a5a41"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "alloc-no-stdlib"
+version = "2.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc7bb162ec39d46ab1ca8c77bf72e890535becd1751bb45f64c597edb4c8c6b3"
+
+[[package]]
+name = "alloc-stdlib"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94fb8275041c72129eb51b7d0322c29b8387a0386127718b096429201a5d6ece"
+dependencies = [
+ "alloc-no-stdlib",
 ]
 
 [[package]]
@@ -302,6 +330,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "brotli"
+version = "3.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1a0b1dbcc8ae29329621f8d4f0d835787c1c38bb1401979b49d13b0b305ff68"
+dependencies = [
+ "alloc-no-stdlib",
+ "alloc-stdlib",
+ "brotli-decompressor",
+]
+
+[[package]]
+name = "brotli-decompressor"
+version = "2.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b6561fd3f895a11e8f72af2cb7d22e08366bebc2b6b57f7744c4bda27034744"
+dependencies = [
+ "alloc-no-stdlib",
+ "alloc-stdlib",
+]
+
+[[package]]
 name = "bstr"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -357,6 +406,15 @@ dependencies = [
  "glib-sys",
  "libc",
  "system-deps",
+]
+
+[[package]]
+name = "castaway"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a17ed5635fc8536268e5d4de1e22e81ac34419e5f052d4d51f4e01dcc263fcc"
+dependencies = [
+ "rustversion",
 ]
 
 [[package]]
@@ -489,12 +547,47 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact_str"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bff0805f79ecb1b35163f3957a6934ea8d04fcd36ef98b52e7316f63e72e73d1"
+dependencies = [
+ "castaway",
+ "cfg-if",
+ "itoa",
+ "ryu",
+ "static_assertions",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62ec6771ecfa0762d24683ee5a32ad78487a3d3afdc0fb8cae19d2c5deb50b7c"
 dependencies = [
  "crossbeam-utils",
+]
+
+[[package]]
+name = "const-random"
+version = "0.1.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "368a7a772ead6ce7e1de82bfb04c485f3db8ec744f72925af5735e29a22cc18e"
+dependencies = [
+ "const-random-macro",
+ "proc-macro-hack",
+]
+
+[[package]]
+name = "const-random-macro"
+version = "0.1.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d7d6ab3c3a2282db210df5f02c4dab6e0a7057af0fb7ebd4070f30fe05c0ddb"
+dependencies = [
+ "getrandom",
+ "once_cell",
+ "proc-macro-hack",
+ "tiny-keccak",
 ]
 
 [[package]]
@@ -599,25 +692,31 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-epoch"
-version = "0.9.14"
+version = "0.9.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46bd5f3f85273295a9d14aedfb86f6aadbff6d8f5295c4a9edb08e819dcf5695"
+checksum = "ae211234986c545741a7dc064309f67ee1e5ad243d0e48335adc0484d960bcc7"
 dependencies = [
  "autocfg",
  "cfg-if",
  "crossbeam-utils",
- "memoffset 0.8.0",
+ "memoffset 0.9.0",
  "scopeguard",
 ]
 
 [[package]]
 name = "crossbeam-utils"
-version = "0.8.15"
+version = "0.8.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c063cd8cc95f5c377ed0d4b49a4b21f632396ff690e8470c29b3359b346984b"
+checksum = "5a22b2d63d4d1dc0b7f1b6b2747dd0088008a9be28b6ddf0b1e7d335e3037294"
 dependencies = [
  "cfg-if",
 ]
+
+[[package]]
+name = "crunchy"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
 name = "crypto-common"
@@ -902,9 +1001,9 @@ dependencies = [
 
 [[package]]
 name = "fraction"
-version = "0.10.0"
+version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6bb65943183b6b3cbf00f64c181e8178217e30194381b150e4f87ec59864c803"
+checksum = "3027ae1df8d41b4bed2241c8fdad4acc1e7af60c8e17743534b545e77182d678"
 dependencies = [
  "lazy_static",
  "num",
@@ -1503,9 +1602,9 @@ checksum = "8eaf4bc02d17cbdd7ff4c7438cafcdf7fb9a4613313ad11b4f8fefe7d3fa0130"
 
 [[package]]
 name = "js-sys"
-version = "0.3.63"
+version = "0.3.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f37a4a5928311ac501dee68b3c7613a1037d0edb30c8e5427bd832d55d1b790"
+checksum = "c5f195fe497f702db0f318b07fdd68edb16955aed830df8363d837542f8f935a"
 dependencies = [
  "wasm-bindgen",
 ]
@@ -1565,10 +1664,13 @@ dependencies = [
 
 [[package]]
 name = "lingua"
-version = "1.4.0"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ff1807a80606b30b928e1c171c8ec030b0d3aef99bb2259a051516229bb9213"
+checksum = "6dc858be45965c868f5fa4a3c57d61842ff8aa2f2b1308eea14babbee5ef2478"
 dependencies = [
+ "ahash",
+ "brotli",
+ "compact_str",
  "fraction",
  "include_dir",
  "itertools",
@@ -1652,684 +1754,684 @@ dependencies = [
  "rayon",
  "regex",
  "serde",
+ "serde-wasm-bindgen",
  "serde_json",
  "strum 0.24.1",
  "strum_macros 0.24.3",
  "wasm-bindgen",
- "zip",
 ]
 
 [[package]]
 name = "lingua-afrikaans-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a5a9ec0e06d8afce002d93b8d3c41a5ae489228c7b6cc2dda882a41e186b9cb"
+checksum = "a97df3a7cd698a09753cb32c0f403cf9f698fa0ae1b081fc1b14fc4707301392"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-albanian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a332101361229cfbf1c723fd6d5a31ea6925ffa031f5b848f26df7642e133f2"
+checksum = "c1f78f0468f3337d53bd1cdc481e0f1c445e33ce43650d654d8b56037daa1996"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-arabic-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fea063b53093ebc05ba56130317a6cbe80723fa5d8da152fd5d7bc9b58450f19"
+checksum = "6ada75100728990b05bacaec7693efebf0c8b911599ac0c082cb4ed576bf494d"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-armenian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9060db52a551fac2712b3f5051de8942716b4e1e2967856d864a956392d6ce3"
+checksum = "d126f4182866345c5df9cef2e0a3ca64891d7bf0325c31f99df360c00c72bc0f"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-azerbaijani-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d68232a1eb939d251f9f3468996aec8184647eb35d5575280ff22f102a7334f6"
+checksum = "962742b8bed5483adb31cfd12b4ee79fc8dccfa602bb4c25a240579236394892"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-basque-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd8e0bf799ddf0fce013759fd77099c9a50360108b603b849cfe78820317efbe"
+checksum = "710aa0c4203d3c019b624601233b0035723087ba2cb9de8572632cb8c5ac97a4"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-belarusian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65226128d55fa9be0128caddbca7f7866b242d793df0f2f20dd02c7f0c5aadf1"
+checksum = "a5b76ec320c7646f0c8849371530ba5332d64f640fc170c14d63102bd27580f5"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-bengali-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47002195ac6aa3283986023a8d7384fd469b403af1093dff0a4abfa913ddfeea"
+checksum = "ecf9f1c7b00c78984eee240f2188f1781a69a08b87bfb1aabd3e3cc50c0d279d"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-bokmal-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e69a2e872f146246d05254884b17100c732d663c73422413f0dd5a65a351798"
+checksum = "2a9215ee6bbe6d37222dc5dbd9d1577389810011cb8afbef6155e71a11fa5cb9"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-bosnian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6cf6b0e45c26c805eebc59b21856f7b4860146ec5e3984e6291d5bfc422c127c"
+checksum = "98f836f559334e2d9c0e1876c87e72431b25412b164efd194a840a13b49d8c3b"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-bulgarian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a904551e986c5bd5f55ed832893aba0bba80315e4f06f3aed45b9d7c13c4328f"
+checksum = "f6639397b34419af35835a594178f93dd84edb3a146938f0f1d7013c1a48a5a1"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-catalan-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "099aaee95f04177b785bb791b603d53a8b0e3eda5eceef5c043633b0631457d7"
+checksum = "d0d9acd43a1320961fe4cb8571ebc0e87d9809a0e9d6d71e5cbab86fab923201"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-chinese-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6015fe96965c7c4b1f1552931cfd993b710cc9c6a8f2b28655d79f20ad43092"
+checksum = "45a1e3a38a0920f6ddbd9b6a79a8c04cd927142713b595ba32be6b811603f7c6"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-croatian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1c07a2adaf7ee6986bcbf40d2787873e46c400fd103babc6427f506123e21e5"
+checksum = "66eaa997d1fa477c42d2497beeb546b63576e04cc6057a60718daabe061c2344"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-czech-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd8daaec821d88775d247154dd75962a3a5daf83dacae0e40aa33718c310e46e"
+checksum = "ed98f50055cb5c9b06c20da82029c8cfe204332ab3360349545cbc3d465cd1d1"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-danish-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04af91fa8c79572331842d111ba3ca75f785925dc3b144957c1cce7d1c5f728c"
+checksum = "0adc4abde17e94cf023a1ae4f3bcda3b13dcfecfc1f6421f59f17f904d5b5ed2"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-dutch-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae4a303904373d2b5d8165c579a3cd01dc0f2c11cfbeef73ff941c64c09e27f5"
+checksum = "30f3db5635a5e964d85190b5d32ca391d9f7630137630458a605c7ab33583db9"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-english-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa6ba281afeb7f767fa6a08b0e10eedc45944eb3a7994fa4dd49fdcc0c3981b2"
+checksum = "fbd066693abb10083bb5b5fc1c494dda357170265021ad873ef582211817b8a8"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-esperanto-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b60ed4f4bfeef65890f9fa17c937b8258c12d1060bda4779a7b09555f67d7727"
+checksum = "7877160b3346161f2714236c9ab1c667097821c0dbb31e5bce42f23c82a157c2"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-estonian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2a95a66f981f6d3b09ec69b78ea3ef30e861c4380d7a1940a27380d053353cc"
+checksum = "9a25c07d8a67c82a5c41d8cb2893a4032332d18abadd8d06d80a654f6a1b3c47"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-finnish-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90657afd99b586d8c2ad2229e3de62a79cc7d631fbdcd6e148056b8363364caa"
+checksum = "d07e0f34931973ec268916cb4c183e06df880e8e43ee99124522ea8c767c9940"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-french-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b41d3ef75e2c6b4c363feabe66c34409add33bc04eeed48a06b1e196d9700d85"
+checksum = "ba406de05309b212790036e576aee4b1a71ce62b77fbd084df5bc8d7c624866f"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-ganda-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fdb4c076bafdf27a59c35a58d0fa8067fa2dd048ee0a5e7ff1fd8db725ce986b"
+checksum = "f9890e6f6b48bf7f2240da770020c5045a1885598c6cb6bc25df73e0182f4792"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-georgian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "647526a2b32d1e095dd23e3666a3104f3e69a0fe2f44dc0e904272dedfb0f189"
+checksum = "c7392be814065ff3ff71bae7dbb463a47039a68f90d45dd34f4ca7221c0c2f01"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-german-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b878b826926f260313afb4568f10f87c1e55a2c32640f30ee127a83d87fcc115"
+checksum = "0dd4041d542b6512d415c0ea6979333e5e88698b966dda7b9bf06029bf690a13"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-greek-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c8f219cd4249326196eded87d284be6a1b12542b0d178a62b293e52e79b4095"
+checksum = "3e1f5a17634410f527a6360979209504072ff9e71e29a0578b18a4f57dcb611b"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-gujarati-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2343159f19ef0b398e1390a6c829a5280c295349d44d171bd85ba909c5e793a2"
+checksum = "0ee11b10ffdf8f4eb3d2078c9edec73fb51a36d061ddc6d6e847585a3b91909e"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-hebrew-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26beada9b9791a8bb5fa1ef7715e1df182c8c5abdc88731b3d4afed7f9dced4e"
+checksum = "1a13c9fa3f21bfb91ed3a9710add72c332d0e36234ea9b9d5ed3d6e2235051f6"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-hindi-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30699440ee47c7b91cb2e0631985f05c225460f1e319a8136ca72a97c0bf5a84"
+checksum = "f63659e514fa8c706d2ed0d7a04b98adb05b8c8d4bc37e3d12edb9d35ce24fd0"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-hungarian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b048a1f8d446c0ecd73f16b14d8e7e66a16cd0382fd5baafa4e6a5bd5ea99e2"
+checksum = "885525276c696b978c4a1aee8a2b3b9a822724e47348c260d05e9092ebd8c96e"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-icelandic-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8129d934943bc989aa60371e2f1ff315d17a1129f2dc2a2096650921d296fe98"
+checksum = "b616e573df1aa0bc9881fcef4258d3445fc80f5efe3a71ab010c68eb97ab659d"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-indonesian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee4ed10b915f8b29156adfa26ac33f64a77ea86d235ff83dc52b22384e78891e"
+checksum = "dc06b8937f6adaad76b28fd009cbfaa6f876ebe5fa887d96dccd1dff2d21d9ad"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-irish-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "592fee9f34d0fcd24fd171d5320031606626304d40f860ce87532ad7830022a0"
+checksum = "a6258beb6627274163aac7da4dda1e6bcbcf7ff404efa603d0e59e8054f77199"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-italian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24cec9eab6c9c137ef348c173da12bed857dd9d4d3fce8972de6d5ee80ca41ae"
+checksum = "0c6e138047ac4d681e419e37ad9e383878652ac19e67056ff16085d4cc82e590"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-japanese-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d00bd26e2de75e813a1e9f204d047aae469f6d451b65773407f52422c780929"
+checksum = "b34b94aa96a1bc0838ddda2c7912d0ebd7256bb21e7a2974e4dd8b186df501a8"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-kazakh-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21da0ab799a77a6221f86c15227eb95fe3e092d2a31263f276a4c9aa43b75786"
+checksum = "1b64a848cc1a38dc3c4e7a5ad18b9f2ecbd6abf4c453a8898538d96e6a5c0da4"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-korean-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa37965f7449f2c731d830aab18d2a528b920befbb6e4405772d92d539242a0b"
+checksum = "35c47aa5e5dc8d029967375081aabda462faf10b070aefc1a175ea7f42f5267c"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-latin-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c48bace6da840f1a2627878219c0fa50d629d02add35e3561e5c75006b54d4b1"
+checksum = "6d0922f27e68ae15397160ab1835aefb5a878bc14f0c0ce79b6d074ee828b4d7"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-latvian-language-model"
-version = "1.0.2"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fe0b49052fa9399bc70ccaf820c13fd514f132a027f966d7df5be2eba504e1f"
+checksum = "0b6cc01bbfda64ccbfb00b5172d7ba9327053da8c38a85c0b71c969533cf8f08"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-lithuanian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ccfd1a636365e72433a7ca43bb32e5acc8b5e239919747a89d6afca9d60d7cb"
+checksum = "a9b68e593c8f72e77b1fe823633baae744681bd8def2dce7d2830947b41c4b1e"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-macedonian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45db07681c6c72683a83fa97288135dd1ed090db0d1fefd563d01b49428183db"
+checksum = "1e288bc4ec1776131580ed80d842de39bce0355bcc3cc59c519008e60f9276fe"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-malay-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15efc930c9b3bce23b261527faf6cf8f3819f0f91c573760d7327d2f11a183e5"
+checksum = "771c6b7ab2865e2563e1ce19bf06611aad674c3f0a180ec43c03a9883e49c8aa"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-maori-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e517b2bf83f7cbd3cdc3b1603899612a71a54d830dd96be63b082ebab7dea000"
+checksum = "d653a0c16c5cfaa088bdf75e362ba4f715cbd6dbca391f1637a6c49c1e8aff90"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-marathi-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88462495f40ddd18c4e05fe6d067351e1337ddab8ae7fd7eba39b89630809367"
+checksum = "b1a141c8d9670ff22e541c064ccab3cfbbc2db2625ec20236d73d76dd98e8ba0"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-mongolian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82ca6a89a7500525d2ec5e24a7ee7ed1cb93cda4116a3ac2a3cabe689ff03951"
+checksum = "f53de502920af44b5d8ec7787895c0a81b0f5f43e3f3c2b80a240f2b605122c1"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-nynorsk-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "445d81e0d9b171c23eb8b8c37660dc6594d0bee801f5d0789cd7db17ceef58fe"
+checksum = "db00b13561df244acb76927677200ff399b02d8c9b160d25a38320ef3361cfa9"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-persian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "795011db21b24cd51ad7cec8b8fe1a2452b4c26451d1bb91737eeb3434f6b507"
+checksum = "043ba9b4ac7df99acaa1cd9f5925d6fc9b0fe850d3891bbeb91b27ed94f266c4"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-polish-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17673ac03a100e9df1588fcc8f7dba0124d2055f96d1169626e805cedb332205"
+checksum = "f298b650531a5d85d3101ad7db7a5cbf3b671b71f01a775e97d4165eebc9ff75"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-portuguese-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfb604ee45a96a8be1c4b80776bf29399fcedc55b65912d28aa7e3ef726dda77"
+checksum = "9df0be307b3f5e24e10e76a7841302c0ff4a6ebf818a11d3a3c5c4cecfcfe58b"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-punjabi-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41d9868ddd52a367dd2cd99eb135a328f2493631a03908894193bcf286d2a1d0"
+checksum = "cc529e58e6af7cca366af7fb964b4cad7a357d538d4b6a7eccde31ae4bd7604f"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-romanian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3645b4134f3aa7e756212ca5f3b79eb2acfda815aef9b35da15ae299c2423a76"
+checksum = "b0428c13d8e05e65929ec170e807c8508c2201c63c7802c7786de0c3b78e390b"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-russian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2b092363a5834298cb7f1632c184f0877103fb88ad82bf6f07edcb871f0fd85"
+checksum = "dea97d6643e90ee4fc0043c728f0c06cdd9e69d4970fd1983e5c59b3448a676e"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-serbian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b4f19064a23062e81711d7cdc1feb6c51fad175ca3558cb0ad18af8324d0eb5"
+checksum = "b7b181be3137969bf5a9e10d8773666d01223886a4d7454048fad99e7b0416db"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-shona-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3894f3c223ffc05b7a9f8aab860e61242eb7c63ad109c7c800e959a6879fe1e5"
+checksum = "509772c502f2a47ec7cd5b50be1bc34b51dcb98cca1f5e30143c96de61a757bb"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-slovak-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "150ccbde4f5e0c2ea3b4e50e5438918df0d54e14734478d59bd446b66efac561"
+checksum = "44e1e99e6725e99659367ac80731efc24298a7a24190ff3d777209e86be3dc40"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-slovene-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7991cf3a04fc61fe3b6624dd2077c46a5c2b321de4440a809b5efddb94e9a689"
+checksum = "49fc410d0acdf3068cc9c7ae493348d47a26be0d3d8c5c23603c807befd949c1"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-somali-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccb563dc178d1642f94976e3b3e54f62fa4526c39ad80c4a9405dc7507baf52b"
+checksum = "dde8a66f8901e7e5eac9af985ace066bd5ed3643815beaecb2d7a7b86645d0b3"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-sotho-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00e2eadbac81290fe6af5ce634af3de635a2c66025e9774cb0843ae1660c0a0a"
+checksum = "58084eb81faf32f62c922e8b3f3dfdcadacf5de934edfb7d3b1acb3759d89f04"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-spanish-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fa5ff519621176934e2edd0eb38bdc9ffe8f187e02acacc8c8102192d76f51e"
+checksum = "d45be9bede9b9d6d53b6e06047822a18dbd83e5d515736afecd85c1e71cc6070"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-swahili-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19e9901282f3061f1ca137dc7e0187a982da23044be1176342e15770f0ce29a5"
+checksum = "f251246905cf56e519af87095fd31264417c19de83fb9e2e0ade5e8c27af4fe3"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-swedish-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c434ce21aefb3bc8d88d91235f806ac12406ed035dff36c284777b721f300c0"
+checksum = "2c0289dc7e5654aac497c829369b811ae1870eb9d5f76c6b82527bbe5470aa0d"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-tagalog-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93bc8cf068b1ac4839263f9ded63106597178c53d4189a3d8c48f994fbd38e4c"
+checksum = "cc5cb889e86a8a62f56f06d0d9bd92d16f697151a9b3dcdefef0ba39624c5cb0"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-tamil-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d953994ec7e7bc80d5930bbb5ded5436a34f67734101a108d2b62c36a3a9310e"
+checksum = "630d10fabcd5a289b5cd4b651df0c448692a3e55cc7e28334313a2d76d2916e5"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-telugu-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "232aad872671ff53c50a96a91e5d1c886b191217adf41674b777f651fecef287"
+checksum = "0501f9b52fc247ef4e1f4020fd44a90cccddf9914724977cb3440eced01cbe07"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-thai-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c01dc8ced43c87d37c869528a353681a2bac9c393352e96b820f99120374dc93"
+checksum = "194b09209fc63d986d8ef9505689756eff1935fa52fd91031b60e7d546ca3c76"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-tsonga-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5990437427d9dee91f8d3f3059d6861dce98719022b8345cbd096043a45e242"
+checksum = "5aa10493e6bb3bfd8591254a5657eb98bad6be33334c4ebd791edb354fc83b07"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-tswana-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19fb235b7b05852f6bded0ffc1890b1da708f1490a41d1c41a417583e406dbf7"
+checksum = "5db016128507f4eb48dbe96b05be134c9385f6752da7949c653a24e3c4661e37"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-turkish-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f58513bff0ce9503eed82522dc65813370e0116c897c30703f66aa8894788373"
+checksum = "7b517e12fe94ce80e7f8f380fdd2c0223bcfe351c0898c9a83f56f78b3afad81"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-ukrainian-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c39f40906c186265e12458e73d46767a5211dfad25d5df538f15cee6c348782"
+checksum = "14ed035dd4b7ec5f76fe3b07e5f499d76c4cdb2a6d275459e4cdd3a3d21f131a"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-urdu-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "984de2de71dda05cf0c09af752d0370dd8d2abffa25bee54749963918663406b"
+checksum = "1b9edb8e15e88004b5b89e80f1bf41237770c5536805494dcf627f7ec550eaf4"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-vietnamese-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9490c7234aed122e201e629af6854de5752bb879ff3f6ed5aa0ff65fa52fb5c"
+checksum = "07d08afaf263906aa3f2bfaffaf52eecd368992685e2468f1ba7f85f3e41fd49"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-welsh-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "320df870ddd01919b4815e1a361d753ce1f77dd1abe8db10526ca9093af9f4b9"
+checksum = "07c47a533b66772fdd7ece069359900b18824851464a4dd4fd8e4b29928d19b1"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-xhosa-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4f5efd0a5cd523fa59d2051cb073b94f4c0ebe4653f6bbeb00e8bd2965be536"
+checksum = "55a48851d35933a57c6f87a4fdc25d7eeba8eff98f1852b00d7c8c15b2a818fb"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-yoruba-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1db77f9689eb87a89eb715a212ac381f132cc92972f160b4e2c58fe1a2dacb3"
+checksum = "5bf6365215ffb772d22c18fbf55b1503ad292aa9a5e93d1249d9307117f6b0ef"
 dependencies = [
  "include_dir",
 ]
 
 [[package]]
 name = "lingua-zulu-language-model"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4750bd5fe9fcb76c7626b6d267a930758509317947ab0931e7fe055c7c099403"
+checksum = "63f8b5c7f412d078f37ffd2874297afce76719c4b1b7c4856af0fa4e8f89abe2"
 dependencies = [
  "include_dir",
 ]
@@ -2358,9 +2460,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.18"
+version = "0.4.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "518ef76f2f87365916b142844c16d8fefd85039bc5699050210a7778ee1cd1de"
+checksum = "b06a4cde4c0f271a446782e3eff8de789548ce57dbc8eca9292c27f4a42004b4"
 dependencies = [
  "serde",
 ]
@@ -2413,15 +2515,6 @@ name = "memoffset"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5de893c32cde5f383baa4c04c5d6dbdd735cfd4a794b0debdb2bb1b421da5ff4"
-dependencies = [
- "autocfg",
-]
-
-[[package]]
-name = "memoffset"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d61c719bcfbcf5d62b3a09efa6088de8c54bc0bfcd3ea7ae39fcc186108b8de1"
 dependencies = [
  "autocfg",
 ]
@@ -2569,9 +2662,9 @@ dependencies = [
 
 [[package]]
 name = "num"
-version = "0.2.1"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8536030f9fea7127f841b45bb6243b27255787fb4eb83958aa1ef9d2fdc0c36"
+checksum = "43db66d1170d347f9a065114077f7dccb00c1b9478c89384490a3425279a4606"
 dependencies = [
  "num-bigint",
  "num-complex",
@@ -2583,9 +2676,9 @@ dependencies = [
 
 [[package]]
 name = "num-bigint"
-version = "0.2.6"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "090c7f9998ee0ff65aa5b723e4009f7b217707f1fb5ea551329cc4d6231fb304"
+checksum = "f93ab6289c7b344a8a9f60f88d80aa20032336fe78da341afc91c8a2341fc75f"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -2594,11 +2687,10 @@ dependencies = [
 
 [[package]]
 name = "num-complex"
-version = "0.2.4"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6b19411a9719e753aff12e5187b74d60d3dc449ec3f4dc21e3989c3f554bc95"
+checksum = "02e0d21255c828d6f128a1e41534206671e8c3ea0c62f32291e808dc82cff17d"
 dependencies = [
- "autocfg",
  "num-traits",
 ]
 
@@ -2625,9 +2717,9 @@ dependencies = [
 
 [[package]]
 name = "num-rational"
-version = "0.2.4"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c000134b5dbf44adc5cb772486d335293351644b801551abe8f75c84cfa4aef"
+checksum = "0638a1c9d0a3c0914158145bc76cff373a75a627e6ecbfb71cbe6f453a5a19b0"
 dependencies = [
  "autocfg",
  "num-bigint",
@@ -3022,6 +3114,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "proc-macro-hack"
+version = "0.5.20+deprecated"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc375e1527247fe1a97d8b7156678dfe7c1af2fc075c9a4db3690ecd2a148068"
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3219,9 +3317,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.37.19"
+version = "0.37.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acf8729d8542766f1b2cf77eb034d52f40d375bb8b615d0b147089946e16613d"
+checksum = "b96e891d04aa506a6d1f318d2771bcb1c7dfda84e126660ace067c9b474bb2c0"
 dependencies = [
  "bitflags",
  "errno",
@@ -3275,9 +3373,9 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "self_cell"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a3926e239738d36060909ffe6f511502f92149a45a1fade7fe031cb2d33e88b"
+checksum = "4c309e515543e67811222dbc9e3dd7e1056279b782e1dacffe4242b718734fb6"
 
 [[package]]
 name = "semver"
@@ -3292,6 +3390,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e8c8cf938e98f769bc164923b06dce91cea1751522f46f8466461af04c9027d"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-wasm-bindgen"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f3b143e2833c57ab9ad3ea280d21fd34e285a42837aeb0ee301f4f41890fa00e"
+dependencies = [
+ "js-sys",
+ "serde",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -3704,6 +3813,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tiny-keccak"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c9d3793400a45f954c52e73d068316d76b6f4e36977e3fcebb13a2721e80237"
+dependencies = [
+ "crunchy",
+]
+
+[[package]]
 name = "tinyvec"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4081,21 +4199,19 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
 name = "wasm-bindgen"
-version = "0.2.86"
+version = "0.2.87"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bba0e8cb82ba49ff4e229459ff22a191bbe9a1cb3a341610c9c33efc27ddf73"
+checksum = "7706a72ab36d8cb1f80ffbf0e071533974a60d0a308d01a5d0375bf60499a342"
 dependencies = [
  "cfg-if",
- "serde",
- "serde_json",
  "wasm-bindgen-macro",
 ]
 
 [[package]]
 name = "wasm-bindgen-backend"
-version = "0.2.86"
+version = "0.2.87"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19b04bc93f9d6bdee709f6bd2118f57dd6679cf1176a1af464fca3ab0d66d8fb"
+checksum = "5ef2b6d3c510e9625e5fe6f509ab07d66a760f0885d858736483c32ed7809abd"
 dependencies = [
  "bumpalo",
  "log",
@@ -4108,9 +4224,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro"
-version = "0.2.86"
+version = "0.2.87"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14d6b024f1a526bb0234f52840389927257beb670610081360e5a03c5df9c258"
+checksum = "dee495e55982a3bd48105a7b947fd2a9b4a8ae3010041b9e0faab3f9cd028f1d"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -4118,9 +4234,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro-support"
-version = "0.2.86"
+version = "0.2.87"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e128beba882dd1eb6200e1dc92ae6c5dbaa4311aa7bb211ca035779e5efc39f8"
+checksum = "54681b18a46765f095758388f2d0cf16eb8d4169b639ab575a8f5693af210c7b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4131,9 +4247,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-shared"
-version = "0.2.86"
+version = "0.2.87"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed9d5b4305409d1fc9482fee2d7f9bcbf24b3972bf59817ef757e23982242a93"
+checksum = "ca6ad05a4870b2bf5fe995117d3728437bd27d7cd5f06f13c17443ef369775a1"
 
 [[package]]
 name = "wayland-client"
@@ -4196,9 +4312,9 @@ dependencies = [
 
 [[package]]
 name = "web-sys"
-version = "0.3.63"
+version = "0.3.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bdd9ef4e984da1187bf8110c5cf5b845fbc87a23602cdf912386a76fcd3a7c2"
+checksum = "9b85cbef8c220a6abc02aefd892dfc0fc23afb1c6a426316ec33253a3877249b"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
@@ -4601,18 +4717,6 @@ dependencies = [
  "serde",
  "static_assertions",
  "zvariant",
-]
-
-[[package]]
-name = "zip"
-version = "0.6.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "760394e246e4c28189f19d488c058bf16f564016aefac5d32bb1f3b51d5e9261"
-dependencies = [
- "byteorder",
- "crc32fast",
- "crossbeam-utils",
- "flate2",
 ]
 
 [[package]]

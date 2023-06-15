@@ -983,7 +983,6 @@ Body text
     fn test_from_content_template4() {
         // Example with `TemplateKind::AnnotateFile`
 
-        use crate::config::FILENAME_EXTENSION_DEFAULT;
         use crate::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
         use crate::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
         use crate::content::Content;
@@ -999,9 +998,8 @@ Body text
         let raw = "This simulates a non tp-note file";
         let non_notefile = temp_dir().join("20221030-some.pdf");
         fs::write(&non_notefile, raw.as_bytes()).unwrap();
-        let mut expected = temp_dir().join("20221030-some.pdf--Note.md");
+        let expected = temp_dir().join("20221030-some.pdf--Note");
         // In case this test runs on Windows, the extension may be different.
-        expected.set_extension(FILENAME_EXTENSION_DEFAULT);
         let _ = fs::remove_file(&expected);
 
         // Run the test.

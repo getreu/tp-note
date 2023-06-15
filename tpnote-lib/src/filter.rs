@@ -473,9 +473,13 @@ impl Hyperlink {
 
 #[cfg(test)]
 mod tests {
+    use crate::settings::Settings;
+
     use super::*;
-    use crate::settings::update_settings;
-    use std::collections::HashMap;
+
+    use lingua::IsoCode639_1;
+    use std::collections::{BTreeMap, HashMap};
+    use std::mem;
     use tera::to_value;
 
     #[test]
@@ -679,9 +683,26 @@ mod tests {
     }
 
     #[test]
-    fn test_get_lang_filter() {
+    fn test_lang_filter() {
+        //
+        // Test `get_lang_filter()`
+
         // The `get_lang` filter requires an initialized `SETTINGS` object.
-        update_settings().unwrap();
+        // Lock the config object for this test.
+        let filter_get_lang = FilterGetLang::SomeLanguages(vec![
+            IsoCode639_1::DE,
+            IsoCode639_1::EN,
+            IsoCode639_1::FR,
+        ]);
+
+        let mut settings = SETTINGS.write().unwrap();
+        *settings = Settings::default();
+        let _ = mem::replace(&mut settings.filter_get_lang, filter_get_lang);
+        // Downgrade the lock.
+        drop(settings);
+        // Between these 2 lines a race-condition could occur.
+        // This locks `SETTINGS` for further write access in this scope.
+        let _settings = SETTINGS.read().unwrap();
 
         let args = HashMap::new();
         // Test Markdown link in clipboard.
@@ -718,10 +739,25 @@ mod tests {
         let input = " \t\n ";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);
-    }
+        // Release the lock.
+        drop(_settings);
 
-    #[test]
-    fn test_map_lang_filter() {
+        //
+        // `Test `map_lang_filter()`
+        let mut filter_map_lang_btmap = BTreeMap::new();
+        filter_map_lang_btmap.insert("de".to_string(), "de-DE".to_string());
+        let mut settings = SETTINGS.write().unwrap();
+        *settings = Settings::default();
+        let _ = mem::replace(
+            &mut settings.filter_map_lang_btmap,
+            Some(filter_map_lang_btmap),
+        );
+        // Downgrade the lock.
+        drop(settings);
+        // Between these 2 lines a race-condition could occur.
+        // This locks `SETTINGS` for further write access in this scope.
+        let _settings = SETTINGS.read().unwrap();
+
         let args = HashMap::new();
         // Test Markdown link in clipboard.
         let input = "de";
