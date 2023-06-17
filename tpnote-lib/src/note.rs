@@ -815,10 +815,18 @@ Body text
         use crate::content::ContentString;
         use crate::context::Context;
         use crate::note::Note;
+        use crate::settings::Settings;
+        use crate::settings::SETTINGS;
         use crate::template::TemplateKind;
+        use parking_lot::RwLockWriteGuard;
         use std::env::temp_dir;
         use std::fs;
 
+        // Prepare test.
+        let mut settings = SETTINGS.write();
+        *settings = Settings::default();
+        // This locks `SETTINGS` for further write access in this scope.
+        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
         // Create a directory for the new note.
         let notedir = temp_dir().join("123-my dir/");
         fs::create_dir_all(&notedir).unwrap();
@@ -859,10 +867,18 @@ Body text
         use crate::content::ContentString;
         use crate::context::Context;
         use crate::note::Note;
+        use crate::settings::Settings;
+        use crate::settings::SETTINGS;
         use crate::template::TemplateKind;
+        use parking_lot::RwLockWriteGuard;
         use std::env::temp_dir;
         use std::fs;
 
+        // Prepare test.
+        let mut settings = SETTINGS.write();
+        *settings = Settings::default();
+        // This locks `SETTINGS` for further write access in this scope.
+        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
         // Directory for the new note.
         let notedir = temp_dir();
 
@@ -923,11 +939,18 @@ Body text
         use crate::context::Context;
         use crate::filter::CUT_LEN_MAX;
         use crate::note::Note;
+        use crate::settings::Settings;
+        use crate::settings::SETTINGS;
         use crate::template::TemplateKind;
+        use parking_lot::RwLockWriteGuard;
         use std::env::temp_dir;
         use std::fs;
 
         // Prepare test.
+        let mut settings = SETTINGS.write();
+        *settings = Settings::default();
+        // This locks `SETTINGS` for further write access in this scope.
+        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
         // Directory for the new note.
         let notedir = temp_dir().join("123-my dir/");
 
@@ -990,11 +1013,19 @@ Body text
         use crate::content::ContentString;
         use crate::context::Context;
         use crate::note::Note;
+        use crate::settings::Settings;
+        use crate::settings::SETTINGS;
         use crate::template::TemplateKind;
+        use parking_lot::RwLockWriteGuard;
         use std::env::temp_dir;
         use std::fs;
 
         // Prepare the test.
+        let mut settings = SETTINGS.write();
+        *settings = Settings::default();
+        // This locks `SETTINGS` for further write access in this scope.
+        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
+
         // Create some non-Tp-Note-file.
         let raw = "This simulates a non tp-note file";
         let non_notefile = temp_dir().join("20221030-some.pdf");

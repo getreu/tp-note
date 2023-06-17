@@ -477,11 +477,7 @@ impl Hyperlink {
 
 #[cfg(test)]
 mod tests {
-    use crate::settings::Settings;
-
     use super::*;
-
-    use lingua::IsoCode639_1;
     use parking_lot::RwLockWriteGuard;
     use std::collections::{BTreeMap, HashMap};
     use std::mem;
@@ -700,6 +696,8 @@ mod tests {
     fn test_get_lang_filter() {
         //
         // Test `get_lang_filter()`
+        use crate::settings::Settings;
+        use lingua::IsoCode639_1;
 
         // The `get_lang` filter requires an initialized `SETTINGS` object.
         // Lock the config object for this test.
@@ -747,6 +745,8 @@ mod tests {
     fn test_map_lang_filter() {
         //
         // `Test `map_lang_filter()`
+        use crate::settings::Settings;
+
         let mut filter_map_lang_btmap = BTreeMap::new();
         filter_map_lang_btmap.insert("de".to_string(), "de-DE".to_string());
         let mut settings = SETTINGS.write();
