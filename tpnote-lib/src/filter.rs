@@ -378,15 +378,18 @@ fn get_lang_filter<S: BuildHasher>(
 
             let detector: LanguageDetector = match &settings.filter_get_lang {
                 FilterGetLang::SomeLanguages(iso_codes) => {
-                    log::debug!(
-                        "Trying to identify one of the following languages: {:?}",
+                    log::trace!(
+                        "Execute template filter `get_lang` \
+                        with languages candiates: {:?}",
                         iso_codes,
                     );
-
                     LanguageDetectorBuilder::from_iso_codes_639_1(&iso_codes)
                 }
                 FilterGetLang::AllLanguages => {
-                    log::debug!("Trying to identify one of all available languages",);
+                    log::trace!(
+                        "Execute template filter `get_lang` \
+                        with all available languages",
+                    );
                     LanguageDetectorBuilder::from_all_languages()
                 }
                 FilterGetLang::Error(e) => return Err(tera::Error::from(e.to_string())),
