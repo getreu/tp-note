@@ -251,4 +251,15 @@ pub enum ConfigError {
         language_code: String,
         all_langs: String,
     },
+    /// Remedy: add one more ISO 639-1 code in the configuration variable
+    /// `tmpl.filter_get_lang` (or in `TPNOTE_LANG_DETECTION`) and make
+    /// sure that the code is supported, by checking `tpnote -V`.
+    #[error(
+        "Not enough languages to choose from. \
+         The list of ISO 639-1 language subtags currently contains only one \
+         item: `{language_code}`. Add one more language to the configuration \
+         file variable `tmpl.filter_get_lang` or to the environment variable \
+         `TPNOTE_LANG_DETECTION` to prevent this error from occurring."
+    )]
+    NotEnoughLanguageCodes { language_code: String },
 }

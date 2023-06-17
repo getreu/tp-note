@@ -294,18 +294,12 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
                 }
 
                 // Check if there are at least 2 languages in the list.
-                if iso_codes.len() >= 2 {
-                    // Store result.
-                    let _ = mem::replace(
-                        &mut settings.filter_get_lang,
-                        FilterGetLang::SomeLanguages(iso_codes),
-                    );
-                // Disable the filter otherwise.
-                } else {
-                    // There is not at least 2 languages to choose from.
-                    // This disables the filter meaning the filter returns
-                    // always the empty string.
-                    let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
+                settings.filter_get_lang = match iso_codes.len() {
+                    0 => FilterGetLang::Disabled,
+                    1 => FilterGetLang::Error(ConfigError::NotEnoughLanguageCodes {
+                        language_code: iso_codes[0].to_string(),
+                    }),
+                    _ => FilterGetLang::SomeLanguages(iso_codes),
                 }
             }
         }
@@ -439,10 +433,13 @@ fn update_env_lang_detection(settings: &mut Settings) {
                     let _ =
                         mem::replace(&mut settings.filter_get_lang, FilterGetLang::AllLanguages);
                 } else {
-                    let _ = mem::replace(
-                        &mut settings.filter_get_lang,
-                        FilterGetLang::SomeLanguages(iso_codes),
-                    );
+                    settings.filter_get_lang = match iso_codes.len() {
+                        0 => FilterGetLang::Disabled,
+                        1 => FilterGetLang::Error(ConfigError::NotEnoughLanguageCodes {
+                            language_code: iso_codes[0].to_string(),
+                        }),
+                        _ => FilterGetLang::SomeLanguages(iso_codes),
+                    }
                 }
                 let _ = mem::replace(&mut settings.filter_map_lang_btmap, Some(hm));
             }
@@ -713,7 +710,7 @@ mod tests {
         // Test faulty `settings.lang`.
         let mut settings = Settings::default();
         let _ = mem::replace(&mut settings.lang, "xy-XY".to_string());
-        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "en-GB");
+        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "en-GB, fr");
         update_env_lang_detection(&mut settings);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
@@ -725,7 +722,7 @@ mod tests {
                     l
                 })
                 .collect::<String>();
-            assert_eq!(output_filter_get_lang, "en ");
+            assert_eq!(output_filter_get_lang, "en fr ");
         } else {
             panic!("Wrong variant: {:?}", settings.filter_get_lang);
         }
