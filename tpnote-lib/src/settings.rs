@@ -93,15 +93,33 @@ const DEFAULT_SETTINGS: Settings = Settings {
     filter_map_lang_btmap: None,
 };
 
-/// Default to empty lists and values.
 impl Default for Settings {
+    #[cfg(not(test))]
+    /// Defaults to empty lists and values.
     fn default() -> Self {
         DEFAULT_SETTINGS
+    }
+
+    #[cfg(test)]
+    /// Defaults to test values.
+    fn default() -> Self {
+        let mut settings = DEFAULT_SETTINGS;
+        settings.author = String::from("testuser");
+        settings.lang = String::from("ab_AB");
+        settings.extension_default = String::from("md");
+        settings
     }
 }
 
 /// Global mutable varible of type `Settings`.
+#[cfg(not(test))]
 pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(DEFAULT_SETTINGS);
+
+#[cfg(test)]
+lazy_static::lazy_static! {
+/// Global default for `SETTINGS` in test environments.
+pub(crate) static ref SETTINGS: RwLock<Settings> = RwLock::new(DEFAULT_SETTINGS);
+}
 
 /// When `lang` is `Some(l)`, overwrite `SETTINGS.lang` with `l`.
 /// In any case, disable the `get_lang` filter by setting `filter_get_lang`
