@@ -383,6 +383,29 @@ mod tests {
         input.shorten_filename();
         let output = input;
         assert_eq!(OsString::from(expected), output);
+
+        //
+        // Test if assembled correctly.
+        let mut input = PathBuf::from("20221030-some.pdf--Note.md");
+        let expected = input.clone();
+        input.shorten_filename();
+        let output = input;
+        assert_eq!(OsString::from(expected), output);
+    }
+
+    #[test]
+    fn test_set_next_unused() {
+        use std::env::temp_dir;
+        use std::fs;
+
+        let raw = "This simulates a non tp-note file";
+        let mut notefile = temp_dir().join("20221030-some.pdf--Note.md");
+        fs::write(&notefile, raw.as_bytes()).unwrap();
+
+        notefile.set_next_unused().unwrap();
+        let expected = temp_dir().join("20221030-some.pdf--Note(1).md");
+        assert_eq!(notefile, expected);
+        let _ = fs::remove_file(notefile);
     }
 
     #[test]
@@ -465,6 +488,11 @@ mod tests {
 
         let expected = ("2021 04 12 ", "(9).md", "", "(9)", "md");
         let p = Path::new("/my/dir/2021 04 12 (9).md");
+        let result = p.disassemble();
+        assert_eq!(expected, result);
+
+        let expected = ("20221030-", "some.pdf--Note.md", "some.pdf--Note", "", "md");
+        let p = Path::new("/my/dir/20221030-some.pdf--Note.md");
         let result = p.disassemble();
         assert_eq!(expected, result);
     }

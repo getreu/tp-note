@@ -650,6 +650,11 @@ mod tests {
         assert_eq!("md", output);
 
         let input =
+            "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.pfd.md";
+        let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("md", output);
+
+        let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
         let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("", output);

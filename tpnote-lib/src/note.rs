@@ -999,8 +999,7 @@ Body text
         let raw = "This simulates a non tp-note file";
         let non_notefile = temp_dir().join("20221030-some.pdf");
         fs::write(&non_notefile, raw.as_bytes()).unwrap();
-        let expected = temp_dir().join("20221030-some.pdf--Note");
-        // In case this test runs on Windows, the extension may be different.
+        let expected = temp_dir().join("20221030-some.pdf--Note.md");
         let _ = fs::remove_file(&expected);
 
         // Run the test.
@@ -1035,6 +1034,6 @@ Body text
 
         // Check the new note file.
         assert_eq!(n.rendered_filename, expected);
-        assert!(n.rendered_filename.is_file());
+        fs::remove_file(n.rendered_filename).unwrap();
     }
 }
