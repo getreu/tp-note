@@ -13,9 +13,9 @@ use lingua;
 use lingua::IsoCode639_1;
 use parking_lot::RwLock;
 use std::collections::BTreeMap;
+use std::env;
 #[cfg(feature = "lang-detection")]
 use std::str::FromStr;
-use std::{env, mem};
 #[cfg(target_family = "windows")]
 use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
 #[cfg(target_family = "windows")]
@@ -128,10 +128,10 @@ pub(crate) fn force_lang_setting(lang: Option<String>) {
     let mut settings = SETTINGS.write();
     // Overwrite environment setting.
     if let Some(l) = lang {
-        let _ = mem::replace(&mut settings.lang, l);
+        settings.lang = l;
     }
     // Disable the `get_lang` Tera filter.
-    let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
+    settings.filter_get_lang = FilterGetLang::Disabled;
 
     log::trace!(
         "`SETTINGS` updated after `force_lang_setting()`:\n{:#?}",
@@ -173,7 +173,7 @@ fn update_author_setting(settings: &mut Settings) {
     });
 
     // Store result.
-    let _ = mem::replace(&mut settings.author, author);
+    settings.author = author;
 }
 
 /// Read the environment variable `TPNOTE_EXTENSION_DEFAULT` or -if empty-
@@ -188,7 +188,7 @@ fn update_extension_default_setting(settings: &mut Settings) {
             lib_cfg.filename.extension_default.to_string()
         }
     };
-    let _ = mem::replace(&mut settings.extension_default, ext);
+    settings.extension_default = ext;
 }
 
 /// Read the environment variable `TPNOTE_LANG` or -if empty- `LANG` into
@@ -239,7 +239,7 @@ fn update_lang_setting(settings: &mut Settings) {
     };
 
     // Store result.
-    let _ = mem::replace(&mut settings.lang, lang);
+    settings.lang = lang;
 }
 
 /// Read language list from `LIB_CFG.tmpl.filter_get_lang`, add the user's
@@ -297,7 +297,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
         Ok(mut iso_codes) => {
             if all_languages_selected {
                 // Store result.
-                let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::AllLanguages);
+                settings.filter_get_lang = FilterGetLang::AllLanguages;
             } else {
                 // Add the user's language subtag as reported from the OS.
                 // Silently ignore if anything goes wrong here.
@@ -325,7 +325,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
         Err(e) =>
         // Store error.
         {
-            let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Error(e));
+            settings.filter_get_lang = FilterGetLang::Error(e);
         }
     }
 }
@@ -333,7 +333,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
 #[cfg(not(feature = "lang-detection"))]
 /// Disable filter.
 fn update_filter_get_lang_setting(settings: &mut Settings) {
-    let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
+    settings.filter_get_lang = FilterGetLang::Disabled;
 }
 
 /// Read keys and values from `LIB_CFG.tmpl.filter_btmap_lang` in the `BTreeMap`.
@@ -357,7 +357,7 @@ fn update_filter_map_lang_btmap_setting(settings: &mut Settings) {
     }
 
     // Store result.
-    let _ = mem::replace(&mut settings.filter_map_lang_btmap, Some(btm));
+    settings.filter_map_lang_btmap = Some(btm);
 }
 
 /// Reads the environment variable `LANG_DETECTION`. If not empty,
@@ -368,8 +368,8 @@ fn update_env_lang_detection(settings: &mut Settings) {
     if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
         if env_var.is_empty() {
             // Early return.
-            let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
-            let _ = mem::replace(&mut settings.filter_map_lang_btmap, None);
+            settings.filter_get_lang = FilterGetLang::Disabled;
+            settings.filter_map_lang_btmap = None;
             log::debug!(
                 "Empty env. var. `{}` disables the `lang-detection` feature.",
                 ENV_VAR_TPNOTE_LANG_DETECTION
@@ -448,8 +448,7 @@ fn update_env_lang_detection(settings: &mut Settings) {
                 }
                 // Store result.
                 if all_languages_selected {
-                    let _ =
-                        mem::replace(&mut settings.filter_get_lang, FilterGetLang::AllLanguages);
+                    settings.filter_get_lang = FilterGetLang::AllLanguages;
                 } else {
                     settings.filter_get_lang = match iso_codes.len() {
                         0 => FilterGetLang::Disabled,
@@ -459,13 +458,13 @@ fn update_env_lang_detection(settings: &mut Settings) {
                         _ => FilterGetLang::SomeLanguages(iso_codes),
                     }
                 }
-                let _ = mem::replace(&mut settings.filter_map_lang_btmap, Some(hm));
+                settings.filter_map_lang_btmap = Some(hm);
             }
             // The error path.
             Err(e) =>
             // Store error.
             {
-                let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Error(e));
+                settings.filter_get_lang = FilterGetLang::Error(e);
             }
         }
     }
@@ -476,8 +475,8 @@ fn update_env_lang_detection(settings: &mut Settings) {
 fn update_env_lang_detection(settings: &mut Settings) {
     if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
         if !env_var.is_empty() {
-            let _ = mem::replace(&mut settings.filter_get_lang, FilterGetLang::Disabled);
-            let _ = mem::replace(&mut settings.filter_map_lang_btmap, None);
+            settings.filter_get_lang = FilterGetLang::Disabled;
+            settings.filter_map_lang_btmap = None;
             log::debug!(
                 "Ignoring the env. var. `{}`. The `lang-detection` feature \
                  is not included in this build.",
@@ -545,7 +544,7 @@ mod tests {
     fn test_update_filter_get_lang_setting() {
         // Test 1.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        settings.lang = "en-GB".to_string();
         update_filter_get_lang_setting(&mut settings);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
@@ -565,7 +564,7 @@ mod tests {
         //
         // Test 2.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "it-IT".to_string());
+        settings.lang = "it-IT".to_string();
         update_filter_get_lang_setting(&mut settings);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
@@ -587,7 +586,7 @@ mod tests {
     fn test_update_filter_map_lang_hmap_setting() {
         // Test 1.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "it-IT".to_string());
+        settings.lang = "it-IT".to_string();
         update_filter_map_lang_btmap_setting(&mut settings);
 
         let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
@@ -599,7 +598,7 @@ mod tests {
         //
         // Test short `settings.lang`.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "it".to_string());
+        settings.lang = "it".to_string();
         update_filter_map_lang_btmap_setting(&mut settings);
 
         let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
@@ -613,7 +612,7 @@ mod tests {
     fn test_update_env_lang_detection() {
         // Test 1.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        settings.lang = "en-GB".to_string();
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "fr-FR, de-DE, hu");
         update_env_lang_detection(&mut settings);
 
@@ -639,7 +638,7 @@ mod tests {
         //
         // Test 2.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        settings.lang = "en-GB".to_string();
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en-US");
         update_env_lang_detection(&mut settings);
 
@@ -663,7 +662,7 @@ mod tests {
         //
         // Test 3.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        settings.lang = "en-GB".to_string();
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, en-US");
         update_env_lang_detection(&mut settings);
 
@@ -678,7 +677,7 @@ mod tests {
         //
         // Test 4.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        settings.lang = "en-GB".to_string();
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en");
         update_env_lang_detection(&mut settings);
 
@@ -702,7 +701,7 @@ mod tests {
         //
         // Test 5.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        settings.lang = "en-GB".to_string();
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, de-AT, en");
         update_env_lang_detection(&mut settings);
 
@@ -717,7 +716,7 @@ mod tests {
         //
         // Test empty env. var.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "".to_string());
+        settings.lang = "".to_string();
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
         update_env_lang_detection(&mut settings);
 
@@ -727,7 +726,7 @@ mod tests {
         //
         // Test faulty `settings.lang`.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "xy-XY".to_string());
+        settings.lang = "xy-XY".to_string();
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "en-GB, fr");
         update_env_lang_detection(&mut settings);
 
@@ -750,7 +749,7 @@ mod tests {
         //
         // Test faulty entry in list.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        settings.lang = "en-GB".to_string();
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, xy-XY");
         update_env_lang_detection(&mut settings);
 
@@ -759,7 +758,7 @@ mod tests {
         //
         // Test empty list.
         let mut settings = Settings::default();
-        let _ = mem::replace(&mut settings.lang, "en-GB".to_string());
+        settings.lang = "en-GB".to_string();
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
         update_env_lang_detection(&mut settings);
 

@@ -477,7 +477,6 @@ mod tests {
     use super::*;
     use parking_lot::RwLockWriteGuard;
     use std::collections::{BTreeMap, HashMap};
-    use std::mem;
     use tera::to_value;
 
     #[test]
@@ -706,7 +705,7 @@ mod tests {
 
         let mut settings = SETTINGS.write();
         *settings = Settings::default();
-        let _ = mem::replace(&mut settings.filter_get_lang, filter_get_lang);
+        settings.filter_get_lang = filter_get_lang;
         // This locks `SETTINGS` for further write access in this scope.
         let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
 
@@ -748,10 +747,7 @@ mod tests {
         filter_map_lang_btmap.insert("de".to_string(), "de-DE".to_string());
         let mut settings = SETTINGS.write();
         *settings = Settings::default();
-        let _ = mem::replace(
-            &mut settings.filter_map_lang_btmap,
-            Some(filter_map_lang_btmap),
-        );
+        settings.filter_map_lang_btmap = Some(filter_map_lang_btmap);
 
         // This locks `SETTINGS` for further write access in this scope.
         let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
