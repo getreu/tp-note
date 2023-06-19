@@ -150,6 +150,7 @@ use crate::note::Note;
 use crate::note_error_tera_template;
 use crate::settings::force_lang_setting;
 use crate::settings::update_settings;
+use crate::settings::SETTINGS;
 use crate::template::TemplateKind;
 #[cfg(feature = "viewer")]
 use parse_hyperlinks::renderer::text_rawlinks2html;
@@ -202,6 +203,9 @@ use tera::Value;
 pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteError> {
     // Initialize settings.
     update_settings()?;
+    // Prevent the rest to run in parallel.
+    let _lock = SETTINGS.read_recursive();
+
     // Collect input data for templates.
     let context = Context::from(path);
 
@@ -289,7 +293,6 @@ where
 {
     // Initialize settings.
     update_settings()?;
-
     if let Some(lang) = force_lang {
         if lang == "-" {
             // Only disable `get_lang` filter.
@@ -300,6 +303,9 @@ where
             force_lang_setting(Some(lang));
         }
     }
+
+    // Prevent the rest to run in parallel.
+    let _lock = SETTINGS.read_recursive();
 
     // First, generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
