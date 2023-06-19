@@ -70,8 +70,6 @@ impl TryFrom<&str> for FrontMatter {
     /// Helper function deserialising the front-matter of the note file.
     /// An empty header leads to an empty `tera::Map`; no error.
     fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
-        let lib_cfg = LIB_CFG.read_recursive();
-
         let map: tera::Map<String, tera::Value> =
             serde_yaml::from_str(header).map_err(|e| NoteError::InvalidFrontMatterYaml {
                 front_matter: header
@@ -84,6 +82,7 @@ impl TryFrom<&str> for FrontMatter {
             })?;
         let fm = FrontMatter(map);
 
+        let lib_cfg = LIB_CFG.read_recursive();
         // `sort_tag` has additional constrains to check.
         if let Some(tera::Value::String(sort_tag)) =
             &fm.get(TMPL_VAR_FM_SORT_TAG.trim_start_matches(TMPL_VAR_FM_))

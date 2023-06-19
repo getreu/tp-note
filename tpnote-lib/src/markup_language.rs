@@ -48,7 +48,6 @@ impl From<&str> for MarkupLanguage {
     #[inline]
     fn from(file_extension: &str) -> Self {
         let lib_cfg = LIB_CFG.read_recursive();
-        let settings = SETTINGS.read_recursive();
 
         for e in &lib_cfg.filename.extensions_md {
             if e == file_extension {
@@ -75,10 +74,13 @@ impl From<&str> for MarkupLanguage {
                 return MarkupLanguage::Unknown;
             }
         }
+
         // If ever `extension_default` got forgotten in
         // one of the above lists, make sure that Tp-Note
         // recognizes its own files. Even without Markup
         // rendition.
+        let settings = SETTINGS.read_recursive();
+
         if file_extension == lib_cfg.filename.extension_default
             || file_extension == settings.extension_default
         {

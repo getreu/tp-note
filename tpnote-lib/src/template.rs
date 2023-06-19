@@ -100,16 +100,13 @@ impl TemplateKind {
     /// Returns the content template string as it is defined in the configuration file.
     /// Panics for `TemplateKind::SyncFilename` and `TemplateKind::None`.
     pub fn get_content_template(&self) -> String {
+        let lib_cfg = LIB_CFG.read_recursive();
         match self {
-            Self::New => LIB_CFG.read_recursive().tmpl.new_content.clone(),
-            Self::FromClipboardYaml => LIB_CFG
-                .read_recursive()
-                .tmpl
-                .from_clipboard_yaml_content
-                .clone(),
-            Self::FromClipboard => LIB_CFG.read_recursive().tmpl.from_clipboard_content.clone(),
-            Self::FromTextFile => LIB_CFG.read_recursive().tmpl.from_text_file_content.clone(),
-            Self::AnnotateFile => LIB_CFG.read_recursive().tmpl.annotate_file_content.clone(),
+            Self::New => lib_cfg.tmpl.new_content.clone(),
+            Self::FromClipboardYaml => lib_cfg.tmpl.from_clipboard_yaml_content.clone(),
+            Self::FromClipboard => lib_cfg.tmpl.from_clipboard_content.clone(),
+            Self::FromTextFile => lib_cfg.tmpl.from_text_file_content.clone(),
+            Self::AnnotateFile => lib_cfg.tmpl.annotate_file_content.clone(),
             Self::SyncFilename => {
                 panic!("`TemplateKind::SyncFilename` has no content template")
             }
@@ -133,25 +130,14 @@ impl TemplateKind {
     /// Returns the file template string as it is defined in the configuration file.
     /// Panics for `TemplateKind::None`.
     pub fn get_filename_template(&self) -> String {
+        let lib_cfg = LIB_CFG.read_recursive();
         match self {
-            Self::New => LIB_CFG.read_recursive().tmpl.new_filename.clone(),
-            Self::FromClipboardYaml => LIB_CFG
-                .read_recursive()
-                .tmpl
-                .from_clipboard_yaml_filename
-                .clone(),
-            Self::FromClipboard => LIB_CFG
-                .read_recursive()
-                .tmpl
-                .from_clipboard_filename
-                .clone(),
-            Self::FromTextFile => LIB_CFG
-                .read_recursive()
-                .tmpl
-                .from_text_file_filename
-                .clone(),
-            Self::AnnotateFile => LIB_CFG.read_recursive().tmpl.annotate_file_filename.clone(),
-            Self::SyncFilename => LIB_CFG.read_recursive().tmpl.sync_filename.clone(),
+            Self::New => lib_cfg.tmpl.new_filename.clone(),
+            Self::FromClipboardYaml => lib_cfg.tmpl.from_clipboard_yaml_filename.clone(),
+            Self::FromClipboard => lib_cfg.tmpl.from_clipboard_filename.clone(),
+            Self::FromTextFile => lib_cfg.tmpl.from_text_file_filename.clone(),
+            Self::AnnotateFile => lib_cfg.tmpl.annotate_file_filename.clone(),
+            Self::SyncFilename => lib_cfg.tmpl.sync_filename.clone(),
             Self::None => panic!("`TemplateKind::None` has no filename template"),
         }
     }

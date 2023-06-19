@@ -66,8 +66,6 @@ fn sanit_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let lib_cfg = LIB_CFG.read_recursive();
-
     let p = try_get_value!("sanit", "value", Value, value);
 
     // Take unmodified `String()`, but format all other types into
@@ -91,6 +89,7 @@ fn sanit_filter<S: BuildHasher>(
             None => false,
         };
 
+    let lib_cfg = LIB_CFG.read_recursive();
     // Check if this is a usual filename.
     if p.starts_with(FILENAME_DOTFILE_MARKER) && PathBuf::from(&*p).has_wellformed_filename() {
         p.to_mut()
@@ -364,8 +363,6 @@ fn get_lang_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let settings = SETTINGS.read_recursive();
-
     let p = try_get_value!("get_lang", "value", tera::Value, value);
     match p {
         #[allow(unused_variables)]
@@ -376,6 +373,7 @@ fn get_lang_filter<S: BuildHasher>(
                 return Ok(to_value("").unwrap());
             }
 
+            let settings = SETTINGS.read_recursive();
             let detector: LanguageDetector = match &settings.filter_get_lang {
                 FilterGetLang::SomeLanguages(iso_codes) => {
                     log::trace!(
@@ -396,7 +394,6 @@ fn get_lang_filter<S: BuildHasher>(
                 _ => return Ok(to_value("").unwrap()),
             }
             .build();
-            drop(settings);
 
             let detected_language = detector
                 .detect_language_of(input)
@@ -431,7 +428,6 @@ fn map_lang_filter<S: BuildHasher>(
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let p = try_get_value!("map_lang", "value", tera::Value, value);
-    let settings = SETTINGS.read_recursive();
 
     match p {
         tera::Value::String(input) => {
@@ -443,6 +439,7 @@ fn map_lang_filter<S: BuildHasher>(
                     return Ok(to_value("")?);
                 };
             };
+            let settings = SETTINGS.read_recursive();
             if let Some(btm) = &settings.filter_map_lang_btmap {
                 match btm.get(input) {
                     None => Ok(to_value(input)?),

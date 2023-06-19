@@ -205,8 +205,6 @@ pub trait NotePath {
 
 impl NotePath for Path {
     fn disassemble(&self) -> (&str, &str, &str, &str, &str) {
-        let lib_cfg = LIB_CFG.read_recursive();
-
         let sort_tag_stem_copy_counter_ext = &self
             .file_name()
             .unwrap_or_default()
@@ -219,6 +217,7 @@ impl NotePath for Path {
             .to_str()
             .unwrap_or_default();
 
+        let lib_cfg = LIB_CFG.read_recursive();
         let stem_copy_counter = sort_tag_stem_copy_counter.trim_start_matches(
             &lib_cfg
                 .filename
@@ -226,6 +225,7 @@ impl NotePath for Path {
                 .chars()
                 .collect::<Vec<char>>()[..],
         );
+        drop(lib_cfg);
 
         let sort_tag = &sort_tag_stem_copy_counter
             [0..sort_tag_stem_copy_counter.len() - stem_copy_counter.len()];
