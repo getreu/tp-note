@@ -104,6 +104,7 @@ fi
 
 echo '[ab:cd"ef](https://getreu.net)' | \
 LANG="en_US.UTF-8" LOGNAME="myuser" \
+TPNOTE_LANG_DETECTION="" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
