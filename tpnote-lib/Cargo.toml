@@ -10,7 +10,7 @@ name = "tpnote-lib"
 readme.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-version = "0.20.3"
+version = "0.21.0"
 
 [features]
 default = ["renderer", "viewer", "lang-detection"]
@@ -34,7 +34,7 @@ rst_parser = { version = "0.4.0", optional = true }
 rst_renderer = { version = "0.4.0", optional = true }
 sanitize-filename-reader-friendly.workspace = true
 self_cell = "1.0.1"
-serde_json = "1.0.96"
+serde_json = "1.0.97"
 serde.workspace = true
 serde_yaml.workspace = true
 substring = "1.4.5"

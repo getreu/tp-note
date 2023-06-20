@@ -2621,9 +2621,9 @@ dependencies = [
 
 [[package]]
 name = "notify"
-version = "6.0.0"
+version = "6.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d9ba6c734de18ca27c8cef5cd7058aa4ac9f63596131e4c7e41e579319032a2"
+checksum = "5738a2795d57ea20abec2d6d76c6081186709c0024187cd5977265eda6598b51"
 dependencies = [
  "bitflags",
  "crossbeam-channel",
@@ -3428,9 +3428,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.96"
+version = "1.0.97"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "057d394a50403bcac12672b2b18fb387ab6d289d957dab67dd201875391e52f1"
+checksum = "bdf3bf93142acad5821c99197022e170842cdbc1c30482b98750c688c640842a"
 dependencies = [
  "itoa",
  "ryu",
@@ -3885,6 +3885,7 @@ dependencies = [
  "notify",
  "notify-debouncer-mini",
  "notify-rust",
+ "parking_lot",
  "percent-encoding",
  "sanitize-filename-reader-friendly",
  "semver",
@@ -3894,7 +3895,7 @@ dependencies = [
  "thiserror",
  "time",
  "toml",
- "tpnote-lib 0.20.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tpnote-lib",
  "webbrowser",
  "win32job",
  "windows-sys 0.48.0",
@@ -3909,36 +3910,7 @@ dependencies = [
  "lazy_static",
  "lingua",
  "log",
- "parse-hyperlinks",
- "parse-hyperlinks-extras",
- "percent-encoding",
- "pulldown-cmark",
- "rst_parser",
- "rst_renderer",
- "sanitize-filename-reader-friendly",
- "self_cell",
- "serde",
- "serde_json",
- "serde_yaml",
- "substring",
- "syntect",
- "tera",
- "thiserror",
- "toml",
- "win32job",
- "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "tpnote-lib"
-version = "0.20.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8f3a62e08e55f96e07431246d87b823fbd58d27ec5c0373689dbad541439705"
-dependencies = [
- "latex2mathml",
- "lazy_static",
- "lingua",
- "log",
+ "parking_lot",
  "parse-hyperlinks",
  "parse-hyperlinks-extras",
  "percent-encoding",
