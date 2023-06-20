@@ -309,9 +309,7 @@ some examples:
   rustup target add x86_64-unknown-linux-musl
   sudo apt install musl-tools
 
-  PKG_CONFIG_ALLOW_CROSS=1 cargo build \
- 	   --target x86_64-unknown-linux-musl \
- 	   --release
+  cargo build --target x86_64-unknown-linux-musl --release
   ```
 
 * Target Raspberry Pi (32 bit):
@@ -320,9 +318,8 @@ some examples:
   rustup target add armv7-unknown-linux-gnueabihf
   sudo apt install crossbuild-essential-armhf
   
-  PKG_CONFIG_ALLOW_CROSS=1 cargo build \
-	  --target armv7-unknown-linux-gnueabihf \
-	  --release
+  CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=/usr/bin/arm-linux-gnueabihf-gcc \
+    cargo build --target armv7-unknown-linux-gnueabihf --release
   ```
 
 * Target Windows:
