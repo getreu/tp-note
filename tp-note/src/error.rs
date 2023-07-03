@@ -99,17 +99,13 @@ pub enum ConfigFileError {
     /// Remedy: check the configuration file variable `app_args.editor`
     /// or `app_args.browser` depending on the displayed variable name.
     #[error(
-        "Can not find any external application listend in `{var_name}`:\n\
-        \t{app_list:?}\n\
-        \n\
+        "Can not find any external application listend in `{var_name}`: \
+        {app_list}\n\
         Install one of the listed applications on your system -or-\n\
         register some already installed application in Tp-Note's \n\
         configuration file or in the corresponding environment variable."
     )]
-    NoApplicationFound {
-        app_list: Vec<Vec<String>>,
-        var_name: String,
-    },
+    NoApplicationFound { app_list: String, var_name: String },
 
     #[error(transparent)]
     Io(#[from] std::io::Error),

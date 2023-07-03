@@ -143,11 +143,17 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
     }
 
     if !executable_found {
-        return Err(ConfigFileError::NoApplicationFound {
-            app_list: browser_args.to_owned(),
-            var_name,
+        let mut app_list = String::new();
+        for l in browser_args.iter() {
+            app_list.push_str("\n\t");
+            for a in l {
+                app_list.push_str(a);
+                app_list.push(' ');
+            }
+            app_list.truncate(app_list.len() - " ".len());
         }
-        .into());
+
+        return Err(ConfigFileError::NoApplicationFound { app_list, var_name }.into());
     };
 
     Ok(())

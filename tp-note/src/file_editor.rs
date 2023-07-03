@@ -166,8 +166,18 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
     } // All executables in the list are launched, without success.
 
     if !executable_found {
+        let mut app_list = String::new();
+        for l in editor_args.iter() {
+            app_list.push_str("\n\t");
+            for a in l {
+                app_list.push_str(a);
+                app_list.push(' ');
+            }
+            app_list.truncate(app_list.len() - " ".len());
+        }
+
         return Err(ConfigFileError::NoApplicationFound {
-            app_list: editor_args.to_owned(),
+            app_list,
             // Choose the right parameter list.
             var_name: match (&env_var, *RUNS_ON_CONSOLE) {
                 (Some(_), false) => ENV_VAR_TPNOTE_EDITOR.to_string(),
