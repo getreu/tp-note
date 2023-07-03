@@ -19,8 +19,12 @@ use std::fs;
 use std::fs::File;
 #[cfg(not(test))]
 use std::io::Write;
+#[cfg(not(test))]
+use std::mem;
 use std::path::Path;
 use std::path::PathBuf;
+#[cfg(not(test))]
+use tera::Tera;
 use tpnote_lib::config::Filename;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::Tmpl;
@@ -149,6 +153,7 @@ const APP_ARGS_EDITOR: &[&[&str]] = &[
     &["flatpak", "run", "com.vscodium.codium", "-w", "-n"],
     &["code", "-w", "-n"],
     &["flatpak", "run", "com.visualstudio.code", "-w", "-n"],
+    &["subl", "-w"],
     // Disable Typora until bug fix:
     // https://github.com/typora/typora-issues/issues/4633
     //    &["typora"],
@@ -163,6 +168,7 @@ const APP_ARGS_EDITOR: &[&[&str]] = &[
 ];
 #[cfg(target_family = "windows")]
 const APP_ARGS_EDITOR: &[&[&str]] = &[
+    &["C:\\Program Files\\Microsoft VS Code\\Code.exe", "-w", "-n"],
     // Disable Typora until bug fix:
     // https://github.com/typora/typora-issues/issues/4633
     //    &["C:\\Program Files\\Typora\\Typora.exe"],
@@ -449,7 +455,42 @@ lazy_static! {
 #[inline]
 fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
     if config_path.exists() {
-        let config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
+        let mut config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
+
+        // Fill `config.app_args.*` templates with empty `tera::Context`.
+        // The latter allows to use environment variables in templates: e.g.:
+        // `{{ get_env(name="username", default="unknown-user" )}}`.
+        let mut tera = Tera::default();
+        let context = tera::Context::new();
+        config.app_args.browser.iter_mut().for_each(|i| {
+            i.iter_mut().for_each(|arg| {
+                let new_arg = tera
+                    .render_str(&arg, &context)
+                    .unwrap_or_default()
+                    .to_string();
+                let _ = mem::replace(arg, new_arg);
+            })
+        });
+        config.app_args.editor.iter_mut().for_each(|i| {
+            i.iter_mut().for_each(|arg| {
+                let new_arg = tera
+                    .render_str(&arg, &context)
+                    .unwrap_or_default()
+                    .to_string();
+                let _ = mem::replace(arg, new_arg);
+            })
+        });
+        config.app_args.editor_console.iter_mut().for_each(|i| {
+            i.iter_mut().for_each(|arg| {
+                let new_arg = tera
+                    .render_str(&arg, &context)
+                    .unwrap_or_default()
+                    .to_string();
+                let _ = mem::replace(arg, new_arg);
+            })
+        });
+        let config = config; // Freeze.
+
         // Check for obvious configuration errors.
         if config
             .filename
