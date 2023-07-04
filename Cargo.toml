@@ -24,8 +24,8 @@ lazy_static = "1.4.0"
 log = { version = "0.4.19", features = ["serde"] }
 parking_lot = "0.12.1"
 sanitize-filename-reader-friendly = "2.2.1"
-serde = { version = "1.0.164", features = ["derive"] }
-serde_yaml = "0.9.21"
+serde = { version = "1.0.166", features = ["derive"] }
+serde_yaml = "0.9.22"
 tera = { version = "1.19.0", default-features = true }
 thiserror = "1.0.40"
-toml = "0.7.4"
+toml = "0.7.5"
