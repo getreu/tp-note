@@ -168,7 +168,6 @@ const APP_ARGS_EDITOR: &[&[&str]] = &[
 ];
 #[cfg(target_family = "windows")]
 const APP_ARGS_EDITOR: &[&[&str]] = &[
-    &["C:\\Program Files\\Microsoft VS Code\\Code.exe", "-w", "-n"],
     // Disable Typora until bug fix:
     // https://github.com/typora/typora-issues/issues/4633
     //    &["C:\\Program Files\\Typora\\Typora.exe"],
@@ -176,6 +175,17 @@ const APP_ARGS_EDITOR: &[&[&str]] = &[
         "C:\\Program Files\\Mark Text\\Mark Text.exe",
         "--new-window",
     ],
+    &[
+        "{{get_env(name=\"LOCALAPPDATA\")}}\\Programs\\Microsoft VS Code\\Code.exe",
+        "-n",
+        "-w",
+    ],
+    &[
+        "{{get_env(name=\"LOCALAPPDATA\")}}\\Programs\\VSCodium\\VSCodium.exe",
+        "-n",
+        "-w",
+    ],
+    &["C:\\Program Files\\Microsoft VS Code\\Code.exe", "-n", "-w"],
     &[
         "C:\\Program Files\\Notepad++\\notepad++.exe",
         "-nosession",
