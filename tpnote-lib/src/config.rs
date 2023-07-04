@@ -91,11 +91,6 @@ pub const FILENAME_COPY_COUNTER_MAX: usize = 400;
 ///
 /// NB: Do not forget to adapt the templates `TMPL_*` in case you set
 /// this to another markup language.
-#[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-pub const FILENAME_EXTENSION_DEFAULT: &str = "md";
-#[cfg(target_family = "windows")]
-pub const FILENAME_EXTENSION_DEFAULT: &str = "txt";
-#[cfg(all(target_family = "unix", target_vendor = "apple"))]
 pub const FILENAME_EXTENSION_DEFAULT: &str = "md";
 
 /// The variables `FILENAME_EXTENSIONS_*` list file extensions that Tp-Note
