@@ -1031,15 +1031,41 @@ editor = [
 ]
 ```
 
-When you configure Tp-Note to work with your text editor, make sure, that your
-text editor does not fork! You can check this by launching the text editor from
-the command line: if the command prompt returns immediately, then the file
-editor forks the process. On the other hand everything is OK, when the command
-prompt only comes back at the moment the text editor is closed. Many text
-editors provide an option to restrain from forking: for example the
-_VScode_ file editor can be launched with the '`--wait`' option, _Vim_ with
-'`--nofork`' or _Kate_ with '`--block`' (see example above). However,
-Tp-Note also works with forking text editors. Although this should be
+All items in the above list are subject to limited template expansion allowing
+to insert the value of environment variables. Consider the following example:
+
+```toml
+editor = [
+    [
+    '{{get_env(name="LOCALAPPDATA")}}\Programs\Microsoft VS Code\Code.exe',
+    "-n", "-w",
+    ]
+]
+```
+
+When the configuration file is loaded, the above expression
+'`{{get_env(name="LOCALAPPDATA")}}`' expends under Windows (my username is
+'`Getreu`') to '`C:\User\Getreu\AppData\Local`' resulting in:
+
+```toml
+editor = [
+    [
+    'C:\User\Getreu\AppData\Local\Programs\Microsoft VS Code\Code.exe',
+    "-n", "-w",
+    ]
+]
+```
+
+In general, when you configure Tp-Note to work with your text editor, make sure,
+that your text editor does not fork! You can check this by launching the text
+editor from the command line: if the command prompt returns immediately, then
+the file editor forks the process. On the other hand everything is OK, when the
+command prompt only reappears at the moment the text editor is closed. Many text
+editors provide an option to restrain from forking: for example the _VScode_
+file editor can be launched with the '`--wait`' option, _Vim_ with '`--nofork`'
+or _Kate_ with '`--block`' (see example above). 
+
+However, Tp-Note also works with forking text editors. Although this should be
 avoided, there is a possible workaround:
 
 ```sh
@@ -1050,8 +1076,9 @@ tpnote --view "$FILE"  # Launch Tp-Note's viewer.
 tpnote --batch "$FILE" # Synchronize the note's filename.
 ```
 
-Whereby '`FILE=$(tpnote --batch)`' creates the note file, '`vi "$FILE"`' opens
-the '`vi`'-text editor and '`tpnote --batch "$FILE"`' synchronizes the filename.
+Whereby '`FILE=$(tpnote --batch)`' creates the note file, 
+'`mytexteditor "$FILE"`' opens the text editor and '`tpnote --batch "$FILE"`'
+synchronizes the filename.
 
 
 
@@ -1120,7 +1147,6 @@ editor = [
 
 Save the modified configuration file.  Next time you launch Tp-Note, the
 _Mark Text_-editor will open with your note.
-
 
 **Register a console text editor running in a terminal emulator**
 
@@ -1634,7 +1660,7 @@ template '`tmpl_html.viewer`' example, the source code highlighting CSS
 code is now embedded in the HTML output with '`<style>{{ note_css }}</style>`'
 
 
-## Choose your favorite web browser as note viewer
+## Choose your favourite web browser as note viewer
 
 Once the note is rendered into HTML, Tp-Note's internal HTTP server connects
 to a random port at the '`localhost`' interface where the rendition is served to
@@ -1728,9 +1754,9 @@ and _synchronize filename_:
 * _Synchronize filename_: This function mode is invoked when [Tp-Note] opens an
   existing note file, after it's YAML header is evaluated. The extracted header
   information is then applied to the '`tmpl.sync_filename`' template and the
-  resulting filename is compared to the actual filename on disk. If they differ,
-  [Tp-Note] renames the note file. The '`tmpl.sync_filename`' template operates
-  on its own without a corresponding content template.
+  resulting filename is compared with the actual filename on disk. If they
+  differ, [Tp-Note] renames the note file. Note, the '`tmpl.sync_filename`'
+  template operates on its own without a corresponding content template.
 
 Note, that in the operation mode _synchronize filename_, the header data
 overwrites the filename of the note, whereas in the operation mode _prepend
