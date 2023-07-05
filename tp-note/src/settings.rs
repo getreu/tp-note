@@ -4,11 +4,11 @@
 use crate::config::CFG;
 #[cfg(feature = "read-clipboard")]
 use arboard::Clipboard;
-use atty::{is, Stream};
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use std::env;
 use std::io;
+use std::io::IsTerminal;
 use std::io::Read;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -178,8 +178,9 @@ lazy_static! {
         let mut buffer = String::new();
 
         // Read stdin().
-        if !is(Stream::Stdin) {
-            let stdin = io::stdin();
+        let stdin = io::stdin();
+        if !stdin.is_terminal(){
+            // There is an input pipe for us to read from.
             let mut handle = stdin.lock();
             let _ = handle.read_to_string(&mut buffer);
         }

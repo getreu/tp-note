@@ -3893,7 +3893,6 @@ name = "tp-note"
 version = "1.21.8"
 dependencies = [
  "arboard",
- "atty",
  "directories",
  "httparse",
  "httpdate",
