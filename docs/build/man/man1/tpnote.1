@@ -1314,7 +1314,7 @@ Consider the following example:
 \f[C]
 editor = [
     [
-    \[aq]{{get_env(name=\[dq]LOCALAPPDATA\[dq])}}\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[aq],
+    \[aq]{{ get_env(name=\[dq]LOCALAPPDATA\[dq]) }}\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[aq],
     \[dq]-n\[dq], \[dq]-w\[dq],
     ]
 ]
@@ -1322,15 +1322,15 @@ editor = [
 .fi
 .PP
 When the configuration file is loaded, the above expression
-`\f[C]{{get_env(name=\[dq]LOCALAPPDATA\[dq])}}\f[R]' expends under
-Windows (my username is `\f[C]Getreu\f[R]') to
-`\f[C]C:\[rs]User\[rs]Getreu\[rs]AppData\[rs]Local\f[R]' resulting in:
+`\f[C]{{ get_env(name=\[dq]LOCALAPPDATA\[dq]) }}\f[R]' expands under
+Windows for a user with the username `\f[C]Joe\f[R]' to
+`\f[C]C:\[rs]User\[rs]Joe\[rs]AppData\[rs]Local\f[R]' resulting in:
 .IP
 .nf
 \f[C]
 editor = [
     [
-    \[aq]C:\[rs]User\[rs]Getreu\[rs]AppData\[rs]Local\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[aq],
+    \[aq]C:\[rs]User\[rs]Joe\[rs]AppData\[rs]Local\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[aq],
     \[dq]-n\[dq], \[dq]-w\[dq],
     ]
 ]

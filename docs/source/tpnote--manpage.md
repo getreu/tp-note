@@ -1037,20 +1037,20 @@ to insert the value of environment variables. Consider the following example:
 ```toml
 editor = [
     [
-    '{{get_env(name="LOCALAPPDATA")}}\Programs\Microsoft VS Code\Code.exe',
+    '{{ get_env(name="LOCALAPPDATA") }}\Programs\Microsoft VS Code\Code.exe',
     "-n", "-w",
     ]
 ]
 ```
 
 When the configuration file is loaded, the above expression
-'`{{get_env(name="LOCALAPPDATA")}}`' expends under Windows (my username is
-'`Getreu`') to '`C:\User\Getreu\AppData\Local`' resulting in:
+'`{{ get_env(name="LOCALAPPDATA") }}`' expands under Windows for a user with
+the username '`Joe`' to '`C:\User\Joe\AppData\Local`' resulting in:
 
 ```toml
 editor = [
     [
-    'C:\User\Getreu\AppData\Local\Programs\Microsoft VS Code\Code.exe',
+    'C:\User\Joe\AppData\Local\Programs\Microsoft VS Code\Code.exe',
     "-n", "-w",
     ]
 ]
