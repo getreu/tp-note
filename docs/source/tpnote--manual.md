@@ -738,8 +738,8 @@ _Tp-Note_ is distributed with a Microsoft Windows Installer package
 `tpnote-x.x.x-x86_64.msi`, which automates the following key registration.
 Omit this section if you have installed _Tp-Note_ through this `.msi` package!
 
-1. Make the directory `C:\Windows\tpnote\bin\` and move `tpnote.exe`
-   into it.
+1. Make the directory `C:\Program Files\tpnote\bin\` with Administrator rights 
+   and move the binary `tpnote.exe` into it.
 
 2. Open the *notepad* text editor and paste the following registry key into
    it.
@@ -801,9 +801,9 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
 
 4. Double-click on `tpnote.reg` and confirm several times.
 
-5. Assign `tpnote` as default application for `.txt`-files
+5. Assign `tpnote` as default application for `.md`-files
 
-   ![Click-right on .txt file to open file properties](images/Properties-Opens_with-Notepad.png){width="8cm"}
+   ![Click-right on some .md file to open file properties](images/Properties-Opens_with-Notepad.png){width="8cm"}
 
    ![Press "Change ..." and choose "Tp-Note"](images/Properties-Opens_with-tp-note.png){width="8cm"}
 
