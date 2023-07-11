@@ -92,7 +92,8 @@ pub enum NoteError {
 
     /// Remedy: check the syntax of the Tera template in the configuration file.
     #[error(
-        "Tera template error in configuration file variable \"{template_str}\":\n {source_str}"
+        "Tera template error in configuration file\n\
+        variable \"{template_str}\":\n {source_str}"
     )]
     TeraTemplate {
         source_str: String,
@@ -111,7 +112,8 @@ pub enum NoteError {
 
     /// Remedy: add the missing field in the note's front matter.
     #[error(
-        "The document is missing a `{field_name}:` field in its front matter:\n\
+        "The document is missing a `{field_name}:`\n\
+         field in its front matter:\n\
          \n\
          \t~~~~~~~~~~~~~~\n\
          \t---\n\
@@ -120,13 +122,16 @@ pub enum NoteError {
          \tsome text\n\
          \t~~~~~~~~~~~~~~\n\
          \n\
-         Please correct the front matter if this is supposed \
-         to be a Tp-Note file. Ignore otherwise."
+         Please correct the front matter if this is\n\
+         supposed to be a Tp-Note file. Ignore otherwise."
     )]
     MissingFrontMatterField { field_name: String },
 
     /// Remedy: enter a string.
-    #[error("The value of the front matter field `{field_name}:` must be a non empty string.")]
+    #[error(
+        "The value of the front matter field `{field_name}:`\n\
+         must be a non empty string."
+    )]
     CompulsoryFrontMatterFieldIsEmpty { field_name: String },
 
     /// Remedy: check YAML syntax in the note's front matter.
@@ -144,7 +149,8 @@ pub enum NoteError {
 
     /// Remedy: check YAML syntax in the input stream's front matter.
     #[error(
-        "Invalid YAML field(s) in the {tmpl_var} input stream data found:\n\
+        "Invalid YAML field(s) in the {tmpl_var} input\n\
+        stream data found:\n\
         {source_str}"
     )]
     InvalidInputYaml {
@@ -154,8 +160,8 @@ pub enum NoteError {
 
     /// Remedy: check front matter delimiters `----`.
     #[error(
-        "The document (or template) has no front matter section.\n\
-         Is one `---` missing?\n\n\
+        "The document (or template) has no front matter\n\
+         section. Is one `---` missing?\n\n\
          \t~~~~~~~~~~~~~~\n\
          \t---\n\
          \t{compulsory_field}: \"My note\"\n\
@@ -163,19 +169,20 @@ pub enum NoteError {
          \tsome text\n\
          \t~~~~~~~~~~~~~~\n\
          \n\
-         Please correct the front matter if this is supposed \
-         to be a Tp-Note file. Ignore otherwise."
+         Please correct the front matter if this is\n\
+         supposed to be a Tp-Note file. Ignore otherwise."
     )]
     MissingFrontMatter { compulsory_field: String },
 
     /// Remedy: remove invalid characters.
     #[error(
-        "The `sort_tag` header variable contains invalid \
+        "The `sort_tag` header variable contains invalid\n\
          character(s):\n\n\
          \t---\n\
          \tsort_tag = \"{sort_tag}\"\n\
          \t---\n\n\
-         Only the characters: \"{sort_tag_chars}\" are allowed here."
+         Only the characters: \"{sort_tag_chars}\"\n\
+         are allowed here."
     )]
     SortTagVarInvalidChar {
         sort_tag: String,
@@ -188,17 +195,18 @@ pub enum NoteError {
         \t---\n\
         \tfile_ext=\"{extension}\"\n\
         \t---\n\
-        is not registered as a valid\n\
-        Tp-Note-file in the `filename.extensions_*` variables\n\
-        in your configuration file:\n\
+        is not registered as a valid Tp-Note-file in\n\
+        the `filename.extensions_*` variables in your\n\
+        configuration file:\n\
         \t{md_ext:?}\n\
         \t{rst_ext:?}\n\
         \t{html_ext:?}\n\
         \t{txt_ext:?}\n\
         \t{no_viewer_ext:?}\n\
         \n\
-        Choose one of the listed above or add more extensions to the\n\
-        `filename.extensions_*` variables in your configuration file."
+        Choose one of the listed above or add more\n\
+        extensions to the `filename.extensions_*`\n\
+        variables in your configuration file."
     )]
     FileExtNotRegistered {
         extension: Box<String>,
@@ -241,9 +249,10 @@ pub enum ConfigError {
     /// `tmpl.filter_get_lang` and make sure that they are supported, by
     /// checking `tpnote -V`.
     #[error(
-        "The ISO 639-1 language subtag `{language_code}` in the configuration \
-         file variable `tmpl.filter_get_lang` or in the environment variable \
-         `TPNOTE_LANG_DETECTION` is not supported.\n\
+        "The ISO 639-1 language subtag `{language_code}`\n\
+         in the configuration file variable\n\
+         `tmpl.filter_get_lang` or in the environment\n\
+         variable `TPNOTE_LANG_DETECTION` is not supported.\n\
          All listed codes must be part of the set:\n\
          {all_langs}."
     )]
@@ -255,11 +264,13 @@ pub enum ConfigError {
     /// `tmpl.filter_get_lang` (or in `TPNOTE_LANG_DETECTION`) and make
     /// sure that the code is supported, by checking `tpnote -V`.
     #[error(
-        "Not enough languages to choose from. \
-         The list of ISO 639-1 language subtags currently contains only one \
-         item: `{language_code}`. Add one more language to the configuration \
-         file variable `tmpl.filter_get_lang` or to the environment variable \
-         `TPNOTE_LANG_DETECTION` to prevent this error from occurring."
+        "Not enough languages to choose from.\n\
+         The list of ISO 639-1 language subtags\n\
+         currently contains only one item: `{language_code}`.\n\
+         Add one more language to the configuration \n\
+         file variable `tmpl.filter_get_lang` or to the\n\
+         environment variable `TPNOTE_LANG_DETECTION`\n\
+         to prevent this error from occurring."
     )]
     NotEnoughLanguageCodes { language_code: String },
 }

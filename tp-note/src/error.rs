@@ -44,7 +44,8 @@ pub enum WorkflowError {
 pub enum ConfigFileError {
     /// Remedy: delete or rename the configuration file.
     #[error(
-        "Can not backup and delete the erroneous configuration file:\n\
+        "Can not backup and delete the erroneous\n\
+        configuration file:\n\
         ---\n\
         {error}\n\n\
         Please do it manually."
@@ -53,11 +54,13 @@ pub enum ConfigFileError {
 
     /// Remedy: restart, or check file permission of the configuration file.
     #[error(
-        "Unable to load, parse or write the configuration file:\n\
+        "Unable to load, parse or write the\n\
+        configuration file:\n\
         ---\n\
         {error}\n\n\
-        Note: this error may occur after upgrading Tp-Note due\n\
-        to some incompatible configuration file changes.\n\
+        Note: this error may occur after upgrading\n\
+        Tp-Note due to some incompatible configuration\n\
+        file changes.\n\
         \n\
         Tp-Note backs up the existing configuration\n\
         file and creates a new one with default values."
@@ -68,7 +71,7 @@ pub enum ConfigFileError {
     #[error(
         "Configuration file version mismatch:\n---\n\
         Configuration file version: \'{config_file_version}\'\n\
-        Minimum required configuration file version: \'{min_version}\'\n\
+        Minimum required version: \'{min_version}\'\n\
         \n\
         Tp-Note backs up the existing configuration\n\
         file and creates a new one with default values."
@@ -84,10 +87,11 @@ pub enum ConfigFileError {
 
     /// Remedy: check the configuration file variable `app_args.editor`.
     #[error(
-        "The external application did not terminate gracefully: {code}\n\
+        "The external application did not terminate\n\
+         gracefully: {code}\n\
          \n\
-         Edit the variable `{var_name}` in Tp-Note's configuration file\n\
-         and correct the following:\n\
+         Edit the variable `{var_name}` in Tp-Note's\n\
+         configuration file and correct the following:\n\
          \t{args:?}"
     )]
     ApplicationReturn {
@@ -98,12 +102,16 @@ pub enum ConfigFileError {
 
     /// Remedy: check the configuration file variable `app_args.editor`
     /// or `app_args.browser` depending on the displayed variable name.
+    /// For `TPNOTE_EDITOR` and `TPNOTE_BROWSER` check the environment
+    /// variable of the same name.
     #[error(
-        "Can not find any external application listend in `{var_name}`: \
+        "Can not find any external application listed\n\
+        in `{var_name}`: \
         {app_list}\n\
-        Install one of the listed applications on your system -or-\n\
-        register some already installed application in Tp-Note's \n\
-        configuration file or in the corresponding environment variable."
+        Install one of the listed applications on your\n\
+        system -or- register some already installed\n\
+        application in Tp-Note's configuration file\n\
+        or in the corresponding environment variable."
     )]
     NoApplicationFound { app_list: String, var_name: String },
 
