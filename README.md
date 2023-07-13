@@ -26,6 +26,8 @@ or _Typora_) and connects the default web browser to _Tp-Note_'s
 internal Markdown/RestructuredText renderer and web server. The viewer detects
 note file changes and updates the rendition accordingly.
 
+![Screenshot](./assets/tpnote-screenshot.png)
+
 * Read more in [Tp-Note’s user manual]
 
 * [Download Tp-Note]
@@ -54,7 +56,7 @@ User documentation:
 * User manual:
 
   The user manual showcases how to best use use _Tp-Note_ and how to integrate it
-  with you file manager.
+  with your file manager.
 
   [Tp-Note user manual - html]
 
