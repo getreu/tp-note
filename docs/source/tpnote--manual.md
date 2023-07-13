@@ -69,20 +69,20 @@ common workflows.
 
 ## Fast start note taking (when the lecture starts)
 
-![The folder in which the new note will be created.](images/workflow1-1.png){width="10cm"}
+![The folder in which the new note will be created.](assets/workflow1-1.png){width="10cm"}
 
 Alternatively you can open the folder where you want to create a new note and
 right-click on some empty white space.
 
-![The new unmodified note created by template on disk](images/workflow1-2.png){width="10cm"}
+![The new unmodified note created by template on disk](assets/workflow1-2.png){width="10cm"}
 
-![The new unmodified note created by template](images/workflow1-3.png){width="11cm"}
+![The new unmodified note created by template](assets/workflow1-3.png){width="11cm"}
 
-![Change the title](images/workflow1-4.png){width="11cm"}
+![Change the title](assets/workflow1-4.png){width="11cm"}
 
-![Add some text](images/workflow1-5.png){width="11cm"}
+![Add some text](assets/workflow1-5.png){width="11cm"}
 
-![The new note file on disk after closing the editor](images/workflow1-6.png){width="10cm"}
+![The new note file on disk after closing the editor](assets/workflow1-6.png){width="10cm"}
 
 > **Note**
 >
@@ -94,9 +94,9 @@ right-click on some empty white space.
 
 ## Taking notes about a file
 
-![We want to take a note about a pdf](images/workflow2-1.png){width="9cm"}
+![We want to take a note about a pdf](assets/workflow2-1.png){width="9cm"}
 
-![The new unmodified note created automatically](images/workflow2-2.png){width="11cm"}
+![The new unmodified note created automatically](assets/workflow2-2.png){width="11cm"}
 
 The source code of the note shows the link with its target. The left-click, opens the `.odt` document.
 
@@ -112,9 +112,9 @@ lang:       "en-GB"
 [03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt](<03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt>)
 ```
 
-![Annotate](images/workflow2-3.png){width="11cm"}
+![Annotate](assets/workflow2-3.png){width="11cm"}
 
-![The new note file on disk after closing the editor](images/workflow2-4.png){width="8cm"}
+![The new note file on disk after closing the editor](assets/workflow2-4.png){width="8cm"}
 
 
 
@@ -122,15 +122,15 @@ lang:       "en-GB"
 
 The approach is similar to what we have seen in the [previous chapter](#taking-notes-about-a-file):
 
-![Copy the location of the download page as Markdown](images/workflow6-1.png){width="9cm"}
+![Copy the location of the download page as Markdown](assets/workflow6-1.png){width="9cm"}
 
 Note: for convenience I use in this example the Firefox browser addon [Copy
 Selection as Markdown] to copy the hyperlink. If this addon is not available,
 you can also copy the URL directly from the search bar.
 
-![Select the file to annotate and start Tp-Note](images/workflow6-2.png){width="8cm"}
+![Select the file to annotate and start Tp-Note](assets/workflow6-2.png){width="8cm"}
 
-![The new unmodified note created automatically](images/workflow6-3.png){width="11cm"}
+![The new unmodified note created automatically](assets/workflow6-3.png){width="11cm"}
 
 The source-code of the note shows the links with their targets.
 
@@ -149,13 +149,13 @@ lang:       "en-GB"
 
 ```
 
-![The new note file on disk after closing the editor](images/workflow6-4.png){width="8cm"}
+![The new note file on disk after closing the editor](assets/workflow6-4.png){width="8cm"}
 
 
 
 ## Bookmark and comment a hyperlink
 
-![Copy a link in Markdown format](images/workflow3-2.png){width="11cm"}
+![Copy a link in Markdown format](assets/workflow3-2.png){width="11cm"}
 
 To copy a link in Markdown format a browser addon is needed. I recommend the
 addons [Copy as Markdown] and [Copy Selection as Markdown] available
@@ -164,9 +164,9 @@ for Firefox.
 [Copy as Markdown]: https://addons.mozilla.org/en-GB/firefox/search/?q=copy%20as%20markdown
 [Copy Selection as Markdown]: https://addons.mozilla.org/en-GB/firefox/addon/copy-selection-as-markdown/?src=search
 
-![Right-click on or in the new note's destination folder and start Tp-Note](images/workflow3-3.png){width="9cm"}
+![Right-click on or in the new note's destination folder and start Tp-Note](assets/workflow3-3.png){width="9cm"}
 
-![The new unmodified note created automatically](images/workflow3-4.png){width="9cm"}
+![The new unmodified note created automatically](assets/workflow3-4.png){width="9cm"}
 
 The source code of the note shows the link target:
 
@@ -189,9 +189,9 @@ open tabs. In this case, _Tp-Note_ would retain only the name of the first link
 as document title, whereas the whole link list would appear in the body of the
 note.
 
-![Annotate](images/workflow3-5.png){width="11cm"}
+![Annotate](assets/workflow3-5.png){width="11cm"}
 
-![The new note file on disk after closing the editor](images/workflow3-6.png){width="7cm"}
+![The new note file on disk after closing the editor](assets/workflow3-6.png){width="7cm"}
 
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
@@ -201,11 +201,11 @@ note.
 
 ## Copy a page from a book
 
-![Copy some chapters](images/workflow4-1.png){width="10cm"}
+![Copy some chapters](assets/workflow4-1.png){width="10cm"}
 
-![Right-click on or in the new note's destination folder and start Tp-Note](images/workflow4-2.png){width="7cm"}
+![Right-click on or in the new note's destination folder and start Tp-Note](assets/workflow4-2.png){width="7cm"}
 
-![The new unmodified note created automatically](images/workflow4-3.png){width="9cm"}
+![The new unmodified note created automatically](assets/workflow4-3.png){width="9cm"}
 
 ```{=docbook}
 <?dbfo-need height="4cm" ?>
@@ -231,7 +231,7 @@ In this example we copied only text. *Tp-Note* suggests the first sentence as
 title. This can be changed before saving as illustrated above. Here we just save
 and observe the file on the disk.
 
-![The new note file on disk after closing the editor](images/workflow4-4.png){width="7cm"}
+![The new note file on disk after closing the editor](assets/workflow4-4.png){width="7cm"}
 
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
@@ -264,18 +264,18 @@ hyperlink it can find for composing the note's title and its filename on disk.
 This is why the web page's name ends up automatically in the note's title and
 filename.  Here a sample work flow:
 
-![A webpage to copy extracts from](images/workflow5-1.png){width=12cm}
+![A webpage to copy extracts from](assets/workflow5-1.png){width=12cm}
 
-![“Copy Selection as Markdown”](images/workflow5-2.png){width="12cm"}
+![“Copy Selection as Markdown”](assets/workflow5-2.png){width="12cm"}
 
 ![Right-click on or in the new note's destination folder and start
-Tp-Note](images/workflow5-3.png){width="8cm"}
+Tp-Note](assets/workflow5-3.png){width="8cm"}
 
 ![The new template generated note opened with
-Typora](images/workflow5-4.png){width="11cm"}
+Typora](assets/workflow5-4.png){width="11cm"}
 
 ![The new note file on disk after closing the
-editor](images/workflow5-5.png){width="9cm"}
+editor](assets/workflow5-5.png){width="9cm"}
 
 Note, no content or filename was edited manually in this example. _Tp-Note_
 takes care of interpreting the clipboard's content and generating the file on
@@ -517,9 +517,9 @@ numerical digits and whitespace, a _sort-tag_ can be any combination of
 
 The figures below illustrate organizing files with *sort-tags".
 
-![Folders with sequence number sort-tag](images/filing-system1.png){width="10cm"}
+![Folders with sequence number sort-tag](assets/filing-system1.png){width="10cm"}
 
-![File with chronological sort-tag](images/filing-system2.png){width="7cm"}
+![File with chronological sort-tag](assets/filing-system2.png){width="7cm"}
 
 When _Tp-Note_ creates a new note, it automatically prepends a *chronological
 sort-tag* of today. The `{{ fm_title }}` part is usually derived from the parent
@@ -675,7 +675,7 @@ text editor, update Windows to the latest version or install
   your system will be launched, depends on which of them _Tp-Note_ finds
   first by searching through a configurable list of well known web browsers.
 
-  ![Tp-Note with open text editor (left) and viewer (right)](images/editor_and_viewer.png){width="12cm"}
+  ![Tp-Note with open text editor (left) and viewer (right)](assets/editor_and_viewer.png){width="12cm"}
 
   Please refer to [Tp-Note's man-page] to learn how change which web browser
   _Tp-Note_ launches as note viewer.
@@ -725,7 +725,7 @@ on a directory icon or on the white space in between (cf. figure below). In
 the following we will configure the file manager to launch _Tp-Note_ with the
 path to the selected icon.
 
-![Tp-note in the context-menu (right-click menu)](images/workflow2-1.png){width="9cm"}
+![Tp-note in the context-menu (right-click menu)](assets/workflow2-1.png){width="9cm"}
 
 ```{=docbook}
 <?dbfo-need height="6cm" ?>
@@ -803,9 +803,9 @@ Omit this section if you have installed _Tp-Note_ through this `.msi` package!
 
 5. Assign `tpnote` as default application for `.md`-files
 
-   ![Click-right on some .md file to open file properties](images/Properties-Opens_with-Notepad.png){width="8cm"}
+   ![Click-right on some .md file to open file properties](assets/Properties-Opens_with-Notepad.png){width="8cm"}
 
-   ![Press "Change ..." and choose "Tp-Note"](images/Properties-Opens_with-tp-note.png){width="8cm"}
+   ![Press "Change ..." and choose "Tp-Note"](assets/Properties-Opens_with-tp-note.png){width="8cm"}
 
 
 
@@ -838,13 +838,13 @@ In *Thunar*'s menu go to:
 
     Edit -> Configure custom actions...
 
-![Thunar's custom action configuration](images/custom_actions1.png){width="8cm"}
+![Thunar's custom action configuration](assets/custom_actions1.png){width="8cm"}
 
-![Edit custom action](images/edit_action.png){width="8cm"}
+![Edit custom action](assets/edit_action.png){width="8cm"}
 
-![Appearance Condition](images/appearance-condition.png){width="8cm"}
+![Appearance Condition](assets/appearance-condition.png){width="8cm"}
 
-![Thunar's custom action configuration with Tp-Note](images/custom_actions2.png){width="8cm"}
+![Thunar's custom action configuration with Tp-Note](assets/custom_actions2.png){width="8cm"}
 
 [Debian/Unbuntu package]: https://blog.getreu.net/projects/tp-note/#tp-note-debianubuntu-installer-package
 
@@ -857,9 +857,9 @@ when your note contains hyperlinks.
 In Thunar, we add a custom action the same way as we
 did before:
 
-![Edit custom action](images/viewer-edit_action.png){width="8cm"}
+![Edit custom action](assets/viewer-edit_action.png){width="8cm"}
 
-![Appearance Condition](images/viewer-appearance-condition.png){width="8cm"}
+![Appearance Condition](assets/viewer-appearance-condition.png){width="8cm"}
 
 ```{=docbook}
 <?dbfo-need height="4cm" ?>

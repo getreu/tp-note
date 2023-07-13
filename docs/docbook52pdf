@@ -78,7 +78,7 @@ render () {
     ### Generate .pdf 
     # xsltproc also take parameters e.g. --stringparam use.extensions 0\
 
-    cp -r  "$InDir/images/" "$OutDir"
+    cp -r  "$InDir/assets/" "$OutDir"
 
     cd "$OutDir"
 
@@ -89,7 +89,7 @@ render () {
            "$XmlFile" && \
         fop -fo "$FoFile" -pdf "$PdfFile"
         rm  "$XmlFile" && \
-        rm  -r "images" && \
+        rm  -r "assets" && \
         rm  "$FoFile"  
 }
 

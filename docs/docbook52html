@@ -73,7 +73,7 @@ render () {
     ### Generate .html
     # xsltproc also take parameters e.g. --stringparam use.extensions 0\
     # this is only needed for html output
-    cp -r -L  "$InDir/images/" "$OutDir"
+    cp -r -L  "$InDir/assets/" "$OutDir"
     cp "$InDir/docutils_basic.css" "$OutDir"
 
     ### Generate HTML
