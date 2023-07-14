@@ -1306,6 +1306,14 @@ editor = [
 \f[R]
 .fi
 .PP
+The equivalent configuration with environment variable:
+.IP
+.nf
+\f[C]
+TPNOTE_EDITOR=\[dq]kate --block\[dq] tpnote
+\f[R]
+.fi
+.PP
 All items in the above list are subject to limited template expansion
 allowing to insert the value of environment variables.
 Consider the following example:
@@ -1315,7 +1323,7 @@ Consider the following example:
 editor = [
     [
     \[aq]{{ get_env(name=\[dq]LOCALAPPDATA\[dq]) }}\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[aq],
-    \[dq]-n\[dq], \[dq]-w\[dq],
+    \[dq]--new-window\[dq], \[dq]--wait\[dq],
     ]
 ]
 \f[R]
@@ -1331,7 +1339,7 @@ Windows for a user with the username `\f[C]Joe\f[R]' to
 editor = [
     [
     \[aq]C:\[rs]User\[rs]Joe\[rs]AppData\[rs]Local\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[aq],
-    \[dq]-n\[dq], \[dq]-w\[dq],
+    \[dq]--new-window\[dq], \[dq]--wait\[dq],
     ]
 ]
 \f[R]
@@ -1346,24 +1354,55 @@ reappears at the moment the text editor is closed.
 Many text editors provide an option to restrain from forking: for
 example the \f[I]VScode\f[R] file editor can be launched with the
 `\f[C]--wait\f[R]' option, \f[I]Vim\f[R] with `\f[C]--nofork\f[R]' or
-\f[I]Kate\f[R] with `\f[C]--block\f[R]' (see example above).
+\f[I]Kate\f[R] with `\f[C]--block\f[R]'.
 .PP
 However, Tp-Note also works with forking text editors.
-Although this should be avoided, there is a possible workaround:
+Although this should be avoided, there is a possible workaround.
+Observe the following example:
+.IP
+.nf
+\f[C]
+$ TPNOTE_EDITOR=\[dq]kate\[dq] tpnote
+/home/getreu/20230714-getreu--Note.md
+$ 
+\f[R]
+.fi
+.PP
+In the above example Tp-Note launches the `\f[C]kate\f[R]' editor in a
+forking manner as the command line flag `\f[C]--block\f[R]' is missing.
+Internally the editor process launching returns immediately, leaving
+Tp-Note without any means to detect when exactly the user closes the
+editor.
+Hence, Tp-Note is not able to check if the user has changed the
+note\[cq]s header and no filename synchronization can occur afterwards.
+.PP
+As a workaround, you can manually trigger the filename synchronization
+after editing with `\f[C]tpnote --batch \[dq]$FILE\[dq]\f[R]':
 .IP
 .nf
 \f[C]
 FILE=$(tpnote --batch) # Create the new note.
-mytexteditor \[dq]$FILE\[dq]   # The prompt returns immediatly as the editor forks.
-tpnote --view \[dq]$FILE\[dq]  # Launch Tp-Note\[aq]s viewer.
-                       # After the editing is done...
-tpnote --batch \[dq]$FILE\[dq] # Synchronize the note\[aq]s filename.
+tpnote --view \[dq]$FILE\[dq]& # Launch Tp-Note\[aq]s viewer.
+kate \[dq]$FILE\[dq]           # Note, the prompt returns immediatly as the editor forks.
+                       # After closing the editor when editing is done...
+tpnote --batch \[dq]$FILE\[dq] # Synchronize the note\[aq]s filename again.
 \f[R]
 .fi
 .PP
 Whereby `\f[C]FILE=$(tpnote --batch)\f[R]' creates the note file,
-`\f[C]mytexteditor \[dq]$FILE\[dq]\f[R]' opens the text editor and
-`\f[C]tpnote --batch \[dq]$FILE\[dq]\f[R]' synchronizes the filename.
+`\f[C]kate \[dq]$FILE\[dq]\f[R]' opens the text editor and
+`\f[C]tpnote --batch \[dq]$FILE\[dq]\f[R]' synchronizes the filename
+after editing.
+.PP
+NB: Try to avoid forking at all cost.
+As mentioned above, most text editors have a command line flag to
+prevent the process from forking:
+.IP
+.nf
+\f[C]
+TPNOTE_EDITOR=\[dq]kate --block\[dq] tpnote
+\f[R]
+.fi
 .PP
 \f[B]Register a Flatpak Markdown editor\f[R]
 .PP

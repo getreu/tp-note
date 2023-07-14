@@ -1031,6 +1031,12 @@ editor = [
 ]
 ```
 
+The equivalent configuration with environment variable:
+
+```sh
+TPNOTE_EDITOR="kate --block" tpnote
+```
+
 All items in the above list are subject to limited template expansion allowing
 to insert the value of environment variables. Consider the following example:
 
@@ -1038,7 +1044,7 @@ to insert the value of environment variables. Consider the following example:
 editor = [
     [
     '{{ get_env(name="LOCALAPPDATA") }}\Programs\Microsoft VS Code\Code.exe',
-    "-n", "-w",
+    "--new-window", "--wait",
     ]
 ]
 ```
@@ -1051,7 +1057,7 @@ the username '`Joe`' to '`C:\User\Joe\AppData\Local`' resulting in:
 editor = [
     [
     'C:\User\Joe\AppData\Local\Programs\Microsoft VS Code\Code.exe',
-    "-n", "-w",
+    "--new-window", "--wait",
     ]
 ]
 ```
@@ -1063,24 +1069,48 @@ the file editor forks the process. On the other hand everything is OK, when the
 command prompt only reappears at the moment the text editor is closed. Many text
 editors provide an option to restrain from forking: for example the _VScode_
 file editor can be launched with the '`--wait`' option, _Vim_ with '`--nofork`'
-or _Kate_ with '`--block`' (see example above). 
+or _Kate_ with '`--block`'. 
+
 
 However, Tp-Note also works with forking text editors. Although this should be
-avoided, there is a possible workaround:
+avoided, there is a possible workaround. Observe the following example:
+
+```sh
+$ TPNOTE_EDITOR="kate" tpnote
+/home/getreu/20230714-getreu--Note.md
+$ 
+```
+
+In the above example Tp-Note launches the '`kate`' editor in a forking manner
+as the command line flag '`--block`' is missing. Internally the editor process
+launching returns immediately, leaving Tp-Note without any means to detect when
+exactly the user closes the editor. Hence, Tp-Note is not able to check if the
+user has changed the note's header and no filename synchronization can occur
+afterwards.
+
+As a workaround, you can manually trigger the filename synchronization after 
+editing with '`tpnote --batch "$FILE"`':
+ 
 
 ```sh
 FILE=$(tpnote --batch) # Create the new note.
-mytexteditor "$FILE"   # The prompt returns immediatly as the editor forks.
-tpnote --view "$FILE"  # Launch Tp-Note's viewer.
-                       # After the editing is done...
-tpnote --batch "$FILE" # Synchronize the note's filename.
+tpnote --view "$FILE"& # Launch Tp-Note's viewer.
+kate "$FILE"           # Note, the prompt returns immediatly as the editor forks.
+                       # After closing the editor when editing is done...
+tpnote --batch "$FILE" # Synchronize the note's filename again.
 ```
 
 Whereby '`FILE=$(tpnote --batch)`' creates the note file, 
-'`mytexteditor "$FILE"`' opens the text editor and '`tpnote --batch "$FILE"`'
-synchronizes the filename.
+'`kate "$FILE"`' opens the text editor and '`tpnote --batch "$FILE"`'
+synchronizes the filename after editing. 
 
+NB: Try to avoid forking at all cost. As mentioned above, most text editors
+have a command line flag to prevent the process from forking:
 
+ 
+```sh
+TPNOTE_EDITOR="kate --block" tpnote
+```
 
 **Register a Flatpak Markdown editor**
 
