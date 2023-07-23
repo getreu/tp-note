@@ -744,8 +744,8 @@ do not break when the source and the destination documents are moved together.
 Tp-Note's exporter function '`--export`' converts a given Tp-Note file into
 HTML and adds '`.html`' to the output filename. Links in the documents content
 to other Tp-Note files are hereby rewritten by appending '`.html`' to their
-URLs. This way you can convert groups of documents to HTML and later browse from
-document to document in you web browser. The option '`--export-link-rewriting`'
+qURLs. This way you can convert groups of documents to HTML and later jump from
+document to document in your web browser. The option '`--export-link-rewriting`'
 allows you to fine-tune how local links are written out. Valid values are:
 '`off`', '`short`' and '`long`'.
 
@@ -755,9 +755,9 @@ documents is always the directory where the marker file '`.tpnote.toml`' resides
 (or '`/`' if none exists). The option '`--export-link-rewriting`' decides how
 local links in the Tp-Note document are converted when the HTML is generated.
 If its value is '`short`', then relative local links are converted to absolute
-links. The base of the resulting links is again the directory where the
+links. The base of the resulting links is always the directory where the
 `.tpnote.toml` file resides (or `/` if none exists). Consider the following
-example:
+'`--export-link-rewriting=short`' example:
 
 * The Tp-Note file '`/my/docs/car/bill.md`' contains
 * the absolute link '`/car/scan.jpg`',
@@ -788,7 +788,7 @@ Concerning the link's _text_ property, the situation is simpler as the _text_
 property never changes. However, there is one exception: when the
 text property contains a URL starting with '`http:`' or '`https:`' only the file
 stem is displayed. For example, the link: '`[http:dir/my file.md](<http:dir/my
-file.md>)`' is rewritten into '`[my file](<http:dir/my file.md>)`' during the
+file.md>)`' is rewritten as '`[my file](<http:dir/my file.md>)`' during the
 rendition process. This explains why the autolink '`<http:dir/my file.md>.`'
 appears as '`my file`' in the browser.
 
@@ -1278,23 +1278,25 @@ extensions, that are regarded as Markdown files:
 extensions_md = [ 'txt', 'md', 'markdown' ]
 ```
 
-The default file extension for new note files under Windows is defined as:
-
-```toml
-[filename]
-extension_default = 'txt'
-```
-
-If you prefer rather the file extension '`md`' for new notes, change this to:
+The default file extension for new note files is defined as:
 
 ```toml
 [filename]
 extension_default = 'md'
 ```
 
+If you prefer rather the file extension '`.markdown`' for new notes, change
+this to:
+
+```toml
+[filename]
+extension_default = 'markdown'
+```
+
 This modification does not change how the note file's content is interpreted -
-in this case as Markdown - because both file extensions '`.txt`' and '`.md`'
-belong to the same extension group defined in '`filename.extensions_md`'.
+in this case as Markdown - because both file extensions '`.md`' and 
+'`.markdown`' belong to the same extension group defined in
+'`filename.extensions_md`'.
 
 
 
@@ -1777,7 +1779,7 @@ and _synchronize filename_:
 
 * _Prepend header to text file_ (new feature in Tp-Note v1.16.0): When Tp-Note
   opens a regular text file without a YAML header, a new header is prepended
-  automatically. It's data origins mainly form the filename of the
+  automatically. It's data originates mainly form the filename of the
   text file. The templates applied in this use case are:
   '`tmpl.from_text_file_content`' and '`tmpl.from_text_file_filename`'.
 

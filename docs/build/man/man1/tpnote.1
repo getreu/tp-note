@@ -934,9 +934,9 @@ Tp-Note\[cq]s exporter function `\f[C]--export\f[R]' converts a given
 Tp-Note file into HTML and adds `\f[C].html\f[R]' to the output
 filename.
 Links in the documents content to other Tp-Note files are hereby
-rewritten by appending `\f[C].html\f[R]' to their URLs.
-This way you can convert groups of documents to HTML and later browse
-from document to document in you web browser.
+rewritten by appending `\f[C].html\f[R]' to their qURLs.
+This way you can convert groups of documents to HTML and later jump from
+document to document in your web browser.
 The option `\f[C]--export-link-rewriting\f[R]' allows you to fine-tune
 how local links are written out.
 Valid values are: `\f[C]off\f[R]', `\f[C]short\f[R]' and
@@ -950,9 +950,10 @@ The option `\f[C]--export-link-rewriting\f[R]' decides how local links
 in the Tp-Note document are converted when the HTML is generated.
 If its value is `\f[C]short\f[R]', then relative local links are
 converted to absolute links.
-The base of the resulting links is again the directory where the
+The base of the resulting links is always the directory where the
 \f[C].tpnote.toml\f[R] file resides (or \f[C]/\f[R] if none exists).
-Consider the following example:
+Consider the following `\f[C]--export-link-rewriting=short\f[R]'
+example:
 .IP \[bu] 2
 The Tp-Note file `\f[C]/my/docs/car/bill.md\f[R]' contains
 .IP \[bu] 2
@@ -995,8 +996,8 @@ However, there is one exception: when the text property contains a URL
 starting with `\f[C]http:\f[R]' or `\f[C]https:\f[R]' only the file stem
 is displayed.
 For example, the link:
-`\f[C][http:dir/my file.md](<http:dir/my file.md>)\f[R]' is rewritten
-into `\f[C][my file](<http:dir/my file.md>)\f[R]' during the rendition
+`\f[C][http:dir/my file.md](<http:dir/my file.md>)\f[R]' is rewritten as
+`\f[C][my file](<http:dir/my file.md>)\f[R]' during the rendition
 process.
 This explains why the autolink `\f[C]<http:dir/my file.md>.\f[R]'
 appears as `\f[C]my file\f[R]' in the browser.
@@ -1602,18 +1603,7 @@ extensions_md = [ \[aq]txt\[aq], \[aq]md\[aq], \[aq]markdown\[aq] ]
 \f[R]
 .fi
 .PP
-The default file extension for new note files under Windows is defined
-as:
-.IP
-.nf
-\f[C]
-[filename]
-extension_default = \[aq]txt\[aq]
-\f[R]
-.fi
-.PP
-If you prefer rather the file extension `\f[C]md\f[R]' for new notes,
-change this to:
+The default file extension for new note files is defined as:
 .IP
 .nf
 \f[C]
@@ -1622,10 +1612,20 @@ extension_default = \[aq]md\[aq]
 \f[R]
 .fi
 .PP
+If you prefer rather the file extension `\f[C].markdown\f[R]' for new
+notes, change this to:
+.IP
+.nf
+\f[C]
+[filename]
+extension_default = \[aq]markdown\[aq]
+\f[R]
+.fi
+.PP
 This modification does not change how the note file\[cq]s content is
 interpreted - in this case as Markdown - because both file extensions
-`\f[C].txt\f[R]' and `\f[C].md\f[R]' belong to the same extension group
-defined in `\f[C]filename.extensions_md\f[R]'.
+`\f[C].md\f[R]' and `\f[C].markdown\f[R]' belong to the same extension
+group defined in `\f[C]filename.extensions_md\f[R]'.
 .SS Configure the natural language detection algorithm
 .PP
 When creating a new header for a new or an existing note file, a
@@ -2233,7 +2233,7 @@ file\f[R] and \f[I]synchronize filename\f[R]:
 \f[I]Prepend header to text file\f[R] (new feature in Tp-Note v1.16.0):
 When Tp-Note opens a regular text file without a YAML header, a new
 header is prepended automatically.
-It\[cq]s data origins mainly form the filename of the text file.
+It\[cq]s data originates mainly form the filename of the text file.
 The templates applied in this use case are:
 `\f[C]tmpl.from_text_file_content\f[R]' and
 `\f[C]tmpl.from_text_file_filename\f[R]'.
