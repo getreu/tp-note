@@ -14,7 +14,7 @@ license = "MIT/Apache-2.0"
 readme = "README.md"
 repository = "https://gitlab.com/getreu/tp-note"
 rust-version = "1.70.0"
-version = "1.21.8"
+version = "1.21.9"
 
 [profile.release]
 strip = "symbols"
@@ -24,8 +24,8 @@ lazy_static = "1.4.0"
 log = { version = "0.4.19", features = ["serde"] }
 parking_lot = "0.12.1"
 sanitize-filename-reader-friendly = "2.2.1"
-serde = { version = "1.0.166", features = ["derive"] }
-serde_yaml = "0.9.22"
+serde = { version = "1.0.177", features = ["derive"] }
+serde_yaml = "0.9.25"
 tera = { version = "1.19.0", default-features = true }
-thiserror = "1.0.40"
-toml = "0.7.5"
+thiserror = "1.0.44"
+toml = "0.7.6"
