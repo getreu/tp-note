@@ -1,7 +1,7 @@
 //! Configuration data that origins from environment variables.
-//! Unlike the configuration data in `LIB_CFG` which is source only once at the
-//! of Tp-Note, the `SETTINGS` object may be sourced more often to follow
-//! changes in the related environment variables.
+//! Unlike the configuration data in `LIB_CFG` which is sourced only once when
+//! Tp-Note is launched, the `SETTINGS` object may be sourced more often in
+//! order to follow changes in the related environment variables.
 
 use crate::config::LIB_CFG;
 #[cfg(feature = "lang-detection")]
