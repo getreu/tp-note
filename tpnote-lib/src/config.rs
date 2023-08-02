@@ -43,7 +43,18 @@ pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnote.toml";
 /// This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
 /// The first character in the filename which is not
 /// in this list, marks the end of the sort tag.
+/// If `FILENAME_SORT_TAG_SEPARATOR` is not empty and the resulting string 
+/// terminates with `FILENAME_SORT_TAG_SEPARATOR` the latter is is stripped
+/// from the result.
 pub const FILENAME_SORT_TAG_CHARS: &str = "0123456789.-_ \t";
+
+/// If empty, the first character which is not in `FILENAME_SORT_TAG_CHARS`
+/// marks the end of a sort tag.
+/// If not empty, a _sort_tag_ is only valid, when is it is followed by 
+/// `FILENAME_SORT_TAG_SEPARATOR`. A _sort_tag_ never ends with a 
+/// `FILENAME_SORT_TAG_SEPARATOR`, if it does it stripped. In other positions
+/// the speparator may appear. 
+pub const FILENAME_SORT_TAG_SEPARATOR: &str = "-";
 
 /// In case the file stem starts with a character in
 /// `SORT_TAG_CHARS` the `SORT_TAG_EXTRA_SEPARATOR`
@@ -721,6 +732,7 @@ pub struct LibCfg {
 pub struct Filename {
     pub root_path_marker: String,
     pub sort_tag_chars: String,
+    pub sort_tag_separator: String,
     pub sort_tag_extra_separator: char,
     pub copy_counter_extra_separator: String,
     pub copy_counter_opening_brackets: String,
@@ -773,6 +785,7 @@ impl ::std::default::Default for Filename {
         Filename {
             root_path_marker: FILENAME_ROOT_PATH_MARKER.to_string(),
             sort_tag_chars: FILENAME_SORT_TAG_CHARS.to_string(),
+            sort_tag_separator: FILENAME_SORT_TAG_SEPARATOR.to_string(),
             sort_tag_extra_separator: FILENAME_SORT_TAG_EXTRA_SEPARATOR,
             copy_counter_extra_separator: FILENAME_COPY_COUNTER_EXTRA_SEPARATOR.to_string(),
             copy_counter_opening_brackets: FILENAME_COPY_COUNTER_OPENING_BRACKETS.to_string(),
