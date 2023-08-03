@@ -140,6 +140,7 @@ impl HttpResponse for ServerThread {
                 let mut abspath = Cow::Borrowed(abspath.as_path());
                 // From here on, we only work with `abspath`.
                 #[allow(clippy::drop_ref)]
+                #[allow(dropping_references)]
                 drop(relpath);
 
                 //
