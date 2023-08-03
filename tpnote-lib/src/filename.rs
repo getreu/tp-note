@@ -118,7 +118,7 @@ impl NotePathBuf for PathBuf {
             return Ok(());
         };
 
-        let (sort_tag, _, stem, _copy_counter, ext) = &self.disassemble();
+        let (sort_tag, _, stem, _copy_counter, ext) = self.disassemble();
 
         let mut new_path = self.clone();
 
@@ -211,7 +211,7 @@ impl NotePath for Path {
             .to_str()
             .unwrap_or_default();
 
-        let sort_tag_stem_copy_counter = &self
+        let sort_tag_stem_copy_counter = self
             .file_stem()
             .unwrap_or_default()
             .to_str()
@@ -259,8 +259,8 @@ impl NotePath for Path {
     /// Check if 2 filenames are equal. Compare all parts, except the copy counter.
     /// Consider 2 file identical even when they have a different copy counter.
     fn exclude_copy_counter_eq(&self, p2: &Path) -> bool {
-        let (sort_tag1, _, stem1, _, ext1) = &self.disassemble();
-        let (sort_tag2, _, stem2, _, ext2) = &p2.disassemble();
+        let (sort_tag1, _, stem1, _, ext1) = self.disassemble();
+        let (sort_tag2, _, stem2, _, ext2) = p2.disassemble();
         sort_tag1 == sort_tag2 && stem1 == stem2 && ext1 == ext2
     }
 
