@@ -627,12 +627,12 @@ mod tests {
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.md";
         let output = file_sort_tag_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("20200908-", output);
+        assert_eq!("20200908", output);
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
         let output = file_sort_tag_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("20200908-", output);
+        assert_eq!("20200908", output);
         //
         //
         // Test file extension.
