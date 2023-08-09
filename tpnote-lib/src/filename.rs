@@ -347,7 +347,7 @@ impl NotePath for Path {
 /// * `[0-9_- .\t]` with `filename.sort_tag_chars`,
 /// * `-` with `filename.sort_tag_separator` and
 /// * `'` with `filename.sort_tag_extra_separator`.
-fn split_sort_tag(sort_tag_stem_copy_counter_ext: &str) -> (&str, &str) {
+pub(crate) fn split_sort_tag(sort_tag_stem_copy_counter_ext: &str) -> (&str, &str) {
     let lib_cfg = LIB_CFG.read_recursive();
 
     let mut stem_copy_counter_ext = sort_tag_stem_copy_counter_ext.trim_start_matches(

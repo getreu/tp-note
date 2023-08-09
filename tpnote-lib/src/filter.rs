@@ -1,6 +1,7 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
+use crate::filename::split_sort_tag;
 use crate::filename::NotePath;
 #[cfg(feature = "lang-detection")]
 use crate::settings::FilterGetLang;
@@ -314,6 +315,23 @@ fn prepend_filter<S: BuildHasher>(
             s.push_str(&res);
             res = s;
         };
+    } else if let Some(Value::String(sort_tag)) = args.get("with_sort_tag") {
+        let needs_extra_separator = res.is_empty() || !split_sort_tag(&res).0.is_empty();
+        let mut s = String::new();
+        if !sort_tag.is_empty() || needs_extra_separator {
+            let lib_cfg = LIB_CFG.read_recursive();
+
+            if !sort_tag.is_empty() {
+                s.push_str(sort_tag);
+                s.push_str(&lib_cfg.filename.sort_tag_separator);
+            }
+            if needs_extra_separator {
+                s.push(lib_cfg.filename.sort_tag_extra_separator);
+            }
+        }
+
+        s.push_str(&res);
+        res = s;
     };
 
     Ok(to_value(res)?)
@@ -487,40 +505,73 @@ mod tests {
         );
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), to_value("Strange filename_ Yes").unwrap());
+
+        let result = sanit_filter(&to_value("Correct filename.pdf").unwrap(), &HashMap::new());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("Correct filename.pdf").unwrap());
+
+        let result = sanit_filter(&to_value(".dotfilename").unwrap(), &HashMap::new());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value(".dotfilename").unwrap());
     }
 
     #[test]
-    fn test_sanit_filter_alpha() {
+    fn test_prepend_filter() {
+        // `with`
         let mut args = HashMap::new();
-        args.insert("alpha".to_string(), to_value(true).unwrap());
-        let result = sanit_filter(&to_value("1. My first: chapter").unwrap(), &args);
+        args.insert("with".to_string(), to_value("-").unwrap());
+        let result = prepend_filter(&to_value("1. My first chapter").unwrap(), &args);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("'1. My first_ chapter").unwrap());
+        assert_eq!(result.unwrap(), to_value("-1. My first chapter").unwrap());
 
         let mut args = HashMap::new();
-        args.insert("alpha".to_string(), to_value(true).unwrap());
-        let result = sanit_filter(&to_value(222).unwrap(), &args);
+        args.insert("with".to_string(), to_value("_").unwrap());
+        let result = prepend_filter(&to_value("").unwrap(), &args);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("\'222").unwrap());
+        assert_eq!(result.unwrap(), to_value("").unwrap());
+
+        // `with_sort_tag`
+        let mut args = HashMap::new();
+        args.insert("with_sort_tag".to_string(), to_value("20230809").unwrap());
+        let result = prepend_filter(&to_value("1. My first chapter").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(
+            result.unwrap(),
+            to_value("20230809-1. My first chapter").unwrap()
+        );
 
         let mut args = HashMap::new();
-        args.insert("alpha".to_string(), to_value(true).unwrap());
-        let result = sanit_filter(&to_value(r#"a"b'c'b"a"#).unwrap(), &args);
+        args.insert("with_sort_tag".to_string(), to_value("20230809").unwrap());
+        let result = prepend_filter(&to_value("1-My first chapter").unwrap(), &args);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value(r#"a b'c'b a"#).unwrap());
+        assert_eq!(
+            result.unwrap(),
+            to_value("20230809-'1-My first chapter").unwrap()
+        );
 
         let mut args = HashMap::new();
-        args.insert("alpha".to_string(), to_value(true).unwrap());
-        let result = sanit_filter(&to_value(123.4).unwrap(), &args);
+        args.insert("with_sort_tag".to_string(), to_value("").unwrap());
+        let result = prepend_filter(&to_value("1. My first chapter").unwrap(), &args);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("\'123.4").unwrap());
+        assert_eq!(result.unwrap(), to_value("1. My first chapter").unwrap());
 
         let mut args = HashMap::new();
-        args.insert("alpha".to_string(), to_value(true).unwrap());
-        // Note: the dot is trimmed by the `sanitize_filename_reader_friendly` lib.
-        let result = sanit_filter(&to_value(".pdf").unwrap(), &args);
+        args.insert("with_sort_tag".to_string(), to_value("").unwrap());
+        let result = prepend_filter(&to_value("1-My first chapter").unwrap(), &args);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("'.pdf").unwrap());
+        assert_eq!(result.unwrap(), to_value("'1-My first chapter").unwrap());
+
+        let mut args = HashMap::new();
+        args.insert("with_sort_tag".to_string(), to_value("20230809").unwrap());
+        let result = prepend_filter(&to_value("").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("20230809-'").unwrap());
+
+        let mut args = HashMap::new();
+        args.insert("with_sort_tag".to_string(), to_value("").unwrap());
+        let result = prepend_filter(&to_value("").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("'").unwrap());
     }
 
     #[test]
