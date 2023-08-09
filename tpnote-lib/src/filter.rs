@@ -78,15 +78,19 @@ fn sanit_filter<S: BuildHasher>(
         Cow::Owned(p.to_string())
     };
 
-    let lib_cfg = LIB_CFG.read_recursive();
-    // Check if this is a usual filename.
-    if p.starts_with(FILENAME_DOTFILE_MARKER) && PathBuf::from(&*p).has_wellformed_filename() {
-        p.to_mut()
-            .insert(0, lib_cfg.filename.sort_tag_extra_separator);
-    }
+    // Check if this is a usual dotfile filename.
+    let is_dotfile =
+        p.starts_with(FILENAME_DOTFILE_MARKER) && PathBuf::from(&*p).has_wellformed_filename();
 
     // Sanitize string.
     p = sanitize(&p).into();
+
+    // If `FILNAME_DOTFILE_MARKER` was stripped, prepend one.
+    if is_dotfile && !p.starts_with(FILENAME_DOTFILE_MARKER) {
+        let mut s = String::from(FILENAME_DOTFILE_MARKER);
+        s.push_str(&*p);
+        p = Cow::from(s);
+    }
 
     Ok(to_value(&p)?)
 }
