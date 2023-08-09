@@ -10,7 +10,7 @@ pub const FRONT_MATTER_ERROR_MAX_LINES: usize = 20;
 
 /// Error related to the filesystem and to invoking external applications.
 #[derive(Debug, Error)]
-pub enum FileError {
+pub enum LibCfgFileError {
     /// Remedy: restart.
     #[cfg(not(test))]
     #[error(
@@ -229,7 +229,7 @@ pub enum NoteError {
     },
 
     #[error(transparent)]
-    File(#[from] FileError),
+    File(#[from] LibCfgFileError),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),

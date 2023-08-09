@@ -35,7 +35,7 @@ use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 #[cfg(not(test))]
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::context::Context;
-use tpnote_lib::error::FileError;
+use tpnote_lib::error::LibCfgFileError;
 use tpnote_lib::filename::NotePathBuf;
 
 /// Name of this executable (without the Windows ".exe" extension).
@@ -457,13 +457,13 @@ lazy_static! {
 
 lazy_static! {
     /// Variable indicating with `Err` if the loading of the configuration file went wrong.
-    pub static ref CFG_FILE_LOADING: RwLock<Result<(), FileError>> = RwLock::new(Ok(()));
+    pub static ref CFG_FILE_LOADING: RwLock<Result<(), LibCfgFileError>> = RwLock::new(Ok(()));
 }
 
 /// Parse the configuration file if it exists. Otherwise write one with default values.
 #[cfg(not(test))]
 #[inline]
-fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
+fn config_load(config_path: &Path) -> Result<Cfg, LibCfgFileError> {
     if config_path.exists() {
         let mut config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
 
@@ -509,7 +509,7 @@ fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
             .is_some()
             || config.filename.sort_tag_extra_separator == FILENAME_DOTFILE_MARKER
         {
-            return Err(FileError::ConfigFileSortTag {
+            return Err(LibCfgFileError::ConfigFileSortTag {
                 char: FILENAME_DOTFILE_MARKER,
                 chars: config.filename.sort_tag_chars.escape_default().to_string(),
                 extra_separator: config
@@ -522,7 +522,7 @@ fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
 
         // Check for obvious configuration errors.
         if !TRIM_LINE_CHARS.contains(&config.filename.copy_counter_extra_separator) {
-            return Err(FileError::ConfigFileCopyCounter {
+            return Err(LibCfgFileError::ConfigFileCopyCounter {
                 chars: TRIM_LINE_CHARS.escape_default().to_string(),
                 extra_separator: config
                     .filename
@@ -551,13 +551,13 @@ fn config_load(config_path: &Path) -> Result<Cfg, FileError> {
 /// In unit tests we use the default configuration values.
 #[cfg(test)]
 #[inline]
-fn config_load(_config_path: &Path) -> Result<Cfg, FileError> {
+fn config_load(_config_path: &Path) -> Result<Cfg, LibCfgFileError> {
     Ok(Cfg::default())
 }
 
 /// Writes the default configuration to `Path`.
 #[cfg(not(test))]
-fn config_write(config: &Cfg, config_path: &Path) -> Result<(), FileError> {
+fn config_write(config: &Cfg, config_path: &Path) -> Result<(), LibCfgFileError> {
     fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
 
     let mut buffer = File::create(config_path)?;
@@ -567,7 +567,7 @@ fn config_write(config: &Cfg, config_path: &Path) -> Result<(), FileError> {
 
 /// In unit tests we do not write anything.
 #[cfg(test)]
-fn config_write(_config: &Cfg, _config_path: &Path) -> Result<(), FileError> {
+fn config_write(_config: &Cfg, _config_path: &Path) -> Result<(), LibCfgFileError> {
     Ok(())
 }
 
@@ -584,7 +584,7 @@ lazy_static! {
                 None => {
                     // Remember that something went wrong.
                     let mut cfg_file_loading = CFG_FILE_LOADING.write();
-                    *cfg_file_loading = Err(FileError::PathToConfigFileNotFound);
+                    *cfg_file_loading = Err(LibCfgFileError::PathToConfigFileNotFound);
                     return Cfg::default();
                 },
             }
@@ -648,7 +648,7 @@ lazy_static! {
     };
 }
 
-pub fn backup_config_file() -> Result<PathBuf, FileError> {
+pub fn backup_config_file() -> Result<PathBuf, LibCfgFileError> {
     if let Some(ref config_path) = *CONFIG_PATH {
         if config_path.exists() {
             let mut config_path_bak = config_path.clone();
@@ -660,9 +660,9 @@ pub fn backup_config_file() -> Result<PathBuf, FileError> {
 
             Ok(config_path_bak)
         } else {
-            Err(FileError::ConfigFileNotFound)
+            Err(LibCfgFileError::ConfigFileNotFound)
         }
     } else {
-        Err(FileError::PathToConfigFileNotFound)
+        Err(LibCfgFileError::PathToConfigFileNotFound)
     }
 }

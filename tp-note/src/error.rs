@@ -2,7 +2,7 @@
 use std::path::PathBuf;
 use std::process::ExitStatus;
 use thiserror::Error;
-use tpnote_lib::error::FileError;
+use tpnote_lib::error::LibCfgFileError;
 use tpnote_lib::error::NoteError;
 
 #[allow(dead_code)]
@@ -30,7 +30,7 @@ pub enum WorkflowError {
     ConfigFile(#[from] ConfigFileError),
 
     #[error(transparent)]
-    File(#[from] FileError),
+    File(#[from] LibCfgFileError),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
