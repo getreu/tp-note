@@ -378,7 +378,7 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
   
     <tr>
     <th class="keygrey">sort_tag:</th>
-    <th class="valgrey">111-</th>
+    <th class="valgrey">111</th>
   </tr>
   
   </table>

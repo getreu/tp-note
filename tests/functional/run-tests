@@ -178,7 +178,7 @@ cat - > "$INPUT_FILENAME" <<'EOF'
 ---
 title: "xxx"
 subtitle: "yyy"
-sort_tag: "111-"
+sort_tag: "111"
 file_ext: "md"
 ...
 EOF
@@ -208,7 +208,7 @@ subtitle: 'bbb'
 date: '2020-01-02'
 lang: 'en'
 revision: '2.0'
-sort_tag: '222-'
+sort_tag: '222'
 file_ext: 'mdtxt'
 my_own_var: 'foo'
 ...
@@ -264,7 +264,7 @@ cat - > "$INPUT_FILENAME" <<'EOF'
 ---
 title: "xxx"
 subtitle: "yyy"
-sort_tag: "111-"
+sort_tag: "111"
 file_ext: "md"
 ...
 EOF
