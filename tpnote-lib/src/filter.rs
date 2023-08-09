@@ -65,7 +65,7 @@ lazy_static! {
 /// `tera::String`.
 fn sanit_filter<S: BuildHasher>(
     value: &Value,
-    args: &HashMap<String, Value, S>,
+    _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let p = try_get_value!("sanit", "value", Value, value);
 
@@ -78,18 +78,6 @@ fn sanit_filter<S: BuildHasher>(
         Cow::Owned(p.to_string())
     };
 
-    let mut force_alpha = match args.get("force_alpha") {
-        Some(val) => try_get_value!("sanit", "force_alpha", bool, val),
-        None => false,
-    };
-
-    // Allow also the short form for backwards compatibility.
-    force_alpha = force_alpha
-        || match args.get("alpha") {
-            Some(val) => try_get_value!("sanit", "alpha", bool, val),
-            None => false,
-        };
-
     let lib_cfg = LIB_CFG.read_recursive();
     // Check if this is a usual filename.
     if p.starts_with(FILENAME_DOTFILE_MARKER) && PathBuf::from(&*p).has_wellformed_filename() {
@@ -99,17 +87,6 @@ fn sanit_filter<S: BuildHasher>(
 
     // Sanitize string.
     p = sanitize(&p).into();
-
-    // Check if we must prepend a `sort_tag_extra_separator`.
-    if force_alpha
-        // `sort_tag_extra_separator` is guaranteed not to be part of `sort_tag_chars`.
-        // Thus, the following makes sure, that we do not accidentally add two
-        // `sort_tag_extra_separator`.
-        && p.starts_with(&lib_cfg.filename.sort_tag_chars.chars().collect::<Vec<char>>()[..])
-    {
-        p.to_mut()
-            .insert(0, lib_cfg.filename.sort_tag_extra_separator);
-    };
 
     Ok(to_value(&p)?)
 }
