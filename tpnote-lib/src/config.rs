@@ -43,17 +43,17 @@ pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnote.toml";
 /// This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
 /// The first character in the filename which is not
 /// in this list, marks the end of the sort tag.
-/// If `FILENAME_SORT_TAG_SEPARATOR` is not empty and the resulting string 
+/// If `FILENAME_SORT_TAG_SEPARATOR` is not empty and the resulting string
 /// terminates with `FILENAME_SORT_TAG_SEPARATOR` the latter is is stripped
 /// from the result.
 pub const FILENAME_SORT_TAG_CHARS: &str = "0123456789.-_ \t";
 
 /// If empty, the first character which is not in `FILENAME_SORT_TAG_CHARS`
 /// marks the end of a sort tag.
-/// If not empty, a _sort_tag_ is only valid, when is it is followed by 
-/// `FILENAME_SORT_TAG_SEPARATOR`. A _sort_tag_ never ends with a 
+/// If not empty, a _sort_tag_ is only valid, when is it is followed by
+/// `FILENAME_SORT_TAG_SEPARATOR`. A _sort_tag_ never ends with a
 /// `FILENAME_SORT_TAG_SEPARATOR`, if it does it stripped. In other positions
-/// the speparator may appear. 
+/// the speparator may appear.
 pub const FILENAME_SORT_TAG_SEPARATOR: &str = "-";
 
 /// In case the file stem starts with a character in
@@ -326,16 +326,11 @@ lang:       {{ title_text | get_lang | map_lang(default=lang) | json_encode }}
 /// sync criteria for note metadata in front matter and filename.
 /// Useful variables in this context are:
 /// `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}.
-/// All variables also can be used this way
-/// `{{ <var>| sanit(force_alpha=true) }}` to guarantee that the result does
-/// not start with `sort_tag_char`. If it does, the string is then prepended
-/// with `'`.
 /// In general, in filename template, all variables (except `now` and
-/// `extension_default` must be filtered by a `sanit` or
-/// `sanit(force_alpha=true)` filter.
+/// `extension_default` must be filtered by a `sanit` filter.
 pub const TMPL_NEW_FILENAME: &str = "\
-{{ now() | date(format='%Y%m%d-') }}\
-{{ fm_title | sanit(force_alpha=true) }}\
+{%- set tag = now() | date(format='%Y%m%d') -%}
+{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ extension_default | prepend(with='.') }}\
 ";
@@ -377,8 +372,8 @@ lang:       {{ fm_lang | default(value = fm_title| \
 /// Default filename template used when the stdin or the clipboard contains a
 /// string and one of them has a valid YAML header.
 pub const TMPL_FROM_CLIPBOARD_YAML_FILENAME: &str = "\
-{{ fm_sort_tag | default(value = now() | date(format='%Y%m%d-')) }}\
-{{ fm_title | sanit(force_alpha=true) }}\
+{%- set tag = fm_sort_tag | default(value = now() | date(format='%Y%m%d')) -%}
+{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ fm_file_ext | default(value = extension_default ) | prepend(with='.') }}\
 ";
@@ -421,8 +416,8 @@ lang:       {{ title_text | get_lang | map_lang(default=lang) | json_encode }}
 
 /// Default filename template used when the stdin ~ clipboard contains a string.
 pub const TMPL_FROM_CLIPBOARD_FILENAME: &str = "\
-{{ now() | date(format='%Y%m%d-') }}\
-{{ fm_title | sanit(force_alpha=true) }}\
+{%- set tag = now() | date(format='%Y%m%d') -%}
+{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ extension_default | prepend(with='.') }}";
 
@@ -450,11 +445,11 @@ lang:       {{ note_body_text | get_lang | map_lang(default=lang) | json_encode 
 /// The text file's sort-tag and file extension are preserved.
 pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 {%- if path | file_sort_tag != '' -%}
-  {{ path | file_sort_tag }}
+  {%- set tag = path | file_sort_tag -%}
 {%- else -%}
-  {{ note_file_date | date(format='%Y%m%d-') }}\
-{%- endif -%}\
-{{ fm_title | sanit(force_alpha=true) }}\
+  {%- set tag = note_file_date | date(format='%Y%m%d') -%}
+{%- endif -%}
+{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ path | file_ext | prepend(with='.') }}\
 ";
@@ -494,7 +489,8 @@ lang:       {{ lang_test_text | get_lang | map_lang(default=lang) | json_encode 
 /// Filename of a new note, that annotates an existing file on disk given in
 /// `<path>`.
 pub const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
-{{ path | file_sort_tag }}{{ fm_title | sanit(force_alpha=true) }}\
+{%- set tag = path | file_sort_tag -%}
+{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ extension_default | prepend(with='.') }}\
 ";
@@ -503,8 +499,8 @@ pub const TMPL_ANNOTATE_FILE_FILENAME: &str = "\
 /// on disk, corresponds to the note's meta data stored in its front matter. If
 /// it is not the case, the note's filename will be renamed.
 pub const TMPL_SYNC_FILENAME: &str = "\
-{{ fm_sort_tag | default(value = path | file_sort_tag) }}\
-{{ fm_title | default(value='No title') | sanit(force_alpha=true) }}\
+{%- set tag = fm_sort_tag | default(value = path | file_sort_tag) -%}
+{{ fm_title | default(value='No title') | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}\
 ";
