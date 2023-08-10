@@ -23,8 +23,6 @@ use std::path::Path;
 use std::path::PathBuf;
 #[cfg(not(test))]
 use tera::Tera;
-#[cfg(not(test))]
-use tpnote_lib::config::check_lib_cfg;
 use tpnote_lib::config::Filename;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::Tmpl;
@@ -506,8 +504,8 @@ fn config_load(config_path: &Path) -> Result<Cfg, LibCfgFileError> {
             lib_cfg.tmpl = config.tmpl.clone();
             lib_cfg.tmpl_html = config.tmpl_html.clone();
 
-            // Perform some additional semantical checks.
-            check_lib_cfg(&lib_cfg)?;
+            // Perform some additional semantic checks.
+            lib_cfg.assert_validity()?;
         }
 
         // First check passed.

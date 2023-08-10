@@ -43,20 +43,33 @@ pub enum LibCfgFileError {
 /// Configuration file related semantic errors.
 #[derive(Debug, Error, Clone)]
 pub enum LibCfgError {
-    /// Remedy: restart.
+    /// Remedy: Choose another `sort_tag_extra_separator` character.
     #[error(
         "Configuration file error in section `[filename]`:\n\
         `sort_tag_extra_separator=\"{extra_separator}\"\n\
         must not be one of `sort_tag_chars=\"{chars}\"`\n\
-        or `{char}`"
+        or `{dot_file_marker}`"
     )]
     SortTagExtraSeparator {
-        char: char,
+        dot_file_marker: char,
         chars: String,
         extra_separator: String,
     },
 
-    /// Remedy: restart.
+    /// Remedy: Insert `sort_tag_separator` in `sort_tag_chars`.
+    #[error(
+        "Configuration file error in section `[filename]`:\n\
+        All characters in `sort_tag_separator=\"{separator}\"\n\
+        must be in the set `sort_tag_chars=\"{chars}\"`\n\
+        and `sort_tag_separator` must NOT start with `{dot_file_marker}`"
+    )]
+    SortTagSeparator {
+        dot_file_marker: char,
+        chars: String,
+        separator: String,
+    },
+
+    /// Remedy: Choose a `copy_counter_extra_separator` in the set.
     #[error(
         "Configuration file error in section `[filename]`:\n\
         `copy_counter_extra_separator=\"{extra_separator}\"`\n\

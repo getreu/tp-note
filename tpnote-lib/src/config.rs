@@ -840,48 +840,76 @@ impl ::std::default::Default for Tmpl {
     }
 }
 
-/// Perfom some sematic consitency checks.
-/// * `sort_tag_extra_separator` must NOT be in `sort_tag_chars`.
-/// * `sort_tag_extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
-/// * `copy_counter_extra_separator` must be one of
-///   `sanitize_filename_reader_friendly::TRIM_LINE_CHARS`.
-pub fn check_lib_cfg(config: &LibCfg) -> Result<(), LibCfgError> {
-    // Check for obvious configuration errors.
-    // * `sort_tag_extra_separator` must NOT be in `sort_tag_chars`.
-    // * `sort_tag_extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
-    if config
-        .filename
-        .sort_tag_chars
-        .find(config.filename.sort_tag_extra_separator)
-        .is_some()
-        || config.filename.sort_tag_extra_separator == FILENAME_DOTFILE_MARKER
-    {
-        return Err(LibCfgError::SortTagExtraSeparator {
-            char: FILENAME_DOTFILE_MARKER,
-            chars: config.filename.sort_tag_chars.escape_default().to_string(),
-            extra_separator: config
-                .filename
-                .sort_tag_extra_separator
-                .escape_default()
-                .to_string(),
-        });
-    }
+impl LibCfg {
+    /// Perfom some sematic consitency checks.
+    /// * `sort_tag_extra_separator` must NOT be in `sort_tag_chars`.
+    /// * `sort_tag_extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
+    /// * `copy_counter_extra_separator` must be one of
+    ///   `sanitize_filename_reader_friendly::TRIM_LINE_CHARS`.
+    /// * All characters of `sort_tag_separator` must be in `sort_tag_chars`.
+    /// * `sort_tag_separator` must start with NOT `FILENAME_DOTFILE_MARKER`.
+    pub fn assert_validity(&self) -> Result<(), LibCfgError> {
+        // Check for obvious configuration errors.
+        // * `sort_tag_extra_separator` must NOT be in `sort_tag_chars`.
+        // * `sort_tag_extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
+        if self
+            .filename
+            .sort_tag_chars
+            .find(self.filename.sort_tag_extra_separator)
+            .is_some()
+            || self.filename.sort_tag_extra_separator == FILENAME_DOTFILE_MARKER
+        {
+            return Err(LibCfgError::SortTagExtraSeparator {
+                dot_file_marker: FILENAME_DOTFILE_MARKER,
+                chars: self.filename.sort_tag_chars.escape_default().to_string(),
+                extra_separator: self
+                    .filename
+                    .sort_tag_extra_separator
+                    .escape_default()
+                    .to_string(),
+            });
+        }
 
-    // Check for obvious configuration errors.
-    // * `copy_counter_extra_separator` must one of
-    //   `sanitize_filename_reader_friendly::TRIM_LINE_CHARS`.
-    if !TRIM_LINE_CHARS.contains(&config.filename.copy_counter_extra_separator) {
-        return Err(LibCfgError::CopyCounterExtraSeparator {
-            chars: TRIM_LINE_CHARS.escape_default().to_string(),
-            extra_separator: config
+        // Check for obvious configuration errors.
+        // * All characters of `sort_tag_separator` must be in `sort_tag_chars`.
+        // * `sort_tag_separator` must NOT start with `FILENAME_DOTFILE_MARKER`.
+        if !self
+            .filename
+            .sort_tag_separator
+            .chars()
+            .all(|c| self.filename.sort_tag_chars.contains(c))
+            || self
                 .filename
-                .copy_counter_extra_separator
-                .escape_default()
-                .to_string(),
-        });
-    }
+                .sort_tag_separator
+                .starts_with(FILENAME_DOTFILE_MARKER)
+        {
+            return Err(LibCfgError::SortTagSeparator {
+                dot_file_marker: FILENAME_DOTFILE_MARKER,
+                chars: self.filename.sort_tag_chars.escape_default().to_string(),
+                separator: self
+                    .filename
+                    .sort_tag_separator
+                    .escape_default()
+                    .to_string(),
+            });
+        }
 
-    Ok(())
+        // Check for obvious configuration errors.
+        // * `copy_counter_extra_separator` must one of
+        //   `sanitize_filename_reader_friendly::TRIM_LINE_CHARS`.
+        if !TRIM_LINE_CHARS.contains(&self.filename.copy_counter_extra_separator) {
+            return Err(LibCfgError::CopyCounterExtraSeparator {
+                chars: TRIM_LINE_CHARS.escape_default().to_string(),
+                extra_separator: self
+                    .filename
+                    .copy_counter_extra_separator
+                    .escape_default()
+                    .to_string(),
+            });
+        }
+
+        Ok(())
+    }
 }
 
 /// Default values for the exporter feature.
