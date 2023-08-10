@@ -8,8 +8,6 @@ use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use parking_lot::RwLock;
-#[cfg(not(test))]
-use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -25,18 +23,16 @@ use std::path::Path;
 use std::path::PathBuf;
 #[cfg(not(test))]
 use tera::Tera;
+#[cfg(not(test))]
+use tpnote_lib::config::check_lib_cfg;
 use tpnote_lib::config::Filename;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::Tmpl;
 use tpnote_lib::config::TmplHtml;
-#[cfg(not(test))]
-use tpnote_lib::config::FILENAME_DOTFILE_MARKER;
 use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 #[cfg(not(test))]
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::context::Context;
-#[cfg(not(test))]
-use tpnote_lib::error::LibCfgError;
 use tpnote_lib::error::LibCfgFileError;
 use tpnote_lib::filename::NotePathBuf;
 
@@ -503,44 +499,15 @@ fn config_load(config_path: &Path) -> Result<Cfg, LibCfgFileError> {
         });
         let config = config; // Freeze.
 
-        // Check for obvious configuration errors.
-        if config
-            .filename
-            .sort_tag_chars
-            .find(config.filename.sort_tag_extra_separator)
-            .is_some()
-            || config.filename.sort_tag_extra_separator == FILENAME_DOTFILE_MARKER
-        {
-            return Err(LibCfgError::SortTagExtraSeparator {
-                char: FILENAME_DOTFILE_MARKER,
-                chars: config.filename.sort_tag_chars.escape_default().to_string(),
-                extra_separator: config
-                    .filename
-                    .sort_tag_extra_separator
-                    .escape_default()
-                    .to_string(),
-            }
-            .into());
-        }
-
-        // Check for obvious configuration errors.
-        if !TRIM_LINE_CHARS.contains(&config.filename.copy_counter_extra_separator) {
-            return Err(LibCfgError::CopyCounterExtraSeparator {
-                chars: TRIM_LINE_CHARS.escape_default().to_string(),
-                extra_separator: config
-                    .filename
-                    .copy_counter_extra_separator
-                    .escape_default()
-                    .to_string(),
-            }
-            .into());
-        }
         {
             // Copy the parts of `config` into `LIB_CFG`.
             let mut lib_cfg = LIB_CFG.write();
             lib_cfg.filename = config.filename.clone();
             lib_cfg.tmpl = config.tmpl.clone();
             lib_cfg.tmpl_html = config.tmpl_html.clone();
+
+            // Perform some additional semantical checks.
+            check_lib_cfg(&lib_cfg)?;
         }
 
         // First check passed.

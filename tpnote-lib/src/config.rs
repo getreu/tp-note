@@ -18,6 +18,7 @@ use crate::error::LibCfgError;
 use crate::highlight::get_css;
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
+use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -837,6 +838,50 @@ impl ::std::default::Default for Tmpl {
             sync_filename: TMPL_SYNC_FILENAME.to_string(),
         }
     }
+}
+
+/// Perfom some sematic consitency checks.
+/// * `sort_tag_extra_separator` must NOT be in `sort_tag_chars`.
+/// * `sort_tag_extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
+/// * `copy_counter_extra_separator` must be one of
+///   `sanitize_filename_reader_friendly::TRIM_LINE_CHARS`.
+pub fn check_lib_cfg(config: &LibCfg) -> Result<(), LibCfgError> {
+    // Check for obvious configuration errors.
+    // * `sort_tag_extra_separator` must NOT be in `sort_tag_chars`.
+    // * `sort_tag_extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
+    if config
+        .filename
+        .sort_tag_chars
+        .find(config.filename.sort_tag_extra_separator)
+        .is_some()
+        || config.filename.sort_tag_extra_separator == FILENAME_DOTFILE_MARKER
+    {
+        return Err(LibCfgError::SortTagExtraSeparator {
+            char: FILENAME_DOTFILE_MARKER,
+            chars: config.filename.sort_tag_chars.escape_default().to_string(),
+            extra_separator: config
+                .filename
+                .sort_tag_extra_separator
+                .escape_default()
+                .to_string(),
+        });
+    }
+
+    // Check for obvious configuration errors.
+    // * `copy_counter_extra_separator` must one of
+    //   `sanitize_filename_reader_friendly::TRIM_LINE_CHARS`.
+    if !TRIM_LINE_CHARS.contains(&config.filename.copy_counter_extra_separator) {
+        return Err(LibCfgError::CopyCounterExtraSeparator {
+            chars: TRIM_LINE_CHARS.escape_default().to_string(),
+            extra_separator: config
+                .filename
+                .copy_counter_extra_separator
+                .escape_default()
+                .to_string(),
+        });
+    }
+
+    Ok(())
 }
 
 /// Default values for the exporter feature.

@@ -44,7 +44,6 @@ pub enum LibCfgFileError {
 #[derive(Debug, Error, Clone)]
 pub enum LibCfgError {
     /// Remedy: restart.
-    #[cfg(not(test))]
     #[error(
         "Configuration file error in section `[filename]`:\n\
         `sort_tag_extra_separator=\"{extra_separator}\"\n\
@@ -58,7 +57,6 @@ pub enum LibCfgError {
     },
 
     /// Remedy: restart.
-    #[cfg(not(test))]
     #[error(
         "Configuration file error in section `[filename]`:\n\
         `copy_counter_extra_separator=\"{extra_separator}\"`\n\
