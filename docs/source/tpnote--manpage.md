@@ -45,7 +45,7 @@ ReStructuredText and HTML input. In addition, there is some limited
 support for Asciidoc and WikiText. Finally, the note's rendition is live
 updated and displayed in the user's web browser.
 
-After the user finished editing, Tp-Note analyses eventual changes in the
+After the user finished editing, Tp-Note analyses potential changes in the
 notes metadata and renames, if necessary, the file, so that its metadata and
 filename are in sync again. Finally, the resulting path is printed to
 '`stdout`', log and error messages are dumped to '`stderr`'.
@@ -58,11 +58,13 @@ can be found in [Tp-Note's user manual] and at [Tp-Note's project page].
 
 
 
+
 # OPERATION MODES
 
 Tp-Note operates in 5 different modes, depending on its command line arguments
 and the clipboard state. Each mode is associated with one content template and
 one filename template.
+
 
 
 ## Create a new note with empty clipboard
@@ -103,6 +105,7 @@ date:       "2021-10-31"
 lang:       "en-GB"
 ---
 ```
+
 
 
 ## Create a new note based on clipboard data
@@ -285,6 +288,7 @@ lang:       "en"
 ```
 
 
+
 ## Create a new note annotating a non-Tp-Note file
 
 When '`<path>`' points to an existing file, whose file extension is other than
@@ -364,6 +368,7 @@ orig_name:  "Ascii-Hangman--A game for children.md"
 
 A little game designed for primary kids to revise vocabulary in classroom.
 ```
+
 
 
 ## Use Tp-Note in shell scripts
@@ -458,9 +463,10 @@ like:
 
     "20200306-Introduction to bookkeeping--Note.md"
 
-Note: the sort tag '`20200306-`' has not changed. The filename synchronization
+Note: the sort tag '`20200306`' has not changed. The filename synchronization
 mechanism by default never does. (See below for more details about filename
 synchronization).
+
 
 
 
@@ -642,6 +648,7 @@ synchronization).
 
 
 
+
 # THE NOTE'S DOCUMENT STRUCTURE
 
 Tp-Note considers a text file to be a valid note file, if its:
@@ -727,7 +734,7 @@ Here some example links in Markdown notation:
   the marker file '`.tpnote.toml`'. If absent, absolute local links refer
   to the root directory '`/`'.
 * A shorthand link to another Tp-Note document. Instead of writing out the full
-  file name, only the first characters of the note's sort-tag '`20230508-`' are
+  file name, only the first characters of the note's sort-tag '`20230508`' are
   given, e.g. the link '`[my doc](<docs/20230508>)`' points to the file
   '`./docs/20230508-my note.md`'. Alternatively, the shorthand link can be
   expressed as autolink as well: '`<http:docs/20230508>`'. If more than one
@@ -735,7 +742,7 @@ Here some example links in Markdown notation:
   alphabetical order. To set up a different order, you can extend the
   sort-tag until it becomes unique, e.g. rename the example document to
   '`./docs/20230508-1-my note.md`' to obtain the unique sort-tag
-  '`20230508-1-`'.
+  '`20230508-1`'.
 
 Although Tp-Note's built in viewer follows absolute and relative URLs, usually
 the latter are preferred. They make moving documents easier, as relative links
@@ -802,7 +809,7 @@ Consider the following Tp-Note file:
 
 The filename has 4 parts:
 
-    {{ fm_sort_tag }}{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
+    {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
 
 A so-called _sort tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
@@ -826,13 +833,20 @@ When Tp-Note creates a new note, it will automatically prepend a *chronological
 sort tag* of today. The '`{{ fm_title }}`' part is usually derived from the
 parent directory name omitting its own *sort tag*.
 
+Technical note: a sort tag is identified with the following regular expression
+in SED syntax: '`s/\([0-9_- .\t]\)*-'?.*/\1/`'. The expression can be
+customized as follows:
+* '`[0-9_- .\t]`' with '`filename.sort_tag_chars`', 
+* '`-`' with '`filename.sort_tag_separator`' and 
+* '`'`' with '`filename.sort_tag_extra_separator`'.
+
 A note's filename is in sync with its metadata, when the following is true
 (slightly simplified, see the configuration file for the complete definition):
 
 > filename on disk without *sort tag* == '`{{ fm_title }}--{{ fm_subtitle }}.md`'
 
 ^[The variables '`{{ fm_title }}`' and '`{{ fm_subtitle }}`' reflect the values
-in the note's metadata.]
+in the note's front matter.]
 
 Consider the following document with the filename:
 
@@ -850,10 +864,10 @@ lang:       "en-GB"
 ---
 ```
 
-As "`-My file.md`" is not equal to "`-'1. The Beginning--Note.md`",
-Tp-Note will rename the file to "`20211031-'1. The Beginning--Note.md`".
+As "`My file.md`" is not equal to "`1. The Beginning--Note.md`",
+Tp-Note will rename the file to "`20211031-1. The Beginning--Note.md`".
 If the filename had been "`05_02-My file.md`", it would rename it to
-"`05_02-'1. The Beginning--Note.md`".
+"`05_02-1. The Beginning--Note.md`".
 
 Note: When the YAML front-matter does not contain the optional '`sort_tag`'
 variable, Tp-Note will never change a sort tag. Nevertheless, it might
@@ -873,13 +887,13 @@ add a '`sort_tag`' variable to its front-matter:
 ---
 title:      "1. The Beginning"
 date:       "2021-10-31"
-sort_tag:   "20211101-"
+sort_tag:   "20211101"
 ---
 ```
 
 When Tp-Note synchronizes the note's metadata with its filename, it will also
-change the sort tag from '`20211031-`' to '`20211101-`'. The resulting filename
-becomes "`20211101-'1. The Beginning--Note.md`".
+change the sort tag from '`20211031`' to '`20211101`'. The resulting filename
+becomes "`20211101-1. The Beginning--Note.md`".
 
 The '`sort_tag`' variable also becomes handy, when you want to create one single
 note without any sort tag:
@@ -903,7 +917,7 @@ file_ext:   "rst"
 ```
 
 This will change the file extension from '`.md`' to '`.rst`. The resulting
-filename becomes "`20211101-'1. The Beginning--Note.rst`".
+filename becomes "`20211101-1. The Beginning--Note.rst`".
 
 Important: '`rst`' must be one of the registered file extensions
 listed in the '`filename.extensions_rst`' variables in Tp-Note's configuration
@@ -916,7 +930,7 @@ Note: When a '`sort_tag`' variable is defined in the note's YAML header, you
 should not change the sort tag string in the note's file name manually by
 renaming the file, as your change will be overwritten next time you open the
 note with Tp-Note.  However, you can switch back to Tp-Note's default
-behavior any time by deleting the '`sort_tag`' line in the note's metadata.
+behaviour any time by deleting the '`sort_tag`' line in the note's metadata.
 The same applies to the '`file_ext`' variable.
 
 The metadata filename synchronization feature can be disabled permanently
@@ -1484,15 +1498,18 @@ applies to the current note only.
 
 ## Change the sort tag character set
 
-*Sort tags* for new notes are generated with the '`[TMPL] *_filename`'
-templates and updated with the '`[TMPL] sync_filename`' template.
+_Sort-tags_ for new notes are generated with the '`tmpl.*_filename`'
+templates. Before changing the sort-tag generation scheme in these templates,
+make sure to enable the right set of potential sort-tag characters. 
 
 By default, the digits '`0`'-'`9`', the characters '`_`', '`-`', _space_,
 '`\t`' and '`.`' are recognized as being part of a *sort tag* when they appear
 at the beginning of a filename.  This set of characters can be modified with
-the '`[filename] sort_tag_chars`' configuration variable. In addition, one
-special character '`filename.sort_tag_extra_separator`' (by default '`'`') is
-sometimes used as "end of sort tag marker" to avoid ambiguity.
+the '`filename.sort_tag_chars`' configuration variable. If defined, the
+'`filename.sort_tag_separator`' (by default '`-`') marks the end of a
+sort tag without being part of it.  In addition, one special character
+'`filename.sort_tag_extra_separator`' (by default '`'`') might be inserted
+by the filename template directly after the '`-`' to avoid ambiguity.
 
 
 
@@ -1507,25 +1524,26 @@ one '`tmpl.*_filename`' template followed directly by the
 '`tmpl.sync_filename`' template: The latter should never change the filename
 initially set up by any '`tmpl.*_filename`' template.
 
-Secondly, make sure that the expression in '`tmpl.sync_filename`' describing the
-filename's _sort tag_ e.g. '`{{ path | file_sort_tag }}`' is always followed by
-a variable with the '`sanit(force_alpha=true)`' filter set, e.g.:
+Secondly, make sure that in filename templates '`tmpl.*_filename`', sort-tags 
+'`{{ path | file_sort_tag }}`' are never inserted directly. Instead, prepend the
+_sort_tag_ with  '`prepend(with_sort_tag=path|file_sort_tag)`' to the following
+expression, e.g.:
 
-    {{ path | file_sort_tag }}{{ fm_title | sanit(force_alpha=true) }}
+    {{ fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}
 
-The first expression guarantees, that it resolves only to characters defined in
-the '`filename.sort_tag_chars`' set, while the second expression is known
-to not start with such a character. This way Tp-Note is able to separate
-_sort tags_ in filenames and avoids cyclic filename change. Or, in other words:
-the '`tmpl.sync_filname`' template should always give the same result, even
-after repeated application.
+The filter '`prepend(with_sort_tag=<...>)`' decides whether to insert the
+'`sort_tag_separator="-"`' and/or the '`sort_tag_extra_separator="'"`'
+characters. These heuristics enable Tp-Note to identify unequivocally sort-tags
+in filenames, which avoids potential cyclic filename change. Or, in other
+words: the '`tmpl.sync_filname`' template must always give the same result,
+even after repeated application.
 
 To debug your '`tmpl.sync_filename`' template, create a test note file
 '`test.md`' and invoke Tp-Note with '`--debug trace`' and '`--batch`':
 
 ```sh
 tpnote --batch --debug trace test.md
-```
+```i
 
 
 ## Store new note files by default in a subdirectory
@@ -1558,6 +1576,8 @@ the HTML rendition code of the viewer feature. Relative links are now
 always converted into absolute links before being sent to the browser.
 See subsection _Links to resources and other documents_ for more details
 about link rewriting.
+
+
 
 ## Customize the built-in note viewer
 
@@ -1690,6 +1710,7 @@ messages on the console, there is no equivalent to the
 '`tmpl_html.viewer_error`' template. Note, in contrast to the previous
 template '`tmpl_html.viewer`' example, the source code highlighting CSS
 code is now embedded in the HTML output with '`<style>{{ note_css }}</style>`'
+
 
 
 ## Choose your favourite web browser as note viewer
@@ -1901,7 +1922,7 @@ templates and in the '`tmpl.from_clipboard_yaml_content`' content template only.
   '`file_ext:`' (e.g. '`file_ext: "rst"`').
 
 * '`{{ fm_sort_tag }}`': The sort tag variable as defined in the YAML front
-  matter of this note (e.g. '`sort_tag: "20200312-"`').
+  matter of this note (e.g. '`sort_tag: "20200312"`').
 
 * '`{{ fm_all }}`': is a collection (map) of all defined '`{{ fm_* }}`'
   variables.  It is used in the '`tmpl.from_clipboard_yaml_content`' template,
@@ -1938,7 +1959,7 @@ A filter is always used together with a variable. Here are some examples:
   '`<path>`' points to a directory, the filter returns the final directory name.
 
 * '`{{ path | file_sort_tag }}`' is the sort tag (numerical filename prefix) of
-  the final component of '`{{ path }}`', e.g. '`01-23_9-`' or '`20191022-`'. It
+  the final component of '`{{ path }}`', e.g. '`01-23_9`' or '`20191022`'. It
   is similar to '`{{ path | file_name }}`' but without returning its stem,
   copy-counter and extension.
 
@@ -1989,9 +2010,15 @@ A filter is always used together with a variable. Here are some examples:
   omitted or replaced by '`-`' and '`_`'. See the section _Filename template
   convention_ for more details about this filter.
 
-* '`{{ fm_title | sanit(force_alpha=true) }}`' is the note's title as defined
-  in its front-matter. Same as above, but results starting with a sort tag
-  character are prepended with an apostrophe to avoid ambiguity.
+* '`{{ fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}`' is the
+  note's title as defined in its front-matter. Same as above, but
+  the title string is prepended with the note's _sort_tag_ and with a
+  '`filename.sort_tag_separator`' (by default '`-`'). Eventually, a second
+  '`filename.sort_tag_extra_separator`' (by default '`''`') is inserted
+  after the first to guarantee, that one of the separators unequivocally
+  marks the end of the _sort_tag_. This might be necessary to avoid
+  ambiguity in case the '`fm_title`' starts with a character defined in the
+  '`filename.sort_tag_chars`' set.
 
 * '`{{ fm_all | remove(var='fm_title') }}`' represents a collection (map) of
   all '`fm_*`' variables, exclusive of the variable '`fm_title`'.
@@ -2023,6 +2050,7 @@ A filter is always used together with a variable. Here are some examples:
   of the '`{{ lang }}`' variable.
 
 
+
 ## Content template conventions
 
 Tp-Note distinguishes two template types: content templates are used to create
@@ -2049,42 +2077,52 @@ of the new note. Please note that, the filename template
 '`tmpl.sync_filename`' has a special role as it synchronizes the filename
 of existing note files. Besides this, as we are dealing with filenames we must
 guarantee, that the filename templates produce only file system friendly
-characters.  For this purpose Tp-Note provides the additional Tera filters
-'`sanit`' and '`sanit(force_alpha=true)`':
+characters.  For this purpose Tp-Note provides the additional Tera filter
+'`sanit`':
 
-* The '`sanit()`' filter transforms a string in a file system friendly from.
-  This is done by replacing forbidden characters like '`?`' and '`\\`' with
-  '`_`' or space. This filter can be used with any variable, but is most useful
-  with filename templates. For example, in the '`tmpl.sync_filename`' template,
-  we find the expression '`{{ subtitle | sanit }}`'. Note that the filter
-  recognizes strings that represent a so-called dot file name and treats them a
-  little differently by prepending them with an apostrophe: a dot file is a file
-  whose name starts with '`.`' and that does not contain whitespace. It may or
-  may not end with a file extension. The apostrophe preserves the following dot
-  from being filtered.
+The '`sanit()`' filter transforms a string in a file system friendly from.
+This is done by replacing forbidden characters like '`?`' and '`\\`' with
+'`_`' or space. This filter can be used with any variable, but is most useful
+with filename templates. For example, in the '`tmpl.sync_filename`' template,
+we find the expression '`{{ subtitle | sanit }}`'. Note that the filter
+recognizes strings that represent a so-called dot file name and treats them a
+little differently by prepending them with an apostrophe: a dot file is a file
+whose name starts with '`.`' and that does not contain whitespace. It may or
+may not end with a file extension. The apostrophe preserves the following dot
+from being filtered.
 
-* '`sanit(force_alpha=true)`' is similar to the above, with one exception: when
-  a string starts with a digit '`0123456789`' or '`-_ `', the whole string
-  is prepended with `'`. For example: "`1 The Show Begins`" becomes
-  "`'1 The Show Begins`". This filter should always be applied to
-  the first variable assembling the new filename, e.g.
-  '`{{ title | sanit(force_alpha=true )} `'. This way, it is always possible to
-  distinguish the sort tag from the actual filename. The default sort
-  tag separator '`'`' can be changed with the configuration variable
-  '`filename.sort_tag_extra_separator`'.
+The '`prepend(with_sort_tag=<...>`' filter is similar to the 
+'`prepend(with=<...>`' filter, with two exceptions:
 
-In filename templates most variables must pass either the '`sanit`' or the
-'`sanit(force_alpha=true)`' filter. Exception to this rule are the sort tag
-variables '`{{ path | file_sort_tag }}`' and '`{{ dir_path | file_sort_tag }}`'.
-As the latter are guaranteed to contain only the file system friendly characters
-'`0123456789 -_`', no additional filtering is required. Please note, that in
-this case a '`sanit`'-filter would needlessly restrict the value range of sort
-tags as they usually end with a '`-`', a character, which the '`sanit`'-filter
-screens out when it appears in leading or trailing position. For this reason
-no '`sanit`'-filter is not allowed with '`{{ path | file_sort_tag }}`' and
+1. If '`filename.sort_tag_separator`' is defined (by default '`-`'), it is 
+   automatically inserted between the sort-tag and the input string.
+2. In some cases an additional separator 
+   '`filename.sort_tag_extra_separator`' (by default '`'`') may be inserted 
+   as well.
+
+Both separators guarantee that the end of a sort-tag is detected
+unequivocally. For example, when the input string starts with a digit
+'`0123456789`' or '`-_ `', the string is prepended with `-'`, e.g.
+"`1-The Show Begins`" becomes "`'1-The Show Begins`".
+The '`prepend(with_sort_tag=<...>)`' filter must be applied to the first
+variable, e.g. '`{{ fm_title | sanit | prepend(with_separator=path|
+file_sort_tag )}`'. This way, it is always possible to univocally
+distinguish the sort-tag from the rest of the filename. Note, the default
+sort-tag separators can be changed with the configuration variables
+'`filename.sort_tag_separator`' and '`filename.sort_tag_extra_separator`'. For
+more details please consult the _Customize the filename synchronization scheme_
+chapter.
+
+In filename templates most variables must pass the '`sanit`' filter.  Exception
+to this rule are sort-tag expressions like '`{{ path | file_sort_tag }}`' and
+'`{{ dir_path | file_sort_tag }}`'. As the latter are guaranteed to contain only
+the file system friendly characters '`0123456789 -_`', no additional filtering
+is required. Please note, that in this case a '`sanit`'-filter would needlessly
+restrict the value range of sort-tags because they may contain characters, 
+which the '`sanit`'-filter screens out when they appear in leading
+or trailing position. For this reason one must not use the '`sanit`'-filter
+together with '`{{ path | file_sort_tag }}`' or 
 '`{{ dir_path |file_sort_tag }}`'.
-
-
 
 
 
