@@ -511,7 +511,7 @@ fn config_load(config_path: &Path) -> Result<Cfg, LibCfgFileError> {
             .is_some()
             || config.filename.sort_tag_extra_separator == FILENAME_DOTFILE_MARKER
         {
-            return Err(LibCfgError::ConfigFileSortTag {
+            return Err(LibCfgError::SortTagExtraSeparator {
                 char: FILENAME_DOTFILE_MARKER,
                 chars: config.filename.sort_tag_chars.escape_default().to_string(),
                 extra_separator: config

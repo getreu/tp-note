@@ -51,7 +51,7 @@ pub enum LibCfgError {
         must not be one of `sort_tag_chars=\"{chars}\"`\n\
         or `{char}`"
     )]
-    ConfigFileSortTag {
+    SortTagExtraSeparator {
         char: char,
         chars: String,
         extra_separator: String,
