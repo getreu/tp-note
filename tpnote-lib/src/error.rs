@@ -235,12 +235,12 @@ pub enum NoteError {
     Io(#[from] std::io::Error),
 
     #[error(transparent)]
-    ParseLanguageCode(#[from] ConfigError),
+    ParseLanguageCode(#[from] LibCfgError),
 }
 
 /// Error related to configuration deserialization.
 #[derive(Debug, Error, Clone)]
-pub enum ConfigError {
+pub enum LibCfgError {
     /// Remedy: check the configuration file variable `arg_default.export_link_rewriting`.
     #[error("choose one of: `off`, `short` or `long`")]
     ParseLocalLinkKind,

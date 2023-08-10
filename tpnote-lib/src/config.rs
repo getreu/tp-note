@@ -13,7 +13,7 @@
 //! Contract: although `LIB_CFG` is mutable at runtime, it is sourced only
 //! once at the start of Tp-Note. All modification terminates before accessing
 //! the high-level API in the `workflow` module of this crate.
-use crate::error::ConfigError;
+use crate::error::LibCfgError;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_css;
 use lazy_static::lazy_static;
@@ -905,13 +905,13 @@ pub enum LocalLinkKind {
 }
 
 impl FromStr for LocalLinkKind {
-    type Err = ConfigError;
+    type Err = LibCfgError;
     fn from_str(level: &str) -> Result<LocalLinkKind, Self::Err> {
         match &*level.to_ascii_lowercase() {
             "off" => Ok(LocalLinkKind::Off),
             "short" => Ok(LocalLinkKind::Short),
             "long" => Ok(LocalLinkKind::Long),
-            _ => Err(ConfigError::ParseLocalLinkKind {}),
+            _ => Err(LibCfgError::ParseLocalLinkKind {}),
         }
     }
 }

@@ -6,7 +6,7 @@
 use crate::config::LIB_CFG;
 #[cfg(feature = "lang-detection")]
 use crate::config::TMPL_FILTER_GET_LANG_ALL;
-use crate::error::ConfigError;
+use crate::error::LibCfgError;
 #[cfg(feature = "lang-detection")]
 use lingua;
 #[cfg(feature = "lang-detection")]
@@ -71,7 +71,7 @@ pub(crate) enum FilterGetLang {
     #[cfg(not(feature = "lang-detection"))]
     SomeLanguages(Vec<String>),
     /// The filter configuration could not be read and converted properly.
-    Error(ConfigError),
+    Error(LibCfgError),
 }
 
 #[derive(Debug)]
@@ -141,7 +141,7 @@ pub(crate) fn force_lang_setting(lang: Option<String>) {
 
 /// (Re)read environment variables and store them in the global `SETTINGS`
 /// object. Some data originates from `LIB_CFG`.
-pub fn update_settings() -> Result<(), ConfigError> {
+pub fn update_settings() -> Result<(), LibCfgError> {
     let mut settings = SETTINGS.write();
     update_author_setting(&mut settings);
     update_extension_default_setting(&mut settings);
@@ -285,13 +285,13 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
                 let mut all_langs = all_langs.into_iter().collect::<String>();
                 all_langs.truncate(all_langs.len() - ", ".len());
                 // Insert data into error object.
-                ConfigError::ParseLanguageCode {
+                LibCfgError::ParseLanguageCode {
                     language_code: l.into(),
                     all_langs,
                 }
             })
         })
-        .collect::<Result<Vec<IsoCode639_1>, ConfigError>>()
+        .collect::<Result<Vec<IsoCode639_1>, LibCfgError>>()
     {
         // The happy path.
         Ok(mut iso_codes) => {
@@ -314,7 +314,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
                 // Check if there are at least 2 languages in the list.
                 settings.filter_get_lang = match iso_codes.len() {
                     0 => FilterGetLang::Disabled,
-                    1 => FilterGetLang::Error(ConfigError::NotEnoughLanguageCodes {
+                    1 => FilterGetLang::Error(LibCfgError::NotEnoughLanguageCodes {
                         language_code: iso_codes[0].to_string(),
                     }),
                     _ => FilterGetLang::SomeLanguages(iso_codes),
@@ -421,13 +421,13 @@ fn update_env_lang_detection(settings: &mut Settings) {
                     let mut all_langs = all_langs.into_iter().collect::<String>();
                     all_langs.truncate(all_langs.len() - ", ".len());
                     // Insert data into error object.
-                    ConfigError::ParseLanguageCode {
+                    LibCfgError::ParseLanguageCode {
                         language_code: l.into(),
                         all_langs,
                     }
                 })
             })
-            .collect::<Result<Vec<IsoCode639_1>, ConfigError>>()
+            .collect::<Result<Vec<IsoCode639_1>, LibCfgError>>()
         {
             // The happy path.
             Ok(mut iso_codes) => {
@@ -452,7 +452,7 @@ fn update_env_lang_detection(settings: &mut Settings) {
                 } else {
                     settings.filter_get_lang = match iso_codes.len() {
                         0 => FilterGetLang::Disabled,
-                        1 => FilterGetLang::Error(ConfigError::NotEnoughLanguageCodes {
+                        1 => FilterGetLang::Error(LibCfgError::NotEnoughLanguageCodes {
                             language_code: iso_codes[0].to_string(),
                         }),
                         _ => FilterGetLang::SomeLanguages(iso_codes),
