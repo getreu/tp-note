@@ -10,15 +10,7 @@ pub const FRONT_MATTER_ERROR_MAX_LINES: usize = 20;
 
 /// Configuration file related filesystem and syntax errors.
 #[derive(Debug, Error)]
-pub enum LibCfgFileError {
-    /// Should not happen. Please report this bug.
-    #[error("No path to configuration file found.")]
-    PathToConfigFileNotFound,
-
-    /// Should not happen. Please report this bug.
-    #[error("Configuration file not found.")]
-    ConfigFileNotFound,
-
+pub enum FileError {
     /// Remedy: delete all files in configuration file directory.
     #[error(
         "Can not find unused filename in directory:\n\
@@ -26,9 +18,6 @@ pub enum LibCfgFileError {
         (only `COPY_COUNTER_MAX` copies are allowed)."
     )]
     NoFreeFileName { directory: PathBuf },
-
-    #[error(transparent)]
-    InconsitentConfig(#[from] LibCfgError),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
@@ -48,7 +37,7 @@ pub enum LibCfgError {
         "Configuration file error in section `[filename]`:\n\
         `sort_tag_extra_separator=\"{extra_separator}\"\n\
         must not be one of `sort_tag_chars=\"{chars}\"`\n\
-        or `{dot_file_marker}`"
+        or `{dot_file_marker}`."
     )]
     SortTagExtraSeparator {
         dot_file_marker: char,
@@ -61,7 +50,7 @@ pub enum LibCfgError {
         "Configuration file error in section `[filename]`:\n\
         All characters in `sort_tag_separator=\"{separator}\"\n\
         must be in the set `sort_tag_chars=\"{chars}\"`\n\
-        and `sort_tag_separator` must NOT start with `{dot_file_marker}`"
+        and `sort_tag_separator` must NOT start with `{dot_file_marker}`."
     )]
     SortTagSeparator {
         dot_file_marker: char,
@@ -264,7 +253,7 @@ pub enum NoteError {
     },
 
     #[error(transparent)]
-    File(#[from] LibCfgFileError),
+    File(#[from] FileError),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),

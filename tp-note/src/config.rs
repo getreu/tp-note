@@ -1,5 +1,6 @@
 //! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
 //! and exposes the configuration as `static` variable.
+use crate::error::ConfigFileError;
 use crate::settings::ARGS;
 use crate::settings::DOC_PATH;
 use crate::settings::ENV_VAR_TPNOTE_CONFIG;
@@ -31,7 +32,6 @@ use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 #[cfg(not(test))]
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::context::Context;
-use tpnote_lib::error::LibCfgFileError;
 use tpnote_lib::filename::NotePathBuf;
 
 /// Name of this executable (without the Windows ".exe" extension).
@@ -453,13 +453,13 @@ lazy_static! {
 
 lazy_static! {
     /// Variable indicating with `Err` if the loading of the configuration file went wrong.
-    pub static ref CFG_FILE_LOADING: RwLock<Result<(), LibCfgFileError>> = RwLock::new(Ok(()));
+    pub static ref CFG_FILE_LOADING: RwLock<Result<(), ConfigFileError>> = RwLock::new(Ok(()));
 }
 
 /// Parse the configuration file if it exists. Otherwise write one with default values.
 #[cfg(not(test))]
 #[inline]
-fn config_load(config_path: &Path) -> Result<Cfg, LibCfgFileError> {
+fn config_load(config_path: &Path) -> Result<Cfg, ConfigFileError> {
     if config_path.exists() {
         let mut config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
 
@@ -520,13 +520,13 @@ fn config_load(config_path: &Path) -> Result<Cfg, LibCfgFileError> {
 /// In unit tests we use the default configuration values.
 #[cfg(test)]
 #[inline]
-fn config_load(_config_path: &Path) -> Result<Cfg, LibCfgFileError> {
+fn config_load(_config_path: &Path) -> Result<Cfg, ConfigFileError> {
     Ok(Cfg::default())
 }
 
 /// Writes the default configuration to `Path`.
 #[cfg(not(test))]
-fn config_write(config: &Cfg, config_path: &Path) -> Result<(), LibCfgFileError> {
+fn config_write(config: &Cfg, config_path: &Path) -> Result<(), ConfigFileError> {
     fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
 
     let mut buffer = File::create(config_path)?;
@@ -536,7 +536,7 @@ fn config_write(config: &Cfg, config_path: &Path) -> Result<(), LibCfgFileError>
 
 /// In unit tests we do not write anything.
 #[cfg(test)]
-fn config_write(_config: &Cfg, _config_path: &Path) -> Result<(), LibCfgFileError> {
+fn config_write(_config: &Cfg, _config_path: &Path) -> Result<(), ConfigFileError> {
     Ok(())
 }
 
@@ -553,7 +553,7 @@ lazy_static! {
                 None => {
                     // Remember that something went wrong.
                     let mut cfg_file_loading = CFG_FILE_LOADING.write();
-                    *cfg_file_loading = Err(LibCfgFileError::PathToConfigFileNotFound);
+                    *cfg_file_loading = Err(ConfigFileError::PathToConfigFileNotFound);
                     return Cfg::default();
                 },
             }
@@ -563,7 +563,7 @@ lazy_static! {
             .unwrap_or_else(|e|{
                 // Remember that something went wrong.
                 let mut cfg_file_loading = CFG_FILE_LOADING.write();
-                *cfg_file_loading = Err(e);
+                *cfg_file_loading = Err(e.into());
 
                 // As we could not load the config file, we will use the default
                 // configuration.
@@ -617,7 +617,7 @@ lazy_static! {
     };
 }
 
-pub fn backup_config_file() -> Result<PathBuf, LibCfgFileError> {
+pub fn backup_config_file() -> Result<PathBuf, ConfigFileError> {
     if let Some(ref config_path) = *CONFIG_PATH {
         if config_path.exists() {
             let mut config_path_bak = config_path.clone();
@@ -629,9 +629,9 @@ pub fn backup_config_file() -> Result<PathBuf, LibCfgFileError> {
 
             Ok(config_path_bak)
         } else {
-            Err(LibCfgFileError::ConfigFileNotFound)
+            Err(ConfigFileError::ConfigFileNotFound)
         }
     } else {
-        Err(LibCfgFileError::PathToConfigFileNotFound)
+        Err(ConfigFileError::PathToConfigFileNotFound)
     }
 }

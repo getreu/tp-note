@@ -3,7 +3,7 @@ use crate::config::FILENAME_COPY_COUNTER_MAX;
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::FILENAME_LEN_MAX;
 use crate::config::LIB_CFG;
-use crate::error::LibCfgFileError;
+use crate::error::FileError;
 use crate::markup_language::MarkupLanguage;
 use std::mem::swap;
 use std::path::Path;
@@ -51,7 +51,7 @@ pub trait NotePathBuf {
     /// assert_eq!(notefile, expected);
     /// ```
 
-    fn set_next_unused(&mut self) -> Result<(), LibCfgFileError>;
+    fn set_next_unused(&mut self) -> Result<(), FileError>;
 
     /// Shortens the stem of a filename so that
     /// `filename.len() <= FILENAME_LEN_MAX`.
@@ -107,7 +107,7 @@ impl NotePathBuf for PathBuf {
         PathBuf::from(filename)
     }
 
-    fn set_next_unused(&mut self) -> Result<(), LibCfgFileError> {
+    fn set_next_unused(&mut self) -> Result<(), FileError> {
         #[inline]
         fn append_copy_counter(stem: &str, n: usize) -> String {
             let lib_cfg = LIB_CFG.read_recursive();
@@ -139,7 +139,7 @@ impl NotePathBuf for PathBuf {
 
         // This only happens, when we have 99 copies already. Should never happen.
         if new_path.exists() {
-            return Err(LibCfgFileError::NoFreeFileName {
+            return Err(FileError::NoFreeFileName {
                 directory: self.parent().unwrap_or_else(|| Path::new("")).to_path_buf(),
             });
         }

@@ -2,7 +2,8 @@
 use std::path::PathBuf;
 use std::process::ExitStatus;
 use thiserror::Error;
-use tpnote_lib::error::LibCfgFileError;
+use tpnote_lib::error::FileError;
+use tpnote_lib::error::LibCfgError;
 use tpnote_lib::error::NoteError;
 
 #[allow(dead_code)]
@@ -28,9 +29,6 @@ pub enum WorkflowError {
 
     #[error(transparent)]
     ConfigFile(#[from] ConfigFileError),
-
-    #[error(transparent)]
-    File(#[from] LibCfgFileError),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
@@ -114,6 +112,20 @@ pub enum ConfigFileError {
         or in the corresponding environment variable."
     )]
     NoApplicationFound { app_list: String, var_name: String },
+
+    /// Should not happen. Please report this bug.
+    #[error("No path to configuration file found.")]
+    PathToConfigFileNotFound,
+
+    /// Should not happen. Please report this bug.
+    #[error("Configuration file not found.")]
+    ConfigFileNotFound,
+
+    #[error(transparent)]
+    File(#[from] FileError),
+
+    #[error(transparent)]
+    LibConfig(#[from] LibCfgError),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
