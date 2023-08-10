@@ -8,9 +8,41 @@ use thiserror::Error;
 /// note file. This constant limits the number of text lines that are printed.
 pub const FRONT_MATTER_ERROR_MAX_LINES: usize = 20;
 
-/// Error related to the filesystem and to invoking external applications.
+/// Configuration file related filesystem and syntax errors.
 #[derive(Debug, Error)]
 pub enum LibCfgFileError {
+    /// Should not happen. Please report this bug.
+    #[error("No path to configuration file found.")]
+    PathToConfigFileNotFound,
+
+    /// Should not happen. Please report this bug.
+    #[error("Configuration file not found.")]
+    ConfigFileNotFound,
+
+    /// Remedy: delete all files in configuration file directory.
+    #[error(
+        "Can not find unused filename in directory:\n\
+        \t{directory:?}\n\
+        (only `COPY_COUNTER_MAX` copies are allowed)."
+    )]
+    NoFreeFileName { directory: PathBuf },
+
+    #[error(transparent)]
+    InconsitentConfig(#[from] LibCfgError),
+
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+
+    #[error(transparent)]
+    Serialize(#[from] toml::ser::Error),
+
+    #[error(transparent)]
+    Deserialize(#[from] toml::de::Error),
+}
+
+/// Configuration file related semantic errors.
+#[derive(Debug, Error, Clone)]
+pub enum LibCfgError {
     /// Remedy: restart.
     #[cfg(not(test))]
     #[error(
@@ -37,35 +69,6 @@ pub enum LibCfgFileError {
         extra_separator: String,
     },
 
-    /// Should not happen. Please report this bug.
-    #[error("No path to configuration file found.")]
-    PathToConfigFileNotFound,
-
-    /// Should not happen. Please report this bug.
-    #[error("Configuration file not found.")]
-    ConfigFileNotFound,
-
-    /// Remedy: delete all files in configuration file directory.
-    #[error(
-        "Can not find unused filename in directory:\n\
-        \t{directory:?}\n\
-        (only `COPY_COUNTER_MAX` copies are allowed)."
-    )]
-    NoFreeFileName { directory: PathBuf },
-
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-
-    #[error(transparent)]
-    Serialize(#[from] toml::ser::Error),
-
-    #[error(transparent)]
-    Deserialize(#[from] toml::de::Error),
-}
-
-/// Error related to configuration deserialization.
-#[derive(Debug, Error, Clone)]
-pub enum LibCfgError {
     /// Remedy: check the configuration file variable `arg_default.export_link_rewriting`.
     #[error("choose one of: `off`, `short` or `long`")]
     ParseLocalLinkKind,

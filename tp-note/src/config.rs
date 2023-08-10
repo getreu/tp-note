@@ -35,6 +35,8 @@ use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 #[cfg(not(test))]
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::context::Context;
+#[cfg(not(test))]
+use tpnote_lib::error::LibCfgError;
 use tpnote_lib::error::LibCfgFileError;
 use tpnote_lib::filename::NotePathBuf;
 
@@ -509,7 +511,7 @@ fn config_load(config_path: &Path) -> Result<Cfg, LibCfgFileError> {
             .is_some()
             || config.filename.sort_tag_extra_separator == FILENAME_DOTFILE_MARKER
         {
-            return Err(LibCfgFileError::ConfigFileSortTag {
+            return Err(LibCfgError::ConfigFileSortTag {
                 char: FILENAME_DOTFILE_MARKER,
                 chars: config.filename.sort_tag_chars.escape_default().to_string(),
                 extra_separator: config
@@ -517,19 +519,21 @@ fn config_load(config_path: &Path) -> Result<Cfg, LibCfgFileError> {
                     .sort_tag_extra_separator
                     .escape_default()
                     .to_string(),
-            });
+            }
+            .into());
         }
 
         // Check for obvious configuration errors.
         if !TRIM_LINE_CHARS.contains(&config.filename.copy_counter_extra_separator) {
-            return Err(LibCfgFileError::ConfigFileCopyCounter {
+            return Err(LibCfgError::ConfigFileCopyCounter {
                 chars: TRIM_LINE_CHARS.escape_default().to_string(),
                 extra_separator: config
                     .filename
                     .copy_counter_extra_separator
                     .escape_default()
                     .to_string(),
-            });
+            }
+            .into());
         }
         {
             // Copy the parts of `config` into `LIB_CFG`.
