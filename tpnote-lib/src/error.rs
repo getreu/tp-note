@@ -63,20 +63,41 @@ pub enum LibCfgFileError {
     Deserialize(#[from] toml::de::Error),
 }
 
-/// Macro to construct a `NoteError::TeraTemplate from a `Tera::Error` .
-#[macro_export]
-macro_rules! note_error_tera_template {
-    ($e:ident, $t:expr) => {
-        NoteError::TeraTemplate {
-            source_str: std::error::Error::source(&$e)
-                .unwrap_or(&tera::Error::msg(""))
-                .to_string()
-                // Remove useless information.
-                .trim_end_matches("in context while rendering '__tera_one_off'")
-                .to_string(),
-            template_str: $t,
-        }
-    };
+/// Error related to configuration deserialization.
+#[derive(Debug, Error, Clone)]
+pub enum LibCfgError {
+    /// Remedy: check the configuration file variable `arg_default.export_link_rewriting`.
+    #[error("choose one of: `off`, `short` or `long`")]
+    ParseLocalLinkKind,
+
+    /// Remedy: check the ISO 639-1 codes in the configuration variable
+    /// `tmpl.filter_get_lang` and make sure that they are supported, by
+    /// checking `tpnote -V`.
+    #[error(
+        "The ISO 639-1 language subtag `{language_code}`\n\
+         in the configuration file variable\n\
+         `tmpl.filter_get_lang` or in the environment\n\
+         variable `TPNOTE_LANG_DETECTION` is not supported.\n\
+         All listed codes must be part of the set:\n\
+         {all_langs}."
+    )]
+    ParseLanguageCode {
+        language_code: String,
+        all_langs: String,
+    },
+    /// Remedy: add one more ISO 639-1 code in the configuration variable
+    /// `tmpl.filter_get_lang` (or in `TPNOTE_LANG_DETECTION`) and make
+    /// sure that the code is supported, by checking `tpnote -V`.
+    #[error(
+        "Not enough languages to choose from.\n\
+         The list of ISO 639-1 language subtags\n\
+         currently contains only one item: `{language_code}`.\n\
+         Add one more language to the configuration \n\
+         file variable `tmpl.filter_get_lang` or to the\n\
+         environment variable `TPNOTE_LANG_DETECTION`\n\
+         to prevent this error from occurring."
+    )]
+    NotEnoughLanguageCodes { language_code: String },
 }
 
 #[derive(Debug, Error)]
@@ -238,39 +259,18 @@ pub enum NoteError {
     ParseLanguageCode(#[from] LibCfgError),
 }
 
-/// Error related to configuration deserialization.
-#[derive(Debug, Error, Clone)]
-pub enum LibCfgError {
-    /// Remedy: check the configuration file variable `arg_default.export_link_rewriting`.
-    #[error("choose one of: `off`, `short` or `long`")]
-    ParseLocalLinkKind,
-
-    /// Remedy: check the ISO 639-1 codes in the configuration variable
-    /// `tmpl.filter_get_lang` and make sure that they are supported, by
-    /// checking `tpnote -V`.
-    #[error(
-        "The ISO 639-1 language subtag `{language_code}`\n\
-         in the configuration file variable\n\
-         `tmpl.filter_get_lang` or in the environment\n\
-         variable `TPNOTE_LANG_DETECTION` is not supported.\n\
-         All listed codes must be part of the set:\n\
-         {all_langs}."
-    )]
-    ParseLanguageCode {
-        language_code: String,
-        all_langs: String,
-    },
-    /// Remedy: add one more ISO 639-1 code in the configuration variable
-    /// `tmpl.filter_get_lang` (or in `TPNOTE_LANG_DETECTION`) and make
-    /// sure that the code is supported, by checking `tpnote -V`.
-    #[error(
-        "Not enough languages to choose from.\n\
-         The list of ISO 639-1 language subtags\n\
-         currently contains only one item: `{language_code}`.\n\
-         Add one more language to the configuration \n\
-         file variable `tmpl.filter_get_lang` or to the\n\
-         environment variable `TPNOTE_LANG_DETECTION`\n\
-         to prevent this error from occurring."
-    )]
-    NotEnoughLanguageCodes { language_code: String },
+/// Macro to construct a `NoteError::TeraTemplate from a `Tera::Error` .
+#[macro_export]
+macro_rules! note_error_tera_template {
+    ($e:ident, $t:expr) => {
+        NoteError::TeraTemplate {
+            source_str: std::error::Error::source(&$e)
+                .unwrap_or(&tera::Error::msg(""))
+                .to_string()
+                // Remove useless information.
+                .trim_end_matches("in context while rendering '__tera_one_off'")
+                .to_string(),
+            template_str: $t,
+        }
+    };
 }
