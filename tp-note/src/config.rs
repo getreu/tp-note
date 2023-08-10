@@ -525,7 +525,7 @@ fn config_load(config_path: &Path) -> Result<Cfg, LibCfgFileError> {
 
         // Check for obvious configuration errors.
         if !TRIM_LINE_CHARS.contains(&config.filename.copy_counter_extra_separator) {
-            return Err(LibCfgError::ConfigFileCopyCounter {
+            return Err(LibCfgError::CopyCounterExtraSeparator {
                 chars: TRIM_LINE_CHARS.escape_default().to_string(),
                 extra_separator: config
                     .filename

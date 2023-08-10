@@ -64,7 +64,7 @@ pub enum LibCfgError {
         `copy_counter_extra_separator=\"{extra_separator}\"`\n\
         must be one of: \"{chars}\""
     )]
-    ConfigFileCopyCounter {
+    CopyCounterExtraSeparator {
         chars: String,
         extra_separator: String,
     },
