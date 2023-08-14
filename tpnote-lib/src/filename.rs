@@ -352,18 +352,17 @@ impl NotePath for Path {
 pub(crate) fn split_sort_tag(sort_tag_stem_copy_counter_ext: &str) -> (&str, &str) {
     let lib_cfg = LIB_CFG.read_recursive();
 
-    let mut stem_copy_counter_ext = sort_tag_stem_copy_counter_ext.trim_start_matches(
-        &lib_cfg
-            .filename
-            .sort_tag_chars
-            .chars()
-            .collect::<Vec<char>>()[..],
-    );
-    let mut sort_tag = &sort_tag_stem_copy_counter_ext
-        [0..sort_tag_stem_copy_counter_ext.len() - stem_copy_counter_ext.len()];
+    let mut sort_tag = &sort_tag_stem_copy_counter_ext[..sort_tag_stem_copy_counter_ext
+        .chars()
+        .take_while(|&c| lib_cfg.filename.sort_tag_chars.contains([c]))
+        .count()];
 
-    // Take `sort_tag_separator` into account.
-    if !lib_cfg.filename.sort_tag_separator.is_empty() {
+    let mut stem_copy_counter_ext;
+    if lib_cfg.filename.sort_tag_separator.is_empty() {
+        // `sort_tag` is correct.
+        stem_copy_counter_ext = &sort_tag_stem_copy_counter_ext[sort_tag.len()..];
+    } else {
+        // Take `sort_tag_separator` into account.
         if let Some(i) = sort_tag.rfind(&lib_cfg.filename.sort_tag_separator) {
             sort_tag = &sort_tag[..i];
             stem_copy_counter_ext =
@@ -374,8 +373,8 @@ pub(crate) fn split_sort_tag(sort_tag_stem_copy_counter_ext: &str) -> (&str, &st
         }
     }
 
-    // Remove `sort_tag_extra_separator` it it is on first position and
-    // a `sort_tag_char` on second position.
+    // Remove `sort_tag_extra_separator` if it is at the first position followed
+    // by a `sort_tag_char` at the second position.
     let mut chars = stem_copy_counter_ext.chars();
     if chars
         .next()
