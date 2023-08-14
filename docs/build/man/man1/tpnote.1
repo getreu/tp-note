@@ -14,7 +14,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "TP-NOTE" "1" "2023-05-16" "Version 1.21.9" "Tp-Note documentation"
+.TH "TP-NOTE" "1" "2023-05-16" "Version 1.21.10" "Tp-Note documentation"
 .hy
 .SH NAME
 .PP
@@ -53,7 +53,7 @@ In addition, there is some limited support for Asciidoc and WikiText.
 Finally, the note\[cq]s rendition is live updated and displayed in the
 user\[cq]s web browser.
 .PP
-After the user finished editing, Tp-Note analyses eventual changes in
+After the user finished editing, Tp-Note analyses potential changes in
 the notes metadata and renames, if necessary, the file, so that its
 metadata and filename are in sync again.
 Finally, the resulting path is printed to `\f[V]stdout\f[R]', log and
@@ -554,7 +554,7 @@ and looks like:
 \f[R]
 .fi
 .PP
-Note: the sort tag `\f[V]20200306-\f[R]' has not changed.
+Note: the sort tag `\f[V]20200306\f[R]' has not changed.
 The filename synchronization mechanism by default never does.
 (See below for more details about filename synchronization).
 .SH OPTIONS
@@ -927,7 +927,7 @@ If absent, absolute local links refer to the root directory
 .IP \[bu] 2
 A shorthand link to another Tp-Note document.
 Instead of writing out the full file name, only the first characters of
-the note\[cq]s sort-tag `\f[V]20230508-\f[R]' are given, e.g.\ the link
+the note\[cq]s sort-tag `\f[V]20230508\f[R]' are given, e.g.\ the link
 `\f[V][my doc](<docs/20230508>)\f[R]' points to the file
 `\f[V]./docs/20230508-my note.md\f[R]'.
 Alternatively, the shorthand link can be expressed as autolink as well:
@@ -937,7 +937,7 @@ displays the first in alphabetical order.
 To set up a different order, you can extend the sort-tag until it
 becomes unique, e.g.\ rename the example document to
 `\f[V]./docs/20230508-1-my note.md\f[R]' to obtain the unique sort-tag
-`\f[V]20230508-1-\f[R]'.
+`\f[V]20230508-1\f[R]'.
 .PP
 Although Tp-Note\[cq]s built in viewer follows absolute and relative
 URLs, usually the latter are preferred.
@@ -1029,7 +1029,7 @@ The filename has 4 parts:
 .IP
 .nf
 \f[C]
-{{ fm_sort_tag }}{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
+{{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
 \f[R]
 .fi
 .PP
@@ -1070,6 +1070,14 @@ When Tp-Note creates a new note, it will automatically prepend a
 The `\f[V]{{ fm_title }}\f[R]' part is usually derived from the parent
 directory name omitting its own \f[I]sort tag\f[R].
 .PP
+Technical note: a sort tag is identified with the following regular
+expression in SED syntax:
+`\f[V]s/\[rs]([0-9_- .\[rs]t]\[rs])*-\[aq]?.*/\[rs]1/\f[R]'.
+The expression can be customized as follows: *
+`\f[V][0-9_- .\[rs]t]\f[R]' with `\f[V]filename.sort_tag_chars\f[R]', *
+`\f[V]-\f[R]' with `\f[V]filename.sort_tag_separator\f[R]' and *
+`\f[V]\[aq]\f[R]' with `\f[V]filename.sort_tag_extra_separator\f[R]'.
+.PP
 A note\[cq]s filename is in sync with its metadata, when the following
 is true (slightly simplified, see the configuration file for the
 complete definition):
@@ -1103,11 +1111,11 @@ lang:       \[dq]en-GB\[dq]
 \f[R]
 .fi
 .PP
-As \[lq]\f[V]-My file.md\f[R]\[rq] is not equal to
-\[lq]\f[V]-\[aq]1. The Beginning--Note.md\f[R]\[rq], Tp-Note will rename
-the file to \[lq]\f[V]20211031-\[aq]1. The Beginning--Note.md\f[R]\[rq].
+As \[lq]\f[V]My file.md\f[R]\[rq] is not equal to
+\[lq]\f[V]1. The Beginning--Note.md\f[R]\[rq], Tp-Note will rename the
+file to \[lq]\f[V]20211031-1. The Beginning--Note.md\f[R]\[rq].
 If the filename had been \[lq]\f[V]05_02-My file.md\f[R]\[rq], it would
-rename it to \[lq]\f[V]05_02-\[aq]1. The Beginning--Note.md\f[R]\[rq].
+rename it to \[lq]\f[V]05_02-1. The Beginning--Note.md\f[R]\[rq].
 .PP
 Note: When the YAML front-matter does not contain the optional
 `\f[V]sort_tag\f[R]' variable, Tp-Note will never change a sort tag.
@@ -1131,16 +1139,16 @@ In order to overwrite the note\[cq]s sort tag on disk, you can add a
 ---
 title:      \[dq]1. The Beginning\[dq]
 date:       \[dq]2021-10-31\[dq]
-sort_tag:   \[dq]20211101-\[dq]
+sort_tag:   \[dq]20211101\[dq]
 ---
 \f[R]
 .fi
 .PP
 When Tp-Note synchronizes the note\[cq]s metadata with its filename, it
-will also change the sort tag from `\f[V]20211031-\f[R]' to
-`\f[V]20211101-\f[R]'.
+will also change the sort tag from `\f[V]20211031\f[R]' to
+`\f[V]20211101\f[R]'.
 The resulting filename becomes
-\[lq]\f[V]20211101-\[aq]1. The Beginning--Note.md\f[R]\[rq].
+\[lq]\f[V]20211101-1. The Beginning--Note.md\f[R]\[rq].
 .PP
 The `\f[V]sort_tag\f[R]' variable also becomes handy, when you want to
 create one single note without any sort tag:
@@ -1171,7 +1179,7 @@ file_ext:   \[dq]rst\[dq]
 This will change the file extension from `\f[V].md\f[R]' to
 \[cq]\f[V].rst\f[R].
 The resulting filename becomes
-\[lq]\f[V]20211101-\[aq]1. The Beginning--Note.rst\f[R]\[rq].
+\[lq]\f[V]20211101-1. The Beginning--Note.rst\f[R]\[rq].
 .PP
 Important: `\f[V]rst\f[R]' must be one of the registered file extensions
 listed in the `\f[V]filename.extensions_rst\f[R]' variables in
@@ -1185,7 +1193,7 @@ Note: When a `\f[V]sort_tag\f[R]' variable is defined in the note\[cq]s
 YAML header, you should not change the sort tag string in the note\[cq]s
 file name manually by renaming the file, as your change will be
 overwritten next time you open the note with Tp-Note.
-However, you can switch back to Tp-Note\[cq]s default behavior any time
+However, you can switch back to Tp-Note\[cq]s default behaviour any time
 by deleting the `\f[V]sort_tag\f[R]' line in the note\[cq]s metadata.
 The same applies to the `\f[V]file_ext\f[R]' variable.
 .PP
@@ -1877,20 +1885,23 @@ extension of the note file will change to `\f[V].rst\f[R]'.
 The above modification applies to the current note only.
 .SS Change the sort tag character set
 .PP
-\f[I]Sort tags\f[R] for new notes are generated with the
-`\f[V][TMPL] *_filename\f[R]' templates and updated with the
-`\f[V][TMPL] sync_filename\f[R]' template.
+\f[I]Sort-tags\f[R] for new notes are generated with the
+`\f[V]tmpl.*_filename\f[R]' templates.
+Before changing the sort-tag generation scheme in these templates, make
+sure to enable the right set of potential sort-tag characters.
 .PP
 By default, the digits `\f[V]0\f[R]'-`\f[V]9\f[R]', the characters
 `\f[V]_\f[R]', `\f[V]-\f[R]', \f[I]space\f[R], `\f[V]\[rs]t\f[R]' and
 `\f[V].\f[R]' are recognized as being part of a \f[I]sort tag\f[R] when
 they appear at the beginning of a filename.
 This set of characters can be modified with the
-`\f[V][filename] sort_tag_chars\f[R]' configuration variable.
+`\f[V]filename.sort_tag_chars\f[R]' configuration variable.
+If defined, the `\f[V]filename.sort_tag_separator\f[R]' (by default
+`\f[V]-\f[R]') marks the end of a sort tag without being part of it.
 In addition, one special character
 `\f[V]filename.sort_tag_extra_separator\f[R]' (by default
-`\f[V]\[aq]\f[R]') is sometimes used as \[lq]end of sort tag marker\[rq]
-to avoid ambiguity.
+`\f[V]\[aq]\f[R]') might be inserted by the filename template directly
+after the `\f[V]-\f[R]' to avoid ambiguity.
 .SS Customize the filename synchronization scheme
 .PP
 The filename synchronization scheme is fully customizable through
@@ -1905,24 +1916,25 @@ followed directly by the `\f[V]tmpl.sync_filename\f[R]' template: The
 latter should never change the filename initially set up by any
 `\f[V]tmpl.*_filename\f[R]' template.
 .PP
-Secondly, make sure that the expression in
-`\f[V]tmpl.sync_filename\f[R]' describing the filename\[cq]s \f[I]sort
-tag\f[R] e.g.\ `\f[V]{{ path | file_sort_tag }}\f[R]' is always followed
-by a variable with the `\f[V]sanit(force_alpha=true)\f[R]' filter set,
-e.g.:
+Secondly, make sure that in filename templates
+`\f[V]tmpl.*_filename\f[R]', sort-tags
+`\f[V]{{ path | file_sort_tag }}\f[R]' are never inserted directly.
+Instead, prepend the \f[I]sort_tag\f[R] with
+`\f[V]prepend(with_sort_tag=path|file_sort_tag)\f[R]' to the following
+expression, e.g.:
 .IP
 .nf
 \f[C]
-{{ path | file_sort_tag }}{{ fm_title | sanit(force_alpha=true) }}
+{{ fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}
 \f[R]
 .fi
 .PP
-The first expression guarantees, that it resolves only to characters
-defined in the `\f[V]filename.sort_tag_chars\f[R]' set, while the second
-expression is known to not start with such a character.
-This way Tp-Note is able to separate \f[I]sort tags\f[R] in filenames
-and avoids cyclic filename change.
-Or, in other words: the `\f[V]tmpl.sync_filname\f[R]' template should
+The filter `\f[V]prepend(with_sort_tag=<...>)\f[R]' decides whether to
+insert the `\f[V]sort_tag_separator=\[dq]-\[dq]\f[R]' and/or the
+`\f[V]sort_tag_extra_separator=\[dq]\[aq]\[dq]\f[R]' characters.
+These heuristics enable Tp-Note to identify unequivocally sort-tags in
+filenames, which avoids potential cyclic filename change.
+Or, in other words: the `\f[V]tmpl.sync_filname\f[R]' template must
 always give the same result, even after repeated application.
 .PP
 To debug your `\f[V]tmpl.sync_filename\f[R]' template, create a test
@@ -1932,106 +1944,79 @@ note file `\f[V]test.md\f[R]' and invoke Tp-Note with
 .nf
 \f[C]
 tpnote --batch --debug trace test.md
-\f[R]
-.fi
-.SS Store new note files by default in a subdirectory
-.PP
+\[ga]\[ga]\[ga]i
+
+
+## Store new note files by default in a subdirectory
+
 When you are annotating an existing file on disk, the new note file is
-placed in the same directory by default.
-To configure Tp-Note to store the new note file in a subdirectory,
-let\[cq]s say `\f[V]Notes/\f[R]', instead, you need to modify the
-templates `\f[V]tmpl.annotate_file_filename\f[R]' and
-`\f[V]tmpl.annotate_file_content\f[R]':
-.PP
-Replace in `\f[V]tmpl.annotate_file_filename\f[R]' the string:
-.IP
-.nf
-\f[C]
-{{ path | file_sort_tag }}
-\f[R]
-.fi
-.PP
+placed in the same directory by default. To configure Tp-Note to
+store the new note file in a subdirectory, let\[aq]s say \[aq]\[ga]Notes/\[ga]\[aq], instead, you
+need to modify the templates \[aq]\[ga]tmpl.annotate_file_filename\[ga]\[aq] and
+\[aq]\[ga]tmpl.annotate_file_content\[ga]\[aq]:
+
+Replace in \[aq]\[ga]tmpl.annotate_file_filename\[ga]\[aq] the string:
+
+    {{ path | file_sort_tag }}
+
 with:
-.IP
-.nf
-\f[C]
-Notes/{{ path | file_sort_tag }}
-\f[R]
-.fi
-.PP
-and in `\f[V]tmpl.annotate_file_content\f[R]':
-.IP
-.nf
-\f[C]
-[{{ path | filename }}](<{{ path | filename }}>)
-\f[R]
-.fi
-.PP
+
+    Notes/{{ path | file_sort_tag }}
+
+and in \[aq]\[ga]tmpl.annotate_file_content\[ga]\[aq]:
+
+    [{{ path | filename }}](<{{ path | filename }}>)
+
 with:
-.IP
-.nf
-\f[C]
-[{{ path | filename }}](<../{{ path | filename }}>)
-\f[R]
-.fi
-.PP
+
+    [{{ path | filename }}](<../{{ path | filename }}>)
+
 Unlike early versions of Tp-Note, relative links can now start with
-\f[V]../\f[R].
-This became possible with the introduction of link rewriting in the HTML
-rendition code of the viewer feature.
-Relative links are now always converted into absolute links before being
-sent to the browser.
-See subsection \f[I]Links to resources and other documents\f[R] for more
-details about link rewriting.
-.SS Customize the built-in note viewer
-.PP
-\f[B]Delay the launch of the web browser\f[R]
-.PP
-By default, Tp-Note launches two external programs: some text editor and
-a web browser.
-If wished for, the configuration variable
-`\f[V]viewer.startup_delay\f[R]' allows delaying the launch of the web
-browser some milliseconds.
-This way the web browser window will always appear on top of the editor
-window.
-A negative value delays the start of the text editor instead.
-.PP
-\f[B]Change the way how note files are rendered for viewing\f[R]
-.PP
+\[ga]../\[ga]. This became possible with the introduction of link rewriting in
+the HTML rendition code of the viewer feature. Relative links are now
+always converted into absolute links before being sent to the browser.
+See subsection _Links to resources and other documents_ for more details
+about link rewriting.
+
+
+
+## Customize the built-in note viewer
+
+**Delay the launch of the web browser**
+
+By default, Tp-Note launches two external programs: some text editor and a
+web browser. If wished for, the configuration variable
+\[aq]\[ga]viewer.startup_delay\[ga]\[aq] allows delaying the launch of the web browser some
+milliseconds.  This way the web browser window will always appear on top of the
+editor window.  A negative value delays the start of the text editor instead.
+
+**Change the way how note files are rendered for viewing**
+
 Besides its core function, Tp-Note comes with several built-in markup
-renderer and viewer, allowing to work with different markup languages at
-the same time.
-The configuration file variables `\f[V]filename.extensions_*\f[R]'
-determine which markup renderer is used for which note file extension.
-Depending on the markup language, this feature is more or less advanced
-and complete: \f[I]Markdown\f[R]
-(cf.\ `\f[V]filename.extensions_md\f[R]') is best supported and feature
-complete: It complies with the \f[I]Common Mark\f[R] specification.
-The \f[I]ReStructuredText\f[R] renderer
-(cf.\ `\f[V]filename.extensions_rst\f[R]') is quite new and still in
-experimental state.
-For all other supported markup languages Tp-Note provides a built-in
-markup source text viewer (cf.\ `\f[V]filename.extensions_txt\f[R]')
-that shows the note as typed (without markup), but renders all
-hyperlinks to make them clickable.
-In case none of the above rendition engines suit you, it is possible to
-disable the viewer feature selectively for some particular note file
-extensions: just place these extensions in the
-`\f[V]filename.extensions_no_viewer\f[R]' variable.
-If you wish to disable the viewer feature overall, set the variable
-\f[V]arg_default.edit = true\f[R].
-.PP
-\f[B]Change the HTML rendition template\f[R]
-.PP
-After the markup rendition process, Tp-Note\[cq]s built-in viewer
-generates its final HTML rendition through the customizable HTML
-templates `\f[V]tmpl_html.viewer\f[R]' and
-`\f[V]tmpl_html.viewer_error\f[R]'.
-The following code example taken from `\f[V]tmpl_html.viewer\f[R]'
-illustrates the available variables:
-.IP
-.nf
-\f[C]
+renderer and viewer, allowing to work with different markup languages at the
+same time. The configuration file variables \[aq]\[ga]filename.extensions_*\[ga]\[aq] determine
+which markup renderer is used for which note file extension. Depending on the
+markup language, this feature is more or less advanced and complete: _Markdown_
+(cf. \[aq]\[ga]filename.extensions_md\[ga]\[aq]) is best supported and feature complete: It
+complies with the _Common Mark_ specification. The _ReStructuredText_ renderer
+(cf.  \[aq]\[ga]filename.extensions_rst\[ga]\[aq]) is quite new and still in experimental state.
+For all other supported markup languages Tp-Note provides a built-in markup
+source text viewer (cf.  \[aq]\[ga]filename.extensions_txt\[ga]\[aq]) that shows the note as
+typed (without markup), but renders all hyperlinks to make them clickable.  In
+case none of the above rendition engines suit you, it is possible to disable
+the viewer feature selectively for some particular note file extensions: just
+place these extensions in the \[aq]\[ga]filename.extensions_no_viewer\[ga]\[aq] variable. If
+you wish to disable the viewer feature overall, set the variable
+\[ga]arg_default.edit = true\[ga].
+
+**Change the HTML rendition template**
+
+After the markup rendition process, Tp-Note\[aq]s built-in viewer generates its
+final HTML rendition through the customizable HTML templates
+\[aq]\[ga]tmpl_html.viewer\[ga]\[aq] and \[aq]\[ga]tmpl_html.viewer_error\[ga]\[aq]. The following code
+example taken from \[aq]\[ga]tmpl_html.viewer\[ga]\[aq] illustrates the available variables:
+
+\[ga]\[ga]\[ga]toml
 [tmpl_html]
 viewer = \[aq]\[aq]\[aq]<!DOCTYPE html>
 <html lang=\[dq]{{ fm_lang | default(value=\[aq]en\[aq]) }}\[dq]>
@@ -2398,7 +2383,7 @@ header variable `\f[V]file_ext:\f[R]'
 .IP \[bu] 2
 `\f[V]{{ fm_sort_tag }}\f[R]': The sort tag variable as defined in the
 YAML front matter of this note
-(e.g.\ `\f[V]sort_tag: \[dq]20200312-\[dq]\f[R]').
+(e.g.\ `\f[V]sort_tag: \[dq]20200312\[dq]\f[R]').
 .IP \[bu] 2
 `\f[V]{{ fm_all }}\f[R]': is a collection (map) of all defined
 `\f[V]{{ fm_* }}\f[R]' variables.
@@ -2446,7 +2431,7 @@ final directory name.
 .IP \[bu] 2
 `\f[V]{{ path | file_sort_tag }}\f[R]' is the sort tag (numerical
 filename prefix) of the final component of `\f[V]{{ path }}\f[R]',
-e.g.\ `\f[V]01-23_9-\f[R]' or `\f[V]20191022-\f[R]'.
+e.g.\ `\f[V]01-23_9\f[R]' or `\f[V]20191022\f[R]'.
 It is similar to `\f[V]{{ path |\ file_name }}\f[R]' but without
 returning its stem, copy-counter and extension.
 .IP \[bu] 2
@@ -2509,10 +2494,18 @@ Special characters are omitted or replaced by `\f[V]-\f[R]' and
 See the section \f[I]Filename template convention\f[R] for more details
 about this filter.
 .IP \[bu] 2
-`\f[V]{{ fm_title | sanit(force_alpha=true) }}\f[R]' is the note\[cq]s
-title as defined in its front-matter.
-Same as above, but results starting with a sort tag character are
-prepended with an apostrophe to avoid ambiguity.
+`\f[V]{{ fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}\f[R]'
+is the note\[cq]s title as defined in its front-matter.
+Same as above, but the title string is prepended with the note\[cq]s
+\f[I]sort_tag\f[R] and with a `\f[V]filename.sort_tag_separator\f[R]'
+(by default `\f[V]-\f[R]').
+Eventually, a second `\f[V]filename.sort_tag_extra_separator\f[R]' (by
+default `\f[V]\[aq]\[aq]\f[R]') is inserted after the first to
+guarantee, that one of the separators unequivocally marks the end of the
+\f[I]sort_tag\f[R].
+This might be necessary to avoid ambiguity in case the
+`\f[V]fm_title\f[R]' starts with a character defined in the
+`\f[V]filename.sort_tag_chars\f[R]' set.
 .IP \[bu] 2
 `\f[V]{{ fm_all | remove(var=\[aq]fm_title\[aq]) }}\f[R]' represents a
 collection (map) of all `\f[V]fm_*\f[R]' variables, exclusive of the
@@ -2576,9 +2569,9 @@ has a special role as it synchronizes the filename of existing note
 files.
 Besides this, as we are dealing with filenames we must guarantee, that
 the filename templates produce only file system friendly characters.
-For this purpose Tp-Note provides the additional Tera filters
-`\f[V]sanit\f[R]' and `\f[V]sanit(force_alpha=true)\f[R]':
-.IP \[bu] 2
+For this purpose Tp-Note provides the additional Tera filter
+`\f[V]sanit\f[R]':
+.PP
 The `\f[V]sanit()\f[R]' filter transforms a string in a file system
 friendly from.
 This is done by replacing forbidden characters like `\f[V]?\f[R]' and
@@ -2593,34 +2586,50 @@ an apostrophe: a dot file is a file whose name starts with `\f[V].\f[R]'
 and that does not contain whitespace.
 It may or may not end with a file extension.
 The apostrophe preserves the following dot from being filtered.
-.IP \[bu] 2
-`\f[V]sanit(force_alpha=true)\f[R]' is similar to the above, with one
-exception: when a string starts with a digit `\f[V]0123456789\f[R]' or
-`\f[V]-_\f[R]', the whole string is prepended with \f[V]\[aq]\f[R].
-For example: \[lq]\f[V]1 The Show Begins\f[R]\[rq] becomes
-\[lq]\f[V]\[aq]1 The Show Begins\f[R]\[rq].
-This filter should always be applied to the first variable assembling
-the new filename, e.g.
-`\f[V]{{ title | sanit(force_alpha=true )}\f[R]'.
-This way, it is always possible to distinguish the sort tag from the
-actual filename.
-The default sort tag separator `\f[V]\[aq]\f[R]' can be changed with the
-configuration variable `\f[V]filename.sort_tag_extra_separator\f[R]'.
 .PP
-In filename templates most variables must pass either the
-`\f[V]sanit\f[R]' or the `\f[V]sanit(force_alpha=true)\f[R]' filter.
-Exception to this rule are the sort tag variables
+The `\f[V]prepend(with_sort_tag=<...>\f[R]' filter is similar to the
+`\f[V]prepend(with=<...>\f[R]' filter, with two exceptions:
+.IP "1." 3
+If `\f[V]filename.sort_tag_separator\f[R]' is defined (by default
+`\f[V]-\f[R]'), it is automatically inserted between the sort-tag and
+the input string.
+.IP "2." 3
+In some cases an additional separator
+`\f[V]filename.sort_tag_extra_separator\f[R]' (by default
+`\f[V]\[aq]\f[R]') may be inserted as well.
+.PP
+Both separators guarantee that the end of a sort-tag is detected
+unequivocally.
+For example, when the input string starts with a digit
+`\f[V]0123456789\f[R]' or `\f[V]-_\f[R]', the string is prepended with
+\f[V]-\[aq]\f[R], e.g.
+\[lq]\f[V]1-The Show Begins\f[R]\[rq] becomes
+\[lq]\f[V]\[aq]1-The Show Begins\f[R]\[rq].
+The `\f[V]prepend(with_sort_tag=<...>)\f[R]' filter must be applied to
+the first variable,
+e.g.\ `\f[V]{{ fm_title | sanit | prepend(with_separator=path| file_sort_tag )}\f[R]'.
+This way, it is always possible to univocally distinguish the sort-tag
+from the rest of the filename.
+Note, the default sort-tag separators can be changed with the
+configuration variables `\f[V]filename.sort_tag_separator\f[R]' and
+`\f[V]filename.sort_tag_extra_separator\f[R]'.
+For more details please consult the \f[I]Customize the filename
+synchronization scheme\f[R] chapter.
+.PP
+In filename templates most variables must pass the `\f[V]sanit\f[R]'
+filter.
+Exception to this rule are sort-tag expressions like
 `\f[V]{{ path | file_sort_tag }}\f[R]' and
 `\f[V]{{ dir_path | file_sort_tag }}\f[R]'.
 As the latter are guaranteed to contain only the file system friendly
 characters `\f[V]0123456789 -_\f[R]', no additional filtering is
 required.
 Please note, that in this case a `\f[V]sanit\f[R]'-filter would
-needlessly restrict the value range of sort tags as they usually end
-with a `\f[V]-\f[R]', a character, which the `\f[V]sanit\f[R]'-filter
-screens out when it appears in leading or trailing position.
-For this reason no `\f[V]sanit\f[R]'-filter is not allowed with
-`\f[V]{{ path | file_sort_tag }}\f[R]' and
+needlessly restrict the value range of sort-tags because they may
+contain characters, which the `\f[V]sanit\f[R]'-filter screens out when
+they appear in leading or trailing position.
+For this reason one must not use the `\f[V]sanit\f[R]'-filter together
+with `\f[V]{{ path | file_sort_tag }}\f[R]' or
 `\f[V]{{ dir_path |file_sort_tag }}\f[R]'.
 .SH SECURITY AND PRIVACY CONSIDERATIONS
 .PP
@@ -2976,7 +2985,7 @@ Jens Getreu <getreu@web.de>
 .SS [1]
 .PP
 The variables `\f[V]{{ fm_title }}\f[R]' and
-`\f[V]{{ fm_subtitle }}\f[R]' reflect the values in the note\[cq]s
-metadata.
+`\f[V]{{ fm_subtitle }}\f[R]' reflect the values in the note\[cq]s front
+matter.
 .SH AUTHORS
 Jens Getreu.
