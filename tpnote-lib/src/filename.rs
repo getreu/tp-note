@@ -9,6 +9,8 @@ use std::mem::swap;
 use std::path::Path;
 use std::path::PathBuf;
 
+pub(crate) const FILENAME_EXTENSION_SEPARATOR_DOT: char = '.';
+
 /// Extents `PathBuf` with methods dealing with paths to Tp-Note files.
 pub trait NotePathBuf {
     /// Concatenates the `sort_tag`, `stem`, `copy_counter`, `.` and `extension`.
@@ -101,7 +103,7 @@ impl NotePathBuf for PathBuf {
         filename.push_str(stem);
         filename.push_str(copy_counter);
         if !extension.is_empty() {
-            filename.push('.');
+            filename.push(FILENAME_EXTENSION_SEPARATOR_DOT);
             filename.push_str(extension);
         };
         PathBuf::from(filename)
@@ -183,7 +185,7 @@ impl NotePathBuf for PathBuf {
 
         // Assemble.
         let mut note_filename = note_stem_short;
-        note_filename.push('.');
+        note_filename.push(FILENAME_EXTENSION_SEPARATOR_DOT);
         note_filename.push_str(note_extension);
 
         // Replace filename`
