@@ -96,10 +96,15 @@ impl NotePathBuf for PathBuf {
     fn from_disassembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self {
         // Assemble path.
         let mut filename = sort_tag.to_string();
-        {
+        if !filename.is_empty() {
             let lib_cfg = LIB_CFG.read_recursive();
             filename.push_str(&lib_cfg.filename.sort_tag_separator);
         }
+        if !split_sort_tag(&stem).0.is_empty() {
+            let lib_cfg = LIB_CFG.read_recursive();
+            filename.push(lib_cfg.filename.sort_tag_extra_separator);
+        }
+
         filename.push_str(stem);
         filename.push_str(copy_counter);
         if !extension.is_empty() {
@@ -611,6 +616,18 @@ mod tests {
     fn test_assemble_filename() {
         let expected = PathBuf::from("1_2_3-my_file-1-.md");
         let result = PathBuf::from_disassembled("1_2_3", "my_file", "-1-", "md");
+        assert_eq!(expected, result);
+
+        let expected = PathBuf::from("1_2_3-123 My_file-1-.md");
+        let result = PathBuf::from_disassembled("1_2_3", "123 My_file", "-1-", "md");
+        assert_eq!(expected, result);
+
+        let expected = PathBuf::from("1_2_3-'123-my_file-1-.md");
+        let result = PathBuf::from_disassembled("1_2_3", "123-my_file", "-1-", "md");
+        assert_eq!(expected, result);
+
+        let expected = PathBuf::from("'123-my_file-1-.md");
+        let result = PathBuf::from_disassembled("", "123-my_file", "-1-", "md");
         assert_eq!(expected, result);
     }
 
