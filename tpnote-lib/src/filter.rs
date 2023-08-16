@@ -688,7 +688,7 @@ mod tests {
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
         let output = file_copy_counter_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("(123)", output);
+        assert_eq!("123", output);
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
