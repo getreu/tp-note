@@ -14,6 +14,8 @@ pub(crate) const FILENAME_EXTENSION_SEPARATOR_DOT: char = '.';
 /// Extents `PathBuf` with methods dealing with paths to Tp-Note files.
 pub trait NotePathBuf {
     /// Concatenates the `sort_tag`, `stem`, `copy_counter`, `.` and `extension`.
+    /// This functions inserts all potentially necessary separators and
+    /// extra separators.
     fn from_disassembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self;
     /// Append/increment a copy counter.
     /// When the path `p` exists on disk already, append some extension
@@ -93,23 +95,41 @@ pub trait NotePathBuf {
 impl NotePathBuf for PathBuf {
     #[inline]
 
-    // TODO: Move `append_copy_counter` logic in here. Change signature:
-    // parameter `copy_counter` should not include brackets.
     fn from_disassembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self {
         // Assemble path.
-        let mut filename = sort_tag.to_string();
-        if !filename.is_empty() {
+        let mut filename = String::new();
+
+        // Add potential sort-tag and separators.
+        if !sort_tag.is_empty() {
             let lib_cfg = LIB_CFG.read_recursive();
-            filename.push_str(&lib_cfg.filename.sort_tag_separator);
+            filename.push_str(sort_tag);
+            if !stem.is_empty() {
+                filename.push_str(&lib_cfg.filename.sort_tag_separator);
+            }
         }
+        // Does the beginning of `stem` look like a sort-tag?
         if !split_sort_tag(&stem).0.is_empty() {
             let lib_cfg = LIB_CFG.read_recursive();
             filename.push(lib_cfg.filename.sort_tag_extra_separator);
         }
 
         filename.push_str(stem);
-        // TODO Use append copy counter logic here
-        filename.push_str(copy_counter);
+
+        if !copy_counter.is_empty() {
+            let lib_cfg = LIB_CFG.read_recursive();
+
+            // Is `copy_counter_extra_separator` necessary?
+            // Does this stem ending look similar to a copy counter?
+            if stem.len() != Path::trim_copy_counter(&stem).len() {
+                // Add an additional separator.
+                filename.push_str(&lib_cfg.filename.copy_counter_extra_separator);
+            };
+
+            filename.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
+            filename.push_str(copy_counter);
+            filename.push_str(&lib_cfg.filename.copy_counter_closing_brackets);
+        }
+
         if !extension.is_empty() {
             filename.push(FILENAME_EXTENSION_SEPARATOR_DOT);
             filename.push_str(extension);
@@ -118,25 +138,6 @@ impl NotePathBuf for PathBuf {
     }
 
     fn set_next_unused(&mut self) -> Result<(), FileError> {
-        // TODO: Move this into `from_disassembled`.
-        #[inline]
-        fn append_copy_counter(stem: &str, n: usize) -> String {
-            let lib_cfg = LIB_CFG.read_recursive();
-            let mut stem = stem.to_string();
-
-            // Is `copy_counter_extra_separator` necessary?
-            // Does this stem ending look similar to a copy counter?
-            if stem.len() != Path::trim_copy_counter(&stem).len() {
-                // Add an additional separator.
-                stem.push_str(&lib_cfg.filename.copy_counter_extra_separator);
-            };
-
-            stem.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
-            stem.push_str(&n.to_string());
-            stem.push_str(&lib_cfg.filename.copy_counter_closing_brackets);
-            stem
-        }
-
         if !&self.exists() {
             return Ok(());
         };
@@ -146,9 +147,8 @@ impl NotePathBuf for PathBuf {
         let mut new_path = self.clone();
 
         // Try up to 99 sort tag extensions, then give up.
-        for n in 1..FILENAME_COPY_COUNTER_MAX {
-            let stem_copy_counter = append_copy_counter(stem, n);
-            let filename = Self::from_disassembled(sort_tag, &stem_copy_counter, "", ext);
+        for copy_counter in 1..FILENAME_COPY_COUNTER_MAX {
+            let filename = Self::from_disassembled(sort_tag, &stem, &copy_counter.to_string(), ext);
             new_path.set_file_name(filename);
 
             if !new_path.exists() {
@@ -628,20 +628,24 @@ mod tests {
 
     #[test]
     fn test_assemble_filename() {
-        let expected = PathBuf::from("1_2_3-my_file-1-.md");
-        let result = PathBuf::from_disassembled("1_2_3", "my_file", "-1-", "md");
+        let expected = PathBuf::from("my_file.md");
+        let result = PathBuf::from_disassembled("", "my_file", "", "md");
         assert_eq!(expected, result);
 
-        let expected = PathBuf::from("1_2_3-123 My_file-1-.md");
-        let result = PathBuf::from_disassembled("1_2_3", "123 My_file", "-1-", "md");
+        let expected = PathBuf::from("1_2_3-my_file(1).md");
+        let result = PathBuf::from_disassembled("1_2_3", "my_file", "1", "md");
         assert_eq!(expected, result);
 
-        let expected = PathBuf::from("1_2_3-'123-my_file-1-.md");
-        let result = PathBuf::from_disassembled("1_2_3", "123-my_file", "-1-", "md");
+        let expected = PathBuf::from("1_2_3-123 My_file(1).md");
+        let result = PathBuf::from_disassembled("1_2_3", "123 My_file", "1", "md");
         assert_eq!(expected, result);
 
-        let expected = PathBuf::from("'123-my_file-1-.md");
-        let result = PathBuf::from_disassembled("", "123-my_file", "-1-", "md");
+        let expected = PathBuf::from("1_2_3-'123-my_file(1).md");
+        let result = PathBuf::from_disassembled("1_2_3", "123-my_file", "1", "md");
+        assert_eq!(expected, result);
+
+        let expected = PathBuf::from("'123-my_file(1).md");
+        let result = PathBuf::from_disassembled("", "123-my_file", "1", "md");
         assert_eq!(expected, result);
     }
 
