@@ -166,47 +166,23 @@ impl NotePathBuf for PathBuf {
         Ok(())
     }
 
-    // TODO: Refactor in order to reduce redundancy by using `dissassemble` and
-    // `from_disassembled`.
     fn shorten_filename(&mut self) {
         // Determine length of file-extension.
-        let note_extension = self
-            .extension()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default();
-        let note_extension_len = note_extension.len();
-
-        // Limit length of file-stem.
-        let mut note_stem = self
-            .file_stem()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default()
-            .to_string();
-
-        // Does this stem ending look similar to a copy counter?
-        if !Path::split_copy_counter(&note_stem).1.is_empty() {
-            // Add an additional separator.
-            let lib_cfg = LIB_CFG.read_recursive();
-            note_stem.push_str(&lib_cfg.filename.copy_counter_extra_separator);
-        };
+        let (sort_tag, _, stem, copy_counter, ext) = self.disassemble();
+        let ext_len = ext.len();
 
         // Limit the size of `file_path`
-        let mut note_stem_short = String::new();
+        let mut stem_short = String::new();
         // `+1` reserves one byte for `.` before the extension.
-        for i in (0..FILENAME_LEN_MAX - (note_extension_len + 1)).rev() {
-            if let Some(s) = note_stem.get(..=i) {
-                note_stem_short = s.to_string();
+        for i in (0..FILENAME_LEN_MAX - (ext_len + 1)).rev() {
+            if let Some(s) = stem.get(..=i) {
+                stem_short = s.to_string();
                 break;
             }
         }
 
         // Assemble.
-        let mut note_filename = note_stem_short;
-        note_filename.push(FILENAME_EXTENSION_SEPARATOR_DOT);
-        note_filename.push_str(note_extension);
-
+        let note_filename = PathBuf::from_disassembled(sort_tag, &stem_short, copy_counter, ext);
         // Replace filename`
         self.set_file_name(note_filename);
     }
@@ -432,22 +408,16 @@ mod tests {
         use std::path::PathBuf;
         let lib_cfg = LIB_CFG.read_recursive();
 
-        // Test concatenation of extra `-` if it ends with a copy counter pattern.
-        let mut input = "fn".to_string();
-        // This makes the filename problematic
+        let mut input = "fn(1)-".to_string();
+        // Test copy counter parsing.
         input.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
         input.push('0');
         input.push_str(&lib_cfg.filename.copy_counter_closing_brackets);
 
-        // We expect this to be corrected.
-        let mut expected = input.clone();
-        // Append '-'.
-        expected.push_str(&lib_cfg.filename.copy_counter_extra_separator);
-
         input.push_str(".ext");
-        expected.push_str(".ext");
 
         let mut input = PathBuf::from(input);
+        let expected = input.clone();
         input.shorten_filename();
         let output = input;
         assert_eq!(OsString::from(expected), output);
