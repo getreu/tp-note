@@ -93,6 +93,8 @@ pub trait NotePathBuf {
 impl NotePathBuf for PathBuf {
     #[inline]
 
+    // TODO: Move `append_copy_counter` logic in here. Change signature:
+    // parameter `copy_counter` should not include brackets.
     fn from_disassembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self {
         // Assemble path.
         let mut filename = sort_tag.to_string();
@@ -106,6 +108,7 @@ impl NotePathBuf for PathBuf {
         }
 
         filename.push_str(stem);
+        // TODO Use append copy counter logic here
         filename.push_str(copy_counter);
         if !extension.is_empty() {
             filename.push(FILENAME_EXTENSION_SEPARATOR_DOT);
@@ -115,10 +118,19 @@ impl NotePathBuf for PathBuf {
     }
 
     fn set_next_unused(&mut self) -> Result<(), FileError> {
+        // TODO: Move this into `from_disassembled`.
         #[inline]
         fn append_copy_counter(stem: &str, n: usize) -> String {
             let lib_cfg = LIB_CFG.read_recursive();
             let mut stem = stem.to_string();
+
+            // Is `copy_counter_extra_separator` necessary?
+            // Does this stem ending look similar to a copy counter?
+            if stem.len() != Path::trim_copy_counter(&stem).len() {
+                // Add an additional separator.
+                stem.push_str(&lib_cfg.filename.copy_counter_extra_separator);
+            };
+
             stem.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
             stem.push_str(&n.to_string());
             stem.push_str(&lib_cfg.filename.copy_counter_closing_brackets);
@@ -154,6 +166,8 @@ impl NotePathBuf for PathBuf {
         Ok(())
     }
 
+    // TODO: Refactor in order to reduce redundancy by using `dissassemble` and
+    // `from_disassembled`.
     fn shorten_filename(&mut self) {
         // Determine length of file-extension.
         let note_extension = self
