@@ -251,8 +251,10 @@ fn file_stem_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that takes a path and extracts its copy counter,
-/// in other words: the filename without `sort_tag`, `file_stem`
-/// and `file_ext`.
+/// or, to put it another way: the filename without `sort_tag`, `file_stem`
+/// and `file_ext` (and their separators). If the filename contains a
+/// `copy_counter=n`, the retured JSON value variant is `Value::Number(n)`.
+/// Otherwise it is `Value::Null`.
 fn file_copy_counter_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -260,8 +262,12 @@ fn file_copy_counter_filter<S: BuildHasher>(
     let p = try_get_value!("file_copy_counter", "value", String, value);
     let p = PathBuf::from(p);
     let (_, _, _, copy_counter, _) = p.disassemble();
+    let copy_counter = match copy_counter {
+        Some(cc) => to_value(cc)?,
+        None => Value::Null,
+    };
 
-    Ok(to_value(copy_counter)?)
+    Ok(copy_counter)
 }
 
 /// A Tera filter that takes a path and extracts its filename without
@@ -690,7 +696,7 @@ mod tests {
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
         let output = file_copy_counter_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("123", output);
+        assert_eq!(123, output);
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";

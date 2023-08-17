@@ -16,7 +16,12 @@ pub trait NotePathBuf {
     /// Concatenates the `sort_tag`, `stem`, `copy_counter`, `.` and `extension`.
     /// This functions inserts all potentially necessary separators and
     /// extra separators.
-    fn from_disassembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self;
+    fn from_disassembled(
+        sort_tag: &str,
+        stem: &str,
+        copy_counter: Option<usize>,
+        extension: &str,
+    ) -> Self;
     /// Append/increment a copy counter.
     /// When the path `p` exists on disk already, append some extension
     /// with an incrementing counter to the sort-tag in `p` until
@@ -95,7 +100,12 @@ pub trait NotePathBuf {
 impl NotePathBuf for PathBuf {
     #[inline]
 
-    fn from_disassembled(sort_tag: &str, stem: &str, copy_counter: &str, extension: &str) -> Self {
+    fn from_disassembled(
+        sort_tag: &str,
+        stem: &str,
+        copy_counter: Option<usize>,
+        extension: &str,
+    ) -> Self {
         // Assemble path.
         let mut filename = String::new();
 
@@ -115,18 +125,18 @@ impl NotePathBuf for PathBuf {
 
         filename.push_str(stem);
 
-        if !copy_counter.is_empty() {
+        if let Some(cc) = copy_counter {
             let lib_cfg = LIB_CFG.read_recursive();
 
             // Is `copy_counter_extra_separator` necessary?
             // Does this stem ending look similar to a copy counter?
-            if !Path::split_copy_counter(&stem).1.is_empty() {
+            if Path::split_copy_counter(&stem).1.is_some() {
                 // Add an additional separator.
                 filename.push_str(&lib_cfg.filename.copy_counter_extra_separator);
             };
 
             filename.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
-            filename.push_str(copy_counter);
+            filename.push_str(&cc.to_string());
             filename.push_str(&lib_cfg.filename.copy_counter_closing_brackets);
         }
 
@@ -148,7 +158,7 @@ impl NotePathBuf for PathBuf {
 
         // Try up to 99 sort tag extensions, then give up.
         for copy_counter in 1..FILENAME_COPY_COUNTER_MAX {
-            let filename = Self::from_disassembled(sort_tag, &stem, &copy_counter.to_string(), ext);
+            let filename = Self::from_disassembled(sort_tag, &stem, Some(copy_counter), ext);
             new_path.set_file_name(filename);
 
             if !new_path.exists() {
@@ -193,20 +203,20 @@ pub trait NotePath {
     /// Helper function that decomposes a fully qualified path name
     /// into (`sort_tag`, `stem_copy_counter_ext`, `stem`, `copy_counter`, `ext`).
     /// All sort-tag seprators and copy-counter separators/brackets are removed.
-    fn disassemble(&self) -> (&str, &str, &str, &str, &str);
+    fn disassemble(&self) -> (&str, &str, &str, Option<usize>, &str);
     /// Compares with another `Path` to a Tp-Note file. They are considered equal
     /// even when the copy counter is different.
     fn exclude_copy_counter_eq(&self, p2: &Path) -> bool;
     /// Check if a `Path` points to a file with a "wellformed" filename.
     fn has_wellformed_filename(&self) -> bool;
     /// Helper function: Removes the copy counter from the file stem.
-    fn split_copy_counter(tag: &str) -> (&str, &str);
+    fn split_copy_counter(tag: &str) -> (&str, Option<usize>);
     /// Compare to all file extensions Tp-Note can open.
     fn has_tpnote_extension(&self) -> bool;
 }
 
 impl NotePath for Path {
-    fn disassemble(&self) -> (&str, &str, &str, &str, &str) {
+    fn disassemble(&self) -> (&str, &str, &str, Option<usize>, &str) {
         let sort_tag_stem_copy_counter_ext = self
             .file_name()
             .unwrap_or_default()
@@ -294,28 +304,28 @@ impl NotePath for Path {
     /// returns the result and the copy counter.
     /// This function removes all brackets and a potiential extra separator.
     #[inline]
-    fn split_copy_counter(tag: &str) -> (&str, &str) {
+    fn split_copy_counter(tag: &str) -> (&str, Option<usize>) {
         let lib_cfg = LIB_CFG.read_recursive();
         // Strip closing brackets at the end.
         let tag1 =
             if let Some(t) = tag.strip_suffix(&lib_cfg.filename.copy_counter_closing_brackets) {
                 t
             } else {
-                return (tag, "");
+                return (tag, None);
             };
         // Now strip numbers.
         let tag2 = tag1.trim_end_matches(|c: char| c.is_numeric());
-        let copy_counter = if tag2.len() < tag1.len() {
-            &tag1[tag2.len()..]
+        let copy_counter: Option<usize> = if tag2.len() < tag1.len() {
+            tag1[tag2.len()..].parse().ok()
         } else {
-            return (tag, "");
+            return (tag, None);
         };
         // And finally strip starting bracket.
         let tag3 =
             if let Some(t) = tag2.strip_suffix(&lib_cfg.filename.copy_counter_opening_brackets) {
                 t
             } else {
-                return (tag, "");
+                return (tag, None);
             };
         // This is optional
         if let Some(t) = tag3.strip_suffix(&lib_cfg.filename.copy_counter_extra_separator) {
@@ -484,7 +494,7 @@ mod tests {
             "1_2_3",
             "my_title--my_subtitle(1).md",
             "my_title--my_subtitle",
-            "1",
+            Some(1),
             "md",
         );
         let p = Path::new("/my/dir/1_2_3-my_title--my_subtitle(1).md");
@@ -495,7 +505,7 @@ mod tests {
             "1_2_3",
             "my_title--my_subtitle(1)-(9).md",
             "my_title--my_subtitle(1)",
-            "9",
+            Some(9),
             "md",
         );
         let p = Path::new("/my/dir/1_2_3-my_title--my_subtitle(1)-(9).md");
@@ -506,7 +516,7 @@ mod tests {
             "2021.04.12",
             "my_title--my_subtitle(1).md",
             "my_title--my_subtitle",
-            "1",
+            Some(1),
             "md",
         );
         let p = Path::new("/my/dir/2021.04.12-my_title--my_subtitle(1).md");
@@ -517,30 +527,36 @@ mod tests {
             "",
             "2021 04 12 my_title--my_subtitle(1).md",
             "2021 04 12 my_title--my_subtitle",
-            "1",
+            Some(1),
             "md",
         );
         let p = Path::new("/my/dir/2021 04 12 my_title--my_subtitle(1).md");
         let result = p.disassemble();
         assert_eq!(expected, result);
 
-        let expected = ("2021 04 12", "", "", "", "");
+        let expected = ("2021 04 12", "", "", None, "");
         let p = Path::new("/my/dir/2021 04 12-");
         let result = p.disassemble();
         assert_eq!(expected, result);
 
         // This triggers the bug fixed with v1.14.3.
-        let expected = ("2021 04 12", ".dotfile", ".dotfile", "", "");
+        let expected = ("2021 04 12", ".dotfile", ".dotfile", None, "");
         let p = Path::new("/my/dir/2021 04 12-'.dotfile");
         let result = p.disassemble();
         assert_eq!(expected, result);
 
-        let expected = ("2021 04 12", "(9).md", "", "9", "md");
+        let expected = ("2021 04 12", "(9).md", "", Some(9), "md");
         let p = Path::new("/my/dir/2021 04 12-(9).md");
         let result = p.disassemble();
         assert_eq!(expected, result);
 
-        let expected = ("20221030", "some.pdf--Note.md", "some.pdf--Note", "", "md");
+        let expected = (
+            "20221030",
+            "some.pdf--Note.md",
+            "some.pdf--Note",
+            None,
+            "md",
+        );
         let p = Path::new("/my/dir/20221030-some.pdf--Note.md");
         let result = p.disassemble();
         assert_eq!(expected, result);
@@ -549,7 +565,7 @@ mod tests {
             "1_2_3",
             "my_title--my_subtitle(1).md",
             "my_title--my_subtitle",
-            "1",
+            Some(1),
             "md",
         );
         let p = Path::new("/my/dir/1_2_3-my_title--my_subtitle(1).md");
@@ -560,7 +576,7 @@ mod tests {
             "1_2_3",
             "123 my_title--my_subtitle(1).md",
             "123 my_title--my_subtitle",
-            "1",
+            Some(1),
             "md",
         );
         let p = Path::new("/my/dir/1_2_3-123 my_title--my_subtitle(1).md");
@@ -571,7 +587,7 @@ mod tests {
             "1_2_3-123",
             "my_title--my_subtitle(1).md",
             "my_title--my_subtitle",
-            "1",
+            Some(1),
             "md",
         );
         let p = Path::new("/my/dir/1_2_3-123-my_title--my_subtitle(1).md");
@@ -582,7 +598,7 @@ mod tests {
             "1_2_3",
             "123-my_title--my_subtitle(1).md",
             "123-my_title--my_subtitle",
-            "1",
+            Some(1),
             "md",
         );
         let p = Path::new("/my/dir/1_2_3-'123-my_title--my_subtitle(1).md");
@@ -593,7 +609,7 @@ mod tests {
             "1_2_3",
             "123 my_title--my_subtitle(1).md",
             "123 my_title--my_subtitle",
-            "1",
+            Some(1),
             "md",
         );
         let p = Path::new("/my/dir/1_2_3-123 my_title--my_subtitle(1).md");
@@ -604,7 +620,7 @@ mod tests {
             "1_2_3",
             "'my'_title--my_subtitle(1).md",
             "'my'_title--my_subtitle",
-            "1",
+            Some(1),
             "md",
         );
         let p = Path::new("/my/dir/1_2_3-'my'_title--my_subtitle(1).md");
@@ -615,51 +631,51 @@ mod tests {
     #[test]
     fn test_assemble_filename() {
         let expected = PathBuf::from("my_file.md");
-        let result = PathBuf::from_disassembled("", "my_file", "", "md");
+        let result = PathBuf::from_disassembled("", "my_file", None, "md");
         assert_eq!(expected, result);
 
         let expected = PathBuf::from("1_2_3-my_file(1).md");
-        let result = PathBuf::from_disassembled("1_2_3", "my_file", "1", "md");
+        let result = PathBuf::from_disassembled("1_2_3", "my_file", Some(1), "md");
         assert_eq!(expected, result);
 
         let expected = PathBuf::from("1_2_3-123 My_file(1).md");
-        let result = PathBuf::from_disassembled("1_2_3", "123 My_file", "1", "md");
+        let result = PathBuf::from_disassembled("1_2_3", "123 My_file", Some(1), "md");
         assert_eq!(expected, result);
 
         let expected = PathBuf::from("1_2_3-'123-my_file(1).md");
-        let result = PathBuf::from_disassembled("1_2_3", "123-my_file", "1", "md");
+        let result = PathBuf::from_disassembled("1_2_3", "123-my_file", Some(1), "md");
         assert_eq!(expected, result);
 
         let expected = PathBuf::from("'123-my_file(1).md");
-        let result = PathBuf::from_disassembled("", "123-my_file", "1", "md");
+        let result = PathBuf::from_disassembled("", "123-my_file", Some(1), "md");
         assert_eq!(expected, result);
     }
 
     #[test]
     fn test_trim_copy_counter() {
         // Pattern found and removed.
-        let expected = ("my_stem", "78");
+        let expected = ("my_stem", Some(78));
         let result = Path::split_copy_counter("my_stem(78)");
         assert_eq!(expected, result);
 
         // Pattern found and removed.
-        let expected = ("my_stem", "78");
+        let expected = ("my_stem", Some(78));
         let result = Path::split_copy_counter("my_stem-(78)");
         assert_eq!(expected, result);
 
         // Pattern found and removed.
-        let expected = ("my_stem_", "78");
+        let expected = ("my_stem_", Some(78));
         let result = Path::split_copy_counter("my_stem_(78)");
         assert_eq!(expected, result);
 
         // Pattern not found.
         assert_eq!(expected, result);
-        let expected = ("my_stem_(78))", "");
+        let expected = ("my_stem_(78))", None);
         let result = Path::split_copy_counter("my_stem_(78))");
         assert_eq!(expected, result);
 
         // Pattern not found.
-        let expected = ("my_stem_)78)", "");
+        let expected = ("my_stem_)78)", None);
         let result = Path::split_copy_counter("my_stem_)78)");
         assert_eq!(expected, result);
     }
