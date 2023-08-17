@@ -252,7 +252,7 @@ fn file_stem_filter<S: BuildHasher>(
 
 /// A Tera filter that takes a path and extracts its copy counter,
 /// in other words: the filename without `sort_tag`, `file_stem`
-/// and `extension`.
+/// and `file_ext`.
 fn file_copy_counter_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -264,7 +264,9 @@ fn file_copy_counter_filter<S: BuildHasher>(
     Ok(to_value(copy_counter)?)
 }
 
-/// A Tera filter that takes a path and extracts its filename.
+/// A Tera filter that takes a path and extracts its filename without
+/// file extension. The filename may contain a sort-tag, a copy-counter and
+/// also separators.
 fn file_name_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,

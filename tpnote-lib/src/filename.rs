@@ -192,6 +192,7 @@ impl NotePathBuf for PathBuf {
 pub trait NotePath {
     /// Helper function that decomposes a fully qualified path name
     /// into (`sort_tag`, `stem_copy_counter_ext`, `stem`, `copy_counter`, `ext`).
+    /// All sort-tag seprators and copy-counter separators/brackets are removed.
     fn disassemble(&self) -> (&str, &str, &str, &str, &str);
     /// Compares with another `Path` to a Tp-Note file. They are considered equal
     /// even when the copy counter is different.
@@ -223,6 +224,7 @@ impl NotePath for Path {
         let ext = if stem_copy_counter == stem_copy_counter_ext {
             ""
         } else {
+            // `Path::new()` is a cost free conversion.
             Path::new(stem_copy_counter_ext)
                 .extension()
                 .unwrap_or_default()
@@ -246,8 +248,6 @@ impl NotePath for Path {
     /// Check if a `path` points to a file with a
     /// "well formed" filename.
     /// We consider it well formed,
-    /// * if `path` has no directory components, only
-    ///   a filename, and
     /// * if the filename is not empty, and
     ///   * if the filename is a dot file (len >1 and without whitespace), or
     ///   * if the filename has an extension.
