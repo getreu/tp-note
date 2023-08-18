@@ -408,6 +408,7 @@ mod tests {
     use super::split_sort_tag;
     use super::NotePath;
     use super::NotePathBuf;
+    use crate::config::FILENAME_LEN_MAX;
     use crate::config::LIB_CFG;
     use std::path::Path;
     use std::path::PathBuf;
@@ -418,16 +419,21 @@ mod tests {
         use std::path::PathBuf;
         let lib_cfg = LIB_CFG.read_recursive();
 
-        let mut input = "fn(1)-".to_string();
-        // Test copy counter parsing.
+        // Test short filename.
+        // Problematic file stem.
+        let mut input = "fn(1)".to_string();
+        // Add copy counter.
+        input.push_str(&lib_cfg.filename.copy_counter_extra_separator);
         input.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
         input.push('0');
         input.push_str(&lib_cfg.filename.copy_counter_closing_brackets);
-
+        // Add file extension.
         input.push_str(".ext");
 
         let mut input = PathBuf::from(input);
         let expected = input.clone();
+        // As this filename is too short, `shorten_filename()` should not change
+        // anything.
         input.shorten_filename();
         let output = input;
         assert_eq!(OsString::from(expected), output);
@@ -436,6 +442,23 @@ mod tests {
         // Test if assembled correctly.
         let mut input = PathBuf::from("20221030-some.pdf--Note.md");
         let expected = input.clone();
+        input.shorten_filename();
+        let output = input;
+        assert_eq!(OsString::from(expected), output);
+
+        //
+        // Test long filename.
+        let mut input = std::iter::repeat("X")
+            .take(FILENAME_LEN_MAX + 10)
+            .collect::<String>();
+        input.push_str(".ext");
+
+        let mut expected = std::iter::repeat("X")
+            .take(FILENAME_LEN_MAX - ".ext".len())
+            .collect::<String>();
+        expected.push_str(".ext");
+
+        let mut input = PathBuf::from(input);
         input.shorten_filename();
         let output = input;
         assert_eq!(OsString::from(expected), output);
