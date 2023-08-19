@@ -214,7 +214,7 @@ pub trait NotePath {
     fn split_sort_tag(filename: &str) -> (&str, &str);
     /// Helper function: Splits the file stem and returns the remainder and
     /// the copy counter.
-    fn split_copy_counter(tag: &str) -> (&str, Option<usize>);
+    fn split_copy_counter(file_stem: &str) -> (&str, Option<usize>);
     /// Compare to all file extensions Tp-Note can open.
     fn has_tpnote_extension(&self) -> bool;
 }
@@ -309,28 +309,29 @@ impl NotePath for Path {
     /// returns the result and the copy counter.
     /// This function removes all brackets and a potiential extra separator.
     #[inline]
-    fn split_copy_counter(tag: &str) -> (&str, Option<usize>) {
+    fn split_copy_counter(file_stem: &str) -> (&str, Option<usize>) {
         let lib_cfg = LIB_CFG.read_recursive();
         // Strip closing brackets at the end.
-        let tag1 =
-            if let Some(t) = tag.strip_suffix(&lib_cfg.filename.copy_counter_closing_brackets) {
-                t
-            } else {
-                return (tag, None);
-            };
+        let tag1 = if let Some(t) =
+            file_stem.strip_suffix(&lib_cfg.filename.copy_counter_closing_brackets)
+        {
+            t
+        } else {
+            return (file_stem, None);
+        };
         // Now strip numbers.
         let tag2 = tag1.trim_end_matches(|c: char| c.is_numeric());
         let copy_counter: Option<usize> = if tag2.len() < tag1.len() {
             tag1[tag2.len()..].parse().ok()
         } else {
-            return (tag, None);
+            return (file_stem, None);
         };
         // And finally strip starting bracket.
         let tag3 =
             if let Some(t) = tag2.strip_suffix(&lib_cfg.filename.copy_counter_opening_brackets) {
                 t
             } else {
-                return (tag, None);
+                return (file_stem, None);
             };
         // This is optional
         if let Some(t) = tag3.strip_suffix(&lib_cfg.filename.copy_counter_extra_separator) {
