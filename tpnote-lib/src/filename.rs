@@ -13,7 +13,8 @@ pub(crate) const FILENAME_EXTENSION_SEPARATOR_DOT: char = '.';
 
 /// Extents `PathBuf` with methods dealing with paths to Tp-Note files.
 pub trait NotePathBuf {
-    /// Concatenates the `sort_tag`, `stem`, `copy_counter`, `.` and `extension`.
+    /// Concatenates the `sort_tag`, `stem`, `copy_counter`, `.` and
+    /// `extension`.
     /// This functions inserts all potentially necessary separators and
     /// extra separators.
     fn from_disassembled(
@@ -344,8 +345,9 @@ impl NotePath for Path {
     /// True if the filename extension is considered as a Tp-Note file.
     /// Checks if the filename extension is one of the following list
     /// taken from the configuration file:
-    /// FILENAME_EXTENSIONS_MD, FILENAME_EXTENSIONS_RST, FILENAME_EXTENSIONS_HTML,
-    /// FILENAME_EXTENSIONS_TXT, FILENAME_EXTENSIONS_NO_VIEWER
+    /// FILENAME_EXTENSIONS_MD, FILENAME_EXTENSIONS_RST,
+    /// FILENAME_EXTENSIONS_HTML, FILENAME_EXTENSIONS_TXT,
+    /// FILENAME_EXTENSIONS_NO_VIEWER
     fn has_tpnote_extension(&self) -> bool {
         self.has_wellformed_filename()
             && !matches!(MarkupLanguage::from(self), MarkupLanguage::None)
@@ -388,8 +390,8 @@ impl NotePath for Path {
             }
         }
 
-        // Remove `sort_tag_extra_separator` if it is at the first position followed
-        // by a `sort_tag_char` at the second position.
+        // Remove `sort_tag_extra_separator` if it is at the first position
+        // followed by a `sort_tag_char` at the second position.
         let mut chars = stem_copy_counter_ext.chars();
         if chars
             .next()
