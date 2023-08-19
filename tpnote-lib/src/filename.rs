@@ -199,6 +199,111 @@ impl NotePathBuf for PathBuf {
     }
 }
 
+/// Some private helper functions related to note filenames.
+pub(crate) trait NotePathHelper {
+    /// Helper function: Splits the filename and returns the sort-tag and the
+    /// Remainder.
+    fn split_sort_tag(filename: &str) -> (&str, &str);
+    /// Helper function: Splits the file stem and returns the remainder and
+    /// the copy counter.
+    fn split_copy_counter(file_stem: &str) -> (&str, Option<usize>);
+}
+
+impl NotePathHelper for Path {
+    /// Helper function: Greedliy match sort tags and return it as
+    /// a subslice as first tuple and the rest as second tuple. If
+    /// `filename.sort_tag_separator` is defined and it can be detected after
+    /// the matched subslice, skip it and return the rest of the string as
+    /// second tuple. If `filename.sort_tag_separator` is defined, but the
+    /// separator can not be found, discard the matched sort tag and return `("",
+    /// sort_tag_stem_copy_counter)`.
+    /// Techical note: A sort tag is identified with the following regular
+    /// expression in SED syntax: `[0-9_- .\t]*-`.
+    /// The expression can be customized as follows:
+    /// * `[0-9_- .\t]` with `filename.sort_tag_chars`,
+    /// * `-` with `filename.sort_tag_separator` and
+    /// * `'` with `filename.sort_tag_extra_separator`.
+    fn split_sort_tag(sort_tag_stem_copy_counter_ext: &str) -> (&str, &str) {
+        let lib_cfg = LIB_CFG.read_recursive();
+
+        let mut sort_tag = &sort_tag_stem_copy_counter_ext[..sort_tag_stem_copy_counter_ext
+            .chars()
+            .take_while(|&c| lib_cfg.filename.sort_tag_chars.contains([c]))
+            .count()];
+
+        let mut stem_copy_counter_ext;
+        if lib_cfg.filename.sort_tag_separator.is_empty() {
+            // `sort_tag` is correct.
+            stem_copy_counter_ext = &sort_tag_stem_copy_counter_ext[sort_tag.len()..];
+        } else {
+            // Take `sort_tag_separator` into account.
+            if let Some(i) = sort_tag.rfind(&lib_cfg.filename.sort_tag_separator) {
+                sort_tag = &sort_tag[..i];
+                stem_copy_counter_ext = &sort_tag_stem_copy_counter_ext
+                    [i + lib_cfg.filename.sort_tag_separator.len()..];
+            } else {
+                sort_tag = "";
+                stem_copy_counter_ext = sort_tag_stem_copy_counter_ext;
+            }
+        }
+
+        // Remove `sort_tag_extra_separator` if it is at the first position
+        // followed by a `sort_tag_char` at the second position.
+        let mut chars = stem_copy_counter_ext.chars();
+        if chars
+            .next()
+            .is_some_and(|c| c == lib_cfg.filename.sort_tag_extra_separator)
+        {
+            if chars
+                .next()
+                .is_some_and(|c| lib_cfg.filename.sort_tag_chars.find(c).is_some())
+            {
+                stem_copy_counter_ext = stem_copy_counter_ext
+                    .strip_prefix(lib_cfg.filename.sort_tag_extra_separator)
+                    .unwrap();
+            }
+        }
+
+        (sort_tag, stem_copy_counter_ext)
+    }
+
+    /// Helper function that trims the copy counter at the end of string,
+    /// returns the result and the copy counter.
+    /// This function removes all brackets and a potiential extra separator.
+    #[inline]
+    fn split_copy_counter(file_stem: &str) -> (&str, Option<usize>) {
+        let lib_cfg = LIB_CFG.read_recursive();
+        // Strip closing brackets at the end.
+        let tag1 = if let Some(t) =
+            file_stem.strip_suffix(&lib_cfg.filename.copy_counter_closing_brackets)
+        {
+            t
+        } else {
+            return (file_stem, None);
+        };
+        // Now strip numbers.
+        let tag2 = tag1.trim_end_matches(|c: char| c.is_numeric());
+        let copy_counter: Option<usize> = if tag2.len() < tag1.len() {
+            tag1[tag2.len()..].parse().ok()
+        } else {
+            return (file_stem, None);
+        };
+        // And finally strip starting bracket.
+        let tag3 =
+            if let Some(t) = tag2.strip_suffix(&lib_cfg.filename.copy_counter_opening_brackets) {
+                t
+            } else {
+                return (file_stem, None);
+            };
+        // This is optional
+        if let Some(t) = tag3.strip_suffix(&lib_cfg.filename.copy_counter_extra_separator) {
+            (t, copy_counter)
+        } else {
+            (tag3, copy_counter)
+        }
+    }
+}
+
 /// Extents `Path` with methods dealing with paths to Tp-Note files.
 pub trait NotePath {
     /// Helper function that decomposes a fully qualified path name
@@ -210,12 +315,6 @@ pub trait NotePath {
     fn exclude_copy_counter_eq(&self, p2: &Path) -> bool;
     /// Check if a `Path` points to a file with a "wellformed" filename.
     fn has_wellformed_filename(&self) -> bool;
-    /// Helper function: Splits the filename and returns the sort-tag and the
-    /// Remainder.
-    fn split_sort_tag(filename: &str) -> (&str, &str);
-    /// Helper function: Splits the file stem and returns the remainder and
-    /// the copy counter.
-    fn split_copy_counter(file_stem: &str) -> (&str, Option<usize>);
     /// Compare to all file extensions Tp-Note can open.
     fn has_tpnote_extension(&self) -> bool;
 }
@@ -306,42 +405,6 @@ impl NotePath for Path {
         is_filename && (is_dot_file || has_extension)
     }
 
-    /// Helper function that trims the copy counter at the end of string,
-    /// returns the result and the copy counter.
-    /// This function removes all brackets and a potiential extra separator.
-    #[inline]
-    fn split_copy_counter(file_stem: &str) -> (&str, Option<usize>) {
-        let lib_cfg = LIB_CFG.read_recursive();
-        // Strip closing brackets at the end.
-        let tag1 = if let Some(t) =
-            file_stem.strip_suffix(&lib_cfg.filename.copy_counter_closing_brackets)
-        {
-            t
-        } else {
-            return (file_stem, None);
-        };
-        // Now strip numbers.
-        let tag2 = tag1.trim_end_matches(|c: char| c.is_numeric());
-        let copy_counter: Option<usize> = if tag2.len() < tag1.len() {
-            tag1[tag2.len()..].parse().ok()
-        } else {
-            return (file_stem, None);
-        };
-        // And finally strip starting bracket.
-        let tag3 =
-            if let Some(t) = tag2.strip_suffix(&lib_cfg.filename.copy_counter_opening_brackets) {
-                t
-            } else {
-                return (file_stem, None);
-            };
-        // This is optional
-        if let Some(t) = tag3.strip_suffix(&lib_cfg.filename.copy_counter_extra_separator) {
-            (t, copy_counter)
-        } else {
-            (tag3, copy_counter)
-        }
-    }
-
     /// True if the filename extension is considered as a Tp-Note file.
     /// Checks if the filename extension is one of the following list
     /// taken from the configuration file:
@@ -352,69 +415,13 @@ impl NotePath for Path {
         self.has_wellformed_filename()
             && !matches!(MarkupLanguage::from(self), MarkupLanguage::None)
     }
-
-    /// Helper function: Greedliy match sort tags and return it as
-    /// a subslice as first tuple and the rest as second tuple. If
-    /// `filename.sort_tag_separator` is defined and it can be detected after
-    /// the matched subslice, skip it and return the rest of the string as
-    /// second tuple. If `filename.sort_tag_separator` is defined, but the
-    /// separator can not be found, discard the matched sort tag and return `("",
-    /// sort_tag_stem_copy_counter)`.
-    /// Techical note: A sort tag is identified with the following regular
-    /// expression in SED syntax: `[0-9_- .\t]*-`.
-    /// The expression can be customized as follows:
-    /// * `[0-9_- .\t]` with `filename.sort_tag_chars`,
-    /// * `-` with `filename.sort_tag_separator` and
-    /// * `'` with `filename.sort_tag_extra_separator`.
-    fn split_sort_tag(sort_tag_stem_copy_counter_ext: &str) -> (&str, &str) {
-        let lib_cfg = LIB_CFG.read_recursive();
-
-        let mut sort_tag = &sort_tag_stem_copy_counter_ext[..sort_tag_stem_copy_counter_ext
-            .chars()
-            .take_while(|&c| lib_cfg.filename.sort_tag_chars.contains([c]))
-            .count()];
-
-        let mut stem_copy_counter_ext;
-        if lib_cfg.filename.sort_tag_separator.is_empty() {
-            // `sort_tag` is correct.
-            stem_copy_counter_ext = &sort_tag_stem_copy_counter_ext[sort_tag.len()..];
-        } else {
-            // Take `sort_tag_separator` into account.
-            if let Some(i) = sort_tag.rfind(&lib_cfg.filename.sort_tag_separator) {
-                sort_tag = &sort_tag[..i];
-                stem_copy_counter_ext = &sort_tag_stem_copy_counter_ext
-                    [i + lib_cfg.filename.sort_tag_separator.len()..];
-            } else {
-                sort_tag = "";
-                stem_copy_counter_ext = sort_tag_stem_copy_counter_ext;
-            }
-        }
-
-        // Remove `sort_tag_extra_separator` if it is at the first position
-        // followed by a `sort_tag_char` at the second position.
-        let mut chars = stem_copy_counter_ext.chars();
-        if chars
-            .next()
-            .is_some_and(|c| c == lib_cfg.filename.sort_tag_extra_separator)
-        {
-            if chars
-                .next()
-                .is_some_and(|c| lib_cfg.filename.sort_tag_chars.find(c).is_some())
-            {
-                stem_copy_counter_ext = stem_copy_counter_ext
-                    .strip_prefix(lib_cfg.filename.sort_tag_extra_separator)
-                    .unwrap();
-            }
-        }
-
-        (sort_tag, stem_copy_counter_ext)
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::NotePath;
     use super::NotePathBuf;
+    use super::NotePathHelper;
     use crate::config::FILENAME_LEN_MAX;
     use crate::config::LIB_CFG;
     use std::path::Path;
