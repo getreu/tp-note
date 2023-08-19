@@ -1,7 +1,6 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
-use crate::filename::split_sort_tag;
 use crate::filename::NotePath;
 #[cfg(feature = "lang-detection")]
 use crate::settings::FilterGetLang;
@@ -305,7 +304,7 @@ fn prepend_filter<S: BuildHasher>(
             res = s;
         };
     } else if let Some(Value::String(sort_tag)) = args.get("with_sort_tag") {
-        let needs_extra_separator = res.is_empty() || !split_sort_tag(&res).0.is_empty();
+        let needs_extra_separator = res.is_empty() || !Path::split_sort_tag(&res).0.is_empty();
         let mut s = String::new();
         if !sort_tag.is_empty() || needs_extra_separator {
             let lib_cfg = LIB_CFG.read_recursive();
