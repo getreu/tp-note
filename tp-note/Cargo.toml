@@ -24,7 +24,7 @@ path = "src/main.rs"
 [package.metadata.deb]
 name = "tpnote"
 maintainer = "Jens Getreu, <getreu@web.de>"
-copyright = "2015-2020, Jens Getreu <getreu@web.de>"
+copyright = "2020-2023, Jens Getreu <getreu@web.de>"
 depends = "$auto"
 extended-description = '''
 _Tp-Note_ is a note taking tool and a template system, that synchronizes the
@@ -94,7 +94,7 @@ time = "0.3.27"
 tera.workspace = true
 toml.workspace = true
 #tpnote-lib = { path = "../tpnote-lib", default-features = false }
-tpnote-lib = { version = "0.22.2", default-features = false}
+tpnote-lib = { version = "0.22.3", default-features = false}
 webbrowser = { version = "0.8.11", optional = true }
 
 [target.'cfg(windows)'.dependencies]
