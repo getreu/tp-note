@@ -3,8 +3,9 @@
 use crate::config::CFG;
 use crate::viewer::error::ViewerError;
 use crate::viewer::sse_server::SseToken;
-use notify::{RecommendedWatcher, RecursiveMode};
-use notify_debouncer_mini::{new_debouncer, DebouncedEvent, Debouncer};
+use notify::RecursiveMode;
+use notify_debouncer_mini::Config;
+use notify_debouncer_mini::{new_debouncer_opt, DebouncedEvent, Debouncer};
 use std::ffi::{OsStr, OsString};
 use std::panic::panic_any;
 use std::path::{Path, PathBuf};
@@ -30,11 +31,11 @@ pub struct FileWatcher {
     /// is enough to store only the filename for later comparison.
     watched_file: OsString,
     /// Receiver for file changed messages.
-    rx: Receiver<Result<Vec<DebouncedEvent>, Vec<notify::Error>>>,
+    rx: Receiver<Result<Vec<DebouncedEvent>, notify::Error>>,
     /// We must store the `Debouncer` because it hold
     /// the sender of the channel.
     #[allow(dead_code)]
-    debouncer: Debouncer<RecommendedWatcher>,
+    debouncer: Debouncer<notify::PollWatcher>,
     /// List of subscribers to inform when the file is changed.
     event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
     /// Send additional periodic update events to detect when
@@ -55,12 +56,17 @@ impl FileWatcher {
         event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
         terminate_on_browser_disconnect: Arc<Mutex<bool>>,
     ) -> Result<Self, ViewerError> {
-        let notify_period = CFG.viewer.notify_period;
         let (tx, rx) = channel();
         // Max value for `notify_period` is 2 seconds.
         // We use the same value for `timeout` and `Some(tick_rate)`.
-        let period = Duration::from_millis(notify_period);
-        let mut debouncer = new_debouncer(period, Some(period), tx)?;
+        let notify_period = Duration::from_millis(CFG.viewer.notify_period);
+        let backend_config = notify::Config::default().with_poll_interval(notify_period);
+        // debouncer configuration
+        let debouncer_config = Config::default()
+            .with_timeout(notify_period)
+            .with_notify_config(backend_config);
+        // select backend via fish operator, here PollWatcher backend
+        let mut debouncer = new_debouncer_opt::<_, notify::PollWatcher>(debouncer_config, tx)?;
         // In theory watching only `file` is enough. Unfortunately some file
         // editors do not modify files directly. They first rename the existing
         // file on disk and then  create a new file with the same filename. As
@@ -146,7 +152,7 @@ impl FileWatcher {
                         }
                     }
                 }
-                Err(mut e) => return Err(e.remove(1).into()),
+                Err(e) => return Err(e.into()),
             }
         }
     }
