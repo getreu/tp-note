@@ -313,6 +313,9 @@ pub trait NotePath {
     /// Compares with another `Path` to a Tp-Note file. They are considered equal
     /// even when the copy counter is different.
     fn exclude_copy_counter_eq(&self, p2: &Path) -> bool;
+    /// Check if the filename of `Path` contains only
+    /// `lib_cfg.filename.sort_tag_chars` and return it.
+    fn filename_contains_only_sort_tag_chars(&self) -> Option<&str>;
     /// Check if a `Path` points to a file with a "wellformed" filename.
     fn has_wellformed_filename(&self) -> bool;
     /// Compare to all file extensions Tp-Note can open.
@@ -358,6 +361,45 @@ impl NotePath for Path {
         let (sort_tag1, _, stem1, _, ext1) = self.disassemble();
         let (sort_tag2, _, stem2, _, ext2) = p2.disassemble();
         sort_tag1 == sort_tag2 && stem1 == stem2 && ext1 == ext2
+    }
+
+    /// Check if a the filename of `path` contains only sort tag chars. If
+    /// yes, return it.
+    ///
+    /// ```rust
+    /// use std::path::Path;
+    /// use tpnote_lib::filename::NotePath;
+    ///
+    /// let f = Path::new("20230821-");
+    /// assert_eq!(f.filename_contains_only_sort_tag_chars(), Some("20230821-"));
+    ///
+    /// let f = Path::new("20230821");
+    /// assert_eq!(f.filename_contains_only_sort_tag_chars(), Some("20230821"));
+    ///
+    /// let f = Path::new("2023");
+    /// assert_eq!(f.filename_contains_only_sort_tag_chars(), Some("2023"));
+    ///
+    /// let f = Path::new("20230821-A");
+    /// assert_eq!(f.filename_contains_only_sort_tag_chars(), None);
+    /// ```
+    fn filename_contains_only_sort_tag_chars(&self) -> Option<&str> {
+        let filename = self
+            .file_name()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default();
+
+        let lib_cfg = LIB_CFG.read_recursive();
+
+        if !filename.is_empty()
+            && filename
+                .chars()
+                .all(|c| lib_cfg.filename.sort_tag_chars.contains([c]))
+        {
+            Some(filename)
+        } else {
+            None
+        }
     }
 
     /// Check if a `path` points to a file with a
