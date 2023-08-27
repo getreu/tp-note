@@ -145,8 +145,7 @@ impl HttpResponse for ServerThread {
 
                 //
                 // Condition 2: Does this link only contain a sort-tag?
-                let (sort_tag, remainder, _, _, _) = abspath.disassemble();
-                if !sort_tag.is_empty() && remainder.is_empty() {
+                if let Some(sort_tag) = abspath.filename_contains_only_sort_tag_chars() {
                     if let Some(dir) = abspath.parent() {
                         if let Ok(files) = dir.read_dir() {
                             // If more than one file starts with `sort_tag`, retain the
