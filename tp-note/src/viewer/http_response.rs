@@ -163,14 +163,14 @@ impl HttpResponse for ServerThread {
                                 ) {
                                     continue 'file_loop;
                                 }
+                                // Does this sort-tag short link correspond to
+                                // any sort-tag of a file in the same directory?
                                 if file.parent() == abspath.parent()
-                                            // Compare sort-tags.
-                                            && file.disassemble().0.starts_with(sort_tag)
+                                    && file.disassemble().0.starts_with(sort_tag)
                                 {
                                     // Before the first assignment `minimum` is empty.
-                                    if minimum == Path::new("")                                                // Finds the minimum.
-                                                || minimum > file
-                                    {
+                                    // Finds the minimum.
+                                    if minimum == Path::new("") || minimum > file {
                                         minimum = file;
                                     }
                                 }
