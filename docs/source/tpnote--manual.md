@@ -495,12 +495,12 @@ Consider the following _Tp-Note_-file:
 
 The filename has 4 parts:
 
-    {{ fm_sort_tag }}{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
+    {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
 
 A so called _sort-tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
 numerical digits and whitespace, a _sort-tag_ can be any combination of
-`-_.` and is usually used as:
+`-_.` [^2] and is usually used as:
 
 * *chronological sort-tag*
 
@@ -1110,6 +1110,9 @@ press `[F3]` or `[Enter]`.
       under Windows.  To register your own text editor, please consult the
       man-page.  For best user experience, I recommend text editors with
       internal markup previewer.
+
+[^2]: The compulsory trailing `-` separator is not considered to be part of a
+      sort-tag, although dashes within the sort-tag are allowed.
 
 [^3]: At the moment I do not recommend using [Typora](<https://typora.io/#download>) because of
       this bug: [Errornous rendering when the value of the last header var

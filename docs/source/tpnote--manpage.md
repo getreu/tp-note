@@ -1543,7 +1543,7 @@ To debug your '`tmpl.sync_filename`' template, create a test note file
 
 ```sh
 tpnote --batch --debug trace test.md
-```i
+```
 
 
 ## Store new note files by default in a subdirectory
