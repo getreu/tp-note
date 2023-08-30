@@ -253,15 +253,13 @@ impl NotePathHelper for Path {
         if chars
             .next()
             .is_some_and(|c| c == lib_cfg.filename.sort_tag_extra_separator)
-        {
-            if chars
+            && chars
                 .next()
                 .is_some_and(|c| lib_cfg.filename.sort_tag_chars.find(c).is_some())
-            {
-                stem_copy_counter_ext = stem_copy_counter_ext
-                    .strip_prefix(lib_cfg.filename.sort_tag_extra_separator)
-                    .unwrap();
-            }
+        {
+            stem_copy_counter_ext = stem_copy_counter_ext
+                .strip_prefix(lib_cfg.filename.sort_tag_extra_separator)
+                .unwrap();
         }
 
         (sort_tag, stem_copy_counter_ext)
