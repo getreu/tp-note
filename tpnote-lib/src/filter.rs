@@ -88,7 +88,7 @@ fn sanit_filter<S: BuildHasher>(
     // If `FILNAME_DOTFILE_MARKER` was stripped, prepend one.
     if is_dotfile && !p.starts_with(FILENAME_DOTFILE_MARKER) {
         let mut s = String::from(FILENAME_DOTFILE_MARKER);
-        s.push_str(&*p);
+        s.push_str(&p);
         p = Cow::from(s);
     }
 
