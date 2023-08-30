@@ -471,7 +471,7 @@ fn config_load(config_path: &Path) -> Result<Cfg, ConfigFileError> {
         config.app_args.browser.iter_mut().for_each(|i| {
             i.iter_mut().for_each(|arg| {
                 let new_arg = tera
-                    .render_str(&arg, &context)
+                    .render_str(arg, &context)
                     .unwrap_or_default()
                     .to_string();
                 let _ = mem::replace(arg, new_arg);
@@ -480,7 +480,7 @@ fn config_load(config_path: &Path) -> Result<Cfg, ConfigFileError> {
         config.app_args.editor.iter_mut().for_each(|i| {
             i.iter_mut().for_each(|arg| {
                 let new_arg = tera
-                    .render_str(&arg, &context)
+                    .render_str(arg, &context)
                     .unwrap_or_default()
                     .to_string();
                 let _ = mem::replace(arg, new_arg);
@@ -489,7 +489,7 @@ fn config_load(config_path: &Path) -> Result<Cfg, ConfigFileError> {
         config.app_args.editor_console.iter_mut().for_each(|i| {
             i.iter_mut().for_each(|arg| {
                 let new_arg = tera
-                    .render_str(&arg, &context)
+                    .render_str(arg, &context)
                     .unwrap_or_default()
                     .to_string();
                 let _ = mem::replace(arg, new_arg);

@@ -388,7 +388,7 @@ fn get_lang_filter<S: BuildHasher>(
                         with languages candiates: {:?}",
                         iso_codes,
                     );
-                    LanguageDetectorBuilder::from_iso_codes_639_1(&iso_codes)
+                    LanguageDetectorBuilder::from_iso_codes_639_1(iso_codes)
                 }
                 FilterGetLang::AllLanguages => {
                     log::trace!(

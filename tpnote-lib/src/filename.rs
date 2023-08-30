@@ -119,7 +119,7 @@ impl NotePathBuf for PathBuf {
             }
         }
         // Does the beginning of `stem` look like a sort-tag?
-        if !Path::split_sort_tag(&stem).0.is_empty() {
+        if !Path::split_sort_tag(stem).0.is_empty() {
             let lib_cfg = LIB_CFG.read_recursive();
             filename.push(lib_cfg.filename.sort_tag_extra_separator);
         }
@@ -131,7 +131,7 @@ impl NotePathBuf for PathBuf {
 
             // Is `copy_counter_extra_separator` necessary?
             // Does this stem ending look similar to a copy counter?
-            if Path::split_copy_counter(&stem).1.is_some() {
+            if Path::split_copy_counter(stem).1.is_some() {
                 // Add an additional separator.
                 filename.push_str(&lib_cfg.filename.copy_counter_extra_separator);
             };
@@ -159,7 +159,7 @@ impl NotePathBuf for PathBuf {
 
         // Try up to 99 sort tag extensions, then give up.
         for copy_counter in 1..FILENAME_COPY_COUNTER_MAX {
-            let filename = Self::from_disassembled(sort_tag, &stem, Some(copy_counter), ext);
+            let filename = Self::from_disassembled(sort_tag, stem, Some(copy_counter), ext);
             new_path.set_file_name(filename);
 
             if !new_path.exists() {
