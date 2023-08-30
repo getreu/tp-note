@@ -563,7 +563,7 @@ lazy_static! {
             .unwrap_or_else(|e|{
                 // Remember that something went wrong.
                 let mut cfg_file_loading = CFG_FILE_LOADING.write();
-                *cfg_file_loading = Err(e.into());
+                *cfg_file_loading = Err(e);
 
                 // As we could not load the config file, we will use the default
                 // configuration.
