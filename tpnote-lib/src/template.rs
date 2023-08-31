@@ -75,7 +75,7 @@ impl TemplateKind {
             (_, _, _, _, _, _) => TemplateKind::None,
         };
 
-        log::debug!("Chosing the \"{:?}\" template.", template_kind);
+        log::debug!("Choosing the \"{:?}\" template.", template_kind);
 
         log::trace!(
             "Template choice is based on:

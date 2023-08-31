@@ -700,14 +700,14 @@ viewer will open and the \f[V]arg_default.edit\f[R] variable is ignored.
 \f[B]--force-lang\f[R]=\f[I]LANGUAGE_TAG\f[R]
 .RS
 .PP
-Disable automatic language detection when creating a new note file and
-use \f[I]LANGUAGE_TAG\f[R] instead.
+Disables the automatic language detection while creating a new note file
+and use \f[I]LANGUAGE_TAG\f[R] instead.
 \f[I]LANGUAGE_TAG\f[R] is formatted as IETF BCP 47 language tag,
 e.g.\ `\f[V]en-US\f[R]'.
 If \f[I]LANGUAGE_TAG\f[R] equals `\f[V]-\f[R]', the environment variable
-`\f[V]TPNOTE_LANG\f[R]' is used instead; or, if the latter is not
-defined, the user\[cq]s default language, as reported from the operating
-system\[cq]s locale setting, is used.
+`\f[V]TPNOTE_LANG\f[R]' determines the language instead; or, if the
+latter is not defined, the user\[cq]s default language, as reported from
+the operating system\[cq]s locale setting, is decisive.
 .RE
 .PP
 \f[B]-p\f[R] \f[I]PORT\f[R], \f[B]--port\f[R]=\f[I]PORT\f[R]
@@ -948,7 +948,7 @@ Tp-Note\[cq]s exporter function `\f[V]--export\f[R]' converts a given
 Tp-Note file into HTML and adds `\f[V].html\f[R]' to the output
 filename.
 Links in the documents content to other Tp-Note files are hereby
-rewritten by appending `\f[V].html\f[R]' to their qURLs.
+rewritten by appending `\f[V].html\f[R]' to their URLs.
 This way you can convert groups of documents to HTML and later jump from
 document to document in your web browser.
 The option `\f[V]--export-link-rewriting\f[R]' allows you to fine-tune

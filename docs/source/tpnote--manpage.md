@@ -558,12 +558,12 @@ synchronization).
 
 **-l** *LANGUAGE_TAG*, **\--force-lang**=*LANGUAGE_TAG*
 
->   Disable automatic language detection when creating a new note file and use
-    *LANGUAGE_TAG* instead. *LANGUAGE_TAG* is formatted as IETF BCP 47 language
-    tag, e.g. '`en-US`'. If *LANGUAGE_TAG* equals '`-`', the environment
-    variable '`TPNOTE_LANG`' is used instead; or, if the latter is not defined,
-    the user's default language, as reported from the operating system's
-    locale setting, is used.
+>   Disables the automatic language detection while creating a new note file
+    and use *LANGUAGE_TAG* instead. *LANGUAGE_TAG* is formatted as IETF BCP
+    47 language tag, e.g. '`en-US`'. If *LANGUAGE_TAG* equals '`-`', the
+    environment variable '`TPNOTE_LANG`' determines the language instead; or, if
+    the latter is not defined, the user's default language, as reported from the
+    operating system's locale setting, is decisive.
 
 **-p** *PORT*, **\--port**=*PORT*
 
@@ -751,7 +751,7 @@ do not break when the source and the destination documents are moved together.
 Tp-Note's exporter function '`--export`' converts a given Tp-Note file into
 HTML and adds '`.html`' to the output filename. Links in the documents content
 to other Tp-Note files are hereby rewritten by appending '`.html`' to their
-qURLs. This way you can convert groups of documents to HTML and later jump from
+URLs. This way you can convert groups of documents to HTML and later jump from
 document to document in your web browser. The option '`--export-link-rewriting`'
 allows you to fine-tune how local links are written out. Valid values are:
 '`off`', '`short`' and '`long`'.
