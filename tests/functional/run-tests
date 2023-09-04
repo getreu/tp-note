@@ -147,12 +147,7 @@ fi
 
 
 
-## Test 5b: Create a new note, based on a string supplied by clipboard
-
-#echo -n 'Good morning' | xclip -selection clipboard
-
-# Tp-Note can choose between `fi-Fi` and `en-US`. The latter should be 
-# found.
+## Test 6: Create a new note, based on a string supplied by clipboard
 echo '123456' | \
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 TPNOTE_LANG_DETECTION="" \
@@ -161,20 +156,20 @@ TPNOTE_LANG_DETECTION="" \
 
 OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-'123456--Note.md"
 
-if diff "$OUTPUT_FILENAME" "test5b-clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "test6-clipboard-expected-output"
 then
-    echo Commandline test 5b succeeded.
+    echo Commandline test 6 succeeded.
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 5b failed.
+    echo Commandline test 6 failed.
     exit 1
 fi
 
 
 
 
-## Test 6: Create a new note annotating some existing file
-INPUT_FILENAME="$PWD/test6-some english file to annotate.pdf"
+## Test 7: Create a new note annotating some existing file
+INPUT_FILENAME="$PWD/test7-some english file to annotate.pdf"
 
 # Input file can be empty
 :>"$INPUT_FILENAME"
@@ -186,19 +181,19 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 
 OUTPUT_FILENAME="${INPUT_FILENAME}--Note.md"
 
-if diff "$OUTPUT_FILENAME" "test6-annotate-expected-output"
+if diff "$OUTPUT_FILENAME" "test7-annotate-expected-output"
 then
-echo Commandline test 6 succeeded.
+echo Commandline test 7 succeeded.
     rm "$INPUT_FILENAME"
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 6 failed.
+    echo Commandline test 7 failed.
     exit 1
 fi
 
 
 
-## Test 7: Pin sort tag
+## Test 8: Pin sort tag
 INPUT_FILENAME="$PWD/123-abc--edf.md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 ---
@@ -215,18 +210,18 @@ cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
 
 OUTPUT_FILENAME="$PWD/111-xxx--yyy.md"
 
-if diff "$OUTPUT_FILENAME"  "test7-tag-expected-output"
+if diff "$OUTPUT_FILENAME"  "test8-tag-expected-output"
 then
-    echo Commandline test 7 succeeded.
+    echo Commandline test 8 succeeded.
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 7 failed.
+    echo Commandline test 8 failed.
     exit 1
 fi
 
 
 
-## Test 8: stream note content with front matter
+## Test 9: stream note content with front matter
 
 INPUT_DATA="---
 title: 'aaa'
@@ -248,18 +243,18 @@ cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
 
 OUTPUT_FILENAME="$PWD/222-aaa--bbb.mdtxt"
 
-if diff "$OUTPUT_FILENAME"  "test8-stream-content-expected-output"
+if diff "$OUTPUT_FILENAME"  "test9-stream-content-expected-output"
 then
-    echo Commandline test 8 succeeded.
+    echo Commandline test 9 succeeded.
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 8 failed.
+    echo Commandline test 9 failed.
     exit 1
 fi
 
 
 
-## Test 9: Create 2 notes with same header
+## Test 10: Create 2 notes with same header
 
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch \
@@ -271,20 +266,20 @@ cargo run -- --batch \
 
 OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note.md"
 OUTPUT_FILENAME2="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note(1).md"
-if diff "$OUTPUT_FILENAME2" "test9-new-new-expected-output"
+if diff "$OUTPUT_FILENAME2" "test10-new-new-expected-output"
 then
-    echo Commandline test 9 succeeded.
+    echo Commandline test 10 succeeded.
     rm "$OUTPUT_FILENAME"
     rm "$OUTPUT_FILENAME2"
 else
-    echo Commandline test 9 failed.
+    echo Commandline test 10 failed.
     exit 1
 fi
 
 
 
 
-## Test 10: Export note
+## Test 11: Export note
 INPUT_FILENAME="$PWD/123-abc--edf.md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 ---
@@ -308,19 +303,19 @@ cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
 
 OUTPUT_FILENAME="$PWD/111-xxx--yyy.md.html"
 
-if diff "$OUTPUT_FILENAME"  "test10-html-expected-output"
+if diff "$OUTPUT_FILENAME"  "test11-html-expected-output"
 then
-    echo Commandline test 10 succeeded.
+    echo Commandline test 11 succeeded.
     rm "$INPUT2_FILENAME"
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 10 failed.
+    echo Commandline test 11 failed.
     exit 1
 fi
 
 
 
-## Test 11: Do not synchronize meta data and filename
+## Test 12: Do not synchronize meta data and filename
 INPUT_FILENAME="$PWD/123-abc--edf.md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 ---
@@ -337,16 +332,16 @@ OUTPUT_FILENAME="$PWD/123-abc--edf.md"
 
 if diff "$OUTPUT_FILENAME"  "test1-synchronize-expected-output"
 then
-    echo Commandline test 11 succeeded.
+    echo Commandline test 12 succeeded.
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 11 failed.
+    echo Commandline test 12 failed.
     exit 1
 fi
 
 
 
-## Test 12: Add header
+## Test 13: Add header
 INPUT_FILENAME="$PWD/20220312-abc-- edf.md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 Only body
@@ -358,17 +353,17 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 
 OUTPUT_FILENAME="$PWD/20220312-abc--edf.md"
 
-if diff "$OUTPUT_FILENAME"  "test12-add-header-expected-output"
+if diff "$OUTPUT_FILENAME"  "test13-add-header-expected-output"
 then
-    echo Commandline test 12 succeeded.
+    echo Commandline test 13 succeeded.
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 12 failed.
+    echo Commandline test 13 failed.
     exit 1
 fi
 
 
-## Test 13: Copy counter and sync
+## Test 14: Copy counter and sync
 INPUT_FILENAME="$PWD/20220312-abc--edf(4).md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 ---
@@ -385,22 +380,8 @@ OUTPUT_FILENAME=$(LANG="en_US.UTF-8" LOGNAME="myuser" \
 
 if [ "$INPUT_FILENAME" = "$OUTPUT_FILENAME" ]
 then
-    echo Commandline test 13 succeeded.
-    rm "$OUTPUT_FILENAME"
-else
-    echo Commandline test 13 failed.
-    exit 1
-fi
-
-
-
-## Test 14:  Compilation --no-default-features
-
-cargo check --workspace --no-default-features >/dev/null
-
-if [ $? -eq 0 ]
-then
     echo Commandline test 14 succeeded.
+    rm "$OUTPUT_FILENAME"
 else
     echo Commandline test 14 failed.
     exit 1
@@ -408,67 +389,81 @@ fi
 
 
 
-## Test 15:  Compilation --no-default-features --features renderer
+## Test 30:  Compilation --no-default-features
+
+cargo check --workspace --no-default-features >/dev/null
+
+if [ $? -eq 0 ]
+then
+    echo Commandline test 30 succeeded.
+else
+    echo Commandline test 30 failed.
+    exit 1
+fi
+
+
+
+## Test 31:  Compilation --no-default-features --features renderer
 cargo check --workspace --no-default-features --features renderer >/dev/null
 
 if [ $? -eq 0 ]
 then
-    echo Commandline test 15 succeeded.
+    echo Commandline test 31 succeeded.
 else
-    echo Commandline test 15 failed.
+    echo Commandline test 31 failed.
     exit 1
 fi
 
 
 
-## Test 16:  Compilation --no-default-features --features viewer
+## Test 32:  Compilation --no-default-features --features viewer
 cargo check --no-default-features --features viewer >/dev/null
 
 if [ $? -eq 0 ]
 then
-    echo Commandline test 16 succeeded.
+    echo Commandline test 32 succeeded.
 else
-    echo Commandline test 16 failed.
+    echo Commandline test 32 failed.
     exit 1
 fi
 
 
 
-## Test 17:  Compilation --no-default-features --features message-box
+## Test 33:  Compilation --no-default-features --features message-box
 cargo check --no-default-features --features message-box >/dev/null
 
 if [ $? -eq 0 ]
 then
-    echo Commandline test 17 succeeded.
+    echo Commandline test 33 succeeded.
 else
-    echo Commandline test 17 failed.
+    echo Commandline test 33 failed.
     exit 1
 fi
 
 
 
-## Test 18:  Compilation --no-default-features --features read-clipboard
+## Test 34:  Compilation --no-default-features --features read-clipboard
 cargo check --no-default-features --features read-clipboard >/dev/null
 
 if [ $? -eq 0 ]
 then
-    echo Commandline test 18 succeeded.
+    echo Commandline test 34 succeeded.
 else
-    echo Commandline test 18 failed.
+    echo Commandline test 34 failed.
     exit 1
 fi
 
 
 
-## Test 19:  Compilation --no-default-features --features lang-detection
+## Test 35:  Compilation --no-default-features --features lang-detection
 cargo check --no-default-features \
             --features lang-detection >/dev/null
 
 if [ $? -eq 0 ]
 then
-    echo Commandline test 19 succeeded.
+    echo Commandline test 35 succeeded.
 else
-    echo Commandline test 19 failed.
+    echo Commandline test 35 failed.
     exit 1
 fi
 
