@@ -147,6 +147,32 @@ fi
 
 
 
+## Test 5b: Create a new note, based on a string supplied by clipboard
+
+#echo -n 'Good morning' | xclip -selection clipboard
+
+# Tp-Note can choose between `fi-Fi` and `en-US`. The latter should be 
+# found.
+echo '123456' | \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+TPNOTE_LANG_DETECTION="" \
+	cargo run -- --batch \
+    		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-'123456--Note.md"
+
+if diff "$OUTPUT_FILENAME" "test5b-clipboard-expected-output"
+then
+    echo Commandline test 5b succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 5b failed.
+    exit 1
+fi
+
+
+
+
 ## Test 6: Create a new note annotating some existing file
 INPUT_FILENAME="$PWD/test6-some english file to annotate.pdf"
 
