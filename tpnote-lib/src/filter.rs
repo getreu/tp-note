@@ -305,11 +305,15 @@ fn prepend_filter<S: BuildHasher>(
             res = s;
         };
     } else if let Some(Value::String(sort_tag)) = args.get("with_sort_tag") {
-        let needs_extra_separator = res.is_empty() || !Path::split_sort_tag(&res).0.is_empty();
+        let lib_cfg = LIB_CFG.read_recursive();
+        // Make sure, that the path can not be misinterpreted, even if a
+        // `sort_tag_separator` would follow.
+        let mut test_path = res.clone();
+        test_path.push_str(&lib_cfg.filename.sort_tag_separator);
+        let needs_extra_separator =
+            res.is_empty() || !Path::split_sort_tag(&test_path).0.is_empty();
         let mut s = String::new();
         if !sort_tag.is_empty() || needs_extra_separator {
-            let lib_cfg = LIB_CFG.read_recursive();
-
             if !sort_tag.is_empty() {
                 s.push_str(sort_tag);
                 s.push_str(&lib_cfg.filename.sort_tag_separator);
