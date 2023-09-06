@@ -111,24 +111,26 @@ impl NotePathBuf for PathBuf {
         let mut filename = String::new();
 
         // Add potential sort-tag and separators.
+        let lib_cfg = LIB_CFG.read_recursive();
         if !sort_tag.is_empty() {
-            let lib_cfg = LIB_CFG.read_recursive();
             filename.push_str(sort_tag);
             if !stem.is_empty() {
                 filename.push_str(&lib_cfg.filename.sort_tag_separator);
             }
         }
         // Does the beginning of `stem` look like a sort-tag?
-        if !Path::split_sort_tag(stem).0.is_empty() {
-            let lib_cfg = LIB_CFG.read_recursive();
+        // Make sure, that the path can not be misinterpreted, even if a
+        // `sort_tag_separator` would follow.
+        let mut test_path = String::from(stem);
+        test_path.push_str(&lib_cfg.filename.sort_tag_separator);
+        // Do we need an `extra_separator`?
+        if stem.is_empty() || !Path::split_sort_tag(&test_path).0.is_empty() {
             filename.push(lib_cfg.filename.sort_tag_extra_separator);
         }
 
         filename.push_str(stem);
 
         if let Some(cc) = copy_counter {
-            let lib_cfg = LIB_CFG.read_recursive();
-
             // Is `copy_counter_extra_separator` necessary?
             // Does this stem ending look similar to a copy counter?
             if Path::split_copy_counter(stem).1.is_some() {
@@ -468,6 +470,52 @@ mod tests {
     use std::path::PathBuf;
 
     #[test]
+    fn test_from_disassembled() {
+        let expected = PathBuf::from("my_file.md");
+        let result = PathBuf::from_disassembled("", "my_file", None, "md");
+        assert_eq!(expected, result);
+
+        let expected = PathBuf::from("1_2_3-my_file(1).md");
+        let result = PathBuf::from_disassembled("1_2_3", "my_file", Some(1), "md");
+        assert_eq!(expected, result);
+
+        let expected = PathBuf::from("1_2_3-123 My_file(1).md");
+        let result = PathBuf::from_disassembled("1_2_3", "123 My_file", Some(1), "md");
+        assert_eq!(expected, result);
+
+        let expected = PathBuf::from("1_2_3-'123-my_file(1).md");
+        let result = PathBuf::from_disassembled("1_2_3", "123-my_file", Some(1), "md");
+        assert_eq!(expected, result);
+
+        let expected = PathBuf::from("'123-my_file(1).md");
+        let result = PathBuf::from_disassembled("", "123-my_file", Some(1), "md");
+        assert_eq!(expected, result);
+
+        let res = PathBuf::from_disassembled("1234", "title--subtitle", Some(9), "md");
+        assert_eq!(res, Path::new("1234-title--subtitle(9).md"));
+
+        let res = PathBuf::from_disassembled("1234", "5678", Some(9), "md");
+        assert_eq!(res, Path::new("1234-'5678(9).md"));
+
+        let res = PathBuf::from_disassembled("1234", "5678--subtitle", Some(9), "md");
+        assert_eq!(res, Path::new("1234-'5678--subtitle(9).md"));
+
+        // This is a special case, that can not be disassembled properly.
+        let res = PathBuf::from_disassembled("1234", "'5678--subtitle", Some(9), "md");
+        assert_eq!(res, Path::new("1234-'5678--subtitle(9).md"));
+
+        let res = PathBuf::from_disassembled("", "-", Some(9), "md");
+        assert_eq!(res, Path::new("'-(9).md"));
+
+        let res = PathBuf::from_disassembled("", "(1)", Some(9), "md");
+        assert_eq!(res, Path::new("(1)-(9).md"));
+
+        // This is a special case, that can not be disassembled properly.
+        let res = PathBuf::from_disassembled("", "(1)-", Some(9), "md");
+        assert_eq!(res, Path::new("(1)-(9).md"));
+    }
+
+    #[test]
     fn test_shorten_filename() {
         use std::ffi::OsString;
         use std::path::PathBuf;
@@ -702,29 +750,6 @@ mod tests {
         );
         let p = Path::new("/my/dir/1_2_3-'my'_title--my_subtitle(1).md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn test_assemble_filename() {
-        let expected = PathBuf::from("my_file.md");
-        let result = PathBuf::from_disassembled("", "my_file", None, "md");
-        assert_eq!(expected, result);
-
-        let expected = PathBuf::from("1_2_3-my_file(1).md");
-        let result = PathBuf::from_disassembled("1_2_3", "my_file", Some(1), "md");
-        assert_eq!(expected, result);
-
-        let expected = PathBuf::from("1_2_3-123 My_file(1).md");
-        let result = PathBuf::from_disassembled("1_2_3", "123 My_file", Some(1), "md");
-        assert_eq!(expected, result);
-
-        let expected = PathBuf::from("1_2_3-'123-my_file(1).md");
-        let result = PathBuf::from_disassembled("1_2_3", "123-my_file", Some(1), "md");
-        assert_eq!(expected, result);
-
-        let expected = PathBuf::from("'123-my_file(1).md");
-        let result = PathBuf::from_disassembled("", "123-my_file", Some(1), "md");
         assert_eq!(expected, result);
     }
 
