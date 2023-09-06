@@ -114,9 +114,7 @@ impl NotePathBuf for PathBuf {
         let lib_cfg = LIB_CFG.read_recursive();
         if !sort_tag.is_empty() {
             filename.push_str(sort_tag);
-            if !stem.is_empty() {
-                filename.push_str(&lib_cfg.filename.sort_tag_separator);
-            }
+            filename.push_str(&lib_cfg.filename.sort_tag_separator);
         }
         // Does the beginning of `stem` look like a sort-tag?
         // Make sure, that the path can not be misinterpreted, even if a
@@ -499,6 +497,9 @@ mod tests {
 
         let res = PathBuf::from_disassembled("1234", "5678--subtitle", Some(9), "md");
         assert_eq!(res, Path::new("1234-'5678--subtitle(9).md"));
+
+        let res = PathBuf::from_disassembled("1234", "", None, "md");
+        assert_eq!(res, Path::new("1234-'.md"));
 
         // This is a special case, that can not be disassembled properly.
         let res = PathBuf::from_disassembled("1234", "'5678--subtitle", Some(9), "md");
