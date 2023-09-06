@@ -1,8 +1,7 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_DOTFILE_MARKER;
-use crate::config::LIB_CFG;
 use crate::filename::NotePath;
-use crate::filename::NotePathHelper;
+use crate::filename::NotePathBuf;
 #[cfg(feature = "lang-detection")]
 use crate::settings::FilterGetLang;
 use crate::settings::SETTINGS;
@@ -305,25 +304,10 @@ fn prepend_filter<S: BuildHasher>(
             res = s;
         };
     } else if let Some(Value::String(sort_tag)) = args.get("with_sort_tag") {
-        let lib_cfg = LIB_CFG.read_recursive();
-        let mut s = String::new();
-        if !sort_tag.is_empty() {
-            s.push_str(sort_tag);
-            s.push_str(&lib_cfg.filename.sort_tag_separator);
-        }
-
-        // Make sure, that the path can not be misinterpreted, even if a
-        // `sort_tag_separator` would follow.
-        let mut test_path = res.clone();
-        test_path.push_str(&lib_cfg.filename.sort_tag_separator);
-        // Do we need an `extra_separator`?
-        if res.is_empty() || !Path::split_sort_tag(&test_path).0.is_empty() {
-            s.push(lib_cfg.filename.sort_tag_extra_separator);
-        }
-
-        // Now push the input.
-        s.push_str(&res);
-        res = s;
+        res = PathBuf::from_disassembled(sort_tag, &res, None, "")
+            .to_str()
+            .unwrap_or_default()
+            .to_string();
     };
 
     Ok(to_value(res)?)
