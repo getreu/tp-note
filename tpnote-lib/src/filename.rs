@@ -65,8 +65,9 @@ pub trait NotePathBuf {
 
     /// Shortens the stem of a filename so that
     /// `filename.len() <= FILENAME_LEN_MAX`.
-    /// If stem ends with a pattern similar to a copy counter,
-    /// append `-` to stem (cf. unit test in the source code).
+    /// This method assumes, that the file stem does not contain a copy
+    /// counter. If stem ends with a pattern similar to a copy counter,
+    /// it appends `-` to stem (cf. unit test in the source code).
     ///
     /// ```rust
     /// use std::ffi::OsString;
@@ -83,13 +84,13 @@ pub trait NotePathBuf {
     ///
     /// // Test too long filename.
     /// let mut input = String::from("some/path/");
-    /// for _ in 0..(FILENAME_LEN_MAX - "long fil.ext".len()) {
+    /// for _ in 0..(FILENAME_LEN_MAX - "long fi.ext".len()-1) {
     ///     input.push('x');
     /// }
     /// let mut expected = input.clone();
     /// input.push_str("long filename to be cut.ext");
     /// let mut input = PathBuf::from(input);
-    /// expected.push_str("long fil.ext");
+    /// expected.push_str("long fi.ext");
     ///
     /// input.shorten_filename();
     /// let output = PathBuf::from(input);
@@ -179,21 +180,42 @@ impl NotePathBuf for PathBuf {
 
     fn shorten_filename(&mut self) {
         // Determine length of file-extension.
-        let (sort_tag, _, stem, copy_counter, ext) = self.disassemble();
+        let stem = self
+            .file_stem()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default();
+        let ext = self
+            .extension()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default();
         let ext_len = ext.len();
 
-        // Limit the size of `file_path`
+        // Limit the size of the filename.
         let mut stem_short = String::new();
         // `+1` reserves one byte for `.` before the extension.
-        for i in (0..FILENAME_LEN_MAX - (ext_len + 1)).rev() {
+        // `+1` reserves one byte for `-` a potential copy counter extra
+        // separator.
+        for i in (0..FILENAME_LEN_MAX - (ext_len + 2)).rev() {
             if let Some(s) = stem.get(..=i) {
                 stem_short = s.to_string();
                 break;
             }
         }
 
+        // Does this ending look like a copy counter?
+        if Path::split_copy_counter(&stem_short).1.is_some() {
+            let lib_cfg = LIB_CFG.read_recursive();
+            stem_short.push_str(&lib_cfg.filename.copy_counter_extra_separator);
+        }
+
         // Assemble.
-        let note_filename = PathBuf::from_disassembled(sort_tag, &stem_short, copy_counter, ext);
+        let mut note_filename = stem_short;
+        if !ext.is_empty() {
+            note_filename.push(FILENAME_DOTFILE_MARKER);
+            note_filename.push_str(ext);
+        }
         // Replace filename`
         self.set_file_name(note_filename);
     }
@@ -463,7 +485,6 @@ mod tests {
     use super::NotePathBuf;
     use super::NotePathHelper;
     use crate::config::FILENAME_LEN_MAX;
-    use crate::config::LIB_CFG;
     use std::path::Path;
     use std::path::PathBuf;
 
@@ -520,21 +541,11 @@ mod tests {
     fn test_shorten_filename() {
         use std::ffi::OsString;
         use std::path::PathBuf;
-        let lib_cfg = LIB_CFG.read_recursive();
 
-        // Test short filename.
-        // Problematic file stem.
-        let mut input = "fn(1)".to_string();
-        // Add copy counter.
-        input.push_str(&lib_cfg.filename.copy_counter_extra_separator);
-        input.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
-        input.push('0');
-        input.push_str(&lib_cfg.filename.copy_counter_closing_brackets);
-        // Add file extension.
-        input.push_str(".ext");
-
-        let mut input = PathBuf::from(input);
-        let expected = input.clone();
+        // Test a short filename with a problematic file stem ending looking
+        // like a copy counter pattern. Therefor the method appends `-`.
+        let mut input = PathBuf::from("fn(1).md");
+        let expected = PathBuf::from("fn(1)-.md");
         // As this filename is too short, `shorten_filename()` should not change
         // anything.
         input.shorten_filename();
@@ -557,7 +568,7 @@ mod tests {
         input.push_str(".ext");
 
         let mut expected = std::iter::repeat("X")
-            .take(FILENAME_LEN_MAX - ".ext".len())
+            .take(FILENAME_LEN_MAX - ".ext".len() - 1)
             .collect::<String>();
         expected.push_str(".ext");
 
