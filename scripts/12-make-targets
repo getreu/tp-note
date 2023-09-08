@@ -4,15 +4,19 @@ set -x
 rustup target add x86_64-unknown-linux-gnu
 rustup target add x86_64-unknown-linux-musl
 
-# Musl Needs: `sudo apt install musl-tools` 
+# Musl needs: `sudo apt install musl-tools` 
 cargo build \
  	--target x86_64-unknown-linux-gnu \
  	--target x86_64-unknown-linux-musl \
  	--release
 
 # Supports RaspherryPi 2/3/4
-# needs: `apt install crossbuild-essential-armhf`
+# needs: `sudo apt install crossbuild-essential-armhf`
 rustup target add armv7-unknown-linux-gnueabihf
 CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=/usr/bin/arm-linux-gnueabihf-gcc \
    cargo build  --target armv7-unknown-linux-gnueabihf  --release
 
+
+# Windows needs `sudo apt install binutils-mingw-w64 mingw-w64`
+rustup target add x86_64-pc-windows-gnu
+cargo build --release --target x86_64-pc-windows-gnu
