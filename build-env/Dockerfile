@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=rust:slim-buster
+ARG BASE_IMAGE=rust:slim-bullseye
 
 FROM $BASE_IMAGE as planner
 WORKDIR /home/dockeruser/project
@@ -49,7 +49,7 @@ RUN cargo install cargo-deb
 # RUN cargo deb --target=x86_64-unknown-linux-gnu
 
 # Add a tool to upgrade dependencies.
-RUN apt-get -y install libssl-dev
+RUN apt-get -y install libssl-dev pkg-config
 RUN cargo install cargo-edit
 ### use with
 #RUN cargo upgrade
