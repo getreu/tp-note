@@ -2,8 +2,8 @@
 title:    "Tp-Note: save and edit your clipboard content as a note file"
 subtitle: "Organize your notes with your favourite editor and markup language"
 author:   "Jens Getreu"
-date:     "2023-09-08"
-version:  "1.21.15"
+date:     "2023-09-10"
+version:  "1.21.16"
 filename_sync: false
 lang:     "en-GB"
 ---
@@ -823,7 +823,7 @@ sudo chmod 755 tpnote
 _Debian_ and _Ubuntu_ user can also download [Debian/Ubuntu package] and install it with:
 
 ``` sh
-sudo dpkg -i tp-note_X.X.X_amd64.deb
+sudo dpkg -i tpnote_latest_amd64.deb
 ```
 
 

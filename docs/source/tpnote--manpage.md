@@ -1,10 +1,10 @@
 ---
-title:      "TP-NOTE(1) Version 1.21.15 | Tp-Note documentation"
+title:      "TP-NOTE(1) Version 1.21.16 | Tp-Note documentation"
 subtitle:   "manpage"
 author:     "Jens Getreu"
-version:    "1.21.15"
+version:    "1.21.16"
 filename_sync: false
-date:       "2023-09-08"
+date:       "2023-09-10"
 lang:       "en-GB"
 ---
 

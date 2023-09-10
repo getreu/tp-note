@@ -1,13 +1,13 @@
 # [PROJECT_DIR]/Cargo.toml
 [workspace]
 resolver = "2"
-members = ["tp-note", "tpnote-lib"]
-default-members = ["tp-note"]
+members = ["tpnote", "tpnote-lib", "tp-note"]
+default-members = ["tpnote"]
 
 [workspace.package]
 authors = ["Jens Getreu <getreu@web.de>"]
 categories = ["command-line-utilities", "template-engine", "text-processing"]
-description = "Minimalistic note taking: save and edit your clipboard content as a note file"
+description = "Minimalistic note-taking: save and edit your clipboard content as a note file"
 documentation = "https://blog.getreu.net/projects/tp-note/tpnote--manual.html"
 edition = "2021"
 homepage = "https://blog.getreu.net/projects/tp-note/"
@@ -15,7 +15,7 @@ license = "MIT/Apache-2.0"
 readme = "README.md"
 repository = "https://gitlab.com/getreu/tp-note"
 rust-version = "1.70.0"
-version = "1.21.15"
+version = "1.21.16"
 
 [profile.release]
 strip = "symbols"
