@@ -1,5 +1,5 @@
 ---
-title: "Tp-Note - Minimalistic note taking: save and edit your clipboard content as a note file"
+title: "Tp-Note - Minimalistic note-taking: save and edit your clipboard content as a note file"
 author: Jens Getreu
 filename_sync: false
 ---
@@ -21,10 +21,9 @@ and the clipboard and stores them in variables. New notes are created by
 filling these variables in predefined and customizable _Tera_-templates.
 _TP-Note's_ default templates are written in Markdown and can be easily adapted
 to any other markup language if needed. After creating a new note, _TP-Note_
-launches the system file editor (or any other of your choice, e.g. _MarkText_
-or _Typora_) and connects the default web browser to _Tp-Note_'s
-internal Markdown/RestructuredText renderer and web server. The viewer detects
-note file changes and updates the rendition accordingly.
+launches the system's text editor and connects the default web browser to _Tp-
+Note_'s internal Markdown/RestructuredText renderer and web server. The viewer
+detects note file changes and updates the rendition accordingly.
 
 ![Screenshot](./assets/tpnote-screenshot.png)
 
@@ -32,7 +31,7 @@ note file changes and updates the rendition accordingly.
 
 * [Download Tp-Note]
 
-* Project page: [Tp-Note - Minimalistic note taking: save and edit your clipboard content as a note file]
+* Project page: [Tp-Note - Minimalistic note-taking: save and edit your clipboard content as a note file]
 
 
 ---
@@ -160,7 +159,7 @@ Repository:
   To install Tp-Note on NetBSD, simply use the native package manager:
 
   ```sh
-  pkgin install tp-note
+  pkgin install tpnote
   ```
 
 
@@ -244,7 +243,7 @@ compile _Tp-Note_ yourself.
    **Building on Linux**
 
    ```sh
-   cargo install tp-note
+   cargo install tpnote
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
    # Copy icon
    sudo cp assets/tpnote.svg /usr/local/share/icons
@@ -288,7 +287,7 @@ compile _Tp-Note_ yourself.
 
    Build the full-featured version with:
 
-       cargo install tp-note
+       cargo install tpnote
 
    When building for Windows or macOS, it does not make sense to exclude the
    `message-box` feature, because - under Windows and macOS - it does not rely

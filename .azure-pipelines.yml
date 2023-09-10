@@ -100,7 +100,7 @@ stages:
             condition: eq( variables['Agent.OS'], 'Linux' )
             displayName: Build documentation
           - script: |
-              cargo deb --package tp-note --target $TARGET
+              cargo deb --package tpnote --target $TARGET
             condition: eq( variables['Agent.OS'], 'Linux' )
             displayName: Build deb package
           - script: |
