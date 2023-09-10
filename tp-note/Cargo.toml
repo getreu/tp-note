@@ -1,118 +1,17 @@
-# [PROJECT_DIR]/tpnote/Cargo.toml
 [package]
+name = "tp-note"
 authors.workspace = true
-build =  "build.rs"
 categories.workspace = true
-description.workspace = true
+description = "This crate has moved to `tpnote`"
 documentation.workspace = true
 edition.workspace = true
 homepage.workspace = true
 license.workspace = true
-name = "tp-note"
 readme.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-version.workspace = true
+version = "1.21.16"
 
-[build-dependencies]
-winresource = "0.1.17"
-
-[[bin]]
-name = "tpnote"
-path = "src/main.rs"
-
-[package.metadata.deb]
-name = "tpnote"
-maintainer = "Jens Getreu, <getreu@web.de>"
-copyright = "2020-2023, Jens Getreu <getreu@web.de>"
-depends = "$auto"
-extended-description = '''
-_Tp-Note_ is a note taking tool and a template system, that synchronizes the
-note's metadata with its filename. _Tp-Note_ collects various information
-about its environment and the clipboard and stores it in variables. New
-notes are created by filling these variables in predefined and customizable
-`Tera`-templates. In case `<path>` points to an existing _Tp-Note_-file, the
-note's metadata is analysed and, if necessary, its filename is adjusted.
-For all other file types, _Tp-Note_ creates a new note annotating the
-file `<path>` points to. If `<path>` is a directory (or, when omitted the
-current working directory), a new note is created in that directory. After
-creation, _Tp-Note_ launches an external editor of your choice. Although the
-templates are written for Markdown, _Tp-Note_ is not tied to
-any specific markup language. However, _Tp-Note_ comes with an optional
-viewer feature, that currently renders only Markdown, ReStructuredText and
-HTML. Note, that there is also some limited support for Asciidoc and
-WikiText. The note's rendition with its hyperlinks is live updated and
-displayed in the user's webbrowser.
-'''
-assets = [
-    ["../docs/build/html/index.html", "usr/share/doc/tpnote/", "644"],
-    ["../docs/build/pdf/tpnote--manpage.pdf", "usr/share/doc/tpnote/", "644"],
-    ["../docs/build/pdf/tpnote--manual.pdf", "usr/share/doc/tpnote/", "644"],
-    ["../docs/build/man/man1/tpnote.1.gz", "usr/share/man/man1/", "644"],
-    ["../target/x86_64-unknown-linux-gnu/release/tpnote", "usr/bin/tpnote", "755"],
-    ["../assets/tpnote.svg", "usr/share/icons/", "644"]
-]
-
-[features]
-default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detection"]
-
-# To disable features: `cargo build --no-default-features`
-# If you can do away with error message popup boxes (for example on a headless
-# system), no GTK is required. In this case all error messages will appear on
-# the console from where you started _Tp-Note_ in `stderr` only.
-# Disable this feature if you do not want error message boxes.
-message-box = ["dep:msgbox", "dep:notify-rust"]
-read-clipboard = ["dep:arboard"]
-viewer = ["dep:notify", "dep:httparse", "dep:webbrowser", "dep:httpdate", "tpnote-lib/viewer"]
-# This feature declaration is forwarded to `tpnote_lib` and not used in this
-# crate.
-lang-detection = ["tpnote-lib/lang-detection"]
-# This feature declaration is used in this crate and also forwarded to 
-# `tpnote_lib`.
-renderer = ["tpnote-lib/renderer"]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# arboard: when cross compiling for `armv7-unknown-linux-gnueabihf`: `apt install crossbuild-essential-armhf`
-arboard = { version = "3.2.1", optional = true, default-features = false, features = ["wayland-data-control"] }
-directories = "5.0.1"
-httparse = { version = "1.8.0", optional = true }
-httpdate = { version = "1.0.3", optional = true }
-lazy_static.workspace = true
-log.workspace = true
-notify-debouncer-mini = "0.4.1"
-notify = { version = "6.1.1", optional = true }
-parking_lot.workspace = true
-percent-encoding = "2.3.0"
-# sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
-sanitize-filename-reader-friendly.workspace = true
-semver = "1.0.18"
-serde.workspace = true
-serde_yaml.workspace = true
-structopt = "0.3.26"
-thiserror.workspace = true
-time = "0.3.28"
-tera.workspace = true
-toml.workspace = true
-#tpnote-lib = { path = "../tpnote-lib", default-features = false }
-tpnote-lib = { version = "0.22.8", default-features = false}
-webbrowser = { version = "0.8.11", optional = true }
-
-[target.'cfg(windows)'.dependencies]
-win32job = "1.0.2"
-windows-sys = { version = "0.48.0", features = [
-         #"Win32_Foundation",
-         #"Win32_Security",
-         #"Win32_System_Threading",
-         #"Win32_UI_WindowsAndMessaging",
-         "Win32_Globalization",
-         "Win32_System_SystemServices",
-     ] }
-
-# All, but not linux.
-[target.'cfg(not(all(unix, not(target_os = "macos"))))'.dependencies]
-# msgbox: On Debian Linux you need to: sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
-msgbox = { version = "0.7.0", optional = true }
-
-# Only Linux, MacOs excluded.
-[target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
-notify-rust = { version = "4.9.0", optional = true }
