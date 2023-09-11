@@ -4,10 +4,20 @@ mkdir --parents ./build/html
 mkdir --parents ./build/html/_downloads
 mkdir --parents ./build/man/man1
 
-cp ./source/README.md ./source/index.md
+cat << EOT >./source/index.md
+---
+title: "Tp-Note - Minimalistic note-taking"
+subtitle: "Save and edit your clipboard content as a note file"
+author: Jens Getreu
+---
+
+EOT
+
+tail --lines=+4 ./source/README.md >>./source/index.md
+
+./docbook52pdf ./source/index.md ./build/pdf/README.pdf
+
 sed -i 's/http.*\.getreu\.net//g' ./source/index.md
-
 ./docbook52html ./source/index.md ./build/html/index.html
-rm index.md
 
-./docbook52pdf ./source/README.md ./build/pdf/README.pdf
+rm index.md
