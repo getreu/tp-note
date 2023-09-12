@@ -588,7 +588,7 @@ pub const TMPL_HTML_VIEWER: &str = r#"<!DOCTYPE html>
   %}
     <tr>
     <th class="keygrey">{{ k }}:</th>
-    <th class="valgrey">{{ v }}</th>
+    <th class="valgrey">{{ v | json_encode() | safe }}</th>
   </tr>
   {% endfor %}
   </table>
@@ -663,7 +663,7 @@ pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
     %}
     <tr>
     <th class="keygrey">{{ k }}:</th>
-    <th class="valgrey">{{ v }}</th>
+    <th class="valgrey">{{ v | json_encode() | safe }}</th>
   </tr>
   {% endfor %}
   </table>
