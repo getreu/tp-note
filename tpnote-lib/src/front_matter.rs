@@ -255,9 +255,9 @@ mod tests {
         (*expected).insert("fm_count".to_string(), &json!(2)); // Number()
         (*expected).insert("fm_neg".to_string(), &json!(-1)); // Number()
         (*expected).insert("fm_flag".to_string(), &json!(true)); // Bool()
-        (*expected).insert("fm_numbers".to_string(), &json!("[1,3,5]")); // String()!
+        (*expected).insert("fm_numbers".to_string(), &json!([1, 3, 5])); // String()!
         tmp2.remove("numbers");
-        tmp2.insert("numbers".to_string(), json!("[1,3,5]")); // String()!
+        tmp2.insert("numbers".to_string(), json!([1, 3, 5])); // String()!
         (*expected).insert("fm_all".to_string(), &tmp2); // Map()
 
         input1.insert_front_matter(&input2);

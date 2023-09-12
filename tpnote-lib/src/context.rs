@@ -118,21 +118,15 @@ impl Context {
         let mut tera_map = tera::Map::new();
 
         for (name, value) in fm.iter() {
-            // Flatten all types.
-            let val = match value {
-                tera::Value::String(_) => value.to_owned(),
-                tera::Value::Number(_) => value.to_owned(),
-                tera::Value::Bool(_) => value.to_owned(),
-                _ => tera::Value::String(value.to_string()),
-            };
-
             // First we register a copy with the original variable name.
-            tera_map.insert(name.to_string(), val.to_owned());
+            // NB: We also insert `Value::Array` and `Value::Object`
+            // variants, No flattening occurs here.
+            tera_map.insert(name.to_string(), value.to_owned());
 
             // Here we register `fm_<var_name>`.
             let mut var_name = TMPL_VAR_FM_.to_string();
             var_name.push_str(name);
-            self.ct.insert(&var_name, &val);
+            self.ct.insert(&var_name, &value);
         }
         // Register the collection as `Object(Map<String, Value>)`.
         self.ct.insert(TMPL_VAR_FM_ALL, &tera_map);
