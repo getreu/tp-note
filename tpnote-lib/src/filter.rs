@@ -31,6 +31,7 @@ lazy_static! {
 /// Tera object with custom functions registered.
     pub static ref TERA: Tera = {
         let mut tera = Tera::default();
+        tera.register_filter("to_yaml", to_yaml_filter);
         tera.register_filter("sanit", sanit_filter);
         tera.register_filter("link_text", link_text_filter);
         tera.register_filter("link_dest", link_dest_filter);
@@ -51,6 +52,69 @@ lazy_static! {
     };
 }
 
+/// A filter converting an input `tera::Value::Object` into a
+/// `tera::Value::String(s)` with `s` being the YAML representation of the
+/// object. When the optional parameter `key='k'` is given, the input can be
+/// any `tera::Value` variant.
+/// The parameter `tab=n` indents the YAML values `n` characters to the right
+/// of the first character of the key by inserting additional spaces between
+/// the key and the value.
+fn to_yaml_filter<S: BuildHasher>(
+    val: &Value,
+    args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let val_yaml = if let Some(Value::String(k)) = args.get("key") {
+        let mut m = tera::Map::new();
+        m.insert(k.to_owned(), val.to_owned());
+        serde_yaml::to_string(&m).unwrap()
+    } else {
+        serde_yaml::to_string(&val).unwrap()
+    };
+
+    // Translate the empty set, into an empty string and return it.
+    if val_yaml.trim_end() == "{}" {
+        return Ok(tera::Value::String("".to_string()));
+    }
+
+    // Formatting: adjust indent.
+    let val_yaml: String = if let Some(n) = args.get("tab").and_then(|v| v.as_u64()) {
+        val_yaml
+            .lines()
+            .map(|l| {
+                let mut colon_pos = 0;
+                let mut insert = 0;
+                if let Some(colpos) = l.find(": ") {
+                    colon_pos = colpos;
+                    if let Some(key_pos) = l.find(char::is_alphabetic) {
+                        if key_pos < colon_pos {
+                            if !l.find("'").is_some_and(|p| p < colon_pos)
+                                && !l.find("\"'").is_some_and(|p| p < colon_pos)
+                            {
+                                insert = (n as usize + key_pos)
+                                    .checked_sub(colon_pos + ": ".len())
+                                    .unwrap_or(0);
+                            }
+                        }
+                    }
+                };
+
+                let mut l = l.to_owned();
+                // Enlarge indent.
+                for _ in 0..insert {
+                    // If `insert>0`, we know that `colon_pos>0`.
+                    l.insert(colon_pos + 1, ' ');
+                }
+                l.push('\n');
+                l
+            })
+            .collect()
+    } else {
+        val_yaml
+    };
+
+    Ok(tera::Value::String(val_yaml.trim_end().to_string()))
+}
+
 /// Adds a new filter to Tera templates:
 /// `sanit` or `sanit()` sanitizes a string so that it can be used to
 /// assemble filenames or paths. In addition, `sanit(alpha=true)` prepends
@@ -62,12 +126,7 @@ lazy_static! {
 /// is the case, and the filename starts with a dot, the file is prepended by
 /// `sort_tag_extra_separator`. Note, this filter converts all input types to
 /// `tera::String`.
-fn sanit_filter<S: BuildHasher>(
-    value: &Value,
-    _args: &HashMap<String, Value, S>,
-) -> TeraResult<Value> {
-    let p = try_get_value!("sanit", "value", Value, value);
-
+fn sanit_filter<S: BuildHasher>(p: &Value, _args: &HashMap<String, Value, S>) -> TeraResult<Value> {
     // Take unmodified `String()`, but format all other types into
     // string.
     let mut p = if p.is_string() {
@@ -470,8 +529,143 @@ impl Hyperlink {
 mod tests {
     use super::*;
     use parking_lot::RwLockWriteGuard;
+    use serde_json::json;
     use std::collections::{BTreeMap, HashMap};
     use tera::to_value;
+
+    #[test]
+    fn test_to_yaml_filter() {
+        // No key, the input is of type `Value::Object()`.
+        let mut input = tera::Map::new();
+        input.insert("number_type".to_string(), json!(123));
+
+        let expected = "number_type: 123".to_string();
+
+        let args = HashMap::new();
+        assert_eq!(
+            to_yaml_filter(&Value::Object(input), &args).unwrap(),
+            Value::String(expected)
+        );
+
+        //
+        // The key is `author`, the value is of type `Value::String()`.
+        let input = "Getreu".to_string();
+
+        let expected = "author: Getreu".to_string();
+
+        let mut args = HashMap::new();
+        args.insert("key".to_string(), to_value("author").unwrap());
+        assert_eq!(
+            to_yaml_filter(&Value::String(input), &args).unwrap(),
+            Value::String(expected)
+        );
+
+        //
+        // The key is `my`, the value is of type `Value::Object()`.
+        let mut input = tera::Map::new();
+        input.insert(
+            "author".to_string(),
+            json!(["Getreu: Noname", "Jens: Noname"]),
+        );
+
+        let expected = "my:\n  author:\n  - 'Getreu: Noname'\n  - 'Jens: Noname'".to_string();
+
+        let mut args = HashMap::new();
+        args.insert("key".to_string(), to_value("my").unwrap());
+        assert_eq!(
+            to_yaml_filter(&Value::Object(input), &args).unwrap(),
+            Value::String(expected)
+        );
+
+        //
+        // The key is `my`, the value is of type `Value::Object()`.
+        let mut input = tera::Map::new();
+        input.insert("number_type".to_string(), json!(123));
+
+        let expected = "my:\n  number_type: 123".to_string();
+
+        let mut args = HashMap::new();
+        args.insert("key".to_string(), to_value("my").unwrap());
+        assert_eq!(
+            to_yaml_filter(&Value::Object(input), &args).unwrap(),
+            Value::String(expected)
+        );
+
+        //
+        // The key is `my`, `tab` is 10, the value is of type `Value::Object()`.
+        let mut input = tera::Map::new();
+        input.insert("num".to_string(), json!(123));
+
+        let expected = "my:\n  num:      123".to_string();
+
+        let mut args = HashMap::new();
+        args.insert("key".to_string(), to_value("my").unwrap());
+        args.insert("tab".to_string(), to_value(10).unwrap());
+        assert_eq!(
+            to_yaml_filter(&Value::Object(input), &args).unwrap(),
+            Value::String(expected)
+        );
+
+        //
+        // Empty input.
+        let input = tera::Map::new();
+
+        let expected = "".to_string();
+
+        let mut args = HashMap::new();
+        args.insert("tab".to_string(), to_value(10).unwrap());
+        assert_eq!(
+            to_yaml_filter(&Value::Object(input), &args).unwrap(),
+            Value::String(expected)
+        );
+
+        //
+        // Empty input with key.
+        let input = tera::Map::new();
+
+        let expected = "my:       {}".to_string();
+
+        let mut args = HashMap::new();
+        args.insert("key".to_string(), to_value("my").unwrap());
+        args.insert("tab".to_string(), to_value(10).unwrap());
+        assert_eq!(
+            to_yaml_filter(&Value::Object(input), &args).unwrap(),
+            Value::String(expected)
+        );
+
+        //
+        // Simple input string, no map.
+        let input = json!("my str");
+        let expected = "my str".to_string();
+        let mut args = HashMap::new();
+        args.insert("tab".to_string(), to_value(10).unwrap());
+        assert_eq!(
+            to_yaml_filter(&input, &args).unwrap(),
+            Value::String(expected)
+        );
+
+        //
+        // Simple input string, no map.
+        let input = json!("my: str");
+        let expected = "'my: str'".to_string();
+        let mut args = HashMap::new();
+        args.insert("tab".to_string(), to_value(10).unwrap());
+        assert_eq!(
+            to_yaml_filter(&input, &args).unwrap(),
+            Value::String(expected)
+        );
+
+        //
+        // Simple input number, no map.
+        let input = json!(9876);
+        let expected = "9876".to_string();
+        let mut args = HashMap::new();
+        args.insert("tab".to_string(), to_value(10).unwrap());
+        assert_eq!(
+            to_yaml_filter(&input, &args).unwrap(),
+            Value::String(expected)
+        );
+    }
 
     #[test]
     fn test_sanit_filter() {
