@@ -309,15 +309,15 @@ pub const TMPL_FILTER_MAP_LANG: &[&[&str]] = &[&["de", "de-DE"], &["et", "et-ET"
 /// * `{{ dir_path }}` is in this context identical to `{{ path }}`.
 ///  In addition, all environment variables can be used, e.g.
 /// `{{ get_env(name=\"LOGNAME\") }}` When placed in YAML front matter, the
-/// filter `| json_encode` must be appended to each variable.
+/// filter `to_yaml` must be appended to each variable.
 pub const TMPL_NEW_CONTENT: &str = "\
 {%- set title_text = dir_path | trim_file_sort_tag -%}
 ---
-title:      {{ title_text | cut | json_encode }}
-subtitle:   {{ 'Note' | json_encode }}
-author:     {{ username | capitalize | json_encode }}
-date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ title_text | get_lang | map_lang(default=lang) | json_encode }}
+{{ title_text | cut | to_yaml(key='title',tab=12) }}
+{{ 'Note' | to_yaml(key='subtitle',tab=12) }}
+{{ username | capitalize | to_yaml(key='author',tab=12) }}
+{{ now() | date(format='%Y-%m-%d') | to_yaml(key='date',tab=12) }}
+{{ title_text | get_lang | map_lang(default=lang) | to_yaml(key='lang',tab=12) }}
 ---
 
 
@@ -345,25 +345,24 @@ pub const TMPL_NEW_FILENAME: &str = "\
 /// stream `stdin`. The latter can overwrite the former.  One of the front
 /// matters must define the `title` variable, which is then available in this
 /// template as `{{ fm_title }}`.
-/// When placed in YAML front matter, the filter `| json_encode` must be
+/// When placed in YAML front matter, the filter `to_yaml` must be
 /// appended to each variable.
 pub const TMPL_FROM_CLIPBOARD_YAML_CONTENT: &str = "\
 ---
-title:      {{ fm_title | default(value = path|trim_file_sort_tag) | cut | json_encode }}
-subtitle:   {{ fm_subtitle | default(value = 'Note') | cut | json_encode }}
-author:     {{ fm_author | default(value=username | capitalize) | json_encode }}
-date:       {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | json_encode }}
-{% for k, v in fm_all|\
+{{ fm_title | default(value = path|trim_file_sort_tag) | cut | to_yaml(key='title',tab=12) }}
+{{ fm_subtitle | default(value = 'Note') | cut | to_yaml(key='subtitle',tab=12) }}
+{{ fm_author | default(value=username | capitalize) | to_yaml(key='author',tab=12) }}
+{{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='date',tab=12) }}
+{{ fm_all|\
  remove(var='fm_title')|\
  remove(var='fm_subtitle')|\
  remove(var='fm_author')|\
  remove(var='fm_date')|\
  remove(var='fm_lang')\
- %}{{ k }}:\t\t{{ v | json_encode }}
-{% endfor -%}
-lang:       {{ fm_lang | default(value = fm_title| \
+ | to_yaml(tab=12) }}
+{{ fm_lang | default(value = fm_title| \
                            default(value=stdin~clipboard|heading)| \
-                 get_lang | map_lang(default=lang) ) | json_encode }}
+                 get_lang | map_lang(default=lang) ) | to_yaml(key='lang',tab=12) }}
 ---
 
 {{ stdin ~ clipboard }}
@@ -399,16 +398,16 @@ pub const TMPL_FROM_CLIPBOARD_CONTENT: &str = "\
     {%- set title_text = stdin ~ clipboard | heading -%}
 {% endif -%}
 ---
-title:      {{ title_text | cut | json_encode }}
+{{ title_text | cut | to_yaml(key='title',tab=12) }}
 {% if stdin ~ clipboard | link_text !='' and
       stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut -%}
-  subtitle:   {{ 'URL' | json_encode -}}
+  {{ 'URL' | to_yaml(key='subtitle',tab=12) -}}
 {%- else -%}
-  subtitle:   {{ 'Note' | json_encode -}}
+  {{ 'Note' | to_yaml(key='subtitle',tab=12) -}}
 {%- endif %}
-author:     {{ username | capitalize | json_encode }}
-date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ title_text | get_lang | map_lang(default=lang) | json_encode }}
+{{ username | capitalize | to_yaml(key='author',tab=12) }}
+{{ now() | date(format='%Y-%m-%d') | to_yaml(key='date',tab=12) }}
+{{ title_text | get_lang | map_lang(default=lang) | to_yaml(key='lang',tab=12) }}
 ---
 
 {{ stdin ~ clipboard }}
@@ -429,13 +428,13 @@ pub const TMPL_FROM_CLIPBOARD_FILENAME: &str = "\
 /// `{{ dir_path }}` to the directory where it is located.
 pub const TMPL_FROM_TEXT_FILE_CONTENT: &str = "\
 ---
-title:      {{ path | file_stem | split(pat='--') | first | cut | json_encode }}
-subtitle:   {{ path | file_stem | split(pat='--') | nth(n=1) | cut | json_encode }}
-author:     {{ username | capitalize | json_encode }}
-date:       {{ note_file_date | default(value='') | date(format='%Y-%m-%d') | \
-               json_encode }}
-orig_name:  {{ path | file_name | json_encode }}
-lang:       {{ note_body_text | get_lang | map_lang(default=lang) | json_encode }}
+{{ path | file_stem | split(pat='--') | first | cut | to_yaml(key='title',tab=12) }}
+{{ path | file_stem | split(pat='--') | nth(n=1) | cut | to_yaml(key='subtitle',tab=12) }}
+{{ username | capitalize | to_yaml(key='author',tab=12) }}
+{{ note_file_date | default(value='') | date(format='%Y-%m-%d') | \
+   to_yaml(key='date',tab=12) }}
+{{ path | file_name | to_yaml(key='orig_name',tab=12) }}
+{{ note_body_text | get_lang | map_lang(default=lang) | to_yaml(key='lang',tab=12) }}
 ---
 
 {{ note_body_text }}
@@ -466,16 +465,16 @@ pub const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
    {%- set lang_test_text = path | file_stem  -%}
 {%- endif -%}
 ---
-title:      {{ path | trim_file_sort_tag | json_encode }}
+{{ path | trim_file_sort_tag | to_yaml(key='title',tab=12) }}
 {% if body_text | link_text !='' and
       body_text | heading == body_text -%}
-  subtitle:   {{ 'URL' | json_encode -}}
+{{ 'URL' | to_yaml(key='subtitle',tab=12) -}}
 {%- else -%}
-  subtitle:   {{ 'Note' | json_encode -}}
+{{ 'Note' | to_yaml(key='subtitle',tab=12) -}}
 {%- endif %}
-author:     {{ username | capitalize | json_encode }}
-date:       {{ now() | date(format='%Y-%m-%d') | json_encode }}
-lang:       {{ lang_test_text | get_lang | map_lang(default=lang) | json_encode }}
+{{ username | capitalize | to_yaml(key='author',tab=12) }}
+{{ now() | date(format='%Y-%m-%d') | to_yaml(key='date',tab=12) }}
+{{ lang_test_text | get_lang | map_lang(default=lang) | to_yaml(key='lang',tab=12) }}
 ---
 
 [{{ path | file_name }}](<{{ path | file_name }}>)
@@ -588,7 +587,7 @@ pub const TMPL_HTML_VIEWER: &str = r#"<!DOCTYPE html>
   %}
     <tr>
     <th class="keygrey">{{ k }}:</th>
-    <th class="valgrey">{{ v | json_encode() | safe }}</th>
+    <th class="valgrey">{{ v }}</th>
   </tr>
   {% endfor %}
   </table>
@@ -663,7 +662,7 @@ pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
     %}
     <tr>
     <th class="keygrey">{{ k }}:</th>
-    <th class="valgrey">{{ v | json_encode() | safe }}</th>
+    <th class="valgrey">{{ v }}</th>
   </tr>
   {% endfor %}
   </table>
