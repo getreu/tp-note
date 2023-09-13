@@ -1,12 +1,12 @@
 ﻿---
-title:      "aaa"
-subtitle:   "bbb"
-author:     "Myuser"
-file_ext:		"mdtxt"
-my_own_var:		"foo"
-revision:		"2.0"
-sort_tag:		"222"
-lang:       "en"
+title:      aaa
+subtitle:   bbb
+author:     Myuser
+file_ext:   mdtxt
+my_own_long_var: foo
+revision:   '2.0'
+sort_tag:   '222'
+lang:       en
 ---
 
 EOF
