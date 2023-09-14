@@ -568,26 +568,26 @@ pub const TMPL_HTML_VIEWER: &str = r#"<!DOCTYPE html>
 </style>
   </head>
   <body>
-  <table class="center">
+  <table class="fm">
     <tr>
-    <th class="key">title:</th>
-    <th class="val"><b>{{ fm_title }}</b></th>
+    <th class="fmkey">title:</th>
+    <th class="fmval"><b>{{ fm_title|to_html }}</b></th>
   </tr>
     <tr>
-    <th class="key">subtitle:</th>
-    <th class="val">{{ fm_subtitle | default(value='') }}</th>
+    <th class="fmkey">subtitle:</th>
+    <th class="fmval">{{ fm_subtitle | default(value='')|to_html }}</th>
   </tr>
     <tr>
-    <th class="keygrey">date:</th>
-    <th class="valgrey">{{ fm_date | default(value='') }}</th>
+    <th class="fmkeygrey">date:</th>
+    <th class="fmvalgrey">{{ fm_date | default(value='')|to_html }}</th>
   </tr>
   {% for k, v in fm_all| remove(var='fm_title')|
                          remove(var='fm_subtitle')|
                          remove(var='fm_date')
   %}
     <tr>
-    <th class="keygrey">{{ k }}:</th>
-    <th class="valgrey">{{ v }}</th>
+    <th class="fmkeygrey">{{ k }}:</th>
+    <th class="fmvalgrey">{{ v|to_html }}</th>
   </tr>
   {% endfor %}
   </table>
@@ -642,18 +642,18 @@ pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
 </style>
   </head>
   <body>
-  <table class="center">
+  <table class="fm">
     <tr>
-    <th class="key">title:</th>
-    <th class="val"><b>{{ fm_title }}</b></th>
+    <th class="fmkey">title:</th>
+    <th class="fmval"><b>{{ fm_title|to_html }}</b></th>
   </tr>
     <tr>
-    <th class="key">subtitle:</th>
-    <th class="val">{{ fm_subtitle | default(value='') }}</th>
+    <th class="fmkey">subtitle:</th>
+    <th class="fmval">{{ fm_subtitle | default(value='')|to_html }}</th>
   </tr>
     <tr>
-    <th class="keygrey">date:</th>
-    <th class="valgrey">{{ fm_date | default(value='') }}</th>
+    <th class="fmkeygrey">date:</th>
+    <th class="fmvalgrey">{{ fm_date | default(value='')|to_html }}</th>
   </tr>
   {% for k, v in fm_all|
         remove(var='fm_title')|
@@ -661,8 +661,8 @@ pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
         remove(var='fm_date')
     %}
     <tr>
-    <th class="keygrey">{{ k }}:</th>
-    <th class="valgrey">{{ v }}</th>
+    <th class="fmkeygrey">{{ k }}:</th>
+    <th class="fmvalgrey">{{ v|to_html }}</th>
   </tr>
   {% endfor %}
   </table>
@@ -675,26 +675,37 @@ pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
 /// the `TMPL_HTML_EXPORTER` template and as referenced code in the
 /// `TMPL_HTML_VIEWER` template.
 pub const TMPL_HTML_CSS_COMMON: &str = r#"/* Tp-Note's CSS */
-table, th, td { font-weight: normal; }
-table.center {
+table.fm {
+  font-weight: normal;
   margin-left: auto;
   margin-right: auto;
   background-color: #f3f2e4;
   border:1px solid grey;
 }
-th, td {
-  padding: 3px;
+th.fmkey, th.fmkeygrey, th.fmval, th.fmvalgrey {
+  font-weight: normal;
   padding-left:15px;
   padding-right:15px;
 }
-th.key{ color:#444444; text-align:right; }
-th.val{
+th.fmkey{ color:#444444; text-align:right; vertical-align:top;}
+th.fmval{
   color:#316128;
   text-align:left;
   font-family:sans-serif;
 }
-th.keygrey{ color:grey; text-align:right; }
-th.valgrey{ color:grey; text-align:left; }
+th.fmkeygrey{ color:grey; text-align:right; vertical-align:top;}
+th.fmvalgrey{ color:grey; text-align:left; }
+ul.fm {
+  padding-left: 15px;
+  margin: 0px;
+}
+li.fm {
+  padding-bottom: 0px;
+}
+blockquote.fm {
+  margin: 0px;
+  padding-left: 15px
+}
 pre { white-space: pre-wrap; }
 em { color: #523626; }
 a { color: #316128; }
