@@ -274,10 +274,10 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 ///
 /// #[cfg(not(target_family = "windows"))]
 /// assert!(raw_note.starts_with(
-///            "\u{feff}---\ntitle:      \"my stdin\\nmy clipboard\\n\""));
+///            "\u{feff}---\ntitle:      |\n  my stdin\n  my clipboard"));
 /// #[cfg(target_family = "windows")]
 /// assert!(raw_note.starts_with(
-///            "\u{feff}---\r\ntitle:      \"my stdin"));
+///            "\u{feff}---\r\ntitle:      |"));
 /// ```
 pub fn create_new_note_or_synchronize_filename<T, F>(
     path: &Path,
