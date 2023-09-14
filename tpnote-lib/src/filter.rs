@@ -32,6 +32,7 @@ lazy_static! {
     pub static ref TERA: Tera = {
         let mut tera = Tera::default();
         tera.register_filter("to_yaml", to_yaml_filter);
+        tera.register_filter("to_html", to_html_filter);
         tera.register_filter("sanit", sanit_filter);
         tera.register_filter("link_text", link_text_filter);
         tera.register_filter("link_dest", link_dest_filter);
@@ -113,6 +114,58 @@ fn to_yaml_filter<S: BuildHasher>(
     };
 
     Ok(tera::Value::String(val_yaml.trim_end().to_string()))
+}
+
+/// A filter that coverts a `tera::Value` tree into an HTML representation,
+/// with following HTLM tags:
+/// * `Value::Object`: `<blockquote class="fm">` and `<div class="fm">`,
+/// * `Value::Array`: `<ul class="fm">` and `<li class="fm">`,
+/// * `Value::String`: no tag,
+/// * Other non-string basic types: `<code class="fm">`.
+fn to_html_filter<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    fn tag_to_html(val: Value, output: &mut String) {
+        match val {
+            Value::Array(a) => {
+                output.push_str("<ul class=\"fm\">");
+                for i in a {
+                    output.push_str("<li class=\"fm\">");
+                    tag_to_html(i, output);
+                    output.push_str("</li>");
+                }
+                output.push_str("</ul>");
+            }
+
+            Value::String(s) => output.push_str(&s),
+
+            Value::Object(map) => {
+                output.push_str("<blockquote class=\"fm\">");
+                for (k, v) in map {
+                    output.push_str("<div class=\"fm\">");
+                    output.push_str(&k);
+                    output.push_str(": ");
+                    tag_to_html(v, output);
+                    output.push_str("</div>");
+                }
+                output.push_str("</blockquote>");
+            }
+
+            _ => {
+                output.push_str("<code class=\"fm\">");
+                output.push_str(&val.to_string());
+                output.push_str("</code>");
+            }
+        };
+    }
+
+    let val = try_get_value!("to_yaml", "value", Value, value);
+
+    let mut html = String::new();
+    tag_to_html(val, &mut html);
+
+    Ok(tera::Value::String(html.to_string()))
 }
 
 /// Adds a new filter to Tera templates:
@@ -663,6 +716,69 @@ mod tests {
         args.insert("tab".to_string(), to_value(10).unwrap());
         assert_eq!(
             to_yaml_filter(&input, &args).unwrap(),
+            Value::String(expected)
+        );
+    }
+    #[test]
+    fn test_to_html_filter() {
+        //
+        let input = json!(["Hello", "World", 123]);
+        let expected = "<ul class=\"fm\"><li class=\"fm\">Hello</li>\
+            <li class=\"fm\">World</li><li class=\"fm\">\
+            <code class=\"fm\">123</code></li></ul>"
+            .to_string();
+
+        let args = HashMap::new();
+        assert_eq!(
+            to_html_filter(&input, &args).unwrap(),
+            Value::String(expected)
+        );
+
+        //
+        let input = json!({
+            "title": "tmp: test",
+            "subtitle": "Note",
+            "author": [
+                "Getreu: Noname",
+                "Jens: Noname"
+            ],
+            "date": "2023-09-12T00:00:00.000Z",
+            "my": {
+                "num_type": 123,
+                "str_type": {
+                    "sub1": "foo",
+                    "sub2": "bar"
+                },
+                "weiter": 3454
+            },
+            "other": "my \"new\" text",
+            "filename_sync": false,
+            "lang": "et-ET"
+        });
+        let expected = "<blockquote class=\"fm\">\
+            <div class=\"fm\">author: <ul class=\"fm\">\
+            <li class=\"fm\">Getreu: Noname</li>\
+            <li class=\"fm\">Jens: Noname</li></ul></div>\
+            <div class=\"fm\">date: 2023-09-12T00:00:00.000Z</div>\
+            <div class=\"fm\">filename_sync: <code class=\"fm\">false</code></div>\
+            <div class=\"fm\">lang: et-ET</div>\
+            <div class=\"fm\">my: \
+              <blockquote class=\"fm\">\
+              <div class=\"fm\">num_type: <code class=\"fm\">123</code></div>\
+              <div class=\"fm\">str_type: \
+                <blockquote class=\"fm\"><div class=\"fm\">sub1: foo</div>\
+                <div class=\"fm\">sub2: bar</div></blockquote></div>\
+                <div class=\"fm\">weiter: <code class=\"fm\">3454</code></div>\
+                </blockquote></div>\
+            <div class=\"fm\">other: my \"new\" text</div>\
+            <div class=\"fm\">subtitle: Note</div>\
+            <div class=\"fm\">title: tmp: test</div>\
+            </blockquote>"
+            .to_string();
+
+        let args = HashMap::new();
+        assert_eq!(
+            to_html_filter(&input, &args).unwrap(),
             Value::String(expected)
         );
     }
