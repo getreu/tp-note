@@ -115,13 +115,13 @@ impl Context {
     /// with templates.
     ///
     pub(crate) fn insert_front_matter(&mut self, fm: &FrontMatter) {
-        let mut tera_map = tera::Map::new();
+        let mut fm_all_map = tera::Map::new();
 
         for (name, value) in fm.iter() {
             // First we register a copy with the original variable name.
             // NB: We also insert `Value::Array` and `Value::Object`
             // variants, No flattening occurs here.
-            tera_map.insert(name.to_string(), value.to_owned());
+            fm_all_map.insert(name.to_string(), value.to_owned());
 
             // Here we register `fm_<var_name>`.
             let mut var_name = TMPL_VAR_FM_.to_string();
@@ -129,7 +129,7 @@ impl Context {
             self.ct.insert(&var_name, &value);
         }
         // Register the collection as `Object(Map<String, Value>)`.
-        self.ct.insert(TMPL_VAR_FM_ALL, &tera_map);
+        self.ct.insert(TMPL_VAR_FM_ALL, &fm_all_map);
     }
 
     /// Inserts clipboard or stdin data into the context. The data may
