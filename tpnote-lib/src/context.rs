@@ -115,7 +115,17 @@ impl Context {
     /// with templates.
     ///
     pub(crate) fn insert_front_matter(&mut self, fm: &FrontMatter) {
-        let mut fm_all_map = tera::Map::new();
+        let mut fm_all_map = self
+            .ct
+            .remove(TMPL_VAR_FM_ALL)
+            .and_then(|v| {
+                if let tera::Value::Object(map) = v {
+                    Some(map)
+                } else {
+                    None
+                }
+            })
+            .unwrap_or(tera::Map::new());
 
         for (name, value) in fm.iter() {
             // First we register a copy with the original variable name.
@@ -278,6 +288,41 @@ mod tests {
         let mut context = Context::from(Path::new("/path/to/mynote.md"));
         context
             .insert_front_matter(&FrontMatter::try_from("title: My Stdin.\nsome: text").unwrap());
+
+        assert_eq!(
+            &context.get("fm_title").unwrap().to_string(),
+            r#""My Stdin.""#
+        );
+        assert_eq!(&context.get("fm_some").unwrap().to_string(), r#""text""#);
+        assert_eq!(
+            &context
+                .get("fm_all")
+                .unwrap()
+                .get("title")
+                .unwrap()
+                .to_string(),
+            r#""My Stdin.""#
+        );
+        assert_eq!(
+            &context
+                .get("fm_all")
+                .unwrap()
+                .get("some")
+                .unwrap()
+                .to_string(),
+            r#""text""#
+        );
+    }
+
+    #[test]
+    fn test_insert_front_matter2() {
+        use crate::context::Context;
+        use crate::front_matter::FrontMatter;
+        use std::path::Path;
+        let mut context = Context::from(Path::new("/path/to/mynote.md"));
+        context.insert_front_matter(&FrontMatter::try_from("title: My Stdin.").unwrap());
+
+        context.insert_front_matter(&FrontMatter::try_from("some: text").unwrap());
 
         assert_eq!(
             &context.get("fm_title").unwrap().to_string(),
