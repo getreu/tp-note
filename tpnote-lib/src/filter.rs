@@ -92,9 +92,7 @@ fn to_yaml_filter<S: BuildHasher>(
                             && !l.find('\'').is_some_and(|p| p < colon_pos)
                             && !l.find("\"'").is_some_and(|p| p < colon_pos)
                         {
-                            insert = (n as usize + key_pos)
-                                .checked_sub(colon_pos + ": ".len())
-                                .unwrap_or(0);
+                            insert = (n as usize + key_pos).saturating_sub(colon_pos + ": ".len());
                         }
                     }
                 };
