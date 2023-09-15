@@ -46,6 +46,7 @@ lazy_static! {
         tera.register_filter("file_name", file_name_filter);
         tera.register_filter("file_ext", file_ext_filter);
         tera.register_filter("prepend", prepend_filter);
+        tera.register_filter("append", append_filter);
         tera.register_filter("remove", remove_filter);
         tera.register_filter("get_lang", get_lang_filter);
         tera.register_filter("map_lang", map_lang_filter);
@@ -399,8 +400,11 @@ fn file_name_filter<S: BuildHasher>(
     Ok(to_value(filename)?)
 }
 
-/// A Tera filter that prepends the string parameter `with` only if the input
-/// stream is not empty.
+/// A Tera filter that prepends the string parameter `with`, but only if the
+/// input stream is not empty.
+/// When called with the strings parameter `with_sort_tag`, the filter
+/// prepends the sort-tag and all necessary sort-tag separator characters,
+/// regardless whether the input stream in empty or not.
 fn prepend_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
@@ -420,6 +424,36 @@ fn prepend_filter<S: BuildHasher>(
             .to_str()
             .unwrap_or_default()
             .to_string();
+    };
+
+    Ok(to_value(res)?)
+}
+
+/// A Tera filter that appends the string parameter `with`. In addition, the
+/// flag `newline` inserts a newline character at end of the result. In
+/// case the input stream is empty, nothing is appended.
+fn append_filter<S: BuildHasher>(
+    value: &Value,
+    args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let input = try_get_value!("append", "value", String, value);
+
+    if input.is_empty() {
+        return Ok(Value::String("".to_string()));
+    }
+
+    let mut res = input.clone();
+    if let Some(Value::String(with)) = args.get("with") {
+        res.push_str(with);
+    };
+
+    if let Some(Value::Bool(newline)) = args.get("newline") {
+        if *newline {
+            #[cfg(not(target_family = "windows"))]
+            res.push('\n');
+            #[cfg(target_family = "windows")]
+            res.push_str("\r\n");
+        }
     };
 
     Ok(to_value(res)?)
@@ -858,6 +892,36 @@ mod tests {
         let result = prepend_filter(&to_value("").unwrap(), &args);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), to_value("'").unwrap());
+    }
+
+    #[test]
+    fn test_append_filter() {
+        // `with`
+        let mut args = HashMap::new();
+        args.insert("with".to_string(), to_value("-").unwrap());
+        let result = append_filter(&to_value("1. My first chapter").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("1. My first chapter-").unwrap());
+
+        let mut args = HashMap::new();
+        args.insert("with".to_string(), to_value("_").unwrap());
+        let result = append_filter(&to_value("").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("").unwrap());
+
+        // `with_sort_tag`
+        let mut args = HashMap::new();
+        args.insert("with".to_string(), to_value("-").unwrap());
+        args.insert("newline".to_string(), to_value(true).unwrap());
+        let result = append_filter(&to_value("1. My first chapter").unwrap(), &args);
+        assert!(result.is_ok());
+        #[cfg(not(target_family = "windows"))]
+        assert_eq!(result.unwrap(), to_value("1. My first chapter-\n").unwrap());
+        #[cfg(target_family = "windows")]
+        assert_eq!(
+            result.unwrap(),
+            to_value("1. My first chapter-\r\n").unwrap()
+        );
     }
 
     #[test]
