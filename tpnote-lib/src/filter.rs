@@ -88,14 +88,13 @@ fn to_yaml_filter<S: BuildHasher>(
                 if let Some(colpos) = l.find(": ") {
                     colon_pos = colpos;
                     if let Some(key_pos) = l.find(char::is_alphabetic) {
-                        if key_pos < colon_pos {
-                            if !l.find("'").is_some_and(|p| p < colon_pos)
-                                && !l.find("\"'").is_some_and(|p| p < colon_pos)
-                            {
-                                insert = (n as usize + key_pos)
-                                    .checked_sub(colon_pos + ": ".len())
-                                    .unwrap_or(0);
-                            }
+                        if key_pos < colon_pos
+                            && !l.find("'").is_some_and(|p| p < colon_pos)
+                            && !l.find("\"'").is_some_and(|p| p < colon_pos)
+                        {
+                            insert = (n as usize + key_pos)
+                                .checked_sub(colon_pos + ": ".len())
+                                .unwrap_or(0);
                         }
                     }
                 };
