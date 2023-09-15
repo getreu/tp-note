@@ -1,5 +1,6 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_DOTFILE_MARKER;
+use crate::config::LIB_CFG;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 #[cfg(feature = "lang-detection")]
@@ -58,9 +59,11 @@ lazy_static! {
 /// `tera::Value::String(s)` with `s` being the YAML representation of the
 /// object. When the optional parameter `key='k'` is given, the input can be
 /// any `tera::Value` variant.
-/// The parameter `tab=n` indents the YAML values `n` characters to the right
-/// of the first character of the key by inserting additional spaces between
-/// the key and the value.
+/// The optional parameter `tab=n` indents the YAML values `n` characters to
+/// the right of the first character of the key by inserting additional spaces
+/// between the key and the value. When `tab=n` is given, it has precendence
+/// over the  default value, read from the configuration file variable
+/// `tmpl.filter_to_yaml_tab`.
 fn to_yaml_filter<S: BuildHasher>(
     val: &Value,
     args: &HashMap<String, Value, S>,
@@ -79,7 +82,15 @@ fn to_yaml_filter<S: BuildHasher>(
     }
 
     // Formatting: adjust indent.
-    let val_yaml: String = if let Some(n) = args.get("tab").and_then(|v| v.as_u64()) {
+    let val_yaml: String = if let Some(n) = args.get("tab").and_then(|v| v.as_u64()).or_else(|| {
+        let lib_cfg = LIB_CFG.read_recursive();
+        let n = lib_cfg.tmpl.filter_to_yaml_tab;
+        if n == 0 {
+            None
+        } else {
+            Some(n)
+        }
+    }) {
         val_yaml
             .lines()
             .map(|l| {
@@ -623,7 +634,7 @@ mod tests {
         let mut input = tera::Map::new();
         input.insert("number_type".to_string(), json!(123));
 
-        let expected = "number_type: 123".to_string();
+        let expected = "number_type:  123".to_string();
 
         let args = HashMap::new();
         assert_eq!(
@@ -635,7 +646,7 @@ mod tests {
         // The key is `author`, the value is of type `Value::String()`.
         let input = "Getreu".to_string();
 
-        let expected = "author: Getreu".to_string();
+        let expected = "author:       Getreu".to_string();
 
         let mut args = HashMap::new();
         args.insert("key".to_string(), to_value("author").unwrap());

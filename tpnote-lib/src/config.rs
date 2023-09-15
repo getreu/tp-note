@@ -301,6 +301,13 @@ pub const TMPL_FILTER_GET_LANG_ALL: &str = "+all";
 /// tag - here `fr-CA` - as well.
 pub const TMPL_FILTER_MAP_LANG: &[&[&str]] = &[&["de", "de-DE"], &["et", "et-ET"]];
 
+/// Default value used by `to_yaml_filter`.
+/// The parameter `TMPL_FILTER_TO_YAML_TAB_DEFAULT = n` indents the YAML values
+/// `n` characters to the right of the first character of the key by inserting
+/// additional spaces between the key and the value. `n==0` disables the
+/// extra indentation.
+pub const TMPL_FILTER_TO_YAML_TAB: u64 = 14;
+
 /// Default content template used when the command line argument `<sanit>`
 /// is a directory. Can be changed through editing the configuration
 /// file. The following variables are  defined:
@@ -758,6 +765,7 @@ pub struct Filename {
 pub struct Tmpl {
     pub filter_get_lang: Vec<String>,
     pub filter_map_lang: Vec<Vec<String>>,
+    pub filter_to_yaml_tab: u64,
     pub compulsory_header_field: String,
     pub new_content: String,
     pub new_filename: String,
@@ -834,6 +842,7 @@ impl ::std::default::Default for Tmpl {
                 .iter()
                 .map(|i| i.iter().map(|a| (*a).to_string()).collect())
                 .collect(),
+            filter_to_yaml_tab: TMPL_FILTER_TO_YAML_TAB,
             compulsory_header_field: TMPL_COMPULSORY_HEADER_FIELD.to_string(),
             new_content: TMPL_NEW_CONTENT.to_string(),
             new_filename: TMPL_NEW_FILENAME.to_string(),
