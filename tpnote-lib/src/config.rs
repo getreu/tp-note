@@ -365,7 +365,7 @@ pub const TMPL_FROM_CLIPBOARD_YAML_CONTENT: &str = "\
                  get_lang | map_lang(default=lang) ) | to_yaml(key='lang',tab=12) }}
 ---
 
-{{ stdin ~ clipboard }}
+{{ stdin ~ clipboard | trim }}
 
 ";
 
@@ -410,7 +410,7 @@ pub const TMPL_FROM_CLIPBOARD_CONTENT: &str = "\
 {{ title_text | get_lang | map_lang(default=lang) | to_yaml(key='lang',tab=12) }}
 ---
 
-{{ stdin ~ clipboard }}
+{{ stdin ~ clipboard | trim }}
 
 ";
 
@@ -458,7 +458,7 @@ pub const TMPL_FROM_TEXT_FILE_FILENAME: &str = "\
 /// existing - to be annotated - non-`.md`-file. `{{ path}}` points to that
 /// file, `{{ dir_path }}` to the directory where it is located.
 pub const TMPL_ANNOTATE_FILE_CONTENT: &str = "\
-{%- set body_text = stdin ~ clipboard -%}
+{%- set body_text = stdin ~ clipboard | trim -%}
 {%- if body_text != '' -%}
    {%- set lang_test_text = body_text | cut -%}
 {%- else -%}

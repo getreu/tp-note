@@ -900,7 +900,7 @@ Body text
         // You can plug in your own type (must impl. `Content`).
         let mut n: Note<ContentString> =
             Note::from_content_template(context, TemplateKind::FromClipboard).unwrap();
-        let expected_body = "\nstd\nclp\n\n\n";
+        let expected_body = "\nstd\nclp\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
         assert_eq!(
@@ -973,7 +973,7 @@ Body text
         // You can plug in your own type (must impl. `Content`).
         let mut n: Note<ContentString> =
             Note::from_content_template(context, TemplateKind::FromClipboardYaml).unwrap();
-        let expected_body = "\nstdin bodymy clipboard\n\n\n";
+        let expected_body = "\nstdin bodymy clipboard\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
         assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("my dir"));
@@ -1050,7 +1050,7 @@ Body text
         let mut n: Note<ContentString> =
             Note::from_content_template(context, TemplateKind::AnnotateFile).unwrap();
         let expected_body =
-            "\n[20221030-some.pdf](<20221030-some.pdf>)\n\nmy stdin\nmy clipboard\n\n\n";
+            "\n[20221030-some.pdf](<20221030-some.pdf>)\n\nmy stdin\nmy clipboard\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
         assert_eq!(
