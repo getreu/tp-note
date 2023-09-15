@@ -89,7 +89,7 @@ fn to_yaml_filter<S: BuildHasher>(
                     colon_pos = colpos;
                     if let Some(key_pos) = l.find(char::is_alphabetic) {
                         if key_pos < colon_pos
-                            && !l.find("'").is_some_and(|p| p < colon_pos)
+                            && !l.find('\'').is_some_and(|p| p < colon_pos)
                             && !l.find("\"'").is_some_and(|p| p < colon_pos)
                         {
                             insert = (n as usize + key_pos)
