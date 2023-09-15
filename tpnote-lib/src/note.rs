@@ -802,9 +802,9 @@ Body text
         assert!(n.rendered_filename.is_file());
         let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
         #[cfg(not(target_family = "windows"))]
-        assert!(raw_note.starts_with("\u{feff}---\ntitle:      'hello '"));
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:        'hello '"));
         #[cfg(target_family = "windows")]
-        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      'hello '"));
+        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:        'hello '"));
     }
 
     #[test]
@@ -838,7 +838,7 @@ Body text
         // You can plug in your own type (must impl. `Content`).
         let mut n: Note<ContentString> =
             Note::from_content_template(context, TemplateKind::New).unwrap();
-        assert!(n.content.header().starts_with("title:      my dir"));
+        assert!(n.content.header().starts_with("title:        my dir"));
         assert_eq!(n.content.borrow_dependent().body, "\n\n");
 
         // Check the title and subtitle in the note's header.
@@ -852,9 +852,9 @@ Body text
         assert!(n.rendered_filename.is_file());
         let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
         #[cfg(not(target_family = "windows"))]
-        assert!(raw_note.starts_with("\u{feff}---\ntitle:      my dir"));
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:        my dir"));
         #[cfg(target_family = "windows")]
-        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      my dir"));
+        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:        my dir"));
     }
 
     #[test]
@@ -923,7 +923,7 @@ Body text
         assert!(n.rendered_filename.is_file());
         let raw_note = fs::read_to_string(&n.rendered_filename).unwrap();
         #[cfg(not(target_family = "windows"))]
-        assert!(raw_note.starts_with("\u{feff}---\ntitle:      |\n  std\n  clp"));
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:        |\n  std\n  clp"));
         #[cfg(target_family = "windows")]
         assert!(raw_note.starts_with("\u{feff}---\r\ntitle:"));
     }
@@ -998,9 +998,9 @@ Body text
         assert!(n.rendered_filename.is_file());
         let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
         #[cfg(not(target_family = "windows"))]
-        assert!(raw_note.starts_with("\u{feff}---\ntitle:      my dir"));
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:        my dir"));
         #[cfg(target_family = "windows")]
-        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:      my dir"));
+        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:        my dir"));
     }
 
     #[test]
