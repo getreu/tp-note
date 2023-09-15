@@ -359,7 +359,7 @@ pub const TMPL_FROM_CLIPBOARD_YAML_CONTENT: &str = "\
  remove(var='fm_author')|\
  remove(var='fm_date')|\
  remove(var='fm_lang')\
- | to_yaml(tab=12) }}
+ | to_yaml(tab=12) | append(newline=true) }}\
 {{ fm_lang | default(value = fm_title| \
                            default(value=stdin~clipboard|heading)| \
                  get_lang | map_lang(default=lang) ) | to_yaml(key='lang',tab=12) }}
