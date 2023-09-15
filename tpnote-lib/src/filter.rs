@@ -92,7 +92,7 @@ fn to_yaml_filter<S: BuildHasher>(
                             && !l.find('\'').is_some_and(|p| p < colon_pos)
                             && !l.find("\"'").is_some_and(|p| p < colon_pos)
                         {
-                            insert = (n as usize + key_pos).saturating_sub(colon_pos + ": ".len());
+                            insert = (n as usize).saturating_sub(colon_pos + ": ".len());
                         }
                     }
                 };
@@ -680,7 +680,7 @@ mod tests {
         let mut input = tera::Map::new();
         input.insert("num".to_string(), json!(123));
 
-        let expected = "my:\n  num:      123".to_string();
+        let expected = "my:\n  num:    123".to_string();
 
         let mut args = HashMap::new();
         args.insert("key".to_string(), to_value("my").unwrap());
