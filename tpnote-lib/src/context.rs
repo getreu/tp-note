@@ -276,11 +276,31 @@ mod tests {
         use crate::front_matter::FrontMatter;
         use std::path::Path;
         let mut context = Context::from(Path::new("/path/to/mynote.md"));
-        context.insert_front_matter(&FrontMatter::try_from("title: \"My Stdin.\"").unwrap());
+        context
+            .insert_front_matter(&FrontMatter::try_from("title: My Stdin.\nsome: text").unwrap());
 
         assert_eq!(
             &context.get("fm_title").unwrap().to_string(),
             r#""My Stdin.""#
+        );
+        assert_eq!(&context.get("fm_some").unwrap().to_string(), r#""text""#);
+        assert_eq!(
+            &context
+                .get("fm_all")
+                .unwrap()
+                .get("title")
+                .unwrap()
+                .to_string(),
+            r#""My Stdin.""#
+        );
+        assert_eq!(
+            &context
+                .get("fm_all")
+                .unwrap()
+                .get("some")
+                .unwrap()
+                .to_string(),
+            r#""text""#
         );
     }
 }
