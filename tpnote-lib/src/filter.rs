@@ -48,7 +48,7 @@ lazy_static! {
         tera.register_filter("file_ext", file_ext_filter);
         tera.register_filter("prepend", prepend_filter);
         tera.register_filter("append", append_filter);
-        tera.register_filter("remove", remove_filter);
+        tera.register_filter("field", field_filter);
         tera.register_filter("get_lang", get_lang_filter);
         tera.register_filter("map_lang", map_lang_filter);
         tera
@@ -485,18 +485,16 @@ fn file_ext_filter<S: BuildHasher>(
 
 /// A Tera filter that takes a list of variables and removes
 /// one.
-fn remove_filter<S: BuildHasher>(
+fn field_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let mut map = try_get_value!("remove", "value", tera::Map<String, tera::Value>, value);
+    let mut map = try_get_value!("field", "value", tera::Map<String, tera::Value>, value);
 
-    let var = match args.get("var") {
-        Some(val) => try_get_value!("remove", "var", String, val),
-        None => "".to_string(),
+    if let Some(outkey) = args.get("out") {
+        let outkey = try_get_value!("field", "out", String, outkey);
+        let _ = map.remove(outkey.trim_start_matches("fm_"));
     };
-
-    let _ = map.remove(var.trim_start_matches("fm_"));
 
     Ok(to_value(&map).unwrap_or_default())
 }

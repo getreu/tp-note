@@ -361,11 +361,11 @@ pub const TMPL_FROM_CLIPBOARD_YAML_CONTENT: &str = "\
 {{ fm_author | default(value=username | capitalize) | to_yaml(key='author') }}
 {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='date') }}
 {{ fm_all|\
- remove(var='fm_title')|\
- remove(var='fm_subtitle')|\
- remove(var='fm_author')|\
- remove(var='fm_date')|\
- remove(var='fm_lang')\
+ field(out='fm_title')|\
+ field(out='fm_subtitle')|\
+ field(out='fm_author')|\
+ field(out='fm_date')|\
+ field(out='fm_lang')\
  | to_yaml | append(newline=true) }}\
 {{ fm_lang | default(value = fm_title| \
                            default(value=stdin~clipboard|heading)| \
@@ -588,9 +588,9 @@ pub const TMPL_HTML_VIEWER: &str = r#"<!DOCTYPE html>
     <th class="fmkeygrey">date:</th>
     <th class="fmvalgrey">{{ fm_date | default(value='')|to_html }}</th>
   </tr>
-  {% for k, v in fm_all| remove(var='fm_title')|
-                         remove(var='fm_subtitle')|
-                         remove(var='fm_date')
+  {% for k, v in fm_all| field(out='fm_title')|
+                         field(out='fm_subtitle')|
+                         field(out='fm_date')
   %}
     <tr>
     <th class="fmkeygrey">{{ k }}:</th>
@@ -663,9 +663,9 @@ pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
     <th class="fmvalgrey">{{ fm_date | default(value='')|to_html }}</th>
   </tr>
   {% for k, v in fm_all|
-        remove(var='fm_title')|
-        remove(var='fm_subtitle')|
-        remove(var='fm_date')
+        field(out='fm_title')|
+        field(out='fm_subtitle')|
+        field(out='fm_date')
     %}
     <tr>
     <th class="fmkeygrey">{{ k }}:</th>
