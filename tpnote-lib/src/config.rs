@@ -355,21 +355,24 @@ pub const TMPL_NEW_FILENAME: &str = "\
 /// When placed in YAML front matter, the filter `to_yaml` must be
 /// appended to each variable.
 pub const TMPL_FROM_CLIPBOARD_YAML_CONTENT: &str = "\
+{%- set lang = fm_lang \
+               | default(value = fm_title \
+                                 | default(value=stdin~clipboard|heading) \
+               | get_lang \
+               | map_lang(default=lang) )  -%}
 ---
 {{ fm_title | default(value = path|trim_file_sort_tag) | cut | to_yaml(key='title') }}
 {{ fm_subtitle | default(value = 'Note') | cut | to_yaml(key='subtitle') }}
 {{ fm_author | default(value=username | capitalize) | to_yaml(key='author') }}
 {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='date') }}
-{{ fm_all|\
- field(out='fm_title')|\
- field(out='fm_subtitle')|\
- field(out='fm_author')|\
- field(out='fm_date')|\
- field(out='fm_lang')\
- | to_yaml | append(newline=true) }}\
-{{ fm_lang | default(value = fm_title| \
-                           default(value=stdin~clipboard|heading)| \
-                 get_lang | map_lang(default=lang) ) | to_yaml(key='lang') }}
+{{ lang | to_yaml(key='lang') }}
+{{ fm_all\
+     | field(out='fm_title')\
+     | field(out='fm_subtitle')\
+     | field(out='fm_author')\
+     | field(out='fm_date')\
+     | field(out='fm_lang')\
+     | to_yaml | prepend(newline=true) | append(newline=true) }}\
 ---
 
 {{ stdin ~ clipboard | trim }}
