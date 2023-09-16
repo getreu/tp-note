@@ -599,7 +599,9 @@ pub const TMPL_HTML_VIEWER: &str = r#"<!DOCTYPE html>
     <th class="fmkeygrey">lang:</th>
     <th class="fmvalgrey">{{ fm_lang | default(value='') |to_html }}</th>
   </tr>
-    <tr><th style="margin-bottom: 4px;<px/></tr>"
+  {% if fm_all | length > 5 %}
+    <tr><th colspan=2;\"/>&nbsp<th/</tr>
+  {% endif %}
   {% for k, v in fm_all| field(out='fm_title')|
                          field(out='fm_subtitle')|
                          field(out='fm_author')|
@@ -684,6 +686,9 @@ pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
     <th class="fmkeygrey">lang:</th>
     <th class="fmvalgrey">{{ fm_lang | default(value='') |to_html }}</th>
   </tr>
+  {% if fm_all | length > 5 %}
+    <tr><th colspan=2;\"/>&nbsp<th/</tr>
+  {% endif %}
   {% for k, v in fm_all| field(out='fm_title')|
                          field(out='fm_subtitle')|
                          field(out='fm_author')|
