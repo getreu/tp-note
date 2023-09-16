@@ -581,19 +581,30 @@ pub const TMPL_HTML_VIEWER: &str = r#"<!DOCTYPE html>
   <table class="fm">
     <tr>
     <th class="fmkey">title:</th>
-    <th class="fmval"><b>{{ fm_title|to_html }}</b></th>
+    <th class="fmval"><b>{{ fm_title| default(value='') | to_html }}</b></th>
   </tr>
     <tr>
     <th class="fmkey">subtitle:</th>
-    <th class="fmval">{{ fm_subtitle | default(value='')|to_html }}</th>
+    <th class="fmval">{{ fm_subtitle | default(value='') | to_html }}</th>
+  </tr>
+    <tr>
+    <th class="fmkeygrey">author:</th>
+    <th class="fmvalgrey">{{ fm_author | default(value='') |to_html }}</th>
   </tr>
     <tr>
     <th class="fmkeygrey">date:</th>
-    <th class="fmvalgrey">{{ fm_date | default(value='')|to_html }}</th>
+    <th class="fmvalgrey">{{ fm_date | default(value='')| to_html }}</th>
   </tr>
+    <tr>
+    <th class="fmkeygrey">lang:</th>
+    <th class="fmvalgrey">{{ fm_lang | default(value='') |to_html }}</th>
+  </tr>
+    <tr><th style="margin-bottom: 4px;<px/></tr>"
   {% for k, v in fm_all| field(out='fm_title')|
                          field(out='fm_subtitle')|
-                         field(out='fm_date')
+                         field(out='fm_author')|
+                         field(out='fm_date')|
+                         field(out='fm_lang')
   %}
     <tr>
     <th class="fmkeygrey">{{ k }}:</th>
@@ -655,21 +666,30 @@ pub const TMPL_HTML_EXPORTER: &str = r#"<!DOCTYPE html>
   <table class="fm">
     <tr>
     <th class="fmkey">title:</th>
-    <th class="fmval"><b>{{ fm_title|to_html }}</b></th>
+    <th class="fmval"><b>{{ fm_title| default(value='') | to_html }}</b></th>
   </tr>
     <tr>
     <th class="fmkey">subtitle:</th>
-    <th class="fmval">{{ fm_subtitle | default(value='')|to_html }}</th>
+    <th class="fmval">{{ fm_subtitle | default(value='') | to_html }}</th>
+  </tr>
+    <tr>
+    <th class="fmkeygrey">author:</th>
+    <th class="fmvalgrey">{{ fm_author | default(value='') |to_html }}</th>
   </tr>
     <tr>
     <th class="fmkeygrey">date:</th>
-    <th class="fmvalgrey">{{ fm_date | default(value='')|to_html }}</th>
+    <th class="fmvalgrey">{{ fm_date | default(value='')| to_html }}</th>
   </tr>
-  {% for k, v in fm_all|
-        field(out='fm_title')|
-        field(out='fm_subtitle')|
-        field(out='fm_date')
-    %}
+    <tr>
+    <th class="fmkeygrey">lang:</th>
+    <th class="fmvalgrey">{{ fm_lang | default(value='') |to_html }}</th>
+  </tr>
+  {% for k, v in fm_all| field(out='fm_title')|
+                         field(out='fm_subtitle')|
+                         field(out='fm_author')|
+                         field(out='fm_date')|
+                         field(out='fm_lang')
+  %}
     <tr>
     <th class="fmkeygrey">{{ k }}:</th>
     <th class="fmvalgrey">{{ v|to_html }}</th>
@@ -689,13 +709,19 @@ table.fm {
   font-weight: normal;
   margin-left: auto;
   margin-right: auto;
+  padding: 4px;
   background-color: #f3f2e4;
   border:1px solid grey;
 }
-th.fmkey, th.fmkeygrey, th.fmval, th.fmvalgrey {
+th.fmkey, th.fmkeygrey {
   font-weight: normal;
-  padding-left:15px;
-  padding-right:15px;
+  padding-left:20px;
+  padding-right:10px;
+}
+th.fmval, th.fmvalgrey {
+  font-weight: normal;
+  padding-left:10px;
+  padding-right:20px;
 }
 th.fmkey{ color:#444444; text-align:right; vertical-align:top;}
 th.fmval{
