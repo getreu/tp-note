@@ -496,6 +496,15 @@ fn field_filter<S: BuildHasher>(
         let _ = map.remove(outkey.trim_start_matches("fm_"));
     };
 
+    if let Some(inkey) = args.get("in") {
+        let inkey = try_get_value!("field", "in", String, inkey);
+        let inval = args
+            .get("inval")
+            .map(|v| v.to_owned())
+            .unwrap_or(tera::Value::Null);
+        map.insert(inkey.trim_start_matches("fm_").to_string(), inval);
+    };
+
     Ok(to_value(&map).unwrap_or_default())
 }
 
@@ -839,6 +848,67 @@ mod tests {
         let result = sanit_filter(&to_value(".dotfilename").unwrap(), &HashMap::new());
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), to_value(".dotfilename").unwrap());
+    }
+
+    #[test]
+    fn test_field_filter() {
+        //
+        let input = json!({"title": "my title", "subtitle": "my subtitle"});
+        let mut args = HashMap::new();
+        args.insert("out".to_string(), to_value("fm_title").unwrap());
+        let expected = json!({"subtitle": "my subtitle"});
+        let result = field_filter(&input, &args);
+        //eprintln!("{:?}", result);
+        assert_eq!(result.unwrap(), expected);
+
+        //
+        let input = json!({"title": "my title", "subtitle": "my subtitle"});
+        let mut args = HashMap::new();
+        args.insert("out".to_string(), to_value("title").unwrap());
+        let expected = json!({"subtitle": "my subtitle"});
+        let result = field_filter(&input, &args);
+        //eprintln!("{:?}", result);
+        assert_eq!(result.unwrap(), expected);
+
+        //
+        let input = json!({"title": "my title", "subtitle": "my subtitle"});
+        let mut args = HashMap::new();
+        args.insert("out".to_string(), to_value("fm_title").unwrap());
+        args.insert("in".to_string(), to_value("fm_new").unwrap());
+        args.insert("inval".to_string(), to_value("my new").unwrap());
+        let expected = json!({"new": "my new", "subtitle": "my subtitle"});
+        let result = field_filter(&input, &args);
+        //eprintln!("{:?}", result);
+        assert_eq!(result.unwrap(), expected);
+
+        //
+        let input = json!({"title": "my title", "subtitle": "my subtitle"});
+        let mut args = HashMap::new();
+        args.insert("in".to_string(), to_value("fm_title").unwrap());
+        args.insert("inval".to_string(), to_value("my replaced title").unwrap());
+        let expected = json!({"title": "my replaced title", "subtitle": "my subtitle"});
+        let result = field_filter(&input, &args);
+        //eprintln!("{:?}", result);
+        assert_eq!(result.unwrap(), expected);
+
+        //
+        let input = json!({"title": "my title"});
+        let mut args = HashMap::new();
+        args.insert("in".to_string(), to_value("fm_new").unwrap());
+        let expected = json!({"new": null, "title": "my title"});
+        let result = field_filter(&input, &args);
+        //eprintln!("{:?}", result);
+        assert_eq!(result.unwrap(), expected);
+
+        //
+        let input = json!({"title": "my title"});
+        let mut args = HashMap::new();
+        args.insert("in".to_string(), to_value("fm_new").unwrap());
+        args.insert("inval".to_string(), to_value("my new").unwrap());
+        let expected = json!({"new": "my new", "title": "my title"});
+        let result = field_filter(&input, &args);
+        //eprintln!("{:?}", result);
+        assert_eq!(result.unwrap(), expected);
     }
 
     #[test]
