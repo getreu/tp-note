@@ -108,16 +108,16 @@ fn to_yaml_filter<S: BuildHasher>(
                     }
                 };
 
-                let mut l = l.to_owned();
                 // Enlarge indent.
-                for _ in 0..insert {
-                    // If `insert>0`, we know that `colon_pos>0`.
-                    l.insert(colon_pos + 1, ' ');
-                }
+                let mut l = l.to_owned();
+                let strut = std::iter::repeat(' ').take(insert).collect::<String>();
+                // If `insert>0`, we know that `colon_pos>0`.
+                // `colon_pos+1` inserts between `: `.
+                l.insert_str(colon_pos + 1, &strut);
                 l.push('\n');
                 l
             })
-            .collect()
+            .collect::<String>()
     } else {
         val_yaml
     };
