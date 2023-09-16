@@ -328,13 +328,19 @@ table.fm {
   font-weight: normal;
   margin-left: auto;
   margin-right: auto;
+  padding: 4px;
   background-color: #f3f2e4;
   border:1px solid grey;
 }
-th.fmkey, th.fmkeygrey, th.fmval, th.fmvalgrey {
+th.fmkey, th.fmkeygrey {
   font-weight: normal;
-  padding-left:15px;
-  padding-right:15px;
+  padding-left:20px;
+  padding-right:10px;
+}
+th.fmval, th.fmvalgrey {
+  font-weight: normal;
+  padding-left:10px;
+  padding-right:20px;
 }
 th.fmkey{ color:#444444; text-align:right; vertical-align:top;}
 th.fmval{
@@ -378,14 +384,18 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
     <th class="fmval">yyy</th>
   </tr>
     <tr>
-    <th class="fmkeygrey">date:</th>
-    <th class="fmvalgrey"></th>
-  </tr>
-  
-    <tr>
     <th class="fmkeygrey">author:</th>
     <th class="fmvalgrey"><ul class="fm"><li class="fm">Jens</li><li class="fm">Hans</li></ul></th>
   </tr>
+    <tr>
+    <th class="fmkeygrey">date:</th>
+    <th class="fmvalgrey"></th>
+  </tr>
+    <tr>
+    <th class="fmkeygrey">lang:</th>
+    <th class="fmvalgrey"></th>
+  </tr>
+  
   
     <tr>
     <th class="fmkeygrey">sort_tag:</th>
