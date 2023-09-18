@@ -269,6 +269,24 @@ pub const TMPL_VAR_FM_NO_FILENAME_SYNC: &str = "fm_no_filename_sync";
 /// disabled for this note file. Default value is `true`.
 pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
 
+/// After generating a new note with a content template, Tp-Note parses the
+/// resulting front matter into `fm_* variables and checks their values. The
+/// following conditions are checked and the user is prompted if one of them is
+/// not satisfied.
+/// The first item per line is the checked variable name, the following
+/// the applied tests (see `AssertPrecondition`).
+pub const TMPL_FILTER_ASSERT_PRECONDITIONS: &[&[&str]] = &[
+    &["fm_title", "IsDefined", "IsString"],
+    &["fm_subtitle", "IsString"],
+    &["fm_author", "IsString"],
+    &["fm_date", "IsString"],
+    &["fm_lang", "IsString"],
+    &["fm_sort_tag", "IsStringOrNumber", "HasOnlySortTagChars"],
+    &["fm_file_ext", "IsStringOrNumber"],
+    &["fm_no_filename_sync", "IsBool"],
+    &["fm_filename_sync", "IsBoolx"],
+];
+
 /// A list of language tags, defining languages TP-Note tries to recognize in
 /// the filter input. The user's default language subtag, as reported from
 /// the operating system, is automatically added to the present list.
@@ -798,6 +816,7 @@ pub struct Filename {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tmpl {
     pub filter_get_lang: Vec<String>,
+    pub filter_assert_preconditions: Vec<(String, Vec<AssertPrecondition>)>,
     pub filter_map_lang: Vec<Vec<String>>,
     pub filter_to_yaml_tab: u64,
     pub compulsory_header_field: String,
@@ -842,23 +861,23 @@ impl ::std::default::Default for Filename {
             extension_default: FILENAME_EXTENSION_DEFAULT.to_string(),
             extensions_md: FILENAME_EXTENSIONS_MD
                 .iter()
-                .map(|a| (*a).to_string())
+                .map(|&a| a.to_string())
                 .collect(),
             extensions_rst: FILENAME_EXTENSIONS_RST
                 .iter()
-                .map(|a| (*a).to_string())
+                .map(|&a| a.to_string())
                 .collect(),
             extensions_html: FILENAME_EXTENSIONS_HTML
                 .iter()
-                .map(|a| (*a).to_string())
+                .map(|&a| a.to_string())
                 .collect(),
             extensions_txt: FILENAME_EXTENSIONS_TXT
                 .iter()
-                .map(|a| (*a).to_string())
+                .map(|&a| a.to_string())
                 .collect(),
             extensions_no_viewer: FILENAME_EXTENSIONS_NO_VIEWER
                 .iter()
-                .map(|a| (*a).to_string())
+                .map(|&a| a.to_string())
                 .collect(),
         }
     }
@@ -868,13 +887,29 @@ impl ::std::default::Default for Filename {
 impl ::std::default::Default for Tmpl {
     fn default() -> Self {
         Tmpl {
+            filter_assert_preconditions: TMPL_FILTER_ASSERT_PRECONDITIONS
+                .iter()
+                .map(|&v| {
+                    let var = v
+                        .iter() //
+                        .next() //
+                        .unwrap_or(&"") //
+                        .to_string();
+                    let aps = v
+                        .iter()
+                        .skip(1)
+                        .map(|&pc| AssertPrecondition::from_str(pc).unwrap_or_default())
+                        .collect::<Vec<AssertPrecondition>>();
+                    (var, aps)
+                })
+                .collect::<Vec<(String, Vec<AssertPrecondition>)>>(),
             filter_get_lang: TMPL_FILTER_GET_LANG
                 .iter()
-                .map(|a| (*a).to_string())
+                .map(|&a| a.to_string())
                 .collect(),
             filter_map_lang: TMPL_FILTER_MAP_LANG
                 .iter()
-                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
+                .map(|&i| i.iter().map(|&a| (*a).to_string()).collect())
                 .collect(),
             filter_to_yaml_tab: TMPL_FILTER_TO_YAML_TAB,
             compulsory_header_field: TMPL_COMPULSORY_HEADER_FIELD.to_string(),
@@ -1020,13 +1055,14 @@ impl ::std::default::Default for TmplHtml {
 /// * `/my/docs/car/scan.jpg`.
 /// * `/my/docs/car/photo.jpg`.
 ///
-#[derive(Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
+#[derive(Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy, Default)]
 pub enum LocalLinkKind {
     /// Do not rewrite links.
     Off,
     /// Rewrite rel. local links. Base: ".tpnoteroot"
     Short,
     /// Rewrite all local links. Base: "/"
+    #[default]
     Long,
 }
 
@@ -1038,6 +1074,53 @@ impl FromStr for LocalLinkKind {
             "short" => Ok(LocalLinkKind::Short),
             "long" => Ok(LocalLinkKind::Long),
             _ => Err(LibCfgError::ParseLocalLinkKind {}),
+        }
+    }
+}
+
+/// Describes a set of tests, that assert template variable `tera:Value`
+/// properties.
+#[derive(Default, Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
+pub enum AssertPrecondition {
+    /// Assert that the variable is defined in the template
+    IsDefined,
+    /// In addtion to `IsString`, the condition asserts, that the string is
+    /// not empty.
+    IsNotEmptyString,
+    /// Assert, that if the variable is defined, its type is `Value::String`.
+    IsString,
+    /// Assert, that if the variable is defined, its type is `Value::Number`.
+    IsNumber,
+    /// Assert, that if the variable is defined, its type is `Value::Bool`.
+    IsBool,
+    /// Assert, that if the variable is defined, its type is not `Value::Array`
+    /// or `Value::Object`.
+    IsNotCompound,
+    /// Assert, that if the variable is defined, the values
+    /// string representation contains solely characters of the
+    /// `filename.sort_tag_chars` set.
+    HasOnlySortTagChars,
+    /// Assert, that if the variable is defined, the values string
+    /// representation is regeistered in one of the `filename.extension_*`
+    /// configuraion file variables.
+    IsTpnoteExtension,
+    /// A test that is always satisfied. For internal use only.
+    #[default]
+    NoOperation,
+}
+
+impl FromStr for AssertPrecondition {
+    type Err = LibCfgError;
+    fn from_str(precondition: &str) -> Result<AssertPrecondition, Self::Err> {
+        match precondition {
+            "IsDefined" => Ok(AssertPrecondition::IsDefined),
+            "IsNotEmptyString" => Ok(AssertPrecondition::IsNotEmptyString),
+            "IsString" => Ok(AssertPrecondition::IsString),
+            "IsNumber" => Ok(AssertPrecondition::IsNumber),
+            "IsBool" => Ok(AssertPrecondition::IsBool),
+            "IsNotCompound" => Ok(AssertPrecondition::IsNotCompound),
+            "HasOnlySortTagChars" => Ok(AssertPrecondition::HasOnlySortTagChars),
+            _ => Err(LibCfgError::ParseAssertPrecondition {}),
         }
     }
 }

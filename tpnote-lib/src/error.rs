@@ -69,6 +69,10 @@ pub enum LibCfgError {
         extra_separator: String,
     },
 
+    /// Remedy: check the configuration file variable `tmpl.filter_assert_preconditions`.
+    #[error("choose one of: `IsDefined`, `IsString`, `IsNumber`, `IsStringOrNumber`, `IsBool`, `HasOnlySortTagChars`")]
+    ParseAssertPrecondition,
+
     /// Remedy: check the configuration file variable `arg_default.export_link_rewriting`.
     #[error("choose one of: `off`, `short` or `long`")]
     ParseLocalLinkKind,
