@@ -130,7 +130,7 @@ impl<T: Content> Note<T> {
 
         // Deserialize the note's header read from disk.
         // Store the front matter in the context for later use in templates.
-        let fm = FrontMatter::try_from_content(&content)?;
+        let fm = FrontMatter::try_from(content.header())?;
         context.insert_front_matter(&fm);
 
         match template_kind {
@@ -218,7 +218,7 @@ impl<T: Content> Note<T> {
         );
 
         // deserialize the rendered template
-        let fm = FrontMatter::try_from_content(&content)?;
+        let fm = FrontMatter::try_from(content.header())?;
 
         context.insert_front_matter(&fm);
 

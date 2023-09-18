@@ -6,7 +6,6 @@ use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::config::TMPL_VAR_FM_SORT_TAG;
-use crate::content::Content;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::markup_language::MarkupLanguage;
@@ -116,13 +115,6 @@ impl FrontMatter {
         }
         //
         Ok(())
-    }
-
-    /// Helper function deserialising the front-matter of the note file.
-    /// An empty header leads to an empty `tera::Map`; no error.
-    pub fn try_from_content(content: &impl Content) -> Result<FrontMatter, NoteError> {
-        let header = content.header();
-        Self::try_from(header)
     }
 }
 
@@ -295,7 +287,7 @@ mod tests {
         assert!(!content.is_empty());
         assert!(!content.borrow_dependent().header.is_empty());
 
-        let front_matter = FrontMatter::try_from_content(&content).unwrap();
+        let front_matter = FrontMatter::try_from(content.header()).unwrap();
         assert_eq!(front_matter.get("title"), Some(&json!("My day")));
         assert_eq!(front_matter.get("subtitle"), Some(&json!("Note")));
     }
