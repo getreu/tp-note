@@ -24,7 +24,8 @@ impl FrontMatter {
     /// Checks if the front matter contains a field variable
     /// with the name defined in the configuration file:
     /// as: "compulsory_header_field".
-    pub fn assert_compulsory_field(&self) -> Result<(), NoteError> {
+    #[inline]
+    pub(crate) fn assert_compulsory_field(&self) -> Result<(), NoteError> {
         let lib_cfg = LIB_CFG.read_recursive();
 
         if !lib_cfg.tmpl.compulsory_header_field.is_empty() {
@@ -46,7 +47,8 @@ impl FrontMatter {
     }
 
     /// Are any variables registerd?
-    pub fn assert_not_empty(&self) -> Result<(), NoteError> {
+    #[inline]
+    pub(crate) fn assert_not_empty(&self) -> Result<(), NoteError> {
         if self.is_empty() {
             let lib_cfg = LIB_CFG.read_recursive();
             Err(NoteError::MissingFrontMatter {
@@ -57,35 +59,18 @@ impl FrontMatter {
         }
     }
 
-    /// Helper function deserialising the front-matter of the note file.
-    /// An empty header leads to an empty `tera::Map`; no error.
-    pub fn try_from_content(content: &impl Content) -> Result<FrontMatter, NoteError> {
-        let header = content.header();
-        Self::try_from(header)
-    }
-}
-
-impl TryFrom<&str> for FrontMatter {
-    type Error = NoteError;
-    /// Helper function deserialising the front-matter of the note file.
-    /// An empty header leads to an empty `tera::Map`; no error.
-    fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
-        let map: tera::Map<String, tera::Value> =
-            serde_yaml::from_str(header).map_err(|e| NoteError::InvalidFrontMatterYaml {
-                front_matter: header
-                    .lines()
-                    .enumerate()
-                    .map(|(n, s)| format!("{:03}: {}\n", n + 1, s))
-                    .take(FRONT_MATTER_ERROR_MAX_LINES)
-                    .collect::<String>(),
-                source_error: e,
-            })?;
-        let fm = FrontMatter(map);
-
+    /// Runtime checks for field values:
+    /// * Assert, that all characters in the front matter variable
+    ///   `TMPL_VAR_FM_SORT_TAG` are in the set `filename.sort_tag_chars`.
+    /// * Is the value of the field `TMPL_VAR_FM_FILE_EXT` listed in
+    //    `filename.extensions_*`?
+    #[inline]
+    fn assert_value_constraints(&self) -> Result<(), NoteError> {
         let lib_cfg = LIB_CFG.read_recursive();
+
         // `sort_tag` has additional constrains to check.
         if let Some(tera::Value::String(sort_tag)) =
-            &fm.get(TMPL_VAR_FM_SORT_TAG.trim_start_matches(TMPL_VAR_FM_))
+            self.get(TMPL_VAR_FM_SORT_TAG.trim_start_matches(TMPL_VAR_FM_))
         {
             if !sort_tag.is_empty() {
                 // Check for forbidden characters.
@@ -114,7 +99,7 @@ impl TryFrom<&str> for FrontMatter {
         // `extension` has also additional constrains to check.
         // Is `extension` listed in `CFG.filename.extensions_*`?
         if let Some(tera::Value::String(file_ext)) =
-            &fm.get(TMPL_VAR_FM_FILE_EXT.trim_start_matches(TMPL_VAR_FM_))
+            self.get(TMPL_VAR_FM_FILE_EXT.trim_start_matches(TMPL_VAR_FM_))
         {
             let extension_is_unknown =
                 matches!(MarkupLanguage::from(&**file_ext), MarkupLanguage::None);
@@ -129,6 +114,37 @@ impl TryFrom<&str> for FrontMatter {
                 });
             }
         }
+        //
+        Ok(())
+    }
+
+    /// Helper function deserialising the front-matter of the note file.
+    /// An empty header leads to an empty `tera::Map`; no error.
+    pub fn try_from_content(content: &impl Content) -> Result<FrontMatter, NoteError> {
+        let header = content.header();
+        Self::try_from(header)
+    }
+}
+
+impl TryFrom<&str> for FrontMatter {
+    type Error = NoteError;
+    /// Helper function deserialising the front-matter of the note file.
+    /// An empty header leads to an empty `tera::Map`; no error.
+    fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
+        let map: tera::Map<String, tera::Value> =
+            serde_yaml::from_str(header).map_err(|e| NoteError::InvalidFrontMatterYaml {
+                front_matter: header
+                    .lines()
+                    .enumerate()
+                    .map(|(n, s)| format!("{:03}: {}\n", n + 1, s))
+                    .take(FRONT_MATTER_ERROR_MAX_LINES)
+                    .collect::<String>(),
+                source_error: e,
+            })?;
+        let fm = FrontMatter(map);
+
+        fm.assert_value_constraints()?;
+
         Ok(fm)
     }
 }
