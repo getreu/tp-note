@@ -11,12 +11,11 @@ use lazy_static::lazy_static;
 use lingua::{LanguageDetector, LanguageDetectorBuilder};
 use parse_hyperlinks::iterator::first_hyperlink;
 use sanitize_filename_reader_friendly::sanitize;
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::hash::BuildHasher;
 use std::path::Path;
 use std::path::PathBuf;
-use tera::{to_value, try_get_value, Result as TeraResult, Tera, Value};
+use tera::{try_get_value, Result as TeraResult, Tera, Value};
 
 /// Filter parameter of the `cut_filter()` limiting the maximum length of
 /// template variables. The filter is usually used to in the note's front matter
@@ -57,13 +56,14 @@ lazy_static! {
 
 /// A filter converting an input `tera::Value::Object` into a
 /// `tera::Value::String(s)` with `s` being the YAML representation of the
-/// object. When the optional parameter `key='k'` is given, the input can be
-/// any `tera::Value` variant.
+/// object. When the optional parameter `key='k'` is given, the input is
+/// the corresponding value.
 /// The optional parameter `tab=n` indents the YAML values `n` characters to
 /// the right of the first character of the key by inserting additional spaces
-/// between the key and the value. When `tab=n` is given, it has precendence
+/// between the key and the value. When `tab=n` is given, it has precedence
 /// over the  default value, read from the configuration file variable
 /// `tmpl.filter_to_yaml_tab`.
+/// The input can be of any type, the output type is `Value::String()`.
 fn to_yaml_filter<S: BuildHasher>(
     val: &Value,
     args: &HashMap<String, Value, S>,
@@ -122,7 +122,9 @@ fn to_yaml_filter<S: BuildHasher>(
         val_yaml
     };
 
-    Ok(tera::Value::String(val_yaml.trim_end().to_string()))
+    let val_yaml = val_yaml.trim_end().to_owned();
+
+    Ok(Value::String(val_yaml))
 }
 
 /// A filter that coverts a `tera::Value` tree into an HTML representation,
@@ -131,6 +133,7 @@ fn to_yaml_filter<S: BuildHasher>(
 /// * `Value::Array`: `<ul class="fm">` and `<li class="fm">`,
 /// * `Value::String`: no tag,
 /// * Other non-string basic types: `<code class="fm">`.
+/// The input can be of any type, the output type is `Value::String()`.
 fn to_html_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -169,12 +172,10 @@ fn to_html_filter<S: BuildHasher>(
         };
     }
 
-    let val = try_get_value!("to_yaml", "value", Value, value);
-
     let mut html = String::new();
-    tag_to_html(val, &mut html);
+    tag_to_html(value.to_owned(), &mut html);
 
-    Ok(tera::Value::String(html.to_string()))
+    Ok(Value::String(html))
 }
 
 /// Adds a new filter to Tera templates:
@@ -186,50 +187,49 @@ fn to_html_filter<S: BuildHasher>(
 /// reliably the sort tag from the filename. In addition to the above, the
 /// filter checks if the string represents a "well-formed" filename. If it
 /// is the case, and the filename starts with a dot, the file is prepended by
-/// `sort_tag_extra_separator`. Note, this filter converts all input types to
-/// `tera::String`.
-fn sanit_filter<S: BuildHasher>(p: &Value, _args: &HashMap<String, Value, S>) -> TeraResult<Value> {
-    // Take unmodified `String()`, but format all other types into
-    // string.
-    let mut p = if p.is_string() {
-        Cow::Borrowed(p.as_str().unwrap())
-    } else {
-        // Convert and format.
-        Cow::Owned(p.to_string())
-    };
+/// `sort_tag_extra_separator`.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String()`
+fn sanit_filter<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let input = try_get_value!("sanit", "value", String, value);
 
     // Check if this is a usual dotfile filename.
-    let is_dotfile =
-        p.starts_with(FILENAME_DOTFILE_MARKER) && PathBuf::from(&*p).has_wellformed_filename();
+    let is_dotfile = input.starts_with(FILENAME_DOTFILE_MARKER)
+        && PathBuf::from(&*input).has_wellformed_filename();
 
     // Sanitize string.
-    p = sanitize(&p).into();
+    let mut res = sanitize(&input);
 
     // If `FILNAME_DOTFILE_MARKER` was stripped, prepend one.
-    if is_dotfile && !p.starts_with(FILENAME_DOTFILE_MARKER) {
-        let mut s = String::from(FILENAME_DOTFILE_MARKER);
-        s.push_str(&p);
-        p = Cow::from(s);
+    if is_dotfile && !res.starts_with(FILENAME_DOTFILE_MARKER) {
+        res.insert(0, FILENAME_DOTFILE_MARKER);
     }
 
-    Ok(to_value(&p)?)
+    Ok(Value::String(res))
 }
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's name.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String()`
 fn link_text_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("link_text", "value", String, value);
+    let input = try_get_value!("link_text", "value", String, value);
 
-    let hyperlink = Hyperlink::from(&p).unwrap_or_default();
+    let hyperlink = Hyperlink::from(&input).unwrap_or_default();
 
-    Ok(to_value(hyperlink.name)?)
+    Ok(Value::String(hyperlink.name))
 }
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's URL.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String()`
 fn link_dest_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -238,11 +238,13 @@ fn link_dest_filter<S: BuildHasher>(
 
     let hyperlink = Hyperlink::from(&p).unwrap_or_default();
 
-    Ok(to_value(hyperlink.target)?)
+    Ok(Value::String(hyperlink.target))
 }
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's title.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String()`
 fn link_title_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -251,36 +253,33 @@ fn link_title_filter<S: BuildHasher>(
 
     let hyperlink = Hyperlink::from(&p).unwrap_or_default();
 
-    Ok(to_value(hyperlink.title)?)
+    Ok(Value::String(hyperlink.title))
 }
 
 /// A Tera filter that truncates the input stream and returns the
 /// max `CUT_LEN_MAX` bytes of valid UTF-8.
-/// This filter only acts on `String` types. All other types
-/// are passed through.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String()`
 fn cut_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("cut", "value", tera::Value, value);
+    let input = try_get_value!("cut", "value", String, value);
 
-    match p {
-        tera::Value::String(sv) => {
-            let mut short = "";
-            for i in (0..CUT_LEN_MAX).rev() {
-                if let Some(s) = sv.get(..i) {
-                    short = s;
-                    break;
-                }
-            }
-            Ok(to_value(short)?)
+    let mut short = "";
+    for i in (0..CUT_LEN_MAX).rev() {
+        if let Some(s) = input.get(..i) {
+            short = s;
+            break;
         }
-        _ => Ok(p),
     }
+    Ok(Value::String(short.to_owned()))
 }
 
 /// A Tera filter that returns the first line or the first sentence of the input
 /// stream.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String()`
 fn heading_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -328,10 +327,12 @@ fn heading_filter<S: BuildHasher>(
     }
     let content_heading = p[0..index].to_string();
 
-    Ok(to_value(content_heading)?)
+    Ok(Value::String(content_heading))
 }
 
 /// A Tera filter that takes a path and extracts the tag of the filename.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String()`
 fn file_sort_tag_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -340,59 +341,64 @@ fn file_sort_tag_filter<S: BuildHasher>(
     let p = PathBuf::from(p);
     let (tag, _, _, _, _) = p.disassemble();
 
-    Ok(to_value(tag)?)
+    Ok(Value::String(tag.to_owned()))
 }
 
 /// A Tera filter that takes a path and extracts its last element.
 /// This function trims the `sort_tag` if present.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String()`
 fn trim_file_sort_tag_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("trim_file_sort_tag", "value", String, value);
-    let p = PathBuf::from(p);
-    let (_, fname, _, _, _) = p.disassemble();
+    let input = try_get_value!("trim_file_sort_tag", "value", String, value);
+    let input = PathBuf::from(input);
+    let (_, fname, _, _, _) = input.disassemble();
 
-    Ok(to_value(fname)?)
+    Ok(Value::String(fname.to_owned()))
 }
 
 /// A Tera filter that takes a path and extracts its file stem,
 /// in other words: the filename without `sort_tag`, `file_copy_counter`
 /// and `extension`.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String()`
 fn file_stem_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("file_stem", "value", String, value);
-    let p = PathBuf::from(p);
-    let (_, _, stem, _, _) = p.disassemble();
+    let input = try_get_value!("file_stem", "value", String, value);
+    let input = PathBuf::from(input);
+    let (_, _, stem, _, _) = input.disassemble();
 
-    Ok(to_value(stem)?)
+    Ok(Value::String(stem.to_owned()))
 }
 
 /// A Tera filter that takes a path and extracts its copy counter,
 /// or, to put it another way: the filename without `sort_tag`, `file_stem`
 /// and `file_ext` (and their separators). If the filename contains a
-/// `copy_counter=n`, the retured JSON value variant is `Value::Number(n)`.
-/// Otherwise it is `Value::Null`.
+/// `copy_counter=n`, the returned JSON value variant is `Value::Number(n)`.
+/// If there is no copy counter in the input, the output is `Value::Number(0)`.
+/// The input type must be `Value::String` and the output type is
+/// `Value::Number()`
 fn file_copy_counter_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("file_copy_counter", "value", String, value);
-    let p = PathBuf::from(p);
-    let (_, _, _, copy_counter, _) = p.disassemble();
-    let copy_counter = match copy_counter {
-        Some(cc) => to_value(cc)?,
-        None => Value::Null,
-    };
+    let input = try_get_value!("file_copy_counter", "value", String, value);
+    let input = PathBuf::from(input);
+    let (_, _, _, copy_counter, _) = input.disassemble();
+    let copy_counter = copy_counter.unwrap_or(0);
 
-    Ok(copy_counter)
+    Ok(Value::from(copy_counter))
 }
 
 /// A Tera filter that takes a path and extracts its filename without
 /// file extension. The filename may contain a sort-tag, a copy-counter and
 /// also separators.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String()`
 fn file_name_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -403,9 +409,10 @@ fn file_name_filter<S: BuildHasher>(
         .file_name()
         .unwrap_or_default()
         .to_str()
-        .unwrap_or_default();
+        .unwrap_or_default()
+        .to_owned();
 
-    Ok(to_value(filename)?)
+    Ok(Value::String(filename))
 }
 
 /// A Tera filter that prepends the string parameter `with`, but only if the
@@ -413,6 +420,9 @@ fn file_name_filter<S: BuildHasher>(
 /// When called with the strings parameter `with_sort_tag`, the filter
 /// prepends the sort-tag and all necessary sort-tag separator characters,
 /// regardless whether the input stream in empty or not.
+/// The input type, and the type of the parameter `with` and   `with_sort_tag`
+/// must be `Value::String`. The parameter `newline` must be a `Value::Bool` and
+/// the output type is `Value::String()`.
 fn prepend_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
@@ -420,26 +430,44 @@ fn prepend_filter<S: BuildHasher>(
     let input = try_get_value!("prepend", "value", String, value);
 
     let mut res = input;
-    if let Some(Value::String(with)) = args.get("with") {
+
+    if let Some(with) = args.get("with") {
+        let with = try_get_value!("prepend", "with", String, with);
         let mut s = String::new();
         if !res.is_empty() {
-            s.push_str(with);
+            s.push_str(&with);
             s.push_str(&res);
             res = s;
         };
-    } else if let Some(Value::String(sort_tag)) = args.get("with_sort_tag") {
-        res = PathBuf::from_disassembled(sort_tag, &res, None, "")
+    } else if let Some(sort_tag) = args.get("with_sort_tag") {
+        let sort_tag = try_get_value!("prepend", "with_sort_tag", String, sort_tag);
+        res = PathBuf::from_disassembled(&sort_tag, &res, None, "")
             .to_str()
             .unwrap_or_default()
             .to_string();
     };
 
-    Ok(to_value(res)?)
+    if let Some(Value::Bool(newline)) = args.get("newline") {
+        if *newline && !res.is_empty() {
+            let mut s = String::new();
+            #[cfg(not(target_family = "windows"))]
+            s.push('\n');
+            #[cfg(target_family = "windows")]
+            s.push_str("\r\n");
+            s.push_str(&res);
+            res = s;
+        }
+    };
+
+    Ok(Value::String(res))
 }
 
 /// A Tera filter that appends the string parameter `with`. In addition, the
 /// flag `newline` inserts a newline character at end of the result. In
 /// case the input stream is empty, nothing is appended.
+/// The input type, and the type of the parameter `with`  must be
+/// `Value::String`. The parameter `newline` must be a `Value::Bool` and the
+/// output type is `Value::String()`.
 fn append_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
@@ -451,12 +479,14 @@ fn append_filter<S: BuildHasher>(
     }
 
     let mut res = input.clone();
-    if let Some(Value::String(with)) = args.get("with") {
-        res.push_str(with);
+    if let Some(with) = args.get("with") {
+        let with = try_get_value!("append", "value", String, with);
+        res.push_str(&with);
     };
 
-    if let Some(Value::Bool(newline)) = args.get("newline") {
-        if *newline {
+    if let Some(newline) = args.get("newline") {
+        let newline = try_get_value!("newline", "value", bool, newline);
+        if newline {
             #[cfg(not(target_family = "windows"))]
             res.push('\n');
             #[cfg(target_family = "windows")]
@@ -464,10 +494,12 @@ fn append_filter<S: BuildHasher>(
         }
     };
 
-    Ok(to_value(res)?)
+    Ok(Value::String(res))
 }
 
 /// A Tera filter that takes a path and extracts its file extension.
+/// The input type must be `Value::String()`, the output type is
+/// `Value::String()`.
 fn file_ext_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -478,13 +510,21 @@ fn file_ext_filter<S: BuildHasher>(
         .extension()
         .unwrap_or_default()
         .to_str()
-        .unwrap_or_default();
+        .unwrap_or_default()
+        .to_owned();
 
-    Ok(to_value(ext)?)
+    Ok(Value::String(ext))
 }
 
-/// A Tera filter that takes a list of variables and removes
-/// one.
+/// A Tera filter that takes a map of variables/values. With the parameter
+/// `field_filter(out="<var-name>"), the variable `<var-name>` is removed
+/// from the map.
+/// With the parameter `field_filter(in="<var-name>", inval="<var-value>"),
+/// the variable `<var-name>` with the value `<var-value>` is appended
+/// to the map. If the variable exists in the map already, its value is
+/// replaced.
+/// The input type must be `Value::Object()`, the parameter types must be
+/// `Value::String()` and the output type is `Value::Object()`.
 fn field_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
@@ -505,7 +545,7 @@ fn field_filter<S: BuildHasher>(
         map.insert(inkey.trim_start_matches("fm_").to_string(), inval);
     };
 
-    Ok(to_value(&map).unwrap_or_default())
+    Ok(Value::Object(map))
 }
 
 /// A Tera filter telling which natural language some provided textual data is
@@ -513,55 +553,50 @@ fn field_filter<S: BuildHasher>(
 /// language. This filter only acts on `String` types. All other types are
 /// passed through. Returns the empty string in case the language can not be
 /// detected reliably.
+/// All input types must be `Value::String()`, output type is `Value::String(0)`
 #[cfg(feature = "lang-detection")]
 fn get_lang_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("get_lang", "value", tera::Value, value);
-    match p {
-        #[allow(unused_variables)]
-        tera::Value::String(input) => {
-            let input = input.trim();
-            // Return early if there is no input text.
-            if input.is_empty() {
-                return Ok(to_value("").unwrap());
-            }
-
-            let settings = SETTINGS.read_recursive();
-            let detector: LanguageDetector = match &settings.filter_get_lang {
-                FilterGetLang::SomeLanguages(iso_codes) => {
-                    log::trace!(
-                        "Execute template filter `get_lang` \
-                        with languages candiates: {:?}",
-                        iso_codes,
-                    );
-                    LanguageDetectorBuilder::from_iso_codes_639_1(iso_codes)
-                }
-                FilterGetLang::AllLanguages => {
-                    log::trace!(
-                        "Execute template filter `get_lang` \
-                        with all available languages",
-                    );
-                    LanguageDetectorBuilder::from_all_languages()
-                }
-                FilterGetLang::Error(e) => return Err(tera::Error::from(e.to_string())),
-                _ => return Ok(to_value("").unwrap()),
-            }
-            .build();
-
-            let detected_language = detector
-                .detect_language_of(input)
-                .map(|l| format!("{}", l.iso_code_639_1()))
-                // If not languages can be detected, this returns the empty
-                // string.
-                .unwrap_or_default();
-            log::debug!("Language '{}' in input detected.", detected_language);
-
-            Ok(to_value(detected_language)?)
-        }
-        _ => Ok(p),
+    let input = try_get_value!("get_lang", "value", String, value);
+    let input = input.trim();
+    // Return early if there is no input text.
+    if input.is_empty() {
+        return Ok(Value::String("".to_string()));
     }
+
+    let settings = SETTINGS.read_recursive();
+    let detector: LanguageDetector = match &settings.filter_get_lang {
+        FilterGetLang::SomeLanguages(iso_codes) => {
+            log::trace!(
+                "Execute template filter `get_lang` \
+                        with languages candiates: {:?}",
+                iso_codes,
+            );
+            LanguageDetectorBuilder::from_iso_codes_639_1(iso_codes)
+        }
+        FilterGetLang::AllLanguages => {
+            log::trace!(
+                "Execute template filter `get_lang` \
+                        with all available languages",
+            );
+            LanguageDetectorBuilder::from_all_languages()
+        }
+        FilterGetLang::Error(e) => return Err(tera::Error::from(e.to_string())),
+        _ => return Ok(Value::String("".to_string())),
+    }
+    .build();
+
+    let detected_language = detector
+        .detect_language_of(input)
+        .map(|l| format!("{}", l.iso_code_639_1()))
+        // If not languages can be detected, this returns the empty
+        // string.
+        .unwrap_or_default();
+    log::debug!("Language '{}' in input detected.", detected_language);
+
+    Ok(Value::String(detected_language))
 }
 
 #[cfg(not(feature = "lang-detection"))]
@@ -569,7 +604,7 @@ fn get_lang_filter<S: BuildHasher>(
     _value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    Ok(to_value("").unwrap())
+    Ok(Value::String("".to_owned()))
 }
 
 /// A mapper for ISO 639 codes adding some region information, e.g.
@@ -578,34 +613,32 @@ fn get_lang_filter<S: BuildHasher>(
 /// An input value without mapping definition is passed through.
 /// When the optional parameter `default` is given, e.g.
 /// `map_lang(default=val)`, an empty input string is mapped to `val`.  
+/// All input types must be `Value::String()`, the output type is
+/// `Value::String(0)`
 fn map_lang_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("map_lang", "value", tera::Value, value);
+    let input = try_get_value!("map_lang", "value", String, value);
 
-    match p {
-        tera::Value::String(input) => {
-            let input = input.trim();
-            if input.is_empty() {
-                if let Some(val) = args.get("default") {
-                    return Ok(to_value(val)?);
-                } else {
-                    return Ok(to_value("")?);
-                };
-            };
-            let settings = SETTINGS.read_recursive();
-            if let Some(btm) = &settings.filter_map_lang_btmap {
-                match btm.get(input) {
-                    None => Ok(to_value(input)?),
-                    Some(tag) => Ok(to_value(tag)?),
-                }
-            } else {
-                Ok(to_value(input)?)
-            }
-        }
-        _ => Ok(p),
-    }
+    let input = input.trim();
+    if input.is_empty() {
+        if let Some(default) = args.get("default") {
+            let default = try_get_value!("map_lang", "default", String, default);
+            return Ok(Value::String(default));
+        } else {
+            return Ok(Value::String("".to_owned()));
+        };
+    };
+    let settings = SETTINGS.read_recursive();
+
+    let res = if let Some(btm) = &settings.filter_map_lang_btmap {
+        btm.get(input).map(|v| &v[..]).unwrap_or(input)
+    } else {
+        input
+    };
+
+    Ok(Value::String(res.to_owned()))
 }
 
 #[derive(Debug, Eq, PartialEq, Default)]
@@ -1030,12 +1063,6 @@ mod tests {
         let input = "Jens Getreu's blog";
         let output = cut_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("Jens Getr", output);
-
-        let args = HashMap::new();
-        // Test Markdown link in clipboard.
-        let input = 222; // Number type.
-        let output = cut_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(222, output);
     }
 
     #[test]
