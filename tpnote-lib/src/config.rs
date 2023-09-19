@@ -247,7 +247,6 @@ impl ::std::default::Default for LibCfg {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Filename {
-    pub root_path_marker: String,
     pub sort_tag_chars: String,
     pub sort_tag_separator: String,
     pub sort_tag_extra_separator: char,
@@ -266,11 +265,10 @@ pub struct Filename {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Tmpl {
-    pub filter_get_lang: Vec<String>,
     pub filter_assert_preconditions: Vec<(String, Vec<AssertPrecondition>)>,
+    pub filter_get_lang: Vec<String>,
     pub filter_map_lang: Vec<Vec<String>>,
     pub filter_to_yaml_tab: u64,
-    pub compulsory_header_field: String,
     pub new_content: String,
     pub new_filename: String,
     pub from_clipboard_yaml_content: String,

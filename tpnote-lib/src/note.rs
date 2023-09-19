@@ -137,9 +137,7 @@ impl<T: Content> Note<T> {
             TemplateKind::SyncFilename =>
             // No rendering to markdown is required. `content` is read from disk and left untouched.
             {
-                fm.assert_not_empty()?;
-                // Check if the compulsory field is present.
-                fm.assert_compulsory_field()?;
+                fm.assert_precoditions()?;
                 Ok(Self {
                     context,
                     content,
@@ -150,9 +148,7 @@ impl<T: Content> Note<T> {
             // No rendering to markdown is required. `content` is read from disk and left untouched.
             // A rendition to HTML may follow.
             {
-                fm.assert_not_empty()?;
-                // Check if the compulsory field is present.
-                fm.assert_compulsory_field()?;
+                fm.assert_precoditions()?;
                 Ok(Self {
                     context,
                     content,

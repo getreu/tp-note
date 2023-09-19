@@ -27,44 +27,6 @@ impl FrontMatter {
         Ok(())
     }
 
-    /// Checks if the front matter contains a field variable
-    /// with the name defined in the configuration file:
-    /// as: "compulsory_header_field".
-    #[inline]
-    pub(crate) fn assert_compulsory_field(&self) -> Result<(), NoteError> {
-        let lib_cfg = LIB_CFG.read_recursive();
-
-        if !lib_cfg.tmpl.compulsory_header_field.is_empty() {
-            if let Some(tera::Value::String(header_field)) =
-                self.get(&lib_cfg.tmpl.compulsory_header_field)
-            {
-                if header_field.is_empty() {
-                    return Err(NoteError::CompulsoryFrontMatterFieldIsEmpty {
-                        field_name: lib_cfg.tmpl.compulsory_header_field.to_owned(),
-                    });
-                };
-            } else {
-                return Err(NoteError::MissingFrontMatterField {
-                    field_name: lib_cfg.tmpl.compulsory_header_field.to_owned(),
-                });
-            }
-        }
-        Ok(())
-    }
-
-    /// Are any variables registerd?
-    #[inline]
-    pub(crate) fn assert_not_empty(&self) -> Result<(), NoteError> {
-        if self.is_empty() {
-            let lib_cfg = LIB_CFG.read_recursive();
-            Err(NoteError::MissingFrontMatter {
-                compulsory_field: lib_cfg.tmpl.compulsory_header_field.to_owned(),
-            })
-        } else {
-            Ok(())
-        }
-    }
-
     /// Runtime checks for field values:
     /// * Assert, that all characters in the front matter variable
     ///   `TMPL_VAR_FM_SORT_TAG` are in the set `filename.sort_tag_chars`.

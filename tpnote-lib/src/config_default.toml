@@ -1,8 +1,4 @@
 [filename]
-# The apperance of a file with this filename marks the position of
-# `TMPL_VAR_ROOT_PATH`.
-root_path_marker = ".tpnote.toml"
-
 # List of characters that can be part of a _sort tag_.
 # This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
 # The first character in the filename which is not
@@ -171,18 +167,6 @@ filter_map_lang = [
 # additional spaces between the key and the value. `n==0` disables the
 # extra indentation.
 filter_to_yaml_tab = 14
-
-# TODO
-# As all application logic is encoded in Tp-Note's templates, it does
-# not know about field names. Nevertheless, it is useful to identify at
-# least one field as _the_ field that identifies a note the most.  When
-# `TMPL_COMPULSORY_HEADER_FIELD` is not empty, Tp-Note will not synchronize
-# the note's filename and will pop up an error message, unless it finds the
-# field in the note's header.  When `TMPL_COMPULSORY_HEADER_FIELD` is empty,
-# all files are synchronized without any further field check. Make sure to
-# define a default value with `fm_* | default(value=*)` in case the variable
-# `fm_*` does not exist in the note's front matter.
-compulsory_header_field = "title"
 
 # Default content template used when the command line argument `<sanit>`
 # is a directory. Can be changed through editing the configuration
