@@ -235,6 +235,7 @@ impl ::std::default::Default for LibCfg {
         let mut config: LibCfg = toml::from_str(LIB_CFG_TOML)
             .expect("can not parse included configuration file `tpnote_lib.toml`");
 
+        #[allow(unused_mut)]
         let mut css = config.tmpl_html.css.to_owned();
         #[cfg(feature = "renderer")]
         css.push_str(&get_css());
