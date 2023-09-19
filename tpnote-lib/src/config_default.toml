@@ -1,0 +1,590 @@
+[filename]
+# The apperance of a file with this filename marks the position of
+# `TMPL_VAR_ROOT_PATH`.
+root_path_marker = ".tpnote.toml"
+
+# List of characters that can be part of a _sort tag_.
+# This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
+# The first character in the filename which is not
+# in this list, marks the end of the sort tag.
+# If `FILENAME_SORT_TAG_SEPARATOR` is not empty and the resulting string
+# terminates with `FILENAME_SORT_TAG_SEPARATOR` the latter is is stripped
+# from the result.
+sort_tag_chars = "0123456789.-_ \t"
+
+# If empty, the first character which is not in `FILENAME_SORT_TAG_CHARS`
+# marks the end of a sort tag.
+# If not empty, a _sort_tag_ is only valid, when is it is followed by
+# `FILENAME_SORT_TAG_SEPARATOR`. A _sort_tag_ never ends with a
+# `FILENAME_SORT_TAG_SEPARATOR`, if it does it stripped. In other positions
+# the speparator may appear.
+sort_tag_separator = "-"
+
+# In case the file stem starts with a character in
+# `SORT_TAG_CHARS` the `SORT_TAG_EXTRA_SEPARATOR`
+# character is inserted in order to separate both parts
+# when the filename is read next time.
+sort_tag_extra_separator = "'"
+
+# If the stem of a filename ends with a pattern, that is
+# similar to a copy counter, add this extra separator. It
+# must be one of `TRIM_LINE_CHARS` (see definition in
+# crate: `sanitize_filename_reader_friendly`) because they
+# are known not to appear at the end of `sanitze()`'d
+# strings. This is why they are suitable here.
+copy_counter_extra_separator = "-"
+
+# Tp-Note may add a counter at the end of the filename when
+# it can not save a file because the name is taken already.
+# This is the opening bracket search pattern. Some examples:
+# `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
+# Can be empty.
+copy_counter_opening_brackets = "("
+
+# Tp-Note may add a counter at the end of the filename when
+# it can not save a file because the name is taken already.
+# This is the closing bracket search pattern. Some examples:
+# `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
+# Can be empty.
+copy_counter_closing_brackets = ")"
+
+# File extension of new _Tp-Note_ files.
+#
+# For UNIX like systems this defaults to `.md` because all the
+# listed file editors (see `APP_ARGS_EDITOR`) support it. The
+# Windows default is `.txt` to ensure that the _Notepad_ editor can
+# handle these files properly.
+#
+# As longs as all extensions are part of the same group, here
+# `FILENAME_EXTENSIONS_MD`, all note files are interpreted as
+# _Markdown_ on all systems.
+#
+# NB: Do not forget to adapt the templates `TMPL_*` in case you set
+# this to another markup language.
+extension_default = "md"
+
+# The variables `FILENAME_EXTENSIONS_*` list file extensions that Tp-Note
+# considers as its own note files. Tp-Note opens these files, reads their
+# YAML header and launches an external file editor and an file viewer (web
+# browser). According to the markup language used, the appropriate renderer
+# is called to convert the note's content into HTML. The rendered HTML is then
+# shown to the user with his web browser.
+#
+# The present list contains file extensions of Markdown encoded Tp-Note files.
+extensions_md = [
+    "txt",
+    "md",
+    "markdown",
+    "markdn",
+    "mdown",
+    "mdtxt",
+]
+
+# The present list contains file extensions of RestructuredText encoded Tp-
+# Note files.
+#
+# See also `FILENAME_EXTENSIONS_MD`.
+extensions_rst = [
+    "rst",
+    "rest",
+]
+
+# The present list contains file extensions of HTML encoded Tp-Note files.
+# For these file types the content is forwarded to the web browser without
+# modification.
+#
+# See also `FILENAME_EXTENSIONS_MD`.
+extensions_html = ["htmlnote"]
+
+# The present list contains file extensions of Text encoded Tp-Note files
+# that the viewer shows literally without (almost) any additional rendering.
+# Only hyperlinks in _Markdown_, _reStructuredText_, _Asciidoc_ and _HTML_ are
+# rendered, thus clickable.
+#
+# See also `FILENAME_EXTENSIONS_MD`.
+extensions_txt = [
+    "txtnote",
+    "adoc",
+    "asciidoc",
+    "mediawiki",
+    "mw",
+]
+
+# The present list contains file extensions of Tp-Note files for which no
+# viewer is opened (unless Tp-Note is invoked with `--view`).
+#
+# See also `FILENAME_EXTENSIONS_MD`.
+extensions_no_viewer = ["t2t"]
+
+[tmpl]
+# After generating a new note with a content template, Tp-Note parses the
+# resulting front matter into `fm_* variables and checks their values. The
+# following conditions are checked and the user is prompted if one of them is
+# not satisfied.
+# The first item per line is the checked variable name, the following
+# the applied tests (see `AssertPrecondition`).
+filter_assert_preconditions = [
+    [ "fm_title", [ "IsDefined", "IsString", ], ],
+    [ "fm_subtitle", ["IsString"], ],
+    [ "fm_author", ["IsString"], ],
+    [ "fm_date", ["IsString"], ],
+    [ "fm_lang", ["IsString"], ],
+    [ "fm_sort_tag", ["IsNotCompound", "HasOnlySortTagChars", ], ],
+    [ "fm_file_ext", ["IsString", "IsTpnoteExtension"], ],
+    [ "fm_no_filename_sync", ["IsBool"], ],
+    [ "fm_filename_sync", ["IsBool"], ],
+]
+# A list of language tags, defining languages TP-Note tries to recognize in
+# the filter input. The user's default language subtag, as reported from
+# the operating system, is automatically added to the present list.
+# The language recognition feature is disabled, when the list is empty.
+# It is also disabled, when the user's default language, as reported from
+# the operating system, is not supported by the external language guessing
+# library _Lingua_. In both cases the filter returns the empty string.
+filter_get_lang = [ "en", "fr", "de", ]
+
+# Default values for the `map_lang` hash map filter, that is used to post
+# process the language recognition subtag as defined in `TMPL_GET_LANG`. The
+# key is the language subtag, the corresponding value adds a region subtag
+# completing the language tag. The default region subtags are chosen to be
+# compatible with the _LanguageTool_ grammar checker. In case a language
+# subtag has no key in the present hash map, the filter forwards the input
+# unchanged, e.g. the filter input `fr` results in `fr`.
+# One entry, derived from the user's default language - as reported from the
+# operating system - is automatically added to the present list. This
+# happens only when this language is not listed yet. For example,
+# consider the list `TMPL_FILTER_MAP_LANG = &[&["en", "en-US"]]`: In this
+# case, the user's default language `fr_CA.UTF-8` is added as
+# `&["fr", "fr-CA"]`. But, if the user's default language were
+# `en_GB.UTF-8`, then it is _not_ added because an entry `&["en", "en-US"]`
+# exists already.
+# Note,  that the empty input string results in the user's default language
+# tag - here `fr-CA` - as well.
+filter_map_lang = [
+    [ "de", "de-DE", ],
+    [ "et", "et-ET", ],
+]
+
+# Default value used by `to_yaml_filter`.
+# The parameter `TMPL_FILTER_TO_YAML_TAB_DEFAULT = n` indents the YAML values
+# `n` characters to the right of the first character of the key by inserting
+# additional spaces between the key and the value. `n==0` disables the
+# extra indentation.
+filter_to_yaml_tab = 14
+
+# TODO
+# As all application logic is encoded in Tp-Note's templates, it does
+# not know about field names. Nevertheless, it is useful to identify at
+# least one field as _the_ field that identifies a note the most.  When
+# `TMPL_COMPULSORY_HEADER_FIELD` is not empty, Tp-Note will not synchronize
+# the note's filename and will pop up an error message, unless it finds the
+# field in the note's header.  When `TMPL_COMPULSORY_HEADER_FIELD` is empty,
+# all files are synchronized without any further field check. Make sure to
+# define a default value with `fm_* | default(value=*)` in case the variable
+# `fm_*` does not exist in the note's front matter.
+compulsory_header_field = "title"
+
+# Default content template used when the command line argument `<sanit>`
+# is a directory. Can be changed through editing the configuration
+# file. The following variables are  defined:
+# * `{{ path }}`: points to the directory where the new note will be
+#   created.
+# * `{{ dir_path }}` is in this context identical to `{{ path }}`.
+#  In addition, all environment variables can be used, e.g.
+# `{{ get_env(name=\"LOGNAME\") }}` When placed in YAML front matter, the
+# filter `to_yaml` must be appended to each variable.
+new_content = """
+{%- set title_text = dir_path | trim_file_sort_tag -%}
+---
+{{ title_text | cut | to_yaml(key='title') }}
+{{ 'Note' | to_yaml(key='subtitle') }}
+{{ username | capitalize | to_yaml(key='author') }}
+{{ now() | date(format='%Y-%m-%d') | to_yaml(key='date') }}
+{{ title_text | get_lang | map_lang(default=lang) | to_yaml(key='lang') }}
+---
+
+
+"""
+
+# Default filename template for a new note file on disk. It implements the
+# sync criteria for note metadata in front matter and filename.
+# Useful variables in this context are:
+# `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}.
+# In general, in filename template, all variables (except `now` and
+# `extension_default` must be filtered by a `sanit` filter.
+new_filename = """
+{%- set tag = now() | date(format='%Y%m%d') -%}
+{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ extension_default | prepend(with='.') }}"""
+
+# Default template used, when the clipboard or the input stream `stdin`
+# contains a string and one the of these strings contains a valid YAML front
+# matter section. The clipboards body is in `{{ clipboard }}`, the header
+# is in `{{ clipboard_header }}`.  The stdin's body is in `{{ stdin }}`,
+# the header is in `{{ stdin_header }}`. First all variables defined in the
+# clipboard's front matter are registered, the ones defined in the input
+# stream `stdin`. The latter can overwrite the former.  One of the front
+# matters must define the `title` variable, which is then available in this
+# template as `{{ fm_title }}`.
+# When placed in YAML front matter, the filter `to_yaml` must be
+# appended to each variable.
+from_clipboard_yaml_content = """
+{%- set lang = fm_lang 
+    | default(value = fm_title 
+    | default(value=stdin~clipboard|heading) 
+    | get_lang 
+    | map_lang(default=lang) )  -%}
+---
+{{ fm_title | default(value = path|trim_file_sort_tag) | cut | to_yaml(key='title') }}
+{{ fm_subtitle | default(value = 'Note') | cut | to_yaml(key='subtitle') }}
+{{ fm_author | default(value=username | capitalize) | to_yaml(key='author') }}
+{{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='date') }}
+{{ lang | to_yaml(key='lang') }}
+{{ fm_all \
+    | field(out='fm_title')\
+    | field(out='fm_subtitle')\
+    | field(out='fm_author')\
+    | field(out='fm_date')\
+    | field(out='fm_lang')\
+    | to_yaml \
+    | prepend(newline=true) \
+    | append(newline=true) }}\
+---
+
+{{ stdin ~ clipboard | trim }}
+
+"""
+
+# Default filename template used when the stdin or the clipboard contains a
+# string and one of them has a valid YAML header.
+from_clipboard_yaml_filename = """
+{%- set tag = fm_sort_tag | default(value = now() | date(format='%Y%m%d')) -%}
+{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
+
+# Default template used, when the clipboard or the input stream `stdin`
+# contains a string and this string has no valid YAML front matter section.
+# The clipboards content is in `{{ clipboard }}`, its truncated version in
+# `{{ clipboard | heading }}` When the clipboard contains a hyperlink in
+# Markdown or reStruncturedText format. See crate `parse-hyperlinks` for
+# details. For example: `[<link-name>](<link-url> "link-title")`, can be
+# accessed with the variables: `{{ clipboard | link_text }}`, `
+# {{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
+from_clipboard_content = """
+{%- set lname = stdin ~ clipboard | link_text -%}
+{%- set is_link_text =
+        lname !='' and
+        not lname is starting_with(\"http\")
+        and not lname is starting_with(\"HTTP\") -%}
+{%- if is_link_text -%}
+    {%- set title_text = stdin ~ clipboard | link_text -%}
+{%- else -%}
+    {%- set title_text = stdin ~ clipboard | heading -%}
+{% endif -%}
+---
+{{ title_text | cut | to_yaml(key='title') }}
+{% if stdin ~ clipboard | link_text !='' and
+      stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut -%}
+  {{ 'URL' | to_yaml(key='subtitle') -}}
+{%- else -%}
+  {{ 'Note' | to_yaml(key='subtitle') -}}
+{%- endif %}
+{{ username | capitalize | to_yaml(key='author') }}
+{{ now() | date(format='%Y-%m-%d') | to_yaml(key='date') }}
+{{ title_text | get_lang | map_lang(default=lang) | to_yaml(key='lang') }}
+---
+
+{{ stdin ~ clipboard | trim }}
+
+"""
+
+
+# Default filename template used when the stdin ~ clipboard contains a string.
+from_clipboard_filename = """
+{%- set tag = now() | date(format='%Y%m%d') -%}
+{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ extension_default | prepend(with='.') }}"""
+
+# Default template used, when the opened text file (with a known file
+# extension) is missing a YAML front matter section. This template prepends
+# such a header. The template inserts information extracted from the input
+# filename and its creation date. `{{ path }}` points to the text file,
+# `{{ dir_path }}` to the directory where it is located.
+from_text_file_content = """
+---
+{{ path | file_stem | split(pat='--') | first | cut | to_yaml(key='title') }}
+{{ path | file_stem | split(pat='--') | nth(n=1) | cut | to_yaml(key='subtitle') }}
+{{ username | capitalize | to_yaml(key='author') }}
+{{ note_file_date | default(value='') | date(format='%Y-%m-%d') | to_yaml(key='date') }}
+{{ path | file_name | to_yaml(key='orig_name') }}
+{{ note_body_text | get_lang | map_lang(default=lang) | to_yaml(key='lang') }}
+---
+
+{{ note_body_text }}
+"""
+
+# Default filename template used when the input file (with a known
+# file extension) is missing a YAML front matter section.
+# The text file's sort-tag and file extension are preserved.
+from_text_file_filename = """
+{%- if path | file_sort_tag != '' -%}
+  {%- set tag = path | file_sort_tag -%}
+{%- else -%}
+  {%- set tag = note_file_date | date(format='%Y%m%d') -%}
+{%- endif -%}
+{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ path | file_ext | prepend(with='.') }}"""
+
+# Default template used when the command line `<path>` parameter points to an
+# existing - to be annotated - non-`.md`-file. `{{ path}}` points to that
+# file, `{{ dir_path }}` to the directory where it is located.
+annotate_file_content = """
+{%- set body_text = stdin ~ clipboard | trim -%}
+{%- if body_text != '' -%}
+   {%- set lang_test_text = body_text | cut -%}
+{%- else -%}
+   {%- set lang_test_text = path | file_stem  -%}
+{%- endif -%}
+---
+{{ path | trim_file_sort_tag | to_yaml(key='title') }}
+{% if body_text | link_text !='' and
+      body_text | heading == body_text -%}
+{{ 'URL' | to_yaml(key='subtitle') -}}
+{%- else -%}
+{{ 'Note' | to_yaml(key='subtitle') -}}
+{%- endif %}
+{{ username | capitalize | to_yaml(key='author') }}
+{{ now() | date(format='%Y-%m-%d') | to_yaml(key='date') }}
+{{ lang_test_text | get_lang | map_lang(default=lang) | to_yaml(key='lang') }}
+---
+
+[{{ path | file_name }}](<{{ path | file_name }}>)
+{% if body_text != '' -%}
+{%- if body_text != body_text | heading %}
+---
+{% endif %}
+{{ body_text }}
+{% endif %}
+"""
+
+# Filename of a new note, that annotates an existing file on disk given in
+# `<path>`.
+annotate_file_filename = """
+{%- set tag = path | file_sort_tag -%}
+{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ extension_default | prepend(with='.') }}"""
+
+# Default filename template to test, if the filename of an existing note file
+# on disk, corresponds to the note's meta data stored in its front matter. If
+# it is not the case, the note's filename will be renamed.
+sync_filename = """
+{%- set tag = fm_sort_tag | default(value = path | file_sort_tag) -%}
+{{ fm_title | default(value='No title') | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}"""
+
+
+[tmpl_html]
+# HTML template to render regular viewer pages.
+# We could set
+# `#[cfg(feature = "viewer")]`,
+# but we prefer the same config file structure independent
+# of the enabled features.
+viewer = '''
+<!DOCTYPE html>
+<html lang="{{ fm_lang | default(value='en') }}">
+<head>
+<meta charset="UTF-8">
+<title>{{ fm_title }}</title>
+<link rel="stylesheet" href="{{ note_css_path }}">
+<style>
+<!-- Customize the viewer CSS here -->
+</style>
+  </head>
+  <body>
+  <table class="fm">
+    <tr>
+    <th class="fmkey">title:</th>
+    <th class="fmval"><b>{{ fm_title| default(value='') | to_html }}</b></th>
+  </tr>
+    <tr>
+    <th class="fmkey">subtitle:</th>
+    <th class="fmval">{{ fm_subtitle | default(value='') | to_html }}</th>
+  </tr>
+    <tr>
+    <th class="fmkeygrey">author:</th>
+    <th class="fmvalgrey">{{ fm_author | default(value='') |to_html }}</th>
+  </tr>
+    <tr>
+    <th class="fmkeygrey">date:</th>
+    <th class="fmvalgrey">{{ fm_date | default(value='')| to_html }}</th>
+  </tr>
+    <tr>
+    <th class="fmkeygrey">lang:</th>
+    <th class="fmvalgrey">{{ fm_lang | default(value='') |to_html }}</th>
+  </tr>
+  {% if fm_all | length > 5 %}
+    <tr><th colspan=2;\"/>&nbsp<th/</tr>
+  {% endif %}
+  {% for k, v in fm_all| field(out='fm_title')|
+                         field(out='fm_subtitle')|
+                         field(out='fm_author')|
+                         field(out='fm_date')|
+                         field(out='fm_lang')
+  %}
+    <tr>
+    <th class="fmkeygrey">{{ k }}:</th>
+    <th class="fmvalgrey">{{ v|to_html }}</th>
+  </tr>
+  {% endfor %}
+  </table>
+  <div class="note-body">{{ note_body_html }}</div>
+  <script>{{ note_js }}</script>
+</body>
+</html>
+'''
+
+# HTML template to render the viewer-error page.
+# We could set
+# `#[cfg(feature = "viewer")]`,
+# but we prefer the same config file structure independent
+# of the enabled features.
+viewer_error = """
+<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"UTF-8\">
+<title>Syntax error</title>
+<style>
+.note-error { color: #523626; }
+pre { white-space: pre-wrap; }
+a { color: #316128; }
+h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
+</style>
+</head>
+<body>
+<h3>Syntax error</h3>
+<p> in note file: <pre>{{ path }}</pre><p>
+<div class=\"note-error\">
+<hr>
+<pre>{{ note_error }}</pre>
+<hr>
+</div>
+{{ note_erroneous_content_html }}
+<script>{{ note_js }}</script>
+</body>
+</html>
+"""
+
+# HTML template used to render a note into html when the
+# rendition is saved to disk. Similar to `HTML_VIEWER_TMPL`
+# but does not inject JavaScript code.
+exporter = '''
+<!DOCTYPE html>
+<html lang="{{ fm_lang | default(value='en') }}">
+<head>
+<meta charset="utf-8">
+<title>{{ fm_title }}</title>
+<style>
+{{ note_css }}
+<!-- Customize the exporter CSS here -->
+</style>
+  </head>
+  <body>
+  <table class="fm">
+    <tr>
+    <th class="fmkey">title:</th>
+    <th class="fmval"><b>{{ fm_title| default(value='') | to_html }}</b></th>
+  </tr>
+    <tr>
+    <th class="fmkey">subtitle:</th>
+    <th class="fmval">{{ fm_subtitle | default(value='') | to_html }}</th>
+  </tr>
+    <tr>
+    <th class="fmkeygrey">author:</th>
+    <th class="fmvalgrey">{{ fm_author | default(value='') |to_html }}</th>
+  </tr>
+    <tr>
+    <th class="fmkeygrey">date:</th>
+    <th class="fmvalgrey">{{ fm_date | default(value='')| to_html }}</th>
+  </tr>
+    <tr>
+    <th class="fmkeygrey">lang:</th>
+    <th class="fmvalgrey">{{ fm_lang | default(value='') |to_html }}</th>
+  </tr>
+  {% if fm_all | length > 5 %}
+    <tr><th colspan=2;\"/>&nbsp<th/</tr>
+  {% endif %}
+  {% for k, v in fm_all| field(out='fm_title')|
+                         field(out='fm_subtitle')|
+                         field(out='fm_author')|
+                         field(out='fm_date')|
+                         field(out='fm_lang')
+  %}
+    <tr>
+    <th class="fmkeygrey">{{ k }}:</th>
+    <th class="fmvalgrey">{{ v|to_html }}</th>
+  </tr>
+  {% endfor %}
+  </table>
+  <div class="note-body">{{ note_body_html }}</div>
+</body>
+</html>
+'''
+
+# A constant holding common CSS code, used as embedded code in
+# the `TMPL_HTML_EXPORTER` template and as referenced code in the
+# `TMPL_HTML_VIEWER` template.
+css = """
+/* Tp-Note's CSS */
+table.fm {
+  font-weight: normal;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 4px;
+  background-color: #f3f2e4;
+  border:1px solid grey;
+}
+th.fmkey, th.fmkeygrey {
+  font-weight: normal;
+  padding-left:20px;
+  padding-right:10px;
+}
+th.fmval, th.fmvalgrey {
+  font-weight: normal;
+  padding-left:10px;
+  padding-right:20px;
+}
+th.fmkey{ color:#444444; text-align:right; vertical-align:top;}
+th.fmval{
+  color:#316128;
+  text-align:left;
+  font-family:sans-serif;
+}
+th.fmkeygrey{ color:grey; text-align:right; vertical-align:top;}
+th.fmvalgrey{ color:grey; text-align:left; }
+ul.fm {
+  padding-left: 15px;
+  margin: 0px;
+}
+li.fm {
+  padding-bottom: 0px;
+}
+blockquote.fm {
+  margin: 0px;
+  padding-left: 15px
+}
+pre { white-space: pre-wrap; }
+em { color: #523626; }
+a { color: #316128; }
+h1 { font-size: 150% }
+h2 { font-size: 132% }
+h3 { font-size: 115% }
+h4, h5, h6 { font-size: 100% }
+h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
+"""

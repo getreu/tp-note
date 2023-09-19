@@ -489,8 +489,6 @@ fn update_env_lang_detection(settings: &mut Settings) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::FILENAME_EXTENSION_DEFAULT;
-
     /// Attention: as these test-functions run in parallel, make sure that
     /// each environment variable appears in one function only!
 
@@ -512,7 +510,7 @@ mod tests {
         let mut settings = Settings::default();
         std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
         update_extension_default_setting(&mut settings);
-        assert_eq!(settings.extension_default, FILENAME_EXTENSION_DEFAULT);
+        assert_eq!(settings.extension_default, "md");
     }
 
     #[test]

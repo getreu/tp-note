@@ -8,7 +8,7 @@ use crate::settings::ARGS;
 use crate::settings::RUNS_ON_CONSOLE;
 use crate::CONFIG_PATH;
 #[cfg(feature = "message-box")]
-use crate::VERSION;
+use crate::PKG_VERSION;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
@@ -32,7 +32,7 @@ lazy_static! {
     pub static ref ALERT_DIALOG_TITLE_LINE: String = format!(
         "{} (v{})",
         &ALERT_DIALOG_TITLE,
-        VERSION.unwrap_or("unknown")
+        PKG_VERSION.unwrap_or("unknown")
     );
 }
 

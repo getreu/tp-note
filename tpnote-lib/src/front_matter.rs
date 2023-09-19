@@ -20,6 +20,13 @@ use std::str;
 pub struct FrontMatter(pub tera::Map<String, tera::Value>);
 
 impl FrontMatter {
+    /// Checks if the front matter variables satisfy preconditions.
+    #[inline]
+    pub fn assert_precoditions(&self) -> Result<(), NoteError> {
+        // TODO
+        Ok(())
+    }
+
     /// Checks if the front matter contains a field variable
     /// with the name defined in the configuration file:
     /// as: "compulsory_header_field".
@@ -159,7 +166,6 @@ impl DerefMut for FrontMatter {
 
 #[cfg(test)]
 mod tests {
-
     #[test]
     fn test_deserialize() {
         use super::FrontMatter;
@@ -290,5 +296,23 @@ mod tests {
         let front_matter = FrontMatter::try_from(content.header()).unwrap();
         assert_eq!(front_matter.get("title"), Some(&json!("My day")));
         assert_eq!(front_matter.get("subtitle"), Some(&json!("Note")));
+    }
+
+    #[test]
+    fn test_assert_preconditions() {
+        use crate::front_matter::FrontMatter;
+        use serde_json::json;
+
+        let input = "# document start
+        title: my title
+        subtitle: my subtitle
+        ";
+
+        let expected = json!({"title": "my title", "subtitle": "my subtitle"});
+        let expected = expected.as_object().unwrap();
+
+        let output = FrontMatter::try_from(input).unwrap().0;
+        //fm.assert_precoditions().unwrap();
+        assert_eq!(&output, expected);
     }
 }

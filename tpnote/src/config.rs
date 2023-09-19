@@ -4,7 +4,6 @@ use crate::error::ConfigFileError;
 use crate::settings::ARGS;
 use crate::settings::DOC_PATH;
 use crate::settings::ENV_VAR_TPNOTE_CONFIG;
-use crate::VERSION;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use log::LevelFilter;
@@ -18,13 +17,13 @@ use std::fs;
 use std::fs::File;
 #[cfg(not(test))]
 use std::io::Write;
-#[cfg(not(test))]
 use std::mem;
 use std::path::Path;
 use std::path::PathBuf;
 #[cfg(not(test))]
 use tera::Tera;
 use tpnote_lib::config::Filename;
+use tpnote_lib::config::LibCfg;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::Tmpl;
 use tpnote_lib::config::TmplHtml;
@@ -37,263 +36,14 @@ use tpnote_lib::filename::NotePathBuf;
 /// Name of this executable (without the Windows ".exe" extension).
 const CARGO_BIN_NAME: &str = env!("CARGO_BIN_NAME");
 
+/// Use the version number defined in `../Cargo.toml`.
+pub(crate) const PKG_VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
+
 /// Tp-Note's configuration file filename.
 const CONFIG_FILENAME: &str = concat!(env!("CARGO_BIN_NAME"), ".toml");
 
-/// Default value for the command line option `--debug`.  Determines the maximum
-/// debug level events must have, to be logged.  If the command line option
-/// `--debug` is present, its value will be used instead.
-const ARG_DEFAULT_DEBUG: LevelFilter = LevelFilter::Error;
-
-/// Default value for the command line flag `--edit` to disable file watcher,
-/// (Markdown)-renderer, html server and a web browser launcher set to `true`.
-const ARG_DEFAULT_EDITOR: bool = false;
-
-/// Default value for the command line flag `--no-filename-sync` to disable
-/// the title to filename synchronisation mechanism permanently.
-/// If set to `true`, the corresponding command line flag is ignored.
-const ARG_DEFAULT_NO_FILENAME_SYNC: bool = false;
-
-/// Default value for the command line flag `--popup`. If the command line flag
-/// `--popup` or `POPUP` is `true`, all log events will also trigger the
-/// appearance of a popup alert window.  Note, that error level debug events
-/// will always pop up, regardless of `--popup` and `POPUP` (unless
-/// `--debug=off`).
-const ARG_DEFAULT_POPUP: bool = true;
-
-/// Default value for the command line flag `--tty`. _Tp-Note_ tries different
-/// heuristics to detect weather a graphic environment is available or not. For
-/// example, under Linux, the '`DISPLAY`' environment variable is evaluated. The
-/// '`--tty`' flag disables the automatic detection and sets _Tp-Note_ in
-/// "console" mode, where only the non GUI editor (see configuration variable:
-/// '`app_args.editor_console`') and no viewer is launched. If this is set
-/// to `true` _Tp-Note_ starts in console mode permanently.
-const ARG_DEFAULT_TTY: bool = false;
-
-/// Default value for the command line flag `--add-header`. If unset,
-/// _Tp-Note_ exits of when it tries to open a text file without a YAML
-/// header. When this flag is set, the missing header is constructed by
-/// means of the text file's filename and creation date.
-const ARG_DEFAULT_ADD_HEADER: bool = true;
-
-/// By default clipboard support is enabled, can be disabled
-/// in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
-/// false.
-const CLIPBOARD_READ_ENABLED: bool = true;
-
-/// Should the clipboard be emptied when tp-note closes?
-/// Default value.
-const CLIPBOARD_EMPTY_ENABLED: bool = true;
-
-/// Default command line argument list when launching the web browser.
-/// The list is executed item by item until an installed web browser is found.
-/// Can be changed in config file.
-#[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-const APP_ARGS_BROWSER: &[&[&str]] = &[
-    &[
-        "flatpak",
-        "run",
-        "org.mozilla.firefox",
-        "--new-window",
-        "--private-window",
-    ],
-    &["firefox", "--new-window", "--private-window"],
-    &["firefox-esr", "--new-window", "--private-window"],
-    &[
-        "flatpak",
-        "run",
-        "com.github.Eloston.UngoogledChromium",
-        "--new-window",
-        "--incognito",
-    ],
-    &[
-        "flatpak",
-        "run",
-        "org.chromium.Chromium",
-        "--new-window",
-        "--incognito",
-    ],
-    &["chromium-browser", "--new-window", "--incognito"],
-    &["chrome", "--new-window", "--incognito"],
-];
-#[cfg(target_family = "windows")]
-const APP_ARGS_BROWSER: &[&[&str]] = &[
-    &[
-        "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
-        "--new-window",
-        "--private-window",
-    ],
-    &[
-        "C:\\Program Files\\Google\\Chrome\\Application\\chrome",
-        "--new-window",
-        "--incognito",
-    ],
-    &[
-        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-        "--inprivate",
-    ],
-];
-// Some info about launching programs on iOS:
-//[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
-#[cfg(all(target_family = "unix", target_vendor = "apple"))]
-const APP_ARGS_BROWSER: &[&[&str]] = &[];
-
-/// Default command line argument list when launching external editor.
-/// The editor list is executed item by item until an editor is found.
-/// Can be changed in config file.
-#[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-const APP_ARGS_EDITOR: &[&[&str]] = &[
-    &["alacritty", "-e", "hx"],
-    &["alacritty", "-e", "nvim"],
-    &["codium", "-w", "-n"],
-    &["flatpak", "run", "com.vscodium.codium", "-w", "-n"],
-    &["code", "-w", "-n"],
-    &["flatpak", "run", "com.visualstudio.code", "-w", "-n"],
-    &["subl", "-w"],
-    // Disable Typora until bug fix:
-    // https://github.com/typora/typora-issues/issues/4633
-    //    &["typora"],
-    &["flatpak", "run", "org.gnome.gitlab.somas.Apostrophe"],
-    &["retext"],
-    &["nvim-qt", "--nofork"],
-    &["gvim", "--nofork"],
-    &["geany", "-s", "-i", "-m"],
-    &["gedit", "-w"],
-    &["mousepad", "--disable-server"],
-    &["leafpad"],
-];
-#[cfg(target_family = "windows")]
-const APP_ARGS_EDITOR: &[&[&str]] = &[
-    // Disable Typora until bug fix:
-    // https://github.com/typora/typora-issues/issues/4633
-    //    &["C:\\Program Files\\Typora\\Typora.exe"],
-    &[
-        "C:\\Program Files\\Mark Text\\Mark Text.exe",
-        "--new-window",
-    ],
-    &[
-        "{{get_env(name=\"LOCALAPPDATA\")}}\\Programs\\Microsoft VS Code\\Code.exe",
-        "-n",
-        "-w",
-    ],
-    &[
-        "{{get_env(name=\"LOCALAPPDATA\")}}\\Programs\\VSCodium\\VSCodium.exe",
-        "-n",
-        "-w",
-    ],
-    &["C:\\Program Files\\Microsoft VS Code\\Code.exe", "-n", "-w"],
-    &[
-        "C:\\Program Files\\Notepad++\\notepad++.exe",
-        "-nosession",
-        "-multiInst",
-    ],
-    &["C:\\Windows\\notepad.exe"],
-];
-// Some info about launching programs on iOS:
-//[dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
-#[cfg(all(target_family = "unix", target_vendor = "apple"))]
-const APP_ARGS_EDITOR: &[&[&str]] = &[
-    &["code", "-w", "-n"],
-    &["typora"],
-    &["marktext", "--no-sandbox"],
-    &["gvim", "--nofork"],
-    &["mate"],
-    &["open", "-a", "TextEdit"],
-    &["open", "-a", "TextMate"],
-    &["open"],
-];
-
-/// Default command line argument list when launching an external editor
-/// and no graphical environment is available (`DISPLAY=''`).
-/// This lists console file editors only.
-/// The editor list is executed item by item until an editor is found.
-/// Can be changed in config file.
-#[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-const APP_ARGS_EDITOR_CONSOLE: &[&[&str]] =
-    &[&["hx"], &["nvim"], &["nano"], &["vim"], &["emacs"], &["vi"]];
-#[cfg(target_family = "windows")]
-const APP_ARGS_EDITOR_CONSOLE: &[&[&str]] = &[&["hx"], &["nvim"]];
-// Some info about launching programs on iOS:
-// [dshell.pdf](https://www.stata.com/manuals13/dshell.pdf)
-#[cfg(all(target_family = "unix", target_vendor = "apple"))]
-const APP_ARGS_EDITOR_CONSOLE: &[&[&str]] = &[
-    &["hx"],
-    &["nvim"],
-    &["nano"],
-    &["pico"],
-    &["vim"],
-    &["emacs"],
-    &["vi"],
-];
-
-/// When Tp-Note starts, it launches two external applications: some text editor
-/// and the viewer (web browser). By default the two programs are launched at
-/// the same time (`VIEWER_STARTUP_DELAY==0`). If `VIEWER_STARTUP_DELAY>0` the
-/// viewer (web browser) will be launched `VIEWER_STARTUP_DELAY` milliseconds
-/// after the text editor. If `VIEWER_STARTUP_DELAY<0` the viewer will be
-/// started first. Common values are `-1000`, `0` and `1000`.
-const VIEWER_STARTUP_DELAY: isize = 500;
-
-/// When set to true, the viewer feature is automatically disabled when
-/// _Tp-Note_ encounters an `.md` file without header.  Experienced users can
-/// set this to `true`. This setting is ignored, meaning is considered `false`,
-/// if `ARG_DEFAULT_ADD_HEADER=true` or `ARGS.add_header=true` or
-/// `ARGS.viewer=true`.
-const VIEWER_MISSING_HEADER_DISABLES: bool = false;
-
-/// How often should the file watcher check for changes?
-/// Delay in milliseconds. Maximum value is 2000.
-const VIEWER_NOTIFY_PERIOD: u64 = 200;
-
-/// The maximum number of TCP connections the HTTP server can handle at the same
-/// time. In general, the serving and live update of the HTML rendition of the
-/// note file, requires normally 3 TCP connections: 1 old event channel (that is
-/// still open from the previous update), 1 TCP connection to serve the HTML,
-/// the local images (and referenced documents), and 1 new event channel.  In
-/// practise, stale connection are not always closed immediately. Hence 4 open
-/// connections are not uncommon.
-const VIEWER_TCP_CONNECTIONS_MAX: usize = 16;
-
-/// Served file types with corresponding mime types.
-/// The first entry per line is the file extension in lowercase(!), the second the
-/// corresponding mime type.  Embedded files with types other than those listed
-/// here are silently ignored.  Note, that image files must be located in the
-/// same or in the note's parent directory.
-const VIEWER_SERVED_MIME_TYPES: &[&[&str]] = &[
-    &["md", "text/x-markdown"],
-    &["txt", "text/plain"],
-    &["apng", "image/apng"],
-    &["avif", "image/avif"],
-    &["bmp", "image/bmp"],
-    &["gif", "image/gif"],
-    &["html", "text/html"],
-    &["htm", "text/html"],
-    &["ico", "image/vnd.microsoft.icon"],
-    &["jpeg", "image/jpeg"],
-    &["jpg", "image/jpeg"],
-    &["pdf", "application/pdf"],
-    &["png", "image/png"],
-    &["svg", "image/svg+xml"],
-    &["tiff", "image/tiff"],
-    &["tif", "image/tiff"],
-    &["webp", "image/webp"],
-    &["mp3", "audio/mp3"],
-    &["ogg", "audio/ogg"],
-    &["oga", "audio/ogg"],
-    &["weba", "audio/webm"],
-    &["flac", "audio/flac"],
-    &["wav", "audio/wav"],
-    &["opus", "audio/opus"],
-    &["mp4", "video/mp4"],
-    &["ogv", "video/ogg"],
-    &["webm", "video/webm"],
-    &["ogx", "application/ogg"],
-];
-
-/// For security reasons, Tp-Note's internal viewer only displays a limited
-/// number number of Tp-Note files when browsing between files.
-/// This variable limits this number.
-const VIEWER_DISPLAYED_TPNOTE_COUNT_MAX: usize = 20;
+/// Default configuragtion.
+pub(crate) const CFG_GUI_TOML: &str = include_str!("config_default.toml");
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
@@ -311,6 +61,20 @@ pub struct Cfg {
     pub tmpl_html: TmplHtml,
 }
 
+/// Configuration data, subset of `Cfg`.
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct GuiCfg {
+    /// Version number of the config file as String -or-
+    /// a text message explaining why we could not load the
+    /// configuration file.
+    pub arg_default: ArgDefault,
+    pub clipboard: Clipboard,
+    pub app_args_unix: AppArgs,
+    pub app_args_windows: AppArgs,
+    pub app_args_mac: AppArgs,
+    pub viewer: Viewer,
+}
+
 /// Command line arguments, deserialized form configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ArgDefault {
@@ -323,9 +87,24 @@ pub struct ArgDefault {
     pub export_link_rewriting: LocalLinkKind,
 }
 
+/// Default values for command line arguments.
+impl ::std::default::Default for ArgDefault {
+    fn default() -> Self {
+        ArgDefault {
+            debug: LevelFilter::Error,
+            edit: false,
+            no_filename_sync: false,
+            popup: false,
+            tty: false,
+            add_header: true,
+            export_link_rewriting: LocalLinkKind::default(),
+        }
+    }
+}
+
 /// Configuration of clipboard behaviour, deserialized from the
 /// configuration file.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Clipboard {
     pub read_enabled: bool,
     pub empty_enabled: bool,
@@ -333,7 +112,7 @@ pub struct Clipboard {
 
 /// Arguments lists for invoking external applications, deserialized from the
 /// configuration file.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct AppArgs {
     pub browser: Vec<Vec<String>>,
     pub editor: Vec<Vec<String>>,
@@ -342,7 +121,7 @@ pub struct AppArgs {
 
 /// Configuration data for the viewer feature, deserialized from the
 /// configuration file.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Viewer {
     pub startup_delay: isize,
     pub missing_header_disables: bool,
@@ -357,13 +136,17 @@ pub struct Viewer {
 /// configuration file on disk.
 impl ::std::default::Default for Cfg {
     fn default() -> Self {
-        let version = match VERSION {
-            Some(v) => v.to_string(),
-            None => "".to_string(),
-        };
+        // Merge source 1.
+        let gui_cfg: GuiCfg = toml::from_str(CFG_GUI_TOML)
+            .expect("can not parse included configuration `tpnote_gui.toml`");
 
-        Cfg {
-            version,
+        // Merge source 2.
+        let lib_cfg = LibCfg::default();
+
+        // Merge destination.
+        // Some dummy defaults, jsut to construct an object.
+        let mut cfg = Cfg {
+            version: String::new(),
             arg_default: ArgDefault::default(),
             tmpl: Tmpl::default(),
             app_args: AppArgs::default(),
@@ -371,69 +154,27 @@ impl ::std::default::Default for Cfg {
             filename: Filename::default(),
             viewer: Viewer::default(),
             tmpl_html: TmplHtml::default(),
-        }
-    }
-}
+        };
 
-/// Default values for command line arguments.
-impl ::std::default::Default for ArgDefault {
-    fn default() -> Self {
-        ArgDefault {
-            debug: ARG_DEFAULT_DEBUG,
-            edit: ARG_DEFAULT_EDITOR,
-            no_filename_sync: ARG_DEFAULT_NO_FILENAME_SYNC,
-            popup: ARG_DEFAULT_POPUP,
-            tty: ARG_DEFAULT_TTY,
-            add_header: ARG_DEFAULT_ADD_HEADER,
-            export_link_rewriting: LocalLinkKind::Long,
-        }
-    }
-}
-
-/// Default values for invoking external applications.
-impl ::std::default::Default for AppArgs {
-    fn default() -> Self {
-        AppArgs {
-            editor: APP_ARGS_EDITOR
-                .iter()
-                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
-                .collect(),
-            editor_console: APP_ARGS_EDITOR_CONSOLE
-                .iter()
-                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
-                .collect(),
-            browser: APP_ARGS_BROWSER
-                .iter()
-                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
-                .collect(),
-        }
-    }
-}
-
-/// Default values for clipboard behaviour.
-impl ::std::default::Default for Clipboard {
-    fn default() -> Self {
-        Clipboard {
-            read_enabled: CLIPBOARD_READ_ENABLED,
-            empty_enabled: CLIPBOARD_EMPTY_ENABLED,
-        }
-    }
-}
-
-/// Default values for the viewer feature.
-impl ::std::default::Default for Viewer {
-    fn default() -> Self {
-        Viewer {
-            startup_delay: VIEWER_STARTUP_DELAY,
-            missing_header_disables: VIEWER_MISSING_HEADER_DISABLES,
-            notify_period: VIEWER_NOTIFY_PERIOD,
-            tcp_connections_max: VIEWER_TCP_CONNECTIONS_MAX,
-            served_mime_types: VIEWER_SERVED_MIME_TYPES
-                .iter()
-                .map(|i| i.iter().map(|a| (*a).to_string()).collect())
-                .collect(),
-            displayed_tpnote_count_max: VIEWER_DISPLAYED_TPNOTE_COUNT_MAX,
-        }
+        cfg.version = match PKG_VERSION {
+            Some(v) => v.to_string(),
+            None => "".to_string(),
+        };
+        // Overwrite with defaults from `tpnote_lib`.
+        let _ = mem::replace(&mut cfg.filename, lib_cfg.filename);
+        let _ = mem::replace(&mut cfg.tmpl, lib_cfg.tmpl);
+        let _ = mem::replace(&mut cfg.tmpl_html, lib_cfg.tmpl_html);
+        // Overwrite with defaults from `tpnote_gui.toml`.
+        let _ = mem::replace(&mut cfg.arg_default, gui_cfg.arg_default);
+        let _ = mem::replace(&mut cfg.clipboard, gui_cfg.clipboard);
+        #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
+        let _ = mem::replace(&mut cfg.app_args, gui_cfg.app_args_unix);
+        #[cfg(target_family = "windows")]
+        let _ = mem::replace(&mut cfg.app_args, gui_cfg.app_args_windows);
+        #[cfg(all(target_family = "unix", target_vendor = "apple"))]
+        let _ = mem::replace(&mut cfg.app_args, gui_cfg.app_args_mac);
+        let _ = mem::replace(&mut cfg.viewer, gui_cfg.viewer);
+        cfg
     }
 }
 

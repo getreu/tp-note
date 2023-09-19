@@ -36,6 +36,7 @@ use crate::config::backup_config_file;
 use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
 use crate::config::CONFIG_PATH;
+use crate::config::PKG_VERSION;
 #[cfg(feature = "read-clipboard")]
 use crate::error::WorkflowError;
 use crate::logger::AppLogger;
@@ -56,8 +57,6 @@ use std::process;
 #[cfg(feature = "read-clipboard")]
 use tpnote_lib::error::NoteError;
 
-/// Use the version number defined in `../Cargo.toml`.
-const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 /// Set the minimum required config file version that is compatible with this
 /// Tp-Note version.
 ///
@@ -72,7 +71,7 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 /// 2. Require the config file to be of the same version as this binary.
 ///
 ///    ```no_run
-///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
+///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = PKG_VERSION;
 ///    ```
 ///
 /// 3. Disable minimum version check; all config file versions are allowed.
@@ -81,7 +80,7 @@ const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
 ///    ```
 ///
-const MIN_CONFIG_FILE_VERSION: Option<&'static str> = VERSION;
+const MIN_CONFIG_FILE_VERSION: Option<&'static str> = PKG_VERSION;
 /// Authors.
 const AUTHOR: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 /// Copyright.
@@ -197,7 +196,7 @@ fn main() {
         features.push("viewer".to_string());
 
         let about = About {
-            version: VERSION.unwrap_or("unknown").to_string(),
+            version: PKG_VERSION.unwrap_or("unknown").to_string(),
             features,
             config_file_path: CONFIG_PATH
                 .as_ref()

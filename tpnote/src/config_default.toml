@@ -1,0 +1,240 @@
+[arg_default]
+# Default value for the command line option `--debug`.  Determines the maximum
+# debug level events must have, to be logged.  If the command line option
+# `--debug` is present, its value will be used instead.
+debug = "ERROR"
+
+# Default value for the command line flag `--edit` to disable file watcher,
+# (Markdown)-renderer, html server and a web browser launcher set to `true`.
+edit = false
+
+# Default value for the command line flag `--no-filename-sync` to disable
+# the title to filename synchronisation mechanism permanently.
+# If set to `true`, the corresponding command line flag is ignored.
+no_filename_sync = false
+
+# Default value for the command line flag `--popup`. If the command line flag
+# `--popup` or `POPUP` is `true`, all log events will also trigger the
+# appearance of a popup alert window.  Note, that error level debug events
+# will always pop up, regardless of `--popup` and `POPUP` (unless
+# `--debug=off`).
+popup = true
+
+# Default value for the command line flag `--tty`. _Tp-Note_ tries different
+# heuristics to detect weather a graphic environment is available or not. For
+# example, under Linux, the '`DISPLAY`' environment variable is evaluated. The
+# '`--tty`' flag disables the automatic detection and sets _Tp-Note_ in
+# "console" mode, where only the non GUI editor (see configuration variable:
+# '`app_args.editor_console`') and no viewer is launched. If this is set
+# to `true` _Tp-Note_ starts in console mode permanently.
+tty = false
+
+# Default value for the command line flag `--add-header`. If unset,
+# _Tp-Note_ exits of when it tries to open a text file without a YAML
+# header. When this flag is set, the missing header is constructed by
+# means of the text file's filename and creation date.
+add_header = true
+
+# Rewrite relative local links. Base: ".tpnoteroot".
+export_link_rewriting = "Long"
+
+
+[clipboard]
+# By default clipboard support is enabled, can be disabled
+# in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
+# false.
+read_enabled = true
+
+# Should the clipboard be emptied when tp-note closes?
+# Default value.
+empty_enabled = true
+
+
+[app_args_unix]
+# Default command line argument list when launching the web browser.
+# The list is executed item by item until an installed web browser is found.
+# Can be changed in config file.
+browser = [
+    [
+    "flatpak",
+    "run",
+    "org.mozilla.firefox",
+    "--new-window",
+    "--private-window",
+],
+    [
+    "firefox",
+    "--new-window",
+    "--private-window",
+],
+    [
+    "firefox-esr",
+    "--new-window",
+    "--private-window",
+],
+    [
+    "flatpak",
+    "run",
+    "com.github.Eloston.UngoogledChromium",
+    "--new-window",
+    "--incognito",
+],
+    [
+    "flatpak",
+    "run",
+    "org.chromium.Chromium",
+    "--new-window",
+    "--incognito",
+],
+    [
+    "chromium-browser",
+    "--new-window",
+    "--incognito",
+],
+    [
+    "chrome",
+    "--new-window",
+    "--incognito",
+],
+]
+
+# Default command line argument list when launching external editor.
+# The editor list is executed item by item until an editor is found.
+# Can be changed in config file.
+editor = [
+    [ "alacritty", "-e", "hx", ],
+    [ "alacritty", "-e", "nvim", ],
+    [ "codium", "-w", "-n", ],
+    [ "flatpak", "run", "com.vscodium.codium", "-w", "-n", ],
+    [ "code", "-w", "-n", ],
+    [ "flatpak", "run", "com.visualstudio.code", "-w", "-n", ],
+    [ "subl", "-w", ],
+    [ "flatpak", "run", "org.gnome.gitlab.somas.Apostrophe", ],
+    ["retext"],
+    [ "nvim-qt", "--nofork", ],
+    [ "gvim", "--nofork", ],
+    [ "geany", "-s", "-i", "-m", ],
+    [ "gedit", "-w", ],
+    [ "mousepad", "--disable-server", ],
+    ["leafpad"],
+]
+
+# Default command line argument list when launching an external editor
+# and no graphical environment is available (`DISPLAY=''`).
+# This lists console file editors only.
+# The editor list is executed item by item until an editor is found.
+# Can be changed in config file.
+editor_console = [
+    ["hx"],
+    ["nvim"],
+    ["nano"],
+    ["vim"],
+    ["emacs"],
+    ["vi"],
+]
+
+
+[app_args_windows]
+browser = [
+    [
+        "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
+        "--new-window",
+        "--private-window",
+    ],
+    [
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome",
+        "--new-window",
+        "--incognito",
+    ],
+    [
+        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+        "--inprivate",
+    ],
+]
+editor = [
+    [
+        "C:\\Program Files\\Mark Text\\Mark Text.exe",
+        "--new-window",
+    ],
+    [
+        "{{get_env(name=\"LOCALAPPDATA\")}}\\Programs\\Microsoft VS Code\\Code.exe",
+        "-n",
+        "-w",
+    ],
+    [
+        "{{get_env(name=\"LOCALAPPDATA\")}}\\Programs\\VSCodium\\VSCodium.exe",
+        "-n",
+        "-w",
+    ],
+    ["C:\\Program Files\\Microsoft VS Code\\Code.exe", "-n", "-w"],
+    [
+        "C:\\Program Files\\Notepad++\\notepad++.exe",
+        "-nosession",
+        "-multiInst",
+    ],
+    ["C:\\Windows\\notepad.exe"],
+]
+editor_console = [
+    ["hx"],
+    ["nvim"],
+]
+
+
+[app_args_mac]
+browser = [[]]
+editor = [
+    ["code", "-w", "-n"],
+    ["typora"],
+    ["marktext", "--no-sandbox"],
+    ["gvim", "--nofork"],
+    ["mate"],
+    ["open", "-a", "TextEdit"],
+    ["open", "-a", "TextMate"],
+    ["open"],
+]
+editor_console = [
+    ["hx"],
+    ["nvim"],
+    ["nano"],
+    ["pico"],
+    ["vim"],
+    ["emacs"],
+    ["vi"],
+]
+
+[viewer]
+startup_delay = 500
+missing_header_disables = false
+notify_period = 200
+tcp_connections_max = 16
+served_mime_types = [
+    [ "md", "text/x-markdown", ],
+    [ "txt", "text/plain", ],
+    [ "apng", "image/apng", ],
+    [ "avif", "image/avif", ],
+    [ "bmp", "image/bmp", ],
+    [ "gif", "image/gif", ],
+    [ "html", "text/html", ],
+    [ "htm", "text/html", ],
+    [ "ico", "image/vnd.microsoft.icon", ],
+    [ "jpeg", "image/jpeg", ],
+    [ "jpg", "image/jpeg", ],
+    [ "pdf", "application/pdf", ],
+    [ "png", "image/png", ],
+    [ "svg", "image/svg+xml", ],
+    [ "tiff", "image/tiff", ],
+    [ "tif", "image/tiff", ],
+    [ "webp", "image/webp", ],
+    [ "mp3", "audio/mp3", ],
+    [ "ogg", "audio/ogg", ],
+    [ "oga", "audio/ogg", ],
+    [ "weba", "audio/webm", ],
+    [ "flac", "audio/flac", ],
+    [ "wav", "audio/wav", ],
+    [ "opus", "audio/opus", ],
+    [ "mp4", "video/mp4", ],
+    [ "ogv", "video/ogg", ],
+    [ "webm", "video/webm", ],
+    [ "ogx", "application/ogg", ],
+]
+displayed_tpnote_count_max = 20

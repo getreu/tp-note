@@ -233,7 +233,6 @@ impl Context {
     /// use tpnote_lib::settings::update_settings;
     /// use tpnote_lib::context::Context;
     /// use tpnote_lib::config::TMPL_VAR_EXTENSION_DEFAULT; // `extension_default`
-    /// use tpnote_lib::config::FILENAME_EXTENSION_DEFAULT; // usually `md`
     /// std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
     /// update_settings().unwrap();
     ///
@@ -242,7 +241,7 @@ impl Context {
     ///
     /// // For most platforms `context.get("extension_default")` is `md`
     /// assert_eq!(&context.get(TMPL_VAR_EXTENSION_DEFAULT).unwrap().to_string(),
-    ///     &format!("\"{FILENAME_EXTENSION_DEFAULT}\""));
+    ///     &format!("\"md\""));
     /// ```
     fn insert_settings(&mut self) {
         let settings = SETTINGS.read_recursive();
