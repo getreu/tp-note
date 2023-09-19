@@ -563,7 +563,7 @@ fn render_html<T: Content>(
 /// let notefile = temp_dir().join("20221030-My day3--Note.md");
 /// fs::write(&notefile, raw_error.as_bytes()).unwrap();
 /// let mut context = Context::from(&notefile);
-/// let e = NoteError::MissingFrontMatterField { field_name: "title".to_string() };
+/// let e = NoteError::FrontMatterFieldMissing { field_name: "title".to_string() };
 ///
 /// // Start test
 /// let mut context = Context::from(&notefile);

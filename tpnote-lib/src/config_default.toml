@@ -120,10 +120,8 @@ extensions_no_viewer = ["t2t"]
 # The first item per line is the checked variable name, the following
 # the applied tests (see `AssertPrecondition`).
 filter_assert_preconditions = [
-    [ "fm_title", [ "IsDefined", "IsString", ], ],
-    [ "fm_subtitle", ["IsString"], ],
-    [ "fm_author", ["IsString"], ],
-    [ "fm_date", ["IsString"], ],
+    [ "fm_title", [ "IsDefined", "IsString", "IsNotEmptyString", "IsNotCompound"], ],
+    [ "fm_subtitle", ["IsString", "IsNotCompound"], ],
     [ "fm_lang", ["IsString"], ],
     [ "fm_sort_tag", ["IsNotCompound", "HasOnlySortTagChars", ], ],
     [ "fm_file_ext", ["IsString", "IsTpnoteExtension"], ],
@@ -243,7 +241,8 @@ from_clipboard_yaml_content = """
 # Default filename template used when the stdin or the clipboard contains a
 # string and one of them has a valid YAML header.
 from_clipboard_yaml_filename = """
-{%- set tag = fm_sort_tag | default(value = now() | date(format='%Y%m%d')) -%}
+{%- set tag = fm_sort_tag | default(value = now() | date(format='%Y%m%d')) \
+   | as_str -%}
 {{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
@@ -367,7 +366,7 @@ annotate_file_filename = """
 # on disk, corresponds to the note's meta data stored in its front matter. If
 # it is not the case, the note's filename will be renamed.
 sync_filename = """
-{%- set tag = fm_sort_tag | default(value = path | file_sort_tag) -%}
+{%- set tag = fm_sort_tag | default(value = path | file_sort_tag) | as_str -%}
 {{ fm_title | default(value='No title') | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}"""

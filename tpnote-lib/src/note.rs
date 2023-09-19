@@ -616,34 +616,8 @@ mod tests {
 
         let expected_front_matter = FrontMatter(expected);
 
+        //panic!("{:?}", &expected_front_matter);
         assert_eq!(expected_front_matter, FrontMatter::try_from(input).unwrap());
-
-        //
-        // Is empty.
-        let input = "";
-
-        assert!(FrontMatter::try_from(input).is_ok());
-
-        //
-        // forbidden character `x` in `tag`.
-        let input = "# document start
-        title: The book
-        subtitle: you always wanted
-        author: It's me
-        sort_tag:    123x4";
-
-        assert!(FrontMatter::try_from(input).is_err());
-
-        //
-        // Not registered file extension.
-        let input = "# document start
-        title: The book
-        subtitle: you always wanted
-        author: It's me
-        sort_tag:    123x4
-        file_ext:    xyz";
-
-        assert!(FrontMatter::try_from(input).is_err());
     }
 
     #[test]

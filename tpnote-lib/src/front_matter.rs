@@ -2,10 +2,9 @@
 //! In this documentation, the terms “YAML header”, ”header” and ”front matter"
 //! are used as synonyms for the note's meta data block at the beginning
 //! of the text file. Technically this is a wrapper around a `tera::Map`.
+use crate::config::AssertPrecondition;
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_FM_;
-use crate::config::TMPL_VAR_FM_FILE_EXT;
-use crate::config::TMPL_VAR_FM_SORT_TAG;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::markup_language::MarkupLanguage;
@@ -13,6 +12,7 @@ use std::matches;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::str;
+use tera::Value;
 
 #[derive(Debug, Eq, PartialEq)]
 /// Represents the front matter of the note. This is a newtype
@@ -23,66 +23,119 @@ impl FrontMatter {
     /// Checks if the front matter variables satisfy preconditions.
     #[inline]
     pub fn assert_precoditions(&self) -> Result<(), NoteError> {
-        // TODO
-        Ok(())
-    }
-
-    /// Runtime checks for field values:
-    /// * Assert, that all characters in the front matter variable
-    ///   `TMPL_VAR_FM_SORT_TAG` are in the set `filename.sort_tag_chars`.
-    /// * Is the value of the field `TMPL_VAR_FM_FILE_EXT` listed in
-    //    `filename.extensions_*`?
-    #[inline]
-    fn assert_value_constraints(&self) -> Result<(), NoteError> {
         let lib_cfg = LIB_CFG.read_recursive();
+        for (key, conditions) in lib_cfg.tmpl.filter_assert_preconditions.iter() {
+            let key = key.trim_start_matches(TMPL_VAR_FM_);
+            if let Some(value) = self.get(key) {
+                for cond in conditions {
+                    match cond {
+                        AssertPrecondition::IsDefined => {}
+                        AssertPrecondition::IsString => {
+                            if !matches!(value, Value::String(..)) {
+                                return Err(NoteError::FrontMatterFieldIsNotString {
+                                    field_name: key.to_owned(),
+                                });
+                            }
+                        }
+                        AssertPrecondition::IsNotEmptyString => {
+                            if let Value::String(s) = value {
+                                if s.is_empty() {
+                                    return Err(NoteError::FrontMatterFieldIsEmptyString {
+                                        field_name: key.to_owned(),
+                                    });
+                                } else {
+                                    return Err(NoteError::FrontMatterFieldIsNotString {
+                                        field_name: key.to_owned(),
+                                    });
+                                }
+                            }
+                        }
+                        AssertPrecondition::IsNumber => {
+                            if !matches!(value, Value::Number(..)) {
+                                return Err(NoteError::FrontMatterFieldIsNotNumber {
+                                    field_name: key.to_owned(),
+                                });
+                            }
+                        }
+                        AssertPrecondition::IsBool => {
+                            if !matches!(value, Value::Bool(..)) {
+                                return Err(NoteError::FrontMatterFieldIsNotBool {
+                                    field_name: key.to_owned(),
+                                });
+                            }
+                        }
+                        AssertPrecondition::IsNotCompound => {
+                            if matches!(value, Value::Array(..))
+                                || matches!(value, Value::Object(..))
+                            {
+                                return Err(NoteError::FrontMatterFieldIsCompound {
+                                    field_name: key.to_owned(),
+                                });
+                            }
+                        }
+                        AssertPrecondition::HasOnlySortTagChars => {
+                            let sort_tag = if let Value::String(s) = value {
+                                s.to_owned()
+                            } else {
+                                value.to_string()
+                            };
+                            if !sort_tag.is_empty() {
+                                // Check for forbidden characters.
+                                if !sort_tag
+                                    .trim_start_matches(
+                                        &lib_cfg
+                                            .filename
+                                            .sort_tag_chars
+                                            .chars()
+                                            .collect::<Vec<char>>()[..],
+                                    )
+                                    .is_empty()
+                                {
+                                    return Err(
+                                        NoteError::FrontMatterFieldHasNotOnlySortTagChars {
+                                            sort_tag: sort_tag.to_owned(),
+                                            sort_tag_chars: lib_cfg
+                                                .filename
+                                                .sort_tag_chars
+                                                .escape_default()
+                                                .to_string(),
+                                        },
+                                    );
+                                }
+                            };
+                        }
+                        AssertPrecondition::IsTpnoteExtension => {
+                            let file_ext = if let Value::String(s) = value {
+                                s.to_owned()
+                            } else {
+                                value.to_string()
+                            };
 
-        // `sort_tag` has additional constrains to check.
-        if let Some(tera::Value::String(sort_tag)) =
-            self.get(TMPL_VAR_FM_SORT_TAG.trim_start_matches(TMPL_VAR_FM_))
-        {
-            if !sort_tag.is_empty() {
-                // Check for forbidden characters.
-                if !sort_tag
-                    .trim_start_matches(
-                        &lib_cfg
-                            .filename
-                            .sort_tag_chars
-                            .chars()
-                            .collect::<Vec<char>>()[..],
-                    )
-                    .is_empty()
-                {
-                    return Err(NoteError::SortTagVarInvalidChar {
-                        sort_tag: sort_tag.to_owned(),
-                        sort_tag_chars: lib_cfg
-                            .filename
-                            .sort_tag_chars
-                            .escape_default()
-                            .to_string(),
-                    });
+                            let extension_is_unknown =
+                                matches!(MarkupLanguage::from(&*file_ext), MarkupLanguage::None);
+                            if extension_is_unknown {
+                                return Err(NoteError::FrontMatterFieldIsNotTpnoteExtension {
+                                    extension: Box::new(file_ext.to_owned()),
+                                    md_ext: Box::new(lib_cfg.filename.extensions_md.to_owned()),
+                                    rst_ext: Box::new(lib_cfg.filename.extensions_rst.to_owned()),
+                                    html_ext: Box::new(lib_cfg.filename.extensions_html.to_owned()),
+                                    txt_ext: Box::new(lib_cfg.filename.extensions_txt.to_owned()),
+                                    no_viewer_ext: Box::new(
+                                        lib_cfg.filename.extensions_no_viewer.to_owned(),
+                                    ),
+                                });
+                            }
+                        }
+                        AssertPrecondition::NoOperation => {}
+                    } //
                 }
-            };
-        };
-
-        // `extension` has also additional constrains to check.
-        // Is `extension` listed in `CFG.filename.extensions_*`?
-        if let Some(tera::Value::String(file_ext)) =
-            self.get(TMPL_VAR_FM_FILE_EXT.trim_start_matches(TMPL_VAR_FM_))
-        {
-            let extension_is_unknown =
-                matches!(MarkupLanguage::from(&**file_ext), MarkupLanguage::None);
-            if extension_is_unknown {
-                return Err(NoteError::FileExtNotRegistered {
-                    extension: Box::new(file_ext.to_owned()),
-                    md_ext: Box::new(lib_cfg.filename.extensions_md.to_owned()),
-                    rst_ext: Box::new(lib_cfg.filename.extensions_rst.to_owned()),
-                    html_ext: Box::new(lib_cfg.filename.extensions_html.to_owned()),
-                    txt_ext: Box::new(lib_cfg.filename.extensions_txt.to_owned()),
-                    no_viewer_ext: Box::new(lib_cfg.filename.extensions_no_viewer.to_owned()),
+                //
+            } else if conditions.contains(&AssertPrecondition::IsDefined) {
+                return Err(NoteError::FrontMatterFieldMissing {
+                    field_name: key.to_owned(),
                 });
             }
         }
-        //
         Ok(())
     }
 }
@@ -103,8 +156,6 @@ impl TryFrom<&str> for FrontMatter {
                 source_error: e,
             })?;
         let fm = FrontMatter(map);
-
-        fm.assert_value_constraints()?;
 
         Ok(fm)
     }
@@ -128,6 +179,8 @@ impl DerefMut for FrontMatter {
 
 #[cfg(test)]
 mod tests {
+    use crate::error::NoteError;
+
     #[test]
     fn test_deserialize() {
         use super::FrontMatter;
@@ -180,29 +233,75 @@ mod tests {
         //
         // Is empty.
         let input = "";
-
-        assert!(FrontMatter::try_from(input).is_ok());
+        let res = FrontMatter::try_from(input).unwrap();
+        assert!(matches!(
+            res.assert_precoditions().unwrap_err(),
+            NoteError::FrontMatterFieldMissing { .. }
+        ));
 
         //
-        // forbidden character `x` in `tag`.
+        // Forbidden character `x` in `tag`.
         let input = "# document start
         title: The book
-        subtitle: you always wanted
-        author: It's me
         sort_tag:    123x4";
 
-        assert!(FrontMatter::try_from(input).is_err());
+        let res = FrontMatter::try_from(input).unwrap();
+        assert!(matches!(
+            res.assert_precoditions().unwrap_err(),
+            NoteError::FrontMatterFieldHasNotOnlySortTagChars { .. }
+        ));
+
+        //
+        // Should not be a compound type.
+        let input = "# document start
+        title: The book
+        sort_tag:
+        -    1234
+        -    456";
+
+        let res = FrontMatter::try_from(input).unwrap();
+        assert!(matches!(
+            res.assert_precoditions().unwrap_err(),
+            NoteError::FrontMatterFieldIsCompound { .. }
+        ));
+
+        //
+        // Should not be a compound type.
+        let input = "# document start
+        title: The book
+        sort_tag:
+          first:  1234
+          second: 456";
+
+        let res = FrontMatter::try_from(input).unwrap();
+        assert!(matches!(
+            res.assert_precoditions().unwrap_err(),
+            NoteError::FrontMatterFieldIsCompound { .. }
+        ));
 
         //
         // Not registered file extension.
         let input = "# document start
         title: The book
-        subtitle: you always wanted
-        author: It's me
-        sort_tag:    123x4
         file_ext:    xyz";
 
-        assert!(FrontMatter::try_from(input).is_err());
+        let res = FrontMatter::try_from(input).unwrap();
+        assert!(matches!(
+            res.assert_precoditions().unwrap_err(),
+            NoteError::FrontMatterFieldIsNotTpnoteExtension { .. }
+        ));
+
+        //
+        // Check `bool`
+        let input = "# document start
+        title: The book
+        filename_sync: error, here should be a bool";
+
+        let res = FrontMatter::try_from(input).unwrap();
+        assert!(matches!(
+            res.assert_precoditions().unwrap_err(),
+            NoteError::FrontMatterFieldIsNotBool { .. }
+        ));
     }
 
     #[test]

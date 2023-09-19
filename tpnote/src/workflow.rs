@@ -54,18 +54,22 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
         }
         Err(e) => {
             if (matches!(e, NoteError::InvalidFrontMatterYaml { .. })
-                || matches!(e, NoteError::MissingFrontMatter { .. })
-                || matches!(e, NoteError::MissingFrontMatterField { .. })
-                || matches!(e, NoteError::CompulsoryFrontMatterFieldIsEmpty { .. })
-                || matches!(e, NoteError::SortTagVarInvalidChar { .. })
-                || matches!(e, NoteError::FileExtNotRegistered { .. }))
+                || matches!(e, NoteError::FrontMatterMissing { .. })
+                || matches!(e, NoteError::FrontMatterFieldMissing { .. })
+                || matches!(e, NoteError::FrontMatterFieldIsEmptyString { .. })
+                || matches!(e, NoteError::FrontMatterFieldIsNotString { .. })
+                || matches!(e, NoteError::FrontMatterFieldIsNotNumber { .. })
+                || matches!(e, NoteError::FrontMatterFieldIsNotBool { .. })
+                || matches!(e, NoteError::FrontMatterFieldMissing { .. })
+                || matches!(e, NoteError::FrontMatterFieldHasNotOnlySortTagChars { .. })
+                || matches!(e, NoteError::FrontMatterFieldIsNotTpnoteExtension { .. }))
                 && !ARGS.batch
                 && ARGS.export.is_none()
             {
                 // Continue the workflow.
 
-                let missing_header = matches!(e, NoteError::MissingFrontMatter { .. })
-                    || matches!(e, NoteError::MissingFrontMatterField { .. });
+                let missing_header = matches!(e, NoteError::FrontMatterMissing { .. })
+                    || matches!(e, NoteError::FrontMatterFieldMissing { .. });
 
                 launch_viewer = *LAUNCH_VIEWER
                     && !(missing_header
@@ -112,8 +116,8 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
             // `path` has changed!
             Ok(p) => path = p,
             Err(e) => {
-                let missing_header = matches!(e, NoteError::MissingFrontMatter { .. })
-                    || matches!(e, NoteError::MissingFrontMatterField { .. });
+                let missing_header = matches!(e, NoteError::FrontMatterMissing { .. })
+                    || matches!(e, NoteError::FrontMatterFieldMissing { .. });
 
                 if missing_header && *LAUNCH_VIEWER {
                     // Silently ignore error.

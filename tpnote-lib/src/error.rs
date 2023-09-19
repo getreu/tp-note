@@ -153,14 +153,83 @@ pub enum NoteError {
          Please correct the front matter if this is\n\
          supposed to be a Tp-Note file. Ignore otherwise."
     )]
-    MissingFrontMatterField { field_name: String },
+    FrontMatterFieldMissing { field_name: String },
 
-    /// Remedy: enter a string.
+    /// Remedy: try to enclose with quotes.
     #[error(
-        "The value of the front matter field `{field_name}:`\n\
-         must be a non empty string."
+        "The type of the front matter field {field_name} `\n\
+         must be `String`. Example:\n\
+         \n\
+         \t~~~~~~~~~~~~~~\n\
+         \t---\n\
+         \t{field_name}: My string\n\
+         \t---\n\
+         \tsome text\n\
+         \t~~~~~~~~~~~~~~\n\
+         \n\
+         Hint: try to enclose with quotes."
     )]
-    CompulsoryFrontMatterFieldIsEmpty { field_name: String },
+    FrontMatterFieldIsNotString { field_name: String },
+
+    /// Remedy: try to enclose with quotes.
+    #[error(
+        "The front matter field {field_name} `\n\
+         must be a non empty `String`. Example:\n\
+         \n\
+         \t~~~~~~~~~~~~~~\n\
+         \t---\n\
+         \t{field_name}: My string\n\
+         \t---\n\
+         \tsome text\n\
+         \t~~~~~~~~~~~~~~"
+    )]
+    FrontMatterFieldIsEmptyString { field_name: String },
+
+    /// Remedy: try to remove possible quotes.
+    #[error(
+        "The type of the front matter field {field_name} `\n\
+         must be `Number`. Example:\n\
+         \n\
+         \t~~~~~~~~~~~~~~\n\
+         \t---\n\
+         \t{field_name}: 142\n\
+         \t---\n\
+         \tsome text\n\
+         \t~~~~~~~~~~~~~~\n\
+         \n\
+         Hint: try to remove possible quotes."
+    )]
+    FrontMatterFieldIsNotNumber { field_name: String },
+
+    /// Remedy: try to remove possible quotes.
+    #[error(
+        "The type of the front matter field {field_name} `\n\
+         must be `Bool`. Example:\n\
+         \n\
+         \t~~~~~~~~~~~~~~\n\
+         \t---\n\
+         \t{field_name}: false\n\
+         \t---\n\
+         \tsome text\n\
+         \t~~~~~~~~~~~~~~\n\
+         \n\
+         Hint: try to remove possible quotes."
+    )]
+    FrontMatterFieldIsNotBool { field_name: String },
+
+    /// Remedy: index the compound type?
+    #[error(
+        "The type of the front matter field {field_name} `\n\
+         must be `String`, `Number` or `Bool`. Example:\n\
+         \n\
+         \t~~~~~~~~~~~~~~\n\
+         \t---\n\
+         \t{field_name}: 20230912\n\
+         \t---\n\
+         \tsome text\n\
+         \t~~~~~~~~~~~~~~"
+    )]
+    FrontMatterFieldIsCompound { field_name: String },
 
     /// Remedy: check YAML syntax in the note's front matter.
     #[error(
@@ -192,7 +261,7 @@ pub enum NoteError {
          section. Is one `---` missing?\n\n\
          \t~~~~~~~~~~~~~~\n\
          \t---\n\
-         \t{compulsory_field}: \"My note\"\n\
+         \t{compulsory_field}: My note\n\
          \t---\n\
          \tsome text\n\
          \t~~~~~~~~~~~~~~\n\
@@ -200,19 +269,19 @@ pub enum NoteError {
          Please correct the front matter if this is\n\
          supposed to be a Tp-Note file. Ignore otherwise."
     )]
-    MissingFrontMatter { compulsory_field: String },
+    FrontMatterMissing { compulsory_field: String },
 
     /// Remedy: remove invalid characters.
     #[error(
         "The `sort_tag` header variable contains invalid\n\
          character(s):\n\n\
          \t---\n\
-         \tsort_tag = \"{sort_tag}\"\n\
+         \tsort_tag: {sort_tag}\n\
          \t---\n\n\
          Only the characters: \"{sort_tag_chars}\"\n\
          are allowed here."
     )]
-    SortTagVarInvalidChar {
+    FrontMatterFieldHasNotOnlySortTagChars {
         sort_tag: String,
         sort_tag_chars: String,
     },
@@ -221,7 +290,7 @@ pub enum NoteError {
     #[error(
         "The file extension:\n\
         \t---\n\
-        \tfile_ext=\"{extension}\"\n\
+        \tfile_ext: {extension}\n\
         \t---\n\
         is not registered as a valid Tp-Note-file in\n\
         the `filename.extensions_*` variables in your\n\
@@ -236,7 +305,7 @@ pub enum NoteError {
         extensions to the `filename.extensions_*`\n\
         variables in your configuration file."
     )]
-    FileExtNotRegistered {
+    FrontMatterFieldIsNotTpnoteExtension {
         extension: Box<String>,
         md_ext: Box<Vec<String>>,
         rst_ext: Box<Vec<String>>,
