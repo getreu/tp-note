@@ -1001,6 +1001,20 @@ mod tests {
         let result = prepend_filter(&to_value("").unwrap(), &args);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), to_value("'").unwrap());
+
+        // `with`
+        let mut args = HashMap::new();
+        args.insert("with".to_string(), to_value("-").unwrap());
+        args.insert("newline".to_string(), to_value(true).unwrap());
+        let result = prepend_filter(&to_value("1. My first chapter").unwrap(), &args);
+        assert!(result.is_ok());
+        #[cfg(not(target_family = "windows"))]
+        assert_eq!(result.unwrap(), to_value("\n-1. My first chapter").unwrap());
+        #[cfg(target_family = "windows")]
+        assert_eq!(
+            result.unwrap(),
+            to_value("\r\n-1. My first chapter").unwrap()
+        );
     }
 
     #[test]
