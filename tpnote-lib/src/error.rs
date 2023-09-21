@@ -157,7 +157,7 @@ pub enum NoteError {
 
     /// Remedy: try to enclose with quotes.
     #[error(
-        "The type of the front matter field {field_name} `\n\
+        "The (sub)type of the front matter field `{field_name}:`\n\
          must be `String`. Example:\n\
          \n\
          \t~~~~~~~~~~~~~~\n\
@@ -173,7 +173,7 @@ pub enum NoteError {
 
     /// Remedy: try to enclose with quotes.
     #[error(
-        "The front matter field {field_name} `\n\
+        "The (sub)type of the front matter field `{field_name}:`\n\
          must be a non empty `String`. Example:\n\
          \n\
          \t~~~~~~~~~~~~~~\n\
@@ -187,7 +187,7 @@ pub enum NoteError {
 
     /// Remedy: try to remove possible quotes.
     #[error(
-        "The type of the front matter field {field_name} `\n\
+        "The (sub)type of the front matter field `{field_name}:`\n\
          must be `Number`. Example:\n\
          \n\
          \t~~~~~~~~~~~~~~\n\
@@ -203,7 +203,7 @@ pub enum NoteError {
 
     /// Remedy: try to remove possible quotes.
     #[error(
-        "The type of the front matter field {field_name} `\n\
+        "The (sub)type of the front matter field `{field_name}:`\n\
          must be `Bool`. Example:\n\
          \n\
          \t~~~~~~~~~~~~~~\n\
@@ -219,12 +219,13 @@ pub enum NoteError {
 
     /// Remedy: index the compound type?
     #[error(
-        "The type of the front matter field {field_name} `\n\
-         must be `String`, `Number` or `Bool`. Example:\n\
+        "The type of the front matter field `{field_name}:`\n\
+         must not be a compound type. Use a simple type, \n\
+         i.e. `String`, `Number` or `Bool` instead. Example:\n\
          \n\
          \t~~~~~~~~~~~~~~\n\
          \t---\n\
-         \t{field_name}: 20230912\n\
+         \t{field_name}: My simple type\n\
          \t---\n\
          \tsome text\n\
          \t~~~~~~~~~~~~~~"

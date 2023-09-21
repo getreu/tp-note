@@ -19,6 +19,33 @@ use tera::Value;
 /// for `tera::Map<String, tera::Value>`.
 pub struct FrontMatter(pub tera::Map<String, tera::Value>);
 
+/// Helper function asserting that all the leaves of `val` have a certain type.
+/// The first parameter is the type to check recursivly.
+/// the second is a closure that evaluates to true or false.
+fn all_leaves(val: &Value, f: &dyn Fn(&Value) -> bool) -> bool {
+    match &val {
+        Value::Array(a) => {
+            for i in a.iter() {
+                if !all_leaves(i, &f) {
+                    return false;
+                }
+            }
+        }
+        Value::Object(map) => {
+            for (_, v) in map {
+                if !all_leaves(v, &f) {
+                    return false;
+                }
+            }
+        }
+
+        _ => {
+            return f(val);
+        }
+    }
+    true
+}
+
 impl FrontMatter {
     /// Checks if the front matter variables satisfy preconditions.
     #[inline]
@@ -31,34 +58,30 @@ impl FrontMatter {
                     match cond {
                         AssertPrecondition::IsDefined => {}
                         AssertPrecondition::IsString => {
-                            if !matches!(value, Value::String(..)) {
+                            if !all_leaves(value, &|v| matches!(v, Value::String(..))) {
                                 return Err(NoteError::FrontMatterFieldIsNotString {
                                     field_name: key.to_owned(),
                                 });
                             }
                         }
                         AssertPrecondition::IsNotEmptyString => {
-                            if let Value::String(s) = value {
-                                if s.is_empty() {
-                                    return Err(NoteError::FrontMatterFieldIsEmptyString {
-                                        field_name: key.to_owned(),
-                                    });
-                                } else {
-                                    return Err(NoteError::FrontMatterFieldIsNotString {
-                                        field_name: key.to_owned(),
-                                    });
-                                }
+                            if !all_leaves(value, &|v| {
+                                matches!(v, Value::String(..)) && v.as_str() != Some("")
+                            }) {
+                                return Err(NoteError::FrontMatterFieldIsEmptyString {
+                                    field_name: key.to_owned(),
+                                });
                             }
                         }
                         AssertPrecondition::IsNumber => {
-                            if !matches!(value, Value::Number(..)) {
+                            if !all_leaves(value, &|v| matches!(v, Value::Number(..))) {
                                 return Err(NoteError::FrontMatterFieldIsNotNumber {
                                     field_name: key.to_owned(),
                                 });
                             }
                         }
                         AssertPrecondition::IsBool => {
-                            if !matches!(value, Value::Bool(..)) {
+                            if !all_leaves(value, &|v| matches!(v, Value::Bool(..))) {
                                 return Err(NoteError::FrontMatterFieldIsNotBool {
                                     field_name: key.to_owned(),
                                 });
@@ -180,12 +203,14 @@ impl DerefMut for FrontMatter {
 #[cfg(test)]
 mod tests {
     use crate::error::NoteError;
+    use crate::front_matter::FrontMatter;
+    use serde_json::json;
+    use tera::Value;
 
     #[test]
     fn test_deserialize() {
         use super::FrontMatter;
         use serde_json::json;
-        use tera::Value;
         let input = "# document start
         title:     The book
         subtitle:  you always wanted
@@ -229,6 +254,68 @@ mod tests {
         let expected_front_matter = FrontMatter(expected);
 
         assert_eq!(expected_front_matter, FrontMatter::try_from(input).unwrap());
+    }
+
+    #[test]
+    fn test_register_front_matter() {
+        use super::FrontMatter;
+        use crate::context::Context;
+        use serde_json::json;
+        use std::path::Path;
+        use tera::Value;
+
+        let mut tmp = tera::Map::new();
+        tmp.insert("file_ext".to_string(), Value::String("md".to_string())); // String
+        tmp.insert("height".to_string(), json!(1.23)); // Number()
+        tmp.insert("count".to_string(), json!(2)); // Number()
+        tmp.insert("neg".to_string(), json!(-1)); // Number()
+        tmp.insert("flag".to_string(), json!(true)); // Bool()
+        tmp.insert("numbers".to_string(), json!([1, 3, 5])); // Array([Numbers()..])!
+        let mut tmp2 = tmp.clone();
+
+        let mut input1 = Context::from(Path::new("a/b/test.md"));
+        let input2 = FrontMatter(tmp);
+
+        let mut expected = Context::from(Path::new("a/b/test.md"));
+        (*expected).insert("fm_file_ext".to_string(), &json!("md")); // String
+        (*expected).insert("fm_height".to_string(), &json!(1.23)); // Number()
+        (*expected).insert("fm_count".to_string(), &json!(2)); // Number()
+        (*expected).insert("fm_neg".to_string(), &json!(-1)); // Number()
+        (*expected).insert("fm_flag".to_string(), &json!(true)); // Bool()
+        (*expected).insert("fm_numbers".to_string(), &json!([1, 3, 5])); // String()!
+        tmp2.remove("numbers");
+        tmp2.insert("numbers".to_string(), json!([1, 3, 5])); // String()!
+        (*expected).insert("fm_all".to_string(), &tmp2); // Map()
+
+        input1.insert_front_matter(&input2);
+        let result = input1;
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_try_from_content() {
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use serde_json::json;
+
+        // Create existing note.
+        let raw = "\u{feff}---\ntitle: \"My day\"\nsubtitle: \"Note\"\n---\nBody";
+        let content = ContentString::from(raw.to_string());
+        assert!(!content.is_empty());
+        assert!(!content.borrow_dependent().header.is_empty());
+
+        let front_matter = FrontMatter::try_from(content.header()).unwrap();
+        assert_eq!(front_matter.get("title"), Some(&json!("My day")));
+        assert_eq!(front_matter.get("subtitle"), Some(&json!("Note")));
+    }
+
+    #[test]
+    fn test_assert_preconditions() {
+        // Check `tmpl.filter_assert_preconditions` in
+        // `tpnote_lib/src/config_default.toml` to understand these tests.
+        use crate::front_matter::FrontMatter;
+        use serde_json::json;
 
         //
         // Is empty.
@@ -302,67 +389,6 @@ mod tests {
             res.assert_precoditions().unwrap_err(),
             NoteError::FrontMatterFieldIsNotBool { .. }
         ));
-    }
-
-    #[test]
-    fn test_register_front_matter() {
-        use super::FrontMatter;
-        use crate::context::Context;
-        use serde_json::json;
-        use std::path::Path;
-        use tera::Value;
-
-        let mut tmp = tera::Map::new();
-        tmp.insert("file_ext".to_string(), Value::String("md".to_string())); // String
-        tmp.insert("height".to_string(), json!(1.23)); // Number()
-        tmp.insert("count".to_string(), json!(2)); // Number()
-        tmp.insert("neg".to_string(), json!(-1)); // Number()
-        tmp.insert("flag".to_string(), json!(true)); // Bool()
-        tmp.insert("numbers".to_string(), json!([1, 3, 5])); // Array([Numbers()..])!
-        let mut tmp2 = tmp.clone();
-
-        let mut input1 = Context::from(Path::new("a/b/test.md"));
-        let input2 = FrontMatter(tmp);
-
-        let mut expected = Context::from(Path::new("a/b/test.md"));
-        (*expected).insert("fm_file_ext".to_string(), &json!("md")); // String
-        (*expected).insert("fm_height".to_string(), &json!(1.23)); // Number()
-        (*expected).insert("fm_count".to_string(), &json!(2)); // Number()
-        (*expected).insert("fm_neg".to_string(), &json!(-1)); // Number()
-        (*expected).insert("fm_flag".to_string(), &json!(true)); // Bool()
-        (*expected).insert("fm_numbers".to_string(), &json!([1, 3, 5])); // String()!
-        tmp2.remove("numbers");
-        tmp2.insert("numbers".to_string(), json!([1, 3, 5])); // String()!
-        (*expected).insert("fm_all".to_string(), &tmp2); // Map()
-
-        input1.insert_front_matter(&input2);
-        let result = input1;
-
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_try_from_content() {
-        use crate::content::Content;
-        use crate::content::ContentString;
-        use crate::front_matter::FrontMatter;
-        use serde_json::json;
-
-        // Create existing note.
-        let raw = "\u{feff}---\ntitle: \"My day\"\nsubtitle: \"Note\"\n---\nBody";
-        let content = ContentString::from(raw.to_string());
-        assert!(!content.is_empty());
-        assert!(!content.borrow_dependent().header.is_empty());
-
-        let front_matter = FrontMatter::try_from(content.header()).unwrap();
-        assert_eq!(front_matter.get("title"), Some(&json!("My day")));
-        assert_eq!(front_matter.get("subtitle"), Some(&json!("Note")));
-    }
-
-    #[test]
-    fn test_assert_preconditions() {
-        use crate::front_matter::FrontMatter;
-        use serde_json::json;
 
         let input = "# document start
         title: my title
@@ -372,8 +398,92 @@ mod tests {
         let expected = json!({"title": "my title", "subtitle": "my subtitle"});
         let expected = expected.as_object().unwrap();
 
-        let output = FrontMatter::try_from(input).unwrap().0;
-        //fm.assert_precoditions().unwrap();
-        assert_eq!(&output, expected);
+        let output = FrontMatter::try_from(input).unwrap();
+        assert_eq!(&output.0, expected);
+
+        //
+        let input = "# document start
+        title: ''
+        subtitle: my subtitle
+        ";
+
+        let output = FrontMatter::try_from(input).unwrap();
+        assert!(matches!(
+            output.assert_precoditions().unwrap_err(),
+            NoteError::FrontMatterFieldIsEmptyString { .. }
+        ));
+
+        //
+        let input = "# document start
+        title: My doc
+        author: 
+        - First author
+        - Second author
+        ";
+
+        let output = FrontMatter::try_from(input).unwrap();
+        assert!(output.assert_precoditions().is_ok());
+
+        //
+        let input = "# document start
+        title: My doc
+        subtitle: my subtitle
+        author:
+        - First title
+        - 1234
+        ";
+
+        let output = FrontMatter::try_from(input).unwrap();
+        assert!(matches!(
+            output.assert_precoditions().unwrap_err(),
+            NoteError::FrontMatterFieldIsNotString { .. }
+        ));
+    }
+
+    #[test]
+    fn test_all_leaves() {
+        use super::all_leaves;
+
+        let input = json!({
+             "first": "tmp: test",
+             "second": [
+                 "string(a)",
+                 "string(b)"
+             ],});
+        assert!(all_leaves(&input, &|v| matches!(v, Value::String(..))));
+
+        let input = json!({
+            "first": "tmp: test",
+            "second": [
+                1234,
+                "string(b)"
+            ],});
+        assert!(!all_leaves(&input, &|v| matches!(v, Value::String(..))));
+
+        let input = json!({
+             "first": "tmp: test",
+             "second": [
+                 "string(a)",
+                 false
+             ],});
+        assert!(!all_leaves(&input, &|v| matches!(v, Value::String(..))));
+
+        let input = json!({
+            "first": "tmp: test",
+            "second": [
+                "string(a)",
+                "string(b)"
+            ],});
+        assert!(all_leaves(&input, &|v| matches!(v, Value::String(..))
+            && v.as_str() != Some("")));
+
+        let input = json!({
+             "first": "tmp: test",
+             "second": [
+                 "string(a)",
+                 ""
+             ],});
+        assert!(!all_leaves(&input, &|v| matches!(v, Value::String(..))
+            && v.as_str() != Some("")));
     }
 }

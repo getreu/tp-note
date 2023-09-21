@@ -433,29 +433,33 @@ impl FromStr for LocalLinkKind {
 /// properties.
 #[derive(Default, Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
 pub enum AssertPrecondition {
-    /// Assert that the variable is defined in the template
+    /// `IsDefined`: Assert that the variable is defined in the template.
     IsDefined,
-    /// In addtion to `IsString`, the condition asserts, that the string is
-    /// not empty.
+    /// `IsNotEmptyString`: In addtion to `IsString`, the condition asserts,
+    ///  that the string -or all substrings-) are not empty.
     IsNotEmptyString,
-    /// Assert, that if the variable is defined, its type is `Value::String`.
+    /// `IsString`: Assert, that if the variable is defined, its type -or all
+    ///  subtypes- are `Value::String`.
     IsString,
-    /// Assert, that if the variable is defined, its type is `Value::Number`.
+    /// `IsNumber`: Assert, that if the variable is defined, its type -or all
+    ///  subtypes- are `Value::Number`.
     IsNumber,
-    /// Assert, that if the variable is defined, its type is `Value::Bool`.
+    /// `IsBool`: Assert, that if the variable is defined, its type -or all
+    ///  subtypes- are `Value::Bool`.
     IsBool,
-    /// Assert, that if the variable is defined, its type is not `Value::Array`
-    /// or `Value::Object`.
+    /// `IsNotCompound`: Assert, that if the variable is defined, its type is
+    /// not `Value::Array` or `Value::Object`.
     IsNotCompound,
-    /// Assert, that if the variable is defined, the values
-    /// string representation contains solely characters of the
-    /// `filename.sort_tag_chars` set.
+    /// `HasOnlySortTagChars`: Assert, that if the variable is defined,
+    ///  the values string representation contains solely characters of the
+    ///  `filename.sort_tag_chars` set.
     HasOnlySortTagChars,
-    /// Assert, that if the variable is defined, the values string
-    /// representation is regeistered in one of the `filename.extension_*`
-    /// configuraion file variables.
+    /// `IsTpnoteExtension`: Assert, that if the variable is defined,
+    ///  the values string representation is regeistered in one of the
+    ///  `filename.extension_*` configuraion file variables.
     IsTpnoteExtension,
-    /// A test that is always satisfied. For internal use only.
+    /// `NoOperation` (default): A test that is always satisfied. For internal
+    ///  use only.
     #[default]
     NoOperation,
 }

@@ -117,16 +117,37 @@ extensions_no_viewer = ["t2t"]
 # resulting front matter into `fm_* variables and checks their values. The
 # following conditions are checked and the user is prompted if one of them is
 # not satisfied.
-# The first item per line is the checked variable name, the following
-# the applied tests (see `AssertPrecondition`).
+# The first item per line is the checked variable name, the following items
+# are the applied tests:
+# * `IsDefined`: Assert that the variable is defined in the template.
+# * `IsString`: Assert, that if the variable is defined, its type -or all
+#    subtypes- are `Value::String`.
+# * `IsNotEmptyString`: In addtion to `IsString`, the condition asserts, that 
+#    the string -or all substrings-) are not empty.
+# * `IsNumber`: Assert, that if the variable is defined, its type -or all
+#    subtypes- are `Value::Number`.
+# * `IsBool`: Assert, that if the variable is defined, its type -or all
+#    subtypes- are `Value::Bool`.
+# * `IsNotCompound`: Assert, that if the variable is defined, its type is not
+#   `Value::Array` or `Value::Object`.
+# * `HasOnlySortTagChars`: Assert, that if the variable is defined, the values
+#    string representation contains solely characters of the
+#    `filename.sort_tag_chars` set.
+# * `IsTpnoteExtension`: Assert, that if the variable is defined, the values
+#    string representation is regeistered in one of the `filename.extension_*`
+#    configuraion file variables.
+# * `NoOperation` (default): A test that is always satisfied. For internal use
+#    only.
+
 filter_assert_preconditions = [
     [ "fm_title", [ "IsDefined", "IsString", "IsNotEmptyString", "IsNotCompound"], ],
     [ "fm_subtitle", ["IsString", "IsNotCompound"], ],
+    [ "fm_author", ["IsString"], ],
     [ "fm_lang", ["IsString"], ],
     [ "fm_sort_tag", ["IsNotCompound", "HasOnlySortTagChars", ], ],
-    [ "fm_file_ext", ["IsString", "IsTpnoteExtension"], ],
-    [ "fm_no_filename_sync", ["IsBool"], ],
-    [ "fm_filename_sync", ["IsBool"], ],
+    [ "fm_file_ext", ["IsString", "IsNotCompound", "IsTpnoteExtension"], ],
+    [ "fm_no_filename_sync", ["IsBool", "IsNotCompound"], ],
+    [ "fm_filename_sync", ["IsBool", "IsNotCompound"], ],
 ]
 # A list of language tags, defining languages TP-Note tries to recognize in
 # the filter input. The user's default language subtag, as reported from
