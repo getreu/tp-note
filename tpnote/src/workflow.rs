@@ -60,10 +60,7 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
                 || matches!(e, NoteError::FrontMatterFieldIsEmptyString { .. })
                 || matches!(e, NoteError::FrontMatterFieldIsNotString { .. })
                 || matches!(e, NoteError::FrontMatterFieldIsNotNumber { .. })
-                || matches!(e, NoteError::FrontMatterFieldIsNotBool { .. })
-                || matches!(e, NoteError::FrontMatterFieldMissing { .. })
-                || matches!(e, NoteError::FrontMatterFieldHasNotOnlySortTagChars { .. })
-                || matches!(e, NoteError::FrontMatterFieldIsNotTpnoteExtension { .. }))
+                || matches!(e, NoteError::FrontMatterFieldIsNotBool { .. }))
                 && !ARGS.batch
                 && ARGS.export.is_none()
             {

@@ -110,7 +110,7 @@ fn to_yaml_filter<S: BuildHasher>(
 
                 // Enlarge indent.
                 let mut l = l.to_owned();
-                let strut = std::iter::repeat(' ').take(insert).collect::<String>();
+                let strut = " ".repeat(insert);
                 // If `insert>0`, we know that `colon_pos>0`.
                 // `colon_pos+1` inserts between `: `.
                 l.insert_str(colon_pos + 1, &strut);
