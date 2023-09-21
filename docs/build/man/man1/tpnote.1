@@ -83,8 +83,8 @@ metadata and its filename.
 This operation is performed with the `\f[V]tmpl.sync_filename\f[R]'
 template.
 .PP
-Example: the clipboard is empty and \f[V]<path>\f[R] is a directory (or
-empty):
+Example: the clipboard is empty and `\f[V]<path>\f[R]' is a directory
+(or empty):
 .IP
 .nf
 \f[C]
@@ -105,7 +105,7 @@ creates the document:
 .IP
 .nf
 \f[C]
-\[dq]./03-Favorite Readings/20211031-Favorite Readings--Note.md\[dq]
+\&./03-Favorite Readings/20211031-Favorite Readings--Note.md
 \f[R]
 .fi
 .PP
@@ -114,11 +114,11 @@ with the content:
 .nf
 \f[C]
 ---
-title:      \[dq]Favorite Readings\[dq]
-subtitle:   \[dq]Note\[dq]
-author:     \[dq]Getreu\[dq]
-date:       \[dq]2021-10-31\[dq]
-lang:       \[dq]en-GB\[dq]
+title:      Favorite Readings
+subtitle:   Note
+author:     Getreu
+date:       2021-10-31
+lang:       en-GB
 ---
 \f[R]
 .fi
@@ -161,7 +161,7 @@ Tp-Note behaves here as if the clipboard contained the string:
 .PP
 Example: While launching Tp-Note the clipboard contains the string:
 \[lq]\f[V]Who Moved My Cheese?\[rs]n\[rs]nChapter 2\f[R]\[rq] and
-\f[V]<path>\f[R] is a directory.
+`\f[V]<path>\f[R]' is a directory.
 .IP
 .nf
 \f[C]
@@ -182,7 +182,7 @@ This creates the document:
 .IP
 .nf
 \f[C]
-\[dq]./03-Favorite Readings/20211031-Who Moved My Cheese--Note.md\[dq]
+\&./03-Favorite Readings/20211031-Who Moved My Cheese--Note.md
 \f[R]
 .fi
 .PP
@@ -191,11 +191,11 @@ with the content:
 .nf
 \f[C]
 ---
-title:      \[dq]Who Moved My Cheese\[dq]
-subtitle:   \[dq]Note\[dq]
-author:     \[dq]Getreu\[dq]
-date:       \[dq]2021-10-31\[dq]
-lang:       \[dq]en-GB\[dq]
+title:      Who Moved My Cheese
+subtitle:   Note
+author:     Getreu
+date:       2021-10-31
+lang:       en-GB
 ---
 
 Who Moved My Cheese?
@@ -218,9 +218,9 @@ filename template concatenates the current date, the note\[cq]s title
 and subtitle.
 .SS The clipboard contains a hyperlink
 .PP
-Example: \f[V]<path>\f[R] is a directory, the clipboard is not empty and
-it contains the string:
-\[lq]\f[V]I recommend:\[rs]n[The Rust Book](https://doc.rust-lang.org/book/)\f[R]\[rq].
+Example: `\f[V]<path>\f[R]' is a directory, the clipboard is not empty
+and it contains the string:
+`\f[V]I recommend:\[rs]n[The Rust Book](https://doc.rust-lang.org/book/)\f[R]'.
 .IP
 .nf
 \f[C]
@@ -240,11 +240,11 @@ Tp-Note\[cq]s templates `\f[V]tmpl.from_clipboard_content\f[R]' and
 .nf
 \f[C]
 ---
-title:      \[dq]The Rust Book\[dq]
-subtitle:   \[dq]URL\[dq]
-author:     \[dq]Getreu\[dq]
-date:       \[dq]2021-10-31\[dq]
-lang:       \[dq]en-GB\[dq]
+title:      The Rust Book
+subtitle:   URL
+author:     Getreu
+date:       2021-10-31
+lang:       en-GB
 ---
 
 I recommend:
@@ -260,7 +260,7 @@ hyperlink found as document title.
 .PP
 Example: `\f[V]<path>\f[R]' is a directory, the clipboard is not empty
 and contains the string:
-\[lq]\f[V]---\[rs]ntitle: Todo\[rs]nfile_ext: mdtxt\[rs]n---\[rs]n\[rs]nnothing\f[R]\[rq].
+`\f[V]---\[rs]ntitle: Todo\[rs]nfile_ext: mdtxt\[rs]n---\[rs]nnothing\f[R]'.
 .IP
 .nf
 \f[C]
@@ -268,18 +268,19 @@ tpnote
 \f[R]
 .fi
 .PP
-This creates the note: `\f[V]20211031-Todo.mdtxt\f[R]' with the
+This creates the note: `\f[V]20230915-Todo.mdtxt\f[R]' with the
 following content:
 .IP
 .nf
 \f[C]
 ---
-title:      \[dq]Todo\[dq]
-subtitle:   \[dq]\[dq]
-author:     \[dq]Getreu\[dq]
-date:       \[dq]2021-10-31\[dq]
-lang:       \[dq]en-GB\[dq]
-file_ext:   \[dq]mdtxt\[dq]
+title:      Todo
+subtitle:   Note
+author:     Getreu
+date:       2023-09-15
+lang:       fr-FR
+
+file_ext:   mdtxt
 ---
 
 nothing
@@ -316,19 +317,21 @@ curl \[aq]https://blog.getreu.net\[aq] \[rs]
 \f[R]
 .fi
 .PP
-creates the note file `\f[V]20211031-Jens Getreu\[aq]s blog.md\f[R]'
-with the webpage\[cq]s content converted to Markdown:
+creates the note file
+`\f[V]20230919-Jens Getreu\[aq]s blog--Note.md\f[R]' with the
+webpage\[cq]s content converted to Markdown:
 .IP
 .nf
 \f[C]
 ---
-title:      \[dq]Jens Getreu\[aq]s blog\[dq]
-subtitle:   \[dq]\[dq]
-author:     \[dq]getreu\[dq]
-date:       \[dq]2021-10-31\[dq]
-lang:       \[dq]en\[dq]
----
+title:      Jens Getreu\[aq]s blog
+subtitle:   Note
+author:     Getreu
+date:       2023-09-15
+lang:       en
 
+viewport:   width=device-width, initial-scale=1.0, maximum-scale=1
+---
 
 <a href=\[dq]/\[dq] class=\[dq]logo\[dq]>Jens Getreu\[aq]s blog</a>
 
@@ -336,7 +339,7 @@ lang:       \[dq]en\[dq]
 -   [Categories](https://blog.getreu.net/categories)
 \f[R]
 .fi
-.SS Create a new note annotating a non-Tp-Note file
+.SS Create a new note annotating a non Tp-Note file
 .PP
 When `\f[V]<path>\f[R]' points to an existing file, whose file extension
 is other than `\f[V].md\f[R]', a new note is created with a similar
@@ -354,6 +357,8 @@ Example:
 .IP
 .nf
 \f[C]
+:> \[dq]Classic Shell Scripting.pdf\[dq]
+
 tpnote \[dq]Classic Shell Scripting.pdf\[dq]
 \f[R]
 .fi
@@ -371,11 +376,11 @@ with the content:
 .nf
 \f[C]
 ---
-title:      \[dq]Classic Shell Scripting.pdf\[dq]
-subtitle:   \[dq]Note\[dq]
-author:     \[dq]getreu\[dq]
-date:       \[dq]2021-10-31\[dq]
-lang:       \[dq]en-GB\[dq]
+title:      Classic Shell Scripting.pdf
+subtitle:   Note
+author:     Getreu
+date:       2023-09-15
+lang:       en-US
 ---
 
 [Classic Shell Scripting.pdf](<Classic Shell Scripting.pdf>)
@@ -426,12 +431,13 @@ and prepends a YAML header to the file\[cq]s content:
 .nf
 \f[C]
 ---
-title:      \[dq]Ascii-Hangman \[dq]
-subtitle:   \[dq]A game for children\[dq]
-author:     \[dq]getreu\[dq]
-date:       \[dq]2022-03-13\[dq]
-lang:       \[dq]en-GB\[dq]
-orig_name:  \[dq]Ascii-Hangman--A game for children.md\[dq]
+title:      Ascii-Hangman
+subtitle:   A game for children
+author:     Getreu
+date:       2022-03-13
+lang:       en-US
+
+orig_name:  Ascii-Hangman--A game for children.md
 ---
 
 A little game designed for primary kids to revise vocabulary in classroom.
@@ -541,16 +547,16 @@ tpnote \[dq]20200306-Favorite Readings--Note.md\[dq]
 The way how Tp-Note synchronizes the note\[cq]s metadata and filename is
 defined in the template `\f[V]tmpl.sync_filename\f[R]'.
 .PP
-Once Tp-Note opens the file in an text editor, the person taking notes
-may decide updating the title in the note\[cq]s YAML metadata section
-from `\f[V]title: \[dq]Favorite Readings\[dq]\f[R]' to
-`\f[V]title: \[dq]Introduction to bookkeeping\[dq]\f[R]'.
-After closing the text editor the filename is automatically updated too
-and looks like:
+Once Tp-Note opens the file in your text editor, let\[cq]s assume you
+decide to change the title in the note\[cq]s YAML metadata section from
+`\f[V]title: Favorite Readings\f[R]' to
+`\f[V]title: Introduction to bookkeeping\f[R]'.
+After closing the text editor, Tp-Note updates the filename
+automatically:
 .IP
 .nf
 \f[C]
-\[dq]20200306-Introduction to bookkeeping--Note.md\[dq]
+20200306-Introduction to bookkeeping--Note.md
 \f[R]
 .fi
 .PP
@@ -723,9 +729,9 @@ If not given, a random available port is chosen automatically.
 .PP
 Whenever Tp-Note opens a note file, it synchronizes its YAML-metadata
 with its filename.
-`\f[V]--no-filename-sync\f[R]' disables the synchronization.
-In addition, the \[lq]flag in scripts\[rq] can be especially useful for
-testing `\f[V].md\f[R]'-files.
+`\f[V]--no-filename-sync\f[R]' disables this synchronization.
+In addition, in scripts this flag can be especially useful for
+validating the syntax of `\f[V].md\f[R]'-files.
 See section EXIT STATUS for more details.
 The section METADATA FILENAME SYNCHRONIZATION shows alternative ways to
 disable synchronization.
@@ -858,6 +864,7 @@ document\[cq]s metadata block at the beginning of the text file:
 ---
 <YAML-front-matter>
 ---
+
 <document-body>
 \f[R]
 .fi
@@ -885,6 +892,7 @@ Prepended text is ignored.
 ---
 <YAML-front-matter>
 ---
+
 <document-body>
 \f[R]
 .fi
@@ -1102,20 +1110,22 @@ and the content:
 .nf
 \f[C]
 ---
-title:      \[dq]1. The Beginning\[dq]
-subtitle:   \[dq]Note\[dq]
-author:     \[dq]Getreu\[dq]
-date:       \[dq]2021-10-31\[dq]
-lang:       \[dq]en-GB\[dq]
+title:      1. The Beginning
+subtitle:   Note
+author:     Getreu
+date:       2021-10-31
+lang:       en-GB
+
+remainder:  false
 ---
 \f[R]
 .fi
 .PP
-As \[lq]\f[V]My file.md\f[R]\[rq] is not equal to
-\[lq]\f[V]1. The Beginning--Note.md\f[R]\[rq], Tp-Note will rename the
-file to \[lq]\f[V]20211031-1. The Beginning--Note.md\f[R]\[rq].
-If the filename had been \[lq]\f[V]05_02-My file.md\f[R]\[rq], it would
-rename it to \[lq]\f[V]05_02-1. The Beginning--Note.md\f[R]\[rq].
+As `\f[V]My file.md\f[R]' is not equal to
+`\f[V]1. The Beginning--Note.md\f[R]', Tp-Note will rename the file to
+`\f[V]20211031-1. The Beginning--Note.md\f[R]'.
+If the filename had been `\f[V]05_02-My file.md\f[R]', it would rename
+it to `\f[V]05_02-1. The Beginning--Note.md\f[R]'.
 .PP
 Note: When the YAML front-matter does not contain the optional
 `\f[V]sort_tag\f[R]' variable, Tp-Note will never change a sort tag.
@@ -1132,23 +1142,26 @@ For example, if \[em] for some reason \[em] you have changed the
 document\[cq]s date in the front-matter and you want to change the
 chronological sort tag in one go.
 In order to overwrite the note\[cq]s sort tag on disk, you can add a
-`\f[V]sort_tag\f[R]' variable to its front-matter:
+`\f[V]sort_tag\f[R]' string-variable to its front-matter:
 .IP
 .nf
 \f[C]
 ---
-title:      \[dq]1. The Beginning\[dq]
-date:       \[dq]2021-10-31\[dq]
-sort_tag:   \[dq]20211101\[dq]
+title:      1. The Beginning
+date:       2021-10-31
+
+sort_tag:   \[aq]20211101\[aq]
 ---
 \f[R]
 .fi
 .PP
+Note, the above sort-tag value - here a number - must be enclosed with
+quotes in order label it as string type.
 When Tp-Note synchronizes the note\[cq]s metadata with its filename, it
 will also change the sort tag from `\f[V]20211031\f[R]' to
 `\f[V]20211101\f[R]'.
 The resulting filename becomes
-\[lq]\f[V]20211101-1. The Beginning--Note.md\f[R]\[rq].
+`\f[V]20211101-1. The Beginning--Note.md\f[R]'.
 .PP
 The `\f[V]sort_tag\f[R]' variable also becomes handy, when you want to
 create one single note without any sort tag:
@@ -1156,8 +1169,9 @@ create one single note without any sort tag:
 .nf
 \f[C]
 ---
-title:      \[dq]1. The Beginning\[dq]
-sort_tag:   \[dq]\[dq]
+title:      1. The Beginning
+
+sort_tag:   \[aq]\[aq]
 ---
 \f[R]
 .fi
@@ -1170,16 +1184,17 @@ front-matter:
 .nf
 \f[C]
 ---
-title:      \[dq]1. The Beginning\[dq]
-file_ext:   \[dq]rst\[dq]
+title:      1. The Beginning
+
+file_ext:   rst
 ---
 \f[R]
 .fi
 .PP
 This will change the file extension from `\f[V].md\f[R]' to
-\[cq]\f[V].rst\f[R].
-The resulting filename becomes
-\[lq]\f[V]20211101-1. The Beginning--Note.rst\f[R]\[rq].
+`\f[V].rst\f[R].
+The resulting filename
+becomes'\f[V]20211101-1. The Beginning--Note.rst\f[R]\[cq].
 .PP
 Important: `\f[V]rst\f[R]' must be one of the registered file extensions
 listed in the `\f[V]filename.extensions_rst\f[R]' variables in
@@ -1208,7 +1223,8 @@ header field `\f[V]filename_sync: false\f[R]'.
 .nf
 \f[C]
 ---
-title:      \[dq]1. The Beginning\[dq]
+title:         1. The Beginning   
+
 filename_sync: false
 ---
 \f[R]
@@ -1247,6 +1263,7 @@ file.
 .IP "3." 3
 At startup all parent directories of the note file path are searched for
 a file named `\f[V].tpnote.toml\f[R]'.
+If found, the document root moves from `\f[V]/\f[R]' the found location.
 If present and its content is not empty, Tp-Note interprets the
 file\[cq]s content as configuration file.
 Continue otherwise.
@@ -1281,9 +1298,9 @@ tpnote -V -b -c .tpnote.toml
 .fi
 .PP
 For a detailed description of the available configuration variables,
-please consult the `\f[V]const\f[R]' definitions in Tp-Note\[cq]s source
-code file `\f[V]config.rs\f[R]' The configuration file is encoded
-according to the TOML standard.
+please consult Tp-Note\[cq]s source code files
+`\f[V]/tp-note/tpnote/src/config_default.toml\f[R]' and
+`\f[V]/tp-note/tpnote-lib/src/config_default.toml\f[R]'.
 .SS Register your own text editor
 .PP
 There are two ways to modify the default file editor, Tp-Note launches
@@ -1874,8 +1891,8 @@ For example, for ReStructuredText add:
 .nf
 \f[C]
 ---
-title:    \[dq]some note\[dq]
-file_ext: \[dq]rst\[dq]
+title:    some note
+file_ext: rst
 ---
 \f[R]
 .fi
@@ -2031,7 +2048,7 @@ disable the viewer feature selectively for some particular note file
 extensions: just place these extensions in the
 `\f[V]filename.extensions_no_viewer\f[R]' variable.
 If you wish to disable the viewer feature overall, set the variable
-\f[V]arg_default.edit = true\f[R].
+`\f[V]arg_default.edit = true\f[R]'.
 .PP
 \f[B]Change the HTML rendition template\f[R]
 .PP
@@ -2092,6 +2109,10 @@ section \f[I]Template variables\f[R]).
 .IP \[bu] 2
 `\f[V]{{ lang }}\f[R]' (c.f.
 section \f[I]Template variables\f[R]).
+.IP \[bu] 2
+`\f[V]{{ my_val | to_html }}\f[R]' is the HTML rendition of the
+`\f[V]my_val\f[R]' variable (c.f.
+section \f[I]Template filter\f[R]).
 .PP
 Alternatively, the header enclosed by `\f[V]<pre>...</pre>\f[R]' can
 also be rendered as a table:
@@ -2102,7 +2123,7 @@ also be rendered as a table:
     <tr><th>title:</th><th>{{ fm_title }}</th> </tr>
     <tr><th>subtitle:</th><th>{{ fm_subtitle | default(value=\[aq]\[aq]) }}</th></tr>
   {% for k, v in fm_all| remove(var=\[aq]fm_title\[aq])| remove(var=\[aq]fm_subtitle\[aq]) %}
-    <tr><th>{{ k }}:</th><th>{{ v }}</th></tr>
+    <tr><th>{{ k }}:</th><th>{{ v | to_html }}</th></tr>
   {% endfor %}
   </table>
 \f[R]
@@ -2388,9 +2409,9 @@ generate a `\f[V]{{ fm_foo }}\f[R]' template variable.
 On the other hand, a missing `\f[V]foo:\f[R]' will cause
 `\f[V]{{ fm_foo }}\f[R]' to be undefined.
 .PP
-Please note that `\f[V]{{ fm_* }}\f[R]' variables are available in all
+Please note that `\f[V]{{ fm_* }}\f[R]' variables are only available in
 filename templates and in the
-`\f[V]tmpl.from_clipboard_yaml_content\f[R]' content template only.
+`\f[V]tmpl.from_clipboard_yaml_content\f[R]' content template.
 .IP \[bu] 2
 `\f[V]{{ fm_title }}\f[R]' is the `\f[V]title:\f[R]' as indicated in the
 YAML front-matter of the note.
@@ -2405,12 +2426,11 @@ the YAML front-matter of the note.
 YAML front-matter of the note.
 .IP \[bu] 2
 `\f[V]{{ fm_file_ext }}\f[R]' holds the value of the optional YAML
-header variable `\f[V]file_ext:\f[R]'
-(e.g.\ `\f[V]file_ext: \[dq]rst\[dq]\f[R]').
+header variable `\f[V]file_ext:\f[R]' (e.g.\ `\f[V]file_ext: rst\f[R]').
 .IP \[bu] 2
 `\f[V]{{ fm_sort_tag }}\f[R]': The sort tag variable as defined in the
 YAML front matter of this note
-(e.g.\ `\f[V]sort_tag: \[dq]20200312\[dq]\f[R]').
+(e.g.\ `\f[V]sort_tag: \[aq]20200312\[aq]\f[R]').
 .IP \[bu] 2
 `\f[V]{{ fm_all }}\f[R]': is a collection (map) of all defined
 `\f[V]{{ fm_* }}\f[R]' variables.
@@ -2432,6 +2452,10 @@ Depending on the last content template result, certain variables might
 be undefined.
 Please take into consideration, that a defined variable might contain
 the empty string `\f[V]\[dq]\[dq]\f[R]'.
+Creating a new note file with a content template, the note\[cq]s header
+is parsed into `\f[V]{{ fm_* }}\f[R]' variables.
+The latter are then type checked according configurable rules.
+The rules are defined in `\f[V]tmpl.filter_assert_precondition\f[R]'
 .PP
 For a more detailed description of the available template variables,
 please consult the `\f[V]const\f[R]' definitions in Tp-Note\[cq]s source
@@ -2440,10 +2464,18 @@ code file `\f[V]note.rs\f[R]'.
 .PP
 In addition to \f[I]Tera\f[R]\[cq]s built-in
 filters (https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes
-with some additional filters, e.g.: `\f[V]file_sort_tag\f[R]',
-`\f[V]trim_file_sort_tag\f[R]', `\f[V]file_stem\f[R]', `\f[V]cut\f[R]',
-`\f[V]heading\f[R]', `\f[V]link_text\f[R]', `\f[V]link_dest\f[R]',
-`\f[V]link_title\f[R]' and `\f[V]ext\f[R]'.
+with some additional filters, i.e.: `\f[V]append\f[R]',
+`\f[V]append(with=...)\f[R]', `\f[V]append(newline=true)\f[R]',
+`\f[V]cut\f[R]', `\f[V]file_copy_counter\f[R]', `\f[V]field\f[R]'
+`\f[V]field(in=..., inval=...)\f[R]' `\f[V]field(out=...)\f[R]',
+`\f[V]file_ext\f[R]', `\f[V]file_name\f[R]', `\f[V]file_sort_tag\f[R]',
+`\f[V]file_stem\f[R]', `\f[V]get_lang\f[R]', `\f[V]heading\f[R]',
+`\f[V]link_dest\f[R]', `\f[V]link_text\f[R]', `\f[V]link_title\f[R]',
+`\f[V]map_lang\f[R]', `\f[V]prepend\f[R]',
+`\f[V]prepend(with=...)\f[R]', `\f[V]prepend(with_sort_tag=...)\f[R]',
+`\f[V]prepend(newline=true)\f[R]', `\f[V]sanit\f[R]',
+`\f[V]to_html\f[R]', `\f[V]to_yaml\f[R]' and
+`\f[V]trim_file_sort_tag\f[R]'.
 .PP
 A filter is always used together with a variable.
 Here are some examples:
@@ -2461,6 +2493,13 @@ filename prefix) of the final component of `\f[V]{{ path }}\f[R]',
 e.g.\ `\f[V]01-23_9\f[R]' or `\f[V]20191022\f[R]'.
 It is similar to `\f[V]{{ path |\ file_name }}\f[R]' but without
 returning its stem, copy-counter and extension.
+.IP \[bu] 2
+`\f[V]{{ path | file_sort_tag | assert_valid_sort_tag }}\f[R]' does not
+change the above output, but the filter asserts at runtime, that the
+resulting type is either `\f[V]String\f[R]' or `\f[V]Number\f[R]' and
+that all characters are part of the set
+`\f[V]filename.sort_tag_chars\f[R]'.
+The additional runtime check simplifies template debugging.
 .IP \[bu] 2
 `\f[V]{{ path |\ file_stem }}\f[R]' is similar to
 `\f[V]{{ path |\ file_name }}\f[R]' but without its sort tag,
@@ -2509,10 +2548,15 @@ or ReStruncturedText formatted link in the clipboard.
 `\f[V]{{ clipboard | link_title }}\f[R]' is the title of the first
 Markdown or ReStruncturedText formatted link in the clipboard.
 .IP \[bu] 2
-`\f[V]{{ username | capitalize | json_encode }}\f[R]' is the capitalized
-JSON encoded username.
-As all YAML front-matter is JSON encoded, this filter code must be
-appended to any template variable placed in the front-matter block.
+`\f[V]{{ username | capitalize | to_yaml(key=\[aq]author\[aq],tab=12) }}\f[R]'
+is the capitalized YAML encoded username.
+As all YAML front-matter is YAML encoded, the `\f[V]to_yaml\f[R]' filter
+must be appended to any template variable placed in the front-matter
+block.
+The `\f[V]key=\[aq]author\[aq]\f[R]' parameter prepends the key to the
+capitalized username, e.g.: `\f[V]autor:      John\f[R]'.
+Note, the first letter of `\f[V]John\f[R]' starts at the tabulator
+position `\f[V]tab=12\f[R]'.
 .IP \[bu] 2
 `\f[V]{{ fm_subtitle | sanit }}\f[R]' is the note\[cq]s subtitle as
 defined in its front matter, sanitized in a file system friendly form.
@@ -2534,9 +2578,28 @@ This might be necessary to avoid ambiguity in case the
 `\f[V]fm_title\f[R]' starts with a character defined in the
 `\f[V]filename.sort_tag_chars\f[R]' set.
 .IP \[bu] 2
-`\f[V]{{ fm_all | remove(var=\[aq]fm_title\[aq]) }}\f[R]' represents a
-collection (map) of all `\f[V]fm_*\f[R]' variables, exclusive of the
-variable `\f[V]fm_title\f[R]'.
+`\f[V]{{ fm_all | field(out=\[aq]fm_title\[aq]) | field(out=\[aq]fm_author\[aq]) | to_yaml }}\f[R]'
+renders a \[lq]Map\[rq] collection of all `\f[V]fm_*\f[R]' variables,
+exclusive of the variables `\f[V]fm_title\f[R]' and
+`\f[V]fm_author\f[R]' to YAML.
+Note, that the optional `\f[V]to_yaml(key=...)\f[R]' parameter is not
+allowed in this context.
+.IP \[bu] 2
+`\f[V]{{ fm_all | field(in=\[aq]fm_author\[aq], inval=\[aq]Jens\[aq]) | to_yaml }}\f[R]'
+inserts the key/value `\f[V]fm_author\f[R]'/`\f[V]Jens\f[R]' and renders
+the resulting collection.
+a \[lq]Map\[rq] collection of all `\f[V]fm_*\f[R]' variables, Note, that
+the optional `\f[V]to_yaml(key=...)\f[R]' parameter is not allowed in
+this context.
+.IP \[bu] 2
+`\f[V]{{ fm_all | to_yaml | append(newline=true) }}\f[R]' renders a
+collection (map) of all `\f[V]fm_*\f[R]' variables.
+If the collection is empty the result is the empty string.
+Otherwise, the YAML rendition is appended with a newline character.
+.IP \[bu] 2
+`\f[V]{{ fm_all | field(out\[aq]fm_title\[aq]) | field(out=\[aq]fm_title\[aq]) | to_html }}\f[R]'
+renders a collection (map) of all `\f[V]fm_*\f[R]' variables, exclusive
+of the variables `\f[V]fm_title\f[R]' and `\f[V]fm_title\f[R]' to HTML.
 .IP \[bu] 2
 `\f[V]{{ note_body_text | get_lang }}\f[R]' determines the natural
 language of the variable `\f[V]{{ note_body_text }}\f[R] and returns the
@@ -2579,12 +2642,21 @@ calculate the note\[cq]s filename.
 By convention, content templates appear in the configuration file in
 variables named `\f[V]tmpl.*_content\f[R]'.
 .PP
-Strings in the YAML front-matter of content templates are JSON encoded.
+Strings in the front matter section of content templates are YAML
+encoded.
 Therefore, all variables used in the front-matter must pass an
-additional `\f[V]json_encode()\f[R]'-filter.
-For example, the variable `\f[V]{{ dir_path | file_stem }}\f[R]' becomes
-`\f[V]{{ dir_path | file_stem() | json_encode() }}\f[R]' or just
-`\f[V]{{ dir_path | file_stem | json_encode }}\f[R]'.
+additional `\f[V]to_yaml()\f[R]'-filter.
+For example, the variable `\f[V]{{ dir_path | file_stem() }}\f[R]'
+becomes
+`\f[V]{{ dir_path | file_stem() | to_yaml(key=\[aq]title\[aq]) }}\f[R]'
+or, shorter:
+`\f[V]{{ dir_path | file_stem | to_yaml(key=\[aq]title\[aq]) }}\f[R]'.
+.PP
+When given with a key, the `\f[V]to_yaml(key=\[aq]...\[aq])\f[R]' filter
+accepts any input type, whereas the short form `\f[V]to_yaml()\f[R]'
+requires an `\f[V]Value::Object\f[R]' type as input.
+The latter is often followed be the `\f[V]append(newline=true)\f[R]'
+filter appending a newline.
 .SS Filename template conventions
 .PP
 By convention, filename templates appear in the configuration file in
@@ -2630,11 +2702,11 @@ unequivocally.
 For example, when the input string starts with a digit
 `\f[V]0123456789\f[R]' or `\f[V]-_\f[R]', the string is prepended with
 \f[V]-\[aq]\f[R], e.g.
-\[lq]\f[V]1-The Show Begins\f[R]\[rq] becomes
-\[lq]\f[V]\[aq]1-The Show Begins\f[R]\[rq].
+`\f[V]1-The Show Begins\f[R]' becomes
+`\f[V]\[aq]1-The Show Begins\f[R]'.
 The `\f[V]prepend(with_sort_tag=<...>)\f[R]' filter must be applied to
-the first variable,
-e.g.\ `\f[V]{{ fm_title | sanit | prepend(with_separator=path| file_sort_tag )}\f[R]'.
+the first variable, e.g.\ 
+`\f[V]{{ fm_title | sanit | prepend(with_separator=path|file_sort_tag )}\f[R]'.
 This way, it is always possible to univocally distinguish the sort-tag
 from the rest of the filename.
 Note, the default sort-tag separators can be changed with the
@@ -2887,8 +2959,8 @@ TPNOTE_EDITOR=\[dq]geany -sim\[dq] tpnote
 .RE
 .RS
 .PP
-The above instructs Tp-Note to start the editor
-\[lq]\f[V]geany\f[R]\[rq] with the flags `\f[V]-sim\f[R]'.
+The above instructs Tp-Note to start the editor `\f[V]geany\f[R]' with
+the flags `\f[V]-sim\f[R]'.
 Unlike with shell tokens, the backslash and quote characters have no
 special meaning.
 Instead, all tokens are \f[I]percent encoded\f[R].
@@ -3003,7 +3075,7 @@ Unless you explicitly state otherwise, any contribution intentionally
 submitted for inclusion in the work by you, as defined in the Apache-2.0
 licence, shall be dual licensed as above, without any additional terms
 or conditions.
-Licensed under the Apache Licence, Version 2.0 (the \[dq]Licence\[dq]);
+Licensed under the Apache Licence, Version 2.0 (the \[lq]Licence\[rq]);
 you may not use this file except in compliance with the Licence.
 .SH AUTHORS
 .PP

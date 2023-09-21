@@ -1,11 +1,11 @@
 ---
 title:    "Tp-Note: save and edit your clipboard content as a note file"
-subtitle: "Organize your notes with your favourite editor and markup language"
-author:   "Jens Getreu"
-date:     "2023-09-10"
-version:  "1.21.16"
+subtitle: Organize your notes with your favourite editor and markup language
+author:   Jens Getreu
+date:     2023-09-10
+version:  1.21.16
 filename_sync: false
-lang:     "en-GB"
+lang:     en-GB
 ---
 
 Markup languages like *Markdown* [^1] are perfectly suited for fast
@@ -13,7 +13,7 @@ note taking. Type your notes with your favourite text editor and observe
 the live rendered text in your web browser.
 
 _Tp-Note_ helps you to quickly get started writing notes with its powerful
-template system. If you like to keep your notes next to your files and you care
+template system. If you like to keep your notes next to your files, and you care
 about expressive filenames, then _Tp-Note_ might be the tool of your choice.
 As _Tp-Note_ synchronizes the note's filename with its document title, you
 will find your notes more easily.
@@ -102,14 +102,14 @@ The source code of the note shows the link with its target. The left-click, open
 
 ```yaml
 ---
-title:      "Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt"
-subtitle:   "Note"
-author:     "getreu"
-date:       "March 10, 2020"
-lang:       "en-GB"
+title:      Lied-Das_ist_mein_Teddybär - Arbeitsblätter.odt
+subtitle:   Note
+author:     Getreu
+date:       2023-09-21
+lang:       en-GB
 ---
 
-[03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt](<03-Lied-Das_ist_mein_Teddybär - Lernstationen - Arbeitsblätter.odt>)
+[03-Lied-Das_ist_mein_Teddybär - Arbeitsblätter.odt](<03-Lied-Das_ist_mein_Teddybär - Arbeitsblätter.odt>)
 ```
 
 ![Annotate](assets/workflow2-3.png){width="11cm"}
@@ -136,11 +136,11 @@ The source-code of the note shows the links with their targets.
 
 ```yaml
 ---
-title:      "ascii-hangman.exe"
-subtitle:   "URL"
-author:     "getreu"
-date:       "2020-08-27"
-lang:       "en-GB"
+title:      ascii-hangman.exe
+subtitle:   URL
+author:     Getreu
+date:       2020-08-27
+lang:       en-GB
 ---
 
 [ascii-hangman.exe](<ascii-hangman.exe>)
@@ -172,11 +172,11 @@ The source code of the note shows the link target:
 
 ```yaml
 ---
-title:      "Rustacean Station"
-subtitle:   "URL"
-author:     "getreu"
-date:       "March 10, 2020"
-lang:       "en-GB"
+title:      Rustacean Station
+subtitle:   URL
+author:     Getreu
+date:       2023-09-21
+lang:       en-GB
 ---
 
 [Rustacean Station](<https://rustacean-station.org/>)
@@ -215,11 +215,11 @@ The source code of the note shows the completed template:
 
 ```yaml
 ---
-title:      "Winston kept his back turned to the telescreen"
-subtitle:   "Note"
-author:     "getreu"
-date:       "2020-03-23"
-lang:       "en-GB"
+title:      Winston kept his back turned to the telescreen
+subtitle:   Note
+author:     Getreu
+date:       2020-03-23
+lang:       en-GB
 ---
 
 Winston kept his back turned to the telescreen. It was safer, though, as he well
@@ -323,11 +323,11 @@ well as with the `--no-default-features` console only version.
 
   ```yaml
   ---
-  title:      "i3-extensions.zip"
-  subtitle:   "URL"
-  author:     "getreu"
-  date:       "2020-09-03"
-  lang:       "en-GB"
+  title:      i3-extensions.zip
+  subtitle:   URL
+  author:     getreu
+  date:       2020-09-03
+  lang:       en-GB
   ---
 
   [i3-extensions.zip](<i3-extensions.zip>)
@@ -373,12 +373,13 @@ well as with the `--no-default-features` console only version.
 
   ```yaml
   ---
-  title:      "Todo"
-  subtitle:   ""
-  author:     "getreu"
-  date:       "2020-09-13"
-  lang:       "en-GB"
-  file_ext:   "mdtxt"
+  title:      Todo
+  subtitle:   ''
+  author:     getreu
+  date:       2020-09-13
+  lang:       en-GB
+
+  file_ext:   mdtxt
   ---
 
   nothing
@@ -414,11 +415,11 @@ well as with the `--no-default-features` console only version.
 
   ```yaml
   ---
-  title:      "dev"
-  subtitle:   "Draft"
-  author:     "getreu"
-  date:       "2020-09-25"
-  lang:       "en-GB"
+  title:      dev
+  subtitle:   Draft
+  author:     Getreu
+  date:       2020-09-25
+  lang:       en-GB
   ---
 
   # Draft

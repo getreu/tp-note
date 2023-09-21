@@ -1,11 +1,11 @@
 ---
-title:      "TP-NOTE(1) Version 1.21.16 | Tp-Note documentation"
-subtitle:   "manpage"
-author:     "Jens Getreu"
-version:    "1.21.16"
+title:      TP-NOTE(1) Version 1.21.16 | Tp-Note documentation
+subtitle:   manpage
+author:     Jens Getreu
+version:    1.21.16
 filename_sync: false
-date:       "2023-09-10"
-lang:       "en-GB"
+date:       2023-09-10
+lang:       en-GB
 ---
 
 
@@ -77,7 +77,7 @@ proposed title and add other content. When the text editor closes, Tp-Note
 synchronizes the note's metadata and its filename. This operation is performed
 with the '`tmpl.sync_filename`' template.
 
-Example: the clipboard is empty and `<path>` is a directory (or empty):
+Example: the clipboard is empty and '`<path>`' is a directory (or empty):
 
 ``` sh
 tpnote "./03-Favorite Readings/"
@@ -92,17 +92,17 @@ tpnote
 
 creates the document:
 
-    "./03-Favorite Readings/20211031-Favorite Readings--Note.md"
+    ./03-Favorite Readings/20211031-Favorite Readings--Note.md
 
 with the content:
 
 ``` yaml
 ---
-title:      "Favorite Readings"
-subtitle:   "Note"
-author:     "Getreu"
-date:       "2021-10-31"
-lang:       "en-GB"
+title:      Favorite Readings
+subtitle:   Note
+author:     Getreu
+date:       2021-10-31
+lang:       en-GB
 ---
 ```
 
@@ -141,7 +141,7 @@ Tp-Note behaves here as if the clipboard contained the string:
 ### The clipboard contains a string
 
 Example: While launching Tp-Note the clipboard contains the string:
-"`Who Moved My Cheese?\n\nChapter 2`" and `<path>` is a directory.
+"`Who Moved My Cheese?\n\nChapter 2`" and '`<path>`' is a directory.
 
 ``` sh
 tpnote "./03-Favorite Readings/"
@@ -156,17 +156,17 @@ tpnote
 
 This creates the document:
 
-    "./03-Favorite Readings/20211031-Who Moved My Cheese--Note.md"
+    ./03-Favorite Readings/20211031-Who Moved My Cheese--Note.md
 
 with the content:
 
 ```yaml
 ---
-title:      "Who Moved My Cheese"
-subtitle:   "Note"
-author:     "Getreu"
-date:       "2021-10-31"
-lang:       "en-GB"
+title:      Who Moved My Cheese
+subtitle:   Note
+author:     Getreu
+date:       2021-10-31
+lang:       en-GB
 ---
 
 Who Moved My Cheese?
@@ -186,8 +186,8 @@ date, the note's title and subtitle.
 
 ### The clipboard contains a hyperlink
 
-Example: `<path>` is a directory, the clipboard is not empty and it contains
-the string: "`I recommend:\n[The Rust Book](https://doc.rust-lang.org/book/)`".
+Example: '`<path>`' is a directory, the clipboard is not empty and it contains
+the string: '`I recommend:\n[The Rust Book](https://doc.rust-lang.org/book/)`'.
 
 ```sh
 tpnote './doc/Lecture 1'
@@ -200,11 +200,11 @@ Tp-Note's templates '`tmpl.from_clipboard_content`' and
 
 ```yaml
 ---
-title:      "The Rust Book"
-subtitle:   "URL"
-author:     "Getreu"
-date:       "2021-10-31"
-lang:       "en-GB"
+title:      The Rust Book
+subtitle:   URL
+author:     Getreu
+date:       2021-10-31
+lang:       en-GB
 ---
 
 I recommend:
@@ -220,23 +220,24 @@ title.
 ### The clipboard contains a string with a YAML header
 
 Example: '`<path>`' is a directory, the clipboard is not empty and contains
-the string: "`---\ntitle: Todo\nfile_ext: mdtxt\n---\n\nnothing`".
+the string: '`---\ntitle: Todo\nfile_ext: mdtxt\n---\nnothing`'.
 
 ```sh
 tpnote
 ```
 
-This creates the note: '`20211031-Todo.mdtxt`' with the following
+This creates the note: '`20230915-Todo.mdtxt`' with the following
 content:
 
 ```yaml
 ---
-title:      "Todo"
-subtitle:   ""
-author:     "Getreu"
-date:       "2021-10-31"
-lang:       "en-GB"
-file_ext:   "mdtxt"
+title:      Todo
+subtitle:   Note
+author:     Getreu
+date:       2023-09-15
+lang:       fr-FR
+
+file_ext:   mdtxt
 ---
 
 nothing
@@ -268,18 +269,19 @@ curl 'https://blog.getreu.net' \
 | tpnote
 ```
 
-creates the note file '`20211031-Jens Getreu's blog.md`' with the webpage's
-content converted to Markdown:
+creates the note file '`20230919-Jens Getreu's blog--Note.md`' with the
+webpage's content converted to Markdown:
 
 ```yaml
 ---
-title:      "Jens Getreu's blog"
-subtitle:   ""
-author:     "getreu"
-date:       "2021-10-31"
-lang:       "en"
----
+title:      Jens Getreu's blog
+subtitle:   Note
+author:     Getreu
+date:       2023-09-15
+lang:       en
 
+viewport:   width=device-width, initial-scale=1.0, maximum-scale=1
+---
 
 <a href="/" class="logo">Jens Getreu's blog</a>
 
@@ -289,7 +291,7 @@ lang:       "en"
 
 
 
-## Create a new note annotating a non-Tp-Note file
+## Create a new note annotating a non Tp-Note file
 
 When '`<path>`' points to an existing file, whose file extension is other than
 '`.md`', a new note is created with a similar filename and a reference to the
@@ -303,6 +305,8 @@ renamed to be in sync with the note's metadata.
 Example:
 
 ``` sh
+:> "Classic Shell Scripting.pdf"
+
 tpnote "Classic Shell Scripting.pdf"
 ```
 
@@ -314,11 +318,11 @@ with the content:
 
 ``` yaml
 ---
-title:      "Classic Shell Scripting.pdf"
-subtitle:   "Note"
-author:     "getreu"
-date:       "2021-10-31"
-lang:       "en-GB"
+title:      Classic Shell Scripting.pdf
+subtitle:   Note
+author:     Getreu
+date:       2023-09-15
+lang:       en-US
 ---
 
 [Classic Shell Scripting.pdf](<Classic Shell Scripting.pdf>)
@@ -358,12 +362,13 @@ and prepends a YAML header to the file's content:
 
 ```yaml
 ---
-title:      "Ascii-Hangman "
-subtitle:   "A game for children"
-author:     "getreu"
-date:       "2022-03-13"
-lang:       "en-GB"
-orig_name:  "Ascii-Hangman--A game for children.md"
+title:      Ascii-Hangman
+subtitle:   A game for children
+author:     Getreu
+date:       2022-03-13
+lang:       en-US
+
+orig_name:  Ascii-Hangman--A game for children.md
 ---
 
 A little game designed for primary kids to revise vocabulary in classroom.
@@ -455,13 +460,12 @@ tpnote "20200306-Favorite Readings--Note.md"
 The way how Tp-Note synchronizes the note's metadata and filename is defined
 in the template '`tmpl.sync_filename`'.
 
-Once Tp-Note opens the file in an text editor, the person taking notes may
-decide updating the title in the note's YAML metadata section from '`title:
-"Favorite Readings"`' to '`title: "Introduction to bookkeeping"`'.  After
-closing the text editor the filename is automatically updated too and looks
-like:
+Once Tp-Note opens the file in your text editor, let's assume you decide to 
+change the title in the note's YAML metadata section from 
+'`title: Favorite Readings`' to '`title: Introduction to bookkeeping`'.
+After closing the text editor, Tp-Note updates the filename automatically:
 
-    "20200306-Introduction to bookkeeping--Note.md"
+    20200306-Introduction to bookkeeping--Note.md
 
 Note: the sort tag '`20200306`' has not changed. The filename synchronization
 mechanism by default never does. (See below for more details about filename
@@ -574,10 +578,10 @@ synchronization).
 **-n**, **\--no-filename-sync**
 
 >   Whenever Tp-Note opens a note file, it synchronizes its YAML-metadata with
-    its filename. '`--no-filename-sync`' disables the synchronization.  In
-    addition, the "flag in scripts" can be especially useful for testing
-    '`.md`'-files.  See section EXIT STATUS for more details.  The section
-    METADATA FILENAME SYNCHRONIZATION shows alternative ways to disable
+    its filename. '`--no-filename-sync`' disables this synchronization.  In
+    addition, in scripts this flag can be especially useful for validating
+    the syntax of '`.md`'-files. See section EXIT STATUS for more details. The
+    section METADATA FILENAME SYNCHRONIZATION shows alternative ways to disable
     synchronization.
 
 **-t**, **\--tty**
@@ -679,6 +683,7 @@ of the text file:
 ---
 <YAML-front-matter>
 ---
+
 <document-body>
 ```
 
@@ -700,6 +705,7 @@ Prepended text is ignored.
 ---
 <YAML-front-matter>
 ---
+
 <document-body>
 ```
 
@@ -856,18 +862,20 @@ and the content:
 
 ``` yaml
 ---
-title:      "1. The Beginning"
-subtitle:   "Note"
-author:     "Getreu"
-date:       "2021-10-31"
-lang:       "en-GB"
+title:      1. The Beginning
+subtitle:   Note
+author:     Getreu
+date:       2021-10-31
+lang:       en-GB
+
+remainder:  false
 ---
 ```
 
-As "`My file.md`" is not equal to "`1. The Beginning--Note.md`",
-Tp-Note will rename the file to "`20211031-1. The Beginning--Note.md`".
-If the filename had been "`05_02-My file.md`", it would rename it to
-"`05_02-1. The Beginning--Note.md`".
+As '`My file.md`' is not equal to '`1. The Beginning--Note.md`',
+Tp-Note will rename the file to '`20211031-1. The Beginning--Note.md`'.
+If the filename had been '`05_02-My file.md`', it would rename it to
+'`05_02-1. The Beginning--Note.md`'.
 
 Note: When the YAML front-matter does not contain the optional '`sort_tag`'
 variable, Tp-Note will never change a sort tag. Nevertheless, it might
@@ -881,27 +889,31 @@ might want to have full control over the whole filename through the note's YAML
 front-matter. For example, if — for some reason — you have changed the
 document's date in the front-matter and you want to change the chronological
 sort tag in one go. In order to overwrite the note's sort tag on disk, you can
-add a '`sort_tag`' variable to its front-matter:
+add a '`sort_tag`' string-variable to its front-matter:
 
 ``` yaml
 ---
-title:      "1. The Beginning"
-date:       "2021-10-31"
-sort_tag:   "20211101"
+title:      1. The Beginning
+date:       2021-10-31
+
+sort_tag:   '20211101'
 ---
 ```
 
-When Tp-Note synchronizes the note's metadata with its filename, it will also
-change the sort tag from '`20211031`' to '`20211101`'. The resulting filename
-becomes "`20211101-1. The Beginning--Note.md`".
+Note, the above sort-tag value - here a number - must be enclosed with
+quotes in order label it as string type. When Tp-Note synchronizes the
+note's metadata with its filename, it will also change the sort tag from
+'`20211031`' to '`20211101`'. The resulting filename becomes 
+'`20211101-1. The Beginning--Note.md`'.
 
 The '`sort_tag`' variable also becomes handy, when you want to create one single
 note without any sort tag:
 
 ``` yaml
 ---
-title:      "1. The Beginning"
-sort_tag:   ""
+title:      1. The Beginning
+
+sort_tag:   ''
 ---
 ```
 
@@ -911,13 +923,14 @@ optional '`file_ext`' variable into the note's front-matter:
 
 ``` yaml
 ---
-title:      "1. The Beginning"
-file_ext:   "rst"
+title:      1. The Beginning
+
+file_ext:   rst
 ---
 ```
 
 This will change the file extension from '`.md`' to '`.rst`. The resulting
-filename becomes "`20211101-1. The Beginning--Note.rst`".
+filename becomes '`20211101-1. The Beginning--Note.rst`'.
 
 Important: '`rst`' must be one of the registered file extensions
 listed in the '`filename.extensions_rst`' variables in Tp-Note's configuration
@@ -942,7 +955,8 @@ false`'.
 
 ``` yaml
 ---
-title:      "1. The Beginning"
+title:         1. The Beginning   
+
 filename_sync: false
 ---
 ```
@@ -977,7 +991,8 @@ data at the following locations:
 2. If the environment variable '`TPNOTE_CONFIG="<path>"`' is set,
    '`<path>`' indicates the location of the configuration file.
 3. At startup all parent directories of the note file path are searched for
-   a file named '`.tpnote.toml`'. If present and its content is not empty,
+   a file named '`.tpnote.toml`'. If found, the document root moves
+   from '`/`' the found location. If present and its content is not empty,
    Tp-Note interprets the file's content as configuration file.
    Continue otherwise.
 4. Tp-Note tries to find its configuration data at the operating system's
@@ -1003,10 +1018,10 @@ with '`-c`'.
 tpnote -V -b -c .tpnote.toml
 ```
 
-For a detailed description of the available configuration
-variables, please consult the '`const`' definitions in Tp-Note's source code
-file '`config.rs`' The configuration file is encoded according to the TOML
-standard.
+For a detailed description of the available configuration variables, please
+consult Tp-Note's source code files
+'`/tp-note/tpnote/src/config_default.toml`' and
+'`/tp-note/tpnote-lib/src/config_default.toml`'.
 
 
 
@@ -1276,7 +1291,7 @@ Examples, adjust to your needs and taste:
       'hx',
     ],
   ]
-```
+  ```
 
 
 
@@ -1485,8 +1500,8 @@ You can change the Markup language of a specific note by adding the variable
 
 ```yaml
 ---
-title:    "some note"
-file_ext: "rst"
+title:    some note
+file_ext: rst
 ---
 ```
 
@@ -1606,7 +1621,7 @@ case none of the above rendition engines suit you, it is possible to disable
 the viewer feature selectively for some particular note file extensions: just
 place these extensions in the '`filename.extensions_no_viewer`' variable. If
 you wish to disable the viewer feature overall, set the variable
-`arg_default.edit = true`.
+'`arg_default.edit = true`'.
 
 **Change the HTML rendition template**
 
@@ -1658,6 +1673,9 @@ Specifically:
 
 * '`{{ lang }}`' (c.f. section _Template variables_).
 
+* '`{{ my_val | to_html }}`' is the HTML rendition of the '`my_val`'
+  variable (c.f. section _Template filter_).
+
 Alternatively, the header enclosed by '`<pre>...</pre>`' can also be rendered
 as a table:
 
@@ -1666,7 +1684,7 @@ as a table:
     <tr><th>title:</th><th>{{ fm_title }}</th> </tr>
     <tr><th>subtitle:</th><th>{{ fm_subtitle | default(value='') }}</th></tr>
   {% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle') %}
-    <tr><th>{{ k }}:</th><th>{{ v }}</th></tr>
+    <tr><th>{{ k }}:</th><th>{{ v | to_html }}</th></tr>
   {% endfor %}
   </table>
 ```
@@ -1903,8 +1921,8 @@ means, a YAML front-matter variable '`foo:`' in a note will generate a
 '`{{ fm_foo }}`' template variable. On the other hand, a missing '`foo:`'
 will cause '`{{ fm_foo }}`' to be undefined.
 
-Please note that '`{{ fm_* }}`' variables are available in all filename
-templates and in the '`tmpl.from_clipboard_yaml_content`' content template only.
+Please note that '`{{ fm_* }}`' variables are only available in filename
+templates and in the '`tmpl.from_clipboard_yaml_content`' content template.
 
 * '`{{ fm_title }}`' is the '`title:`' as indicated in the YAML front-matter of
   the note.
@@ -1919,10 +1937,10 @@ templates and in the '`tmpl.from_clipboard_yaml_content`' content template only.
   the note.
 
 * '`{{ fm_file_ext }}`' holds the value of the optional YAML header variable
-  '`file_ext:`' (e.g. '`file_ext: "rst"`').
+  '`file_ext:`' (e.g. '`file_ext: rst`').
 
 * '`{{ fm_sort_tag }}`': The sort tag variable as defined in the YAML front
-  matter of this note (e.g. '`sort_tag: "20200312"`').
+  matter of this note (e.g. '`sort_tag: '20200312'`').
 
 * '`{{ fm_all }}`': is a collection (map) of all defined '`{{ fm_* }}`'
   variables.  It is used in the '`tmpl.from_clipboard_yaml_content`' template,
@@ -1936,7 +1954,10 @@ templates and in the '`tmpl.from_clipboard_yaml_content`' content template only.
 Important: there is no guarantee, that any of the above '`{{ fm_* }}`'
 variables are defined! Depending on the last content template result, certain
 variables might be undefined. Please take into consideration, that a defined
-variable might contain the empty string '`""`'.
+variable might contain the empty string '`""`'. Creating a new note file
+with a content template, the note's header is parsed into '`{{ fm_* }}`'
+variables. The latter are then type checked according configurable rules.
+The rules are defined in '`tmpl.filter_assert_precondition`'
 
 For a more detailed description of the available template variables, please
 consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
@@ -1947,9 +1968,13 @@ consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 
 In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
-some additional filters, e.g.: '`file_sort_tag`', '`trim_file_sort_tag`',
-'`file_stem`', '`cut`', '`heading`', '`link_text`', '`link_dest`',
-'`link_title`' and '`ext`'.
+some additional filters, i.e.: '`append`', '`append(with=...)`',
+'`append(newline=true)`', '`cut`', '`file_copy_counter`', '`field`'
+'`field(in=..., inval=...)`' '`field(out=...)`', '`file_ext`', '`file_name`',
+'`file_sort_tag`', '`file_stem`', '`get_lang`', '`heading`', '`link_dest`',
+'`link_text`', '`link_title`', '`map_lang`', '`prepend`', '`prepend(with=...)`',
+'`prepend(with_sort_tag=...)`', '`prepend(newline=true)`', '`sanit`',
+'`to_html`', '`to_yaml`' and '`trim_file_sort_tag`'.
 
 A filter is always used together with a variable. Here are some examples:
 
@@ -1962,6 +1987,12 @@ A filter is always used together with a variable. Here are some examples:
   the final component of '`{{ path }}`', e.g. '`01-23_9`' or '`20191022`'. It
   is similar to '`{{ path | file_name }}`' but without returning its stem,
   copy-counter and extension.
+
+* '`{{ path | file_sort_tag | assert_valid_sort_tag }}`' does not change 
+  the above output, but the filter asserts at runtime, that the resulting type
+  is either '`String`' or '`Number`' and that all characters are part of the set
+  '`filename.sort_tag_chars`'. The additional runtime check simplifies
+  template debugging. 
 
 * '`{{ path | file_stem }}`' is similar to '`{{ path | file_name }}`'
   but without its sort tag, copy-counter and extension. Only the stem of
@@ -2001,11 +2032,14 @@ A filter is always used together with a variable. Here are some examples:
 * '`{{ clipboard | link_title }}`' is the title of the first Markdown or
   ReStruncturedText formatted link in the clipboard.
 
-* '`{{ username | capitalize | json_encode }}`' is the capitalized JSON encoded
-  username. As all YAML front-matter is JSON encoded, this filter code must be
-  appended to any template variable placed in the front-matter block.
+* '`{{ username | capitalize | to_yaml(key='author',tab=12) }}`' is the
+  capitalized YAML encoded username. As all YAML front-matter is YAML encoded,
+  the '`to_yaml`' filter must be appended to any template variable placed
+  in the front-matter block. The '`key='author'`' parameter prepends the
+  key to the capitalized username, e.g.: '`autor:      John`'. Note, the
+  first letter of '`John`' starts at the tabulator position '`tab=12`'.
 
-* '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its  front
+* '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its front
   matter, sanitized in a file system friendly form. Special characters are
   omitted or replaced by '`-`' and '`_`'. See the section _Filename template
   convention_ for more details about this filter.
@@ -2020,8 +2054,26 @@ A filter is always used together with a variable. Here are some examples:
   ambiguity in case the '`fm_title`' starts with a character defined in the
   '`filename.sort_tag_chars`' set.
 
-* '`{{ fm_all | remove(var='fm_title') }}`' represents a collection (map) of
-  all '`fm_*`' variables, exclusive of the variable '`fm_title`'.
+* '`{{ fm_all | field(out='fm_title') | field(out='fm_author') | to_yaml }}`' 
+  renders a "Map" collection of all '`fm_*`' variables, exclusive of the
+  variables '`fm_title`' and '`fm_author`' to YAML. Note, that 
+  the optional '`to_yaml(key=...)`' parameter is not allowed in this 
+  context.
+
+* '`{{ fm_all | field(in='fm_author', inval='Jens') | to_yaml }}`' 
+  inserts the key/value '`fm_author`'/'`Jens`' and renders the resulting
+  collection. a "Map" collection of all '`fm_*`' variables, Note, that 
+  the optional '`to_yaml(key=...)`' parameter is not allowed in this 
+  context.
+
+* '`{{ fm_all | to_yaml | append(newline=true) }}`' 
+  renders a collection (map) of all '`fm_*`' variables. If the collection is
+  empty the result is the empty string. Otherwise, the YAML rendition is
+  appended with a newline character.
+
+* '`{{ fm_all | field(out'fm_title') | field(out='fm_title') | to_html }}`' 
+  renders a collection (map) of all '`fm_*`' variables, exclusive of the
+  variables '`fm_title`' and '`fm_title`' to HTML.
 
 * '`{{ note_body_text | get_lang }}`' determines the natural language of
   the variable '`{{ note_body_text }}` and returns the result as ISO 639-1
@@ -2059,14 +2111,17 @@ filename templates '`tmpl.*_filename`' are used to calculate the note's
 filename.  By convention, content templates appear in the configuration file in
 variables named '`tmpl.*_content`'.
 
-Strings in the YAML front-matter of content templates are JSON encoded.
+Strings in the front matter section of content templates are YAML encoded.
 Therefore, all variables used in the front-matter must pass an additional
-'`json_encode()`'-filter. For example, the variable
-'`{{ dir_path | file_stem }}`' becomes
-'`{{ dir_path | file_stem() | json_encode() }}`' or just
-'`{{ dir_path | file_stem | json_encode }}`'.
+'`to_yaml()`'-filter. For example, the variable
+'`{{ dir_path | file_stem() }}`' becomes
+'`{{ dir_path | file_stem() | to_yaml(key='title') }}`' or, shorter:
+'`{{ dir_path | file_stem | to_yaml(key='title') }}`'.
 
-
+When given with a key, the '`to_yaml(key='...')`' filter accepts any input
+type, whereas the short form '`to_yaml()`' requires an '`Value::Object`'
+type as input. The latter is often followed be the '`append(newline=true)`'
+filter appending a newline.
 
 ## Filename template conventions
 
@@ -2103,12 +2158,13 @@ The '`prepend(with_sort_tag=<...>`' filter is similar to the
 Both separators guarantee that the end of a sort-tag is detected
 unequivocally. For example, when the input string starts with a digit
 '`0123456789`' or '`-_ `', the string is prepended with `-'`, e.g.
-"`1-The Show Begins`" becomes "`'1-The Show Begins`".
+'`1-The Show Begins`' becomes '`'1-The Show Begins`'.
 The '`prepend(with_sort_tag=<...>)`' filter must be applied to the first
-variable, e.g. '`{{ fm_title | sanit | prepend(with_separator=path|
-file_sort_tag )}`'. This way, it is always possible to univocally
-distinguish the sort-tag from the rest of the filename. Note, the default
-sort-tag separators can be changed with the configuration variables
+variable, e.g. 
+'`{{ fm_title | sanit | prepend(with_separator=path|file_sort_tag )}`'. 
+This way, it is always possible to univocally distinguish the sort-tag from the
+rest of the filename. Note, the default sort-tag separators can be changed with
+the configuration variables
 '`filename.sort_tag_separator`' and '`filename.sort_tag_extra_separator`'. For
 more details please consult the _Customize the filename synchronization scheme_
 chapter.
@@ -2282,7 +2338,7 @@ TPNOTE\_EDITOR
 >   TPNOTE_EDITOR="geany -sim" tpnote
 >   ```
 
->   The above instructs Tp-Note to start the editor "`geany`" with the
+>   The above instructs Tp-Note to start the editor '`geany`' with the
     flags '`-sim`'. Unlike with shell tokens, the backslash and
     quote characters have no special meaning. Instead, all tokens
     are _percent encoded_. Consider the following example where
@@ -2376,7 +2432,7 @@ Unless you explicitly state otherwise, any contribution intentionally
 submitted for inclusion in the work by you, as defined in the Apache-2.0
 licence, shall be dual licensed as above, without any additional terms
 or conditions. Licensed under the Apache Licence, Version 2.0 (the
-\"Licence\"); you may not use this file except in compliance with the
+"Licence"); you may not use this file except in compliance with the
 Licence.
 
 
