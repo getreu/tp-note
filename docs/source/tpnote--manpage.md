@@ -1968,13 +1968,13 @@ consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 
 In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
-some additional filters, i.e.: '`append`', '`append(with=...)`',
-'`append(newline=true)`', '`cut`', '`file_copy_counter`', '`field`'
-'`field(in=..., inval=...)`' '`field(out=...)`', '`file_ext`', '`file_name`',
-'`file_sort_tag`', '`file_stem`', '`get_lang`', '`heading`', '`link_dest`',
-'`link_text`', '`link_title`', '`map_lang`', '`prepend`', '`prepend(with=...)`',
-'`prepend(with_sort_tag=...)`', '`prepend(newline=true)`', '`sanit`',
-'`to_html`', '`to_yaml`' and '`trim_file_sort_tag`'.
+some additional filters, i.e.: 
+'`append(newline=true)`', '`append(with=...)`', '`cut`', '`file_copy_counter`',
+'`file_ext`', '`file_name`', '`file_sort_tag`', '`file_stem`', '`get_lang`',
+'`heading`', '`insert(key=..., value=...)`', '`link_dest`', '`link_text`',
+'`link_title`', '`map_lang`', '`prepend`', '`prepend(newline=true)`',
+'`prepend(with=...)`', '`prepend(with_sort_tag=...)`', '`remove(key=)`'
+'`sanit`', '`to_html`', '`to_yaml`' and  '`trim_file_sort_tag`'.
 
 A filter is always used together with a variable. Here are some examples:
 
@@ -2054,26 +2054,22 @@ A filter is always used together with a variable. Here are some examples:
   ambiguity in case the '`fm_title`' starts with a character defined in the
   '`filename.sort_tag_chars`' set.
 
-* '`{{ fm_all | field(out='fm_title') | field(out='fm_author') | to_yaml }}`' 
-  renders a "Map" collection of all '`fm_*`' variables, exclusive of the
-  variables '`fm_title`' and '`fm_author`' to YAML. Note, that 
-  the optional '`to_yaml(key=...)`' parameter is not allowed in this 
-  context.
+* '`{{ fm_all | remove(key='fm_title') | remove(key='fm_author') | to_yaml }}`'
+  renders the collection (map) '`fm_all`', exclusive of the
+  variables '`fm_title`' and '`fm_author`' to YAML. Note, that the filter
+  '`to_yaml`' has no parameter '`key`' in this context.
 
-* '`{{ fm_all | field(in='fm_author', inval='Jens') | to_yaml }}`' 
-  inserts the key/value '`fm_author`'/'`Jens`' and renders the resulting
-  collection. a "Map" collection of all '`fm_*`' variables, Note, that 
-  the optional '`to_yaml(key=...)`' parameter is not allowed in this 
-  context.
+* '`{{ fm_all | insert(key='fm_author', value='Getreu') | to_yaml}}`' takes
+  the collection (map) '`fm_all`', inserts the key/value '`fm_author`'/'`Jens`'
+  and renders the result into YAML. Note, that the filter '`to_yaml`' has no
+  parameter '`key`' in this context.
 
 * '`{{ fm_all | to_yaml | append(newline=true) }}`' 
-  renders a collection (map) of all '`fm_*`' variables. If the collection is
-  empty the result is the empty string. Otherwise, the YAML rendition is
-  appended with a newline character.
+  renders the collection (map) '`fm_all`' into YAML. If the collection is empty,
+  the result is the empty string. Otherwise, the YAML rendition is appended with
+  a newline character.
 
-* '`{{ fm_all | field(out'fm_title') | field(out='fm_title') | to_html }}`' 
-  renders a collection (map) of all '`fm_*`' variables, exclusive of the
-  variables '`fm_title`' and '`fm_title`' to HTML.
+* '`{{ fm_all | to_html}}`' renders the collection (map) '`fm_*`'  into HTML.
 
 * '`{{ note_body_text | get_lang }}`' determines the natural language of
   the variable '`{{ note_body_text }}` and returns the result as ISO 639-1
