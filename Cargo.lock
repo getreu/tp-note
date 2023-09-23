@@ -540,15 +540,14 @@ dependencies = [
 
 [[package]]
 name = "cocoa-foundation"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "931d3837c286f56e3c58423ce4eba12d08db2374461a785c86f672b08b5650d6"
+checksum = "8c6234cbb2e4c785b456c0644748b1ac416dd045799740356f8363dfe00c93f7"
 dependencies = [
  "bitflags 1.3.2",
  "block",
  "core-foundation",
  "core-graphics-types",
- "foreign-types",
  "libc",
  "objc",
 ]
@@ -3115,7 +3114,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f4c021e1093a56626774e81216a4ce732a735e5bad4868a03f3ed65ca0c3919"
 dependencies = [
  "once_cell",
- "toml_edit",
+ "toml_edit 0.19.15",
 ]
 
 [[package]]
@@ -3425,9 +3424,9 @@ checksum = "4c309e515543e67811222dbc9e3dd7e1056279b782e1dacffe4242b718734fb6"
 
 [[package]]
 name = "semver"
-version = "1.0.18"
+version = "1.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0293b4b29daaf487284529cc2f5675b8e57c61f70167ba415a463651fd6a918"
+checksum = "ad977052201c6de01a8ef2aa3378c4bd23217a056337d1d6da40468d267a4fb0"
 
 [[package]]
 name = "serde"
@@ -3731,7 +3730,7 @@ dependencies = [
  "cfg-expr",
  "heck 0.4.1",
  "pkg-config",
- "toml",
+ "toml 0.7.8",
  "version-compare",
 ]
 
@@ -3886,7 +3885,19 @@ dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "toml_edit",
+ "toml_edit 0.19.15",
+]
+
+[[package]]
+name = "toml"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c226a7bba6d859b63c92c4b4fe69c5b6b72d0cb897dbc8e6012298e6154cb56e"
+dependencies = [
+ "serde",
+ "serde_spanned",
+ "toml_datetime",
+ "toml_edit 0.20.0",
 ]
 
 [[package]]
@@ -3912,12 +3923,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "toml_edit"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ff63e60a958cefbb518ae1fd6566af80d9d4be430a33f3723dfc47d1d411d95"
+dependencies = [
+ "indexmap 2.0.0",
+ "serde",
+ "serde_spanned",
+ "toml_datetime",
+ "winnow",
+]
+
+[[package]]
 name = "tp-note"
-version = "1.21.16"
+version = "1.22.1"
 
 [[package]]
 name = "tpnote"
-version = "1.22.0"
+version = "1.22.1"
 dependencies = [
  "arboard",
  "directories",
@@ -3939,8 +3963,8 @@ dependencies = [
  "tera",
  "thiserror",
  "time",
- "toml",
- "tpnote-lib 0.23.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "toml 0.8.0",
+ "tpnote-lib 0.23.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "webbrowser",
  "win32job",
  "windows-sys 0.48.0",
@@ -3949,7 +3973,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote-lib"
-version = "0.23.0"
+version = "0.23.1"
 dependencies = [
  "latex2mathml",
  "lazy_static",
@@ -3971,16 +3995,16 @@ dependencies = [
  "syntect",
  "tera",
  "thiserror",
- "toml",
+ "toml 0.8.0",
  "win32job",
  "windows-sys 0.48.0",
 ]
 
 [[package]]
 name = "tpnote-lib"
-version = "0.23.0"
+version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05c9f07bd94a43476636cb14b68a459502dc279dfba3f0398da14c3574854a55"
+checksum = "5a09ee7d67f60be35ed4b3a2c5d9ff17472bfffada5d518caeef6e3ff2e64174"
 dependencies = [
  "latex2mathml",
  "lazy_static",
@@ -4002,7 +4026,7 @@ dependencies = [
  "syntect",
  "tera",
  "thiserror",
- "toml",
+ "toml 0.7.8",
  "win32job",
  "windows-sys 0.48.0",
 ]
@@ -4625,7 +4649,7 @@ version = "0.1.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77e2aaaf8cfa92078c0c0375423d631f82f2f57979c2884fdd5f604a11e45329"
 dependencies = [
- "toml",
+ "toml 0.7.8",
  "version_check",
 ]
 
@@ -4681,9 +4705,9 @@ dependencies = [
 
 [[package]]
 name = "xml-rs"
-version = "0.8.18"
+version = "0.8.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bab77e97b50aee93da431f2cee7cd0f43b4d1da3c408042f2d7d164187774f0a"
+checksum = "0fcb9cbac069e033553e8bb871be2fbdffcab578eb25bd0f7c508cedc6dcd75a"
 
 [[package]]
 name = "yaml-rust"

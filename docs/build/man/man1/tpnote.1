@@ -14,7 +14,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "TP-NOTE" "1" "2023-09-22" "Version 1.21.16" "Tp-Note documentation"
+.TH "TP-NOTE" "1" "2023-09-23" "Version 1.22.1" "Tp-Note documentation"
 .hy
 .SH NAME
 .PP
@@ -2464,18 +2464,17 @@ code file `\f[V]note.rs\f[R]'.
 .PP
 In addition to \f[I]Tera\f[R]\[cq]s built-in
 filters (https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes
-with some additional filters, i.e.: `\f[V]append\f[R]',
-`\f[V]append(with=...)\f[R]', `\f[V]append(newline=true)\f[R]',
-`\f[V]cut\f[R]', `\f[V]file_copy_counter\f[R]', `\f[V]field\f[R]'
-`\f[V]field(in=..., inval=...)\f[R]' `\f[V]field(out=...)\f[R]',
-`\f[V]file_ext\f[R]', `\f[V]file_name\f[R]', `\f[V]file_sort_tag\f[R]',
-`\f[V]file_stem\f[R]', `\f[V]get_lang\f[R]', `\f[V]heading\f[R]',
-`\f[V]link_dest\f[R]', `\f[V]link_text\f[R]', `\f[V]link_title\f[R]',
-`\f[V]map_lang\f[R]', `\f[V]prepend\f[R]',
+with some additional filters, i.e.: `\f[V]append(newline=true)\f[R]',
+`\f[V]append(with=...)\f[R]', `\f[V]cut\f[R]',
+`\f[V]file_copy_counter\f[R]', `\f[V]file_ext\f[R]',
+`\f[V]file_name\f[R]', `\f[V]file_sort_tag\f[R]', `\f[V]file_stem\f[R]',
+`\f[V]get_lang\f[R]', `\f[V]heading\f[R]',
+`\f[V]insert(key=..., value=...)\f[R]', `\f[V]link_dest\f[R]',
+`\f[V]link_text\f[R]', `\f[V]link_title\f[R]', `\f[V]map_lang\f[R]',
+`\f[V]prepend\f[R]', `\f[V]prepend(newline=true)\f[R]',
 `\f[V]prepend(with=...)\f[R]', `\f[V]prepend(with_sort_tag=...)\f[R]',
-`\f[V]prepend(newline=true)\f[R]', `\f[V]sanit\f[R]',
-`\f[V]to_html\f[R]', `\f[V]to_yaml\f[R]' and
-`\f[V]trim_file_sort_tag\f[R]'.
+`\f[V]remove(key=)\f[R]' `\f[V]sanit\f[R]', `\f[V]to_html\f[R]',
+`\f[V]to_yaml\f[R]' and `\f[V]trim_file_sort_tag\f[R]'.
 .PP
 A filter is always used together with a variable.
 Here are some examples:
@@ -2578,28 +2577,25 @@ This might be necessary to avoid ambiguity in case the
 `\f[V]fm_title\f[R]' starts with a character defined in the
 `\f[V]filename.sort_tag_chars\f[R]' set.
 .IP \[bu] 2
-`\f[V]{{ fm_all | field(out=\[aq]fm_title\[aq]) | field(out=\[aq]fm_author\[aq]) | to_yaml }}\f[R]'
-renders a \[lq]Map\[rq] collection of all `\f[V]fm_*\f[R]' variables,
-exclusive of the variables `\f[V]fm_title\f[R]' and
-`\f[V]fm_author\f[R]' to YAML.
-Note, that the optional `\f[V]to_yaml(key=...)\f[R]' parameter is not
-allowed in this context.
+`\f[V]{{ fm_all | remove(key=\[aq]fm_title\[aq]) | remove(key=\[aq]fm_author\[aq]) | to_yaml }}\f[R]'
+renders the collection (map) `\f[V]fm_all\f[R]', exclusive of the
+variables `\f[V]fm_title\f[R]' and `\f[V]fm_author\f[R]' to YAML.
+Note, that the filter `\f[V]to_yaml\f[R]' has no parameter
+`\f[V]key\f[R]' in this context.
 .IP \[bu] 2
-`\f[V]{{ fm_all | field(in=\[aq]fm_author\[aq], inval=\[aq]Jens\[aq]) | to_yaml }}\f[R]'
-inserts the key/value `\f[V]fm_author\f[R]'/`\f[V]Jens\f[R]' and renders
-the resulting collection.
-a \[lq]Map\[rq] collection of all `\f[V]fm_*\f[R]' variables, Note, that
-the optional `\f[V]to_yaml(key=...)\f[R]' parameter is not allowed in
-this context.
+`\f[V]{{ fm_all | insert(key=\[aq]fm_author\[aq], value=\[aq]Getreu\[aq]) | to_yaml}}\f[R]'
+takes the collection (map) `\f[V]fm_all\f[R]', inserts the key/value
+`\f[V]fm_author\f[R]'/`\f[V]Jens\f[R]' and renders the result into YAML.
+Note, that the filter `\f[V]to_yaml\f[R]' has no parameter
+`\f[V]key\f[R]' in this context.
 .IP \[bu] 2
-`\f[V]{{ fm_all | to_yaml | append(newline=true) }}\f[R]' renders a
-collection (map) of all `\f[V]fm_*\f[R]' variables.
-If the collection is empty the result is the empty string.
+`\f[V]{{ fm_all | to_yaml | append(newline=true) }}\f[R]' renders the
+collection (map) `\f[V]fm_all\f[R]' into YAML.
+If the collection is empty, the result is the empty string.
 Otherwise, the YAML rendition is appended with a newline character.
 .IP \[bu] 2
-`\f[V]{{ fm_all | field(out\[aq]fm_title\[aq]) | field(out=\[aq]fm_title\[aq]) | to_html }}\f[R]'
-renders a collection (map) of all `\f[V]fm_*\f[R]' variables, exclusive
-of the variables `\f[V]fm_title\f[R]' and `\f[V]fm_title\f[R]' to HTML.
+`\f[V]{{ fm_all | to_html}}\f[R]' renders the collection (map)
+`\f[V]fm_*\f[R]' into HTML.
 .IP \[bu] 2
 `\f[V]{{ note_body_text | get_lang }}\f[R]' determines the natural
 language of the variable `\f[V]{{ note_body_text }}\f[R] and returns the
