@@ -1974,7 +1974,8 @@ some additional filters, i.e.:
 '`heading`', '`insert(key=..., value=...)`', '`link_dest`', '`link_text`',
 '`link_title`', '`map_lang`', '`prepend`', '`prepend(newline=true)`',
 '`prepend(with=...)`', '`prepend(with_sort_tag=...)`', '`remove(key=)`'
-'`sanit`', '`to_html`', '`to_yaml`' and  '`trim_file_sort_tag`'.
+'`sanit`', '`to_html`', '`to_yaml`', '`to_yaml(key=...)`', '`to_yaml(tab=...)`'
+and  '`trim_file_sort_tag`'.
 
 A filter is always used together with a variable. Here are some examples:
 
