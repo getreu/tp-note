@@ -33,9 +33,11 @@ mod workflow;
 #[cfg(feature = "message-box")]
 use crate::alert_service::AlertService;
 use crate::config::backup_config_file;
+use crate::config::AUTHOR;
 use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
 use crate::config::CONFIG_PATH;
+use crate::config::COPYRIGHT_FROM;
 use crate::config::PKG_VERSION;
 #[cfg(feature = "read-clipboard")]
 use crate::error::WorkflowError;
@@ -48,6 +50,7 @@ use crate::settings::RUNS_ON_CONSOLE;
 use crate::workflow::run;
 #[cfg(feature = "read-clipboard")]
 use arboard::Clipboard;
+use config::MIN_CONFIG_FILE_VERSION;
 use error::ConfigFileError;
 use semver::Version;
 use serde::Serialize;
@@ -56,35 +59,6 @@ use std::path::PathBuf;
 use std::process;
 #[cfg(feature = "read-clipboard")]
 use tpnote_lib::error::NoteError;
-
-/// Set the minimum required config file version that is compatible with this
-/// Tp-Note version.
-///
-/// Examples how to use this constant. Choose one of the following:
-/// 1. Require some minimum version of the config file.
-///    Abort if not satisfied.
-///
-///    ```no_run
-///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.5.1");
-///    ```
-///
-/// 2. Require the config file to be of the same version as this binary.
-///
-///    ```no_run
-///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = PKG_VERSION;
-///    ```
-///
-/// 3. Disable minimum version check; all config file versions are allowed.
-///
-///    ```no_run
-///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
-///    ```
-///
-const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.22.0");
-/// Authors.
-const AUTHOR: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
-/// Copyright.
-const COPYRIGHT_FROM: &str = "2020";
 
 #[derive(Debug, PartialEq, Serialize)]
 struct About {

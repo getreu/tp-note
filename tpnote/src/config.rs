@@ -33,6 +33,37 @@ use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::context::Context;
 use tpnote_lib::filename::NotePathBuf;
 
+/// Set the minimum required config file version that is compatible with this
+/// Tp-Note version.
+///
+/// Examples how to use this constant. Choose one of the following:
+/// 1. Require some minimum version of the config file.
+///    Abort if not satisfied.
+///
+///    ```no_run
+///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.5.1");
+///    ```
+///
+/// 2. Require the config file to be of the same version as this binary.
+///
+///    ```no_run
+///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = PKG_VERSION;
+///    ```
+///
+/// 3. Disable minimum version check; all config file versions are allowed.
+///
+///    ```no_run
+///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
+///    ```
+///
+pub(crate) const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.22.1");
+
+/// Authors.
+pub(crate) const AUTHOR: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
+
+/// Copyright.
+pub(crate) const COPYRIGHT_FROM: &str = "2020";
+
 /// Name of this executable (without the Windows ".exe" extension).
 const CARGO_BIN_NAME: &str = env!("CARGO_BIN_NAME");
 
