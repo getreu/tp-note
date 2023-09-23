@@ -1,7 +1,7 @@
 # [PROJECT_DIR]/Cargo.toml
 [workspace]
 resolver = "2"
-members = ["tpnote", "tpnote-lib", "tp-note"]
+members = ["tpnote", "tpnote-lib"]
 default-members = ["tpnote"]
 
 [workspace.package]
