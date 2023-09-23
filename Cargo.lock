@@ -3936,10 +3936,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tp-note"
-version = "1.22.1"
-
-[[package]]
 name = "tpnote"
 version = "1.22.1"
 dependencies = [

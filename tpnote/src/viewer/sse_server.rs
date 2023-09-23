@@ -96,20 +96,23 @@ pub fn manage_connections(
             Ok(stream) => {
                 let (event_tx, event_rx) = sync_channel(0);
                 event_tx_list.lock().unwrap().push(event_tx);
-                let allowed_urls = allowed_urls.clone();
-                let delivered_tpnote_docs = delivered_tpnote_docs.clone();
-                let conn_counter = conn_counter.clone();
-                let context = context.clone();
-                thread::spawn(move || {
-                    let mut st = ServerThread::new(
-                        event_rx,
-                        stream,
-                        allowed_urls,
-                        delivered_tpnote_docs,
-                        conn_counter,
-                        context,
-                    );
-                    st.serve_connection()
+                thread::spawn({
+                    let allowed_urls = allowed_urls.clone();
+                    let delivered_tpnote_docs = delivered_tpnote_docs.clone();
+                    let conn_counter = conn_counter.clone();
+                    let context = context.clone();
+
+                    move || {
+                        let mut st = ServerThread::new(
+                            event_rx,
+                            stream,
+                            allowed_urls,
+                            delivered_tpnote_docs,
+                            conn_counter,
+                            context,
+                        );
+                        st.serve_connection()
+                    }
                 });
             }
             Err(e) => log::warn!("TCP connection failed: {}", e),

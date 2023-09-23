@@ -15,6 +15,9 @@ use std::thread::JoinHandle;
 /// Launches a file watcher and Markdown renderer and displays the
 /// result in the system's default browser.
 pub fn launch_viewer_thread(path: &Path) -> JoinHandle<()> {
-    let p = path.to_path_buf();
-    thread::spawn(move || Viewer::run(p))
+    thread::spawn({
+        let p = path.to_path_buf();
+
+        move || Viewer::run(p)
+    })
 }

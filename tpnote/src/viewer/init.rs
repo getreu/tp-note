@@ -84,17 +84,22 @@ impl Viewer {
         // Launch a background HTTP server thread to manage Server-Sent-Event subscribers
         // and to serve the rendered html.
         let event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>> = Arc::new(Mutex::new(Vec::new()));
-        let doc_ = doc.clone();
-        let event_tx_list_ = event_tx_list.clone();
-        thread::spawn(move || manage_connections(event_tx_list_, listener, doc_));
+        thread::spawn({
+            // Use a separate scope to `clone()`.
+            let doc = doc.clone();
+            let event_tx_list = event_tx_list.clone();
+
+            move || manage_connections(event_tx_list, listener, doc)
+        });
 
         // Launch the file watcher thread.
         // Send a signal whenever the file is modified. Without error, this thread runs as long as
         // the parent thread (where we are) is running.
         let terminate_on_browser_disconnect = Arc::new(Mutex::new(false));
-        let terminate_on_browser_disconnect_ = terminate_on_browser_disconnect.clone();
-        let watcher_handle: JoinHandle<_> = thread::spawn(move || {
-            match FileWatcher::new(doc, event_tx_list, terminate_on_browser_disconnect_) {
+        let watcher_handle: JoinHandle<_> = thread::spawn({
+            let terminate_on_browser_disconnect = terminate_on_browser_disconnect.clone();
+
+            move || match FileWatcher::new(doc, event_tx_list, terminate_on_browser_disconnect) {
                 Ok(mut w) => w.run(),
                 Err(e) => {
                     log::warn!("Can not start file watcher, giving up: {}", e);
