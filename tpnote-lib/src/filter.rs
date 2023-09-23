@@ -47,7 +47,8 @@ lazy_static! {
         tera.register_filter("file_ext", file_ext_filter);
         tera.register_filter("prepend", prepend_filter);
         tera.register_filter("append", append_filter);
-        tera.register_filter("field", field_filter);
+        tera.register_filter("remove", remove_filter);
+        tera.register_filter("insert", insert_filter);
         tera.register_filter("get_lang", get_lang_filter);
         tera.register_filter("map_lang", map_lang_filter);
         tera
@@ -516,30 +517,39 @@ fn file_ext_filter<S: BuildHasher>(
     Ok(Value::String(ext))
 }
 
-/// A Tera filter that takes a map of variables/values. With the parameter
-/// `field_filter(out="<var-name>"), the variable `<var-name>` is removed
-/// from the map.
-/// With the parameter `field_filter(in="<var-name>", inval="<var-value>"),
-/// the variable `<var-name>` with the value `<var-value>` is appended
-/// to the map. If the variable exists in the map already, its value is
-/// replaced.
-/// The input type must be `Value::Object()`, the parameter types must be
+/// A Tera filter that takes a map of variables/values and removes a key/value
+/// pair with the parameter `remove(key="<var-name>").
+/// The input type must be `Value::Object()`, the parameter must be
 /// `Value::String()` and the output type is `Value::Object()`.
-fn field_filter<S: BuildHasher>(
+fn remove_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let mut map = try_get_value!("field", "value", tera::Map<String, tera::Value>, value);
+    let mut map = try_get_value!("remove", "value", tera::Map<String, tera::Value>, value);
 
-    if let Some(outkey) = args.get("out") {
-        let outkey = try_get_value!("field", "out", String, outkey);
+    if let Some(outkey) = args.get("key") {
+        let outkey = try_get_value!("remove", "key", String, outkey);
         let _ = map.remove(outkey.trim_start_matches("fm_"));
     };
 
-    if let Some(inkey) = args.get("in") {
-        let inkey = try_get_value!("field", "in", String, inkey);
+    Ok(Value::Object(map))
+}
+
+/// A Tera filter that takes a map of key/values and inserts a key/value pair
+/// with the parameters `insert(key="<var-name>", value=<var-value>). If the
+/// variable exists in the map already, its value is replaced.
+/// The input type must be `Value::Object()`, the `key` parameter must be a
+/// `Value::String()` and the output type is `Value::Object()`.
+fn insert_filter<S: BuildHasher>(
+    value: &Value,
+    args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let mut map = try_get_value!("insert", "value", tera::Map<String, tera::Value>, value);
+
+    if let Some(inkey) = args.get("key") {
+        let inkey = try_get_value!("insert", "key", String, inkey);
         let inval = args
-            .get("inval")
+            .get("value")
             .map(|v| v.to_owned())
             .unwrap_or(tera::Value::Null);
         map.insert(inkey.trim_start_matches("fm_").to_string(), inval);
@@ -884,62 +894,54 @@ mod tests {
     }
 
     #[test]
-    fn test_field_filter() {
+    fn test_remove_filter() {
         //
         let input = json!({"title": "my title", "subtitle": "my subtitle"});
         let mut args = HashMap::new();
-        args.insert("out".to_string(), to_value("fm_title").unwrap());
+        args.insert("key".to_string(), to_value("fm_title").unwrap());
         let expected = json!({"subtitle": "my subtitle"});
-        let result = field_filter(&input, &args);
+        let result = remove_filter(&input, &args);
         //eprintln!("{:?}", result);
         assert_eq!(result.unwrap(), expected);
 
         //
         let input = json!({"title": "my title", "subtitle": "my subtitle"});
         let mut args = HashMap::new();
-        args.insert("out".to_string(), to_value("title").unwrap());
-        let expected = json!({"subtitle": "my subtitle"});
-        let result = field_filter(&input, &args);
+        args.insert("key".to_string(), to_value("nono").unwrap());
+        let expected = json!({"title": "my title", "subtitle": "my subtitle"});
+        let result = remove_filter(&input, &args);
         //eprintln!("{:?}", result);
         assert_eq!(result.unwrap(), expected);
+    }
 
+    #[test]
+    fn test_insert_filter() {
         //
-        let input = json!({"title": "my title", "subtitle": "my subtitle"});
+        let input = json!({"subtitle": "my subtitle"});
         let mut args = HashMap::new();
-        args.insert("out".to_string(), to_value("fm_title").unwrap());
-        args.insert("in".to_string(), to_value("fm_new").unwrap());
-        args.insert("inval".to_string(), to_value("my new").unwrap());
+        args.insert("key".to_string(), to_value("fm_new").unwrap());
+        args.insert("value".to_string(), to_value("my new").unwrap());
         let expected = json!({"new": "my new", "subtitle": "my subtitle"});
-        let result = field_filter(&input, &args);
+        let result = insert_filter(&input, &args);
         //eprintln!("{:?}", result);
         assert_eq!(result.unwrap(), expected);
 
         //
         let input = json!({"title": "my title", "subtitle": "my subtitle"});
         let mut args = HashMap::new();
-        args.insert("in".to_string(), to_value("fm_title").unwrap());
-        args.insert("inval".to_string(), to_value("my replaced title").unwrap());
+        args.insert("key".to_string(), to_value("fm_title").unwrap());
+        args.insert("value".to_string(), to_value("my replaced title").unwrap());
         let expected = json!({"title": "my replaced title", "subtitle": "my subtitle"});
-        let result = field_filter(&input, &args);
+        let result = insert_filter(&input, &args);
         //eprintln!("{:?}", result);
         assert_eq!(result.unwrap(), expected);
 
         //
         let input = json!({"title": "my title"});
         let mut args = HashMap::new();
-        args.insert("in".to_string(), to_value("fm_new").unwrap());
+        args.insert("key".to_string(), to_value("fm_new").unwrap());
         let expected = json!({"new": null, "title": "my title"});
-        let result = field_filter(&input, &args);
-        //eprintln!("{:?}", result);
-        assert_eq!(result.unwrap(), expected);
-
-        //
-        let input = json!({"title": "my title"});
-        let mut args = HashMap::new();
-        args.insert("in".to_string(), to_value("fm_new").unwrap());
-        args.insert("inval".to_string(), to_value("my new").unwrap());
-        let expected = json!({"new": "my new", "title": "my title"});
-        let result = field_filter(&input, &args);
+        let result = insert_filter(&input, &args);
         //eprintln!("{:?}", result);
         assert_eq!(result.unwrap(), expected);
     }

@@ -245,11 +245,11 @@ from_clipboard_yaml_content = """
 {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='date') }}
 {{ lang | to_yaml(key='lang') }}
 {{ fm_all \
-    | field(out='fm_title')\
-    | field(out='fm_subtitle')\
-    | field(out='fm_author')\
-    | field(out='fm_date')\
-    | field(out='fm_lang')\
+    | remove(key='fm_title')\
+    | remove(key='fm_subtitle')\
+    | remove(key='fm_author')\
+    | remove(key='fm_date')\
+    | remove(key='fm_lang')\
     | to_yaml \
     | prepend(newline=true) \
     | append(newline=true) }}\
@@ -435,11 +435,11 @@ viewer = '''
   {% if fm_all | length > 5 %}
     <tr><th colspan=2;\"/>&nbsp<th/</tr>
   {% endif %}
-  {% for k, v in fm_all| field(out='fm_title')|
-                         field(out='fm_subtitle')|
-                         field(out='fm_author')|
-                         field(out='fm_date')|
-                         field(out='fm_lang')
+  {% for k, v in fm_all| remove(key='fm_title')|
+                         remove(key='fm_subtitle')|
+                         remove(key='fm_author')|
+                         remove(key='fm_date')|
+                         remove(key='fm_lang')
   %}
     <tr>
     <th class="fmkeygrey">{{ k }}:</th>
@@ -524,11 +524,11 @@ exporter = '''
   {% if fm_all | length > 5 %}
     <tr><th colspan=2;\"/>&nbsp<th/</tr>
   {% endif %}
-  {% for k, v in fm_all| field(out='fm_title')|
-                         field(out='fm_subtitle')|
-                         field(out='fm_author')|
-                         field(out='fm_date')|
-                         field(out='fm_lang')
+  {% for k, v in fm_all| remove(key='fm_title')|
+                         remove(key='fm_subtitle')|
+                         remove(key='fm_author')|
+                         remove(key='fm_date')|
+                         remove(key='fm_lang')
   %}
     <tr>
     <th class="fmkeygrey">{{ k }}:</th>
