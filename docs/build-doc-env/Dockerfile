@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=debian:buster-slim
+ARG BASE_IMAGE=debian:stable-slim
 
 FROM $BASE_IMAGE as planner
 WORKDIR /home/dockeruser/project
