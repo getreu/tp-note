@@ -187,10 +187,8 @@ impl ::std::default::Default for Cfg {
             tmpl_html: TmplHtml::default(),
         };
 
-        cfg.version = match PKG_VERSION {
-            Some(v) => v.to_string(),
-            None => "".to_string(),
-        };
+        cfg.version = PKG_VERSION.unwrap_or_default().to_owned();
+
         // Overwrite with defaults from `tpnote_lib`.
         let _ = mem::replace(&mut cfg.filename, lib_cfg.filename);
         let _ = mem::replace(&mut cfg.tmpl, lib_cfg.tmpl);
