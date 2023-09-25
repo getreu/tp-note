@@ -405,7 +405,7 @@ viewer = '''
 <head>
 <meta charset="UTF-8">
 <title>{{ fm_title }}</title>
-<link rel="stylesheet" href="{{ note_css_path }}">
+<link rel="stylesheet" href="{{ tpnote_css_path }}">
 <style>
 <!-- Customize the viewer CSS here -->
 </style>

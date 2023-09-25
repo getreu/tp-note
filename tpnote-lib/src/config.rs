@@ -184,14 +184,14 @@ pub const TMPL_HTML_VAR_TPNOTE_JS: &str = "tpnote_js";
 /// to be included in the HTML rendition produced by the exporter.
 pub const TMPL_HTML_VAR_NOTE_CSS: &str = "note_css";
 
-/// HTML template variable name. The value contains the path, for which
-/// the viewer delivers CSS code. Note, the viewer delivers the same CSS code
-/// which is stored as value for `TMPL_VAR_NOTE_CSS`.
-pub const TMPL_HTML_VAR_NOTE_CSS_PATH: &str = "note_css_path";
+/// HTML template variable name. The value contains the path, for which the
+/// viewer delivers Tp-Note's CSS code. Note, the viewer delivers the same CSS
+/// code which is stored as value for `TMPL_HTML_VAR_NOTE_CSS`.
+pub const TMPL_HTML_VAR_TPNOTE_CSS_PATH: &str = "tpnote_css_path";
 
 /// The constant URL for which Tp-Note's internal web server delivers the CSS
 /// stylesheet. In HTML templates, this constant can be accessed as value of
-/// the `TMPL_VAR_NOTE_CSS_PATH` variable.
+/// the `TMPL_HTML_VAR_NOTE_CSS_PATH` variable.
 pub const TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE: &str = "/tpnote.css";
 
 /// HTML template variable used in the error page containing the error message
