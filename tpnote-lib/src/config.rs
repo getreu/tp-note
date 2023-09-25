@@ -192,7 +192,7 @@ pub const TMPL_HTML_VAR_TPNOTE_CSS_PATH: &str = "tpnote_css_path";
 /// The constant URL for which Tp-Note's internal web server delivers the CSS
 /// stylesheet. In HTML templates, this constant can be accessed as value of
 /// the `TMPL_HTML_VAR_NOTE_CSS_PATH` variable.
-pub const TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE: &str = "/tpnote.css";
+pub const TMPL_HTML_VAR_TPNOTE_CSS_PATH_VALUE: &str = "/tpnote.css";
 
 /// HTML template variable used in the error page containing the error message
 /// explaining why this page could not be rendered.
