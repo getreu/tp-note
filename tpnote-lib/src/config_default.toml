@@ -448,7 +448,7 @@ viewer = '''
   {% endfor %}
   </table>
   <div class="note-body">{{ note_body_html }}</div>
-  <script>{{ note_js }}</script>
+  <script>{{ tpnote_js }}</script>
 </body>
 </html>
 '''
@@ -480,7 +480,7 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 <hr>
 </div>
 {{ note_erroneous_content_html }}
-<script>{{ note_js }}</script>
+<script>{{ tpnote_js }}</script>
 </body>
 </html>
 """

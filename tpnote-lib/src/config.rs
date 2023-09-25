@@ -178,7 +178,7 @@ pub const TMPL_HTML_VAR_NOTE_BODY_HTML: &str = "note_body_html";
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
-pub const TMPL_HTML_VAR_NOTE_JS: &str = "note_js";
+pub const TMPL_HTML_VAR_TPNOTE_JS: &str = "tpnote_js";
 
 /// HTML template variable name. The value contains the highlighting CSS code
 /// to be included in the HTML rendition produced by the exporter.
