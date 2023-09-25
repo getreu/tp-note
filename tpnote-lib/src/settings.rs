@@ -1,6 +1,6 @@
 //! Configuration data that origins from environment variables.
 //! Unlike the configuration data in `LIB_CFG` which is sourced only once when
-//! Tp-Note is launched, the `SETTINGS` object may be sourced more often in
+//! Tpublaunched, the `SETTINGS` object may be sourced more often in
 //! order to follow changes in the related environment variables.
 
 use crate::config::LIB_CFG;
@@ -74,9 +74,10 @@ pub(crate) enum FilterGetLang {
     Error(LibCfgError),
 }
 
-#[derive(Debug)]
 /// Struct containing additional user configuration read from or depending
 /// on environment variables.
+#[derive(Debug)]
+#[allow(dead_code)]
 pub(crate) struct Settings {
     pub author: String,
     pub lang: String,

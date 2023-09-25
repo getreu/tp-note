@@ -92,6 +92,7 @@ pub enum LibCfgError {
         language_code: String,
         all_langs: String,
     },
+
     /// Remedy: add one more ISO 639-1 code in the configuration variable
     /// `tmpl.filter_get_lang` (or in `TPNOTE_LANG_DETECTION`) and make
     /// sure that the code is supported, by checking `tpnote -V`.
@@ -105,6 +106,19 @@ pub enum LibCfgError {
          to prevent this error from occurring."
     )]
     NotEnoughLanguageCodes { language_code: String },
+
+    /// Remedy: correct the variable by choosing one the available themes.
+    #[error(
+        "Configuration file error in section `[tmp_html]` in line:\n\
+        \t{var} = \"{value}\"\n\
+        The theme must be one of the following set:\n\
+        {available}"
+    )]
+    ThemeName {
+        var: String,
+        value: String,
+        available: String,
+    },
 }
 
 #[derive(Debug, Error)]

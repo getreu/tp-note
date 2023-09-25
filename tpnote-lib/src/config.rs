@@ -14,16 +14,16 @@
 //! once at the start of Tp-Note. All modification terminates before accessing
 //! the high-level API in the `workflow` module of this crate.
 use crate::error::LibCfgError;
-#[cfg(feature = "renderer")]
-use crate::highlight::get_css;
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+#[cfg(feature = "renderer")]
+use syntect::highlighting::ThemeSet;
 
 /// Default configuragtion.
-pub(crate) const LIB_CFG_TOML: &str = include_str!("config_default.toml");
+pub(crate) const CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
 
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
@@ -170,7 +170,7 @@ pub const TMPL_FILTER_GET_LANG_ALL: &str = "+all";
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
-pub const TMPL_HTML_VAR_NOTE_BODY_HTML: &str = "note_body_html";
+pub const TMPL_HTML_VAR_DOC_BODY_HTML: &str = "doc_body_html";
 
 /// HTML template variable containing the automatically generated JavaScript
 /// code to be included in the HTML rendition.
@@ -178,21 +178,34 @@ pub const TMPL_HTML_VAR_NOTE_BODY_HTML: &str = "note_body_html";
 /// `#[cfg(feature = "viewer")]`,
 /// but we prefer the same config file structure independent
 /// of the enabled features.
-pub const TMPL_HTML_VAR_TPNOTE_JS: &str = "tpnote_js";
+pub const TMPL_HTML_VAR_VIEWER_DOC_JS: &str = "viewer_doc_js";
+
+/// HTML template variable name. The value contains Tp-Note's CSS code
+/// to be included in the HTML rendition produced by the exporter.
+pub const TMPL_HTML_VAR_EXPORTER_DOC_CSS: &str = "exporter_doc_css";
 
 /// HTML template variable name. The value contains the highlighting CSS code
 /// to be included in the HTML rendition produced by the exporter.
-pub const TMPL_HTML_VAR_NOTE_CSS: &str = "note_css";
+pub const TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS: &str = "exporter_highlighting_css";
 
 /// HTML template variable name. The value contains the path, for which the
 /// viewer delivers Tp-Note's CSS code. Note, the viewer delivers the same CSS
-/// code which is stored as value for `TMPL_HTML_VAR_NOTE_CSS`.
-pub const TMPL_HTML_VAR_TPNOTE_CSS_PATH: &str = "tpnote_css_path";
+/// code which is stored as value for `TMPL_HTML_VAR_VIEWER_DOC_CSS`.
+pub const TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH: &str = "viewer_doc_css_path";
+
+/// The constant URL for which Tp-Note's internal web server delivers the CSS
+/// stylesheet. In HTML templates, this constant can be accessed as value of
+/// the `TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH` variable.
+pub const TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE: &str = "/viewer_doc.css";
+
+/// HTML template variable name. The value contains the path, for which the
+/// viewer delivers Tp-Note's highlighting CSS code.
+pub const TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH: &str = "viewer_highlighting_css_path";
 
 /// The constant URL for which Tp-Note's internal web server delivers the CSS
 /// stylesheet. In HTML templates, this constant can be accessed as value of
 /// the `TMPL_HTML_VAR_NOTE_CSS_PATH` variable.
-pub const TMPL_HTML_VAR_TPNOTE_CSS_PATH_VALUE: &str = "/tpnote.css";
+pub const TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE: &str = "/viewer_highlighting.css";
 
 /// HTML template variable used in the error page containing the error message
 /// explaining why this page could not be rendered.
@@ -201,7 +214,7 @@ pub const TMPL_HTML_VAR_TPNOTE_CSS_PATH_VALUE: &str = "/tpnote.css";
 /// but we prefer the same config file structure independent
 /// of the enabled features.
 #[allow(dead_code)]
-pub const TMPL_HTML_VAR_NOTE_ERROR: &str = "note_error";
+pub const TMPL_HTML_VAR_DOC_ERROR: &str = "doc_error";
 
 /// HTML template variable used in the error page containing a verbatim
 /// HTML rendition with hyperlinks of the erroneous note file.
@@ -210,7 +223,7 @@ pub const TMPL_HTML_VAR_NOTE_ERROR: &str = "note_error";
 /// but we prefer the same config file structure independent
 /// of the enabled features.
 #[allow(dead_code)]
-pub const TMPL_HTML_VAR_NOTE_ERRONEOUS_CONTENT_HTML: &str = "note_erroneous_content_html";
+pub const TMPL_HTML_VAR_DOC_ERRONEOUS_CONTENT_HTML: &str = "doc_erroneous_content_html";
 
 lazy_static! {
 /// Global variable containing the filename and template related configuration
@@ -227,21 +240,6 @@ pub struct LibCfg {
     pub tmpl: Tmpl,
     /// Configuration of HTML templates.
     pub tmpl_html: TmplHtml,
-}
-
-/// Deserialise the default configuration.
-impl ::std::default::Default for LibCfg {
-    fn default() -> Self {
-        let mut config: LibCfg = toml::from_str(LIB_CFG_TOML)
-            .expect("can not parse included configuration file `tpnote_lib.toml`");
-
-        #[allow(unused_mut)]
-        let mut css = config.tmpl_html.css.to_owned();
-        #[cfg(feature = "renderer")]
-        css.push_str(&get_css());
-        config.tmpl_html.css = css;
-        config
-    }
 }
 
 /// Configuration of filename parsing, deserialized from the
@@ -289,12 +287,11 @@ pub struct Tmpl {
 pub struct TmplHtml {
     pub viewer: String,
     pub viewer_error: String,
+    pub viewer_doc_css: String,
+    pub viewer_highlighting_theme: String,
     pub exporter: String,
-    /// Configuration variable holding the source code highlighter CSS code
-    /// concatenated with `TMPL_HTML_CSS_COMMON`. In HTML templates this
-    /// constant can be accessed as value of the `TMPL_HTML_VAR_NOTE_CSS`
-    /// variable.
-    pub css: String,
+    pub exporter_doc_css: String,
+    pub exporter_highlighting_theme: String,
 }
 
 impl LibCfg {
@@ -365,7 +362,49 @@ impl LibCfg {
             });
         }
 
+        // Highlighting config is valid?
+        // Validate `tmpl_html.viewer_highlighting_theme` and
+        // `tmpl_html.exporter_highlighting_theme`.
+        #[cfg(feature = "renderer")]
+        {
+            let ts = ThemeSet::load_defaults();
+            let theme_name = &self.tmpl_html.viewer_highlighting_theme;
+            if !theme_name.is_empty() && ts.themes.get(theme_name).is_none() {
+                return Err(LibCfgError::ThemeName {
+                    var: "viewer_highlighting_theme".to_string(),
+                    value: theme_name.to_owned(),
+                    available: ts
+                        .themes
+                        .into_keys()
+                        .map(|k| format!("`{k}`, "))
+                        .collect::<String>(),
+                });
+            };
+            let theme_name = &self.tmpl_html.exporter_highlighting_theme;
+            if !theme_name.is_empty() && ts.themes.get(theme_name).is_none() {
+                return Err(LibCfgError::ThemeName {
+                    var: "exporter_highlighting_theme".to_string(),
+                    value: theme_name.to_owned(),
+                    available: ts
+                        .themes
+                        .into_keys()
+                        .map(|k| format!("`{k}`, "))
+                        .collect::<String>(),
+                });
+            };
+        }
+
         Ok(())
+    }
+}
+
+/// Defaults are sourced from file `tpnote-lib/src/config_default.toml`.
+impl Default for LibCfg {
+    fn default() -> Self {
+        toml::from_str(CONFIG_DEFAULT_TOML).expect(
+            "Error in default configuration in source file:\n\
+                 `tpnote-lib/src/config_default.toml`",
+        )
     }
 }
 

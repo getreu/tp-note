@@ -1637,13 +1637,14 @@ viewer = '''<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <title>{{ fm_title }}</title>
-<link rel="stylesheet" href="{{ note_css_path }}">
+<link rel="stylesheet" href="{{ viewer_doc_css_path }}">
+<link rel="stylesheet" href="{{ viewer_highlighting_css_path }}">
   </head>
   <body>
-  <pre class="note-header">{{ note_fm_text }}</pre>
+  <pre class="doc-header">{{ doc_fm_text }}</pre>
   <hr>
-  <div class="note-body">{{ note_body_html }}</div>
-  <script>{{ note_js }}</script>
+  <div class="doc-body">{{ doc_body_html }}</div>
+  <script>{{ viewer_doc_js }}</script>
 </body>
 </html>
 '''
@@ -1655,16 +1656,20 @@ Specifically:
   template variables and filters are available. See section _Template
   variables_ above.
 
-* '`{{ note_css_path }}`' is the CSS stylesheet path required to
-  highlight embedded source code. This path is hard-wired and
+* '`{{ viewer_doc_css_path }}`' is the CSS stylesheet path required to
+  format a Tp-Note HTML rendition. This path is hard-wired and is
   understood by Tp-Note's internal web server.
 
-* '`{{ note_fm_text }}`' is the raw UTF-8 copy of the header. Not to be
+* '`{{ viewer_highlighting_css_path }}`' is the CSS stylesheet path required to
+  highlight embedded source code. This path is hard-wired and is
+  understood by Tp-Note's internal web server.
+
+* '`{{ doc_fm_text }}`' is the raw UTF-8 copy of the header. Not to be
   confounded with the dictionary variable '`{{ fm_all }}`'.
 
-* '`{{ note_body_html }}`' is the note's body as HTML rendition.
+* '`{{ doc_body_html }}`' is the note's body as HTML rendition.
 
-* '`{{ note_js }}`' is the JavaScript browser code for
+* '`{{ viewer_doc_js }}`' is the JavaScript browser code for
   live updates.
 
 * '`{{ extension_default }}`' (c.f. section _Template variables_).
@@ -1691,8 +1696,8 @@ as a table:
 
 The error page template '`tmpl_html.viewer_error`' (see below)
 does not provide '`fm_*`' variables, because of possible header syntax
-errors. Instead, the variable '`{{ note_error }}`' contains the error
-message as raw UTF-8 and the variable '`{{ note_erroneous_content_html }}`'
+errors. Instead, the variable '`{{ doc_error }}`' contains the error
+message as raw UTF-8 and the variable '`{{ doc_erroneous_content_html }}`'
 the HTML rendition of the text source with clickable hyperlinks:
 
 ```toml
@@ -1707,9 +1712,9 @@ error = '''<!DOCTYPE html>
 <h3>Syntax error</h3>
 <p> in note file: <pre>{{ path }}</pre><p>
 <hr>
-<pre class="note-error">{{ note_error }}</pre>
+<pre class="doc-error">{{ doc_error }}</pre>
 <hr>
-{{ note_erroneous_content_html }}
+{{ doc_erroneous_content_html }}
 <script>{{ note_js }}</script>
 </body>
 </html>
@@ -1721,13 +1726,41 @@ error = '''<!DOCTYPE html>
 Customizing Tp-Note's HTML export function works the same way as
 customizing the built-in viewer. There are some slight differences though:
 The role of the '`tmpl_html.viewer`' template - discussed above - is
-taken over by the '`tmpl_html.exporter`' template. In this template the
-same _Tera_ variables are available, except '`{{ note_js }}`' which does not
-make sense in this context. As the exporter prints possible rendition error
-messages on the console, there is no equivalent to the
-'`tmpl_html.viewer_error`' template. Note, in contrast to the previous
-template '`tmpl_html.viewer`' example, the source code highlighting CSS
-code is now embedded in the HTML output with '`<style>{{ note_css }}</style>`'
+taken over by the '`tmpl_html.exporter`' template: 
+
+```toml
+exporter = '''
+<!DOCTYPE html>
+<html lang="{{ fm_lang | default(value='en') }}">
+<head>
+<meta charset="utf-8">
+<title>{{ fm_title }}</title>
+<style>
+{{ exporter_doc_css }}
+{{ exporter_highlighting_css }}
+</style>
+</head>
+<body>
+  <pre class="doc-header">{{ doc_fm_text }}</pre>
+  <hr>
+  <div class="doc-body">{{ doc_body_html }}</div>
+</body>
+</html>
+```
+
+In this template the same _Tera_ variables are available, except 
+'`{{ note_js }}`' which does not make sense in this context. As the exporter
+prints possible rendition error messages on the console, there is no equivalent
+to the '`tmpl_html.viewer_error`' template. Note, in contrast to the previous
+template '`tmpl_html.viewer`' example, the source code highlighting CSS code is
+now embedded into the HTML output with:
+
+```html
+<style>
+{{ exporter_doc_css }}
+{{ exporter_highlighting_css }}
+</style>
+```
 
 
 

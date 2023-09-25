@@ -20,7 +20,7 @@ use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::SystemTime;
-use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
+use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
 use tpnote_lib::context::Context;
 
 /// The TCP stream is read in chunks. This is the read buffer size.
@@ -172,7 +172,7 @@ impl ServerThread {
         };
 
         // Save JavaScript code.
-        context.insert(TMPL_HTML_VAR_NOTE_JS, &note_js);
+        context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &note_js);
 
         Self {
             rx,

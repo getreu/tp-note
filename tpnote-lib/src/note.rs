@@ -7,9 +7,13 @@
 
 use crate::config::LocalLinkKind;
 use crate::config::LIB_CFG;
-use crate::config::TMPL_HTML_VAR_NOTE_BODY_HTML;
-use crate::config::TMPL_HTML_VAR_TPNOTE_CSS_PATH;
-use crate::config::TMPL_HTML_VAR_TPNOTE_CSS_PATH_VALUE;
+use crate::config::TMPL_HTML_VAR_DOC_BODY_HTML;
+use crate::config::TMPL_HTML_VAR_EXPORTER_DOC_CSS;
+use crate::config::TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS;
+use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH;
+use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
+use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH;
+use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::config::TMPL_VAR_NOTE_BODY_TEXT;
 use crate::config::TMPL_VAR_NOTE_FILE_DATE;
@@ -21,6 +25,8 @@ use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 use crate::filter::TERA;
 use crate::front_matter::FrontMatter;
+#[cfg(feature = "renderer")]
+use crate::highlight::get_exporter_highlighting_css;
 #[cfg(feature = "renderer")]
 use crate::highlight::SyntaxPreprocessor;
 use crate::html::rewrite_links;
@@ -498,17 +504,35 @@ impl<T: Content> Note<T> {
         let mut html_context = self.context.clone();
 
         // Register rendered body.
-        html_context.insert(TMPL_HTML_VAR_NOTE_BODY_HTML, &html_output);
+        html_context.insert(TMPL_HTML_VAR_DOC_BODY_HTML, &html_output);
 
         // Insert the raw CSS
         html_context.insert(
-            TMPL_HTML_VAR_NOTE_CSS,
-            &LIB_CFG.read_recursive().tmpl_html.css,
+            TMPL_HTML_VAR_EXPORTER_DOC_CSS,
+            &LIB_CFG.read_recursive().tmpl_html.exporter_doc_css,
         );
-        // Insert the web server path to get the CSS loaded.
+
+        // Insert the raw CSS
+        #[cfg(feature = "renderer")]
         html_context.insert(
-            TMPL_HTML_VAR_TPNOTE_CSS_PATH,
-            TMPL_HTML_VAR_TPNOTE_CSS_PATH_VALUE,
+            TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS,
+            &get_exporter_highlighting_css(),
+        );
+
+        // Insert the raw CSS
+        #[cfg(not(feature = "renderer"))]
+        html_context.insert(TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS, "");
+
+        // Insert the web server path to get the Tp-Note's CSS loaded.
+        html_context.insert(
+            TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH,
+            TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE,
+        );
+
+        // Insert the web server path to get the highlighting CSS loaded.
+        html_context.insert(
+            TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH,
+            TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE,
         );
 
         let mut tera = Tera::default();
@@ -696,7 +720,7 @@ Body text
         // HTML rendering and no templates will be applied.
         //
         use crate::config::LIB_CFG;
-        use crate::config::TMPL_HTML_VAR_TPNOTE_JS;
+        use crate::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
         use crate::content::Content;
         use crate::content::ContentString;
         use crate::context::Context;
@@ -717,7 +741,7 @@ Body text
         // Only minimal context is needed, because no templates are applied later.
         let mut context = Context::from(&notefile);
         // We do not inject any JavaScript.
-        context.insert(TMPL_HTML_VAR_TPNOTE_JS, &"".to_string());
+        context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".to_string());
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).

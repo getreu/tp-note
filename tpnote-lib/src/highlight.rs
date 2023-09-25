@@ -1,18 +1,46 @@
 //! Syntax highlighting for (inline) source code blocks in Markdown input.
 
+use crate::config::LIB_CFG;
+use lazy_static::lazy_static;
+use parking_lot::RwLock;
 use pulldown_cmark::{CodeBlockKind, Event, Tag};
 use syntect::highlighting::ThemeSet;
-use syntect::html::{css_for_theme_with_class_style, ClassStyle, ClassedHTMLGenerator};
+use syntect::html::css_for_theme_with_class_style;
+use syntect::html::{ClassStyle, ClassedHTMLGenerator};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
-/// Get the syntax highlighting CSS defaults. Together with other CSS used
-/// by Tp-Note's HTML renderer, the result can be cusomized through Tp-Note's
-/// configuration file variable `tmpl_html.css`.
-pub fn get_css() -> String {
+lazy_static! {
+/// Viewer syntax highlighting CSS configuration cache.
+    pub static ref VIEWER_HIGHLIGHTING_CSS: RwLock<String> = RwLock::new(get_viewer_highlighting_css());
+}
+
+/// Get the viewer syntax highlighting CSS configuration.
+pub(crate) fn get_viewer_highlighting_css() -> String {
+    let lib_cfg = LIB_CFG.read_recursive();
     let ts = ThemeSet::load_defaults();
-    let light_theme = &ts.themes["Solarized (light)"];
-    css_for_theme_with_class_style(light_theme, syntect::html::ClassStyle::Spaced).unwrap()
+
+    let theme_name = &lib_cfg.tmpl_html.viewer_highlighting_theme;
+    ts.themes
+        .get(theme_name)
+        .and_then(|theme| {
+            css_for_theme_with_class_style(theme, syntect::html::ClassStyle::Spaced).ok()
+        })
+        .unwrap_or_default()
+}
+
+/// Get the exporter syntax highlighting CSS configuration.
+pub(crate) fn get_exporter_highlighting_css() -> String {
+    let lib_cfg = LIB_CFG.read_recursive();
+    let ts = ThemeSet::load_defaults();
+
+    let theme_name = &lib_cfg.tmpl_html.exporter_highlighting_theme;
+    ts.themes
+        .get(theme_name)
+        .and_then(|theme| {
+            css_for_theme_with_class_style(theme, syntect::html::ClassStyle::Spaced).ok()
+        })
+        .unwrap_or_default()
 }
 
 /// A wraper for a `pulldown_cmark` event iterator.

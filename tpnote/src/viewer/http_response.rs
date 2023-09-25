@@ -15,12 +15,15 @@ use std::str;
 use std::time::SystemTime;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::LIB_CFG;
-use tpnote_lib::config::TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE;
-use tpnote_lib::config::TMPL_HTML_VAR_NOTE_ERROR;
-use tpnote_lib::config::TMPL_HTML_VAR_NOTE_JS;
+use tpnote_lib::config::TMPL_HTML_VAR_DOC_ERROR;
+use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
+use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
+use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::filename::NotePath;
+#[cfg(feature = "renderer")]
+use tpnote_lib::highlight::VIEWER_HIGHLIGHTING_CSS;
 use tpnote_lib::html::rewrite_links;
 use tpnote_lib::markup_language::MarkupLanguage;
 use tpnote_lib::workflow::render_erroneous_content_html;
@@ -83,12 +86,32 @@ impl HttpResponse for ServerThread {
                 self.respond_content_ok(Path::new(&FAVICON_PATH), "image/x-icon", FAVICON)?;
             }
 
-            // Serve CSS file.
-            TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE => {
+            // Serve document CSS file.
+            TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE => {
                 self.respond_content_ok(
-                    Path::new(&TMPL_HTML_VAR_NOTE_CSS_PATH_VALUE),
+                    Path::new(&TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE),
                     "text/css",
-                    LIB_CFG.read_recursive().tmpl_html.css.as_bytes(),
+                    LIB_CFG.read_recursive().tmpl_html.viewer_doc_css.as_bytes(),
+                )?;
+            }
+
+            // Serve highlighting CSS file.
+            #[cfg(feature = "renderer")]
+            TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE => {
+                self.respond_content_ok(
+                    Path::new(&TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE),
+                    "text/css",
+                    VIEWER_HIGHLIGHTING_CSS.read_recursive().as_bytes(),
+                )?;
+            }
+
+            // Serve empty highlighting CSS file.
+            #[cfg(not(feature = "renderer"))]
+            TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE => {
+                self.respond_content_ok(
+                    Path::new(&TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE),
+                    "text/css",
+                    b"",
                 )?;
             }
 
@@ -410,7 +433,7 @@ impl HttpResponse for ServerThread {
         // Only the first base document is live updated.
         let mut context = self.context.clone();
         if context.path != abspath_doc {
-            context.insert(TMPL_HTML_VAR_NOTE_JS, "");
+            context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
         }
         match render_viewer_html::<ContentString>(context, content)
             // Now scan the HTML result for links and store them in a Map
@@ -452,7 +475,7 @@ impl HttpResponse for ServerThread {
             Err(e) => {
                 // Render error page providing all information we havStringe.
                 let mut context = self.context.clone();
-                context.insert(TMPL_HTML_VAR_NOTE_ERROR, &e.to_string());
+                context.insert(TMPL_HTML_VAR_DOC_ERROR, &e.to_string());
                 let note_erroneous_content = <ContentString as Content>::open(&context.path)?;
                 render_erroneous_content_html::<ContentString>(context, note_erroneous_content)
                     .map_err(|e| ViewerError::RenderErrorPage {

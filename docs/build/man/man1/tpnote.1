@@ -2067,13 +2067,14 @@ viewer = \[aq]\[aq]\[aq]<!DOCTYPE html>
 <head>
 <meta charset=\[dq]utf-8\[dq]>
 <title>{{ fm_title }}</title>
-<link rel=\[dq]stylesheet\[dq] href=\[dq]{{ note_css_path }}\[dq]>
+<link rel=\[dq]stylesheet\[dq] href=\[dq]{{ viewer_doc_css_path }}\[dq]>
+<link rel=\[dq]stylesheet\[dq] href=\[dq]{{ viewer_highlighting_css_path }}\[dq]>
   </head>
   <body>
-  <pre class=\[dq]note-header\[dq]>{{ note_fm_text }}</pre>
+  <pre class=\[dq]doc-header\[dq]>{{ doc_fm_text }}</pre>
   <hr>
-  <div class=\[dq]note-body\[dq]>{{ note_body_html }}</div>
-  <script>{{ note_js }}</script>
+  <div class=\[dq]doc-body\[dq]>{{ doc_body_html }}</div>
+  <script>{{ viewer_doc_js }}</script>
 </body>
 </html>
 \[aq]\[aq]\[aq]
@@ -2086,19 +2087,24 @@ Specifically:
 All content template variables and filters are available.
 See section \f[I]Template variables\f[R] above.
 .IP \[bu] 2
-`\f[V]{{ note_css_path }}\f[R]' is the CSS stylesheet path required to
-highlight embedded source code.
-This path is hard-wired and understood by Tp-Note\[cq]s internal web
+`\f[V]{{ viewer_doc_css_path }}\f[R]' is the CSS stylesheet path
+required to format a Tp-Note HTML rendition.
+This path is hard-wired and is understood by Tp-Note\[cq]s internal web
 server.
 .IP \[bu] 2
-`\f[V]{{ note_fm_text }}\f[R]' is the raw UTF-8 copy of the header.
+`\f[V]{{ viewer_highlighting_css_path }}\f[R]' is the CSS stylesheet
+path required to highlight embedded source code.
+This path is hard-wired and is understood by Tp-Note\[cq]s internal web
+server.
+.IP \[bu] 2
+`\f[V]{{ doc_fm_text }}\f[R]' is the raw UTF-8 copy of the header.
 Not to be confounded with the dictionary variable
 `\f[V]{{ fm_all }}\f[R]'.
 .IP \[bu] 2
-`\f[V]{{ note_body_html }}\f[R]' is the note\[cq]s body as HTML
+`\f[V]{{ doc_body_html }}\f[R]' is the note\[cq]s body as HTML
 rendition.
 .IP \[bu] 2
-`\f[V]{{ note_js }}\f[R]' is the JavaScript browser code for live
+`\f[V]{{ viewer_doc_js }}\f[R]' is the JavaScript browser code for live
 updates.
 .IP \[bu] 2
 `\f[V]{{ extension_default }}\f[R]' (c.f.
@@ -2132,9 +2138,9 @@ also be rendered as a table:
 The error page template `\f[V]tmpl_html.viewer_error\f[R]' (see below)
 does not provide `\f[V]fm_*\f[R]' variables, because of possible header
 syntax errors.
-Instead, the variable `\f[V]{{ note_error }}\f[R]' contains the error
+Instead, the variable `\f[V]{{ doc_error }}\f[R]' contains the error
 message as raw UTF-8 and the variable
-`\f[V]{{ note_erroneous_content_html }}\f[R]' the HTML rendition of the
+`\f[V]{{ doc_erroneous_content_html }}\f[R]' the HTML rendition of the
 text source with clickable hyperlinks:
 .IP
 .nf
@@ -2150,9 +2156,9 @@ error = \[aq]\[aq]\[aq]<!DOCTYPE html>
 <h3>Syntax error</h3>
 <p> in note file: <pre>{{ path }}</pre><p>
 <hr>
-<pre class=\[dq]note-error\[dq]>{{ note_error }}</pre>
+<pre class=\[dq]doc-error\[dq]>{{ doc_error }}</pre>
 <hr>
-{{ note_erroneous_content_html }}
+{{ doc_erroneous_content_html }}
 <script>{{ note_js }}</script>
 </body>
 </html>
@@ -2166,15 +2172,47 @@ Customizing Tp-Note\[cq]s HTML export function works the same way as
 customizing the built-in viewer.
 There are some slight differences though: The role of the
 `\f[V]tmpl_html.viewer\f[R]' template - discussed above - is taken over
-by the `\f[V]tmpl_html.exporter\f[R]' template.
+by the `\f[V]tmpl_html.exporter\f[R]' template:
+.IP
+.nf
+\f[C]
+exporter = \[aq]\[aq]\[aq]
+<!DOCTYPE html>
+<html lang=\[dq]{{ fm_lang | default(value=\[aq]en\[aq]) }}\[dq]>
+<head>
+<meta charset=\[dq]utf-8\[dq]>
+<title>{{ fm_title }}</title>
+<style>
+{{ exporter_doc_css }}
+{{ exporter_highlighting_css }}
+</style>
+</head>
+<body>
+  <pre class=\[dq]doc-header\[dq]>{{ doc_fm_text }}</pre>
+  <hr>
+  <div class=\[dq]doc-body\[dq]>{{ doc_body_html }}</div>
+</body>
+</html>
+\f[R]
+.fi
+.PP
 In this template the same \f[I]Tera\f[R] variables are available, except
 `\f[V]{{ note_js }}\f[R]' which does not make sense in this context.
 As the exporter prints possible rendition error messages on the console,
 there is no equivalent to the `\f[V]tmpl_html.viewer_error\f[R]'
 template.
 Note, in contrast to the previous template `\f[V]tmpl_html.viewer\f[R]'
-example, the source code highlighting CSS code is now embedded in the
-HTML output with `\f[V]<style>{{ note_css }}</style>\f[R]'
+example, the source code highlighting CSS code is now embedded into the
+HTML output with:
+.IP
+.nf
+\f[C]
+<style>
+{{ exporter_doc_css }}
+{{ exporter_highlighting_css }}
+</style>
+\f[R]
+.fi
 .SS Choose your favourite web browser as note viewer
 .PP
 Once the note is rendered into HTML, Tp-Note\[cq]s internal HTTP server
@@ -2474,7 +2512,8 @@ with some additional filters, i.e.: `\f[V]append(newline=true)\f[R]',
 `\f[V]prepend\f[R]', `\f[V]prepend(newline=true)\f[R]',
 `\f[V]prepend(with=...)\f[R]', `\f[V]prepend(with_sort_tag=...)\f[R]',
 `\f[V]remove(key=)\f[R]' `\f[V]sanit\f[R]', `\f[V]to_html\f[R]',
-`\f[V]to_yaml\f[R]' and `\f[V]trim_file_sort_tag\f[R]'.
+`\f[V]to_yaml\f[R]', `\f[V]to_yaml(key=...)\f[R]',
+`\f[V]to_yaml(tab=...)\f[R]' and `\f[V]trim_file_sort_tag\f[R]'.
 .PP
 A filter is always used together with a variable.
 Here are some examples:

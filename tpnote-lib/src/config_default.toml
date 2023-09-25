@@ -405,12 +405,13 @@ viewer = '''
 <head>
 <meta charset="UTF-8">
 <title>{{ fm_title }}</title>
-<link rel="stylesheet" href="{{ tpnote_css_path }}">
+<link rel="stylesheet" href="{{ viewer_doc_css_path }}">
+<link rel="stylesheet" href="{{ viewer_highlighting_css_path }}">
 <style>
 <!-- Customize the viewer CSS here -->
 </style>
-  </head>
-  <body>
+</head>
+<body>
   <table class="fm">
     <tr>
     <th class="fmkey">title:</th>
@@ -447,8 +448,8 @@ viewer = '''
   </tr>
   {% endfor %}
   </table>
-  <div class="note-body">{{ note_body_html }}</div>
-  <script>{{ tpnote_js }}</script>
+  <div class="doc-body">{{ doc_body_html }}</div>
+  <script>{{ viewer_doc_js }}</script>
 </body>
 </html>
 '''
@@ -476,14 +477,76 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 <p> in note file: <pre>{{ path }}</pre><p>
 <div class=\"note-error\">
 <hr>
-<pre>{{ note_error }}</pre>
+<pre>{{ doc_error }}</pre>
 <hr>
 </div>
-{{ note_erroneous_content_html }}
-<script>{{ tpnote_js }}</script>
+{{ doc_erroneous_content_html }}
+<script>{{ viewer_doc_js }}</script>
 </body>
 </html>
 """
+
+# A constant holding common CSS code, published by Tp-Note's viewer 
+# under the `/viewer_doc.css` path.
+viewer_doc_css = """
+/* Tp-Note's viewer document CSS */
+table.fm {
+  font-weight: normal;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 4px;
+  background-color: #f3f2e4;
+  border:1px solid grey;
+}
+th.fmkey, th.fmkeygrey {
+  font-weight: normal;
+  padding-left:20px;
+  padding-right:10px;
+}
+th.fmval, th.fmvalgrey {
+  font-weight: normal;
+  padding-left:10px;
+  padding-right:20px;
+}
+th.fmkey{ color:#444444; text-align:right; vertical-align:top;}
+th.fmval{
+  color:#316128;
+  text-align:left;
+  font-family:sans-serif;
+}
+th.fmkeygrey{ color:grey; text-align:right; vertical-align:top;}
+th.fmvalgrey{ color:grey; text-align:left; }
+ul.fm {
+  padding-left: 15px;
+  margin: 0px;
+}
+li.fm {
+  padding-bottom: 0px;
+}
+blockquote.fm {
+  margin: 0px;
+  padding-left: 15px
+}
+pre { white-space: pre-wrap; }
+em { color: #523626; }
+a { color: #316128; }
+h1 { font-size: 150% }
+h2 { font-size: 132% }
+h3 { font-size: 115% }
+h4, h5, h6 { font-size: 100% }
+h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
+"""
+
+# Loads the viewer's code syntax highlighting theme. The theme is converted
+# into additional CSS. Currently available are:
+# *  `base16-ocean.dark`
+# *  `base16-eighties.dark`
+# *  `base16-mocha.dark`
+# *  `base16-ocean.light`
+# *  `InspiredGitHub`
+# *  `Solarized (dark)`
+# *  `Solarized (light)`
+viewer_highlighting_theme = "Solarized (light)"
 
 # HTML template used to render a note into html when the
 # rendition is saved to disk. Similar to `HTML_VIEWER_TMPL`
@@ -495,11 +558,12 @@ exporter = '''
 <meta charset="utf-8">
 <title>{{ fm_title }}</title>
 <style>
-{{ note_css }}
+{{ exporter_doc_css }}
+{{ exporter_highlighting_css }}
 <!-- Customize the exporter CSS here -->
 </style>
-  </head>
-  <body>
+</head>
+<body>
   <table class="fm">
     <tr>
     <th class="fmkey">title:</th>
@@ -536,16 +600,26 @@ exporter = '''
   </tr>
   {% endfor %}
   </table>
-  <div class="note-body">{{ note_body_html }}</div>
+  <div class="doc-body">{{ doc_body_html }}</div>
 </body>
 </html>
 '''
 
-# A constant holding common CSS code, used as embedded code in
-# the `TMPL_HTML_EXPORTER` template and as referenced code in the
-# `TMPL_HTML_VIEWER` template.
-css = """
-/* Tp-Note's CSS */
+# Loads the exporter's code syntax highlighting theme. The theme is converted
+# into additional CSS. Currently available are:
+# *  `base16-ocean.dark`
+# *  `base16-eighties.dark`
+# *  `base16-mocha.dark`
+# *  `base16-ocean.light`
+# *  `InspiredGitHub`
+# *  `Solarized (dark)`
+# *  `Solarized (light)`
+exporter_highlighting_theme = "Solarized (light)"
+
+# A constant holding common CSS code, inserted into exported HTML documents
+# with the template variable `{{ exporter_doc.css }}`. 
+exporter_doc_css = """
+/* Tp-Note's exporter document CSS */
 table.fm {
   font-weight: normal;
   margin-left: auto;
