@@ -27,11 +27,19 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
     // Choose the right parameter list.
     let env_var = env::var(ENV_VAR_TPNOTE_EDITOR).ok();
     let vv: Vec<Vec<String>>;
+
+    #[cfg(target_os = "linux")]
+    let app_args = &CFG.app_args.linux;
+    #[cfg(target_os = "windows")]
+    let app_args = &CFG.app_args.windows;
+    #[cfg(target_os = "macos")]
+    let app_args = &CFG.app_args.macos;
+
     let editor_args = match (&env_var, *RUNS_ON_CONSOLE) {
         // If the environment variable is defined, it has precedence.
         (Some(s), false) => {
             if s.is_empty() {
-                &CFG.app_args.editor
+                &app_args.editor
             } else {
                 vv = vec![s
                     .split_ascii_whitespace()
@@ -40,8 +48,8 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
                 &vv
             }
         }
-        (None, false) => &CFG.app_args.editor,
-        (_, true) => &CFG.app_args.editor_console,
+        (None, false) => &app_args.editor,
+        (_, true) => &app_args.editor_console,
     };
 
     // Prepare launch of editor/viewer.

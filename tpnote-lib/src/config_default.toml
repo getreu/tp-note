@@ -1,4 +1,5 @@
 [filename]
+
 # List of characters that can be part of a _sort tag_.
 # This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
 # The first character in the filename which is not
@@ -112,7 +113,10 @@ extensions_txt = [
 # See also `FILENAME_EXTENSIONS_MD`.
 extensions_no_viewer = ["t2t"]
 
+
+
 [tmpl]
+
 # After generating a new note with a content template, Tp-Note parses the
 # resulting front matter into `fm_* variables and checks their values. The
 # following conditions are checked and the user is prompted if one of them is
@@ -393,7 +397,9 @@ sync_filename = """
 {{ fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}"""
 
 
+
 [tmpl_html]
+
 # HTML template to render regular viewer pages.
 # We could set
 # `#[cfg(feature = "viewer")]`,

@@ -89,9 +89,16 @@ pub struct Cfg {
     pub filename: Filename,
     pub clipboard: Clipboard,
     pub tmpl: Tmpl,
-    pub app_args: AppArgs,
+    pub app_args: OsType<AppArgs>,
     pub viewer: Viewer,
     pub tmpl_html: TmplHtml,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct OsType<T> {
+    pub linux: T,
+    pub macos: T,
+    pub windows: T,
 }
 
 /// Configuration data, subset of `Cfg`.
@@ -172,12 +179,10 @@ impl ::std::default::Default for Cfg {
         // Make sure that we parse the `LIB_CONFIG_DEFAULT_TOML` first.
         lazy_static::initialize(&LIB_CFG);
 
-        let cfg = toml::from_str(&Cfg::default_as_toml()).expect(
+        toml::from_str(&Cfg::default_as_toml()).expect(
             "Error in default configuration in source file:\n\
                  `tpnote/src/config_default.toml`",
-        );
-
-        cfg
+        )
     }
 }
 
@@ -204,46 +209,42 @@ impl Cfg {
         config_default_toml
     }
 
-    /// Parse the configuration file if it exists. Otherwise write one with default values.
+    /// Parse the configuration file if it exists. Otherwise write one with
+    /// default values.
     #[cfg(not(test))]
     #[inline]
     fn from_file(config_path: &Path) -> Result<Cfg, ConfigFileError> {
+        // Runs through all strings and renders config values as templates.
+        // No variables are set in this context. But you can use environment
+        // variables in templates: e.g.:
+        //    `{{ get_env(name="username", default="unknown-user" )}}`.
+        fn render_tmpl(var: &mut [Vec<String>]) {
+            var.iter_mut().for_each(|i| {
+                i.iter_mut().for_each(|arg| {
+                    let new_arg = Tera::default()
+                        .render_str(arg, &tera::Context::new())
+                        .unwrap_or_default()
+                        .to_string();
+                    let _ = mem::replace(arg, new_arg);
+                })
+            })
+        }
+
         if config_path.exists() {
             let mut config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
 
-            // Render `config.app_args.*` config values as templates with
-            // empty `tera::Context`. The latter allows to use environment
-            // variables in templates: e.g.: `{{ get_env(name="username",
-            // default="unknown-user" )}}`.
-            let mut tera = Tera::default();
-            let context = tera::Context::new();
-            config.app_args.browser.iter_mut().for_each(|i| {
-                i.iter_mut().for_each(|arg| {
-                    let new_arg = tera
-                        .render_str(arg, &context)
-                        .unwrap_or_default()
-                        .to_string();
-                    let _ = mem::replace(arg, new_arg);
-                })
-            });
-            config.app_args.editor.iter_mut().for_each(|i| {
-                i.iter_mut().for_each(|arg| {
-                    let new_arg = tera
-                        .render_str(arg, &context)
-                        .unwrap_or_default()
-                        .to_string();
-                    let _ = mem::replace(arg, new_arg);
-                })
-            });
-            config.app_args.editor_console.iter_mut().for_each(|i| {
-                i.iter_mut().for_each(|arg| {
-                    let new_arg = tera
-                        .render_str(arg, &context)
-                        .unwrap_or_default()
-                        .to_string();
-                    let _ = mem::replace(arg, new_arg);
-                })
-            });
+            render_tmpl(&mut config.app_args.linux.browser);
+            render_tmpl(&mut config.app_args.linux.editor);
+            render_tmpl(&mut config.app_args.linux.editor_console);
+
+            render_tmpl(&mut config.app_args.windows.browser);
+            render_tmpl(&mut config.app_args.windows.editor);
+            render_tmpl(&mut config.app_args.windows.editor_console);
+
+            render_tmpl(&mut config.app_args.macos.browser);
+            render_tmpl(&mut config.app_args.macos.editor);
+            render_tmpl(&mut config.app_args.macos.editor_console);
+
             let config = config; // Freeze.
 
             {

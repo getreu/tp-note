@@ -1,4 +1,5 @@
 [arg_default]
+
 # Default value for the command line option `--debug`.  Determines the maximum
 # debug level events must have, to be logged.  If the command line option
 # `--debug` is present, its value will be used instead.
@@ -39,6 +40,7 @@ add_header = true
 export_link_rewriting = "Long"
 
 
+
 [clipboard]
 # By default clipboard support is enabled, can be disabled
 # in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
@@ -50,11 +52,13 @@ read_enabled = true
 empty_enabled = true
 
 
-[app_args_unix]
+
+[app_args]
+
 # Default command line argument list when launching the web browser.
 # The list is executed item by item until an installed web browser is found.
-# Can be changed in config file.
-browser = [
+# Defaults valid under Linux:
+linux.browser = [
     [
     "flatpak",
     "run",
@@ -100,8 +104,7 @@ browser = [
 
 # Default command line argument list when launching external editor.
 # The editor list is executed item by item until an editor is found.
-# Can be changed in config file.
-editor = [
+linux.editor = [
     [ "alacritty", "-e", "hx", ],
     [ "alacritty", "-e", "nvim", ],
     [ "codium", "-w", "-n", ],
@@ -123,8 +126,7 @@ editor = [
 # and no graphical environment is available (`DISPLAY=''`).
 # This lists console file editors only.
 # The editor list is executed item by item until an editor is found.
-# Can be changed in config file.
-editor_console = [
+linux.editor_console = [
     ["hx"],
     ["nvim"],
     ["nano"],
@@ -133,9 +135,8 @@ editor_console = [
     ["vi"],
 ]
 
-
-[app_args_windows]
-browser = [
+# Defaults valid under Windows:
+windows.browser = [
     [
         "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
         "--new-window",
@@ -151,7 +152,8 @@ browser = [
         "--inprivate",
     ],
 ]
-editor = [
+
+windows.editor = [
     [
         "C:\\Program Files\\Mark Text\\Mark Text.exe",
         "--new-window",
@@ -174,15 +176,17 @@ editor = [
     ],
     ["C:\\Windows\\notepad.exe"],
 ]
-editor_console = [
+
+windows.editor_console = [
     ["hx"],
     ["nvim"],
 ]
 
 
-[app_args_mac]
-browser = [[]]
-editor = [
+# Defaults valid under MacOs:
+macos.browser = [[]]
+
+macos.editor = [
     ["code", "-w", "-n"],
     ["typora"],
     ["marktext", "--no-sandbox"],
@@ -192,7 +196,7 @@ editor = [
     ["open", "-a", "TextMate"],
     ["open"],
 ]
-editor_console = [
+macos.editor_console = [
     ["hx"],
     ["nvim"],
     ["nano"],
@@ -202,7 +206,10 @@ editor_console = [
     ["vi"],
 ]
 
+
+
 [viewer]
+
 startup_delay = 500
 missing_header_disables = false
 notify_period = 200

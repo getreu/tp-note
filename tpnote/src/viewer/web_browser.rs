@@ -39,10 +39,17 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
 
     // Choose the right parameter list.
     let vv: Vec<Vec<String>>;
+
+    #[cfg(target_os = "linux")]
+    let app_args = &CFG.app_args.linux;
+    #[cfg(target_os = "windows")]
+    let app_args = &CFG.app_args.windows;
+    #[cfg(target_os = "macos")]
+    let app_args = &CFG.app_args.macos;
     let browser_args = if let Ok(s) = env::var(ENV_VAR_TPNOTE_BROWSER) {
         if s.is_empty() {
             var_name = "app_args.browser".to_string();
-            &CFG.app_args.browser
+            &app_args.browser
         } else {
             var_name = ENV_VAR_TPNOTE_BROWSER.to_string();
             vv = vec![s
@@ -53,7 +60,7 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
         }
     } else {
         var_name = "app_args.browser".to_string();
-        &CFG.app_args.browser
+        &app_args.browser
     };
 
     // Prepare launch of browser/viewer.
