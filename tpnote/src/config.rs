@@ -195,11 +195,6 @@ impl ::std::default::Default for Cfg {
     }
 }
 
-lazy_static! {
-    /// Variable indicating with `Err` if the loading of the configuration file went wrong.
-    pub static ref CFG_FILE_LOADING: RwLock<Result<(), ConfigFileError>> = RwLock::new(Ok(()));
-}
-
 /// Parse the configuration file if it exists. Otherwise write one with default values.
 #[cfg(not(test))]
 #[inline]
@@ -313,6 +308,11 @@ lazy_static! {
                 Cfg::default()
             })
         };
+}
+
+lazy_static! {
+    /// Variable indicating with `Err` if the loading of the configuration file went wrong.
+    pub static ref CFG_FILE_LOADING: RwLock<Result<(), ConfigFileError>> = RwLock::new(Ok(()));
 }
 
 lazy_static! {
