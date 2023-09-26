@@ -251,7 +251,7 @@ impl Cfg {
             // First check passed.
             Ok(config)
         } else {
-            Self::config_default_save(config_path)?;
+            Self::write_default_to_file(config_path)?;
             Ok(Cfg::default())
         }
     }
@@ -288,13 +288,10 @@ impl Cfg {
                 config_path_bak.set_next_unused()?;
 
                 fs::rename(config_path.as_path(), &config_path_bak)?;
-
-                Cfg::write_default_to_file(config_path)?;
-
-                Ok(config_path_bak)
-            } else {
-                Err(ConfigFileError::ConfigFileNotFound)
             }
+            Cfg::write_default_to_file(config_path)?;
+
+            Ok(config_path.clone())
         } else {
             Err(ConfigFileError::PathToConfigFileNotFound)
         }

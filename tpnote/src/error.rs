@@ -117,10 +117,6 @@ pub enum ConfigFileError {
     #[error("No path to configuration file found.")]
     PathToConfigFileNotFound,
 
-    /// Should not happen. Please report this bug.
-    #[error("Configuration file not found.")]
-    ConfigFileNotFound,
-
     #[error(transparent)]
     File(#[from] FileError),
 
