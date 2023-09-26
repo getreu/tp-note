@@ -211,9 +211,10 @@ impl Cfg {
         if config_path.exists() {
             let mut config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
 
-            // Fill `config.app_args.*` templates with empty `tera::Context`.
-            // The latter allows to use environment variables in templates: e.g.:
-            // `{{ get_env(name="username", default="unknown-user" )}}`.
+            // Render `config.app_args.*` config values as templates with
+            // empty `tera::Context`. The latter allows to use environment
+            // variables in templates: e.g.: `{{ get_env(name="username",
+            // default="unknown-user" )}}`.
             let mut tera = Tera::default();
             let context = tera::Context::new();
             config.app_args.browser.iter_mut().for_each(|i| {
@@ -260,7 +261,7 @@ impl Cfg {
             Ok(config)
         } else {
             Self::write_default_to_file(config_path)?;
-            Ok(Cfg::default())
+            Ok(Self::default())
         }
     }
 
@@ -268,7 +269,7 @@ impl Cfg {
     #[cfg(test)]
     #[inline]
     fn from_file(_config_path: &Path) -> Result<Cfg, ConfigFileError> {
-        Ok(Cfg::default())
+        Ok(Self::default())
     }
 
     /// Writes the default configuration to `Path`. If destination exists,
@@ -285,7 +286,7 @@ impl Cfg {
         }
 
         let mut buffer = File::create(config_path)?;
-        buffer.write_all(toml::to_string_pretty(&Cfg::default())?.as_bytes())?;
+        buffer.write_all(Self::default_as_toml().as_bytes())?;
         Ok(())
     }
 
@@ -299,7 +300,7 @@ impl Cfg {
     /// values.
     pub fn backup_and_replace_with_default() -> Result<PathBuf, ConfigFileError> {
         if let Some(ref config_path) = *CONFIG_PATH {
-            Cfg::write_default_to_file(config_path)?;
+            Self::write_default_to_file(config_path)?;
 
             Ok(config_path.clone())
         } else {
