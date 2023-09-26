@@ -17,19 +17,19 @@ use std::fs;
 use std::fs::File;
 #[cfg(not(test))]
 use std::io::Write;
+#[cfg(not(test))]
 use std::mem;
 use std::path::Path;
 use std::path::PathBuf;
 #[cfg(not(test))]
 use tera::Tera;
 use tpnote_lib::config::Filename;
-use tpnote_lib::config::LibCfg;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::Tmpl;
 use tpnote_lib::config::TmplHtml;
 use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
-#[cfg(not(test))]
 use tpnote_lib::config::LIB_CFG;
+use tpnote_lib::config::LIB_CONFIG_DEFAULT_TOML;
 use tpnote_lib::context::Context;
 use tpnote_lib::filename::NotePathBuf;
 
@@ -74,7 +74,7 @@ pub(crate) const PKG_VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERS
 const CONFIG_FILENAME: &str = concat!(env!("CARGO_BIN_NAME"), ".toml");
 
 /// Default configuragtion.
-pub(crate) const CFG_GUI_TOML: &str = include_str!("config_default.toml");
+pub(crate) const GUI_CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
@@ -167,42 +167,30 @@ pub struct Viewer {
 /// configuration file on disk.
 impl ::std::default::Default for Cfg {
     fn default() -> Self {
-        // Merge source 1.
-        let gui_cfg: GuiCfg = toml::from_str(CFG_GUI_TOML)
-            .expect("can not parse included configuration `tpnote_gui.toml`");
+        #[cfg(not(target_family = "windows"))]
+        let config_default_toml = format!(
+            "version = \"{}\"\n\n{}\n\n{}",
+            PKG_VERSION.unwrap_or_default(),
+            GUI_CONFIG_DEFAULT_TOML,
+            LIB_CONFIG_DEFAULT_TOML
+        );
 
-        // Merge source 2.
-        let lib_cfg = LibCfg::default();
-
-        // Merge destination.
-        // Some dummy defaults, jsut to construct an object.
-        let mut cfg = Cfg {
-            version: String::new(),
-            arg_default: ArgDefault::default(),
-            tmpl: Tmpl::default(),
-            app_args: AppArgs::default(),
-            clipboard: Clipboard::default(),
-            filename: Filename::default(),
-            viewer: Viewer::default(),
-            tmpl_html: TmplHtml::default(),
-        };
-
-        cfg.version = PKG_VERSION.unwrap_or_default().to_owned();
-
-        // Overwrite with defaults from `tpnote_lib`.
-        let _ = mem::replace(&mut cfg.filename, lib_cfg.filename);
-        let _ = mem::replace(&mut cfg.tmpl, lib_cfg.tmpl);
-        let _ = mem::replace(&mut cfg.tmpl_html, lib_cfg.tmpl_html);
-        // Overwrite with defaults from `tpnote_gui.toml`.
-        let _ = mem::replace(&mut cfg.arg_default, gui_cfg.arg_default);
-        let _ = mem::replace(&mut cfg.clipboard, gui_cfg.clipboard);
-        #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-        let _ = mem::replace(&mut cfg.app_args, gui_cfg.app_args_unix);
         #[cfg(target_family = "windows")]
-        let _ = mem::replace(&mut cfg.app_args, gui_cfg.app_args_windows);
-        #[cfg(all(target_family = "unix", target_vendor = "apple"))]
-        let _ = mem::replace(&mut cfg.app_args, gui_cfg.app_args_mac);
-        let _ = mem::replace(&mut cfg.viewer, gui_cfg.viewer);
+        let config_default_toml = format!(
+            "version = \"{}\"\r\n\r\n{}\r\n\r\n{}",
+            PKG_VERSION.unwrap_or_default(),
+            GUI_CONFIG_DEFAULT_TOML,
+            LIB_CONFIG_DEFAULT_TOML
+        );
+
+        // Make sure that we parse the `LIB_CONFIG_DEFAULT_TOML` first.
+        lazy_static::initialize(&LIB_CFG);
+
+        let cfg = toml::from_str(&config_default_toml).expect(
+            "Error in default configuration in source file:\n\
+                 `tpnote/src/config_default.toml`",
+        );
+
         cfg
     }
 }

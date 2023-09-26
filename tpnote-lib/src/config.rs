@@ -24,8 +24,8 @@ use std::str::FromStr;
 #[cfg(feature = "renderer")]
 use syntect::highlighting::ThemeSet;
 
-/// Default configuragtion.
-pub(crate) const CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
+/// Default library configuragtion as TOML.
+pub const LIB_CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
 
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
@@ -246,7 +246,7 @@ pub struct LibCfg {
 
 /// Configuration of filename parsing, deserialized from the
 /// configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Filename {
     pub sort_tag_chars: String,
     pub sort_tag_separator: String,
@@ -264,7 +264,7 @@ pub struct Filename {
 
 /// Filename templates and content templates, deserialized from the
 /// configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tmpl {
     pub filter_assert_preconditions: Vec<(String, Vec<AssertPrecondition>)>,
     pub filter_get_lang: Vec<String>,
@@ -285,7 +285,7 @@ pub struct Tmpl {
 
 /// Configuration for the HTML exporter feature, deserialized from the
 /// configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TmplHtml {
     pub viewer: String,
     pub viewer_error: String,
@@ -403,7 +403,7 @@ impl LibCfg {
 /// Defaults are sourced from file `tpnote-lib/src/config_default.toml`.
 impl Default for LibCfg {
     fn default() -> Self {
-        toml::from_str(CONFIG_DEFAULT_TOML).expect(
+        toml::from_str(LIB_CONFIG_DEFAULT_TOML).expect(
             "Error in default configuration in source file:\n\
                  `tpnote-lib/src/config_default.toml`",
         )
