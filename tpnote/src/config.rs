@@ -265,7 +265,7 @@ impl Cfg {
 
     /// Writes the default configuration to `Path`.
     #[cfg(not(test))]
-    fn config_default_save(config_path: &Path) -> Result<(), ConfigFileError> {
+    fn write_default_to_file(config_path: &Path) -> Result<(), ConfigFileError> {
         fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
 
         let mut buffer = File::create(config_path)?;
@@ -275,7 +275,7 @@ impl Cfg {
 
     /// In unit tests we do not write anything.
     #[cfg(test)]
-    fn config_default_save(_config_path: &Path) -> Result<(), ConfigFileError> {
+    fn write_default_to_file(_config_path: &Path) -> Result<(), ConfigFileError> {
         Ok(())
     }
 
@@ -289,7 +289,7 @@ impl Cfg {
 
                 fs::rename(config_path.as_path(), &config_path_bak)?;
 
-                Cfg::config_default_save(config_path)?;
+                Cfg::write_default_to_file(config_path)?;
 
                 Ok(config_path_bak)
             } else {
