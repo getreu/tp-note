@@ -169,6 +169,22 @@ pub struct Viewer {
 /// configuration file on disk.
 impl ::std::default::Default for Cfg {
     fn default() -> Self {
+        // Make sure that we parse the `LIB_CONFIG_DEFAULT_TOML` first.
+        lazy_static::initialize(&LIB_CFG);
+
+        let cfg = toml::from_str(&Cfg::default_as_toml()).expect(
+            "Error in default configuration in source file:\n\
+                 `tpnote/src/config_default.toml`",
+        );
+
+        cfg
+    }
+}
+
+impl Cfg {
+    /// Emits the default configuration as TOML string with comments.
+    #[inline]
+    fn default_as_toml() -> String {
         #[cfg(not(target_family = "windows"))]
         let config_default_toml = format!(
             "version = \"{}\"\n\n{}\n\n{}",
@@ -185,19 +201,9 @@ impl ::std::default::Default for Cfg {
             LIB_CONFIG_DEFAULT_TOML
         );
 
-        // Make sure that we parse the `LIB_CONFIG_DEFAULT_TOML` first.
-        lazy_static::initialize(&LIB_CFG);
-
-        let cfg = toml::from_str(&config_default_toml).expect(
-            "Error in default configuration in source file:\n\
-                 `tpnote/src/config_default.toml`",
-        );
-
-        cfg
+        config_default_toml
     }
-}
 
-impl Cfg {
     /// Parse the configuration file if it exists. Otherwise write one with default values.
     #[cfg(not(test))]
     #[inline]
