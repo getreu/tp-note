@@ -101,20 +101,6 @@ pub struct OsType<T> {
     pub windows: T,
 }
 
-/// Configuration data, subset of `Cfg`.
-#[derive(Debug, Serialize, Deserialize, Default)]
-pub struct GuiCfg {
-    /// Version number of the config file as String -or-
-    /// a text message explaining why we could not load the
-    /// configuration file.
-    pub arg_default: ArgDefault,
-    pub clipboard: Clipboard,
-    pub app_args_unix: AppArgs,
-    pub app_args_windows: AppArgs,
-    pub app_args_mac: AppArgs,
-    pub viewer: Viewer,
-}
-
 /// Command line arguments, deserialized form configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ArgDefault {
