@@ -270,7 +270,7 @@ fn config_load(config_path: &Path) -> Result<Cfg, ConfigFileError> {
         Ok(config)
     } else {
         let cfg = Cfg::default();
-        config_write(&cfg, config_path)?;
+        config_default_save(&cfg, config_path)?;
         Ok(cfg)
     }
 }
@@ -284,7 +284,7 @@ fn config_load(_config_path: &Path) -> Result<Cfg, ConfigFileError> {
 
 /// Writes the default configuration to `Path`.
 #[cfg(not(test))]
-fn config_write(config: &Cfg, config_path: &Path) -> Result<(), ConfigFileError> {
+fn config_default_save(config: &Cfg, config_path: &Path) -> Result<(), ConfigFileError> {
     fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
 
     let mut buffer = File::create(config_path)?;
@@ -294,7 +294,7 @@ fn config_write(config: &Cfg, config_path: &Path) -> Result<(), ConfigFileError>
 
 /// In unit tests we do not write anything.
 #[cfg(test)]
-fn config_write(_config: &Cfg, _config_path: &Path) -> Result<(), ConfigFileError> {
+fn config_default_save(_config: &Cfg, _config_path: &Path) -> Result<(), ConfigFileError> {
     Ok(())
 }
 
@@ -383,7 +383,7 @@ pub fn backup_config_file() -> Result<PathBuf, ConfigFileError> {
 
             fs::rename(config_path.as_path(), &config_path_bak)?;
 
-            config_write(&Cfg::default(), config_path)?;
+            config_default_save(&Cfg::default(), config_path)?;
 
             Ok(config_path_bak)
         } else {
