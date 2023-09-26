@@ -199,7 +199,7 @@ impl Cfg {
     /// Parse the configuration file if it exists. Otherwise write one with default values.
     #[cfg(not(test))]
     #[inline]
-    fn config_load(config_path: &Path) -> Result<Cfg, ConfigFileError> {
+    fn from_file(config_path: &Path) -> Result<Cfg, ConfigFileError> {
         if config_path.exists() {
             let mut config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
 
@@ -259,7 +259,7 @@ impl Cfg {
     /// In unit tests we use the default configuration values.
     #[cfg(test)]
     #[inline]
-    fn config_load(_config_path: &Path) -> Result<Cfg, ConfigFileError> {
+    fn from_file(_config_path: &Path) -> Result<Cfg, ConfigFileError> {
         Ok(Cfg::default())
     }
 
@@ -320,7 +320,7 @@ lazy_static! {
             }
         };
 
-        Cfg::config_load(config_path)
+        Cfg::from_file(config_path)
             .unwrap_or_else(|e|{
                 // Remember that something went wrong.
                 let mut cfg_file_loading = CFG_FILE_LOADING.write();
