@@ -195,87 +195,110 @@ impl ::std::default::Default for Cfg {
     }
 }
 
-/// Parse the configuration file if it exists. Otherwise write one with default values.
-#[cfg(not(test))]
-#[inline]
-fn config_load(config_path: &Path) -> Result<Cfg, ConfigFileError> {
-    if config_path.exists() {
-        let mut config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
+impl Cfg {
+    /// Parse the configuration file if it exists. Otherwise write one with default values.
+    #[cfg(not(test))]
+    #[inline]
+    fn config_load(config_path: &Path) -> Result<Cfg, ConfigFileError> {
+        if config_path.exists() {
+            let mut config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
 
-        // Fill `config.app_args.*` templates with empty `tera::Context`.
-        // The latter allows to use environment variables in templates: e.g.:
-        // `{{ get_env(name="username", default="unknown-user" )}}`.
-        let mut tera = Tera::default();
-        let context = tera::Context::new();
-        config.app_args.browser.iter_mut().for_each(|i| {
-            i.iter_mut().for_each(|arg| {
-                let new_arg = tera
-                    .render_str(arg, &context)
-                    .unwrap_or_default()
-                    .to_string();
-                let _ = mem::replace(arg, new_arg);
-            })
-        });
-        config.app_args.editor.iter_mut().for_each(|i| {
-            i.iter_mut().for_each(|arg| {
-                let new_arg = tera
-                    .render_str(arg, &context)
-                    .unwrap_or_default()
-                    .to_string();
-                let _ = mem::replace(arg, new_arg);
-            })
-        });
-        config.app_args.editor_console.iter_mut().for_each(|i| {
-            i.iter_mut().for_each(|arg| {
-                let new_arg = tera
-                    .render_str(arg, &context)
-                    .unwrap_or_default()
-                    .to_string();
-                let _ = mem::replace(arg, new_arg);
-            })
-        });
-        let config = config; // Freeze.
+            // Fill `config.app_args.*` templates with empty `tera::Context`.
+            // The latter allows to use environment variables in templates: e.g.:
+            // `{{ get_env(name="username", default="unknown-user" )}}`.
+            let mut tera = Tera::default();
+            let context = tera::Context::new();
+            config.app_args.browser.iter_mut().for_each(|i| {
+                i.iter_mut().for_each(|arg| {
+                    let new_arg = tera
+                        .render_str(arg, &context)
+                        .unwrap_or_default()
+                        .to_string();
+                    let _ = mem::replace(arg, new_arg);
+                })
+            });
+            config.app_args.editor.iter_mut().for_each(|i| {
+                i.iter_mut().for_each(|arg| {
+                    let new_arg = tera
+                        .render_str(arg, &context)
+                        .unwrap_or_default()
+                        .to_string();
+                    let _ = mem::replace(arg, new_arg);
+                })
+            });
+            config.app_args.editor_console.iter_mut().for_each(|i| {
+                i.iter_mut().for_each(|arg| {
+                    let new_arg = tera
+                        .render_str(arg, &context)
+                        .unwrap_or_default()
+                        .to_string();
+                    let _ = mem::replace(arg, new_arg);
+                })
+            });
+            let config = config; // Freeze.
 
-        {
-            // Copy the parts of `config` into `LIB_CFG`.
-            let mut lib_cfg = LIB_CFG.write();
-            lib_cfg.filename = config.filename.clone();
-            lib_cfg.tmpl = config.tmpl.clone();
-            lib_cfg.tmpl_html = config.tmpl_html.clone();
+            {
+                // Copy the parts of `config` into `LIB_CFG`.
+                let mut lib_cfg = LIB_CFG.write();
+                lib_cfg.filename = config.filename.clone();
+                lib_cfg.tmpl = config.tmpl.clone();
+                lib_cfg.tmpl_html = config.tmpl_html.clone();
 
-            // Perform some additional semantic checks.
-            lib_cfg.assert_validity()?;
+                // Perform some additional semantic checks.
+                lib_cfg.assert_validity()?;
+            }
+
+            // First check passed.
+            Ok(config)
+        } else {
+            Self::config_default_save(config_path)?;
+            Ok(Cfg::default())
         }
+    }
 
-        // First check passed.
-        Ok(config)
-    } else {
-        config_default_save(config_path)?;
+    /// In unit tests we use the default configuration values.
+    #[cfg(test)]
+    #[inline]
+    fn config_load(_config_path: &Path) -> Result<Cfg, ConfigFileError> {
         Ok(Cfg::default())
     }
-}
 
-/// In unit tests we use the default configuration values.
-#[cfg(test)]
-#[inline]
-fn config_load(_config_path: &Path) -> Result<Cfg, ConfigFileError> {
-    Ok(Cfg::default())
-}
+    /// Writes the default configuration to `Path`.
+    #[cfg(not(test))]
+    fn config_default_save(config_path: &Path) -> Result<(), ConfigFileError> {
+        fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
 
-/// Writes the default configuration to `Path`.
-#[cfg(not(test))]
-fn config_default_save(config_path: &Path) -> Result<(), ConfigFileError> {
-    fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
+        let mut buffer = File::create(config_path)?;
+        buffer.write_all(toml::to_string_pretty(&Cfg::default())?.as_bytes())?;
+        Ok(())
+    }
 
-    let mut buffer = File::create(config_path)?;
-    buffer.write_all(toml::to_string_pretty(&Cfg::default())?.as_bytes())?;
-    Ok(())
-}
+    /// In unit tests we do not write anything.
+    #[cfg(test)]
+    fn config_default_save(_config_path: &Path) -> Result<(), ConfigFileError> {
+        Ok(())
+    }
 
-/// In unit tests we do not write anything.
-#[cfg(test)]
-fn config_default_save(_config_path: &Path) -> Result<(), ConfigFileError> {
-    Ok(())
+    /// Backsup the existing config file and writes a new one with default
+    /// values.
+    pub fn backup_config_file() -> Result<PathBuf, ConfigFileError> {
+        if let Some(ref config_path) = *CONFIG_PATH {
+            if config_path.exists() {
+                let mut config_path_bak = config_path.clone();
+                config_path_bak.set_next_unused()?;
+
+                fs::rename(config_path.as_path(), &config_path_bak)?;
+
+                Cfg::config_default_save(config_path)?;
+
+                Ok(config_path_bak)
+            } else {
+                Err(ConfigFileError::ConfigFileNotFound)
+            }
+        } else {
+            Err(ConfigFileError::PathToConfigFileNotFound)
+        }
+    }
 }
 
 lazy_static! {
@@ -297,7 +320,7 @@ lazy_static! {
             }
         };
 
-        config_load(config_path)
+        Cfg::config_load(config_path)
             .unwrap_or_else(|e|{
                 // Remember that something went wrong.
                 let mut cfg_file_loading = CFG_FILE_LOADING.write();
@@ -358,25 +381,6 @@ lazy_static! {
             }
         )
     };
-}
-
-pub fn backup_config_file() -> Result<PathBuf, ConfigFileError> {
-    if let Some(ref config_path) = *CONFIG_PATH {
-        if config_path.exists() {
-            let mut config_path_bak = config_path.clone();
-            config_path_bak.set_next_unused()?;
-
-            fs::rename(config_path.as_path(), &config_path_bak)?;
-
-            config_default_save(config_path)?;
-
-            Ok(config_path_bak)
-        } else {
-            Err(ConfigFileError::ConfigFileNotFound)
-        }
-    } else {
-        Err(ConfigFileError::PathToConfigFileNotFound)
-    }
 }
 
 lazy_static! {

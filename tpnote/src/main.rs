@@ -32,7 +32,7 @@ mod workflow;
 
 #[cfg(feature = "message-box")]
 use crate::alert_service::AlertService;
-use crate::config::backup_config_file;
+use crate::config::Cfg;
 use crate::config::AUTHOR;
 use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
@@ -110,7 +110,7 @@ fn main() {
             log::error!("{}", ConfigFileError::ConfigFileLoadParseWrite { error: e });
 
             // Move erroneous config file away.
-            if let Err(e) = backup_config_file() {
+            if let Err(e) = Cfg::backup_config_file() {
                 log::error!(
                     "{}",
                     ConfigFileError::ConfigFileBackup {
@@ -139,7 +139,7 @@ fn main() {
                 }
                 .to_string()
             );
-            if let Err(e) = backup_config_file() {
+            if let Err(e) = Cfg::backup_config_file() {
                 log::error!(
                     "{}",
                     ConfigFileError::ConfigFileBackup {
