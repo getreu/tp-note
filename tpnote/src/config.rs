@@ -12,6 +12,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::env;
+#[cfg(not(test))]
 use std::fs;
 #[cfg(not(test))]
 use std::fs::File;
@@ -31,6 +32,7 @@ use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::config::LIB_CONFIG_DEFAULT_TOML;
 use tpnote_lib::context::Context;
+#[cfg(not(test))]
 use tpnote_lib::filename::NotePathBuf;
 
 /// Set the minimum required config file version that is compatible with this
@@ -263,10 +265,18 @@ impl Cfg {
         Ok(Cfg::default())
     }
 
-    /// Writes the default configuration to `Path`.
+    /// Writes the default configuration to `Path`. If destination exists,
+    /// backup it.
     #[cfg(not(test))]
     fn write_default_to_file(config_path: &Path) -> Result<(), ConfigFileError> {
         fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
+
+        if config_path.exists() {
+            let mut config_path_bak = config_path.to_path_buf();
+            config_path_bak.set_next_unused()?;
+
+            fs::rename(config_path, &config_path_bak)?;
+        }
 
         let mut buffer = File::create(config_path)?;
         buffer.write_all(toml::to_string_pretty(&Cfg::default())?.as_bytes())?;
@@ -281,14 +291,8 @@ impl Cfg {
 
     /// Backsup the existing config file and writes a new one with default
     /// values.
-    pub fn backup_config_file() -> Result<PathBuf, ConfigFileError> {
+    pub fn backup_and_replace_with_default() -> Result<PathBuf, ConfigFileError> {
         if let Some(ref config_path) = *CONFIG_PATH {
-            if config_path.exists() {
-                let mut config_path_bak = config_path.clone();
-                config_path_bak.set_next_unused()?;
-
-                fs::rename(config_path.as_path(), &config_path_bak)?;
-            }
             Cfg::write_default_to_file(config_path)?;
 
             Ok(config_path.clone())

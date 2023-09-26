@@ -110,7 +110,7 @@ fn main() {
             log::error!("{}", ConfigFileError::ConfigFileLoadParseWrite { error: e });
 
             // Move erroneous config file away.
-            if let Err(e) = Cfg::backup_config_file() {
+            if let Err(e) = Cfg::backup_and_replace_with_default() {
                 log::error!(
                     "{}",
                     ConfigFileError::ConfigFileBackup {
@@ -139,7 +139,7 @@ fn main() {
                 }
                 .to_string()
             );
-            if let Err(e) = Cfg::backup_config_file() {
+            if let Err(e) = Cfg::backup_and_replace_with_default() {
                 log::error!(
                     "{}",
                     ConfigFileError::ConfigFileBackup {
