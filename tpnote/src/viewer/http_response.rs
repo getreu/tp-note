@@ -32,8 +32,8 @@ use tpnote_lib::workflow::render_viewer_html;
 /// Content from files are served in chunks.
 const TCP_WRITE_BUFFER_SIZE: usize = 0x1000;
 
-/// Time in seconds the browsers should keep the delivered content in cache.
-const MAX_AGE: u64 = 600;
+/// Time in seconds the browsers should keep static pages in cache.
+const MAX_AGE: usize = 604800;
 
 /// Modern browser request a small icon image.
 pub const FAVICON: &[u8] = include_bytes!("favicon.ico");
@@ -45,11 +45,17 @@ pub(crate) trait HttpResponse {
     fn respond(&mut self, request: &str) -> Result<(), ViewerError>;
     /// Read file from `abspath` and insert its content into an HTTP OK
     /// response.
-    fn respond_file_ok(&mut self, abspath: &Path, mime_type: &str) -> Result<(), ViewerError>;
+    fn respond_file_ok(
+        &mut self,
+        abspath: &Path,
+        max_age: usize,
+        mime_type: &str,
+    ) -> Result<(), ViewerError>;
     /// Send and HTTP response with `content`.
     fn respond_content_ok(
         &mut self,
         reqpath: &Path,
+        max_age: usize,
         mime_type: &str,
         content: &[u8],
     ) -> Result<(), ViewerError>;
@@ -83,35 +89,31 @@ impl HttpResponse for ServerThread {
         match path {
             // Serve icon.
             FAVICON_PATH => {
-                self.respond_content_ok(Path::new(&FAVICON_PATH), "image/x-icon", FAVICON)?;
+                self.respond_content_ok(
+                    Path::new(&FAVICON_PATH),
+                    MAX_AGE,
+                    "image/x-icon",
+                    FAVICON,
+                )?;
             }
 
             // Serve document CSS file.
             TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE => {
                 self.respond_content_ok(
                     Path::new(&TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE),
+                    MAX_AGE,
                     "text/css",
                     LIB_CFG.read_recursive().tmpl_html.viewer_doc_css.as_bytes(),
                 )?;
             }
 
             // Serve highlighting CSS file.
-            #[cfg(feature = "renderer")]
             TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE => {
                 self.respond_content_ok(
                     Path::new(&TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE),
+                    MAX_AGE,
                     "text/css",
                     VIEWER_HIGHLIGHTING_CSS.read_recursive().as_bytes(),
-                )?;
-            }
-
-            // Serve empty highlighting CSS file.
-            #[cfg(not(feature = "renderer"))]
-            TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE => {
-                self.respond_content_ok(
-                    Path::new(&TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE),
-                    "text/css",
-                    b"",
                 )?;
             }
 
@@ -123,7 +125,7 @@ impl HttpResponse for ServerThread {
                 // reloads this document on request of `self.rx`.
                 let html = self.render_content_and_error(&self.context.path)?;
 
-                self.respond_content_ok(Path::new("/"), "text/html", html.as_bytes())?;
+                self.respond_content_ok(Path::new("/"), 0, "text/html", html.as_bytes())?;
                 // `self.rx` was not used and is dropped here.
             }
 
@@ -251,7 +253,7 @@ impl HttpResponse for ServerThread {
                             self.delivered_tpnote_docs.read_recursive().len();
                         if delivered_docs_count < CFG.viewer.displayed_tpnote_count_max {
                             let html = self.render_content_and_error(&abspath)?;
-                            self.respond_content_ok(&abspath, "text/html", html.as_bytes())?;
+                            self.respond_content_ok(&abspath, 0, "text/html", html.as_bytes())?;
                         } else {
                             self.respond_too_many_requests()?;
                         }
@@ -266,7 +268,7 @@ impl HttpResponse for ServerThread {
                 //
                 // Condition 5: Is the file readable?
                 if abspath.is_file() {
-                    self.respond_file_ok(&abspath, mime_type)?;
+                    self.respond_file_ok(&abspath, 0, mime_type)?;
                 } else {
                     self.respond_not_found(&abspath)?;
                 }
@@ -275,15 +277,25 @@ impl HttpResponse for ServerThread {
         Ok(())
     }
 
-    fn respond_file_ok(&mut self, abspath: &Path, mime_type: &str) -> Result<(), ViewerError> {
+    fn respond_file_ok(
+        &mut self,
+        abspath: &Path,
+        max_age: usize,
+        mime_type: &str,
+    ) -> Result<(), ViewerError> {
+        let cache_control = if max_age == 0 {
+            "no-cache".to_string()
+        } else {
+            format!("private, max-age={}", max_age)
+        };
         let response = format!(
             "HTTP/1.1 200 OK\r\n\
              Date: {}\r\n\
-             Cache-Control: private, max-age={}\r\n\
+             Cache-Control: {}\r\n\
              Content-Type: {}\r\n\
              Content-Length: {}\r\n\r\n",
             httpdate::fmt_http_date(SystemTime::now()),
-            MAX_AGE,
+            cache_control,
             mime_type,
             fs::metadata(abspath)?.len(),
         );
@@ -313,17 +325,23 @@ impl HttpResponse for ServerThread {
     fn respond_content_ok(
         &mut self,
         reqpath: &Path,
+        max_age: usize,
         mime_type: &str,
         content: &[u8],
     ) -> Result<(), ViewerError> {
+        let cache_control = if max_age == 0 {
+            "no-cache".to_string()
+        } else {
+            format!("private, max-age={}", max_age)
+        };
         let response = format!(
             "HTTP/1.1 200 OK\r\n\
              Date: {}\r\n\
-             Cache-Control: private, max-age={}\r\n\
+             Cache-Control: {}\r\n\
              Content-Type: {}\r\n\
              Content-Length: {}\r\n\r\n",
             httpdate::fmt_http_date(SystemTime::now()),
-            MAX_AGE,
+            cache_control,
             mime_type,
             content.len(),
         );
@@ -402,12 +420,11 @@ impl HttpResponse for ServerThread {
         let response = format!(
             "HTTP/1.1 {}\r\n\
              Date: {}\r\n\
-             Cache-Control: private, max-age={}\r\n\
+             Cache-Control: private, no-cache\r\n\
              Content-Type: text/html\r\n\
              Content-Length: {}\r\n\r\n",
             http_error_code,
             httpdate::fmt_http_date(SystemTime::now()),
-            MAX_AGE,
             html_msg.len(),
         );
         self.stream.write_all(response.as_bytes())?;
