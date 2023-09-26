@@ -196,20 +196,6 @@ impl ::std::default::Default for Cfg {
 }
 
 lazy_static! {
-    /// Store the extension as key and mime type as value in Map.
-    pub static ref VIEWER_SERVED_MIME_TYPES_MAP: BTreeMap<&'static str, &'static str> = {
-        let mut hm = BTreeMap::new();
-        for l in &CFG.viewer.served_mime_types {
-            if l.len() >= 2
-            {
-                hm.insert(l[0].as_str(), l[1].as_str());
-            };
-        };
-        hm
-    };
-}
-
-lazy_static! {
     /// Variable indicating with `Err` if the loading of the configuration file went wrong.
     pub static ref CFG_FILE_LOADING: RwLock<Result<(), ConfigFileError>> = RwLock::new(Ok(()));
 }
@@ -391,4 +377,18 @@ pub fn backup_config_file() -> Result<PathBuf, ConfigFileError> {
     } else {
         Err(ConfigFileError::PathToConfigFileNotFound)
     }
+}
+
+lazy_static! {
+    /// Store the extension as key and mime type as value in Map.
+    pub static ref VIEWER_SERVED_MIME_TYPES_MAP: BTreeMap<&'static str, &'static str> = {
+        let mut hm = BTreeMap::new();
+        for l in &CFG.viewer.served_mime_types {
+            if l.len() >= 2
+            {
+                hm.insert(l[0].as_str(), l[1].as_str());
+            };
+        };
+        hm
+    };
 }
