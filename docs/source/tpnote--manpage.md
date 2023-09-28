@@ -1627,8 +1627,11 @@ you wish to disable the viewer feature overall, set the variable
 
 After the markup rendition process, Tp-Note's built-in viewer generates its
 final HTML rendition through the customizable HTML templates
-'`tmpl_html.viewer`' and '`tmpl_html.viewer_error`'. The following code
-example taken from '`tmpl_html.viewer`' illustrates the available variables:
+'`tmpl_html.viewer`' and '`tmpl_html.viewer_error`'. Unlike content templates
+and filename templates, all HTML templates escape HTML critical characters
+by default. To disable escaping for a specific variable, add the '`safe`' filter
+in last position. The following code example taken from '`tmpl_html.viewer`'
+illustrates the available variables:
 
 ```toml
 [tmpl_html]
@@ -1643,8 +1646,8 @@ viewer = '''<!DOCTYPE html>
   <body>
   <pre class="doc-header">{{ doc_fm_text }}</pre>
   <hr>
-  <div class="doc-body">{{ doc_body_html }}</div>
-  <script>{{ viewer_doc_js }}</script>
+  <div class="doc-body">{{ doc_body_html | safe }}</div>
+  <script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
 '''
@@ -1667,9 +1670,9 @@ Specifically:
 * '`{{ doc_fm_text }}`' is the raw UTF-8 copy of the header. Not to be
   confounded with the dictionary variable '`{{ fm_all }}`'.
 
-* '`{{ doc_body_html }}`' is the note's body as HTML rendition.
+* '`{{ doc_body_html | safe }}`' is the note's body as HTML rendition.
 
-* '`{{ viewer_doc_js }}`' is the JavaScript browser code for
+* '`{{ viewer_doc_js | safe }}`' is the JavaScript browser code for
   live updates.
 
 * '`{{ extension_default }}`' (c.f. section _Template variables_).
@@ -1678,18 +1681,33 @@ Specifically:
 
 * '`{{ lang }}`' (c.f. section _Template variables_).
 
-* '`{{ my_val | to_html }}`' is the HTML rendition of the '`my_val`'
+* '`{{ my_val | to_html | safe }}`' is the HTML rendition of the '`my_val`'
   variable (c.f. section _Template filter_).
 
 Alternatively, the header enclosed by '`<pre>...</pre>`' can also be rendered
 as a table:
 
 ```html
-  <table>
-    <tr><th>title:</th><th>{{ fm_title }}</th> </tr>
-    <tr><th>subtitle:</th><th>{{ fm_subtitle | default(value='') }}</th></tr>
-  {% for k, v in fm_all| remove(var='fm_title')| remove(var='fm_subtitle') %}
-    <tr><th>{{ k }}:</th><th>{{ v | to_html }}</th></tr>
+  <table class="fm">
+    <tr>
+    <th class="fmkey">title:</th>
+    <th class="fmval"><b>
+        {{ fm_title| default(value='') | to_html | safe }}</b>
+    </th>
+  </tr>
+    <tr>
+    <th class="fmkey">subtitle:</th>
+    <th class="fmval">
+        {{ fm_subtitle | default(value='') | to_html | safe }}
+    </th>
+  </tr>
+  {% for k, v in fm_all| remove(key='fm_title')|
+                         remove(key='fm_subtitle')|
+  %}
+    <tr>
+    <th class="fmkeygrey">{{ k }}:</th>
+    <th class="fmvalgrey">{{ v | to_html | safe }}</th>
+  </tr>
   {% endfor %}
   </table>
 ```
@@ -1702,20 +1720,22 @@ the HTML rendition of the text source with clickable hyperlinks:
 
 ```toml
 [viewer_error]
-error = '''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang=\"en\">
 <head>
-<meta charset=\"utf-8\">
+<meta charset=\"UTF-8\">
 <title>Syntax error</title>
 </head>
 <body>
 <h3>Syntax error</h3>
 <p> in note file: <pre>{{ path }}</pre><p>
+<div class=\"note-error\">
 <hr>
-<pre class="doc-error">{{ doc_error }}</pre>
+<pre>{{ doc_error }}</pre>
 <hr>
-{{ doc_erroneous_content_html }}
-<script>{{ note_js }}</script>
+</div>
+{{ doc_erroneous_content_html | safe }}
+<script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
 '''
@@ -1736,14 +1756,14 @@ exporter = '''
 <meta charset="utf-8">
 <title>{{ fm_title }}</title>
 <style>
-{{ exporter_doc_css }}
-{{ exporter_highlighting_css }}
+{{ exporter_doc_css | safe }}
+{{ exporter_highlighting_css | safe }}
 </style>
 </head>
 <body>
   <pre class="doc-header">{{ doc_fm_text }}</pre>
   <hr>
-  <div class="doc-body">{{ doc_body_html }}</div>
+  <div class="doc-body">{{ doc_body_html | safe }}</div>
 </body>
 </html>
 ```
@@ -1757,8 +1777,8 @@ now embedded into the HTML output with:
 
 ```html
 <style>
-{{ exporter_doc_css }}
-{{ exporter_highlighting_css }}
+{{ exporter_doc_css | safe }}
+{{ exporter_highlighting_css | safe }}
 </style>
 ```
 
@@ -2103,7 +2123,9 @@ A filter is always used together with a variable. Here are some examples:
   the result is the empty string. Otherwise, the YAML rendition is appended with
   a newline character.
 
-* '`{{ fm_all | to_html}}`' renders the collection (map) '`fm_*`'  into HTML.
+* '`{{ fm_all | to_html | safe }}`' renders the collection (map) '`fm_*`' 
+  into HTML. The '`to_html`' must be followed by a '`safe`' filter to pass
+  through the HTML formatting of objects and arrays.
 
 * '`{{ note_body_text | get_lang }}`' determines the natural language of
   the variable '`{{ note_body_text }}` and returns the result as ISO 639-1

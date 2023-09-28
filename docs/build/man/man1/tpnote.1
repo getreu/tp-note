@@ -2056,6 +2056,10 @@ After the markup rendition process, Tp-Note\[cq]s built-in viewer
 generates its final HTML rendition through the customizable HTML
 templates `\f[V]tmpl_html.viewer\f[R]' and
 `\f[V]tmpl_html.viewer_error\f[R]'.
+Unlike content templates and filename templates, all HTML templates
+escape HTML critical characters by default.
+To disable escaping for a specific variable, add the `\f[V]safe\f[R]'
+filter in last position.
 The following code example taken from `\f[V]tmpl_html.viewer\f[R]'
 illustrates the available variables:
 .IP
@@ -2073,8 +2077,8 @@ viewer = \[aq]\[aq]\[aq]<!DOCTYPE html>
   <body>
   <pre class=\[dq]doc-header\[dq]>{{ doc_fm_text }}</pre>
   <hr>
-  <div class=\[dq]doc-body\[dq]>{{ doc_body_html }}</div>
-  <script>{{ viewer_doc_js }}</script>
+  <div class=\[dq]doc-body\[dq]>{{ doc_body_html | safe }}</div>
+  <script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
 \[aq]\[aq]\[aq]
@@ -2101,11 +2105,11 @@ server.
 Not to be confounded with the dictionary variable
 `\f[V]{{ fm_all }}\f[R]'.
 .IP \[bu] 2
-`\f[V]{{ doc_body_html }}\f[R]' is the note\[cq]s body as HTML
+`\f[V]{{ doc_body_html | safe }}\f[R]' is the note\[cq]s body as HTML
 rendition.
 .IP \[bu] 2
-`\f[V]{{ viewer_doc_js }}\f[R]' is the JavaScript browser code for live
-updates.
+`\f[V]{{ viewer_doc_js | safe }}\f[R]' is the JavaScript browser code
+for live updates.
 .IP \[bu] 2
 `\f[V]{{ extension_default }}\f[R]' (c.f.
 section \f[I]Template variables\f[R]).
@@ -2116,7 +2120,7 @@ section \f[I]Template variables\f[R]).
 `\f[V]{{ lang }}\f[R]' (c.f.
 section \f[I]Template variables\f[R]).
 .IP \[bu] 2
-`\f[V]{{ my_val | to_html }}\f[R]' is the HTML rendition of the
+`\f[V]{{ my_val | to_html | safe }}\f[R]' is the HTML rendition of the
 `\f[V]my_val\f[R]' variable (c.f.
 section \f[I]Template filter\f[R]).
 .PP
@@ -2125,11 +2129,26 @@ also be rendered as a table:
 .IP
 .nf
 \f[C]
-  <table>
-    <tr><th>title:</th><th>{{ fm_title }}</th> </tr>
-    <tr><th>subtitle:</th><th>{{ fm_subtitle | default(value=\[aq]\[aq]) }}</th></tr>
-  {% for k, v in fm_all| remove(var=\[aq]fm_title\[aq])| remove(var=\[aq]fm_subtitle\[aq]) %}
-    <tr><th>{{ k }}:</th><th>{{ v | to_html }}</th></tr>
+  <table class=\[dq]fm\[dq]>
+    <tr>
+    <th class=\[dq]fmkey\[dq]>title:</th>
+    <th class=\[dq]fmval\[dq]><b>
+        {{ fm_title| default(value=\[aq]\[aq]) | to_html | safe }}</b>
+    </th>
+  </tr>
+    <tr>
+    <th class=\[dq]fmkey\[dq]>subtitle:</th>
+    <th class=\[dq]fmval\[dq]>
+        {{ fm_subtitle | default(value=\[aq]\[aq]) | to_html | safe }}
+    </th>
+  </tr>
+  {% for k, v in fm_all| remove(key=\[aq]fm_title\[aq])|
+                         remove(key=\[aq]fm_subtitle\[aq])|
+  %}
+    <tr>
+    <th class=\[dq]fmkeygrey\[dq]>{{ k }}:</th>
+    <th class=\[dq]fmvalgrey\[dq]>{{ v | to_html | safe }}</th>
+  </tr>
   {% endfor %}
   </table>
 \f[R]
@@ -2146,20 +2165,22 @@ text source with clickable hyperlinks:
 .nf
 \f[C]
 [viewer_error]
-error = \[aq]\[aq]\[aq]<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang=\[rs]\[dq]en\[rs]\[dq]>
 <head>
-<meta charset=\[rs]\[dq]utf-8\[rs]\[dq]>
+<meta charset=\[rs]\[dq]UTF-8\[rs]\[dq]>
 <title>Syntax error</title>
 </head>
 <body>
 <h3>Syntax error</h3>
 <p> in note file: <pre>{{ path }}</pre><p>
+<div class=\[rs]\[dq]note-error\[rs]\[dq]>
 <hr>
-<pre class=\[dq]doc-error\[dq]>{{ doc_error }}</pre>
+<pre>{{ doc_error }}</pre>
 <hr>
-{{ doc_erroneous_content_html }}
-<script>{{ note_js }}</script>
+</div>
+{{ doc_erroneous_content_html | safe }}
+<script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
 \[aq]\[aq]\[aq]
@@ -2183,14 +2204,14 @@ exporter = \[aq]\[aq]\[aq]
 <meta charset=\[dq]utf-8\[dq]>
 <title>{{ fm_title }}</title>
 <style>
-{{ exporter_doc_css }}
-{{ exporter_highlighting_css }}
+{{ exporter_doc_css | safe }}
+{{ exporter_highlighting_css | safe }}
 </style>
 </head>
 <body>
   <pre class=\[dq]doc-header\[dq]>{{ doc_fm_text }}</pre>
   <hr>
-  <div class=\[dq]doc-body\[dq]>{{ doc_body_html }}</div>
+  <div class=\[dq]doc-body\[dq]>{{ doc_body_html | safe }}</div>
 </body>
 </html>
 \f[R]
@@ -2208,8 +2229,8 @@ HTML output with:
 .nf
 \f[C]
 <style>
-{{ exporter_doc_css }}
-{{ exporter_highlighting_css }}
+{{ exporter_doc_css | safe }}
+{{ exporter_highlighting_css | safe }}
 </style>
 \f[R]
 .fi
@@ -2633,8 +2654,10 @@ collection (map) `\f[V]fm_all\f[R]' into YAML.
 If the collection is empty, the result is the empty string.
 Otherwise, the YAML rendition is appended with a newline character.
 .IP \[bu] 2
-`\f[V]{{ fm_all | to_html}}\f[R]' renders the collection (map)
+`\f[V]{{ fm_all | to_html | safe }}\f[R]' renders the collection (map)
 `\f[V]fm_*\f[R]' into HTML.
+The `\f[V]to_html\f[R]' must be followed by a `\f[V]safe\f[R]' filter to
+pass through the HTML formatting of objects and arrays.
 .IP \[bu] 2
 `\f[V]{{ note_body_text | get_lang }}\f[R]' determines the natural
 language of the variable `\f[V]{{ note_body_text }}\f[R] and returns the
