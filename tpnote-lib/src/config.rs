@@ -14,6 +14,8 @@
 //! once at the start of Tp-Note. All modification terminates before accessing
 //! the high-level API in the `workflow` module of this crate.
 use crate::error::LibCfgError;
+#[cfg(feature = "renderer")]
+use crate::highlight::get_viewer_highlighting_css;
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
@@ -405,6 +407,32 @@ impl Default for LibCfg {
             "Error in default configuration in source file:\n\
                  `tpnote-lib/src/config_default.toml`",
         )
+    }
+}
+
+lazy_static! {
+/// Global variable containing the filename and template related configuration
+/// data.
+    pub static ref LIB_CFG_CACHE: RwLock<LibCfgCache> = RwLock::new(LibCfgCache::new());
+}
+
+/// Configuration data, deserialized and preprocessed.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LibCfgCache {
+    /// The result of an expensive calculation:
+    /// `crate::highlight::get_viewer_highlighting_css()` with
+    /// `lib_cfg.tmpl_html.viewer_highlighting_theme` as input.
+    pub viewer_highlighting_css: String,
+}
+
+impl LibCfgCache {
+    fn new() -> Self {
+        Self {
+            #[cfg(feature = "renderer")]
+            viewer_highlighting_css: get_viewer_highlighting_css(),
+            #[cfg(not(feature = "renderer"))]
+            viewer_highlighting_css: String::new(),
+        }
     }
 }
 

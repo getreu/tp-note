@@ -1,19 +1,12 @@
 //! Syntax highlighting for (inline) source code blocks in Markdown input.
 
 use crate::config::LIB_CFG;
-use lazy_static::lazy_static;
-use parking_lot::RwLock;
 use pulldown_cmark::{CodeBlockKind, Event, Tag};
 use syntect::highlighting::ThemeSet;
 use syntect::html::css_for_theme_with_class_style;
 use syntect::html::{ClassStyle, ClassedHTMLGenerator};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
-
-lazy_static! {
-/// Viewer syntax highlighting CSS configuration cache.
-    pub static ref VIEWER_HIGHLIGHTING_CSS: RwLock<String> = RwLock::new(get_viewer_highlighting_css());
-}
 
 /// Get the viewer syntax highlighting CSS configuration.
 pub(crate) fn get_viewer_highlighting_css() -> String {
