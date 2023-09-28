@@ -23,8 +23,8 @@ html-escape = "0.2.13"
 lazy_static.workspace = true
 lingua = { version = "1.5.0", optional = true }
 log.workspace = true
-parse-hyperlinks = "0.23.4"
-parse-hyperlinks-extras = "0.23.4"
+parse-hyperlinks = "0.24.1"
+parse-hyperlinks-extras = "0.24.1"
 # parse-hyperlinks = { path = "../parse-hyperlinks/parse-hyperlinks" }
 percent-encoding = "2.3.0"
 pulldown-cmark = { version = "0.9.3", default-features = false, features = ["simd"], optional = true }
