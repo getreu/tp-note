@@ -7,10 +7,10 @@ edition.workspace = true
 homepage.workspace = true
 license.workspace = true
 name = "tpnote-lib"
-readme.workspace = true
+readme = "README.md"
 repository.workspace = true
 rust-version.workspace = true
-version = "0.23.1"
+version = "0.24.0"
 
 [features]
 default = ["renderer", "viewer", "lang-detection"]
