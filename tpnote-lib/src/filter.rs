@@ -6,6 +6,7 @@ use crate::filename::NotePathBuf;
 #[cfg(feature = "lang-detection")]
 use crate::settings::FilterGetLang;
 use crate::settings::SETTINGS;
+use html_escape::encode_safe;
 use lazy_static::lazy_static;
 #[cfg(feature = "lang-detection")]
 use lingua::{LanguageDetector, LanguageDetectorBuilder};
@@ -135,6 +136,10 @@ fn to_yaml_filter<S: BuildHasher>(
 /// * `Value::String`: no tag,
 /// * Other non-string basic types: `<code class="fm">`.
 /// The input can be of any type, the output type is `Value::String()`.
+/// Note: HTML templates escape HTML critical characters by default.
+/// To use the `to_hmtl` filter in HTML templates, add a `safe` filter in last
+/// postion. This is no risk, as the `to_html` filter always escapes string
+/// values automatically, regardles of the template type.
 fn to_html_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -151,7 +156,7 @@ fn to_html_filter<S: BuildHasher>(
                 output.push_str("</ul>");
             }
 
-            Value::String(s) => output.push_str(&s),
+            Value::String(s) => output.push_str(&encode_safe(&s)),
 
             Value::Object(map) => {
                 output.push_str("<blockquote class=\"fm\">");
@@ -862,7 +867,7 @@ mod tests {
                 <div class=\"fm\">sub2: bar</div></blockquote></div>\
                 <div class=\"fm\">weiter: <code class=\"fm\">3454</code></div>\
                 </blockquote></div>\
-            <div class=\"fm\">other: my \"new\" text</div>\
+            <div class=\"fm\">other: my &quot;new&quot; text</div>\
             <div class=\"fm\">subtitle: Note</div>\
             <div class=\"fm\">title: tmp: test</div>\
             </blockquote>"

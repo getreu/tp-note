@@ -147,6 +147,8 @@ use crate::error::NoteError;
 use crate::filter::TERA;
 use crate::note::Note;
 #[cfg(feature = "viewer")]
+use crate::note::ONE_OFF_TEMPLATE_NAME;
+#[cfg(feature = "viewer")]
 use crate::note_error_tera_template;
 use crate::settings::force_lang_setting;
 use crate::settings::update_settings;
@@ -597,6 +599,8 @@ pub fn render_erroneous_content_html<T: Content>(
 
     // Apply template.
     let mut tera = Tera::default();
+    // Switch `autoescape_on()` only for HTML templates.
+    tera.autoescape_on(vec![ONE_OFF_TEMPLATE_NAME]);
     tera.extend(&TERA)?;
     let html = tera
         .render_str(tmpl_html, &context)

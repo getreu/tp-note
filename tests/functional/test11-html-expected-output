@@ -373,8 +373,8 @@ font-weight: bold;
 
 <!-- Customize the exporter CSS here -->
 </style>
-  </head>
-  <body>
+</head>
+<body>
   <table class="fm">
     <tr>
     <th class="fmkey">title:</th>

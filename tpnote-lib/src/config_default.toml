@@ -400,11 +400,9 @@ sync_filename = """
 
 [tmpl_html]
 
-# HTML template to render regular viewer pages.
-# We could set
-# `#[cfg(feature = "viewer")]`,
-# but we prefer the same config file structure independent
-# of the enabled features.
+# HTML template to render regular viewer pages. Note: HTML templates
+# escpape HTML critical symbols by default. To disable this feature for 
+# a specific variable, add a `safe` filter in last position.
 viewer = '''
 <!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
@@ -421,23 +419,23 @@ viewer = '''
   <table class="fm">
     <tr>
     <th class="fmkey">title:</th>
-    <th class="fmval"><b>{{ fm_title| default(value='') | to_html }}</b></th>
+    <th class="fmval"><b>{{ fm_title | default(value='') | to_html | safe }}</b></th>
   </tr>
     <tr>
     <th class="fmkey">subtitle:</th>
-    <th class="fmval">{{ fm_subtitle | default(value='') | to_html }}</th>
+    <th class="fmval">{{ fm_subtitle | default(value='') | to_html | safe }}</th>
   </tr>
     <tr>
     <th class="fmkeygrey">author:</th>
-    <th class="fmvalgrey">{{ fm_author | default(value='') |to_html }}</th>
+    <th class="fmvalgrey">{{ fm_author | default(value='') |to_html | safe }}</th>
   </tr>
     <tr>
     <th class="fmkeygrey">date:</th>
-    <th class="fmvalgrey">{{ fm_date | default(value='')| to_html }}</th>
+    <th class="fmvalgrey">{{ fm_date | default(value='')| to_html | safe }}</th>
   </tr>
     <tr>
     <th class="fmkeygrey">lang:</th>
-    <th class="fmvalgrey">{{ fm_lang | default(value='') |to_html }}</th>
+    <th class="fmvalgrey">{{ fm_lang | default(value='') |to_html | safe }}</th>
   </tr>
   {% if fm_all | length > 5 %}
     <tr><th colspan=2;\"/>&nbsp<th/</tr>
@@ -450,12 +448,12 @@ viewer = '''
   %}
     <tr>
     <th class="fmkeygrey">{{ k }}:</th>
-    <th class="fmvalgrey">{{ v|to_html }}</th>
+    <th class="fmvalgrey">{{ v | to_html | safe }}</th>
   </tr>
   {% endfor %}
   </table>
-  <div class="doc-body">{{ doc_body_html }}</div>
-  <script>{{ viewer_doc_js }}</script>
+  <div class="doc-body">{{ doc_body_html | safe }}</div>
+  <script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
 '''
@@ -486,8 +484,8 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 <pre>{{ doc_error }}</pre>
 <hr>
 </div>
-{{ doc_erroneous_content_html }}
-<script>{{ viewer_doc_js }}</script>
+{{ doc_erroneous_content_html | safe }}
+<script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
 """
@@ -564,8 +562,8 @@ exporter = '''
 <meta charset="utf-8">
 <title>{{ fm_title }}</title>
 <style>
-{{ exporter_doc_css }}
-{{ exporter_highlighting_css }}
+{{ exporter_doc_css | safe }}
+{{ exporter_highlighting_css | safe }}
 <!-- Customize the exporter CSS here -->
 </style>
 </head>
@@ -573,23 +571,23 @@ exporter = '''
   <table class="fm">
     <tr>
     <th class="fmkey">title:</th>
-    <th class="fmval"><b>{{ fm_title| default(value='') | to_html }}</b></th>
+    <th class="fmval"><b>{{ fm_title| default(value='') | to_html | safe }}</b></th>
   </tr>
     <tr>
     <th class="fmkey">subtitle:</th>
-    <th class="fmval">{{ fm_subtitle | default(value='') | to_html }}</th>
+    <th class="fmval">{{ fm_subtitle | default(value='') | to_html | safe }}</th>
   </tr>
     <tr>
     <th class="fmkeygrey">author:</th>
-    <th class="fmvalgrey">{{ fm_author | default(value='') |to_html }}</th>
+    <th class="fmvalgrey">{{ fm_author | default(value='') |to_html | safe }}</th>
   </tr>
     <tr>
     <th class="fmkeygrey">date:</th>
-    <th class="fmvalgrey">{{ fm_date | default(value='')| to_html }}</th>
+    <th class="fmvalgrey">{{ fm_date | default(value='')| to_html | safe }}</th>
   </tr>
     <tr>
     <th class="fmkeygrey">lang:</th>
-    <th class="fmvalgrey">{{ fm_lang | default(value='') |to_html }}</th>
+    <th class="fmvalgrey">{{ fm_lang | default(value='') |to_html | safe }}</th>
   </tr>
   {% if fm_all | length > 5 %}
     <tr><th colspan=2;\"/>&nbsp<th/</tr>
@@ -602,11 +600,11 @@ exporter = '''
   %}
     <tr>
     <th class="fmkeygrey">{{ k }}:</th>
-    <th class="fmvalgrey">{{ v|to_html }}</th>
+    <th class="fmvalgrey">{{ v | to_html | safe }}</th>
   </tr>
   {% endfor %}
   </table>
-  <div class="doc-body">{{ doc_body_html }}</div>
+  <div class="doc-body">{{ doc_body_html | safe }}</div>
 </body>
 </html>
 '''

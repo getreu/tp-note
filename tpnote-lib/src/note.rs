@@ -54,6 +54,10 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use tera::Tera;
 
+/// This constant is used by Tera as template name for `tera::render_str()`.
+/// Unfortunately it is private there, this is why we must redifine it here.
+pub(crate) const ONE_OFF_TEMPLATE_NAME: &str = "__tera_one_off";
+
 #[derive(Debug, PartialEq)]
 /// Represents a note.
 /// 1. The `ContentString`'s header is deserialized into `FrontMatter`.
@@ -537,6 +541,8 @@ impl<T: Content> Note<T> {
 
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
+        // Switch `autoescape_on()` only for HTML templates.
+        tera.autoescape_on(vec![ONE_OFF_TEMPLATE_NAME]);
         let html = tera.render_str(tmpl, &html_context).map_err(|e| {
             note_error_tera_template!(e, "[html_tmpl] viewer/exporter_tmpl ".to_string())
         })?;
