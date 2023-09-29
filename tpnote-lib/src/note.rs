@@ -27,21 +27,12 @@ use crate::filter::TERA;
 use crate::front_matter::FrontMatter;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_exporter_highlighting_css;
-#[cfg(feature = "renderer")]
-use crate::highlight::SyntaxPreprocessor;
 use crate::html::rewrite_links;
 use crate::html::HTML_EXT;
 use crate::markup_language::MarkupLanguage;
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
 use parking_lot::RwLock;
-use parse_hyperlinks::renderer::text_links2html;
-#[cfg(feature = "renderer")]
-use pulldown_cmark::{html, Options, Parser};
-#[cfg(feature = "renderer")]
-use rst_parser::parse;
-#[cfg(feature = "renderer")]
-use rst_renderer::render_html;
 use std::collections::HashSet;
 use std::default::Default;
 use std::fs::File;
@@ -495,15 +486,9 @@ impl<T: Content> Note<T> {
         };
 
         // Render the markup language.
-        let html_output = match MarkupLanguage::from(fm_file_ext).or(MarkupLanguage::from(file_ext))
-        {
-            #[cfg(feature = "renderer")]
-            MarkupLanguage::Markdown => Self::render_md_content(input),
-            #[cfg(feature = "renderer")]
-            MarkupLanguage::RestructuredText => Self::render_rst_content(input)?,
-            MarkupLanguage::Html => input.to_string(),
-            _ => Self::render_txt_content(input),
-        };
+        let html_output = MarkupLanguage::from(fm_file_ext)
+            .or(MarkupLanguage::from(file_ext))
+            .render(input);
 
         let mut html_context = self.context.clone();
 
@@ -548,48 +533,6 @@ impl<T: Content> Note<T> {
         })?;
 
         Ok(html)
-    }
-
-    #[inline]
-    #[cfg(feature = "renderer")]
-    /// Markdown renderer.
-    fn render_md_content(markdown_input: &str) -> String {
-        // Set up options and parser. Besides the CommonMark standard
-        // we enable some useful extras.
-
-        let options = Options::all();
-        let parser = Parser::new_ext(markdown_input, options);
-        let parser = SyntaxPreprocessor::new(parser);
-
-        // Write to String buffer.
-        let mut html_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
-        html::push_html(&mut html_output, parser);
-        html_output
-    }
-
-    #[inline]
-    #[cfg(feature = "renderer")]
-    /// RestructuredText renderer.
-    fn render_rst_content(rest_input: &str) -> Result<String, NoteError> {
-        // Note, that the current rst renderer requires files to end with a new line.
-        // <https://github.com/flying-sheep/rust-rst/issues/30>
-        let mut rest_input = rest_input.trim_start();
-        // The rst parser accepts only exactly one newline at the end.
-        while rest_input.ends_with("\n\n") {
-            rest_input = &rest_input[..rest_input.len() - 1];
-        }
-        let document = parse(rest_input.trim_start())
-            .map_err(|e| NoteError::RstParse { msg: e.to_string() })?;
-        // Write to String buffer.
-        let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
-        let _ = render_html(&document, &mut html_output, false);
-        Ok(str::from_utf8(&html_output)?.to_string())
-    }
-
-    #[inline]
-    /// Renderer for markup languages other than the above.
-    fn render_txt_content(other_input: &str) -> String {
-        text_links2html(other_input)
     }
 }
 
