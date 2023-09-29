@@ -3,6 +3,7 @@ use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
+use crate::markup_language::MarkupLanguage;
 #[cfg(feature = "lang-detection")]
 use crate::settings::FilterGetLang;
 use crate::settings::SETTINGS;
@@ -34,6 +35,7 @@ lazy_static! {
         let mut tera = Tera::default();
         tera.register_filter("to_yaml", to_yaml_filter);
         tera.register_filter("to_html", to_html_filter);
+        tera.register_filter("markup_to_html", markup_to_html_filter);
         tera.register_filter("sanit", sanit_filter);
         tera.register_filter("link_text", link_text_filter);
         tera.register_filter("link_dest", link_dest_filter);
@@ -182,6 +184,29 @@ fn to_html_filter<S: BuildHasher>(
     tag_to_html(value.to_owned(), &mut html);
 
     Ok(Value::String(html))
+}
+
+/// Takes the markup formatted input and renders it to HTML.
+/// The parameter file `extension` indicates in what Markup
+/// language the input is written.
+/// The input types must be `Value::String` and the output type is
+/// `Value::String()`
+fn markup_to_html_filter<S: BuildHasher>(
+    value: &Value,
+    args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let input = try_get_value!("markup_to_html", "value", String, value);
+
+    let ext = if let Some(ext) = args.get("extension") {
+        try_get_value!("markup_to_html", "extension", String, ext)
+    } else {
+        "".to_string()
+    };
+
+    // Render the markup language.
+    let html_output = MarkupLanguage::from(ext.as_str()).render(&input);
+
+    Ok(Value::String(html_output))
 }
 
 /// Adds a new filter to Tera templates:
@@ -486,12 +511,12 @@ fn append_filter<S: BuildHasher>(
 
     let mut res = input.clone();
     if let Some(with) = args.get("with") {
-        let with = try_get_value!("append", "value", String, with);
+        let with = try_get_value!("append", "with", String, with);
         res.push_str(&with);
     };
 
     if let Some(newline) = args.get("newline") {
-        let newline = try_get_value!("newline", "value", bool, newline);
+        let newline = try_get_value!("newline", "newline", bool, newline);
         if newline {
             #[cfg(not(target_family = "windows"))]
             res.push('\n');
