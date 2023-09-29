@@ -1,10 +1,10 @@
 ---
-title:      TP-NOTE(1) Version 1.22.2 | Tp-Note documentation
+title:      TP-NOTE(1) Version 1.22.3 | Tp-Note documentation
 subtitle:   manpage
 author:     Jens Getreu
-version:    1.22.2
+version:    1.22.3
 filename_sync: false
-date:       2023-09-28
+date:       2023-09-29
 lang:       en-GB
 ---
 
@@ -1635,7 +1635,9 @@ illustrates the available variables:
 
 ```toml
 [tmpl_html]
-viewer = '''<!DOCTYPE html>
+viewer = '''
+{%- set ext = fm_file_ext | default(value=extension_default ) -%}
+<!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
 <meta charset="utf-8">
@@ -1646,7 +1648,9 @@ viewer = '''<!DOCTYPE html>
   <body>
   <pre class="doc-header">{{ doc_fm_text }}</pre>
   <hr>
-  <div class="doc-body">{{ doc_body_html | safe }}</div>
+  <div class="doc-body">
+    {{ doc_body_text | markup_to_html(extension=ext) | safe }}
+  </div>
   <script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
@@ -1659,21 +1663,26 @@ Specifically:
   template variables and filters are available. See section _Template
   variables_ above.
 
-* '`{{ viewer_doc_css_path }}`' is the CSS stylesheet path required to
-  format a Tp-Note HTML rendition. This path is hard-wired and is
+* '`{{ viewer_doc_css_path }}`' is the CSS stylesheet path required to format
+  a HTML rendition of a Tp-Note document. This path is hard-wired and it is
   understood by Tp-Note's internal web server.
 
 * '`{{ viewer_highlighting_css_path }}`' is the CSS stylesheet path required to
-  highlight embedded source code. This path is hard-wired and is
-  understood by Tp-Note's internal web server.
+  highlight embedded source code. This path is hard-wired and it is understood
+  by Tp-Note's internal web server.
 
 * '`{{ doc_fm_text }}`' is the raw UTF-8 copy of the header. Not to be
   confounded with the dictionary variable '`{{ fm_all }}`'.
 
-* '`{{ doc_body_html | safe }}`' is the note's body as HTML rendition.
+* '`{{ doc_body_text | markup_to_html(extension=ext) | safe }}`' is the note's
+  body as HTML rendition. The parameter '`extension`' designates the 
+  markup language as specified in the '`filename.extensions-*`' variables .
 
-* '`{{ viewer_doc_js | safe }}`' is the JavaScript browser code for
-  live updates.
+* '`{{ doc_text | markup_to_html | safe }}`' is the note's raw text as HTML
+  rendition with clickable hyperlinks.
+
+* '`{{ viewer_doc_js | safe }}`' is the JavaScript browser code for live
+  updates.
 
 * '`{{ extension_default }}`' (c.f. section _Template variables_).
 
@@ -1715,8 +1724,9 @@ as a table:
 The error page template '`tmpl_html.viewer_error`' (see below)
 does not provide '`fm_*`' variables, because of possible header syntax
 errors. Instead, the variable '`{{ doc_error }}`' contains the error
-message as raw UTF-8 and the variable '`{{ doc_erroneous_content_html }}`'
-the HTML rendition of the text source with clickable hyperlinks:
+message as raw UTF-8 and the variable 
+'`{{ doc_text | markup_to_html | safe }}`' the HTML rendition of the text source
+with clickable hyperlinks:
 
 ```toml
 [viewer_error]
@@ -1734,7 +1744,7 @@ the HTML rendition of the text source with clickable hyperlinks:
 <pre>{{ doc_error }}</pre>
 <hr>
 </div>
-{{ doc_erroneous_content_html | safe }}
+{{ doc_text | markup_to_html | safe }}y
 <script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
@@ -1749,6 +1759,7 @@ The role of the '`tmpl_html.viewer`' template - discussed above - is
 taken over by the '`tmpl_html.exporter`' template: 
 
 ```toml
+{%- set ext = fm_file_ext | default(value=extension_default ) -%}
 exporter = '''
 <!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
@@ -1763,7 +1774,9 @@ exporter = '''
 <body>
   <pre class="doc-header">{{ doc_fm_text }}</pre>
   <hr>
-  <div class="doc-body">{{ doc_body_html | safe }}</div>
+  <div class="doc-body">
+    {{ doc_body_text| markup_to_html(extension=ext) | safe }}
+  </div>
 </body>
 </html>
 ```

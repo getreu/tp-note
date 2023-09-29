@@ -14,7 +14,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "TP-NOTE" "1" "2023-09-28" "Version 1.22.2" "Tp-Note documentation"
+.TH "TP-NOTE" "1" "2023-09-29" "Version 1.22.3" "Tp-Note documentation"
 .hy
 .SH NAME
 .PP
@@ -2066,7 +2066,9 @@ illustrates the available variables:
 .nf
 \f[C]
 [tmpl_html]
-viewer = \[aq]\[aq]\[aq]<!DOCTYPE html>
+viewer = \[aq]\[aq]\[aq]
+{%- set ext = fm_file_ext | default(value=extension_default ) -%}
+<!DOCTYPE html>
 <html lang=\[dq]{{ fm_lang | default(value=\[aq]en\[aq]) }}\[dq]>
 <head>
 <meta charset=\[dq]utf-8\[dq]>
@@ -2077,7 +2079,9 @@ viewer = \[aq]\[aq]\[aq]<!DOCTYPE html>
   <body>
   <pre class=\[dq]doc-header\[dq]>{{ doc_fm_text }}</pre>
   <hr>
-  <div class=\[dq]doc-body\[dq]>{{ doc_body_html | safe }}</div>
+  <div class=\[dq]doc-body\[dq]>
+    {{ doc_body_text | markup_to_html(extension=ext) | safe }}
+  </div>
   <script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
@@ -2092,21 +2096,26 @@ All content template variables and filters are available.
 See section \f[I]Template variables\f[R] above.
 .IP \[bu] 2
 `\f[V]{{ viewer_doc_css_path }}\f[R]' is the CSS stylesheet path
-required to format a Tp-Note HTML rendition.
-This path is hard-wired and is understood by Tp-Note\[cq]s internal web
-server.
+required to format a HTML rendition of a Tp-Note document.
+This path is hard-wired and it is understood by Tp-Note\[cq]s internal
+web server.
 .IP \[bu] 2
 `\f[V]{{ viewer_highlighting_css_path }}\f[R]' is the CSS stylesheet
 path required to highlight embedded source code.
-This path is hard-wired and is understood by Tp-Note\[cq]s internal web
-server.
+This path is hard-wired and it is understood by Tp-Note\[cq]s internal
+web server.
 .IP \[bu] 2
 `\f[V]{{ doc_fm_text }}\f[R]' is the raw UTF-8 copy of the header.
 Not to be confounded with the dictionary variable
 `\f[V]{{ fm_all }}\f[R]'.
 .IP \[bu] 2
-`\f[V]{{ doc_body_html | safe }}\f[R]' is the note\[cq]s body as HTML
-rendition.
+`\f[V]{{ doc_body_text | markup_to_html(extension=ext) | safe }}\f[R]'
+is the note\[cq]s body as HTML rendition.
+The parameter `\f[V]extension\f[R]' designates the markup language as
+specified in the `\f[V]filename.extensions-*\f[R]' variables .
+.IP \[bu] 2
+`\f[V]{{ doc_text | markup_to_html | safe }}\f[R]' is the note\[cq]s raw
+text as HTML rendition with clickable hyperlinks.
 .IP \[bu] 2
 `\f[V]{{ viewer_doc_js | safe }}\f[R]' is the JavaScript browser code
 for live updates.
@@ -2159,8 +2168,8 @@ does not provide `\f[V]fm_*\f[R]' variables, because of possible header
 syntax errors.
 Instead, the variable `\f[V]{{ doc_error }}\f[R]' contains the error
 message as raw UTF-8 and the variable
-`\f[V]{{ doc_erroneous_content_html }}\f[R]' the HTML rendition of the
-text source with clickable hyperlinks:
+`\f[V]{{ doc_text | markup_to_html | safe }}\f[R]' the HTML rendition of
+the text source with clickable hyperlinks:
 .IP
 .nf
 \f[C]
@@ -2179,7 +2188,7 @@ text source with clickable hyperlinks:
 <pre>{{ doc_error }}</pre>
 <hr>
 </div>
-{{ doc_erroneous_content_html | safe }}
+{{ doc_text | markup_to_html | safe }}y
 <script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
@@ -2197,6 +2206,7 @@ by the `\f[V]tmpl_html.exporter\f[R]' template:
 .IP
 .nf
 \f[C]
+{%- set ext = fm_file_ext | default(value=extension_default ) -%}
 exporter = \[aq]\[aq]\[aq]
 <!DOCTYPE html>
 <html lang=\[dq]{{ fm_lang | default(value=\[aq]en\[aq]) }}\[dq]>
@@ -2211,7 +2221,9 @@ exporter = \[aq]\[aq]\[aq]
 <body>
   <pre class=\[dq]doc-header\[dq]>{{ doc_fm_text }}</pre>
   <hr>
-  <div class=\[dq]doc-body\[dq]>{{ doc_body_html | safe }}</div>
+  <div class=\[dq]doc-body\[dq]>
+    {{ doc_body_text| markup_to_html(extension=ext) | safe }}
+  </div>
 </body>
 </html>
 \f[R]
