@@ -397,14 +397,6 @@ impl<T: Content> Note<T> {
             log::debug!("Rendering HTML into: {:?}", html_path);
         };
 
-        // The file extension identifies the markup language.
-        let note_path_ext = current_path
-            .extension()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default()
-            .to_string();
-
         // Check where to dump output.
         if html_path
             .as_os_str()
@@ -417,7 +409,7 @@ impl<T: Content> Note<T> {
 
             // Write HTML rendition.
             handle.write_all(
-                self.render_content_to_html(&note_path_ext, html_template)
+                self.render_content_to_html(html_template)
                     .map(|html| {
                         rewrite_links(
                             html,
@@ -438,7 +430,7 @@ impl<T: Content> Note<T> {
                 .open(&html_path)?;
             // Write HTML rendition.
             handle.write_all(
-                self.render_content_to_html(&note_path_ext, html_template)
+                self.render_content_to_html(html_template)
                     .map(|html| {
                         rewrite_links(
                             html,
@@ -465,9 +457,6 @@ impl<T: Content> Note<T> {
     /// `TMPL_HTML_VAR_NOTE_JS` in `self.context` to be set.
     pub fn render_content_to_html(
         &self,
-        // We need the file extension to determine the
-        // markup language.
-        file_ext: &str,
         // HTML template for this rendition.
         tmpl: &str,
     ) -> Result<String, NoteError> {
@@ -677,7 +666,7 @@ Body text
         let n = Note::from_raw_text(context, content, TemplateKind::None).unwrap();
         // Check the HTML rendition.
         let html = n
-            .render_content_to_html("md", &LIB_CFG.read_recursive().tmpl_html.viewer)
+            .render_content_to_html(&LIB_CFG.read_recursive().tmpl_html.viewer)
             .unwrap();
         assert!(html.starts_with("<!DOCTYPE html>\n<html"))
     }

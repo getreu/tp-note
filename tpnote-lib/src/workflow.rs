@@ -518,17 +518,9 @@ fn render_html<T: Content>(
     content: T,
     tmpl_html: &str,
 ) -> Result<String, NoteError> {
-    let file_path_ext = &context
-        .path
-        .extension()
-        .unwrap_or_default()
-        .to_str()
-        .unwrap_or_default()
-        .to_owned();
-
     let note = Note::from_raw_text(context, content, TemplateKind::None)?;
 
-    note.render_content_to_html(file_path_ext, tmpl_html)
+    note.render_content_to_html(tmpl_html)
 }
 
 /// When the header can not be deserialized, the file located in
