@@ -40,12 +40,13 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
     // Choose the right parameter list.
     let vv: Vec<Vec<String>>;
 
-    #[cfg(target_os = "linux")]
+    #[cfg(all(target_family = "unix", not(target_os = "macos")))]
     let app_args = &CFG.app_args.linux;
-    #[cfg(target_os = "windows")]
+    #[cfg(target_family = "windows")]
     let app_args = &CFG.app_args.windows;
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_family = "unix", target_os = "macos"))]
     let app_args = &CFG.app_args.macos;
+
     let browser_args = if let Ok(s) = env::var(ENV_VAR_TPNOTE_BROWSER) {
         if s.is_empty() {
             var_name = "app_args.browser".to_string();

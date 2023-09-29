@@ -28,11 +28,11 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
     let env_var = env::var(ENV_VAR_TPNOTE_EDITOR).ok();
     let vv: Vec<Vec<String>>;
 
-    #[cfg(target_os = "linux")]
+    #[cfg(all(target_family = "unix", not(target_os = "macos")))]
     let app_args = &CFG.app_args.linux;
-    #[cfg(target_os = "windows")]
+    #[cfg(target_family = "windows")]
     let app_args = &CFG.app_args.windows;
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_family = "unix", target_os = "macos"))]
     let app_args = &CFG.app_args.macos;
 
     let editor_args = match (&env_var, *RUNS_ON_CONSOLE) {
