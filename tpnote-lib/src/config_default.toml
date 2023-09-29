@@ -474,7 +474,7 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 <pre>{{ doc_error }}</pre>
 <hr>
 </div>
-{{ doc_erroneous_content_html | safe }}
+{{ doc_text | markup_to_html | safe }}
 <script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>

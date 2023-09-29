@@ -132,7 +132,7 @@
 use crate::config::LocalLinkKind;
 use crate::config::LIB_CFG;
 #[cfg(feature = "viewer")]
-use crate::config::TMPL_HTML_VAR_DOC_ERRONEOUS_CONTENT_HTML;
+use crate::config::TMPL_HTML_VAR_DOC_TEXT;
 use crate::config::TMPL_VAR_CLIPBOARD;
 use crate::config::TMPL_VAR_CLIPBOARD_HEADER;
 use crate::config::TMPL_VAR_FM_;
@@ -154,8 +154,6 @@ use crate::settings::force_lang_setting;
 use crate::settings::update_settings;
 use crate::settings::SETTINGS;
 use crate::template::TemplateKind;
-#[cfg(feature = "viewer")]
-use parse_hyperlinks::renderer::text_rawlinks2html;
 use std::path::Path;
 use std::path::PathBuf;
 #[cfg(feature = "viewer")]
@@ -587,13 +585,9 @@ pub fn render_erroneous_content_html<T: Content>(
     mut context: Context,
     note_erroneous_content: T,
 ) -> Result<String, NoteError> {
-    // Render to HTML.
-    let note_erroneous_content = text_rawlinks2html(note_erroneous_content.as_str());
     // Insert.
-    context.insert(
-        TMPL_HTML_VAR_DOC_ERRONEOUS_CONTENT_HTML,
-        &note_erroneous_content,
-    );
+
+    context.insert(TMPL_HTML_VAR_DOC_TEXT, &note_erroneous_content.as_str());
 
     let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer_error;
 

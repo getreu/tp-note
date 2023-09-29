@@ -206,7 +206,7 @@ pub const TMPL_HTML_VAR_DOC_ERROR: &str = "doc_error";
 /// HTML template variable used in the error page containing a verbatim
 /// HTML rendition with hyperlinks of the erroneous note file.
 #[allow(dead_code)]
-pub const TMPL_HTML_VAR_DOC_ERRONEOUS_CONTENT_HTML: &str = "doc_erroneous_content_html";
+pub const TMPL_HTML_VAR_DOC_TEXT: &str = "doc_text";
 
 lazy_static! {
 /// Global variable containing the filename and template related configuration
