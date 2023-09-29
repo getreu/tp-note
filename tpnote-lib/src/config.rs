@@ -104,18 +104,18 @@ pub const TMPL_VAR_USERNAME: &str = "username";
 pub const TMPL_VAR_LANG: &str = "lang";
 /// All the front matter fields serialized as text, exactly as they appear in
 /// the front matter.
-pub const TMPL_VAR_NOTE_FM_TEXT: &str = "note_fm_text";
+pub const TMPL_VAR_DOC_FM_TEXT: &str = "doc_fm_text";
 
 /// Contains the body of the file the command line option `<path>`
 /// points to. Only available in the `tmpl.from_text_file_content`,
 /// `tmpl.sync_filename` and HTML templates.
-pub const TMPL_VAR_NOTE_BODY_TEXT: &str = "note_body_text";
+pub const TMPL_VAR_DOC_BODY_TEXT: &str = "doc_body_text";
 
 /// Contains the date of the file the command line option `<path>` points to.
 /// The date is represented as an integer the way `std::time::SystemTime`
 /// resolves to on the platform. Only available in the
 /// `tmpl.from_text_file_content`, `tmpl.sync_filename` and HTML templates.
-pub const TMPL_VAR_NOTE_FILE_DATE: &str = "note_file_date";
+pub const TMPL_VAR_DOC_FILE_DATE: &str = "doc_file_date";
 
 /// Prefix prepended to front matter field names when a template variable
 /// is generated with the same name.

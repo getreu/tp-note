@@ -14,10 +14,10 @@ use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH;
 use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
 use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH;
 use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
+use crate::config::TMPL_VAR_DOC_BODY_TEXT;
+use crate::config::TMPL_VAR_DOC_FILE_DATE;
+use crate::config::TMPL_VAR_DOC_FM_TEXT;
 use crate::config::TMPL_VAR_FM_FILE_EXT;
-use crate::config::TMPL_VAR_NOTE_BODY_TEXT;
-use crate::config::TMPL_VAR_NOTE_FILE_DATE;
-use crate::config::TMPL_VAR_NOTE_FM_TEXT;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
@@ -105,17 +105,17 @@ impl<T: Content> Note<T> {
         // Register context variables:
         // Register the raw serialized header text.
         let header = &content.header();
-        (*context).insert(TMPL_VAR_NOTE_FM_TEXT, &header);
+        (*context).insert(TMPL_VAR_DOC_FM_TEXT, &header);
         //We also keep the body.
         let body = content.body();
-        (*context).insert(TMPL_VAR_NOTE_BODY_TEXT, &body);
+        (*context).insert(TMPL_VAR_DOC_BODY_TEXT, &body);
 
         // Get the file's creation date. Fail silently.
         if let Ok(file) = File::open(&context.path) {
             if let Ok(metadata) = file.metadata() {
                 if let Ok(time) = metadata.created() {
                     (*context).insert(
-                        TMPL_VAR_NOTE_FILE_DATE,
+                        TMPL_VAR_DOC_FILE_DATE,
                         &time
                             .duration_since(SystemTime::UNIX_EPOCH)
                             .unwrap_or_default()

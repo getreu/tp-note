@@ -170,7 +170,7 @@ filter_get_lang = [ "en", "fr", "de", ]
 # `&["fr", "fr-CA"]`. But, if the user's default language were
 # `en_GB.UTF-8`, then it is _not_ added because an entry `&["en", "en-US"]`
 # exists already.
-# Note,  that the empty input string results in the user's default language
+# Note, that the empty input string results in the user's default language
 # tag - here `fr-CA` - as well.
 filter_map_lang = [
     [ "de", "de-DE", ],
@@ -318,12 +318,12 @@ from_text_file_content = """
 {{ path | file_stem | split(pat='--') | first | cut | to_yaml(key='title') }}
 {{ path | file_stem | split(pat='--') | nth(n=1) | cut | to_yaml(key='subtitle') }}
 {{ username | capitalize | to_yaml(key='author') }}
-{{ note_file_date | default(value='') | date(format='%Y-%m-%d') | to_yaml(key='date') }}
+{{ doc_file_date | default(value='') | date(format='%Y-%m-%d') | to_yaml(key='date') }}
 {{ path | file_name | to_yaml(key='orig_name') }}
-{{ note_body_text | get_lang | map_lang(default=lang) | to_yaml(key='lang') }}
+{{ doc_body_text | get_lang | map_lang(default=lang) | to_yaml(key='lang') }}
 ---
 
-{{ note_body_text }}
+{{ doc_body_text }}
 """
 
 # Default filename template used when the input file (with a known
@@ -333,7 +333,7 @@ from_text_file_filename = """
 {%- if path | file_sort_tag != '' -%}
   {%- set tag = path | file_sort_tag -%}
 {%- else -%}
-  {%- set tag = note_file_date | date(format='%Y%m%d') -%}
+  {%- set tag = doc_file_date | date(format='%Y%m%d') -%}
 {%- endif -%}
 {{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
@@ -393,7 +393,7 @@ sync_filename = """
 [tmpl_html]
 
 # HTML template to render regular viewer pages. Note: HTML templates escape HTML
-# critical symbols by default. To disable this feature for  a specific variable,
+# critical symbols by default. To disable this feature for a specific variable,
 # add a `safe` filter in last position.
 viewer = '''
 <!DOCTYPE html>
