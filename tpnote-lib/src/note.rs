@@ -397,54 +397,41 @@ impl<T: Content> Note<T> {
             log::debug!("Rendering HTML into: {:?}", html_path);
         };
 
-        // Check where to dump output.
-        if html_path
+        // These must live longer than `writeable`, and thus are declared first:
+        let (mut stdout_write, mut file_write);
+        // We need to ascribe the type to get dynamic dispatch.
+        let writeable: &mut dyn Write = if html_path
             .as_os_str()
             .to_str()
             .unwrap_or_default()
             .is_empty()
         {
-            let stdout = io::stdout();
-            let mut handle = stdout.lock();
-
-            // Write HTML rendition.
-            handle.write_all(
-                self.render_content_to_html(html_template)
-                    .map(|html| {
-                        rewrite_links(
-                            html,
-                            &self.context.root_path,
-                            current_dir_path,
-                            local_link_kind,
-                            // Do append `.html` to `.md` in links.
-                            true,
-                            Arc::new(RwLock::new(HashSet::new())),
-                        )
-                    })?
-                    .as_bytes(),
-            )?;
+            stdout_write = io::stdout();
+            &mut stdout_write
         } else {
-            let mut handle = OpenOptions::new()
+            file_write = OpenOptions::new()
                 .write(true)
                 .create(true)
                 .open(&html_path)?;
-            // Write HTML rendition.
-            handle.write_all(
-                self.render_content_to_html(html_template)
-                    .map(|html| {
-                        rewrite_links(
-                            html,
-                            &self.context.root_path,
-                            current_dir_path,
-                            local_link_kind,
-                            // Do append `.html` to `.md` in links.
-                            true,
-                            Arc::new(RwLock::new(HashSet::new())),
-                        )
-                    })?
-                    .as_bytes(),
-            )?;
+            &mut file_write
         };
+
+        // Write HTML rendition.
+        writeable.write_all(
+            self.render_content_to_html(html_template)
+                .map(|html| {
+                    rewrite_links(
+                        html,
+                        &self.context.root_path,
+                        current_dir_path,
+                        local_link_kind,
+                        // Do append `.html` to `.md` in links.
+                        true,
+                        Arc::new(RwLock::new(HashSet::new())),
+                    )
+                })?
+                .as_bytes(),
+        )?;
         Ok(())
     }
 
