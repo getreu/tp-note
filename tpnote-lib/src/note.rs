@@ -7,7 +7,6 @@
 
 use crate::config::LocalLinkKind;
 use crate::config::LIB_CFG;
-use crate::config::TMPL_HTML_VAR_DOC_BODY_HTML;
 use crate::config::TMPL_HTML_VAR_EXPORTER_DOC_CSS;
 use crate::config::TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS;
 use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH;
@@ -17,7 +16,6 @@ use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
 use crate::config::TMPL_VAR_DOC_BODY_TEXT;
 use crate::config::TMPL_VAR_DOC_FILE_DATE;
 use crate::config::TMPL_VAR_DOC_FM_TEXT;
-use crate::config::TMPL_VAR_FM_FILE_EXT;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
@@ -29,7 +27,6 @@ use crate::front_matter::FrontMatter;
 use crate::highlight::get_exporter_highlighting_css;
 use crate::html::rewrite_links;
 use crate::html::HTML_EXT;
-use crate::markup_language::MarkupLanguage;
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
 use parking_lot::RwLock;
@@ -476,24 +473,7 @@ impl<T: Content> Note<T> {
     ) -> Result<String, NoteError> {
         // Deserialize.
 
-        // Render Body.
-        let input = self.content.body();
-
-        // If this variable is set, overwrite `file_ext`
-        let fm_file_ext = match self.context.get(TMPL_VAR_FM_FILE_EXT) {
-            Some(tera::Value::String(fm_file_ext)) => fm_file_ext.as_str(),
-            _ => "",
-        };
-
-        // Render the markup language.
-        let html_output = MarkupLanguage::from(fm_file_ext)
-            .or(MarkupLanguage::from(file_ext))
-            .render(input);
-
         let mut html_context = self.context.clone();
-
-        // Register rendered body.
-        html_context.insert(TMPL_HTML_VAR_DOC_BODY_HTML, &html_output);
 
         // Insert the raw CSS
         html_context.insert(

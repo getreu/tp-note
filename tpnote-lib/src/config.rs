@@ -167,9 +167,6 @@ pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
 /// `TMP_FILTER_GET_LANG` list, all available languages are selected.
 pub const TMPL_FILTER_GET_LANG_ALL: &str = "+all";
 
-/// HTML template variable containing the note's body.
-pub const TMPL_HTML_VAR_DOC_BODY_HTML: &str = "doc_body_html";
-
 /// HTML template variable containing the automatically generated JavaScript
 /// code to be included in the HTML rendition.
 pub const TMPL_HTML_VAR_VIEWER_DOC_JS: &str = "viewer_doc_js";
