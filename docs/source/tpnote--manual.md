@@ -2,8 +2,8 @@
 title:    "Tp-Note: save and edit your clipboard content as a note file"
 subtitle: Organize your notes with your favourite editor and markup language
 author:   Jens Getreu
-date:     2023-09-28
-version:  1.22.2
+date:     2023-09-29
+version:  1.22.3
 filename_sync: false
 lang:     en-GB
 ---
