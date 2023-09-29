@@ -35,24 +35,24 @@ use tpnote_lib::context::Context;
 #[cfg(not(test))]
 use tpnote_lib::filename::NotePathBuf;
 
-/// Set the minimum required config file version that is compatible with this
+/// Set the minimum required configuration file version that is compatible with this
 /// Tp-Note version.
 ///
 /// Examples how to use this constant. Choose one of the following:
-/// 1. Require some minimum version of the config file.
+/// 1. Require some minimum version of the configuration file.
 ///    Abort if not satisfied.
 ///
 ///    ```no_run
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.5.1");
 ///    ```
 ///
-/// 2. Require the config file to be of the same version as this binary.
+/// 2. Require the configuration file to be of the same version as this binary.
 ///
 ///    ```no_run
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = PKG_VERSION;
 ///    ```
 ///
-/// 3. Disable minimum version check; all config file versions are allowed.
+/// 3. Disable minimum version check; all configuration file versions are allowed.
 ///
 ///    ```no_run
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
@@ -75,13 +75,13 @@ pub(crate) const PKG_VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERS
 /// Tp-Note's configuration file filename.
 const CONFIG_FILENAME: &str = concat!(env!("CARGO_BIN_NAME"), ".toml");
 
-/// Default configuragtion.
+/// Default configuration.
 pub(crate) const GUI_CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cfg {
-    /// Version number of the config file as String -or-
+    /// Version number of the configuration file as String -or-
     /// a text message explaining why we could not load the
     /// configuration file.
     pub version: String,
@@ -283,7 +283,7 @@ impl Cfg {
         Ok(())
     }
 
-    /// Backsup the existing config file and writes a new one with default
+    /// Backs up the existing configuration file and writes a new one with default
     /// values.
     pub fn backup_and_replace_with_default() -> Result<PathBuf, ConfigFileError> {
         if let Some(ref config_path) = *CONFIG_PATH {
@@ -321,7 +321,7 @@ lazy_static! {
                 let mut cfg_file_loading = CFG_FILE_LOADING.write();
                 *cfg_file_loading = Err(e);
 
-                // As we could not load the config file, we will use the default
+                // As we could not load the configuration file, we will use the default
                 // configuration.
                 Cfg::default()
             })
@@ -367,7 +367,7 @@ lazy_static! {
             if let Ok(c) = env::var(ENV_VAR_TPNOTE_CONFIG) {
                Some(PathBuf::from(c))
             } else {
-                // Config comes from the standard config file location.
+                // Config comes from the standard configuration file location.
                 let config = ProjectDirs::from("rs", "", CARGO_BIN_NAME)?;
 
                 let mut config = PathBuf::from(config.config_dir());

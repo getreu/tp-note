@@ -1,66 +1,59 @@
 [filename]
 
 # List of characters that can be part of a _sort tag_.
-# This list must not include `SORT_TAG_EXTRA_SEPARATOR`.
+# This list must not include `sort_tag_extra_separator`.
 # The first character in the filename which is not
 # in this list, marks the end of the sort tag.
-# If `FILENAME_SORT_TAG_SEPARATOR` is not empty and the resulting string
-# terminates with `FILENAME_SORT_TAG_SEPARATOR` the latter is is stripped
+# If `filename.sort_tag_separator` is not empty and the resulting string
+# terminates with `filename.sort_tag_separator` the latter is stripped
 # from the result.
 sort_tag_chars = "0123456789.-_ \t"
 
-# If empty, the first character which is not in `FILENAME_SORT_TAG_CHARS`
+# If empty, the first character which is not in `filename.sort_tag_chars`
 # marks the end of a sort tag.
-# If not empty, a _sort_tag_ is only valid, when is it is followed by
-# `FILENAME_SORT_TAG_SEPARATOR`. A _sort_tag_ never ends with a
-# `FILENAME_SORT_TAG_SEPARATOR`, if it does it stripped. In other positions
-# the speparator may appear.
+# If not empty, a _sort_tag_ is only valid, when is its followed by
+# `filename.sort_tag_separator`. A _sort_tag_ never ends with a
+# `filename.sort_tag_separator`, if it does it stripped. In other positions
+# the separator may appear.
 sort_tag_separator = "-"
 
-# In case the file stem starts with a character in
-# `SORT_TAG_CHARS` the `SORT_TAG_EXTRA_SEPARATOR`
-# character is inserted in order to separate both parts
-# when the filename is read next time.
+# In case the file stem starts with a character in `sort_tag_chars` the
+# `sort_tag_extra_separator` character is inserted in order to separate both
+# parts when the filename is read next time.
 sort_tag_extra_separator = "'"
 
-# If the stem of a filename ends with a pattern, that is
-# similar to a copy counter, add this extra separator. It
-# must be one of `TRIM_LINE_CHARS` (see definition in
-# crate: `sanitize_filename_reader_friendly`) because they
-# are known not to appear at the end of `sanitze()`'d
-# strings. This is why they are suitable here.
+# If the stem of a filename ends with a pattern, that is similar to a copy
+# counter, add this extra separator. It must be one of `TRIM_LINE_CHARS` (see
+# definition in crate: `sanitize_filename_reader_friendly`) because they are
+# known not to appear at the end of `sanitze()`'d strings. This is why they are
+# suitable here.
 copy_counter_extra_separator = "-"
 
-# Tp-Note may add a counter at the end of the filename when
-# it can not save a file because the name is taken already.
-# This is the opening bracket search pattern. Some examples:
-# `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
-# Can be empty.
+# Tp-Note may add a counter at the end of the filename when it can not save a
+# file because the name is taken already. This is the opening bracket search
+# pattern. Some examples: `"-"`, "'_'"", `"_-"`,`"-_"`, `"("` Can be empty.
 copy_counter_opening_brackets = "("
 
-# Tp-Note may add a counter at the end of the filename when
-# it can not save a file because the name is taken already.
-# This is the closing bracket search pattern. Some examples:
-# `"-"`, "'_'"", `"_-"`,`"-_"`, `"("`
-# Can be empty.
+# Tp-Note may add a counter at the end of the filename when it can not save a
+# file because the name is taken already. This is the closing bracket search
+# pattern. Some examples: `"-"`, "'_'"", `"_-"`,`"-_"`, `"("` Can be empty.
 copy_counter_closing_brackets = ")"
 
 # File extension of new _Tp-Note_ files.
 #
-# For UNIX like systems this defaults to `.md` because all the
-# listed file editors (see `APP_ARGS_EDITOR`) support it. The
-# Windows default is `.txt` to ensure that the _Notepad_ editor can
-# handle these files properly.
+# For UNIX like systems this defaults to `.md` because all the listed file
+# editors (see `app_args.editor`) support it. The Windows default is `.txt` to
+# ensure that the _Notepad_ editor can handle these files properly.
 #
 # As longs as all extensions are part of the same group, here
-# `FILENAME_EXTENSIONS_MD`, all note files are interpreted as
-# _Markdown_ on all systems.
+# `filename.extensions_md`, all note files are interpreted as _Markdown_ on
+# all systems.
 #
-# NB: Do not forget to adapt the templates `TMPL_*` in case you set
+# NB: Do not forget to adapt the templates `tmpl.*` in case you set
 # this to another markup language.
 extension_default = "md"
 
-# The variables `FILENAME_EXTENSIONS_*` list file extensions that Tp-Note
+# The variables `filename.extensions_*` list file extensions that Tp-Note
 # considers as its own note files. Tp-Note opens these files, reads their
 # YAML header and launches an external file editor and an file viewer (web
 # browser). According to the markup language used, the appropriate renderer
@@ -80,7 +73,7 @@ extensions_md = [
 # The present list contains file extensions of RestructuredText encoded Tp-
 # Note files.
 #
-# See also `FILENAME_EXTENSIONS_MD`.
+# See also `filename.extensions_md`.
 extensions_rst = [
     "rst",
     "rest",
@@ -90,7 +83,7 @@ extensions_rst = [
 # For these file types the content is forwarded to the web browser without
 # modification.
 #
-# See also `FILENAME_EXTENSIONS_MD`.
+# See also `filename.extensions_md`.
 extensions_html = ["htmlnote"]
 
 # The present list contains file extensions of Text encoded Tp-Note files
@@ -98,7 +91,7 @@ extensions_html = ["htmlnote"]
 # Only hyperlinks in _Markdown_, _reStructuredText_, _Asciidoc_ and _HTML_ are
 # rendered, thus clickable.
 #
-# See also `FILENAME_EXTENSIONS_MD`.
+# See also `filename.extensions_md`.
 extensions_txt = [
     "txtnote",
     "adoc",
@@ -110,7 +103,7 @@ extensions_txt = [
 # The present list contains file extensions of Tp-Note files for which no
 # viewer is opened (unless Tp-Note is invoked with `--view`).
 #
-# See also `FILENAME_EXTENSIONS_MD`.
+# See also `filename.extensions_md`.
 extensions_no_viewer = ["t2t"]
 
 
@@ -126,7 +119,7 @@ extensions_no_viewer = ["t2t"]
 # * `IsDefined`: Assert that the variable is defined in the template.
 # * `IsString`: Assert, that if the variable is defined, its type -or all
 #    subtypes- are `Value::String`.
-# * `IsNotEmptyString`: In addtion to `IsString`, the condition asserts, that 
+# * `IsNotEmptyString`: In addition to `IsString`, the condition asserts, that 
 #    the string -or all substrings-) are not empty.
 # * `IsNumber`: Assert, that if the variable is defined, its type -or all
 #    subtypes- are `Value::Number`.
@@ -138,7 +131,7 @@ extensions_no_viewer = ["t2t"]
 #    string representation contains solely characters of the
 #    `filename.sort_tag_chars` set.
 # * `IsTpnoteExtension`: Assert, that if the variable is defined, the values
-#    string representation is regeistered in one of the `filename.extension_*`
+#    string representation is registered in one of the `filename.extension_*`
 #    configuraion file variables.
 # * `NoOperation` (default): A test that is always satisfied. For internal use
 #    only.
@@ -162,8 +155,8 @@ filter_assert_preconditions = [
 # library _Lingua_. In both cases the filter returns the empty string.
 filter_get_lang = [ "en", "fr", "de", ]
 
-# Default values for the `map_lang` hash map filter, that is used to post
-# process the language recognition subtag as defined in `TMPL_GET_LANG`. The
+# Default values for the `map_lang` hash map filter, that are used to post
+# process the language recognition subtag as defined in `filter_get_lang`. The
 # key is the language subtag, the corresponding value adds a region subtag
 # completing the language tag. The default region subtags are chosen to be
 # compatible with the _LanguageTool_ grammar checker. In case a language
@@ -172,7 +165,7 @@ filter_get_lang = [ "en", "fr", "de", ]
 # One entry, derived from the user's default language - as reported from the
 # operating system - is automatically added to the present list. This
 # happens only when this language is not listed yet. For example,
-# consider the list `TMPL_FILTER_MAP_LANG = &[&["en", "en-US"]]`: In this
+# consider the list `tmpl.filter_map_lang = &[&["en", "en-US"]]`: In this
 # case, the user's default language `fr_CA.UTF-8` is added as
 # `&["fr", "fr-CA"]`. But, if the user's default language were
 # `en_GB.UTF-8`, then it is _not_ added because an entry `&["en", "en-US"]`
@@ -185,7 +178,7 @@ filter_map_lang = [
 ]
 
 # Default value used by `to_yaml_filter`.
-# The parameter `TMPL_FILTER_TO_YAML_TAB_DEFAULT = n` indents the YAML values
+# The parameter `tmpl.filter_to_yaml_tab = n` indents the YAML values
 # `n` characters to the right of the first character of the key by inserting
 # additional spaces between the key and the value. `n==0` disables the
 # extra indentation.
@@ -193,13 +186,12 @@ filter_to_yaml_tab = 14
 
 # Default content template used when the command line argument `<sanit>`
 # is a directory. Can be changed through editing the configuration
-# file. The following variables are  defined:
-# * `{{ path }}`: points to the directory where the new note will be
-#   created.
+# file. The following variables are defined:
+# * `{{ path }}`: points to the directory where the new note will be created.
 # * `{{ dir_path }}` is in this context identical to `{{ path }}`.
-#  In addition, all environment variables can be used, e.g.
-# `{{ get_env(name=\"LOGNAME\") }}` When placed in YAML front matter, the
-# filter `to_yaml` must be appended to each variable.
+#   In addition, all environment variables can be used, e.g.
+#   `{{ get_env(name=\"LOGNAME\") }}` When placed in YAML front matter, the
+#   filter `to_yaml` must be appended to each variable.
 new_content = """
 {%- set title_text = dir_path | trim_file_sort_tag -%}
 ---
@@ -216,7 +208,7 @@ new_content = """
 # Default filename template for a new note file on disk. It implements the
 # sync criteria for note metadata in front matter and filename.
 # Useful variables in this context are:
-# `{{ title| sanit }}`, `{{ subtitle| sanit }}`, `{{ extension_default }}.
+# `{{ title | sanit }}`, `{{ subtitle | sanit }}`, `{{ extension_default }}.
 # In general, in filename template, all variables (except `now` and
 # `extension_default` must be filtered by a `sanit` filter.
 new_filename = """
@@ -400,9 +392,9 @@ sync_filename = """
 
 [tmpl_html]
 
-# HTML template to render regular viewer pages. Note: HTML templates
-# escpape HTML critical symbols by default. To disable this feature for 
-# a specific variable, add a `safe` filter in last position.
+# HTML template to render regular viewer pages. Note: HTML templates escape HTML
+# critical symbols by default. To disable this feature for  a specific variable,
+# add a `safe` filter in last position.
 viewer = '''
 <!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
@@ -459,10 +451,6 @@ viewer = '''
 '''
 
 # HTML template to render the viewer-error page.
-# We could set
-# `#[cfg(feature = "viewer")]`,
-# but we prefer the same config file structure independent
-# of the enabled features.
 viewer_error = """
 <!DOCTYPE html>
 <html lang=\"en\">
@@ -490,8 +478,8 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 </html>
 """
 
-# A constant holding common CSS code, published by Tp-Note's viewer 
-# under the `/viewer_doc.css` path.
+# A constant holding common CSS code, published by Tp-Note's viewer under the
+# `/viewer_doc.css` path.
 viewer_doc_css = """
 /* Tp-Note's viewer document CSS */
 table.fm {
@@ -543,18 +531,17 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 
 # Loads the viewer's code syntax highlighting theme. The theme is converted
 # into additional CSS. Currently available are:
-# *  `base16-ocean.dark`
-# *  `base16-eighties.dark`
-# *  `base16-mocha.dark`
-# *  `base16-ocean.light`
-# *  `InspiredGitHub`
-# *  `Solarized (dark)`
-# *  `Solarized (light)`
+# * `base16-ocean.dark`
+# * `base16-eighties.dark`
+# * `base16-mocha.dark`
+# * `base16-ocean.light`
+# * `InspiredGitHub`
+# * `Solarized (dark)`
+# * `Solarized (light)`
 viewer_highlighting_theme = "Solarized (light)"
 
-# HTML template used to render a note into html when the
-# rendition is saved to disk. Similar to `HTML_VIEWER_TMPL`
-# but does not inject JavaScript code.
+# HTML template used to render a note into HTML when the rendition is saved to
+# disk. Similar to `tmpl_html.viewer` but does not inject JavaScript code.
 exporter = '''
 <!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
@@ -611,13 +598,13 @@ exporter = '''
 
 # Loads the exporter's code syntax highlighting theme. The theme is converted
 # into additional CSS. Currently available are:
-# *  `base16-ocean.dark`
-# *  `base16-eighties.dark`
-# *  `base16-mocha.dark`
-# *  `base16-ocean.light`
-# *  `InspiredGitHub`
-# *  `Solarized (dark)`
-# *  `Solarized (light)`
+# * `base16-ocean.dark`
+# * `base16-eighties.dark`
+# * `base16-mocha.dark`
+# * `base16-ocean.light`
+# * `InspiredGitHub`
+# * `Solarized (dark)`
+# * `Solarized (light)`
 exporter_highlighting_theme = "Solarized (light)"
 
 # A constant holding common CSS code, inserted into exported HTML documents

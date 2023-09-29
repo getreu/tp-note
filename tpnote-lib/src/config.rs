@@ -24,7 +24,7 @@ use std::str::FromStr;
 #[cfg(feature = "renderer")]
 use syntect::highlighting::ThemeSet;
 
-/// Default library configuragtion as TOML.
+/// Default library configuration as TOML.
 pub const LIB_CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
 
 /// Maximum length of a note's filename in bytes. If a filename template produces
@@ -39,7 +39,7 @@ pub const FILENAME_LEN_MAX: usize =
     // Extra spare bytes, in case the user's copy counter is longer.
     - 6;
 
-/// The apperance of a file with this filename marks the position of
+/// The appearance of a file with this filename marks the position of
 /// `TMPL_VAR_ROOT_PATH`.
 pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnote.toml";
 
@@ -98,7 +98,7 @@ pub const TMPL_VAR_USERNAME: &str = "username";
 /// [RFC 5646](http://www.rfc-editor.org/rfc/rfc5646.txt).
 /// Not to be confused with the UNIX `LANG` environment variable from which
 /// this value is derived under Linux/MacOS.
-/// Under Windows, the user's language tag is queried through the WinAPI.
+/// Under Windows, the user's language tag is queried through the Win-API.
 /// If defined, the environment variable `TPNOTE_LANG` overwrites this value
 /// (all operating systems).
 pub const TMPL_VAR_LANG: &str = "lang";
@@ -107,14 +107,14 @@ pub const TMPL_VAR_LANG: &str = "lang";
 pub const TMPL_VAR_NOTE_FM_TEXT: &str = "note_fm_text";
 
 /// Contains the body of the file the command line option `<path>`
-/// points to. Only available in the `TMPL_FROM_TEXT_FILE_CONTENT`,
-/// `TMPL_SYNC_FILENAME` and HTML templates.
+/// points to. Only available in the `tmpl.from_text_file_content`,
+/// `tmpl.sync_filename` and HTML templates.
 pub const TMPL_VAR_NOTE_BODY_TEXT: &str = "note_body_text";
 
 /// Contains the date of the file the command line option `<path>` points to.
 /// The date is represented as an integer the way `std::time::SystemTime`
 /// resolves to on the platform. Only available in the
-/// `TMPL_FROM_TEXT_FILE_CONTENT`, `TMPL_SYNC_FILENAME` and HTML templates.
+/// `tmpl.from_text_file_content`, `tmpl.sync_filename` and HTML templates.
 pub const TMPL_VAR_NOTE_FILE_DATE: &str = "note_file_date";
 
 /// Prefix prepended to front matter field names when a template variable
@@ -123,10 +123,10 @@ pub const TMPL_VAR_FM_: &str = "fm_";
 
 /// Contains a Hash Map with all front matter fields. Lists are flattened
 /// into strings. These variables are only available in the
-/// `TMPL_FROM_TEXT_FILE_CONTENT`, `TMPL_SYNC_FILENAME` and HTML templates.
+/// `tmpl.from_text_file_content`, `tmpl.sync_filename` and HTML templates.
 pub const TMPL_VAR_FM_ALL: &str = "fm_all";
 
-/// By default, the template `TMPL_SYNC_FILENAME` defines the function of
+/// By default, the template `tmpl.sync_filename` defines the function of
 /// of this variable as follows:
 /// Contains the value of the front matter field `file_ext` and determines the
 /// markup language used to render the document. When the field is missing the
@@ -139,7 +139,7 @@ pub const TMPL_VAR_FM_ALL: &str = "fm_all";
 /// is registered in one of the `filename.extensions_*` variables.
 pub const TMPL_VAR_FM_FILE_EXT: &str = "fm_file_ext";
 
-/// By default, the template `TMPL_SYNC_FILENAME` defines the function of
+/// By default, the template `tmpl.sync_filename` defines the function of
 /// of this variable as follows:
 /// If this variable is defined, the _sort tag_ of the filename is replaced with
 /// the value of this variable next time the filename is synchronized.  If not
@@ -168,18 +168,10 @@ pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
 pub const TMPL_FILTER_GET_LANG_ALL: &str = "+all";
 
 /// HTML template variable containing the note's body.
-/// We could set
-/// `#[cfg(feature = "viewer")]`,
-/// but we prefer the same config file structure independent
-/// of the enabled features.
 pub const TMPL_HTML_VAR_DOC_BODY_HTML: &str = "doc_body_html";
 
 /// HTML template variable containing the automatically generated JavaScript
 /// code to be included in the HTML rendition.
-/// We could set
-/// `#[cfg(feature = "viewer")]`,
-/// but we prefer the same config file structure independent
-/// of the enabled features.
 pub const TMPL_HTML_VAR_VIEWER_DOC_JS: &str = "viewer_doc_js";
 
 /// HTML template variable name. The value contains Tp-Note's CSS code
@@ -196,7 +188,7 @@ pub const TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS: &str = "exporter_highlighting
 pub const TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH: &str = "viewer_doc_css_path";
 
 /// The constant URL for which Tp-Note's internal web server delivers the CSS
-/// stylesheet. In HTML templates, this constant can be accessed as value of
+/// style sheet. In HTML templates, this constant can be accessed as value of
 /// the `TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH` variable.
 pub const TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE: &str = "/viewer_doc.css";
 
@@ -205,25 +197,17 @@ pub const TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE: &str = "/viewer_doc.css";
 pub const TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH: &str = "viewer_highlighting_css_path";
 
 /// The constant URL for which Tp-Note's internal web server delivers the CSS
-/// stylesheet. In HTML templates, this constant can be accessed as value of
+/// style sheet. In HTML templates, this constant can be accessed as value of
 /// the `TMPL_HTML_VAR_NOTE_CSS_PATH` variable.
 pub const TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE: &str = "/viewer_highlighting.css";
 
 /// HTML template variable used in the error page containing the error message
 /// explaining why this page could not be rendered.
-/// We could set
-/// `#[cfg(feature = "viewer")]`,
-/// but we prefer the same config file structure independent
-/// of the enabled features.
 #[allow(dead_code)]
 pub const TMPL_HTML_VAR_DOC_ERROR: &str = "doc_error";
 
 /// HTML template variable used in the error page containing a verbatim
 /// HTML rendition with hyperlinks of the erroneous note file.
-/// We could set
-/// `#[cfg(feature = "viewer")]`,
-/// but we prefer the same config file structure independent
-/// of the enabled features.
 #[allow(dead_code)]
 pub const TMPL_HTML_VAR_DOC_ERRONEOUS_CONTENT_HTML: &str = "doc_erroneous_content_html";
 
@@ -297,7 +281,7 @@ pub struct TmplHtml {
 }
 
 impl LibCfg {
-    /// Perfom some sematic consitency checks.
+    /// Perform some semantic consistency checks.
     /// * `sort_tag_extra_separator` must NOT be in `sort_tag_chars`.
     /// * `sort_tag_extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
     /// * `copy_counter_extra_separator` must be one of
@@ -502,7 +486,7 @@ impl FromStr for LocalLinkKind {
 pub enum AssertPrecondition {
     /// `IsDefined`: Assert that the variable is defined in the template.
     IsDefined,
-    /// `IsNotEmptyString`: In addtion to `IsString`, the condition asserts,
+    /// `IsNotEmptyString`: In addition to `IsString`, the condition asserts,
     ///  that the string -or all substrings-) are not empty.
     IsNotEmptyString,
     /// `IsString`: Assert, that if the variable is defined, its type -or all
@@ -522,8 +506,8 @@ pub enum AssertPrecondition {
     ///  `filename.sort_tag_chars` set.
     HasOnlySortTagChars,
     /// `IsTpnoteExtension`: Assert, that if the variable is defined,
-    ///  the values string representation is regeistered in one of the
-    ///  `filename.extension_*` configuraion file variables.
+    ///  the values string representation is registered in one of the
+    ///  `filename.extension_*` configuration file variables.
     IsTpnoteExtension,
     /// `NoOperation` (default): A test that is always satisfied. For internal
     ///  use only.

@@ -10,7 +10,7 @@ debug = "ERROR"
 edit = false
 
 # Default value for the command line flag `--no-filename-sync` to disable
-# the title to filename synchronisation mechanism permanently.
+# the title to filename synchronization mechanism permanently.
 # If set to `true`, the corresponding command line flag is ignored.
 no_filename_sync = false
 
@@ -210,10 +210,39 @@ macos.editor_console = [
 
 [viewer]
 
+# When Tp-Note starts, it launches two external applications: some text editor
+# and the viewer (web browser). By default, the two programs are launched at
+# the same time (`VIEWER_STARTUP_DELAY==0`). If `VIEWER_STARTUP_DELAY>0` the
+# viewer (web browser) will be launched `VIEWER_STARTUP_DELAY` milliseconds
+# after the text editor. If `VIEWER_STARTUP_DELAY<0` the viewer will be
+# started first. Common values are `-1000`, `0` and `1000`.
 startup_delay = 500
+
+# When set to true, the viewer feature is automatically disabled when
+# _Tp-Note_ encounters an `.md` file without header.  Experienced users can
+# set this to `true`. This setting is ignored, meaning is considered `false`,
+# if `ARG_DEFAULT_ADD_HEADER=true` or `ARGS.add_header=true` or
+# `ARGS.viewer=true`.
 missing_header_disables = false
+
+# How often should the file watcher check for changes?
+# Delay in milliseconds. Maximum value is 2000.
 notify_period = 200
+
+# The maximum number of TCP connections the HTTP server can handle at the same
+# time. In general, the serving and live update of the HTML rendition of the
+# note file, requires normally 3 TCP connections: 1 old event channel (that is
+# still open from the previous update), 1 TCP connection to serve the HTML,
+# the local images (and referenced documents), and 1 new event channel.  In
+# practice, stale connection are not always closed immediately. Hence, 4 open
+# connections are not uncommon.
 tcp_connections_max = 16
+
+# Served file types with corresponding mime types.
+# The first entry per line is the file extension in lowercase(!), the second the
+# corresponding mime type.  Embedded files with types other than those listed
+# here are silently ignored.  Note, that image files must be located in the
+# same or in the note's parent directory.
 served_mime_types = [
     [ "md", "text/x-markdown", ],
     [ "txt", "text/plain", ],
@@ -244,4 +273,8 @@ served_mime_types = [
     [ "webm", "video/webm", ],
     [ "ogx", "application/ogg", ],
 ]
+
+# For security reasons, Tp-Note's internal viewer only displays a limited
+# number of Tp-Note files when browsing between files. This variable limits
+# this number.
 displayed_tpnote_count_max = 20
