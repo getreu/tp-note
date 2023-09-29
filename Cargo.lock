@@ -2952,18 +2952,6 @@ dependencies = [
 
 [[package]]
 name = "parse-hyperlinks"
-version = "0.23.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0181d37c4d5ae35cc8be7cf823c1a933005661da6a08bcb2855aa392c9a54b8e"
-dependencies = [
- "html-escape",
- "nom",
- "percent-encoding",
- "thiserror",
-]
-
-[[package]]
-name = "parse-hyperlinks"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72cbaecbb2edbcf3c272578d36d7b186b84269f7b5857cb54e2de6bd9fd4f819"
@@ -2976,26 +2964,13 @@ dependencies = [
 
 [[package]]
 name = "parse-hyperlinks-extras"
-version = "0.23.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9620c66ee394afa6cce11cd11137ef7dac6f53442d1148d6db93a70a04e13911"
-dependencies = [
- "html-escape",
- "nom",
- "parse-hyperlinks 0.23.4",
- "percent-encoding",
- "thiserror",
-]
-
-[[package]]
-name = "parse-hyperlinks-extras"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23a49abd8233176d75a2579a54d53af4158ccf0f872ee9523cfb50a782a85a5e"
 dependencies = [
  "html-escape",
  "nom",
- "parse-hyperlinks 0.24.1",
+ "parse-hyperlinks",
  "percent-encoding",
  "thiserror",
 ]
@@ -4016,7 +3991,7 @@ dependencies = [
  "thiserror",
  "time",
  "toml 0.8.1",
- "tpnote-lib 0.24.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tpnote-lib",
  "webbrowser",
  "win32job",
  "windows-sys 0.48.0",
@@ -4025,7 +4000,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote-lib"
-version = "0.24.0"
+version = "0.25.0"
 dependencies = [
  "html-escape",
  "latex2mathml",
@@ -4033,40 +4008,8 @@ dependencies = [
  "lingua",
  "log",
  "parking_lot",
- "parse-hyperlinks 0.24.1",
- "parse-hyperlinks-extras 0.24.1",
- "percent-encoding",
- "pulldown-cmark",
- "rst_parser",
- "rst_renderer",
- "sanitize-filename-reader-friendly",
- "self_cell",
- "serde",
- "serde_json",
- "serde_yaml",
- "substring",
- "syntect",
- "tera",
- "thiserror",
- "toml 0.8.1",
- "win32job",
- "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "tpnote-lib"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e418ace60526a85a012b5e63e45683defedb8dde4c29539586dc038410e29e0"
-dependencies = [
- "html-escape",
- "latex2mathml",
- "lazy_static",
- "lingua",
- "log",
- "parking_lot",
- "parse-hyperlinks 0.23.4",
- "parse-hyperlinks-extras 0.23.4",
+ "parse-hyperlinks",
+ "parse-hyperlinks-extras",
  "percent-encoding",
  "pulldown-cmark",
  "rst_parser",
