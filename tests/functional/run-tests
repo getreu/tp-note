@@ -290,6 +290,7 @@ author:
 - Hans
 sort_tag: '111'
 ...
+# Body
 EOF
 
 LANG="en_US.UTF-8" LOGNAME="myuser" \

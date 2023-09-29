@@ -404,6 +404,8 @@ font-weight: bold;
   </tr>
   
   </table>
-  <div class="doc-body"></div>
+  <div class="doc-body"><h1>Body</h1>
+
+  </div>
 </body>
 </html>
