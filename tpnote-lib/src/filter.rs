@@ -912,10 +912,25 @@ mod tests {
         // Render verbatim text with markup hyperlinks to HTML.
         let input = json!("Hello World\n[link](<https://getreu.net>)");
         let expected = "<pre>Hello World\n\
-            <a href=\"https://getreu.net\" title=\"\">link</a></pre>"
+            <a href=\"https://getreu.net\" title=\"\">\
+            [link](&lt;https://getreu.net&gt;)</a></pre>"
             .to_string();
 
         let args = HashMap::new();
+        assert_eq!(
+            markup_to_html_filter(&input, &args).unwrap(),
+            Value::String(expected)
+        );
+
+        // Render verbatim text with markup hyperlinks to HTML.
+        let input = json!("Hello World\n[link](<https://getreu.net>)");
+        let expected = "<pre>Hello World\n\
+            <a href=\"https://getreu.net\" title=\"\">link</a></pre>"
+            .to_string();
+        let mut args = HashMap::new();
+        // Select the "md" renderer.
+        args.insert("extension".to_string(), to_value("txtnote").unwrap());
+
         assert_eq!(
             markup_to_html_filter(&input, &args).unwrap(),
             Value::String(expected)

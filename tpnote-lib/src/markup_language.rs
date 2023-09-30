@@ -6,6 +6,7 @@ use crate::error::NoteError;
 use crate::highlight::SyntaxPreprocessor;
 use crate::settings::SETTINGS;
 use parse_hyperlinks::renderer::text_links2html;
+use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
 use pulldown_cmark::{html, Options, Parser};
 #[cfg(feature = "renderer")]
@@ -46,7 +47,8 @@ impl MarkupLanguage {
             #[cfg(feature = "renderer")]
             Self::RestructuredText => Self::render_rst_content(input),
             Self::Html => input.to_string(),
-            _ => Self::render_txt_content(input),
+            Self::Txt => Self::render_txt_content(input),
+            _ => Self::render_unknown_content(input),
         }
     }
 
@@ -92,6 +94,12 @@ impl MarkupLanguage {
     /// Renderer for markup languages other than the above.
     fn render_txt_content(other_input: &str) -> String {
         text_links2html(other_input)
+    }
+
+    #[inline]
+    /// Renderer for markup languages other than the above.
+    fn render_unknown_content(other_input: &str) -> String {
+        text_rawlinks2html(other_input)
     }
 }
 
