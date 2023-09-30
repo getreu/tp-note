@@ -841,6 +841,7 @@ mod tests {
             Value::String(expected)
         );
     }
+
     #[test]
     fn test_to_html_filter() {
         //
@@ -901,6 +902,35 @@ mod tests {
         let args = HashMap::new();
         assert_eq!(
             to_html_filter(&input, &args).unwrap(),
+            Value::String(expected)
+        );
+    }
+
+    #[test]
+    fn test_markup_to_html_filter() {
+        //
+        // Render verbatim text with markup hyperlinks to HTML.
+        let input = json!("Hello World\n[link](<https://getreu.net>)");
+        let expected = "<pre>Hello World\n\
+            <a href=\"https://getreu.net\" title=\"\">link</a></pre>"
+            .to_string();
+
+        let args = HashMap::new();
+        assert_eq!(
+            markup_to_html_filter(&input, &args).unwrap(),
+            Value::String(expected)
+        );
+
+        //
+        // Render Markdown to HTML.
+        let input = json!("# Title\nHello World");
+        let mut args = HashMap::new();
+        // Select the "md" renderer.
+        args.insert("extension".to_string(), to_value("md").unwrap());
+        let expected = "<h1>Title</h1>\n<p>Hello World</p>\n".to_string();
+
+        assert_eq!(
+            markup_to_html_filter(&input, &args).unwrap(),
             Value::String(expected)
         );
     }
