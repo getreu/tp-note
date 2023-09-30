@@ -58,7 +58,7 @@ use tpnote_lib::filename::NotePathBuf;
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
 ///    ```
 ///
-pub(crate) const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.22.3");
+pub(crate) const MIN_CONFIG_FILE_VERSION: Option<&'static str> = PKG_VERSION;
 
 /// Authors.
 pub(crate) const AUTHOR: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
@@ -95,10 +95,18 @@ pub struct Cfg {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
+/// The `OsType` selects operating system specific defaults at runtime.
 pub struct OsType<T> {
-    pub linux: T,
-    pub macos: T,
+    /// `#[cfg(all(target_family = "unix", not(target_os = "macos")))]`
+    /// Currently this selects the following target operating systems:
+    /// aix, android, dragonfly, emscripten, espidf, freebsd, fuchsia, haiku,
+    /// horizon, illumos, ios, l4re, linux, netbsd, nto, openbsd, redox,
+    /// solaris, tvos, unknown, vita, vxworks, wasi, watchos.
+    pub unix: T,
+    /// `#[cfg(target_family = "windows")]`
     pub windows: T,
+    /// `#[cfg(all(target_family = "unix", target_os = "macos"))]`
+    pub macos: T,
 }
 
 /// Command line arguments, deserialized form configuration file.
@@ -219,9 +227,9 @@ impl Cfg {
         if config_path.exists() {
             let mut config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
 
-            render_tmpl(&mut config.app_args.linux.browser);
-            render_tmpl(&mut config.app_args.linux.editor);
-            render_tmpl(&mut config.app_args.linux.editor_console);
+            render_tmpl(&mut config.app_args.unix.browser);
+            render_tmpl(&mut config.app_args.unix.editor);
+            render_tmpl(&mut config.app_args.unix.editor_console);
 
             render_tmpl(&mut config.app_args.windows.browser);
             render_tmpl(&mut config.app_args.windows.editor);

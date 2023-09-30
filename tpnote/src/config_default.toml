@@ -36,18 +36,19 @@ tty = false
 # means of the text file's filename and creation date.
 add_header = true
 
-# Rewrite relative local links. Base: ".tpnoteroot".
+# Rewrite relative local links. 
+# Base: `FILENAME_ROOT_PATH_MARKER=".tpnote.toml"`.
 export_link_rewriting = "Long"
 
 
 
 [clipboard]
 # By default clipboard support is enabled, can be disabled
-# in config file. A false value here will set ENABLE_EMPTY_CLIPBOARD to
+# in config file. A false value here will set `empty_clipboard` to
 # false.
 read_enabled = true
 
-# Should the clipboard be emptied when tp-note closes?
+# Should the clipboard be emptied when Tp-Note closes?
 # Default value.
 empty_enabled = true
 
@@ -57,8 +58,12 @@ empty_enabled = true
 
 # Default command line argument list when launching the web browser.
 # The list is executed item by item until an installed web browser is found.
-# Defaults valid under Linux:
-linux.browser = [
+# `unix`-defaults are valid under Unix like target operating systems:
+# aix, android, dragonfly, emscripten, espidf, freebsd, fuchsia, haiku, horizon,
+# illumos, ios, l4re, linux, netbsd, nto, openbsd, redox, solaris, tvos,
+# unknown, vita, vxworks, wasi, watchos.
+
+unix.browser = [
     [
     "flatpak",
     "run",
@@ -104,7 +109,7 @@ linux.browser = [
 
 # Default command line argument list when launching external editor.
 # The editor list is executed item by item until an editor is found.
-linux.editor = [
+unix.editor = [
     [ "alacritty", "-e", "hx", ],
     [ "alacritty", "-e", "nvim", ],
     [ "codium", "-w", "-n", ],
@@ -126,7 +131,7 @@ linux.editor = [
 # and no graphical environment is available (`DISPLAY=''`).
 # This lists console file editors only.
 # The editor list is executed item by item until an editor is found.
-linux.editor_console = [
+unix.editor_console = [
     ["hx"],
     ["nvim"],
     ["nano"],

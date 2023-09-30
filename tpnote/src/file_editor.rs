@@ -29,7 +29,7 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
     let vv: Vec<Vec<String>>;
 
     #[cfg(all(target_family = "unix", not(target_os = "macos")))]
-    let app_args = &CFG.app_args.linux;
+    let app_args = &CFG.app_args.unix;
     #[cfg(target_family = "windows")]
     let app_args = &CFG.app_args.windows;
     #[cfg(all(target_family = "unix", target_os = "macos"))]
