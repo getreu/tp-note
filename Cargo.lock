@@ -2952,9 +2952,9 @@ dependencies = [
 
 [[package]]
 name = "parse-hyperlinks"
-version = "0.24.1"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72cbaecbb2edbcf3c272578d36d7b186b84269f7b5857cb54e2de6bd9fd4f819"
+checksum = "c1efa9af450bbd7e54630717eb02743b66b2c87820ff0cd962fbe5b85e8199bc"
 dependencies = [
  "html-escape",
  "nom",
@@ -2964,9 +2964,9 @@ dependencies = [
 
 [[package]]
 name = "parse-hyperlinks-extras"
-version = "0.24.1"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23a49abd8233176d75a2579a54d53af4158ccf0f872ee9523cfb50a782a85a5e"
+checksum = "b5d25d3ddba17d3678ae2d5b51c8af2355a4ba3811444cd22007b4a5333bb71a"
 dependencies = [
  "html-escape",
  "nom",
