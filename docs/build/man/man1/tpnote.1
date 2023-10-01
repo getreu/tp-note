@@ -759,8 +759,7 @@ effect.
 Note, that debug level `\f[V]error\f[R]' conditions will always trigger
 popup messages, regardless of \f[B]--popup\f[R] and \f[B]--debug\f[R]
 (unless `\f[V]--debug off\f[R]').
-Popup alert windows are queued and will never interrupt
-\f[I]Tp-Note\f[R].
+Popup alert windows are queued and will never interrupt Tp-Note.
 To better associate a particular action with its log events, read
 through all upcoming popup alert windows until they fail to appear.
 .RE
@@ -1296,29 +1295,29 @@ with `\f[V]-c\f[R]'.
 tpnote -V -b -c .tpnote.toml
 \f[R]
 .fi
-.PP
-For a detailed description of the available configuration variables,
-please consult Tp-Note\[cq]s source code files
-`\f[V]/tp-note/tpnote/src/config_default.toml\f[R]' and
-`\f[V]/tp-note/tpnote-lib/src/config_default.toml\f[R]'.
 .SS Register your own text editor
 .PP
 There are two ways to modify the default file editor, Tp-Note launches
 when it starts: either you can modify the configuration file variables
-`\f[V]app_args.editor\f[R]' and `\f[V]app_args.editor_console\f[R]', or
-alternatively, you can set the `\f[V]TPNOTE_EDITOR\f[R]' environment
+`\f[V]app_args.*.editor\f[R]' and `\f[V]app_args.*.editor_console\f[R]',
+or alternatively, you can set the `\f[V]TPNOTE_EDITOR\f[R]' environment
 variable (cf.\ examples in the chapter \f[I]ENVIRONMENT_VARIABLES\f[R]
 below).
 .PP
-The configuration file variables `\f[V]app_args.editor\f[R]' and
-`\f[V]app_args.editor_console\f[R]' define lists of external text
+The configuration file variables `\f[V]app_args.unix.editor\f[R]' and
+`\f[V]app_args.unix.editor_console\f[R]' define lists of external text
 editors to be launched for editing.
 The lists contain by default well-known text editor names and their
-command line arguments.
-Tp-Note tries to launch every text editor in `\f[V]app_args.editor\f[R]'
-from the beginning of the list until it finds an installed text editor.
+command line arguments for Unix like operating systems.
+For other systems consult: `\f[V]app_args.windows.editor\f[R]',
+`\f[V]app_args.windows.editor_console\f[R]',
+`\f[V]app_args.macos.editor\f[R]' and
+`\f[V]app_args.macos.editor_console\f[R]'.
+Tp-Note tries to launch every text editor in
+`\f[V]app_args.*.editor\f[R]' from the beginning of the list until it
+finds an installed text editor.
 When Tp-Note is started on a Linux console, the list
-`\f[V]app_args.editor_console\f[R]' is used instead.
+`\f[V]app_args.*.editor_console\f[R]' is used instead.
 Here you can register text editors that do not require a graphical
 environment, e.g.\ `\f[V]vim\f[R]' or `\f[V]nano\f[R]'.
 In order to use your own text editor, just place it at the top of the
@@ -1337,7 +1336,7 @@ necessary.
 .IP
 .nf
 \f[C]
-editor = [
+unix.editor = [
   [
     \[aq]kate\[aq],
     \[aq]--block\[aq]
@@ -1360,7 +1359,7 @@ Consider the following example:
 .IP
 .nf
 \f[C]
-editor = [
+windows.editor = [
     [
     \[aq]{{ get_env(name=\[dq]LOCALAPPDATA\[dq]) }}\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[aq],
     \[dq]--new-window\[dq], \[dq]--wait\[dq],
@@ -1376,7 +1375,7 @@ Windows for a user with the username `\f[V]Joe\f[R]' to
 .IP
 .nf
 \f[C]
-editor = [
+windows.editor = [
     [
     \[aq]C:\[rs]User\[rs]Joe\[rs]AppData\[rs]Local\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[aq],
     \[dq]--new-window\[dq], \[dq]--wait\[dq],
@@ -1471,13 +1470,13 @@ flatpak run com.github.marktext.marktext
 .fi
 .PP
 Then open Tp-Note\[cq]s configuration file \f[V]tpnote.toml\f[R] and
-search for the `\f[V]app_args.editor\f[R]' variable, quoted shortened
-below:
+search for the `\f[V]app_args.unix.editor\f[R]' variable, quoted
+shortened below:
 .IP
 .nf
 \f[C]
 [app_args]
-editor = [
+unix.editor = [
     [
     \[aq]code\[aq],
     \[aq]-w\[aq],
@@ -1494,14 +1493,14 @@ launching a different text editor, here \f[I]VSCode\f[R].
 When launching, Tp-Note searches through this list until it finds an
 installed text editor on the system.
 .PP
-In this example, we register the \f[I]Mark Text\f[R] editor at the first
-place in this list, by inserting
+In the next example, we register the \f[I]Mark Text\f[R] editor at the
+first place in this list, by inserting
 `\f[V][\[aq]flatpak\[aq], \[aq]run\[aq], \[aq]com.github.marktext.marktext\[aq]]\f[R]':
 .IP
 .nf
 \f[C]
 [app_args]
-editor = [
+unix.editor = [
     [
     \[aq]flatpak\[aq],
     \[aq]run\[aq],
@@ -1518,8 +1517,7 @@ editor = [
 .fi
 .PP
 Save the modified configuration file.
-Next time you launch Tp-Note, the \f[I]Mark Text\f[R]-editor will open
-with your note.
+Next time you launch Tp-Note, the \f[I]Mark Text\f[R]-editor will open.
 .PP
 \f[B]Register a console text editor running in a terminal emulator\f[R]
 .PP
@@ -1527,7 +1525,7 @@ In this setup Tp-Note launches the terminal emulator which is configured
 to launch the text editor as child process.
 Neither process should fork when they start (see above).
 .PP
-Examples, adjust to your needs and taste:
+Here, some examples you can adjust to your needs and taste:
 .IP \[bu] 2
 \f[I]Neovim\f[R] in \f[I]Xfce4-Terminal\f[R]:
 .RS 2
@@ -1535,7 +1533,7 @@ Examples, adjust to your needs and taste:
 .nf
 \f[C]
 [app_args]
-editor = [
+unix.editor = [
   [
     \[aq]xfce4-terminal\[aq],
     \[aq]--disable-server\[aq],
@@ -1555,7 +1553,7 @@ editor = [
 .nf
 \f[C]
 [app_args]
-editor = [
+unix.editor = [
   [
     \[aq]lxterminal\[aq],
     \[aq]--no-remote\[aq],
@@ -1575,7 +1573,7 @@ editor = [
 .nf
 \f[C]
 [app_args]
-editor = [
+unix.editor = [
   [
     \[aq]xterm\[aq],
     \[aq]-fa\[aq],
@@ -1598,7 +1596,7 @@ editor = [
 .nf
 \f[C]
 [app_args]
-editor = [
+unix.editor = [
   [
     \[aq]alacritty\[aq],
     \[aq]-e\[aq],
@@ -1617,7 +1615,7 @@ editor = [
 .nf
 \f[C]
 [app_args]
-editor = [
+unix.editor = [
   [
     \[aq]xfce4-terminal\[aq],
     \[aq]--disable-server\[aq],
@@ -2054,14 +2052,18 @@ If you wish to disable the viewer feature overall, set the variable
 .PP
 After the markup rendition process, Tp-Note\[cq]s built-in viewer
 generates its final HTML rendition through the customizable HTML
-templates `\f[V]tmpl_html.viewer\f[R]' and
-`\f[V]tmpl_html.viewer_error\f[R]'.
+templates `\f[V]tmpl_html.viewer\f[R]',
+`\f[V]tmpl_html.viewer_error\f[R]' and `\f[V]tmpl_html.exporter\f[R]'.
 Unlike content templates and filename templates, all HTML templates
-escape HTML critical characters by default.
+escape HTML critical characters in variables by default.
 To disable escaping for a specific variable, add the `\f[V]safe\f[R]'
-filter in last position.
-The following code example taken from `\f[V]tmpl_html.viewer\f[R]'
-illustrates the available variables:
+filter in last position of the filter chain.
+Please note, that in general, the `\f[V]safe\f[R]' filter is only
+recommended directly after the `\f[V]to_html\f[R]' and the
+`\f[V]markup_to_html\f[R]' filters, because these handle critical input
+by themselves.
+The following code example, inspired by the `\f[V]tmpl_html.viewer\f[R]'
+template, illustrates the available variables:
 .IP
 .nf
 \f[C]
@@ -2229,14 +2231,15 @@ exporter = \[aq]\[aq]\[aq]
 \f[R]
 .fi
 .PP
-In this template the same \f[I]Tera\f[R] variables are available, except
-`\f[V]{{ note_js }}\f[R]' which does not make sense in this context.
+In this template the same \f[I]Tera\f[R] variables as in
+`\f[V]tmpl_html.viewer\f[R]' are available, with one exception
+`\f[V]{{ note_js }}\f[R]', which does not make sense in this context.
 As the exporter prints possible rendition error messages on the console,
 there is no equivalent to the `\f[V]tmpl_html.viewer_error\f[R]'
 template.
-Note, in contrast to the previous template `\f[V]tmpl_html.viewer\f[R]'
-example, the source code highlighting CSS code is now embedded into the
-HTML output with:
+Note, in contrast to the previous `\f[V]tmpl_html.viewer\f[R]' example,
+the source code highlighting CSS code is now embedded into the HTML
+output with:
 .IP
 .nf
 \f[C]
@@ -2246,22 +2249,31 @@ HTML output with:
 </style>
 \f[R]
 .fi
+.PP
+Note, the `\f[V]safe\f[R]' filter disables the escaping of critical
+characters in the CSS input.
+We have no security concerns in this context, because we have full
+control over the CCS input coming from the configuration file variables
+`\f[V]tmpl_html.exporter_doc_css\f[R]' and
+`\f[V]tmpl_html.exporter_highlighting_theme\f[R]'.
 .SS Choose your favourite web browser as note viewer
 .PP
 Once the note is rendered into HTML, Tp-Note\[cq]s internal HTTP server
 connects to a random port at the `\f[V]localhost\f[R]' interface where
 the rendition is served to be viewed with a web browser.
 Tp-Note\[cq]s configuration file contains a list
-`\f[V]app_args.browser\f[R]' with common web browsers and their usual
-location on disk.
+`\f[V]app_args.unix.browser\f[R]' with common web browsers and their
+usual location on Unix like operating systems.
+For other systems consult `\f[V]app_args.windows.browser\f[R]' and
+`\f[V]app_args.macos.browser\f[R]'.
 This list is executed top down until a web browser is found and
 launched.
 If you want to view your notes with a different web browser, simply
-modify the `\f[V]app_args.browser\f[R]' list and put your favorite web
-browser on top.
+modify the `\f[V]app_args.unix.browser\f[R]' list and put your favourite
+web browser on top.
 Alternatively, you can set the `\f[V]TPNOTE_BROWSER\f[R]' environment
 variable (cf.
-examples in the capter \f[I]ENVIRONMENT_VARIABLES\f[R] below).
+examples in the chapter \f[I]ENVIRONMENT_VARIABLES\f[R] below).
 .PP
 In case none of the listed browsers can be found, Tp-Note switches into
 a fallback mode with limited functionality, where it tries to open the
@@ -2275,11 +2287,13 @@ invoke Tp-Note with `\f[V]tpnote --debug debug --popup --view\f[R]'.
 .SH TEMPLATES
 .PP
 All \f[I]TP-Note\f[R]\[cq]s workflows are customizable through its
-templates which are grouped in the `\f[V][tmpl]\f[R]' section of
-\f[I]Tp-Nots\f[R]\[cq]s configuration file.
-Configuration file variables ending with `\f[V]tmpl.*_content\f[R]' and
-`\f[V]tmpl.*_filename\f[R]' are \f[I]Tera\f[R] template strings (see:
-<https://tera.netlify.com/docs/#templates>).
+templates which are grouped in the `\f[V][tmpl]\f[R]' and in the
+`\f[V][tmpl_html]\f[R]' section of Tp-Nots\[cq]s configuration file.
+This chapter deals with `\f[V][tmpl]\f[R]' templates which are
+responsible for generating Tp-Note files.
+`\f[V][tmpl_html]\f[R]' templates concern only Tp-Note\[cq]s viewer
+feature and are discussed in the chapters: Customize the built-in note
+viewer_ and \f[I]Choose your favourite web browser as note viewer\f[R].
 .PP
 Tp-Note captures and stores its environment in \f[I]Tera variables\f[R].
 For example, the variable `\f[V]{{ dir_path }}\f[R]' is initialized with

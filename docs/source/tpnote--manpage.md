@@ -599,7 +599,7 @@ synchronization).
     with the **\--debug** option to have an effect. Note, that debug level
     '`error`' conditions will always trigger popup messages, regardless of
     **\--popup** and **\--debug** (unless '`--debug off`'). Popup alert windows
-    are queued and will never interrupt _Tp-Note_. To better associate a
+    are queued and will never interrupt Tp-Note. To better associate a
     particular action with its log events, read through all upcoming popup alert
     windows until they fail to appear.
 
@@ -1018,28 +1018,26 @@ with '`-c`'.
 tpnote -V -b -c .tpnote.toml
 ```
 
-For a detailed description of the available configuration variables, please
-consult Tp-Note's source code files
-'`/tp-note/tpnote/src/config_default.toml`' and
-'`/tp-note/tpnote-lib/src/config_default.toml`'.
-
 
 
 ## Register your own text editor
 
 There are two ways to modify the default file editor, Tp-Note launches
 when it starts: either you can modify the  configuration file variables
-'`app_args.editor`' and '`app_args.editor_console`', or alternatively, you can
-set the '`TPNOTE_EDITOR`' environment variable (cf. examples in the chapter
-_ENVIRONMENT_VARIABLES_ below).
+'`app_args.*.editor`' and '`app_args.*.editor_console`', or alternatively,
+you can set the '`TPNOTE_EDITOR`' environment variable (cf. examples in the
+chapter _ENVIRONMENT_VARIABLES_ below).
 
-The configuration file variables '`app_args.editor`' and
-'`app_args.editor_console`' define lists of external text editors to be
+The configuration file variables '`app_args.unix.editor`' and
+'`app_args.unix.editor_console`' define lists of external text editors to be
 launched for editing. The lists contain by default well-known text editor names
-and their command line arguments.  Tp-Note tries to launch every text editor
-in '`app_args.editor`' from the beginning of the list until it finds an
+and their command line arguments for Unix like operating
+systems. For other systems consult: '`app_args.windows.editor`',
+'`app_args.windows.editor_console`', '`app_args.macos.editor`' and
+'`app_args.macos.editor_console`'. Tp-Note tries to launch every text editor
+in '`app_args.*.editor`' from the beginning of the list until it finds an
 installed text editor. When Tp-Note is started on a Linux console, the list
-'`app_args.editor_console`' is used instead. Here you can register text
+'`app_args.*.editor_console`' is used instead. Here you can register text
 editors that do not require a graphical environment, e.g. '`vim`' or '`nano`'.
 In order to use your own text editor, just place it at the top of the list. To
 debug your changes invoke Tp-Note with '`tpnote --debug debug --popup --edit`'.
@@ -1052,7 +1050,7 @@ checks if the title of the note files has changed in its YAML header
 and renames the note file if necessary.
 
 ```toml
-editor = [
+unix.editor = [
   [
     'kate',
     '--block'
@@ -1070,7 +1068,7 @@ All items in the above list are subject to limited template expansion allowing
 to insert the value of environment variables. Consider the following example:
 
 ```toml
-editor = [
+windows.editor = [
     [
     '{{ get_env(name="LOCALAPPDATA") }}\Programs\Microsoft VS Code\Code.exe',
     "--new-window", "--wait",
@@ -1083,7 +1081,7 @@ When the configuration file is loaded, the above expression
 the username '`Joe`' to '`C:\User\Joe\AppData\Local`' resulting in:
 
 ```toml
-editor = [
+windows.editor = [
     [
     'C:\User\Joe\AppData\Local\Programs\Microsoft VS Code\Code.exe',
     "--new-window", "--wait",
@@ -1164,11 +1162,11 @@ flatpak run com.github.marktext.marktext
 ```
 
 Then open Tp-Note's configuration file `tpnote.toml` and search for the
-'`app_args.editor`' variable, quoted shortened below:
+'`app_args.unix.editor`' variable, quoted shortened below:
 
 ```toml
 [app_args]
-editor = [
+unix.editor = [
     [
     'code',
     '-w',
@@ -1180,16 +1178,15 @@ editor = [
 
 The structure of this variable is a list of lists. Every item in the outer list
 corresponds to one entire command line launching a different text editor, here
-_VSCode_.  When launching, Tp-Note searches through this list
-until it finds an installed text editor on the system.
+_VSCode_.  When launching, Tp-Note searches through this list until it finds an
+installed text editor on the system.
 
-In this example, we register the _Mark Text_ editor at the first place in this
-list, by inserting '`['flatpak', 'run', 'com.github.marktext.marktext']`':
-
+In the next example, we register the _Mark Text_ editor at the first place in
+this list, by inserting '`['flatpak', 'run', 'com.github.marktext.marktext']`':
 
 ```toml
 [app_args]
-editor = [
+unix.editor = [
     [
     'flatpak',
     'run',
@@ -1205,7 +1202,7 @@ editor = [
 ```
 
 Save the modified configuration file.  Next time you launch Tp-Note, the
-_Mark Text_-editor will open with your note.
+_Mark Text_-editor will open.
 
 **Register a console text editor running in a terminal emulator**
 
@@ -1213,13 +1210,13 @@ In this setup Tp-Note launches the terminal emulator which is configured to
 launch the text editor as child process. Neither process should fork when they
 start (see above).
 
-Examples, adjust to your needs and taste:
+Here, some examples you can adjust to your needs and taste:
 
 * _Neovim_ in _Xfce4-Terminal_:
 
   ```toml
   [app_args]
-  editor = [
+  unix.editor = [
     [
       'xfce4-terminal',
       '--disable-server',
@@ -1234,7 +1231,7 @@ Examples, adjust to your needs and taste:
 
   ```toml
   [app_args]
-  editor = [
+  unix.editor = [
     [
       'lxterminal',
       '--no-remote',
@@ -1250,7 +1247,7 @@ Examples, adjust to your needs and taste:
 
   ```toml
   [app_args]
-  editor = [
+  unix.editor = [
     [
       'xterm',
       '-fa',
@@ -1268,7 +1265,7 @@ Examples, adjust to your needs and taste:
 
   ```toml
   [app_args]
-  editor = [
+  unix.editor = [
     [
       'alacritty',
       '-e',
@@ -1283,7 +1280,7 @@ Examples, adjust to your needs and taste:
 
   ```toml
   [app_args]
-  editor = [
+  unix.editor = [
     [
       'xfce4-terminal',
       '--disable-server',
@@ -1627,11 +1624,14 @@ you wish to disable the viewer feature overall, set the variable
 
 After the markup rendition process, Tp-Note's built-in viewer generates its
 final HTML rendition through the customizable HTML templates
-'`tmpl_html.viewer`' and '`tmpl_html.viewer_error`'. Unlike content templates
-and filename templates, all HTML templates escape HTML critical characters
-by default. To disable escaping for a specific variable, add the '`safe`' filter
-in last position. The following code example taken from '`tmpl_html.viewer`'
-illustrates the available variables:
+'`tmpl_html.viewer`', '`tmpl_html.viewer_error`' and '`tmpl_html.exporter`'.
+Unlike content templates and filename templates, all HTML templates escape HTML
+critical characters in variables by default. To disable escaping for a specific
+variable, add the '`safe`' filter in last position of the filter chain.
+Please note, that in general, the '`safe`' filter is only recommended directly
+after the '`to_html`' and the '`markup_to_html`' filters, because these
+handle critical input by themselves. The following code example, inspired by
+the '`tmpl_html.viewer`' template, illustrates the available variables:
 
 ```toml
 [tmpl_html]
@@ -1781,12 +1781,12 @@ exporter = '''
 </html>
 ```
 
-In this template the same _Tera_ variables are available, except 
-'`{{ note_js }}`' which does not make sense in this context. As the exporter
-prints possible rendition error messages on the console, there is no equivalent
-to the '`tmpl_html.viewer_error`' template. Note, in contrast to the previous
-template '`tmpl_html.viewer`' example, the source code highlighting CSS code is
-now embedded into the HTML output with:
+In this template the same _Tera_ variables as in '`tmpl_html.viewer`' are
+available, with one exception '`{{ note_js }}`', which does not make sense
+in this context. As the exporter prints possible rendition error messages on
+the console, there is no equivalent to the '`tmpl_html.viewer_error`' template.
+Note, in contrast to the previous '`tmpl_html.viewer`' example, the
+source code highlighting CSS code is now embedded into the HTML output with:
 
 ```html
 <style>
@@ -1795,38 +1795,46 @@ now embedded into the HTML output with:
 </style>
 ```
 
+Note, the '`safe`' filter disables the escaping of critical characters in the
+CSS input. We have no security concerns in this context, because we have full
+control over the CCS input coming from the configuration file variables
+'`tmpl_html.exporter_doc_css`' and '`tmpl_html.exporter_highlighting_theme`'.
+
 
 
 ## Choose your favourite web browser as note viewer
 
 Once the note is rendered into HTML, Tp-Note's internal HTTP server connects
-to a random port at the '`localhost`' interface where the rendition is served to
-be viewed with a web browser. Tp-Note's configuration file contains a list
-'`app_args.browser`' with common web browsers and their usual location on disk.
-This list is executed top down until a web browser is found and launched. If
-you want to view your notes with a different web browser, simply modify the
-'`app_args.browser`' list and put your favorite web browser on top.
+to a random port at the '`localhost`' interface where the rendition is served
+to be viewed with a web browser. Tp-Note's configuration file contains a list
+'`app_args.unix.browser`' with common web browsers and their usual
+location on Unix like operating systems. For other systems consult
+'`app_args.windows.browser`' and '`app_args.macos.browser`'. This list
+is executed top down until a web browser is found and launched. If you
+want to view your notes with a different web browser, simply modify the
+'`app_args.unix.browser`' list and put your favourite web browser on top.
 Alternatively, you can set the '`TPNOTE_BROWSER`' environment variable  (cf.
-examples in the capter _ENVIRONMENT_VARIABLES_ below).
+examples in the chapter _ENVIRONMENT_VARIABLES_ below).
 
 In case none of the listed browsers can be found, Tp-Note switches into a
 fallback mode with limited functionality, where it tries to open the system's
-default web browser. A disadvantage is, that in fall back mode Tp-Note is not
-able to detect when the user closes the web browser. This might lead to
-situations, where Tp-Note's internal HTTP server shuts down to early.
-In order to check if Tp-Note finds the selected web browser as intended,
-invoke Tp-Note with '`tpnote --debug debug --popup --view`'.
+default web browser. A disadvantage is, that in fall back mode Tp-Note is
+not able to detect when the user closes the web browser. This might lead to
+situations, where Tp-Note's internal HTTP server shuts down to early. In order
+to check if Tp-Note finds the selected web browser as intended, invoke Tp-Note
+with '`tpnote --debug debug --popup --view`'.
 
 
 
 
 # TEMPLATES
 
-All _TP-Note_'s workflows are customizable through its templates which
-are grouped in the '`[tmpl]`' section of _Tp-Nots_'s configuration file.
-Configuration file variables ending with '`tmpl.*_content`' and
-'`tmpl.*_filename`' are _Tera_ template strings (see:
-<https://tera.netlify.com/docs/#templates>).
+All _TP-Note_'s workflows are customizable through its templates which are
+grouped in the '`[tmpl]`' and in the '`[tmpl_html]`' section of Tp-Nots's
+configuration file. This chapter deals with '`[tmpl]`' templates which are
+responsible for generating Tp-Note files. '`[tmpl_html]`' templates concern
+only Tp-Note's viewer feature and are discussed in the chapters: Customize the
+built-in note viewer_ and _Choose your favourite web browser as note viewer_.
 
 Tp-Note captures and stores its environment in _Tera variables_. For example,
 the variable '`{{ dir_path }}`' is initialized with the note's target
