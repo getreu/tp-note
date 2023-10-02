@@ -122,7 +122,7 @@ fn assemble_link(
 /// Contract 4: The returned link is guaranteed to be a child of `root_path`, or
 /// `None`.
 
-fn rewrite_link(
+fn rewrite_local_link(
     link: &str,
     root_path: &Path,
     docdir: &Path,
@@ -294,8 +294,8 @@ pub fn rewrite_links(
             continue;
         }
 
-        // Rewrite the link.
-        if let Some((consumed_new, dest)) = rewrite_link(
+        // Rewrite the local link.
+        if let Some((consumed_new, dest)) = rewrite_local_link(
             consumed,
             root_path,
             docdir,
@@ -346,8 +346,8 @@ mod tests {
     };
 
     use crate::html::assemble_link;
-    use crate::html::rewrite_link;
     use crate::html::rewrite_links;
+    use crate::html::rewrite_local_link;
 
     #[test]
     fn test_assemble_link() {
@@ -436,7 +436,7 @@ mod tests {
 
         // Should panic: this is not a relative path.
         let input = "<a href=\"ftp://getreu.net\">Blog</a>";
-        let _ = rewrite_link(input, root_path, docdir, true, false, false).unwrap();
+        let _ = rewrite_local_link(input, root_path, docdir, true, false, false).unwrap();
     }
 
     #[test]
@@ -449,7 +449,7 @@ mod tests {
         let expected = "<img src=\"/abs/note%20path/t%20m%20p.jpg\" \
             alt=\"Image\" />";
         let (outhtml, outpath) =
-            rewrite_link(input, root_path, docdir, true, false, false).unwrap();
+            rewrite_local_link(input, root_path, docdir, true, false, false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("/abs/note path/t m p.jpg"));
@@ -458,7 +458,7 @@ mod tests {
         let input = "<img src=\"down/./../../t%20m%20p.jpg\" alt=\"Image\" />";
         let expected = "<img src=\"../t%20m%20p.jpg\" alt=\"Image\" />";
         let (outhtml, outpath) =
-            rewrite_link(input, root_path, docdir, false, false, false).unwrap();
+            rewrite_local_link(input, root_path, docdir, false, false, false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("../t m p.jpg"));
@@ -468,7 +468,7 @@ mod tests {
         let expected = "<a href=\"/abs/note%20path/my%20note%201.md\" \
             title=\"\">my note 1</a>";
         let (outhtml, outpath) =
-            rewrite_link(input, root_path, docdir, true, false, false).unwrap();
+            rewrite_local_link(input, root_path, docdir, true, false, false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("/abs/note path/my note 1.md"));
@@ -478,7 +478,7 @@ mod tests {
         let expected = "<a href=\"/dir/my%20note%201.md\" \
             title=\"\">my note 1</a>";
         let (outhtml, outpath) =
-            rewrite_link(input, root_path, docdir, true, false, false).unwrap();
+            rewrite_local_link(input, root_path, docdir, true, false, false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
@@ -488,7 +488,7 @@ mod tests {
         let expected = "<a href=\"dir/my%20note%201.md\" \
             title=\"\">my note 1</a>";
         let (outhtml, outpath) =
-            rewrite_link(input, root_path, docdir, false, false, false).unwrap();
+            rewrite_local_link(input, root_path, docdir, false, false, false).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(outpath, PathBuf::from("dir/my note 1.md"));
@@ -497,7 +497,8 @@ mod tests {
         let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
         let expected = "<a href=\"/abs/note%20path/dir/my%20note%201.md.html\" \
             title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rewrite_link(input, root_path, docdir, true, false, true).unwrap();
+        let (outhtml, outpath) =
+            rewrite_local_link(input, root_path, docdir, true, false, true).unwrap();
 
         assert_eq!(outhtml, expected);
         assert_eq!(
@@ -508,7 +509,7 @@ mod tests {
         // Check relative link in input.
         let input = "<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>";
         let expected = "<a href=\"/path/dir/my%20note%201.md\" title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rewrite_link(
+        let (outhtml, outpath) = rewrite_local_link(
             input,
             Path::new("/my/note/"),
             Path::new("/my/note/path/"),
@@ -524,7 +525,7 @@ mod tests {
         // Check absolute link in input.
         let input = "<a href=\"/down/./../dir/my%20note%201.md\">my note 1</a>";
         let expected = "<a href=\"/dir/my%20note%201.md\" title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rewrite_link(
+        let (outhtml, outpath) = rewrite_local_link(
             input,
             root_path,
             Path::new("/my/ignored/"),
@@ -539,7 +540,7 @@ mod tests {
 
         // Check absolute link in input, not in `root_path`.
         let input = "<a href=\"/down/../../dir/my%20note%201.md\">my note 1</a>";
-        let output = rewrite_link(
+        let output = rewrite_local_link(
             input,
             root_path,
             Path::new("/my/notepath/"),
@@ -552,7 +553,7 @@ mod tests {
 
         // Check relative link in input, not in `root_path`.
         let input = "<a href=\"../../dir/my%20note%201.md\">my note 1</a>";
-        let output = rewrite_link(
+        let output = rewrite_local_link(
             input,
             root_path,
             Path::new("/my/notepath/"),
@@ -566,14 +567,14 @@ mod tests {
         // Check relative link in input, with underflow.
         let root_path = Path::new("/");
         let input = "<a href=\"../../dir/my%20note%201.md\">my note 1</a>";
-        let output = rewrite_link(input, root_path, Path::new("/my/"), true, false, false);
+        let output = rewrite_local_link(input, root_path, Path::new("/my/"), true, false, false);
 
         assert_eq!(output, None);
 
         // Check relative link in input, not in `root_path`.
         let root_path = Path::new("/my");
         let input = "<a href=\"../../dir/my%20note%201.md\">my note 1</a>";
-        let output = rewrite_link(
+        let output = rewrite_local_link(
             input,
             root_path,
             Path::new("/my/notepath"),
