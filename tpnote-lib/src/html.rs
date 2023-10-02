@@ -5,7 +5,6 @@ use crate::markup_language::MarkupLanguage;
 use parking_lot::RwLock;
 use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
-use percent_encoding::{percent_decode_str, utf8_percent_encode, NON_ALPHANUMERIC};
 use std::{
     collections::HashSet,
     path::{Component, Path, PathBuf},
@@ -131,12 +130,6 @@ fn rewrite_local_link(
     rewrite_ext: bool,
 ) -> Option<(String, PathBuf)> {
     //
-    const ASCIISET: percent_encoding::AsciiSet = NON_ALPHANUMERIC
-        .remove(b'/')
-        .remove(b'.')
-        .remove(b'_')
-        .remove(b'-');
-
     match link {
         Link::Text2Dest(text, dest, title) => {
             // Check contract 1. Panic if link is not local.
@@ -162,7 +155,7 @@ fn rewrite_local_link(
                 let text = text
                     .trim_start_matches("http:")
                     .trim_start_matches("https:");
-                let text = PathBuf::from(&*percent_decode_str(text).decode_utf8().unwrap());
+                let text = Path::new(&*text);
                 let text = text
                     .file_stem()
                     .unwrap_or_default()
@@ -172,7 +165,6 @@ fn rewrite_local_link(
             }
 
             // Append ".html" if `rewrite_ext`.
-            let dest = &*percent_decode_str(dest).decode_utf8().unwrap();
             let dest = if rewrite_ext {
                 let mut dest = dest.to_string();
                 dest.push_str(HTML_EXT);
@@ -199,7 +191,6 @@ fn rewrite_local_link(
                 .collect::<String>();
             #[cfg(windows)]
             let destout_encoded = destout_encoded.as_str();
-            let destout_encoded = utf8_percent_encode(destout_encoded, &ASCIISET).to_string();
             Some((
                 format!(
                     "<a href=\"{}\" title=\"{}\">{}</a>",
@@ -210,8 +201,11 @@ fn rewrite_local_link(
         }
 
         Link::Image(text, dest) => {
+            // Check contract 1. Panic if link is not local.
+            debug_assert!(!dest.contains("://"));
+
             // Concat `abspath` and `relpath`.
-            let dest = PathBuf::from(&*percent_decode_str(&dest).decode_utf8().unwrap());
+            let dest = PathBuf::from(&*dest);
 
             let destout = assemble_link(
                 root_path,
@@ -231,7 +225,6 @@ fn rewrite_local_link(
                 .collect::<String>();
             //#[cfg(windows)]
             let destout_encoded = destout_encoded.as_str();
-            let destout_encoded = utf8_percent_encode(destout_encoded, &ASCIISET).to_string();
             Some((
                 format!("<img src=\"{}\" alt=\"{}\" />", destout_encoded, text),
                 destout,
@@ -462,11 +455,11 @@ mod tests {
         let docdir = Path::new("/my/abs/note path/");
 
         // Check relative path to image.
-        let input = take_link("<img src=\"down/./down/../../t%20m%20p.jpg\" alt=\"Image\" />")
+        let input = take_link("<img src=\"down/./down/../../t m p.jpg\" alt=\"Image\" />")
             .unwrap()
             .1
              .1;
-        let expected = "<img src=\"/abs/note%20path/t%20m%20p.jpg\" \
+        let expected = "<img src=\"/abs/note path/t m p.jpg\" \
             alt=\"Image\" />";
         let (outhtml, outpath) =
             rewrite_local_link(input, root_path, docdir, true, false, false).unwrap();
@@ -475,11 +468,11 @@ mod tests {
         assert_eq!(outpath, PathBuf::from("/abs/note path/t m p.jpg"));
 
         // Check relative path to image. Canonicalized?
-        let input = take_link("<img src=\"down/./../../t%20m%20p.jpg\" alt=\"Image\" />")
+        let input = take_link("<img src=\"down/./../../t m p.jpg\" alt=\"Image\" />")
             .unwrap()
             .1
              .1;
-        let expected = "<img src=\"../t%20m%20p.jpg\" alt=\"Image\" />";
+        let expected = "<img src=\"../t m p.jpg\" alt=\"Image\" />";
         let (outhtml, outpath) =
             rewrite_local_link(input, root_path, docdir, false, false, false).unwrap();
 
@@ -487,11 +480,11 @@ mod tests {
         assert_eq!(outpath, PathBuf::from("../t m p.jpg"));
 
         // Check relative path to note file.
-        let input = take_link("<a href=\"./down/./../my%20note%201.md\">my note 1</a>")
+        let input = take_link("<a href=\"./down/./../my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let expected = "<a href=\"/abs/note%20path/my%20note%201.md\" \
+        let expected = "<a href=\"/abs/note path/my note 1.md\" \
             title=\"\">my note 1</a>";
         let (outhtml, outpath) =
             rewrite_local_link(input, root_path, docdir, true, false, false).unwrap();
@@ -500,11 +493,11 @@ mod tests {
         assert_eq!(outpath, PathBuf::from("/abs/note path/my note 1.md"));
 
         // Check absolute path to note file.
-        let input = take_link("<a href=\"/dir/./down/../my%20note%201.md\">my note 1</a>")
+        let input = take_link("<a href=\"/dir/./down/../my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let expected = "<a href=\"/dir/my%20note%201.md\" \
+        let expected = "<a href=\"/dir/my note 1.md\" \
             title=\"\">my note 1</a>";
         let (outhtml, outpath) =
             rewrite_local_link(input, root_path, docdir, true, false, false).unwrap();
@@ -513,11 +506,11 @@ mod tests {
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
 
         // Check relative path to note file. Canonicalized?
-        let input = take_link("<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>")
+        let input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let expected = "<a href=\"dir/my%20note%201.md\" \
+        let expected = "<a href=\"dir/my note 1.md\" \
             title=\"\">my note 1</a>";
         let (outhtml, outpath) =
             rewrite_local_link(input, root_path, docdir, false, false, false).unwrap();
@@ -526,11 +519,11 @@ mod tests {
         assert_eq!(outpath, PathBuf::from("dir/my note 1.md"));
 
         // Check `rewrite_ext=true`.
-        let input = take_link("<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>")
+        let input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let expected = "<a href=\"/abs/note%20path/dir/my%20note%201.md.html\" \
+        let expected = "<a href=\"/abs/note path/dir/my note 1.md.html\" \
             title=\"\">my note 1</a>";
         let (outhtml, outpath) =
             rewrite_local_link(input, root_path, docdir, true, false, true).unwrap();
@@ -542,11 +535,11 @@ mod tests {
         );
 
         // Check relative link in input.
-        let input = take_link("<a href=\"./down/./../dir/my%20note%201.md\">my note 1</a>")
+        let input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let expected = "<a href=\"/path/dir/my%20note%201.md\" title=\"\">my note 1</a>";
+        let expected = "<a href=\"/path/dir/my note 1.md\" title=\"\">my note 1</a>";
         let (outhtml, outpath) = rewrite_local_link(
             input,
             Path::new("/my/note/"),
@@ -561,11 +554,11 @@ mod tests {
         assert_eq!(outpath, PathBuf::from("/path/dir/my note 1.md"));
 
         // Check absolute link in input.
-        let input = take_link("<a href=\"/down/./../dir/my%20note%201.md\">my note 1</a>")
+        let input = take_link("<a href=\"/down/./../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let expected = "<a href=\"/dir/my%20note%201.md\" title=\"\">my note 1</a>";
+        let expected = "<a href=\"/dir/my note 1.md\" title=\"\">my note 1</a>";
         let (outhtml, outpath) = rewrite_local_link(
             input,
             root_path,
@@ -580,7 +573,7 @@ mod tests {
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
 
         // Check absolute link in input, not in `root_path`.
-        let input = take_link("<a href=\"/down/../../dir/my%20note%201.md\">my note 1</a>")
+        let input = take_link("<a href=\"/down/../../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
@@ -596,7 +589,7 @@ mod tests {
         assert_eq!(output, None);
 
         // Check relative link in input, not in `root_path`.
-        let input = take_link("<a href=\"../../dir/my%20note%201.md\">my note 1</a>")
+        let input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
@@ -613,7 +606,7 @@ mod tests {
 
         // Check relative link in input, with underflow.
         let root_path = Path::new("/");
-        let input = take_link("<a href=\"../../dir/my%20note%201.md\">my note 1</a>")
+        let input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
@@ -623,7 +616,7 @@ mod tests {
 
         // Check relative link in input, not in `root_path`.
         let root_path = Path::new("/my");
-        let input = take_link("<a href=\"../../dir/my%20note%201.md\">my note 1</a>")
+        let input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
@@ -646,23 +639,23 @@ mod tests {
         let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
         let input = "abc<a href=\"ftp://getreu.net\">Blog</a>\
             def<a href=\"https://getreu.net\">https://getreu.net</a>\
-            ghi<img src=\"t%20m%20p.jpg\" alt=\"test 1\" />\
-            jkl<a href=\"down/../down/my%20note%201.md\">my note 1</a>\
-            mno<a href=\"http:./down/../dir/my%20note.md\">\
-            http:./down/../dir/my%20note.md</a>\
-            pqr<a href=\"http:/down/../dir/my%20note.md\">\
-            http:./down/../dir/my%20note.md</a>\
-            stu<a href=\"http:/../dir/underflow/my%20note.md\">\
+            ghi<img src=\"t m p.jpg\" alt=\"test 1\" />\
+            jkl<a href=\"down/../down/my note 1.md\">my note 1</a>\
+            mno<a href=\"http:./down/../dir/my note.md\">\
+            http:./down/../dir/my note.md</a>\
+            pqr<a href=\"http:/down/../dir/my note.md\">\
+            http:./down/../dir/my note.md</a>\
+            stu<a href=\"http:/../dir/underflow/my note.md\">\
             not allowed dir</a>\
-            vwx<a href=\"http:../../../not allowed dir/my%20note.md\">\
+            vwx<a href=\"http:../../../not allowed dir/my note.md\">\
             not allowed</a>"
             .to_string();
         let expected = "abc<a href=\"ftp://getreu.net\">Blog</a>\
             def<a href=\"https://getreu.net\">https://getreu.net</a>\
-            ghi<img src=\"/abs/note%20path/t%20m%20p.jpg\" alt=\"test 1\" />\
-            jkl<a href=\"/abs/note%20path/down/my%20note%201.md\" title=\"\">my note 1</a>\
-            mno<a href=\"/abs/note%20path/dir/my%20note.md\" title=\"\">my note</a>\
-            pqr<a href=\"/dir/my%20note.md\" title=\"\">my note</a>\
+            ghi<img src=\"/abs/note path/t m p.jpg\" alt=\"test 1\" />\
+            jkl<a href=\"/abs/note path/down/my note 1.md\" title=\"\">my note 1</a>\
+            mno<a href=\"/abs/note path/dir/my note.md\" title=\"\">my note</a>\
+            pqr<a href=\"/dir/my note.md\" title=\"\">my note</a>\
             stu<i>INVALID LOCAL LINK</i>\
             vwx<i>INVALID LOCAL LINK</i>"
             .to_string();
