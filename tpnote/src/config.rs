@@ -161,7 +161,7 @@ pub struct Viewer {
     pub missing_header_disables: bool,
     pub notify_period: u64,
     pub tcp_connections_max: usize,
-    pub served_mime_types: Vec<Vec<String>>,
+    pub served_mime_types: Vec<(String, String)>,
     pub displayed_tpnote_count_max: usize,
 }
 
@@ -383,19 +383,5 @@ lazy_static! {
                 Some(config)
             }
         )
-    };
-}
-
-lazy_static! {
-    /// Store the extension as key and mime type as value in Map.
-    pub static ref VIEWER_SERVED_MIME_TYPES_MAP: BTreeMap<&'static str, &'static str> = {
-        let mut hm = BTreeMap::new();
-        for l in &CFG.viewer.served_mime_types {
-            if l.len() >= 2
-            {
-                hm.insert(l[0].as_str(), l[1].as_str());
-            };
-        };
-        hm
     };
 }

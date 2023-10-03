@@ -4,7 +4,6 @@
 
 use super::sse_server::ServerThread;
 use crate::config::CFG;
-use crate::config::VIEWER_SERVED_MIME_TYPES_MAP;
 use crate::viewer::error::ViewerError;
 use std::borrow::Cow;
 use std::fs;
@@ -225,10 +224,16 @@ impl HttpResponse for ServerThread {
                     .to_lowercase();
 
                 // Find the corresponding mime type of this file extension.
-                let mime_type = VIEWER_SERVED_MIME_TYPES_MAP
-                    .get(extension)
-                    .map_or_else(|| MarkupLanguage::from(extension).mine_type(), |&mt| mt);
+                let mime_type = CFG
+                    .viewer
+                    .served_mime_types
+                    .iter()
+                    .filter_map(|(ext, mime)| (extension == ext).then(|| mime))
+                    .next()
+                    .map_or_else(|| MarkupLanguage::from(extension).mine_type(), |mt| mt);
 
+                // `mime_types()` returns a non empty string for all
+                // renderable Tp-Note file extensions.
                 if mime_type.is_empty() {
                     // Reject all files with extensions not listed.
                     log::warn!(

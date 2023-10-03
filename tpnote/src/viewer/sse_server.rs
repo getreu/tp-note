@@ -2,7 +2,6 @@
 //! This module contains also the web browser Javascript client code.
 
 use crate::config::CFG;
-use crate::config::VIEWER_SERVED_MIME_TYPES_MAP;
 use crate::viewer::error::ViewerError;
 use crate::viewer::http_response::HttpResponse;
 use crate::viewer::init::LOCALHOST;
@@ -74,22 +73,7 @@ pub fn manage_connections(
     // in the Tera variable `TMPL_VAR_PATH`.
     let context = Context::from(&doc_path);
 
-    log::info!(
-        "Viewer notice:\n\
-         only files under the directory: {}\n\
-         with the following extensions:\n\
-         {}\n\
-         are served!",
-        context.root_path.display(),
-        &VIEWER_SERVED_MIME_TYPES_MAP
-            .keys()
-            .map(|s| {
-                let mut s = s.to_string();
-                s.push_str(", ");
-                s
-            })
-            .collect::<String>()
-    );
+    log::info!("Viewer listens to incomming requests.");
 
     for stream in listener.incoming() {
         match stream {

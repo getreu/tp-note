@@ -1,7 +1,6 @@
 //! Main module for the markup renderer and note viewer feature.
 
 use crate::config::CFG;
-use crate::config::VIEWER_SERVED_MIME_TYPES_MAP;
 use crate::settings::ARGS;
 use crate::settings::LAUNCH_EDITOR;
 use crate::viewer::error::ViewerError;
@@ -77,9 +76,6 @@ impl Viewer {
             TcpListener::bind((LOCALHOST, 0))?
         };
         let localport = listener.local_addr()?.port();
-
-        // We only serve files with `VIEWER_SERVED_MIME_TYPES_HMAP` file extensions.
-        lazy_static::initialize(&VIEWER_SERVED_MIME_TYPES_MAP);
 
         // Launch a background HTTP server thread to manage Server-Sent-Event subscribers
         // and to serve the rendered html.
