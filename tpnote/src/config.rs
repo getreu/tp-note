@@ -10,7 +10,6 @@ use log::LevelFilter;
 use parking_lot::RwLock;
 use serde::Deserialize;
 use serde::Serialize;
-use std::collections::BTreeMap;
 use std::env;
 #[cfg(not(test))]
 use std::fs;

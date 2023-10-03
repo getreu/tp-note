@@ -224,17 +224,19 @@ impl HttpResponse for ServerThread {
                     .to_lowercase();
 
                 // Find the corresponding mime type of this file extension.
-                let mime_type = CFG
-                    .viewer
-                    .served_mime_types
-                    .iter()
-                    .filter_map(|(ext, mime)| (extension == ext).then(|| mime))
-                    .next()
-                    .map_or_else(|| MarkupLanguage::from(extension).mine_type(), |mt| mt);
+                let mime_type = Some(MarkupLanguage::from(extension).mine_type())
+                    // `mime_types()` returns a non empty string for all
+                    // renderable Tp-Note file extensions.
+                    .filter(|&m| !m.is_empty())
+                    .or_else(|| {
+                        CFG.viewer
+                            .served_mime_types
+                            .iter()
+                            .filter_map(|(ext, mime)| (extension == ext).then_some(mime.as_str()))
+                            .next()
+                    });
 
-                // `mime_types()` returns a non empty string for all
-                // renderable Tp-Note file extensions.
-                if mime_type.is_empty() {
+                if mime_type.is_none() {
                     // Reject all files with extensions not listed.
                     log::warn!(
                         "TCP port local {} to peer {}: \
@@ -274,9 +276,10 @@ impl HttpResponse for ServerThread {
                 }
 
                 //
-                // Condition 5: Is the file readable?
+                // Condition 5: Is the file readable? We know:
+                // `mime_type.is_some()` at this point.
                 if abspath.is_file() {
-                    self.respond_file_ok(&abspath, 0, mime_type)?;
+                    self.respond_file_ok(&abspath, 0, mime_type.unwrap())?;
                 } else {
                     self.respond_not_found(&abspath)?;
                 }
