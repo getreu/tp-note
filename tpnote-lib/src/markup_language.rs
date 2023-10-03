@@ -55,63 +55,45 @@ impl MarkupLanguage {
     pub fn render(&self, input: &str) -> String {
         match self {
             #[cfg(feature = "renderer")]
-            Self::Markdown => Self::render_md_content(input),
+            Self::Markdown => {
+                // Set up options and parser. Besides the CommonMark standard
+                // we enable some useful extras.
+
+                let options = Options::all();
+                let parser = Parser::new_ext(input, options);
+                let parser = SyntaxPreprocessor::new(parser);
+
+                // Write to String buffer.
+                let mut html_output: String = String::with_capacity(input.len() * 3 / 2);
+                html::push_html(&mut html_output, parser);
+                html_output
+            }
+
             #[cfg(feature = "renderer")]
-            Self::Restructuredtext => Self::render_rst_content(input),
+            Self::Restructuredtext => {
+                // Note, that the current rst renderer requires files to end with a new line.
+                // <https://github.com/flying-sheep/rust-rst/issues/30>
+                let mut rest_input = input.trim_start();
+                // The rst parser accepts only exactly one newline at the end.
+                while rest_input.ends_with("\n\n") {
+                    rest_input = &rest_input[..rest_input.len() - 1];
+                }
+                // Write to String buffer.
+                let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
+                parse(rest_input.trim_start())
+                    .and_then(|doc| render_html(&doc, &mut html_output, false))
+                    .map_or_else(
+                        |e| NoteError::RstParse { msg: e.to_string() }.to_string(),
+                        |_| from_utf8(&html_output).unwrap_or_default().to_string(),
+                    )
+            }
+
             Self::Html => input.to_string(),
-            Self::PlainText => Self::render_txt_content(input),
-            _ => Self::render_unknown_content(input),
+
+            Self::PlainText => text_links2html(input),
+
+            _ => text_rawlinks2html(input),
         }
-    }
-
-    #[inline]
-    #[cfg(feature = "renderer")]
-    /// Markdown renderer.
-    fn render_md_content(markdown_input: &str) -> String {
-        // Set up options and parser. Besides the CommonMark standard
-        // we enable some useful extras.
-
-        let options = Options::all();
-        let parser = Parser::new_ext(markdown_input, options);
-        let parser = SyntaxPreprocessor::new(parser);
-
-        // Write to String buffer.
-        let mut html_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
-        html::push_html(&mut html_output, parser);
-        html_output
-    }
-
-    #[inline]
-    #[cfg(feature = "renderer")]
-    /// RestructuredText renderer.
-    fn render_rst_content(rest_input: &str) -> String {
-        // Note, that the current rst renderer requires files to end with a new line.
-        // <https://github.com/flying-sheep/rust-rst/issues/30>
-        let mut rest_input = rest_input.trim_start();
-        // The rst parser accepts only exactly one newline at the end.
-        while rest_input.ends_with("\n\n") {
-            rest_input = &rest_input[..rest_input.len() - 1];
-        }
-        // Write to String buffer.
-        let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
-        parse(rest_input.trim_start())
-            .and_then(|doc| render_html(&doc, &mut html_output, false))
-            .map_or_else(
-                |e| NoteError::RstParse { msg: e.to_string() }.to_string(),
-                |_| from_utf8(&html_output).unwrap_or_default().to_string(),
-            )
-    }
-
-    #[inline]
-    /// Renderer for markup languages other than the above.
-    fn render_txt_content(other_input: &str) -> String {
-        text_links2html(other_input)
-    }
-
-    #[inline]
-    /// Renderer for markup languages other than the above.
-    fn render_unknown_content(other_input: &str) -> String {
-        text_rawlinks2html(other_input)
     }
 }
 
