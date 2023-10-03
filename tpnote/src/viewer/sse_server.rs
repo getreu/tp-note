@@ -73,7 +73,29 @@ pub fn manage_connections(
     // in the Tera variable `TMPL_VAR_PATH`.
     let context = Context::from(&doc_path);
 
-    log::info!("Viewer listens to incomming requests.");
+    log::info!(
+        "Viewer listens to incomming requests.\n\
+        The following file extensions are served:\n\
+        {}",
+        {
+            let mut list = CFG
+                .filename
+                .extensions
+                .iter()
+                .map(|(k, _v)| format!("{}, ", k))
+                .collect::<String>();
+            list.push_str(
+                CFG.viewer
+                    .served_mime_types
+                    .iter()
+                    .map(|(k, _v)| format!("{}, ", k))
+                    .collect::<String>()
+                    .as_str(),
+            );
+            list.truncate(list.len().saturating_sub(2));
+            list
+        }
+    );
 
     for stream in listener.incoming() {
         match stream {
