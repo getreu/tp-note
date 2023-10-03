@@ -42,6 +42,9 @@ impl MarkupLanguage {
         }
     }
 
+    /// Returns the MIME type for all Markup Languages, Tp-Note is
+    /// able to render. Otherwise, for `MarkupLanguage::Unknown` and
+    /// `MarkupLanguage::None` this returns the empty string "".
     pub fn mine_type(&self) -> &'static str {
         match self {
             Self::Markdown => "text/markodwn",

@@ -225,25 +225,26 @@ impl HttpResponse for ServerThread {
                     .to_lowercase();
 
                 // Find the corresponding mime type of this file extension.
-                let mime_type = match VIEWER_SERVED_MIME_TYPES_MAP.get(extension) {
-                    Some(mt) => mt,
-                    None => {
-                        // Reject all files with extensions not listed.
-                        log::warn!(
-                            "TCP port local {} to peer {}: \
+                let mime_type = VIEWER_SERVED_MIME_TYPES_MAP
+                    .get(extension)
+                    .map_or_else(|| MarkupLanguage::from(extension).mine_type(), |&mt| mt);
+
+                if mime_type.is_empty() {
+                    // Reject all files with extensions not listed.
+                    log::warn!(
+                        "TCP port local {} to peer {}: \
                                 files with extension '{}' are not served. Rejecting: '{}'",
-                            self.stream.local_addr()?.port(),
-                            self.stream.peer_addr()?.port(),
-                            abspath
-                                .extension()
-                                .unwrap_or_default()
-                                .to_str()
-                                .unwrap_or_default(),
-                            abspath.display(),
-                        );
-                        self.respond_not_found(&abspath)?;
-                        return Ok(());
-                    }
+                        self.stream.local_addr()?.port(),
+                        self.stream.peer_addr()?.port(),
+                        abspath
+                            .extension()
+                            .unwrap_or_default()
+                            .to_str()
+                            .unwrap_or_default(),
+                        abspath.display(),
+                    );
+                    self.respond_not_found(&abspath)?;
+                    return Ok(());
                 };
 
                 //

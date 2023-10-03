@@ -249,7 +249,6 @@ tcp_connections_max = 16
 # here are silently ignored.  Note, that image files must be located in the
 # same or in the note's parent directory.
 served_mime_types = [
-    [ "md", "text/x-markdown", ],
     [ "txt", "text/plain", ],
     [ "apng", "image/apng", ],
     [ "avif", "image/avif", ],
