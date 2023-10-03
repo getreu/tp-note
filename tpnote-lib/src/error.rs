@@ -307,26 +307,17 @@ pub enum NoteError {
         \t---\n\
         \tfile_ext: {extension}\n\
         \t---\n\
-        is not registered as a valid Tp-Note-file in\n\
-        the `filename.extensions_*` variables in your\n\
-        configuration file:\n\
-        \t{md_ext:?}\n\
-        \t{rst_ext:?}\n\
-        \t{html_ext:?}\n\
-        \t{txt_ext:?}\n\
-        \t{no_viewer_ext:?}\n\
+        is not registered as Tp-Note file in\n\
+        your configuration file:\n\
+        \t{extensions}\n\
         \n\
         Choose one of the listed above or add more\n\
-        extensions to the `filename.extensions_*`\n\
-        variables in your configuration file."
+        extensions to `filename.extensions`\n\
+        variable in your configuration file."
     )]
     FrontMatterFieldIsNotTpnoteExtension {
-        extension: Box<String>,
-        md_ext: Box<Vec<String>>,
-        rst_ext: Box<Vec<String>>,
-        html_ext: Box<Vec<String>>,
-        txt_ext: Box<Vec<String>>,
-        no_viewer_ext: Box<Vec<String>>,
+        extension: String,
+        extensions: String,
     },
 
     /// Remedy: check reStructuredText syntax.

@@ -13,9 +13,9 @@
 //! Contract: although `LIB_CFG` is mutable at runtime, it is sourced only
 //! once at the start of Tp-Note. All modification terminates before accessing
 //! the high-level API in the `workflow` module of this crate.
-use crate::error::LibCfgError;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_viewer_highlighting_css;
+use crate::{error::LibCfgError, markup_language::MarkupLanguage};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
@@ -236,11 +236,7 @@ pub struct Filename {
     pub copy_counter_opening_brackets: String,
     pub copy_counter_closing_brackets: String,
     pub extension_default: String,
-    pub extensions_md: Vec<String>,
-    pub extensions_rst: Vec<String>,
-    pub extensions_html: Vec<String>,
-    pub extensions_txt: Vec<String>,
-    pub extensions_no_viewer: Vec<String>,
+    pub extensions: Vec<(String, MarkupLanguage)>,
 }
 
 /// Filename templates and content templates, deserialized from the

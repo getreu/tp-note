@@ -13,21 +13,23 @@ use pulldown_cmark::{html, Options, Parser};
 use rst_parser::parse;
 #[cfg(feature = "renderer")]
 use rst_renderer::render_html;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 #[cfg(feature = "renderer")]
 use std::str::from_utf8;
 
 /// The Markup language of the note content.
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Default, Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
 pub enum MarkupLanguage {
     Markdown,
-    RestructuredText,
+    Restructuredtext,
     Html,
-    Txt,
+    PlainText,
     /// We can not determine the markup language, but confirm that this
     /// is a Tp-Note file.
     Unknown,
     /// This is not a Tp-Note file.
+    #[default]
     None,
 }
 
@@ -40,14 +42,24 @@ impl MarkupLanguage {
         }
     }
 
+    pub fn mine_type(&self) -> &'static str {
+        match self {
+            Self::Markdown => "text/markodwn",
+            Self::Restructuredtext => "x-rst",
+            Self::Html => "text/html",
+            Self::PlainText => "text/plain",
+            _ => "",
+        }
+    }
+
     pub fn render(&self, input: &str) -> String {
         match self {
             #[cfg(feature = "renderer")]
             Self::Markdown => Self::render_md_content(input),
             #[cfg(feature = "renderer")]
-            Self::RestructuredText => Self::render_rst_content(input),
+            Self::Restructuredtext => Self::render_rst_content(input),
             Self::Html => input.to_string(),
-            Self::Txt => Self::render_txt_content(input),
+            Self::PlainText => Self::render_txt_content(input),
             _ => Self::render_unknown_content(input),
         }
     }
@@ -125,29 +137,9 @@ impl From<&str> for MarkupLanguage {
     fn from(file_extension: &str) -> Self {
         let lib_cfg = LIB_CFG.read_recursive();
 
-        for e in &lib_cfg.filename.extensions_md {
-            if e == file_extension {
-                return MarkupLanguage::Markdown;
-            }
-        }
-        for e in &lib_cfg.filename.extensions_rst {
-            if e == file_extension {
-                return MarkupLanguage::RestructuredText;
-            }
-        }
-        for e in &lib_cfg.filename.extensions_html {
-            if e == file_extension {
-                return MarkupLanguage::Html;
-            }
-        }
-        for e in &lib_cfg.filename.extensions_txt {
-            if e == file_extension {
-                return MarkupLanguage::Txt;
-            }
-        }
-        for e in &lib_cfg.filename.extensions_no_viewer {
-            if e == file_extension {
-                return MarkupLanguage::Unknown;
+        for e in &lib_cfg.filename.extensions {
+            if e.0 == file_extension {
+                return e.1;
             }
         }
 
@@ -160,8 +152,10 @@ impl From<&str> for MarkupLanguage {
         if file_extension == lib_cfg.filename.extension_default
             || file_extension == settings.extension_default
         {
-            return MarkupLanguage::Txt;
+            return MarkupLanguage::PlainText;
         }
+
+        // Nothing was found.
         MarkupLanguage::None
     }
 }

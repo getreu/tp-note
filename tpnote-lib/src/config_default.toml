@@ -40,72 +40,42 @@ copy_counter_opening_brackets = "("
 copy_counter_closing_brackets = ")"
 
 # File extension of new _Tp-Note_ files.
-#
-# For UNIX like systems this defaults to `.md` because all the listed file
-# editors (see `app_args.editor`) support it. The Windows default is `.txt` to
-# ensure that the _Notepad_ editor can handle these files properly.
-#
-# As longs as all extensions are part of the same group, here
-# `filename.extensions_md`, all note files are interpreted as _Markdown_ on
-# all systems.
-#
 # NB: Do not forget to adapt the templates `tmpl.*` in case you set
 # this to another markup language.
 extension_default = "md"
 
-# The variables `filename.extensions_*` list file extensions that Tp-Note
+# The variable `filename.extensions` list file extensions that Tp-Note
 # considers as its own note files. Tp-Note opens these files, reads their
-# YAML header and launches an external file editor and an file viewer (web
+# YAML header and launches an external file editor and file viewer (web
 # browser). According to the markup language used, the appropriate renderer
-# is called to convert the note's content into HTML. The rendered HTML is then
-# shown to the user with his web browser.
-#
-# The present list contains file extensions of Markdown encoded Tp-Note files.
-extensions_md = [
-    "txt",
-    "md",
-    "markdown",
-    "markdn",
-    "mdown",
-    "mdtxt",
+# is called to convert the note's content into HTML. The renderer is
+# selected by the associated second value. Currently, Tp-Note renders the
+# following markup languages: 
+# * `Markdown`, 
+# * `Restructuredtext`, 
+# * `Html`, 
+# * `PlainText` and 
+# * `Unknown`. 
+# When type field is `Unknown`, the viewer and exporter are disabled
+# for note files with this file extension. No rendition occurs.
+# Finally, the rendered HTML is displayed to the user via his web browser.
+extensions = [
+  [ "txt", "Markdown" ],
+  [ "md", "Markdown" ],
+  [ "markdown", "Markdown" ],
+  [ "markdn", "Markdown" ],
+  [ "mdown", "Markdown" ],
+  [ "mdtxt", "Markdown" ],
+  [ "rst", "Restructuredtext" ],
+  [ "rest", "Restructuredtext" ],
+  [ "htmlnote", "Html" ],
+  [ "txtnote", "PlainText" ],
+  [ "adoc", "PlainText" ],
+  [ "asciidoc", "PlainText" ],
+  [ "mediawiki", "PlainText" ],
+  [ "mw", "PlainText" ],
+  [ "t2t", "Unknown" ],
 ]
-
-# The present list contains file extensions of RestructuredText encoded Tp-
-# Note files.
-#
-# See also `filename.extensions_md`.
-extensions_rst = [
-    "rst",
-    "rest",
-]
-
-# The present list contains file extensions of HTML encoded Tp-Note files.
-# For these file types the content is forwarded to the web browser without
-# modification.
-#
-# See also `filename.extensions_md`.
-extensions_html = ["htmlnote"]
-
-# The present list contains file extensions of Text encoded Tp-Note files
-# that the viewer shows literally without (almost) any additional rendering.
-# Only hyperlinks in _Markdown_, _reStructuredText_, _Asciidoc_ and _HTML_ are
-# rendered, thus clickable.
-#
-# See also `filename.extensions_md`.
-extensions_txt = [
-    "txtnote",
-    "adoc",
-    "asciidoc",
-    "mediawiki",
-    "mw",
-]
-
-# The present list contains file extensions of Tp-Note files for which no
-# viewer is opened (unless Tp-Note is invoked with `--view`).
-#
-# See also `filename.extensions_md`.
-extensions_no_viewer = ["t2t"]
-
 
 
 [tmpl]
@@ -146,6 +116,7 @@ filter_assert_preconditions = [
     [ "fm_no_filename_sync", ["IsBool", "IsNotCompound"], ],
     [ "fm_filename_sync", ["IsBool", "IsNotCompound"], ],
 ]
+
 # A list of language tags, defining languages TP-Note tries to recognize in
 # the filter input. The user's default language subtag, as reported from
 # the operating system, is automatically added to the present list.
