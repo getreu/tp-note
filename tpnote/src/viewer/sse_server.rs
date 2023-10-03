@@ -356,7 +356,7 @@ impl ServerThread {
                             SseToken::Ping => ": ping\r\n\r\n".to_string(),
                         };
                         self.stream.write_all(event.as_bytes())?;
-                        log::debug!(
+                        log::trace!(
                             "TCP port local {} to peer {} ({} open TCP conn.): pushed '{:?}' in event connection to web browser.",
                             self.stream.local_addr()?.port(),
                             self.stream.peer_addr()?.port(),
