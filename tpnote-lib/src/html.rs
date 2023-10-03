@@ -6,6 +6,7 @@ use parking_lot::RwLock;
 use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
 use std::{
+    borrow::Cow,
     collections::HashSet,
     path::{Component, Path, PathBuf},
     sync::Arc,
@@ -114,12 +115,16 @@ fn assemble_link(
 /// `https:`, only the file stem is kept. Example, the anchor text property:
 /// `<a ...>http:dir/my file.md</a>` is rewritten into `<a ...>my file</a>`.
 ///
-/// Contract 1: `link` must be local. It may have a scheme.
-/// Contract 2: `link` is `Link::Text2Dest` or `Link::Image`
-/// Contract 3: `root_path` and `docdir` are absolute paths to directories.
-/// Contract 4: `root_path` is never empty `""`. It can be `"/"`.
-/// Contract 5: The returned link is guaranteed to be a child of `root_path`, or
-/// `None`.
+/// Contracts:
+/// 1. `link` must be local (link dest may contain`;///` but not `;//`). It
+///    may have a scheme.
+/// 2. `link` is `Link::Text2Dest` or `Link::Image`
+/// 3. `root_path` and `docdir` are absolute paths to directories.
+/// 4. `root_path` is never empty `""`. It can be `"/"`.
+///
+/// Guaranties:
+/// 1. The returned link is guaranteed to be a child of `root_path`, or
+///    `None`.
 
 fn rewrite_local_link(
     link: Link,
@@ -133,7 +138,7 @@ fn rewrite_local_link(
     match link {
         Link::Text2Dest(text, dest, title) => {
             // Check contract 1. Panic if link is not local.
-            debug_assert!(!dest.contains("://"));
+            debug_assert!(!dest.contains("://") && !dest.contains(":///"));
 
             // Only rewrite file extensions for Tp-Note files.
             let rewrite_ext = rewrite_ext
@@ -142,60 +147,57 @@ fn rewrite_local_link(
                     MarkupLanguage::None
                 );
 
-            // Local ones are Ok. Trim URL scheme.
-            let dest = dest
-                .trim_start_matches("http:")
-                .trim_start_matches("https:");
-
-            let mut short_text = text.to_string();
-
-            // Example: display `my text` for the local relative URL: `<http:my%20text.md>`.
-            if text.starts_with("http:") || text.starts_with("https:") {
-                // Improves pretty printing:
-                let text = text
-                    .trim_start_matches("http:")
-                    .trim_start_matches("https:");
-                let text = Path::new(&*text);
-                let text = text
+            // Is this an autolink?
+            // Show only the stem as link text.
+            let mut text = text;
+            if text == dest && (text.contains(':') || text.contains('@')) {
+                let short_text = text
+                    .trim_start_matches("http://")
+                    .trim_start_matches("http:");
+                let short_text = Path::new(short_text);
+                let short_text = short_text
                     .file_stem()
                     .unwrap_or_default()
                     .to_str()
                     .unwrap_or_default();
-                short_text = text.to_string();
+                text = Cow::Owned(short_text.to_string());
             }
 
-            // Append ".html" if `rewrite_ext`.
-            let dest = if rewrite_ext {
-                let mut dest = dest.to_string();
-                dest.push_str(HTML_EXT);
-                PathBuf::from(dest)
+            // As we have only local destinations here, we trim the URL scheme.
+            let short_dest = dest
+                .trim_start_matches("http://")
+                .trim_start_matches("http:");
+            let mut dest = if let Cow::Owned(_) = dest {
+                Cow::Owned(short_dest.to_string())
             } else {
-                PathBuf::from(dest)
+                Cow::Borrowed(short_dest)
+            };
+
+            // Append ".html" if `rewrite_ext`.
+            if rewrite_ext {
+                let mut long_dest = dest.to_string();
+                long_dest.push_str(HTML_EXT);
+                dest = Cow::Owned(long_dest)
             };
 
             let destout = assemble_link(
                 root_path,
                 docdir,
-                &dest,
+                Path::new(&dest.as_ref()),
                 rewrite_rel_links,
                 rewrite_abs_links,
             )?;
 
-            // Convert to str.
-            let destout_encoded = destout.to_str().unwrap_or_default();
-            // Windows: replace `\` with `/`.
-            #[cfg(windows)]
-            let destout_encoded = destout_encoded
-                .chars()
-                .map(|c| if c == '\\' { '/' } else { c })
-                .collect::<String>();
-            #[cfg(windows)]
-            let destout_encoded = destout_encoded.as_str();
+            // Replace Windows backslash
+            let deststr = destout.to_str().unwrap_or_default();
+            let deststr = if deststr.contains('\\') {
+                Cow::Owned(deststr.replace('\\', "/"))
+            } else {
+                Cow::Borrowed(deststr)
+            };
+
             Some((
-                format!(
-                    "<a href=\"{}\" title=\"{}\">{}</a>",
-                    destout_encoded, title, short_text
-                ),
+                format!("<a href=\"{}\" title=\"{}\">{}</a>", deststr, title, text),
                 destout,
             ))
         }
@@ -204,29 +206,24 @@ fn rewrite_local_link(
             // Check contract 1. Panic if link is not local.
             debug_assert!(!dest.contains("://"));
 
-            // Concat `abspath` and `relpath`.
-            let dest = PathBuf::from(&*dest);
-
             let destout = assemble_link(
                 root_path,
                 docdir,
-                &dest,
+                Path::new(&dest.as_ref()),
                 rewrite_rel_links,
                 rewrite_abs_links,
             )?;
 
-            // Convert to str.
-            let destout_encoded = destout.to_str().unwrap_or_default();
-            // Windows: replace `\` with `/`.
-            //#[cfg(windows)]
-            let destout_encoded = destout_encoded
-                .chars()
-                .map(|c| if c == '\\' { '/' } else { c })
-                .collect::<String>();
-            //#[cfg(windows)]
-            let destout_encoded = destout_encoded.as_str();
+            // Replace Windows backslash
+            let deststr = destout.to_str().unwrap_or_default();
+            let deststr = if deststr.contains('\\') {
+                Cow::Owned(deststr.replace('\\', "/"))
+            } else {
+                Cow::Borrowed(deststr)
+            };
+
             Some((
-                format!("<img src=\"{}\" alt=\"{}\" />", destout_encoded, text),
+                format!("<img src=\"{}\" alt=\"{}\" />", deststr, text),
                 destout,
             ))
         }
@@ -278,6 +275,7 @@ pub fn rewrite_links(
     let mut rest = &*html;
     let mut html_out = String::new();
     for ((skipped, consumed, remaining), link) in HyperlinkInlineImage::new(&html) {
+        //
         html_out.push_str(skipped);
         rest = remaining;
 
@@ -287,11 +285,11 @@ pub fn rewrite_links(
                     link_destination
                 }
                 Link::Image(ref _img_alt, ref img_src) => img_src,
-                _ => unreachable!(),
+                _ => continue,
             };
 
             // We skip absolute URLs, `mailto:` and `tel:` links.
-            if link_destination.contains("://")
+            if (link_destination.contains("://") && !link_destination.contains(":///"))
                 || link_destination.starts_with("mailto:")
                 || link_destination.starts_with("tel:")
             {
@@ -344,17 +342,16 @@ pub fn rewrite_links(
 #[cfg(test)]
 mod tests {
 
+    use crate::html::assemble_link;
+    use crate::html::rewrite_links;
+    use crate::html::rewrite_local_link;
     use parking_lot::RwLock;
+    use parse_hyperlinks_extras::parser::parse_html::take_link;
     use std::{
         collections::HashSet,
         path::{Path, PathBuf},
         sync::Arc,
     };
-
-    use crate::html::assemble_link;
-    use crate::html::rewrite_links;
-    use crate::html::rewrite_local_link;
-    use parse_hyperlinks_extras::parser::parse_html::take_link;
 
     #[test]
     fn test_assemble_link() {
@@ -644,7 +641,7 @@ mod tests {
             mno<a href=\"http:./down/../dir/my note.md\">\
             http:./down/../dir/my note.md</a>\
             pqr<a href=\"http:/down/../dir/my note.md\">\
-            http:./down/../dir/my note.md</a>\
+            http:/down/../dir/my note.md</a>\
             stu<a href=\"http:/../dir/underflow/my note.md\">\
             not allowed dir</a>\
             vwx<a href=\"http:../../../not allowed dir/my note.md\">\
