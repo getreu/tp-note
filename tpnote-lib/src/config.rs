@@ -341,6 +341,29 @@ impl LibCfg {
             });
         }
 
+        // Assert that `filename.extension_default` is listed in
+        // `filename.extensions[..].0`.
+        if !self
+            .filename
+            .extensions
+            .iter()
+            .any(|ext| ext.0 == self.filename.extension_default)
+        {
+            return Err(LibCfgError::ExtensionDefault {
+                extension_default: self.filename.extension_default.to_owned(),
+                extensions: {
+                    let mut list = self
+                        .filename
+                        .extensions
+                        .iter()
+                        .map(|(k, _v)| format!("{}, ", k))
+                        .collect::<String>();
+                    list.truncate(list.len().saturating_sub(2));
+                    list
+                },
+            });
+        }
+
         // Highlighting config is valid?
         // Validate `tmpl_html.viewer_highlighting_theme` and
         // `tmpl_html.exporter_highlighting_theme`.

@@ -35,7 +35,7 @@ pub enum LibCfgError {
     /// Remedy: Choose another `sort_tag_extra_separator` character.
     #[error(
         "Configuration file error in section `[filename]`:\n\
-        `sort_tag_extra_separator=\"{extra_separator}\"\n\
+        \t`sort_tag_extra_separator=\"{extra_separator}\"\n\
         must not be one of `sort_tag_chars=\"{chars}\"`\n\
         or `{dot_file_marker}`."
     )]
@@ -43,6 +43,19 @@ pub enum LibCfgError {
         dot_file_marker: char,
         chars: String,
         extra_separator: String,
+    },
+
+    /// Remedy: Choose another `extension_default` out of
+    /// `extensions[..].0`.
+    #[error(
+        "Configuration file error in section `[filename]`:\n\
+        \t`extension_default=\"{extension_default}\"\n\
+        must not be one of:`\n\
+        \t{extensions}."
+    )]
+    ExtensionDefault {
+        extension_default: String,
+        extensions: String,
     },
 
     /// Remedy: Insert `sort_tag_separator` in `sort_tag_chars`.

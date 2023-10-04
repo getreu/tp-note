@@ -4,7 +4,6 @@ use crate::config::LIB_CFG;
 use crate::error::NoteError;
 #[cfg(feature = "renderer")]
 use crate::highlight::SyntaxPreprocessor;
-use crate::settings::SETTINGS;
 use parse_hyperlinks::renderer::text_links2html;
 use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
@@ -158,18 +157,6 @@ impl From<&str> for MarkupLanguage {
             if e.0 == file_extension {
                 return e.1;
             }
-        }
-
-        // If ever `extension_default` got forgotten in
-        // one of the above lists, make sure that Tp-Note
-        // recognizes its own files. Even without Markup
-        // rendition.
-        let settings = SETTINGS.read_recursive();
-
-        if file_extension == lib_cfg.filename.extension_default
-            || file_extension == settings.extension_default
-        {
-            return MarkupLanguage::PlainText;
         }
 
         // Nothing was found.
