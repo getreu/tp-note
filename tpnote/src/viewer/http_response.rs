@@ -224,17 +224,15 @@ impl HttpResponse for ServerThread {
                     .to_lowercase();
 
                 // Find the corresponding mime type of this file extension.
-                let mime_type = Some(MarkupLanguage::from(extension).mine_type())
-                    // `mime_types()` returns a non empty string for all
-                    // renderable Tp-Note file extensions.
-                    .filter(|&m| !m.is_empty())
-                    .or_else(|| {
-                        CFG.viewer
-                            .served_mime_types
-                            .iter()
-                            .filter_map(|(ext, mime)| (extension == ext).then_some(mime.as_str()))
-                            .next()
-                    });
+                // Is this `extension` a Tp-Note file the viewer?
+                let mime_type = MarkupLanguage::from(extension).mine_type().or_else(|| {
+                    // Is this extension registered in `served_mime_types`?
+                    CFG.viewer
+                        .served_mime_types
+                        .iter()
+                        .filter_map(|(ext, mime)| (extension == ext).then_some(mime.as_str()))
+                        .next()
+                });
 
                 if mime_type.is_none() {
                     // Reject all files with extensions not listed.

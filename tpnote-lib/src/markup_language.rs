@@ -42,19 +42,34 @@ impl MarkupLanguage {
         }
     }
 
-    /// Returns the MIME type for all Markup Languages, Tp-Note is
-    /// able to render. Otherwise, for `MarkupLanguage::Unknown` and
-    /// `MarkupLanguage::None` this returns the empty string "".
-    pub fn mine_type(&self) -> &'static str {
+    /// Returns the MIME type for all `Markup Languages.is_tpnote_file()==true`.
+    /// Otherwise, for `MarkupLanguage::None` this returns None.
+    pub fn mine_type(&self) -> Option<&'static str> {
         match self {
-            Self::Markdown => "text/markodwn",
-            Self::Restructuredtext => "x-rst",
-            Self::Html => "text/html",
-            Self::PlainText => "text/plain",
-            _ => "",
+            Self::Markdown => Some("text/markodwn"),
+            Self::Restructuredtext => Some("x-rst"),
+            Self::Html => Some("text/html"),
+            Self::PlainText => Some("text/plain"),
+            Self::Unknown => Some("text/plain"),
+            _ => None,
         }
     }
 
+    /// As we identify a markup language by the file's extension, we
+    /// can also tell, in case `Markuplanguage::from(ext).is_some()`,
+    /// that a file with the extension `ext` is a Tp-Note file.
+    pub fn is_some(&self) -> bool {
+        !matches!(self, Self::None)
+    }
+
+    /// As we identify a markup language by the file's extension, we
+    /// can also tell, in case `Markuplanguage::from(ext).is_none()`,
+    /// that a file with the extension `ext` is NOT a Tp-Note file.
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+
+    /// Every `MarkupLanguage` has an internal renderer to HTML.
     pub fn render(&self, input: &str) -> String {
         match self {
             #[cfg(feature = "renderer")]
