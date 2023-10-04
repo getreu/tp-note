@@ -178,14 +178,7 @@ impl HttpResponse for ServerThread {
                             let mut minimum = PathBuf::new();
                             'file_loop: for file in files.flatten() {
                                 let file = file.path();
-                                if matches!(
-                                    file.extension()
-                                        .unwrap_or_default()
-                                        .to_str()
-                                        .unwrap_or_default()
-                                        .into(),
-                                    MarkupLanguage::None
-                                ) {
+                                if MarkupLanguage::from(&*file).is_none() {
                                     continue 'file_loop;
                                 }
                                 // Does this sort-tag short link correspond to
@@ -255,7 +248,7 @@ impl HttpResponse for ServerThread {
                 //
                 // Condition 4: If this is a Tp-Note file, check the maximum
                 // of delivered documents, then deliver.
-                if !matches!(extension.into(), MarkupLanguage::None) {
+                if MarkupLanguage::from(extension).is_some() {
                     if abspath.is_file() {
                         let delivered_docs_count =
                             self.delivered_tpnote_docs.read_recursive().len();

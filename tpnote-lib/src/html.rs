@@ -142,11 +142,8 @@ fn rewrite_local_link(
             debug_assert!(!dest.contains("://") && !dest.contains(":///"));
 
             // Only rewrite file extensions for Tp-Note files.
-            let rewrite_ext = rewrite_ext
-                && !matches!(
-                    MarkupLanguage::from(Path::new(dest.as_ref())),
-                    MarkupLanguage::None
-                );
+            let rewrite_ext =
+                rewrite_ext && MarkupLanguage::from(Path::new(dest.as_ref())).is_some();
 
             // Is this an autolink?
             // Show only the stem as link text.

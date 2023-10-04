@@ -134,9 +134,7 @@ impl FrontMatter {
                                 value.to_string()
                             };
 
-                            let extension_is_unknown =
-                                matches!(MarkupLanguage::from(&*file_ext), MarkupLanguage::None);
-                            if extension_is_unknown {
+                            if MarkupLanguage::from(&*file_ext).is_none() {
                                 return Err(NoteError::FrontMatterFieldIsNotTpnoteExtension {
                                     extension: file_ext,
                                     extensions: {

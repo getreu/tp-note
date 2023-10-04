@@ -474,8 +474,7 @@ impl NotePath for Path {
     /// FILENAME_EXTENSIONS_HTML, FILENAME_EXTENSIONS_TXT,
     /// FILENAME_EXTENSIONS_NO_VIEWER
     fn has_tpnote_extension(&self) -> bool {
-        self.has_wellformed_filename()
-            && !matches!(MarkupLanguage::from(self), MarkupLanguage::None)
+        self.has_wellformed_filename() && MarkupLanguage::from(self).is_some()
     }
 }
 

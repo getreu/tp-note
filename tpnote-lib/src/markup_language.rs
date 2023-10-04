@@ -26,7 +26,7 @@ pub enum MarkupLanguage {
     Html,
     PlainText,
     /// We can not determine the markup language, but confirm that this
-    /// is a Tp-Note file.
+    /// is a Tp-Note file with text content.
     Unknown,
     /// This is not a Tp-Note file.
     #[default]
