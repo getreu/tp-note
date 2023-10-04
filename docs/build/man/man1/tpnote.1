@@ -387,8 +387,8 @@ lang:       en-US
 \f[R]
 .fi
 .PP
-The configuration file variables `\f[V]filename.extensions_*\f[R]' list
-all the file extensions that Tp-Note recognizes as own file types.
+The configuration file variable `\f[V]filename.extensions\f[R]' list all
+the file extensions that Tp-Note recognizes as own file types.
 Only foreign file types can be annotated.
 .PP
 Note that the file annotation mode also reads the clipboard\[cq]s
@@ -1196,8 +1196,8 @@ The resulting filename
 becomes'\f[V]20211101-1. The Beginning--Note.rst\f[R]\[cq].
 .PP
 Important: `\f[V]rst\f[R]' must be one of the registered file extensions
-listed in the `\f[V]filename.extensions_rst\f[R]' variables in
-Tp-Note\[cq]s configuration file.
+listed in the `\f[V]filename.extensions\f[R]' variable in Tp-Note\[cq]s
+configuration file.
 If needed you can add more extensions there.
 If the new filename extension is not listed in one of these variables,
 Tp-Note will not be able to recognize the note file as such and will not
@@ -1629,15 +1629,22 @@ unix.editor = [
 .SS Change the file extension for new note files
 .PP
 Tp-Note identifies the note\[cq]s markup language by its file extension
-and renders the content accordingly (see
-`\f[V]filename.extensions_*\f[R]' variables).
-For example: the variable `\f[V]filename.extensions_md\f[R]' lists all
-file extensions, that are regarded as Markdown files:
+and renders the content accordingly (see `\f[V]filename.extensions\f[R]'
+variable).
+For example: the variable `\f[V]filename.extensions\f[R]' lists some
+extensions, that are regarded as Markdown files:
 .IP
 .nf
 \f[C]
 [filename]
-extensions_md = [ \[aq]txt\[aq], \[aq]md\[aq], \[aq]markdown\[aq] ]
+extensions = [
+  [ \[dq]txt\[dq], \[dq]Markdown\[dq] ],
+  [ \[dq]md\[dq], \[dq]Markdown\[dq] ],
+  [ \[dq]markdown\[dq], \[dq]Markdown\[dq] ],
+  [ \[dq]markdn\[dq], \[dq]Markdown\[dq] ],
+  [ \[dq]mdown\[dq], \[dq]Markdown\[dq] ],
+  [ \[dq]mdtxt\[dq], \[dq]Markdown\[dq] ],
+]
 \f[R]
 .fi
 .PP
@@ -1662,8 +1669,8 @@ extension_default = \[aq]markdown\[aq]
 .PP
 This modification does not change how the note file\[cq]s content is
 interpreted - in this case as Markdown - because both file extensions
-`\f[V].md\f[R]' and `\f[V].markdown\f[R]' belong to the same extension
-group defined in `\f[V]filename.extensions_md\f[R]'.
+`\f[V].md\f[R]' and `\f[V].markdown\f[R]' are rendered as
+`\f[V]Markdown\f[R]' according to `\f[V]filename.extensions\f[R]'.
 .SS Configure the natural language detection algorithm
 .PP
 When creating a new header for a new or an existing note file, a
@@ -2028,23 +2035,23 @@ A negative value delays the start of the text editor instead.
 Besides its core function, Tp-Note comes with several built-in markup
 renderer and viewer, allowing to work with different markup languages at
 the same time.
-The configuration file variables `\f[V]filename.extensions_*\f[R]'
-determine which markup renderer is used for which note file extension.
+The configuration file variable `\f[V]filename.extension\f[R]' determine
+which markup renderer is used for which note file extension.
 Depending on the markup language, this feature is more or less advanced
-and complete: \f[I]Markdown\f[R]
-(cf.\ `\f[V]filename.extensions_md\f[R]') is best supported and feature
-complete: It complies with the \f[I]Common Mark\f[R] specification.
+and complete: \f[I]Markdown\f[R] (cf.\ `\f[V]Markdown\f[R]') is best
+supported and feature complete: It complies with the \f[I]Common
+Mark\f[R] specification.
 The \f[I]ReStructuredText\f[R] renderer
-(cf.\ `\f[V]filename.extensions_rst\f[R]') is quite new and still in
+(cf.\ `\f[V]Restructuredtext\f[R]') is quite new and still in
 experimental state.
 For all other supported markup languages Tp-Note provides a built-in
-markup source text viewer (cf.\ `\f[V]filename.extensions_txt\f[R]')
-that shows the note as typed (without markup), but renders all
-hyperlinks to make them clickable.
+markup source text viewer (cf.\ `\f[V]PlainText\f[R]') that shows the
+note as typed (without markup), but renders all hyperlinks to make them
+clickable.
 In case none of the above rendition engines suit you, it is possible to
 disable the viewer feature selectively for some particular note file
-extensions: just place these extensions in the
-`\f[V]filename.extensions_no_viewer\f[R]' variable.
+extensions: just associate these extensions with the
+`\f[V]PlainTextNoViewer\f[R]' renderer.
 If you wish to disable the viewer feature overall, set the variable
 `\f[V]arg_default.edit = true\f[R]'.
 .PP
@@ -3113,8 +3120,7 @@ If set, this variable takes precedence over the configuration file
 variable `\f[V]filename.extension_default\f[R]', which defines the file
 extension of new note files.
 In order to activate the appropriate markup renderer make sure, that the
-value given here is listed in one of the
-`\f[V]filename.extensions_*\f[R]' list.
+value given here is listed in `\f[V]filename.extensions\f[R]'.
 .RE
 .PP
 TPNOTE_USER, LOGNAME, USER, USERNAME

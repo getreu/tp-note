@@ -328,7 +328,7 @@ lang:       en-US
 [Classic Shell Scripting.pdf](<Classic Shell Scripting.pdf>)
 ```
 
-The configuration file variables '`filename.extensions_*`' list all the file
+The configuration file variable '`filename.extensions`' list all the file
 extensions that Tp-Note recognizes as own file types. Only foreign file types
 can be annotated.
 
@@ -933,7 +933,7 @@ This will change the file extension from '`.md`' to '`.rst`. The resulting
 filename becomes '`20211101-1. The Beginning--Note.rst`'.
 
 Important: '`rst`' must be one of the registered file extensions
-listed in the '`filename.extensions_rst`' variables in Tp-Note's configuration
+listed in the '`filename.extensions`' variable in Tp-Note's configuration
 file. If needed you can add more extensions there. If the new filename extension
 is not listed in one of these variables, Tp-Note will not be able to
 recognize the note file as such and will not open it in the external text editor
@@ -1295,13 +1295,20 @@ Here, some examples you can adjust to your needs and taste:
 ## Change the file extension for new note files
 
 Tp-Note identifies the note's markup language by its file extension and
-renders the content accordingly (see '`filename.extensions_*`' variables).
-For example: the variable '`filename.extensions_md`' lists all file
-extensions, that are regarded as Markdown files:
+renders the content accordingly (see '`filename.extensions`' variable).
+For example: the variable '`filename.extensions`' lists some extensions, that
+are regarded as Markdown files:
 
 ```toml
 [filename]
-extensions_md = [ 'txt', 'md', 'markdown' ]
+extensions = [
+  [ "txt", "Markdown" ],
+  [ "md", "Markdown" ],
+  [ "markdown", "Markdown" ],
+  [ "markdn", "Markdown" ],
+  [ "mdown", "Markdown" ],
+  [ "mdtxt", "Markdown" ],
+]
 ```
 
 The default file extension for new note files is defined as:
@@ -1321,8 +1328,7 @@ extension_default = 'markdown'
 
 This modification does not change how the note file's content is interpreted -
 in this case as Markdown - because both file extensions '`.md`' and 
-'`.markdown`' belong to the same extension group defined in
-'`filename.extensions_md`'.
+'`.markdown`' are rendered as '`Markdown`' according to '`filename.extensions`'.
 
 
 
@@ -1605,18 +1611,18 @@ editor window.  A negative value delays the start of the text editor instead.
 
 Besides its core function, Tp-Note comes with several built-in markup
 renderer and viewer, allowing to work with different markup languages at the
-same time. The configuration file variables '`filename.extensions_*`' determine
+same time. The configuration file variable '`filename.extension`' determine
 which markup renderer is used for which note file extension. Depending on the
 markup language, this feature is more or less advanced and complete: _Markdown_
-(cf. '`filename.extensions_md`') is best supported and feature complete: It
+(cf. '`Markdown`') is best supported and feature complete: It
 complies with the _Common Mark_ specification. The _ReStructuredText_ renderer
-(cf.  '`filename.extensions_rst`') is quite new and still in experimental state.
+(cf.  '`Restructuredtext`') is quite new and still in experimental state.
 For all other supported markup languages Tp-Note provides a built-in markup
-source text viewer (cf.  '`filename.extensions_txt`') that shows the note as
+source text viewer (cf.  '`PlainText`') that shows the note as
 typed (without markup), but renders all hyperlinks to make them clickable.  In
 case none of the above rendition engines suit you, it is possible to disable
 the viewer feature selectively for some particular note file extensions: just
-place these extensions in the '`filename.extensions_no_viewer`' variable. If
+associate these extensions with the '`PlainTextNoViewer`' renderer. If
 you wish to disable the viewer feature overall, set the variable
 '`arg_default.edit = true`'.
 
@@ -2451,8 +2457,8 @@ TPNOTE\_EXTENSION\_DEFAULT
 >   If set, this variable takes precedence over the configuration file
     variable '`filename.extension_default`', which defines the file extension
     of new note files. In order to activate the appropriate markup renderer
-    make sure, that the value given here is listed in one of the
-    '`filename.extensions_*`' list.
+    make sure, that the value given here is listed in 
+    '`filename.extensions`'.
 
 TPNOTE\_USER, LOGNAME, USER, USERNAME
 
