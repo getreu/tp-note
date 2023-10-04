@@ -25,9 +25,11 @@ pub enum MarkupLanguage {
     Restructuredtext,
     Html,
     PlainText,
-    /// We can not determine the markup language, but confirm that this
-    /// is a Tp-Note file with text content.
-    Unknown,
+    /// The exporter renders this, but the viewer is disabled.
+    PlainTextNoViewer,
+    /// This is a Tp-Note file, but we are not able to determine the
+    /// MarkupLanguage at this point.
+    Unkown,
     /// This is not a Tp-Note file.
     #[default]
     None,
@@ -50,7 +52,8 @@ impl MarkupLanguage {
             Self::Restructuredtext => Some("x-rst"),
             Self::Html => Some("text/html"),
             Self::PlainText => Some("text/plain"),
-            Self::Unknown => Some("text/plain"),
+            Self::PlainTextNoViewer => Some("text/plain"),
+            Self::Unkown => Some("text/plain"),
             _ => None,
         }
     }
@@ -69,7 +72,19 @@ impl MarkupLanguage {
         matches!(self, Self::None)
     }
 
-    /// Every `MarkupLanguage` has an internal renderer to HTML.
+    /// Every `MarkupLanguage` variant has an own internal HTML renderer:
+    /// * `Markdown` is rendered according the "CommonMark" standard.
+    /// * Currently only as small subset of ReStructuredText is rendered for
+    ///   `Restructuredtext`. This feature is experimental.
+    /// * The `Html` renderer simply forwards the input without modification.
+    /// * `PlainText` is rendered as raw text. Hyperlinks in Markdown,
+    ///   ReStructuredText, AsciiDoc and WikiText syntax are detected and
+    ///   are displayed in the rendition with their link text. All hyperlinks
+    ///   are clickable.
+    /// * `Unknown` is rendered like `PlainText`, hyperlinks are also
+    ///   clickable, but they are displayed as they appear in the input.
+    /// * For the variant `None` the result is always the empty string whatever
+    ///   the input may be.
     pub fn render(&self, input: &str) -> String {
         match self {
             #[cfg(feature = "renderer")]
@@ -108,9 +123,11 @@ impl MarkupLanguage {
 
             Self::Html => input.to_string(),
 
-            Self::PlainText => text_links2html(input),
+            Self::PlainText | Self::PlainTextNoViewer => text_links2html(input),
 
-            _ => text_rawlinks2html(input),
+            Self::Unkown => text_rawlinks2html(input),
+
+            _ => String::new(),
         }
     }
 }

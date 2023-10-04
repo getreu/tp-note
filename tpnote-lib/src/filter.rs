@@ -189,6 +189,8 @@ fn to_html_filter<S: BuildHasher>(
 /// Takes the markup formatted input and renders it to HTML.
 /// The parameter file `extension` indicates in what Markup
 /// language the input is written.
+/// When `extension` is not given or known, the renderer defaults to
+/// `MarkupLanguage::Unknown`.
 /// The input types must be `Value::String` and the output type is
 /// `Value::String()`
 fn markup_to_html_filter<S: BuildHasher>(
@@ -197,14 +199,20 @@ fn markup_to_html_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let input = try_get_value!("markup_to_html", "value", String, value);
 
-    let ext = if let Some(ext) = args.get("extension") {
-        try_get_value!("markup_to_html", "extension", String, ext)
+    let markup_language = if let Some(ext) = args.get("extension") {
+        let ext = try_get_value!("markup_to_html", "extension", String, ext);
+        let ml = MarkupLanguage::from(ext.as_str());
+        if ml.is_some() {
+            ml
+        } else {
+            MarkupLanguage::Unkown
+        }
     } else {
-        "".to_string()
+        MarkupLanguage::Unkown
     };
 
     // Render the markup language.
-    let html_output = MarkupLanguage::from(ext.as_str()).render(&input);
+    let html_output = markup_language.render(&input);
 
     Ok(Value::String(html_output))
 }

@@ -48,17 +48,18 @@ extension_default = "md"
 # considers as its own note files. Tp-Note opens these files, reads their
 # YAML header and launches an external file editor and file viewer (web
 # browser). According to the markup language used, the appropriate renderer
-# is called to convert the note's content into HTML. The renderer is
-# selected by the associated second value. Currently, Tp-Note renders the
-# following markup languages: 
+# is called to convert the note's content into HTML. Technically, the renderer
+# is selected by the `markup_to_html` filter in `tmpl_html` templates. The 
+# associated second value in the below list parametrizes the `markup_to_html` 
+# filter. Currently, Tp-Note renders the following markup languages: 
 # * `Markdown`, 
 # * `Restructuredtext`, 
 # * `Html`, 
 # * `PlainText` and 
-# * `Unknown`. 
-# When type field is `Unknown`, the viewer and exporter are disabled
-# for note files with this file extension. No rendition occurs.
-# Finally, the rendered HTML is displayed to the user via his web browser.
+# * `PlainTextNoViewer`. 
+# When the renderer is `PlainTextNoViewer`, the viewer is disabled for note
+# files with this file extension. Otherwise, the rendered HTML is displayed to
+# the user via his web browser.
 # NB: The list is ordered to look for the most common extensions first.
 extensions = [
   [ "txt", "Markdown" ],
@@ -77,9 +78,9 @@ extensions = [
   [ "mkd", "Markdown" ],
   [ "rest", "Restructuredtext" ],
   [ "asciidoc", "PlainText" ],
-  [ "mediawiki", "PlainText" ],
-  [ "mw", "PlainText" ],
-  [ "t2t", "Unknown" ],
+  [ "mediawiki", "PlainTextNoViewer" ],
+  [ "mw", "PlainTextNoViewer" ],
+  [ "t2t", "PlainTextNoViewer" ],
 ]
 
 

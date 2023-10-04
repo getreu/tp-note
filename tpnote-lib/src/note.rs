@@ -436,12 +436,9 @@ impl<T: Content> Note<T> {
     }
 
     #[inline]
-    /// First, determines the markup language from the file extension or
-    /// the `fm_file_ext` YAML variable, if present.
-    /// Then calls the appropriate markup renderer.
-    /// Finally the result is rendered with the `HTML_VIEWER_TMPL`
-    /// template. This template expects the template variable
-    /// `TMPL_HTML_VAR_NOTE_JS` in `self.context` to be set.
+    /// Calls the appropriate markup renderer.
+    /// This template expects the template variable
+    /// `TMPL_HTML_VAR_VIEWER_DOC_JS` in `self.context` to be set.
     pub fn render_content_to_html(
         &self,
         // HTML template for this rendition.
