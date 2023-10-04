@@ -530,19 +530,3 @@ pub enum AssertPrecondition {
     #[default]
     NoOperation,
 }
-
-impl FromStr for AssertPrecondition {
-    type Err = LibCfgError;
-    fn from_str(precondition: &str) -> Result<AssertPrecondition, Self::Err> {
-        match precondition {
-            "IsDefined" => Ok(AssertPrecondition::IsDefined),
-            "IsNotEmptyString" => Ok(AssertPrecondition::IsNotEmptyString),
-            "IsString" => Ok(AssertPrecondition::IsString),
-            "IsNumber" => Ok(AssertPrecondition::IsNumber),
-            "IsBool" => Ok(AssertPrecondition::IsBool),
-            "IsNotCompound" => Ok(AssertPrecondition::IsNotCompound),
-            "HasOnlySortTagChars" => Ok(AssertPrecondition::HasOnlySortTagChars),
-            _ => Err(LibCfgError::ParseAssertPrecondition {}),
-        }
-    }
-}
