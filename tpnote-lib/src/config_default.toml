@@ -59,18 +59,23 @@ extension_default = "md"
 # When type field is `Unknown`, the viewer and exporter are disabled
 # for note files with this file extension. No rendition occurs.
 # Finally, the rendered HTML is displayed to the user via his web browser.
+# NB: The list is ordered to look for the most common extensions first.
 extensions = [
   [ "txt", "Markdown" ],
   [ "md", "Markdown" ],
-  [ "markdown", "Markdown" ],
-  [ "markdn", "Markdown" ],
-  [ "mdown", "Markdown" ],
-  [ "mdtxt", "Markdown" ],
   [ "rst", "Restructuredtext" ],
-  [ "rest", "Restructuredtext" ],
   [ "htmlnote", "Html" ],
   [ "txtnote", "PlainText" ],
   [ "adoc", "PlainText" ],
+  [ "text", "Markdown" ],
+  [ "markdn", "Markdown" ],
+  [ "markdown", "Markdown" ],
+  [ "mdown", "Markdown" ],
+  [ "mdtext", "Markdown" ],
+  [ "mdtxt", "Markdown" ],
+  [ "mdwn", "Markdown" ],
+  [ "mkd", "Markdown" ],
+  [ "rest", "Restructuredtext" ],
   [ "asciidoc", "PlainText" ],
   [ "mediawiki", "PlainText" ],
   [ "mw", "PlainText" ],
