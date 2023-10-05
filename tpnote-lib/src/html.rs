@@ -5,6 +5,7 @@ use crate::markup_language::MarkupLanguage;
 use parking_lot::RwLock;
 use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
+use percent_encoding::percent_decode_str;
 use std::{
     borrow::Cow,
     collections::HashSet,
@@ -232,6 +233,42 @@ fn rewrite_local_link(
     }
 }
 
+/// A helper function, that percent decodes the link destinations (and the link text
+/// in case of an autolink).
+fn percent_decode(link: Link) -> Link {
+    match link {
+        Link::Text2Dest(text, dest, title) => {
+            // Is this an autolink?
+            let autolink = *text == *dest && (text.contains(':') || text.contains('@'));
+
+            // Percent decode URL. The template we insert in is UTF-8 encoded.
+            let decoded_dest = percent_decode_str(&dest).decode_utf8().unwrap();
+            let dest = match (&dest, &decoded_dest) {
+                (Cow::Borrowed(_), Cow::Borrowed(_)) => dest,
+                _ => Cow::Owned(decoded_dest.to_string()),
+            };
+
+            let text = if autolink { dest.clone() } else { text };
+
+            Link::Text2Dest(text, dest, title)
+        }
+
+        Link::Image(alt_text, source) => {
+            // Percent decode URL. The template we insert in is UTF-8 encoded.
+            let decoded_source = percent_decode_str(&source).decode_utf8().unwrap();
+            let source = match (&source, &decoded_source) {
+                (Cow::Borrowed(_), Cow::Borrowed(_)) => source,
+                _ => Cow::Owned(decoded_source.to_string()),
+            };
+
+            Link::Image(alt_text, source)
+        }
+
+        // The `HyperlinkInlineImage` iterator has no further variants.
+        _ => unreachable!(),
+    }
+}
+
 #[inline]
 /// Helper function that scans the input `html` string and converts
 /// all relative local HTML links to absolute links.
@@ -254,6 +291,8 @@ fn rewrite_local_link(
 /// `root_path`. If not, the link is displayed as `INVALID LOCAL LINK` and
 /// discarded. All valid local links are inserted in `allowed_local_links`
 /// the same way as their destination appears in the resulting HTML.
+/// NB: Before processing, all links are percent decoded, as some
+/// rendering libraries do not do this, e.g. `pulldown-cmark`.
 pub fn rewrite_links(
     html: String,
     root_path: &Path,
@@ -276,9 +315,9 @@ pub fn rewrite_links(
     let mut html_out = String::new();
     for ((skipped, consumed, remaining), link) in HyperlinkInlineImage::new(&html) {
         //
+        // Is this an absolute hyperlink?
         html_out.push_str(skipped);
         rest = remaining;
-
         {
             let link_destination = match link {
                 Link::Text2Dest(ref _link_text, ref link_destination, ref _link_title) => {
@@ -297,6 +336,10 @@ pub fn rewrite_links(
                 continue;
             }
         }
+
+        // From here on we only deal with local links.
+        // Percent decode link destination.
+        let link = percent_decode(link);
 
         // Rewrite the local link.
         if let Some((consumed_new, dest)) = rewrite_local_link(
@@ -343,10 +386,13 @@ pub fn rewrite_links(
 mod tests {
 
     use crate::html::assemble_link;
+    use crate::html::percent_decode;
     use crate::html::rewrite_links;
     use crate::html::rewrite_local_link;
     use parking_lot::RwLock;
+    use parse_hyperlinks::parser::Link;
     use parse_hyperlinks_extras::parser::parse_html::take_link;
+    use std::borrow::Cow;
     use std::{
         collections::HashSet,
         path::{Path, PathBuf},
@@ -630,7 +676,55 @@ mod tests {
     }
 
     #[test]
-    fn test_rewrite_abs_links() {
+    fn test_percent_decode() {
+        //
+        let input = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
+        let expected = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
+        assert_eq!(percent_decode(input), expected);
+
+        //
+        let input = Link::Text2Dest(
+            Cow::from("te%20xt"),
+            Cow::from("de%20st"),
+            Cow::from("title"),
+        );
+        let expected =
+            Link::Text2Dest(Cow::from("te%20xt"), Cow::from("de st"), Cow::from("title"));
+        assert_eq!(percent_decode(input), expected);
+
+        //
+        let input = Link::Text2Dest(
+            Cow::from("de%20st"),
+            Cow::from("de%20st"),
+            Cow::from("title"),
+        );
+        let expected =
+            Link::Text2Dest(Cow::from("de%20st"), Cow::from("de st"), Cow::from("title"));
+        assert_eq!(percent_decode(input), expected);
+
+        //
+        let input = Link::Text2Dest(
+            Cow::from("d:e%20st"),
+            Cow::from("d:e%20st"),
+            Cow::from("title"),
+        );
+        let expected =
+            Link::Text2Dest(Cow::from("d:e st"), Cow::from("d:e st"), Cow::from("title"));
+        assert_eq!(percent_decode(input), expected);
+
+        //
+        let input = Link::Image(Cow::from("al%20t"), Cow::from("de%20st"));
+        let expected = Link::Image(Cow::from("al%20t"), Cow::from("de st"));
+        assert_eq!(percent_decode(input), expected);
+
+        //
+        let input = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
+        let expected = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
+        assert_eq!(percent_decode(input), expected);
+    }
+
+    #[test]
+    fn test_rewrite_links() {
         use crate::config::LocalLinkKind;
 
         let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
