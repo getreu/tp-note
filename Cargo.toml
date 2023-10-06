@@ -29,4 +29,4 @@ serde = { version = "1.0.188", features = ["derive"] }
 serde_yaml = "0.9.25"
 tera = { version = "1.19.1", default-features = true }
 thiserror = "1.0.49"
-toml = "0.8.1"
+toml = "0.8.2"
