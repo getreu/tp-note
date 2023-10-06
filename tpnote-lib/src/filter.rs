@@ -11,8 +11,8 @@ use html_escape::encode_safe;
 use lazy_static::lazy_static;
 #[cfg(feature = "lang-detection")]
 use lingua::{LanguageDetector, LanguageDetectorBuilder};
-use parse_hyperlinks::iterator::first_hyperlink;
 use sanitize_filename_reader_friendly::sanitize;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::hash::BuildHasher;
 use std::path::Path;
@@ -38,6 +38,7 @@ lazy_static! {
         tera.register_filter("markup_to_html", markup_to_html_filter);
         tera.register_filter("sanit", sanit_filter);
         tera.register_filter("link_text", link_text_filter);
+        tera.register_filter("link_text_picky", link_text_picky_filter);
         tera.register_filter("link_dest", link_dest_filter);
         tera.register_filter("link_title", link_title_filter);
         tera.register_filter("heading", heading_filter);
@@ -251,7 +252,7 @@ fn sanit_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
-/// in the input stream and returns the link's name.
+/// in the input stream and returns the link's name (link text).
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
 fn link_text_filter<S: BuildHasher>(
@@ -260,9 +261,9 @@ fn link_text_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let input = try_get_value!("link_text", "value", String, value);
 
-    let hyperlink = Hyperlink::from(&input).unwrap_or_default();
+    let hyperlink = FirstHyperlink::from(&input).unwrap_or_default();
 
-    Ok(Value::String(hyperlink.name))
+    Ok(Value::String(hyperlink.text.to_string()))
 }
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
@@ -275,9 +276,27 @@ fn link_dest_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let p = try_get_value!("link_dest", "value", String, value);
 
-    let hyperlink = Hyperlink::from(&p).unwrap_or_default();
+    let hyperlink = FirstHyperlink::from(&p).unwrap_or_default();
 
-    Ok(Value::String(hyperlink.target))
+    Ok(Value::String(hyperlink.dest.to_string()))
+}
+
+/// A Tera filter that searches for the first Markdown or reStructuredText link
+/// in the input stream and returns the link's text's name (link text).
+/// Unlinke the filter `link_dest`, it does not necessary return the first
+/// finding. For example, it skips autolinks, local links and links
+/// with some URL in the link text.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String()`
+fn link_text_picky_filter<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let p = try_get_value!("link_text", "value", String, value);
+
+    let hyperlink = FirstHyperlink::from_picky(&p).unwrap_or_default();
+
+    Ok(Value::String(hyperlink.text.to_string()))
 }
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
@@ -290,9 +309,9 @@ fn link_title_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let p = try_get_value!("link_title", "value", String, value);
 
-    let hyperlink = Hyperlink::from(&p).unwrap_or_default();
+    let hyperlink = FirstHyperlink::from(&p).unwrap_or_default();
 
-    Ok(Value::String(hyperlink.title))
+    Ok(Value::String(hyperlink.title.to_string()))
 }
 
 /// A Tera filter that truncates the input stream and returns the
@@ -691,19 +710,35 @@ fn map_lang_filter<S: BuildHasher>(
 
 #[derive(Debug, Eq, PartialEq, Default)]
 /// Represents a hyperlink.
-struct Hyperlink {
-    name: String,
-    target: String,
-    title: String,
+struct FirstHyperlink<'a> {
+    text: Cow<'a, str>,
+    dest: Cow<'a, str>,
+    title: Cow<'a, str>,
 }
 
-impl Hyperlink {
+impl<'a> FirstHyperlink<'a> {
     /// Parse a markdown formatted hyperlink and stores the result in `Self`.
-    fn from(input: &str) -> Option<Hyperlink> {
-        first_hyperlink(input).map(|(link_name, link_target, link_title)| Hyperlink {
-            name: link_name.to_string(),
-            target: link_target.to_string(),
-            title: link_title.to_string(),
+    fn from(i: &'a str) -> Option<Self> {
+        let mut hlinks = parse_hyperlinks::iterator::Hyperlink::new(i, false);
+        hlinks
+            .next()
+            .map(|(_, (text, dest, title))| FirstHyperlink { text, dest, title })
+    }
+
+    fn from_picky(i: &'a str) -> Option<Self> {
+        let mut hlinks = parse_hyperlinks::iterator::Hyperlink::new(i, false);
+
+        hlinks.find_map(|l| {
+            match l.1 {
+                // Is this an autolink? Skip.
+                (text, dest, _) if text == dest => None,
+                // Email autolink? Skip
+                (_, dest, _) if dest.to_lowercase().starts_with("mailto:") => None,
+                (text, _, _) if text.to_lowercase().starts_with("https:") => None,
+                (text, _, _) if text.to_lowercase().starts_with("http:") => None,
+                (text, _, _) if text.to_lowercase().starts_with("tpnote:") => None,
+                (text, dest, title) => Some(FirstHyperlink { text, dest, title }),
+            }
         })
     }
 }
@@ -1156,6 +1191,20 @@ mod tests {
     }
 
     #[test]
+    fn test_link_text_picky_filter() {
+        let args = HashMap::new();
+        // Test Markdown link in clipboard.
+        let input = r#"Some autolink: <tpnote:locallink.md>,
+more autolinks: <tpnote:20>, <getreu@web.de>,
+boring link text: [http://domain.com](http://getreu.net)
+[Jens Getreu's blog](https://blog.getreu.net "My blog")
+Some more text."#;
+        let output_ln =
+            link_text_picky_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("Jens Getreu's blog", output_ln);
+    }
+
+    #[test]
     fn test_cut_filter() {
         let args = HashMap::new();
         // Test Markdown link in clipboard.
@@ -1381,48 +1430,48 @@ mod tests {
 
     #[test]
     fn test_parse_hyperlink() {
-        use super::Hyperlink;
+        use super::FirstHyperlink;
         // Stand alone Markdown link.
         let input = r#"abc[Homepage](https://blog.getreu.net "My blog")abc"#;
-        let expected_output = Hyperlink {
-            name: "Homepage".to_string(),
-            target: "https://blog.getreu.net".to_string(),
-            title: "My blog".to_string(),
+        let expected_output = FirstHyperlink {
+            text: "Homepage".into(),
+            dest: "https://blog.getreu.net".into(),
+            title: "My blog".into(),
         };
-        let output = Hyperlink::from(input);
+        let output = FirstHyperlink::from(input);
         assert_eq!(expected_output, output.unwrap());
 
         // Markdown link reference.
         let input = r#"abc[Homepage][home]abc
                       [home]: https://blog.getreu.net "My blog""#;
-        let expected_output = Hyperlink {
-            name: "Homepage".to_string(),
-            target: "https://blog.getreu.net".to_string(),
-            title: "My blog".to_string(),
+        let expected_output = FirstHyperlink {
+            text: "Homepage".into(),
+            dest: "https://blog.getreu.net".into(),
+            title: "My blog".into(),
         };
-        let output = Hyperlink::from(input);
+        let output = FirstHyperlink::from(input);
         assert_eq!(expected_output, output.unwrap());
 
         //
         // RestructuredText link
         let input = "abc`Homepage <https://blog.getreu.net>`_\nabc";
-        let expected_output = Hyperlink {
-            name: "Homepage".to_string(),
-            target: "https://blog.getreu.net".to_string(),
-            title: "".to_string(),
+        let expected_output = FirstHyperlink {
+            text: "Homepage".into(),
+            dest: "https://blog.getreu.net".into(),
+            title: "".into(),
         };
-        let output = Hyperlink::from(input);
+        let output = FirstHyperlink::from(input);
         assert_eq!(expected_output, output.unwrap());
 
         //
         // RestructuredText link ref
         let input = "abc `Homepage<home_>`_ abc\n.. _home: https://blog.getreu.net\nabc";
-        let expected_output = Hyperlink {
-            name: "Homepage".to_string(),
-            target: "https://blog.getreu.net".to_string(),
-            title: "".to_string(),
+        let expected_output = FirstHyperlink {
+            text: "Homepage".into(),
+            dest: "https://blog.getreu.net".into(),
+            title: "".into(),
         };
-        let output = Hyperlink::from(input);
+        let output = FirstHyperlink::from(input);
         assert_eq!(expected_output, output.unwrap());
     }
 }
