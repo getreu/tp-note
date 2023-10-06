@@ -1,10 +1,10 @@
 ---
-title:      TP-NOTE(1) Version 1.22.5 | Tp-Note documentation
+title:      TP-NOTE(1) Version 1.22.6 | Tp-Note documentation
 subtitle:   manpage
 author:     Jens Getreu
-version:    1.22.5
+version:    1.22.6
 filename_sync: false
-date:       2023-10-01
+date:       2023-10-06
 lang:       en-GB
 ---
 
@@ -797,13 +797,13 @@ The image paths in the resulting HTML will appear as
 
 So far, we have seen how Tp-Note's viewer and HTML exporter converts the
 _destination_ of local links '`[text](destination)`'.
-Concerning the link's _text_ property, the situation is simpler as the _text_
-property never changes. However, there is one exception: when the
-text property contains a URL starting with '`http:`' or '`https:`' only the file
-stem is displayed. For example, the link: '`[http:dir/my file.md](<http:dir/my
-file.md>)`' is rewritten as '`[my file](<http:dir/my file.md>)`' during the
-rendition process. This explains why the autolink '`<http:dir/my file.md>.`'
-appears as '`my file`' in the browser.
+Concerning the link's _text_ property of local links, the situation is simpler
+as the _text_ property never changes. However, there is one exception: when the
+text property contains an autolink starting with '`tpnote:`' or '`http:`'
+only the file stem is displayed. For example, the autolink: 
+'`<tpnote:dir/my file.md>.`' is transformed into 
+'`[my file](<tpnote:dir/my file.md>)`' during the HTML rendition process. This 
+explains why it appears as '`my file`' in the browser.
 
 
 
