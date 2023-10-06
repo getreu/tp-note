@@ -250,24 +250,24 @@ from_clipboard_yaml_filename = """
 # accessed with the variables: `{{ clipboard | link_text }}`, `
 # {{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
 from_clipboard_content = """
-{%- set lname = stdin ~ clipboard | link_text -%}
-{%- set is_link_text =
-        lname !='' and
-        not lname is starting_with(\"http\")
-        and not lname is starting_with(\"HTTP\") -%}
-{%- if is_link_text -%}
-    {%- set title_text = stdin ~ clipboard | link_text -%}
+{%- set first_link = stdin ~ clipboard | link_text_picky -%}
+{%- set first_lines = stdin ~ clipboard | heading -%}
+
+{%- if first_link != '' -%} 
+  {%- set title_text = first_link -%}
 {%- else -%}
-    {%- set title_text = stdin ~ clipboard | heading -%}
-{% endif -%}
+  {%- set title_text = first_lines -%}
+{%- endif -%}
+
+{% if first_link !='' and
+          stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut -%}
+  {%- set subtitle_text = 'URL' -%}
+{%- else -%}
+  {%- set subtitle_text = 'Note' -%}
+{%- endif -%}
 ---
 {{ title_text | cut | to_yaml(key='title') }}
-{% if stdin ~ clipboard | link_text !='' and
-      stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut -%}
-  {{ 'URL' | to_yaml(key='subtitle') -}}
-{%- else -%}
-  {{ 'Note' | to_yaml(key='subtitle') -}}
-{%- endif %}
+{{ subtitle_text | to_yaml(key='subtitle') }}
 {{ username | capitalize | to_yaml(key='author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='date') }}
 {{ title_text | get_lang | map_lang(default=lang) | to_yaml(key='lang') }}
