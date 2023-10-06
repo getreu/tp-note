@@ -273,7 +273,7 @@ fn link_dest_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("link_text", "value", String, value);
+    let p = try_get_value!("link_dest", "value", String, value);
 
     let hyperlink = Hyperlink::from(&p).unwrap_or_default();
 
