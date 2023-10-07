@@ -151,7 +151,8 @@ fn rewrite_local_link(
             if text == dest && (text.contains(':') || text.contains('@')) {
                 let short_text = text
                     .trim_start_matches("http://")
-                    .trim_start_matches("http:");
+                    .trim_start_matches("http:")
+                    .trim_start_matches("tpnote:");
                 let short_text = Path::new(short_text);
                 let short_text = short_text
                     .file_stem()
@@ -164,7 +165,8 @@ fn rewrite_local_link(
             // As we have only local destinations here, we trim the URL scheme.
             let short_dest = dest
                 .trim_start_matches("http://")
-                .trim_start_matches("http:");
+                .trim_start_matches("http:")
+                .trim_start_matches("tpnote:");
             let mut dest = if let Cow::Owned(_) = dest {
                 Cow::Owned(short_dest.to_string())
             } else {
