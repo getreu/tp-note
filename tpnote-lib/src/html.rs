@@ -233,7 +233,8 @@ fn rewrite_local_link(
 }
 
 /// A helper function, that percent decodes the link destinations (and the link text
-/// in case of an autolink).
+/// in case of an autolink). As we insert the result in an UTF-8 template, we
+/// can
 fn percent_decode(link: Link) -> Link {
     match link {
         Link::Text2Dest(text, dest, title) => {
@@ -247,7 +248,12 @@ fn percent_decode(link: Link) -> Link {
                 _ => Cow::Owned(decoded_dest.to_string()),
             };
 
-            let text = if autolink { dest.clone() } else { text };
+            // We also check `text == decoded(dest)`.
+            let text = if autolink || *text == *dest {
+                dest.clone()
+            } else {
+                text
+            };
 
             Link::Text2Dest(text, dest, title)
         }
