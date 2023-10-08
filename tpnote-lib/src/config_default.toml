@@ -373,7 +373,7 @@ sync_filename = """
 # critical symbols by default. To disable this feature for a specific variable,
 # add a `safe` filter in last position.
 viewer = '''
-{%- set ext = fm_file_ext | default(value=extension_default ) -%}
+{%- set ext = fm_file_ext | default(value=path|file_ext) -%}
 <!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
@@ -522,7 +522,7 @@ viewer_highlighting_theme = "Solarized (light)"
 # HTML template used to render a note into HTML when the rendition is saved to
 # disk. Similar to `tmpl_html.viewer` but does not inject JavaScript code.
 exporter = '''
-{%- set ext = fm_file_ext | default(value=extension_default ) -%}
+{%- set ext = fm_file_ext | default(value=path|file_ext) -%}
 <!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
