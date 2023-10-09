@@ -239,23 +239,24 @@ fn percent_decode(link: Link) -> Link {
     match link {
         Link::Text2Dest(text, dest, title) => {
             // Is this an autolink?
-            let autolink = *text == *dest && (text.contains(':') || text.contains('@'));
+            let autolink = text == dest;
 
             // Percent decode URL. The template we insert in is UTF-8 encoded.
             let decoded_dest = percent_decode_str(&dest).decode_utf8().unwrap();
-            let dest = match (&dest, &decoded_dest) {
+            let decoded_dest = match (&dest, &decoded_dest) {
                 (Cow::Borrowed(_), Cow::Borrowed(_)) => dest,
                 _ => Cow::Owned(decoded_dest.to_string()),
             };
 
-            // We also check `text == decoded(dest)`.
-            let text = if autolink || *text == *dest {
-                dest.clone()
-            } else {
-                text
+            // We check also if `decoded_dest==decoded_text`.
+            let decoded_text = percent_decode_str(&text).decode_utf8().unwrap();
+            let autolink = match (&text, &decoded_text) {
+                (Cow::Borrowed(_), Cow::Borrowed(_)) => autolink,
+                (_, decoded_text) => decoded_text == &decoded_dest,
             };
+            let decoded_text = if autolink { decoded_dest.clone() } else { text };
 
-            Link::Text2Dest(text, dest, title)
+            Link::Text2Dest(decoded_text, decoded_dest, title)
         }
 
         Link::Image(alt_text, source) => {
@@ -270,7 +271,7 @@ fn percent_decode(link: Link) -> Link {
         }
 
         // The `HyperlinkInlineImage` iterator has no further variants.
-        _ => unreachable!(),
+        _ => link,
     }
 }
 
@@ -345,7 +346,6 @@ pub fn rewrite_links(
         // From here on we only deal with local links.
         // Percent decode link destination.
         let link = percent_decode(link);
-
         // Rewrite the local link.
         if let Some((consumed_new, dest)) = rewrite_local_link(
             link,
@@ -699,22 +699,24 @@ mod tests {
 
         //
         let input = Link::Text2Dest(
-            Cow::from("de%20st"),
-            Cow::from("de%20st"),
-            Cow::from("title"),
-        );
-        let expected =
-            Link::Text2Dest(Cow::from("de%20st"), Cow::from("de st"), Cow::from("title"));
-        assert_eq!(percent_decode(input), expected);
-
-        //
-        let input = Link::Text2Dest(
             Cow::from("d:e%20st"),
             Cow::from("d:e%20st"),
             Cow::from("title"),
         );
         let expected =
             Link::Text2Dest(Cow::from("d:e st"), Cow::from("d:e st"), Cow::from("title"));
+        assert_eq!(percent_decode(input), expected);
+
+        let input = Link::Text2Dest(
+            Cow::from("d:e%20&st%26"),
+            Cow::from("d:e%20%26st&"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("d:e &st&"),
+            Cow::from("d:e &st&"),
+            Cow::from("title"),
+        );
         assert_eq!(percent_decode(input), expected);
 
         //
