@@ -338,6 +338,10 @@ pub enum NoteError {
     #[cfg(feature = "renderer")]
     RstParse { msg: String },
 
+    /// Remedy: correct link path.
+    #[error("<i>INVALID LOCAL LINK</i>")]
+    InvalidLocalLink,
+
     #[error(transparent)]
     Utf8Conversion {
         #[from]

@@ -1,7 +1,7 @@
 //! Helper functions dealing with HTML conversion.
 
-use crate::config::LocalLinkKind;
 use crate::markup_language::MarkupLanguage;
+use crate::{config::LocalLinkKind, error::NoteError};
 use parking_lot::RwLock;
 use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
@@ -97,181 +97,217 @@ fn assemble_link(
     }
 }
 
-#[inline]
-/// Helper function that converts relative local HTML links to absolute
-/// links. If successful, we return `Some(converted_anchor_tag, target)`.
-///
-/// The base path for this conversion (usually where the HTML file resides),
-/// is `docdir`.
-/// If not `rewrite_rel_links`, relative local links are not converted.
-/// Furthermore, all local _absolute_ (not converted) links are prepended with
-/// `root_path`. All external URLs always remain untouched.
-/// If `rewrite_abs_links` and `link` is absolute, concatenate and return
-/// `root_path` and `dest`.
-/// If not `rewrite_abs_links` and dest` is absolute, return `dest`.
-/// If `rewrite_ext` is true and the link points to a known Tp-Note file
-/// extension, then `.html` is appended to the converted link.
-/// Remark: The _anchor's text property_ is never changed. However, there is
-/// one exception: when the text contains a URL starting with `http:` or
-/// `https:`, only the file stem is kept. Example, the anchor text property:
-/// `<a ...>http:dir/my file.md</a>` is rewritten into `<a ...>my file</a>`.
-///
-/// Contracts:
-/// 1. `link` must be local (link dest may contain`;///` but not `;//`). It
-///    may have a scheme.
-/// 2. `link` is `Link::Text2Dest` or `Link::Image`
-/// 3. `root_path` and `docdir` are absolute paths to directories.
-/// 4. `root_path` is never empty `""`. It can be `"/"`.
-///
-/// Guaranties:
-/// 1. The returned link is guaranteed to be a child of `root_path`, or
-///    `None`.
+trait Hyperlink {
+    /// A helper function, that percent decodes the link destinations (and the
+    /// link text in case of an autolink).
+    fn percent_decode_url(&mut self);
 
-fn rewrite_local_link(
-    link: Link,
-    root_path: &Path,
-    docdir: &Path,
-    rewrite_rel_links: bool,
-    rewrite_abs_links: bool,
-    rewrite_ext: bool,
-) -> Option<(String, PathBuf)> {
-    //
-    match link {
-        Link::Text2Dest(text, dest, title) => {
-            // Check contract 1. Panic if link is not local.
-            debug_assert!(!dest.contains("://") && !dest.contains(":///"));
+    /// Member function converting the relative local URLs in `self`.
+    /// If successful, we return `Ok(Some(URL))`, otherwise
+    /// `Err(NoteError::InvalidLocalLink)`.
+    /// If `self` contains an absolute URL, no conversion is performed and the
+    /// return value is `Ok(None))`.
+    ///
+    /// Conversion details:
+    /// The base path for this conversion (usually where the HTML file resides),
+    /// is `docdir`. If not `rewrite_rel_links`, relative local links are not
+    /// converted. Furthermore, all local links starting with `/` are prepended
+    /// with `root_path`. All absolute URLs always remain untouched.
+    ///
+    /// Algorithm:
+    /// 1. If `rewrite_abs_links==true` and `link` starts with `/`, concatenate
+    ///    and return `root_path` and `dest`.
+    /// 2. If `rewrite_abs_links==false` and `dest` does not start wit `/`,
+    ///    return `dest`.
+    /// 3. If `rewrite_ext==true` and the link points to a known Tp-Note file
+    ///    extension, then `.html` is appended to the converted link.
+    /// Remark: The _anchor's text property_ is never changed. However, there
+    /// is one exception: when the text contains a URL starting with `http:` or
+    /// `https:`, only the file stem is kept. Example, the anchor text property:
+    /// `<a ...>http:dir/my file.md</a>` is rewritten into `<a ...>my file</a>`.
+    ///
+    /// Contracts:
+    /// 1. `link` may have a scheme.
+    /// 2. `link` is `Link::Text2Dest` or `Link::Image`
+    /// 3. `root_path` and `docdir` are absolute paths to directories.
+    /// 4. `root_path` is never empty `""`. It can be `"/"`.
+    ///
+    /// Guaranties:
+    /// 1. The returned link is guaranteed to be a child of `root_path`, or
+    ///    `None`.
+    fn rewrite_local_link(
+        &mut self,
+        root_path: &Path,
+        docdir: &Path,
+        rewrite_rel_links: bool,
+        rewrite_abs_links: bool,
+        rewrite_ext: bool,
+    ) -> Result<Option<PathBuf>, NoteError>;
 
-            // Only rewrite file extensions for Tp-Note files.
-            let rewrite_ext =
-                rewrite_ext && MarkupLanguage::from(Path::new(dest.as_ref())).is_some();
+    /// Renders `Link::Text2Dest` and `Link::Image` to HTML.
+    fn render_html(&self) -> String;
+}
 
-            // Is this an autolink?
-            // Show only the stem as link text.
-            let mut text = text;
-            if text == dest && (text.contains(':') || text.contains('@')) {
-                let short_text = text
-                    .trim_start_matches("http://")
-                    .trim_start_matches("http:")
-                    .trim_start_matches("tpnote:");
-                let short_text = Path::new(short_text);
-                let short_text = short_text
-                    .file_stem()
-                    .unwrap_or_default()
-                    .to_str()
-                    .unwrap_or_default();
-                text = Cow::Owned(short_text.to_string());
+impl<'a> Hyperlink for Link<'a> {
+    #[inline]
+    fn percent_decode_url(&mut self) {
+        match self {
+            Link::Text2Dest(text, dest, _title) => {
+                // Is this an autolink?
+                let autolink = text == dest;
+
+                // Percent decode URL. The template we insert in is UTF-8 encoded.
+                let decoded_dest = percent_decode_str(&*dest).decode_utf8().unwrap();
+                if matches!(&decoded_dest, Cow::Owned(..)) {
+                    let decoded_dest = Cow::Owned(decoded_dest.to_string());
+                    // Store result.
+                    let _ = std::mem::replace(dest, decoded_dest);
+                }
+
+                // We check also if `decoded_dest==decoded_text`.
+                let decoded_text = percent_decode_str(&*text).decode_utf8().unwrap();
+                let autolink = match (&text, decoded_text) {
+                    (Cow::Borrowed(_), Cow::Borrowed(_)) => autolink,
+                    (_, decoded_text) => &decoded_text == dest,
+                };
+                if autolink {
+                    // Store result.
+                    let _ = std::mem::replace(text, dest.clone());
+                }
             }
 
+            Link::Image(_alt_text, source) => {
+                // Percent decode URL. The template we insert in is UTF-8 encoded.
+                let decoded_source = percent_decode_str(&*source).decode_utf8().unwrap();
+                if matches!(&decoded_source, Cow::Owned(..)) {
+                    let decoded_source = Cow::Owned(decoded_source.to_string());
+                    // Store result.
+                    let _ = std::mem::replace(source, decoded_source);
+                }
+            }
+
+            // The `HyperlinkInlineImage` iterator has no further variants.
+            _ => unreachable!(),
+        }
+    }
+
+    fn rewrite_local_link(
+        &mut self,
+        root_path: &Path,
+        docdir: &Path,
+        rewrite_rel_links: bool,
+        rewrite_abs_links: bool,
+        rewrite_ext: bool,
+    ) -> Result<Option<PathBuf>, NoteError> {
+        //
+        let (text, dest) = match self {
+            Link::Text2Dest(text, dest, _title) => (text, dest),
+            Link::Image(alt, source) => (alt, source),
+            _ => return Err(NoteError::InvalidLocalLink),
+        };
+
+        // Return None, if link is not local.
+        if (dest.contains("://") && !dest.contains(":///"))
+            || dest.starts_with("mailto:")
+            || dest.starts_with("tel:")
+        {
+            return Ok(None);
+        }
+
+        // Is this an autolink? Then modify `text`.
+        if text == dest && (text.contains(':') || text.contains('@')) {
+            let short_text = text
+                .trim_start_matches("http://")
+                .trim_start_matches("http:")
+                .trim_start_matches("tpnote:");
+            // Strip extension.
+            let short_text = short_text
+                .rsplit_once('.')
+                .map(|(s, _ext)| s)
+                .unwrap_or(short_text);
+            // Show only the stem as link text. Strip path.
+            let short_text = short_text
+                .rsplit_once(['/', '\\'])
+                .map(|(_path, stem)| stem)
+                .unwrap_or(short_text);
+            // Store result.
+            let new_text = Cow::Owned(short_text.to_string());
+            let _ = std::mem::replace(text, new_text);
+            // Store result.
+        }
+
+        // Now we deal with `dest`.
+        {
             // As we have only local destinations here, we trim the URL scheme.
             let short_dest = dest
                 .trim_start_matches("http://")
                 .trim_start_matches("http:")
                 .trim_start_matches("tpnote:");
-            let mut dest = if let Cow::Owned(_) = dest {
+            let short_dest = if let Cow::Owned(_) = dest {
                 Cow::Owned(short_dest.to_string())
             } else {
                 Cow::Borrowed(short_dest)
             };
 
-            // Append ".html" if `rewrite_ext`.
-            if rewrite_ext {
-                let mut long_dest = dest.to_string();
-                long_dest.push_str(HTML_EXT);
-                dest = Cow::Owned(long_dest)
-            };
+            // Append ".html" to dest, if `rewrite_ext`.
+            // Only rewrite file extensions for Tp-Note files.
+            let short_dest =
+                if rewrite_ext && MarkupLanguage::from(Path::new(dest.as_ref())).is_some() {
+                    Cow::Owned(format!("{}{}", short_dest, HTML_EXT))
+                } else {
+                    short_dest
+                };
 
-            let destout = assemble_link(
+            let dest_out = assemble_link(
                 root_path,
                 docdir,
-                Path::new(&dest.as_ref()),
+                Path::new(&short_dest.as_ref()),
                 rewrite_rel_links,
                 rewrite_abs_links,
-            )?;
+            )
+            .ok_or(NoteError::InvalidLocalLink)?;
 
-            // Replace Windows backslash
-            let deststr = destout.to_str().unwrap_or_default();
-            let deststr = if deststr.contains('\\') {
-                Cow::Owned(deststr.replace('\\', "/"))
-            } else {
-                Cow::Borrowed(deststr)
-            };
+            // Store result.
+            let new_dest = Cow::Owned(dest_out.to_str().unwrap_or_default().to_string());
+            let _ = std::mem::replace(dest, new_dest);
 
-            Some((
-                format!("<a href=\"{}\" title=\"{}\">{}</a>", deststr, title, text),
-                destout,
-            ))
+            // Return `new_dest` as path.
+            Ok(Some(dest_out))
         }
-
-        Link::Image(text, dest) => {
-            // Check contract 1. Panic if link is not local.
-            debug_assert!(!dest.contains("://"));
-
-            let destout = assemble_link(
-                root_path,
-                docdir,
-                Path::new(&dest.as_ref()),
-                rewrite_rel_links,
-                rewrite_abs_links,
-            )?;
-
-            // Replace Windows backslash
-            let deststr = destout.to_str().unwrap_or_default();
-            let deststr = if deststr.contains('\\') {
-                Cow::Owned(deststr.replace('\\', "/"))
-            } else {
-                Cow::Borrowed(deststr)
-            };
-
-            Some((
-                format!("<img src=\"{}\" alt=\"{}\" />", deststr, text),
-                destout,
-            ))
-        }
-
-        _ => unreachable!(),
     }
-}
 
-/// A helper function, that percent decodes the link destinations (and the link text
-/// in case of an autolink). As we insert the result in an UTF-8 template, we
-/// can
-fn percent_decode(link: Link) -> Link {
-    match link {
-        Link::Text2Dest(text, dest, title) => {
-            // Is this an autolink?
-            let autolink = text == dest;
+    //
+    fn render_html(&self) -> String {
+        match &self {
+            Link::Text2Dest(text, dest, title) => {
+                // Replace Windows backslash
+                let newdest = if (*dest).contains('\\') {
+                    Cow::Owned(dest.to_string().replace('\\', "/"))
+                } else {
+                    dest.clone()
+                };
+                let title = if !title.is_empty() {
+                    format!(" title=\"{}\"", title)
+                } else {
+                    title.to_string()
+                };
+                // Save results.
+                format!("<a href=\"{}\"{}>{}</a>", newdest, title, text)
+            }
 
-            // Percent decode URL. The template we insert in is UTF-8 encoded.
-            let decoded_dest = percent_decode_str(&dest).decode_utf8().unwrap();
-            let decoded_dest = match (&dest, &decoded_dest) {
-                (Cow::Borrowed(_), Cow::Borrowed(_)) => dest,
-                _ => Cow::Owned(decoded_dest.to_string()),
-            };
+            Link::Image(text, dest) => {
+                // Replace Windows backslash
+                let newdest = if (*dest).contains('\\') {
+                    Cow::Owned(dest.to_string().replace('\\', "/"))
+                } else {
+                    dest.clone()
+                };
 
-            // We check also if `decoded_dest==decoded_text`.
-            let decoded_text = percent_decode_str(&text).decode_utf8().unwrap();
-            let autolink = match (&text, &decoded_text) {
-                (Cow::Borrowed(_), Cow::Borrowed(_)) => autolink,
-                (_, decoded_text) => decoded_text == &decoded_dest,
-            };
-            let decoded_text = if autolink { decoded_dest.clone() } else { text };
+                format!("<img src=\"{}\" alt=\"{}\" />", newdest, text)
+            }
 
-            Link::Text2Dest(decoded_text, decoded_dest, title)
+            _ => String::new(),
         }
-
-        Link::Image(alt_text, source) => {
-            // Percent decode URL. The template we insert in is UTF-8 encoded.
-            let decoded_source = percent_decode_str(&source).decode_utf8().unwrap();
-            let source = match (&source, &decoded_source) {
-                (Cow::Borrowed(_), Cow::Borrowed(_)) => source,
-                _ => Cow::Owned(decoded_source.to_string()),
-            };
-
-            Link::Image(alt_text, source)
-        }
-
-        // The `HyperlinkInlineImage` iterator has no further variants.
-        _ => link,
     }
 }
 
@@ -319,48 +355,29 @@ pub fn rewrite_links(
     // of this note.
     let mut rest = &*html;
     let mut html_out = String::new();
-    for ((skipped, consumed, remaining), link) in HyperlinkInlineImage::new(&html) {
-        //
-        // Is this an absolute hyperlink?
+    for ((skipped, _consumed, remaining), mut link) in HyperlinkInlineImage::new(&html) {
         html_out.push_str(skipped);
         rest = remaining;
-        {
-            let link_destination = match link {
-                Link::Text2Dest(ref _link_text, ref link_destination, ref _link_title) => {
-                    link_destination
-                }
-                Link::Image(ref _img_alt, ref img_src) => img_src,
-                _ => continue,
-            };
 
-            // We skip absolute URLs, `mailto:` and `tel:` links.
-            if (link_destination.contains("://") && !link_destination.contains(":///"))
-                || link_destination.starts_with("mailto:")
-                || link_destination.starts_with("tel:")
-            {
-                html_out.push_str(consumed);
-                continue;
-            }
-        }
-
-        // From here on we only deal with local links.
         // Percent decode link destination.
-        let link = percent_decode(link);
+        link.percent_decode_url();
+
         // Rewrite the local link.
-        if let Some((consumed_new, dest)) = rewrite_local_link(
-            link,
+        match link.rewrite_local_link(
             root_path,
             docdir,
             rewrite_rel_links,
             rewrite_abs_links,
             rewrite_ext,
         ) {
-            html_out.push_str(&consumed_new);
-            allowed_urls.insert(dest);
-        } else {
-            log::debug!("Viewer: invalid_local_links: {}", consumed);
-            html_out.push_str("<i>INVALID LOCAL LINK</i>");
-        }
+            Ok(Some(dest_path)) => {
+                allowed_urls.insert(dest_path);
+                html_out.push_str(&link.render_html());
+            }
+            Ok(None) => html_out.push_str(&link.render_html()),
+
+            Err(e) => html_out.push_str(&e.to_string()),
+        };
     }
     // Add the last `remaining`.
     html_out.push_str(rest);
@@ -390,10 +407,9 @@ pub fn rewrite_links(
 #[cfg(test)]
 mod tests {
 
+    use crate::error::NoteError;
     use crate::html::assemble_link;
-    use crate::html::percent_decode;
     use crate::html::rewrite_links;
-    use crate::html::rewrite_local_link;
     use parking_lot::RwLock;
     use parse_hyperlinks::parser::Link;
     use parse_hyperlinks_extras::parser::parse_html::take_link;
@@ -403,6 +419,8 @@ mod tests {
         path::{Path, PathBuf},
         sync::Arc,
     };
+
+    use super::Hyperlink;
 
     #[test]
     fn test_assemble_link() {
@@ -484,17 +502,19 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "assertion failed: !dest.contains(\\\"://\\\")")]
     fn test_rewrite_link1() {
         let root_path = Path::new("/my/");
         let docdir = Path::new("/my/abs/note path/");
 
         // Should panic: this is not a relative path.
-        let input = take_link("<a href=\"ftp://getreu.net\">Blog</a>")
+        let mut input = take_link("<a href=\"ftp://getreu.net\">Blog</a>")
             .unwrap()
             .1
              .1;
-        let _ = rewrite_local_link(input, root_path, docdir, true, false, false).unwrap();
+        assert!(input
+            .rewrite_local_link(root_path, docdir, true, false, false)
+            .unwrap()
+            .is_none());
     }
 
     #[test]
@@ -503,211 +523,204 @@ mod tests {
         let docdir = Path::new("/my/abs/note path/");
 
         // Check relative path to image.
-        let input = take_link("<img src=\"down/./down/../../t m p.jpg\" alt=\"Image\" />")
+        let mut input = take_link("<img src=\"down/./down/../../t m p.jpg\" alt=\"Image\" />")
             .unwrap()
             .1
              .1;
         let expected = "<img src=\"/abs/note path/t m p.jpg\" \
             alt=\"Image\" />";
-        let (outhtml, outpath) =
-            rewrite_local_link(input, root_path, docdir, true, false, false).unwrap();
-
-        assert_eq!(outhtml, expected);
+        let outpath = input
+            .rewrite_local_link(root_path, docdir, true, false, false)
+            .unwrap()
+            .unwrap();
+        let output = input.render_html();
+        assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/abs/note path/t m p.jpg"));
 
         // Check relative path to image. Canonicalized?
-        let input = take_link("<img src=\"down/./../../t m p.jpg\" alt=\"Image\" />")
+        let mut input = take_link("<img src=\"down/./../../t m p.jpg\" alt=\"Image\" />")
             .unwrap()
             .1
              .1;
-        let expected = "<img src=\"../t m p.jpg\" alt=\"Image\" />";
-        let (outhtml, outpath) =
-            rewrite_local_link(input, root_path, docdir, false, false, false).unwrap();
-
-        assert_eq!(outhtml, expected);
-        assert_eq!(outpath, PathBuf::from("../t m p.jpg"));
+        let expected = "<img src=\"/abs/t m p.jpg\" alt=\"Image\" />";
+        let outpath = input
+            .rewrite_local_link(root_path, docdir, true, false, false)
+            .unwrap()
+            .unwrap();
+        let output = input.render_html();
+        assert_eq!(output, expected);
+        assert_eq!(outpath, PathBuf::from("/abs/t m p.jpg"));
 
         // Check relative path to note file.
-        let input = take_link("<a href=\"./down/./../my note 1.md\">my note 1</a>")
+        let mut input = take_link("<a href=\"./down/./../my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let expected = "<a href=\"/abs/note path/my note 1.md\" \
-            title=\"\">my note 1</a>";
-        let (outhtml, outpath) =
-            rewrite_local_link(input, root_path, docdir, true, false, false).unwrap();
-
-        assert_eq!(outhtml, expected);
+        let expected = "<a href=\"/abs/note path/my note 1.md\">my note 1</a>";
+        let outpath = input
+            .rewrite_local_link(root_path, docdir, true, false, false)
+            .unwrap()
+            .unwrap();
+        let output = input.render_html();
+        assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/abs/note path/my note 1.md"));
 
         // Check absolute path to note file.
-        let input = take_link("<a href=\"/dir/./down/../my note 1.md\">my note 1</a>")
+        let mut input = take_link("<a href=\"/dir/./down/../my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let expected = "<a href=\"/dir/my note 1.md\" \
-            title=\"\">my note 1</a>";
-        let (outhtml, outpath) =
-            rewrite_local_link(input, root_path, docdir, true, false, false).unwrap();
-
-        assert_eq!(outhtml, expected);
+        let expected = "<a href=\"/dir/my note 1.md\">my note 1</a>";
+        let outpath = input
+            .rewrite_local_link(root_path, docdir, true, false, false)
+            .unwrap()
+            .unwrap();
+        let output = input.render_html();
+        assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
 
         // Check relative path to note file. Canonicalized?
-        let input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
+        let mut input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let expected = "<a href=\"dir/my note 1.md\" \
-            title=\"\">my note 1</a>";
-        let (outhtml, outpath) =
-            rewrite_local_link(input, root_path, docdir, false, false, false).unwrap();
-
-        assert_eq!(outhtml, expected);
+        let expected = "<a href=\"dir/my note 1.md\">my note 1</a>";
+        let outpath = input
+            .rewrite_local_link(root_path, docdir, false, false, false)
+            .unwrap()
+            .unwrap();
+        let output = input.render_html();
+        assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("dir/my note 1.md"));
 
         // Check `rewrite_ext=true`.
-        let input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
+        let mut input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let expected = "<a href=\"/abs/note path/dir/my note 1.md.html\" \
-            title=\"\">my note 1</a>";
-        let (outhtml, outpath) =
-            rewrite_local_link(input, root_path, docdir, true, false, true).unwrap();
-
-        assert_eq!(outhtml, expected);
+        let expected = "<a href=\"/abs/note path/dir/my note 1.md.html\">my note 1</a>";
+        let outpath = input
+            .rewrite_local_link(root_path, docdir, true, false, true)
+            .unwrap()
+            .unwrap();
+        let output = input.render_html();
+        assert_eq!(output, expected);
         assert_eq!(
             outpath,
             PathBuf::from("/abs/note path/dir/my note 1.md.html")
         );
 
         // Check relative link in input.
-        let input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
+        let mut input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let expected = "<a href=\"/path/dir/my note 1.md\" title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rewrite_local_link(
-            input,
-            Path::new("/my/note/"),
-            Path::new("/my/note/path/"),
-            true,
-            false,
-            false,
-        )
-        .unwrap();
-
-        assert_eq!(outhtml, expected);
+        let expected = "<a href=\"/path/dir/my note 1.md\">my note 1</a>";
+        let outpath = input
+            .rewrite_local_link(
+                Path::new("/my/note/"),
+                Path::new("/my/note/path/"),
+                true,
+                false,
+                false,
+            )
+            .unwrap()
+            .unwrap();
+        let output = input.render_html();
+        assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/path/dir/my note 1.md"));
 
         // Check absolute link in input.
-        let input = take_link("<a href=\"/down/./../dir/my note 1.md\">my note 1</a>")
+        let mut input = take_link("<a href=\"/down/./../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let expected = "<a href=\"/dir/my note 1.md\" title=\"\">my note 1</a>";
-        let (outhtml, outpath) = rewrite_local_link(
-            input,
-            root_path,
-            Path::new("/my/ignored/"),
-            true,
-            false,
-            false,
-        )
-        .unwrap();
-
-        assert_eq!(outhtml, expected);
+        let expected = "<a href=\"/dir/my note 1.md\">my note 1</a>";
+        let outpath = input
+            .rewrite_local_link(root_path, Path::new("/my/ignored/"), true, false, false)
+            .unwrap()
+            .unwrap();
+        let output = input.render_html();
+        assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
 
         // Check absolute link in input, not in `root_path`.
-        let input = take_link("<a href=\"/down/../../dir/my note 1.md\">my note 1</a>")
+        let mut input = take_link("<a href=\"/down/../../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let output = rewrite_local_link(
-            input,
-            root_path,
-            Path::new("/my/notepath/"),
-            true,
-            false,
-            false,
-        );
-
-        assert_eq!(output, None);
+        let output = input
+            .rewrite_local_link(root_path, Path::new("/my/notepath/"), true, false, false)
+            .unwrap_err();
+        assert!(matches!(output, NoteError::InvalidLocalLink));
 
         // Check relative link in input, not in `root_path`.
-        let input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
+        let mut input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let output = rewrite_local_link(
-            input,
-            root_path,
-            Path::new("/my/notepath/"),
-            true,
-            false,
-            false,
-        );
-
-        assert_eq!(output, None);
+        let output = input
+            .rewrite_local_link(root_path, Path::new("/my/notepath/"), true, false, false)
+            .unwrap_err();
+        assert!(matches!(output, NoteError::InvalidLocalLink));
 
         // Check relative link in input, with underflow.
         let root_path = Path::new("/");
-        let input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
+        let mut input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let output = rewrite_local_link(input, root_path, Path::new("/my/"), true, false, false);
-
-        assert_eq!(output, None);
+        let output = input
+            .rewrite_local_link(root_path, Path::new("/my/"), true, false, false)
+            .unwrap_err();
+        assert!(matches!(output, NoteError::InvalidLocalLink));
 
         // Check relative link in input, not in `root_path`.
         let root_path = Path::new("/my");
-        let input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
+        let mut input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
              .1;
-        let output = rewrite_local_link(
-            input,
-            root_path,
-            Path::new("/my/notepath"),
-            true,
-            false,
-            false,
-        );
-
-        assert_eq!(output, None);
+        let output = input
+            .rewrite_local_link(root_path, Path::new("/my/notepath"), true, false, false)
+            .unwrap_err();
+        assert!(matches!(output, NoteError::InvalidLocalLink));
     }
 
     #[test]
     fn test_percent_decode() {
         //
-        let input = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
+        let mut input = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
         let expected = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
-        assert_eq!(percent_decode(input), expected);
+        input.percent_decode_url();
+        let output = input;
+        assert_eq!(output, expected);
 
         //
-        let input = Link::Text2Dest(
+        let mut input = Link::Text2Dest(
             Cow::from("te%20xt"),
             Cow::from("de%20st"),
             Cow::from("title"),
         );
         let expected =
             Link::Text2Dest(Cow::from("te%20xt"), Cow::from("de st"), Cow::from("title"));
-        assert_eq!(percent_decode(input), expected);
+        input.percent_decode_url();
+        let output = input;
+        assert_eq!(output, expected);
 
         //
-        let input = Link::Text2Dest(
+        let mut input = Link::Text2Dest(
             Cow::from("d:e%20st"),
             Cow::from("d:e%20st"),
             Cow::from("title"),
         );
         let expected =
             Link::Text2Dest(Cow::from("d:e st"), Cow::from("d:e st"), Cow::from("title"));
-        assert_eq!(percent_decode(input), expected);
+        input.percent_decode_url();
+        let output = input;
+        assert_eq!(output, expected);
 
-        let input = Link::Text2Dest(
+        let mut input = Link::Text2Dest(
             Cow::from("d:e%20&st%26"),
             Cow::from("d:e%20%26st&"),
             Cow::from("title"),
@@ -717,17 +730,23 @@ mod tests {
             Cow::from("d:e &st&"),
             Cow::from("title"),
         );
-        assert_eq!(percent_decode(input), expected);
+        input.percent_decode_url();
+        let output = input;
+        assert_eq!(output, expected);
 
         //
-        let input = Link::Image(Cow::from("al%20t"), Cow::from("de%20st"));
+        let mut input = Link::Image(Cow::from("al%20t"), Cow::from("de%20st"));
         let expected = Link::Image(Cow::from("al%20t"), Cow::from("de st"));
-        assert_eq!(percent_decode(input), expected);
+        input.percent_decode_url();
+        let output = input;
+        assert_eq!(output, expected);
 
         //
-        let input = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
+        let mut input = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
         let expected = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
-        assert_eq!(percent_decode(input), expected);
+        input.percent_decode_url();
+        let output = input;
+        assert_eq!(output, expected);
     }
 
     #[test]
@@ -751,9 +770,9 @@ mod tests {
         let expected = "abc<a href=\"ftp://getreu.net\">Blog</a>\
             def<a href=\"https://getreu.net\">https://getreu.net</a>\
             ghi<img src=\"/abs/note path/t m p.jpg\" alt=\"test 1\" />\
-            jkl<a href=\"/abs/note path/down/my note 1.md\" title=\"\">my note 1</a>\
-            mno<a href=\"/abs/note path/dir/my note.md\" title=\"\">my note</a>\
-            pqr<a href=\"/dir/my note.md\" title=\"\">my note</a>\
+            jkl<a href=\"/abs/note path/down/my note 1.md\">my note 1</a>\
+            mno<a href=\"/abs/note path/dir/my note.md\">my note</a>\
+            pqr<a href=\"/dir/my note.md\">my note</a>\
             stu<i>INVALID LOCAL LINK</i>\
             vwx<i>INVALID LOCAL LINK</i>"
             .to_string();
