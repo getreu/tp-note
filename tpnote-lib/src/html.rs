@@ -15,12 +15,12 @@ use std::{
 
 pub(crate) const HTML_EXT: &str = ".html";
 
-/// If `rewrite_rel_links` and `dest` is relative, concat `docdir`  and
+/// If `rewrite_rel_path` and `dest` is relative, concatenate `docdir` and
 /// `dest`, then strip `root_path` from the left before returning.
-/// If not `rewrite_rel_links` and `dest` is relative, return `dest`.
-/// If `rewrite_abs_links` and `dest` is absolute, concatenate and return
+/// If not `rewrite_rel_path` and `dest` is relative, return `dest`.
+/// If `rewrite_abs_path` and `dest` is absolute, concatenate and return
 /// `root_path` and `dest`.
-/// If not `rewrite_abs_links` and `dest` is absolute, return `dest`.
+/// If not `rewrite_abs_path` and `dest` is absolute, return `dest`.
 /// The `dest` portion of the output is always canonicalized.
 /// Return the assembled path, when in `root_path`, or `None` otherwise.
 /// Asserts in debug mode, that `doc_dir` is in `root_path`.
@@ -312,29 +312,34 @@ impl<'a> Hyperlink for Link<'a> {
 }
 
 #[inline]
-/// Helper function that scans the input `html` string and converts
-/// all relative local HTML links to absolute links.
+/// A helper function that scans the input HTML document in `html` for HTML
+/// hyperlinks. When it finds a relative URL (local link), it analyzes it's
+/// path.  A relative path is then converted into an absolute path, before the
+/// result is reinserted into the HTML document.
 ///
-/// The base path for this conversion (usually where the HTML file resides),
-/// is `docdir`.
-/// If not `rewrite_rel_links`, relative local links are not converted.
-/// Furthermore, all local _absolute_ (not converted) links are prepended with
+/// The base path for this conversion is `docdir`, the location of the HTML
+/// document.
+/// If not `rewrite_rel_paths`, relative local paths are not converted.
+/// Furthermore, all local _absolute_ (not converted) paths are prepended with
 /// `root_path`. All external URLs always remain untouched.
-/// If `rewrite_abs_links` and `link` is absolute, concatenate and return
-/// `root_path` and `dest`.
-/// If `rewrite_ext` is true and the link points to a known Tp-Note file
-/// extension, then `.html` is appended to the converted link.
-/// Remark: The _anchor's text property_ is never changed. However, there is
-/// one exception: when the text contains a URL starting with `http:` or
-/// `https:`, only the file stem is kept. Example, the anchor text property:
+/// If `rewrite_abs_paths` and the URL's path is absolute, it prepends
+/// `root_path`.
+/// Finally, if `rewrite_ext` is true and a local link points to a known
+/// Tp-Note file extension, then `.html` is appended to the converted link.
+/// Remark: The link's text property is never changed. However, there is
+/// one exception: when the link's text contains a string similar to URLs,
+/// starting with `http:` or `tpnote:`. In this case, the string is interpreted
+/// URL and only the stem of the filename is displayed, e.g.
 /// `<a ...>http:dir/my file.md</a>` is rewritten into `<a ...>my file</a>`.
 ///
-/// It is guaranteed, that all local links in the converted `html` point inside
-/// `root_path`. If not, the link is displayed as `INVALID LOCAL LINK` and
-/// discarded. All valid local links are inserted in `allowed_local_links`
-/// the same way as their destination appears in the resulting HTML.
-/// NB: Before processing, all links are percent decoded, as some
-/// rendering libraries do not do this, e.g. `pulldown-cmark`.
+/// Before a local (converted) link is reinserted in the output HTML,
+/// a copy is inserted into `allowed_local_links` for further bookkeeping.
+///
+/// decoded. After rewriting, the links are finally HTML escape encoded before
+/// the are reinserted in the output HTML of this function.
+/// NB2: It is guaranteed, that the resulting HTML document contains only local links
+/// to other documents within `root_path`. Deviant links displayed as `INVALID
+/// LOCAL LINK` and URL is discarded.
 pub fn rewrite_links(
     html: String,
     root_path: &Path,

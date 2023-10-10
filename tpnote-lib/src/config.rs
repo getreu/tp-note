@@ -440,19 +440,20 @@ impl LibCfgCache {
 ///
 /// The enum `LocalLinkKind` allows you to fine tune how local links are written
 /// out. Valid variants are: `off`, `short` and `long`. In order to achieve
-/// this, the user must respect  the following convention concerning absolute
-/// local links in Tp-Note documents:  The base of absolute local links in Tp-
-/// Note documents must be the directory where the marker file `.tpnoteroot`
+/// this, the user must respect the following convention concerning absolute
+/// paths in local links in Tp-Note documents: When a document contains a
+/// local link with an absolute path, the base of this path
+/// is considered to be the the directory where the marker file `.tpnoteroot`
 /// resides (or `/` in non exists). The option `--export-link- rewriting`
 /// decides how local links in the Tp-Note  document are converted when the
-/// HTML is generated.  If its value is `short`, then relative local links are
-/// converted to absolute links. The base of the resulting links is where the
-/// `.tpnoteroot` file resides (or `/` if none exists). Consider the following
-/// example:
+/// HTML is generated.  If its value is `short`, then local links with relative
+/// paths are converted to absolute paths. The base of the resulting path is
+/// where the `.tpnoteroot` file resides (or `/` if none exists).
+/// Consider the following example `LocalLinkKind::Short`:
 ///
 /// * The Tp-Note file `/my/docs/car/bill.md` contains
-/// * the absolute link `/car/scan.jpg`.
-/// * and the relative link `./photo.jpg`.
+/// * a local link with an absolute path: `/car/scan.jpg`,
+/// * and another link with a relative path: `./photo.jpg`.
 /// * The document root marker is: `/my/docs/.tpnoteroot`.
 ///
 /// The images in the resulting HTML will appear as
@@ -460,12 +461,12 @@ impl LibCfgCache {
 /// * `/car/scan.jpg`.
 /// * `/car/photo.jpg`.
 ///
-/// For `LocalLinkKind::long`, in addition to the above, all absolute
+/// For `LocalLinkKind::Long`, in addition to the above, all absolute paths in
 /// local links are rebased to `/`'. Consider the following example:
 ///
 /// * The Tp-Note file `/my/docs/car/bill.md` contains
-/// * the absolute link `/car/scan.jpg`.
-/// * and the relative link `./photo.jpg`.
+/// * a link with an absolute path: `/car/scan.jpg`,
+/// * and another link with a relative path: `./photo.jpg`.
 /// * The document root marker is: `/my/docs/.tpnoteroot`.
 ///
 /// The images in the resulting HTML will appear as
