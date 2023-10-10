@@ -7,7 +7,7 @@ use crate::markup_language::MarkupLanguage;
 #[cfg(feature = "lang-detection")]
 use crate::settings::FilterGetLang;
 use crate::settings::SETTINGS;
-use html_escape::encode_safe;
+use html_escape;
 use lazy_static::lazy_static;
 #[cfg(feature = "lang-detection")]
 use lingua::{LanguageDetector, LanguageDetectorBuilder};
@@ -159,7 +159,7 @@ fn to_html_filter<S: BuildHasher>(
                 output.push_str("</ul>");
             }
 
-            Value::String(s) => output.push_str(&encode_safe(&s)),
+            Value::String(s) => output.push_str(&html_escape::encode_text(&s)),
 
             Value::Object(map) => {
                 output.push_str("<blockquote class=\"fm\">");
