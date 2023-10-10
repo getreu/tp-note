@@ -14,7 +14,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "TP-NOTE" "1" "2023-10-01" "Version 1.22.5" "Tp-Note documentation"
+.TH "TP-NOTE" "1" "2023-10-06" "Version 1.22.6" "Tp-Note documentation"
 .hy
 .SH NAME
 .PP
@@ -963,26 +963,27 @@ how local links are written out.
 Valid values are: `\f[V]off\f[R]', `\f[V]short\f[R]' and
 `\f[V]long\f[R]'.
 .PP
-In order to achieve this, the author must respect the following
-convention concerning absolute local links: The base of absolute local
-links in Tp-Note documents is always the directory where the marker file
-`\f[V].tpnote.toml\f[R]' resides (or `\f[V]/\f[R]' if none exists).
-The option `\f[V]--export-link-rewriting\f[R]' decides how local links
+In order to achieve this, the user must respect the following convention
+concerning absolute paths in local links in Tp-Note documents: When a
+document contains a local link with an absolute path, the base of this
+path is considered to be the the directory where the marker file
+`\f[V].tpnoteroot\f[R]' resides (or `\f[V]/\f[R]' in non exists).
+The option `\f[V]--export-link- rewriting\f[R]' decides how local links
 in the Tp-Note document are converted when the HTML is generated.
-If its value is `\f[V]short\f[R]', then relative local links are
-converted to absolute links.
-The base of the resulting links is always the directory where the
-\f[V].tpnote.toml\f[R] file resides (or \f[V]/\f[R] if none exists).
-Consider the following `\f[V]--export-link-rewriting=short\f[R]'
-example:
+If its value is `\f[V]short\f[R]', then local links with relative paths
+are converted to absolute paths.
+The base of the resulting path is where the `\f[V].tpnoteroot\f[R]' file
+resides (or \f[V]/\f[R] if none exists).
+Consider the following example
+`\f[V]--export-link-rewriting=short\f[R]':
 .IP \[bu] 2
 The Tp-Note file `\f[V]/my/docs/car/bill.md\f[R]' contains
 .IP \[bu] 2
-the absolute link `\f[V]/car/scan.jpg\f[R]',
+a local link with an absolute path: `\f[V]/car/scan.jpg\f[R]',
 .IP \[bu] 2
-and the relative link `\f[V]./photo.jpg\f[R]'.
+and another link with a relative path: `\f[V]./photo.jpg\f[R]'.
 .IP \[bu] 2
-The document root marker is: `\f[V]/my/docs/.tpnote.toml\f[R]'.
+The document root marker is: `\f[V]/my/docs/.tpnoteroot\f[R]'.
 .PP
 The images in the resulting HTML will appear as
 .IP \[bu] 2
@@ -990,19 +991,19 @@ The images in the resulting HTML will appear as
 .IP \[bu] 2
 `\f[V]/car/photo.jpg\f[R]'.
 .PP
-For `\f[V]--export-link-rewriting=long\f[R]', in addition to the above,
-all absolute local links are rebased to `\f[V]/\f[R]'\[cq].
+For `\f[V]--export-link-rewriting=short\f[R]', in addition to the above,
+all absolute paths in local links are rebased to `\f[V]/\f[R]'\[cq].
 Consider the following example:
 .IP \[bu] 2
 The Tp-Note file `\f[V]/my/docs/car/bill.md\f[R]' contains
 .IP \[bu] 2
-the absolute link `\f[V]/car/scan.jpg\f[R]',
+a link with an absolute path: `\f[V]/car/scan.jpg\f[R]',
 .IP \[bu] 2
-and the relative link `\f[V]./photo.jpg\f[R]'.
+and another link with a relative path: `\f[V]./photo.jpg\f[R]'.
 .IP \[bu] 2
-The document root marker is: `\f[V]/my/docs/.tpnote.toml\f[R]'.
+The document root marker is: `\f[V]/my/docs/.tpnoteroot\f[R]'.
 .PP
-The image paths in the resulting HTML will appear as
+The images in the resulting HTML will appear as
 .IP \[bu] 2
 `\f[V]/my/docs/car/scan.jpg\f[R]'.
 .IP \[bu] 2
@@ -1011,17 +1012,15 @@ The image paths in the resulting HTML will appear as
 So far, we have seen how Tp-Note\[cq]s viewer and HTML exporter converts
 the \f[I]destination\f[R] of local links
 `\f[V][text](destination)\f[R]'.
-Concerning the link\[cq]s \f[I]text\f[R] property, the situation is
-simpler as the \f[I]text\f[R] property never changes.
-However, there is one exception: when the text property contains a URL
-starting with `\f[V]http:\f[R]' or `\f[V]https:\f[R]' only the file stem
-is displayed.
-For example, the link:
-`\f[V][http:dir/my file.md](<http:dir/my file.md>)\f[R]' is rewritten as
-`\f[V][my file](<http:dir/my file.md>)\f[R]' during the rendition
-process.
-This explains why the autolink `\f[V]<http:dir/my file.md>.\f[R]'
-appears as `\f[V]my file\f[R]' in the browser.
+Concerning the link\[cq]s \f[I]text\f[R] property of local links, the
+situation is simpler as the \f[I]text\f[R] property never changes.
+However, there is one exception: when the text property contains an
+autolink starting with `\f[V]tpnote:\f[R]' or `\f[V]http:\f[R]' only the
+file stem is displayed.
+For example, the autolink: `\f[V]<tpnote:dir/my file.md>.\f[R]' is
+transformed into `\f[V][my file](<tpnote:dir/my file.md>)\f[R]' during
+the HTML rendition process.
+This explains why it appears as `\f[V]my file\f[R]' in the browser.
 .SH METADATA FILENAME SYNCHRONIZATION
 .PP
 Consider the following Tp-Note file:

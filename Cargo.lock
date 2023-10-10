@@ -2923,9 +2923,9 @@ dependencies = [
 
 [[package]]
 name = "parse-hyperlinks"
-version = "0.26.1"
+version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78b783f0a6d74d9b640f4959edaccdf60372f6aa8c4e9956dc0a7399b816014c"
+checksum = "09b4accbb27d3c1c56aa1209dee66019ce7b8eae3a7f6c87ca359cc8552daee1"
 dependencies = [
  "html-escape",
  "nom",
@@ -2935,9 +2935,9 @@ dependencies = [
 
 [[package]]
 name = "parse-hyperlinks-extras"
-version = "0.26.1"
+version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fafa16b5cd4695aa6f5a14760f222c9ceedd01fddce8c35fbe748c6fb5ca66e"
+checksum = "4d8d5a449b8d8637cd8525d30ed160d9b1aa5acee5e518555e6341f355103874"
 dependencies = [
  "html-escape",
  "nom",
@@ -3981,7 +3981,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote-lib"
-version = "0.26.0"
+version = "0.27.0"
 dependencies = [
  "html-escape",
  "latex2mathml",

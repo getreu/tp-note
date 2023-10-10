@@ -10,7 +10,7 @@ name = "tpnote-lib"
 readme = "README.md"
 repository.workspace = true
 rust-version.workspace = true
-version = "0.26.0"
+version = "0.27.0"
 
 [features]
 default = ["renderer", "viewer", "lang-detection"]
@@ -24,10 +24,10 @@ lazy_static.workspace = true
 lingua = { version = "1.5.0", optional = true }
 log.workspace = true
 #parse-hyperlinks = { path = "../../parse-hyperlinks/parse-hyperlinks" }
-parse-hyperlinks = "0.26.1"
+parse-hyperlinks = "0.26.2"
 # Plain text renderer.
 #parse-hyperlinks-extras = { path = "../../parse-hyperlinks/parse-hyperlinks-extras" }
-parse-hyperlinks-extras = "0.26.1"
+parse-hyperlinks-extras = "0.26.2"
 percent-encoding = "2.3.0"
 # Markdown renderer.
 pulldown-cmark = { version = "0.9.3", default-features = false, features = ["simd"], optional = true }
