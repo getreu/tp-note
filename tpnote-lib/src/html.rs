@@ -2,6 +2,7 @@
 
 use crate::markup_language::MarkupLanguage;
 use crate::{config::LocalLinkKind, error::NoteError};
+use html_escape;
 use parking_lot::RwLock;
 use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
@@ -98,9 +99,10 @@ fn assemble_link(
 }
 
 trait Hyperlink {
-    /// A helper function, that percent decodes the link destinations (and the
+    /// A helper function, that first HTML escape decodes all strings of the
+    /// link. Then it percent decodes the link destination (and the
     /// link text in case of an autolink).
-    fn percent_decode_url(&mut self);
+    fn decode_html_escape_and_percent(&mut self);
 
     /// Member function converting the relative local URLs in `self`.
     /// If successful, we return `Ok(Some(URL))`, otherwise
@@ -150,44 +152,55 @@ trait Hyperlink {
 
 impl<'a> Hyperlink for Link<'a> {
     #[inline]
-    fn percent_decode_url(&mut self) {
-        match self {
-            Link::Text2Dest(text, dest, _title) => {
-                // Is this an autolink?
-                let autolink = text == dest;
-
-                // Percent decode URL. The template we insert in is UTF-8 encoded.
-                let decoded_dest = percent_decode_str(&*dest).decode_utf8().unwrap();
-                if matches!(&decoded_dest, Cow::Owned(..)) {
-                    let decoded_dest = Cow::Owned(decoded_dest.to_string());
-                    // Store result.
-                    let _ = std::mem::replace(dest, decoded_dest);
-                }
-
-                // We check also if `decoded_dest==decoded_text`.
-                let decoded_text = percent_decode_str(&*text).decode_utf8().unwrap();
-                let autolink = match (&text, decoded_text) {
-                    (Cow::Borrowed(_), Cow::Borrowed(_)) => autolink,
-                    (_, decoded_text) => &decoded_text == dest,
-                };
-                if autolink {
-                    // Store result.
-                    let _ = std::mem::replace(text, dest.clone());
-                }
+    fn decode_html_escape_and_percent(&mut self) {
+        let empty_title = &mut Cow::from("");
+        let (text, dest, title) = match self {
+            Link::Text2Dest(text, dest, title) => (text, dest, title),
+            Link::Image(alt, source) => (alt, source, empty_title),
+            _ => unimplemented!(),
+        };
+        // HTML escape decoding
+        {
+            let decoded_text = html_escape::decode_html_entities(&*text);
+            if matches!(&decoded_text, Cow::Owned(..)) {
+                // Does nothing, but satisfying the borrow checker. Does not `clone()`.
+                let decoded_text = Cow::Owned(decoded_text.into_owned());
+                // Store result.
+                let _ = std::mem::replace(text, decoded_text);
             }
 
-            Link::Image(_alt_text, source) => {
-                // Percent decode URL. The template we insert in is UTF-8 encoded.
-                let decoded_source = percent_decode_str(&*source).decode_utf8().unwrap();
-                if matches!(&decoded_source, Cow::Owned(..)) {
-                    let decoded_source = Cow::Owned(decoded_source.to_string());
-                    // Store result.
-                    let _ = std::mem::replace(source, decoded_source);
-                }
+            let decoded_dest = html_escape::decode_html_entities(&*dest);
+            if matches!(&decoded_dest, Cow::Owned(..)) {
+                // Does nothing, but satisfying the borrow checker. Does not `clone()`.
+                let decoded_dest = Cow::Owned(decoded_dest.into_owned());
+                // Store result.
+                let _ = std::mem::replace(dest, decoded_dest);
             }
 
-            // The `HyperlinkInlineImage` iterator has no further variants.
-            _ => unreachable!(),
+            let decoded_title = html_escape::decode_html_entities(&*title);
+            if matches!(&decoded_title, Cow::Owned(..)) {
+                // Does nothing, but satisfying the borrow checker. Does not `clone()`.
+                let decoded_title = Cow::Owned(decoded_title.into_owned());
+                // Store result.
+                let _ = std::mem::replace(title, decoded_title);
+            }
+        }
+
+        // Percent decode URL. The template we insert in is UTF-8 encoded.
+        let decoded_dest = percent_decode_str(&*dest).decode_utf8().unwrap();
+        if matches!(&decoded_dest, Cow::Owned(..)) {
+            // Does nothing, but satisfying the borrow checker. Does not `clone()`.
+            let decoded_dest = Cow::Owned(decoded_dest.into_owned());
+            // Store result.
+            let _ = std::mem::replace(dest, decoded_dest);
+        }
+
+        // The link text might be percent encoded in case of an autolink.
+        let decoded_text = percent_decode_str(&*text).decode_utf8().unwrap();
+        // Is this an autolink?
+        if &decoded_text == dest {
+            // Clone `dest` and store result.
+            let _ = std::mem::replace(text, dest.clone());
         }
     }
 
@@ -365,7 +378,7 @@ pub fn rewrite_links(
         rest = remaining;
 
         // Percent decode link destination.
-        link.percent_decode_url();
+        link.decode_html_escape_and_percent();
 
         // Rewrite the local link.
         match link.rewrite_local_link(
@@ -697,7 +710,7 @@ mod tests {
         //
         let mut input = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
         let expected = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
-        input.percent_decode_url();
+        input.decode_html_escape_and_percent();
         let output = input;
         assert_eq!(output, expected);
 
@@ -709,7 +722,7 @@ mod tests {
         );
         let expected =
             Link::Text2Dest(Cow::from("te%20xt"), Cow::from("de st"), Cow::from("title"));
-        input.percent_decode_url();
+        input.decode_html_escape_and_percent();
         let output = input;
         assert_eq!(output, expected);
 
@@ -721,7 +734,7 @@ mod tests {
         );
         let expected =
             Link::Text2Dest(Cow::from("d:e st"), Cow::from("d:e st"), Cow::from("title"));
-        input.percent_decode_url();
+        input.decode_html_escape_and_percent();
         let output = input;
         assert_eq!(output, expected);
 
@@ -735,21 +748,42 @@ mod tests {
             Cow::from("d:e &st&"),
             Cow::from("title"),
         );
-        input.percent_decode_url();
+        input.decode_html_escape_and_percent();
+        let output = input;
+        assert_eq!(output, expected);
+
+        let mut input = Link::Text2Dest(
+            Cow::from("a&amp;&quot;lt"),
+            Cow::from("a&amp;&quot;lt"),
+            Cow::from("a&amp;&quot;lt"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("a&\"lt"),
+            Cow::from("a&\"lt"),
+            Cow::from("a&\"lt"),
+        );
+        input.decode_html_escape_and_percent();
         let output = input;
         assert_eq!(output, expected);
 
         //
         let mut input = Link::Image(Cow::from("al%20t"), Cow::from("de%20st"));
         let expected = Link::Image(Cow::from("al%20t"), Cow::from("de st"));
-        input.percent_decode_url();
+        input.decode_html_escape_and_percent();
         let output = input;
         assert_eq!(output, expected);
 
         //
         let mut input = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
         let expected = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
-        input.percent_decode_url();
+        input.decode_html_escape_and_percent();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Image(Cow::from("a&amp;&quot;lt"), Cow::from("a&amp;&quot;lt"));
+        let expected = Link::Image(Cow::from("a&\"lt"), Cow::from("a&\"lt"));
+        input.decode_html_escape_and_percent();
         let output = input;
         assert_eq!(output, expected);
     }

@@ -936,7 +936,7 @@ mod tests {
                 <div class=\"fm\">sub2: bar</div></blockquote></div>\
                 <div class=\"fm\">weiter: <code class=\"fm\">3454</code></div>\
                 </blockquote></div>\
-            <div class=\"fm\">other: my &quot;new&quot; text</div>\
+            <div class=\"fm\">other: my \"new\" text</div>\
             <div class=\"fm\">subtitle: Note</div>\
             <div class=\"fm\">title: tmp: test</div>\
             </blockquote>"
