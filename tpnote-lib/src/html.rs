@@ -147,7 +147,10 @@ trait Hyperlink {
     ) -> Result<Option<PathBuf>, NoteError>;
 
     /// Renders `Link::Text2Dest` and `Link::Image` to HTML.
-    fn render_html(&self) -> String;
+    /// Some characters are HTML escape encoded. URLs are not
+    /// percent encoded, as the result will be inserted in an
+    /// UTF-8 template. So percent encoding is not necessary.
+    fn to_html(&self) -> String;
 }
 
 impl<'a> Hyperlink for Link<'a> {
@@ -290,36 +293,37 @@ impl<'a> Hyperlink for Link<'a> {
     }
 
     //
-    fn render_html(&self) -> String {
-        match &self {
-            Link::Text2Dest(text, dest, title) => {
-                // Replace Windows backslash
-                let newdest = if (*dest).contains('\\') {
-                    Cow::Owned(dest.to_string().replace('\\', "/"))
-                } else {
-                    dest.clone()
-                };
-                let title = if !title.is_empty() {
-                    format!(" title=\"{}\"", title)
-                } else {
-                    title.to_string()
-                };
-                // Save results.
-                format!("<a href=\"{}\"{}>{}</a>", newdest, title, text)
-            }
+    fn to_html(&self) -> String {
+        let empty_title = &Cow::from("");
+        let (text, dest, title) = match self {
+            Link::Text2Dest(text, dest, title) => (text, dest, title),
+            Link::Image(alt, source) => (alt, source, empty_title),
+            _ => unimplemented!(),
+        };
+        // Replace Windows backslash
+        let dest = if (*dest).contains('\\') {
+            Cow::Owned(dest.to_string().replace('\\', "/"))
+        } else {
+            Cow::Borrowed(&**dest)
+        };
 
-            Link::Image(text, dest) => {
-                // Replace Windows backslash
-                let newdest = if (*dest).contains('\\') {
-                    Cow::Owned(dest.to_string().replace('\\', "/"))
-                } else {
-                    dest.clone()
-                };
+        // Encode HTML escape.
+        let text = html_escape::encode_text(&text);
+        let dest = html_escape::encode_double_quoted_attribute(&dest);
+        let title = html_escape::encode_double_quoted_attribute(&title);
 
-                format!("<img src=\"{}\" alt=\"{}\" />", newdest, text)
-            }
+        // Format title.
+        let title = if !title.is_empty() {
+            format!(" title=\"{}\"", title)
+        } else {
+            title.to_string()
+        };
+        // Save results.
 
-            _ => String::new(),
+        match self {
+            Link::Text2Dest(_, _, _) => format!("<a href=\"{}\"{}>{}</a>", dest, title, text),
+            Link::Image(_, _) => format!("<img src=\"{}\" alt=\"{}\" />", dest, text),
+            _ => unimplemented!(),
         }
     }
 }
@@ -390,9 +394,9 @@ pub fn rewrite_links(
         ) {
             Ok(Some(dest_path)) => {
                 allowed_urls.insert(dest_path);
-                html_out.push_str(&link.render_html());
+                html_out.push_str(&link.to_html());
             }
-            Ok(None) => html_out.push_str(&link.render_html()),
+            Ok(None) => html_out.push_str(&link.to_html()),
 
             Err(e) => html_out.push_str(&e.to_string()),
         };
@@ -551,7 +555,7 @@ mod tests {
             .rewrite_local_link(root_path, docdir, true, false, false)
             .unwrap()
             .unwrap();
-        let output = input.render_html();
+        let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/abs/note path/t m p.jpg"));
 
@@ -565,7 +569,7 @@ mod tests {
             .rewrite_local_link(root_path, docdir, true, false, false)
             .unwrap()
             .unwrap();
-        let output = input.render_html();
+        let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/abs/t m p.jpg"));
 
@@ -579,7 +583,7 @@ mod tests {
             .rewrite_local_link(root_path, docdir, true, false, false)
             .unwrap()
             .unwrap();
-        let output = input.render_html();
+        let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/abs/note path/my note 1.md"));
 
@@ -593,7 +597,7 @@ mod tests {
             .rewrite_local_link(root_path, docdir, true, false, false)
             .unwrap()
             .unwrap();
-        let output = input.render_html();
+        let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
 
@@ -607,7 +611,7 @@ mod tests {
             .rewrite_local_link(root_path, docdir, false, false, false)
             .unwrap()
             .unwrap();
-        let output = input.render_html();
+        let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("dir/my note 1.md"));
 
@@ -621,7 +625,7 @@ mod tests {
             .rewrite_local_link(root_path, docdir, true, false, true)
             .unwrap()
             .unwrap();
-        let output = input.render_html();
+        let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(
             outpath,
@@ -644,7 +648,7 @@ mod tests {
             )
             .unwrap()
             .unwrap();
-        let output = input.render_html();
+        let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/path/dir/my note 1.md"));
 
@@ -658,7 +662,7 @@ mod tests {
             .rewrite_local_link(root_path, Path::new("/my/ignored/"), true, false, false)
             .unwrap()
             .unwrap();
-        let output = input.render_html();
+        let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
 
@@ -832,5 +836,40 @@ mod tests {
         assert!(url.contains(&PathBuf::from("/abs/note path/t m p.jpg")));
         assert!(url.contains(&PathBuf::from("/abs/note path/dir/my note.md")));
         assert!(url.contains(&PathBuf::from("/abs/note path/down/my note 1.md")));
+    }
+
+    #[test]
+    fn test_to_html() {
+        //
+        let input = Link::Text2Dest(
+            Cow::from("te\\x/t"),
+            Cow::from("de\\s/t"),
+            Cow::from("ti\\t/le"),
+        );
+        let expected = "<a href=\"de/s/t\" title=\"ti\\t/le\">te\\x/t</a>";
+        let output = input.to_html();
+        assert_eq!(output, expected);
+
+        //
+        let input = Link::Text2Dest(
+            Cow::from("te&> xt"),
+            Cow::from("de&> st"),
+            Cow::from("ti&> tle"),
+        );
+        let expected = "<a href=\"de&amp;&gt; st\" title=\"ti&amp;&gt; tle\">te&amp;&gt; xt</a>";
+        let output = input.to_html();
+        assert_eq!(output, expected);
+
+        //
+        let input = Link::Image(Cow::from("al&> t"), Cow::from("so&> urce"));
+        let expected = "<img src=\"so&amp;&gt; urce\" alt=\"al&amp;&gt; t\" />";
+        let output = input.to_html();
+        assert_eq!(output, expected);
+
+        //
+        let input = Link::Text2Dest(Cow::from("te&> xt"), Cow::from("de&> st"), Cow::from(""));
+        let expected = "<a href=\"de&amp;&gt; st\">te&amp;&gt; xt</a>";
+        let output = input.to_html();
+        assert_eq!(output, expected);
     }
 }
