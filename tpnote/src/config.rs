@@ -57,7 +57,7 @@ use tpnote_lib::filename::NotePathBuf;
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
 ///    ```
 ///
-pub(crate) const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.22.5");
+pub(crate) const MIN_CONFIG_FILE_VERSION: Option<&'static str> = Some("1.22.6");
 
 /// Authors.
 pub(crate) const AUTHOR: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
