@@ -28,8 +28,8 @@ fn assemble_link(
     root_path: &Path,
     docdir: &Path,
     dest: &Path,
-    rewrite_rel_links: bool,
-    rewrite_abs_links: bool,
+    rewrite_rel_paths: bool,
+    rewrite_abs_paths: bool,
 ) -> Option<PathBuf> {
     ///
     /// Concatenate `path` and `append`.
@@ -71,7 +71,7 @@ fn assemble_link(
     debug_assert!(docdir.starts_with(root_path));
 
     // Caculate the output.
-    let mut link = match (rewrite_rel_links, rewrite_abs_links, dest_is_relative) {
+    let mut link = match (rewrite_rel_paths, rewrite_abs_paths, dest_is_relative) {
         // *** Relative links.
         // Result: "/" + docdir.strip(root_path) + dest
         (true, false, true) => {
@@ -139,8 +139,8 @@ trait Hyperlink {
         &mut self,
         root_path: &Path,
         docdir: &Path,
-        rewrite_rel_links: bool,
-        rewrite_abs_links: bool,
+        rewrite_rel_paths: bool,
+        rewrite_abs_paths: bool,
         rewrite_ext: bool,
     ) -> Result<Option<PathBuf>, NoteError>;
 
@@ -195,8 +195,8 @@ impl<'a> Hyperlink for Link<'a> {
         &mut self,
         root_path: &Path,
         docdir: &Path,
-        rewrite_rel_links: bool,
-        rewrite_abs_links: bool,
+        rewrite_rel_paths: bool,
+        rewrite_abs_paths: bool,
         rewrite_ext: bool,
     ) -> Result<Option<PathBuf>, NoteError> {
         //
@@ -262,8 +262,8 @@ impl<'a> Hyperlink for Link<'a> {
                 root_path,
                 docdir,
                 Path::new(&short_dest.as_ref()),
-                rewrite_rel_links,
-                rewrite_abs_links,
+                rewrite_rel_paths,
+                rewrite_abs_paths,
             )
             .ok_or(NoteError::InvalidLocalLink)?;
 
@@ -348,7 +348,7 @@ pub fn rewrite_links(
     rewrite_ext: bool,
     allowed_local_links: Arc<RwLock<HashSet<PathBuf>>>,
 ) -> String {
-    let (rewrite_rel_links, rewrite_abs_links) = match local_link_kind {
+    let (rewrite_rel_paths, rewrite_abs_paths) = match local_link_kind {
         LocalLinkKind::Off => (false, false),
         LocalLinkKind::Short => (true, false),
         LocalLinkKind::Long => (true, true),
@@ -371,8 +371,8 @@ pub fn rewrite_links(
         match link.rewrite_local_link(
             root_path,
             docdir,
-            rewrite_rel_links,
-            rewrite_abs_links,
+            rewrite_rel_paths,
+            rewrite_abs_paths,
             rewrite_ext,
         ) {
             Ok(Some(dest_path)) => {
