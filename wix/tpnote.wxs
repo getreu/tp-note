@@ -121,6 +121,9 @@
                                 <Extension Id ="rst" ContentType="application/text">
                                     <Verb Id="open" Sequence='10' Command="open"  Argument="&quot;%1&quot;"/>
                                 </Extension>
+                                <Extension Id ="txtnote" ContentType="application/text">
+                                    <Verb Id="open" Sequence='10' Command="open"  Argument="&quot;%1&quot;"/>
+                                </Extension>
                             </ProgId>
                             <RegistryKey Root='HKCR' Key='.md'>
                                 <RegistryValue Value='tpnote.mdfile' Type='string' />
@@ -130,6 +133,9 @@
                             </RegistryKey>
                             <RegistryKey Root='HKCR' Key='.rst'>
                                 <RegistryValue Value='tpnote.rstfile' Type='string' />
+                            </RegistryKey>
+                            <RegistryKey Root='HKCR' Key='.txtnote'>
+                                <RegistryValue Value='tpnote.txtnotefile' Type='string' />
                             </RegistryKey>
                             <RegistryKey Root='HKCR' Key='tpnote.mdfile'>
                                 <RegistryValue Value='Tp-Note file' Type='string' />
@@ -147,6 +153,12 @@
                                 <RegistryValue Value='Tp-Note file' Type='string' />
                              </RegistryKey>
                             <RegistryKey Root='HKCR' Key='tpnote.rstfile\DefaultIcon'>
+                                <RegistryValue Value='[APPLICATIONFOLDER]bin\tpnote.exe,1' Type ='string' />
+                            </RegistryKey>
+                            <RegistryKey Root='HKCR' Key='tpnote.txtnotefile'>
+                                <RegistryValue Value='Tp-Note file' Type='string' />
+                             </RegistryKey>
+                            <RegistryKey Root='HKCR' Key='tpnote.txtnotefile\DefaultIcon'>
                                 <RegistryValue Value='[APPLICATIONFOLDER]bin\tpnote.exe,1' Type ='string' />
                             </RegistryKey>
 
@@ -222,6 +234,31 @@
                             </RegistryKey>
                             <RegistryKey Root="HKLM"
                                          Key="SOFTWARE\Classes\SystemFileAssociations\.rst\shell\export.tpnote.exe\command">
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;--export=&quot; &quot;%1&quot;" Type="string" />
+                            </RegistryKey>
+
+                            <RegistryKey Root="HKLM"
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txtnote\shell\edit.tpnote.exe">
+                                 <RegistryValue Value="Edit Tp-Note" Type="string" />
+                            </RegistryKey>
+                            <RegistryKey Root="HKLM"
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txtnote\shell\edit.tpnote.exe\command">
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;%1&quot;" Type="string" />
+                            </RegistryKey>
+                            <RegistryKey Root="HKLM"
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txtnote\shell\view.tpnote.exe">
+                                 <RegistryValue Value="View Tp-Note" Type="string" />
+                            </RegistryKey>
+                            <RegistryKey Root="HKLM"
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txtnote\shell\view.tpnote.exe\command">
+                             <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;-v&quot; &quot;-n&quot; &quot;%1&quot;" Type="string" />
+                            </RegistryKey>
+                            <RegistryKey Root="HKLM"
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txtnote\shell\export.tpnote.exe">
+                                 <RegistryValue Value="Export Tp-Note" Type="string" />
+                            </RegistryKey>
+                            <RegistryKey Root="HKLM"
+                                         Key="SOFTWARE\Classes\SystemFileAssociations\.txtnote\shell\export.tpnote.exe\command">
                              <RegistryValue Value="&quot;[APPLICATIONFOLDER]bin\tpnote.exe&quot; &quot;--export=&quot; &quot;%1&quot;" Type="string" />
                             </RegistryKey>
 

@@ -2,8 +2,8 @@
 title:    "Tp-Note: save and edit your clipboard content as a note file"
 subtitle: Organize your notes with your favourite editor and markup language
 author:   Jens Getreu
-date:     2023-10-01
-version:  1.22.5
+date:     2023-10-10
+version:  1.22.6
 filename_sync: false
 lang:     en-GB
 ---
@@ -895,7 +895,7 @@ Search for `</actions>` and replace it with:
   <name>Tp-Note View</name>
   <command>tpnote -v -n %f</command>
   <description>Tp-Note View</description>
-  <patterns>*.txt; *.md;*.rst;*.adoc</patterns>
+  <patterns>*.txt; *.md;*.rst;*.adoc;*.txtnote</patterns>
   <text-files/>
 </action>
 </actions>
@@ -973,7 +973,7 @@ Search for `</actions>` and replace it with: [^6]
   <name>Tp-Note Export</name>
   <command>tpnote --export=- %f | sed 's_&lt;_\r&lt;_g' -  | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>
   <description>Tp-Note Export</description>
-  <patterns>*.txt; *.md;*.rst;*.adoc</patterns>
+  <patterns>*.txt; *.md;*.rst;*.adoc;*.txtnote</patterns>
   <text-files/>
 </action>
 </actions>
@@ -1086,7 +1086,7 @@ runs _Tp-Note_ in editing mode.
 4. Replace the line `default/*` with:
 
    ```bash
-   regex/i/.(txt|md|rst)$
+   regex/i/.(txt|md|rst|adoc|txtnote)$
        Open=tpnote %f
        View=if HTML=`tpnote -b -n -x - %f`; then (echo $"HTML" | lynx --stdin); else less    %f; fi
 
