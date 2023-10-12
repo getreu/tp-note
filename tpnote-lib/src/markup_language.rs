@@ -132,11 +132,11 @@ impl MarkupLanguage {
 }
 
 impl From<&Path> for MarkupLanguage {
-    /// Is `file_extension` listed in one of the known file extension
-    /// lists?
+    /// Is the file extension ` at the end of the given path listed in
+    /// `file.extensions`?
     #[inline]
-    fn from(file_extension: &Path) -> Self {
-        let file_extension = file_extension
+    fn from(path: &Path) -> Self {
+        let file_extension = path
             .extension()
             .unwrap_or_default()
             .to_str()
@@ -147,8 +147,7 @@ impl From<&Path> for MarkupLanguage {
 }
 
 impl From<&str> for MarkupLanguage {
-    /// Is `file_extension` listed in one of the known file extension
-    /// lists?
+    /// Is `file_extension` listed in `file.extensions`?
     #[inline]
     fn from(file_extension: &str) -> Self {
         let lib_cfg = LIB_CFG.read_recursive();
@@ -163,3 +162,29 @@ impl From<&str> for MarkupLanguage {
         MarkupLanguage::None
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use crate::markup_language::MarkupLanguage;
+    use std::path::Path;
+
+    #[test]
+    fn test_markuplanguage_from() {
+        //
+        let path = Path::new("/dir/file.md");
+        assert_eq!(MarkupLanguage::from(path), MarkupLanguage::Markdown);
+
+        //
+        let path = Path::new("md");
+        assert_eq!(MarkupLanguage::from(path), MarkupLanguage::None);
+        //
+        let ext = "/dir/file.md";
+        assert_eq!(MarkupLanguage::from(ext), MarkupLanguage::None);
+
+        //
+        let ext = "md";
+        assert_eq!(MarkupLanguage::from(ext), MarkupLanguage::Markdown);
+    }
+}
+// `rewrite_rel_links=true`
