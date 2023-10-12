@@ -524,7 +524,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rewrite_link1() {
+    fn test_rewrite_local_link() {
         let root_path = Path::new("/my/");
         let docdir = Path::new("/my/abs/note path/");
 
@@ -537,10 +537,8 @@ mod tests {
             .rewrite_local_link(root_path, docdir, true, false, false)
             .unwrap()
             .is_none());
-    }
 
-    #[test]
-    fn test_rewrite_link2() {
+        //
         let root_path = Path::new("/my/");
         let docdir = Path::new("/my/abs/note path/");
 
@@ -710,7 +708,7 @@ mod tests {
     }
 
     #[test]
-    fn test_percent_decode() {
+    fn test_decode_html_escape_and_percent() {
         //
         let mut input = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
         let expected = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
