@@ -1,5 +1,6 @@
 //! Helper functions dealing with HTML conversion.
 
+use crate::filename::NotePathHelper;
 use crate::markup_language::MarkupLanguage;
 use crate::{config::LocalLinkKind, error::NoteError};
 use html_escape;
@@ -231,25 +232,37 @@ impl<'a> Hyperlink for Link<'a> {
         }
 
         // Is this an autolink? Then modify `text`.
-        if text == dest && (text.contains(':') || text.contains('@')) {
+        if *text == *dest && (text.contains(':') || text.contains('@')) {
             let short_text = text
                 .trim_start_matches("http://")
                 .trim_start_matches("http:")
                 .trim_start_matches("tpnote:");
-            // Strip extension.
-            let short_text = short_text
-                .rsplit_once('.')
-                .map(|(s, _ext)| s)
-                .unwrap_or(short_text);
-            // Show only the stem as link text. Strip path.
+
+            // Show only the stem as link text.
+            // Strip the path.
             let short_text = short_text
                 .rsplit_once(['/', '\\'])
                 .map(|(_path, stem)| stem)
                 .unwrap_or(short_text);
-            // Store result.
+
+            // Strip extension...
+            // The input `short_text` can be a full filename (starting with a
+            // sort-tag, ending with an extension) or only a sort-tag.
+            // In the latter case we do not strip anything.
+            let sort_tag1 = <Path as NotePathHelper>::split_sort_tag(&short_text).0;
+            let (sort_tag_stem, ext) = short_text.rsplit_once('.').unwrap_or((short_text, ""));
+            let sort_tag2 = <Path as NotePathHelper>::split_sort_tag(&sort_tag_stem).0;
+            // ... but only if the sort tag would not change and the extension
+            // is a Tp-Note file.
+            let short_text = if sort_tag1 == sort_tag2 && MarkupLanguage::from(ext).is_some() {
+                sort_tag_stem
+            } else {
+                short_text
+            };
+            // Store the result.
             let new_text = Cow::Owned(short_text.to_string());
             let _ = std::mem::replace(text, new_text);
-            // Store result.
+            // Store the result.
         }
 
         // Now we deal with `dest`.
@@ -788,6 +801,37 @@ mod tests {
             .rewrite_local_link(root_path, Path::new("/my/notepath"), true, false, false)
             .unwrap_err();
         assert!(matches!(output, NoteError::InvalidLocalLink));
+
+        // Test autolink.
+        let root_path = Path::new("/my");
+        let mut input =
+            take_link("<a href=\"tpnote:dir/3.0-my note.md\">tpnote:dir/3.0-my note.md</a>")
+                .unwrap()
+                .1
+                 .1;
+        let outpath = input
+            .rewrite_local_link(root_path, Path::new("/my/path"), true, false, false)
+            .unwrap()
+            .unwrap();
+        let output = input.to_html();
+        let expected = "<a href=\"/path/dir/3.0-my note.md\">3.0-my note</a>";
+        assert_eq!(output, expected);
+        assert_eq!(outpath, PathBuf::from("/path/dir/3.0-my note.md"));
+
+        // Test short autolink 1 with sort-tag only.
+        let root_path = Path::new("/my");
+        let mut input = take_link("<a href=\"tpnote:dir/3.0\">tpnote:dir/3.0</a>")
+            .unwrap()
+            .1
+             .1;
+        let outpath = input
+            .rewrite_local_link(root_path, Path::new("/my/path"), true, false, false)
+            .unwrap()
+            .unwrap();
+        let output = input.to_html();
+        let expected = "<a href=\"/path/dir/3.0\">3.0</a>";
+        assert_eq!(output, expected);
+        assert_eq!(outpath, PathBuf::from("/path/dir/3.0"));
     }
 
     #[test]
