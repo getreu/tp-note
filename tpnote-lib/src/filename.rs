@@ -222,7 +222,7 @@ impl NotePathBuf for PathBuf {
 }
 
 /// Some private helper functions related to note filenames.
-pub(crate) trait NotePathHelper {
+pub(crate) trait NotePathPrivate {
     /// Helper function: Greedliy match sort tags and return it as
     /// a subslice as first tuple and the rest as second tuple. If
     /// `filename.sort_tag_separator` is defined and it can be detected after
@@ -315,7 +315,7 @@ pub(crate) trait NotePathHelper {
     }
 }
 
-impl NotePathHelper for Path {}
+impl NotePathPrivate for Path {}
 
 /// Extents `Path` with methods dealing with paths to Tp-Note files.
 pub trait NotePath {
@@ -475,7 +475,7 @@ impl NotePath for Path {
 mod tests {
     use super::NotePath;
     use super::NotePathBuf;
-    use super::NotePathHelper;
+    use super::NotePathPrivate;
     use crate::config::FILENAME_LEN_MAX;
     use std::path::Path;
     use std::path::PathBuf;

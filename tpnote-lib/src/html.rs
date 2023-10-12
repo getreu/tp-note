@@ -249,9 +249,9 @@ impl<'a> Hyperlink for Link<'a> {
             // The input `short_text` can be a full filename (starting with a
             // sort-tag, ending with an extension) or only a sort-tag.
             // In the latter case we do not strip anything.
-            let sort_tag1 = <Path as NotePathHelper>::split_sort_tag(&short_text).0;
+            let sort_tag1 = <Path as NotePathPrivate>::split_sort_tag(&short_text).0;
             let (sort_tag_stem, ext) = short_text.rsplit_once('.').unwrap_or((short_text, ""));
-            let sort_tag2 = <Path as NotePathHelper>::split_sort_tag(&sort_tag_stem).0;
+            let sort_tag2 = <Path as NotePathPrivate>::split_sort_tag(&sort_tag_stem).0;
             // ... but only if the sort tag would not change and the extension
             // is a Tp-Note file.
             let short_text = if sort_tag1 == sort_tag2 && MarkupLanguage::from(ext).is_some() {
