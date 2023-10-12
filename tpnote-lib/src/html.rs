@@ -342,8 +342,8 @@ impl<'a> Hyperlink for Link<'a> {
 }
 
 #[inline]
-/// A helper function that scans the input HTML document in `html` for HTML
-/// hyperlinks. When it finds a relative URL (local link), it analyzes it's
+/// A helper function that scans the input HTML document in `html_input` for
+/// HTML hyperlinks. When it finds a relative URL (local link), it analyzes it's
 /// path.  A relative path is then converted into an absolute path, before the
 /// result is reinserted into the HTML document.
 ///
@@ -371,7 +371,7 @@ impl<'a> Hyperlink for Link<'a> {
 /// to other documents within `root_path`. Deviant links displayed as `INVALID
 /// LOCAL LINK` and URL is discarded.
 pub fn rewrite_links(
-    html: String,
+    html_input: String,
     root_path: &Path,
     docdir: &Path,
     local_link_kind: LocalLinkKind,
@@ -388,9 +388,9 @@ pub fn rewrite_links(
 
     // Search for hyperlinks and inline images in the HTML rendition
     // of this note.
-    let mut rest = &*html;
+    let mut rest = &*html_input;
     let mut html_out = String::new();
-    for ((skipped, _consumed, remaining), mut link) in HyperlinkInlineImage::new(&html) {
+    for ((skipped, _consumed, remaining), mut link) in HyperlinkInlineImage::new(&html_input) {
         html_out.push_str(skipped);
         rest = remaining;
 
