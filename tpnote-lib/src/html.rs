@@ -791,6 +791,41 @@ mod tests {
     }
 
     #[test]
+    fn test_to_html() {
+        //
+        let input = Link::Text2Dest(
+            Cow::from("te\\x/t"),
+            Cow::from("de\\s/t"),
+            Cow::from("ti\\t/le"),
+        );
+        let expected = "<a href=\"de/s/t\" title=\"ti\\t/le\">te\\x/t</a>";
+        let output = input.to_html();
+        assert_eq!(output, expected);
+
+        //
+        let input = Link::Text2Dest(
+            Cow::from("te&> xt"),
+            Cow::from("de&> st"),
+            Cow::from("ti&> tle"),
+        );
+        let expected = "<a href=\"de&amp;&gt; st\" title=\"ti&amp;&gt; tle\">te&amp;&gt; xt</a>";
+        let output = input.to_html();
+        assert_eq!(output, expected);
+
+        //
+        let input = Link::Image(Cow::from("al&> t"), Cow::from("so&> urce"));
+        let expected = "<img src=\"so&amp;&gt; urce\" alt=\"al&amp;&gt; t\" />";
+        let output = input.to_html();
+        assert_eq!(output, expected);
+
+        //
+        let input = Link::Text2Dest(Cow::from("te&> xt"), Cow::from("de&> st"), Cow::from(""));
+        let expected = "<a href=\"de&amp;&gt; st\">te&amp;&gt; xt</a>";
+        let output = input.to_html();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
     fn test_rewrite_links() {
         use crate::config::LocalLinkKind;
 
@@ -834,40 +869,5 @@ mod tests {
         assert!(url.contains(&PathBuf::from("/abs/note path/t m p.jpg")));
         assert!(url.contains(&PathBuf::from("/abs/note path/dir/my note.md")));
         assert!(url.contains(&PathBuf::from("/abs/note path/down/my note 1.md")));
-    }
-
-    #[test]
-    fn test_to_html() {
-        //
-        let input = Link::Text2Dest(
-            Cow::from("te\\x/t"),
-            Cow::from("de\\s/t"),
-            Cow::from("ti\\t/le"),
-        );
-        let expected = "<a href=\"de/s/t\" title=\"ti\\t/le\">te\\x/t</a>";
-        let output = input.to_html();
-        assert_eq!(output, expected);
-
-        //
-        let input = Link::Text2Dest(
-            Cow::from("te&> xt"),
-            Cow::from("de&> st"),
-            Cow::from("ti&> tle"),
-        );
-        let expected = "<a href=\"de&amp;&gt; st\" title=\"ti&amp;&gt; tle\">te&amp;&gt; xt</a>";
-        let output = input.to_html();
-        assert_eq!(output, expected);
-
-        //
-        let input = Link::Image(Cow::from("al&> t"), Cow::from("so&> urce"));
-        let expected = "<img src=\"so&amp;&gt; urce\" alt=\"al&amp;&gt; t\" />";
-        let output = input.to_html();
-        assert_eq!(output, expected);
-
-        //
-        let input = Link::Text2Dest(Cow::from("te&> xt"), Cow::from("de&> st"), Cow::from(""));
-        let expected = "<a href=\"de&amp;&gt; st\">te&amp;&gt; xt</a>";
-        let output = input.to_html();
-        assert_eq!(output, expected);
     }
 }
