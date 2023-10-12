@@ -1,7 +1,5 @@
 //! Helper functions dealing with HTML conversion.
-
-use crate::filename::NotePathPrivate;
-use crate::markup_language::MarkupLanguage;
+use crate::filename::{Extension, NotePathPrivate};
 use crate::{config::LocalLinkKind, error::NoteError};
 use html_escape;
 use parking_lot::RwLock;
@@ -249,12 +247,12 @@ impl<'a> Hyperlink for Link<'a> {
             // The input `short_text` can be a full filename (starting with a
             // sort-tag, ending with an extension) or only a sort-tag.
             // In the latter case we do not strip anything.
-            let sort_tag1 = <Path as NotePathPrivate>::split_sort_tag(&short_text).0;
+            let sort_tag1 = <Path as NotePathPrivate>::split_sort_tag(short_text).0;
             let (sort_tag_stem, ext) = short_text.rsplit_once('.').unwrap_or((short_text, ""));
-            let sort_tag2 = <Path as NotePathPrivate>::split_sort_tag(&sort_tag_stem).0;
+            let sort_tag2 = <Path as NotePathPrivate>::split_sort_tag(sort_tag_stem).0;
             // ... but only if the sort tag would not change and the extension
             // is a Tp-Note file.
-            let short_text = if sort_tag1 == sort_tag2 && MarkupLanguage::from(ext).is_some() {
+            let short_text = if sort_tag1 == sort_tag2 && <str as Extension>::is_tpnote_ext(ext) {
                 sort_tag_stem
             } else {
                 short_text
@@ -280,12 +278,11 @@ impl<'a> Hyperlink for Link<'a> {
 
             // Append ".html" to dest, if `rewrite_ext`.
             // Only rewrite file extensions for Tp-Note files.
-            let short_dest =
-                if rewrite_ext && MarkupLanguage::from(Path::new(dest.as_ref())).is_some() {
-                    Cow::Owned(format!("{}{}", short_dest, HTML_EXT))
-                } else {
-                    short_dest
-                };
+            let short_dest = if rewrite_ext && <str as Extension>::has_tpnote_ext(&**dest) {
+                Cow::Owned(format!("{}{}", short_dest, HTML_EXT))
+            } else {
+                short_dest
+            };
 
             let dest_out = assemble_link(
                 root_path,

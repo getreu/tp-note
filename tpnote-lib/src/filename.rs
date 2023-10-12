@@ -225,12 +225,19 @@ impl NotePathBuf for PathBuf {
 pub(crate) trait Extension {
     /// Returns `True` if `self` is equal to one of the Tp-Note extensions
     /// registered in the configuration file `filename.extensions` table.
-    fn is_tpnote(&self) -> bool;
+    fn is_tpnote_ext(&self) -> bool;
+    /// Returns `True` is the path in `self` ends with an extension, that
+    /// registered as Tp-Note extension in `filename.extensions`.
+    fn has_tpnote_ext(&self) -> bool;
 }
 
 impl Extension for str {
-    fn is_tpnote(&self) -> bool {
+    fn is_tpnote_ext(&self) -> bool {
         MarkupLanguage::from(self).is_some()
+    }
+
+    fn has_tpnote_ext(&self) -> bool {
+        MarkupLanguage::from(Path::new(self)).is_some()
     }
 }
 
@@ -345,7 +352,7 @@ pub trait NotePath {
     /// Check if a `Path` points to a file with a "wellformed" filename.
     fn has_wellformed_filename(&self) -> bool;
     /// Compare to all file extensions Tp-Note can open.
-    fn has_tpnote_extension(&self) -> bool;
+    fn has_tpnote_ext(&self) -> bool;
 }
 
 impl NotePath for Path {
@@ -477,7 +484,7 @@ impl NotePath for Path {
     /// Note considers as it's own file. To do so, the extension is compared
     /// to all items in the registered `filename.extensions` table in the
     /// configuration file.
-    fn has_tpnote_extension(&self) -> bool {
+    fn has_tpnote_ext(&self) -> bool {
         MarkupLanguage::from(self).is_some()
     }
 }
@@ -488,6 +495,7 @@ mod tests {
     use super::NotePathBuf;
     use super::NotePathPrivate;
     use crate::config::FILENAME_LEN_MAX;
+    use crate::filename::Extension;
     use std::path::Path;
     use std::path::PathBuf;
 
@@ -825,5 +833,40 @@ mod tests {
         let expected = ("123-", "Rest");
         let result = Path::split_sort_tag("123--Rest");
         assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_note_path_has_tpnote_ext() {
+        //
+        let path = Path::new("/dir/file.md");
+        assert!(<Path as NotePath>::has_tpnote_ext(path));
+
+        //
+        let path = Path::new("/dir/file.abc");
+        assert!(!<Path as NotePath>::has_tpnote_ext(path));
+
+        // This goes wrong because a file path or at least a filename is
+        // expected here.
+        let path = Path::new("md");
+        assert!(!<Path as NotePath>::has_tpnote_ext(path));
+    }
+
+    #[test]
+    fn test_extension_has_tpnote_ext_is_tpnote_ext() {
+        //
+        let path = "/dir/file.md";
+        assert!(<str as Extension>::has_tpnote_ext(path));
+
+        //
+        let path = "/dir/file.abc";
+        assert!(!<str as Extension>::has_tpnote_ext(path));
+
+        //
+        let ext = "md";
+        assert!(<str as Extension>::is_tpnote_ext(ext));
+
+        // This goes wrong because only `md` is expected here.
+        let ext = "/dir/file.md";
+        assert!(!<str as Extension>::is_tpnote_ext(ext));
     }
 }

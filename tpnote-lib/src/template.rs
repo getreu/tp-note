@@ -47,7 +47,7 @@ impl TemplateKind {
         let path_is_dir = path.is_dir();
         let path_is_file = path.is_file();
 
-        let path_has_tpnote_extension = path.has_tpnote_extension();
+        let path_has_tpnote_extension = path.has_tpnote_ext();
         let path_is_tpnote_file = path_is_file && path_has_tpnote_extension;
 
         let (path_is_tpnote_file_and_has_header, content) = if path_is_tpnote_file {

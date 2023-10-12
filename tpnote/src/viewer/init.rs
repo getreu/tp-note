@@ -53,12 +53,7 @@ impl Viewer {
     #[inline]
     fn run2(doc: PathBuf) -> Result<(), ViewerError> {
         // Check if the master document (note file) has a known file extension.
-        match MarkupLanguage::from(
-            doc.extension()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default(),
-        ) {
+        match MarkupLanguage::from(&*doc) {
             // A master document with this file extension is exempted from being viewed.
             // We quit here and do not start the viewer.
             MarkupLanguage::PlainTextNoViewer => return Ok(()),

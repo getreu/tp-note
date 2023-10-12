@@ -7,7 +7,7 @@ use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_FM_;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
-use crate::markup_language::MarkupLanguage;
+use crate::filename::Extension;
 use std::matches;
 use std::ops::Deref;
 use std::ops::DerefMut;
@@ -134,7 +134,7 @@ impl FrontMatter {
                                 value.to_string()
                             };
 
-                            if MarkupLanguage::from(&*file_ext).is_none() {
+                            if !<str as Extension>::is_tpnote_ext(&*file_ext) {
                                 return Err(NoteError::FrontMatterFieldIsNotTpnoteExtension {
                                     extension: file_ext,
                                     extensions: {
