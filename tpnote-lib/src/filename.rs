@@ -221,6 +221,19 @@ impl NotePathBuf for PathBuf {
     }
 }
 
+/// Trait that interprets the implenting type as filename extension.
+pub(crate) trait Extension {
+    /// Returns `True` if `self` is equal to one of the Tp-Note extensions
+    /// registered in the configuration file `filename.extensions` table.
+    fn is_tpnote(&self) -> bool;
+}
+
+impl Extension for str {
+    fn is_tpnote(&self) -> bool {
+        MarkupLanguage::from(self).is_some()
+    }
+}
+
 /// Some private helper functions related to note filenames.
 pub(crate) trait NotePathPrivate {
     /// Helper function: Greedliy match sort tags and return it as
@@ -460,14 +473,12 @@ impl NotePath for Path {
         is_filename && (is_dot_file || has_extension)
     }
 
-    /// True if the filename extension is considered as a Tp-Note file.
-    /// Checks if the filename extension is one of the following list
-    /// taken from the configuration file:
-    /// FILENAME_EXTENSIONS_MD, FILENAME_EXTENSIONS_RST,
-    /// FILENAME_EXTENSIONS_HTML, FILENAME_EXTENSIONS_TXT,
-    /// FILENAME_EXTENSIONS_NO_VIEWER
+    /// Returns `True` if the path in `self` ends with an extension, that Tp-
+    /// Note considers as it's own file. To do so, the extension is compared
+    /// to all items in the registered `filename.extensions` table in the
+    /// configuration file.
     fn has_tpnote_extension(&self) -> bool {
-        self.has_wellformed_filename() && MarkupLanguage::from(self).is_some()
+        MarkupLanguage::from(self).is_some()
     }
 }
 

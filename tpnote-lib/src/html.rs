@@ -1,6 +1,6 @@
 //! Helper functions dealing with HTML conversion.
 
-use crate::filename::NotePathHelper;
+use crate::filename::NotePathPrivate;
 use crate::markup_language::MarkupLanguage;
 use crate::{config::LocalLinkKind, error::NoteError};
 use html_escape;
