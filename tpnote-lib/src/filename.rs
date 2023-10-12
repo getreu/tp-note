@@ -223,15 +223,6 @@ impl NotePathBuf for PathBuf {
 
 /// Some private helper functions related to note filenames.
 pub(crate) trait NotePathHelper {
-    /// Helper function: Splits the filename and returns the sort-tag and the
-    /// Remainder.
-    fn split_sort_tag(filename: &str) -> (&str, &str);
-    /// Helper function: Splits the file stem and returns the remainder and
-    /// the copy counter.
-    fn split_copy_counter(file_stem: &str) -> (&str, Option<usize>);
-}
-
-impl NotePathHelper for Path {
     /// Helper function: Greedliy match sort tags and return it as
     /// a subslice as first tuple and the rest as second tuple. If
     /// `filename.sort_tag_separator` is defined and it can be detected after
@@ -323,6 +314,8 @@ impl NotePathHelper for Path {
         }
     }
 }
+
+impl NotePathHelper for Path {}
 
 /// Extents `Path` with methods dealing with paths to Tp-Note files.
 pub trait NotePath {
