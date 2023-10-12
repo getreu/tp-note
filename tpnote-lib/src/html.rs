@@ -524,6 +524,89 @@ mod tests {
     }
 
     #[test]
+    fn test_decode_html_escape_and_percent() {
+        //
+        let mut input = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
+        let expected = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
+        input.decode_html_escape_and_percent();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("te%20xt"),
+            Cow::from("de%20st"),
+            Cow::from("title"),
+        );
+        let expected =
+            Link::Text2Dest(Cow::from("te%20xt"), Cow::from("de st"), Cow::from("title"));
+        input.decode_html_escape_and_percent();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("d:e%20st"),
+            Cow::from("d:e%20st"),
+            Cow::from("title"),
+        );
+        let expected =
+            Link::Text2Dest(Cow::from("d:e st"), Cow::from("d:e st"), Cow::from("title"));
+        input.decode_html_escape_and_percent();
+        let output = input;
+        assert_eq!(output, expected);
+
+        let mut input = Link::Text2Dest(
+            Cow::from("d:e%20&st%26"),
+            Cow::from("d:e%20%26st&"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("d:e &st&"),
+            Cow::from("d:e &st&"),
+            Cow::from("title"),
+        );
+        input.decode_html_escape_and_percent();
+        let output = input;
+        assert_eq!(output, expected);
+
+        let mut input = Link::Text2Dest(
+            Cow::from("a&amp;&quot;lt"),
+            Cow::from("a&amp;&quot;lt"),
+            Cow::from("a&amp;&quot;lt"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("a&\"lt"),
+            Cow::from("a&\"lt"),
+            Cow::from("a&\"lt"),
+        );
+        input.decode_html_escape_and_percent();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Image(Cow::from("al%20t"), Cow::from("de%20st"));
+        let expected = Link::Image(Cow::from("al%20t"), Cow::from("de st"));
+        input.decode_html_escape_and_percent();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
+        let expected = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
+        input.decode_html_escape_and_percent();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Image(Cow::from("a&amp;&quot;lt"), Cow::from("a&amp;&quot;lt"));
+        let expected = Link::Image(Cow::from("a&\"lt"), Cow::from("a&\"lt"));
+        input.decode_html_escape_and_percent();
+        let output = input;
+        assert_eq!(output, expected);
+    }
+    #[test]
+
     fn test_rewrite_local_link() {
         let root_path = Path::new("/my/");
         let docdir = Path::new("/my/abs/note path/");
@@ -705,89 +788,6 @@ mod tests {
             .rewrite_local_link(root_path, Path::new("/my/notepath"), true, false, false)
             .unwrap_err();
         assert!(matches!(output, NoteError::InvalidLocalLink));
-    }
-
-    #[test]
-    fn test_decode_html_escape_and_percent() {
-        //
-        let mut input = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
-        let expected = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
-        input.decode_html_escape_and_percent();
-        let output = input;
-        assert_eq!(output, expected);
-
-        //
-        let mut input = Link::Text2Dest(
-            Cow::from("te%20xt"),
-            Cow::from("de%20st"),
-            Cow::from("title"),
-        );
-        let expected =
-            Link::Text2Dest(Cow::from("te%20xt"), Cow::from("de st"), Cow::from("title"));
-        input.decode_html_escape_and_percent();
-        let output = input;
-        assert_eq!(output, expected);
-
-        //
-        let mut input = Link::Text2Dest(
-            Cow::from("d:e%20st"),
-            Cow::from("d:e%20st"),
-            Cow::from("title"),
-        );
-        let expected =
-            Link::Text2Dest(Cow::from("d:e st"), Cow::from("d:e st"), Cow::from("title"));
-        input.decode_html_escape_and_percent();
-        let output = input;
-        assert_eq!(output, expected);
-
-        let mut input = Link::Text2Dest(
-            Cow::from("d:e%20&st%26"),
-            Cow::from("d:e%20%26st&"),
-            Cow::from("title"),
-        );
-        let expected = Link::Text2Dest(
-            Cow::from("d:e &st&"),
-            Cow::from("d:e &st&"),
-            Cow::from("title"),
-        );
-        input.decode_html_escape_and_percent();
-        let output = input;
-        assert_eq!(output, expected);
-
-        let mut input = Link::Text2Dest(
-            Cow::from("a&amp;&quot;lt"),
-            Cow::from("a&amp;&quot;lt"),
-            Cow::from("a&amp;&quot;lt"),
-        );
-        let expected = Link::Text2Dest(
-            Cow::from("a&\"lt"),
-            Cow::from("a&\"lt"),
-            Cow::from("a&\"lt"),
-        );
-        input.decode_html_escape_and_percent();
-        let output = input;
-        assert_eq!(output, expected);
-
-        //
-        let mut input = Link::Image(Cow::from("al%20t"), Cow::from("de%20st"));
-        let expected = Link::Image(Cow::from("al%20t"), Cow::from("de st"));
-        input.decode_html_escape_and_percent();
-        let output = input;
-        assert_eq!(output, expected);
-
-        //
-        let mut input = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
-        let expected = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
-        input.decode_html_escape_and_percent();
-        let output = input;
-        assert_eq!(output, expected);
-
-        //
-        let mut input = Link::Image(Cow::from("a&amp;&quot;lt"), Cow::from("a&amp;&quot;lt"));
-        let expected = Link::Image(Cow::from("a&\"lt"), Cow::from("a&\"lt"));
-        input.decode_html_escape_and_percent();
-        let output = input;
-        assert_eq!(output, expected);
     }
 
     #[test]
