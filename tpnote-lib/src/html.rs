@@ -103,6 +103,13 @@ trait Hyperlink {
     /// link text in case of an autolink).
     fn decode_html_escape_and_percent(&mut self);
 
+    /// True if the link is:
+    /// * `Text2Dest` and the link text equals the link destination, or
+    /// * `Image` and the links `alt` equals the the link source.
+    /// Precondition: `decode_html_escape_and_percent()` must have been
+    /// Executed.
+    fn is_autolink(&self) -> bool;
+
     /// Member function converting the relative local URLs in `self`.
     /// If successful, we return `Ok(Some(URL))`, otherwise
     /// `Err(NoteError::InvalidLocalLink)`.
@@ -132,7 +139,6 @@ trait Hyperlink {
     /// 2. `link` is `Link::Text2Dest` or `Link::Image`
     /// 3. `root_path` and `docdir` are absolute paths to directories.
     /// 4. `root_path` is never empty `""`. It can be `"/"`.
-    ///
     /// Guaranties:
     /// 1. The returned link is guaranteed to be a child of `root_path`, or
     ///    `None`.
@@ -204,6 +210,15 @@ impl<'a> Hyperlink for Link<'a> {
             // Clone `dest` and store result.
             let _ = std::mem::replace(text, dest.clone());
         }
+    }
+
+    fn is_autolink(&self) -> bool {
+        let (text, dest) = match self {
+            Link::Text2Dest(text, dest, _title) => (text, dest),
+            Link::Image(alt, source) => (alt, source),
+            _ => return false,
+        };
+        text == dest
     }
 
     fn rewrite_local_link(
@@ -393,7 +408,6 @@ pub fn rewrite_links(
 
         // Percent decode link destination.
         link.decode_html_escape_and_percent();
-
         // Rewrite the local link.
         match link.rewrite_local_link(
             root_path,
@@ -615,8 +629,26 @@ mod tests {
         let output = input;
         assert_eq!(output, expected);
     }
-    #[test]
 
+    #[test]
+    fn test_is_autolink() {
+        let input = Link::Image(Cow::from("abc"), Cow::from("abc"));
+        assert!(input.is_autolink());
+
+        //
+        let input = Link::Text2Dest(Cow::from("abc"), Cow::from("abc"), Cow::from("xyz"));
+        assert!(input.is_autolink());
+
+        //
+        let input = Link::Image(Cow::from("abc"), Cow::from("abcd"));
+        assert!(!input.is_autolink());
+
+        //
+        let input = Link::Text2Dest(Cow::from("abc"), Cow::from("abcd"), Cow::from("xyz"));
+        assert!(!input.is_autolink());
+    }
+
+    #[test]
     fn test_rewrite_local_link() {
         let root_path = Path::new("/my/");
         let docdir = Path::new("/my/abs/note path/");
