@@ -221,125 +221,6 @@ impl NotePathBuf for PathBuf {
     }
 }
 
-/// Trait that interprets the implenting type as filename extension.
-pub(crate) trait Extension {
-    /// Returns `True` if `self` is equal to one of the Tp-Note extensions
-    /// registered in the configuration file `filename.extensions` table.
-    fn is_tpnote_ext(&self) -> bool;
-}
-
-impl Extension for str {
-    fn is_tpnote_ext(&self) -> bool {
-        MarkupLanguage::from(self).is_some()
-    }
-}
-
-/// Some private helper functions related to note filenames.
-pub(crate) trait NotePathStr {
-    /// Helper function: Greedliy match sort tags and return it as
-    /// a subslice as first tuple and the rest as second tuple. If
-    /// `filename.sort_tag_separator` is defined and it can be detected after
-    /// the matched subslice, skip it and return the rest of the string as
-    /// second tuple. If `filename.sort_tag_separator` is defined, but the
-    /// separator can not be found, discard the matched sort tag and return
-    /// `("", sort_tag_stem_copy_counter)`.
-    /// Techical note: A sort tag is identified with the following regular
-    /// expression in SED syntax: `[0-9_- .\t]*-`.
-    /// The expression can be customized as follows:
-    /// * `[0-9_- .\t]` with `filename.sort_tag_chars`,
-    /// * `-` with `filename.sort_tag_separator` and
-    /// * `'` with `filename.sort_tag_extra_separator`.
-    fn split_sort_tag(&self) -> (&str, &str);
-
-    /// Helper function that trims the copy counter at the end of string,
-    /// returns the result and the copy counter.
-    /// This function removes all brackets and a potiential extra separator.
-    fn split_copy_counter(&self) -> (&str, Option<usize>);
-
-    /// Returns `True` is the path in `self` ends with an extension, that
-    /// registered as Tp-Note extension in `filename.extensions`.
-    fn has_tpnote_ext(&self) -> bool;
-}
-
-impl NotePathStr for str {
-    fn split_sort_tag(&self) -> (&str, &str) {
-        let lib_cfg = LIB_CFG.read_recursive();
-
-        let mut sort_tag = &self[..self
-            .chars()
-            .take_while(|&c| lib_cfg.filename.sort_tag_chars.contains([c]))
-            .count()];
-
-        let mut stem_copy_counter_ext;
-        if lib_cfg.filename.sort_tag_separator.is_empty() {
-            // `sort_tag` is correct.
-            stem_copy_counter_ext = &self[sort_tag.len()..];
-        } else {
-            // Take `sort_tag_separator` into account.
-            if let Some(i) = sort_tag.rfind(&lib_cfg.filename.sort_tag_separator) {
-                sort_tag = &sort_tag[..i];
-                stem_copy_counter_ext = &self[i + lib_cfg.filename.sort_tag_separator.len()..];
-            } else {
-                sort_tag = "";
-                stem_copy_counter_ext = &self;
-            }
-        }
-
-        // Remove `sort_tag_extra_separator` if it is at the first position
-        // followed by a `sort_tag_char` at the second position.
-        let mut chars = stem_copy_counter_ext.chars();
-        if chars
-            .next()
-            .is_some_and(|c| c == lib_cfg.filename.sort_tag_extra_separator)
-            && chars
-                .next()
-                .is_some_and(|c| lib_cfg.filename.sort_tag_chars.find(c).is_some())
-        {
-            stem_copy_counter_ext = stem_copy_counter_ext
-                .strip_prefix(lib_cfg.filename.sort_tag_extra_separator)
-                .unwrap();
-        }
-
-        (sort_tag, stem_copy_counter_ext)
-    }
-
-    #[inline]
-    fn split_copy_counter(&self) -> (&str, Option<usize>) {
-        let lib_cfg = LIB_CFG.read_recursive();
-        // Strip closing brackets at the end.
-        let tag1 =
-            if let Some(t) = self.strip_suffix(&lib_cfg.filename.copy_counter_closing_brackets) {
-                t
-            } else {
-                return (&self, None);
-            };
-        // Now strip numbers.
-        let tag2 = tag1.trim_end_matches(|c: char| c.is_numeric());
-        let copy_counter: Option<usize> = if tag2.len() < tag1.len() {
-            tag1[tag2.len()..].parse().ok()
-        } else {
-            return (&self, None);
-        };
-        // And finally strip starting bracket.
-        let tag3 =
-            if let Some(t) = tag2.strip_suffix(&lib_cfg.filename.copy_counter_opening_brackets) {
-                t
-            } else {
-                return (&self, None);
-            };
-        // This is optional
-        if let Some(t) = tag3.strip_suffix(&lib_cfg.filename.copy_counter_extra_separator) {
-            (t, copy_counter)
-        } else {
-            (tag3, copy_counter)
-        }
-    }
-
-    fn has_tpnote_ext(&self) -> bool {
-        MarkupLanguage::from(Path::new(self)).is_some()
-    }
-}
-
 /// Extents `Path` with methods dealing with paths to Tp-Note files.
 pub trait NotePath {
     /// Helper function that decomposes a fully qualified path name
@@ -355,11 +236,11 @@ pub trait NotePath {
     /// `lib_cfg.filename.sort_tag_chars` and return it.
     fn filename_contains_only_sort_tag_chars(&self) -> Option<&str>;
 
-    /// Check if a `Path` points to a file with a "wellformed" filename.
-    fn has_wellformed_filename(&self) -> bool;
-
     /// Compare to all file extensions Tp-Note can open.
     fn has_tpnote_ext(&self) -> bool;
+
+    /// Check if a `Path` points to a file with a "wellformed" filename.
+    fn has_wellformed_filename(&self) -> bool;
 }
 
 impl NotePath for Path {
@@ -441,6 +322,14 @@ impl NotePath for Path {
         }
     }
 
+    /// Returns `True` if the path in `self` ends with an extension, that Tp-
+    /// Note considers as it's own file. To do so, the extension is compared
+    /// to all items in the registered `filename.extensions` table in the
+    /// configuration file.
+    fn has_tpnote_ext(&self) -> bool {
+        MarkupLanguage::from(self).is_some()
+    }
+
     /// Check if a `path` points to a file with a
     /// "well formed" filename.
     /// We consider it well formed,
@@ -485,12 +374,123 @@ impl NotePath for Path {
 
         is_filename && (is_dot_file || has_extension)
     }
+}
 
-    /// Returns `True` if the path in `self` ends with an extension, that Tp-
-    /// Note considers as it's own file. To do so, the extension is compared
-    /// to all items in the registered `filename.extensions` table in the
-    /// configuration file.
+/// Some private helper functions related to note filenames.
+pub(crate) trait NotePathStr {
+    /// Returns `True` is the path in `self` ends with an extension, that
+    /// registered as Tp-Note extension in `filename.extensions`.
+    fn has_tpnote_ext(&self) -> bool;
+
+    /// Helper function that trims the copy counter at the end of string,
+    /// returns the result and the copy counter.
+    /// This function removes all brackets and a potiential extra separator.
+    fn split_copy_counter(&self) -> (&str, Option<usize>);
+
+    /// Helper function: Greedliy match sort tags and return it as
+    /// a subslice as first tuple and the rest as second tuple. If
+    /// `filename.sort_tag_separator` is defined and it can be detected after
+    /// the matched subslice, skip it and return the rest of the string as
+    /// second tuple. If `filename.sort_tag_separator` is defined, but the
+    /// separator can not be found, discard the matched sort tag and return
+    /// `("", sort_tag_stem_copy_counter)`.
+    /// Techical note: A sort tag is identified with the following regular
+    /// expression in SED syntax: `[0-9_- .\t]*-`.
+    /// The expression can be customized as follows:
+    /// * `[0-9_- .\t]` with `filename.sort_tag_chars`,
+    /// * `-` with `filename.sort_tag_separator` and
+    /// * `'` with `filename.sort_tag_extra_separator`.
+    fn split_sort_tag(&self) -> (&str, &str);
+}
+
+impl NotePathStr for str {
     fn has_tpnote_ext(&self) -> bool {
+        MarkupLanguage::from(Path::new(self)).is_some()
+    }
+
+    #[inline]
+    fn split_copy_counter(&self) -> (&str, Option<usize>) {
+        let lib_cfg = LIB_CFG.read_recursive();
+        // Strip closing brackets at the end.
+        let tag1 =
+            if let Some(t) = self.strip_suffix(&lib_cfg.filename.copy_counter_closing_brackets) {
+                t
+            } else {
+                return (self, None);
+            };
+        // Now strip numbers.
+        let tag2 = tag1.trim_end_matches(|c: char| c.is_numeric());
+        let copy_counter: Option<usize> = if tag2.len() < tag1.len() {
+            tag1[tag2.len()..].parse().ok()
+        } else {
+            return (self, None);
+        };
+        // And finally strip starting bracket.
+        let tag3 =
+            if let Some(t) = tag2.strip_suffix(&lib_cfg.filename.copy_counter_opening_brackets) {
+                t
+            } else {
+                return (self, None);
+            };
+        // This is optional
+        if let Some(t) = tag3.strip_suffix(&lib_cfg.filename.copy_counter_extra_separator) {
+            (t, copy_counter)
+        } else {
+            (tag3, copy_counter)
+        }
+    }
+
+    fn split_sort_tag(&self) -> (&str, &str) {
+        let lib_cfg = LIB_CFG.read_recursive();
+
+        let mut sort_tag = &self[..self
+            .chars()
+            .take_while(|&c| lib_cfg.filename.sort_tag_chars.contains([c]))
+            .count()];
+
+        let mut stem_copy_counter_ext;
+        if lib_cfg.filename.sort_tag_separator.is_empty() {
+            // `sort_tag` is correct.
+            stem_copy_counter_ext = &self[sort_tag.len()..];
+        } else {
+            // Take `sort_tag_separator` into account.
+            if let Some(i) = sort_tag.rfind(&lib_cfg.filename.sort_tag_separator) {
+                sort_tag = &sort_tag[..i];
+                stem_copy_counter_ext = &self[i + lib_cfg.filename.sort_tag_separator.len()..];
+            } else {
+                sort_tag = "";
+                stem_copy_counter_ext = self;
+            }
+        }
+
+        // Remove `sort_tag_extra_separator` if it is at the first position
+        // followed by a `sort_tag_char` at the second position.
+        let mut chars = stem_copy_counter_ext.chars();
+        if chars
+            .next()
+            .is_some_and(|c| c == lib_cfg.filename.sort_tag_extra_separator)
+            && chars
+                .next()
+                .is_some_and(|c| lib_cfg.filename.sort_tag_chars.find(c).is_some())
+        {
+            stem_copy_counter_ext = stem_copy_counter_ext
+                .strip_prefix(lib_cfg.filename.sort_tag_extra_separator)
+                .unwrap();
+        }
+
+        (sort_tag, stem_copy_counter_ext)
+    }
+}
+
+/// A trait that interprets the implenting type as filename extension.
+pub(crate) trait Extension {
+    /// Returns `True` if `self` is equal to one of the Tp-Note extensions
+    /// registered in the configuration file `filename.extensions` table.
+    fn is_tpnote_ext(&self) -> bool;
+}
+
+impl Extension for str {
+    fn is_tpnote_ext(&self) -> bool {
         MarkupLanguage::from(self).is_some()
     }
 }
@@ -553,6 +553,23 @@ mod tests {
     }
 
     #[test]
+    fn test_set_next_unused() {
+        use crate::filename::NotePathBuf;
+
+        use std::env::temp_dir;
+        use std::fs;
+
+        let raw = "This simulates a non tp-note file";
+        let mut notefile = temp_dir().join("20221030-some.pdf--Note.md");
+        fs::write(&notefile, raw.as_bytes()).unwrap();
+
+        notefile.set_next_unused().unwrap();
+        let expected = temp_dir().join("20221030-some.pdf--Note(1).md");
+        assert_eq!(notefile, expected);
+        let _ = fs::remove_file(notefile);
+    }
+
+    #[test]
     fn test_shorten_filename() {
         use crate::config::FILENAME_LEN_MAX;
         use crate::filename::NotePathBuf;
@@ -591,56 +608,6 @@ mod tests {
         input.shorten_filename();
         let output = input;
         assert_eq!(OsString::from(expected), output);
-    }
-
-    #[test]
-    fn test_set_next_unused() {
-        use crate::filename::NotePathBuf;
-
-        use std::env::temp_dir;
-        use std::fs;
-
-        let raw = "This simulates a non tp-note file";
-        let mut notefile = temp_dir().join("20221030-some.pdf--Note.md");
-        fs::write(&notefile, raw.as_bytes()).unwrap();
-
-        notefile.set_next_unused().unwrap();
-        let expected = temp_dir().join("20221030-some.pdf--Note(1).md");
-        assert_eq!(notefile, expected);
-        let _ = fs::remove_file(notefile);
-    }
-
-    #[test]
-    fn test_has_wellformed() {
-        use crate::filename::NotePath;
-        use std::path::Path;
-
-        // Test long filename.
-        assert!(&Path::new("long filename.ext").has_wellformed_filename());
-
-        // Test long file path, this fails.
-        assert!(&Path::new("long directory name/long filename.ext").has_wellformed_filename());
-
-        // Test dot file
-        assert!(&Path::new(".dotfile").has_wellformed_filename());
-
-        // Test dot file with extension.
-        assert!(&Path::new(".dotfile.ext").has_wellformed_filename());
-
-        // Test dot file with whitespace, this fails.
-        assert!(!&Path::new(".dot file").has_wellformed_filename());
-
-        // Test space in ext, this fails.
-        assert!(!&Path::new("filename.e xt").has_wellformed_filename());
-
-        // Test space in ext, this fails.
-        assert!(!&Path::new("filename. ext").has_wellformed_filename());
-
-        // Test space in ext, this fails.
-        assert!(!&Path::new("filename.ext ").has_wellformed_filename());
-
-        // Test path.
-        assert!(&Path::new("/path/to/filename.ext").has_wellformed_filename());
     }
 
     #[test]
@@ -786,6 +753,74 @@ mod tests {
     }
 
     #[test]
+    fn test_exclude_copy_counter_eq() {
+        use crate::filename::NotePath;
+
+        let p1 = PathBuf::from("/mypath/123-title(1).md");
+        let p2 = PathBuf::from("/mypath/123-title(3).md");
+        let expected = true;
+        let result = Path::exclude_copy_counter_eq(&p1, &p2);
+        assert_eq!(expected, result);
+
+        let p1 = PathBuf::from("/mypath/123-title(1).md");
+        let p2 = PathBuf::from("/mypath/123-titlX(3).md");
+        let expected = false;
+        let result = Path::exclude_copy_counter_eq(&p1, &p2);
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_note_path_has_tpnote_ext() {
+        use crate::filename::NotePath;
+
+        //
+        let path = Path::new("/dir/file.md");
+        assert!(<Path as NotePath>::has_tpnote_ext(path));
+
+        //
+        let path = Path::new("/dir/file.abc");
+        assert!(!<Path as NotePath>::has_tpnote_ext(path));
+
+        // This goes wrong because a file path or at least a filename is
+        // expected here.
+        let path = Path::new("md");
+        assert!(!<Path as NotePath>::has_tpnote_ext(path));
+    }
+
+    #[test]
+    fn test_has_wellformed() {
+        use crate::filename::NotePath;
+        use std::path::Path;
+
+        // Test long filename.
+        assert!(&Path::new("long filename.ext").has_wellformed_filename());
+
+        // Test long file path, this fails.
+        assert!(&Path::new("long directory name/long filename.ext").has_wellformed_filename());
+
+        // Test dot file
+        assert!(&Path::new(".dotfile").has_wellformed_filename());
+
+        // Test dot file with extension.
+        assert!(&Path::new(".dotfile.ext").has_wellformed_filename());
+
+        // Test dot file with whitespace, this fails.
+        assert!(!&Path::new(".dot file").has_wellformed_filename());
+
+        // Test space in ext, this fails.
+        assert!(!&Path::new("filename.e xt").has_wellformed_filename());
+
+        // Test space in ext, this fails.
+        assert!(!&Path::new("filename. ext").has_wellformed_filename());
+
+        // Test space in ext, this fails.
+        assert!(!&Path::new("filename.ext ").has_wellformed_filename());
+
+        // Test path.
+        assert!(&Path::new("/path/to/filename.ext").has_wellformed_filename());
+    }
+
+    #[test]
     fn test_trim_copy_counter() {
         use crate::filename::NotePathStr;
 
@@ -817,23 +852,6 @@ mod tests {
     }
 
     #[test]
-    fn test_filename_exclude_copy_counter_eq() {
-        use crate::filename::NotePath;
-
-        let p1 = PathBuf::from("/mypath/123-title(1).md");
-        let p2 = PathBuf::from("/mypath/123-title(3).md");
-        let expected = true;
-        let result = Path::exclude_copy_counter_eq(&p1, &p2);
-        assert_eq!(expected, result);
-
-        let p1 = PathBuf::from("/mypath/123-title(1).md");
-        let p2 = PathBuf::from("/mypath/123-titlX(3).md");
-        let expected = false;
-        let result = Path::exclude_copy_counter_eq(&p1, &p2);
-        assert_eq!(expected, result);
-    }
-
-    #[test]
     fn test_split_sort_tag() {
         use crate::filename::NotePathStr;
 
@@ -848,24 +866,6 @@ mod tests {
         let expected = ("123-", "Rest");
         let result = "123--Rest".split_sort_tag();
         assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn test_note_path_has_tpnote_ext() {
-        use crate::filename::NotePath;
-
-        //
-        let path = Path::new("/dir/file.md");
-        assert!(<Path as NotePath>::has_tpnote_ext(path));
-
-        //
-        let path = Path::new("/dir/file.abc");
-        assert!(!<Path as NotePath>::has_tpnote_ext(path));
-
-        // This goes wrong because a file path or at least a filename is
-        // expected here.
-        let path = Path::new("md");
-        assert!(!<Path as NotePath>::has_tpnote_ext(path));
     }
 
     #[test]
