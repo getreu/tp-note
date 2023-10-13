@@ -104,8 +104,8 @@ trait Hyperlink {
     fn decode_html_escape_and_percent(&mut self);
 
     /// True if the link is:
-    /// * `Text2Dest` and the link text equals the link destination, or
-    /// * `Image` and the links `alt` equals the the link source.
+    /// * `Link::Text2Dest` and the link text equals the link destination, or
+    /// * `Link::Image` and the links `alt` equals the the link source.
     /// Precondition: `decode_html_escape_and_percent()` must have been
     /// Executed.
     fn is_autolink(&self) -> bool;
@@ -150,6 +150,16 @@ trait Hyperlink {
         rewrite_abs_paths: bool,
         rewrite_ext: bool,
     ) -> Result<Option<PathBuf>, NoteError>;
+
+    /// Extracts some substring in `dest`  (`Link::Text2Dest`) or
+    /// `source` (`Link::Image`), and copy the result in `text`
+    /// (`Link::Text2Dest`) or `alt` (`Link::Image`).
+    /// For absolute URLs the scheme is removed and then copied.
+    /// For paths in relative URLs only the file stem (without sort-tag,
+    /// copy-counter and extension) is copied.
+    /// WARNING: only execute this method if you have asserted before
+    /// with `is_autolink()` that this is really an autolink.
+    fn rewrite_autolink(&mut self);
 
     /// Renders `Link::Text2Dest` and `Link::Image` to HTML.
     /// Some characters are HTML escape encoded. URLs are not
@@ -314,6 +324,62 @@ impl<'a> Hyperlink for Link<'a> {
 
             // Return `new_dest` as path.
             Ok(Some(dest_out))
+        }
+    }
+
+    fn rewrite_autolink(&mut self) {
+        let (text, dest) = match self {
+            Link::Text2Dest(text, dest, _title) => (text, dest),
+            Link::Image(alt, source) => (alt, source),
+            _ => return,
+        };
+
+        // Is this an absolute URL?
+        let is_rel_url = !((dest.contains("://") && !dest.contains(":///"))
+            || dest.starts_with("mailto:")
+            || dest.starts_with("tel:"));
+
+        // Strip scheme from dest and copy the result in text.
+        let short_dest = dest
+            .trim_start_matches("https://")
+            .trim_start_matches("https:")
+            .trim_start_matches("http://")
+            .trim_start_matches("http:")
+            .trim_start_matches("tpnote:")
+            .trim_start_matches("mailto:")
+            .trim_start_matches("tel:")
+            .to_string();
+        if short_dest != dest.as_ref() {
+            let _ = std::mem::replace(text, Cow::Owned(short_dest));
+        }
+
+        if is_rel_url {
+            // Show only the stem as link text.
+            // Strip the path.
+            let short_text = text
+                .as_ref()
+                .rsplit_once(['/', '\\'])
+                .map(|(_path, stem)| stem)
+                .unwrap_or(text.as_ref());
+
+            // Strip extension...
+            // The input `short_text` can be a full filename (starting with a
+            // sort-tag, ending with an extension) or only a sort-tag.
+            // In the latter case we do not strip anything.
+            let sort_tag1 = short_text.split_sort_tag().0;
+            let (sort_tag_stem, ext) = short_text.rsplit_once('.').unwrap_or((short_text, ""));
+            let sort_tag2 = sort_tag_stem.split_sort_tag().0;
+            // ... but only if the sort tag would not change and the extension
+            // is a Tp-Note file.
+            let short_text = if sort_tag1 == sort_tag2 && ext.is_tpnote_ext() {
+                sort_tag_stem
+            } else {
+                short_text
+            };
+            // Store the result.
+            if short_text != text.as_ref() {
+                let _ = std::mem::replace(text, Cow::Owned(short_text.to_string()));
+            }
         }
     }
 
@@ -861,6 +927,50 @@ mod tests {
         let expected = "<a href=\"/path/dir/3.0\">3.0</a>";
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/path/dir/3.0"));
+    }
+
+    #[test]
+    fn test_rewrite_autolink() {
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("http://getreu.net"),
+            Cow::from("http://getreu.net"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("getreu.net"),
+            Cow::from("http://getreu.net"),
+            Cow::from("title"),
+        );
+        input.rewrite_autolink();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("/dir/3.0-My note.md"),
+            Cow::from("/dir/3.0-My note.md"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("3.0-My note"),
+            Cow::from("/dir/3.0-My note.md"),
+            Cow::from("title"),
+        );
+        input.rewrite_autolink();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("/dir/3.0"),
+            Cow::from("/dir/3.0"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(Cow::from("3.0"), Cow::from("/dir/3.0"), Cow::from("title"));
+        input.rewrite_autolink();
+        let output = input;
+        assert_eq!(output, expected);
     }
 
     #[test]
