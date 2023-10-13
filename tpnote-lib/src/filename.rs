@@ -123,7 +123,7 @@ impl NotePathBuf for PathBuf {
         let mut test_path = String::from(stem);
         test_path.push_str(&lib_cfg.filename.sort_tag_separator);
         // Do we need an `extra_separator`?
-        if stem.is_empty() || !Path::split_sort_tag(&test_path).0.is_empty() {
+        if stem.is_empty() || !&test_path.split_sort_tag().0.is_empty() {
             filename.push(lib_cfg.filename.sort_tag_extra_separator);
         }
 
@@ -132,7 +132,7 @@ impl NotePathBuf for PathBuf {
         if let Some(cc) = copy_counter {
             // Is `copy_counter_extra_separator` necessary?
             // Does this stem ending look similar to a copy counter?
-            if Path::split_copy_counter(stem).1.is_some() {
+            if stem.split_copy_counter().1.is_some() {
                 // Add an additional separator.
                 filename.push_str(&lib_cfg.filename.copy_counter_extra_separator);
             };
@@ -205,7 +205,7 @@ impl NotePathBuf for PathBuf {
         }
 
         // Does this ending look like a copy counter?
-        if Path::split_copy_counter(&stem_short).1.is_some() {
+        if stem_short.split_copy_counter().1.is_some() {
             let lib_cfg = LIB_CFG.read_recursive();
             stem_short.push_str(&lib_cfg.filename.copy_counter_extra_separator);
         }
@@ -226,6 +226,7 @@ pub(crate) trait Extension {
     /// Returns `True` if `self` is equal to one of the Tp-Note extensions
     /// registered in the configuration file `filename.extensions` table.
     fn is_tpnote_ext(&self) -> bool;
+
     /// Returns `True` is the path in `self` ends with an extension, that
     /// registered as Tp-Note extension in `filename.extensions`.
     fn has_tpnote_ext(&self) -> bool;
@@ -242,24 +243,33 @@ impl Extension for str {
 }
 
 /// Some private helper functions related to note filenames.
-pub(crate) trait NotePathPrivate {
+pub(crate) trait NotePathStr {
     /// Helper function: Greedliy match sort tags and return it as
     /// a subslice as first tuple and the rest as second tuple. If
     /// `filename.sort_tag_separator` is defined and it can be detected after
     /// the matched subslice, skip it and return the rest of the string as
     /// second tuple. If `filename.sort_tag_separator` is defined, but the
-    /// separator can not be found, discard the matched sort tag and return `("",
-    /// sort_tag_stem_copy_counter)`.
+    /// separator can not be found, discard the matched sort tag and return
+    /// `("", sort_tag_stem_copy_counter)`.
     /// Techical note: A sort tag is identified with the following regular
     /// expression in SED syntax: `[0-9_- .\t]*-`.
     /// The expression can be customized as follows:
     /// * `[0-9_- .\t]` with `filename.sort_tag_chars`,
     /// * `-` with `filename.sort_tag_separator` and
     /// * `'` with `filename.sort_tag_extra_separator`.
-    fn split_sort_tag(sort_tag_stem_copy_counter_ext: &str) -> (&str, &str) {
+    fn split_sort_tag(&self) -> (&str, &str);
+
+    /// Helper function that trims the copy counter at the end of string,
+    /// returns the result and the copy counter.
+    /// This function removes all brackets and a potiential extra separator.
+    fn split_copy_counter(&self) -> (&str, Option<usize>);
+}
+
+impl NotePathStr for str {
+    fn split_sort_tag(&self) -> (&str, &str) {
         let lib_cfg = LIB_CFG.read_recursive();
 
-        let mut sort_tag = &sort_tag_stem_copy_counter_ext[..sort_tag_stem_copy_counter_ext
+        let mut sort_tag = &self[..self
             .chars()
             .take_while(|&c| lib_cfg.filename.sort_tag_chars.contains([c]))
             .count()];
@@ -267,16 +277,15 @@ pub(crate) trait NotePathPrivate {
         let mut stem_copy_counter_ext;
         if lib_cfg.filename.sort_tag_separator.is_empty() {
             // `sort_tag` is correct.
-            stem_copy_counter_ext = &sort_tag_stem_copy_counter_ext[sort_tag.len()..];
+            stem_copy_counter_ext = &self[sort_tag.len()..];
         } else {
             // Take `sort_tag_separator` into account.
             if let Some(i) = sort_tag.rfind(&lib_cfg.filename.sort_tag_separator) {
                 sort_tag = &sort_tag[..i];
-                stem_copy_counter_ext = &sort_tag_stem_copy_counter_ext
-                    [i + lib_cfg.filename.sort_tag_separator.len()..];
+                stem_copy_counter_ext = &self[i + lib_cfg.filename.sort_tag_separator.len()..];
             } else {
                 sort_tag = "";
-                stem_copy_counter_ext = sort_tag_stem_copy_counter_ext;
+                stem_copy_counter_ext = &self;
             }
         }
 
@@ -298,33 +307,29 @@ pub(crate) trait NotePathPrivate {
         (sort_tag, stem_copy_counter_ext)
     }
 
-    /// Helper function that trims the copy counter at the end of string,
-    /// returns the result and the copy counter.
-    /// This function removes all brackets and a potiential extra separator.
     #[inline]
-    fn split_copy_counter(file_stem: &str) -> (&str, Option<usize>) {
+    fn split_copy_counter(&self) -> (&str, Option<usize>) {
         let lib_cfg = LIB_CFG.read_recursive();
         // Strip closing brackets at the end.
-        let tag1 = if let Some(t) =
-            file_stem.strip_suffix(&lib_cfg.filename.copy_counter_closing_brackets)
-        {
-            t
-        } else {
-            return (file_stem, None);
-        };
+        let tag1 =
+            if let Some(t) = self.strip_suffix(&lib_cfg.filename.copy_counter_closing_brackets) {
+                t
+            } else {
+                return (&self, None);
+            };
         // Now strip numbers.
         let tag2 = tag1.trim_end_matches(|c: char| c.is_numeric());
         let copy_counter: Option<usize> = if tag2.len() < tag1.len() {
             tag1[tag2.len()..].parse().ok()
         } else {
-            return (file_stem, None);
+            return (&self, None);
         };
         // And finally strip starting bracket.
         let tag3 =
             if let Some(t) = tag2.strip_suffix(&lib_cfg.filename.copy_counter_opening_brackets) {
                 t
             } else {
-                return (file_stem, None);
+                return (&self, None);
             };
         // This is optional
         if let Some(t) = tag3.strip_suffix(&lib_cfg.filename.copy_counter_extra_separator) {
@@ -335,22 +340,24 @@ pub(crate) trait NotePathPrivate {
     }
 }
 
-impl NotePathPrivate for Path {}
-
 /// Extents `Path` with methods dealing with paths to Tp-Note files.
 pub trait NotePath {
     /// Helper function that decomposes a fully qualified path name
     /// into (`sort_tag`, `stem_copy_counter_ext`, `stem`, `copy_counter`, `ext`).
     /// All sort-tag seprators and copy-counter separators/brackets are removed.
     fn disassemble(&self) -> (&str, &str, &str, Option<usize>, &str);
+
     /// Compares with another `Path` to a Tp-Note file. They are considered equal
     /// even when the copy counter is different.
     fn exclude_copy_counter_eq(&self, p2: &Path) -> bool;
+
     /// Check if the filename of `Path` contains only
     /// `lib_cfg.filename.sort_tag_chars` and return it.
     fn filename_contains_only_sort_tag_chars(&self) -> Option<&str>;
+
     /// Check if a `Path` points to a file with a "wellformed" filename.
     fn has_wellformed_filename(&self) -> bool;
+
     /// Compare to all file extensions Tp-Note can open.
     fn has_tpnote_ext(&self) -> bool;
 }
@@ -363,8 +370,7 @@ impl NotePath for Path {
             .to_str()
             .unwrap_or_default();
 
-        let (sort_tag, stem_copy_counter_ext) =
-            Self::split_sort_tag(sort_tag_stem_copy_counter_ext);
+        let (sort_tag, stem_copy_counter_ext) = sort_tag_stem_copy_counter_ext.split_sort_tag();
 
         let stem_copy_counter = Path::new(stem_copy_counter_ext)
             .file_stem()
@@ -383,7 +389,7 @@ impl NotePath for Path {
                 .unwrap_or_default()
         };
 
-        let (stem, copy_counter) = Self::split_copy_counter(stem_copy_counter);
+        let (stem, copy_counter) = stem_copy_counter.split_copy_counter();
 
         (sort_tag, stem_copy_counter_ext, stem, copy_counter, ext)
     }
@@ -493,7 +499,7 @@ impl NotePath for Path {
 mod tests {
     use super::NotePath;
     use super::NotePathBuf;
-    use super::NotePathPrivate;
+    use super::NotePathStr;
     use crate::config::FILENAME_LEN_MAX;
     use crate::filename::Extension;
     use std::path::Path;
@@ -780,28 +786,28 @@ mod tests {
     fn test_trim_copy_counter() {
         // Pattern found and removed.
         let expected = ("my_stem", Some(78));
-        let result = Path::split_copy_counter("my_stem(78)");
+        let result = "my_stem(78)".split_copy_counter();
         assert_eq!(expected, result);
 
         // Pattern found and removed.
         let expected = ("my_stem", Some(78));
-        let result = Path::split_copy_counter("my_stem-(78)");
+        let result = "my_stem-(78)".split_copy_counter();
         assert_eq!(expected, result);
 
         // Pattern found and removed.
         let expected = ("my_stem_", Some(78));
-        let result = Path::split_copy_counter("my_stem_(78)");
+        let result = "my_stem_(78)".split_copy_counter();
         assert_eq!(expected, result);
 
         // Pattern not found.
         assert_eq!(expected, result);
         let expected = ("my_stem_(78))", None);
-        let result = Path::split_copy_counter("my_stem_(78))");
+        let result = "my_stem_(78))".split_copy_counter();
         assert_eq!(expected, result);
 
         // Pattern not found.
         let expected = ("my_stem_)78)", None);
-        let result = Path::split_copy_counter("my_stem_)78)");
+        let result = "my_stem_)78)".split_copy_counter();
         assert_eq!(expected, result);
     }
 
@@ -823,15 +829,15 @@ mod tests {
     #[test]
     fn test_split_sort_tag() {
         let expected = ("123", "Rest");
-        let result = Path::split_sort_tag("123-Rest");
+        let result = "123-Rest".split_sort_tag();
         assert_eq!(expected, result);
 
         let expected = ("123", "Rest");
-        let result = Path::split_sort_tag("123-Rest");
+        let result = "123-Rest".split_sort_tag();
         assert_eq!(expected, result);
 
         let expected = ("123-", "Rest");
-        let result = Path::split_sort_tag("123--Rest");
+        let result = "123--Rest".split_sort_tag();
         assert_eq!(expected, result);
     }
 
