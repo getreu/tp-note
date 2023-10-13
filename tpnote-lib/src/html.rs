@@ -142,7 +142,7 @@ trait Hyperlink {
     /// Guaranties:
     /// 1. The returned link is guaranteed to be a child of `root_path`, or
     ///    `None`.
-    fn rewrite_local_link(
+    fn rebase_local_link(
         &mut self,
         root_path: &Path,
         docdir: &Path,
@@ -231,7 +231,7 @@ impl<'a> Hyperlink for Link<'a> {
         text == dest
     }
 
-    fn rewrite_local_link(
+    fn rebase_local_link(
         &mut self,
         root_path: &Path,
         docdir: &Path,
@@ -475,7 +475,7 @@ pub fn rewrite_links(
         // Percent decode link destination.
         link.decode_html_escape_and_percent();
         // Rewrite the local link.
-        match link.rewrite_local_link(
+        match link.rebase_local_link(
             root_path,
             docdir,
             rewrite_rel_paths,
@@ -725,7 +725,7 @@ mod tests {
             .1
              .1;
         assert!(input
-            .rewrite_local_link(root_path, docdir, true, false, false)
+            .rebase_local_link(root_path, docdir, true, false, false)
             .unwrap()
             .is_none());
 
@@ -741,7 +741,7 @@ mod tests {
         let expected = "<img src=\"/abs/note path/t m p.jpg\" \
             alt=\"Image\" />";
         let outpath = input
-            .rewrite_local_link(root_path, docdir, true, false, false)
+            .rebase_local_link(root_path, docdir, true, false, false)
             .unwrap()
             .unwrap();
         let output = input.to_html();
@@ -755,7 +755,7 @@ mod tests {
              .1;
         let expected = "<img src=\"/abs/t m p.jpg\" alt=\"Image\" />";
         let outpath = input
-            .rewrite_local_link(root_path, docdir, true, false, false)
+            .rebase_local_link(root_path, docdir, true, false, false)
             .unwrap()
             .unwrap();
         let output = input.to_html();
@@ -769,7 +769,7 @@ mod tests {
              .1;
         let expected = "<a href=\"/abs/note path/my note 1.md\">my note 1</a>";
         let outpath = input
-            .rewrite_local_link(root_path, docdir, true, false, false)
+            .rebase_local_link(root_path, docdir, true, false, false)
             .unwrap()
             .unwrap();
         let output = input.to_html();
@@ -783,7 +783,7 @@ mod tests {
              .1;
         let expected = "<a href=\"/dir/my note 1.md\">my note 1</a>";
         let outpath = input
-            .rewrite_local_link(root_path, docdir, true, false, false)
+            .rebase_local_link(root_path, docdir, true, false, false)
             .unwrap()
             .unwrap();
         let output = input.to_html();
@@ -797,7 +797,7 @@ mod tests {
              .1;
         let expected = "<a href=\"dir/my note 1.md\">my note 1</a>";
         let outpath = input
-            .rewrite_local_link(root_path, docdir, false, false, false)
+            .rebase_local_link(root_path, docdir, false, false, false)
             .unwrap()
             .unwrap();
         let output = input.to_html();
@@ -811,7 +811,7 @@ mod tests {
              .1;
         let expected = "<a href=\"/abs/note path/dir/my note 1.md.html\">my note 1</a>";
         let outpath = input
-            .rewrite_local_link(root_path, docdir, true, false, true)
+            .rebase_local_link(root_path, docdir, true, false, true)
             .unwrap()
             .unwrap();
         let output = input.to_html();
@@ -828,7 +828,7 @@ mod tests {
              .1;
         let expected = "<a href=\"/path/dir/my note 1.md\">my note 1</a>";
         let outpath = input
-            .rewrite_local_link(
+            .rebase_local_link(
                 Path::new("/my/note/"),
                 Path::new("/my/note/path/"),
                 true,
@@ -848,7 +848,7 @@ mod tests {
              .1;
         let expected = "<a href=\"/dir/my note 1.md\">my note 1</a>";
         let outpath = input
-            .rewrite_local_link(root_path, Path::new("/my/ignored/"), true, false, false)
+            .rebase_local_link(root_path, Path::new("/my/ignored/"), true, false, false)
             .unwrap()
             .unwrap();
         let output = input.to_html();
@@ -861,7 +861,7 @@ mod tests {
             .1
              .1;
         let output = input
-            .rewrite_local_link(root_path, Path::new("/my/notepath/"), true, false, false)
+            .rebase_local_link(root_path, Path::new("/my/notepath/"), true, false, false)
             .unwrap_err();
         assert!(matches!(output, NoteError::InvalidLocalLink));
 
@@ -871,7 +871,7 @@ mod tests {
             .1
              .1;
         let output = input
-            .rewrite_local_link(root_path, Path::new("/my/notepath/"), true, false, false)
+            .rebase_local_link(root_path, Path::new("/my/notepath/"), true, false, false)
             .unwrap_err();
         assert!(matches!(output, NoteError::InvalidLocalLink));
 
@@ -882,7 +882,7 @@ mod tests {
             .1
              .1;
         let output = input
-            .rewrite_local_link(root_path, Path::new("/my/"), true, false, false)
+            .rebase_local_link(root_path, Path::new("/my/"), true, false, false)
             .unwrap_err();
         assert!(matches!(output, NoteError::InvalidLocalLink));
 
@@ -893,7 +893,7 @@ mod tests {
             .1
              .1;
         let output = input
-            .rewrite_local_link(root_path, Path::new("/my/notepath"), true, false, false)
+            .rebase_local_link(root_path, Path::new("/my/notepath"), true, false, false)
             .unwrap_err();
         assert!(matches!(output, NoteError::InvalidLocalLink));
 
@@ -905,7 +905,7 @@ mod tests {
                 .1
                  .1;
         let outpath = input
-            .rewrite_local_link(root_path, Path::new("/my/path"), true, false, false)
+            .rebase_local_link(root_path, Path::new("/my/path"), true, false, false)
             .unwrap()
             .unwrap();
         let output = input.to_html();
@@ -920,7 +920,7 @@ mod tests {
             .1
              .1;
         let outpath = input
-            .rewrite_local_link(root_path, Path::new("/my/path"), true, false, false)
+            .rebase_local_link(root_path, Path::new("/my/path"), true, false, false)
             .unwrap()
             .unwrap();
         let output = input.to_html();
