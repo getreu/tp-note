@@ -252,7 +252,7 @@ impl<'a> Hyperlink for Link<'a> {
             let sort_tag2 = sort_tag_stem.split_sort_tag().0;
             // ... but only if the sort tag would not change and the extension
             // is a Tp-Note file.
-            let short_text = if sort_tag1 == sort_tag2 && <str as Extension>::is_tpnote_ext(ext) {
+            let short_text = if sort_tag1 == sort_tag2 && ext.is_tpnote_ext() {
                 sort_tag_stem
             } else {
                 short_text

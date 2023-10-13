@@ -178,7 +178,7 @@ impl HttpResponse for ServerThread {
                             let mut minimum = PathBuf::new();
                             'file_loop: for file in files.flatten() {
                                 let file = file.path();
-                                if !<Path as NotePath>::has_tpnote_ext(&*file) {
+                                if !(&*file).has_tpnote_ext() {
                                     continue 'file_loop;
                                 }
                                 // Does this sort-tag short link correspond to

@@ -775,16 +775,16 @@ mod tests {
 
         //
         let path = Path::new("/dir/file.md");
-        assert!(<Path as NotePath>::has_tpnote_ext(path));
+        assert!(path.has_tpnote_ext());
 
         //
         let path = Path::new("/dir/file.abc");
-        assert!(!<Path as NotePath>::has_tpnote_ext(path));
+        assert!(!path.has_tpnote_ext());
 
         // This goes wrong because a file path or at least a filename is
         // expected here.
         let path = Path::new("md");
-        assert!(!<Path as NotePath>::has_tpnote_ext(path));
+        assert!(!path.has_tpnote_ext());
     }
 
     #[test]
