@@ -122,7 +122,7 @@ trait Hyperlink {
     /// If successful, we return `Ok(Some(URL))`, otherwise
     /// `Err(NoteError::InvalidLocalLink)`.
     /// If `self` contains an absolute URL, no conversion is performed and the
-    /// return value is `Ok(None))`.
+    /// return value is `Ok(())`.
     ///
     /// Conversion details:
     /// The base path for this conversion (usually where the HTML file resides),
@@ -147,17 +147,13 @@ trait Hyperlink {
     /// 2. `link` is `Link::Text2Dest` or `Link::Image`
     /// 3. `root_path` and `docdir` are absolute paths to directories.
     /// 4. `root_path` is never empty `""`. It can be `"/"`.
-    /// Guaranties:
-    /// 1. The returned link is guaranteed to be a child of `root_path`, or
-    ///    `None`.
     fn rebase_local_link(
         &mut self,
         root_path: &Path,
         docdir: &Path,
         rewrite_rel_paths: bool,
         rewrite_abs_paths: bool,
-        rewrite_ext: bool,
-    ) -> Result<Option<PathBuf>, NoteError>;
+    ) -> Result<(), NoteError>;
 
     /// Extracts some substring in `dest`  (`Link::Text2Dest`) or
     /// `source` (`Link::Image`), and copy the result in `text`
@@ -294,11 +290,10 @@ impl<'a> Hyperlink for Link<'a> {
         docdir: &Path,
         rewrite_rel_paths: bool,
         rewrite_abs_paths: bool,
-        rewrite_ext: bool,
-    ) -> Result<Option<PathBuf>, NoteError> {
+    ) -> Result<(), NoteError> {
         // Return None, if link is not local.
         if !self.is_local() {
-            return Ok(None);
+            return Ok(());
         }
 
         let (text, dest) = match self {
@@ -354,14 +349,6 @@ impl<'a> Hyperlink for Link<'a> {
                 Cow::Borrowed(short_dest)
             };
 
-            // Append ".html" to dest, if `rewrite_ext`.
-            // Only rewrite file extensions for Tp-Note files.
-            let short_dest = if rewrite_ext && dest.has_tpnote_ext() {
-                Cow::Owned(format!("{}{}", short_dest, HTML_EXT))
-            } else {
-                short_dest
-            };
-
             let dest_out = assemble_link(
                 root_path,
                 docdir,
@@ -376,7 +363,7 @@ impl<'a> Hyperlink for Link<'a> {
             let _ = std::mem::replace(dest, new_dest);
 
             // Return `new_dest` as path.
-            Ok(Some(dest_out))
+            Ok(())
         }
     }
 
@@ -558,18 +545,18 @@ pub fn rewrite_links(
         // Percent decode link destination.
         link.decode_html_escape_and_percent();
         // Rewrite the local link.
-        match link.rebase_local_link(
-            root_path,
-            docdir,
-            rewrite_rel_paths,
-            rewrite_abs_paths,
-            rewrite_ext,
-        ) {
-            Ok(Some(dest_path)) => {
-                allowed_urls.insert(dest_path);
-                html_out.push_str(&link.to_html());
+        match link.rebase_local_link(root_path, docdir, rewrite_rel_paths, rewrite_abs_paths) {
+            Ok(()) => {
+                if let Some(dest_path) = link.get_local_link_path() {
+                    allowed_urls.insert(dest_path);
+                    if rewrite_ext {
+                        link.append_html_ext();
+                    }
+                    html_out.push_str(&link.to_html());
+                } else {
+                    html_out.push_str(&link.to_html());
+                }
             }
-            Ok(None) => html_out.push_str(&link.to_html()),
 
             Err(e) => html_out.push_str(&e.to_string()),
         };
@@ -871,10 +858,10 @@ mod tests {
             .unwrap()
             .1
              .1;
-        assert!(input
-            .rebase_local_link(root_path, docdir, true, false, false)
-            .unwrap()
-            .is_none());
+        input
+            .rebase_local_link(root_path, docdir, true, false)
+            .unwrap();
+        assert!(input.get_local_link_path().is_none());
 
         //
         let root_path = Path::new("/my/");
@@ -887,10 +874,10 @@ mod tests {
              .1;
         let expected = "<img src=\"/abs/note path/t m p.jpg\" \
             alt=\"Image\" />";
-        let outpath = input
-            .rebase_local_link(root_path, docdir, true, false, false)
-            .unwrap()
+        input
+            .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
+        let outpath = input.get_local_link_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/abs/note path/t m p.jpg"));
@@ -901,10 +888,10 @@ mod tests {
             .1
              .1;
         let expected = "<img src=\"/abs/t m p.jpg\" alt=\"Image\" />";
-        let outpath = input
-            .rebase_local_link(root_path, docdir, true, false, false)
-            .unwrap()
+        input
+            .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
+        let outpath = input.get_local_link_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/abs/t m p.jpg"));
@@ -915,10 +902,10 @@ mod tests {
             .1
              .1;
         let expected = "<a href=\"/abs/note path/my note 1.md\">my note 1</a>";
-        let outpath = input
-            .rebase_local_link(root_path, docdir, true, false, false)
-            .unwrap()
+        input
+            .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
+        let outpath = input.get_local_link_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/abs/note path/my note 1.md"));
@@ -929,10 +916,10 @@ mod tests {
             .1
              .1;
         let expected = "<a href=\"/dir/my note 1.md\">my note 1</a>";
-        let outpath = input
-            .rebase_local_link(root_path, docdir, true, false, false)
-            .unwrap()
+        input
+            .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
+        let outpath = input.get_local_link_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
@@ -943,30 +930,13 @@ mod tests {
             .1
              .1;
         let expected = "<a href=\"dir/my note 1.md\">my note 1</a>";
-        let outpath = input
-            .rebase_local_link(root_path, docdir, false, false, false)
-            .unwrap()
+        input
+            .rebase_local_link(root_path, docdir, false, false)
             .unwrap();
+        let outpath = input.get_local_link_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("dir/my note 1.md"));
-
-        // Check `rewrite_ext=true`.
-        let mut input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
-            .unwrap()
-            .1
-             .1;
-        let expected = "<a href=\"/abs/note path/dir/my note 1.md.html\">my note 1</a>";
-        let outpath = input
-            .rebase_local_link(root_path, docdir, true, false, true)
-            .unwrap()
-            .unwrap();
-        let output = input.to_html();
-        assert_eq!(output, expected);
-        assert_eq!(
-            outpath,
-            PathBuf::from("/abs/note path/dir/my note 1.md.html")
-        );
 
         // Check relative link in input.
         let mut input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
@@ -974,16 +944,15 @@ mod tests {
             .1
              .1;
         let expected = "<a href=\"/path/dir/my note 1.md\">my note 1</a>";
-        let outpath = input
+        input
             .rebase_local_link(
                 Path::new("/my/note/"),
                 Path::new("/my/note/path/"),
                 true,
                 false,
-                false,
             )
-            .unwrap()
             .unwrap();
+        let outpath = input.get_local_link_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/path/dir/my note 1.md"));
@@ -994,10 +963,10 @@ mod tests {
             .1
              .1;
         let expected = "<a href=\"/dir/my note 1.md\">my note 1</a>";
-        let outpath = input
-            .rebase_local_link(root_path, Path::new("/my/ignored/"), true, false, false)
-            .unwrap()
+        input
+            .rebase_local_link(root_path, Path::new("/my/ignored/"), true, false)
             .unwrap();
+        let outpath = input.get_local_link_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
@@ -1008,7 +977,7 @@ mod tests {
             .1
              .1;
         let output = input
-            .rebase_local_link(root_path, Path::new("/my/notepath/"), true, false, false)
+            .rebase_local_link(root_path, Path::new("/my/notepath/"), true, false)
             .unwrap_err();
         assert!(matches!(output, NoteError::InvalidLocalLink));
 
@@ -1018,7 +987,7 @@ mod tests {
             .1
              .1;
         let output = input
-            .rebase_local_link(root_path, Path::new("/my/notepath/"), true, false, false)
+            .rebase_local_link(root_path, Path::new("/my/notepath/"), true, false)
             .unwrap_err();
         assert!(matches!(output, NoteError::InvalidLocalLink));
 
@@ -1029,7 +998,7 @@ mod tests {
             .1
              .1;
         let output = input
-            .rebase_local_link(root_path, Path::new("/my/"), true, false, false)
+            .rebase_local_link(root_path, Path::new("/my/"), true, false)
             .unwrap_err();
         assert!(matches!(output, NoteError::InvalidLocalLink));
 
@@ -1040,7 +1009,7 @@ mod tests {
             .1
              .1;
         let output = input
-            .rebase_local_link(root_path, Path::new("/my/notepath"), true, false, false)
+            .rebase_local_link(root_path, Path::new("/my/notepath"), true, false)
             .unwrap_err();
         assert!(matches!(output, NoteError::InvalidLocalLink));
 
@@ -1051,10 +1020,10 @@ mod tests {
                 .unwrap()
                 .1
                  .1;
-        let outpath = input
-            .rebase_local_link(root_path, Path::new("/my/path"), true, false, false)
-            .unwrap()
+        input
+            .rebase_local_link(root_path, Path::new("/my/path"), true, false)
             .unwrap();
+        let outpath = input.get_local_link_path().unwrap();
         let output = input.to_html();
         let expected = "<a href=\"/path/dir/3.0-my note.md\">3.0-my note</a>";
         assert_eq!(output, expected);
@@ -1066,10 +1035,10 @@ mod tests {
             .unwrap()
             .1
              .1;
-        let outpath = input
-            .rebase_local_link(root_path, Path::new("/my/path"), true, false, false)
-            .unwrap()
+        input
+            .rebase_local_link(root_path, Path::new("/my/path"), true, false)
             .unwrap();
+        let outpath = input.get_local_link_path().unwrap();
         let output = input.to_html();
         let expected = "<a href=\"/path/dir/3.0\">3.0</a>";
         assert_eq!(output, expected);
