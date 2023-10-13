@@ -226,19 +226,11 @@ pub(crate) trait Extension {
     /// Returns `True` if `self` is equal to one of the Tp-Note extensions
     /// registered in the configuration file `filename.extensions` table.
     fn is_tpnote_ext(&self) -> bool;
-
-    /// Returns `True` is the path in `self` ends with an extension, that
-    /// registered as Tp-Note extension in `filename.extensions`.
-    fn has_tpnote_ext(&self) -> bool;
 }
 
 impl Extension for str {
     fn is_tpnote_ext(&self) -> bool {
         MarkupLanguage::from(self).is_some()
-    }
-
-    fn has_tpnote_ext(&self) -> bool {
-        MarkupLanguage::from(Path::new(self)).is_some()
     }
 }
 
@@ -263,6 +255,10 @@ pub(crate) trait NotePathStr {
     /// returns the result and the copy counter.
     /// This function removes all brackets and a potiential extra separator.
     fn split_copy_counter(&self) -> (&str, Option<usize>);
+
+    /// Returns `True` is the path in `self` ends with an extension, that
+    /// registered as Tp-Note extension in `filename.extensions`.
+    fn has_tpnote_ext(&self) -> bool;
 }
 
 impl NotePathStr for str {
@@ -337,6 +333,10 @@ impl NotePathStr for str {
         } else {
             (tag3, copy_counter)
         }
+    }
+
+    fn has_tpnote_ext(&self) -> bool {
+        MarkupLanguage::from(Path::new(self)).is_some()
     }
 }
 
@@ -497,16 +497,14 @@ impl NotePath for Path {
 
 #[cfg(test)]
 mod tests {
-    use super::NotePath;
-    use super::NotePathBuf;
-    use super::NotePathStr;
-    use crate::config::FILENAME_LEN_MAX;
-    use crate::filename::Extension;
+    use std::ffi::OsString;
     use std::path::Path;
     use std::path::PathBuf;
 
     #[test]
     fn test_from_disassembled() {
+        use crate::filename::NotePathBuf;
+
         let expected = PathBuf::from("my_file.md");
         let result = PathBuf::from_disassembled("", "my_file", None, "md");
         assert_eq!(expected, result);
@@ -556,8 +554,8 @@ mod tests {
 
     #[test]
     fn test_shorten_filename() {
-        use std::ffi::OsString;
-        use std::path::PathBuf;
+        use crate::config::FILENAME_LEN_MAX;
+        use crate::filename::NotePathBuf;
 
         // Test a short filename with a problematic file stem ending looking
         // like a copy counter pattern. Therefor the method appends `-`.
@@ -597,6 +595,8 @@ mod tests {
 
     #[test]
     fn test_set_next_unused() {
+        use crate::filename::NotePathBuf;
+
         use std::env::temp_dir;
         use std::fs;
 
@@ -612,6 +612,7 @@ mod tests {
 
     #[test]
     fn test_has_wellformed() {
+        use crate::filename::NotePath;
         use std::path::Path;
 
         // Test long filename.
@@ -644,6 +645,8 @@ mod tests {
 
     #[test]
     fn test_disassemble_filename() {
+        use crate::filename::NotePath;
+
         let expected = (
             "1_2_3",
             "my_title--my_subtitle(1).md",
@@ -784,6 +787,8 @@ mod tests {
 
     #[test]
     fn test_trim_copy_counter() {
+        use crate::filename::NotePathStr;
+
         // Pattern found and removed.
         let expected = ("my_stem", Some(78));
         let result = "my_stem(78)".split_copy_counter();
@@ -813,6 +818,8 @@ mod tests {
 
     #[test]
     fn test_filename_exclude_copy_counter_eq() {
+        use crate::filename::NotePath;
+
         let p1 = PathBuf::from("/mypath/123-title(1).md");
         let p2 = PathBuf::from("/mypath/123-title(3).md");
         let expected = true;
@@ -828,6 +835,8 @@ mod tests {
 
     #[test]
     fn test_split_sort_tag() {
+        use crate::filename::NotePathStr;
+
         let expected = ("123", "Rest");
         let result = "123-Rest".split_sort_tag();
         assert_eq!(expected, result);
@@ -843,6 +852,8 @@ mod tests {
 
     #[test]
     fn test_note_path_has_tpnote_ext() {
+        use crate::filename::NotePath;
+
         //
         let path = Path::new("/dir/file.md");
         assert!(<Path as NotePath>::has_tpnote_ext(path));
@@ -858,21 +869,27 @@ mod tests {
     }
 
     #[test]
-    fn test_extension_has_tpnote_ext_is_tpnote_ext() {
-        //
-        let path = "/dir/file.md";
-        assert!(<str as Extension>::has_tpnote_ext(path));
+    fn test_note_path_str_has_tpnote() {
+        use crate::filename::NotePathStr;
 
         //
-        let path = "/dir/file.abc";
-        assert!(!<str as Extension>::has_tpnote_ext(path));
+        let path_str = "/dir/file.md";
+        assert!(path_str.has_tpnote_ext());
 
+        //
+        let path_str = "/dir/file.abc";
+        assert!(!path_str.has_tpnote_ext());
+    }
+
+    #[test]
+    fn test_is_tpnote_ext() {
+        use crate::filename::Extension;
         //
         let ext = "md";
-        assert!(<str as Extension>::is_tpnote_ext(ext));
+        assert!(ext.is_tpnote_ext());
 
         // This goes wrong because only `md` is expected here.
         let ext = "/dir/file.md";
-        assert!(!<str as Extension>::is_tpnote_ext(ext));
+        assert!(!ext.is_tpnote_ext());
     }
 }

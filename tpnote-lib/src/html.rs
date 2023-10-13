@@ -278,7 +278,7 @@ impl<'a> Hyperlink for Link<'a> {
 
             // Append ".html" to dest, if `rewrite_ext`.
             // Only rewrite file extensions for Tp-Note files.
-            let short_dest = if rewrite_ext && <str as Extension>::has_tpnote_ext(&**dest) {
+            let short_dest = if rewrite_ext && dest.has_tpnote_ext() {
                 Cow::Owned(format!("{}{}", short_dest, HTML_EXT))
             } else {
                 short_dest
