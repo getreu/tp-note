@@ -134,7 +134,7 @@ impl FrontMatter {
                                 value.to_string()
                             };
 
-                            if !(&*file_ext).is_tpnote_ext() {
+                            if !file_ext.is_empty() && !(&*file_ext).is_tpnote_ext() {
                                 return Err(NoteError::FrontMatterFieldIsNotTpnoteExtension {
                                     extension: file_ext,
                                     extensions: {
@@ -391,12 +391,25 @@ mod tests {
             NoteError::FrontMatterFieldIsNotBool { .. }
         ));
 
+        //
         let input = "# document start
         title: my title
         subtitle: my subtitle
         ";
 
         let expected = json!({"title": "my title", "subtitle": "my subtitle"});
+        let expected = expected.as_object().unwrap();
+
+        let output = FrontMatter::try_from(input).unwrap();
+        assert_eq!(&output.0, expected);
+
+        let input = "# document start
+        title: my title
+        file_ext: ''
+        ";
+
+        //
+        let expected = json!({"title": "my title", "file_ext": ""});
         let expected = expected.as_object().unwrap();
 
         let output = FrontMatter::try_from(input).unwrap();
