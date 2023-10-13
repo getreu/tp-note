@@ -103,6 +103,14 @@ trait Hyperlink {
     /// link text in case of an autolink).
     fn decode_html_escape_and_percent(&mut self);
 
+    /// True if `dest`  (`Link::Text2Dest`) or /// `source` (`Link::Image`)
+    /// are local links (=relative URL).
+    fn is_local(&self) -> bool;
+
+    /// Strips a possible scheme in local `dest` (`Link::Text2Dest`) or
+    /// local `source` (`Link::Image`). No action on absolute URLs.
+    fn strip_scheme(&mut self);
+
     /// True if the link is:
     /// * `Link::Text2Dest` and the link text equals the link destination, or
     /// * `Link::Image` and the links `alt` equals the the link source.
@@ -160,6 +168,16 @@ trait Hyperlink {
     /// WARNING: only execute this method if you have asserted before
     /// with `is_autolink()` that this is really an autolink.
     fn rewrite_autolink(&mut self);
+
+    /// If the extension of a local path is some Tp-Note extension,
+    /// return the path. Otherwise return `None`.
+    /// Acts an `Link:Text2Dest` solely.
+    fn get_local_link_path(&self) -> Option<PathBuf>;
+
+    /// If the extension of a local path is some Tp-Note extension,
+    /// append `.html` to path. Otherwise silently return.
+    /// Acts an `Link:Text2Dest` solely.
+    fn append_html_ext(&mut self);
 
     /// Renders `Link::Text2Dest` and `Link::Image` to HTML.
     /// Some characters are HTML escape encoded. URLs are not
@@ -222,6 +240,44 @@ impl<'a> Hyperlink for Link<'a> {
         }
     }
 
+    //
+    fn is_local(&self) -> bool {
+        let dest = match self {
+            Link::Text2Dest(_, dest, _) => dest,
+            Link::Image(_, source) => source,
+            _ => return false,
+        };
+        !((dest.contains("://") && !dest.contains(":///"))
+            || dest.starts_with("mailto:")
+            || dest.starts_with("tel:"))
+    }
+
+    //
+    fn strip_scheme(&mut self) {
+        if !self.is_local() {
+            return;
+        }
+
+        let dest = match self {
+            Link::Text2Dest(_, dest, _title) => dest,
+            Link::Image(_, source) => source,
+            _ => return,
+        };
+        // Strip scheme from dest and copy the result in text.
+        let short_dest = dest
+            .trim_start_matches("https://")
+            .trim_start_matches("https:")
+            .trim_start_matches("http://")
+            .trim_start_matches("http:")
+            .trim_start_matches("tpnote:")
+            .trim_start_matches("mailto:")
+            .trim_start_matches("tel:");
+        if short_dest != dest.as_ref() {
+            let _ = std::mem::replace(dest, Cow::Owned(short_dest.to_string()));
+        }
+    }
+
+    //
     fn is_autolink(&self) -> bool {
         let (text, dest) = match self {
             Link::Text2Dest(text, dest, _title) => (text, dest),
@@ -231,6 +287,7 @@ impl<'a> Hyperlink for Link<'a> {
         text == dest
     }
 
+    //
     fn rebase_local_link(
         &mut self,
         root_path: &Path,
@@ -239,20 +296,16 @@ impl<'a> Hyperlink for Link<'a> {
         rewrite_abs_paths: bool,
         rewrite_ext: bool,
     ) -> Result<Option<PathBuf>, NoteError> {
-        //
+        // Return None, if link is not local.
+        if !self.is_local() {
+            return Ok(None);
+        }
+
         let (text, dest) = match self {
             Link::Text2Dest(text, dest, _title) => (text, dest),
             Link::Image(alt, source) => (alt, source),
             _ => return Err(NoteError::InvalidLocalLink),
         };
-
-        // Return None, if link is not local.
-        if (dest.contains("://") && !dest.contains(":///"))
-            || dest.starts_with("mailto:")
-            || dest.starts_with("tel:")
-        {
-            return Ok(None);
-        }
 
         // Is this an autolink? Then modify `text`.
         if *text == *dest && (text.contains(':') || text.contains('@')) {
@@ -328,16 +381,14 @@ impl<'a> Hyperlink for Link<'a> {
     }
 
     fn rewrite_autolink(&mut self) {
+        // Is this an absolute URL?
+        let link_is_local = self.is_local();
+
         let (text, dest) = match self {
             Link::Text2Dest(text, dest, _title) => (text, dest),
             Link::Image(alt, source) => (alt, source),
             _ => return,
         };
-
-        // Is this an absolute URL?
-        let is_rel_url = !((dest.contains("://") && !dest.contains(":///"))
-            || dest.starts_with("mailto:")
-            || dest.starts_with("tel:"));
 
         // Strip scheme from dest and copy the result in text.
         let short_dest = dest
@@ -353,7 +404,7 @@ impl<'a> Hyperlink for Link<'a> {
             let _ = std::mem::replace(text, Cow::Owned(short_dest));
         }
 
-        if is_rel_url {
+        if link_is_local {
             // Show only the stem as link text.
             // Strip the path.
             let short_text = text
@@ -380,6 +431,38 @@ impl<'a> Hyperlink for Link<'a> {
             if short_text != text.as_ref() {
                 let _ = std::mem::replace(text, Cow::Owned(short_text.to_string()));
             }
+        }
+    }
+
+    //
+    fn get_local_link_path(&self) -> Option<PathBuf> {
+        let dest = match self {
+            Link::Text2Dest(_, dest, _) => dest,
+            Link::Image(_, source) => source,
+            _ => return None,
+        };
+        if self.is_local() {
+            Some(PathBuf::from(dest.as_ref()))
+        } else {
+            None
+        }
+    }
+
+    //
+    fn append_html_ext(&mut self) {
+        if !self.is_local() {
+            return;
+        }
+        let dest = match self {
+            Link::Text2Dest(_, dest, _) => dest,
+            _ => return,
+        };
+        let path = dest.as_ref();
+        if path.has_tpnote_ext() {
+            let mut newpath = path.to_string();
+            newpath.push_str(HTML_EXT);
+
+            let _ = std::mem::replace(dest, Cow::Owned(newpath));
         }
     }
 
@@ -697,6 +780,70 @@ mod tests {
     }
 
     #[test]
+    fn test_is_local() {
+        let input = Link::Text2Dest(
+            Cow::from("xyz"),
+            Cow::from("/path/My doc.md"),
+            Cow::from("xyz"),
+        );
+        assert!(input.is_local());
+
+        //
+        let input = Link::Text2Dest(
+            Cow::from("xyz"),
+            Cow::from("tpnote:path/My doc.md"),
+            Cow::from("xyz"),
+        );
+        assert!(input.is_local());
+
+        //
+        let input = Link::Text2Dest(
+            Cow::from("xyz"),
+            Cow::from("tpnote:/path/My doc.md"),
+            Cow::from("xyz"),
+        );
+        assert!(input.is_local());
+
+        //
+        let input = Link::Text2Dest(
+            Cow::from("xyz"),
+            Cow::from("https://getreu.net"),
+            Cow::from("xyz"),
+        );
+        assert!(!input.is_local());
+    }
+
+    #[test]
+    fn strip_scheme() {
+        let mut input = Link::Text2Dest(
+            Cow::from("xyz"),
+            Cow::from("https://getreu.net"),
+            Cow::from("xyz"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("xyz"),
+            Cow::from("https://getreu.net"),
+            Cow::from("xyz"),
+        );
+        input.strip_scheme();
+        assert_eq!(input, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("xyz"),
+            Cow::from("tpnote:/dir/My doc.md"),
+            Cow::from("xyz"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("xyz"),
+            Cow::from("/dir/My doc.md"),
+            Cow::from("xyz"),
+        );
+        input.strip_scheme();
+        assert_eq!(input, expected);
+    }
+
+    #[test]
     fn test_is_autolink() {
         let input = Link::Image(Cow::from("abc"), Cow::from("abc"));
         assert!(input.is_autolink());
@@ -969,6 +1116,39 @@ mod tests {
         );
         let expected = Link::Text2Dest(Cow::from("3.0"), Cow::from("/dir/3.0"), Cow::from("title"));
         input.rewrite_autolink();
+        let output = input;
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn text_get_local_link_path() {
+        //
+        let input = Link::Text2Dest(Cow::from("xyz"), Cow::from("/dir/3.0"), Cow::from("title"));
+        assert_eq!(input.get_local_link_path(), Some(PathBuf::from("/dir/3.0")));
+
+        //
+        let input = Link::Text2Dest(
+            Cow::from("xyz"),
+            Cow::from("http://getreu.net"),
+            Cow::from("title"),
+        );
+        assert_eq!(input.get_local_link_path(), None);
+    }
+
+    #[test]
+    fn test_append_html_ext() {
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("abc"),
+            Cow::from("/dir/3.0-My note.md"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("abc"),
+            Cow::from("/dir/3.0-My note.md.html"),
+            Cow::from("title"),
+        );
+        input.append_html_ext();
         let output = input;
         assert_eq!(output, expected);
     }
