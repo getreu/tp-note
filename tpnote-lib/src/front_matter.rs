@@ -134,7 +134,7 @@ impl FrontMatter {
                                 value.to_string()
                             };
 
-                            if !file_ext.is_empty() && !(&*file_ext).is_tpnote_ext() {
+                            if !file_ext.is_empty() && !(*file_ext).is_tpnote_ext() {
                                 return Err(NoteError::FrontMatterFieldIsNotTpnoteExtension {
                                     extension: file_ext,
                                     extensions: {
