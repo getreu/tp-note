@@ -86,7 +86,7 @@ parking_lot.workspace = true
 percent-encoding = "2.3.0"
 # sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
 sanitize-filename-reader-friendly.workspace = true
-semver = "1.0.19"
+semver = "1.0.20"
 serde.workspace = true
 serde_yaml.workspace = true
 structopt = "0.3.26"
@@ -96,7 +96,7 @@ tera.workspace = true
 toml.workspace = true
 tpnote-lib = { path = "../tpnote-lib", default-features = false }
 #tpnote-lib = { version = "0.27.0", default-features = false}
-webbrowser = { version = "0.8.11", optional = true }
+webbrowser = { version = "0.8.12", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 win32job = "1.0.2"
