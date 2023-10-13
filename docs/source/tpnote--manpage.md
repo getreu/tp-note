@@ -765,7 +765,7 @@ allows you to fine-tune how local links are written out. Valid values are:
 In order to achieve this, the user must respect the following convention
 concerning absolute paths in local links in Tp-Note documents: When a document
 contains a  local link with an absolute path, the base of this path  is
-considered to be the the directory where the marker file '`.tpnoteroot`' resides
+considered to be the directory where the marker file '`.tpnoteroot`' resides
 (or '`/`' in non exists). The option '`--export-link- rewriting`' decides how
 local links in the Tp-Note  document are converted when the HTML is generated.
 If its value is '`short`', then local links with relative paths are converted to
@@ -801,10 +801,17 @@ _destination_ of local links '`[text](destination)`'.
 Concerning the link's _text_ property of local links, the situation is simpler
 as the _text_ property never changes. However, there is one exception: when the
 text property contains an autolink starting with '`tpnote:`' or '`http:`'
-only the file stem is displayed. For example, the autolink: 
-'`<tpnote:dir/my file.md>.`' is transformed into 
-'`[my file](<tpnote:dir/my file.md>)`' during the HTML rendition process. This 
-explains why it appears as '`my file`' in the browser.
+only the file stem is displayed. For example, the Markdown autolink: 
+'`<tpnote:dir/123-My File.md>.`' is transformed into 
+'`[My File](<tpnote:dir/123-My File.md>)`' during the HTML rendition process.
+This explains why it appears as '`My File`' in the browser.
+
+As mentioned above, the shortest way to refer to other Tp-Note documents, is 
+indicating their sort-tag only. For example, the above links can be shortened to
+'`<tpnote:dir/123>.`' and '`[my file](<tpnote:dir/123>)`'. If the other document
+is located in the same directory, the links are even shorter:
+'`<tpnote:123>.`' and '`[my file](<tpnote:123>)`'.
+
 
 
 
