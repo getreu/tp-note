@@ -1,5 +1,5 @@
 //! Helper functions dealing with HTML conversion.
-use crate::filename::{Extension, NotePathStr};
+use crate::filename::{NotePath, NotePathStr};
 use crate::{config::LocalLinkKind, error::NoteError};
 use html_escape;
 use parking_lot::RwLock;
@@ -338,32 +338,21 @@ impl<'a> Hyperlink for Link<'a> {
         Self::strip_scheme_fn(text);
 
         if link_is_local {
-            // Show only the stem as link text.
-            // Strip the path.
-            let short_text = text
-                .as_ref()
-                .rsplit_once(['/', '\\'])
-                .map(|(_path, stem)| stem)
-                .unwrap_or(text.as_ref());
-
-            // Strip extension...
-            // The input `short_text` can be a full filename (starting with a
-            // sort-tag, ending with an extension) or only a sort-tag.
-            // In the latter case we do not strip anything.
-            let sort_tag1 = short_text.split_sort_tag().0;
-            let (sort_tag_stem, ext) = short_text.rsplit_once('.').unwrap_or((short_text, ""));
-            let sort_tag2 = sort_tag_stem.split_sort_tag().0;
-            // ... but only if the sort tag would not change and the extension
-            // is a Tp-Note file.
-            let short_text = if sort_tag1 == sort_tag2 && ext.is_tpnote_ext() {
-                sort_tag_stem
+            let short_text = Path::new(text.as_ref());
+            let short_text = if short_text.has_wellformed_filename() && short_text.has_tpnote_ext()
+            {
+                // Show only the stem (without sort-tag) as link text.
+                short_text.disassemble().2
             } else {
+                // Strip the path and show the complete filename.
                 short_text
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_str()
+                    .unwrap_or_default()
             };
             // Store the result.
-            if short_text != text.as_ref() {
-                let _ = std::mem::replace(text, Cow::Owned(short_text.to_string()));
-            }
+            let _ = std::mem::replace(text, Cow::Owned(short_text.to_string()));
         }
     }
 
@@ -981,7 +970,7 @@ mod tests {
         input.rewrite_autolink();
         let outpath = input.get_local_link_path().unwrap();
         let output = input.to_html();
-        let expected = "<a href=\"/path/dir/3.0-my note.md\">3.0-my note</a>";
+        let expected = "<a href=\"/path/dir/3.0-my note.md\">my note</a>";
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/path/dir/3.0-my note.md"));
 
@@ -1027,7 +1016,7 @@ mod tests {
             Cow::from("title"),
         );
         let expected = Link::Text2Dest(
-            Cow::from("3.0-My note"),
+            Cow::from("My note"),
             Cow::from("/dir/3.0-My note.md"),
             Cow::from("title"),
         );
