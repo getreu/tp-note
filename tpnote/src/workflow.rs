@@ -54,15 +54,17 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
         }
         Err(e) => {
             if (matches!(e, NoteError::InvalidFrontMatterYaml { .. })
-                || matches!(e, NoteError::FrontMatterMissing { .. })
+                || matches!(e, NoteError::FrontMatterFieldHasNotOnlySortTagChars { .. })
                 || matches!(e, NoteError::FrontMatterFieldIsCompound { .. })
-                || matches!(e, NoteError::FrontMatterFieldMissing { .. })
                 || matches!(e, NoteError::FrontMatterFieldIsEmptyString { .. })
-                || matches!(e, NoteError::FrontMatterFieldIsNotString { .. })
-                || matches!(e, NoteError::FrontMatterFieldIsNotNumber { .. })
                 || matches!(e, NoteError::FrontMatterFieldIsNotBool { .. }))
-                && !ARGS.batch
-                && ARGS.export.is_none()
+                || matches!(e, NoteError::FrontMatterFieldIsNotNumber { .. })
+                || matches!(e, NoteError::FrontMatterFieldIsNotString { .. })
+                || matches!(e, NoteError::FrontMatterFieldIsNotTpnoteExtension { .. })
+                || matches!(e, NoteError::FrontMatterFieldMissing { .. })
+                || matches!(e, NoteError::FrontMatterMissing { .. })
+                    && !ARGS.batch
+                    && ARGS.export.is_none()
             {
                 // Continue the workflow.
 
