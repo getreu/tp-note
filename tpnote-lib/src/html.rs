@@ -165,7 +165,7 @@ trait Hyperlink {
     /// Otherwise, no action.
     /// This method accesses the filesystem. Therefore `root_path`
     /// is needed.
-    fn expand_shorthand_link(&mut self, root_path: &Path);
+    fn expand_shorthand_link(&mut self, root_path: &Path) -> Result<(), NoteError>;
 
     /// Extracts some substring in `dest`  (`Link::Text2Dest`) or
     /// `source` (`Link::Image`), copies it and overwrites `text`
@@ -333,10 +333,10 @@ impl<'a> Hyperlink for Link<'a> {
     }
 
     //
-    fn expand_shorthand_link(&mut self, root_path: &Path) {
+    fn expand_shorthand_link(&mut self, root_path: &Path) -> Result<(), NoteError> {
         let shorthand_link = match self {
             Link::Text2Dest(_, dest, _title) => dest,
-            _ => return,
+            _ => return Ok(()),
         };
 
         let shorthand_path = Path::new(shorthand_link.as_ref());
@@ -398,8 +398,13 @@ impl<'a> Hyperlink for Link<'a> {
 
                 // Store result.
                 let _ = std::mem::replace(shorthand_link, Cow::Owned(lang_link));
+            } else {
+                return Err(NoteError::CanNotExpandShorthandLink {
+                    path: abspath.to_string_lossy().into_owned(),
+                });
             }
         }
+        Ok(())
     }
 
     //
@@ -567,18 +572,19 @@ pub fn rewrite_links(
         };
 
         // Rewrite the local link.
-        match link.rebase_local_link(root_path, docdir, rewrite_rel_paths, rewrite_abs_paths) {
+        match link
+            .rebase_local_link(root_path, docdir, rewrite_rel_paths, rewrite_abs_paths)
+            .and_then(|_| link.expand_shorthand_link(root_path))
+        {
             Ok(()) => {}
-
             Err(e) => {
                 let e = e.to_string();
                 let e = html_escape::encode_text(&e);
-                html_out.push_str(e.as_ref());
+                html_out.push_str(&format!("<i>{}</i>", e));
                 continue;
             }
         };
 
-        link.expand_shorthand_link(root_path);
         if link_is_autolink {
             link.rewrite_autolink();
         };
@@ -1223,8 +1229,8 @@ mod tests {
             jkl<a href=\"/abs/note path/down/my note 1.md\">my note 1</a>\
             mno<a href=\"/abs/note path/dir/my note.md\">my note</a>\
             pqr<a href=\"/dir/my note.md\">my note</a>\
-            stu&lt;INVALID: /../dir/underflow/my note.md&gt;\
-            vwx&lt;INVALID: ../../../not allowed dir/my note.md&gt;"
+            stu<i>&lt;INVALID: /../dir/underflow/my note.md&gt;</i>\
+            vwx<i>&lt;INVALID: ../../../not allowed dir/my note.md&gt;</i>"
             .to_string();
 
         let root_path = Path::new("/my/");

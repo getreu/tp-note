@@ -342,6 +342,10 @@ pub enum NoteError {
     #[error("<INVALID: {path}>")]
     InvalidLocalPath { path: String },
 
+    /// Remedy: make sure, that a file starting with `path` exists.
+    #[error("<NONE FOUND: {path}...>")]
+    CanNotExpandShorthandLink { path: String },
+
     #[error(transparent)]
     Utf8Conversion {
         #[from]
