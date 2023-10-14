@@ -137,32 +137,125 @@ pub enum LibCfgError {
 #[derive(Debug, Error)]
 /// Error type returned form methods in or related to the `note` module.
 pub enum NoteError {
-    /// Remedy: check the file permission of the note file.
-    #[error("Can not read file:\n\t {path:?}\n{source}")]
-    Read { path: PathBuf, source: io::Error },
+    /// Remedy: make sure, that a file starting with `path` exists.
+    #[error("<NONE FOUND: {path}...>")]
+    CanNotExpandShorthandLink { path: String },
 
     /// Remedy: report this error. It should not happen.
     #[error("Can not prepend header. File has one already: \n{existing_header}")]
     CannotPrependHeader { existing_header: String },
 
-    /// Remedy: check the syntax of the Tera template in the configuration file.
+    #[error(transparent)]
+    File(#[from] FileError),
+
+    /// Remedy: remove invalid characters.
     #[error(
-        "Tera template error in configuration file\n\
-        variable \"{template_str}\":\n {source_str}"
+        "The `sort_tag` header variable contains invalid\n\
+         character(s):\n\n\
+         \t---\n\
+         \tsort_tag: {sort_tag}\n\
+         \t---\n\n\
+         Only the characters: \"{sort_tag_chars}\"\n\
+         are allowed here."
     )]
-    TeraTemplate {
-        source_str: String,
-        template_str: String,
+    FrontMatterFieldHasNotOnlySortTagChars {
+        sort_tag: String,
+        sort_tag_chars: String,
     },
 
-    /// Remedy: restart with `--debug trace`.
+    /// Remedy: index the compound type?
     #[error(
-        "Tera error:\n\
-         {source}"
+        "The type of the front matter field `{field_name}:`\n\
+         must not be a compound type. Use a simple type, \n\
+         i.e. `String`, `Number` or `Bool` instead. Example:\n\
+         \n\
+         \t~~~~~~~~~~~~~~\n\
+         \t---\n\
+         \t{field_name}: My simple type\n\
+         \t---\n\
+         \tsome text\n\
+         \t~~~~~~~~~~~~~~"
     )]
-    Tera {
-        #[from]
-        source: tera::Error,
+    FrontMatterFieldIsCompound { field_name: String },
+
+    /// Remedy: try to enclose with quotes.
+    #[error(
+        "The (sub)type of the front matter field `{field_name}:`\n\
+         must be a non empty `String`. Example:\n\
+         \n\
+         \t~~~~~~~~~~~~~~\n\
+         \t---\n\
+         \t{field_name}: My string\n\
+         \t---\n\
+         \tsome text\n\
+         \t~~~~~~~~~~~~~~"
+    )]
+    FrontMatterFieldIsEmptyString { field_name: String },
+
+    /// Remedy: try to remove possible quotes.
+    #[error(
+        "The (sub)type of the front matter field `{field_name}:`\n\
+         must be `Bool`. Example:\n\
+         \n\
+         \t~~~~~~~~~~~~~~\n\
+         \t---\n\
+         \t{field_name}: false\n\
+         \t---\n\
+         \tsome text\n\
+         \t~~~~~~~~~~~~~~\n\
+         \n\
+         Hint: try to remove possible quotes."
+    )]
+    FrontMatterFieldIsNotBool { field_name: String },
+
+    /// Remedy: try to remove possible quotes.
+    #[error(
+        "The (sub)type of the front matter field `{field_name}:`\n\
+         must be `Number`. Example:\n\
+         \n\
+         \t~~~~~~~~~~~~~~\n\
+         \t---\n\
+         \t{field_name}: 142\n\
+         \t---\n\
+         \tsome text\n\
+         \t~~~~~~~~~~~~~~\n\
+         \n\
+         Hint: try to remove possible quotes."
+    )]
+    FrontMatterFieldIsNotNumber { field_name: String },
+
+    /// Remedy: try to enclose with quotes.
+    #[error(
+        "The (sub)type of the front matter field `{field_name}:`\n\
+         must be `String`. Example:\n\
+         \n\
+         \t~~~~~~~~~~~~~~\n\
+         \t---\n\
+         \t{field_name}: My string\n\
+         \t---\n\
+         \tsome text\n\
+         \t~~~~~~~~~~~~~~\n\
+         \n\
+         Hint: try to enclose with quotes."
+    )]
+    FrontMatterFieldIsNotString { field_name: String },
+
+    /// Remedy: correct the front matter variable `file_ext`.
+    #[error(
+        "The file extension:\n\
+        \t---\n\
+        \tfile_ext: {extension}\n\
+        \t---\n\
+        is not registered as Tp-Note file in\n\
+        your configuration file:\n\
+        \t{extensions}\n\
+        \n\
+        Choose one of the listed above or add more extensions to the\n\
+        `filename.extensions` variable in your configuration file."
+    )]
+    FrontMatterFieldIsNotTpnoteExtension {
+        extension: String,
+        extensions: String,
     },
 
     /// Remedy: add the missing field in the note's front matter.
@@ -182,82 +275,21 @@ pub enum NoteError {
     )]
     FrontMatterFieldMissing { field_name: String },
 
-    /// Remedy: try to enclose with quotes.
+    /// Remedy: check front matter delimiters `----`.
     #[error(
-        "The (sub)type of the front matter field `{field_name}:`\n\
-         must be `String`. Example:\n\
-         \n\
+        "The document (or template) has no front matter\n\
+         section. Is one `---` missing?\n\n\
          \t~~~~~~~~~~~~~~\n\
          \t---\n\
-         \t{field_name}: My string\n\
+         \t{compulsory_field}: My note\n\
          \t---\n\
          \tsome text\n\
          \t~~~~~~~~~~~~~~\n\
          \n\
-         Hint: try to enclose with quotes."
+         Please correct the front matter if this is\n\
+         supposed to be a Tp-Note file. Ignore otherwise."
     )]
-    FrontMatterFieldIsNotString { field_name: String },
-
-    /// Remedy: try to enclose with quotes.
-    #[error(
-        "The (sub)type of the front matter field `{field_name}:`\n\
-         must be a non empty `String`. Example:\n\
-         \n\
-         \t~~~~~~~~~~~~~~\n\
-         \t---\n\
-         \t{field_name}: My string\n\
-         \t---\n\
-         \tsome text\n\
-         \t~~~~~~~~~~~~~~"
-    )]
-    FrontMatterFieldIsEmptyString { field_name: String },
-
-    /// Remedy: try to remove possible quotes.
-    #[error(
-        "The (sub)type of the front matter field `{field_name}:`\n\
-         must be `Number`. Example:\n\
-         \n\
-         \t~~~~~~~~~~~~~~\n\
-         \t---\n\
-         \t{field_name}: 142\n\
-         \t---\n\
-         \tsome text\n\
-         \t~~~~~~~~~~~~~~\n\
-         \n\
-         Hint: try to remove possible quotes."
-    )]
-    FrontMatterFieldIsNotNumber { field_name: String },
-
-    /// Remedy: try to remove possible quotes.
-    #[error(
-        "The (sub)type of the front matter field `{field_name}:`\n\
-         must be `Bool`. Example:\n\
-         \n\
-         \t~~~~~~~~~~~~~~\n\
-         \t---\n\
-         \t{field_name}: false\n\
-         \t---\n\
-         \tsome text\n\
-         \t~~~~~~~~~~~~~~\n\
-         \n\
-         Hint: try to remove possible quotes."
-    )]
-    FrontMatterFieldIsNotBool { field_name: String },
-
-    /// Remedy: index the compound type?
-    #[error(
-        "The type of the front matter field `{field_name}:`\n\
-         must not be a compound type. Use a simple type, \n\
-         i.e. `String`, `Number` or `Bool` instead. Example:\n\
-         \n\
-         \t~~~~~~~~~~~~~~\n\
-         \t---\n\
-         \t{field_name}: My simple type\n\
-         \t---\n\
-         \tsome text\n\
-         \t~~~~~~~~~~~~~~"
-    )]
-    FrontMatterFieldIsCompound { field_name: String },
+    FrontMatterMissing { compulsory_field: String },
 
     /// Remedy: check YAML syntax in the note's front matter.
     #[error(
@@ -283,82 +315,50 @@ pub enum NoteError {
         source_str: String,
     },
 
-    /// Remedy: check front matter delimiters `----`.
-    #[error(
-        "The document (or template) has no front matter\n\
-         section. Is one `---` missing?\n\n\
-         \t~~~~~~~~~~~~~~\n\
-         \t---\n\
-         \t{compulsory_field}: My note\n\
-         \t---\n\
-         \tsome text\n\
-         \t~~~~~~~~~~~~~~\n\
-         \n\
-         Please correct the front matter if this is\n\
-         supposed to be a Tp-Note file. Ignore otherwise."
-    )]
-    FrontMatterMissing { compulsory_field: String },
-
-    /// Remedy: remove invalid characters.
-    #[error(
-        "The `sort_tag` header variable contains invalid\n\
-         character(s):\n\n\
-         \t---\n\
-         \tsort_tag: {sort_tag}\n\
-         \t---\n\n\
-         Only the characters: \"{sort_tag_chars}\"\n\
-         are allowed here."
-    )]
-    FrontMatterFieldHasNotOnlySortTagChars {
-        sort_tag: String,
-        sort_tag_chars: String,
-    },
-
-    /// Remedy: correct the front matter variable `file_ext`.
-    #[error(
-        "The file extension:\n\
-        \t---\n\
-        \tfile_ext: {extension}\n\
-        \t---\n\
-        is not registered as Tp-Note file in\n\
-        your configuration file:\n\
-        \t{extensions}\n\
-        \n\
-        Choose one of the listed above or add more extensions to the\n\
-        `filename.extensions` variable in your configuration file."
-    )]
-    FrontMatterFieldIsNotTpnoteExtension {
-        extension: String,
-        extensions: String,
-    },
-
-    /// Remedy: check reStructuredText syntax.
-    #[error("Can not parse reStructuredText input:\n{msg}")]
-    #[cfg(feature = "renderer")]
-    RstParse { msg: String },
-
     /// Remedy: correct link path.
     #[error("<INVALID: {path}>")]
     InvalidLocalPath { path: String },
-
-    /// Remedy: make sure, that a file starting with `path` exists.
-    #[error("<NONE FOUND: {path}...>")]
-    CanNotExpandShorthandLink { path: String },
-
-    #[error(transparent)]
-    Utf8Conversion {
-        #[from]
-        source: core::str::Utf8Error,
-    },
-
-    #[error(transparent)]
-    File(#[from] FileError),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
 
     #[error(transparent)]
     ParseLanguageCode(#[from] LibCfgError),
+
+    /// Remedy: check the file permission of the note file.
+    #[error("Can not read file:\n\t {path:?}\n{source}")]
+    Read { path: PathBuf, source: io::Error },
+
+    /// Remedy: check reStructuredText syntax.
+    #[error("Can not parse reStructuredText input:\n{msg}")]
+    #[cfg(feature = "renderer")]
+    RstParse { msg: String },
+
+    /// Remedy: restart with `--debug trace`.
+    #[error(
+        "Tera error:\n\
+         {source}"
+    )]
+    Tera {
+        #[from]
+        source: tera::Error,
+    },
+
+    /// Remedy: check the syntax of the Tera template in the configuration file.
+    #[error(
+        "Tera template error in configuration file\n\
+        variable \"{template_str}\":\n {source_str}"
+    )]
+    TeraTemplate {
+        source_str: String,
+        template_str: String,
+    },
+
+    #[error(transparent)]
+    Utf8Conversion {
+        #[from]
+        source: core::str::Utf8Error,
+    },
 }
 
 /// Macro to construct a `NoteError::TeraTemplate from a `Tera::Error` .
