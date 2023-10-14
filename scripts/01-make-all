@@ -4,7 +4,6 @@ set -x
 ./10-clear-targets
 ./11-test
 ./12-make-targets
-./14-make-rustdoc
 ./15-make-docs
 ./16-prepare-build-dir
 # The next is using Docker:
