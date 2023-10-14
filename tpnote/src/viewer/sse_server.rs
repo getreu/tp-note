@@ -78,18 +78,23 @@ pub fn manage_connections(
         The following file extensions are served:\n\
         {}",
         {
-            let mut list = CFG
-                .filename
-                .extensions
-                .iter()
-                .map(|(k, _v)| format!("{}, ", k))
-                .collect::<String>();
+            use std::fmt::Write;
+            let mut list =
+                CFG.filename
+                    .extensions
+                    .iter()
+                    .fold(String::new(), |mut output, (k, _v)| {
+                        let _ = write!(output, "{k}, ");
+                        output
+                    });
             list.push_str(
                 CFG.viewer
                     .served_mime_types
                     .iter()
-                    .map(|(k, _v)| format!("{}, ", k))
-                    .collect::<String>()
+                    .fold(String::new(), |mut output, (k, _v)| {
+                        let _ = write!(output, "{k}, ");
+                        output
+                    })
                     .as_str(),
             );
             list.truncate(list.len().saturating_sub(2));

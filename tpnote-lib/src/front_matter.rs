@@ -138,12 +138,14 @@ impl FrontMatter {
                                 return Err(NoteError::FrontMatterFieldIsNotTpnoteExtension {
                                     extension: file_ext,
                                     extensions: {
-                                        let mut errstr = lib_cfg
-                                            .filename
-                                            .extensions
-                                            .iter()
-                                            .map(|s| format!("{}, ", s.0))
-                                            .collect::<String>();
+                                        use std::fmt::Write;
+                                        let mut errstr = lib_cfg.filename.extensions.iter().fold(
+                                            String::new(),
+                                            |mut output, (k, _v)| {
+                                                let _ = write!(output, "{k}, ");
+                                                output
+                                            },
+                                        );
                                         errstr.truncate(errstr.len().saturating_sub(2));
                                         errstr
                                     },

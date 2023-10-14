@@ -20,6 +20,7 @@ use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::{Deserialize, Serialize};
+use std::fmt::Write;
 use std::str::FromStr;
 #[cfg(feature = "renderer")]
 use syntect::highlighting::ThemeSet;
@@ -352,12 +353,13 @@ impl LibCfg {
             return Err(LibCfgError::ExtensionDefault {
                 extension_default: self.filename.extension_default.to_owned(),
                 extensions: {
-                    let mut list = self
-                        .filename
-                        .extensions
-                        .iter()
-                        .map(|(k, _v)| format!("{}, ", k))
-                        .collect::<String>();
+                    let mut list = self.filename.extensions.iter().fold(
+                        String::new(),
+                        |mut output, (k, _v)| {
+                            let _ = write!(output, "{k}, ");
+                            output
+                        },
+                    );
                     list.truncate(list.len().saturating_sub(2));
                     list
                 },
@@ -375,11 +377,10 @@ impl LibCfg {
                 return Err(LibCfgError::ThemeName {
                     var: "viewer_highlighting_theme".to_string(),
                     value: theme_name.to_owned(),
-                    available: ts
-                        .themes
-                        .into_keys()
-                        .map(|k| format!("`{k}`, "))
-                        .collect::<String>(),
+                    available: ts.themes.into_keys().fold(String::new(), |mut output, k| {
+                        let _ = write!(output, "{k}, ");
+                        output
+                    }),
                 });
             };
             let theme_name = &self.tmpl_html.exporter_highlighting_theme;
@@ -387,11 +388,10 @@ impl LibCfg {
                 return Err(LibCfgError::ThemeName {
                     var: "exporter_highlighting_theme".to_string(),
                     value: theme_name.to_owned(),
-                    available: ts
-                        .themes
-                        .into_keys()
-                        .map(|k| format!("`{k}`, "))
-                        .collect::<String>(),
+                    available: ts.themes.into_keys().fold(String::new(), |mut output, k| {
+                        let _ = write!(output, "{k}, ");
+                        output
+                    }),
                 });
             };
         }

@@ -125,7 +125,7 @@ impl Context {
                     None
                 }
             })
-            .unwrap_or(tera::Map::new());
+            .unwrap_or_default();
 
         for (name, value) in fm.iter() {
             // First we register a copy with the original variable name.

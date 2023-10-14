@@ -324,9 +324,8 @@ pub enum NoteError {
         your configuration file:\n\
         \t{extensions}\n\
         \n\
-        Choose one of the listed above or add more\n\
-        extensions to `filename.extensions`\n\
-        variable in your configuration file."
+        Choose one of the listed above or add more extensions to the\n\
+        `filename.extensions` variable in your configuration file."
     )]
     FrontMatterFieldIsNotTpnoteExtension {
         extension: String,

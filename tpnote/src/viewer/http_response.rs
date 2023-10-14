@@ -166,9 +166,6 @@ impl HttpResponse for ServerThread {
                 #[allow(dropping_references)]
                 drop(relpath);
 
-                // From here on `abspath is immutable.`
-                let abspath = abspath;
-
                 //
                 // Condition 2: Check if we serve this kind of extension
                 let extension = &*abspath
@@ -185,8 +182,7 @@ impl HttpResponse for ServerThread {
                     CFG.viewer
                         .served_mime_types
                         .iter()
-                        .filter_map(|(ext, mime)| (extension == ext).then_some(mime.as_str()))
-                        .next()
+                        .find_map(|(ext, mime)| (extension == ext).then_some(mime.as_str()))
                 });
 
                 if mime_type.is_none() {
