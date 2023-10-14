@@ -9,7 +9,6 @@ use std::borrow::Cow;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::Path;
-use std::path::PathBuf;
 use std::str;
 use std::time::SystemTime;
 use tpnote_lib::config::LocalLinkKind;
@@ -21,7 +20,6 @@ use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
-use tpnote_lib::filename::NotePath;
 use tpnote_lib::html::rewrite_links;
 use tpnote_lib::markup_language::MarkupLanguage;
 use tpnote_lib::workflow::render_erroneous_content_html;
@@ -163,52 +161,16 @@ impl HttpResponse for ServerThread {
                     .context
                     .root_path
                     .join(relpath.strip_prefix("/").unwrap_or(relpath));
-                let mut abspath = Cow::Borrowed(abspath.as_path());
+                let abspath = Cow::Borrowed(abspath.as_path());
                 // From here on, we only work with `abspath`.
                 #[allow(dropping_references)]
                 drop(relpath);
 
-                //
-                // Condition 2: Does this link only contain a sort-tag?
-                if let Some(sort_tag) = abspath.filename_contains_only_sort_tag_chars() {
-                    if let Some(dir) = abspath.parent() {
-                        if let Ok(files) = dir.read_dir() {
-                            // If more than one file starts with `sort_tag`, retain the
-                            // alphabetic first.
-                            let mut minimum = PathBuf::new();
-                            'file_loop: for file in files.flatten() {
-                                let file = file.path();
-                                if !(*file).has_tpnote_ext() {
-                                    continue 'file_loop;
-                                }
-                                // Does this sort-tag short link correspond to
-                                // any sort-tag of a file in the same directory?
-                                if file.parent() == abspath.parent()
-                                    && file.disassemble().0.starts_with(sort_tag)
-                                {
-                                    // Before the first assignment `minimum` is empty.
-                                    // Finds the minimum.
-                                    if minimum == Path::new("") || minimum > file {
-                                        minimum = file;
-                                    }
-                                }
-                            } // End of loop.
-                            if minimum != Path::new("") {
-                                log::info!(
-                                    "File `{}` referenced by sort-tag match `{}`.",
-                                    minimum.to_str().unwrap_or_default(),
-                                    sort_tag,
-                                );
-                                abspath = Cow::Owned(minimum);
-                            }
-                        };
-                    }
-                };
                 // From here on `abspath is immutable.`
                 let abspath = abspath;
 
                 //
-                // Condition 3: Check if we serve this kind of extension
+                // Condition 2: Check if we serve this kind of extension
                 let extension = &*abspath
                     .extension()
                     .unwrap_or_default()
@@ -246,7 +208,7 @@ impl HttpResponse for ServerThread {
                 };
 
                 //
-                // Condition 4: If this is a Tp-Note file, check the maximum
+                // Condition 3: If this is a Tp-Note file, check the maximum
                 // of delivered documents, then deliver.
                 if MarkupLanguage::from(extension).is_some() {
                     if abspath.is_file() {
@@ -267,7 +229,7 @@ impl HttpResponse for ServerThread {
                 }
 
                 //
-                // Condition 5: Is the file readable? We know:
+                // Condition 4: Is the file readable? We know:
                 // `mime_type.is_some()` at this point.
                 if abspath.is_file() {
                     self.respond_file_ok(&abspath, 0, mime_type.unwrap())?;
