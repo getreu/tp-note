@@ -312,7 +312,7 @@ impl<'a> Hyperlink for Link<'a> {
         let dest = match self {
             Link::Text2Dest(_, dest, _) => dest,
             Link::Image(_, source) => source,
-            _ => return Err(NoteError::InvalidLocalLink),
+            _ => return Ok(()),
         };
 
         let dest_out = assemble_link(
@@ -322,7 +322,9 @@ impl<'a> Hyperlink for Link<'a> {
             rewrite_rel_paths,
             rewrite_abs_paths,
         )
-        .ok_or(NoteError::InvalidLocalLink)?;
+        .ok_or(NoteError::InvalidLocalPath {
+            path: dest.as_ref().to_string(),
+        })?;
 
         // Store result.
         let new_dest = Cow::Owned(dest_out.to_str().unwrap_or_default().to_string());
@@ -566,22 +568,29 @@ pub fn rewrite_links(
 
         // Rewrite the local link.
         match link.rebase_local_link(root_path, docdir, rewrite_rel_paths, rewrite_abs_paths) {
-            Ok(()) => {
-                link.expand_shorthand_link(root_path);
-                if link_is_autolink {
-                    link.rewrite_autolink();
-                };
-                if let Some(dest_path) = link.get_local_link_path() {
-                    allowed_urls.insert(dest_path);
-                };
-                if rewrite_ext {
-                    link.append_html_ext();
-                }
-                html_out.push_str(&link.to_html());
-            }
+            Ok(()) => {}
 
-            Err(e) => html_out.push_str(&e.to_string()),
+            Err(e) => {
+                let e = e.to_string();
+                let e = html_escape::encode_text(&e);
+                html_out.push_str(e.as_ref());
+                continue;
+            }
         };
+
+        link.expand_shorthand_link(root_path);
+        if link_is_autolink {
+            link.rewrite_autolink();
+        };
+
+        if let Some(dest_path) = link.get_local_link_path() {
+            allowed_urls.insert(dest_path);
+        };
+
+        if rewrite_ext {
+            link.append_html_ext();
+        }
+        html_out.push_str(&link.to_html());
     }
     // Add the last `remaining`.
     html_out.push_str(rest);
@@ -997,7 +1006,7 @@ mod tests {
         let output = input
             .rebase_local_link(root_path, Path::new("/my/notepath/"), true, false)
             .unwrap_err();
-        assert!(matches!(output, NoteError::InvalidLocalLink));
+        assert!(matches!(output, NoteError::InvalidLocalPath { .. }));
 
         // Check relative link in input, not in `root_path`.
         let mut input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
@@ -1007,7 +1016,7 @@ mod tests {
         let output = input
             .rebase_local_link(root_path, Path::new("/my/notepath/"), true, false)
             .unwrap_err();
-        assert!(matches!(output, NoteError::InvalidLocalLink));
+        assert!(matches!(output, NoteError::InvalidLocalPath { .. }));
 
         // Check relative link in input, with underflow.
         let root_path = Path::new("/");
@@ -1018,7 +1027,7 @@ mod tests {
         let output = input
             .rebase_local_link(root_path, Path::new("/my/"), true, false)
             .unwrap_err();
-        assert!(matches!(output, NoteError::InvalidLocalLink));
+        assert!(matches!(output, NoteError::InvalidLocalPath { .. }));
 
         // Check relative link in input, not in `root_path`.
         let root_path = Path::new("/my");
@@ -1029,7 +1038,7 @@ mod tests {
         let output = input
             .rebase_local_link(root_path, Path::new("/my/notepath"), true, false)
             .unwrap_err();
-        assert!(matches!(output, NoteError::InvalidLocalLink));
+        assert!(matches!(output, NoteError::InvalidLocalPath { .. }));
 
         // Test autolink.
         let root_path = Path::new("/my");
@@ -1214,8 +1223,8 @@ mod tests {
             jkl<a href=\"/abs/note path/down/my note 1.md\">my note 1</a>\
             mno<a href=\"/abs/note path/dir/my note.md\">my note</a>\
             pqr<a href=\"/dir/my note.md\">my note</a>\
-            stu<i>INVALID LOCAL LINK</i>\
-            vwx<i>INVALID LOCAL LINK</i>"
+            stu&lt;INVALID: /../dir/underflow/my note.md&gt;\
+            vwx&lt;INVALID: ../../../not allowed dir/my note.md&gt;"
             .to_string();
 
         let root_path = Path::new("/my/");

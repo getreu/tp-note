@@ -339,8 +339,8 @@ pub enum NoteError {
     RstParse { msg: String },
 
     /// Remedy: correct link path.
-    #[error("<i>INVALID LOCAL LINK</i>")]
-    InvalidLocalLink,
+    #[error("<INVALID: {path}>")]
+    InvalidLocalPath { path: String },
 
     #[error(transparent)]
     Utf8Conversion {
