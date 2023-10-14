@@ -6,6 +6,7 @@ use parking_lot::RwLock;
 use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
 use percent_encoding::percent_decode_str;
+use std::path::MAIN_SEPARATOR_STR;
 use std::{
     borrow::Cow,
     collections::HashSet,
@@ -158,6 +159,13 @@ trait Hyperlink {
         rewrite_rel_paths: bool,
         rewrite_abs_paths: bool,
     ) -> Result<(), NoteError>;
+
+    /// If `dest` in `Link::Text2Dest` contains only a sort
+    /// tag as filename, expand the latter to a full filename.
+    /// Otherwise, no action.
+    /// This method accesses the filesystem. Therefore `root_path`
+    /// is needed.
+    fn expand_shorthand_link(&mut self, root_path: &Path);
 
     /// Extracts some substring in `dest`  (`Link::Text2Dest`) or
     /// `source` (`Link::Image`), copies it and overwrites `text`
@@ -322,6 +330,77 @@ impl<'a> Hyperlink for Link<'a> {
         Ok(())
     }
 
+    //
+    fn expand_shorthand_link(&mut self, root_path: &Path) {
+        let shorthand_link = match self {
+            Link::Text2Dest(_, dest, _title) => dest,
+            _ => return,
+        };
+
+        let shorthand_path = Path::new(shorthand_link.as_ref());
+
+        if let Some(sort_tag) = shorthand_path.filename_contains_only_sort_tag_chars() {
+            // Concatenate `root_path` and `shorthand_path`.
+            let shorthand_path = shorthand_path
+                .strip_prefix(MAIN_SEPARATOR_STR)
+                .unwrap_or(shorthand_path);
+            let mut abspath = root_path.to_path_buf();
+            abspath.push(shorthand_path);
+
+            // Search for the file.
+            let mut found = None;
+            if let Some(dir) = abspath.parent() {
+                if let Ok(files) = dir.read_dir() {
+                    // If more than one file starts with `sort_tag`, retain the
+                    // alphabetic first.
+                    let mut minimum = PathBuf::new();
+                    'file_loop: for file in files.flatten() {
+                        let file = file.path();
+                        if !(*file).has_tpnote_ext() {
+                            continue 'file_loop;
+                        }
+                        // Does this sort-tag short link correspond to
+                        // any sort-tag of a file in the same directory?
+                        if file.parent() == abspath.parent()
+                            && file.disassemble().0.starts_with(sort_tag)
+                        {
+                            // Before the first assignment `minimum` is empty.
+                            // Finds the minimum.
+                            if minimum == Path::new("") || minimum > file {
+                                minimum = file;
+                            }
+                        }
+                    } // End of loop.
+                    if minimum != Path::new("") {
+                        log::info!(
+                            "File `{}` referenced by sort-tag match `{}`.",
+                            minimum.to_str().unwrap_or_default(),
+                            sort_tag,
+                        );
+                        // Found, return result
+                        found = Some(minimum)
+                    }
+                }
+            };
+
+            if let Some(path) = found {
+                // We prepended `root_path` before, we can safely strip it
+                // and unwrap.
+                let lang_link = path.strip_prefix(root_path).unwrap();
+                // Prepend `/`.
+                let lang_link = Path::new(MAIN_SEPARATOR_STR)
+                    .join(lang_link)
+                    .to_str()
+                    .unwrap_or_default()
+                    .to_string();
+
+                // Store result.
+                let _ = std::mem::replace(shorthand_link, Cow::Owned(lang_link));
+            }
+        }
+    }
+
+    //
     fn rewrite_autolink(&mut self) {
         // Is this an absolute URL?
 
@@ -488,21 +567,17 @@ pub fn rewrite_links(
         // Rewrite the local link.
         match link.rebase_local_link(root_path, docdir, rewrite_rel_paths, rewrite_abs_paths) {
             Ok(()) => {
+                link.expand_shorthand_link(root_path);
+                if link_is_autolink {
+                    link.rewrite_autolink();
+                };
                 if let Some(dest_path) = link.get_local_link_path() {
                     allowed_urls.insert(dest_path);
-                    if link_is_autolink {
-                        link.rewrite_autolink()
-                    };
-                    if rewrite_ext {
-                        link.append_html_ext();
-                    }
-                    html_out.push_str(&link.to_html());
-                } else {
-                    if link_is_autolink {
-                        link.rewrite_autolink()
-                    };
-                    html_out.push_str(&link.to_html());
+                };
+                if rewrite_ext {
+                    link.append_html_ext();
                 }
+                html_out.push_str(&link.to_html());
             }
 
             Err(e) => html_out.push_str(&e.to_string()),
