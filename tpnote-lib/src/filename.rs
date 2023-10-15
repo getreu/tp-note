@@ -303,11 +303,18 @@ impl NotePath for Path {
     /// assert_eq!(f.filename_contains_only_sort_tag_chars(), None);
     /// ```
     fn filename_contains_only_sort_tag_chars(&self) -> Option<&str> {
-        let filename = self
-            .file_name()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default();
+        let path = self.to_str().unwrap_or_default();
+        let filename = if let Some((_, filename)) = path.rsplit_once(['\\', '/']) {
+            filename
+        } else {
+            self.file_name()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default()
+        };
+        if path.is_empty() {
+            return None;
+        }
 
         let lib_cfg = LIB_CFG.read_recursive();
 

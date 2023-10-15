@@ -334,6 +334,10 @@ impl<'a> Hyperlink for Link<'a> {
 
     //
     fn expand_shorthand_link(&mut self, root_path: &Path) -> Result<(), NoteError> {
+        if !self.is_local() {
+            return Ok(());
+        }
+
         let shorthand_link = match self {
             Link::Text2Dest(_, dest, _title) => dest,
             _ => return Ok(()),
