@@ -363,9 +363,7 @@ impl<'a> Hyperlink for Link<'a> {
                         }
                         // Does this sort-tag short link correspond to
                         // any sort-tag of a file in the same directory?
-                        if file.parent() == abspath.parent()
-                            && file.disassemble().0.starts_with(sort_tag)
-                        {
+                        if file.parent() == abspath.parent() && file.disassemble().0 == sort_tag {
                             // Before the first assignment `minimum` is empty.
                             // Finds the minimum.
                             if minimum == Path::new("") || minimum > file {
