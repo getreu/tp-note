@@ -372,7 +372,7 @@ impl<'a> Hyperlink for Link<'a> {
                         }
                     } // End of loop.
                     if minimum != Path::new("") {
-                        log::info!(
+                        log::debug!(
                             "File `{}` referenced by sort-tag match `{}`.",
                             minimum.to_str().unwrap_or_default(),
                             sort_tag,
