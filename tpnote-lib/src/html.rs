@@ -474,35 +474,39 @@ impl<'a> Hyperlink for Link<'a> {
 
     //
     fn to_html(&self) -> String {
-        let empty_title = &Cow::from("");
-        let (text, dest, title) = match self {
-            Link::Text2Dest(text, dest, title) => (text, dest, title),
-            Link::Image(alt, source) => (alt, source, empty_title),
-            _ => unimplemented!(),
-        };
-        // Replace Windows backslash
-        let dest = if (*dest).contains('\\') {
-            Cow::Owned(dest.to_string().replace('\\', "/"))
-        } else {
-            Cow::Borrowed(&**dest)
-        };
-
-        // Encode HTML escape.
-        let text = html_escape::encode_text(&text);
-        let dest = html_escape::encode_double_quoted_attribute(&dest);
-        let title = html_escape::encode_double_quoted_attribute(&title);
-
-        // Format title.
-        let title = if !title.is_empty() {
-            format!(" title=\"{}\"", title)
-        } else {
-            title.to_string()
-        };
-        // Save results.
-
         match self {
-            Link::Text2Dest(_, _, _) => format!("<a href=\"{}\"{}>{}</a>", dest, title, text),
-            Link::Image(_, _) => format!("<img src=\"{}\" alt=\"{}\" />", dest, text),
+            Link::Text2Dest(text, dest, title) => {
+                // Replace Windows backslash
+                let dest = if dest.as_ref().contains('\\') {
+                    Cow::Owned(dest.to_string().replace('\\', "/"))
+                } else {
+                    Cow::Borrowed(dest.as_ref())
+                };
+
+                let dest = html_escape::encode_double_quoted_attribute(dest.as_ref());
+                let title = html_escape::encode_double_quoted_attribute(title.as_ref());
+
+                // Format title.
+                let title = if !title.is_empty() {
+                    Cow::Owned(format!(" title=\"{}\"", title))
+                } else {
+                    title
+                };
+
+                format!("<a href=\"{}\"{}>{}</a>", dest, title, text)
+            }
+            Link::Image(alt, source) => {
+                // Replace Windows backslash
+                let source = if source.as_ref().contains('\\') {
+                    Cow::Owned(source.as_ref().to_string().replace('\\', "/"))
+                } else {
+                    Cow::Borrowed(source.as_ref())
+                };
+
+                let alt = html_escape::encode_double_quoted_attribute(alt);
+                let source = html_escape::encode_double_quoted_attribute(&source);
+                format!("<img src=\"{}\" alt=\"{}\" />", source, alt)
+            }
             _ => unimplemented!(),
         }
     }
@@ -1071,6 +1075,28 @@ mod tests {
         let expected = "<a href=\"/path/dir/3.0\">3.0</a>";
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/path/dir/3.0"));
+
+        // The link with The link text may contain inline content.
+        let root_path = Path::new("/my");
+        let mut input = take_link(
+            "<a href=\
+            \"/uri\">link <em>foo <strong>bar</strong> <code>#</code></em>\
+            </a>",
+        )
+        .unwrap()
+        .1
+         .1;
+        input.strip_scheme();
+        input
+            .rebase_local_link(root_path, Path::new("/my/path"), true, false)
+            .unwrap();
+        let outpath = input.get_local_link_path().unwrap();
+        let expected = "<a href=\"/uri\">link <em>foo <strong>bar\
+            </strong> <code>#</code></em></a>";
+
+        let output = input.to_html();
+        assert_eq!(output, expected);
+        assert_eq!(outpath, PathBuf::from("/uri"));
     }
 
     #[test]
@@ -1179,7 +1205,7 @@ mod tests {
             Cow::from("de&> st"),
             Cow::from("ti&> tle"),
         );
-        let expected = "<a href=\"de&amp;&gt; st\" title=\"ti&amp;&gt; tle\">te&amp;&gt; xt</a>";
+        let expected = "<a href=\"de&amp;&gt; st\" title=\"ti&amp;&gt; tle\">te&> xt</a>";
         let output = input.to_html();
         assert_eq!(output, expected);
 
@@ -1191,7 +1217,7 @@ mod tests {
 
         //
         let input = Link::Text2Dest(Cow::from("te&> xt"), Cow::from("de&> st"), Cow::from(""));
-        let expected = "<a href=\"de&amp;&gt; st\">te&amp;&gt; xt</a>";
+        let expected = "<a href=\"de&amp;&gt; st\">te&> xt</a>";
         let output = input.to_html();
         assert_eq!(output, expected);
     }
@@ -1254,8 +1280,7 @@ mod tests {
         //      <img src=\"/imagedir/favicon-32x32.png\" alt=\"logo\"></a>abd"
         //     .to_string();
         let expected = "abd<a href=\"/abs/note path/dir/my note.md\">\
-            &lt;img src=\"/imagedir/favicon-32x32.png\" alt=\"logo\"&gt;\
-            </a>abd";
+            <img src=\"/imagedir/favicon-32x32.png\" alt=\"logo\"></a>abd";
         let root_path = Path::new("/my/");
         let docdir = Path::new("/my/abs/note path/");
         let output = rewrite_links(
