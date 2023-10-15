@@ -238,14 +238,6 @@ impl<'a> Hyperlink for Link<'a> {
             // Store result.
             let _ = std::mem::replace(dest, decoded_dest);
         }
-
-        // The link text might be percent encoded in case of an autolink.
-        let decoded_text = percent_decode_str(&*text).decode_utf8().unwrap();
-        // Is this an autolink?
-        if &decoded_text == dest {
-            // Clone `dest` and store result.
-            let _ = std::mem::replace(text, dest.clone());
-        }
     }
 
     //
