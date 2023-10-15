@@ -1241,4 +1241,36 @@ mod tests {
         assert!(url.contains(&PathBuf::from("/abs/note path/down/my note 1.md")));
         assert_eq!(output, expected);
     }
+    #[test]
+    fn test_rewrite_links2() {
+        use crate::config::LocalLinkKind;
+
+        let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
+        let input = "abd<a href=\"tpnote:dir/my note.md\">\
+            <img src=\"/imagedir/favicon-32x32.png\" alt=\"logo\"></a>abd"
+            .to_string();
+        // TODO: this needs new Link variant to work.
+        // let expected = "abd<a href=\"tpnote:/dir/my note.md\">\
+        //      <img src=\"/imagedir/favicon-32x32.png\" alt=\"logo\"></a>abd"
+        //     .to_string();
+        let expected = "abd<a href=\"/abs/note path/dir/my note.md\">\
+            &lt;img src=\"/imagedir/favicon-32x32.png\" alt=\"logo\"&gt;\
+            </a>abd";
+        let root_path = Path::new("/my/");
+        let docdir = Path::new("/my/abs/note path/");
+        let output = rewrite_links(
+            input,
+            root_path,
+            docdir,
+            LocalLinkKind::Short,
+            false,
+            allowed_urls.clone(),
+        );
+        let url = allowed_urls.read_recursive();
+
+        // TODO: this needs new Link variant to work.
+        //assert!(url.contains(&PathBuf::from("/abs//imagedir/favicon-32x32.png")));
+        assert!(url.contains(&PathBuf::from("/abs/note path/dir/my note.md")));
+        assert_eq!(output, expected);
+    }
 }
