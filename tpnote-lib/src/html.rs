@@ -551,8 +551,6 @@ pub fn rewrite_links(
         LocalLinkKind::Long => (true, true),
     };
 
-    let mut allowed_urls = allowed_local_links.write();
-
     // Search for hyperlinks and inline images in the HTML rendition
     // of this note.
     let mut rest = &*html_input;
@@ -588,7 +586,7 @@ pub fn rewrite_links(
         };
 
         if let Some(dest_path) = link.get_local_link_path() {
-            allowed_urls.insert(dest_path);
+            allowed_local_links.write().insert(dest_path);
         };
 
         if rewrite_ext {
@@ -599,23 +597,18 @@ pub fn rewrite_links(
     // Add the last `remaining`.
     html_out.push_str(rest);
 
-    if allowed_urls.is_empty() {
-        log::debug!(
-            "Viewer: note file has no local hyperlinks. No additional local files are served.",
-        );
-    } else {
-        log::debug!(
-            "Viewer: referenced allowed local files: {}",
-            allowed_urls
-                .iter()
-                .map(|p| {
-                    let mut s = "\n    '".to_string();
-                    s.push_str(&p.display().to_string());
-                    s
-                })
-                .collect::<String>()
-        );
-    }
+    log::debug!(
+        "Viewer: referenced allowed local files: {}",
+        allowed_local_links
+            .read_recursive()
+            .iter()
+            .map(|p| {
+                let mut s = "\n    '".to_string();
+                s.push_str(&p.display().to_string());
+                s
+            })
+            .collect::<String>()
+    );
 
     html_out
     // The `RwLockWriteGuard` is released here.
