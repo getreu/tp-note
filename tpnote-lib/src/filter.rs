@@ -10,6 +10,8 @@ use crate::settings::SETTINGS;
 use lazy_static::lazy_static;
 #[cfg(feature = "lang-detection")]
 use lingua::{LanguageDetector, LanguageDetectorBuilder};
+use parse_hyperlinks::iterator::MarkupLink;
+use parse_hyperlinks::parser::Link;
 use sanitize_filename_reader_friendly::sanitize;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -291,7 +293,7 @@ fn link_text_picky_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("link_text", "value", String, value);
+    let p = try_get_value!("link_text_picky", "value", String, value);
 
     let hyperlink = FirstHyperlink::from_picky(&p).unwrap_or_default();
 
@@ -718,25 +720,30 @@ struct FirstHyperlink<'a> {
 impl<'a> FirstHyperlink<'a> {
     /// Parse a markdown formatted hyperlink and stores the result in `Self`.
     fn from(i: &'a str) -> Option<Self> {
-        let mut hlinks = parse_hyperlinks::iterator::Hyperlink::new(i, false);
+        let mut hlinks = MarkupLink::new(i, false);
         hlinks
-            .next()
-            .map(|(_, (text, dest, title))| FirstHyperlink { text, dest, title })
+            .find_map(|l| match l.1 {
+                Link::Text2Dest(te, de, ti) => Some((te, de, ti)),
+                _ => None,
+            })
+            .map(|(text, dest, title)| FirstHyperlink { text, dest, title })
     }
 
+    ///
     fn from_picky(i: &'a str) -> Option<Self> {
-        let mut hlinks = parse_hyperlinks::iterator::Hyperlink::new(i, false);
+        let mut hlinks = MarkupLink::new(i, false);
 
         hlinks.find_map(|l| {
             match l.1 {
                 // Is this an autolink? Skip.
-                (text, dest, _) if text == dest => None,
                 // Email autolink? Skip
-                (_, dest, _) if dest.to_lowercase().starts_with("mailto:") => None,
-                (text, _, _) if text.to_lowercase().starts_with("https:") => None,
-                (text, _, _) if text.to_lowercase().starts_with("http:") => None,
-                (text, _, _) if text.to_lowercase().starts_with("tpnote:") => None,
-                (text, dest, title) => Some(FirstHyperlink { text, dest, title }),
+                Link::Text2Dest(text, dest, _) if text == dest => None,
+                Link::Text2Dest(_, dest, _) if dest.to_lowercase().starts_with("mailto:") => None,
+                Link::Text2Dest(text, _, _) if text.to_lowercase().starts_with("https:") => None,
+                Link::Text2Dest(text, _, _) if text.to_lowercase().starts_with("http:") => None,
+                Link::Text2Dest(text, _, _) if text.to_lowercase().starts_with("tpnote:") => None,
+                Link::Text2Dest(text, dest, title) => Some(FirstHyperlink { text, dest, title }),
+                _ => None,
             }
         })
     }
@@ -1190,7 +1197,7 @@ mod tests {
     }
 
     #[test]
-    fn test_link_text_picky_filter() {
+    fn test_link_text_filter() {
         let args = HashMap::new();
         // Test Markdown link in clipboard.
         let input = r#"Some autolink: <tpnote:locallink.md>,
@@ -1198,9 +1205,14 @@ more autolinks: <tpnote:20>, <getreu@web.de>,
 boring link text: [http://domain.com](http://getreu.net)
 [Jens Getreu's blog](https://blog.getreu.net "My blog")
 Some more text."#;
-        let output_ln =
-            link_text_picky_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("Jens Getreu's blog", output_ln);
+
+        let output = link_text_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!(output, "tpnote:locallink.md");
+
+        // Test picky version also.
+
+        let output = link_text_picky_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!(output, "Jens Getreu's blog");
     }
 
     #[test]

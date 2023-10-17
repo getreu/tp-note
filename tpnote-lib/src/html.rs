@@ -4,7 +4,7 @@ use crate::{config::LocalLinkKind, error::NoteError};
 use html_escape;
 use parking_lot::RwLock;
 use parse_hyperlinks::parser::Link;
-use parse_hyperlinks_extras::iterator_html::HyperlinkInlineImage;
+use parse_hyperlinks_extras::iterator_html::HtmlLinkInlineImage;
 use percent_encoding::percent_decode_str;
 use std::path::MAIN_SEPARATOR_STR;
 use std::{
@@ -611,7 +611,7 @@ pub fn rewrite_links(
     // of this note.
     let mut rest = &*html_input;
     let mut html_out = String::new();
-    for ((skipped, _consumed, remaining), mut link) in HyperlinkInlineImage::new(&html_input) {
+    for ((skipped, _consumed, remaining), mut link) in HtmlLinkInlineImage::new(&html_input) {
         html_out.push_str(skipped);
         rest = remaining;
 
