@@ -102,15 +102,15 @@ trait Hyperlink {
     /// A helper function, that first HTML escape decodes all strings of the
     /// link. Then it percent decodes the link destination (and the
     /// link text in case of an autolink).
-    fn decode_html_escape_and_percent(&mut self);
+    fn decode_ampersand_and_percent(&mut self);
 
-    /// True if `dest`  (`Link::Text2Dest`) or /// `source` (`Link::Image`)
-    /// are local links (=relative URL).
-    fn is_local(&self) -> bool;
+    /// True if the value is a local link.
+    fn is_local_fn(value: &Cow<str>) -> bool;
 
-    /// Strips a possible scheme in `dest` (`Link::Text2Dest`) or
+    /// Strips a possible scheme in local `dest` (`Link::Text2Dest`),
+    /// or both `Link::Image2Dest`. No action if not local.
     /// `source` (`Link::Image`)..
-    fn strip_scheme(&mut self);
+    fn strip_local_scheme(&mut self);
 
     /// Helper function that strips a possible scheme in `input`
     /// and returns the result.
@@ -177,10 +177,15 @@ trait Hyperlink {
     /// with `is_autolink()` that this is really an autolink.
     fn rewrite_autolink(&mut self);
 
-    /// If the extension of a local path is some Tp-Note extension,
-    /// return the path. Otherwise return `None`.
-    /// Acts an `Link:Text2Dest` solely.
-    fn get_local_link_path(&self) -> Option<PathBuf>;
+    /// If the link destination `dest` is a local path, return it.
+    /// Otherwise return `None`.
+    /// Acts an `Link:Text2Dest` and `Link::Imgage2Dest` only.
+    fn get_local_link_dest_path(&self) -> Option<&Path>;
+
+    /// If the image destination `src` is local path, return it.
+    /// Otherwise return `None`.
+    /// Acts an `Link:Image` and `Link::Imgage2Dest` only.
+    fn get_local_link_src_path(&self) -> Option<&Path>;
 
     /// If the extension of a local path is some Tp-Note extension,
     /// append `.html` to path. Otherwise silently return.
@@ -196,71 +201,76 @@ trait Hyperlink {
 
 impl<'a> Hyperlink for Link<'a> {
     #[inline]
-    fn decode_html_escape_and_percent(&mut self) {
-        let empty_title = &mut Cow::from("");
-        let (text, dest, title) = match self {
-            Link::Text2Dest(text, dest, title) => (text, dest, title),
-            Link::Image(alt, source) => (alt, source, empty_title),
-            _ => unimplemented!(),
-        };
-        // HTML escape decoding
-        {
-            let decoded_text = html_escape::decode_html_entities(&*text);
+    fn decode_ampersand_and_percent(&mut self) {
+        // HTML escape decode value.
+        fn dec_amp(val: &mut Cow<str>) {
+            let decoded_text = html_escape::decode_html_entities(val);
             if matches!(&decoded_text, Cow::Owned(..)) {
                 // Does nothing, but satisfying the borrow checker. Does not `clone()`.
                 let decoded_text = Cow::Owned(decoded_text.into_owned());
                 // Store result.
-                let _ = std::mem::replace(text, decoded_text);
+                let _ = std::mem::replace(val, decoded_text);
             }
+        }
 
-            let decoded_dest = html_escape::decode_html_entities(&*dest);
+        // HTML escape decode and percent decode value.
+        fn dec_amp_percent(val: &mut Cow<str>) {
+            dec_amp(val);
+            let decoded_dest = percent_decode_str(val.as_ref()).decode_utf8().unwrap();
             if matches!(&decoded_dest, Cow::Owned(..)) {
                 // Does nothing, but satisfying the borrow checker. Does not `clone()`.
                 let decoded_dest = Cow::Owned(decoded_dest.into_owned());
                 // Store result.
-                let _ = std::mem::replace(dest, decoded_dest);
-            }
-
-            let decoded_title = html_escape::decode_html_entities(&*title);
-            if matches!(&decoded_title, Cow::Owned(..)) {
-                // Does nothing, but satisfying the borrow checker. Does not `clone()`.
-                let decoded_title = Cow::Owned(decoded_title.into_owned());
-                // Store result.
-                let _ = std::mem::replace(title, decoded_title);
+                let _ = std::mem::replace(val, decoded_dest);
             }
         }
 
-        // Percent decode URL. The template we insert in is UTF-8 encoded.
-        let decoded_dest = percent_decode_str(&*dest).decode_utf8().unwrap();
-        if matches!(&decoded_dest, Cow::Owned(..)) {
-            // Does nothing, but satisfying the borrow checker. Does not `clone()`.
-            let decoded_dest = Cow::Owned(decoded_dest.into_owned());
-            // Store result.
-            let _ = std::mem::replace(dest, decoded_dest);
-        }
+        match self {
+            Link::Text2Dest(text1, dest, title) => {
+                dec_amp(text1);
+                dec_amp_percent(dest);
+                dec_amp(title);
+            }
+            Link::Image(alt, src) => {
+                dec_amp(alt);
+                dec_amp_percent(src);
+            }
+            Link::Image2Dest(text1, alt, src, text2, dest, title) => {
+                dec_amp(text1);
+                dec_amp(alt);
+                dec_amp_percent(src);
+                dec_amp(text2);
+                dec_amp_percent(dest);
+                dec_amp(title);
+            }
+            _ => unimplemented!(),
+        };
     }
 
     //
-    fn is_local(&self) -> bool {
-        let dest = match self {
-            Link::Text2Dest(_, dest, _) => dest,
-            Link::Image(_, source) => source,
-            _ => return false,
-        };
+    fn is_local_fn(dest: &Cow<str>) -> bool {
         !((dest.contains("://") && !dest.contains(":///"))
             || dest.starts_with("mailto:")
             || dest.starts_with("tel:"))
     }
 
     //
-    fn strip_scheme(&mut self) {
-        let dest = match self {
-            Link::Text2Dest(_, dest, _title) => dest,
-            Link::Image(_, source) => source,
-            _ => return,
+    fn strip_local_scheme(&mut self) {
+        fn strip(dest: &mut Cow<str>) {
+            if <Link<'_> as Hyperlink>::is_local_fn(dest) {
+                <Link<'_> as Hyperlink>::strip_scheme_fn(dest);
+            }
+        }
+
+        match self {
+            Link::Text2Dest(_, dest, _title) => strip(dest),
+            Link::Image2Dest(_, _, src, _, dest, _) => {
+                strip(src);
+                strip(dest);
+            }
+            Link::Image(_, src) => strip(src),
+            _ => {}
         };
-        // Strip scheme from dest and copy the result in text.
-        Self::strip_scheme_fn(dest);
     }
 
     //
@@ -283,6 +293,7 @@ impl<'a> Hyperlink for Link<'a> {
         let (text, dest) = match self {
             Link::Text2Dest(text, dest, _title) => (text, dest),
             Link::Image(alt, source) => (alt, source),
+            // `Link::Image2Dest` is never an autolink.
             _ => return false,
         };
         text == dest
@@ -296,44 +307,45 @@ impl<'a> Hyperlink for Link<'a> {
         rewrite_rel_paths: bool,
         rewrite_abs_paths: bool,
     ) -> Result<(), NoteError> {
-        // Return None, if link is not local.
-        if !self.is_local() {
-            return Ok(());
-        }
+        let do_rebase = |path: &mut Cow<str>| -> Result<(), NoteError> {
+            if <Link as Hyperlink>::is_local_fn(path) {
+                let dest_out = assemble_link(
+                    root_path,
+                    docdir,
+                    Path::new(path.as_ref()),
+                    rewrite_rel_paths,
+                    rewrite_abs_paths,
+                )
+                .ok_or(NoteError::InvalidLocalPath {
+                    path: path.as_ref().to_string(),
+                })?;
 
-        let dest = match self {
-            Link::Text2Dest(_, dest, _) => dest,
-            Link::Image(_, source) => source,
-            _ => return Ok(()),
+                // Store result.
+                let new_dest = Cow::Owned(dest_out.to_str().unwrap_or_default().to_string());
+                let _ = std::mem::replace(path, new_dest);
+            }
+            Ok(())
         };
 
-        let dest_out = assemble_link(
-            root_path,
-            docdir,
-            Path::new(dest.as_ref()),
-            rewrite_rel_paths,
-            rewrite_abs_paths,
-        )
-        .ok_or(NoteError::InvalidLocalPath {
-            path: dest.as_ref().to_string(),
-        })?;
-
-        // Store result.
-        let new_dest = Cow::Owned(dest_out.to_str().unwrap_or_default().to_string());
-        let _ = std::mem::replace(dest, new_dest);
-        Ok(())
+        match self {
+            Link::Text2Dest(_, dest, _) => do_rebase(dest),
+            Link::Image2Dest(_, _, src, _, dest, _) => do_rebase(src).and_then(|_| do_rebase(dest)),
+            Link::Image(_, src) => do_rebase(src),
+            _ => unimplemented!(),
+        }
     }
 
     //
     fn expand_shorthand_link(&mut self, root_path: &Path) -> Result<(), NoteError> {
-        if !self.is_local() {
-            return Ok(());
-        }
-
         let shorthand_link = match self {
-            Link::Text2Dest(_, dest, _title) => dest,
+            Link::Text2Dest(_, dest, _) => dest,
+            Link::Image2Dest(_, _, _, _, dest, _) => dest,
             _ => return Ok(()),
         };
+
+        if !<Link as Hyperlink>::is_local_fn(&shorthand_link) {
+            return Ok(());
+        }
 
         let shorthand_path = Path::new(shorthand_link.as_ref());
 
@@ -405,8 +417,6 @@ impl<'a> Hyperlink for Link<'a> {
     fn rewrite_autolink(&mut self) {
         // Is this an absolute URL?
 
-        let link_is_local = self.is_local();
-
         let (text, dest) = match self {
             Link::Text2Dest(text, dest, _) => (text, dest),
             Link::Image(alt, source) => (alt, source),
@@ -417,7 +427,7 @@ impl<'a> Hyperlink for Link<'a> {
 
         Self::strip_scheme_fn(text);
 
-        if link_is_local {
+        if <Link as Hyperlink>::is_local_fn(dest) {
             let short_text = Path::new(text.as_ref());
             let short_text = if short_text.has_wellformed_filename() && short_text.has_tpnote_ext()
             {
@@ -437,14 +447,28 @@ impl<'a> Hyperlink for Link<'a> {
     }
 
     //
-    fn get_local_link_path(&self) -> Option<PathBuf> {
+    fn get_local_link_dest_path(&self) -> Option<&Path> {
         let dest = match self {
             Link::Text2Dest(_, dest, _) => dest,
-            Link::Image(_, source) => source,
+            Link::Image2Dest(_, _, _, _, dest, _) => dest,
             _ => return None,
         };
-        if self.is_local() {
-            Some(PathBuf::from(dest.as_ref()))
+        if <Link as Hyperlink>::is_local_fn(dest) {
+            Some(Path::new(dest.as_ref()))
+        } else {
+            None
+        }
+    }
+
+    //
+    fn get_local_link_src_path(&self) -> Option<&Path> {
+        let src = match self {
+            Link::Image2Dest(_, _, src, _, _, _) => src,
+            Link::Image(_, src) => src,
+            _ => return None,
+        };
+        if <Link as Hyperlink>::is_local_fn(src) {
+            Some(Path::new(src.as_ref()))
         } else {
             None
         }
@@ -452,56 +476,88 @@ impl<'a> Hyperlink for Link<'a> {
 
     //
     fn append_html_ext(&mut self) {
-        if !self.is_local() {
-            return;
-        }
         let dest = match self {
             Link::Text2Dest(_, dest, _) => dest,
+            Link::Image2Dest(_, _, _, _, dest, _) => dest,
             _ => return,
         };
-        let path = dest.as_ref();
-        if path.has_tpnote_ext() {
-            let mut newpath = path.to_string();
-            newpath.push_str(HTML_EXT);
+        if <Link as Hyperlink>::is_local_fn(dest) {
+            let path = dest.as_ref();
+            if path.has_tpnote_ext() {
+                let mut newpath = path.to_string();
+                newpath.push_str(HTML_EXT);
 
-            let _ = std::mem::replace(dest, Cow::Owned(newpath));
+                let _ = std::mem::replace(dest, Cow::Owned(newpath));
+            }
         }
     }
 
     //
     fn to_html(&self) -> String {
+        // HTML escape encode double quoted attributes
+        fn enc_amp(val: Cow<str>) -> Cow<str> {
+            let s = html_escape::encode_double_quoted_attribute(val.as_ref());
+            if s == val {
+                val
+            } else {
+                Cow::Owned(s.to_string())
+            }
+        }
+        // Replace Windows backslash, then HTML escape encode.
+        fn repl_backspace_enc_amp(val: Cow<str>) -> Cow<str> {
+            let val = if val.as_ref().contains('\\') {
+                Cow::Owned(val.to_string().replace('\\', "/"))
+            } else {
+                val
+            };
+            let s = html_escape::encode_double_quoted_attribute(val.as_ref());
+            if s == val {
+                val
+            } else {
+                Cow::Owned(s.to_string())
+            }
+        }
+
         match self {
             Link::Text2Dest(text, dest, title) => {
-                // Replace Windows backslash
-                let dest = if dest.as_ref().contains('\\') {
-                    Cow::Owned(dest.to_string().replace('\\', "/"))
-                } else {
-                    Cow::Borrowed(dest.as_ref())
-                };
-
-                let dest = html_escape::encode_double_quoted_attribute(dest.as_ref());
-                let title = html_escape::encode_double_quoted_attribute(title.as_ref());
-
                 // Format title.
-                let title = if !title.is_empty() {
-                    Cow::Owned(format!(" title=\"{}\"", title))
+                let title_html = if !title.is_empty() {
+                    format!(" title=\"{}\"", enc_amp(title.clone()))
                 } else {
-                    title
+                    "".to_string()
                 };
 
-                format!("<a href=\"{}\"{}>{}</a>", dest, title, text)
+                format!(
+                    "<a href=\"{}\"{}>{}</a>",
+                    repl_backspace_enc_amp(dest.clone()),
+                    title_html,
+                    text
+                )
             }
-            Link::Image(alt, source) => {
-                // Replace Windows backslash
-                let source = if source.as_ref().contains('\\') {
-                    Cow::Owned(source.as_ref().to_string().replace('\\', "/"))
+            Link::Image2Dest(text1, alt, src, text2, dest, title) => {
+                // Format title.
+                let title_html = if !title.is_empty() {
+                    format!(" title=\"{}\"", enc_amp(title.clone()))
                 } else {
-                    Cow::Borrowed(source.as_ref())
+                    "".to_string()
                 };
 
-                let alt = html_escape::encode_double_quoted_attribute(alt);
-                let source = html_escape::encode_double_quoted_attribute(&source);
-                format!("<img src=\"{}\" alt=\"{}\" />", source, alt)
+                format!(
+                    "<a href=\"{}\"{}>{}<img src=\"{}\" alt=\"{}\">{}</a>",
+                    repl_backspace_enc_amp(dest.clone()),
+                    title_html,
+                    text1,
+                    repl_backspace_enc_amp(src.clone()),
+                    enc_amp(alt.clone()),
+                    text2
+                )
+            }
+            Link::Image(alt, src) => {
+                format!(
+                    "<img src=\"{}\" alt=\"{}\">",
+                    repl_backspace_enc_amp(src.clone()),
+                    enc_amp(alt.clone())
+                )
             }
             _ => unimplemented!(),
         }
@@ -560,12 +616,10 @@ pub fn rewrite_links(
         rest = remaining;
 
         // Percent decode link destination.
-        link.decode_html_escape_and_percent();
+        link.decode_ampersand_and_percent();
 
         let link_is_autolink = link.is_autolink();
-        if link.is_local() {
-            link.strip_scheme()
-        };
+        link.strip_local_scheme();
 
         // Rewrite the local link.
         match link
@@ -585,8 +639,11 @@ pub fn rewrite_links(
             link.rewrite_autolink();
         };
 
-        if let Some(dest_path) = link.get_local_link_path() {
-            allowed_local_links.write().insert(dest_path);
+        if let Some(dest_path) = link.get_local_link_dest_path() {
+            allowed_local_links.write().insert(dest_path.to_path_buf());
+        };
+        if let Some(src_path) = link.get_local_link_src_path() {
+            allowed_local_links.write().insert(src_path.to_path_buf());
         };
 
         if rewrite_ext {
@@ -716,7 +773,7 @@ mod tests {
         //
         let mut input = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
         let expected = Link::Text2Dest(Cow::from("text"), Cow::from("dest"), Cow::from("title"));
-        input.decode_html_escape_and_percent();
+        input.decode_ampersand_and_percent();
         let output = input;
         assert_eq!(output, expected);
 
@@ -728,33 +785,15 @@ mod tests {
         );
         let expected =
             Link::Text2Dest(Cow::from("te%20xt"), Cow::from("de st"), Cow::from("title"));
-        input.decode_html_escape_and_percent();
+        input.decode_ampersand_and_percent();
         let output = input;
         assert_eq!(output, expected);
 
         //
-        let mut input = Link::Text2Dest(
-            Cow::from("d:e%20st"),
-            Cow::from("d:e%20st"),
-            Cow::from("title"),
-        );
-        let expected =
-            Link::Text2Dest(Cow::from("d:e st"), Cow::from("d:e st"), Cow::from("title"));
-        input.decode_html_escape_and_percent();
-        let output = input;
-        assert_eq!(output, expected);
-
-        let mut input = Link::Text2Dest(
-            Cow::from("d:e%20&st%26"),
-            Cow::from("d:e%20%26st&"),
-            Cow::from("title"),
-        );
-        let expected = Link::Text2Dest(
-            Cow::from("d:e &st&"),
-            Cow::from("d:e &st&"),
-            Cow::from("title"),
-        );
-        input.decode_html_escape_and_percent();
+        let mut input =
+            Link::Text2Dest(Cow::from("text"), Cow::from("d:e%20st"), Cow::from("title"));
+        let expected = Link::Text2Dest(Cow::from("text"), Cow::from("d:e st"), Cow::from("title"));
+        input.decode_ampersand_and_percent();
         let output = input;
         assert_eq!(output, expected);
 
@@ -768,64 +807,45 @@ mod tests {
             Cow::from("a&\"lt"),
             Cow::from("a&\"lt"),
         );
-        input.decode_html_escape_and_percent();
+        input.decode_ampersand_and_percent();
         let output = input;
         assert_eq!(output, expected);
 
         //
         let mut input = Link::Image(Cow::from("al%20t"), Cow::from("de%20st"));
         let expected = Link::Image(Cow::from("al%20t"), Cow::from("de st"));
-        input.decode_html_escape_and_percent();
+        input.decode_ampersand_and_percent();
         let output = input;
         assert_eq!(output, expected);
 
         //
         let mut input = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
         let expected = Link::Image(Cow::from("a\\lt"), Cow::from("d\\est"));
-        input.decode_html_escape_and_percent();
+        input.decode_ampersand_and_percent();
         let output = input;
         assert_eq!(output, expected);
 
         //
         let mut input = Link::Image(Cow::from("a&amp;&quot;lt"), Cow::from("a&amp;&quot;lt"));
         let expected = Link::Image(Cow::from("a&\"lt"), Cow::from("a&\"lt"));
-        input.decode_html_escape_and_percent();
+        input.decode_ampersand_and_percent();
         let output = input;
         assert_eq!(output, expected);
     }
 
     #[test]
     fn test_is_local() {
-        let input = Link::Text2Dest(
-            Cow::from("xyz"),
-            Cow::from("/path/My doc.md"),
-            Cow::from("xyz"),
-        );
-        assert!(input.is_local());
+        let input = Cow::from("/path/My doc.md");
+        assert!(<Link as Hyperlink>::is_local_fn(&input));
 
-        //
-        let input = Link::Text2Dest(
-            Cow::from("xyz"),
-            Cow::from("tpnote:path/My doc.md"),
-            Cow::from("xyz"),
-        );
-        assert!(input.is_local());
+        let input = Cow::from("tpnote:path/My doc.md");
+        assert!(<Link as Hyperlink>::is_local_fn(&input));
 
-        //
-        let input = Link::Text2Dest(
-            Cow::from("xyz"),
-            Cow::from("tpnote:/path/My doc.md"),
-            Cow::from("xyz"),
-        );
-        assert!(input.is_local());
+        let input = Cow::from("tpnote:/path/My doc.md");
+        assert!(<Link as Hyperlink>::is_local_fn(&input));
 
-        //
-        let input = Link::Text2Dest(
-            Cow::from("xyz"),
-            Cow::from("https://getreu.net"),
-            Cow::from("xyz"),
-        );
-        assert!(!input.is_local());
+        let input = Cow::from("https://getreu.net");
+        assert!(!<Link as Hyperlink>::is_local_fn(&input));
     }
 
     #[test]
@@ -835,8 +855,8 @@ mod tests {
             Cow::from("https://getreu.net"),
             Cow::from("xyz"),
         );
-        let expected = Link::Text2Dest(Cow::from("xyz"), Cow::from("getreu.net"), Cow::from("xyz"));
-        input.strip_scheme();
+        let expected = input.clone();
+        input.strip_local_scheme();
         assert_eq!(input, expected);
 
         //
@@ -850,7 +870,7 @@ mod tests {
             Cow::from("/dir/My doc.md"),
             Cow::from("xyz"),
         );
-        input.strip_scheme();
+        input.strip_local_scheme();
         assert_eq!(input, expected);
     }
 
@@ -885,7 +905,7 @@ mod tests {
         input
             .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
-        assert!(input.get_local_link_path().is_none());
+        assert!(input.get_local_link_dest_path().is_none());
 
         //
         let root_path = Path::new("/my/");
@@ -897,11 +917,11 @@ mod tests {
             .1
              .1;
         let expected = "<img src=\"/abs/note path/t m p.jpg\" \
-            alt=\"Image\" />";
+            alt=\"Image\">";
         input
             .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
-        let outpath = input.get_local_link_path().unwrap();
+        let outpath = input.get_local_link_src_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/abs/note path/t m p.jpg"));
@@ -911,11 +931,11 @@ mod tests {
             .unwrap()
             .1
              .1;
-        let expected = "<img src=\"/abs/t m p.jpg\" alt=\"Image\" />";
+        let expected = "<img src=\"/abs/t m p.jpg\" alt=\"Image\">";
         input
             .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
-        let outpath = input.get_local_link_path().unwrap();
+        let outpath = input.get_local_link_src_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/abs/t m p.jpg"));
@@ -929,7 +949,7 @@ mod tests {
         input
             .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
-        let outpath = input.get_local_link_path().unwrap();
+        let outpath = input.get_local_link_dest_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/abs/note path/my note 1.md"));
@@ -943,7 +963,7 @@ mod tests {
         input
             .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
-        let outpath = input.get_local_link_path().unwrap();
+        let outpath = input.get_local_link_dest_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
@@ -957,7 +977,7 @@ mod tests {
         input
             .rebase_local_link(root_path, docdir, false, false)
             .unwrap();
-        let outpath = input.get_local_link_path().unwrap();
+        let outpath = input.get_local_link_dest_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("dir/my note 1.md"));
@@ -976,7 +996,7 @@ mod tests {
                 false,
             )
             .unwrap();
-        let outpath = input.get_local_link_path().unwrap();
+        let outpath = input.get_local_link_dest_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/path/dir/my note 1.md"));
@@ -990,7 +1010,7 @@ mod tests {
         input
             .rebase_local_link(root_path, Path::new("/my/ignored/"), true, false)
             .unwrap();
-        let outpath = input.get_local_link_path().unwrap();
+        let outpath = input.get_local_link_dest_path().unwrap();
         let output = input.to_html();
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/dir/my note 1.md"));
@@ -1044,12 +1064,12 @@ mod tests {
                 .unwrap()
                 .1
                  .1;
-        input.strip_scheme();
+        input.strip_local_scheme();
         input
             .rebase_local_link(root_path, Path::new("/my/path"), true, false)
             .unwrap();
         input.rewrite_autolink();
-        let outpath = input.get_local_link_path().unwrap();
+        let outpath = input.get_local_link_dest_path().unwrap();
         let output = input.to_html();
         let expected = "<a href=\"/path/dir/3.0-my note.md\">my note</a>";
         assert_eq!(output, expected);
@@ -1061,12 +1081,12 @@ mod tests {
             .unwrap()
             .1
              .1;
-        input.strip_scheme();
+        input.strip_local_scheme();
         input
             .rebase_local_link(root_path, Path::new("/my/path"), true, false)
             .unwrap();
         input.rewrite_autolink();
-        let outpath = input.get_local_link_path().unwrap();
+        let outpath = input.get_local_link_dest_path().unwrap();
         let output = input.to_html();
         let expected = "<a href=\"/path/dir/3.0\">3.0</a>";
         assert_eq!(output, expected);
@@ -1082,11 +1102,11 @@ mod tests {
         .unwrap()
         .1
          .1;
-        input.strip_scheme();
+        input.strip_local_scheme();
         input
             .rebase_local_link(root_path, Path::new("/my/path"), true, false)
             .unwrap();
-        let outpath = input.get_local_link_path().unwrap();
+        let outpath = input.get_local_link_dest_path().unwrap();
         let expected = "<a href=\"/uri\">link <em>foo <strong>bar\
             </strong> <code>#</code></em></a>";
 
@@ -1154,7 +1174,10 @@ mod tests {
     fn text_get_local_link_path() {
         //
         let input = Link::Text2Dest(Cow::from("xyz"), Cow::from("/dir/3.0"), Cow::from("title"));
-        assert_eq!(input.get_local_link_path(), Some(PathBuf::from("/dir/3.0")));
+        assert_eq!(
+            input.get_local_link_dest_path(),
+            Some(Path::new("/dir/3.0"))
+        );
 
         //
         let input = Link::Text2Dest(
@@ -1162,7 +1185,7 @@ mod tests {
             Cow::from("http://getreu.net"),
             Cow::from("title"),
         );
-        assert_eq!(input.get_local_link_path(), None);
+        assert_eq!(input.get_local_link_dest_path(), None);
     }
 
     #[test]
@@ -1206,8 +1229,8 @@ mod tests {
         assert_eq!(output, expected);
 
         //
-        let input = Link::Image(Cow::from("al&> t"), Cow::from("so&> urce"));
-        let expected = "<img src=\"so&amp;&gt; urce\" alt=\"al&amp;&gt; t\" />";
+        let input = Link::Image(Cow::from("al&t"), Cow::from("sr&c"));
+        let expected = "<img src=\"sr&amp;c\" alt=\"al&amp;t\">";
         let output = input.to_html();
         assert_eq!(output, expected);
 
@@ -1238,7 +1261,7 @@ mod tests {
             .to_string();
         let expected = "abc<a href=\"ftp://getreu.net\">Blog</a>\
             def<a href=\"https://getreu.net\">getreu.net</a>\
-            ghi<img src=\"/abs/note path/t m p.jpg\" alt=\"test 1\" />\
+            ghi<img src=\"/abs/note path/t m p.jpg\" alt=\"test 1\">\
             jkl<a href=\"/abs/note path/down/my note 1.md\">my note 1</a>\
             mno<a href=\"/abs/note path/dir/my note.md\">my note</a>\
             pqr<a href=\"/dir/my note.md\">my note</a>\
@@ -1263,6 +1286,7 @@ mod tests {
         assert!(url.contains(&PathBuf::from("/abs/note path/down/my note 1.md")));
         assert_eq!(output, expected);
     }
+
     #[test]
     fn test_rewrite_links2() {
         use crate::config::LocalLinkKind;
@@ -1271,10 +1295,6 @@ mod tests {
         let input = "abd<a href=\"tpnote:dir/my note.md\">\
             <img src=\"/imagedir/favicon-32x32.png\" alt=\"logo\"></a>abd"
             .to_string();
-        // TODO: this needs new Link variant to work.
-        // let expected = "abd<a href=\"tpnote:/dir/my note.md\">\
-        //      <img src=\"/imagedir/favicon-32x32.png\" alt=\"logo\"></a>abd"
-        //     .to_string();
         let expected = "abd<a href=\"/abs/note path/dir/my note.md\">\
             <img src=\"/imagedir/favicon-32x32.png\" alt=\"logo\"></a>abd";
         let root_path = Path::new("/my/");
@@ -1288,9 +1308,7 @@ mod tests {
             allowed_urls.clone(),
         );
         let url = allowed_urls.read_recursive();
-
-        // TODO: this needs new Link variant to work.
-        //assert!(url.contains(&PathBuf::from("/abs//imagedir/favicon-32x32.png")));
+        println!("{:?}", allowed_urls.read_recursive());
         assert!(url.contains(&PathBuf::from("/abs/note path/dir/my note.md")));
         assert_eq!(output, expected);
     }
