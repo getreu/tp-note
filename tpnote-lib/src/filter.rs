@@ -1213,6 +1213,17 @@ Some more text."#;
 
         let output = link_text_picky_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!(output, "Jens Getreu's blog");
+
+        //
+        let input = "[into\\_bytes](https://doc.rust-lang.org)";
+
+        let output = link_text_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!(output, "into_bytes");
+
+        // Test picky version also.
+
+        let output = link_text_picky_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!(output, "into_bytes");
     }
 
     #[test]
