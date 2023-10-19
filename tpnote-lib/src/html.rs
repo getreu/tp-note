@@ -1,4 +1,5 @@
 //! Helper functions dealing with HTML conversion.
+use crate::clone_ext::CloneExt;
 use crate::filename::{NotePath, NotePathStr};
 use crate::{config::LocalLinkKind, error::NoteError};
 use html_escape;
@@ -522,14 +523,14 @@ impl<'a> Hyperlink for Link<'a> {
             Link::Text2Dest(text, dest, title) => {
                 // Format title.
                 let title_html = if !title.is_empty() {
-                    format!(" title=\"{}\"", enc_amp(title.clone()))
+                    format!(" title=\"{}\"", enc_amp(title.shallow_clone()))
                 } else {
                     "".to_string()
                 };
 
                 format!(
                     "<a href=\"{}\"{}>{}</a>",
-                    repl_backspace_enc_amp(dest.clone()),
+                    repl_backspace_enc_amp(dest.shallow_clone()),
                     title_html,
                     text
                 )
@@ -537,26 +538,26 @@ impl<'a> Hyperlink for Link<'a> {
             Link::Image2Dest(text1, alt, src, text2, dest, title) => {
                 // Format title.
                 let title_html = if !title.is_empty() {
-                    format!(" title=\"{}\"", enc_amp(title.clone()))
+                    format!(" title=\"{}\"", enc_amp(title.shallow_clone()))
                 } else {
                     "".to_string()
                 };
 
                 format!(
                     "<a href=\"{}\"{}>{}<img src=\"{}\" alt=\"{}\">{}</a>",
-                    repl_backspace_enc_amp(dest.clone()),
+                    repl_backspace_enc_amp(dest.shallow_clone()),
                     title_html,
                     text1,
-                    repl_backspace_enc_amp(src.clone()),
-                    enc_amp(alt.clone()),
+                    repl_backspace_enc_amp(src.shallow_clone()),
+                    enc_amp(alt.shallow_clone()),
                     text2
                 )
             }
             Link::Image(alt, src) => {
                 format!(
                     "<img src=\"{}\" alt=\"{}\">",
-                    repl_backspace_enc_amp(src.clone()),
-                    enc_amp(alt.clone())
+                    repl_backspace_enc_amp(src.shallow_clone()),
+                    enc_amp(alt.shallow_clone())
                 )
             }
             _ => unimplemented!(),

@@ -16,6 +16,7 @@
 //! `tpnote-lib`'s high-level API is the module `workflow` in the `tp-note`
 //! crate.
 //!
+pub mod clone_ext;
 pub mod config;
 pub mod content;
 pub mod context;
