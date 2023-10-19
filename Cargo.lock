@@ -2952,9 +2952,9 @@ dependencies = [
 
 [[package]]
 name = "parse-hyperlinks"
-version = "0.27.0"
+version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "750b9f630c6ad071d09975552c336c34194e744473daf62f75e7d83d4982805d"
+checksum = "92ac700657cc7a89620d1c28b310d594ff0491c11fd3dd1ae748ed5c5c8640e6"
 dependencies = [
  "html-escape",
  "nom",
@@ -2964,9 +2964,9 @@ dependencies = [
 
 [[package]]
 name = "parse-hyperlinks-extras"
-version = "0.27.0"
+version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c227ded63e0e5bd32a4612a181f6ccbc5564d765c8f9129fbdbe2ec8e68c04de"
+checksum = "9e1b998dd90278a34cd29c247c4de27e31bcb8230d73d80ec3f314020ed23b22"
 dependencies = [
  "html-escape",
  "nom",
@@ -4013,7 +4013,7 @@ dependencies = [
  "thiserror",
  "time",
  "toml 0.8.2",
- "tpnote-lib 0.28.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tpnote-lib",
  "webbrowser",
  "win32job",
  "windows-sys 0.48.0",
@@ -4051,42 +4051,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "tpnote-lib"
-version = "0.28.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1411b278b778ec8e76e3e90a7996e82a9db45a2c3d1b03f38c276930a9fa1f7"
-dependencies = [
- "html-escape",
- "latex2mathml",
- "lazy_static",
- "lingua",
- "log",
- "parking_lot",
- "parse-hyperlinks",
- "parse-hyperlinks-extras",
- "percent-encoding",
- "pulldown-cmark",
- "rst_parser",
- "rst_renderer",
- "sanitize-filename-reader-friendly",
- "self_cell",
- "serde",
- "serde_json",
- "serde_yaml",
- "substring",
- "syntect",
- "tera",
- "thiserror",
- "toml 0.8.2",
- "win32job",
- "windows-sys 0.48.0",
-]
-
-[[package]]
 name = "tracing"
-version = "0.1.39"
+version = "0.1.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee2ef2af84856a50c1d430afce2fdded0a4ec7eda868db86409b4543df0797f9"
+checksum = "c3523ab5a71916ccf420eebdf5521fcef02141234bbc0b8a49f2fdc4544364ef"
 dependencies = [
  "pin-project-lite",
  "tracing-attributes",
