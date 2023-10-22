@@ -296,8 +296,8 @@ from_text_file_content = """
 {{ path | file_stem | split(pat='--') | nth(n=1) | cut | to_yaml(key='subtitle') }}
 {{ username | capitalize | to_yaml(key='author') }}
 {{ doc_file_date | default(value='') | date(format='%Y-%m-%d') | to_yaml(key='date') }}
-{{ path | file_name | to_yaml(key='orig_name') }}
 {{ doc_body_text | get_lang | map_lang(default=lang) | to_yaml(key='lang') }}
+# {{ path | file_name | to_yaml(key='orig_name', tab=12) }}
 ---
 
 {{ doc_body_text }}
