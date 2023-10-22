@@ -169,7 +169,7 @@ filter_to_yaml_tab = 14
 #   In addition, all environment variables can be used, e.g.
 #   `{{ get_env(name=\"LOGNAME\") }}` When placed in YAML front matter, the
 #   filter `to_yaml` must be appended to each variable.
-new_content = """
+from_dir_content = """
 {%- set title_text = dir_path | trim_file_sort_tag -%}
 ---
 {{ title_text | cut | to_yaml(key='title') }}
@@ -188,7 +188,7 @@ new_content = """
 # `{{ title | sanit }}`, `{{ subtitle | sanit }}`, `{{ extension_default }}.
 # In general, in filename template, all variables (except `now` and
 # `extension_default` must be filtered by a `sanit` filter.
-new_filename = """
+from_dir_filename = """
 {%- set tag = now() | date(format='%Y%m%d') -%}
 {{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\

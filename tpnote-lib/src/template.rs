@@ -9,7 +9,7 @@ use std::path::Path;
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TemplateKind {
     /// Templates used when Tp-Note is invoked with a directory path.
-    New,
+    FromDir,
     /// Templates used when the clipboard contains a text with a YAML header.
     FromClipboardYaml,
     /// Templates used when the clipboard contains a text without header.
@@ -66,7 +66,7 @@ impl TemplateKind {
             path_is_tpnote_file,
             path_is_tpnote_file_and_has_header,
         ) {
-            (true, false, _, false, _, _) => TemplateKind::New,
+            (true, false, _, false, _, _) => TemplateKind::FromDir,
             (true, true, false, false, _, _) => TemplateKind::FromClipboard,
             (true, true, true, false, _, _) => TemplateKind::FromClipboardYaml,
             (false, _, _, true, true, true) => TemplateKind::SyncFilename,
@@ -102,7 +102,7 @@ impl TemplateKind {
     pub fn get_content_template(&self) -> String {
         let lib_cfg = LIB_CFG.read_recursive();
         match self {
-            Self::New => lib_cfg.tmpl.new_content.clone(),
+            Self::FromDir => lib_cfg.tmpl.from_dir_content.clone(),
             Self::FromClipboardYaml => lib_cfg.tmpl.from_clipboard_yaml_content.clone(),
             Self::FromClipboard => lib_cfg.tmpl.from_clipboard_content.clone(),
             Self::FromTextFile => lib_cfg.tmpl.from_text_file_content.clone(),
@@ -117,7 +117,7 @@ impl TemplateKind {
     /// Returns the content template variable name as it is used in the configuration file.
     pub fn get_content_template_name(&self) -> &str {
         match self {
-            Self::New => "tmpl.new_content",
+            Self::FromDir => "tmpl.from_dir_content",
             Self::FromClipboardYaml => "tmpl.from_clipboard_yaml_content",
             Self::FromClipboard => "tmpl.from_clipboard_content",
             Self::FromTextFile => "tmpl.from_text_file_content",
@@ -132,7 +132,7 @@ impl TemplateKind {
     pub fn get_filename_template(&self) -> String {
         let lib_cfg = LIB_CFG.read_recursive();
         match self {
-            Self::New => lib_cfg.tmpl.new_filename.clone(),
+            Self::FromDir => lib_cfg.tmpl.from_dir_filename.clone(),
             Self::FromClipboardYaml => lib_cfg.tmpl.from_clipboard_yaml_filename.clone(),
             Self::FromClipboard => lib_cfg.tmpl.from_clipboard_filename.clone(),
             Self::FromTextFile => lib_cfg.tmpl.from_text_file_filename.clone(),
@@ -145,7 +145,7 @@ impl TemplateKind {
     /// Returns the content template variable name as it is used in the configuration file.
     pub fn get_filename_template_name(&self) -> &str {
         match self {
-            Self::New => "tmpl.new_filename",
+            Self::FromDir => "tmpl.from_dir_filename",
             Self::FromClipboardYaml => "tmpl.from_clipboard_yaml_filename",
             Self::FromClipboard => "tmpl.from_clipboard_filename",
             Self::FromTextFile => "tmpl.from_text_file_filename",

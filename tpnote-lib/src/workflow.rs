@@ -320,7 +320,7 @@ where
     let template_kind = tk_filter(template_kind);
 
     let n = match template_kind {
-        TemplateKind::New
+        TemplateKind::FromDir
         | TemplateKind::FromClipboardYaml
         | TemplateKind::FromClipboard
         | TemplateKind::AnnotateFile => {

@@ -732,14 +732,14 @@ Body text
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
         let mut n: Note<ContentString> =
-            Note::from_content_template(context, TemplateKind::New).unwrap();
+            Note::from_content_template(context, TemplateKind::FromDir).unwrap();
         assert!(n.content.header().starts_with("title:        my dir"));
         assert_eq!(n.content.borrow_dependent().body, "\n\n");
 
         // Check the title and subtitle in the note's header.
         assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("my dir"));
         assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
-        n.render_filename(TemplateKind::New).unwrap();
+        n.render_filename(TemplateKind::FromDir).unwrap();
         n.set_next_unused_rendered_filename().unwrap();
         n.save().unwrap();
 

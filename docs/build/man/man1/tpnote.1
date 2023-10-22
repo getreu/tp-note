@@ -73,8 +73,8 @@ template.
 .SS Create a new note with empty clipboard
 .PP
 In case the clipboard is empty while starting, the new note is created
-with the templates: `\f[V]tmpl.new_content\f[R]' and
-`\f[V]tmpl.new_filename\f[R]'.
+with the templates: `\f[V]tmpl.from_dir_content\f[R]' and
+`\f[V]tmpl.from_dir_filename\f[R]'.
 By default, the new note\[cq]s title is the parent\[cq]s directory name.
 The newly created file is then opened with an external text editor,
 allowing it to change the proposed title and add other content.
@@ -2332,7 +2332,7 @@ If the clipboard contains text with a YAML header, the template
 .PP
 In total, there are 5 different `\f[V]tmpl.*_content\f[R]' templates:
 .IP \[bu] 2
-`\f[V]tmpl.new_content\f[R]'
+`\f[V]tmpl.from_dir_content\f[R]'
 .IP \[bu] 2
 `\f[V]tmpl.from_clipboard_content\f[R]'
 .IP \[bu] 2
@@ -2352,7 +2352,7 @@ another template type comes into play: the so-called \f[I]filename
 template\f[R].
 Each content template has a corresponding filename template, e.g.:
 .IP \[bu] 2
-`\f[V]tmpl.new_filename\f[R]'
+`\f[V]tmpl.from_dir_filename\f[R]'
 .IP \[bu] 2
 `\f[V]tmpl.from_clipboard_filename\f[R]'
 .IP \[bu] 2
@@ -2501,9 +2501,9 @@ the value of `\f[V]{{ lang }}\f[R]' (all operating systems).
 The following `\f[V]{{ fm_* }}\f[R]' variables are typically generated,
 \f[I]after\f[R] a content template was filled in with data: For example
 a field named `\f[V]title:\f[R]' in the content template
-`\f[V]tmpl.new_content\f[R]' will generate the variable
+`\f[V]tmpl.from_dir_content\f[R]' will generate the variable
 `\f[V]fm_title\f[R]' which can then be used in the corresponding
-`\f[V]tmpl.new_filename\f[R]' filename template.
+`\f[V]tmpl.from_dir_filename\f[R]' filename template.
 `\f[V]{{ fm_* }}\f[R]' variables are generated dynamically.
 This means, a YAML front-matter variable `\f[V]foo:\f[R]' in a note will
 generate a `\f[V]{{ fm_foo }}\f[R]' template variable.

@@ -70,7 +70,7 @@ one filename template.
 ## Create a new note with empty clipboard
 
 In case the clipboard is empty while starting, the new note is created
-with the templates: '`tmpl.new_content`' and '`tmpl.new_filename`'.  By
+with the templates: '`tmpl.from_dir_content`' and '`tmpl.from_dir_filename`'. By
 default, the new note's title is the parent's directory name. The newly created
 file is then opened with an external text editor, allowing it to change the
 proposed title and add other content. When the text editor closes, Tp-Note
@@ -1870,7 +1870,7 @@ header, the template '`tmpl.from_clipboard_yaml_content`' is used.
 
 In total, there are 5 different '`tmpl.*_content`' templates:
 
-* '`tmpl.new_content`'
+* '`tmpl.from_dir_content`'
 * '`tmpl.from_clipboard_content`'
 * '`tmpl.from_clipboard_yaml_content`'
 * '`tmpl.from_text_file_content`'
@@ -1885,7 +1885,7 @@ Once the content of the new note is set by one of the content templates,
 another template type comes into play: the so-called _filename template_.
 Each content template has a corresponding filename template, e.g.:
 
-* '`tmpl.new_filename`'
+* '`tmpl.from_dir_filename`'
 * '`tmpl.from_clipboard_filename`'
 * '`tmpl.from_clipboard_yaml_filename`'
 * '`tmpl.from_text_file_filename`'
@@ -2002,12 +2002,12 @@ In addition, Tp-Note defines the following variables:
 
 The following '`{{ fm_* }}`' variables are typically generated, _after_ a
 content template was filled in with data: For example a field named '`title:`'
-in the content template '`tmpl.new_content`' will generate the variable
-'`fm_title`' which can then be used in the corresponding '`tmpl.new_filename`'
-filename template. '`{{ fm_* }}`' variables are generated dynamically. This
-means, a YAML front-matter variable '`foo:`' in a note will generate a
-'`{{ fm_foo }}`' template variable. On the other hand, a missing '`foo:`'
-will cause '`{{ fm_foo }}`' to be undefined.
+in the content template '`tmpl.from_dir_content`' will generate the variable
+'`fm_title`' which can then be used in the corresponding
+'`tmpl.from_dir_filename`' filename template. '`{{ fm_* }}`' variables are
+generated dynamically. This means, a YAML front-matter variable '`foo:`' in a
+note will generate a '`{{ fm_foo }}`' template variable. On the other hand, a
+missing '`foo:`' will cause '`{{ fm_foo }}`' to be undefined.
 
 Please note that '`{{ fm_* }}`' variables are only available in filename
 templates and in the '`tmpl.from_clipboard_yaml_content`' content template.
