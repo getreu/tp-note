@@ -187,16 +187,16 @@ impl Cfg {
         let config_default_toml = format!(
             "version = \"{}\"\n\n{}\n\n{}",
             PKG_VERSION.unwrap_or_default(),
-            GUI_CONFIG_DEFAULT_TOML,
-            LIB_CONFIG_DEFAULT_TOML
+            LIB_CONFIG_DEFAULT_TOML,
+            GUI_CONFIG_DEFAULT_TOML
         );
 
         #[cfg(target_family = "windows")]
         let config_default_toml = format!(
             "version = \"{}\"\r\n\r\n{}\r\n\r\n{}",
             PKG_VERSION.unwrap_or_default(),
-            GUI_CONFIG_DEFAULT_TOML,
-            LIB_CONFIG_DEFAULT_TOML
+            LIB_CONFIG_DEFAULT_TOML,
+            GUI_CONFIG_DEFAULT_TOML
         );
 
         config_default_toml
