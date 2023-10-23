@@ -252,6 +252,7 @@ pub struct Filename {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tmpl {
     pub filter_assert_preconditions: Vec<(String, Vec<AssertPrecondition>)>,
+    pub filter_incr_sort_tag: FilterIncrSortTag,
     pub filter_get_lang: Vec<String>,
     pub filter_map_lang: Vec<Vec<String>>,
     pub filter_to_yaml_tab: u64,
@@ -266,6 +267,13 @@ pub struct Tmpl {
     pub annotate_file_content: String,
     pub annotate_file_filename: String,
     pub sync_filename: String,
+}
+
+/// Parameters for the `incr_sort_tag` Tera filter.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FilterIncrSortTag {
+    pub default_if_greater: u8,
+    pub default_if_contains: String,
 }
 
 /// Configuration for the HTML exporter feature, deserialized from the

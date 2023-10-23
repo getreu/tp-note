@@ -157,11 +157,13 @@ pub enum NoteError {
          \tsort_tag: {sort_tag}\n\
          \t---\n\n\
          Only the characters: \"{sort_tag_chars}\", `0..9`\n\
-         and `a..z` (maximum 2 in succession) are allowed."
+         and `a..z` (maximum {filename_sort_tag_letters_in_succession_max} in \
+         succession) are allowed."
     )]
     FrontMatterFieldIsInvalidSortTag {
         sort_tag: String,
         sort_tag_chars: String,
+        filename_sort_tag_letters_in_succession_max: u8,
     },
 
     /// Remedy: index the compound type?

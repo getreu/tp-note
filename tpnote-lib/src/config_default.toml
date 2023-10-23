@@ -114,7 +114,6 @@ extensions = [
 #    configuraion file variables.
 # * `NoOperation` (default): A test that is always satisfied. For internal use
 #    only.
-
 filter_assert_preconditions = [
     [ "fm_title", [ "IsDefined", "IsString", "IsNotEmptyString", "IsNotCompound"], ],
     [ "fm_subtitle", ["IsString", "IsNotCompound"], ],
@@ -126,9 +125,18 @@ filter_assert_preconditions = [
     [ "fm_filename_sync", ["IsBool", "IsNotCompound"], ],
 ]
 
-# A list of language tags, defining languages TP-Note tries to recognize in
-# the filter input. The user's default language subtag, as reported from
-# the operating system, is automatically added to the present list.
+# If the number, the `icr_sort_tag` filter extracted from its input, is 
+# larger than this, then do not increment but return the default value instead.
+# Values bigger than `9` have no effect, as the integers are stored in an `u32`.
+filter_incr_sort_tag.default_if_greater = 2
+
+# If the input of the `icr_sort_tag` filter contains one of these characters,
+# then do not increment but return the default value instead.
+filter_incr_sort_tag.default_if_contains = "-"
+
+# A list of language tags, defining languages the `get_lang` filter tries
+# to identify in its input. The user's default language subtag, as reported 
+# from the operating system, is automatically added to the present list.
 # The language recognition feature is disabled, when the list is empty.
 # It is also disabled, when the user's default language, as reported from
 # the operating system, is not supported by the external language guessing
@@ -192,7 +200,8 @@ from_dir_content = """
 # In general, in filename template, all variables (except `now` and
 # `extension_default` must be filtered by a `sanit` filter.
 from_dir_filename = """
-{%- set tag = now() | date(format='%Y%m%d') -%}
+{%- set tag_default = now() | date(format='%Y%m%d') -%}
+{%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
 {{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ extension_default | prepend(with='.') }}"""
@@ -238,8 +247,13 @@ from_clipboard_yaml_content = """
 # Default filename template used when the stdin or the clipboard contains a
 # string and one of them has a valid YAML header.
 from_clipboard_yaml_filename = """
-{%- set tag = fm_sort_tag | default(value = now() | date(format='%Y%m%d')) \
-   | as_str -%}
+{%- if fm_sort_tag -%}
+  {%- set tag = fm_sort_tag -%}
+{%- else -%}
+  {%- set tag_default = now() | date(format='%Y%m%d') -%}
+  {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
+{%- endif -%}
+
 {{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
@@ -280,10 +294,10 @@ from_clipboard_content = """
 
 """
 
-
 # Default filename template used when the stdin ~ clipboard contains a string.
 from_clipboard_filename = """
-{%- set tag = now() | date(format='%Y%m%d') -%}
+{%- set tag_default = now() | date(format='%Y%m%d') -%}
+{%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
 {{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ extension_default | prepend(with='.') }}"""
@@ -366,9 +380,8 @@ sync_filename = """
 {%- set tag = fm_sort_tag | default(value = path | file_sort_tag) | as_str -%}
 {{ fm_title | default(value='No title') | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
-{{ fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}"""
-
-
+{{ fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}
+"""
 
 [tmpl_html]
 

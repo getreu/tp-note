@@ -1,5 +1,6 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_DOTFILE_MARKER;
+use crate::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX;
 use crate::config::LIB_CFG;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
@@ -36,7 +37,6 @@ lazy_static! {
         let mut tera = Tera::default();
         tera.register_filter("append", append_filter);
         tera.register_filter("cut", cut_filter);
-        tera.register_filter("dir_last_sort_tag", dir_last_sort_tag_filter);
         tera.register_filter("file_copy_counter", file_copy_counter_filter);
         tera.register_filter("file_ext", file_ext_filter);
         tera.register_filter("file_name", file_name_filter);
@@ -46,6 +46,7 @@ lazy_static! {
         tera.register_filter("file_name", file_name_filter);
         tera.register_filter("file_ext", file_ext_filter);
         tera.register_filter("find_last_created_file", find_last_created_file);
+        tera.register_filter("incr_sort_tag", incr_sort_tag_filter);
         tera.register_filter("prepend", prepend_filter);
         tera.register_filter("append", append_filter);
         tera.register_filter("remove", remove_filter);
@@ -607,6 +608,145 @@ fn find_last_created_file<S: BuildHasher>(
     Ok(Value::String(last.to_string()))
 }
 
+/// Expects the path and filename in its input. From the latter the sort-tag
+/// is extracted. Then, it matches all digits from the end of the input's sort-
+/// tag, increments them and replaces the matched digits with the result. If no
+/// numeric digits can be matched, consider alphabetic letters as base 26 number
+/// system and try again. Returns the default value if no match succeeds.
+/// Numbers with more digits than `default_if_greater` are never incremented
+/// (they are most likely dates). Instead the `default` value is returned.
+/// The default value is also returned if the input contains a character
+/// of the set `tmpl.filter_incr_sort_tag.default_if_contains` or if the input
+/// is empty. The path in the input allows to check if the resulting sort-tag
+/// exsists on disk already. If this is the case, a subcategory is appended to
+/// the resulting sort-tag.
+/// All input types are `Value::String`. The output type is `Value::String()`.
+fn incr_sort_tag_filter<S: BuildHasher>(
+    value: &Value,
+    args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let input = try_get_value!("incr_sort_tag", "value", String, value);
+
+    let mut default = String::new();
+    if let Some(d) = args.get("default") {
+        default = try_get_value!("incr_sort_tag", "default", String, d);
+    };
+
+    // Extract path and sort-tag.
+    let input = Path::new(&input);
+    let input_sort_tag = input.disassemble().0;
+    if input_sort_tag.is_empty() {
+        return Ok(Value::String(default));
+    }
+    let input_path = input.parent().unwrap_or(Path::new(""));
+
+    // Early return if precondition fails.
+    let lib_cfg = LIB_CFG.read_recursive();
+    let default_if_contains = &lib_cfg.tmpl.filter_incr_sort_tag.default_if_contains;
+    if input_sort_tag
+        .chars()
+        .any(|c| default_if_contains.contains(c))
+    {
+        return Ok(Value::String(default));
+    };
+
+    // Start analysing the input.
+    let (prefix, digits) = match input_sort_tag.rfind(|c: char| !c.is_ascii_digit()) {
+        Some(idx) => (&input_sort_tag[..idx + 1], &input_sort_tag[idx + 1..]),
+        None => ("", input_sort_tag),
+    };
+
+    // Search for digits
+    let mut output_sort_tag = if !digits.is_empty() {
+        // Return early if this number is too big.
+        const DIGITS_MAX: usize = u32::MAX.ilog10() as usize; // 9
+        if digits.len() > DIGITS_MAX
+            || digits.len() > lib_cfg.tmpl.filter_incr_sort_tag.default_if_greater as usize
+        {
+            return Ok(Value::String(default));
+        }
+
+        // Convert string to n base 10.
+        let mut n = match digits.parse::<u32>() {
+            Ok(n) => n,
+            _ => return Ok(Value::String(default)),
+        };
+
+        n += 1;
+
+        let mut res = n.to_string();
+        if res.len() < digits.len() {
+            let padding = "0".repeat(digits.len() - res.len());
+            res = format!("{}{}", padding, res);
+        }
+
+        // Assemble sort-tag.
+        prefix.to_string() + &res
+    } else {
+        //
+        // Search for letters as digits
+        let (prefix, letters) = match input_sort_tag.rfind(|c: char| !c.is_ascii_lowercase()) {
+            Some(idx) => (&input_sort_tag[..idx + 1], &input_sort_tag[idx + 1..]),
+            None => ("", input_sort_tag),
+        };
+
+        if !letters.is_empty() {
+            const LETTERS_BASE: u32 = 26;
+            const LETTERS_MAX: usize = (u32::MAX.ilog2() / (LETTERS_BASE.ilog2() + 1)) as usize; // 6=31/(4+1)
+
+            // Return early if this number is too big.
+            if letters.len() > LETTERS_MAX
+                || letters.len() > FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX as usize
+                || letters.len() > lib_cfg.tmpl.filter_incr_sort_tag.default_if_greater as usize
+            {
+                return Ok(Value::String(default));
+            }
+
+            // Interpret letters as base LETTERS_BASE and convert to int.
+            let mut n = letters.chars().fold(0, |acc, c| {
+                LETTERS_BASE * acc + (c as u8).saturating_sub(b'a') as u32
+            });
+
+            n += 1;
+
+            // Convert back to letters base LETTERS_BASE.
+            let mut res = String::new();
+            while n > 0 {
+                let c = char::from_u32('a' as u32 + n.rem_euclid(LETTERS_BASE)).unwrap_or_default();
+                n = n.div_euclid(LETTERS_BASE);
+                res = format!("{}{}", c, res);
+            }
+            if res.len() < letters.len() {
+                let padding = "a".repeat(letters.len() - res.len());
+                res = format!("{}{}", padding, res);
+            }
+
+            // Assemble sort-tag.
+            prefix.to_string() + &res
+        } else {
+            default
+        }
+    };
+
+    // Check for a free slot, branch if not free.
+    if input_path.has_file_with_sort_tag(&output_sort_tag) {
+        output_sort_tag = input_sort_tag.to_string();
+    }
+    while input_path.has_file_with_sort_tag(&output_sort_tag) {
+        if output_sort_tag
+            .chars()
+            .last()
+            .is_some_and(|c| c.is_ascii_digit())
+        {
+            output_sort_tag.push('a')
+        } else {
+            output_sort_tag.push('1')
+        }
+    }
+
+    Ok(Value::String(output_sort_tag))
+}
+
 /// A Tera filter that takes a map of variables/values and removes a key/value
 /// pair with the parameter `remove(key="<var-name>").
 /// The input type must be `Value::Object()`, the parameter must be
@@ -712,7 +852,7 @@ fn get_lang_filter<S: BuildHasher>(
 /// `tmpl.filter_map_lang`.
 /// An input value without mapping definition is passed through.
 /// When the optional parameter `default` is given, e.g.
-/// `map_lang(default=val)`, an empty input string is mapped to `val`.  
+/// `map_lang(default=val)`, an empty input string is mapped to `val`.
 /// All input types must be `Value::String()`, the output type is
 /// `Value::String(0)`
 fn map_lang_filter<S: BuildHasher>(
@@ -1029,6 +1169,78 @@ mod tests {
             markup_to_html_filter(&input, &args).unwrap(),
             Value::String(expected)
         );
+    }
+
+    #[test]
+    fn test_incr_sort_tag_filter() {
+        let result = incr_sort_tag_filter(&to_value("dir/19-Note.md").unwrap(), &HashMap::new());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("20").unwrap());
+
+        let result = incr_sort_tag_filter(&to_value("Note.md").unwrap(), &HashMap::new());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("").unwrap());
+
+        let result = incr_sort_tag_filter(&to_value("29-Note.md").unwrap(), &HashMap::new());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("30").unwrap());
+
+        let result = incr_sort_tag_filter(&to_value("02-Note.md").unwrap(), &HashMap::new());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("03").unwrap());
+
+        // let result = incr_sort_tag_filter(&to_value("cz-Note.md").unwrap(), &HashMap::new());
+        // assert!(result.is_ok());
+        // assert_eq!(result.unwrap(), to_value("da").unwrap());
+
+        // let result = incr_sort_tag_filter(&to_value("2cz-Note.md").unwrap(), &HashMap::new());
+        // assert!(result.is_ok());
+        // assert_eq!(result.unwrap(), to_value("2da").unwrap());
+
+        // let result = incr_sort_tag_filter(&to_value("2acz-Note.md").unwrap(), &HashMap::new());
+        // assert!(result.is_ok());
+        // assert_eq!(result.unwrap(), to_value("2ada").unwrap());
+
+        // No input.
+        let mut args = HashMap::new();
+        args.insert("default".to_string(), to_value("my default.md").unwrap());
+        let result = incr_sort_tag_filter(&to_value("-Note.md").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
+
+        // Too big.
+        let mut args = HashMap::new();
+        args.insert("default".to_string(), to_value("my default.md").unwrap());
+        let result = incr_sort_tag_filter(&to_value("10000000000-Note.md").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
+
+        // Too many digits.
+        let mut args = HashMap::new();
+        args.insert("default".to_string(), to_value("my default.md").unwrap());
+        let result = incr_sort_tag_filter(&to_value("013-Note.md").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
+
+        // Too big.
+        let mut args = HashMap::new();
+        args.insert("default".to_string(), to_value("my default.md").unwrap());
+        let result = incr_sort_tag_filter(&to_value("aaafbaz-Note.md").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
+
+        // // Too many digits.
+        // let mut args = HashMap::new();
+        // args.insert("default".to_string(), to_value("my default.md").unwrap());
+        // let result = incr_sort_tag_filter(&to_value("aaf-Note.md").unwrap(), &args);
+        // assert!(result.is_ok());
+        // assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
+
+        let mut args = HashMap::new();
+        args.insert("default".to_string(), to_value("my default.md").unwrap());
+        let result = incr_sort_tag_filter(&to_value("23-01-23-Note.md").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
     }
 
     #[test]
