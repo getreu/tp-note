@@ -34,17 +34,12 @@ lazy_static! {
 /// Tera object with custom functions registered.
     pub static ref TERA: Tera = {
         let mut tera = Tera::default();
-        tera.register_filter("to_yaml", to_yaml_filter);
-        tera.register_filter("to_html", to_html_filter);
-        tera.register_filter("markup_to_html", markup_to_html_filter);
-        tera.register_filter("sanit", sanit_filter);
-        tera.register_filter("link_text", link_text_filter);
-        tera.register_filter("link_text_picky", link_text_picky_filter);
-        tera.register_filter("link_dest", link_dest_filter);
-        tera.register_filter("link_title", link_title_filter);
-        tera.register_filter("heading", heading_filter);
+        tera.register_filter("append", append_filter);
         tera.register_filter("cut", cut_filter);
-        tera.register_filter("trim_file_sort_tag", trim_file_sort_tag_filter);
+        tera.register_filter("dir_last_sort_tag", dir_last_sort_tag_filter);
+        tera.register_filter("file_copy_counter", file_copy_counter_filter);
+        tera.register_filter("file_ext", file_ext_filter);
+        tera.register_filter("file_name", file_name_filter);
         tera.register_filter("file_sort_tag", file_sort_tag_filter);
         tera.register_filter("file_stem", file_stem_filter);
         tera.register_filter("file_copy_counter", file_copy_counter_filter);
@@ -56,7 +51,20 @@ lazy_static! {
         tera.register_filter("remove", remove_filter);
         tera.register_filter("insert", insert_filter);
         tera.register_filter("get_lang", get_lang_filter);
+        tera.register_filter("heading", heading_filter);
+        tera.register_filter("insert", insert_filter);
+        tera.register_filter("link_dest", link_dest_filter);
+        tera.register_filter("link_text", link_text_filter);
+        tera.register_filter("link_text_picky", link_text_picky_filter);
+        tera.register_filter("link_title", link_title_filter);
         tera.register_filter("map_lang", map_lang_filter);
+        tera.register_filter("markup_to_html", markup_to_html_filter);
+        tera.register_filter("prepend", prepend_filter);
+        tera.register_filter("remove", remove_filter);
+        tera.register_filter("sanit", sanit_filter);
+        tera.register_filter("to_html", to_html_filter);
+        tera.register_filter("to_yaml", to_yaml_filter);
+        tera.register_filter("trim_file_sort_tag", trim_file_sort_tag_filter);
         tera
     };
 }
