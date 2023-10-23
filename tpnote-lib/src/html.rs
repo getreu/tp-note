@@ -106,6 +106,7 @@ trait Hyperlink {
     fn decode_ampersand_and_percent(&mut self);
 
     /// True if the value is a local link.
+    #[allow(clippy::ptr_arg)]
     fn is_local_fn(value: &Cow<str>) -> bool;
 
     /// Strips a possible scheme in local `dest` (`Link::Text2Dest`),
@@ -344,7 +345,7 @@ impl<'a> Hyperlink for Link<'a> {
             _ => return Ok(()),
         };
 
-        if !<Link as Hyperlink>::is_local_fn(&shorthand_link) {
+        if !<Link as Hyperlink>::is_local_fn(shorthand_link) {
             return Ok(());
         }
 
