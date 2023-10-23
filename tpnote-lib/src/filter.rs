@@ -50,6 +50,7 @@ lazy_static! {
         tera.register_filter("file_copy_counter", file_copy_counter_filter);
         tera.register_filter("file_name", file_name_filter);
         tera.register_filter("file_ext", file_ext_filter);
+        tera.register_filter("find_last_created_file", find_last_created_file);
         tera.register_filter("prepend", prepend_filter);
         tera.register_filter("append", append_filter);
         tera.register_filter("remove", remove_filter);
@@ -573,6 +574,29 @@ fn file_ext_filter<S: BuildHasher>(
         .to_owned();
 
     Ok(Value::String(ext))
+}
+
+/// A Tera filter that takes a directory path and returns the alphabetically
+/// last sort-tag of all Tp-Note documents in that directory.
+/// The filter returns the empty string if none was found.
+/// The input type must be `Value::String()`, the output type is
+/// `Value::String()`.
+fn find_last_created_file<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let p_str = try_get_value!("dir_last_created", "value", String, value);
+
+    let p = Path::new(&p_str);
+    let last = match p.find_last_created_file() {
+        Some(filename) => Path::join(p, Path::new(&filename))
+            .to_str()
+            .unwrap()
+            .to_string(),
+        None => String::new(),
+    };
+
+    Ok(Value::String(last.to_string()))
 }
 
 /// A Tera filter that takes a map of variables/values and removes a key/value

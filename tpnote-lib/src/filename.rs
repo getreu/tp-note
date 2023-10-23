@@ -10,6 +10,7 @@ use crate::markup_language::MarkupLanguage;
 use std::mem::swap;
 use std::path::Path;
 use std::path::PathBuf;
+use std::time::SystemTime;
 
 /// Extents `PathBuf` with methods dealing with paths to Tp-Note files.
 pub trait NotePathBuf {
@@ -237,6 +238,13 @@ pub trait NotePath {
 
     /// Check if a `Path` points to a file with a "wellformed" filename.
     fn has_wellformed_filename(&self) -> bool;
+
+    /// Get the filename of the last created Tp-Note file in the directory
+    /// `self`. If more files have the same creation date, choose the
+    /// lexicographical last sort-tag in the current directory. Files without
+    /// sort tag are ignored.
+    /// <https://doc.rust-lang.org/std/cmp/trait.Ord.html#lexicographical-comparison>
+    fn find_last_created_file(&self) -> Option<String>;
 }
 
 impl NotePath for Path {
@@ -331,6 +339,43 @@ impl NotePath for Path {
             && ext.split_whitespace().count() == 1;
 
         is_filename && (is_dot_file || has_extension)
+    }
+
+    fn find_last_created_file(&self) -> Option<String> {
+        if let Ok(files) = self.read_dir() {
+            // If more than one file starts with `sort_tag`, retain the
+            // alphabetic first.
+            let mut filename_max = String::new();
+            let mut ctime_max = SystemTime::UNIX_EPOCH;
+            for file in files.flatten() {
+                let ctime = file
+                    .metadata()
+                    .ok()
+                    .and_then(|md| md.created().ok())
+                    .unwrap_or(SystemTime::UNIX_EPOCH);
+                let filename = file.file_name();
+                let filename = filename.to_str().unwrap();
+                if filename.is_empty() || !filename.has_tpnote_ext() {
+                    continue;
+                }
+
+                if ctime > ctime_max
+                    || (ctime == ctime_max
+                        && filename.split_sort_tag(false).0 > filename_max.split_sort_tag(false).0)
+                {
+                    filename_max = filename.to_string();
+                    ctime_max = ctime;
+                }
+            } // End of loop.
+              // Found, return result
+            if !filename_max.is_empty() {
+                Some(filename_max.to_string())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 }
 
