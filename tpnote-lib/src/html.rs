@@ -17,6 +17,20 @@ use std::{
 
 pub(crate) const HTML_EXT: &str = ".html";
 
+/// A local path can carry a format string at the end. This is the separator
+/// character.
+const FORMAT_SEPARATOR: char = '?';
+
+/// A format string can be separated in a _from_ and _to_ part. This
+/// optional separator is placed after `FORMAT_SEPARATOR` and separates
+/// the _from_ and _to_ pattern.
+const FROM_TO_SEPARATOR: char = ':';
+
+/// A local path can carry a format string at the end.
+/// This marker must follow directly the `FORMAT_SEPARATOR` and shows only
+/// the sort-tag of the path.
+const FORMAT_ONLY_SORT_TAG: &str = "?";
+
 /// If `rewrite_rel_path` and `dest` is relative, concatenate `docdir` and
 /// `dest`, then strip `root_path` from the left before returning.
 /// If not `rewrite_rel_path` and `dest` is relative, return `dest`.
@@ -109,24 +123,25 @@ trait Hyperlink {
     #[allow(clippy::ptr_arg)]
     fn is_local_fn(value: &Cow<str>) -> bool;
 
-    /// Strips a possible scheme in local `dest` (`Link::Text2Dest`),
-    /// or both `Link::Image2Dest`. No action if not local.
-    /// `source` (`Link::Image`)..
+    /// * `Link::Text2Dest`: strips a possible scheme in local `dest`.
+    /// * `Link::Image2Dest`: strip local scheme in `dest`.
+    /// * `Link::Image`: strip local scheme in `src`.
+    ///  No action if not local.
     fn strip_local_scheme(&mut self);
 
-    /// Helper function that strips a possible scheme in `input`
-    /// and returns the result.
+    /// Helper function that strips a possible scheme in `input`.
     fn strip_scheme_fn(input: &mut Cow<str>);
 
     /// True if the link is:
     /// * `Link::Text2Dest` and the link text equals the link destination, or
-    /// * `Link::Image` and the links `alt` equals the the link source.
-    /// Precondition: `decode_html_escape_and_percent()` must have been
-    /// Executed.
+    /// * `Link::Image` and the links `alt` equals the link source.
+    /// WARNING: place this test after `decode_html_escape_and_percent()`
+    /// and before: `rebase_local_link`, `expand_shorthand_link`,
+    /// `rewrite_autolink` and `apply_format_attribute`.
     fn is_autolink(&self) -> bool;
 
-    /// Member function converting the relative local URLs in `self`.
-    /// If successful, we return `Ok(Some(URL))`, otherwise
+    /// A method that converts the relative URLs (local links) in `self`.
+    /// If successful, it returns `Ok(Some(URL))`, otherwise
     /// `Err(NoteError::InvalidLocalLink)`.
     /// If `self` contains an absolute URL, no conversion is performed and the
     /// return value is `Ok(())`.
@@ -166,38 +181,43 @@ trait Hyperlink {
     /// tag as filename, expand the latter to a full filename.
     /// Otherwise, no action.
     /// This method accesses the filesystem. Therefore `root_path`
-    /// is needed.
+    /// is needed as parameter.
     fn expand_shorthand_link(&mut self, root_path: &Path) -> Result<(), NoteError>;
 
-    /// Extracts some substring in `dest`  (`Link::Text2Dest`) or
-    /// `source` (`Link::Image`), copies it and overwrites `text`
-    /// (`Link::Text2Dest`) or `alt` (`Link::Image`).
-    /// The scheme is removed while copying.
-    /// For paths in relative URLs only the file stem (without sort-tag,
-    /// copy-counter and extension) is copied.
-    /// WARNING: only execute this method if you have asserted before
-    /// with `is_autolink()` that this is really an autolink.
+    /// This removes a possible scheme in `text`.
+    /// Call this method only, when you sure that this
+    /// is an autolink by testing with `is_autolink()`.
     fn rewrite_autolink(&mut self);
+
+    /// A formatting attribute is a format string starting with `?  followed
+    /// by one or two patterns. It is appended to to `dest` or `src`.
+    /// Processing details:
+    /// 1. Extract some a possible formatting attribute string in `dest`
+    /// (`Link::Text2Dest`) or `src` (`Link::Image`) after `?`.
+    /// 2. Extract the _path_ before `?` in `dest` or `src`.
+    /// 3. Apply the formatting to _path_.
+    /// 4. Store the result by overwriting `text` or `alt`.
+    fn apply_format_attribute(&mut self);
 
     /// If the link destination `dest` is a local path, return it.
     /// Otherwise return `None`.
-    /// Acts an `Link:Text2Dest` and `Link::Imgage2Dest` only.
+    /// Acts on `Link:Text2Dest` and `Link::Imgage2Dest` only.
     fn get_local_link_dest_path(&self) -> Option<&Path>;
 
-    /// If the image destination `src` is local path, return it.
+    /// If `dest` or `src` is a local path, return it.
     /// Otherwise return `None`.
-    /// Acts an `Link:Image` and `Link::Imgage2Dest` only.
+    /// Acts an `Link:Image` and `Link::Image2Dest` only.
     fn get_local_link_src_path(&self) -> Option<&Path>;
 
-    /// If the extension of a local path is some Tp-Note extension,
-    /// append `.html` to path. Otherwise silently return.
-    /// Acts an `Link:Text2Dest` solely.
+    /// If the extension of a local path in `dest` is some Tp-Note
+    /// extension, append `.html` to the path. Otherwise silently return.
+    /// Acts on `Link:Text2Dest` only.
     fn append_html_ext(&mut self);
 
-    /// Renders `Link::Text2Dest` and `Link::Image` to HTML.
-    /// Some characters are HTML escape encoded. URLs are not
-    /// percent encoded, as the result will be inserted in an
-    /// UTF-8 template. So percent encoding is not necessary.
+    /// Renders `Link::Text2Dest`, `Link::Image2Dest` and `Link::Image`
+    /// to HTML. Some characters in `dest` or `src` might be HTML
+    /// escape encoded. This does not percent encode at all, because
+    /// we know, that the result will be inserted in an UTF-8 template.
     fn to_html(&self) -> String;
 }
 
@@ -349,67 +369,47 @@ impl<'a> Hyperlink for Link<'a> {
             return Ok(());
         }
 
-        let shorthand_path = Path::new(shorthand_link.as_ref());
+        let (shorthand_str, shorthand_format) = match shorthand_link.split_once(FORMAT_SEPARATOR) {
+            Some((path, fmt)) => (path, Some(fmt)),
+            None => (shorthand_link.as_ref(), None),
+        };
 
-        if shorthand_link.as_ref().is_valid_sort_tag() {
-            let sort_tag = shorthand_link.as_ref();
+        let shorthand_path = Path::new(shorthand_str);
+
+        if let Some(sort_tag) = shorthand_str.filename_is_valid_sort_tag() {
             // Concatenate `root_path` and `shorthand_path`.
             let shorthand_path = shorthand_path
                 .strip_prefix(MAIN_SEPARATOR_STR)
                 .unwrap_or(shorthand_path);
-            let mut abspath = root_path.to_path_buf();
-            abspath.push(shorthand_path);
+            let mut full_shorthand_path = root_path.to_path_buf();
+            full_shorthand_path.push(shorthand_path);
 
             // Search for the file.
-            let mut found = None;
-            if let Some(dir) = abspath.parent() {
-                if let Ok(files) = dir.read_dir() {
-                    // If more than one file starts with `sort_tag`, retain the
-                    // alphabetic first.
-                    let mut minimum = PathBuf::new();
-                    'file_loop: for file in files.flatten() {
-                        let file = file.path();
-                        if !(*file).has_tpnote_ext() {
-                            continue 'file_loop;
-                        }
-                        // Does this sort-tag short link correspond to
-                        // any sort-tag of a file in the same directory?
-                        if file.parent() == abspath.parent() && file.disassemble().0 == sort_tag {
-                            // Before the first assignment `minimum` is empty.
-                            // Finds the minimum.
-                            if minimum == Path::new("") || minimum > file {
-                                minimum = file;
-                            }
-                        }
-                    } // End of loop.
-                    if minimum != Path::new("") {
-                        log::debug!(
-                            "File `{}` referenced by sort-tag match `{}`.",
-                            minimum.to_str().unwrap_or_default(),
-                            sort_tag,
-                        );
-                        // Found, return result
-                        found = Some(minimum)
-                    }
-                }
-            };
+            let found = full_shorthand_path
+                .parent()
+                .and_then(|dir| dir.find_file_with_sort_tag(sort_tag));
 
             if let Some(path) = found {
                 // We prepended `root_path` before, we can safely strip it
                 // and unwrap.
-                let lang_link = path.strip_prefix(root_path).unwrap();
+                let found_link = path.strip_prefix(root_path).unwrap();
                 // Prepend `/`.
-                let lang_link = Path::new(MAIN_SEPARATOR_STR)
-                    .join(lang_link)
+                let mut found_link = Path::new(MAIN_SEPARATOR_STR)
+                    .join(found_link)
                     .to_str()
                     .unwrap_or_default()
                     .to_string();
 
+                if let Some(fmt) = shorthand_format {
+                    found_link.push(FORMAT_SEPARATOR);
+                    found_link.push_str(fmt);
+                }
+
                 // Store result.
-                let _ = std::mem::replace(shorthand_link, Cow::Owned(lang_link));
+                let _ = std::mem::replace(shorthand_link, Cow::Owned(found_link));
             } else {
                 return Err(NoteError::CanNotExpandShorthandLink {
-                    path: abspath.to_string_lossy().into_owned(),
+                    path: full_shorthand_path.to_string_lossy().into_owned(),
                 });
             }
         }
@@ -418,6 +418,17 @@ impl<'a> Hyperlink for Link<'a> {
 
     //
     fn rewrite_autolink(&mut self) {
+        let text = match self {
+            Link::Text2Dest(text, _, _) => text,
+            Link::Image(alt, _) => alt,
+            _ => return,
+        };
+
+        <Link as Hyperlink>::strip_scheme_fn(text);
+    }
+
+    //
+    fn apply_format_attribute(&mut self) {
         // Is this an absolute URL?
 
         let (text, dest) = match self {
@@ -426,27 +437,58 @@ impl<'a> Hyperlink for Link<'a> {
             _ => return,
         };
 
-        let _ = std::mem::replace(text, dest.clone());
-
-        Self::strip_scheme_fn(text);
-
-        if <Link as Hyperlink>::is_local_fn(dest) {
-            let short_text = Path::new(text.as_ref());
-            let short_text = if short_text.has_wellformed_filename() && short_text.has_tpnote_ext()
-            {
-                // Show only the stem (without sort-tag) as link text.
-                short_text.disassemble().2
-            } else {
-                // Strip the path and show the complete filename.
-                short_text
-                    .file_name()
-                    .unwrap_or_default()
-                    .to_str()
-                    .unwrap_or_default()
-            };
-            // Store the result.
-            let _ = std::mem::replace(text, Cow::Owned(short_text.to_string()));
+        if !<Link as Hyperlink>::is_local_fn(dest) {
+            return;
         }
+
+        // We assume, that `dest` had been expanded already, so we can extract
+        // the full filename here.
+        // If ever it ends with a format string we it it. Otherwise we quit
+        // the method and do nothing.
+        let (path, format) = match dest.split_once(FORMAT_SEPARATOR) {
+            Some(s) => s,
+            None => return,
+        };
+
+        let mut short_text = Path::new(path)
+            .file_name()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default();
+
+        match format.split_once(FROM_TO_SEPARATOR) {
+            // `?`, no `:`
+            None => {
+                match format {
+                    FORMAT_ONLY_SORT_TAG => short_text = Path::new(path).disassemble().0,
+                    // Strip sort-tag, copy counter and ext, keep stem.
+                    "" => short_text = Path::new(path).disassemble().2,
+                    _ => {
+                        short_text = Path::new(path).disassemble().2;
+                        if let Some(idx) = short_text.rfind(format) {
+                            short_text = &short_text[..idx];
+                        };
+                    }
+                }
+            }
+            // `?` and `:`
+            Some((from, to)) => {
+                if !from.is_empty() {
+                    if let Some(idx) = short_text.find(from) {
+                        short_text = &short_text[(idx + from.len())..];
+                    };
+                }
+                if !to.is_empty() {
+                    if let Some(idx) = short_text.rfind(to) {
+                        short_text = &short_text[..idx];
+                    };
+                }
+            }
+        }
+        // no `?`
+        // Store the result.
+        let _ = std::mem::replace(text, Cow::Owned(short_text.to_string()));
+        let _ = std::mem::replace(dest, Cow::Owned(path.to_string()));
     }
 
     //
@@ -618,10 +660,15 @@ pub fn rewrite_links(
         html_out.push_str(skipped);
         rest = remaining;
 
+        // Check if `text` = `dest`.
+        let mut link_is_autolink = link.is_autolink();
+
         // Percent decode link destination.
         link.decode_ampersand_and_percent();
 
-        let link_is_autolink = link.is_autolink();
+        // Check again if `text` = `dest`.
+        link_is_autolink = link_is_autolink || link.is_autolink();
+
         link.strip_local_scheme();
 
         // Rewrite the local link.
@@ -640,7 +687,9 @@ pub fn rewrite_links(
 
         if link_is_autolink {
             link.rewrite_autolink();
-        };
+        }
+
+        link.apply_format_attribute();
 
         if let Some(dest_path) = link.get_local_link_dest_path() {
             allowed_local_links.write().insert(dest_path.to_path_buf());
@@ -852,7 +901,7 @@ mod tests {
     }
 
     #[test]
-    fn strip_scheme() {
+    fn strip_local_scheme() {
         let mut input = Link::Text2Dest(
             Cow::from("xyz"),
             Cow::from("https://getreu.net"),
@@ -1072,9 +1121,10 @@ mod tests {
             .rebase_local_link(root_path, Path::new("/my/path"), true, false)
             .unwrap();
         input.rewrite_autolink();
+        input.apply_format_attribute();
         let outpath = input.get_local_link_dest_path().unwrap();
         let output = input.to_html();
-        let expected = "<a href=\"/path/dir/3.0-my note.md\">my note</a>";
+        let expected = "<a href=\"/path/dir/3.0-my note.md\">dir/3.0-my note.md</a>";
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/path/dir/3.0-my note.md"));
 
@@ -1089,13 +1139,14 @@ mod tests {
             .rebase_local_link(root_path, Path::new("/my/path"), true, false)
             .unwrap();
         input.rewrite_autolink();
+        input.apply_format_attribute();
         let outpath = input.get_local_link_dest_path().unwrap();
         let output = input.to_html();
-        let expected = "<a href=\"/path/dir/3.0\">3.0</a>";
+        let expected = "<a href=\"/path/dir/3.0\">dir/3.0</a>";
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/path/dir/3.0"));
 
-        // The link with The link text may contain inline content.
+        // The link text contains inline content.
         let root_path = Path::new("/my");
         let mut input = take_link(
             "<a href=\
@@ -1137,8 +1188,86 @@ mod tests {
 
         //
         let mut input = Link::Text2Dest(
+            Cow::from("/dir/3.0"),
+            Cow::from("/dir/3.0-My note.md"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("/dir/3.0"),
+            Cow::from("/dir/3.0-My note.md"),
+            Cow::from("title"),
+        );
+        input.rewrite_autolink();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("tpnote:/dir/3.0"),
+            Cow::from("/dir/3.0-My note.md"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("/dir/3.0"),
+            Cow::from("/dir/3.0-My note.md"),
+            Cow::from("title"),
+        );
+        input.rewrite_autolink();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("tpnote:/dir/3.0"),
+            Cow::from("/dir/3.0-My note.md?"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("/dir/3.0"),
+            Cow::from("/dir/3.0-My note.md?"),
+            Cow::from("title"),
+        );
+        input.rewrite_autolink();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
             Cow::from("/dir/3.0-My note.md"),
             Cow::from("/dir/3.0-My note.md"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("/dir/3.0-My note.md"),
+            Cow::from("/dir/3.0-My note.md"),
+            Cow::from("title"),
+        );
+        input.rewrite_autolink();
+        let output = input;
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_apply_format_attribute() {
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("tpnote:/dir/3.0"),
+            Cow::from("/dir/3.0-My note.md"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("tpnote:/dir/3.0"),
+            Cow::from("/dir/3.0-My note.md"),
+            Cow::from("title"),
+        );
+        input.apply_format_attribute();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("does not matter"),
+            Cow::from("/dir/3.0-My note.md?"),
             Cow::from("title"),
         );
         let expected = Link::Text2Dest(
@@ -1146,29 +1275,111 @@ mod tests {
             Cow::from("/dir/3.0-My note.md"),
             Cow::from("title"),
         );
-        input.rewrite_autolink();
+        input.apply_format_attribute();
+        let output = input;
+        assert_eq!(output, expected);
+
+        let mut input = Link::Text2Dest(
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
+            Cow::from("title"),
+        );
+        input.apply_format_attribute();
         let output = input;
         assert_eq!(output, expected);
 
         //
         let mut input = Link::Text2Dest(
-            Cow::from("/dir/3.0"),
-            Cow::from("/dir/3.0"),
+            Cow::from("does not matter"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg?"),
             Cow::from("title"),
         );
-        let expected = Link::Text2Dest(Cow::from("3.0"), Cow::from("/dir/3.0"), Cow::from("title"));
-        input.rewrite_autolink();
+        let expected = Link::Text2Dest(
+            Cow::from("My note--red_blue_green"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
+            Cow::from("title"),
+        );
+        input.apply_format_attribute();
         let output = input;
         assert_eq!(output, expected);
 
         //
         let mut input = Link::Text2Dest(
-            Cow::from("tpnote:3.0"),
-            Cow::from("3.0"),
+            Cow::from("does not matter"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg?--"),
             Cow::from("title"),
         );
-        let expected = Link::Text2Dest(Cow::from("3.0"), Cow::from("3.0"), Cow::from("title"));
-        input.rewrite_autolink();
+        let expected = Link::Text2Dest(
+            Cow::from("My note"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
+            Cow::from("title"),
+        );
+        input.apply_format_attribute();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("does not matter"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg?_"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("My note--red_blue"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
+            Cow::from("title"),
+        );
+        input.apply_format_attribute();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("does not matter"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg?:"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("3.0-My note--red_blue_green.jpg"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
+            Cow::from("title"),
+        );
+        input.apply_format_attribute();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("does not matter"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg?--:."),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("red_blue_green"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
+            Cow::from("title"),
+        );
+        input.apply_format_attribute();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("does not matter"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg?_:_"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("blue"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
+            Cow::from("title"),
+        );
+        input.apply_format_attribute();
         let output = input;
         assert_eq!(output, expected);
     }
@@ -1253,8 +1464,7 @@ mod tests {
             def<a href=\"https://getreu.net\">https://getreu.net</a>\
             ghi<img src=\"t m p.jpg\" alt=\"test 1\" />\
             jkl<a href=\"down/../down/my note 1.md\">my note 1</a>\
-            mno<a href=\"http:./down/../dir/my note.md\">\
-            http:./down/../dir/my note.md</a>\
+            mno<a href=\"http:./down/../dir/my note.md\">http:./down/../dir/my note.md</a>\
             pqr<a href=\"http:/down/../dir/my note.md\">\
             http:/down/../dir/my note.md</a>\
             stu<a href=\"http:/../dir/underflow/my note.md\">\
@@ -1266,8 +1476,8 @@ mod tests {
             def<a href=\"https://getreu.net\">getreu.net</a>\
             ghi<img src=\"/abs/note path/t m p.jpg\" alt=\"test 1\">\
             jkl<a href=\"/abs/note path/down/my note 1.md\">my note 1</a>\
-            mno<a href=\"/abs/note path/dir/my note.md\">my note</a>\
-            pqr<a href=\"/dir/my note.md\">my note</a>\
+            mno<a href=\"/abs/note path/dir/my note.md\">./down/../dir/my note.md</a>\
+            pqr<a href=\"/dir/my note.md\">/down/../dir/my note.md</a>\
             stu<i>&lt;INVALID: /../dir/underflow/my note.md&gt;</i>\
             vwx<i>&lt;INVALID: ../../../not allowed dir/my note.md&gt;</i>"
             .to_string();

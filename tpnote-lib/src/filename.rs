@@ -249,6 +249,10 @@ pub trait NotePath {
     /// Checks if the directory in `self` has a Tp-Note file starting with the
     /// `sort_tag`.
     fn has_file_with_sort_tag(&self, sort_tag: &str) -> bool;
+
+    /// A method that searches the directory in `self` for a Tp-Note
+    /// file with the sort-tag `sort_tag`. It returns the filename.
+    fn find_file_with_sort_tag(&self, sort_tag: &str) -> Option<PathBuf>;
 }
 
 impl NotePath for Path {
@@ -402,6 +406,41 @@ impl NotePath for Path {
         }
         found
     }
+
+    fn find_file_with_sort_tag(&self, sort_tag: &str) -> Option<PathBuf> {
+        let mut found = None;
+
+        if let Ok(files) = self.read_dir() {
+            // If more than one file starts with `sort_tag`, retain the
+            // alphabetic first.
+            let mut minimum = PathBuf::new();
+            'file_loop: for file in files.flatten() {
+                let file = file.path();
+                if !(*file).has_tpnote_ext() {
+                    continue 'file_loop;
+                }
+                // Does this sort-tag short link correspond to
+                // any sort-tag of a file in the same directory?
+                if file.disassemble().0 == sort_tag {
+                    // Before the first assignment `minimum` is empty.
+                    // Finds the minimum.
+                    if minimum == Path::new("") || minimum > file {
+                        minimum = file;
+                    }
+                }
+            } // End of loop.
+            if minimum != Path::new("") {
+                log::debug!(
+                    "File `{}` referenced by sort-tag match `{}`.",
+                    minimum.to_str().unwrap_or_default(),
+                    sort_tag,
+                );
+                // Found, return result
+                found = Some(minimum)
+            }
+        }
+        found
+    }
 }
 
 /// Some private helper functions related to note filenames.
@@ -427,11 +466,12 @@ pub(crate) trait NotePathStr {
     /// `filename_sort_tag_speparator=""`.
     fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str);
 
-    /// Check if the `self` contains only `lib_cfg.filename.sort_tag_chars`.
-    /// The number of lowercase letters in a row is limited by
-    /// `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`.
-    /// If `self` contains a path, it is ignored.
-    fn is_valid_sort_tag(&self) -> bool;
+    /// Check and return the filename in `self`, if it contains
+    /// only `lib_cfg.filename.sort_tag_chars`. The
+    /// number of lowercase letters in a row must not exceed
+    /// `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`. If
+    /// `self` contains a path, it is ignored.
+    fn filename_is_valid_sort_tag(&self) -> Option<&str>;
 }
 
 impl NotePathStr for str {
@@ -526,18 +566,22 @@ impl NotePathStr for str {
         (sort_tag, stem_copy_counter_ext)
     }
 
-    fn is_valid_sort_tag(&self) -> bool {
-        let sort_tag = if let Some((_, filename)) = self.rsplit_once(['\\', '/']) {
+    fn filename_is_valid_sort_tag(&self) -> Option<&str> {
+        let filename = if let Some((_, filename)) = self.rsplit_once(['\\', '/']) {
             filename
         } else {
             self
         };
-        if sort_tag.is_empty() {
-            return false;
+        if filename.is_empty() {
+            return None;
         }
 
         // If the rest is empty, all characters are in `sort_tag`.
-        sort_tag.split_sort_tag(true).1.is_empty()
+        if filename.split_sort_tag(true).1.is_empty() {
+            Some(filename)
+        } else {
+            None
+        }
     }
 }
 
@@ -1003,21 +1047,30 @@ mod tests {
     fn test_is_valid_sort_tag() {
         use super::NotePathStr;
         let f = "20230821";
-        assert!(f.is_valid_sort_tag());
+        assert_eq!(f.filename_is_valid_sort_tag(), Some("20230821"));
+
+        let f = "dir/20230821";
+        assert_eq!(f.filename_is_valid_sort_tag(), Some("20230821"));
+
+        let f = "dir\\20230821";
+        assert_eq!(f.filename_is_valid_sort_tag(), Some("20230821"));
 
         let f = "1_3_2";
-        assert!(f.is_valid_sort_tag());
+        assert_eq!(f.filename_is_valid_sort_tag(), Some("1_3_2"));
 
         let f = "1c2";
-        assert!(f.is_valid_sort_tag());
+        assert_eq!(f.filename_is_valid_sort_tag(), Some("1c2"));
 
         let f = "2023ab";
-        assert!(f.is_valid_sort_tag());
+        assert_eq!(f.filename_is_valid_sort_tag(), Some("2023ab"));
 
         let f = "2023abc";
-        assert!(!f.is_valid_sort_tag());
+        assert_eq!(f.filename_is_valid_sort_tag(), None);
+
+        let f = "dir/2023abc";
+        assert_eq!(f.filename_is_valid_sort_tag(), None);
 
         let f = "2023A";
-        assert!(!f.is_valid_sort_tag());
+        assert_eq!(f.filename_is_valid_sort_tag(), None);
     }
 }
