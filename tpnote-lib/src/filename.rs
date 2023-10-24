@@ -262,21 +262,23 @@ impl NotePath for Path {
         let (sort_tag, stem_copy_counter_ext) =
             sort_tag_stem_copy_counter_ext.split_sort_tag(false);
 
-        let stem_copy_counter = Path::new(stem_copy_counter_ext)
-            .file_stem()
+        let ext = Path::new(stem_copy_counter_ext)
+            .extension()
             .unwrap_or_default()
             .to_str()
             .unwrap_or_default(); // Trim `sort_tag`.
 
-        let ext = if stem_copy_counter == stem_copy_counter_ext {
-            ""
+        let (stem_copy_counter, ext) = if !ext.is_empty()
+            && ext.chars().all(|c| c.is_ascii_alphanumeric())
+        {
+            (
+                // This is a little faster than `stem_copy_counter_ext.file_stem()`.
+                &stem_copy_counter_ext[..stem_copy_counter_ext.len().saturating_sub(ext.len() + 1)],
+                // `ext` is Ok, we keep it.
+                ext,
+            )
         } else {
-            // `Path::new()` is a cost free conversion.
-            Path::new(stem_copy_counter_ext)
-                .extension()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default()
+            (stem_copy_counter_ext, "")
         };
 
         let (stem, copy_counter) = stem_copy_counter.split_copy_counter();
@@ -338,9 +340,8 @@ impl NotePath for Path {
             && filename.split_whitespace().count() == 1;
 
         let has_extension = !ext.is_empty()
-            // Make sure that there is no whitespace.
-            && (ext == ext.trim())
-            && ext.split_whitespace().count() == 1;
+            // Only accept extensions with alphanumeric characters.
+            && ext.chars().all(|c| c.is_ascii_alphanumeric());
 
         is_filename && (is_dot_file || has_extension)
     }
@@ -831,6 +832,28 @@ mod tests {
             "md",
         );
         let p = Path::new("/my/dir/1a2b3abc-my_title--my_subtitle(1).md");
+        let result = p.disassemble();
+        assert_eq!(expected, result);
+
+        let expected = (
+            "1_2_3",
+            "my_title--my_subtitle(1).m d",
+            "my_title--my_subtitle(1).m d",
+            None,
+            "",
+        );
+        let p = Path::new("/my/dir/1_2_3-my_title--my_subtitle(1).m d");
+        let result = p.disassemble();
+        assert_eq!(expected, result);
+
+        let expected = (
+            "1_2_3",
+            "my_title--my_subtitle(1)",
+            "my_title--my_subtitle",
+            Some(1),
+            "",
+        );
+        let p = Path::new("/my/dir/1_2_3-my_title--my_subtitle(1)");
         let result = p.disassemble();
         assert_eq!(expected, result);
     }
