@@ -685,7 +685,7 @@ mod tests {
         );
         let p = Path::new("/my/dir/1_2_3-my_title--my_subtitle(1).md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = (
             "1_2_3",
@@ -696,7 +696,7 @@ mod tests {
         );
         let p = Path::new("/my/dir/1_2_3-my_title--my_subtitle(1)-(9).md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = (
             "2021.04.12",
@@ -707,7 +707,7 @@ mod tests {
         );
         let p = Path::new("/my/dir/2021.04.12-my_title--my_subtitle(1).md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = (
             "",
@@ -718,23 +718,23 @@ mod tests {
         );
         let p = Path::new("/my/dir/2021 04 12 my_title--my_subtitle(1).md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = ("2021-04-12", "", "", None, "");
         let p = Path::new("/my/dir/2021-04-12-");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         // This triggers the bug fixed with v1.14.3.
         let expected = ("2021-04-12", ".dotfile", ".dotfile", None, "");
         let p = Path::new("/my/dir/2021-04-12-'.dotfile");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = ("2021-04-12", "(9).md", "", Some(9), "md");
         let p = Path::new("/my/dir/2021-04-12-(9).md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = (
             "20221030",
@@ -745,7 +745,7 @@ mod tests {
         );
         let p = Path::new("/my/dir/20221030-Some.pdf--Note.md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = (
             "1_2_3",
@@ -756,7 +756,7 @@ mod tests {
         );
         let p = Path::new("/my/dir/1_2_3-my_title--my_subtitle(1).md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = (
             "1_2_3",
@@ -767,7 +767,7 @@ mod tests {
         );
         let p = Path::new("/my/dir/1_2_3-123 my_title--my_subtitle(1).md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = (
             "1_2_3-123",
@@ -778,7 +778,7 @@ mod tests {
         );
         let p = Path::new("/my/dir/1_2_3-123-My_title--my_subtitle(1).md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = (
             "1_2_3",
@@ -789,7 +789,7 @@ mod tests {
         );
         let p = Path::new("/my/dir/1_2_3-'123-my_title--my_subtitle(1).md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = (
             "1_2_3",
@@ -800,7 +800,7 @@ mod tests {
         );
         let p = Path::new("/my/dir/1_2_3-123 my_title--my_subtitle(1).md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = (
             "1_2_3",
@@ -833,7 +833,7 @@ mod tests {
         );
         let p = Path::new("/my/dir/1a2b3abc-my_title--my_subtitle(1).md");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = (
             "1_2_3",
@@ -844,7 +844,7 @@ mod tests {
         );
         let p = Path::new("/my/dir/1_2_3-my_title--my_subtitle(1).m d");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
 
         let expected = (
             "1_2_3",
@@ -855,7 +855,7 @@ mod tests {
         );
         let p = Path::new("/my/dir/1_2_3-my_title--my_subtitle(1)");
         let result = p.disassemble();
-        assert_eq!(expected, result);
+        assert_eq!(result, expected);
     }
 
     #[test]
