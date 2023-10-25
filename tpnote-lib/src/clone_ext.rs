@@ -28,9 +28,11 @@ pub(crate) trait CloneExt<'b> {
 
 impl<'b> CloneExt<'b> for Cow<'b, str> {
     fn shallow_clone(&'b self) -> Cow<'b, str> {
-        match *self {
-            Self::Borrowed(b) => Self::Borrowed(b),
-            Self::Owned(ref o) => Self::Borrowed(o.as_ref()),
-        }
+        // match *self {
+        //     Self::Borrowed(b) => Self::Borrowed(b),
+        //     Self::Owned(ref o) => Self::Borrowed(o.as_ref()),
+        // }
+        // // This is equivalent to:
+        Cow::Borrowed(&**self)
     }
 }
