@@ -245,6 +245,10 @@ pub trait NotePath {
     /// sort tag are ignored.
     /// <https://doc.rust-lang.org/std/cmp/trait.Ord.html#lexicographical-comparison>
     fn find_last_created_file(&self) -> Option<String>;
+
+    /// Checks if the directory in `self` has a Tp-Note file starting with the
+    /// `sort_tag`.
+    fn has_file_with_sort_tag(&self, sort_tag: &str) -> bool;
 }
 
 impl NotePath for Path {
@@ -376,6 +380,26 @@ impl NotePath for Path {
         } else {
             None
         }
+    }
+
+    fn has_file_with_sort_tag(&self, sort_tag: &str) -> bool {
+        let mut found = false;
+        if let Ok(files) = self.read_dir() {
+            for file in files.flatten() {
+                let filename = file.file_name();
+                let filename = filename.to_str().unwrap();
+
+                // Tests in the order of the cost.
+                if filename.starts_with(sort_tag)
+                    && filename.has_tpnote_ext()
+                    && !Path::new(filename).disassemble().0.is_empty()
+                {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        found
     }
 }
 
