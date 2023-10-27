@@ -49,8 +49,15 @@ pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnote.toml";
 /// at the end.
 pub const FILENAME_COPY_COUNTER_MAX: usize = 400;
 
-/// This a dot by definition.
-pub const FILENAME_DOTFILE_MARKER: char = '.';
+/// A filename extension, if prensent, is separated by a dot.
+pub(crate) const FILENAME_EXTENSION_SEPARATOR_DOT: char = '.';
+
+/// A dotfile starts with a dot.
+pub(crate) const FILENAME_DOTFILE_MARKER: char = '.';
+
+/// A sort-tag is allowed to contain letters, but only this
+/// number in a row.
+pub const FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX: u8 = 2;
 
 /// The template variable contains the fully qualified path of the `<path>`
 /// command line argument. If `<path>` points to a file, the variable contains
@@ -277,6 +284,9 @@ pub struct TmplHtml {
 impl LibCfg {
     /// Perform some semantic consistency checks.
     /// * `sort_tag_extra_separator` must NOT be in `sort_tag_chars`.
+    /// * `sort_tag_extra_separator` must NOT be in `0..9`.
+    /// * `sort_tag_extra_separator` must NOT be in `a..z`.
+    /// * `sort_tag_extra_separator` must NOT be in `sort_tag_chars`.
     /// * `sort_tag_extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
     /// * `copy_counter_extra_separator` must be one of
     ///   `sanitize_filename_reader_friendly::TRIM_LINE_CHARS`.
@@ -289,9 +299,10 @@ impl LibCfg {
         if self
             .filename
             .sort_tag_chars
-            .find(self.filename.sort_tag_extra_separator)
-            .is_some()
-            || self.filename.sort_tag_extra_separator == FILENAME_DOTFILE_MARKER
+            .contains(self.filename.sort_tag_extra_separator)
+            || (self.filename.sort_tag_extra_separator == FILENAME_DOTFILE_MARKER)
+            || self.filename.sort_tag_extra_separator.is_ascii_digit()
+            || self.filename.sort_tag_extra_separator.is_ascii_lowercase()
         {
             return Err(LibCfgError::SortTagExtraSeparator {
                 dot_file_marker: FILENAME_DOTFILE_MARKER,
@@ -307,15 +318,13 @@ impl LibCfg {
         // Check for obvious configuration errors.
         // * All characters of `sort_tag_separator` must be in `sort_tag_chars`.
         // * `sort_tag_separator` must NOT start with `FILENAME_DOTFILE_MARKER`.
-        if !self
+        // * `sort_tag_separator` must NOT contain ASCII `0..9` or `a..z`.
+        if !self.filename.sort_tag_separator.chars().all(|c| {
+            c.is_ascii_digit() || c.is_ascii_lowercase() || self.filename.sort_tag_chars.contains(c)
+        }) || self
             .filename
             .sort_tag_separator
-            .chars()
-            .all(|c| self.filename.sort_tag_chars.contains(c))
-            || self
-                .filename
-                .sort_tag_separator
-                .starts_with(FILENAME_DOTFILE_MARKER)
+            .starts_with(FILENAME_DOTFILE_MARKER)
         {
             return Err(LibCfgError::SortTagSeparator {
                 dot_file_marker: FILENAME_DOTFILE_MARKER,
@@ -518,10 +527,12 @@ pub enum AssertPrecondition {
     /// `IsNotCompound`: Assert, that if the variable is defined, its type is
     /// not `Value::Array` or `Value::Object`.
     IsNotCompound,
-    /// `HasOnlySortTagChars`: Assert, that if the variable is defined,
-    ///  the values string representation contains solely characters of the
-    ///  `filename.sort_tag_chars` set.
-    HasOnlySortTagChars,
+    /// `IsValidSortTag`: Assert, that if the variable is defined, the value's
+    ///  string representation contains solely characters of the
+    ///  `filename.sort_tag_chars` set, digits or lowercase letters.
+    ///  The number of lowercase letters in a row is limited by
+    ///  `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`.
+    IsValidSortTag,
     /// `IsTpnoteExtension`: Assert, that if the variable is defined,
     ///  the values string representation is registered in one of the
     ///  `filename.extension_*` configuration file variables.

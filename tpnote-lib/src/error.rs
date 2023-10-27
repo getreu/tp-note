@@ -36,8 +36,8 @@ pub enum LibCfgError {
     #[error(
         "Configuration file error in section `[filename]`:\n\
         \t`sort_tag_extra_separator=\"{extra_separator}\"\n\
-        must not be one of `sort_tag_chars=\"{chars}\"`\n\
-        or `{dot_file_marker}`."
+        must not be one of `sort_tag_chars=\"{chars}\"`,\n\
+        `0..9`, `a..z` or `{dot_file_marker}`."
     )]
     SortTagExtraSeparator {
         dot_file_marker: char,
@@ -62,8 +62,9 @@ pub enum LibCfgError {
     #[error(
         "Configuration file error in section `[filename]`:\n\
         All characters in `sort_tag_separator=\"{separator}\"\n\
-        must be in the set `sort_tag_chars=\"{chars}\"`\n\
-        and `sort_tag_separator` must NOT start with `{dot_file_marker}`."
+        must be in the set `sort_tag_chars=\"{chars}\"`,\n\
+        or in `0..9`, `a..z` and `sort_tag_separator`\n\
+        must NOT start with `{dot_file_marker}`."
     )]
     SortTagSeparator {
         dot_file_marker: char,
@@ -83,7 +84,7 @@ pub enum LibCfgError {
     },
 
     /// Remedy: check the configuration file variable `tmpl.filter_assert_preconditions`.
-    #[error("choose one of: `IsDefined`, `IsString`, `IsNumber`, `IsStringOrNumber`, `IsBool`, `HasOnlySortTagChars`")]
+    #[error("choose one of: `IsDefined`, `IsString`, `IsNumber`, `IsStringOrNumber`, `IsBool`, `IsValidSortTag`")]
     ParseAssertPrecondition,
 
     /// Remedy: check the configuration file variable `arg_default.export_link_rewriting`.
@@ -155,10 +156,10 @@ pub enum NoteError {
          \t---\n\
          \tsort_tag: {sort_tag}\n\
          \t---\n\n\
-         Only the characters: \"{sort_tag_chars}\"\n\
-         are allowed here."
+         Only the characters: \"{sort_tag_chars}\", `0..9`\n\
+         and `a..z` (maximum 2 in succession) are allowed."
     )]
-    FrontMatterFieldHasNotOnlySortTagChars {
+    FrontMatterFieldIsInvalidSortTag {
         sort_tag: String,
         sort_tag_chars: String,
     },

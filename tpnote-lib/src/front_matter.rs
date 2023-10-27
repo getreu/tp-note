@@ -8,6 +8,7 @@ use crate::config::TMPL_VAR_FM_;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::filename::Extension;
+use crate::filename::NotePathStr;
 use std::matches;
 use std::ops::Deref;
 use std::ops::DerefMut;
@@ -96,7 +97,7 @@ impl FrontMatter {
                                 });
                             }
                         }
-                        AssertPrecondition::HasOnlySortTagChars => {
+                        AssertPrecondition::IsValidSortTag => {
                             let sort_tag = if let Value::String(s) = value {
                                 s.to_owned()
                             } else {
@@ -104,26 +105,15 @@ impl FrontMatter {
                             };
                             if !sort_tag.is_empty() {
                                 // Check for forbidden characters.
-                                if !sort_tag
-                                    .trim_start_matches(
-                                        &lib_cfg
+                                if !sort_tag.is_valid_sort_tag() {
+                                    return Err(NoteError::FrontMatterFieldIsInvalidSortTag {
+                                        sort_tag: sort_tag.to_owned(),
+                                        sort_tag_chars: lib_cfg
                                             .filename
                                             .sort_tag_chars
-                                            .chars()
-                                            .collect::<Vec<char>>()[..],
-                                    )
-                                    .is_empty()
-                                {
-                                    return Err(
-                                        NoteError::FrontMatterFieldHasNotOnlySortTagChars {
-                                            sort_tag: sort_tag.to_owned(),
-                                            sort_tag_chars: lib_cfg
-                                                .filename
-                                                .sort_tag_chars
-                                                .escape_default()
-                                                .to_string(),
-                                        },
-                                    );
+                                            .escape_default()
+                                            .to_string(),
+                                    });
                                 }
                             };
                         }
@@ -330,15 +320,15 @@ mod tests {
         ));
 
         //
-        // Forbidden character `x` in `tag`.
+        // Too many lowercase letters is a row `xxx` in `tag`.
         let input = "# document start
         title: The book
-        sort_tag:    123x4";
+        sort_tag:    123xxx4";
 
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
             res.assert_precoditions().unwrap_err(),
-            NoteError::FrontMatterFieldHasNotOnlySortTagChars { .. }
+            NoteError::FrontMatterFieldIsInvalidSortTag { .. }
         ));
 
         //

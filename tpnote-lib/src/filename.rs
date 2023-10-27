@@ -1,15 +1,15 @@
 //! Helper functions dealing with filenames.
 use crate::config::FILENAME_COPY_COUNTER_MAX;
 use crate::config::FILENAME_DOTFILE_MARKER;
+use crate::config::FILENAME_EXTENSION_SEPARATOR_DOT;
 use crate::config::FILENAME_LEN_MAX;
+use crate::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX;
 use crate::config::LIB_CFG;
 use crate::error::FileError;
 use crate::markup_language::MarkupLanguage;
 use std::mem::swap;
 use std::path::Path;
 use std::path::PathBuf;
-
-pub(crate) const FILENAME_EXTENSION_SEPARATOR_DOT: char = '.';
 
 /// Extents `PathBuf` with methods dealing with paths to Tp-Note files.
 pub trait NotePathBuf {
@@ -123,7 +123,7 @@ impl NotePathBuf for PathBuf {
         let mut test_path = String::from(stem);
         test_path.push_str(&lib_cfg.filename.sort_tag_separator);
         // Do we need an `extra_separator`?
-        if stem.is_empty() || !&test_path.split_sort_tag().0.is_empty() {
+        if stem.is_empty() || !&test_path.split_sort_tag(false).0.is_empty() {
             filename.push(lib_cfg.filename.sort_tag_extra_separator);
         }
 
@@ -232,10 +232,6 @@ pub trait NotePath {
     /// even when the copy counter is different.
     fn exclude_copy_counter_eq(&self, p2: &Path) -> bool;
 
-    /// Check if the filename of `Path` contains only
-    /// `lib_cfg.filename.sort_tag_chars` and return it.
-    fn filename_contains_only_sort_tag_chars(&self) -> Option<&str>;
-
     /// Compare to all file extensions Tp-Note can open.
     fn has_tpnote_ext(&self) -> bool;
 
@@ -251,7 +247,8 @@ impl NotePath for Path {
             .to_str()
             .unwrap_or_default();
 
-        let (sort_tag, stem_copy_counter_ext) = sort_tag_stem_copy_counter_ext.split_sort_tag();
+        let (sort_tag, stem_copy_counter_ext) =
+            sort_tag_stem_copy_counter_ext.split_sort_tag(false);
 
         let stem_copy_counter = Path::new(stem_copy_counter_ext)
             .file_stem()
@@ -281,52 +278,6 @@ impl NotePath for Path {
         let (sort_tag1, _, stem1, _, ext1) = self.disassemble();
         let (sort_tag2, _, stem2, _, ext2) = p2.disassemble();
         sort_tag1 == sort_tag2 && stem1 == stem2 && ext1 == ext2
-    }
-
-    /// Check if a the filename of `path` contains only sort tag chars. If
-    /// yes, return it.
-    ///
-    /// ```rust
-    /// use std::path::Path;
-    /// use tpnote_lib::filename::NotePath;
-    ///
-    /// let f = Path::new("20230821-");
-    /// assert_eq!(f.filename_contains_only_sort_tag_chars(), Some("20230821-"));
-    ///
-    /// let f = Path::new("20230821");
-    /// assert_eq!(f.filename_contains_only_sort_tag_chars(), Some("20230821"));
-    ///
-    /// let f = Path::new("2023");
-    /// assert_eq!(f.filename_contains_only_sort_tag_chars(), Some("2023"));
-    ///
-    /// let f = Path::new("20230821-A");
-    /// assert_eq!(f.filename_contains_only_sort_tag_chars(), None);
-    /// ```
-    fn filename_contains_only_sort_tag_chars(&self) -> Option<&str> {
-        let path = self.to_str().unwrap_or_default();
-        let filename = if let Some((_, filename)) = path.rsplit_once(['\\', '/']) {
-            filename
-        } else {
-            self.file_name()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default()
-        };
-        if path.is_empty() {
-            return None;
-        }
-
-        let lib_cfg = LIB_CFG.read_recursive();
-
-        if !filename.is_empty()
-            && filename
-                .chars()
-                .all(|c| lib_cfg.filename.sort_tag_chars.contains([c]))
-        {
-            Some(filename)
-        } else {
-            None
-        }
     }
 
     /// Returns `True` if the path in `self` ends with an extension, that Tp-
@@ -389,25 +340,28 @@ pub(crate) trait NotePathStr {
     /// registered as Tp-Note extension in `filename.extensions`.
     fn has_tpnote_ext(&self) -> bool;
 
-    /// Helper function that trims the copy counter at the end of string,
+    /// Helper function that expects a filename in `self` und
+    /// matches the copy counter at the end of string,
     /// returns the result and the copy counter.
     /// This function removes all brackets and a potiential extra separator.
     fn split_copy_counter(&self) -> (&str, Option<usize>);
 
-    /// Helper function: Greedliy match sort tags and return it as
-    /// a subslice as first tuple and the rest as second tuple. If
-    /// `filename.sort_tag_separator` is defined and it can be detected after
-    /// the matched subslice, skip it and return the rest of the string as
-    /// second tuple. If `filename.sort_tag_separator` is defined, but the
-    /// separator can not be found, discard the matched sort tag and return
-    /// `("", sort_tag_stem_copy_counter)`.
-    /// Techical note: A sort tag is identified with the following regular
-    /// expression in SED syntax: `[0-9_- .\t]*-`.
-    /// The expression can be customized as follows:
-    /// * `[0-9_- .\t]` with `filename.sort_tag_chars`,
-    /// * `-` with `filename.sort_tag_separator` and
-    /// * `'` with `filename.sort_tag_extra_separator`.
-    fn split_sort_tag(&self) -> (&str, &str);
+    /// Helper function that expects a filename in `self`:
+    /// Greedliy match sort tag chars and return it as a subslice as first tuple
+    /// and the rest as second tuple.
+    /// If `filename.sort_tag_separator` is defined, it must appear after the
+    /// sort-tag (without being part of it). Otherwise the sort-tag is discarded.
+    /// A sort-tag can not contain more than
+    /// `FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX` lowercase letters in a row.
+    /// If `ignore_sort_tag_separator=true` this split runs with the setting
+    /// `filename_sort_tag_speparator=""`.
+    fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str);
+
+    /// Check if the `self` contains only `lib_cfg.filename.sort_tag_chars`.
+    /// The number of lowercase letters in a row is limited by
+    /// `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`.
+    /// If `self` contains a path, it is ignored.
+    fn is_valid_sort_tag(&self) -> bool;
 }
 
 impl NotePathStr for str {
@@ -447,16 +401,28 @@ impl NotePathStr for str {
         }
     }
 
-    fn split_sort_tag(&self) -> (&str, &str) {
+    fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str) {
         let lib_cfg = LIB_CFG.read_recursive();
 
+        let mut letters: u8 = 0;
         let mut sort_tag = &self[..self
             .chars()
-            .take_while(|&c| lib_cfg.filename.sort_tag_chars.contains([c]))
+            .take_while(|&c| {
+                if c.is_ascii_lowercase() {
+                    letters += 1;
+                } else {
+                    letters = 0;
+                }
+
+                letters <= FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX
+                    && (c.is_ascii_digit()
+                        || c.is_ascii_lowercase()
+                        || lib_cfg.filename.sort_tag_chars.contains([c]))
+            })
             .count()];
 
         let mut stem_copy_counter_ext;
-        if lib_cfg.filename.sort_tag_separator.is_empty() {
+        if lib_cfg.filename.sort_tag_separator.is_empty() || ignore_sort_tag_separator {
             // `sort_tag` is correct.
             stem_copy_counter_ext = &self[sort_tag.len()..];
         } else {
@@ -476,9 +442,11 @@ impl NotePathStr for str {
         if chars
             .next()
             .is_some_and(|c| c == lib_cfg.filename.sort_tag_extra_separator)
-            && chars
-                .next()
-                .is_some_and(|c| lib_cfg.filename.sort_tag_chars.find(c).is_some())
+            && chars.next().is_some_and(|c| {
+                c.is_ascii_digit()
+                    || c.is_ascii_lowercase()
+                    || lib_cfg.filename.sort_tag_chars.contains(c)
+            })
         {
             stem_copy_counter_ext = stem_copy_counter_ext
                 .strip_prefix(lib_cfg.filename.sort_tag_extra_separator)
@@ -486,6 +454,20 @@ impl NotePathStr for str {
         }
 
         (sort_tag, stem_copy_counter_ext)
+    }
+
+    fn is_valid_sort_tag(&self) -> bool {
+        let sort_tag = if let Some((_, filename)) = self.rsplit_once(['\\', '/']) {
+            filename
+        } else {
+            self
+        };
+        if sort_tag.is_empty() {
+            return false;
+        }
+
+        // If the rest is empty, all characters are in `sort_tag`.
+        sort_tag.split_sort_tag(true).1.is_empty()
     }
 }
 
@@ -512,28 +494,31 @@ mod tests {
     fn test_from_disassembled() {
         use crate::filename::NotePathBuf;
 
-        let expected = PathBuf::from("my_file.md");
-        let result = PathBuf::from_disassembled("", "my_file", None, "md");
+        let expected = PathBuf::from("My_file.md");
+        let result = PathBuf::from_disassembled("", "My_file", None, "md");
         assert_eq!(expected, result);
 
-        let expected = PathBuf::from("1_2_3-my_file(1).md");
-        let result = PathBuf::from_disassembled("1_2_3", "my_file", Some(1), "md");
+        let expected = PathBuf::from("1_2_3-My_file(1).md");
+        let result = PathBuf::from_disassembled("1_2_3", "My_file", Some(1), "md");
         assert_eq!(expected, result);
 
-        let expected = PathBuf::from("1_2_3-123 My_file(1).md");
-        let result = PathBuf::from_disassembled("1_2_3", "123 My_file", Some(1), "md");
+        let expected = PathBuf::from("1_2_3-123 my_file(1).md");
+        let result = PathBuf::from_disassembled("1_2_3", "123 my_file", Some(1), "md");
         assert_eq!(expected, result);
 
-        let expected = PathBuf::from("1_2_3-'123-my_file(1).md");
-        let result = PathBuf::from_disassembled("1_2_3", "123-my_file", Some(1), "md");
+        let expected = PathBuf::from("1_2_3-'123-My_file(1).md");
+        let result = PathBuf::from_disassembled("1_2_3", "123-My_file", Some(1), "md");
         assert_eq!(expected, result);
 
-        let expected = PathBuf::from("'123-my_file(1).md");
-        let result = PathBuf::from_disassembled("", "123-my_file", Some(1), "md");
+        let expected = PathBuf::from("'123-My_file(1).md");
+        let result = PathBuf::from_disassembled("", "123-My_file", Some(1), "md");
         assert_eq!(expected, result);
 
         let res = PathBuf::from_disassembled("1234", "title--subtitle", Some(9), "md");
         assert_eq!(res, Path::new("1234-title--subtitle(9).md"));
+
+        let res = PathBuf::from_disassembled("1234ab", "title--subtitle", Some(9), "md");
+        assert_eq!(res, Path::new("1234ab-title--subtitle(9).md"));
 
         let res = PathBuf::from_disassembled("1234", "5678", Some(9), "md");
         assert_eq!(res, Path::new("1234-'5678(9).md"));
@@ -665,30 +650,30 @@ mod tests {
         let result = p.disassemble();
         assert_eq!(expected, result);
 
-        let expected = ("2021 04 12", "", "", None, "");
-        let p = Path::new("/my/dir/2021 04 12-");
+        let expected = ("2021-04-12", "", "", None, "");
+        let p = Path::new("/my/dir/2021-04-12-");
         let result = p.disassemble();
         assert_eq!(expected, result);
 
         // This triggers the bug fixed with v1.14.3.
-        let expected = ("2021 04 12", ".dotfile", ".dotfile", None, "");
-        let p = Path::new("/my/dir/2021 04 12-'.dotfile");
+        let expected = ("2021-04-12", ".dotfile", ".dotfile", None, "");
+        let p = Path::new("/my/dir/2021-04-12-'.dotfile");
         let result = p.disassemble();
         assert_eq!(expected, result);
 
-        let expected = ("2021 04 12", "(9).md", "", Some(9), "md");
-        let p = Path::new("/my/dir/2021 04 12-(9).md");
+        let expected = ("2021-04-12", "(9).md", "", Some(9), "md");
+        let p = Path::new("/my/dir/2021-04-12-(9).md");
         let result = p.disassemble();
         assert_eq!(expected, result);
 
         let expected = (
             "20221030",
-            "some.pdf--Note.md",
-            "some.pdf--Note",
+            "Some.pdf--Note.md",
+            "Some.pdf--Note",
             None,
             "md",
         );
-        let p = Path::new("/my/dir/20221030-some.pdf--Note.md");
+        let p = Path::new("/my/dir/20221030-Some.pdf--Note.md");
         let result = p.disassemble();
         assert_eq!(expected, result);
 
@@ -716,12 +701,12 @@ mod tests {
 
         let expected = (
             "1_2_3-123",
-            "my_title--my_subtitle(1).md",
-            "my_title--my_subtitle",
+            "My_title--my_subtitle(1).md",
+            "My_title--my_subtitle",
             Some(1),
             "md",
         );
-        let p = Path::new("/my/dir/1_2_3-123-my_title--my_subtitle(1).md");
+        let p = Path::new("/my/dir/1_2_3-123-My_title--my_subtitle(1).md");
         let result = p.disassemble();
         assert_eq!(expected, result);
 
@@ -749,12 +734,34 @@ mod tests {
 
         let expected = (
             "1_2_3",
-            "'my'_title--my_subtitle(1).md",
-            "'my'_title--my_subtitle",
+            "my_title--my_subtitle(1).md",
+            "my_title--my_subtitle",
             Some(1),
             "md",
         );
-        let p = Path::new("/my/dir/1_2_3-'my'_title--my_subtitle(1).md");
+        let p = Path::new("/my/dir/1_2_3-my_title--my_subtitle(1).md");
+        let result = p.disassemble();
+        assert_eq!(expected, result);
+
+        let expected = (
+            "1a2b3ab",
+            "my_title--my_subtitle(1).md",
+            "my_title--my_subtitle",
+            Some(1),
+            "md",
+        );
+        let p = Path::new("/my/dir/1a2b3ab-my_title--my_subtitle(1).md");
+        let result = p.disassemble();
+        assert_eq!(expected, result);
+
+        let expected = (
+            "",
+            "1a2b3abc-my_title--my_subtitle(1).md",
+            "1a2b3abc-my_title--my_subtitle",
+            Some(1),
+            "md",
+        );
+        let p = Path::new("/my/dir/1a2b3abc-my_title--my_subtitle(1).md");
         let result = p.disassemble();
         assert_eq!(expected, result);
     }
@@ -863,15 +870,15 @@ mod tests {
         use crate::filename::NotePathStr;
 
         let expected = ("123", "Rest");
-        let result = "123-Rest".split_sort_tag();
+        let result = "123-Rest".split_sort_tag(false);
         assert_eq!(expected, result);
 
         let expected = ("123", "Rest");
-        let result = "123-Rest".split_sort_tag();
+        let result = "123-Rest".split_sort_tag(false);
         assert_eq!(expected, result);
 
         let expected = ("123-", "Rest");
-        let result = "123--Rest".split_sort_tag();
+        let result = "123--Rest".split_sort_tag(false);
         assert_eq!(expected, result);
     }
 
@@ -898,5 +905,27 @@ mod tests {
         // This goes wrong because only `md` is expected here.
         let ext = "/dir/file.md";
         assert!(!ext.is_tpnote_ext());
+    }
+
+    #[test]
+    fn test_is_valid_sort_tag() {
+        use super::NotePathStr;
+        let f = "20230821";
+        assert!(f.is_valid_sort_tag());
+
+        let f = "1_3_2";
+        assert!(f.is_valid_sort_tag());
+
+        let f = "1c2";
+        assert!(f.is_valid_sort_tag());
+
+        let f = "2023ab";
+        assert!(f.is_valid_sort_tag());
+
+        let f = "2023abc";
+        assert!(!f.is_valid_sort_tag());
+
+        let f = "2023A";
+        assert!(!f.is_valid_sort_tag());
     }
 }

@@ -825,44 +825,60 @@ The filename has 4 parts:
 
     {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
 
-A so-called _sort tag_ is a numerical prefix at the beginning of the
-filename. It is used to order files and notes in the file system. Besides
-numerical digits and whitespace, a _sort tag_ can be any combination of
-'`_`', '`-`', '` `', '`\t`', '`.`' and is usually used as
+The '`-`' between '`{{ fm_sort_tag }}`' and '`{{ fm_title }}`' is hereafter
+referred to as _sort-tag separator_ (cf. '`filename.sort_tag_separator`').
 
-* *chronological sort tag*
+A so-called _sort tag_ is an alphanumerical prefix at the beginning of the
+filename. It is used to order files and notes in the file system. Besides
+numerical digits and lowercase letters, a _sort tag_ may contain any 
+combination of '`_`', '`-`', '`=`' and '`.`' (cf. 
+'`filename.sort_tag_chars`'). If a sort-tag contains lowercase  letters, only 2
+in a row are allowed. Examples:
+
+* *Chronological sort tag*
 
         20140211-Reminder.doc
         20151208-Manual.pdf
         2015-12-08-Manual.pdf
 
-* or, as a *sequence number sort tag*.
+  NB: the character '`-`' inside the sort tag is optional.
+  
+* *Sequence number sort tag*
 
-        02-Invoices
-        08-Tax documents
-        09_02-Notes
-        09.09-Notes
+        02-Invoices/
+        08-Tax documents/
+        09_2-Manual.pdf
+        09.9.1-Notes.md
 
-When Tp-Note creates a new note, it will automatically prepend a *chronological
-sort tag* of today. The '`{{ fm_title }}`' part is usually derived from the
-parent directory name omitting its own *sort tag*.
+  NB: sort-tags can be structured with '`_`' or '`.`'. Do not use '`-`' here,
+  because Tp-Note interprets sort-tags containing '`-`' as chronological
+  sort tags. (cf. '`tmpl.filter_incr_sort_tag.default_if_contains`').
 
-Technical note: a sort tag is identified with the following regular expression
-in SED syntax: '`s/\([0-9_- .\t]\)*-'?.*/\1/`'. The expression can be
-customized as follows:
-* '`[0-9_- .\t]`' with '`filename.sort_tag_chars`', 
-* '`-`' with '`filename.sort_tag_separator`' and 
-* '`'`' with '`filename.sort_tag_extra_separator`'.
+* *Alphanumerical sequence number sort tag*
 
-A note's filename is in sync with its metadata, when the following is true
-(slightly simplified, see the configuration file for the complete definition):
+        02-Invoices/
+        08-Tax documents/
+        09b-Manual.pdf
+        09i1-Notes.md
+
+  NB: the example is equivalent to the previous one. The only difference is,
+  that the separators are expressed through the alternation of digits and 
+  letters. 
+
+Before Tp-Note creates a new note file, it searches the current directory for
+the latest existing Tp-Note file. If that file starts with a sequence number
+sort-tag, Tp-Note increments that number and uses the result as sort-tag for the
+new note file.  Otherwise, the new note gets a chronological sort tag of today.
+
+A note's filename is said to be in sync with its metadata, when the following
+holds (slightly simplified, see '`tmpl.sync_filename`'):
 
 > filename on disk without *sort tag* == '`{{ fm_title }}--{{ fm_subtitle }}.md`'
 
 ^[The variables '`{{ fm_title }}`' and '`{{ fm_subtitle }}`' reflect the values
 in the note's front matter.]
 
-Consider the following document with the filename:
+Example, consider the following document with the filename:
 
     20211031-My file.md
 

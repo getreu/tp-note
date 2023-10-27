@@ -350,7 +350,8 @@ impl<'a> Hyperlink for Link<'a> {
 
         let shorthand_path = Path::new(shorthand_link.as_ref());
 
-        if let Some(sort_tag) = shorthand_path.filename_contains_only_sort_tag_chars() {
+        if shorthand_link.as_ref().is_valid_sort_tag() {
+            let sort_tag = shorthand_link.as_ref();
             // Concatenate `root_path` and `shorthand_path`.
             let shorthand_path = shorthand_path
                 .strip_prefix(MAIN_SEPARATOR_STR)
