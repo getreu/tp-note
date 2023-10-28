@@ -2118,6 +2118,15 @@ A filter is always used together with a variable. Here are some examples:
   filter (which also returns the final component), '`trim_file_sort_tag`' trims
   the sort tag if there is one.
 
+* '`{{ dir_path | find_last_created_file | incr_sort_tag(default="") }}`'
+  searches '`dir_path`' for the most recently created Tp-Note file,
+  extracts the sort-tag from this file, increments the sort-tag and returns the 
+  result. If the incrementation fails, the '`default`' value is returned.
+  This can happen, when the input sort-tag contains characters of the set
+  '`tmpl.filter_incr_sort_tag.default_if_contains`'. Or, if the to be
+  incremented counter (a sequential sort-tag usually has more than one counter)
+  has more than '`tmpl.filter_incr_sort_tag.default_if_greater`' digits.
+
 * '`{{ dir_path | trim_file_sort_tag }}`' returns the final component
   of '`dir_path`' (which is the final directory name in '`{{ path }}`').
   Unlike the '`file_name`' filter (which also returns the final component),
