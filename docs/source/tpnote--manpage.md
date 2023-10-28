@@ -721,38 +721,58 @@ language render is called for Tp-Note's internal viewer.
 
 ## Links to resources and other documents
 
+
+### Link types
+
 The document's body often contains (inline) links to resources e.g. images and
-links to other documents. The link syntax depends on the markup language used
-in the Tp-Note file.
+links to other documents. This section describes how the automatic path
+rewriting of local links works.
 
-Here some example links in Markdown notation:
+In general, the link syntax depends on the markup language used in the Tp-Note
+file. The following examples illustrate the different link types Tp-Note 
+understands:
 
-* A website: '`[blog](<https://blog.getreu.net>)`'
-* An inline image with relative local URL:
-  '`![Alt text](<images/my logo.png>)`'.
-* A link to another Tp-Note document with a relative local link:
-  '`[my doc](<../../notes/my doc.md>)`'
-* The same as above, but using the short autolink syntax:
-  '`<http:../../notes/my%20doc.md>`'
-* A link to another Tp-Note document with an absolute local link:
-  '`[my doc](</home/kanban/docs/my note.md>)`'
-  The base for absolute local links is the first parent directory containing
+| Link type                  | Example in Markdown notation                 |
+|----------------------------|----------------------------------------------|
+| Absolute URL               | '`[blog](<https://blog.getreu.net>)`'        |
+| Relative URL (=local link) | '`![Alt text](<images/my logo.png>)`'        |
+| Absolute local link        | '`![Alt text](</images/my logo.png>)`'       |
+| Relative local link        | '`![Alt text](<images/my logo.png>)`'        |
+| Relative local link        | '`[my doc](<../../notes/31-my doc.md>)`'     |
+| Relative local autolink    | '`<tpnote:../../notes/31-my%20doc.md>`'      |
+| Shorthand link             | '`[my doc](<../../notes/31>)`'               |
+| Shorthand autolink         | '`<tpnote:../../notes/31>`'                  |
+| Formatted shorthand link   | '`<tpnote:../../notes/31?-->)`'              |
+
+Remarks:
+ 
+* The base for absolute local links is the first parent directory containing
   the marker file '`.tpnote.toml`'. If absent, absolute local links refer
   to the root directory '`/`'.
-* A shorthand link to another Tp-Note document. Instead of writing out the full
-  file name, only the first characters of the note's sort-tag '`20230508`' are
-  given, e.g. the link '`[my doc](<docs/20230508>)`' points to the file
-  '`./docs/20230508-my note.md`'. Alternatively, the shorthand link can be
-  expressed as autolink as well: '`<http:docs/20230508>`'. If more than one
-  document with the same sort-tag exist, the viewer displays the first in
-  alphabetical order. To set up a different order, you can extend the
-  sort-tag until it becomes unique, e.g. rename the example document to
-  '`./docs/20230508-1-my note.md`' to obtain the unique sort-tag
-  '`20230508-1`'.
+* *Shorthand link*: Instead of writing out the full link destination, e.g. 
+  '`[my doc](<./docs/20230508-my note.md>)`', you can shorten the link to
+  '`[my doc](<docs/20230508>)`' indicating only the destination's sort-tag.
+  Alternatively, the same shorthand link can be expressed as autolink as well:
+  '`<http:docs/20230508>`'. NB, if more than one document with the same
+  sort-tag exist in a directory, the viewer only displays the first in
+  alphabetical order. To set up a different order, you can extend the 
+  sort-tag until it becomes unique, e.g. by renaming the destination document in
+  the above example to '`./ docs/20230508a-my note.md`'. This way you obtain the
+  unique sort-tag '`20230508a`'.
 
-Although Tp-Note's built in viewer follows absolute and relative URLs, usually
-the latter are preferred. They make moving documents easier, as relative links
-do not break when the source and the destination documents are moved together.
+Although Tp-Note's built in viewer follows absolute and relative local links,
+usually the latter are preferred. They make moving documents easier, as relative
+links do not break when the source and the destination documents are moved
+together.
+
+As mentioned above, the shortest way to refer to other Tp-Note documents, is
+indicating their sort-tag only, e.g. '`<tpnote:dir/123>.`' and 
+'`[my file](<tpnote:dir/123>)`'. If the other document is located in the same
+directory, the links are even shorter: '`<tpnote:123>.`' and 
+'`[my file](<tpnote:123>)`'. 
+
+
+### Local links in HTML export
 
 Tp-Note's exporter function '`--export`' converts a given Tp-Note file into
 HTML and adds '`.html`' to the output filename. Links in the documents content
@@ -796,21 +816,52 @@ The images in the resulting HTML will appear as
 * '`/my/docs/car/scan.jpg`'.
 * '`/my/docs/car/photo.jpg`'.
 
+
+### Local links with format strings
+
 So far, we have seen how Tp-Note's viewer and HTML exporter converts the
 _destination_ of local links '`[text](destination)`'.
-Concerning the link's _text_ property of local links, the situation is simpler
-as the _text_ property never changes. However, there is one exception: when the
-text property contains an autolink starting with '`tpnote:`' or '`http:`'
-only the file stem is displayed. For example, the Markdown autolink: 
-'`<tpnote:dir/123-My File.md>.`' is transformed into 
-'`[My File](<tpnote:dir/123-My File.md>)`' during the HTML rendition process.
-This explains why it appears as '`My File`' in the browser.
+Concerning the local link's _text_ property, the situation is simpler
+as the _text_ property never changes during the above discussed
+rewriting process. However, it is possible to overwrite the displayed text
+property by appending a _format string_ to the destination: 
+'`[formatted destination](destination?format string)`'. 
 
-As mentioned above, the shortest way to refer to other Tp-Note documents, is 
-indicating their sort-tag only. For example, the above links can be shortened to
-'`<tpnote:dir/123>.`' and '`[my file](<tpnote:dir/123>)`'. If the other document
-is located in the same directory, the links are even shorter:
-'`<tpnote:123>.`' and '`[my file](<tpnote:123>)`'.
+All local links in the following tables have the same link destination
+'`dir/01ac-Tulips--red, yellow.md`'. The examples differ only in the way the
+link is displayed in the browser.
+
+
+| Local link                                          | What you see        |
+|-----------------------------------------------------|---------------------|
+| '`[matters](<dir/01ac-Tulips--red, yellow.md>)`'    | matters             |
+| '`[matters](<dir/01ac>)`'                           | matters             |
+
+
+| Formatted local link                                 | What you see        |
+|------------------------------------------------------|---------------------|
+| '`[whatever](<dir/01ac-Tulips--red, yellow.md?>)`'   | Tulips--red, yellow |
+| '`[whatever](<dir/01ac?>)`'                          | Tulips--red, yellow |
+| '`[whatever](<dir/01ac??>)`'                         | 01ac                |
+| '`[whatever](<dir/01ac?,>)`'                         | Tulips--red         |
+| '`[whatever](<dir/01ac?-->)`'                        | Tulips              |
+
+
+| Local autolink                                 | What you see                      |
+|------------------------------------------------|-----------------------------------|
+| '`'<tpnote:dir/01ac-Tulips--red,%20yellow.md>`'| dir/01ac-Tulips--red,%20yellow.md |
+| '`'<tpnote:dir/01ac>`'                         | dir/01ac                          |
+|
+
+
+| Formatted local autolink                            | What you see                |
+|-----------------------------------------------------|-----------------------------|
+| '`'<tpnote:dir/01ac-Tulips--red,%20yellow.md?>`'    | Tulips--red, yellow         |
+| '`'<tpnote:dir/01ac?>`'                             | Tulips--red, yellow         |
+| '`'<tpnote:dir/01ac?:>`'                            | 01ac-Tulips--red, yellow.md |
+| '`'<tpnote:dir/01ac?:.>`'                           | 01ac-Tulips--red, yellow  	|
+| '`'<tpnote:dir/01ac?-:,>`'                          | Tulips--red                 |
+| '`'<tpnote:dir/01ac?--:,>`'                         | red                         |
 
 
 
