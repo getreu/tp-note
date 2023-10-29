@@ -376,7 +376,6 @@ subtitle: edf
 Body
 EOF
 
-
 OUTPUT_FILENAME=$(LANG="en_US.UTF-8" LOGNAME="myuser" \
 	cargo run -- --batch --add-header --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME"| tail -n 1)  >/dev/null 2>&1
@@ -390,6 +389,57 @@ else
     exit 1
 fi
 
+
+
+## Test 16: Export note with format attributes
+INPUT_FILENAME="$PWD/01ac-Tulips--red, yellow.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: Tulips
+subtitle: red, yellow
+sort_tag: 01ac
+---
+
+[matters](<01ac-Tulips--red, yellow.md>)     
+[matters](<01ac>)                            
+[whatever](<01ac-Tulips--red, yellow.md?>)   
+[whatever](<01ac?>)                          
+[whatever](<01ac-Tulips--red, yellow.md??>)  
+[whatever](<01ac??>)                         
+[whatever](<01ac-Tulips--red, yellow.md?,>)  
+[whatever](<01ac?,>)                         
+[whatever](<01ac-Tulips--red, yellow.md?-->) 
+[whatever](<01ac?-->)                        
+<tpnote:01ac-Tulips--red,%20yellow.md>       
+<tpnote:01ac>                                
+<tpnote:01ac-Tulips--red,%20yellow.md?>      
+<tpnote:01ac?>                               
+<tpnote:01ac-Tulips--red,%20yellow.md?:>     
+<tpnote:01ac?:>                              
+<tpnote:01ac-Tulips--red,%20yellow.md?:.>    
+<tpnote:01ac?:.>                             
+<tpnote:01ac-Tulips--red,%20yellow.md?-:,>   
+<tpnote:01ac?-:,>                            
+<tpnote:01ac-Tulips--red,%20yellow.md?--:,>  
+<tpnote:01ac?--:,>                           
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+     --export "" \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/01ac-Tulips--red, yellow.md.html"
+
+if diff "$OUTPUT_FILENAME"  "test16-html-expected-output"
+then
+    echo Commandline test 16 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 16 failed.
+    exit 1
+fi
 
 
 ## Test 30:  Compilation --no-default-features
