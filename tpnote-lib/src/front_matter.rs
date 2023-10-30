@@ -105,7 +105,7 @@ impl FrontMatter {
                             };
                             if !sort_tag.is_empty() {
                                 // Check for forbidden characters.
-                                if sort_tag.filename_is_valid_sort_tag().is_none() {
+                                if sort_tag.is_valid_sort_tag().is_none() {
                                     return Err(NoteError::FrontMatterFieldIsInvalidSortTag {
                                         sort_tag: sort_tag.to_owned(),
                                         sort_tag_extra_chars: lib_cfg

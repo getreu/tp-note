@@ -446,17 +446,20 @@ impl NotePath for Path {
 pub(crate) trait NotePathStr {
     /// Returns `True` is the path in `self` ends with an extension, that
     /// registered as Tp-Note extension in `filename.extensions`.
+    /// The input may contain a path as long as it ends with a filename.
     fn has_tpnote_ext(&self) -> bool;
 
     /// Helper function that expects a filename in `self` und
     /// matches the copy counter at the end of string,
     /// returns the result and the copy counter.
     /// This function removes all brackets and a potiential extra separator.
+    /// The input must not contain a path, only a filename is allowed here.
     fn split_copy_counter(&self) -> (&str, Option<usize>);
 
     /// Helper function that expects a filename in `self`:
     /// Greedliy match sort tag chars and return it as a subslice as first tuple
-    /// and the rest as second tuple.
+    /// and the rest as second tuple: `(sort-tag, rest, is_sequential)`.
+    /// The input must not contain a path, only a filename is allowed here.
     /// If `filename.sort_tag.separator` is defined, it must appear after the
     /// sort-tag (without being part of it). Otherwise the sort-tag is discarded.
     /// A sort-tag can not contain more than
@@ -467,12 +470,13 @@ pub(crate) trait NotePathStr {
     /// criteria for a sequential sort-tag.
     fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str, bool);
 
-    /// Check and return the filename in `self`, if it contains
-    /// only `lib_cfg.filename.sort_tag.extra_chars`. The
-    /// number of lowercase letters in a row must not exceed
-    /// `filename.sort_tag.letters_in_succession_max`. If
-    /// `self` contains a path, it is ignored.
-    fn filename_is_valid_sort_tag(&self) -> Option<&str>;
+    /// Check and return the filename in `self`, if it contains only
+    /// `lib_cfg.filename.sort_tag.extra_chars` (no sort-tag separator, no file
+    /// stem, no extension). The number of lowercase letters in a row must not
+    /// exceed `filename.sort_tag.letters_in_succession_max`.
+    /// The input may contain a path as long as it ends with `/`, `\\` or a
+    /// filename. The path, if present, it is ignored.
+    fn is_valid_sort_tag(&self) -> Option<&str>;
 }
 
 impl NotePathStr for str {
@@ -585,7 +589,7 @@ impl NotePathStr for str {
         (sort_tag, stem_copy_counter_ext, is_sequential_sort_tag)
     }
 
-    fn filename_is_valid_sort_tag(&self) -> Option<&str> {
+    fn is_valid_sort_tag(&self) -> Option<&str> {
         let filename = if let Some((_, filename)) = self.rsplit_once(['\\', '/']) {
             filename
         } else {
@@ -1066,45 +1070,45 @@ mod tests {
     fn test_filename_is_valid_sort_tag() {
         use super::NotePathStr;
         let f = "20230821";
-        assert_eq!(f.filename_is_valid_sort_tag(), Some("20230821"));
+        assert_eq!(f.is_valid_sort_tag(), Some("20230821"));
 
         let f = "dir/20230821";
-        assert_eq!(f.filename_is_valid_sort_tag(), Some("20230821"));
+        assert_eq!(f.is_valid_sort_tag(), Some("20230821"));
 
         let f = "dir\\20230821";
-        assert_eq!(f.filename_is_valid_sort_tag(), Some("20230821"));
+        assert_eq!(f.is_valid_sort_tag(), Some("20230821"));
 
         let f = "1_3_2";
-        assert_eq!(f.filename_is_valid_sort_tag(), Some("1_3_2"));
+        assert_eq!(f.is_valid_sort_tag(), Some("1_3_2"));
 
         let f = "1c2";
-        assert_eq!(f.filename_is_valid_sort_tag(), Some("1c2"));
+        assert_eq!(f.is_valid_sort_tag(), Some("1c2"));
 
         let f = "2023ab";
-        assert_eq!(f.filename_is_valid_sort_tag(), Some("2023ab"));
+        assert_eq!(f.is_valid_sort_tag(), Some("2023ab"));
 
         let f = "2023abc";
-        assert_eq!(f.filename_is_valid_sort_tag(), None);
+        assert_eq!(f.is_valid_sort_tag(), None);
 
         let f = "dir/2023abc";
-        assert_eq!(f.filename_is_valid_sort_tag(), None);
+        assert_eq!(f.is_valid_sort_tag(), None);
 
         let f = "2023A";
-        assert_eq!(f.filename_is_valid_sort_tag(), None);
+        assert_eq!(f.is_valid_sort_tag(), None);
 
         let f = "20230821";
-        assert_eq!(f.filename_is_valid_sort_tag(), Some("20230821"));
+        assert_eq!(f.is_valid_sort_tag(), Some("20230821"));
 
         let f = "2023-08-21";
-        assert_eq!(f.filename_is_valid_sort_tag(), Some("2023-08-21"));
+        assert_eq!(f.is_valid_sort_tag(), Some("2023-08-21"));
 
         let f = "20-08-21";
-        assert_eq!(f.filename_is_valid_sort_tag(), Some("20-08-21"));
+        assert_eq!(f.is_valid_sort_tag(), Some("20-08-21"));
 
         let f = "2023ab";
-        assert_eq!(f.filename_is_valid_sort_tag(), Some("2023ab"));
+        assert_eq!(f.is_valid_sort_tag(), Some("2023ab"));
 
         let f = "202ab";
-        assert_eq!(f.filename_is_valid_sort_tag(), Some("202ab"));
+        assert_eq!(f.is_valid_sort_tag(), Some("202ab"));
     }
 }

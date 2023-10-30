@@ -376,7 +376,7 @@ impl<'a> Hyperlink for Link<'a> {
 
         let shorthand_path = Path::new(shorthand_str);
 
-        if let Some(sort_tag) = shorthand_str.filename_is_valid_sort_tag() {
+        if let Some(sort_tag) = shorthand_str.is_valid_sort_tag() {
             // Concatenate `root_path` and `shorthand_path`.
             let shorthand_path = shorthand_path
                 .strip_prefix(MAIN_SEPARATOR_STR)
