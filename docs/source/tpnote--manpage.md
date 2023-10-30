@@ -877,13 +877,13 @@ The filename has 4 parts:
     {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
 
 The '`-`' between '`{{ fm_sort_tag }}`' and '`{{ fm_title }}`' is hereafter
-referred to as _sort-tag separator_ (cf. '`filename.sort_tag_separator`').
+referred to as _sort-tag separator_ (cf. '`filename.sort_tag.separator`').
 
 A so-called _sort tag_ is an alphanumerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
 numerical digits and lowercase letters, a _sort tag_ may contain any 
 combination of '`_`', '`-`', '`=`' and '`.`' (cf. 
-'`filename.sort_tag_extra_chars`'). If a sort-tag contains lowercase  letters, only 2
+'`filename.sort_tag.extra_chars`'). If a sort-tag contains lowercase  letters, only 2
 in a row are allowed. Examples:
 
 * *Chronological sort tag*
@@ -1598,10 +1598,10 @@ make sure to enable the right set of potential sort-tag characters.
 By default, the digits '`0`'-'`9`', the characters '`_`', '`-`', _space_,
 '`\t`' and '`.`' are recognized as being part of a *sort tag* when they appear
 at the beginning of a filename.  This set of characters can be modified with
-the '`filename.sort_tag_extra_chars`' configuration variable. If defined, the
-'`filename.sort_tag_separator`' (by default '`-`') marks the end of a
+the '`filename.sort_tag.extra_chars`' configuration variable. If defined, the
+'`filename.sort_tag.separator`' (by default '`-`') marks the end of a
 sort tag without being part of it.  In addition, one special character
-'`filename.sort_tag_extra_separator`' (by default '`'`') might be inserted
+'`filename.sort_tag.extra_separator`' (by default '`'`') might be inserted
 by the filename template directly after the '`-`' to avoid ambiguity.
 
 
@@ -1625,7 +1625,7 @@ expression, e.g.:
     {{ fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}
 
 The filter '`prepend(with_sort_tag=<...>)`' decides whether to insert the
-'`sort_tag_separator="-"`' and/or the '`sort_tag_extra_separator="'"`'
+'`sort_tag.separator="-"`' and/or the '`sort_tag.extra_separator="'"`'
 characters. These heuristics enable Tp-Note to identify unequivocally sort-tags
 in filenames, which avoids potential cyclic filename change. Or, in other
 words: the '`tmpl.sync_filname`' template must always give the same result,
@@ -2147,7 +2147,7 @@ A filter is always used together with a variable. Here are some examples:
 * '`{{ path | file_sort_tag | assert_valid_sort_tag }}`' does not change 
   the above output, but the filter asserts at runtime, that the resulting type
   is either '`String`' or '`Number`' and that all characters are part of the set
-  '`filename.sort_tag_extra_chars`'. The additional runtime check simplifies
+  '`filename.sort_tag.extra_chars`'. The additional runtime check simplifies
   template debugging. 
 
 * '`{{ path | file_stem }}`' is similar to '`{{ path | file_name }}`'
@@ -2212,12 +2212,12 @@ A filter is always used together with a variable. Here are some examples:
 * '`{{ fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}`' is the
   note's title as defined in its front-matter. Same as above, but
   the title string is prepended with the note's _sort_tag_ and with a
-  '`filename.sort_tag_separator`' (by default '`-`'). Eventually, a second
-  '`filename.sort_tag_extra_separator`' (by default '`''`') is inserted
+  '`filename.sort_tag.separator`' (by default '`-`'). Eventually, a second
+  '`filename.sort_tag.extra_separator`' (by default '`''`') is inserted
   after the first to guarantee, that one of the separators unequivocally
   marks the end of the _sort_tag_. This might be necessary to avoid
   ambiguity in case the '`fm_title`' starts with a character defined in the
-  '`filename.sort_tag_extra_chars`' set.
+  '`filename.sort_tag.extra_chars`' set.
 
 * '`{{ fm_all | remove(key='fm_title') | remove(key='fm_author') | to_yaml }}`'
   renders the collection (map) '`fm_all`', exclusive of the
@@ -2312,10 +2312,10 @@ from being filtered.
 The '`prepend(with_sort_tag=<...>`' filter is similar to the 
 '`prepend(with=<...>`' filter, with two exceptions:
 
-1. If '`filename.sort_tag_separator`' is defined (by default '`-`'), it is 
+1. If '`filename.sort_tag.separator`' is defined (by default '`-`'), it is 
    automatically inserted between the sort-tag and the input string.
 2. In some cases an additional separator 
-   '`filename.sort_tag_extra_separator`' (by default '`'`') may be inserted 
+   '`filename.sort_tag.extra_separator`' (by default '`'`') may be inserted 
    as well.
 
 Both separators guarantee that the end of a sort-tag is detected
@@ -2328,7 +2328,7 @@ variable, e.g.
 This way, it is always possible to univocally distinguish the sort-tag from the
 rest of the filename. Note, the default sort-tag separators can be changed with
 the configuration variables
-'`filename.sort_tag_separator`' and '`filename.sort_tag_extra_separator`'. For
+'`filename.sort_tag.separator`' and '`filename.sort_tag.extra_separator`'. For
 more details please consult the _Customize the filename synchronization scheme_
 chapter.
 

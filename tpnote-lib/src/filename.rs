@@ -116,16 +116,16 @@ impl NotePathBuf for PathBuf {
         let lib_cfg = LIB_CFG.read_recursive();
         if !sort_tag.is_empty() {
             filename.push_str(sort_tag);
-            filename.push_str(&lib_cfg.filename.sort_tag_separator);
+            filename.push_str(&lib_cfg.filename.sort_tag.separator);
         }
         // Does the beginning of `stem` look like a sort-tag?
         // Make sure, that the path can not be misinterpreted, even if a
-        // `sort_tag_separator` would follow.
+        // `sort_tag.separator` would follow.
         let mut test_path = String::from(stem);
-        test_path.push_str(&lib_cfg.filename.sort_tag_separator);
+        test_path.push_str(&lib_cfg.filename.sort_tag.separator);
         // Do we need an `extra_separator`?
         if stem.is_empty() || !&test_path.split_sort_tag(false).0.is_empty() {
-            filename.push(lib_cfg.filename.sort_tag_extra_separator);
+            filename.push(lib_cfg.filename.sort_tag.extra_separator);
         }
 
         filename.push_str(stem);
@@ -458,7 +458,7 @@ pub(crate) trait NotePathStr {
     /// Helper function that expects a filename in `self`:
     /// Greedliy match sort tag chars and return it as a subslice as first tuple
     /// and the rest as second tuple.
-    /// If `filename.sort_tag_separator` is defined, it must appear after the
+    /// If `filename.sort_tag.separator` is defined, it must appear after the
     /// sort-tag (without being part of it). Otherwise the sort-tag is discarded.
     /// A sort-tag can not contain more than
     /// `FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX` lowercase letters in a row.
@@ -467,7 +467,7 @@ pub(crate) trait NotePathStr {
     fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str);
 
     /// Check and return the filename in `self`, if it contains
-    /// only `lib_cfg.filename.sort_tag_extra_chars`. The
+    /// only `lib_cfg.filename.sort_tag.extra_chars`. The
     /// number of lowercase letters in a row must not exceed
     /// `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`. If
     /// `self` contains a path, it is ignored.
@@ -527,39 +527,39 @@ impl NotePathStr for str {
                 letters <= FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX
                     && (c.is_ascii_digit()
                         || c.is_ascii_lowercase()
-                        || lib_cfg.filename.sort_tag_extra_chars.contains([c]))
+                        || lib_cfg.filename.sort_tag.extra_chars.contains([c]))
             })
             .count()];
 
         let mut stem_copy_counter_ext;
-        if lib_cfg.filename.sort_tag_separator.is_empty() || ignore_sort_tag_separator {
+        if lib_cfg.filename.sort_tag.separator.is_empty() || ignore_sort_tag_separator {
             // `sort_tag` is correct.
             stem_copy_counter_ext = &self[sort_tag.len()..];
         } else {
-            // Take `sort_tag_separator` into account.
-            if let Some(i) = sort_tag.rfind(&lib_cfg.filename.sort_tag_separator) {
+            // Take `sort_tag.separator` into account.
+            if let Some(i) = sort_tag.rfind(&lib_cfg.filename.sort_tag.separator) {
                 sort_tag = &sort_tag[..i];
-                stem_copy_counter_ext = &self[i + lib_cfg.filename.sort_tag_separator.len()..];
+                stem_copy_counter_ext = &self[i + lib_cfg.filename.sort_tag.separator.len()..];
             } else {
                 sort_tag = "";
                 stem_copy_counter_ext = self;
             }
         }
 
-        // Remove `sort_tag_extra_separator` if it is at the first position
+        // Remove `sort_tag.extra_separator` if it is at the first position
         // followed by a `sort_tag_char` at the second position.
         let mut chars = stem_copy_counter_ext.chars();
         if chars
             .next()
-            .is_some_and(|c| c == lib_cfg.filename.sort_tag_extra_separator)
+            .is_some_and(|c| c == lib_cfg.filename.sort_tag.extra_separator)
             && chars.next().is_some_and(|c| {
                 c.is_ascii_digit()
                     || c.is_ascii_lowercase()
-                    || lib_cfg.filename.sort_tag_extra_chars.contains(c)
+                    || lib_cfg.filename.sort_tag.extra_chars.contains(c)
             })
         {
             stem_copy_counter_ext = stem_copy_counter_ext
-                .strip_prefix(lib_cfg.filename.sort_tag_extra_separator)
+                .strip_prefix(lib_cfg.filename.sort_tag.extra_separator)
                 .unwrap();
         }
 

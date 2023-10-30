@@ -157,7 +157,7 @@ pub const TMPL_VAR_FM_FILE_EXT: &str = "fm_file_ext";
 /// of the current note. As all front matter variables, its value is copied as
 /// it is without modification.  Here, the only special treatment is, when
 /// analyzing the front matter, it is verified, that all the characters of the
-/// value of this variable are listed in `filename.sort_tag_extra_chars`.
+/// value of this variable are listed in `filename.sort_tag.extra_chars`.
 pub const TMPL_VAR_FM_SORT_TAG: &str = "fm_sort_tag";
 
 /// Contains the value of the front matter field `no_filename_sync`.  When set
@@ -237,14 +237,20 @@ pub struct LibCfg {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Filename {
-    pub sort_tag_extra_chars: String,
-    pub sort_tag_separator: String,
-    pub sort_tag_extra_separator: char,
+    pub sort_tag: SortTag,
     pub copy_counter_extra_separator: String,
     pub copy_counter_opening_brackets: String,
     pub copy_counter_closing_brackets: String,
     pub extension_default: String,
     pub extensions: Vec<(String, MarkupLanguage)>,
+}
+
+/// Configuration for sort-tag.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SortTag {
+    pub extra_chars: String,
+    pub separator: String,
+    pub extra_separator: char,
 }
 
 /// Filename templates and content templates, deserialized from the
@@ -291,55 +297,55 @@ pub struct TmplHtml {
 
 impl LibCfg {
     /// Perform some semantic consistency checks.
-    /// * `sort_tag_extra_separator` must NOT be in `sort_tag_extra_chars`.
-    /// * `sort_tag_extra_separator` must NOT be in `0..9`.
-    /// * `sort_tag_extra_separator` must NOT be in `a..z`.
-    /// * `sort_tag_extra_separator` must NOT be in `sort_tag_extra_chars`.
-    /// * `sort_tag_extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
+    /// * `sort_tag.extra_separator` must NOT be in `sort_tag.extra_chars`.
+    /// * `sort_tag.extra_separator` must NOT be in `0..9`.
+    /// * `sort_tag.extra_separator` must NOT be in `a..z`.
+    /// * `sort_tag.extra_separator` must NOT be in `sort_tag.extra_chars`.
+    /// * `sort_tag.extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
     /// * `copy_counter_extra_separator` must be one of
     ///   `sanitize_filename_reader_friendly::TRIM_LINE_CHARS`.
-    /// * All characters of `sort_tag_separator` must be in `sort_tag_extra_chars`.
-    /// * `sort_tag_separator` must start with NOT `FILENAME_DOTFILE_MARKER`.
+    /// * All characters of `sort_tag.separator` must be in `sort_tag.extra_chars`.
+    /// * `sort_tag.separator` must start with NOT `FILENAME_DOTFILE_MARKER`.
     pub fn assert_validity(&self) -> Result<(), LibCfgError> {
         // Check for obvious configuration errors.
-        // * `sort_tag_extra_separator` must NOT be in `sort_tag_extra_chars`.
-        // * `sort_tag_extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
+        // * `sort_tag.extra_separator` must NOT be in `sort_tag.extra_chars`.
+        // * `sort_tag.extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
         if self
             .filename
-            .sort_tag_extra_chars
-            .contains(self.filename.sort_tag_extra_separator)
-            || (self.filename.sort_tag_extra_separator == FILENAME_DOTFILE_MARKER)
-            || self.filename.sort_tag_extra_separator.is_ascii_digit()
-            || self.filename.sort_tag_extra_separator.is_ascii_lowercase()
+            .sort_tag.extra_chars
+            .contains(self.filename.sort_tag.extra_separator)
+            || (self.filename.sort_tag.extra_separator == FILENAME_DOTFILE_MARKER)
+            || self.filename.sort_tag.extra_separator.is_ascii_digit()
+            || self.filename.sort_tag.extra_separator.is_ascii_lowercase()
         {
             return Err(LibCfgError::SortTagExtraSeparator {
                 dot_file_marker: FILENAME_DOTFILE_MARKER,
-                chars: self.filename.sort_tag_extra_chars.escape_default().to_string(),
+                sort_tag_extra_chars: self.filename.sort_tag.extra_chars.escape_default().to_string(),
                 extra_separator: self
                     .filename
-                    .sort_tag_extra_separator
+                    .sort_tag.extra_separator
                     .escape_default()
                     .to_string(),
             });
         }
 
         // Check for obvious configuration errors.
-        // * All characters of `sort_tag_separator` must be in `sort_tag_extra_chars`.
-        // * `sort_tag_separator` must NOT start with `FILENAME_DOTFILE_MARKER`.
-        // * `sort_tag_separator` must NOT contain ASCII `0..9` or `a..z`.
-        if !self.filename.sort_tag_separator.chars().all(|c| {
-            c.is_ascii_digit() || c.is_ascii_lowercase() || self.filename.sort_tag_extra_chars.contains(c)
+        // * All characters of `sort_tag.separator` must be in `sort_tag.extra_chars`.
+        // * `sort_tag.separator` must NOT start with `FILENAME_DOTFILE_MARKER`.
+        // * `sort_tag.separator` must NOT contain ASCII `0..9` or `a..z`.
+        if !self.filename.sort_tag.separator.chars().all(|c| {
+            c.is_ascii_digit() || c.is_ascii_lowercase() || self.filename.sort_tag.extra_chars.contains(c)
         }) || self
             .filename
-            .sort_tag_separator
+            .sort_tag.separator
             .starts_with(FILENAME_DOTFILE_MARKER)
         {
             return Err(LibCfgError::SortTagSeparator {
                 dot_file_marker: FILENAME_DOTFILE_MARKER,
-                chars: self.filename.sort_tag_extra_chars.escape_default().to_string(),
+                chars: self.filename.sort_tag.extra_chars.escape_default().to_string(),
                 separator: self
                     .filename
-                    .sort_tag_separator
+                    .sort_tag.separator
                     .escape_default()
                     .to_string(),
             });
@@ -537,7 +543,7 @@ pub enum AssertPrecondition {
     IsNotCompound,
     /// `IsValidSortTag`: Assert, that if the variable is defined, the value's
     ///  string representation contains solely characters of the
-    ///  `filename.sort_tag_extra_chars` set, digits or lowercase letters.
+    ///  `filename.sort_tag.extra_chars` set, digits or lowercase letters.
     ///  The number of lowercase letters in a row is limited by
     ///  `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`.
     IsValidSortTag,

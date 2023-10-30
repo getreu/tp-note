@@ -3,20 +3,20 @@
 # List of characters that can be part of a _sort tag_.
 # Besides the characters listed here, the digits `0..9` and
 # the lowercase letters `a..z` are always valid sort-tag characters. 
-sort_tag_extra_chars = ".-_="
+sort_tag.extra_chars = ".-_="
 
-# If empty, the first character which is not in `filename.sort_tag_extra_chars`
+# If empty, the first character which is not in `filename.sort_tag.extra_chars`
 # marks the end of a sort tag.
 # If not empty, a _sort_tag_ is only valid, when is its followed by
-# `filename.sort_tag_separator`. A _sort_tag_ never ends with a
-# `filename.sort_tag_separator`, if it does it stripped. In other positions
+# `filename.sort_tag.separator`. A _sort_tag_ never ends with a
+# `filename.sort_tag.separator`, if it does it stripped. In other positions
 # the separator may appear.
-sort_tag_separator = "-"
+sort_tag.separator = "-"
 
-# In case the file stem starts with a character in `sort_tag_extra_chars` the
-# `sort_tag_extra_separator` character is inserted in order to separate both
+# In case the file stem starts with a character in `sort_tag.extra_chars` the
+# `sort_tag.extra_separator` character is inserted in order to separate both
 # parts when the filename is read next time.
-sort_tag_extra_separator = "'"
+sort_tag.extra_separator = "'"
 
 # If the stem of a filename ends with a pattern, that is similar to a copy
 # counter, add this extra separator. It must be one of `TRIM_LINE_CHARS` (see
@@ -101,7 +101,7 @@ extensions = [
 #   `Value::Array` or `Value::Object`.
 # * `IsValidSortTag`: Assert, that if the variable is defined, the value's
 #    string representation contains solely characters of the
-#    `filename.sort_tag_extra_chars` set, digits or lowercase letters.
+#    `filename.sort_tag.extra_chars` set, digits or lowercase letters.
 #    The number of lowercase letters in a row is limited by
 #    `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`.
 # * `IsTpnoteExtension`: Assert, that if the variable is defined, the values

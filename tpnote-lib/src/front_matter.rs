@@ -111,7 +111,7 @@ impl FrontMatter {
                                         sort_tag: sort_tag.to_owned(),
                                         sort_tag_extra_chars: lib_cfg
                                             .filename
-                                            .sort_tag_extra_chars
+                                            .sort_tag.extra_chars
                                             .escape_default()
                                             .to_string(),
                                         filename_sort_tag_letters_in_succession_max:

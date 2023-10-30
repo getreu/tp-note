@@ -235,13 +235,13 @@ fn markup_to_html_filter<S: BuildHasher>(
 /// Adds a new filter to Tera templates:
 /// `sanit` or `sanit()` sanitizes a string so that it can be used to
 /// assemble filenames or paths. In addition, `sanit(alpha=true)` prepends
-/// the `sort_tag_extra_separator` when the result starts with one of
-/// `sort_tag_extra_chars`, usually a number. This way we guaranty that the filename
+/// the `sort_tag.extra_separator` when the result starts with one of
+/// `sort_tag.extra_chars`, usually a number. This way we guaranty that the filename
 /// never starts with a number. We do not allow this, to be able to distinguish
 /// reliably the sort tag from the filename. In addition to the above, the
 /// filter checks if the string represents a "well-formed" filename. If it
 /// is the case, and the filename starts with a dot, the file is prepended by
-/// `sort_tag_extra_separator`.
+/// `sort_tag.extra_separator`.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
 fn sanit_filter<S: BuildHasher>(

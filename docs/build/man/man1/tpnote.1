@@ -1225,14 +1225,14 @@ The filename has 4 parts:
 .PP
 The `\f[V]-\f[R]' between `\f[V]{{ fm_sort_tag }}\f[R]' and
 `\f[V]{{ fm_title }}\f[R]' is hereafter referred to as \f[I]sort-tag
-separator\f[R] (cf.\ `\f[V]filename.sort_tag_separator\f[R]').
+separator\f[R] (cf.\ `\f[V]filename.sort_tag.separator\f[R]').
 .PP
 A so-called \f[I]sort tag\f[R] is an alphanumerical prefix at the
 beginning of the filename.
 It is used to order files and notes in the file system.
 Besides numerical digits and lowercase letters, a \f[I]sort tag\f[R] may
 contain any combination of `\f[V]_\f[R]', `\f[V]-\f[R]', `\f[V]=\f[R]'
-and `\f[V].\f[R]' (cf.\  `\f[V]filename.sort_tag_extra_chars\f[R]').
+and `\f[V].\f[R]' (cf.\  `\f[V]filename.sort_tag.extra_chars\f[R]').
 If a sort-tag contains lowercase letters, only 2 in a row are allowed.
 Examples:
 .IP \[bu] 2
@@ -2123,11 +2123,11 @@ By default, the digits `\f[V]0\f[R]'-`\f[V]9\f[R]', the characters
 `\f[V].\f[R]' are recognized as being part of a \f[I]sort tag\f[R] when
 they appear at the beginning of a filename.
 This set of characters can be modified with the
-`\f[V]filename.sort_tag_extra_chars\f[R]' configuration variable.
-If defined, the `\f[V]filename.sort_tag_separator\f[R]' (by default
+`\f[V]filename.sort_tag.extra_chars\f[R]' configuration variable.
+If defined, the `\f[V]filename.sort_tag.separator\f[R]' (by default
 `\f[V]-\f[R]') marks the end of a sort tag without being part of it.
 In addition, one special character
-`\f[V]filename.sort_tag_extra_separator\f[R]' (by default
+`\f[V]filename.sort_tag.extra_separator\f[R]' (by default
 `\f[V]\[aq]\f[R]') might be inserted by the filename template directly
 after the `\f[V]-\f[R]' to avoid ambiguity.
 .SS Customize the filename synchronization scheme
@@ -2158,8 +2158,8 @@ expression, e.g.:
 .fi
 .PP
 The filter `\f[V]prepend(with_sort_tag=<...>)\f[R]' decides whether to
-insert the `\f[V]sort_tag_separator=\[dq]-\[dq]\f[R]' and/or the
-`\f[V]sort_tag_extra_separator=\[dq]\[aq]\[dq]\f[R]' characters.
+insert the `\f[V]sort_tag.separator=\[dq]-\[dq]\f[R]' and/or the
+`\f[V]sort_tag.extra_separator=\[dq]\[aq]\[dq]\f[R]' characters.
 These heuristics enable Tp-Note to identify unequivocally sort-tags in
 filenames, which avoids potential cyclic filename change.
 Or, in other words: the `\f[V]tmpl.sync_filname\f[R]' template must
@@ -2796,7 +2796,7 @@ returning its stem, copy-counter and extension.
 change the above output, but the filter asserts at runtime, that the
 resulting type is either `\f[V]String\f[R]' or `\f[V]Number\f[R]' and
 that all characters are part of the set
-`\f[V]filename.sort_tag_extra_chars\f[R]'.
+`\f[V]filename.sort_tag.extra_chars\f[R]'.
 The additional runtime check simplifies template debugging.
 .IP \[bu] 2
 `\f[V]{{ path |\ file_stem }}\f[R]' is similar to
@@ -2877,15 +2877,15 @@ about this filter.
 `\f[V]{{ fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}\f[R]'
 is the note\[cq]s title as defined in its front-matter.
 Same as above, but the title string is prepended with the note\[cq]s
-\f[I]sort_tag\f[R] and with a `\f[V]filename.sort_tag_separator\f[R]'
+\f[I]sort_tag\f[R] and with a `\f[V]filename.sort_tag.separator\f[R]'
 (by default `\f[V]-\f[R]').
-Eventually, a second `\f[V]filename.sort_tag_extra_separator\f[R]' (by
+Eventually, a second `\f[V]filename.sort_tag.extra_separator\f[R]' (by
 default `\f[V]\[aq]\[aq]\f[R]') is inserted after the first to
 guarantee, that one of the separators unequivocally marks the end of the
 \f[I]sort_tag\f[R].
 This might be necessary to avoid ambiguity in case the
 `\f[V]fm_title\f[R]' starts with a character defined in the
-`\f[V]filename.sort_tag_extra_chars\f[R]' set.
+`\f[V]filename.sort_tag.extra_chars\f[R]' set.
 .IP \[bu] 2
 `\f[V]{{ fm_all | remove(key=\[aq]fm_title\[aq]) | remove(key=\[aq]fm_author\[aq]) | to_yaml }}\f[R]'
 renders the collection (map) `\f[V]fm_all\f[R]', exclusive of the
@@ -2997,12 +2997,12 @@ The apostrophe preserves the following dot from being filtered.
 The `\f[V]prepend(with_sort_tag=<...>\f[R]' filter is similar to the
 `\f[V]prepend(with=<...>\f[R]' filter, with two exceptions:
 .IP "1." 3
-If `\f[V]filename.sort_tag_separator\f[R]' is defined (by default
+If `\f[V]filename.sort_tag.separator\f[R]' is defined (by default
 `\f[V]-\f[R]'), it is automatically inserted between the sort-tag and
 the input string.
 .IP "2." 3
 In some cases an additional separator
-`\f[V]filename.sort_tag_extra_separator\f[R]' (by default
+`\f[V]filename.sort_tag.extra_separator\f[R]' (by default
 `\f[V]\[aq]\f[R]') may be inserted as well.
 .PP
 Both separators guarantee that the end of a sort-tag is detected
@@ -3018,8 +3018,8 @@ the first variable, e.g.\
 This way, it is always possible to univocally distinguish the sort-tag
 from the rest of the filename.
 Note, the default sort-tag separators can be changed with the
-configuration variables `\f[V]filename.sort_tag_separator\f[R]' and
-`\f[V]filename.sort_tag_extra_separator\f[R]'.
+configuration variables `\f[V]filename.sort_tag.separator\f[R]' and
+`\f[V]filename.sort_tag.extra_separator\f[R]'.
 For more details please consult the \f[I]Customize the filename
 synchronization scheme\f[R] chapter.
 .PP
