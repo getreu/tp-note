@@ -467,7 +467,7 @@ pub(crate) trait NotePathStr {
     fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str);
 
     /// Check and return the filename in `self`, if it contains
-    /// only `lib_cfg.filename.sort_tag_chars`. The
+    /// only `lib_cfg.filename.sort_tag_extra_chars`. The
     /// number of lowercase letters in a row must not exceed
     /// `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`. If
     /// `self` contains a path, it is ignored.
@@ -527,7 +527,7 @@ impl NotePathStr for str {
                 letters <= FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX
                     && (c.is_ascii_digit()
                         || c.is_ascii_lowercase()
-                        || lib_cfg.filename.sort_tag_chars.contains([c]))
+                        || lib_cfg.filename.sort_tag_extra_chars.contains([c]))
             })
             .count()];
 
@@ -555,7 +555,7 @@ impl NotePathStr for str {
             && chars.next().is_some_and(|c| {
                 c.is_ascii_digit()
                     || c.is_ascii_lowercase()
-                    || lib_cfg.filename.sort_tag_chars.contains(c)
+                    || lib_cfg.filename.sort_tag_extra_chars.contains(c)
             })
         {
             stem_copy_counter_ext = stem_copy_counter_ext

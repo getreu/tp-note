@@ -109,9 +109,9 @@ impl FrontMatter {
                                 if sort_tag.filename_is_valid_sort_tag().is_none() {
                                     return Err(NoteError::FrontMatterFieldIsInvalidSortTag {
                                         sort_tag: sort_tag.to_owned(),
-                                        sort_tag_chars: lib_cfg
+                                        sort_tag_extra_chars: lib_cfg
                                             .filename
-                                            .sort_tag_chars
+                                            .sort_tag_extra_chars
                                             .escape_default()
                                             .to_string(),
                                         filename_sort_tag_letters_in_succession_max:

@@ -36,7 +36,7 @@ pub enum LibCfgError {
     #[error(
         "Configuration file error in section `[filename]`:\n\
         \t`sort_tag_extra_separator=\"{extra_separator}\"\n\
-        must not be one of `sort_tag_chars=\"{chars}\"`,\n\
+        must not be one of `sort_tag_extra_chars=\"{chars}\"`,\n\
         `0..9`, `a..z` or `{dot_file_marker}`."
     )]
     SortTagExtraSeparator {
@@ -58,11 +58,11 @@ pub enum LibCfgError {
         extensions: String,
     },
 
-    /// Remedy: Insert `sort_tag_separator` in `sort_tag_chars`.
+    /// Remedy: Insert `sort_tag_separator` in `sort_tag_extra_chars`.
     #[error(
         "Configuration file error in section `[filename]`:\n\
         All characters in `sort_tag_separator=\"{separator}\"\n\
-        must be in the set `sort_tag_chars=\"{chars}\"`,\n\
+        must be in the set `sort_tag_extra_chars=\"{chars}\"`,\n\
         or in `0..9`, `a..z` and `sort_tag_separator`\n\
         must NOT start with `{dot_file_marker}`."
     )]
@@ -156,13 +156,13 @@ pub enum NoteError {
          \t---\n\
          \tsort_tag: {sort_tag}\n\
          \t---\n\n\
-         Only the characters: \"{sort_tag_chars}\", `0..9`\n\
+         Only the characters: \"{sort_tag_extra_chars}\", `0..9`\n\
          and `a..z` (maximum {filename_sort_tag_letters_in_succession_max} in \
          succession) are allowed."
     )]
     FrontMatterFieldIsInvalidSortTag {
         sort_tag: String,
-        sort_tag_chars: String,
+        sort_tag_extra_chars: String,
         filename_sort_tag_letters_in_succession_max: u8,
     },
 

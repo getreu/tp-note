@@ -1,16 +1,11 @@
 [filename]
 
 # List of characters that can be part of a _sort tag_.
-# This list must not include `sort_tag_extra_separator`.
-# The first character in the filename which is not
-# in this list, marks the end of the sort tag.
-# If `filename.sort_tag_separator` is not empty and the resulting string
-# terminates with `filename.sort_tag_separator` the latter is stripped
-# from the result. Besides the characters listed here, the digits `0..9` and
+# Besides the characters listed here, the digits `0..9` and
 # the lowercase letters `a..z` are always valid sort-tag characters. 
-sort_tag_chars = ".-_="
+sort_tag_extra_chars = ".-_="
 
-# If empty, the first character which is not in `filename.sort_tag_chars`
+# If empty, the first character which is not in `filename.sort_tag_extra_chars`
 # marks the end of a sort tag.
 # If not empty, a _sort_tag_ is only valid, when is its followed by
 # `filename.sort_tag_separator`. A _sort_tag_ never ends with a
@@ -18,7 +13,7 @@ sort_tag_chars = ".-_="
 # the separator may appear.
 sort_tag_separator = "-"
 
-# In case the file stem starts with a character in `sort_tag_chars` the
+# In case the file stem starts with a character in `sort_tag_extra_chars` the
 # `sort_tag_extra_separator` character is inserted in order to separate both
 # parts when the filename is read next time.
 sort_tag_extra_separator = "'"
@@ -106,7 +101,7 @@ extensions = [
 #   `Value::Array` or `Value::Object`.
 # * `IsValidSortTag`: Assert, that if the variable is defined, the value's
 #    string representation contains solely characters of the
-#    `filename.sort_tag_chars` set, digits or lowercase letters.
+#    `filename.sort_tag_extra_chars` set, digits or lowercase letters.
 #    The number of lowercase letters in a row is limited by
 #    `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`.
 # * `IsTpnoteExtension`: Assert, that if the variable is defined, the values

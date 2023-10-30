@@ -1232,7 +1232,7 @@ beginning of the filename.
 It is used to order files and notes in the file system.
 Besides numerical digits and lowercase letters, a \f[I]sort tag\f[R] may
 contain any combination of `\f[V]_\f[R]', `\f[V]-\f[R]', `\f[V]=\f[R]'
-and `\f[V].\f[R]' (cf.\  `\f[V]filename.sort_tag_chars\f[R]').
+and `\f[V].\f[R]' (cf.\  `\f[V]filename.sort_tag_extra_chars\f[R]').
 If a sort-tag contains lowercase letters, only 2 in a row are allowed.
 Examples:
 .IP \[bu] 2
@@ -2123,7 +2123,7 @@ By default, the digits `\f[V]0\f[R]'-`\f[V]9\f[R]', the characters
 `\f[V].\f[R]' are recognized as being part of a \f[I]sort tag\f[R] when
 they appear at the beginning of a filename.
 This set of characters can be modified with the
-`\f[V]filename.sort_tag_chars\f[R]' configuration variable.
+`\f[V]filename.sort_tag_extra_chars\f[R]' configuration variable.
 If defined, the `\f[V]filename.sort_tag_separator\f[R]' (by default
 `\f[V]-\f[R]') marks the end of a sort tag without being part of it.
 In addition, one special character
@@ -2796,7 +2796,7 @@ returning its stem, copy-counter and extension.
 change the above output, but the filter asserts at runtime, that the
 resulting type is either `\f[V]String\f[R]' or `\f[V]Number\f[R]' and
 that all characters are part of the set
-`\f[V]filename.sort_tag_chars\f[R]'.
+`\f[V]filename.sort_tag_extra_chars\f[R]'.
 The additional runtime check simplifies template debugging.
 .IP \[bu] 2
 `\f[V]{{ path |\ file_stem }}\f[R]' is similar to
@@ -2885,7 +2885,7 @@ guarantee, that one of the separators unequivocally marks the end of the
 \f[I]sort_tag\f[R].
 This might be necessary to avoid ambiguity in case the
 `\f[V]fm_title\f[R]' starts with a character defined in the
-`\f[V]filename.sort_tag_chars\f[R]' set.
+`\f[V]filename.sort_tag_extra_chars\f[R]' set.
 .IP \[bu] 2
 `\f[V]{{ fm_all | remove(key=\[aq]fm_title\[aq]) | remove(key=\[aq]fm_author\[aq]) | to_yaml }}\f[R]'
 renders the collection (map) `\f[V]fm_all\f[R]', exclusive of the

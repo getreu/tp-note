@@ -883,7 +883,7 @@ A so-called _sort tag_ is an alphanumerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
 numerical digits and lowercase letters, a _sort tag_ may contain any 
 combination of '`_`', '`-`', '`=`' and '`.`' (cf. 
-'`filename.sort_tag_chars`'). If a sort-tag contains lowercase  letters, only 2
+'`filename.sort_tag_extra_chars`'). If a sort-tag contains lowercase  letters, only 2
 in a row are allowed. Examples:
 
 * *Chronological sort tag*
@@ -1598,7 +1598,7 @@ make sure to enable the right set of potential sort-tag characters.
 By default, the digits '`0`'-'`9`', the characters '`_`', '`-`', _space_,
 '`\t`' and '`.`' are recognized as being part of a *sort tag* when they appear
 at the beginning of a filename.  This set of characters can be modified with
-the '`filename.sort_tag_chars`' configuration variable. If defined, the
+the '`filename.sort_tag_extra_chars`' configuration variable. If defined, the
 '`filename.sort_tag_separator`' (by default '`-`') marks the end of a
 sort tag without being part of it.  In addition, one special character
 '`filename.sort_tag_extra_separator`' (by default '`'`') might be inserted
@@ -2147,7 +2147,7 @@ A filter is always used together with a variable. Here are some examples:
 * '`{{ path | file_sort_tag | assert_valid_sort_tag }}`' does not change 
   the above output, but the filter asserts at runtime, that the resulting type
   is either '`String`' or '`Number`' and that all characters are part of the set
-  '`filename.sort_tag_chars`'. The additional runtime check simplifies
+  '`filename.sort_tag_extra_chars`'. The additional runtime check simplifies
   template debugging. 
 
 * '`{{ path | file_stem }}`' is similar to '`{{ path | file_name }}`'
@@ -2217,7 +2217,7 @@ A filter is always used together with a variable. Here are some examples:
   after the first to guarantee, that one of the separators unequivocally
   marks the end of the _sort_tag_. This might be necessary to avoid
   ambiguity in case the '`fm_title`' starts with a character defined in the
-  '`filename.sort_tag_chars`' set.
+  '`filename.sort_tag_extra_chars`' set.
 
 * '`{{ fm_all | remove(key='fm_title') | remove(key='fm_author') | to_yaml }}`'
   renders the collection (map) '`fm_all`', exclusive of the
