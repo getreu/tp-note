@@ -123,6 +123,8 @@ fn to_yaml_filter<S: BuildHasher>(
                             inserts_n = (tab as usize).saturating_sub(insert_pos);
                         }
                     }
+                } else if l.starts_with("- ") {
+                    inserts_n = tab as usize;
                 };
 
                 // Enlarge indent.
@@ -1047,6 +1049,17 @@ mod tests {
         let expected = "'my: str'".to_string();
         let mut args = HashMap::new();
         args.insert("tab".to_string(), to_value(10).unwrap());
+        assert_eq!(
+            to_yaml_filter(&input, &args).unwrap(),
+            Value::String(expected)
+        );
+
+        //
+        // Array.
+        let input = json!(["Ford", "BMW", "Fiat"]);
+        let expected = "    - Ford\n    - BMW\n    - Fiat".to_string();
+        let mut args = HashMap::new();
+        args.insert("tab".to_string(), to_value(4).unwrap());
         assert_eq!(
             to_yaml_filter(&input, &args).unwrap(),
             Value::String(expected)
