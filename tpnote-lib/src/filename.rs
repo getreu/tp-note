@@ -131,16 +131,16 @@ impl NotePathBuf for PathBuf {
         filename.push_str(stem);
 
         if let Some(cc) = copy_counter {
-            // Is `copy_counter_extra_separator` necessary?
+            // Is `copy_counter.extra_separator` necessary?
             // Does this stem ending look similar to a copy counter?
             if stem.split_copy_counter().1.is_some() {
                 // Add an additional separator.
-                filename.push_str(&lib_cfg.filename.copy_counter_extra_separator);
+                filename.push_str(&lib_cfg.filename.copy_counter.extra_separator);
             };
 
-            filename.push_str(&lib_cfg.filename.copy_counter_opening_brackets);
+            filename.push_str(&lib_cfg.filename.copy_counter.opening_brackets);
             filename.push_str(&cc.to_string());
-            filename.push_str(&lib_cfg.filename.copy_counter_closing_brackets);
+            filename.push_str(&lib_cfg.filename.copy_counter.closing_brackets);
         }
 
         if !extension.is_empty() {
@@ -208,7 +208,7 @@ impl NotePathBuf for PathBuf {
         // Does this ending look like a copy counter?
         if stem_short.split_copy_counter().1.is_some() {
             let lib_cfg = LIB_CFG.read_recursive();
-            stem_short.push_str(&lib_cfg.filename.copy_counter_extra_separator);
+            stem_short.push_str(&lib_cfg.filename.copy_counter.extra_separator);
         }
 
         // Assemble.
@@ -484,7 +484,7 @@ impl NotePathStr for str {
         let lib_cfg = LIB_CFG.read_recursive();
         // Strip closing brackets at the end.
         let tag1 =
-            if let Some(t) = self.strip_suffix(&lib_cfg.filename.copy_counter_closing_brackets) {
+            if let Some(t) = self.strip_suffix(&lib_cfg.filename.copy_counter.closing_brackets) {
                 t
             } else {
                 return (self, None);
@@ -498,13 +498,13 @@ impl NotePathStr for str {
         };
         // And finally strip starting bracket.
         let tag3 =
-            if let Some(t) = tag2.strip_suffix(&lib_cfg.filename.copy_counter_opening_brackets) {
+            if let Some(t) = tag2.strip_suffix(&lib_cfg.filename.copy_counter.opening_brackets) {
                 t
             } else {
                 return (self, None);
             };
         // This is optional
-        if let Some(t) = tag3.strip_suffix(&lib_cfg.filename.copy_counter_extra_separator) {
+        if let Some(t) = tag3.strip_suffix(&lib_cfg.filename.copy_counter.extra_separator) {
             (t, copy_counter)
         } else {
             (tag3, copy_counter)

@@ -23,17 +23,17 @@ sort_tag.extra_separator = "'"
 # definition in crate: `sanitize_filename_reader_friendly`) because they are
 # known not to appear at the end of `sanitze()`'d strings. This is why they are
 # suitable here.
-copy_counter_extra_separator = "-"
+copy_counter.extra_separator = "-"
 
 # Tp-Note may add a counter at the end of the filename when it can not save a
 # file because the name is taken already. This is the opening bracket search
 # pattern. Some examples: `"-"`, "'_'"", `"_-"`,`"-_"`, `"("` Can be empty.
-copy_counter_opening_brackets = "("
+copy_counter.opening_brackets = "("
 
 # Tp-Note may add a counter at the end of the filename when it can not save a
 # file because the name is taken already. This is the closing bracket search
 # pattern. Some examples: `"-"`, "'_'"", `"_-"`,`"-_"`, `"("` Can be empty.
-copy_counter_closing_brackets = ")"
+copy_counter.closing_brackets = ")"
 
 # File extension of new _Tp-Note_ files.
 # NB: Do not forget to adapt the templates `tmpl.*` in case you set

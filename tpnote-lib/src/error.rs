@@ -72,10 +72,10 @@ pub enum LibCfgError {
         separator: String,
     },
 
-    /// Remedy: Choose a `copy_counter_extra_separator` in the set.
+    /// Remedy: Choose a `copy_counter.extra_separator` in the set.
     #[error(
         "Configuration file error in section `[filename]`:\n\
-        `copy_counter_extra_separator=\"{extra_separator}\"`\n\
+        `copy_counter.extra_separator=\"{extra_separator}\"`\n\
         must be one of: \"{chars}\""
     )]
     CopyCounterExtraSeparator {

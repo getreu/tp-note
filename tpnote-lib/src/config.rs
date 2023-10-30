@@ -7,7 +7,7 @@
 //! use tpnote_lib::config::LIB_CFG;
 //!
 //! let mut lib_cfg = LIB_CFG.write();
-//! (*lib_cfg).filename.copy_counter_extra_separator = '@'.to_string();
+//! (*lib_cfg).filename.copy_counter.extra_separator = '@'.to_string();
 //! ```
 //!
 //! Contract: although `LIB_CFG` is mutable at runtime, it is sourced only
@@ -238,9 +238,7 @@ pub struct LibCfg {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Filename {
     pub sort_tag: SortTag,
-    pub copy_counter_extra_separator: String,
-    pub copy_counter_opening_brackets: String,
-    pub copy_counter_closing_brackets: String,
+    pub copy_counter: CopyCounter,
     pub extension_default: String,
     pub extensions: Vec<(String, MarkupLanguage)>,
 }
@@ -251,6 +249,14 @@ pub struct SortTag {
     pub extra_chars: String,
     pub separator: String,
     pub extra_separator: char,
+}
+
+/// Configuration for copy-counter.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CopyCounter {
+    pub extra_separator: String,
+    pub opening_brackets: String,
+    pub closing_brackets: String,
 }
 
 /// Filename templates and content templates, deserialized from the
@@ -302,7 +308,7 @@ impl LibCfg {
     /// * `sort_tag.extra_separator` must NOT be in `a..z`.
     /// * `sort_tag.extra_separator` must NOT be in `sort_tag.extra_chars`.
     /// * `sort_tag.extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
-    /// * `copy_counter_extra_separator` must be one of
+    /// * `copy_counter.extra_separator` must be one of
     ///   `sanitize_filename_reader_friendly::TRIM_LINE_CHARS`.
     /// * All characters of `sort_tag.separator` must be in `sort_tag.extra_chars`.
     /// * `sort_tag.separator` must start with NOT `FILENAME_DOTFILE_MARKER`.
@@ -352,14 +358,14 @@ impl LibCfg {
         }
 
         // Check for obvious configuration errors.
-        // * `copy_counter_extra_separator` must one of
+        // * `copy_counter.extra_separator` must one of
         //   `sanitize_filename_reader_friendly::TRIM_LINE_CHARS`.
-        if !TRIM_LINE_CHARS.contains(&self.filename.copy_counter_extra_separator) {
+        if !TRIM_LINE_CHARS.contains(&self.filename.copy_counter.extra_separator) {
             return Err(LibCfgError::CopyCounterExtraSeparator {
                 chars: TRIM_LINE_CHARS.escape_default().to_string(),
                 extra_separator: self
                     .filename
-                    .copy_counter_extra_separator
+                    .copy_counter.extra_separator
                     .escape_default()
                     .to_string(),
             });
