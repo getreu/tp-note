@@ -78,7 +78,7 @@ lazy_static! {
 /// the right of the first character of the key by inserting additional spaces
 /// between the key and the value. When `tab=n` is given, it has precedence
 /// over the  default value, read from the configuration file variable
-/// `tmpl.filter_to_yaml_tab`.
+/// `tmpl.filter.to_yaml_tab`.
 /// The input can be of any type, the output type is `Value::String()`.
 fn to_yaml_filter<S: BuildHasher>(
     val: &Value,
@@ -101,7 +101,7 @@ fn to_yaml_filter<S: BuildHasher>(
     let val_yaml: String = if let Some(tab) =
         args.get("tab").and_then(|v| v.as_u64()).or_else(|| {
             let lib_cfg = LIB_CFG.read_recursive();
-            let n = lib_cfg.tmpl.filter_to_yaml_tab;
+            let n = lib_cfg.tmpl.filter.to_yaml_tab;
             if n == 0 {
                 None
             } else {
@@ -619,7 +619,7 @@ fn find_last_created_file<S: BuildHasher>(
 /// Numbers with more digits than `default_if_greater` are never incremented
 /// (they are most likely dates). Instead the `default` value is returned.
 /// The default value is also returned if the input contains a character
-/// of the set `tmpl.filter_incr_sort_tag.default_if_contains` or if the input
+/// of the set `tmpl.filter.incr_sort_tag.default_if_contains` or if the input
 /// is empty. The path in the input allows to check if the resulting sort-tag
 /// exsists on disk already. If this is the case, a subcategory is appended to
 /// the resulting sort-tag.
@@ -645,7 +645,7 @@ fn incr_sort_tag_filter<S: BuildHasher>(
 
     // Early return if precondition fails.
     let lib_cfg = LIB_CFG.read_recursive();
-    let default_if_contains = &lib_cfg.tmpl.filter_incr_sort_tag.default_if_contains;
+    let default_if_contains = &lib_cfg.tmpl.filter.incr_sort_tag.default_if_contains;
     if input_sort_tag
         .chars()
         .any(|c| default_if_contains.contains(c))
@@ -664,7 +664,7 @@ fn incr_sort_tag_filter<S: BuildHasher>(
         // Return early if this number is too big.
         const DIGITS_MAX: usize = u32::MAX.ilog10() as usize; // 9
         if digits.len() > DIGITS_MAX
-            || digits.len() > lib_cfg.tmpl.filter_incr_sort_tag.default_if_greater as usize
+            || digits.len() > lib_cfg.tmpl.filter.incr_sort_tag.default_if_greater as usize
         {
             return Ok(Value::String(default));
         }
@@ -700,7 +700,7 @@ fn incr_sort_tag_filter<S: BuildHasher>(
             // Return early if this number is too big.
             if letters.len() > LETTERS_MAX
                 || letters.len() > FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX as usize
-                || letters.len() > lib_cfg.tmpl.filter_incr_sort_tag.default_if_greater as usize
+                || letters.len() > lib_cfg.tmpl.filter.incr_sort_tag.default_if_greater as usize
             {
                 return Ok(Value::String(default));
             }
@@ -852,7 +852,7 @@ fn get_lang_filter<S: BuildHasher>(
 
 /// A mapper for ISO 639 codes adding some region information, e.g.
 /// `en` to `en-US` or `de` to `de-DE`. Configure the mapping with
-/// `tmpl.filter_map_lang`.
+/// `tmpl.filter.map_lang`.
 /// An input value without mapping definition is passed through.
 /// When the optional parameter `default` is given, e.g.
 /// `map_lang(default=val)`, an empty input string is mapped to `val`.

@@ -31,7 +31,7 @@ pub const ENV_VAR_TPNOTE_EXTENSION_DEFAULT: &str = "TPNOTE_EXTENSION_DEFAULT";
 pub const ENV_VAR_TPNOTE_LANG: &str = "TPNOTE_LANG";
 
 /// Name of the environment variable, that can be optionally
-/// used to overwrite the user's `filter_get_lang` and `filter_map_lang`
+/// used to overwrite the user's `tmpl.filter.get_lang` and `tmpl.filter.map_lang`
 /// configuration file setting.
 pub const ENV_VAR_TPNOTE_LANG_DETECTION: &str = "TPNOTE_LANG_DETECTION";
 
@@ -243,7 +243,7 @@ fn update_lang_setting(settings: &mut Settings) {
     settings.lang = lang;
 }
 
-/// Read language list from `LIB_CFG.tmpl.filter_get_lang`, add the user's
+/// Read language list from `LIB_CFG.tmpl.filter.get_lang`, add the user's
 /// default language subtag and store them in `SETTINGS.filter_get_lang`
 /// as `FilterGetLang::SomeLanguages(l)` `enum` variant.
 /// If `SETTINGS.filter_get_lang` contains a tag `TMPL_FILTER_GET_LANG_ALL`,
@@ -257,7 +257,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
     // Read and convert ISO codes from config object.
     match lib_cfg
         .tmpl
-        .filter_get_lang
+        .filter.get_lang
         .iter()
         // Skip if this is the pseudo tag for all languages.
         .filter(|&l| {
@@ -342,7 +342,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
 fn update_filter_map_lang_btmap_setting(settings: &mut Settings) {
     let mut btm = BTreeMap::new();
     let lib_cfg = LIB_CFG.read_recursive();
-    for l in &lib_cfg.tmpl.filter_map_lang {
+    for l in &lib_cfg.tmpl.filter.map_lang {
         if l.len() >= 2 {
             btm.insert(l[0].to_string(), l[1].to_string());
         };

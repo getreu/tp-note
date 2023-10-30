@@ -83,7 +83,7 @@ pub enum LibCfgError {
         extra_separator: String,
     },
 
-    /// Remedy: check the configuration file variable `tmpl.filter_assert_preconditions`.
+    /// Remedy: check the configuration file variable `tmpl.filter.assert_preconditions`.
     #[error("choose one of: `IsDefined`, `IsString`, `IsNumber`, `IsStringOrNumber`, `IsBool`, `IsValidSortTag`")]
     ParseAssertPrecondition,
 
@@ -92,12 +92,12 @@ pub enum LibCfgError {
     ParseLocalLinkKind,
 
     /// Remedy: check the ISO 639-1 codes in the configuration variable
-    /// `tmpl.filter_get_lang` and make sure that they are supported, by
+    /// `tmpl.filter.get_lang` and make sure that they are supported, by
     /// checking `tpnote -V`.
     #[error(
         "The ISO 639-1 language subtag `{language_code}`\n\
          in the configuration file variable\n\
-         `tmpl.filter_get_lang` or in the environment\n\
+         `tmpl.filter.get_lang` or in the environment\n\
          variable `TPNOTE_LANG_DETECTION` is not supported.\n\
          All listed codes must be part of the set:\n\
          {all_langs}."
@@ -108,14 +108,14 @@ pub enum LibCfgError {
     },
 
     /// Remedy: add one more ISO 639-1 code in the configuration variable
-    /// `tmpl.filter_get_lang` (or in `TPNOTE_LANG_DETECTION`) and make
+    /// `tmpl.filter.get_lang` (or in `TPNOTE_LANG_DETECTION`) and make
     /// sure that the code is supported, by checking `tpnote -V`.
     #[error(
         "Not enough languages to choose from.\n\
          The list of ISO 639-1 language subtags\n\
          currently contains only one item: `{language_code}`.\n\
          Add one more language to the configuration \n\
-         file variable `tmpl.filter_get_lang` or to the\n\
+         file variable `tmpl.filter.get_lang` or to the\n\
          environment variable `TPNOTE_LANG_DETECTION`\n\
          to prevent this error from occurring."
     )]

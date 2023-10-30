@@ -263,11 +263,7 @@ pub struct CopyCounter {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tmpl {
-    pub filter_assert_preconditions: Vec<(String, Vec<AssertPrecondition>)>,
-    pub filter_incr_sort_tag: FilterIncrSortTag,
-    pub filter_get_lang: Vec<String>,
-    pub filter_map_lang: Vec<Vec<String>>,
-    pub filter_to_yaml_tab: u64,
+    pub filter: Filter,
     pub from_dir_content: String,
     pub from_dir_filename: String,
     pub from_clipboard_yaml_content: String,
@@ -279,6 +275,16 @@ pub struct Tmpl {
     pub annotate_file_content: String,
     pub annotate_file_filename: String,
     pub sync_filename: String,
+}
+
+/// Configuration related to various Tera template filters.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Filter {
+    pub assert_preconditions: Vec<(String, Vec<AssertPrecondition>)>,
+    pub incr_sort_tag: FilterIncrSortTag,
+    pub get_lang: Vec<String>,
+    pub map_lang: Vec<Vec<String>>,
+    pub to_yaml_tab: u64,
 }
 
 /// Parameters for the `incr_sort_tag` Tera filter.
@@ -318,7 +324,8 @@ impl LibCfg {
         // * `sort_tag.extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
         if self
             .filename
-            .sort_tag.extra_chars
+            .sort_tag
+            .extra_chars
             .contains(self.filename.sort_tag.extra_separator)
             || (self.filename.sort_tag.extra_separator == FILENAME_DOTFILE_MARKER)
             || self.filename.sort_tag.extra_separator.is_ascii_digit()
@@ -326,10 +333,16 @@ impl LibCfg {
         {
             return Err(LibCfgError::SortTagExtraSeparator {
                 dot_file_marker: FILENAME_DOTFILE_MARKER,
-                sort_tag_extra_chars: self.filename.sort_tag.extra_chars.escape_default().to_string(),
+                sort_tag_extra_chars: self
+                    .filename
+                    .sort_tag
+                    .extra_chars
+                    .escape_default()
+                    .to_string(),
                 extra_separator: self
                     .filename
-                    .sort_tag.extra_separator
+                    .sort_tag
+                    .extra_separator
                     .escape_default()
                     .to_string(),
             });
@@ -340,18 +353,27 @@ impl LibCfg {
         // * `sort_tag.separator` must NOT start with `FILENAME_DOTFILE_MARKER`.
         // * `sort_tag.separator` must NOT contain ASCII `0..9` or `a..z`.
         if !self.filename.sort_tag.separator.chars().all(|c| {
-            c.is_ascii_digit() || c.is_ascii_lowercase() || self.filename.sort_tag.extra_chars.contains(c)
+            c.is_ascii_digit()
+                || c.is_ascii_lowercase()
+                || self.filename.sort_tag.extra_chars.contains(c)
         }) || self
             .filename
-            .sort_tag.separator
+            .sort_tag
+            .separator
             .starts_with(FILENAME_DOTFILE_MARKER)
         {
             return Err(LibCfgError::SortTagSeparator {
                 dot_file_marker: FILENAME_DOTFILE_MARKER,
-                chars: self.filename.sort_tag.extra_chars.escape_default().to_string(),
+                chars: self
+                    .filename
+                    .sort_tag
+                    .extra_chars
+                    .escape_default()
+                    .to_string(),
                 separator: self
                     .filename
-                    .sort_tag.separator
+                    .sort_tag
+                    .separator
                     .escape_default()
                     .to_string(),
             });
@@ -365,7 +387,8 @@ impl LibCfg {
                 chars: TRIM_LINE_CHARS.escape_default().to_string(),
                 extra_separator: self
                     .filename
-                    .copy_counter.extra_separator
+                    .copy_counter
+                    .extra_separator
                     .escape_default()
                     .to_string(),
             });

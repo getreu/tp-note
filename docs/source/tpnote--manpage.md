@@ -903,7 +903,7 @@ in a row are allowed. Examples:
 
   NB: sort-tags can be structured with '`_`' or '`.`'. Do not use '`-`' here,
   because Tp-Note interprets sort-tags containing '`-`' as chronological
-  sort tags. (cf. '`tmpl.filter_incr_sort_tag.default_if_contains`').
+  sort tags. (cf. '`tmpl.filter.incr_sort_tag.default_if_contains`').
 
 * *Alphanumerical sequence number sort tag*
 
@@ -1416,13 +1416,13 @@ input: the header field '`title:`' or the first sentence of the text body.
 The natural language detection algorithm is implemented as a template filter
 named '`get_lang`', which is used in various Tera content templates
 '`tmpl.*_content`' in Tp-Note's configuration file. The filter '`get_lang`'
-is parametrized by the configuration variable '`tmpl.filter_get_lang`'
+is parametrized by the configuration variable '`tmpl.filter.get_lang`'
 containing a list of ISO 639-1 encoded languages, the algorithm considers as
 potential detection candidates, e.g.:
 
 ```toml
 [tmpl]
-filter_get_lang = [
+filter.get_lang = [
     'en',
     'fr',
     'de',
@@ -1440,7 +1440,7 @@ which stands for “add all languages”:
 
 ```toml
 [tmpl]
-filter_get_lang = [
+filter.get_lang = [
     '+all',
 ]
 ```
@@ -1458,7 +1458,7 @@ The corresponding configuration looks like this:
 
 ```toml
 [tmpl]
-filter_map_lang = [
+filter.map_lang = [
     [
     'en',
     'en-US',
@@ -1479,7 +1479,7 @@ Subsequent entries that differ only in the region subtag, e.g.
 '`['en', 'en- GB'], ['en', 'en-US']`' are ignored.
 
 Note, that the environment variable '`TPNOTE_LANG_DETECTION`' - if set -
-takes precedence over the '`tmpl.filter_get_lang`' and '`tmpl.filter_map_lang`'
+takes precedence over the '`tmpl.filter.get_lang`' and '`tmpl.filter.map_lang`'
 settings. This allows configuring the language detection feature system-wide
 without touching Tp-Note's configuration file. The following example achieves
 the equivalent result to the configuration hereinabove:
@@ -1506,11 +1506,11 @@ tpnote -d trace -b
 ```
 
 If wished for, you can disable Tp-Note's language detection feature, by
-deleting all entries in the '`tmpl.filter_get_lang`' variable:
+deleting all entries in the '`tmpl.filter.get_lang`' variable:
 
 ```toml
 [tmpl]
-filter_get_lang = []
+filter.get_lang = []
 ```
 
 Like above, you can achieve the same with:
@@ -2112,7 +2112,7 @@ variables might be undefined. Please take into consideration, that a defined
 variable might contain the empty string '`""`'. Creating a new note file
 with a content template, the note's header is parsed into '`{{ fm_* }}`'
 variables. The latter are then type checked according configurable rules.
-The rules are defined in '`tmpl.filter_assert_precondition`'
+The rules are defined in '`tmpl.filter.assert_precondition`'
 
 For a more detailed description of the available template variables, please
 consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
@@ -2174,9 +2174,9 @@ A filter is always used together with a variable. Here are some examples:
   extracts the sort-tag from this file, increments the sort-tag and returns the 
   result. If the incrementation fails, the '`default`' value is returned.
   This can happen, when the input sort-tag contains characters of the set
-  '`tmpl.filter_incr_sort_tag.default_if_contains`'. Or, if the to be
+  '`tmpl.filter.incr_sort_tag.default_if_contains`'. Or, if the to be
   incremented counter (a sequential sort-tag usually has more than one counter)
-  has more than '`tmpl.filter_incr_sort_tag.default_if_greater`' digits.
+  has more than '`tmpl.filter.incr_sort_tag.default_if_greater`' digits.
 
 * '`{{ dir_path | trim_file_sort_tag }}`' returns the final component
   of '`dir_path`' (which is the final directory name in '`{{ path }}`').
@@ -2241,7 +2241,7 @@ A filter is always used together with a variable. Here are some examples:
 * '`{{ note_body_text | get_lang }}`' determines the natural language of
   the variable '`{{ note_body_text }}` and returns the result as ISO 639-1
   language code. The template filter '`{{ get_lang }}`' can be configured with
-  the configuration file variable '`tmpl.filter_get_lang`'. The latter
+  the configuration file variable '`tmpl.filter.get_lang`'. The latter
   defines a list of ISO 639-1 codes, the detection algorithm considers as
   possible language candidates. Keep this list as small as possible, because
   language detection is computationally expensive. A long candidate list may
@@ -2254,8 +2254,8 @@ A filter is always used together with a variable. Here are some examples:
   region subtag. For example the input '`en`' results in '`en-US`'. This
   additional mapping is useful because the detection algorithm can not
   determine the region automatically. The mapping can be configured by
-  adjusting the configuration file variable '`tmpl.filter_map_lang`'.
-  If a language is not listed in the '`tmpl.filter_map_lang`' filter
+  adjusting the configuration file variable '`tmpl.filter.map_lang`'.
+  If a language is not listed in the '`tmpl.filter.map_lang`' filter
   configuration, the input is passed through, e.g. '`fr`' results in '`fr`', or,
   the empty string results in an empty string.
 
@@ -2434,7 +2434,7 @@ TPNOTE\_LANG
 TPNOTE\_LANG\_DETECTION
 
 >   If set, this variable overwrites the configuration file variables
-    '`tmpl.filter_get_lang`' and '`tmpl.filter_map_lang`', thus selecting
+    '`tmpl.filter.get_lang`' and '`tmpl.filter.map_lang`', thus selecting
     potential language candidates for Tp-Note's natural language detection. The
     string contains a comma and space separated list of ISO 63901 codes, e.g.
     '`fr`' or IETF BCP 47 tags, e.g. '`fr-FR`'. Here is an example of a complete

@@ -657,10 +657,10 @@ text editor, update Windows to the latest version or install
 
   This process can be configured in various ways. The most important is to
   provide _Tp-Note_ with a list of language candidates you write your notes.
-  C.f. the variable `tmpl.filter_get_lang` in Tp-Note's configuration file.
+  C.f. the variable `tmpl.filter.get_lang` in Tp-Note's configuration file.
 
   You may also want to indicate the default region codes of your preferred
-  languages. C.f. the variable `tmpl.filter_map_lang` in Tp-Note's
+  languages. C.f. the variable `tmpl.filter.map_lang` in Tp-Note's
   configuration file.
 
   Please refer to _customization_ section in [Tp-Note's man-page] to learn

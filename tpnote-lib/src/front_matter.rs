@@ -53,7 +53,7 @@ impl FrontMatter {
     #[inline]
     pub fn assert_precoditions(&self) -> Result<(), NoteError> {
         let lib_cfg = LIB_CFG.read_recursive();
-        for (key, conditions) in lib_cfg.tmpl.filter_assert_preconditions.iter() {
+        for (key, conditions) in lib_cfg.tmpl.filter.assert_preconditions.iter() {
             let key = key.trim_start_matches(TMPL_VAR_FM_);
             if let Some(value) = self.get(key) {
                 for cond in conditions {
@@ -308,7 +308,7 @@ mod tests {
 
     #[test]
     fn test_assert_preconditions() {
-        // Check `tmpl.filter_assert_preconditions` in
+        // Check `tmpl.filter.assert_preconditions` in
         // `tpnote_lib/src/config_default.toml` to understand these tests.
         use crate::front_matter::FrontMatter;
         use serde_json::json;
