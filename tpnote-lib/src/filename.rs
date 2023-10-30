@@ -3,7 +3,6 @@ use crate::config::FILENAME_COPY_COUNTER_MAX;
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::FILENAME_EXTENSION_SEPARATOR_DOT;
 use crate::config::FILENAME_LEN_MAX;
-use crate::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX;
 use crate::config::LIB_CFG;
 use crate::error::FileError;
 use crate::markup_language::MarkupLanguage;
@@ -263,7 +262,7 @@ impl NotePath for Path {
             .to_str()
             .unwrap_or_default();
 
-        let (sort_tag, stem_copy_counter_ext) =
+        let (sort_tag, stem_copy_counter_ext, _) =
             sort_tag_stem_copy_counter_ext.split_sort_tag(false);
 
         let ext = Path::new(stem_copy_counter_ext)
@@ -464,12 +463,14 @@ pub(crate) trait NotePathStr {
     /// `FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX` lowercase letters in a row.
     /// If `ignore_sort_tag_separator=true` this split runs with the setting
     /// `filename_sort_tag_speparator=""`.
-    fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str);
+    /// If the boolean return value is true, the sort-tag satisfies the
+    /// criteria for a sequential sort-tag.
+    fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str, bool);
 
     /// Check and return the filename in `self`, if it contains
     /// only `lib_cfg.filename.sort_tag.extra_chars`. The
     /// number of lowercase letters in a row must not exceed
-    /// `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`. If
+    /// `filename.sort_tag.letters_in_succession_max`. If
     /// `self` contains a path, it is ignored.
     fn filename_is_valid_sort_tag(&self) -> Option<&str>;
 }
@@ -511,20 +512,38 @@ impl NotePathStr for str {
         }
     }
 
-    fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str) {
+    fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str, bool) {
         let lib_cfg = LIB_CFG.read_recursive();
 
+        let mut is_sequential_sort_tag = true;
+
+        let mut digits: u8 = 0;
         let mut letters: u8 = 0;
         let mut sort_tag = &self[..self
             .chars()
             .take_while(|&c| {
+                if c.is_ascii_digit() {
+                    digits += 1;
+                    if digits
+                        > lib_cfg
+                            .filename
+                            .sort_tag
+                            .sequential
+                            .digits_in_succession_max
+                    {
+                        is_sequential_sort_tag = false;
+                    }
+                } else {
+                    digits = 0;
+                }
+
                 if c.is_ascii_lowercase() {
                     letters += 1;
                 } else {
                     letters = 0;
                 }
 
-                letters <= FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX
+                letters <= lib_cfg.filename.sort_tag.letters_in_succession_max
                     && (c.is_ascii_digit()
                         || c.is_ascii_lowercase()
                         || lib_cfg.filename.sort_tag.extra_chars.contains([c]))
@@ -563,7 +582,7 @@ impl NotePathStr for str {
                 .unwrap();
         }
 
-        (sort_tag, stem_copy_counter_ext)
+        (sort_tag, stem_copy_counter_ext, is_sequential_sort_tag)
     }
 
     fn filename_is_valid_sort_tag(&self) -> Option<&str> {
@@ -1005,16 +1024,16 @@ mod tests {
     fn test_split_sort_tag() {
         use crate::filename::NotePathStr;
 
-        let expected = ("123", "Rest");
+        let expected = ("123", "", true);
+        let result = "123".split_sort_tag(true);
+        assert_eq!(expected, result);
+
+        let expected = ("123", "Rest", true);
         let result = "123-Rest".split_sort_tag(false);
         assert_eq!(expected, result);
 
-        let expected = ("123", "Rest");
-        let result = "123-Rest".split_sort_tag(false);
-        assert_eq!(expected, result);
-
-        let expected = ("123-", "Rest");
-        let result = "123--Rest".split_sort_tag(false);
+        let expected = ("2023-10-30", "Rest", false);
+        let result = "2023-10-30-Rest".split_sort_tag(false);
         assert_eq!(expected, result);
     }
 
@@ -1044,7 +1063,7 @@ mod tests {
     }
 
     #[test]
-    fn test_is_valid_sort_tag() {
+    fn test_filename_is_valid_sort_tag() {
         use super::NotePathStr;
         let f = "20230821";
         assert_eq!(f.filename_is_valid_sort_tag(), Some("20230821"));
@@ -1072,5 +1091,20 @@ mod tests {
 
         let f = "2023A";
         assert_eq!(f.filename_is_valid_sort_tag(), None);
+
+        let f = "20230821";
+        assert_eq!(f.filename_is_valid_sort_tag(), Some("20230821"));
+
+        let f = "2023-08-21";
+        assert_eq!(f.filename_is_valid_sort_tag(), Some("2023-08-21"));
+
+        let f = "20-08-21";
+        assert_eq!(f.filename_is_valid_sort_tag(), Some("20-08-21"));
+
+        let f = "2023ab";
+        assert_eq!(f.filename_is_valid_sort_tag(), Some("2023ab"));
+
+        let f = "202ab";
+        assert_eq!(f.filename_is_valid_sort_tag(), Some("202ab"));
     }
 }

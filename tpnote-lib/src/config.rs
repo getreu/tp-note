@@ -55,10 +55,6 @@ pub(crate) const FILENAME_EXTENSION_SEPARATOR_DOT: char = '.';
 /// A dotfile starts with a dot.
 pub(crate) const FILENAME_DOTFILE_MARKER: char = '.';
 
-/// A sort-tag is allowed to contain letters, but only this
-/// number in a row.
-pub const FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX: u8 = 2;
-
 /// The template variable contains the fully qualified path of the `<path>`
 /// command line argument. If `<path>` points to a file, the variable contains
 /// the file path. If it points to a directory, it contains the directory path,
@@ -249,6 +245,14 @@ pub struct SortTag {
     pub extra_chars: String,
     pub separator: String,
     pub extra_separator: char,
+    pub letters_in_succession_max: u8,
+    pub sequential: Sequential,
+}
+
+/// Requirements for chronological sort tags.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Sequential {
+    pub digits_in_succession_max: u8,
 }
 
 /// Configuration for copy-counter.
@@ -281,17 +285,9 @@ pub struct Tmpl {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Filter {
     pub assert_preconditions: Vec<(String, Vec<AssertPrecondition>)>,
-    pub incr_sort_tag: FilterIncrSortTag,
     pub get_lang: Vec<String>,
     pub map_lang: Vec<Vec<String>>,
     pub to_yaml_tab: u64,
-}
-
-/// Parameters for the `incr_sort_tag` Tera filter.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct FilterIncrSortTag {
-    pub default_if_greater: u8,
-    pub default_if_contains: String,
 }
 
 /// Configuration for the HTML exporter feature, deserialized from the

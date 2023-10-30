@@ -1,6 +1,5 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_DOTFILE_MARKER;
-use crate::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX;
 use crate::config::LIB_CFG;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
@@ -643,16 +642,6 @@ fn incr_sort_tag_filter<S: BuildHasher>(
     }
     let input_path = input.parent().unwrap_or(Path::new(""));
 
-    // Early return if precondition fails.
-    let lib_cfg = LIB_CFG.read_recursive();
-    let default_if_contains = &lib_cfg.tmpl.filter.incr_sort_tag.default_if_contains;
-    if input_sort_tag
-        .chars()
-        .any(|c| default_if_contains.contains(c))
-    {
-        return Ok(Value::String(default));
-    };
-
     // Start analysing the input.
     let (prefix, digits) = match input_sort_tag.rfind(|c: char| !c.is_ascii_digit()) {
         Some(idx) => (&input_sort_tag[..idx + 1], &input_sort_tag[idx + 1..]),
@@ -663,8 +652,14 @@ fn incr_sort_tag_filter<S: BuildHasher>(
     let mut output_sort_tag = if !digits.is_empty() {
         // Return early if this number is too big.
         const DIGITS_MAX: usize = u32::MAX.ilog10() as usize; // 9
+        let lib_cfg = LIB_CFG.read_recursive();
         if digits.len() > DIGITS_MAX
-            || digits.len() > lib_cfg.tmpl.filter.incr_sort_tag.default_if_greater as usize
+            || digits.len()
+                > lib_cfg
+                    .filename
+                    .sort_tag
+                    .sequential
+                    .digits_in_succession_max as usize
         {
             return Ok(Value::String(default));
         }
@@ -698,9 +693,9 @@ fn incr_sort_tag_filter<S: BuildHasher>(
             const LETTERS_MAX: usize = (u32::MAX.ilog2() / (LETTERS_BASE.ilog2() + 1)) as usize; // 6=31/(4+1)
 
             // Return early if this number is too big.
+            let lib_cfg = LIB_CFG.read_recursive();
             if letters.len() > LETTERS_MAX
-                || letters.len() > FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX as usize
-                || letters.len() > lib_cfg.tmpl.filter.incr_sort_tag.default_if_greater as usize
+                || letters.len() > lib_cfg.filename.sort_tag.letters_in_succession_max as usize
             {
                 return Ok(Value::String(default));
             }
@@ -1234,7 +1229,7 @@ mod tests {
         args.insert("default".to_string(), to_value("my default.md").unwrap());
         let result = incr_sort_tag_filter(&to_value("013-Note.md").unwrap(), &args);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
+        assert_eq!(result.unwrap(), to_value("014").unwrap());
 
         // Too big.
         let mut args = HashMap::new();
@@ -1254,7 +1249,7 @@ mod tests {
         args.insert("default".to_string(), to_value("my default.md").unwrap());
         let result = incr_sort_tag_filter(&to_value("23-01-23-Note.md").unwrap(), &args);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
+        assert_eq!(result.unwrap(), to_value("23-01-24").unwrap());
     }
 
     #[test]

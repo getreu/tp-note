@@ -18,6 +18,18 @@ sort_tag.separator = "-"
 # parts when the filename is read next time.
 sort_tag.extra_separator = "'"
 
+# A sort-tag can have several counters. A counter can a set of digits or
+# a set of lower case letters. A valid sort-tag (sequential or chronological)
+# can have at most this number of letters in succession. 
+sort_tag.letters_in_succession_max = 2
+
+# A criterium to decide if a sort tag is sequential or not: a sequential
+# sort-tag must have a maximum of this number of digits in succession.
+# We set this to `3` assuming, that the chronological sort-tag contains some 
+# year, e.g. # `20231028` or `2023-10-28`. We require sequential sort-tags 
+# to have shorter numbers to satisfy this criterium, e.g. `3.1.123` or `3a123`.
+sort_tag.sequential.digits_in_succession_max = 3
+ 
 # If the stem of a filename ends with a pattern, that is similar to a copy
 # counter, add this extra separator. It must be one of `TRIM_LINE_CHARS` (see
 # definition in crate: `sanitize_filename_reader_friendly`) because they are

@@ -3,7 +3,6 @@
 //! are used as synonyms for the note's meta data block at the beginning
 //! of the text file. Technically this is a wrapper around a `tera::Map`.
 use crate::config::AssertPrecondition;
-use crate::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX;
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_FM_;
 use crate::error::NoteError;
@@ -111,11 +110,14 @@ impl FrontMatter {
                                         sort_tag: sort_tag.to_owned(),
                                         sort_tag_extra_chars: lib_cfg
                                             .filename
-                                            .sort_tag.extra_chars
+                                            .sort_tag
+                                            .extra_chars
                                             .escape_default()
                                             .to_string(),
-                                        filename_sort_tag_letters_in_succession_max:
-                                            FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX,
+                                        filename_sort_tag_letters_in_succession_max: lib_cfg
+                                            .filename
+                                            .sort_tag
+                                            .letters_in_succession_max,
                                     });
                                 }
                             };

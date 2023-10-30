@@ -883,8 +883,9 @@ A so-called _sort tag_ is an alphanumerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
 numerical digits and lowercase letters, a _sort tag_ may contain any 
 combination of '`_`', '`-`', '`=`' and '`.`' (cf. 
-'`filename.sort_tag.extra_chars`'). If a sort-tag contains lowercase  letters, only 2
-in a row are allowed. Examples:
+'`filename.sort_tag.extra_chars`'). If a sort-tag contains lowercase  letters, 
+only 2 in a row are allowed (cf. 
+'`filename.sort_tag.letters_in_succession_max `'). Examples:
 
 * *Chronological sort tag*
 
@@ -892,24 +893,27 @@ in a row are allowed. Examples:
         20151208-Manual.pdf
         2015-12-08-Manual.pdf
 
-  NB: the character '`-`' inside the sort tag is optional.
+  NB: All chronological sort-tags have at least one counter with 4 digits or
+  more, e.g. '`2015`'. The character '`-`' between the counters is optional.
   
 * *Sequence number sort tag*
 
         02-Invoices/
         08-Tax documents/
-        09_2-Manual.pdf
+        09_2_144-Manual.pdf
         09.9.1-Notes.md
 
-  NB: sort-tags can be structured with '`_`' or '`.`'. Do not use '`-`' here,
-  because Tp-Note interprets sort-tags containing '`-`' as chronological
-  sort tags. (cf. '`tmpl.filter.incr_sort_tag.default_if_contains`').
+  NB: None of the counters exceeds 3 digits (cf. 
+  '`filename.sort_tag.chronological.digits_in_succession_min`') which is the
+  criterium recognize a sequential sort-tag. The largest counter in this 
+  example is '`144`'.
+  
 
 * *Alphanumerical sequence number sort tag*
 
         02-Invoices/
         08-Tax documents/
-        09b-Manual.pdf
+        09b144-Manual.pdf
         09i1-Notes.md
 
   NB: the example is equivalent to the previous one. The only difference is,
