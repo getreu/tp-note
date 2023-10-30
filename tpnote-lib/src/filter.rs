@@ -98,38 +98,39 @@ fn to_yaml_filter<S: BuildHasher>(
     }
 
     // Formatting: adjust indent.
-    let val_yaml: String = if let Some(n) = args.get("tab").and_then(|v| v.as_u64()).or_else(|| {
-        let lib_cfg = LIB_CFG.read_recursive();
-        let n = lib_cfg.tmpl.filter_to_yaml_tab;
-        if n == 0 {
-            None
-        } else {
-            Some(n)
-        }
-    }) {
+    let val_yaml: String = if let Some(tab) =
+        args.get("tab").and_then(|v| v.as_u64()).or_else(|| {
+            let lib_cfg = LIB_CFG.read_recursive();
+            let n = lib_cfg.tmpl.filter_to_yaml_tab;
+            if n == 0 {
+                None
+            } else {
+                Some(n)
+            }
+        }) {
         val_yaml
             .lines()
             .map(|l| {
-                let mut colon_pos = 0;
-                let mut insert = 0;
+                let mut insert_pos = 0;
+                let mut inserts_n = 0;
                 if let Some(colpos) = l.find(": ") {
-                    colon_pos = colpos;
                     if let Some(key_pos) = l.find(char::is_alphabetic) {
-                        if key_pos < colon_pos
-                            && !l.find('\'').is_some_and(|p| p < colon_pos)
-                            && !l.find("\"'").is_some_and(|p| p < colon_pos)
+                        if key_pos < colpos
+                            && !l.find('\'').is_some_and(|p| p < colpos)
+                            && !l.find("\"'").is_some_and(|p| p < colpos)
                         {
-                            insert = (n as usize).saturating_sub(colon_pos + ": ".len());
+                            insert_pos = colpos + ": ".len();
+                            inserts_n = (tab as usize).saturating_sub(insert_pos);
                         }
                     }
                 };
 
                 // Enlarge indent.
                 let mut l = l.to_owned();
-                let strut = " ".repeat(insert);
+                let strut = " ".repeat(inserts_n);
                 // If `insert>0`, we know that `colon_pos>0`.
                 // `colon_pos+1` inserts between `: `.
-                l.insert_str(colon_pos + 1, &strut);
+                l.insert_str(insert_pos, &strut);
                 l.push('\n');
                 l
             })
