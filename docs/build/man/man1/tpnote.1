@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "TP-NOTE" "1" "2023-10-29" "Version 1.22.10" "Tp-Note documentation"
+.TH "TP-NOTE" "1" "2023-10-31" "Version 1.22.11" "Tp-Note documentation"
 .hy
 .SH NAME
 .PP
@@ -1233,7 +1233,8 @@ It is used to order files and notes in the file system.
 Besides numerical digits and lowercase letters, a \f[I]sort tag\f[R] may
 contain any combination of `\f[V]_\f[R]', `\f[V]-\f[R]', `\f[V]=\f[R]'
 and `\f[V].\f[R]' (cf.\  `\f[V]filename.sort_tag.extra_chars\f[R]').
-If a sort-tag contains lowercase letters, only 2 in a row are allowed.
+If a sort-tag contains lowercase letters, only 2 in a row are allowed
+(cf.\  `\f[V]filename.sort_tag.letters_in_succession_max\f[R]').
 Examples:
 .IP \[bu] 2
 \f[I]Chronological sort tag\f[R]
@@ -1247,7 +1248,11 @@ Examples:
 \f[R]
 .fi
 .PP
-NB: the character `\f[V]-\f[R]' inside the sort tag is optional.
+NB: All chronological sort-tags must have at least one counter with 4
+digits or more, e.g.\ `\f[V]2015\f[R]'.
+The character `\f[V]-\f[R]' between the counters is optional.
+.PP
+Tip: Always include the year with 4 digits in chronological sort-tags.
 .RE
 .IP \[bu] 2
 \f[I]Sequence number sort tag\f[R]
@@ -1257,15 +1262,15 @@ NB: the character `\f[V]-\f[R]' inside the sort tag is optional.
 \f[C]
   02-Invoices/
   08-Tax documents/
-  09_2-Manual.pdf
+  09_2_144-Manual.pdf
   09.9.1-Notes.md
 \f[R]
 .fi
 .PP
-NB: sort-tags can be structured with `\f[V]_\f[R]' or `\f[V].\f[R]'.
-Do not use `\f[V]-\f[R]' here, because Tp-Note interprets sort-tags
-containing `\f[V]-\f[R]' as chronological sort tags.
-(cf.\ `\f[V]tmpl.filter.incr_sort_tag.default_if_contains\f[R]').
+NB: None of the counters exceeds 3 digits (cf.\ 
+`\f[V]filename.sort_tag.chronological.digits_in_succession_min\f[R]')
+which is the criterium recognize a sequential sort-tag.
+The largest counter in this example is `\f[V]144\f[R]'.
 .RE
 .IP \[bu] 2
 \f[I]Alphanumerical sequence number sort tag\f[R]
@@ -1275,7 +1280,7 @@ containing `\f[V]-\f[R]' as chronological sort tags.
 \f[C]
   02-Invoices/
   08-Tax documents/
-  09b-Manual.pdf
+  09b144-Manual.pdf
   09i1-Notes.md
 \f[R]
 .fi
@@ -1284,6 +1289,30 @@ NB: the example is equivalent to the previous one.
 The only difference is, that the separators are expressed through the
 alternation of digits and letters.
 .RE
+.PP
+\f[B]Summary:\f[R]
+.IP "1." 3
+A \f[I]sort-tag\f[R] is composed of a number of counters, which can be
+numerical, e.g.\ `\f[V]123.28\f[R]' or combined numerical/letter based,
+e.g.\ `\f[V]123ab\f[R]'.
+.IP "2." 3
+A counter is set of digits (base 10) `\f[V]123\f[R]' or a set of
+lowercase letters (base 26) `\f[V]ab\f[R]'.
+.IP "3." 3
+A letter based counter can be maximal 2 letters wide.
+Its maximum is `\f[V]zz\f[R]'
+(cf.\ `\f[V]filename.sort_tag.letters_in_succession_max\f[R]').
+.IP "4." 3
+A \f[I]sequential sort-tag\f[R] is a sort-tag that whose counters are at
+most 3 digits wide
+(cf.\ `\f[V]sort_tag.sequential.digits_in_succession_max\f[R]').
+.IP "5." 3
+The filter `\f[V]incr_sort_tag\f[R]' increments only sequential
+sort-tags.
+.IP "6." 3
+In order not to confuse sequential and chronological sort-tags, it is
+recommended to always write out the year in chronological sort-tags with
+4 digits, e.g.\ \[cq]`\f[V]2013-08-10\f[R]' or `\f[V]20130810\f[R]'.
 .PP
 Before Tp-Note creates a new note file, it searches the current
 directory for the latest existing Tp-Note file.
