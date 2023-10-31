@@ -356,6 +356,10 @@ impl NotePath for Path {
             let mut filename_max = String::new();
             let mut ctime_max = SystemTime::UNIX_EPOCH;
             for file in files.flatten() {
+                match file.file_type(){
+                    Ok(ft) if ft.is_file() => {}
+                    _ => continue
+                }
                 let ctime = file
                     .metadata()
                     .ok()
@@ -389,6 +393,10 @@ impl NotePath for Path {
     fn has_file_with_sort_tag(&self, sort_tag: &str) -> Option<String> {
         if let Ok(files) = self.read_dir() {
             for file in files.flatten() {
+                match file.file_type(){
+                    Ok(ft) if ft.is_file() => {}
+                    _ => continue
+                }
                 let filename = file.file_name();
                 let filename = filename.to_str().unwrap();
 
@@ -413,6 +421,10 @@ impl NotePath for Path {
             // alphabetic first.
             let mut minimum = PathBuf::new();
             'file_loop: for file in files.flatten() {
+                match file.file_type(){
+                    Ok(ft) if ft.is_file() => {}
+                    _ => continue
+                }
                 let file = file.path();
                 if !(*file).has_tpnote_ext() {
                     continue 'file_loop;
