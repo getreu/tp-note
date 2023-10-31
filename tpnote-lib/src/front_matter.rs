@@ -98,16 +98,17 @@ impl FrontMatter {
                             }
                         }
                         AssertPrecondition::IsValidSortTag => {
-                            let sort_tag = if let Value::String(s) = value {
+                            let fm_sort_tag = if let Value::String(s) = value {
                                 s.to_owned()
                             } else {
                                 value.to_string()
                             };
-                            if !sort_tag.is_empty() {
+                            if !fm_sort_tag.is_empty() {
                                 // Check for forbidden characters.
-                                if sort_tag.is_valid_sort_tag().is_none() {
+                                let (_, rest, is_sequential) = fm_sort_tag.split_sort_tag(true);
+                                if !rest.is_empty() {
                                     return Err(NoteError::FrontMatterFieldIsInvalidSortTag {
-                                        sort_tag: sort_tag.to_owned(),
+                                        sort_tag: fm_sort_tag.to_owned(),
                                         sort_tag_extra_chars: lib_cfg
                                             .filename
                                             .sort_tag
