@@ -246,8 +246,8 @@ pub trait NotePath {
     fn find_last_created_file(&self) -> Option<String>;
 
     /// Checks if the directory in `self` has a Tp-Note file starting with the
-    /// `sort_tag`.
-    fn has_file_with_sort_tag(&self, sort_tag: &str) -> bool;
+    /// `sort_tag`. If found, return the filename, otherwise `None`
+    fn has_file_with_sort_tag(&self, sort_tag: &str) -> Option<String>;
 
     /// A method that searches the directory in `self` for a Tp-Note
     /// file with the sort-tag `sort_tag`. It returns the filename.
@@ -386,8 +386,7 @@ impl NotePath for Path {
         }
     }
 
-    fn has_file_with_sort_tag(&self, sort_tag: &str) -> bool {
-        let mut found = false;
+    fn has_file_with_sort_tag(&self, sort_tag: &str) -> Option<String> {
         if let Ok(files) = self.read_dir() {
             for file in files.flatten() {
                 let filename = file.file_name();
@@ -396,14 +395,14 @@ impl NotePath for Path {
                 // Tests in the order of the cost.
                 if filename.starts_with(sort_tag)
                     && filename.has_tpnote_ext()
-                    && !Path::new(filename).disassemble().0.is_empty()
+                    && filename.split_sort_tag(false).0 == sort_tag
                 {
-                    found = true;
-                    break;
+                    let filename = filename.to_string();
+                    return Some(filename);
                 }
             }
         }
-        found
+        None
     }
 
     fn find_file_with_sort_tag(&self, sort_tag: &str) -> Option<PathBuf> {

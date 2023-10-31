@@ -727,10 +727,16 @@ fn incr_sort_tag_filter<S: BuildHasher>(
     };
 
     // Check for a free slot, branch if not free.
-    if input_path.has_file_with_sort_tag(&output_sort_tag) {
+    if input_path
+        .has_file_with_sort_tag(&output_sort_tag)
+        .is_some()
+    {
         output_sort_tag = input_sort_tag.to_string();
     }
-    while input_path.has_file_with_sort_tag(&output_sort_tag) {
+    while input_path
+        .has_file_with_sort_tag(&output_sort_tag)
+        .is_some()
+    {
         if output_sort_tag
             .chars()
             .last()
