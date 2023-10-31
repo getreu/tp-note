@@ -283,7 +283,7 @@ from_clipboard_content = """
   {%- set title_text = first_lines -%}
 {%- endif -%}
 
-{% if first_link !='' and
+{%- if first_link !='' and
           stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut -%}
   {%- set subtitle_text = 'URL' -%}
 {%- else -%}
