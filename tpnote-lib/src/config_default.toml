@@ -132,15 +132,6 @@ filter.assert_preconditions = [
     [ "fm_filename_sync", ["IsBool", "IsNotCompound"], ],
 ]
 
-# If the number, the `icr_sort_tag` filter extracted from its input, is 
-# larger than this, then do not increment but return the default value instead.
-# Values bigger than `9` have no effect, as the integers are stored in an `u32`.
-filter.incr_sort_tag.default_if_greater = 2
-
-# If the input of the `icr_sort_tag` filter contains one of these characters,
-# then do not increment but return the default value instead.
-filter.incr_sort_tag.default_if_contains = "-"
-
 # A list of language tags, defining languages the `get_lang` filter tries
 # to identify in its input. The user's default language subtag, as reported 
 # from the operating system, is automatically added to the present list.
