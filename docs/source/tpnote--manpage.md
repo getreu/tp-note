@@ -883,7 +883,7 @@ A so-called _sort tag_ is an alphanumerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
 numerical digits and lowercase letters, a _sort tag_ may contain any 
 combination of '`_`', '`-`', '`=`' and '`.`' (cf. 
-'`filename.sort_tag.extra_chars`'). If a sort-tag contains lowercase  letters, 
+'`filename.sort_tag.extra_chars`'). If a sort-tag contains lowercase letters, 
 only 2 in a row are allowed (cf. 
 '`filename.sort_tag.letters_in_succession_max `'). Examples:
 
@@ -921,6 +921,28 @@ only 2 in a row are allowed (cf.
   NB: the example is equivalent to the previous one. The only difference is,
   that the separators are expressed through the alternation of digits and 
   letters. 
+
+**Summary:**
+
+1. A _sort-tag_ is composed of a number of counters, which can be numerical,
+   e.g. '`123.28`' or combined numerical/letter based, e.g. '`123ab`'.
+
+2. A counter is set of digits (base 10) '`123`' or a set of lowercase
+   letters (base 26) '`ab`'.
+
+3. A letter based counter can be maximal 2 letters wide. Its maximum is
+   '`zz`' (cf. '`filename.sort_tag.letters_in_succession_max`').
+
+4. A _sequential sort-tag_ is a sort-tag that whose counters are at most 3
+   digits wide (cf. '`sort_tag.sequential.digits_in_succession_max`').
+
+5. The filter '`incr_sort_tag`' increments only sequential sort-tags.
+
+6. In order not to confuse sequential and chronological sort-tags, it is
+   recommended to always write out the year in chronological sort-tags with 4
+   digits, e.g. ''`2013-08-10`' or '`20130810`'.
+ 
+
 
 Before Tp-Note creates a new note file, it searches the current directory for
 the latest existing Tp-Note file. If that file starts with a sequence number
