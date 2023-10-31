@@ -166,6 +166,23 @@ pub enum NoteError {
         filename_sort_tag_letters_in_succession_max: u8,
     },
 
+    /// Remedy: choose another sort-tag.
+    #[error(
+        "This `sort_tag` header variable is a sequential sort-tag:\n\
+         \t---\n\
+         \tsort_tag: {sort_tag}\n\
+         \t---\n\n\
+         A file with this sort-tag exists already on disk:\n\n\
+         \t`{existing_file}`\n\n\
+         For sequential sort-tags no duplicates are allowed.\n\
+         Please choose another sort-tag.
+    "
+    )]
+    FrontMatterFieldIsDuplicateSortTag {
+        sort_tag: String,
+        existing_file: String,
+    },
+
     /// Remedy: index the compound type?
     #[error(
         "The type of the front matter field `{field_name}:`\n\

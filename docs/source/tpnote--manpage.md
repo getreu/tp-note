@@ -893,8 +893,10 @@ only 2 in a row are allowed (cf.
         20151208-Manual.pdf
         2015-12-08-Manual.pdf
 
-  NB: All chronological sort-tags have at least one counter with 4 digits or
-  more, e.g. '`2015`'. The character '`-`' between the counters is optional.
+  NB: All chronological sort-tags must have at least one counter with 4 digits
+  or more, e.g. '`2015`'. The character '`-`' between the counters is optional.
+
+  Tip: Always include the year with 4 digits in chronological sort-tags.
   
 * *Sequence number sort tag*
 

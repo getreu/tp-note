@@ -8,10 +8,12 @@ use crate::config::TMPL_VAR_FM_;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::filename::Extension;
+use crate::filename::NotePath;
 use crate::filename::NotePathStr;
 use std::matches;
 use std::ops::Deref;
 use std::ops::DerefMut;
+use std::path::Path;
 use std::str;
 use tera::Value;
 
@@ -49,8 +51,9 @@ fn all_leaves(val: &Value, f: &dyn Fn(&Value) -> bool) -> bool {
 
 impl FrontMatter {
     /// Checks if the front matter variables satisfy preconditions.
+    /// The path is the path to the current document.
     #[inline]
-    pub fn assert_precoditions(&self) -> Result<(), NoteError> {
+    pub fn assert_precoditions(&self, docpath: &Path) -> Result<(), NoteError> {
         let lib_cfg = LIB_CFG.read_recursive();
         for (key, conditions) in lib_cfg.tmpl.filter.assert_preconditions.iter() {
             let key = key.trim_start_matches(TMPL_VAR_FM_);
@@ -121,7 +124,33 @@ impl FrontMatter {
                                             .letters_in_succession_max,
                                     });
                                 }
-                            };
+
+                                // Check for duplicate sequential sort-tags.
+                                if !is_sequential {
+                                    // No further checks.
+                                    return Ok(());
+                                }
+                                let docpath = docpath.to_str().unwrap_or_default();
+
+                                let (dirpath, filename) =
+                                    docpath.rsplit_once(['/', '\\']).unwrap_or(("", &docpath));
+                                let sort_tag = filename.split_sort_tag(false).0;
+                                // No further check if filename(path) has no sort-tag
+                                // or if sort-tags are identical.
+                                if sort_tag.is_empty() || sort_tag == fm_sort_tag {
+                                    return Ok(());
+                                }
+                                let dirpath = Path::new(dirpath);
+
+                                if let Some(other_file) =
+                                    dirpath.has_file_with_sort_tag(&fm_sort_tag)
+                                {
+                                    return Err(NoteError::FrontMatterFieldIsDuplicateSortTag {
+                                        sort_tag: fm_sort_tag,
+                                        existing_file: other_file,
+                                    });
+                                }
+                            }
                         }
                         AssertPrecondition::IsTpnoteExtension => {
                             let file_ext = if let Value::String(s) = value {
@@ -201,6 +230,8 @@ impl DerefMut for FrontMatter {
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
+
     use crate::error::NoteError;
     use crate::front_matter::FrontMatter;
     use serde_json::json;
@@ -321,20 +352,20 @@ mod tests {
         let input = "";
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            res.assert_precoditions().unwrap_err(),
+            res.assert_precoditions(&Path::new("does not matter"))
+                .unwrap_err(),
             NoteError::FrontMatterFieldMissing { .. }
         ));
 
         //
-        // Too many lowercase letters is a row `xxx` in `tag`.
+        // Ok as long as no other file with that sort-tag exists.
         let input = "# document start
         title: The book
-        sort_tag:    123xxx4";
-
+        sort_tag:    123b";
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            res.assert_precoditions().unwrap_err(),
-            NoteError::FrontMatterFieldIsInvalidSortTag { .. }
+            res.assert_precoditions(&Path::new("./03b-test.md")),
+            Ok(())
         ));
 
         //
@@ -344,10 +375,10 @@ mod tests {
         sort_tag:
         -    1234
         -    456";
-
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            res.assert_precoditions().unwrap_err(),
+            res.assert_precoditions(&Path::new("does not matter"))
+                .unwrap_err(),
             NoteError::FrontMatterFieldIsCompound { .. }
         ));
 
@@ -358,10 +389,10 @@ mod tests {
         sort_tag:
           first:  1234
           second: 456";
-
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            res.assert_precoditions().unwrap_err(),
+            res.assert_precoditions(&Path::new("does not matter"))
+                .unwrap_err(),
             NoteError::FrontMatterFieldIsCompound { .. }
         ));
 
@@ -370,10 +401,10 @@ mod tests {
         let input = "# document start
         title: The book
         file_ext:    xyz";
-
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            res.assert_precoditions().unwrap_err(),
+            res.assert_precoditions(&Path::new("does not matter"))
+                .unwrap_err(),
             NoteError::FrontMatterFieldIsNotTpnoteExtension { .. }
         ));
 
@@ -382,10 +413,10 @@ mod tests {
         let input = "# document start
         title: The book
         filename_sync: error, here should be a bool";
-
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            res.assert_precoditions().unwrap_err(),
+            res.assert_precoditions(&Path::new("does not matter"))
+                .unwrap_err(),
             NoteError::FrontMatterFieldIsNotBool { .. }
         ));
 
@@ -394,7 +425,6 @@ mod tests {
         title: my title
         subtitle: my subtitle
         ";
-
         let expected = json!({"title": "my title", "subtitle": "my subtitle"});
         let expected = expected.as_object().unwrap();
 
@@ -418,10 +448,11 @@ mod tests {
         title: ''
         subtitle: my subtitle
         ";
-
         let output = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            output.assert_precoditions().unwrap_err(),
+            output
+                .assert_precoditions(&Path::new("does not matter"))
+                .unwrap_err(),
             NoteError::FrontMatterFieldIsEmptyString { .. }
         ));
 
@@ -432,9 +463,10 @@ mod tests {
         - First author
         - Second author
         ";
-
         let output = FrontMatter::try_from(input).unwrap();
-        assert!(output.assert_precoditions().is_ok());
+        assert!(output
+            .assert_precoditions(&Path::new("does not matter"))
+            .is_ok());
 
         //
         let input = "# document start
@@ -444,10 +476,11 @@ mod tests {
         - First title
         - 1234
         ";
-
         let output = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            output.assert_precoditions().unwrap_err(),
+            output
+                .assert_precoditions(&Path::new("does not matter"))
+                .unwrap_err(),
             NoteError::FrontMatterFieldIsNotString { .. }
         ));
     }

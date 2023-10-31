@@ -54,9 +54,10 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
         }
         Err(e) => {
             if (matches!(e, NoteError::InvalidFrontMatterYaml { .. })
-                || matches!(e, NoteError::FrontMatterFieldIsInvalidSortTag { .. })
                 || matches!(e, NoteError::FrontMatterFieldIsCompound { .. })
+                || matches!(e, NoteError::FrontMatterFieldIsDuplicateSortTag { .. })
                 || matches!(e, NoteError::FrontMatterFieldIsEmptyString { .. })
+                || matches!(e, NoteError::FrontMatterFieldIsInvalidSortTag { .. })
                 || matches!(e, NoteError::FrontMatterFieldIsNotBool { .. }))
                 || matches!(e, NoteError::FrontMatterFieldIsNotNumber { .. })
                 || matches!(e, NoteError::FrontMatterFieldIsNotString { .. })

@@ -134,7 +134,7 @@ impl<T: Content> Note<T> {
             TemplateKind::SyncFilename =>
             // No rendering to markdown is required. `content` is read from disk and left untouched.
             {
-                fm.assert_precoditions()?;
+                fm.assert_precoditions(&context.path)?;
                 Ok(Self {
                     context,
                     content,
@@ -145,7 +145,7 @@ impl<T: Content> Note<T> {
             // No rendering to markdown is required. `content` is read from disk and left untouched.
             // A rendition to HTML may follow.
             {
-                fm.assert_precoditions()?;
+                fm.assert_precoditions(&context.path)?;
                 Ok(Self {
                     context,
                     content,
