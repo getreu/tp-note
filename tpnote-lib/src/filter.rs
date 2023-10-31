@@ -3,6 +3,7 @@ use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
+use crate::filename::NotePathStr;
 use crate::markup_language::MarkupLanguage;
 #[cfg(feature = "lang-detection")]
 use crate::settings::FilterGetLang;
@@ -610,18 +611,18 @@ fn find_last_created_file<S: BuildHasher>(
     Ok(Value::String(last.to_string()))
 }
 
-/// Expects the path and filename in its input. From the latter the sort-tag
-/// is extracted. Then, it matches all digits from the end of the input's sort-
-/// tag, increments them and replaces the matched digits with the result. If no
-/// numeric digits can be matched, consider alphabetic letters as base 26 number
-/// system and try again. Returns the default value if no match succeeds.
-/// Numbers with more digits than `default_if_greater` are never incremented
-/// (they are most likely dates). Instead the `default` value is returned.
-/// The default value is also returned if the input contains a character
-/// of the set `tmpl.filter.incr_sort_tag.default_if_contains` or if the input
-/// is empty. The path in the input allows to check if the resulting sort-tag
-/// exsists on disk already. If this is the case, a subcategory is appended to
-/// the resulting sort-tag.
+/// Expects a path a filename in its input and returns an incremented sequential
+/// sort-tag.
+/// First, from the input's filename the sort-tag is extracted. Then, it
+/// matches all digits from the end of the sort- tag, increments them
+/// and replaces the matched digits with the result. If no numeric digits can be
+/// matched, consider alphabetic letters as base 26 number system and try again.
+/// Returns the default value if no match succeeds.
+/// Note, that only sequential sort-tags are incremented, for others or, if the
+/// input is empty, `default` is returned.
+/// The path in the input allows to check if the resulting sort-tag exsists
+/// on disk already. If this is the case, a subcategory is appended to the
+/// resulting sort-tag.
 /// All input types are `Value::String`. The output type is `Value::String()`.
 fn incr_sort_tag_filter<S: BuildHasher>(
     value: &Value,
@@ -634,13 +635,12 @@ fn incr_sort_tag_filter<S: BuildHasher>(
         default = try_get_value!("incr_sort_tag", "default", String, d);
     };
 
-    // Extract path and sort-tag.
-    let input = Path::new(&input);
-    let input_sort_tag = input.disassemble().0;
-    if input_sort_tag.is_empty() {
+    let (input_dir, filename) = input.rsplit_once(['/', '\\']).unwrap_or(("", &input));
+    let (input_sort_tag, _, is_sequential) = filename.split_sort_tag(false);
+
+    if input_sort_tag.is_empty() || !is_sequential {
         return Ok(Value::String(default));
     }
-    let input_path = input.parent().unwrap_or(Path::new(""));
 
     // Start analysing the input.
     let (prefix, digits) = match input_sort_tag.rfind(|c: char| !c.is_ascii_digit()) {
@@ -652,15 +652,7 @@ fn incr_sort_tag_filter<S: BuildHasher>(
     let mut output_sort_tag = if !digits.is_empty() {
         // Return early if this number is too big.
         const DIGITS_MAX: usize = u32::MAX.ilog10() as usize; // 9
-        let lib_cfg = LIB_CFG.read_recursive();
-        if digits.len() > DIGITS_MAX
-            || digits.len()
-                > lib_cfg
-                    .filename
-                    .sort_tag
-                    .sequential
-                    .digits_in_succession_max as usize
-        {
+        if digits.len() > DIGITS_MAX {
             return Ok(Value::String(default));
         }
 
@@ -693,10 +685,7 @@ fn incr_sort_tag_filter<S: BuildHasher>(
             const LETTERS_MAX: usize = (u32::MAX.ilog2() / (LETTERS_BASE.ilog2() + 1)) as usize; // 6=31/(4+1)
 
             // Return early if this number is too big.
-            let lib_cfg = LIB_CFG.read_recursive();
-            if letters.len() > LETTERS_MAX
-                || letters.len() > lib_cfg.filename.sort_tag.letters_in_succession_max as usize
-            {
+            if letters.len() > LETTERS_MAX {
                 return Ok(Value::String(default));
             }
 
@@ -727,16 +716,11 @@ fn incr_sort_tag_filter<S: BuildHasher>(
     };
 
     // Check for a free slot, branch if not free.
-    if input_path
-        .has_file_with_sort_tag(&output_sort_tag)
-        .is_some()
-    {
+    let input_dir = Path::new(input_dir);
+    if input_dir.has_file_with_sort_tag(&output_sort_tag).is_some() {
         output_sort_tag = input_sort_tag.to_string();
     }
-    while input_path
-        .has_file_with_sort_tag(&output_sort_tag)
-        .is_some()
-    {
+    while input_dir.has_file_with_sort_tag(&output_sort_tag).is_some() {
         if output_sort_tag
             .chars()
             .last()
