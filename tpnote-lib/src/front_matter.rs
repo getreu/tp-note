@@ -352,7 +352,7 @@ mod tests {
         let input = "";
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            res.assert_precoditions(&Path::new("does not matter"))
+            res.assert_precoditions(Path::new("does not matter"))
                 .unwrap_err(),
             NoteError::FrontMatterFieldMissing { .. }
         ));
@@ -364,7 +364,7 @@ mod tests {
         sort_tag:    123b";
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            res.assert_precoditions(&Path::new("./03b-test.md")),
+            res.assert_precoditions(Path::new("./03b-test.md")),
             Ok(())
         ));
 
@@ -377,7 +377,7 @@ mod tests {
         -    456";
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            res.assert_precoditions(&Path::new("does not matter"))
+            res.assert_precoditions(Path::new("does not matter"))
                 .unwrap_err(),
             NoteError::FrontMatterFieldIsCompound { .. }
         ));
@@ -391,7 +391,7 @@ mod tests {
           second: 456";
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            res.assert_precoditions(&Path::new("does not matter"))
+            res.assert_precoditions(Path::new("does not matter"))
                 .unwrap_err(),
             NoteError::FrontMatterFieldIsCompound { .. }
         ));
@@ -403,7 +403,7 @@ mod tests {
         file_ext:    xyz";
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            res.assert_precoditions(&Path::new("does not matter"))
+            res.assert_precoditions(Path::new("does not matter"))
                 .unwrap_err(),
             NoteError::FrontMatterFieldIsNotTpnoteExtension { .. }
         ));
@@ -415,7 +415,7 @@ mod tests {
         filename_sync: error, here should be a bool";
         let res = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
-            res.assert_precoditions(&Path::new("does not matter"))
+            res.assert_precoditions(Path::new("does not matter"))
                 .unwrap_err(),
             NoteError::FrontMatterFieldIsNotBool { .. }
         ));
@@ -451,7 +451,7 @@ mod tests {
         let output = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
             output
-                .assert_precoditions(&Path::new("does not matter"))
+                .assert_precoditions(Path::new("does not matter"))
                 .unwrap_err(),
             NoteError::FrontMatterFieldIsEmptyString { .. }
         ));
@@ -465,7 +465,7 @@ mod tests {
         ";
         let output = FrontMatter::try_from(input).unwrap();
         assert!(output
-            .assert_precoditions(&Path::new("does not matter"))
+            .assert_precoditions(Path::new("does not matter"))
             .is_ok());
 
         //
@@ -479,7 +479,7 @@ mod tests {
         let output = FrontMatter::try_from(input).unwrap();
         assert!(matches!(
             output
-                .assert_precoditions(&Path::new("does not matter"))
+                .assert_precoditions(Path::new("does not matter"))
                 .unwrap_err(),
             NoteError::FrontMatterFieldIsNotString { .. }
         ));
