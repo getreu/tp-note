@@ -257,7 +257,8 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
     // Read and convert ISO codes from config object.
     match lib_cfg
         .tmpl
-        .filter.get_lang
+        .filter
+        .get_lang
         .iter()
         // Skip if this is the pseudo tag for all languages.
         .filter(|&l| {
@@ -542,8 +543,10 @@ mod tests {
     #[test]
     fn test_update_filter_get_lang_setting() {
         // Test 1.
-        let mut settings = Settings::default();
-        settings.lang = "en-GB".to_string();
+        let mut settings = Settings {
+            lang: "en-GB".to_string(),
+            ..Default::default()
+        };
         update_filter_get_lang_setting(&mut settings);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
@@ -551,7 +554,7 @@ mod tests {
                 .iter()
                 .map(|l| {
                     let mut l = l.to_string();
-                    l.push_str(" ");
+                    l.push(' ');
                     l
                 })
                 .collect::<String>();
@@ -562,8 +565,10 @@ mod tests {
 
         //
         // Test 2.
-        let mut settings = Settings::default();
-        settings.lang = "it-IT".to_string();
+        let mut settings = Settings {
+            lang: "it-IT".to_string(),
+            ..Default::default()
+        };
         update_filter_get_lang_setting(&mut settings);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
@@ -571,7 +576,7 @@ mod tests {
                 .iter()
                 .map(|l| {
                     let mut l = l.to_string();
-                    l.push_str(" ");
+                    l.push(' ');
                     l
                 })
                 .collect::<String>();
@@ -584,8 +589,10 @@ mod tests {
     #[test]
     fn test_update_filter_map_lang_hmap_setting() {
         // Test 1.
-        let mut settings = Settings::default();
-        settings.lang = "it-IT".to_string();
+        let mut settings = Settings {
+            lang: "it-IT".to_string(),
+            ..Default::default()
+        };
         update_filter_map_lang_btmap_setting(&mut settings);
 
         let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
@@ -596,8 +603,10 @@ mod tests {
 
         //
         // Test short `settings.lang`.
-        let mut settings = Settings::default();
-        settings.lang = "it".to_string();
+        let mut settings = Settings {
+            lang: "it".to_string(),
+            ..Default::default()
+        };
         update_filter_map_lang_btmap_setting(&mut settings);
 
         let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
@@ -610,8 +619,11 @@ mod tests {
     #[test]
     fn test_update_env_lang_detection() {
         // Test 1.
-        let mut settings = Settings::default();
-        settings.lang = "en-GB".to_string();
+        // Test short `settings.lang`.
+        let mut settings = Settings {
+            lang: "en-GB".to_string(),
+            ..Default::default()
+        };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "fr-FR, de-DE, hu");
         update_env_lang_detection(&mut settings);
 
@@ -620,7 +632,7 @@ mod tests {
                 .iter()
                 .map(|l| {
                     let mut l = l.to_string();
-                    l.push_str(" ");
+                    l.push(' ');
                     l
                 })
                 .collect::<String>();
@@ -636,8 +648,10 @@ mod tests {
 
         //
         // Test 2.
-        let mut settings = Settings::default();
-        settings.lang = "en-GB".to_string();
+        let mut settings = Settings {
+            lang: "en-GB".to_string(),
+            ..Default::default()
+        };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en-US");
         update_env_lang_detection(&mut settings);
 
@@ -646,7 +660,7 @@ mod tests {
                 .iter()
                 .map(|l| {
                     let mut l = l.to_string();
-                    l.push_str(" ");
+                    l.push(' ');
                     l
                 })
                 .collect::<String>();
@@ -660,8 +674,10 @@ mod tests {
 
         //
         // Test 3.
-        let mut settings = Settings::default();
-        settings.lang = "en-GB".to_string();
+        let mut settings = Settings {
+            lang: "en-GB".to_string(),
+            ..Default::default()
+        };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, en-US");
         update_env_lang_detection(&mut settings);
 
@@ -675,8 +691,10 @@ mod tests {
 
         //
         // Test 4.
-        let mut settings = Settings::default();
-        settings.lang = "en-GB".to_string();
+        let mut settings = Settings {
+            lang: "en-GB".to_string(),
+            ..Default::default()
+        };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en");
         update_env_lang_detection(&mut settings);
 
@@ -685,7 +703,7 @@ mod tests {
                 .iter()
                 .map(|l| {
                     let mut l = l.to_string();
-                    l.push_str(" ");
+                    l.push(' ');
                     l
                 })
                 .collect::<String>();
@@ -699,8 +717,10 @@ mod tests {
 
         //
         // Test 5.
-        let mut settings = Settings::default();
-        settings.lang = "en-GB".to_string();
+        let mut settings = Settings {
+            lang: "en-GB".to_string(),
+            ..Default::default()
+        };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, de-AT, en");
         update_env_lang_detection(&mut settings);
 
@@ -714,8 +734,10 @@ mod tests {
 
         //
         // Test empty env. var.
-        let mut settings = Settings::default();
-        settings.lang = "".to_string();
+        let mut settings = Settings {
+            lang: "".to_string(),
+            ..Default::default()
+        };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
         update_env_lang_detection(&mut settings);
 
@@ -724,8 +746,10 @@ mod tests {
 
         //
         // Test faulty `settings.lang`.
-        let mut settings = Settings::default();
-        settings.lang = "xy-XY".to_string();
+        let mut settings = Settings {
+            lang: "xy-XY".to_string(),
+            ..Default::default()
+        };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "en-GB, fr");
         update_env_lang_detection(&mut settings);
 
@@ -734,7 +758,7 @@ mod tests {
                 .iter()
                 .map(|l| {
                     let mut l = l.to_string();
-                    l.push_str(" ");
+                    l.push(' ');
                     l
                 })
                 .collect::<String>();
@@ -747,8 +771,10 @@ mod tests {
 
         //
         // Test faulty entry in list.
-        let mut settings = Settings::default();
-        settings.lang = "en-GB".to_string();
+        let mut settings = Settings {
+            lang: "en-GB".to_string(),
+            ..Default::default()
+        };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, xy-XY");
         update_env_lang_detection(&mut settings);
 
@@ -756,8 +782,10 @@ mod tests {
         assert!(settings.filter_map_lang_btmap.is_none());
         //
         // Test empty list.
-        let mut settings = Settings::default();
-        settings.lang = "en-GB".to_string();
+        let mut settings = Settings {
+            lang: "en-GB".to_string(),
+            ..Default::default()
+        };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
         update_env_lang_detection(&mut settings);
 
