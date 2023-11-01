@@ -356,9 +356,9 @@ impl NotePath for Path {
             let mut filename_max = String::new();
             let mut ctime_max = SystemTime::UNIX_EPOCH;
             for file in files.flatten() {
-                match file.file_type(){
+                match file.file_type() {
                     Ok(ft) if ft.is_file() => {}
-                    _ => continue
+                    _ => continue,
                 }
                 let ctime = file
                     .metadata()
@@ -393,9 +393,9 @@ impl NotePath for Path {
     fn has_file_with_sort_tag(&self, sort_tag: &str) -> Option<String> {
         if let Ok(files) = self.read_dir() {
             for file in files.flatten() {
-                match file.file_type(){
+                match file.file_type() {
                     Ok(ft) if ft.is_file() => {}
-                    _ => continue
+                    _ => continue,
                 }
                 let filename = file.file_name();
                 let filename = filename.to_str().unwrap();
@@ -421,9 +421,9 @@ impl NotePath for Path {
             // alphabetic first.
             let mut minimum = PathBuf::new();
             'file_loop: for file in files.flatten() {
-                match file.file_type(){
+                match file.file_type() {
                     Ok(ft) if ft.is_file() => {}
-                    _ => continue
+                    _ => continue,
                 }
                 let file = file.path();
                 if !(*file).has_tpnote_ext() {
@@ -734,14 +734,10 @@ mod tests {
 
         //
         // Test long filename.
-        let mut input = std::iter::repeat("X")
-            .take(FILENAME_LEN_MAX + 10)
-            .collect::<String>();
+        let mut input = "X".repeat(FILENAME_LEN_MAX + 10);
         input.push_str(".ext");
 
-        let mut expected = std::iter::repeat("X")
-            .take(FILENAME_LEN_MAX - ".ext".len() - 1)
-            .collect::<String>();
+        let mut expected = "X".repeat(FILENAME_LEN_MAX - ".ext".len() - 1);
         expected.push_str(".ext");
 
         let mut input = PathBuf::from(input);
