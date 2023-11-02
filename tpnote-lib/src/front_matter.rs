@@ -5,6 +5,7 @@
 use crate::config::AssertPrecondition;
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_FM_;
+use crate::error::LibCfgError;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::filename::Extension;
@@ -55,13 +56,15 @@ impl FrontMatter {
     /// The path is the path to the current document.
     #[inline]
     pub fn assert_precoditions(&self, docpath: &Path) -> Result<(), NoteError> {
-        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
+        let lib_cfg = &LIB_CFG.read_recursive();
+        let scheme = &lib_cfg.scheme[SETTINGS.read_recursive().scheme_default];
         for (key, conditions) in scheme.tmpl.filter.assert_preconditions.iter() {
             let key = key.trim_start_matches(TMPL_VAR_FM_);
             if let Some(value) = self.get(key) {
                 for cond in conditions {
                     match cond {
                         AssertPrecondition::IsDefined => {}
+
                         AssertPrecondition::IsString => {
                             if !all_leaves(value, &|v| matches!(v, Value::String(..))) {
                                 return Err(NoteError::FrontMatterFieldIsNotString {
@@ -69,6 +72,7 @@ impl FrontMatter {
                                 });
                             }
                         }
+
                         AssertPrecondition::IsNotEmptyString => {
                             if !all_leaves(value, &|v| {
                                 matches!(v, Value::String(..)) && v.as_str() != Some("")
@@ -78,6 +82,7 @@ impl FrontMatter {
                                 });
                             }
                         }
+
                         AssertPrecondition::IsNumber => {
                             if !all_leaves(value, &|v| matches!(v, Value::Number(..))) {
                                 return Err(NoteError::FrontMatterFieldIsNotNumber {
@@ -85,6 +90,7 @@ impl FrontMatter {
                                 });
                             }
                         }
+
                         AssertPrecondition::IsBool => {
                             if !all_leaves(value, &|v| matches!(v, Value::Bool(..))) {
                                 return Err(NoteError::FrontMatterFieldIsNotBool {
@@ -92,6 +98,7 @@ impl FrontMatter {
                                 });
                             }
                         }
+
                         AssertPrecondition::IsNotCompound => {
                             if matches!(value, Value::Array(..))
                                 || matches!(value, Value::Object(..))
@@ -101,12 +108,9 @@ impl FrontMatter {
                                 });
                             }
                         }
+
                         AssertPrecondition::IsValidSortTag => {
-                            let fm_sort_tag = if let Value::String(s) = value {
-                                s.to_owned()
-                            } else {
-                                value.to_string()
-                            };
+                            let fm_sort_tag = value.as_str().unwrap_or_default();
                             if !fm_sort_tag.is_empty() {
                                 // Check for forbidden characters.
                                 let (_, rest, is_sequential) = fm_sort_tag.split_sort_tag(true);
@@ -144,25 +148,22 @@ impl FrontMatter {
                                 let dirpath = Path::new(dirpath);
 
                                 if let Some(other_file) =
-                                    dirpath.has_file_with_sort_tag(&fm_sort_tag)
+                                    dirpath.has_file_with_sort_tag(fm_sort_tag)
                                 {
                                     return Err(NoteError::FrontMatterFieldIsDuplicateSortTag {
-                                        sort_tag: fm_sort_tag,
+                                        sort_tag: fm_sort_tag.to_string(),
                                         existing_file: other_file,
                                     });
                                 }
                             }
                         }
+
                         AssertPrecondition::IsTpnoteExtension => {
-                            let file_ext = if let Value::String(s) = value {
-                                s.to_owned()
-                            } else {
-                                value.to_string()
-                            };
+                            let file_ext = value.as_str().unwrap_or_default();
 
                             if !file_ext.is_empty() && !(*file_ext).is_tpnote_ext() {
                                 return Err(NoteError::FrontMatterFieldIsNotTpnoteExtension {
-                                    extension: file_ext,
+                                    extension: file_ext.to_string(),
                                     extensions: {
                                         use std::fmt::Write;
                                         let mut errstr = scheme.filename.extensions.iter().fold(
@@ -178,6 +179,25 @@ impl FrontMatter {
                                 });
                             }
                         }
+
+                        AssertPrecondition::IsConfiguredScheme => {
+                            let fm_scheme = value.as_str().unwrap_or_default();
+                            match lib_cfg.scheme_idx(fm_scheme) {
+                                Ok(_) => {}
+                                Err(LibCfgError::SchemeNotFound {
+                                    scheme_name,
+                                    schemes,
+                                }) => {
+                                    return Err(NoteError::SchemeNotFound {
+                                        scheme_val: scheme_name,
+                                        scheme_key: key.to_string(),
+                                        schemes,
+                                    })
+                                }
+                                Err(e) => return Err(e.into()),
+                            };
+                        }
+
                         AssertPrecondition::NoOperation => {}
                     } //
                 }

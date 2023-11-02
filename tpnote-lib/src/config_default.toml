@@ -130,6 +130,9 @@ extensions = [
 #    `filename.sort_tag.extra_chars` set, digits or lowercase letters.
 #    The number of lowercase letters in a row is limited by
 #    `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`.
+# *  `IsConfguredScheme`: Assert, that -if the variable is defined- the
+#    string equals to one of the `scheme.name` in the configuration file.
+#    IsConfiguredScheme,
 # * `IsTpnoteExtension`: Assert, that if the variable is defined, the values
 #    string representation is registered in one of the `filename.extension_*`
 #    configuraion file variables.
@@ -144,6 +147,7 @@ filter.assert_preconditions = [
     [ "fm_file_ext", ["IsString", "IsNotCompound", "IsTpnoteExtension"], ],
     [ "fm_no_filename_sync", ["IsBool", "IsNotCompound"], ],
     [ "fm_filename_sync", ["IsBool", "IsNotCompound"], ],
+    [ "fm_scheme", ["IsString", "IsConfiguredScheme"], ],
 ]
 
 # A list of language tags, defining languages the `get_lang` filter tries

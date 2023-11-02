@@ -243,6 +243,16 @@ impl LibCfg {
                 || {
                     Err(LibCfgError::SchemeNotFound {
                         scheme_name: name.to_string(),
+                        schemes: {
+                            //Already imported: `use std::fmt::Write;`
+                            let mut errstr =
+                                self.scheme.iter().fold(String::new(), |mut output, s| {
+                                    let _ = write!(output, "{}, ", s.name);
+                                    output
+                                });
+                            errstr.truncate(errstr.len().saturating_sub(2));
+                            errstr
+                        },
                     })
                 },
                 |(i, _)| Ok(i),
@@ -599,29 +609,32 @@ pub enum AssertPrecondition {
     /// `IsDefined`: Assert that the variable is defined in the template.
     IsDefined,
     /// `IsNotEmptyString`: In addition to `IsString`, the condition asserts,
-    ///  that the string -or all substrings-) are not empty.
+    /// that the string -or all substrings-) are not empty.
     IsNotEmptyString,
     /// `IsString`: Assert, that if the variable is defined, its type -or all
-    ///  subtypes- are `Value::String`.
+    /// subtypes- are `Value::String`.
     IsString,
     /// `IsNumber`: Assert, that if the variable is defined, its type -or all
-    ///  subtypes- are `Value::Number`.
+    /// subtypes- are `Value::Number`.
     IsNumber,
     /// `IsBool`: Assert, that if the variable is defined, its type -or all
-    ///  subtypes- are `Value::Bool`.
+    /// subtypes- are `Value::Bool`.
     IsBool,
     /// `IsNotCompound`: Assert, that if the variable is defined, its type is
     /// not `Value::Array` or `Value::Object`.
     IsNotCompound,
     /// `IsValidSortTag`: Assert, that if the variable is defined, the value's
-    ///  string representation contains solely characters of the
-    ///  `filename.sort_tag.extra_chars` set, digits or lowercase letters.
-    ///  The number of lowercase letters in a row is limited by
-    ///  `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`.
+    /// string representation contains solely characters of the
+    /// `filename.sort_tag.extra_chars` set, digits or lowercase letters.
+    /// The number of lowercase letters in a row is limited by
+    /// `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`.
     IsValidSortTag,
+    /// `IsConfiguredScheme`: Assert, that -if the variable is defined- the
+    /// string equals to one of the `scheme.name` in the configuration file.
+    IsConfiguredScheme,
     /// `IsTpnoteExtension`: Assert, that if the variable is defined,
-    ///  the values string representation is registered in one of the
-    ///  `filename.extension_*` configuration file variables.
+    /// the values string representation is registered in one of the
+    /// `filename.extension_*` configuration file variables.
     IsTpnoteExtension,
     /// `NoOperation` (default): A test that is always satisfied. For internal
     ///  use only.

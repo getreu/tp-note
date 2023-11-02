@@ -32,14 +32,19 @@ pub enum FileError {
 /// Configuration file related semantic errors.
 #[derive(Debug, Error, Clone)]
 pub enum LibCfgError {
-    /// Remedy: Choose another `sort_tag.extra_separator` character.
+    /// Remedy: Choose another scheme.
     #[error(
         "Configuration file error in section:\n\
         \t[[scheme]]\n\
-        \tname = \"{scheme_name}\"
-        No scheme found."
+        \tscheme_default = \"{scheme_name}\"\n\
+        No scheme found. Available configured schemes:\n\
+        {schemes}
+        "
     )]
-    SchemeNotFound { scheme_name: String },
+    SchemeNotFound {
+        scheme_name: String,
+        schemes: String,
+    },
 
     /// Remedy: Choose another `sort_tag.extra_separator` character.
     #[error(
@@ -173,6 +178,22 @@ pub enum NoteError {
 
     #[error(transparent)]
     File(#[from] FileError),
+
+    /// Remedy: Choose another scheme.
+    #[error(
+        "Invalid header variable value: no scheme `{scheme_val}` found.\n\
+         \t---\n\
+         \t{scheme_key}: {scheme_val}\n\
+         \t---\n\n\
+        Available schemes in configuration file:\n\
+        {schemes}
+        "
+    )]
+    SchemeNotFound {
+        scheme_val: String,
+        scheme_key: String,
+        schemes: String,
+    },
 
     /// Remedy: remove invalid characters.
     #[error(
