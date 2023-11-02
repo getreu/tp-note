@@ -85,7 +85,7 @@ pub struct Args {
     #[structopt(long, short = "n")]
     pub no_filename_sync: bool,
     /// Disables the automatic language detection and uses `<force-lang>` instead;
-    /// or, if `-` use `TPNOTE_LANG` or `LANG`
+    /// or, if `` use `TPNOTE_LANG` or `LANG`
     #[structopt(long, short = "l")]
     pub force_lang: Option<String>,
     /// Launches only the browser, no editor

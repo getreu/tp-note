@@ -100,7 +100,7 @@ fn to_yaml_filter<S: BuildHasher>(
     // Formatting: adjust indent.
     let val_yaml: String = if let Some(tab) =
         args.get("tab").and_then(|v| v.as_u64()).or_else(|| {
-            let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
+            let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
 
             let n = scheme.tmpl.filter.to_yaml_tab;
             if n == 0 {

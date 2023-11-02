@@ -113,7 +113,7 @@ impl NotePathBuf for PathBuf {
         let mut filename = String::new();
 
         // Add potential sort-tag and separators.
-        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
+        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
 
         if !sort_tag.is_empty() {
             filename.push_str(sort_tag);
@@ -208,7 +208,7 @@ impl NotePathBuf for PathBuf {
 
         // Does this ending look like a copy counter?
         if stem_short.split_copy_counter().1.is_some() {
-            let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
+            let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
 
             stem_short.push_str(&scheme.filename.copy_counter.extra_separator);
         }
@@ -500,7 +500,7 @@ impl NotePathStr for str {
 
     #[inline]
     fn split_copy_counter(&self) -> (&str, Option<usize>) {
-        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
+        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
         // Strip closing brackets at the end.
         let tag1 =
             if let Some(t) = self.strip_suffix(&scheme.filename.copy_counter.closing_brackets) {
@@ -531,7 +531,7 @@ impl NotePathStr for str {
     }
 
     fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str, bool) {
-        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
+        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
 
         let mut is_sequential_sort_tag = true;
 

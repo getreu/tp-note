@@ -131,6 +131,10 @@ pub const TMPL_VAR_FM_: &str = "fm_";
 /// `tmpl.from_text_file_content`, `tmpl.sync_filename` and HTML templates.
 pub const TMPL_VAR_FM_ALL: &str = "fm_all";
 
+/// If present, this header variable can switch the `settings.current_theme`
+/// before the filename template is processed.
+pub const TMPL_VAR_FM_SCHEME: &str = "fm_scheme";
+
 /// By default, the template `tmpl.sync_filename` defines the function of
 /// of this variable as follows:
 /// Contains the value of the front matter field `file_ext` and determines the
@@ -224,8 +228,9 @@ lazy_static! {
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LibCfg {
-    /// This is the name of the
-    pub scheme_default: String,
+    /// The fallback scheme for the `sync_filename` template choice, if the
+    /// `scheme` header variable is empty or is not defined.
+    pub scheme_sync_default: String,
     /// Configuration of `Scheme`.
     pub scheme: Vec<Scheme>,
     /// Configuration of HTML templates.
@@ -233,7 +238,8 @@ pub struct LibCfg {
 }
 
 impl LibCfg {
-    // Returns the index of a named scheme.
+    /// Returns the index of a named scheme. If no scheme with that name can be
+    /// be found, return `LibCfgError::SchemeNotFound`.
     pub fn scheme_idx(&self, name: &str) -> Result<usize, LibCfgError> {
         self.scheme
             .iter()

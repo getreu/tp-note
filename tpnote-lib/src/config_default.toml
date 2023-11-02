@@ -1,8 +1,8 @@
-# The scheme that will be used for new files. This is one of the 
-# `scheme.name` variables below.
-# If the environment variable `TPNOTE_SCHEME_DEFAULT` is defined, it
-# overwrites this setting.
-scheme_default = "default"
+# The fallback scheme for the `sync_filename` template choice, in case the
+# `scheme` header variable is empty or is not defined.
+# Not to be confused with `app_arg.scheme`!
+scheme_sync_default = "default"
+
 
 
 
@@ -634,8 +634,17 @@ from_text_file_filename = """
   {%- endif -%}
 {%- endif -%}
 
+{%- set keywords = '' -%}
+{%- if fm_keywords | as_str == fm_keywords -%}
+  {%- set keywords = fm_keywords -%}
+{%- else -%}
+  {%- for sub in fm_keywords | default(value=[]) -%}
+    {%- set_global keywords = keywords~sub~'_' -%}
+  {%- endfor -%}
+{%- endif -%}
+
 {{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
-{{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ keywords | sanit | prepend(with='__') }}\
 {{ path | file_ext | prepend(with='.') }}"""
 
 annotate_file_content = """

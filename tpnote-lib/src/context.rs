@@ -49,13 +49,11 @@ impl Context {
     ///
     /// ```rust
     /// use std::path::Path;
-    /// use tpnote_lib::settings::ENV_VAR_TPNOTE_EXTENSION_DEFAULT;
-    /// use tpnote_lib::settings::update_settings;
+    /// use tpnote_lib::settings::set_test_default_settings;
     /// use tpnote_lib::config::TMPL_VAR_DIR_PATH;
     /// use tpnote_lib::config::TMPL_VAR_PATH;
     /// use tpnote_lib::context::Context;
-    /// std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
-    /// update_settings().unwrap();
+    /// set_test_default_settings().unwrap();
     ///
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     ///
@@ -154,13 +152,11 @@ impl Context {
     ///
     /// ```rust
     /// use std::path::Path;
-    /// use tpnote_lib::settings::ENV_VAR_TPNOTE_EXTENSION_DEFAULT;
-    /// use tpnote_lib::settings::update_settings;
+    /// use tpnote_lib::settings::set_test_default_settings;
     /// use tpnote_lib::context::Context;
     /// use tpnote_lib::content::Content;
     /// use tpnote_lib::content::ContentString;
-    /// std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
-    /// update_settings().unwrap();
+    /// set_test_default_settings().unwrap();
     ///
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     ///
@@ -227,12 +223,10 @@ impl Context {
     ///
     /// ```
     /// use std::path::Path;
-    /// use tpnote_lib::settings::ENV_VAR_TPNOTE_EXTENSION_DEFAULT;
-    /// use tpnote_lib::settings::update_settings;
+    /// use tpnote_lib::config::TMPL_VAR_EXTENSION_DEFAULT;
+    /// use tpnote_lib::settings::set_test_default_settings;
     /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::config::TMPL_VAR_EXTENSION_DEFAULT; // `extension_default`
-    /// std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
-    /// update_settings().unwrap();
+    /// set_test_default_settings().unwrap();
     ///
     /// // The constructor calls `context.insert_settings()` before returning.
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));

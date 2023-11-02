@@ -151,7 +151,7 @@ impl From<&str> for MarkupLanguage {
     /// Is `file_extension` listed in `file.extensions`?
     #[inline]
     fn from(file_extension: &str) -> Self {
-        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
+        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
 
         for e in &scheme.filename.extensions {
             if e.0 == file_extension {

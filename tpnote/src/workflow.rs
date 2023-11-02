@@ -42,7 +42,9 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
         &*STDIN,
         template_kind_filter,
         &HTML_EXPORT,
-        ARGS.force_lang.clone(),
+        "default",
+        None,
+        ARGS.force_lang.as_deref(),
     ) {
         // Use the new `path` from now on.
         Ok(p) => {

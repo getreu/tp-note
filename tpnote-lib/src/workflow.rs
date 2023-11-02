@@ -40,7 +40,7 @@
 //! // You can plug in your own type (must impl. `Content`).
 //! let n = create_new_note_or_synchronize_filename::<ContentString, _>(
 //!        &notedir, &clipboard, &stdin, template_kind_filter,
-//!        &None, None).unwrap();
+//!        &None, "default", None, None).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -120,7 +120,7 @@
 //! // Here we plugin our own type (must implement `Content`).
 //! let n = create_new_note_or_synchronize_filename::<MyContentString, _>(
 //!        &notedir, &clipboard, &stdin, template_kind_filter,
-//!        &None, None).unwrap();
+//!        &None, "default", None, None).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -138,6 +138,7 @@ use crate::config::TMPL_VAR_CLIPBOARD_HEADER;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_FILENAME_SYNC;
 use crate::config::TMPL_VAR_FM_NO_FILENAME_SYNC;
+use crate::config::TMPL_VAR_FM_SCHEME;
 use crate::config::TMPL_VAR_STDIN;
 use crate::config::TMPL_VAR_STDIN_HEADER;
 use crate::content::Content;
@@ -150,8 +151,7 @@ use crate::note::Note;
 use crate::note::ONE_OFF_TEMPLATE_NAME;
 #[cfg(feature = "viewer")]
 use crate::note_error_tera_template;
-use crate::settings::force_lang_setting;
-use crate::settings::update_settings;
+use crate::settings::SchemeSource;
 use crate::settings::SETTINGS;
 use crate::template::TemplateKind;
 use std::path::Path;
@@ -201,16 +201,38 @@ use tera::Value;
 /// assert!(n.is_file());
 /// ```
 pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteError> {
-    // Initialize settings.
-    update_settings()?;
-    // Prevent the rest to run in parallel.
-    let _lock = SETTINGS.read_recursive();
+    // Prevent the rest to run in parallel, other threads will block when they
+    // try to write.
+    let mut settings = SETTINGS.upgradable_read();
 
     // Collect input data for templates.
     let context = Context::from(path);
 
     let content = <T>::open(path).unwrap_or_default();
-    let n = synchronize::<T>(context, content)?;
+
+    // This does not fill any templates,
+    let mut n = Note::from_raw_text(context, content, TemplateKind::SyncFilename)?;
+
+    // Shall we switch the `settings.current_theme`?
+    // If `fm_scheme` is defined, prefer this value.
+    match n.context.get(TMPL_VAR_FM_SCHEME).as_ref() {
+        Some(Value::String(s)) if !s.is_empty() => {
+            // Initialize `SETTINGS`.
+            settings.with_upgraded(|settings| settings.update(SchemeSource::Force(s), None))?;
+        }
+        Some(Value::String(_)) | None => {
+            // Initialize `SETTINGS`.
+            settings
+                .with_upgraded(|settings| settings.update(SchemeSource::SchemeSyncDefault, None))?;
+        }
+        Some(_) => {
+            return Err(NoteError::FrontMatterFieldIsNotString {
+                field_name: TMPL_VAR_FM_SCHEME.to_string(),
+            })
+        }
+    };
+
+    synchronize::<T>(&mut n)?;
 
     Ok(n.rendered_filename)
 }
@@ -265,7 +287,7 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// // You can plug in your own type (must impl. `Content`).
 /// let n = create_new_note_or_synchronize_filename::<ContentString, _>(
 ///        &notedir, &clipboard, &stdin, template_kind_filter,
-///        &None, None).unwrap();
+///        &None, "default", None, None).unwrap();
 /// // Check result.
 /// assert!(n.as_os_str().to_str().unwrap()
 ///    .contains("my stdin-my clipboard--Note"));
@@ -279,33 +301,32 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// assert!(raw_note.starts_with(
 ///            "\u{feff}---\r\ntitle:        |"));
 /// ```
+#[allow(clippy::too_many_arguments)]
 pub fn create_new_note_or_synchronize_filename<T, F>(
     path: &Path,
     clipboard: &T,
     stdin: &T,
     tk_filter: F,
     html_export: &Option<(PathBuf, LocalLinkKind)>,
-    force_lang: Option<String>,
+    scheme_new_default: &str,
+    force_scheme: Option<&str>,
+    force_lang: Option<&str>,
 ) -> Result<PathBuf, NoteError>
 where
     T: Content,
     F: Fn(TemplateKind) -> TemplateKind,
 {
-    // Initialize settings.
-    update_settings()?;
-    if let Some(lang) = force_lang {
-        if lang == "-" {
-            // Only disable `get_lang` filter.
-            force_lang_setting(None)
-        } else {
-            // Overwrite `SETTINGS.lang` and disable `get_lang`
-            // filter.
-            force_lang_setting(Some(lang));
-        }
-    }
+    let scheme_sorce = match force_scheme {
+        Some(s) => SchemeSource::Force(s),
+        None => SchemeSource::SchemeNewDefault(scheme_new_default),
+    };
 
-    // Prevent the rest to run in parallel.
-    let _lock = SETTINGS.read_recursive();
+    // Prevent the rest to run in parallel, other threads will block when they
+    // try to write.
+    let mut settings = SETTINGS.upgradable_read();
+
+    // Initialize settings.
+    settings.with_upgraded(|settings| settings.update(scheme_sorce, force_lang))?;
 
     // First, generate a new note (if it does not exist), then parse its front_matter
     // and finally rename the file, if it is not in sync with its front matter.
@@ -344,7 +365,35 @@ where
             n.save_and_delete_from(&context_path)?;
             n
         }
-        TemplateKind::SyncFilename => synchronize(context, content.unwrap())?,
+
+        TemplateKind::SyncFilename => {
+            let mut n = Note::from_raw_text(context, content.unwrap(), TemplateKind::SyncFilename)?;
+            // Shall we switch the `settings.current_theme`?
+            // If `fm_scheme` is defined, prefer this value, otherwise "" (alias for
+            // `scheme_fallback`).
+            match n.context.get(TMPL_VAR_FM_SCHEME) {
+                Some(Value::String(s)) if !s.is_empty() => {
+                    // Initialize `SETTINGS`.
+                    settings
+                        .with_upgraded(|settings| settings.update(SchemeSource::Force(s), None))?;
+                }
+                Some(Value::String(_)) | None => {
+                    // Initialize `SETTINGS`.
+                    settings.with_upgraded(|settings| {
+                        settings.update(SchemeSource::SchemeSyncDefault, None)
+                    })?;
+                }
+                Some(_) => {
+                    return Err(NoteError::FrontMatterFieldIsNotString {
+                        field_name: TMPL_VAR_FM_SCHEME.to_string(),
+                    })
+                }
+            };
+
+            synchronize::<T>(&mut n)?;
+            n
+        }
+
         TemplateKind::None => Note::from_raw_text(context, content.unwrap(), template_kind)?,
     };
 
@@ -367,14 +416,12 @@ where
 }
 
 /// Helper function.
-fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, NoteError> {
+fn synchronize<T: Content>(note: &mut Note<T>) -> Result<(), NoteError> {
     // parse file again to check for synchronicity with filename
 
-    let mut n = Note::from_raw_text(context, content, TemplateKind::SyncFilename)?;
-
     let no_filename_sync = match (
-        n.context.get(TMPL_VAR_FM_FILENAME_SYNC),
-        n.context.get(TMPL_VAR_FM_NO_FILENAME_SYNC),
+        note.context.get(TMPL_VAR_FM_FILENAME_SYNC),
+        note.context.get(TMPL_VAR_FM_NO_FILENAME_SYNC),
     ) {
         // By default we sync.
         (None, None) => false,
@@ -391,14 +438,14 @@ fn synchronize<T: Content>(context: Context, content: T) -> Result<Note<T>, Note
             !no_filename_sync
         );
     } else {
-        n.render_filename(TemplateKind::SyncFilename)?;
+        note.render_filename(TemplateKind::SyncFilename)?;
 
-        n.set_next_unused_rendered_filename_or(&n.context.path.clone())?;
+        note.set_next_unused_rendered_filename_or(&note.context.path.clone())?;
         // Silently fails is source and target are identical.
-        n.rename_file_from(&n.context.path)?;
+        note.rename_file_from(&note.context.path)?;
     }
 
-    Ok(n)
+    Ok(())
 }
 
 /// Returns the HTML rendition of a `ContentString`. The markup rendition

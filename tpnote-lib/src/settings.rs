@@ -12,6 +12,7 @@ use lingua;
 #[cfg(feature = "lang-detection")]
 use lingua::IsoCode639_1;
 use parking_lot::RwLock;
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::env;
 #[cfg(feature = "lang-detection")]
@@ -23,7 +24,7 @@ use windows_sys::Win32::System::SystemServices::LOCALE_NAME_MAX_LENGTH;
 
 /// The name of the environment variable which can be optionally set to
 /// overwrite the `scheme_default` configuration file setting.
-pub const ENV_VAR_TPNOTE_SCHEME_DEFAULT: &str = "TPNOTE_SCHEME_DEFAULT";
+pub const ENV_VAR_TPNOTE_SCHEME: &str = "TPNOTE_SCHEME";
 
 /// The name of the environment variable which can be optionally set to
 /// overwrite the `filename.extension_default` configuration file setting.
@@ -84,16 +85,24 @@ pub(crate) enum FilterGetLang {
 #[derive(Debug)]
 #[allow(dead_code)]
 pub(crate) struct Settings {
-    pub scheme_default: usize,
+    /// This is the index as the schemes are listed in the config file.
+    pub current_scheme: usize,
+    /// This has the format of a login name.
     pub author: String,
+    /// [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
     pub lang: String,
+    /// Extension without dot, e.g. `md`
     pub extension_default: String,
+    /// See defintion of type.
     pub filter_get_lang: FilterGetLang,
+    /// The keys and values from
+    /// `LIB_CFG.schemes[settings.current_scheme].tmpl.filter_btmap_lang` in the `BTreeMap`
+    /// with the user's default language and region added.
     pub filter_map_lang_btmap: Option<BTreeMap<String, String>>,
 }
 
 const DEFAULT_SETTINGS: Settings = Settings {
-    scheme_default: 0,
+    current_scheme: 0,
     author: String::new(),
     lang: String::new(),
     extension_default: String::new(),
@@ -102,18 +111,19 @@ const DEFAULT_SETTINGS: Settings = Settings {
 };
 
 impl Default for Settings {
-    #[cfg(not(test))]
+    #[cfg(not(any(test, doc)))]
     /// Defaults to empty lists and values.
     fn default() -> Self {
         DEFAULT_SETTINGS
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, doc))]
     /// Defaults to test values.
+    /// Do not use outside of tests.
     fn default() -> Self {
         let mut settings = DEFAULT_SETTINGS;
         settings.author = String::from("testuser");
-        settings.lang = String::from("ab_AB");
+        settings.lang = String::from("ab-AB");
         settings.extension_default = String::from("md");
         settings
     }
@@ -129,300 +139,194 @@ lazy_static::lazy_static! {
 pub(crate) static ref SETTINGS: RwLock<Settings> = RwLock::new(DEFAULT_SETTINGS);
 }
 
-/// When `lang` is `Some(l)`, overwrite `SETTINGS.lang` with `l`.
-/// In any case, disable the `get_lang` filter by setting `filter_get_lang`
-/// to `FilterGetLang::Disabled`.
-pub(crate) fn force_lang_setting(lang: Option<String>) {
+/// Like `Settings::update`, with `scheme_source = SchemeSource::Force("default")`
+/// and `force_lang = None`.
+/// This is used in doctests only.
+pub fn set_test_default_settings() -> Result<(), LibCfgError> {
     let mut settings = SETTINGS.write();
-    // Overwrite environment setting.
-    if let Some(l) = lang {
-        settings.lang = l;
-    }
-    // Disable the `get_lang` Tera filter.
-    settings.filter_get_lang = FilterGetLang::Disabled;
-
-    log::trace!(
-        "`SETTINGS` updated after `force_lang_setting()`:\n{:#?}",
-        settings
-    );
+    settings.update(SchemeSource::Force("default"), None)
 }
 
-/// (Re)read environment variables and store them in the global `SETTINGS`
-/// object. Some data originates from `LIB_CFG`.
-pub fn update_settings() -> Result<(), LibCfgError> {
-    let mut settings = SETTINGS.write();
-    update_scheme_default_setting(&mut settings)?;
-    update_author_setting(&mut settings);
-    update_extension_default_setting(&mut settings);
-    update_lang_setting(&mut settings);
-    update_filter_get_lang_setting(&mut settings);
-    update_filter_map_lang_btmap_setting(&mut settings);
-    update_env_lang_detection(&mut settings);
+/// How should `update_settings` collect the right scheme?
+pub(crate) enum SchemeSource<'a> {
+    /// Ingore `TPNOTE_SCHEME_NEW_DEFAULT`, take this.
+    Force(&'a str),
+    /// Take the value `lib_cfg.scheme_sync_default`.
+    SchemeSyncDefault,
+    /// Take `TPNOTE_SCHEME_NEW_DEFAULT`, or, if not defined take this.
+    SchemeNewDefault(&'a str),
+}
 
-    log::trace!(
-        "`SETTINGS` updated (reading config + env. vars.):\n{:#?}",
-        settings
-    );
+impl Settings {
+    /// (Re)read environment variables and store them in the global `SETTINGS`
+    /// object. Some data originates from `LIB_CFG`.
+    /// First sets `SETTINGS.current_scheme`:
+    /// 1. If `force_theme` is `Some(scheme)`, gets the index and stores result, or,
+    /// 2. if `force_theme` is `Some("")`, stores `lib_cfg.scheme_sync_default`, or,
+    /// 3. reads the environment variable `TPNOTE_SCHEME_NEW_DEFAULT` or, -if empty-
+    /// 4. copies `scheme_new_default` into `SETTINGS.curent_scheme`.
+    /// Then, sets all other fields.
+    /// `force_lang=Some(_)` disables the `get_lang` filter by setting
+    /// `filter_get_lang` to `FilterGetLang::Disabled`.
+    /// When `force_lang` is `Some(l)`, sets `SETTINGS.current_lang` with `l`.
+    pub(crate) fn update(
+        &mut self,
+        scheme_source: SchemeSource,
+        force_lang: Option<&str>,
+    ) -> Result<(), LibCfgError> {
+        self.update_current_scheme(scheme_source)?;
+        self.update_author();
+        self.update_extension_default();
+        self.update_lang(force_lang);
+        self.update_filter_get_lang(force_lang);
+        self.update_filter_map_lang_btmap();
+        self.update_env_lang_detection();
 
-    if let FilterGetLang::Error(e) = &settings.filter_get_lang {
-        Err(e.clone())
-    } else {
+        log::trace!(
+            "`SETTINGS` updated (reading config + env. vars.):\n{:#?}",
+            self
+        );
+
+        if let FilterGetLang::Error(e) = &self.filter_get_lang {
+            Err(e.clone())
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Sets `SETTINGS.current_scheme`:
+    fn update_current_scheme(&mut self, scheme_source: SchemeSource) -> Result<(), LibCfgError> {
+        let lib_cfg = LIB_CFG.read_recursive();
+
+        let scheme = match scheme_source {
+            SchemeSource::Force(s) => Cow::Borrowed(s),
+            SchemeSource::SchemeSyncDefault => Cow::Borrowed(&*lib_cfg.scheme_sync_default),
+            SchemeSource::SchemeNewDefault(s) => match env::var(ENV_VAR_TPNOTE_SCHEME) {
+                Ok(ed_env) if !ed_env.is_empty() => Cow::Owned(ed_env),
+                Err(_) | Ok(_) => Cow::Borrowed(s),
+            },
+        };
+        self.current_scheme = lib_cfg.scheme_idx(scheme.as_ref())?;
         Ok(())
     }
-}
 
-/// Read the environment variable `TPNOTE_SCHEME_DEFAULT` or -if empty-
-/// the configuration file variable `scheme_default` into
-/// `SETTINGS.scheme`.
-fn update_scheme_default_setting(settings: &mut Settings) -> Result<(), LibCfgError> {
-    let lib_cfg = LIB_CFG.read_recursive();
-    let scheme = match env::var(ENV_VAR_TPNOTE_SCHEME_DEFAULT) {
-        Ok(ed_env) if !ed_env.is_empty() => (*lib_cfg).scheme_idx(&ed_env)?,
-        Err(_) | Ok(_) => (*lib_cfg).scheme_idx(&lib_cfg.scheme_default)?,
-    };
-    settings.scheme_default = scheme;
-    Ok(())
-}
+    /// Set `SETTINGS.author` to content of the first not empty environment
+    /// variable: `TPNOTE_USER`, `LOGNAME` or `USER`.
+    fn update_author(&mut self) {
+        let author = env::var(ENV_VAR_TPNOTE_USER).unwrap_or_else(|_| {
+            env::var(ENV_VAR_LOGNAME).unwrap_or_else(|_| {
+                env::var(ENV_VAR_USERNAME)
+                    .unwrap_or_else(|_| env::var(ENV_VAR_USER).unwrap_or_default())
+            })
+        });
 
-/// Set `SETTINGS.author` to content of the first not empty environment
-/// variable: `TPNOTE_USER`, `LOGNAME` or `USER`.
-fn update_author_setting(settings: &mut Settings) {
-    let author = env::var(ENV_VAR_TPNOTE_USER).unwrap_or_else(|_| {
-        env::var(ENV_VAR_LOGNAME).unwrap_or_else(|_| {
-            env::var(ENV_VAR_USERNAME)
-                .unwrap_or_else(|_| env::var(ENV_VAR_USER).unwrap_or_default())
-        })
-    });
-
-    // Store result.
-    settings.author = author;
-}
-
-/// Read the environment variable `TPNOTE_EXTENSION_DEFAULT` or -if empty-
-/// the configuration file variable `filename.extension_default` into
-/// `SETTINGS.extension_default`.
-fn update_extension_default_setting(settings: &mut Settings) {
-    // Get the environment variable if it exists.
-    let ext = match env::var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT) {
-        Ok(ed_env) if !ed_env.is_empty() => ed_env,
-        Err(_) | Ok(_) => {
-            let lib_cfg = LIB_CFG.read_recursive();
-            lib_cfg.scheme[settings.scheme_default]
-                .filename
-                .extension_default
-                .to_string()
-        }
-    };
-    settings.extension_default = ext;
-}
-
-/// Read the environment variable `TPNOTE_LANG` or -if empty- `LANG` into
-/// `SETTINGS.lang`.
-fn update_lang_setting(settings: &mut Settings) {
-    // Get the user's language tag.
-    // [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
-    let mut lang = String::new();
-    // Get the environment variable if it exists.
-    let tpnotelang = env::var(ENV_VAR_TPNOTE_LANG).ok();
-    // Unix/MacOS version.
-    #[cfg(not(target_family = "windows"))]
-    if let Some(tpnotelang) = tpnotelang {
-        lang = tpnotelang;
-    } else {
-        // [Linux: Define Locale and Language Settings -
-        // ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
-        if let Ok(lang_env) = env::var(ENV_VAR_LANG) {
-            if !lang_env.is_empty() {
-                // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
-                let mut language = "";
-                // [ISO 3166](https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes) country code.
-                let mut territory = "";
-                if let Some((l, lang_env)) = lang_env.split_once('_') {
-                    language = l;
-                    if let Some((t, _codeset)) = lang_env.split_once('.') {
-                        territory = t;
-                    }
-                }
-                lang = language.to_string();
-                lang.push('-');
-                lang.push_str(territory);
-            }
-        }
+        // Store result.
+        self.author = author;
     }
 
-    // Get the user's language tag.
-    // Windows version.
-    #[cfg(target_family = "windows")]
-    if let Some(tpnotelang) = tpnotelang {
-        lang = tpnotelang;
-    } else {
-        let mut buf = [0u16; LOCALE_NAME_MAX_LENGTH as usize];
-        let len = unsafe { GetUserDefaultLocaleName(buf.as_mut_ptr(), buf.len() as i32) };
-        if len > 0 {
-            lang = String::from_utf16_lossy(&buf[..((len - 1) as usize)]);
-        }
-    };
-
-    // Store result.
-    settings.lang = lang;
-}
-
-/// Read language list from
-/// `LIB_CFG.schemes[settings.scheme].tmpl.filter.get_lang`, add the user's
-/// default language subtag and store them in `SETTINGS.filter_get_lang`
-/// as `FilterGetLang::SomeLanguages(l)` `enum` variant.
-/// If `SETTINGS.filter_get_lang` contains a tag `TMPL_FILTER_GET_LANG_ALL`,
-/// all languages are selected by setting `FilterGetLang::AllLanguages`.
-/// Errors are stored in the `FilterGetLang::Error(e)` variant.
-#[cfg(feature = "lang-detection")]
-fn update_filter_get_lang_setting(settings: &mut Settings) {
-    let lib_cfg = LIB_CFG.read_recursive();
-
-    let mut all_languages_selected = false;
-    // Read and convert ISO codes from config object.
-    match lib_cfg.scheme[settings.scheme_default]
-        .tmpl
-        .filter
-        .get_lang
-        .iter()
-        // Skip if this is the pseudo tag for all languages.
-        .filter(|&l| {
-            if l == TMPL_FILTER_GET_LANG_ALL {
-                all_languages_selected = true;
-                // Skip this string.
-                false
-            } else {
-                // Continue.
-                true
+    /// Read the environment variable `TPNOTE_EXTENSION_DEFAULT` or -if empty-
+    /// the configuration file variable `filename.extension_default` into
+    /// `SETTINGS.extension_default`.
+    fn update_extension_default(&mut self) {
+        // Get the environment variable if it exists.
+        let ext = match env::var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT) {
+            Ok(ed_env) if !ed_env.is_empty() => ed_env,
+            Err(_) | Ok(_) => {
+                let lib_cfg = LIB_CFG.read_recursive();
+                lib_cfg.scheme[self.current_scheme]
+                    .filename
+                    .extension_default
+                    .to_string()
             }
-        })
-        .map(|l| {
-            IsoCode639_1::from_str(l).map_err(|_| {
-                // The error path.
-                // Produce list of all available langugages.
-                let mut all_langs = lingua::Language::all()
-                    .iter()
-                    .map(|l| {
-                        let mut s = l.iso_code_639_1().to_string();
-                        s.push_str(", ");
-                        s
-                    })
-                    .collect::<Vec<String>>();
-                all_langs.sort();
-                let mut all_langs = all_langs.into_iter().collect::<String>();
-                all_langs.truncate(all_langs.len() - ", ".len());
-                // Insert data into error object.
-                LibCfgError::ParseLanguageCode {
-                    language_code: l.into(),
-                    all_langs,
-                }
-            })
-        })
-        .collect::<Result<Vec<IsoCode639_1>, LibCfgError>>()
-    {
-        // The happy path.
-        Ok(mut iso_codes) => {
-            if all_languages_selected {
-                // Store result.
-                settings.filter_get_lang = FilterGetLang::AllLanguages;
-            } else {
-                // Add the user's language subtag as reported from the OS.
-                // Silently ignore if anything goes wrong here.
-                if !settings.lang.is_empty() {
-                    if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
-                        if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
-                            if !iso_codes.contains(&iso_code) {
-                                iso_codes.push(iso_code);
-                            }
+        };
+        self.extension_default = ext;
+    }
+
+    /// If `lang=None` read the environment variable `TPNOTE_LANG` or -if empty-
+    /// `LANG` into `SETTINGS.lang`.
+    /// If `force_lang=Some(l)`, copy `l` in `settings.lang`.
+    fn update_lang(&mut self, force_lang: Option<&str>) {
+        // Overwrite environment setting.
+        if let Some(l) = force_lang {
+            if !l.is_empty() {
+                self.lang = l.to_string();
+                return;
+            }
+        }
+
+        // Get the user's language tag.
+        // [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
+        let mut lang = String::new();
+        // Get the environment variable if it exists.
+        let tpnotelang = env::var(ENV_VAR_TPNOTE_LANG).ok();
+        // Unix/MacOS version.
+        #[cfg(not(target_family = "windows"))]
+        if let Some(tpnotelang) = tpnotelang {
+            lang = tpnotelang;
+        } else {
+            // [Linux: Define Locale and Language Settings -
+            // ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
+            if let Ok(lang_env) = env::var(ENV_VAR_LANG) {
+                if !lang_env.is_empty() {
+                    // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
+                    let mut language = "";
+                    // [ISO 3166](https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes) country code.
+                    let mut territory = "";
+                    if let Some((l, lang_env)) = lang_env.split_once('_') {
+                        language = l;
+                        if let Some((t, _codeset)) = lang_env.split_once('.') {
+                            territory = t;
                         }
                     }
-                }
-
-                // Check if there are at least 2 languages in the list.
-                settings.filter_get_lang = match iso_codes.len() {
-                    0 => FilterGetLang::Disabled,
-                    1 => FilterGetLang::Error(LibCfgError::NotEnoughLanguageCodes {
-                        language_code: iso_codes[0].to_string(),
-                    }),
-                    _ => FilterGetLang::SomeLanguages(iso_codes),
+                    lang = language.to_string();
+                    lang.push('-');
+                    lang.push_str(territory);
                 }
             }
         }
-        // The error path.
-        Err(e) =>
-        // Store error.
-        {
-            settings.filter_get_lang = FilterGetLang::Error(e);
-        }
-    }
-}
 
-#[cfg(not(feature = "lang-detection"))]
-/// Disable filter.
-fn update_filter_get_lang_setting(settings: &mut Settings) {
-    settings.filter_get_lang = FilterGetLang::Disabled;
-}
-
-/// Read keys and values from
-/// `LIB_CFG.schemes[settings.scheme].tmpl.filter_btmap_lang` in the `BTreeMap`.
-/// Add the user's default language and region.
-fn update_filter_map_lang_btmap_setting(settings: &mut Settings) {
-    let mut btm = BTreeMap::new();
-    let lib_cfg = LIB_CFG.read_recursive();
-    for l in &lib_cfg.scheme[settings.scheme_default].tmpl.filter.map_lang {
-        if l.len() >= 2 {
-            btm.insert(l[0].to_string(), l[1].to_string());
-        };
-    }
-    // Insert the user's default language and region in the Map.
-    if !settings.lang.is_empty() {
-        if let Some((lang_subtag, _)) = settings.lang.split_once('-') {
-            // Do not overwrite existing languages.
-            if !lang_subtag.is_empty() && !btm.contains_key(lang_subtag) {
-                btm.insert(lang_subtag.to_string(), settings.lang.to_string());
+        // Get the user's language tag.
+        // Windows version.
+        #[cfg(target_family = "windows")]
+        if let Some(tpnotelang) = tpnotelang {
+            force_lang = tpnotelang;
+        } else {
+            let mut buf = [0u16; LOCALE_NAME_MAX_LENGTH as usize];
+            let len = unsafe { GetUserDefaultLocaleName(buf.as_mut_ptr(), buf.len() as i32) };
+            if len > 0 {
+                force_lang = String::from_utf16_lossy(&buf[..((len - 1) as usize)]);
             }
         };
+
+        // Store result.
+        self.lang = lang;
     }
 
-    // Store result.
-    settings.filter_map_lang_btmap = Some(btm);
-}
-
-/// Reads the environment variable `LANG_DETECTION`. If not empty,
-/// parse the content and overwrite the `settings.filter_get_lang` and
-/// the `settings.filter_map_lang` variables.
-#[cfg(feature = "lang-detection")]
-fn update_env_lang_detection(settings: &mut Settings) {
-    if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
-        if env_var.is_empty() {
-            // Early return.
-            settings.filter_get_lang = FilterGetLang::Disabled;
-            settings.filter_map_lang_btmap = None;
-            log::debug!(
-                "Empty env. var. `{}` disables the `lang-detection` feature.",
-                ENV_VAR_TPNOTE_LANG_DETECTION
-            );
+    /// Read language list from
+    /// `LIB_CFG.schemes[settings.scheme].tmpl.filter.get_lang`, add the user's
+    /// default language subtag and store them in `SETTINGS.filter_get_lang`
+    /// as `FilterGetLang::SomeLanguages(l)` `enum` variant.
+    /// If `SETTINGS.filter_get_lang` contains a tag `TMPL_FILTER_GET_LANG_ALL`,
+    /// all languages are selected by setting `FilterGetLang::AllLanguages`.
+    /// Errors are stored in the `FilterGetLang::Error(e)` variant.
+    /// If `force_lang` is `Some(_)`, set `FilterGetLang::Disabled`
+    #[cfg(feature = "lang-detection")]
+    fn update_filter_get_lang(&mut self, force_lang: Option<&str>) {
+        if force_lang.is_some() {
+            self.filter_get_lang = FilterGetLang::Disabled;
             return;
         }
 
-        // Read and convert ISO codes from config object.
-        let mut hm: BTreeMap<String, String> = BTreeMap::new();
+        let lib_cfg = LIB_CFG.read_recursive();
+
         let mut all_languages_selected = false;
-        match env_var
-            .split(',')
-            .map(|t| {
-                let t = t.trim();
-                if let Some((lang_subtag, _)) = t.split_once('-') {
-                    // Do not overwrite existing languages.
-                    if !lang_subtag.is_empty() && !hm.contains_key(lang_subtag) {
-                        hm.insert(lang_subtag.to_string(), t.to_string());
-                    };
-                    lang_subtag
-                } else {
-                    t
-                }
-            })
-            // Check if this is the pseudo tag `TMPL_FILTER_GET_LANG_ALL `.
+        // Read and convert ISO codes from config object.
+        match lib_cfg.scheme[self.current_scheme]
+            .tmpl
+            .filter
+            .get_lang
+            .iter()
+            // Skip if this is the pseudo tag for all languages.
             .filter(|&l| {
                 if l == TMPL_FILTER_GET_LANG_ALL {
                     all_languages_selected = true;
@@ -434,7 +338,7 @@ fn update_env_lang_detection(settings: &mut Settings) {
                 }
             })
             .map(|l| {
-                IsoCode639_1::from_str(l.trim()).map_err(|_| {
+                IsoCode639_1::from_str(l).map_err(|_| {
                     // The error path.
                     // Produce list of all available langugages.
                     let mut all_langs = lingua::Language::all()
@@ -459,26 +363,24 @@ fn update_env_lang_detection(settings: &mut Settings) {
         {
             // The happy path.
             Ok(mut iso_codes) => {
-                // Add the user's language subtag as reported from the OS.
-                // Continue the happy path.
-                if !settings.lang.is_empty() {
-                    if let Some(lang_subtag) = settings.lang.split('-').next() {
-                        if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
-                            if !iso_codes.contains(&iso_code) {
-                                iso_codes.push(iso_code);
-                            }
-                            // Check if there is a remainder (region code).
-                            if lang_subtag != settings.lang && !hm.contains_key(lang_subtag) {
-                                hm.insert(lang_subtag.to_string(), settings.lang.to_string());
+                if all_languages_selected {
+                    // Store result.
+                    self.filter_get_lang = FilterGetLang::AllLanguages;
+                } else {
+                    // Add the user's language subtag as reported from the OS.
+                    // Silently ignore if anything goes wrong here.
+                    if !self.lang.is_empty() {
+                        if let Some((lang_subtag, _)) = self.lang.split_once('-') {
+                            if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
+                                if !iso_codes.contains(&iso_code) {
+                                    iso_codes.push(iso_code);
+                                }
                             }
                         }
                     }
-                }
-                // Store result.
-                if all_languages_selected {
-                    settings.filter_get_lang = FilterGetLang::AllLanguages;
-                } else {
-                    settings.filter_get_lang = match iso_codes.len() {
+
+                    // Check if there are at least 2 languages in the list.
+                    self.filter_get_lang = match iso_codes.len() {
                         0 => FilterGetLang::Disabled,
                         1 => FilterGetLang::Error(LibCfgError::NotEnoughLanguageCodes {
                             language_code: iso_codes[0].to_string(),
@@ -486,34 +388,173 @@ fn update_env_lang_detection(settings: &mut Settings) {
                         _ => FilterGetLang::SomeLanguages(iso_codes),
                     }
                 }
-                settings.filter_map_lang_btmap = Some(hm);
             }
             // The error path.
             Err(e) =>
             // Store error.
             {
-                settings.filter_get_lang = FilterGetLang::Error(e);
+                self.filter_get_lang = FilterGetLang::Error(e);
+            }
+        }
+    }
+
+    #[cfg(not(feature = "lang-detection"))]
+    /// Disable filter.
+    fn update_filter_get_lang(&mut self, _force_lang: Option<&str>) {
+        self.filter_get_lang = FilterGetLang::Disabled;
+    }
+
+    /// Read keys and values from
+    /// `LIB_CFG.schemes[self.current_scheme].tmpl.filter_btmap_lang` in the `BTreeMap`.
+    /// Add the user's default language and region.
+    fn update_filter_map_lang_btmap(&mut self) {
+        let mut btm = BTreeMap::new();
+        let lib_cfg = LIB_CFG.read_recursive();
+        for l in &lib_cfg.scheme[self.current_scheme].tmpl.filter.map_lang {
+            if l.len() >= 2 {
+                btm.insert(l[0].to_string(), l[1].to_string());
+            };
+        }
+        // Insert the user's default language and region in the Map.
+        if !self.lang.is_empty() {
+            if let Some((lang_subtag, _)) = self.lang.split_once('-') {
+                // Do not overwrite existing languages.
+                if !lang_subtag.is_empty() && !btm.contains_key(lang_subtag) {
+                    btm.insert(lang_subtag.to_string(), self.lang.to_string());
+                }
+            };
+        }
+
+        // Store result.
+        self.filter_map_lang_btmap = Some(btm);
+    }
+
+    /// Reads the environment variable `LANG_DETECTION`. If not empty,
+    /// parse the content and overwrite the `self.filter_get_lang` and
+    /// the `self.filter_map_lang` variables.
+    #[cfg(feature = "lang-detection")]
+    fn update_env_lang_detection(&mut self) {
+        if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
+            if env_var.is_empty() {
+                // Early return.
+                self.filter_get_lang = FilterGetLang::Disabled;
+                self.filter_map_lang_btmap = None;
+                log::debug!(
+                    "Empty env. var. `{}` disables the `lang-detection` feature.",
+                    ENV_VAR_TPNOTE_LANG_DETECTION
+                );
+                return;
+            }
+
+            // Read and convert ISO codes from config object.
+            let mut hm: BTreeMap<String, String> = BTreeMap::new();
+            let mut all_languages_selected = false;
+            match env_var
+                .split(',')
+                .map(|t| {
+                    let t = t.trim();
+                    if let Some((lang_subtag, _)) = t.split_once('-') {
+                        // Do not overwrite existing languages.
+                        if !lang_subtag.is_empty() && !hm.contains_key(lang_subtag) {
+                            hm.insert(lang_subtag.to_string(), t.to_string());
+                        };
+                        lang_subtag
+                    } else {
+                        t
+                    }
+                })
+                // Check if this is the pseudo tag `TMPL_FILTER_GET_LANG_ALL `.
+                .filter(|&l| {
+                    if l == TMPL_FILTER_GET_LANG_ALL {
+                        all_languages_selected = true;
+                        // Skip this string.
+                        false
+                    } else {
+                        // Continue.
+                        true
+                    }
+                })
+                .map(|l| {
+                    IsoCode639_1::from_str(l.trim()).map_err(|_| {
+                        // The error path.
+                        // Produce list of all available langugages.
+                        let mut all_langs = lingua::Language::all()
+                            .iter()
+                            .map(|l| {
+                                let mut s = l.iso_code_639_1().to_string();
+                                s.push_str(", ");
+                                s
+                            })
+                            .collect::<Vec<String>>();
+                        all_langs.sort();
+                        let mut all_langs = all_langs.into_iter().collect::<String>();
+                        all_langs.truncate(all_langs.len() - ", ".len());
+                        // Insert data into error object.
+                        LibCfgError::ParseLanguageCode {
+                            language_code: l.into(),
+                            all_langs,
+                        }
+                    })
+                })
+                .collect::<Result<Vec<IsoCode639_1>, LibCfgError>>()
+            {
+                // The happy path.
+                Ok(mut iso_codes) => {
+                    // Add the user's language subtag as reported from the OS.
+                    // Continue the happy path.
+                    if !self.lang.is_empty() {
+                        if let Some(lang_subtag) = self.lang.split('-').next() {
+                            if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
+                                if !iso_codes.contains(&iso_code) {
+                                    iso_codes.push(iso_code);
+                                }
+                                // Check if there is a remainder (region code).
+                                if lang_subtag != self.lang && !hm.contains_key(lang_subtag) {
+                                    hm.insert(lang_subtag.to_string(), self.lang.to_string());
+                                }
+                            }
+                        }
+                    }
+                    // Store result.
+                    if all_languages_selected {
+                        self.filter_get_lang = FilterGetLang::AllLanguages;
+                    } else {
+                        self.filter_get_lang = match iso_codes.len() {
+                            0 => FilterGetLang::Disabled,
+                            1 => FilterGetLang::Error(LibCfgError::NotEnoughLanguageCodes {
+                                language_code: iso_codes[0].to_string(),
+                            }),
+                            _ => FilterGetLang::SomeLanguages(iso_codes),
+                        }
+                    }
+                    self.filter_map_lang_btmap = Some(hm);
+                }
+                // The error path.
+                Err(e) =>
+                // Store error.
+                {
+                    self.filter_get_lang = FilterGetLang::Error(e);
+                }
+            }
+        }
+    }
+
+    /// Ignore the environment variable `LANG_DETECTION`.
+    #[cfg(not(feature = "lang-detection"))]
+    fn update_env_lang_detection(&mut self) {
+        if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
+            if !env_var.is_empty() {
+                self.filter_get_lang = FilterGetLang::Disabled;
+                self.filter_map_lang_btmap = None;
+                log::debug!(
+                    "Ignoring the env. var. `{}`. The `lang-detection` feature \
+                 is not included in this build.",
+                    ENV_VAR_TPNOTE_LANG_DETECTION
+                );
             }
         }
     }
 }
-
-/// Ignore the environment variable `LANG_DETECTION`.
-#[cfg(not(feature = "lang-detection"))]
-fn update_env_lang_detection(settings: &mut Settings) {
-    if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
-        if !env_var.is_empty() {
-            settings.filter_get_lang = FilterGetLang::Disabled;
-            settings.filter_map_lang_btmap = None;
-            log::debug!(
-                "Ignoring the env. var. `{}`. The `lang-detection` feature \
-                 is not included in this build.",
-                ENV_VAR_TPNOTE_LANG_DETECTION
-            );
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -524,7 +565,7 @@ mod tests {
     fn test_update_author_setting() {
         let mut settings = Settings::default();
         env::set_var(ENV_VAR_LOGNAME, "testauthor");
-        update_author_setting(&mut settings);
+        settings.update_author();
         assert_eq!(settings.author, "testauthor");
     }
 
@@ -532,12 +573,12 @@ mod tests {
     fn test_update_extension_default_setting() {
         let mut settings = Settings::default();
         env::set_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT, "markdown");
-        update_extension_default_setting(&mut settings);
+        settings.update_extension_default();
         assert_eq!(settings.extension_default, "markdown");
 
         let mut settings = Settings::default();
         std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
-        update_extension_default_setting(&mut settings);
+        settings.update_extension_default();
         assert_eq!(settings.extension_default, "md");
     }
 
@@ -548,21 +589,21 @@ mod tests {
         let mut settings = Settings::default();
         env::remove_var(ENV_VAR_TPNOTE_LANG);
         env::set_var(ENV_VAR_LANG, "en_GB.UTF-8");
-        update_lang_setting(&mut settings);
+        settings.update_lang(None);
         assert_eq!(settings.lang, "en-GB");
 
         // Test empty input.
         let mut settings = Settings::default();
         env::remove_var(ENV_VAR_TPNOTE_LANG);
         env::set_var(ENV_VAR_LANG, "");
-        update_lang_setting(&mut settings);
+        settings.update_lang(None);
         assert_eq!(settings.lang, "");
 
         // Test precedence of `TPNOTE_LANG`.
         let mut settings = Settings::default();
         env::set_var(ENV_VAR_TPNOTE_LANG, "it-IT");
         env::set_var(ENV_VAR_LANG, "en_GB.UTF-8");
-        update_lang_setting(&mut settings);
+        settings.update_lang(None);
         assert_eq!(settings.lang, "it-IT");
     }
 
@@ -573,7 +614,7 @@ mod tests {
             lang: "en-GB".to_string(),
             ..Default::default()
         };
-        update_filter_get_lang_setting(&mut settings);
+        settings.update_filter_get_lang(None);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
             let output_filter_get_lang = ofgl
@@ -595,7 +636,7 @@ mod tests {
             lang: "it-IT".to_string(),
             ..Default::default()
         };
-        update_filter_get_lang_setting(&mut settings);
+        settings.update_filter_get_lang(None);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
             let output_filter_get_lang = ofgl
@@ -619,7 +660,7 @@ mod tests {
             lang: "it-IT".to_string(),
             ..Default::default()
         };
-        update_filter_map_lang_btmap_setting(&mut settings);
+        settings.update_filter_map_lang_btmap();
 
         let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
 
@@ -633,7 +674,7 @@ mod tests {
             lang: "it".to_string(),
             ..Default::default()
         };
-        update_filter_map_lang_btmap_setting(&mut settings);
+        settings.update_filter_map_lang_btmap();
 
         let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
 
@@ -651,7 +692,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "fr-FR, de-DE, hu");
-        update_env_lang_detection(&mut settings);
+        settings.update_env_lang_detection();
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
             let output_filter_get_lang = ofgl
@@ -679,7 +720,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en-US");
-        update_env_lang_detection(&mut settings);
+        settings.update_env_lang_detection();
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
             let output_filter_get_lang = ofgl
@@ -705,7 +746,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, en-US");
-        update_env_lang_detection(&mut settings);
+        settings.update_env_lang_detection();
 
         assert!(matches!(
             settings.filter_get_lang,
@@ -722,7 +763,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en");
-        update_env_lang_detection(&mut settings);
+        settings.update_env_lang_detection();
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
             let output_filter_get_lang = ofgl
@@ -748,7 +789,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, de-AT, en");
-        update_env_lang_detection(&mut settings);
+        settings.update_env_lang_detection();
 
         assert!(matches!(
             settings.filter_get_lang,
@@ -765,7 +806,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
-        update_env_lang_detection(&mut settings);
+        settings.update_env_lang_detection();
 
         assert!(matches!(settings.filter_get_lang, FilterGetLang::Disabled));
         assert!(settings.filter_map_lang_btmap.is_none());
@@ -777,7 +818,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "en-GB, fr");
-        update_env_lang_detection(&mut settings);
+        settings.update_env_lang_detection();
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
             let output_filter_get_lang = ofgl
@@ -802,7 +843,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, xy-XY");
-        update_env_lang_detection(&mut settings);
+        settings.update_env_lang_detection();
 
         assert!(matches!(settings.filter_get_lang, FilterGetLang::Error(..)));
         assert!(settings.filter_map_lang_btmap.is_none());
@@ -813,7 +854,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
-        update_env_lang_detection(&mut settings);
+        settings.update_env_lang_detection();
 
         assert!(matches!(settings.filter_get_lang, FilterGetLang::Disabled));
         assert!(settings.filter_map_lang_btmap.is_none());

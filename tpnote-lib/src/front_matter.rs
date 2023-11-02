@@ -57,7 +57,7 @@ impl FrontMatter {
     #[inline]
     pub fn assert_precoditions(&self, docpath: &Path) -> Result<(), NoteError> {
         let lib_cfg = &LIB_CFG.read_recursive();
-        let scheme = &lib_cfg.scheme[SETTINGS.read_recursive().scheme_default];
+        let scheme = &lib_cfg.scheme[SETTINGS.read_recursive().current_scheme];
         for (key, conditions) in scheme.tmpl.filter.assert_preconditions.iter() {
             let key = key.trim_start_matches(TMPL_VAR_FM_);
             if let Some(value) = self.get(key) {

@@ -83,7 +83,7 @@ pub struct Cfg {
     /// a text message explaining why we could not load the
     /// configuration file.
     pub version: String,
-    pub scheme_default: String,
+    pub scheme_sync_default: String,
     pub scheme: Vec<Scheme>,
     pub arg_default: ArgDefault,
     pub clipboard: Clipboard,
@@ -242,7 +242,7 @@ impl Cfg {
             {
                 // Copy the parts of `config` into `LIB_CFG`.
                 let mut lib_cfg = LIB_CFG.write();
-                lib_cfg.scheme_default = config.scheme_default.clone();
+                lib_cfg.scheme_sync_default = config.scheme_sync_default.clone();
                 lib_cfg.scheme = config.scheme.clone();
 
                 // Perform some additional semantic checks.
