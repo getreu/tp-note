@@ -102,7 +102,14 @@ impl TemplateKind {
     /// Panics for `TemplateKind::SyncFilename` and `TemplateKind::None`.
     pub fn get_content_template(&self) -> String {
         let lib_cfg = LIB_CFG.read_recursive();
-        let tmpl = &lib_cfg.scheme[SETTINGS.read_recursive().current_scheme].tmpl;
+        let scheme_idx = SETTINGS.read_recursive().current_scheme;
+        log::trace!(
+            "Scheme index: {}, applying the content template: `{}`",
+            scheme_idx,
+            self.get_content_template_name()
+        );
+        let tmpl = &lib_cfg.scheme[scheme_idx].tmpl;
+
         match self {
             Self::FromDir => tmpl.from_dir_content.clone(),
             Self::FromClipboardYaml => tmpl.from_clipboard_yaml_content.clone(),
@@ -133,7 +140,14 @@ impl TemplateKind {
     /// Panics for `TemplateKind::None`.
     pub fn get_filename_template(&self) -> String {
         let lib_cfg = LIB_CFG.read_recursive();
-        let tmpl = &lib_cfg.scheme[SETTINGS.read_recursive().current_scheme].tmpl;
+        let scheme_idx = SETTINGS.read_recursive().current_scheme;
+        log::trace!(
+            "Scheme index: {}, applying the filename template: `{}`",
+            scheme_idx,
+            self.get_filename_template_name()
+        );
+        let tmpl = &lib_cfg.scheme[scheme_idx].tmpl;
+
         match self {
             Self::FromDir => tmpl.from_dir_filename.clone(),
             Self::FromClipboardYaml => tmpl.from_clipboard_yaml_filename.clone(),

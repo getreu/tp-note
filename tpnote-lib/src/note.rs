@@ -182,11 +182,6 @@ impl<T: Content> Note<T> {
             *context
         );
 
-        log::trace!(
-            "Applying content template: {:?}",
-            template_kind.get_content_template_name()
-        );
-
         // render template
 
         let content: T = T::from({
@@ -231,11 +226,6 @@ impl<T: Content> Note<T> {
             "Available substitution variables for the filename template:\n{:#?}",
             *self.context
         );
-        log::trace!(
-            "Applying the filename template: {:?}",
-            template_kind.get_filename_template_name()
-        );
-
         // render template
         let mut file_path = self.context.dir_path.to_owned();
         let mut tera = Tera::default();
@@ -243,7 +233,6 @@ impl<T: Content> Note<T> {
 
         match tera.render_str(&template_kind.get_filename_template(), &self.context) {
             Ok(filename) => {
-                log::debug!("Rendered filename template:\n{:?}", filename.trim());
                 file_path.push(filename.trim());
             }
             Err(e) => {
