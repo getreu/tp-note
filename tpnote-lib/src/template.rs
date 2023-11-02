@@ -1,5 +1,6 @@
 //!Abstractions for content templates and filename templates.
 use crate::filename::NotePath;
+use crate::settings::SETTINGS;
 use crate::{config::LIB_CFG, content::Content};
 use std::path::Path;
 
@@ -101,12 +102,13 @@ impl TemplateKind {
     /// Panics for `TemplateKind::SyncFilename` and `TemplateKind::None`.
     pub fn get_content_template(&self) -> String {
         let lib_cfg = LIB_CFG.read_recursive();
+        let tmpl = &lib_cfg.scheme[SETTINGS.read_recursive().scheme_default].tmpl;
         match self {
-            Self::FromDir => lib_cfg.tmpl.from_dir_content.clone(),
-            Self::FromClipboardYaml => lib_cfg.tmpl.from_clipboard_yaml_content.clone(),
-            Self::FromClipboard => lib_cfg.tmpl.from_clipboard_content.clone(),
-            Self::FromTextFile => lib_cfg.tmpl.from_text_file_content.clone(),
-            Self::AnnotateFile => lib_cfg.tmpl.annotate_file_content.clone(),
+            Self::FromDir => tmpl.from_dir_content.clone(),
+            Self::FromClipboardYaml => tmpl.from_clipboard_yaml_content.clone(),
+            Self::FromClipboard => tmpl.from_clipboard_content.clone(),
+            Self::FromTextFile => tmpl.from_text_file_content.clone(),
+            Self::AnnotateFile => tmpl.annotate_file_content.clone(),
             Self::SyncFilename => {
                 panic!("`TemplateKind::SyncFilename` has no content template")
             }
@@ -131,13 +133,14 @@ impl TemplateKind {
     /// Panics for `TemplateKind::None`.
     pub fn get_filename_template(&self) -> String {
         let lib_cfg = LIB_CFG.read_recursive();
+        let tmpl = &lib_cfg.scheme[SETTINGS.read_recursive().scheme_default].tmpl;
         match self {
-            Self::FromDir => lib_cfg.tmpl.from_dir_filename.clone(),
-            Self::FromClipboardYaml => lib_cfg.tmpl.from_clipboard_yaml_filename.clone(),
-            Self::FromClipboard => lib_cfg.tmpl.from_clipboard_filename.clone(),
-            Self::FromTextFile => lib_cfg.tmpl.from_text_file_filename.clone(),
-            Self::AnnotateFile => lib_cfg.tmpl.annotate_file_filename.clone(),
-            Self::SyncFilename => lib_cfg.tmpl.sync_filename.clone(),
+            Self::FromDir => tmpl.from_dir_filename.clone(),
+            Self::FromClipboardYaml => tmpl.from_clipboard_yaml_filename.clone(),
+            Self::FromClipboard => tmpl.from_clipboard_filename.clone(),
+            Self::FromTextFile => tmpl.from_text_file_filename.clone(),
+            Self::AnnotateFile => tmpl.annotate_file_filename.clone(),
+            Self::SyncFilename => tmpl.sync_filename.clone(),
             Self::None => panic!("`TemplateKind::None` has no filename template"),
         }
     }

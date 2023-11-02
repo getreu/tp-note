@@ -34,12 +34,25 @@ pub enum FileError {
 pub enum LibCfgError {
     /// Remedy: Choose another `sort_tag.extra_separator` character.
     #[error(
-        "Configuration file error in section `[filename]`:\n\
-        \t`sort_tag.extra_separator=\"{extra_separator}\"\n\
+        "Configuration file error in section:\n\
+        \t[[scheme]]\n\
+        \tname = \"{scheme_name}\"
+        No scheme found."
+    )]
+    SchemeNotFound { scheme_name: String },
+
+    /// Remedy: Choose another `sort_tag.extra_separator` character.
+    #[error(
+        "Configuration file error in section:\n\
+        \t[[scheme]]\n\
+        \tname = \"{scheme_name}\"
+        \t[scheme.filename]\n\
+        \tsort_tag.extra_separator=\"{extra_separator}\"\n\
         must not be one of `sort_tag_extra_chars=\"{sort_tag_extra_chars}\"`,\n\
         `0..9`, `a..z` or `{dot_file_marker}`."
     )]
     SortTagExtraSeparator {
+        scheme_name: String,
         dot_file_marker: char,
         sort_tag_extra_chars: String,
         extra_separator: String,
@@ -48,25 +61,33 @@ pub enum LibCfgError {
     /// Remedy: Choose another `extension_default` out of
     /// `extensions[..].0`.
     #[error(
-        "Configuration file error in section `[filename]`:\n\
+        "Configuration file error in section:\n\
+        \t[[scheme]]\n\
+        \tname = \"{scheme_name}\"
+        \t[scheme.filename]\n\
         \t`extension_default=\"{extension_default}\"\n\
         must not be one of:`\n\
         \t{extensions}."
     )]
     ExtensionDefault {
+        scheme_name: String,
         extension_default: String,
         extensions: String,
     },
 
     /// Remedy: Insert `sort_tag.separator` in `sort_tag.extra_chars`.
     #[error(
-        "Configuration file error in section `[filename]`:\n\
+        "Configuration file error in section:\n\
+        \t[[scheme]]\n\
+        \tname = \"{scheme_name}\"
+        \t[scheme.filename]\n\
         All characters in `sort_tag.separator=\"{separator}\"\n\
         must be in the set `sort_tag.extra_chars=\"{chars}\"`,\n\
         or in `0..9`, `a..z``\n\
         must NOT start with `{dot_file_marker}`."
     )]
     SortTagSeparator {
+        scheme_name: String,
         dot_file_marker: char,
         chars: String,
         separator: String,
@@ -74,11 +95,15 @@ pub enum LibCfgError {
 
     /// Remedy: Choose a `copy_counter.extra_separator` in the set.
     #[error(
-        "Configuration file error in section `[filename]`:\n\
+        "Configuration file error in section:\n\
+        \t[[scheme]]\n\
+        \tname = \"{scheme_name}\"
+        \t[scheme.filename]\n\
         `copy_counter.extra_separator=\"{extra_separator}\"`\n\
         must be one of: \"{chars}\""
     )]
     CopyCounterExtraSeparator {
+        scheme_name: String,
         chars: String,
         extra_separator: String,
     },
@@ -128,7 +153,7 @@ pub enum LibCfgError {
         The theme must be one of the following set:\n\
         {available}"
     )]
-    ThemeName {
+    HighlightingThemeName {
         var: String,
         value: String,
         available: String,

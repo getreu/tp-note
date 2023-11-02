@@ -6,6 +6,7 @@ use crate::config::FILENAME_LEN_MAX;
 use crate::config::LIB_CFG;
 use crate::error::FileError;
 use crate::markup_language::MarkupLanguage;
+use crate::settings::SETTINGS;
 use std::mem::swap;
 use std::path::Path;
 use std::path::PathBuf;
@@ -112,19 +113,20 @@ impl NotePathBuf for PathBuf {
         let mut filename = String::new();
 
         // Add potential sort-tag and separators.
-        let lib_cfg = LIB_CFG.read_recursive();
+        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
+
         if !sort_tag.is_empty() {
             filename.push_str(sort_tag);
-            filename.push_str(&lib_cfg.filename.sort_tag.separator);
+            filename.push_str(&scheme.filename.sort_tag.separator);
         }
         // Does the beginning of `stem` look like a sort-tag?
         // Make sure, that the path can not be misinterpreted, even if a
         // `sort_tag.separator` would follow.
         let mut test_path = String::from(stem);
-        test_path.push_str(&lib_cfg.filename.sort_tag.separator);
+        test_path.push_str(&scheme.filename.sort_tag.separator);
         // Do we need an `extra_separator`?
         if stem.is_empty() || !&test_path.split_sort_tag(false).0.is_empty() {
-            filename.push(lib_cfg.filename.sort_tag.extra_separator);
+            filename.push(scheme.filename.sort_tag.extra_separator);
         }
 
         filename.push_str(stem);
@@ -134,12 +136,12 @@ impl NotePathBuf for PathBuf {
             // Does this stem ending look similar to a copy counter?
             if stem.split_copy_counter().1.is_some() {
                 // Add an additional separator.
-                filename.push_str(&lib_cfg.filename.copy_counter.extra_separator);
+                filename.push_str(&scheme.filename.copy_counter.extra_separator);
             };
 
-            filename.push_str(&lib_cfg.filename.copy_counter.opening_brackets);
+            filename.push_str(&scheme.filename.copy_counter.opening_brackets);
             filename.push_str(&cc.to_string());
-            filename.push_str(&lib_cfg.filename.copy_counter.closing_brackets);
+            filename.push_str(&scheme.filename.copy_counter.closing_brackets);
         }
 
         if !extension.is_empty() {
@@ -206,8 +208,9 @@ impl NotePathBuf for PathBuf {
 
         // Does this ending look like a copy counter?
         if stem_short.split_copy_counter().1.is_some() {
-            let lib_cfg = LIB_CFG.read_recursive();
-            stem_short.push_str(&lib_cfg.filename.copy_counter.extra_separator);
+            let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
+
+            stem_short.push_str(&scheme.filename.copy_counter.extra_separator);
         }
 
         // Assemble.
@@ -497,10 +500,10 @@ impl NotePathStr for str {
 
     #[inline]
     fn split_copy_counter(&self) -> (&str, Option<usize>) {
-        let lib_cfg = LIB_CFG.read_recursive();
+        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
         // Strip closing brackets at the end.
         let tag1 =
-            if let Some(t) = self.strip_suffix(&lib_cfg.filename.copy_counter.closing_brackets) {
+            if let Some(t) = self.strip_suffix(&scheme.filename.copy_counter.closing_brackets) {
                 t
             } else {
                 return (self, None);
@@ -514,13 +517,13 @@ impl NotePathStr for str {
         };
         // And finally strip starting bracket.
         let tag3 =
-            if let Some(t) = tag2.strip_suffix(&lib_cfg.filename.copy_counter.opening_brackets) {
+            if let Some(t) = tag2.strip_suffix(&scheme.filename.copy_counter.opening_brackets) {
                 t
             } else {
                 return (self, None);
             };
         // This is optional
-        if let Some(t) = tag3.strip_suffix(&lib_cfg.filename.copy_counter.extra_separator) {
+        if let Some(t) = tag3.strip_suffix(&scheme.filename.copy_counter.extra_separator) {
             (t, copy_counter)
         } else {
             (tag3, copy_counter)
@@ -528,7 +531,7 @@ impl NotePathStr for str {
     }
 
     fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str, bool) {
-        let lib_cfg = LIB_CFG.read_recursive();
+        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
 
         let mut is_sequential_sort_tag = true;
 
@@ -539,13 +542,7 @@ impl NotePathStr for str {
             .take_while(|&c| {
                 if c.is_ascii_digit() {
                     digits += 1;
-                    if digits
-                        > lib_cfg
-                            .filename
-                            .sort_tag
-                            .sequential
-                            .digits_in_succession_max
-                    {
+                    if digits > scheme.filename.sort_tag.sequential.digits_in_succession_max {
                         is_sequential_sort_tag = false;
                     }
                 } else {
@@ -558,22 +555,22 @@ impl NotePathStr for str {
                     letters = 0;
                 }
 
-                letters <= lib_cfg.filename.sort_tag.letters_in_succession_max
+                letters <= scheme.filename.sort_tag.letters_in_succession_max
                     && (c.is_ascii_digit()
                         || c.is_ascii_lowercase()
-                        || lib_cfg.filename.sort_tag.extra_chars.contains([c]))
+                        || scheme.filename.sort_tag.extra_chars.contains([c]))
             })
             .count()];
 
         let mut stem_copy_counter_ext;
-        if lib_cfg.filename.sort_tag.separator.is_empty() || ignore_sort_tag_separator {
+        if scheme.filename.sort_tag.separator.is_empty() || ignore_sort_tag_separator {
             // `sort_tag` is correct.
             stem_copy_counter_ext = &self[sort_tag.len()..];
         } else {
             // Take `sort_tag.separator` into account.
-            if let Some(i) = sort_tag.rfind(&lib_cfg.filename.sort_tag.separator) {
+            if let Some(i) = sort_tag.rfind(&scheme.filename.sort_tag.separator) {
                 sort_tag = &sort_tag[..i];
-                stem_copy_counter_ext = &self[i + lib_cfg.filename.sort_tag.separator.len()..];
+                stem_copy_counter_ext = &self[i + scheme.filename.sort_tag.separator.len()..];
             } else {
                 sort_tag = "";
                 stem_copy_counter_ext = self;
@@ -585,15 +582,15 @@ impl NotePathStr for str {
         let mut chars = stem_copy_counter_ext.chars();
         if chars
             .next()
-            .is_some_and(|c| c == lib_cfg.filename.sort_tag.extra_separator)
+            .is_some_and(|c| c == scheme.filename.sort_tag.extra_separator)
             && chars.next().is_some_and(|c| {
                 c.is_ascii_digit()
                     || c.is_ascii_lowercase()
-                    || lib_cfg.filename.sort_tag.extra_chars.contains(c)
+                    || scheme.filename.sort_tag.extra_chars.contains(c)
             })
         {
             stem_copy_counter_ext = stem_copy_counter_ext
-                .strip_prefix(lib_cfg.filename.sort_tag.extra_separator)
+                .strip_prefix(scheme.filename.sort_tag.extra_separator)
                 .unwrap();
         }
 

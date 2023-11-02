@@ -23,9 +23,8 @@ use std::path::Path;
 use std::path::PathBuf;
 #[cfg(not(test))]
 use tera::Tera;
-use tpnote_lib::config::Filename;
 use tpnote_lib::config::LocalLinkKind;
-use tpnote_lib::config::Tmpl;
+use tpnote_lib::config::Scheme;
 use tpnote_lib::config::TmplHtml;
 use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 use tpnote_lib::config::LIB_CFG;
@@ -84,10 +83,10 @@ pub struct Cfg {
     /// a text message explaining why we could not load the
     /// configuration file.
     pub version: String,
+    pub scheme_default: String,
+    pub scheme: Vec<Scheme>,
     pub arg_default: ArgDefault,
-    pub filename: Filename,
     pub clipboard: Clipboard,
-    pub tmpl: Tmpl,
     pub app_args: OsType<AppArgs>,
     pub viewer: Viewer,
     pub tmpl_html: TmplHtml,
@@ -243,9 +242,8 @@ impl Cfg {
             {
                 // Copy the parts of `config` into `LIB_CFG`.
                 let mut lib_cfg = LIB_CFG.write();
-                lib_cfg.filename = config.filename.clone();
-                lib_cfg.tmpl = config.tmpl.clone();
-                lib_cfg.tmpl_html = config.tmpl_html.clone();
+                lib_cfg.scheme_default = config.scheme_default.clone();
+                lib_cfg.scheme = config.scheme.clone();
 
                 // Perform some additional semantic checks.
                 lib_cfg.assert_validity()?;

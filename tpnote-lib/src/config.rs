@@ -7,7 +7,8 @@
 //! use tpnote_lib::config::LIB_CFG;
 //!
 //! let mut lib_cfg = LIB_CFG.write();
-//! (*lib_cfg).filename.copy_counter.extra_separator = '@'.to_string();
+//! let i = lib_cfg.scheme_idx("default").unwrap();
+//! (*lib_cfg).scheme[i].filename.copy_counter.extra_separator = '@'.to_string();
 //! ```
 //!
 //! Contract: although `LIB_CFG` is mutable at runtime, it is sourced only
@@ -214,19 +215,49 @@ pub const TMPL_HTML_VAR_DOC_TEXT: &str = "doc_text";
 
 lazy_static! {
 /// Global variable containing the filename and template related configuration
-/// data.
+/// data. This can be changed by the consumer of this library. Once the
+/// initialisation done, this should remain static.
+/// For session configuration see: `settings::SETTINGS`.
     pub static ref LIB_CFG: RwLock<LibCfg> = RwLock::new(LibCfg::default());
 }
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LibCfg {
+    /// This is the name of the
+    pub scheme_default: String,
+    /// Configuration of `Scheme`.
+    pub scheme: Vec<Scheme>,
+    /// Configuration of HTML templates.
+    pub tmpl_html: TmplHtml,
+}
+
+impl LibCfg {
+    // Returns the index of a named scheme.
+    pub fn scheme_idx(&self, name: &str) -> Result<usize, LibCfgError> {
+        self.scheme
+            .iter()
+            .enumerate()
+            .find(|&(_, scheme)| scheme.name == name)
+            .map_or_else(
+                || {
+                    Err(LibCfgError::SchemeNotFound {
+                        scheme_name: name.to_string(),
+                    })
+                },
+                |(i, _)| Ok(i),
+            )
+    }
+}
+
+/// Configuration data, deserialized from the configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Scheme {
+    pub name: String,
     /// Configuration of filename parsing.
     pub filename: Filename,
     /// Configuration of content and filename templates.
     pub tmpl: Tmpl,
-    /// Configuration of HTML templates.
-    pub tmpl_html: TmplHtml,
 }
 
 /// Configuration of filename parsing, deserialized from the
@@ -315,103 +346,113 @@ impl LibCfg {
     /// * All characters of `sort_tag.separator` must be in `sort_tag.extra_chars`.
     /// * `sort_tag.separator` must start with NOT `FILENAME_DOTFILE_MARKER`.
     pub fn assert_validity(&self) -> Result<(), LibCfgError> {
-        // Check for obvious configuration errors.
-        // * `sort_tag.extra_separator` must NOT be in `sort_tag.extra_chars`.
-        // * `sort_tag.extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
-        if self
-            .filename
-            .sort_tag
-            .extra_chars
-            .contains(self.filename.sort_tag.extra_separator)
-            || (self.filename.sort_tag.extra_separator == FILENAME_DOTFILE_MARKER)
-            || self.filename.sort_tag.extra_separator.is_ascii_digit()
-            || self.filename.sort_tag.extra_separator.is_ascii_lowercase()
-        {
-            return Err(LibCfgError::SortTagExtraSeparator {
-                dot_file_marker: FILENAME_DOTFILE_MARKER,
-                sort_tag_extra_chars: self
-                    .filename
-                    .sort_tag
-                    .extra_chars
-                    .escape_default()
-                    .to_string(),
-                extra_separator: self
+        for scheme in &self.scheme {
+            // Check for obvious configuration errors.
+            // * `sort_tag.extra_separator` must NOT be in `sort_tag.extra_chars`.
+            // * `sort_tag.extra_separator` must NOT `FILENAME_DOTFILE_MARKER`.
+            if scheme
+                .filename
+                .sort_tag
+                .extra_chars
+                .contains(scheme.filename.sort_tag.extra_separator)
+                || (scheme.filename.sort_tag.extra_separator == FILENAME_DOTFILE_MARKER)
+                || scheme.filename.sort_tag.extra_separator.is_ascii_digit()
+                || scheme
                     .filename
                     .sort_tag
                     .extra_separator
-                    .escape_default()
-                    .to_string(),
-            });
-        }
+                    .is_ascii_lowercase()
+            {
+                return Err(LibCfgError::SortTagExtraSeparator {
+                    scheme_name: scheme.name.to_string(),
+                    dot_file_marker: FILENAME_DOTFILE_MARKER,
+                    sort_tag_extra_chars: scheme
+                        .filename
+                        .sort_tag
+                        .extra_chars
+                        .escape_default()
+                        .to_string(),
+                    extra_separator: scheme
+                        .filename
+                        .sort_tag
+                        .extra_separator
+                        .escape_default()
+                        .to_string(),
+                });
+            }
 
-        // Check for obvious configuration errors.
-        // * All characters of `sort_tag.separator` must be in `sort_tag.extra_chars`.
-        // * `sort_tag.separator` must NOT start with `FILENAME_DOTFILE_MARKER`.
-        // * `sort_tag.separator` must NOT contain ASCII `0..9` or `a..z`.
-        if !self.filename.sort_tag.separator.chars().all(|c| {
-            c.is_ascii_digit()
-                || c.is_ascii_lowercase()
-                || self.filename.sort_tag.extra_chars.contains(c)
-        }) || self
-            .filename
-            .sort_tag
-            .separator
-            .starts_with(FILENAME_DOTFILE_MARKER)
-        {
-            return Err(LibCfgError::SortTagSeparator {
-                dot_file_marker: FILENAME_DOTFILE_MARKER,
-                chars: self
-                    .filename
-                    .sort_tag
-                    .extra_chars
-                    .escape_default()
-                    .to_string(),
-                separator: self
-                    .filename
-                    .sort_tag
-                    .separator
-                    .escape_default()
-                    .to_string(),
-            });
-        }
+            // Check for obvious configuration errors.
+            // * All characters of `sort_tag.separator` must be in `sort_tag.extra_chars`.
+            // * `sort_tag.separator` must NOT start with `FILENAME_DOTFILE_MARKER`.
+            // * `sort_tag.separator` must NOT contain ASCII `0..9` or `a..z`.
+            if !scheme.filename.sort_tag.separator.chars().all(|c| {
+                c.is_ascii_digit()
+                    || c.is_ascii_lowercase()
+                    || scheme.filename.sort_tag.extra_chars.contains(c)
+            }) || scheme
+                .filename
+                .sort_tag
+                .separator
+                .starts_with(FILENAME_DOTFILE_MARKER)
+            {
+                return Err(LibCfgError::SortTagSeparator {
+                    scheme_name: scheme.name.to_string(),
+                    dot_file_marker: FILENAME_DOTFILE_MARKER,
+                    chars: scheme
+                        .filename
+                        .sort_tag
+                        .extra_chars
+                        .escape_default()
+                        .to_string(),
+                    separator: scheme
+                        .filename
+                        .sort_tag
+                        .separator
+                        .escape_default()
+                        .to_string(),
+                });
+            }
 
-        // Check for obvious configuration errors.
-        // * `copy_counter.extra_separator` must one of
-        //   `sanitize_filename_reader_friendly::TRIM_LINE_CHARS`.
-        if !TRIM_LINE_CHARS.contains(&self.filename.copy_counter.extra_separator) {
-            return Err(LibCfgError::CopyCounterExtraSeparator {
-                chars: TRIM_LINE_CHARS.escape_default().to_string(),
-                extra_separator: self
-                    .filename
-                    .copy_counter
-                    .extra_separator
-                    .escape_default()
-                    .to_string(),
-            });
-        }
+            // Check for obvious configuration errors.
+            // * `copy_counter.extra_separator` must one of
+            //   `sanitize_filename_reader_friendly::TRIM_LINE_CHARS`.
+            if !TRIM_LINE_CHARS.contains(&scheme.filename.copy_counter.extra_separator) {
+                return Err(LibCfgError::CopyCounterExtraSeparator {
+                    scheme_name: scheme.name.to_string(),
+                    chars: TRIM_LINE_CHARS.escape_default().to_string(),
+                    extra_separator: scheme
+                        .filename
+                        .copy_counter
+                        .extra_separator
+                        .escape_default()
+                        .to_string(),
+                });
+            }
 
-        // Assert that `filename.extension_default` is listed in
-        // `filename.extensions[..].0`.
-        if !self
-            .filename
-            .extensions
-            .iter()
-            .any(|ext| ext.0 == self.filename.extension_default)
-        {
-            return Err(LibCfgError::ExtensionDefault {
-                extension_default: self.filename.extension_default.to_owned(),
-                extensions: {
-                    let mut list = self.filename.extensions.iter().fold(
-                        String::new(),
-                        |mut output, (k, _v)| {
-                            let _ = write!(output, "{k}, ");
-                            output
-                        },
-                    );
-                    list.truncate(list.len().saturating_sub(2));
-                    list
-                },
-            });
+            // Assert that `filename.extension_default` is listed in
+            // `filename.extensions[..].0`.
+            if !scheme
+                .filename
+                .extensions
+                .iter()
+                .any(|ext| ext.0 == scheme.filename.extension_default)
+            {
+                return Err(LibCfgError::ExtensionDefault {
+                    scheme_name: scheme.name.to_string(),
+                    extension_default: scheme.filename.extension_default.to_owned(),
+                    extensions: {
+                        let mut list = scheme.filename.extensions.iter().fold(
+                            String::new(),
+                            |mut output, (k, _v)| {
+                                let _ = write!(output, "{k}, ");
+                                output
+                            },
+                        );
+                        list.truncate(list.len().saturating_sub(2));
+                        list
+                    },
+                });
+            }
         }
 
         // Highlighting config is valid?
@@ -419,27 +460,33 @@ impl LibCfg {
         // `tmpl_html.exporter_highlighting_theme`.
         #[cfg(feature = "renderer")]
         {
-            let ts = ThemeSet::load_defaults();
-            let theme_name = &self.tmpl_html.viewer_highlighting_theme;
-            if !theme_name.is_empty() && ts.themes.get(theme_name).is_none() {
-                return Err(LibCfgError::ThemeName {
+            let hl_theme_set = ThemeSet::load_defaults();
+            let hl_theme_name = &self.tmpl_html.viewer_highlighting_theme;
+            if !hl_theme_name.is_empty() && hl_theme_set.themes.get(hl_theme_name).is_none() {
+                return Err(LibCfgError::HighlightingThemeName {
                     var: "viewer_highlighting_theme".to_string(),
-                    value: theme_name.to_owned(),
-                    available: ts.themes.into_keys().fold(String::new(), |mut output, k| {
-                        let _ = write!(output, "{k}, ");
-                        output
-                    }),
+                    value: hl_theme_name.to_owned(),
+                    available: hl_theme_set.themes.into_keys().fold(
+                        String::new(),
+                        |mut output, k| {
+                            let _ = write!(output, "{k}, ");
+                            output
+                        },
+                    ),
                 });
             };
-            let theme_name = &self.tmpl_html.exporter_highlighting_theme;
-            if !theme_name.is_empty() && ts.themes.get(theme_name).is_none() {
-                return Err(LibCfgError::ThemeName {
+            let hl_theme_name = &self.tmpl_html.exporter_highlighting_theme;
+            if !hl_theme_name.is_empty() && hl_theme_set.themes.get(hl_theme_name).is_none() {
+                return Err(LibCfgError::HighlightingThemeName {
                     var: "exporter_highlighting_theme".to_string(),
-                    value: theme_name.to_owned(),
-                    available: ts.themes.into_keys().fold(String::new(), |mut output, k| {
-                        let _ = write!(output, "{k}, ");
-                        output
-                    }),
+                    value: hl_theme_name.to_owned(),
+                    available: hl_theme_set.themes.into_keys().fold(
+                        String::new(),
+                        |mut output, k| {
+                            let _ = write!(output, "{k}, ");
+                            output
+                        },
+                    ),
                 });
             };
         }

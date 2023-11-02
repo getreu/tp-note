@@ -1,4 +1,18 @@
-[filename]
+# The scheme that will be used for new files. This is one of the 
+# `scheme.name` variables below.
+# If the environment variable `TPNOTE_SCHEME_DEFAULT` is defined, it
+# overwrites this setting.
+scheme_default = "default"
+
+
+
+[[scheme]]
+# The name of this scheme. The data is in `scheme_filename` and
+# `scheme.tmpl`.
+name = "default"
+
+# Filename related settings for the scheme `default`.
+[scheme.filename]
 
 # List of characters that can be part of a _sort tag_.
 # Besides the characters listed here, the digits `0..9` and
@@ -91,8 +105,8 @@ extensions = [
   [ "t2t", "PlainTextNoViewer" ],
 ]
 
-
-[tmpl]
+# Template related settings for the scheme `default`.
+[scheme.tmpl]
 
 # After generating a new note with a content template, Tp-Note parses the
 # resulting front matter into `fm_* variables and checks their values. The
@@ -375,15 +389,14 @@ annotate_file_filename = """
 # on disk, corresponds to the note's meta data stored in its front matter. If
 # it is not the case, the note's filename will be renamed.
 sync_filename = """
-{%- if fm_filename_scheme | default(value='default') != 'default' \
-       and throw(message='This template accepts only: `filename_scheme: default`') -%}
-{%- endif -%}
 {%- set tag = fm_sort_tag | default(value = path | file_sort_tag) | as_str -%}
 {{ fm_title | default(value='No title') | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}
 """
 
+
+# This part is common for all schemes.
 [tmpl_html]
 
 # HTML template to render regular viewer pages. Note: HTML templates escape HTML

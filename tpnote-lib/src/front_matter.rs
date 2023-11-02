@@ -10,6 +10,7 @@ use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::filename::Extension;
 use crate::filename::NotePath;
 use crate::filename::NotePathStr;
+use crate::settings::SETTINGS;
 use std::matches;
 use std::ops::Deref;
 use std::ops::DerefMut;
@@ -54,8 +55,8 @@ impl FrontMatter {
     /// The path is the path to the current document.
     #[inline]
     pub fn assert_precoditions(&self, docpath: &Path) -> Result<(), NoteError> {
-        let lib_cfg = LIB_CFG.read_recursive();
-        for (key, conditions) in lib_cfg.tmpl.filter.assert_preconditions.iter() {
+        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
+        for (key, conditions) in scheme.tmpl.filter.assert_preconditions.iter() {
             let key = key.trim_start_matches(TMPL_VAR_FM_);
             if let Some(value) = self.get(key) {
                 for cond in conditions {
@@ -112,13 +113,13 @@ impl FrontMatter {
                                 if !rest.is_empty() {
                                     return Err(NoteError::FrontMatterFieldIsInvalidSortTag {
                                         sort_tag: fm_sort_tag.to_owned(),
-                                        sort_tag_extra_chars: lib_cfg
+                                        sort_tag_extra_chars: scheme
                                             .filename
                                             .sort_tag
                                             .extra_chars
                                             .escape_default()
                                             .to_string(),
-                                        filename_sort_tag_letters_in_succession_max: lib_cfg
+                                        filename_sort_tag_letters_in_succession_max: scheme
                                             .filename
                                             .sort_tag
                                             .letters_in_succession_max,
@@ -164,7 +165,7 @@ impl FrontMatter {
                                     extension: file_ext,
                                     extensions: {
                                         use std::fmt::Write;
-                                        let mut errstr = lib_cfg.filename.extensions.iter().fold(
+                                        let mut errstr = scheme.filename.extensions.iter().fold(
                                             String::new(),
                                             |mut output, (k, _v)| {
                                                 let _ = write!(output, "{k}, ");

@@ -75,28 +75,19 @@ pub fn manage_connections(
 
     log::info!(
         "Viewer listens to incomming requests.\n\
-        The following file extensions are served:\n\
+        Besides all Tp-Note document extensions, \
+        the following file extensions are served:\n\
         {}",
         {
             use std::fmt::Write;
             let mut list =
-                CFG.filename
-                    .extensions
-                    .iter()
-                    .fold(String::new(), |mut output, (k, _v)| {
-                        let _ = write!(output, "{k}, ");
-                        output
-                    });
-            list.push_str(
                 CFG.viewer
                     .served_mime_types
                     .iter()
                     .fold(String::new(), |mut output, (k, _v)| {
                         let _ = write!(output, "{k}, ");
                         output
-                    })
-                    .as_str(),
-            );
+                    });
             list.truncate(list.len().saturating_sub(2));
             list
         }

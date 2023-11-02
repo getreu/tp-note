@@ -4,6 +4,7 @@ use crate::config::LIB_CFG;
 use crate::error::NoteError;
 #[cfg(feature = "renderer")]
 use crate::highlight::SyntaxPreprocessor;
+use crate::settings::SETTINGS;
 use parse_hyperlinks::renderer::text_links2html;
 use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
@@ -150,9 +151,9 @@ impl From<&str> for MarkupLanguage {
     /// Is `file_extension` listed in `file.extensions`?
     #[inline]
     fn from(file_extension: &str) -> Self {
-        let lib_cfg = LIB_CFG.read_recursive();
+        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().scheme_default];
 
-        for e in &lib_cfg.filename.extensions {
+        for e in &scheme.filename.extensions {
             if e.0 == file_extension {
                 return e.1;
             }

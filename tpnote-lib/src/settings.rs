@@ -1,6 +1,6 @@
 //! Configuration data that origins from environment variables.
 //! Unlike the configuration data in `LIB_CFG` which is sourced only once when
-//! Tpublaunched, the `SETTINGS` object may be sourced more often in
+//! Tp-Note is launched, the `SETTINGS` object may be sourced more often in
 //! order to follow changes in the related environment variables.
 
 use crate::config::LIB_CFG;
@@ -22,8 +22,13 @@ use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
 use windows_sys::Win32::System::SystemServices::LOCALE_NAME_MAX_LENGTH;
 
 /// The name of the environment variable which can be optionally set to
-/// overwrite the `flename.extension_default` configuration file setting.
+/// overwrite the `scheme_default` configuration file setting.
+pub const ENV_VAR_TPNOTE_SCHEME_DEFAULT: &str = "TPNOTE_SCHEME_DEFAULT";
+
+/// The name of the environment variable which can be optionally set to
+/// overwrite the `filename.extension_default` configuration file setting.
 pub const ENV_VAR_TPNOTE_EXTENSION_DEFAULT: &str = "TPNOTE_EXTENSION_DEFAULT";
+
 /// Name of the environment variable, that can be optionally
 /// used to overwrite the user's default language setting, which is
 /// accessible as `{{ lang }}` template variable and used in various
@@ -79,6 +84,7 @@ pub(crate) enum FilterGetLang {
 #[derive(Debug)]
 #[allow(dead_code)]
 pub(crate) struct Settings {
+    pub scheme_default: usize,
     pub author: String,
     pub lang: String,
     pub extension_default: String,
@@ -87,6 +93,7 @@ pub(crate) struct Settings {
 }
 
 const DEFAULT_SETTINGS: Settings = Settings {
+    scheme_default: 0,
     author: String::new(),
     lang: String::new(),
     extension_default: String::new(),
@@ -144,6 +151,7 @@ pub(crate) fn force_lang_setting(lang: Option<String>) {
 /// object. Some data originates from `LIB_CFG`.
 pub fn update_settings() -> Result<(), LibCfgError> {
     let mut settings = SETTINGS.write();
+    update_scheme_default_setting(&mut settings)?;
     update_author_setting(&mut settings);
     update_extension_default_setting(&mut settings);
     update_lang_setting(&mut settings);
@@ -161,6 +169,19 @@ pub fn update_settings() -> Result<(), LibCfgError> {
     } else {
         Ok(())
     }
+}
+
+/// Read the environment variable `TPNOTE_SCHEME_DEFAULT` or -if empty-
+/// the configuration file variable `scheme_default` into
+/// `SETTINGS.scheme`.
+fn update_scheme_default_setting(settings: &mut Settings) -> Result<(), LibCfgError> {
+    let lib_cfg = LIB_CFG.read_recursive();
+    let scheme = match env::var(ENV_VAR_TPNOTE_SCHEME_DEFAULT) {
+        Ok(ed_env) if !ed_env.is_empty() => (*lib_cfg).scheme_idx(&ed_env)?,
+        Err(_) | Ok(_) => (*lib_cfg).scheme_idx(&lib_cfg.scheme_default)?,
+    };
+    settings.scheme_default = scheme;
+    Ok(())
 }
 
 /// Set `SETTINGS.author` to content of the first not empty environment
@@ -186,7 +207,10 @@ fn update_extension_default_setting(settings: &mut Settings) {
         Ok(ed_env) if !ed_env.is_empty() => ed_env,
         Err(_) | Ok(_) => {
             let lib_cfg = LIB_CFG.read_recursive();
-            lib_cfg.filename.extension_default.to_string()
+            lib_cfg.scheme[settings.scheme_default]
+                .filename
+                .extension_default
+                .to_string()
         }
     };
     settings.extension_default = ext;
@@ -243,7 +267,8 @@ fn update_lang_setting(settings: &mut Settings) {
     settings.lang = lang;
 }
 
-/// Read language list from `LIB_CFG.tmpl.filter.get_lang`, add the user's
+/// Read language list from
+/// `LIB_CFG.schemes[settings.scheme].tmpl.filter.get_lang`, add the user's
 /// default language subtag and store them in `SETTINGS.filter_get_lang`
 /// as `FilterGetLang::SomeLanguages(l)` `enum` variant.
 /// If `SETTINGS.filter_get_lang` contains a tag `TMPL_FILTER_GET_LANG_ALL`,
@@ -255,7 +280,7 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
 
     let mut all_languages_selected = false;
     // Read and convert ISO codes from config object.
-    match lib_cfg
+    match lib_cfg.scheme[settings.scheme_default]
         .tmpl
         .filter
         .get_lang
@@ -338,12 +363,13 @@ fn update_filter_get_lang_setting(settings: &mut Settings) {
     settings.filter_get_lang = FilterGetLang::Disabled;
 }
 
-/// Read keys and values from `LIB_CFG.tmpl.filter_btmap_lang` in the `BTreeMap`.
+/// Read keys and values from
+/// `LIB_CFG.schemes[settings.scheme].tmpl.filter_btmap_lang` in the `BTreeMap`.
 /// Add the user's default language and region.
 fn update_filter_map_lang_btmap_setting(settings: &mut Settings) {
     let mut btm = BTreeMap::new();
     let lib_cfg = LIB_CFG.read_recursive();
-    for l in &lib_cfg.tmpl.filter.map_lang {
+    for l in &lib_cfg.scheme[settings.scheme_default].tmpl.filter.map_lang {
         if l.len() >= 2 {
             btm.insert(l[0].to_string(), l[1].to_string());
         };
