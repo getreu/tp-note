@@ -4,6 +4,7 @@ subtitle:     bbb
 author:       Myuser
 lang:         en
 
+date:         2020-01-02
 file_ext:     mdtxt
 my_own_long_var: foo
 revision:     '2.0'
