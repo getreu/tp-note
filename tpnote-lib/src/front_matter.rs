@@ -2,15 +2,15 @@
 //! In this documentation, the terms “YAML header”, ”header” and ”front matter"
 //! are used as synonyms for the note's meta data block at the beginning
 //! of the text file. Technically this is a wrapper around a `tera::Map`.
-use crate::config::AssertPrecondition;
+use crate::config::Assertion;
 use crate::config::LIB_CFG;
-use crate::config::TMPL_VAR_FM_;
 use crate::error::LibCfgError;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::filename::Extension;
 use crate::filename::NotePath;
 use crate::filename::NotePathStr;
+use crate::filter::name;
 use crate::settings::SETTINGS;
 use std::matches;
 use std::ops::Deref;
@@ -58,58 +58,58 @@ impl FrontMatter {
     pub fn assert_precoditions(&self, docpath: &Path) -> Result<(), NoteError> {
         let lib_cfg = &LIB_CFG.read_recursive();
         let scheme = &lib_cfg.scheme[SETTINGS.read_recursive().current_scheme];
-        for (key, conditions) in scheme.tmpl.filter.assert_preconditions.iter() {
-            let key = key.trim_start_matches(TMPL_VAR_FM_);
-            if let Some(value) = self.get(key) {
+        for (key, conditions) in scheme.tmpl.fm_var.assertions.iter() {
+            let localized_key = name(scheme, key);
+            if let Some(value) = self.get(localized_key) {
                 for cond in conditions {
                     match cond {
-                        AssertPrecondition::IsDefined => {}
+                        Assertion::IsDefined => {}
 
-                        AssertPrecondition::IsString => {
+                        Assertion::IsString => {
                             if !all_leaves(value, &|v| matches!(v, Value::String(..))) {
                                 return Err(NoteError::FrontMatterFieldIsNotString {
-                                    field_name: key.to_owned(),
+                                    field_name: localized_key.to_owned(),
                                 });
                             }
                         }
 
-                        AssertPrecondition::IsNotEmptyString => {
+                        Assertion::IsNotEmptyString => {
                             if !all_leaves(value, &|v| {
                                 matches!(v, Value::String(..)) && v.as_str() != Some("")
                             }) {
                                 return Err(NoteError::FrontMatterFieldIsEmptyString {
-                                    field_name: key.to_owned(),
+                                    field_name: localized_key.to_owned(),
                                 });
                             }
                         }
 
-                        AssertPrecondition::IsNumber => {
+                        Assertion::IsNumber => {
                             if !all_leaves(value, &|v| matches!(v, Value::Number(..))) {
                                 return Err(NoteError::FrontMatterFieldIsNotNumber {
-                                    field_name: key.to_owned(),
+                                    field_name: localized_key.to_owned(),
                                 });
                             }
                         }
 
-                        AssertPrecondition::IsBool => {
+                        Assertion::IsBool => {
                             if !all_leaves(value, &|v| matches!(v, Value::Bool(..))) {
                                 return Err(NoteError::FrontMatterFieldIsNotBool {
-                                    field_name: key.to_owned(),
+                                    field_name: localized_key.to_owned(),
                                 });
                             }
                         }
 
-                        AssertPrecondition::IsNotCompound => {
+                        Assertion::IsNotCompound => {
                             if matches!(value, Value::Array(..))
                                 || matches!(value, Value::Object(..))
                             {
                                 return Err(NoteError::FrontMatterFieldIsCompound {
-                                    field_name: key.to_owned(),
+                                    field_name: localized_key.to_owned(),
                                 });
                             }
                         }
 
-                        AssertPrecondition::IsValidSortTag => {
+                        Assertion::IsValidSortTag => {
                             let fm_sort_tag = value.as_str().unwrap_or_default();
                             if !fm_sort_tag.is_empty() {
                                 // Check for forbidden characters.
@@ -158,7 +158,7 @@ impl FrontMatter {
                             }
                         }
 
-                        AssertPrecondition::IsTpnoteExtension => {
+                        Assertion::IsTpnoteExtension => {
                             let file_ext = value.as_str().unwrap_or_default();
 
                             if !file_ext.is_empty() && !(*file_ext).is_tpnote_ext() {
@@ -180,7 +180,7 @@ impl FrontMatter {
                             }
                         }
 
-                        AssertPrecondition::IsConfiguredScheme => {
+                        Assertion::IsConfiguredScheme => {
                             let fm_scheme = value.as_str().unwrap_or_default();
                             match lib_cfg.scheme_idx(fm_scheme) {
                                 Ok(_) => {}
@@ -190,7 +190,7 @@ impl FrontMatter {
                                 }) => {
                                     return Err(NoteError::SchemeNotFound {
                                         scheme_val: scheme_name,
-                                        scheme_key: key.to_string(),
+                                        scheme_key: localized_key.to_string(),
                                         schemes,
                                     })
                                 }
@@ -198,13 +198,13 @@ impl FrontMatter {
                             };
                         }
 
-                        AssertPrecondition::NoOperation => {}
+                        Assertion::NoOperation => {}
                     } //
                 }
                 //
-            } else if conditions.contains(&AssertPrecondition::IsDefined) {
+            } else if conditions.contains(&Assertion::IsDefined) {
                 return Err(NoteError::FrontMatterFieldMissing {
-                    field_name: key.to_owned(),
+                    field_name: localized_key.to_owned(),
                 });
             }
         }

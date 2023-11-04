@@ -1,4 +1,5 @@
 //! Extends the built-in Tera filters.
+use crate::config::Scheme;
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_FM_;
@@ -86,8 +87,11 @@ fn to_yaml_filter<S: BuildHasher>(
     val: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
+    let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+
     let val_yaml = if let Some(Value::String(k)) = args.get("key") {
         let mut m = tera::Map::new();
+        let k = name(scheme, k);
         m.insert(k.to_owned(), val.to_owned());
         serde_yaml::to_string(&m).unwrap()
     } else {
@@ -102,8 +106,6 @@ fn to_yaml_filter<S: BuildHasher>(
     // Formatting: adjust indent.
     let val_yaml: String = if let Some(tab) =
         args.get("tab").and_then(|v| v.as_u64()).or_else(|| {
-            let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
-
             let n = scheme.tmpl.filter.to_yaml_tab;
             if n == 0 {
                 None
@@ -222,16 +224,21 @@ fn name_filter<S: BuildHasher>(
 ) -> TeraResult<Value> {
     let input = try_get_value!("translate", "value", String, value);
 
+    // This replaces the `fm`-name in the key by the localized name.
     let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
-
-    // This replaces the `fm`-name in the key by the original alias.
-    let vars = &scheme.tmpl.variables.names_assertions;
-    let output = vars.iter().find(|&l| l.0 == input).map_or_else(
-        || input.strip_prefix(TMPL_VAR_FM_).unwrap_or(&input),
-        |l| &l.1,
-    );
-
+    let output = name(scheme, &input);
     Ok(Value::String(output.to_string()))
+}
+
+/// Returns the localized header field name. For example: `fm_subtitle`
+/// resolves into `Untertitel`. The configuration file variable
+/// '`scheme.tmpl.variables.names_assertions`' contains the translation table.
+pub(crate) fn name<'a>(scheme: &'a Scheme, input: &'a str) -> &'a str {
+    let vars = &scheme.tmpl.fm_var.localization;
+    vars.iter().find(|&l| l.0 == input).map_or_else(
+        || input.strip_prefix(TMPL_VAR_FM_).unwrap_or(input),
+        |l| &l.1,
+    )
 }
 
 /// Takes the markup formatted input and renders it to HTML.
@@ -780,7 +787,9 @@ fn remove_filter<S: BuildHasher>(
 
     if let Some(outkey) = args.get("key") {
         let outkey = try_get_value!("remove", "key", String, outkey);
-        let _ = map.remove(outkey.trim_start_matches("fm_"));
+        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+        let outkey = name(scheme, &outkey);
+        let _ = map.remove(outkey);
     };
 
     Ok(Value::Object(map))
@@ -799,11 +808,13 @@ fn insert_filter<S: BuildHasher>(
 
     if let Some(inkey) = args.get("key") {
         let inkey = try_get_value!("insert", "key", String, inkey);
+        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+        let inkey = name(scheme, &inkey);
         let inval = args
             .get("value")
             .map(|v| v.to_owned())
             .unwrap_or(tera::Value::Null);
-        map.insert(inkey.trim_start_matches("fm_").to_string(), inval);
+        map.insert(inkey.to_string(), inval);
     };
 
     Ok(Value::Object(map))

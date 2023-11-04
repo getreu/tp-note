@@ -314,6 +314,7 @@ pub struct CopyCounter {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tmpl {
+    pub fm_var: FmVar,
     pub filter: Filter,
     pub from_dir_content: String,
     pub from_dir_filename: String,
@@ -328,10 +329,16 @@ pub struct Tmpl {
     pub sync_filename: String,
 }
 
+/// Configuration describing how to localize and check front matter variables.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FmVar {
+    pub localization: Vec<(String, String)>,
+    pub assertions: Vec<(String, Vec<Assertion>)>,
+}
+
 /// Configuration related to various Tera template filters.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Filter {
-    pub assert_preconditions: Vec<(String, Vec<AssertPrecondition>)>,
     pub get_lang: Vec<String>,
     pub map_lang: Vec<Vec<String>>,
     pub to_yaml_tab: u64,
@@ -611,7 +618,7 @@ impl FromStr for LocalLinkKind {
 /// Describes a set of tests, that assert template variable `tera:Value`
 /// properties.
 #[derive(Default, Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
-pub enum AssertPrecondition {
+pub enum Assertion {
     /// `IsDefined`: Assert that the variable is defined in the template.
     IsDefined,
     /// `IsNotEmptyString`: In addition to `IsString`, the condition asserts,

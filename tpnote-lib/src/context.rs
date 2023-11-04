@@ -1,5 +1,6 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_ROOT_PATH_MARKER;
+use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_DIR_PATH;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
@@ -12,6 +13,7 @@ use crate::content::Content;
 use crate::error::NoteError;
 use crate::front_matter::FrontMatter;
 use crate::settings::SETTINGS;
+use std::borrow::Cow;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::path::Path;
@@ -125,16 +127,24 @@ impl Context {
             })
             .unwrap_or_default();
 
-        for (name, value) in fm.iter() {
+        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+        let vars = &scheme.tmpl.fm_var.localization;
+        for (key, value) in fm.iter() {
             // First we register a copy with the original variable name.
             // NB: We also insert `Value::Array` and `Value::Object`
             // variants, No flattening occurs here.
-            fm_all_map.insert(name.to_string(), value.to_owned());
+            fm_all_map.insert(key.to_string(), value.to_owned());
 
-            // Here we register `fm_<var_name>`.
-            let mut var_name = TMPL_VAR_FM_.to_string();
-            var_name.push_str(name);
-            self.ct.insert(&var_name, &value);
+            // This replaces an alias name by an `fm`-name.
+            let fm_key = vars.iter().find(|&l| &l.1 == key).map_or_else(
+                || {
+                    let mut s = TMPL_VAR_FM_.to_string();
+                    s.push_str(key);
+                    Cow::Owned(s)
+                },
+                |l| Cow::Borrowed(&l.0),
+            );
+            self.ct.insert(fm_key.as_ref(), &value);
         }
         // Register the collection as `Object(Map<String, Value>)`.
         self.ct.insert(TMPL_VAR_FM_ALL, &fm_all_map);
