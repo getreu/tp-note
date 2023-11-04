@@ -1,6 +1,7 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
+use crate::config::TMPL_VAR_FM_;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 use crate::filename::NotePathStr;
@@ -60,6 +61,7 @@ lazy_static! {
         tera.register_filter("link_title", link_title_filter);
         tera.register_filter("map_lang", map_lang_filter);
         tera.register_filter("markup_to_html", markup_to_html_filter);
+        tera.register_filter("name", name_filter);
         tera.register_filter("prepend", prepend_filter);
         tera.register_filter("remove", remove_filter);
         tera.register_filter("sanit", sanit_filter);
@@ -200,6 +202,36 @@ fn to_html_filter<S: BuildHasher>(
     tag_to_html(value.to_owned(), &mut html);
 
     Ok(Value::String(html))
+}
+
+/// This filter translates `fm_*` header variable names into some human
+/// language. Suppose we have:
+/// ```rust, ignore
+/// scheme.tmpl.variables.names_assertions = []
+/// `[ "fm_lang", "Sprache", [], ],
+/// ]
+/// ```
+/// Then, the expression `'fm_lang'|name` resolves into `Sprache`.
+/// For variables not listed below, only the prefix `fm_` is stripped and
+/// no translation occurs, e.g. `'fm_unknown'|name` becomes `unknown`.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String`.
+fn name_filter<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let input = try_get_value!("translate", "value", String, value);
+
+    let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+
+    // This replaces the `fm`-name in the key by the original alias.
+    let vars = &scheme.tmpl.variables.names_assertions;
+    let output = vars.iter().find(|&l| l.0 == input).map_or_else(
+        || input.strip_prefix(TMPL_VAR_FM_).unwrap_or(&input),
+        |l| &l.1,
+    );
+
+    Ok(Value::String(output.to_string()))
 }
 
 /// Takes the markup formatted input and renders it to HTML.
@@ -1125,6 +1157,17 @@ mod tests {
             to_html_filter(&input, &args).unwrap(),
             Value::String(expected)
         );
+    }
+
+    #[test]
+    fn test_name_filter() {
+        //
+        let result = name_filter(&to_value("fm_title").unwrap(), &HashMap::new());
+        assert_eq!(result.unwrap(), to_value("title").unwrap());
+
+        //
+        let result = name_filter(&to_value("fm_unknown").unwrap(), &HashMap::new());
+        assert_eq!(result.unwrap(), to_value("unknown").unwrap());
     }
 
     #[test]
