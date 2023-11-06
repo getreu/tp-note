@@ -584,6 +584,14 @@ synchronization).
     section METADATA FILENAME SYNCHRONIZATION shows alternative ways to disable
     synchronization.
 
+**-s** *PORT*, **\--scheme**=*SCHEME_NAME*
+
+>   Sets the filename scheme for creating a new note file. This overwrites the
+    '`arg_default.scheme`' value in the configuration file. Under
+    '`[[scheme]]`' follows the definition of the schemes. The default
+    configuration ships two schemes with the SCHEME_NAMES '`default`' and 
+    '`zettel`' (for Zettelkasten).
+
 **-t**, **\--tty**
 
 >   Tp-Note tries different heuristics to detect whether a graphic environment
@@ -1120,6 +1128,15 @@ with '`-c`'.
 ```sh
 tpnote -V -b -c .tpnote.toml
 ```
+
+Some filename and template related variables are grouped into a '`scheme`'. 
+The shipped configuration file lists two schemes: '`default`' and '`zettel`'.
+The scheme used when creating a new note, is selected by the commend line
+option '`--scheme`', the environment variable '`TPNOTE_SCHEME`' or the
+configuration variable '`arg_default.scheme`'. The scheme selected when
+synchronizing a Tp-Note header with its filename depends on the 
+value of the header variable '`scheme:`' which defaults to '`default`'
+(cf. '`scheme_sync_default`'). 
 
 
 
@@ -2057,7 +2074,7 @@ In addition, Tp-Note defines the following variables:
   '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
 * '`{{ note_body_text }}`': is the content of the file '`{{ path }}`'
-  points to. If the file does not start with a front matter, this variable holds
+ b  points to. If the file does not start with a front matter, this variable holds
   the whole content. Note, this variable is only available in the templates
   '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
@@ -2571,6 +2588,12 @@ TPNOTE\_EXTENSION\_DEFAULT
     of new note files. In order to activate the appropriate markup renderer
     make sure, that the value given here is listed in 
     '`filename.extensions`'.
+
+TPNOTE_SCHEME
+
+>   If set, this variable takes precedence over the configuration file
+    variable '`arg_default.scheme`', which defines the scheme used when
+    creating new note file.
 
 TPNOTE\_USER, LOGNAME, USER, USERNAME
 
