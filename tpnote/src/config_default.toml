@@ -21,6 +21,11 @@ no_filename_sync = false
 # `--debug=off`).
 popup = true
 
+# This is the default scheme for new note files. Shipped schemes are
+# `default` and `zettel` (for _Zettelkasten_). See `[[scheme]] name` for
+# more schemes. Not to be confused with `scheme_sync_default`!
+scheme = "default"
+
 # Default value for the command line flag `--tty`. _Tp-Note_ tries different
 # heuristics to detect weather a graphic environment is available or not. For
 # example, under Linux, the '`DISPLAY`' environment variable is evaluated. The

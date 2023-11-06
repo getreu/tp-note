@@ -42,8 +42,8 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
         &*STDIN,
         template_kind_filter,
         &HTML_EXPORT,
-        "default",
-        None,
+        &CFG.arg_default.scheme,
+        ARGS.scheme.as_deref(),
         ARGS.force_lang.as_deref(),
     ) {
         // Use the new `path` from now on.

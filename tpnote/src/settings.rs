@@ -75,6 +75,9 @@ pub struct Args {
     /// Launches only the editor, no browser
     #[structopt(long, short = "e")]
     pub edit: bool,
+    /// Scheme for new notes: "default", "zettel", (see config. for more)
+    #[structopt(long, short = "s")]
+    pub scheme: Option<String>,
     /// Forces console mode: opens console editor, no browser
     #[structopt(long, short = "t")]
     pub tty: bool,
