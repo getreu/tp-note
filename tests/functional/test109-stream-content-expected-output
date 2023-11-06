@@ -1,0 +1,18 @@
+﻿---
+title:        aaa
+keywords:
+              - bbb
+author:       Myuser
+lang:         en
+scheme:       zettel
+sort_tag:     '222'
+
+date:         2020-01-02
+file_ext:     mdtxt
+my_own_long_var: foo
+revision:     '2.0'
+scheme:       zettel
+---
+
+EOF
+

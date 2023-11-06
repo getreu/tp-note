@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export TPNOTE_SCHEME=zettel
+
 cd `realpath .`
 TESTOUTPUT="test_output"
 PWD="$(pwd)/$TESTOUTPUT"
@@ -16,19 +18,22 @@ mkdir -p "$PWD"
 
 # Prepare toml
 # Generate new config file.
-cargo run -- -V -b -c "$PWD/tpnote.toml"
+cargo run -- -V -b -c "$PWD/tpnote.toml"  >/dev/null 2>&1
 # Remove all `date` lines of all templates.
 TP_NOTE_TEST_TOML="$PWD/tpnote-tmp.toml"
 grep -v -e "key='fm_date'"  "$PWD/tpnote.toml" > "$TP_NOTE_TEST_TOML"
 
 
 
-## Test 001: Synchronize meta data and filename
-INPUT_FILENAME="$PWD/123-abc--edf.md"
+## Test 101: Synchronize meta data and filename
+INPUT_FILENAME="$PWD/123--abc__edf_ghi.md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 ---
 title: xxx
-subtitle: yyy
+keywords:
+- yyy
+- zzz
+scheme: zettel
 ...
 EOF
 
@@ -36,41 +41,42 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME"  >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/123-xxx--yyy.md"
+OUTPUT_FILENAME="$PWD/123--xxx__yyy_zzz.md"
 
-if diff "$OUTPUT_FILENAME"  "test001-synchronize-expected-output"
+if diff "$OUTPUT_FILENAME"  "test101-synchronize-expected-output"
 then
-    echo Commandline test 001 succeeded.
+    echo Commandline test 101 succeeded.
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 001 failed.
+    echo Commandline test 101 failed.
     exit 1
 fi
 
 
 
-## Test 002: Create a new note
-
+## Test 102: Create a new note
+:> "$PWD/03--test.md"
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch \
     --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note.md"
+OUTPUT_FILENAME="$PWD/04--${TESTOUTPUT}__Note.md"
 
-if diff "$OUTPUT_FILENAME" "test002-new-expected-output"
+if diff "$OUTPUT_FILENAME" "test102-new-expected-output"
 then
-    echo Commandline test 002 succeeded.
+    echo Commandline test 102 succeeded.
     rm "$OUTPUT_FILENAME"
+    rm "$PWD/03--test.md"
 else
-    echo Commandline test 002 failed.
+    echo Commandline test 102 failed.
     exit 1
 fi
 
 
 
-## Test 003: Create a new note annotating some existing file
+## Test 103: Create a new note annotating some existing file
 
-INPUT_FILENAME="$PWD/test003-annotate+clipboard-input-dummy.pdf"
+INPUT_FILENAME="$PWD/test103-annotate+clipboard-input-dummy.pdf"
 
 # Input file can be empty
 :>"$INPUT_FILENAME"
@@ -82,94 +88,100 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 	    "$INPUT_FILENAME" >/dev/null 2>&1
 
 # the + is not considered to be a secure char, therefor ommitted
-OUTPUT_FILENAME="$PWD/test003-annotate+clipboard-input-dummy.pdf--url.md"
+OUTPUT_FILENAME="$PWD/test103-annotate+clipboard-input-dummy.pdf__url.md"
 
-if diff "$OUTPUT_FILENAME" "test003-annotate+clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "test103-annotate+clipboard-expected-output"
 then
-echo Commandline test 003 succeeded.
+echo Commandline test 103 succeeded.
     rm "$INPUT_FILENAME"
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 003 failed.
+    echo Commandline test 103 failed.
     exit 1
 fi
 
 
 
 
-## Test 004: Create a new note, based on a markdown link supplied by clipboard
+## Test 104: Create a new note, based on a markdown link supplied by clipboard
 
 # Tp-Note ignores the clipboard in batch mode, we pass it as
 # environment variable instead.
 
+:> "$PWD/03b--test.md"
 echo '[ab:cd"ef](https://getreu.net)' | \
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 TPNOTE_LANG_DETECTION="" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-ab_cd ef--url.md"
+OUTPUT_FILENAME="$PWD/03c--ab_cd ef__url.md"
 
-if diff "$OUTPUT_FILENAME" "test004-clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "test104-clipboard-expected-output"
 then
-    echo Commandline test 004 succeeded.
+    echo Commandline test 104 succeeded.
     rm "$OUTPUT_FILENAME"
+    rm "$PWD/03b--test.md"
 else
-    echo Commandline test 004 failed.
+    echo Commandline test 104 failed.
     exit 1
 fi
 
 
 
-## Test 005: Create a new note, based on a string supplied by clipboard
+## Test 105: Create a new note, based on a string supplied by clipboard
 
 #echo -n 'Good morning' | xclip -selection clipboard
 
 # Tp-Note can choose between `fi-Fi` and `en-US`. The latter should be 
 # found.
+:> "$PWD/03b--test.md"
 echo 'Good morning' | \
 LANG="fi_FI.UTF-8" LOGNAME="myuser" \
 TPNOTE_LANG_DETECTION="en-US" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-Good morning--Note.md"
+OUTPUT_FILENAME="$PWD/03c--Good morning__Note.md"
 
-if diff "$OUTPUT_FILENAME" "test005-clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "test105-clipboard-expected-output"
 then
-    echo Commandline test 005 succeeded.
+    echo Commandline test 105 succeeded.
     rm "$OUTPUT_FILENAME"
+    rm "$PWD/03b--test.md"
 else
-    echo Commandline test 005 failed.
+    echo Commandline test 10o5 failed.
     exit 1
 fi
 
 
 
 
-## Test 006: Create a new note, based on a string supplied by clipboard
+## Test 106: Create a new note, based on a string supplied by clipboard
+:> "$PWD/03b--test.md"
 echo '123456' | \
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 TPNOTE_LANG_DETECTION="" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-'123456--Note.md"
+OUTPUT_FILENAME="$PWD/03c--'123456__Note.md"
 
-if diff "$OUTPUT_FILENAME" "test006-clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "test106-clipboard-expected-output"
 then
-    echo Commandline test 006 succeeded.
+    echo Commandline test 106 succeeded.
     rm "$OUTPUT_FILENAME"
+    rm "$PWD/03b--test.md"
 else
-    echo Commandline test 006 failed.
+    echo Commandline test 106 failed.
     exit 1
 fi
 
 
 
 
-## Test 007: Create a new note annotating some existing file
-INPUT_FILENAME="$PWD/test007-some english file to annotate.pdf"
+## Test 107: Create a new note annotating some existing file
+INPUT_FILENAME="$PWD/test107-some english file to annotate.pdf"
 
 # Input file can be empty
 :>"$INPUT_FILENAME"
@@ -179,58 +191,62 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
     --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME" >/dev/null 2>&1
 
-OUTPUT_FILENAME="${INPUT_FILENAME}--Note.md"
+OUTPUT_FILENAME="${INPUT_FILENAME}__note.md"
 
-if diff "$OUTPUT_FILENAME" "test007-annotate-expected-output"
+if diff "$OUTPUT_FILENAME" "test107-annotate-expected-output"
 then
-echo Commandline test 007 succeeded.
+echo Commandline test 107 succeeded.
     rm "$INPUT_FILENAME"
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 007 failed.
+    echo Commandline test 107 failed.
     exit 1
 fi
 
 
 
-## Test 008: Pin sort tag
-INPUT_FILENAME="$PWD/123-abc--edf.md"
+## Test 108: Pin sort tag
+INPUT_FILENAME="$PWD/123--abc__edf.md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 ---
 title: xxx
-subtitle: yyy
+keywords: 
+- yyy
 sort_tag: '111'
+scheme: zettel
 file_ext: md
 ...
 EOF
 
-LANG="en_US.UTF-008" LOGNAME="myuser" \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
-    "$INPUT_FILENAME"  >/dev/null 2>&1
+    "$INPUT_FILENAME" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/111-xxx--yyy.md"
+OUTPUT_FILENAME="$PWD/111--xxx__yyy.md"
 
-if diff "$OUTPUT_FILENAME"  "test008-tag-expected-output"
+if diff "$OUTPUT_FILENAME"  "test108-tag-expected-output"
 then
-    echo Commandline test 008 succeeded.
+    echo Commandline test 108 succeeded.
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 008 failed.
+    echo Commandline test 108 failed.
     exit 1
 fi
 
 
 
-## Test 009: stream note content with front matter
+## Test 109: stream note content with front matter
 
 INPUT_DATA="---
 title: aaa
-subtitle: bbb
+keywords: 
+- bbb
 date: 2020-01-02
 lang: en
 revision: '2.0'
 sort_tag: '222'
 file_ext: mdtxt
+scheme: zettel
 my_own_long_var: foo
 ...
 EOF
@@ -241,21 +257,21 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
     "$PWD"  >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/222-aaa--bbb.mdtxt"
+OUTPUT_FILENAME="$PWD/222--aaa__bbb.mdtxt"
 
-if diff "$OUTPUT_FILENAME"  "test009-stream-content-expected-output"
+if diff "$OUTPUT_FILENAME"  "test109-stream-content-expected-output"
 then
-    echo Commandline test 009 succeeded.
+    echo Commandline test 109 succeeded.
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 009 failed.
+    echo Commandline test 109 failed.
     exit 1
 fi
 
 
 
-## Test 010: Create 2 notes with same header
-
+## Test 110: Create 2 notes with same header
+:> "$PWD/03b--test.md"
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch \
     --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
@@ -264,22 +280,23 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch \
     --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note.md"
-OUTPUT_FILENAME2="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note(1).md"
-if diff "$OUTPUT_FILENAME2" "test010-new-new-expected-output"
+OUTPUT_FILENAME="$PWD/03c--${TESTOUTPUT}__Note.md"
+OUTPUT_FILENAME2="$PWD/03d--${TESTOUTPUT}__Note.md"
+if diff "$OUTPUT_FILENAME2" "test110-new-new-expected-output"
 then
-    echo Commandline test 010 succeeded.
+    echo Commandline test 110 succeeded.
     rm "$OUTPUT_FILENAME"
     rm "$OUTPUT_FILENAME2"
+    rm "$PWD/03b--test.md"
 else
-    echo Commandline test 010 failed.
+    echo Commandline test 110 failed.
     exit 1
 fi
 
 
 
 
-## Test 011: Export note
+## Test 111: Export note
 INPUT_FILENAME="$PWD/123-abc--edf.md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 ---
@@ -306,24 +323,26 @@ cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
 
 OUTPUT_FILENAME="$PWD/111-xxx--yyy.md.html"
 
-if diff "$OUTPUT_FILENAME"  "test011-html-expected-output"
+if diff "$OUTPUT_FILENAME"  "test111-html-expected-output"
 then
-    echo Commandline test 011 succeeded.
+    echo Commandline test 111 succeeded.
     rm "$INPUT2_FILENAME"
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 011 failed.
+    echo Commandline test 111 failed.
     exit 1
 fi
 
 
 
-## Test 012: Do not synchronize meta data and filename
+## Test 112: Do not synchronize meta data and filename
 INPUT_FILENAME="$PWD/123-abc--edf.md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 ---
 title: xxx
-subtitle: yyy
+keywords:
+- yyy
+scheme: zettel
 ...
 EOF
 
@@ -333,19 +352,19 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 
 OUTPUT_FILENAME="$PWD/123-abc--edf.md"
 
-if diff "$OUTPUT_FILENAME"  "test001-synchronize-expected-output"
+if diff "$OUTPUT_FILENAME"  "test112-synchronize-expected-output"
 then
-    echo Commandline test 012 succeeded.
+    echo Commandline test 112 succeeded.
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 012 failed.
+    echo Commandline test 112 failed.
     exit 1
 fi
 
 
 
-## Test 013: Add header
-INPUT_FILENAME="$PWD/20220312-abc-- edf.md"
+## Test 113: Add header
+INPUT_FILENAME="$PWD/20220312--abc__edf_hij.md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 Only body
 EOF
@@ -354,24 +373,26 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 	cargo run -- --batch --add-header --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME"  >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/20220312-abc--edf.md"
+OUTPUT_FILENAME="$PWD/20220312--abc__edf_hij.md"
 
-if diff "$OUTPUT_FILENAME"  "test013-add-header-expected-output"
+if diff "$OUTPUT_FILENAME"  "test113-add-header-expected-output"
 then
-    echo Commandline test 013 succeeded.
+    echo Commandline test 113 succeeded.
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 013 failed.
+    echo Commandline test 113 failed.
     exit 1
 fi
 
 
-## Test 014: Copy counter and sync
-INPUT_FILENAME="$PWD/20220312-abc--edf(4).md"
+## Test 114: Copy counter and sync
+INPUT_FILENAME="$PWD/20220312--abc__edf(4).md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 ---
 title: abc
-subtitle: edf
+keywords:
+- edf
+scheme: zettel
 ---
 Body
 EOF
@@ -382,22 +403,53 @@ OUTPUT_FILENAME=$(LANG="en_US.UTF-8" LOGNAME="myuser" \
 
 if [ "$INPUT_FILENAME" = "$OUTPUT_FILENAME" ]
 then
-    echo Commandline test 014 succeeded.
+    echo Commandline test 114 succeeded.
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 014 failed.
+    echo Commandline test 114 failed.
+    exit 1
+fi
+
+## Test 115: Synchronize meta data and filename
+:> "$PWD/03b--test.md"
+INPUT_FILENAME="$PWD/123-abc__edf_ghi.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: xxx
+keywords:
+- yyy
+- zzz
+...
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/123-xxx.md"
+
+if diff "$OUTPUT_FILENAME"  "test115-synchronize-expected-output"
+then
+    echo Commandline test 115 succeeded.
+    rm "$OUTPUT_FILENAME"
+    rm "$PWD/03b--test.md"
+else
+    echo Commandline test 115 failed.
     exit 1
 fi
 
 
 
-## Test 016: Export note with format attributes
-INPUT_FILENAME="$PWD/01ac-Tulips--red, yellow.md"
+## Test 116: Export note with format attributes
+INPUT_FILENAME="$PWD/01ac--Tulips__red_yellow.md"
 cat - > "$INPUT_FILENAME" <<'EOF'
 ---
 title: Tulips
-subtitle: red, yellow
+keywords:
+- red
+- yellow
 sort_tag: 01ac
+scheme: zettel
 ---
 
 [matters](<01ac-Tulips--red, yellow.md>)     
@@ -429,102 +481,16 @@ cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
      --export "" \
     "$INPUT_FILENAME"  >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/01ac-Tulips--red, yellow.md.html"
+OUTPUT_FILENAME="$PWD/01ac--Tulips__red_yellow.md.html"
 
-if diff "$OUTPUT_FILENAME"  "test016-html-expected-output"
+if diff "$OUTPUT_FILENAME"  "test116-html-expected-output"
 then
-    echo Commandline test 016 succeeded.
+    echo Commandline test 116 succeeded.
     rm "$INPUT_FILENAME"
     rm "$OUTPUT_FILENAME"
 else
-    echo Commandline test 016 failed.
+    echo Commandline test 116 failed.
     exit 1
 fi
-
-
-
-./run-tests2
-
-
-
-## Test 900:  Compilation --no-default-features
-
-cargo check --workspace --no-default-features >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 900 succeeded.
-else
-    echo Commandline test 900 failed.
-    exit 1
-fi
-
-
-
-## Test 901:  Compilation --no-default-features --features renderer
-cargo check --workspace --no-default-features --features renderer >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 901 succeeded.
-else
-    echo Commandline test 901 failed.
-    exit 1
-fi
-
-
-
-## Test 902:  Compilation --no-default-features --features viewer
-cargo check --no-default-features --features viewer >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 902 succeeded.
-else
-    echo Commandline test 902 failed.
-    exit 1
-fi
-
-
-
-## Test 903:  Compilation --no-default-features --features message-box
-cargo check --no-default-features --features message-box >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 903 succeeded.
-else
-    echo Commandline test 903 failed.
-    exit 1
-fi
-
-
-
-## Test 904:  Compilation --no-default-features --features read-clipboard
-cargo check --no-default-features --features read-clipboard >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 904 succeeded.
-else
-    echo Commandline test 904 failed.
-    exit 1
-fi
-
-
-
-## Test 905:  Compilation --no-default-features --features lang-detection
-cargo check --no-default-features \
-            --features lang-detection >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 905 succeeded.
-else
-    echo Commandline test 905 failed.
-    exit 1
-fi
-
-
 
 exit 0
