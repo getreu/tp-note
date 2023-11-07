@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "TP-NOTE" "1" "2023-10-31" "Version 1.22.11" "Tp-Note documentation"
+.TH "TP-NOTE" "1" "2023-11-07" "Version 1.22.12" "Tp-Note documentation"
 .hy
 .SH NAME
 .PP
@@ -711,10 +711,11 @@ Disables the automatic language detection while creating a new note file
 and use \f[I]LANGUAGE_TAG\f[R] instead.
 \f[I]LANGUAGE_TAG\f[R] is formatted as IETF BCP 47 language tag,
 e.g.\ `\f[V]en-US\f[R]'.
-If \f[I]LANGUAGE_TAG\f[R] equals `\f[V]-\f[R]', the environment variable
-`\f[V]TPNOTE_LANG\f[R]' determines the language instead; or, if the
-latter is not defined, the user\[cq]s default language, as reported from
-the operating system\[cq]s locale setting, is decisive.
+If \f[I]LANGUAGE_TAG\f[R] equals
+`\[ga]\f[V]\[aq], the environment variable \[aq]\f[R]TPNOTE_LANG\[ga]'
+determines the language instead; or, if the latter is not defined, the
+user\[cq]s default language, as reported from the operating system\[cq]s
+locale setting, is decisive.
 .RE
 .PP
 \f[B]-p\f[R] \f[I]PORT\f[R], \f[B]--port\f[R]=\f[I]PORT\f[R]
@@ -736,6 +737,17 @@ validating the syntax of `\f[V].md\f[R]'-files.
 See section EXIT STATUS for more details.
 The section METADATA FILENAME SYNCHRONIZATION shows alternative ways to
 disable synchronization.
+.RE
+.PP
+\f[B]-s\f[R] \f[I]PORT\f[R], \f[B]--scheme\f[R]=\f[I]SCHEME_NAME\f[R]
+.RS
+.PP
+Sets the filename scheme for creating a new note file.
+This overwrites the `\f[V]arg_default.scheme\f[R]' value in the
+configuration file.
+Under `\f[V][[scheme]]\f[R]' follows the definition of the schemes.
+The default configuration ships two schemes with the SCHEME_NAMES
+`\f[V]default\f[R]' and `\f[V]zettel\f[R]' (for Zettelkasten).
 .RE
 .PP
 \f[B]-t\f[R], \f[B]--tty\f[R]
@@ -1530,6 +1542,19 @@ with `\f[V]-c\f[R]'.
 tpnote -V -b -c .tpnote.toml
 \f[R]
 .fi
+.PP
+Some filename and template related variables are grouped into a
+`\f[V]scheme\f[R]'.
+The shipped configuration file lists two schemes: `\f[V]default\f[R]'
+and `\f[V]zettel\f[R]'.
+The scheme used when creating a new note, is selected by the commend
+line option `\f[V]--scheme\f[R]', the environment variable
+`\f[V]TPNOTE_SCHEME\f[R]' or the configuration variable
+`\f[V]arg_default.scheme\f[R]'.
+The scheme selected when synchronizing a Tp-Note header with its
+filename depends on the value of the header variable `\f[V]scheme:\f[R]'
+which defaults to `\f[V]default\f[R]'
+(cf.\ `\f[V]scheme_sync_default\f[R]').
 .SS Register your own text editor
 .PP
 There are two ways to modify the default file editor, Tp-Note launches
@@ -2051,6 +2076,49 @@ Like above, you can achieve the same with:
 TPNOTE_LANG_DETECTION=\[dq]\[dq] tpnote
 \f[R]
 .fi
+.SS Localize the note\[cq]s front matter
+.PP
+Be default, the front matter variable names are printed in English when
+creating new note files from templates.
+For example the header variable `\f[V]fm_subtitle\f[R]' is displayed as
+`\f[V]title:\f[R]' in the note\[cq]s header.
+.PP
+This translation relation is defined in the configuration file variable
+`\f[V]scheme.tmpl.fm_vars.localization\f[R]'.
+Consider the following simplified example:
+.IP
+.nf
+\f[C]
+fm_vars.localization = [
+    [\[dq]fm_title\[dq], \[dq]title\[dq]],
+    [\[dq]fm_subtitle\[dq], \[dq]subtitle\[dq]],
+    [\[dq]fm_author\[dq], \[dq]author\[dq]],
+    [\[dq]fm_date\[dq], \[dq]date\[dq]],
+    [\[dq]fm_lang\[dq], \[dq]lang\[dq]],
+]
+\f[R]
+.fi
+.PP
+To change the natural language of the displayed header variable names,
+modify the second column of the above table.
+Example:
+.IP
+.nf
+\f[C]
+fm_vars.localization = [
+    [\[dq]fm_title\[dq], \[dq]Titel\[dq]],
+    [\[dq]fm_subtitle\[dq], \[dq]Untertitel\[dq]],
+    [\[dq]fm_author\[dq], \[dq]Autor\[dq]],
+    [\[dq]fm_date\[dq], \[dq]Datum\[dq]],
+    [\[dq]fm_lang\[dq], \[dq]Sprache\[dq]],
+]
+\f[R]
+.fi
+.PP
+Keep in mind, that the templates do not change!
+Templates refer to a header variable with an identifier starting with
+`\f[V]fm_\f[R]', The identifier corresponds to the first column of the
+above table.
 .SS Change the default markup language
 .PP
 Tp-Note\[cq]s core functionality, the management of note file headers
@@ -2336,6 +2404,10 @@ viewer = \[aq]\[aq]\[aq]
 Specifically:
 .IP \[bu] 2
 `\f[V]{{ fm_* }}\f[R]' are the deserialized header variables.
+Note, that the header variables may be localized,
+e.g.\ `\f[V]Untertitel\f[R]'.
+Nevertheless, in templates always use the English version,
+e.g.\ `\f[V]fm_subtitle\f[R]'.
 All content template variables and filters are available.
 See section \f[I]Template variables\f[R] above.
 .IP \[bu] 2
@@ -2677,7 +2749,7 @@ Note, this variable is only available in the templates
 templates below.
 .IP \[bu] 2
 `\f[V]{{ note_body_text }}\f[R]': is the content of the file
-`\f[V]{{ path }}\f[R]' points to.
+`\f[V]{{ path }}\f[R]' b points to.
 If the file does not start with a front matter, this variable holds the
 whole content.
 Note, this variable is only available in the templates
@@ -2735,9 +2807,13 @@ This means, a YAML front-matter variable `\f[V]foo:\f[R]' in a note will
 generate a `\f[V]{{ fm_foo }}\f[R]' template variable.
 On the other hand, a missing `\f[V]foo:\f[R]' will cause
 `\f[V]{{ fm_foo }}\f[R]' to be undefined.
+Please note, that the header variables may be localized,
+e.g.\ `\f[V]Untertitel:\f[R]'.
+Nevertheless, in templates always use the English version,
+e.g.\ `\f[V]fm_subtitle\f[R]'.
 .PP
-Please note that `\f[V]{{ fm_* }}\f[R]' variables are only available in
-filename templates and in the
+It is to be observed that `\f[V]{{ fm_* }}\f[R]' variables are only
+available in filename templates and in the
 `\f[V]tmpl.from_clipboard_yaml_content\f[R]' content template.
 .IP \[bu] 2
 `\f[V]{{ fm_title }}\f[R]' is the `\f[V]title:\f[R]' as indicated in the
@@ -3367,6 +3443,14 @@ variable `\f[V]filename.extension_default\f[R]', which defines the file
 extension of new note files.
 In order to activate the appropriate markup renderer make sure, that the
 value given here is listed in `\f[V]filename.extensions\f[R]'.
+.RE
+.PP
+TPNOTE_SCHEME
+.RS
+.PP
+If set, this variable takes precedence over the configuration file
+variable `\f[V]arg_default.scheme\f[R]', which defines the scheme used
+when creating new note file.
 .RE
 .PP
 TPNOTE_USER, LOGNAME, USER, USERNAME

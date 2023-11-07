@@ -242,8 +242,8 @@ impl Settings {
         self.extension_default = ext;
     }
 
-    /// If `lang=None` read the environment variable `TPNOTE_LANG` or -if empty-
-    /// `LANG` into `SETTINGS.lang`.
+    /// If `lang=None` read the environment variable `TPNOTE_LANG` or
+    /// -if not defined- `LANG` into `SETTINGS.lang`.
     /// If `force_lang=Some(l)`, copy `l` in `settings.lang`.
     fn update_lang(&mut self, force_lang: Option<&str>) {
         // Overwrite environment setting.
