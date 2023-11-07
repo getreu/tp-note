@@ -1566,6 +1566,45 @@ TPNOTE_LANG_DETECTION="" tpnote
 
 
 
+## Localize the note's front matter
+
+Be default, the front matter variable names are printed in English when creating
+new note files from templates. For example the header variable '`fm_subtitle`'
+is displayed as '`title:`' in the note's header.
+
+This translation relation is defined in the configuration file variable
+'`scheme.tmpl.fm_vars.localization`'. Consider the following 
+simplified example:
+
+```toml
+fm_vars.localization = [
+    ["fm_title", "title"],
+    ["fm_subtitle", "subtitle"],
+    ["fm_author", "author"],
+    ["fm_date", "date"],
+    ["fm_lang", "lang"],
+]
+```
+
+To change the natural language of the displayed header variable names,
+modify the second column of the above table. Example:
+
+```toml
+fm_vars.localization = [
+    ["fm_title", "Titel"],
+    ["fm_subtitle", "Untertitel"],
+    ["fm_author", "Autor"],
+    ["fm_date", "Datum"],
+    ["fm_lang", "Sprache"],
+]
+```
+
+Keep in mind, that the templates do not change! Templates refer to a header
+variable with an identifier starting with '`fm_`', The identifier 
+corresponds to the first column of the above table.
+
+
+
 ## Change the default markup language
 
 Tp-Note's core functionality, the management of note file headers and
@@ -1785,7 +1824,9 @@ viewer = '''
 
 Specifically:
 
-* '`{{ fm_* }}`' are the deserialized header variables. All content
+* '`{{ fm_* }}`' are the deserialized header variables. Note, that the header
+  variables may be localized, e.g. '`Untertitel`'. Nevertheless, in templates
+  always use the English version, e.g. '`fm_subtitle`'. All content
   template variables and filters are available. See section _Template
   variables_ above.
 
@@ -2120,9 +2161,12 @@ in the content template '`tmpl.from_dir_content`' will generate the variable
 generated dynamically. This means, a YAML front-matter variable '`foo:`' in a
 note will generate a '`{{ fm_foo }}`' template variable. On the other hand, a
 missing '`foo:`' will cause '`{{ fm_foo }}`' to be undefined.
+Please note, that the header variables may be localized, e.g. '`Untertitel:`'.
+Nevertheless, in templates always use the English version, e.g. '`fm_subtitle`'.
 
-Please note that '`{{ fm_* }}`' variables are only available in filename
-templates and in the '`tmpl.from_clipboard_yaml_content`' content template.
+It is to be observed that '`{{ fm_* }}`' variables are only available in
+filename templates and in the '`tmpl.from_clipboard_yaml_content`' content
+template.
 
 * '`{{ fm_title }}`' is the '`title:`' as indicated in the YAML front-matter of
   the note.
