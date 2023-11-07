@@ -152,8 +152,10 @@ use crate::note::ONE_OFF_TEMPLATE_NAME;
 #[cfg(feature = "viewer")]
 use crate::note_error_tera_template;
 use crate::settings::SchemeSource;
+use crate::settings::Settings;
 use crate::settings::SETTINGS;
 use crate::template::TemplateKind;
+use parking_lot::RwLockUpgradableReadGuard;
 use std::path::Path;
 use std::path::PathBuf;
 #[cfg(feature = "viewer")]
@@ -213,26 +215,7 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
     // This does not fill any templates,
     let mut n = Note::from_raw_text(context, content, TemplateKind::SyncFilename)?;
 
-    // Shall we switch the `settings.current_theme`?
-    // If `fm_scheme` is defined, prefer this value.
-    match n.context.get(TMPL_VAR_FM_SCHEME).as_ref() {
-        Some(Value::String(s)) if !s.is_empty() => {
-            // Initialize `SETTINGS`.
-            settings.with_upgraded(|settings| settings.update(SchemeSource::Force(s), None))?;
-        }
-        Some(Value::String(_)) | None => {
-            // Initialize `SETTINGS`.
-            settings
-                .with_upgraded(|settings| settings.update(SchemeSource::SchemeSyncDefault, None))?;
-        }
-        Some(_) => {
-            return Err(NoteError::FrontMatterFieldIsNotString {
-                field_name: TMPL_VAR_FM_SCHEME.to_string(),
-            })
-        }
-    };
-
-    synchronize::<T>(&mut n)?;
+    synchronize::<T>(&mut settings, &mut n)?;
 
     Ok(n.rendered_filename)
 }
@@ -368,29 +351,8 @@ where
 
         TemplateKind::SyncFilename => {
             let mut n = Note::from_raw_text(context, content.unwrap(), TemplateKind::SyncFilename)?;
-            // Shall we switch the `settings.current_theme`?
-            // If `fm_scheme` is defined, prefer this value, otherwise "" (alias for
-            // `scheme_fallback`).
-            match n.context.get(TMPL_VAR_FM_SCHEME) {
-                Some(Value::String(s)) if !s.is_empty() => {
-                    // Initialize `SETTINGS`.
-                    settings
-                        .with_upgraded(|settings| settings.update(SchemeSource::Force(s), None))?;
-                }
-                Some(Value::String(_)) | None => {
-                    // Initialize `SETTINGS`.
-                    settings.with_upgraded(|settings| {
-                        settings.update(SchemeSource::SchemeSyncDefault, None)
-                    })?;
-                }
-                Some(_) => {
-                    return Err(NoteError::FrontMatterFieldIsNotString {
-                        field_name: TMPL_VAR_FM_SCHEME.to_string(),
-                    })
-                }
-            };
 
-            synchronize::<T>(&mut n)?;
+            synchronize::<T>(&mut settings, &mut n)?;
             n
         }
 
@@ -415,10 +377,12 @@ where
     Ok(n.rendered_filename)
 }
 
+///
 /// Helper function.
-fn synchronize<T: Content>(note: &mut Note<T>) -> Result<(), NoteError> {
-    // parse file again to check for synchronicity with filename
-
+fn synchronize<T: Content>(
+    settings: &mut RwLockUpgradableReadGuard<Settings>,
+    note: &mut Note<T>,
+) -> Result<(), NoteError> {
     let no_filename_sync = match (
         note.context.get(TMPL_VAR_FM_FILENAME_SYNC),
         note.context.get(TMPL_VAR_FM_NO_FILENAME_SYNC),
@@ -437,13 +401,33 @@ fn synchronize<T: Content>(note: &mut Note<T>) -> Result<(), NoteError> {
             TMPL_VAR_FM_FILENAME_SYNC.trim_start_matches(TMPL_VAR_FM_),
             !no_filename_sync
         );
-    } else {
-        note.render_filename(TemplateKind::SyncFilename)?;
-
-        note.set_next_unused_rendered_filename_or(&note.context.path.clone())?;
-        // Silently fails is source and target are identical.
-        note.rename_file_from(&note.context.path)?;
+        return Ok(());
     }
+
+    // Shall we switch the `settings.current_theme`?
+    // If `fm_scheme` is defined, prefer this value.
+    match note.context.get(TMPL_VAR_FM_SCHEME).as_ref() {
+        Some(Value::String(s)) if !s.is_empty() => {
+            // Initialize `SETTINGS`.
+            settings.with_upgraded(|settings| settings.update(SchemeSource::Force(s), None))?;
+        }
+        Some(Value::String(_)) | None => {
+            // Initialize `SETTINGS`.
+            settings
+                .with_upgraded(|settings| settings.update(SchemeSource::SchemeSyncDefault, None))?;
+        }
+        Some(_) => {
+            return Err(NoteError::FrontMatterFieldIsNotString {
+                field_name: TMPL_VAR_FM_SCHEME.to_string(),
+            });
+        }
+    };
+
+    note.render_filename(TemplateKind::SyncFilename)?;
+
+    note.set_next_unused_rendered_filename_or(&note.context.path.clone())?;
+    // Silently fails is source and target are identical.
+    note.rename_file_from(&note.context.path)?;
 
     Ok(())
 }
