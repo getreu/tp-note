@@ -451,34 +451,36 @@ keywords:
 sort_tag: 01ac
 scheme: zettel
 ---
-
-[matters](<01ac-Tulips--red, yellow.md>)     
+[matters](<01ac--Tulips__red_yellow.md>)     
 [matters](<01ac>)                            
-[whatever](<01ac-Tulips--red, yellow.md?>)   
+[whatever](<01ac--Tulips__red_yellow.md?>)   
 [whatever](<01ac?>)                          
-[whatever](<01ac-Tulips--red, yellow.md??>)  
+[whatever](<01ac--Tulips__red_yellow.md??>)  
 [whatever](<01ac??>)                         
-[whatever](<01ac-Tulips--red, yellow.md?,>)  
+[whatever](<01ac--Tulips__red_yellow.md?,>)  
 [whatever](<01ac?,>)                         
-[whatever](<01ac-Tulips--red, yellow.md?-->) 
+[whatever](<01ac--Tulips__red_yellow.md?-->) 
 [whatever](<01ac?-->)                        
-<tpnote:01ac-Tulips--red,%20yellow.md>       
+<tpnote:01ac--Tulips__red_yellow.md>       
 <tpnote:01ac>                                
-<tpnote:01ac-Tulips--red,%20yellow.md?>      
+<tpnote:01ac--Tulips__red_yellow.md?>      
 <tpnote:01ac?>                               
-<tpnote:01ac-Tulips--red,%20yellow.md?:>     
+<tpnote:01ac--Tulips__red_yellow.md?:>     
 <tpnote:01ac?:>                              
-<tpnote:01ac-Tulips--red,%20yellow.md?:.>    
+<tpnote:01ac--Tulips__red_yellow.md?:.>    
 <tpnote:01ac?:.>                             
-<tpnote:01ac-Tulips--red,%20yellow.md?-:,>   
+<tpnote:01ac--Tulips__red_yellow.md?-:,>   
 <tpnote:01ac?-:,>                            
-<tpnote:01ac-Tulips--red,%20yellow.md?--:,>  
+<tpnote:01ac--Tulips__red_yellow.md?--:,>  
 <tpnote:01ac?--:,>                           
 EOF
 
+# This is the base dir for the exporter.
+:> "$PWD/.tpnote.toml"
+
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
-     --export "" \
+     --export "" --export-link-rewriting=short \
     "$INPUT_FILENAME"  >/dev/null 2>&1
 
 OUTPUT_FILENAME="$PWD/01ac--Tulips__red_yellow.md.html"
@@ -488,6 +490,7 @@ then
     echo Commandline test 116 succeeded.
     rm "$INPUT_FILENAME"
     rm "$OUTPUT_FILENAME"
+    rm "$PWD/.tpnote.toml"
 else
     echo Commandline test 116 failed.
     exit 1
