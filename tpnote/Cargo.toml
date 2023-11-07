@@ -95,7 +95,7 @@ time = "0.3.30"
 tera.workspace = true
 toml.workspace = true
 tpnote-lib = { path = "../tpnote-lib", default-features = false }
-# tpnote-lib = { version = "0.29.1", default-features = false}
+# tpnote-lib = { version = "0.30.0", default-features = false}
 webbrowser = { version = "0.8.12", optional = true }
 
 [target.'cfg(windows)'.dependencies]

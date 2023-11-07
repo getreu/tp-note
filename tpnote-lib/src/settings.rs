@@ -289,12 +289,12 @@ impl Settings {
         // Windows version.
         #[cfg(target_family = "windows")]
         if let Some(tpnotelang) = tpnotelang {
-            force_lang = tpnotelang;
+            lang = tpnotelang;
         } else {
             let mut buf = [0u16; LOCALE_NAME_MAX_LENGTH as usize];
             let len = unsafe { GetUserDefaultLocaleName(buf.as_mut_ptr(), buf.len() as i32) };
             if len > 0 {
-                force_lang = String::from_utf16_lossy(&buf[..((len - 1) as usize)]);
+                lang = String::from_utf16_lossy(&buf[..((len - 1) as usize)]);
             }
         };
 
