@@ -407,9 +407,14 @@ impl HttpResponse for ServerThread {
         let abspath_dir = abspath_doc.parent().unwrap_or_else(|| Path::new("/"));
         let root_path = &self.context.root_path;
 
-        // Only the first base document is live updated.
         let mut context = self.context.clone();
+
         if context.path != abspath_doc {
+            // This is not the base document, but some other Tp-Note document
+            // we want to render. Store store its path.
+            // `front_matter::assert_precondition()` needs this later.
+            context.path = abspath_doc.to_path_buf();
+            // Only the first base document is live updated.
             context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
         }
         match render_viewer_html::<ContentString>(context, content)
