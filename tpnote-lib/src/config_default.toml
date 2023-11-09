@@ -498,7 +498,7 @@ filter.to_yaml_tab = 14
 from_dir_content = """
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
-{%- set keywords = ['Note'] -%}
+{%- set keywords = ['note'] -%}
 {%- set title_text = dir_path | trim_file_sort_tag -%}
 ---
 {{ title_text | cut | to_yaml(key='fm_title') }}
@@ -545,7 +545,7 @@ from_clipboard_yaml_content = """
     | map_lang(default=lang) )  -%}
 ---
 {{ fm_title | default(value = path|trim_file_sort_tag) | cut | to_yaml(key='fm_title') }}
-{{ fm_keywords | default(value = ['Note']) | to_yaml(key='fm_keywords') }}
+{{ fm_keywords | default(value = ['note']) | to_yaml(key='fm_keywords') }}
 {{ fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
 {{ fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
@@ -600,7 +600,7 @@ from_clipboard_content = """
           stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut -%}
   {%- set keywords_text = ['url'] -%}
 {%- else -%}
-  {%- set keywords_text = ['Note'] -%}
+  {%- set keywords_text = ['note'] -%}
 {%- endif -%}
 ---
 {{ title_text | to_yaml(key='fm_title') }}
