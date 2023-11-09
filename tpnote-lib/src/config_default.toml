@@ -737,10 +737,11 @@ annotate_file_filename = """
 
 sync_filename = """
 {%- set keywords = '' -%}
+{%- set fm_keywords = fm_keywords | default(value='') -%}
 {%- if fm_keywords | as_str == fm_keywords -%}
-  {%- set keywords = fm_keywords -%}
+  {%- set_global keywords = fm_keywords -%}
 {%- else -%}
-  {%- for sub in fm_keywords | default(value=[]) -%}
+  {%- for sub in fm_keywords -%}
     {%- set_global keywords = keywords~sub~'_' -%}
   {%- endfor -%}
 {%- endif -%}
