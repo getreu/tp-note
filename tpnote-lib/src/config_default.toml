@@ -788,8 +788,8 @@ viewer = '''
   {% endif %}
   {% if fm_keywords %}
     <tr>
-    <th class="fmkey">{{'fm_keywords' | name}}:</th>
-    <th class="fmval">{{ fm_keywords | default(value='') | to_html | safe }}</th>
+    <th class="fmkeygrey">{{'fm_keywords' | name}}:</th>
+    <th class="fmvalgrey">{{ fm_keywords | default(value='') | to_html | safe }}</th>
   </tr>
   {% endif %}
     <tr>
@@ -946,8 +946,8 @@ exporter = '''
   {% endif %}
   {% if fm_keywords %}
     <tr>
-    <th class="fmkey">{{'fm_keywords' | name}}:</th>
-    <th class="fmval">{{ fm_keywords | default(value='') | to_html | safe }}</th>
+    <th class="fmkeygrey">{{'fm_keywords' | name}}:</th>
+    <th class="fmvalgrey">{{ fm_keywords | default(value='') | to_html | safe }}</th>
   </tr>
   {% endif %}
     <tr>
