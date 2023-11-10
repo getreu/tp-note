@@ -17,11 +17,9 @@ use std::fs;
 use std::fs::File;
 #[cfg(not(test))]
 use std::io::Write;
-#[cfg(not(test))]
 use std::mem;
 use std::path::Path;
 use std::path::PathBuf;
-#[cfg(not(test))]
 use tera::Tera;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::Scheme;
@@ -75,6 +73,13 @@ const CONFIG_FILENAME: &str = concat!(env!("CARGO_BIN_NAME"), ".toml");
 
 /// Default configuration.
 pub(crate) const GUI_CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
+
+/// This decides until what depth arrays are merged into the default
+/// configuration. Tables are always merged.
+/// Deeper arrays replace the default configuration.
+/// For our configuration this means, that `scheme` is merged and all other
+/// arrays are replaced.
+pub(crate) const CONFIG_FILE_MERGE_DEPTH: isize = 2;
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
@@ -205,9 +210,76 @@ impl Cfg {
 
     /// Parse the configuration file if it exists. Otherwise write one with
     /// default values.
-    #[cfg(not(test))]
     #[inline]
-    fn from_file(config_path: &Path) -> Result<Cfg, ConfigFileError> {
+    fn from_files(config_paths: &[PathBuf]) -> Result<Cfg, ConfigFileError> {
+        /// `CONFIG_FILE_MERGE_DEPTH` controls whether a top-level array in the TOML
+        /// document is merged instead of overridden. This is useful for TOML
+        /// documents that use a top-level array of values like the `tpnote.toml`,
+        /// where one usually wants to override or add to the array instead of
+        /// replacing it altogether. Credits to the Helix editor for the code
+        /// in this method. The algorithm is slightly modified.
+        fn merge_toml_values(
+            left: toml::Value,
+            right: toml::Value,
+            merge_depth: isize,
+        ) -> toml::Value {
+            use toml::Value;
+
+            fn get_name(v: &Value) -> Option<&str> {
+                v.get("name").and_then(Value::as_str)
+            }
+
+            match (left, right) {
+                (Value::Array(mut left_items), Value::Array(right_items)) => {
+                    // The top-level arrays should be merged but nested arrays should
+                    // act as overrides. For the `tpnote.toml` config, this means
+                    // that you can specify a sub-set of schemes in an overriding
+                    // `tpnote.toml` but that nested arrays like
+                    // `schme.tmpl.fm_var_localization` are replaced instead of merged.
+                    if merge_depth > 0 {
+                        left_items.reserve(right_items.len());
+                        for rvalue in right_items {
+                            let lvalue = get_name(&rvalue)
+                                .and_then(|rname| {
+                                    left_items.iter().position(|v| get_name(v) == Some(rname))
+                                })
+                                .map(|lpos| left_items.remove(lpos));
+                            let mvalue = match lvalue {
+                                Some(lvalue) => merge_toml_values(lvalue, rvalue, merge_depth - 1),
+                                None => rvalue,
+                            };
+                            left_items.push(mvalue);
+                        }
+                        Value::Array(left_items)
+                    } else {
+                        Value::Array(right_items)
+                    }
+                }
+                (Value::Table(mut left_map), Value::Table(right_map)) => {
+                    // We merge talbes at (almost) any depth
+                    if merge_depth > -10 {
+                        for (rname, rvalue) in right_map {
+                            match left_map.remove(&rname) {
+                                Some(lvalue) => {
+                                    let merged_value =
+                                        merge_toml_values(lvalue, rvalue, merge_depth - 1);
+                                    left_map.insert(rname, merged_value);
+                                }
+                                None => {
+                                    left_map.insert(rname, rvalue);
+                                }
+                            }
+                        }
+                        Value::Table(left_map)
+                    } else {
+                        Value::Table(right_map)
+                    }
+                }
+                // Catch everything else we didn't handle, and use the right value
+                (_, value) => value,
+            }
+        }
+
         // Runs through all strings and renders config values as templates.
         // No variables are set in this context. But you can use environment
         // variables in templates: e.g.:
@@ -224,46 +296,51 @@ impl Cfg {
             })
         }
 
-        if config_path.exists() {
-            let mut config: Cfg = toml::from_str(&fs::read_to_string(config_path)?)?;
+        //
+        // `from_files()` start
+        let base_config = toml::from_str(&Self::default_as_toml())?;
 
-            render_tmpl(&mut config.app_args.unix.browser);
-            render_tmpl(&mut config.app_args.unix.editor);
-            render_tmpl(&mut config.app_args.unix.editor_console);
+        let config = config_paths
+            .iter()
+            .filter_map(|file| {
+                std::fs::read_to_string(file)
+                    .map(|config| toml::from_str(&config))
+                    .ok()
+            })
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .fold(base_config, |a, b| {
+                merge_toml_values(a, b, CONFIG_FILE_MERGE_DEPTH)
+            });
 
-            render_tmpl(&mut config.app_args.windows.browser);
-            render_tmpl(&mut config.app_args.windows.editor);
-            render_tmpl(&mut config.app_args.windows.editor_console);
+        let mut config: Cfg = config.try_into()?;
 
-            render_tmpl(&mut config.app_args.macos.browser);
-            render_tmpl(&mut config.app_args.macos.editor);
-            render_tmpl(&mut config.app_args.macos.editor_console);
+        render_tmpl(&mut config.app_args.unix.browser);
+        render_tmpl(&mut config.app_args.unix.editor);
+        render_tmpl(&mut config.app_args.unix.editor_console);
 
-            let config = config; // Freeze.
+        render_tmpl(&mut config.app_args.windows.browser);
+        render_tmpl(&mut config.app_args.windows.editor);
+        render_tmpl(&mut config.app_args.windows.editor_console);
 
-            {
-                // Copy the parts of `config` into `LIB_CFG`.
-                let mut lib_cfg = LIB_CFG.write();
-                lib_cfg.scheme_sync_default = config.scheme_sync_default.clone();
-                lib_cfg.scheme = config.scheme.clone();
+        render_tmpl(&mut config.app_args.macos.browser);
+        render_tmpl(&mut config.app_args.macos.editor);
+        render_tmpl(&mut config.app_args.macos.editor_console);
 
-                // Perform some additional semantic checks.
-                lib_cfg.assert_validity()?;
-            }
+        let config = config; // Freeze.
 
-            // First check passed.
-            Ok(config)
-        } else {
-            Self::write_default_to_file(config_path)?;
-            Ok(Self::default())
+        {
+            // Copy the parts of `config` into `LIB_CFG`.
+            let mut lib_cfg = LIB_CFG.write();
+            lib_cfg.scheme_sync_default = config.scheme_sync_default.clone();
+            lib_cfg.scheme = config.scheme.clone();
+
+            // Perform some additional semantic checks.
+            lib_cfg.assert_validity()?;
         }
-    }
 
-    /// In unit tests we use the default configuration values.
-    #[cfg(test)]
-    #[inline]
-    fn from_file(_config_path: &Path) -> Result<Cfg, ConfigFileError> {
-        Ok(Self::default())
+        // First check passed.
+        Ok(config)
     }
 
     /// Writes the default configuration to `Path`. If destination exists,
@@ -293,7 +370,7 @@ impl Cfg {
     /// Backs up the existing configuration file and writes a new one with default
     /// values.
     pub fn backup_and_replace_with_default() -> Result<PathBuf, ConfigFileError> {
-        if let Some(ref config_path) = *CONFIG_PATH {
+        if let Some(config_path) = CONFIG_PATHS.iter().filter(|p| p.exists()).last() {
             Self::write_default_to_file(config_path)?;
 
             Ok(config_path.clone())
@@ -308,30 +385,16 @@ lazy_static! {
     /// filename (optionally with absolute path) can be given on the command line
     /// with "--config".
     pub static ref CFG: Cfg = {
-        let config_path = if let Some(c) = &ARGS.config {
-            Path::new(c)
-        } else {
-            match &*CONFIG_PATH {
-                Some(p) => p.as_path(),
-                None => {
+            Cfg::from_files(&CONFIG_PATHS)
+                .unwrap_or_else(|e|{
                     // Remember that something went wrong.
                     let mut cfg_file_loading = CFG_FILE_LOADING.write();
-                    *cfg_file_loading = Err(ConfigFileError::PathToConfigFileNotFound);
-                    return Cfg::default();
-                },
-            }
-        };
+                    *cfg_file_loading = Err(e);
 
-        Cfg::from_file(config_path)
-            .unwrap_or_else(|e|{
-                // Remember that something went wrong.
-                let mut cfg_file_loading = CFG_FILE_LOADING.write();
-                *cfg_file_loading = Err(e);
-
-                // As we could not load the configuration file, we will use the default
-                // configuration.
-                Cfg::default()
-            })
+                    // As we could not load the configuration file, we will use the default
+                    // configuration.
+                    Cfg::default()
+                })
         };
 }
 
@@ -341,46 +404,111 @@ lazy_static! {
 }
 
 lazy_static! {
-/// This is where the Tp-Note searches for its configuration file.
-    pub static ref CONFIG_PATH : Option<PathBuf> = {
-        use std::fs::File;
-        let config_path = if let Some(c) = &ARGS.config {
-                // Config path comes from command line.
-                Some(PathBuf::from(c))
-        } else {
-            // Is there a `FILENAME_ROOT_PATH_MARKER` file?
-            let root_path = DOC_PATH.as_deref().ok()
-                .map(|doc_path| {
-                            let mut root_path = Context::from(doc_path).root_path;
-                            root_path.push(FILENAME_ROOT_PATH_MARKER);
-                            root_path
-                });
-            // Is this file empty?
-            root_path.as_ref()
-                .and_then(|root_path| File::open(root_path).ok())
-                .and_then(|file| file.metadata().ok())
-                .and_then(|metadata|
-                    if metadata.len() == 0 {
-                        // `FILENAME_ROOT_PATH_MARKER` is empty.
-                        None
-                    } else {
-                        // `FILENAME_ROOT_PATH_MARKER` contains config data.
-                        root_path
-                    })
+/// This is where the Tp-Note searches for its configuration files.
+    pub static ref CONFIG_PATHS : Vec<PathBuf> = {
+
+        let mut config_path: Vec<PathBuf> = vec![];
+
+        #[cfg(unix)]
+        config_path.push(PathBuf::from("/etc/tpnote/tpnote.toml"));
+
+
+        // Config path comes from the environment variable.
+            if let Ok(env_config) = env::var(ENV_VAR_TPNOTE_CONFIG) {
+               config_path.push(PathBuf::from(env_config));
+            };
+        // Config comes from the standard configuration file location.
+        if let Some(usr_config) = ProjectDirs::from("rs", "", CARGO_BIN_NAME){
+
+            let mut config = PathBuf::from(usr_config.config_dir());
+            config.push(Path::new(CONFIG_FILENAME));
+            config_path.push(config);
         };
 
-        config_path.or_else(||
-            // Config path comes from the environment variable.
-            if let Ok(c) = env::var(ENV_VAR_TPNOTE_CONFIG) {
-               Some(PathBuf::from(c))
-            } else {
-                // Config comes from the standard configuration file location.
-                let config = ProjectDirs::from("rs", "", CARGO_BIN_NAME)?;
+        // Is there a `FILENAME_ROOT_PATH_MARKER` file?
+        if let Some(root_path) = DOC_PATH.as_deref().ok()
+            .map(|doc_path| {
+                        let mut root_path = Context::from(doc_path).root_path;
+                        root_path.push(FILENAME_ROOT_PATH_MARKER);
+                        root_path
+            }){
+            config_path.push(root_path);
+        };
 
-                let mut config = PathBuf::from(config.config_dir());
-                config.push(Path::new(CONFIG_FILENAME));
-                Some(config)
-            }
-        )
+        if let Some(commandline_path) = &ARGS.config {
+                // Config path comes from command line.
+                config_path.push(PathBuf::from(commandline_path));
+        };
+
+        config_path
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Cfg;
+    use std::env::temp_dir;
+    use std::fs;
+
+    #[test]
+    fn test_cfg_from_file() {
+        // Prepare test: some mini config file.
+        let raw = "\
+        [arg_default]
+        scheme = 'zettel'
+        ";
+        let userconfig = temp_dir().join("tpnote.toml");
+        fs::write(&userconfig, raw.as_bytes()).unwrap();
+
+        let cfg = Cfg::from_files(&[userconfig]).unwrap();
+        assert_eq!(cfg.arg_default.scheme, "zettel");
+
+        // Prepare test: create existing note.
+        let raw = "\
+        [viewer]
+        served_mime_types = [ ['abc', 'abc/text'], ]
+        ";
+        let userconfig = temp_dir().join("tpnote.toml");
+        fs::write(&userconfig, raw.as_bytes()).unwrap();
+
+        let cfg = Cfg::from_files(&[userconfig]).unwrap();
+        assert_eq!(cfg.viewer.served_mime_types.len(), 1);
+        assert_eq!(cfg.viewer.served_mime_types[0].0, "abc");
+
+        // Prepare test: create existing note.
+        let raw = "\
+        [[scheme]]
+        name = 'default'
+        [scheme.filename]
+        sort_tag.separator = '---'
+        [scheme.tmpl]
+        fm_var.localization = [ ['fm_foo', 'foofoo'], ]
+        ";
+        let userconfig = temp_dir().join("tpnote.toml");
+        fs::write(&userconfig, raw.as_bytes()).unwrap();
+
+        let cfg = Cfg::from_files(&[userconfig]).unwrap();
+        assert_eq!(cfg.scheme.len(), 2);
+        assert_eq!(cfg.scheme[0].name, "zettel");
+        assert_eq!(cfg.scheme[0].filename.sort_tag.separator, "--");
+        assert_eq!(cfg.scheme[1].name, "default");
+        assert_eq!(cfg.scheme[1].filename.sort_tag.separator, "---");
+        assert_eq!(cfg.scheme[1].tmpl.fm_var.localization.len(), 1);
+        assert_eq!(
+            cfg.scheme[1].tmpl.fm_var.localization[0],
+            ("fm_foo".to_string(), "foofoo".to_string())
+        );
+
+        // Prepare test: merge (replace) the default config into itself.
+        let raw = Cfg::default_as_toml();
+        let userconfig = temp_dir().join("tpnote.toml");
+        fs::write(&userconfig, raw.as_bytes()).unwrap();
+
+        let cfg = Cfg::from_files(&[userconfig]).unwrap();
+        // `len=2` means that `scheme.default` is replaced by `scheme.default`
+        // and `scheme.zettel` is replaced `scheme.zettel`.
+        assert_eq!(cfg.scheme.len(), 2);
+        assert_eq!(cfg.scheme[0].name, "default");
+        assert_eq!(cfg.scheme[1].name, "zettel");
+    }
 }
