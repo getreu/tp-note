@@ -313,6 +313,14 @@ impl Cfg {
                 merge_toml_values(a, b, CONFIG_FILE_MERGE_DEPTH)
             });
 
+        // We can not use the logger here, it is too early.
+        if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch {
+            eprintln!(
+                "*** Merged configuration from all config files:\n\n{:#?}",
+                config
+            );
+        }
+
         let mut config: Cfg = config.try_into()?;
 
         render_tmpl(&mut config.app_args.unix.browser);
@@ -337,6 +345,16 @@ impl Cfg {
 
             // Perform some additional semantic checks.
             lib_cfg.assert_validity()?;
+        }
+
+        // We can not use the logger here, it is too early.
+        if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch {
+            eprintln!(
+                "\n\n\n\n\n*** Configuration after applied templates:\n\n\
+                {:#?}\
+                \n\n\n\n\n",
+                config
+            );
         }
 
         // First check passed.

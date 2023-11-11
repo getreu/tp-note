@@ -510,15 +510,14 @@ synchronization).
     informs you only about failures.  A '`warn`' level message means, that not
     all functionality might be available or work as expected.
 
->   Use '`-b -d trace`' for debugging templates. If the HTTP server
-    (viewer) does not work as expected: '`-n -d debug`'. If your text editor
-    does not open as expected: '`-n -d info --edit`'. Or, to observe the
-    launch of the web browser: '`-n -d info --view`'. The option
-    '`-d trace`' shows all available template variables, the templates
-    used and the rendered result of the substitution. This is
-    particularly useful for debugging new templates. The option
-    '`-d off`' silences all error message reporting and also suppresses the
-    error pop-up windows.
+>   Use '`-b -d trace`' for debugging templates and configuration files.  If
+    the HTTP server (viewer) does not work as expected: '`-n -d debug`'. If
+    your text editor does not open as expected: '`-n -d info --edit`'. Or, to
+    observe the launch of the web browser: '`-n -d info --view`'. The option
+    '`-d trace`' shows all available template variables, the templates used and
+    the rendered result of the substitution. This is particularly useful for
+    debugging new templates. The option '`-d off`' silences all error message
+    reporting and also suppresses the error pop-up windows.
 
 >   Note, under Linux, when `-d trace` is given, no pop-up messages appear.
     Instead, the logs are dumped to the console from where you started Tp-Note.
@@ -547,7 +546,6 @@ synchronization).
 >   The value for '`arg_default.debug`' must be one out of '`trace`',
     '`debug`', '`info`', '`warn`', '`error`' (default) and '`off`'. They have
     the same meaning as the corresponding command line options.
-
 
 **-e**, **\--edit**
 
