@@ -310,7 +310,7 @@ impl Cfg {
             });
 
         // We can not use the logger here, it is too early.
-        if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch {
+        if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
             eprintln!(
                 "*** Merged configuration from all config files:\n\n{:#?}",
                 config
@@ -344,7 +344,7 @@ impl Cfg {
         }
 
         // We can not use the logger here, it is too early.
-        if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch {
+        if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
             eprintln!(
                 "\n\n\n\n\n*** Configuration after applied templates:\n\n\
                 {:#?}\

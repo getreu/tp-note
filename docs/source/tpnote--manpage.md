@@ -510,14 +510,15 @@ synchronization).
     informs you only about failures.  A '`warn`' level message means, that not
     all functionality might be available or work as expected.
 
->   Use '`-b -d trace`' for debugging templates and configuration files.  If
-    the HTTP server (viewer) does not work as expected: '`-n -d debug`'. If
-    your text editor does not open as expected: '`-n -d info --edit`'. Or, to
-    observe the launch of the web browser: '`-n -d info --view`'. The option
-    '`-d trace`' shows all available template variables, the templates used and
-    the rendered result of the substitution. This is particularly useful for
-    debugging new templates. The option '`-d off`' silences all error message
-    reporting and also suppresses the error pop-up windows.
+>   Use '`-b -d trace`' for debugging templates and '`-V -b -d trace`' for
+    debugging configuration files.  If the HTTP server (viewer) does not work
+    as expected: '`-n -d debug`'. If your text editor does not open as expected:
+    '`-n -d info --edit`'. Or, to observe the launch of the web browser: '`-n
+    -d info --view`'. The option '`-d trace`' shows all available template
+    variables, the templates used and the rendered result of the substitution.
+    This is particularly useful for debugging new templates. The option '`-d
+    off`' silences all error message reporting and also suppresses the error
+    pop-up windows.
 
 >   Note, under Linux, when `-d trace` is given, no pop-up messages appear.
     Instead, the logs are dumped to the console from where you started Tp-Note.
@@ -626,7 +627,8 @@ synchronization).
 
 >   Print Tp-Note's version, its built-in features and the path to the
     sourced configuration file. The output is YAML formatted for further
-    automatic processing.
+    automatic processing. In addition, use '`-V -b -d trace`' for 
+    configuration file debugging.
 
 **-x** *DIRECTORY*, **\--export**=*DIRECTORY*
 
@@ -1107,10 +1109,12 @@ default values. This  happens in the following order:
 When Tp-Note starts, it first merges all available configuration files into
 the default configuration. Then the resulting syntax is checked.  If not
 correct, the last sourced configuration file is renamed (thus disabled) and
-Tp-Note starts with its internal default configuration.
+Tp-Note starts with its internal default configuration. For debugging, you can
+print out the merge result with '`-V -b -d trace`'.
 
 To write a custom configuration file, first start with a complete default
-configuration you can generate by invoking Tp-Note with '`-V -b -c`'.
+configuration you can generate by invoking Tp-Note with '`-V -b -c`'
+(no '`-d`').
 
 ```sh
 tpnote -V -b -c ~/.config/tpnote/tpnote.toml
@@ -1219,6 +1223,7 @@ All items in the above list are subject to limited template expansion allowing
 to insert the value of environment variables. Consider the following example:
 
 ```toml
+[app_args]
 windows.editor = [
     [
     '{{ get_env(name="LOCALAPPDATA") }}\Programs\Microsoft VS Code\Code.exe',
@@ -1232,6 +1237,7 @@ When the configuration file is loaded, the above expression
 the username '`Joe`' to '`C:\User\Joe\AppData\Local`' resulting in:
 
 ```toml
+[app_args]
 windows.editor = [
     [
     'C:\User\Joe\AppData\Local\Programs\Microsoft VS Code\Code.exe',
@@ -1451,6 +1457,8 @@ For example: the variable '`filename.extensions`' lists some extensions, that
 are regarded as Markdown files:
 
 ```toml
+[[scheme]]
+name = "default"
 [scheme.filename]
 extensions = [
   [ "txt", "Markdown" ],
@@ -1465,14 +1473,18 @@ extensions = [
 The default file extension for new note files is defined as:
 
 ```toml
+[[scheme]]
+name = "default"
 [scheme.filename]
 extension_default = 'md'
 ```
 
-If you prefer rather the file extension '`.markdown`' for new notes, change
-this to:
+If you prefer rather the file extension '`.markdown`' for new notes, write
+a configuration file with:
 
 ```toml
+[[scheme]]
+name = "default"
 [scheme.filename]
 extension_default = 'markdown'
 ```
@@ -1497,6 +1509,8 @@ containing a list of ISO 639-1 encoded languages, the algorithm considers as
 potential detection candidates, e.g.:
 
 ```toml
+[[scheme]]
+name = "default"
 [scheme.tmpl]
 filter.get_lang = [
     'en',
@@ -1515,6 +1529,8 @@ enable all available detection candidates with the pseudo language code '`+all`'
 which stands for “add all languages”:
 
 ```toml
+[[scheme]]
+name = "default"
 [scheme.tmpl]
 filter.get_lang = [
     '+all',
@@ -1533,6 +1549,8 @@ this region information, to work properly.
 The corresponding configuration looks like this:
 
 ```toml
+[[scheme]]
+name = "default"
 [scheme.tmpl]
 filter.map_lang = [
     [
@@ -1608,6 +1626,8 @@ This translation relation is defined in the configuration file variable
 simplified example:
 
 ```toml
+[[scheme]]
+name = "default"
 fm_vars.localization = [
     ["fm_title", "title"],
     ["fm_subtitle", "subtitle"],
@@ -1621,6 +1641,8 @@ To change the natural language of the displayed header variable names,
 modify the second column of the above table. Example:
 
 ```toml
+[[scheme]]
+name = "default"
 fm_vars.localization = [
     ["fm_title", "Titel"],
     ["fm_subtitle", "Untertitel"],
@@ -1654,19 +1676,24 @@ designed in a way that they contain almost no markup specific code. There
 is one little exception though. The following configuration variables
 affect the way new notes are created:
 
-1. Change the default file extension for new notes from:
+1. The file extension for new notes is defined as:
 
    ```toml
+   [[scheme]]
+   name = "default"
    [scheme.filename]
    extension_default='md'
    ```
 
-   to:
+   Overwrite this setting with the configuration file:
 
    ```toml
+   [[scheme]]
+   name = "default"
    [scheme.filename]
    extension_default='rst'
    ```
+
    Alternatively, the above can be achieved by setting the environment variable
    '`TPNOTE_EXTENSION_DEFAULT`':
 
@@ -1927,7 +1954,8 @@ message as raw UTF-8 and the variable
 with clickable hyperlinks:
 
 ```toml
-[viewer_error]
+[tmpl_html]
+viewer_error = '''
 <!DOCTYPE html>
 <html lang=\"en\">
 <head>

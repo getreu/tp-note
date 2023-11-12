@@ -156,7 +156,7 @@ fn main() {
 
     // Process `arg = `--config`.
     // The output is YAML formatted for further automatic processing.
-    if ARGS.batch && ARGS.version {
+    if ARGS.batch && ARGS.version && ARGS.debug.is_none() {
         if let Some(path) = &ARGS.config {
             let path = Path::new(&path);
 
