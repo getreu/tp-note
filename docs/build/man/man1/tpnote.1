@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "TP-NOTE" "1" "2023-11-08" "Version 1.22.13" "Tp-Note documentation"
+.TH "TP-NOTE" "1" "2023-11-12" "Version 1.23.0" "Tp-Note documentation"
 .hy
 .SH NAME
 .PP
@@ -616,8 +616,8 @@ be available or work as expected.
 .RE
 .RS
 .PP
-Use `\f[V]-b -d trace\f[R]' for debugging templates and configuration
-files.
+Use `\f[V]-b -d trace\f[R]' for debugging templates and
+`\f[V]-V -b -d trace\f[R]' for debugging configuration files.
 If the HTTP server (viewer) does not work as expected:
 `\f[V]-n -d debug\f[R]'.
 If your text editor does not open as expected:
@@ -804,6 +804,8 @@ As most users do not expect the viewed file to change,
 Print Tp-Note\[cq]s version, its built-in features and the path to the
 sourced configuration file.
 The output is YAML formatted for further automatic processing.
+In addition, use `\f[V]-V -b -d trace\f[R]' for configuration file
+debugging.
 .RE
 .PP
 \f[B]-x\f[R] \f[I]DIRECTORY\f[R], \f[B]--export\f[R]=\f[I]DIRECTORY\f[R]
@@ -1533,10 +1535,12 @@ into the default configuration.
 Then the resulting syntax is checked.
 If not correct, the last sourced configuration file is renamed (thus
 disabled) and Tp-Note starts with its internal default configuration.
+For debugging, you can print out the merge result with
+`\f[V]-V -b -d trace\f[R]'.
 .PP
 To write a custom configuration file, first start with a complete
 default configuration you can generate by invoking Tp-Note with
-`\f[V]-V -b -c\f[R]'.
+`\f[V]-V -b -c\f[R]' (no `\f[V]-d\f[R]').
 .IP
 .nf
 \f[C]
@@ -1675,6 +1679,7 @@ Consider the following example:
 .IP
 .nf
 \f[C]
+[app_args]
 windows.editor = [
     [
     \[aq]{{ get_env(name=\[dq]LOCALAPPDATA\[dq]) }}\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[aq],
@@ -1691,6 +1696,7 @@ Windows for a user with the username `\f[V]Joe\f[R]' to
 .IP
 .nf
 \f[C]
+[app_args]
 windows.editor = [
     [
     \[aq]C:\[rs]User\[rs]Joe\[rs]AppData\[rs]Local\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[aq],
@@ -1952,6 +1958,8 @@ extensions, that are regarded as Markdown files:
 .IP
 .nf
 \f[C]
+[[scheme]]
+name = \[dq]default\[dq]
 [scheme.filename]
 extensions = [
   [ \[dq]txt\[dq], \[dq]Markdown\[dq] ],
@@ -1968,16 +1976,20 @@ The default file extension for new note files is defined as:
 .IP
 .nf
 \f[C]
+[[scheme]]
+name = \[dq]default\[dq]
 [scheme.filename]
 extension_default = \[aq]md\[aq]
 \f[R]
 .fi
 .PP
 If you prefer rather the file extension `\f[V].markdown\f[R]' for new
-notes, change this to:
+notes, write a configuration file with:
 .IP
 .nf
 \f[C]
+[[scheme]]
+name = \[dq]default\[dq]
 [scheme.filename]
 extension_default = \[aq]markdown\[aq]
 \f[R]
@@ -2005,6 +2017,8 @@ candidates, e.g.:
 .IP
 .nf
 \f[C]
+[[scheme]]
+name = \[dq]default\[dq]
 [scheme.tmpl]
 filter.get_lang = [
     \[aq]en\[aq],
@@ -2028,6 +2042,8 @@ for \[lq]add all languages\[rq]:
 .IP
 .nf
 \f[C]
+[[scheme]]
+name = \[dq]default\[dq]
 [scheme.tmpl]
 filter.get_lang = [
     \[aq]+all\[aq],
@@ -2052,6 +2068,8 @@ The corresponding configuration looks like this:
 .IP
 .nf
 \f[C]
+[[scheme]]
+name = \[dq]default\[dq]
 [scheme.tmpl]
 filter.map_lang = [
     [
@@ -2145,6 +2163,8 @@ Consider the following simplified example:
 .IP
 .nf
 \f[C]
+[[scheme]]
+name = \[dq]default\[dq]
 fm_vars.localization = [
     [\[dq]fm_title\[dq], \[dq]title\[dq]],
     [\[dq]fm_subtitle\[dq], \[dq]subtitle\[dq]],
@@ -2161,6 +2181,8 @@ Example:
 .IP
 .nf
 \f[C]
+[[scheme]]
+name = \[dq]default\[dq]
 fm_vars.localization = [
     [\[dq]fm_title\[dq], \[dq]Titel\[dq]],
     [\[dq]fm_subtitle\[dq], \[dq]Untertitel\[dq]],
@@ -2196,20 +2218,24 @@ There is one little exception though.
 The following configuration variables affect the way new notes are
 created:
 .IP "1." 3
-Change the default file extension for new notes from:
+The file extension for new notes is defined as:
 .RS 4
 .IP
 .nf
 \f[C]
+[[scheme]]
+name = \[dq]default\[dq]
 [scheme.filename]
 extension_default=\[aq]md\[aq]
 \f[R]
 .fi
 .PP
-to:
+Overwrite this setting with the configuration file:
 .IP
 .nf
 \f[C]
+[[scheme]]
+name = \[dq]default\[dq]
 [scheme.filename]
 extension_default=\[aq]rst\[aq]
 \f[R]
@@ -2545,7 +2571,8 @@ the text source with clickable hyperlinks:
 .IP
 .nf
 \f[C]
-[viewer_error]
+[tmpl_html]
+viewer_error = \[aq]\[aq]\[aq]
 <!DOCTYPE html>
 <html lang=\[rs]\[dq]en\[rs]\[dq]>
 <head>
