@@ -620,8 +620,9 @@ synchronization).
     However, with '`--view`' given at the command line, the viewer appears,
     regardless of the value of '`arg_default.edit`'.
 
->   As most users do not expect the viewed file to change, '`--view`'
-    is usually used together with '`--no-filename-sync`'.
+>   NB: By default, Tp-Note tries to synchronize every file it opens. To 
+    prevent the viewed filename from changing, '`--view`' can be used together
+    with '`--no-filename-sync`'.
 
 **-V**, **\--version**
 
@@ -644,20 +645,23 @@ synchronization).
     '`short`' or '`long`' (default). No link rewriting occurs, for the *MODE*
     '`off`'. The *MODE* '`short`' rewrites all local relative links to absolute
     links, whose base is the first parent directory containing the marker
-    file '`tpnote.toml`'. NB, the directory of the marker file defines the
+    file '`.tpnote.toml`'. NB, the directory of the marker file defines the
     base for all absolute local links in your Tp-Note file! The mode '`long`'
     rewrites *all* local links to absolute links whose base is the system's root
     directory '`/`'. For relative local links this is performed by prepending
     the path to the note file. Absolute local links get the path to the marker
-    file '`tpnote.toml`' prepended. In case you do not place a '`tpnote.toml`'
+    file '`.tpnote.toml`' prepended. In case you do not place a '`.tpnote.toml`'
     file in a parent directory, the base for absolute local links in your note
-    file is interpreted as '`/`'. 
-
->   Summary: The right *MODE# choice depends on how you view the resulting
-    HTML: if you publish on a web server, then '`short`' might be a good choice.
-    If you view the HTML file directly in your web browser, better choose
-    '`long`'. NB: You can also set this option via Tp-Note's configuration file
-    with the key '`arg_default.export_link_rewriting`'.
+    file is interpreted as '`/`'.
+    
+>   The right *MODE* choice depends on how you view the resulting HTML:
+    if you publish on a web server, then '`short`' might be a good choice. Do 
+    not forget to place a marker file '`.tpnote.toml`' somewhere in the
+    document's path. If you view the HTML file directly in your web browser,
+    better choose '`long`'. In this case, the present of a marker file will not
+    affect the output.
+    NB: You can also set this option via Tp-Note's configuration file
+    with the key '`arg_default.export_link_rewriting`'. 
 
 
 
@@ -756,7 +760,7 @@ understands:
 Remarks:
  
 * The base for absolute local links is the first parent directory containing
-  the marker file '`tpnote.toml`'. If absent, absolute local links refer
+  the marker file '`.tpnote.toml`'. If absent, absolute local links refer
   to the root directory '`/`'.
 * *Shorthand link*: Instead of writing out the full link destination, e.g. 
   '`[my doc](<./docs/20230508-my note.md>)`', you can shorten the link to
@@ -794,18 +798,18 @@ allows you to fine-tune how local links are written out. Valid values are:
 In order to achieve this, the user must respect the following convention
 concerning absolute paths in local links in Tp-Note documents: When a document
 contains a  local link with an absolute path, the base of this path  is
-considered to be the directory where the marker file '`tpnote.toml`' resides
+considered to be the directory where the marker file '`.tpnote.toml`' resides
 (or '`/`' in non exists). The option '`--export-link- rewriting`' decides how
 local links in the Tp-Note  document are converted when the HTML is generated.
 If its value is '`short`', then local links with relative paths are converted to
-absolute paths. The base of the resulting path is where the '`tpnote.toml`' file
+absolute paths. The base of the resulting path is where the '`.tpnote.toml`' file
 resides (or `/` if none exists).  Consider the following example 
 '`--export-link-rewriting=short`':
 
 * The Tp-Note file '`/my/docs/car/bill.md`' contains
 * a local link with an absolute path: '`/car/scan.jpg`',
 * and another link with a relative path: '`./photo.jpg`'.
-* The document root marker is: '`/my/docs/tpnote.toml`'.
+* The document root marker is: '`/my/docs/.tpnote.toml`'.
 
 The images in the resulting HTML will appear as
 
@@ -818,12 +822,19 @@ paths in local links are rebased to '`/`''. Consider the following example:
 * The Tp-Note file '`/my/docs/car/bill.md`' contains
 * a link with an absolute path: '`/car/scan.jpg`',
 * and another link with a relative path: '`./photo.jpg`'.
-* The document root marker is: '`/my/docs/tpnote.toml`'.
+* The document root marker is: '`/my/docs/.tpnote.toml`'.
 
 The images in the resulting HTML will appear as
 
 * '`/my/docs/car/scan.jpg`'.
 * '`/my/docs/car/photo.jpg`'.
+
+Summary: The right '`--export-link-rewriting`' choice depends on how you view
+the resulting HTML: if you publish on a web server, then '`short`' might be
+a good choice (do not forget to place a marker file '`.tpnote.toml`' somewhere 
+in the document's path). If you view the  HTML file directly in your web 
+browser, better choose '`long`'. In this case, the present of a marker file will
+not affect the output.
 
 
 ### Local links with format strings
@@ -1101,7 +1112,7 @@ default values. This  happens in the following order:
    - Windows: '`C:\Users\<LOGIN>\AppData\Roaming\tpnote\config\tpnote.toml>`'
    - MacOS: '`/Users/<LOGIN>/Library/Application Support/tpnote`'
 4. At startup all parent directories of the note file path '`<PATH>`'are
-   searched for a marker file named '`tpnote.toml`'. If found, the document root
+   searched for a marker file named '`.tpnote.toml`'. If found, the document root
    moves from '`/`' the found location. If present and its content is not empty,
    Tp-Note interprets the file's content as configuration file.
 5. The file indicated by the command line parameter '`--config <FIlE>`'. 
@@ -1205,6 +1216,7 @@ checks if the title of the note files has changed in its YAML header
 and renames the note file if necessary.
 
 ```toml
+[app_args]
 unix.editor = [
   [
     'kate',
@@ -2509,7 +2521,7 @@ able to publish. To summarize, a file is only served:
 3. if the number of so far viewed Tp-Note files,
    '`viewer.displayed_tpnote_count_max`' is not exceeded,
 4. when it's located under a directory containing a marker file named
-   '`tpnote.toml`' (without marker file this condition is void).
+   '`.tpnote.toml`' (without marker file this condition is void).
 
 The HTTP server runs as long as the launched web browser window is open.
 Note, that the server not only exposes the displayed note file, but also all
@@ -2525,10 +2537,10 @@ serves only files whose file extensions are registered with the
 disabling the _follow links to other Tp-Note files_ feature by removing all
 '`text/*`' mime types from that list.
 
-Another security feature is the '`tpnote.toml`' marker file. When Tp-Note
+Another security feature is the '`.tpnote.toml`' marker file. When Tp-Note
 opens a note file, it checks all directories above, one by one, until it
-finds the marker file '`tpnote.toml`'. Tp-Note's viewer will never serve a file
-located outside the root directory and its children. When no '`tpnote.toml`'
+finds the marker file '`.tpnote.toml`'. Tp-Note's viewer will never serve a file
+located outside the root directory and its children. When no '`.tpnote.toml`'
 file is found, the root directory is set to '`/`', which disables this
 security feature.
 

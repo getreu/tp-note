@@ -425,7 +425,7 @@ sort_tag: 01ac
 EOF
 
 # This is the base dir for the exporter.
-:> "$PWD/tpnote.toml"
+:> "$PWD/.tpnote.toml"
 
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
@@ -439,7 +439,7 @@ then
     echo Commandline test 016 succeeded.
     rm "$INPUT_FILENAME"
     rm "$OUTPUT_FILENAME"
-    rm "$PWD/tpnote.toml"
+    rm "$PWD/.tpnote.toml"
     
 else
     echo Commandline test 016 failed.

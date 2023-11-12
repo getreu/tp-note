@@ -43,7 +43,7 @@ pub const FILENAME_LEN_MAX: usize =
 
 /// The appearance of a file with this filename marks the position of
 /// `TMPL_VAR_ROOT_PATH`.
-pub const FILENAME_ROOT_PATH_MARKER: &str = "tpnote.toml";
+pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnote.toml";
 
 /// When a filename is taken already, Tp-Note adds a copy
 /// counter number in the range of `0..COPY_COUNTER_MAX`
@@ -555,48 +555,13 @@ impl LibCfgCache {
 }
 
 /// Defines the way the HTML exporter rewrites local links.
-///
-/// The enum `LocalLinkKind` allows you to fine tune how local links are written
-/// out. Valid variants are: `off`, `short` and `long`. In order to achieve
-/// this, the user must respect the following convention concerning absolute
-/// paths in local links in Tp-Note documents: When a document contains a
-/// local link with an absolute path, the base of this path
-/// is considered to be the the directory where the marker file `tpnote.toml`
-/// resides (or `/` in non exists). The option `--export-link- rewriting`
-/// decides how local links in the Tp-Note  document are converted when the
-/// HTML is generated.  If its value is `short`, then local links with relative
-/// paths are converted to absolute paths. The base of the resulting path is
-/// where the `tpnote.toml` file resides (or `/` if none exists).
-/// Consider the following example `LocalLinkKind::Short`:
-///
-/// * The Tp-Note file `/my/docs/car/bill.md` contains
-/// * a local link with an absolute path: `/car/scan.jpg`,
-/// * and another link with a relative path: `./photo.jpg`.
-/// * The document root marker is: `/my/docs/tpnote.toml`.
-///
-/// The images in the resulting HTML will appear as
-///
-/// * `/car/scan.jpg`.
-/// * `/car/photo.jpg`.
-///
-/// For `LocalLinkKind::Long`, in addition to the above, all absolute paths in
-/// local links are rebased to `/`'. Consider the following example:
-///
-/// * The Tp-Note file `/my/docs/car/bill.md` contains
-/// * a link with an absolute path: `/car/scan.jpg`,
-/// * and another link with a relative path: `./photo.jpg`.
-/// * The document root marker is: `/my/docs/tpnote.toml`.
-///
-/// The images in the resulting HTML will appear as
-///
-/// * `/my/docs/car/scan.jpg`.
-/// * `/my/docs/car/photo.jpg`.
-///
+/// The command line option `--export-link-rewriting` expects this enum.
+/// Consult the manpage for details.
 #[derive(Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy, Default)]
 pub enum LocalLinkKind {
     /// Do not rewrite links.
     Off,
-    /// Rewrite relative local links. Base: localtion of "tpnote.toml"
+    /// Rewrite relative local links. Base: location of `.tpnote.toml`
     Short,
     /// Rewrite all local links. Base: "/"
     #[default]
