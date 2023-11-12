@@ -10,7 +10,7 @@ name = "tpnote-lib"
 readme = "README.md"
 repository.workspace = true
 rust-version.workspace = true
-version = "0.30.2"
+version = "0.30.4"
 
 [features]
 default = ["renderer", "viewer", "lang-detection"]
