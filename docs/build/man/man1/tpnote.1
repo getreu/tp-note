@@ -1496,57 +1496,61 @@ are encoded in customizable so-called filename templates (cf.\ section
 \f[I]Templates\f[R]).
 .SH CUSTOMIZATION
 .PP
-Tp-Note\[cq]s configuration file resides typically in
-`\f[V]\[ti]/.config/tpnote/tpnote.toml\f[R]' under Unix or in
-`\f[V]C:\[rs]Users\[rs]<LOGIN>\[rs]AppData\[rs]Roaming\[rs]tpnote\[rs]config\[rs]tpnote.toml>\f[R]'
-under Windows.
-`\f[V]tpnote --version\f[R]' prints the current configuration file path.
-.PP
-Besides the standard configuration path, Tp-Note searches for its
-configuration data at the following locations:
+Tp-Note is shipped with a default internal configuration that can be
+customized by merging a series of configuration files from various
+locations into the default values.
+This happens in the following order:
 .IP "1." 3
-If the command line parameter `\f[V]--config <path>\f[R]' is given,
-`\f[V]<path>\f[R]' indicates the location of the configuration file.
+Unix and MacOS only: `\f[V]/etc/tpnote/tpnote.toml\f[R]'
 .IP "2." 3
-If the environment variable `\f[V]TPNOTE_CONFIG=\[dq]<path>\[dq]\f[R]'
-is set, `\f[V]<path>\f[R]' indicates the location of the configuration
-file.
+The file where the environment variable `\f[V]TPNOTE_CONFIG\f[R]' points
+to.
 .IP "3." 3
-At startup all parent directories of the note file path are searched for
-a file named `\f[V]tpnote.toml\f[R]'.
-If found, the document root moves from `\f[V]/\f[R]' the found location.
+The user\[cq]s configuration file:
+.RS 4
+.IP \[bu] 2
+Unix: `\f[V]\[ti]/.config/tpnote/tpnote.toml\f[R]'
+.IP \[bu] 2
+Windows:
+`\f[V]C:\[rs]Users\[rs]<LOGIN>\[rs]AppData\[rs]Roaming\[rs]tpnote\[rs]config\[rs]tpnote.toml>\f[R]'
+.IP \[bu] 2
+MacOS: `\f[V]/Users/<LOGIN>/Library/Application Support/tpnote\f[R]'
+.RE
+.IP "4." 3
+At startup all parent directories of the note file path
+`\f[V]<PATH>\f[R]\[cq]are searched for a marker file
+named'\f[V]tpnote.toml\f[R]`.
+If found, the document root moves from'\f[V]/\f[R]\[cq] the found
+location.
 If present and its content is not empty, Tp-Note interprets the
 file\[cq]s content as configuration file.
-Continue otherwise.
-.IP "4." 3
-Tp-Note tries to find its configuration data at the operating
-system\[cq]s standard location indicated here above.
+.IP "5." 3
+The file indicated by the command line parameter
+`\f[V]--config <FIlE>\f[R]'.
 .PP
-When Tp-Note starts, it first tries to find its configuration file.
-Once found, the syntax of the configuration is checked.
-If not correct, the configuration file is renamed and replaced by a file
-with correct syntax and default values.
-If Tp-Note fails to find a configuration file at any of the above
-locations, it writes a default configuration file at the expected
-standard location.
+When Tp-Note starts, it first merges all available configuration files
+into the default configuration.
+Then the resulting syntax is checked.
+If not correct, the last sourced configuration file is renamed (thus
+disabled) and Tp-Note starts with its internal default configuration.
 .PP
-Tp-Note is best customized by starting it once, and then modifying its
-default configuration.
+To write a custom configuration file, first start with a complete
+default configuration you can generate by invoking Tp-Note with
+`\f[V]-V -b -c\f[R]'.
 .IP
 .nf
 \f[C]
-tpnote -V -b
+tpnote -V -b -c \[ti]/.config/tpnote/tpnote.toml
 \f[R]
 .fi
 .PP
-To create a configuration file in the current directory invoke Tp-Note
-with `\f[V]-V -b -c\f[R]'.
-.IP
-.nf
-\f[C]
-tpnote -V -b -c tpnote.toml
-\f[R]
-.fi
+After modifying the concerned variables, delete step by step all the
+remaining variables to keep your configuration file as small as
+possible.
+Also make sure you delete the `\f[V]version\f[R]' variable at the
+beginning.
+As some Tp-Note upgrade include a configuration file structure change, a
+small configuration file increases the chance that it still merges.
 .PP
 Some filename and template related variables are grouped into a
 `\f[V]scheme\f[R]'.
@@ -1560,6 +1564,53 @@ The scheme selected when synchronizing a Tp-Note header with its
 filename depends on the value of the header variable `\f[V]scheme:\f[R]'
 which defaults to `\f[V]default\f[R]'
 (cf.\ `\f[V]scheme_sync_default\f[R]').
+.PP
+Note, that the merging algorithm merges all values, except arrays.
+These are usually replaced by the subsequent configuration file.
+There is one exception though: top level arrays are also merged.
+An example to this is the top level array `\f[V][[scheme]]\f[R]'.
+In the following example we merge the variable
+`\f[V]extension_default = \[dq]txt\[dq]\f[R]' into the scheme
+`\f[V]default\f[R]' whereas all other variables remain untouched.
+.IP
+.nf
+\f[C]
+[[scheme]]
+name=\[aq]default\[aq]
+[scheme.filename]
+extension_default = \[dq]txt\[dq]
+\f[R]
+.fi
+.PP
+To add a custom scheme you must provide all variables:
+.IP
+.nf
+\f[C]
+[[scheme]]
+name=\[aq]my-custom-scheme\[aq]
+[scheme.filename]
+# Insert all variables here.
+[scheme.tmpl]
+# Insert all variables here.
+\f[R]
+.fi
+.PP
+The following example illustrates how non-top-level arrays are
+overwritten by the subsequent configuration file.
+The default configuration lists about 20 MIME types.
+After merging the following example, the configuration lists only the
+two MIME types `\f[V]jpeg\f[R]' and `\f[V]jpg\f[R]' in
+`\f[V]served_mime_types\f[R]'.
+.IP
+.nf
+\f[C]
+[viewer]
+served_mime_types = [
+    [\[dq]jpeg\[dq], \[dq]image/jpeg\[dq]],
+    [\[dq]jpg\[dq], \[dq]image/jpeg\[dq]],
+]
+\f[R]
+.fi
 .SS Register your own text editor
 .PP
 There are two ways to modify the default file editor, Tp-Note launches
@@ -1901,7 +1952,7 @@ extensions, that are regarded as Markdown files:
 .IP
 .nf
 \f[C]
-[filename]
+[scheme.filename]
 extensions = [
   [ \[dq]txt\[dq], \[dq]Markdown\[dq] ],
   [ \[dq]md\[dq], \[dq]Markdown\[dq] ],
@@ -1917,7 +1968,7 @@ The default file extension for new note files is defined as:
 .IP
 .nf
 \f[C]
-[filename]
+[scheme.filename]
 extension_default = \[aq]md\[aq]
 \f[R]
 .fi
@@ -1927,7 +1978,7 @@ notes, change this to:
 .IP
 .nf
 \f[C]
-[filename]
+[scheme.filename]
 extension_default = \[aq]markdown\[aq]
 \f[R]
 .fi
@@ -1954,7 +2005,7 @@ candidates, e.g.:
 .IP
 .nf
 \f[C]
-[tmpl]
+[scheme.tmpl]
 filter.get_lang = [
     \[aq]en\[aq],
     \[aq]fr\[aq],
@@ -1977,7 +2028,7 @@ for \[lq]add all languages\[rq]:
 .IP
 .nf
 \f[C]
-[tmpl]
+[scheme.tmpl]
 filter.get_lang = [
     \[aq]+all\[aq],
 ]
@@ -2001,7 +2052,7 @@ The corresponding configuration looks like this:
 .IP
 .nf
 \f[C]
-[tmpl]
+[scheme.tmpl]
 filter.map_lang = [
     [
     \[aq]en\[aq],
@@ -2069,7 +2120,7 @@ variable:
 .IP
 .nf
 \f[C]
-[tmpl]
+[scheme.tmpl]
 filter.get_lang = []
 \f[R]
 .fi
@@ -2150,7 +2201,7 @@ Change the default file extension for new notes from:
 .IP
 .nf
 \f[C]
-[filename]
+[scheme.filename]
 extension_default=\[aq]md\[aq]
 \f[R]
 .fi
@@ -2159,7 +2210,7 @@ to:
 .IP
 .nf
 \f[C]
-[filename]
+[scheme.filename]
 extension_default=\[aq]rst\[aq]
 \f[R]
 .fi
@@ -2606,13 +2657,15 @@ invoke Tp-Note with `\f[V]tpnote --debug debug --popup --view\f[R]'.
 .SH TEMPLATES
 .PP
 All \f[I]TP-Note\f[R]\[cq]s workflows are customizable through its
-templates which are grouped in the `\f[V][tmpl]\f[R]' and in the
-`\f[V][tmpl_html]\f[R]' section of Tp-Nots\[cq]s configuration file.
-This chapter deals with `\f[V][tmpl]\f[R]' templates which are
+templates which are grouped in the `\f[V][scheme.tmpl]\f[R]' and in the
+`\f[V][scheme.tmpl_html]\f[R]' section of Tp-Nots\[cq]s configuration
+file.
+This chapter deals with `\f[V][scheme.tmpl]\f[R]' templates which are
 responsible for generating Tp-Note files.
-`\f[V][tmpl_html]\f[R]' templates concern only Tp-Note\[cq]s viewer
-feature and are discussed in the chapters: Customize the built-in note
-viewer_ and \f[I]Choose your favourite web browser as note viewer\f[R].
+`\f[V][scheme.tmpl_html]\f[R]' templates concern only Tp-Note\[cq]s
+viewer feature and are discussed in the chapters: Customize the built-in
+note viewer_ and \f[I]Choose your favourite web browser as note
+viewer\f[R].
 .PP
 Tp-Note captures and stores its environment in \f[I]Tera variables\f[R].
 For example, the variable `\f[V]{{ dir_path }}\f[R]' is initialized with

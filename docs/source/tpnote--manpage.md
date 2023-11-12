@@ -1088,45 +1088,39 @@ encoded in customizable so-called filename templates (cf. section _Templates_).
 
 # CUSTOMIZATION
 
-Tp-Note's configuration file resides typically in
-'`~/.config/tpnote/tpnote.toml`' under Unix or in
-'`C:\Users\<LOGIN>\AppData\Roaming\tpnote\config\tpnote.toml>`' under Windows.
-'`tpnote --version`' prints the current configuration file path.
+Tp-Note is shipped with a default internal configuration that can be customized
+by merging a series of configuration files from various locations into the 
+default values. This  happens in the following order:
 
-Besides the standard configuration path, Tp-Note searches for its configuration
-data at the following locations:
-
-1. If the command line parameter '`--config <path>`' is given, '`<path>`'
-   indicates the location of the configuration file.
-2. If the environment variable '`TPNOTE_CONFIG="<path>"`' is set,
-   '`<path>`' indicates the location of the configuration file.
-3. At startup all parent directories of the note file path are searched for
-   a file named '`tpnote.toml`'. If found, the document root moves
-   from '`/`' the found location. If present and its content is not empty,
+1. Unix and MacOS only: '`/etc/tpnote/tpnote.toml`'
+2. The file where the environment variable '`TPNOTE_CONFIG`' points to.
+3. The user's configuration file:
+   - Unix: '`~/.config/tpnote/tpnote.toml`'
+   - Windows: '`C:\Users\<LOGIN>\AppData\Roaming\tpnote\config\tpnote.toml>`'
+   - MacOS: '`/Users/<LOGIN>/Library/Application Support/tpnote`'
+4. At startup all parent directories of the note file path '`<PATH>`'are
+   searched for a marker file named '`tpnote.toml`'. If found, the document root
+   moves from '`/`' the found location. If present and its content is not empty,
    Tp-Note interprets the file's content as configuration file.
-   Continue otherwise.
-4. Tp-Note tries to find its configuration data at the operating system's
-   standard location indicated here above.
+5. The file indicated by the command line parameter '`--config <FIlE>`'. 
 
-When Tp-Note starts, it first tries to find its configuration file. Once found,
-the syntax of the configuration is checked. If not correct, the configuration
-file is renamed and replaced by a file with correct syntax and default values.
-If Tp-Note fails to find a configuration file at any of the above locations, it
-writes a default configuration file at the expected standard location.
+When Tp-Note starts, it first merges all available configuration files into
+the default configuration. Then the resulting syntax is checked.  If not
+correct, the last sourced configuration file is renamed (thus disabled) and
+Tp-Note starts with its internal default configuration.
 
-Tp-Note is best customized by starting it once, and then modifying its default
-configuration.
+To write a custom configuration file, first start with a complete default
+configuration you can generate by invoking Tp-Note with '`-V -b -c`'.
 
 ```sh
-tpnote -V -b
+tpnote -V -b -c ~/.config/tpnote/tpnote.toml
 ```
 
-To create a configuration file in the current directory invoke Tp-Note
-with '`-V -b -c`'.
-
-```sh
-tpnote -V -b -c tpnote.toml
-```
+After modifying the concerned variables, delete step by step all the remaining
+variables to keep your configuration file as small as possible.
+Also make sure you delete the '`version`' variable at the beginning. As some
+Tp-Note upgrade include a configuration file structure change, a small 
+configuration file increases the chance that it still merges.
 
 Some filename and template related variables are grouped into a '`scheme`'. 
 The shipped configuration file lists two schemes: '`default`' and '`zettel`'.
@@ -1136,6 +1130,44 @@ configuration variable '`arg_default.scheme`'. The scheme selected when
 synchronizing a Tp-Note header with its filename depends on the 
 value of the header variable '`scheme:`' which defaults to '`default`'
 (cf. '`scheme_sync_default`'). 
+
+Note, that the merging algorithm merges all values, except arrays. These 
+are usually replaced by the subsequent configuration file. There is one
+exception though: top level arrays are also merged. An example to this
+is the top level array '`[[scheme]]`'. In the following example we merge the
+variable '`extension_default = "txt"`' into the scheme '`default`' whereas all
+other variables remain untouched.
+
+```toml
+[[scheme]]
+name='default'
+[scheme.filename]
+extension_default = "txt"
+```
+
+To add a custom scheme you must provide all variables:
+
+```toml
+[[scheme]]
+name='my-custom-scheme'
+[scheme.filename]
+# Insert all variables here.
+[scheme.tmpl]
+# Insert all variables here.
+```
+
+The following example illustrates how non-top-level arrays are overwritten
+by the subsequent configuration file. The default configuration lists
+about 20 MIME types. After merging the following example, the configuration
+lists only the two MIME types '`jpeg`' and '`jpg`' in '`served_mime_types`'.
+
+```toml
+[viewer]
+served_mime_types = [
+    ["jpeg", "image/jpeg"],
+    ["jpg", "image/jpeg"],
+]
+```
 
 
 
@@ -1419,7 +1451,7 @@ For example: the variable '`filename.extensions`' lists some extensions, that
 are regarded as Markdown files:
 
 ```toml
-[filename]
+[scheme.filename]
 extensions = [
   [ "txt", "Markdown" ],
   [ "md", "Markdown" ],
@@ -1433,7 +1465,7 @@ extensions = [
 The default file extension for new note files is defined as:
 
 ```toml
-[filename]
+[scheme.filename]
 extension_default = 'md'
 ```
 
@@ -1441,7 +1473,7 @@ If you prefer rather the file extension '`.markdown`' for new notes, change
 this to:
 
 ```toml
-[filename]
+[scheme.filename]
 extension_default = 'markdown'
 ```
 
@@ -1465,7 +1497,7 @@ containing a list of ISO 639-1 encoded languages, the algorithm considers as
 potential detection candidates, e.g.:
 
 ```toml
-[tmpl]
+[scheme.tmpl]
 filter.get_lang = [
     'en',
     'fr',
@@ -1483,7 +1515,7 @@ enable all available detection candidates with the pseudo language code '`+all`'
 which stands for “add all languages”:
 
 ```toml
-[tmpl]
+[scheme.tmpl]
 filter.get_lang = [
     '+all',
 ]
@@ -1501,7 +1533,7 @@ this region information, to work properly.
 The corresponding configuration looks like this:
 
 ```toml
-[tmpl]
+[scheme.tmpl]
 filter.map_lang = [
     [
     'en',
@@ -1553,7 +1585,7 @@ If wished for, you can disable Tp-Note's language detection feature, by
 deleting all entries in the '`tmpl.filter.get_lang`' variable:
 
 ```toml
-[tmpl]
+[scheme.tmpl]
 filter.get_lang = []
 ```
 
@@ -1625,14 +1657,14 @@ affect the way new notes are created:
 1. Change the default file extension for new notes from:
 
    ```toml
-   [filename]
+   [scheme.filename]
    extension_default='md'
    ```
 
    to:
 
    ```toml
-   [filename]
+   [scheme.filename]
    extension_default='rst'
    ```
    Alternatively, the above can be achieved by setting the environment variable
@@ -1995,12 +2027,13 @@ with '`tpnote --debug debug --popup --view`'.
 
 # TEMPLATES
 
-All _TP-Note_'s workflows are customizable through its templates which are
-grouped in the '`[tmpl]`' and in the '`[tmpl_html]`' section of Tp-Nots's
-configuration file. This chapter deals with '`[tmpl]`' templates which are
-responsible for generating Tp-Note files. '`[tmpl_html]`' templates concern
-only Tp-Note's viewer feature and are discussed in the chapters: Customize the
-built-in note viewer_ and _Choose your favourite web browser as note viewer_.
+All _TP-Note_'s workflows are customizable through its templates which
+are grouped in the '`[scheme.tmpl]`' and in the '`[scheme.tmpl_html]`'
+section of Tp-Nots's configuration file. This chapter deals with
+'`[scheme.tmpl]`' templates which are responsible for generating Tp-Note files.
+'`[scheme.tmpl_html]`' templates concern only Tp-Note's viewer feature and are
+discussed in the chapters: Customize the built-in note viewer_ and _Choose your
+favourite web browser as note viewer_.
 
 Tp-Note captures and stores its environment in _Tera variables_. For example,
 the variable '`{{ dir_path }}`' is initialized with the note's target
