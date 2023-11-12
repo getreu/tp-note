@@ -11,11 +11,8 @@ use parking_lot::RwLock;
 use serde::Deserialize;
 use serde::Serialize;
 use std::env;
-#[cfg(not(test))]
 use std::fs;
-#[cfg(not(test))]
 use std::fs::File;
-#[cfg(not(test))]
 use std::io::Write;
 use std::mem;
 use std::path::Path;
@@ -28,7 +25,6 @@ use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::config::LIB_CONFIG_DEFAULT_TOML;
 use tpnote_lib::context::Context;
-#[cfg(not(test))]
 use tpnote_lib::filename::NotePathBuf;
 
 /// Set the minimum required configuration file version that is compatible with this
@@ -361,35 +357,22 @@ impl Cfg {
         Ok(config)
     }
 
-    /// Writes the default configuration to `Path`. If destination exists,
-    /// backup it.
-    #[cfg(not(test))]
-    fn write_default_to_file(config_path: &Path) -> Result<(), ConfigFileError> {
+    /// Writes the default configuration to `Path`.
+    pub(crate) fn write_default_to_file(config_path: &Path) -> Result<(), ConfigFileError> {
         fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
-
-        if config_path.exists() {
-            let mut config_path_bak = config_path.to_path_buf();
-            config_path_bak.set_next_unused()?;
-
-            fs::rename(config_path, &config_path_bak)?;
-        }
 
         let mut buffer = File::create(config_path)?;
         buffer.write_all(Self::default_as_toml().as_bytes())?;
         Ok(())
     }
 
-    /// In unit tests we do not write anything.
-    #[cfg(test)]
-    fn write_default_to_file(_config_path: &Path) -> Result<(), ConfigFileError> {
-        Ok(())
-    }
-
     /// Backs up the existing configuration file and writes a new one with default
     /// values.
-    pub fn backup_and_replace_with_default() -> Result<PathBuf, ConfigFileError> {
+    pub(crate) fn backup_and_remove_last() -> Result<PathBuf, ConfigFileError> {
         if let Some(config_path) = CONFIG_PATHS.iter().filter(|p| p.exists()).last() {
-            Self::write_default_to_file(config_path)?;
+            let mut config_path_bak = config_path.to_path_buf();
+            config_path_bak.set_next_unused()?;
+            fs::rename(config_path, &config_path_bak)?;
 
             Ok(config_path.clone())
         } else {

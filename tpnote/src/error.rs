@@ -52,16 +52,16 @@ pub enum ConfigFileError {
 
     /// Remedy: restart, or check file permission of the configuration file.
     #[error(
-        "Unable to load, parse or write the\n\
-        configuration file:\n\
+        "Unable to load or parse the (merged)\n\
+        configuration file(s):\n\
         ---\n\
         {error}\n\n\
         Note: this error may occur after upgrading\n\
         Tp-Note due to some incompatible configuration\n\
         file changes.\n\
         \n\
-        Tp-Note backs up the existing configuration\n\
-        file and creates a new one with default values."
+        Tp-Note renames and thus disables the last sourced\n\
+        configuration file."
     )]
     ConfigFileLoadParseWrite { error: String },
 
@@ -71,8 +71,8 @@ pub enum ConfigFileError {
         Configuration file version: \'{config_file_version}\'\n\
         Minimum required version: \'{min_version}\'\n\
         \n\
-        Tp-Note backs up the existing configuration\n\
-        file and creates a new one with default values."
+        Tp-Note renames and thus disables the last sourced\n\
+        configuration file."
     )]
     ConfigFileVersionMismatch {
         config_file_version: String,
