@@ -63,7 +63,7 @@ pub struct Args {
     /// Batch mode: does not launch editor or viewer
     #[structopt(long, short = "b")]
     pub batch: bool,
-    /// Loads alternative configuration file
+    /// Loads an additional configuration file or writes default
     #[structopt(long, short = "c")]
     pub config: Option<String>,
     /// Console debug level: "trace", "debug", "info", "warn", "error" (default) or "off"

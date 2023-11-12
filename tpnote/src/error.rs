@@ -50,6 +50,15 @@ pub enum ConfigFileError {
     )]
     ConfigFileBackup { error: String },
 
+    /// Remedy: check the path and permissions of the to be generated
+    /// configuration file.
+    #[error(
+        "Unable write a configuration file with default values:\n\
+        ---\n\
+        {error}"
+    )]
+    ConfigFileWrite { error: String },
+
     /// Remedy: restart, or check file permission of the configuration file.
     #[error(
         "Unable to load or parse the (merged)\n\
@@ -63,7 +72,7 @@ pub enum ConfigFileError {
         Tp-Note renames and thus disables the last sourced\n\
         configuration file."
     )]
-    ConfigFileLoadParseWrite { error: String },
+    ConfigFileLoadParse { error: String },
 
     /// Remedy: restart.
     #[error(

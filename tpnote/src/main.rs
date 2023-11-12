@@ -55,6 +55,7 @@ use error::ConfigFileError;
 use semver::Version;
 use serde::Serialize;
 use settings::CLIPBOARD;
+use std::path::Path;
 use std::process;
 #[cfg(feature = "read-clipboard")]
 use tpnote_lib::error::NoteError;
@@ -107,7 +108,7 @@ fn main() {
 
         // One of them is `Err`, we do not care who.
         Some(e) => {
-            log::error!("{}", ConfigFileError::ConfigFileLoadParseWrite { error: e });
+            log::error!("{}", ConfigFileError::ConfigFileLoadParse { error: e });
 
             // Move erroneous config file away.
             if let Err(e) = Cfg::backup_and_remove_last() {
@@ -148,10 +149,30 @@ fn main() {
                     .to_string()
                 );
                 AppLogger::flush();
-                process::exit(5);
+                process::exit(6);
             };
         };
     };
+
+    // Process `arg = `--config`.
+    // The output is YAML formatted for further automatic processing.
+    if ARGS.batch && ARGS.version {
+        if let Some(path) = &ARGS.config {
+            let path = Path::new(&path);
+
+            if let Err(e) = Cfg::write_default_to_file(path) {
+                log::error!(
+                    "{}",
+                    ConfigFileError::ConfigFileWrite {
+                        error: e.to_string()
+                    }
+                    .to_string()
+                );
+                AppLogger::flush();
+                process::exit(5);
+            };
+        }
+    }
 
     // Process `arg = `--version`.
     // The output is YAML formatted for further automatic processing.
@@ -204,6 +225,7 @@ fn main() {
         process::exit(0);
     };
 
+    //
     // Run Tp-Note.
     let res = run();
     match res {
