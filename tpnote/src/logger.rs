@@ -6,7 +6,7 @@ use crate::alert_service::AlertService;
 use crate::settings::ARGS;
 #[cfg(feature = "message-box")]
 use crate::settings::RUNS_ON_CONSOLE;
-use crate::CONFIG_PATH;
+use crate::CONFIG_PATHS;
 #[cfg(feature = "message-box")]
 use crate::PKG_VERSION;
 use lazy_static::lazy_static;
@@ -20,7 +20,6 @@ use msgbox::IconType;
 use notify_rust::{Hint, Notification, Timeout};
 use parking_lot::RwLock;
 use std::env;
-use std::path::PathBuf;
 
 #[cfg(feature = "message-box")]
 /// Window title of the message alert box.
@@ -73,6 +72,8 @@ fn popup_alert(msg: &str) {
 lazy_static! {
     /// Some additional debugging information added to the end of error messages.
     pub static ref ERR_MSG_TAIL: String = {
+        use std::fmt::Write;
+
         let mut args_str = String::new();
         for argument in env::args() {
             args_str.push_str(argument.as_str());
@@ -81,20 +82,25 @@ lazy_static! {
 
         format!(
             "\n\
-            __________\n\
+            \n\
             Additional technical details:\n\
             *    Command line parameters:\n\
             {}\n\
-            *    Configuration file:\n\
+            *    Sourced configuration files:\n\
             {}",
             args_str,
-            CONFIG_PATH
-                .as_ref()
-                .unwrap_or(&PathBuf::from("no path found"))
-                .to_str()
-                .unwrap_or_default()
-        )
-    };
+            CONFIG_PATHS
+               .iter()
+               .filter(|p|p.exists())
+               .map(|p| p.to_str().unwrap_or_default())
+               .fold(
+                   String::new(),
+                   |mut output, p| {
+                       let _ = writeln!(output, "{p}");
+                       output
+                   }
+               )
+        )};
 }
 
 /// If `true`, all future log events will trigger the opening of a popup

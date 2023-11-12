@@ -36,7 +36,7 @@ use crate::config::Cfg;
 use crate::config::AUTHOR;
 use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
-use crate::config::CONFIG_PATH;
+use crate::config::CONFIG_PATHS;
 use crate::config::COPYRIGHT_FROM;
 use crate::config::PKG_VERSION;
 #[cfg(feature = "read-clipboard")]
@@ -55,7 +55,6 @@ use error::ConfigFileError;
 use semver::Version;
 use serde::Serialize;
 use settings::CLIPBOARD;
-use std::path::PathBuf;
 use std::process;
 #[cfg(feature = "read-clipboard")]
 use tpnote_lib::error::NoteError;
@@ -64,7 +63,8 @@ use tpnote_lib::error::NoteError;
 struct About {
     version: String,
     features: Vec<String>,
-    config_file_path: String,
+    searched_config_file_paths: Vec<String>,
+    found_config_files: Vec<String>,
     copyright: String,
 }
 
@@ -172,12 +172,15 @@ fn main() {
         let about = About {
             version: PKG_VERSION.unwrap_or("unknown").to_string(),
             features,
-            config_file_path: CONFIG_PATH
-                .as_ref()
-                .unwrap_or(&PathBuf::new())
-                .to_str()
-                .unwrap_or("")
-                .to_string(),
+            searched_config_file_paths: CONFIG_PATHS
+                .iter()
+                .map(|p| p.to_str().unwrap_or_default().to_owned())
+                .collect(),
+            found_config_files: CONFIG_PATHS
+                .iter()
+                .filter(|p| p.exists())
+                .map(|p| p.to_str().unwrap_or_default().to_owned())
+                .collect(),
             copyright: format!(
                 "© {}-{} {}",
                 COPYRIGHT_FROM,
