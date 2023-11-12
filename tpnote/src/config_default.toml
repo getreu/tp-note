@@ -42,7 +42,7 @@ tty = false
 add_header = true
 
 # Rewrite relative local links. 
-# Base: `FILENAME_ROOT_PATH_MARKER=".tpnote.toml"`.
+# Base: `FILENAME_ROOT_PATH_MARKER="tpnote.toml"`.
 export_link_rewriting = "Long"
 
 

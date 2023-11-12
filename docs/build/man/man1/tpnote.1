@@ -616,7 +616,8 @@ be available or work as expected.
 .RE
 .RS
 .PP
-Use `\f[V]-b -d trace\f[R]' for debugging templates.
+Use `\f[V]-b -d trace\f[R]' for debugging templates and configuration
+files.
 If the HTTP server (viewer) does not work as expected:
 `\f[V]-n -d debug\f[R]'.
 If your text editor does not open as expected:
@@ -826,7 +827,7 @@ Choose how local links in the exported HTML file are written out:
 No link rewriting occurs, for the \f[I]MODE\f[R] `\f[V]off\f[R]'.
 The \f[I]MODE\f[R] `\f[V]short\f[R]' rewrites all local relative links
 to absolute links, whose base is the first parent directory containing
-the marker file `\f[V].tpnote.toml\f[R]' (filename customizable).
+the marker file `\f[V]tpnote.toml\f[R]'.
 NB, the directory of the marker file defines the base for all absolute
 local links in your Tp-Note file!
 The mode `\f[V]long\f[R]' rewrites \f[I]all\f[R] local links to absolute
@@ -834,12 +835,16 @@ links whose base is the system\[cq]s root directory `\f[V]/\f[R]'.
 For relative local links this is performed by prepending the path to the
 note file.
 Absolute local links get the path to the marker file
-`\f[V].tpnote.toml\f[R]' prepended.
-In case you do not place a `\f[V].tpnote.toml\f[R]' file in a parent
+`\f[V]tpnote.toml\f[R]' prepended.
+In case you do not place a `\f[V]tpnote.toml\f[R]' file in a parent
 directory, the base for absolute local links in your note file is
 interpreted as `\f[V]/\f[R]'.
-The right mode to choose depends on how you view the resulting HTML: if
-you publish on a web server, then `\f[V]short\f[R]' is a good choice.
+.RE
+.RS
+.PP
+Summary: The right *MODE# choice depends on how you view the resulting
+HTML: if you publish on a web server, then `\f[V]short\f[R]' might be a
+good choice.
 If you view the HTML file directly in your web browser, better choose
 `\f[V]long\f[R]'.
 NB: You can also set this option via Tp-Note\[cq]s configuration file
@@ -991,7 +996,7 @@ T}
 Remarks:
 .IP \[bu] 2
 The base for absolute local links is the first parent directory
-containing the marker file `\f[V].tpnote.toml\f[R]'.
+containing the marker file `\f[V]tpnote.toml\f[R]'.
 If absent, absolute local links refer to the root directory
 `\f[V]/\f[R]'.
 .IP \[bu] 2
@@ -1038,12 +1043,12 @@ In order to achieve this, the user must respect the following convention
 concerning absolute paths in local links in Tp-Note documents: When a
 document contains a local link with an absolute path, the base of this
 path is considered to be the directory where the marker file
-`\f[V].tpnoteroot\f[R]' resides (or `\f[V]/\f[R]' in non exists).
+`\f[V]tpnote.toml\f[R]' resides (or `\f[V]/\f[R]' in non exists).
 The option `\f[V]--export-link- rewriting\f[R]' decides how local links
 in the Tp-Note document are converted when the HTML is generated.
 If its value is `\f[V]short\f[R]', then local links with relative paths
 are converted to absolute paths.
-The base of the resulting path is where the `\f[V].tpnoteroot\f[R]' file
+The base of the resulting path is where the `\f[V]tpnote.toml\f[R]' file
 resides (or \f[V]/\f[R] if none exists).
 Consider the following example
 `\f[V]--export-link-rewriting=short\f[R]':
@@ -1054,7 +1059,7 @@ a local link with an absolute path: `\f[V]/car/scan.jpg\f[R]',
 .IP \[bu] 2
 and another link with a relative path: `\f[V]./photo.jpg\f[R]'.
 .IP \[bu] 2
-The document root marker is: `\f[V]/my/docs/.tpnoteroot\f[R]'.
+The document root marker is: `\f[V]/my/docs/tpnote.toml\f[R]'.
 .PP
 The images in the resulting HTML will appear as
 .IP \[bu] 2
@@ -1072,7 +1077,7 @@ a link with an absolute path: `\f[V]/car/scan.jpg\f[R]',
 .IP \[bu] 2
 and another link with a relative path: `\f[V]./photo.jpg\f[R]'.
 .IP \[bu] 2
-The document root marker is: `\f[V]/my/docs/.tpnoteroot\f[R]'.
+The document root marker is: `\f[V]/my/docs/tpnote.toml\f[R]'.
 .PP
 The images in the resulting HTML will appear as
 .IP \[bu] 2
@@ -1508,7 +1513,7 @@ is set, `\f[V]<path>\f[R]' indicates the location of the configuration
 file.
 .IP "3." 3
 At startup all parent directories of the note file path are searched for
-a file named `\f[V].tpnote.toml\f[R]'.
+a file named `\f[V]tpnote.toml\f[R]'.
 If found, the document root moves from `\f[V]/\f[R]' the found location.
 If present and its content is not empty, Tp-Note interprets the
 file\[cq]s content as configuration file.
@@ -1535,11 +1540,11 @@ tpnote -V -b
 .fi
 .PP
 To create a configuration file in the current directory invoke Tp-Note
-with `\f[V]-c\f[R]'.
+with `\f[V]-V -b -c\f[R]'.
 .IP
 .nf
 \f[C]
-tpnote -V -b -c .tpnote.toml
+tpnote -V -b -c tpnote.toml
 \f[R]
 .fi
 .PP
@@ -3161,7 +3166,7 @@ if the number of so far viewed Tp-Note files,
 `\f[V]viewer.displayed_tpnote_count_max\f[R]' is not exceeded,
 .IP "4." 3
 when it\[cq]s located under a directory containing a marker file named
-`\f[V].tpnote.toml\f[R]' (without marker file this condition is void).
+`\f[V]tpnote.toml\f[R]' (without marker file this condition is void).
 .PP
 The HTTP server runs as long as the launched web browser window is open.
 Note, that the server not only exposes the displayed note file, but also
@@ -3181,13 +3186,13 @@ The latter allows disabling the \f[I]follow links to other Tp-Note
 files\f[R] feature by removing all `\f[V]text/*\f[R]' mime types from
 that list.
 .PP
-Another security feature is the `\f[V].tpnote.toml\f[R]' marker file.
+Another security feature is the `\f[V]tpnote.toml\f[R]' marker file.
 When Tp-Note opens a note file, it checks all directories above, one by
-one, until it finds the marker file `\f[V].tpnote.toml\f[R]'.
+one, until it finds the marker file `\f[V]tpnote.toml\f[R]'.
 Tp-Note\[cq]s viewer will never serve a file located outside the root
 directory and its children.
-When no `\f[V].tpnote.toml\f[R]' file is found, the root directory is
-set to `\f[V]/\f[R]', which disables this security feature.
+When no `\f[V]tpnote.toml\f[R]' file is found, the root directory is set
+to `\f[V]/\f[R]', which disables this security feature.
 .PP
 As Tp-Note\[cq]s built-in viewer binds to the `\f[V]localhost\f[R]'
 interface, the exposed files are in principle accessible to all
