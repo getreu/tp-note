@@ -60,7 +60,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch \
     --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/04--${TESTOUTPUT}__Note.md"
+OUTPUT_FILENAME="$PWD/04--${TESTOUTPUT}__note.md"
 
 if diff "$OUTPUT_FILENAME" "test102-new-expected-output"
 then
@@ -142,7 +142,7 @@ TPNOTE_LANG_DETECTION="en-US" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/03c--Good morning__Note.md"
+OUTPUT_FILENAME="$PWD/03c--Good morning__note.md"
 
 if diff "$OUTPUT_FILENAME" "test105-clipboard-expected-output"
 then
@@ -165,7 +165,7 @@ TPNOTE_LANG_DETECTION="" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/03c--'123456__Note.md"
+OUTPUT_FILENAME="$PWD/03c--'123456__note.md"
 
 if diff "$OUTPUT_FILENAME" "test106-clipboard-expected-output"
 then
@@ -280,8 +280,8 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch \
     --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/03c--${TESTOUTPUT}__Note.md"
-OUTPUT_FILENAME2="$PWD/03d--${TESTOUTPUT}__Note.md"
+OUTPUT_FILENAME="$PWD/03c--${TESTOUTPUT}__note.md"
+OUTPUT_FILENAME2="$PWD/03d--${TESTOUTPUT}__note.md"
 if diff "$OUTPUT_FILENAME2" "test110-new-new-expected-output"
 then
     echo Commandline test 110 succeeded.

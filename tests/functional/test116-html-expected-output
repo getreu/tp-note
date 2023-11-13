@@ -383,8 +383,8 @@ font-weight: bold;
   
   
     <tr>
-    <th class="fmkey">keywords:</th>
-    <th class="fmval"><ul class="fm"><li class="fm">red</li><li class="fm">yellow</li></ul></th>
+    <th class="fmkeygrey">keywords:</th>
+    <th class="fmvalgrey"><ul class="fm"><li class="fm">red</li><li class="fm">yellow</li></ul></th>
   </tr>
   
     <tr>
