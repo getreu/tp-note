@@ -9,6 +9,8 @@ lang:       en-GB
 ---
 
 
+
+
 # NAME
 
 _Tp-Note_ - save and edit your clipboard content as a note file.
@@ -2447,6 +2449,8 @@ type, whereas the short form '`to_yaml()`' requires an '`Value::Object`'
 type as input. The latter is often followed be the '`append(newline=true)`'
 filter appending a newline.
 
+
+
 ## Filename template conventions
 
 By convention, filename templates appear in the configuration file in variables
@@ -2756,6 +2760,7 @@ Licensed under either of
 at your option.
 
 
+
 ## Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally
@@ -2764,6 +2769,7 @@ licence, shall be dual licensed as above, without any additional terms
 or conditions. Licensed under the Apache Licence, Version 2.0 (the
 "Licence"); you may not use this file except in compliance with the
 Licence.
+
 
 
 

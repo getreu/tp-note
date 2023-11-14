@@ -1243,17 +1243,18 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), to_value("03").unwrap());
 
-        // let result = incr_sort_tag_filter(&to_value("cz-Note.md").unwrap(), &HashMap::new());
-        // assert!(result.is_ok());
-        // assert_eq!(result.unwrap(), to_value("da").unwrap());
+        let result = incr_sort_tag_filter(&to_value("cz-Note.md").unwrap(), &HashMap::new());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("da").unwrap());
 
-        // let result = incr_sort_tag_filter(&to_value("2cz-Note.md").unwrap(), &HashMap::new());
-        // assert!(result.is_ok());
-        // assert_eq!(result.unwrap(), to_value("2da").unwrap());
+        let result = incr_sort_tag_filter(&to_value("2cz-Note.md").unwrap(), &HashMap::new());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("2da").unwrap());
 
-        // let result = incr_sort_tag_filter(&to_value("2acz-Note.md").unwrap(), &HashMap::new());
-        // assert!(result.is_ok());
-        // assert_eq!(result.unwrap(), to_value("2ada").unwrap());
+        // Too many letters, default string is ``.
+        let result = incr_sort_tag_filter(&to_value("2acz-Note.md").unwrap(), &HashMap::new());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("").unwrap());
 
         // No input.
         let mut args = HashMap::new();
@@ -1283,12 +1284,12 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
 
-        // // Too many digits.
-        // let mut args = HashMap::new();
-        // args.insert("default".to_string(), to_value("my default.md").unwrap());
-        // let result = incr_sort_tag_filter(&to_value("aaf-Note.md").unwrap(), &args);
-        // assert!(result.is_ok());
-        // assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
+        // Too many digits.
+        let mut args = HashMap::new();
+        args.insert("default".to_string(), to_value("my default.md").unwrap());
+        let result = incr_sort_tag_filter(&to_value("aaf-Note.md").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
 
         let mut args = HashMap::new();
         args.insert("default".to_string(), to_value("my default.md").unwrap());
