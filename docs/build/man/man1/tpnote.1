@@ -1804,21 +1804,14 @@ flatpak run com.github.marktext.marktext
 \f[R]
 .fi
 .PP
-Then open Tp-Note\[cq]s configuration file \f[V]tpnote.toml\f[R] and
-search for the `\f[V]app_args.unix.editor\f[R]' variable, quoted
-shortened below:
+Then place a Tp-Note configuration in its search path (e.g.\ 
+`\f[V]\[ti]/.config/tpnote/tpnote.toml\f[R]') with the following
+content:
 .IP
 .nf
 \f[C]
 [app_args]
-unix.editor = [
-    [
-    \[aq]code\[aq],
-    \[aq]-w\[aq],
-    \[aq]-n\[aq],
-],
-#...
-]
+unix.editor = [ [ \[aq]code\[aq], \[aq]-w\[aq], \[aq]-n\[aq], ] ]
 \f[R]
 .fi
 .PP
@@ -1835,19 +1828,7 @@ first place in this list, by inserting
 .nf
 \f[C]
 [app_args]
-unix.editor = [
-    [
-    \[aq]flatpak\[aq],
-    \[aq]run\[aq],
-    \[aq]com.github.marktext.marktext\[aq],
-],
-    [
-    \[aq]code\[aq],
-    \[aq]-w\[aq],
-    \[aq]-n\[aq],
-],
-#...
-]
+unix.editor = [ [ \[aq]flatpak\[aq], \[aq]run\[aq], \[aq]com.github.marktext.marktext\[aq], ] ]
 \f[R]
 .fi
 .PP
@@ -1882,7 +1863,25 @@ unix.editor = [
 .fi
 .RE
 .IP \[bu] 2
-\f[I]Neovim\f[R] in \f[I]LXTerminal\f[R]:
+\f[I]Helix-editor\f[R] in \f[I]XFCE4-Terminal\f[R]:
+.RS 2
+.IP
+.nf
+\f[C]
+[app_args]
+unix.editor = [
+  [
+    \[aq]xfce4-terminal\[aq],
+    \[aq]--disable-server\[aq],
+    \[aq]-x\[aq],
+    \[aq]hx\[aq],
+  ],
+]
+\f[R]
+.fi
+.RE
+.IP \[bu] 2
+\f[I]Helix\f[R] in \f[I]LXTerminal\f[R]:
 .RS 2
 .IP
 .nf
@@ -1893,16 +1892,14 @@ unix.editor = [
     \[aq]lxterminal\[aq],
     \[aq]--no-remote\[aq],
     \[aq]-e\[aq],
-    \[aq]nvim\[aq],
-    \[aq]+colorscheme pablo\[aq],
-    \[aq]+set syntax=markdown\[aq],
+    \[aq]hx\[aq],
   ],
 ]
 \f[R]
 .fi
 .RE
 .IP \[bu] 2
-\f[I]Neovim\f[R] in \f[I]Xterm\f[R]:
+\f[I]Helix\f[R] in \f[I]Xterm\f[R]:
 .RS 2
 .IP
 .nf
@@ -1916,16 +1913,14 @@ unix.editor = [
     \[aq]-fs\[aq],
     \[aq]12\[aq],
     \[aq]-e\[aq],
-    \[aq]nvim\[aq],
-    \[aq]+colorscheme pablo\[aq],
-    \[aq]+set syntax=markdown\[aq],
+    \[aq]hx\[aq],
   ],
 ]
 \f[R]
 .fi
 .RE
 .IP \[bu] 2
-\f[I]Neovim\f[R] in \f[I]Alacritty\f[R]:
+\f[I]Helix\f[R] in \f[I]Alacritty\f[R]:
 .RS 2
 .IP
 .nf
@@ -1935,26 +1930,6 @@ unix.editor = [
   [
     \[aq]alacritty\[aq],
     \[aq]-e\[aq],
-    \[aq]nvim\[aq],
-    \[aq]+colorscheme pablo\[aq],
-    \[aq]+set syntax=markdown\[aq],
-  ],
-]
-\f[R]
-.fi
-.RE
-.IP \[bu] 2
-\f[I]Helix-editor\f[R] in \f[I]XFCE4-Terminal\f[R]:
-.RS 2
-.IP
-.nf
-\f[C]
-[app_args]
-unix.editor = [
-  [
-    \[aq]xfce4-terminal\[aq],
-    \[aq]--disable-server\[aq],
-    \[aq]-x\[aq],
     \[aq]hx\[aq],
   ],
 ]
@@ -2033,12 +2008,7 @@ candidates, e.g.:
 [[scheme]]
 name = \[dq]default\[dq]
 [scheme.tmpl]
-filter.get_lang = [
-    \[aq]en\[aq],
-    \[aq]fr\[aq],
-    \[aq]de\[aq],
-    \[aq]et\[aq]
-]
+filter.get_lang = [ \[aq]en\[aq], \[aq]fr\[aq], \[aq]de\[aq], \[aq]et\[aq] ]
 \f[R]
 .fi
 .PP
@@ -2058,9 +2028,7 @@ for \[lq]add all languages\[rq]:
 [[scheme]]
 name = \[dq]default\[dq]
 [scheme.tmpl]
-filter.get_lang = [
-    \[aq]+all\[aq],
-]
+filter.get_lang = [ \[aq]+all\[aq], ]
 \f[R]
 .fi
 .PP
@@ -2085,14 +2053,8 @@ The corresponding configuration looks like this:
 name = \[dq]default\[dq]
 [scheme.tmpl]
 filter.map_lang = [
-    [
-    \[aq]en\[aq],
-    \[aq]en-US\[aq],
-],
-    [
-    \[aq]de\[aq],
-    \[aq]de-DE\[aq],
-],
+    [ \[aq]en\[aq], \[aq]en-US\[aq], ],
+    [ \[aq]de\[aq], \[aq]de-DE\[aq], ],
 ]
 \f[R]
 .fi
@@ -2151,6 +2113,8 @@ variable:
 .IP
 .nf
 \f[C]
+[[scheme]]
+name = \[dq]default\[dq]
 [scheme.tmpl]
 filter.get_lang = []
 \f[R]
@@ -2310,8 +2274,8 @@ The above modification applies to the current note only.
 Before changing the sort-tag generation scheme in these templates, make
 sure to enable the right set of potential sort-tag characters.
 .PP
-By default, the digits `\f[V]0\f[R]'-`\f[V]9\f[R]', the characters
-`\f[V]_\f[R]', `\f[V]-\f[R]', \f[I]space\f[R], `\f[V]\[rs]t\f[R]' and
+In the default scheme, the digits `\f[V]0\f[R]'-`\f[V]9\f[R]', all lower
+case letters and the characters `\f[V]_\f[R]', `\f[V]-\f[R]',
 `\f[V].\f[R]' are recognized as being part of a \f[I]sort tag\f[R] when
 they appear at the beginning of a filename.
 This set of characters can be modified with the
@@ -2406,15 +2370,6 @@ with:
 [{{ path | filename }}](<../{{ path | filename }}>)
 \f[R]
 .fi
-.PP
-Unlike early versions of Tp-Note, relative links can now start with
-\f[V]../\f[R].
-This became possible with the introduction of link rewriting in the HTML
-rendition code of the viewer feature.
-Relative links are now always converted into absolute links before being
-sent to the browser.
-See subsection \f[I]Links to resources and other documents\f[R] for more
-details about link rewriting.
 .SS Customize the built-in note viewer
 .PP
 \f[B]Delay the launch of the web browser\f[R]
@@ -2618,8 +2573,9 @@ by the `\f[V]tmpl_html.exporter\f[R]' template:
 .IP
 .nf
 \f[C]
-{%- set ext = fm_file_ext | default(value=extension_default ) -%}
+[tmpl_html]
 exporter = \[aq]\[aq]\[aq]
+{%- set ext = fm_file_ext | default(value=extension_default ) -%}
 <!DOCTYPE html>
 <html lang=\[dq]{{ fm_lang | default(value=\[aq]en\[aq]) }}\[dq]>
 <head>
@@ -2638,6 +2594,7 @@ exporter = \[aq]\[aq]\[aq]
   </div>
 </body>
 </html>
+\[aq]\[aq]\[aq]
 \f[R]
 .fi
 .PP

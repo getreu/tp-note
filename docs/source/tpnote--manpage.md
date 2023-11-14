@@ -1,10 +1,10 @@
 ---
-title:      TP-NOTE(1) Version 1.23.1 | Tp-Note documentation
+title:      TP-NOTE(1) Version 1.23.2 | Tp-Note documentation
 subtitle:   manpage
 author:     Jens Getreu
-version:    1.23.1
+version:    1.23.2
 filename_sync: false
-date:       2023-11-13
+date:       2023-11-16
 lang:       en-GB
 ---
 
@@ -20,7 +20,7 @@ _Tp-Note_ - save and edit your clipboard content as a note file.
 
 # SYNOPSIS
 
-    tpnote [-a ] [-b] [-c <FILE>] [-d <LEVEL>] [-e] [-l <LANG>]
+    tpnote [-a ] [-b] [-c <FILE>] [-C <FILE>] [-d <LEVEL>] [-e] [-l <LANG>]
            [-p <NUM>] [-n] [-t] [-u] [-v] [-V] [-x <DIR>|''|'-']
            [<DIR>|<FILE>]
 
@@ -480,7 +480,7 @@ synchronization).
 
 **-a**, **\--add-header**
 
->   Prepend a YAML header in case the text file does not have one.
+>   Prepends a YAML header in case the text file does not have one.
     The default template, deduces the '`title:`' and '`subtitle:`'
     header field from the filename. It's sort-tag and file extension
     remain untouched. In case the filename is lacking a _sort-tag_,
@@ -502,11 +502,16 @@ synchronization).
 
 **-c** *FILE*, **\--config**=*FILE*
 
->   Load the alternative config file *FILE* instead of the default one.
+>   Loads an additional configuration from the TOML formatted *FILE* 
+    and merges it into the default configuration.
+
+**-c** *FILE*, **\--config-defaults**=*FILE*
+
+>   Dumps the internal default configuration in TOML format into *FILE*.
 
 **-d** *LEVEL*, **\--debug**=*LEVEL*
 
->   Print additional log messages.  The debug level *LEVEL* must be one out of
+>   Prints additional log messages.  The debug level *LEVEL* must be one out of
     '`trace`', '`debug`', '`info`', '`warn`', '`error`' (default) or '`off`'.
     The level '`trace`' reports the most detailed information, while '`error`'
     informs you only about failures.  A '`warn`' level message means, that not
@@ -604,7 +609,7 @@ synchronization).
 
 **-u**, **\--popup**
 
->   Redirect log file entries into popup alert windows. Must be used together
+>   Redirects log file entries into popup alert windows. Must be used together
     with the **\--debug** option to have an effect. Note, that debug level
     '`error`' conditions will always trigger popup messages, regardless of
     **\--popup** and **\--debug** (unless '`--debug off`'). Popup alert windows
@@ -635,7 +640,7 @@ synchronization).
 
 **-x** *DIRECTORY*, **\--export**=*DIRECTORY*
 
->   Print the note as HTML rendition into _DIRECTORY_. '`-x -`' prints to
+>   Prints the note as HTML rendition into _DIRECTORY_. '`-x -`' prints to
     _stdout_. The empty string, e.g. '`--export= `' or '`-x ""`', defaults to
     the directory where the note file resides. No external text editor or
     viewer is launched. Can be combined with '`--batch`' to avoid popup
@@ -643,7 +648,7 @@ synchronization).
 
 **\--export-link-rewriting**=*MODE*
 
->   Choose how local links in the exported HTML file are written out: '`off`',
+>   Chooses how local links in the exported HTML file are written out: '`off`',
     '`short`' or '`long`' (default). No link rewriting occurs, for the *MODE*
     '`off`'. The *MODE* '`short`' rewrites all local relative links to absolute
     links, whose base is the first parent directory containing the marker
@@ -1126,11 +1131,10 @@ Tp-Note starts with its internal default configuration. For debugging, you can
 print out the merge result with '`-V -b -d trace`'.
 
 To write a custom configuration file, first start with a complete default
-configuration you can generate by invoking Tp-Note with '`-V -b -c`'
-(no '`-d`').
+configuration you can generate by invoking Tp-Note with '`-C`':
 
 ```sh
-tpnote -V -b -c ~/.config/tpnote/tpnote.toml
+tpnote -C ~/.config/tpnote/tpnote.toml
 ```
 
 After modifying the concerned variables, delete step by step all the remaining
@@ -1332,19 +1336,12 @@ To test, run _Mark Text_ from the command line:
 flatpak run com.github.marktext.marktext
 ```
 
-Then open Tp-Note's configuration file `tpnote.toml` and search for the
-'`app_args.unix.editor`' variable, quoted shortened below:
+Then place a Tp-Note configuration in its search path (e.g. 
+'`~/.config/tpnote/tpnote.toml`') with the following content:
 
 ```toml
 [app_args]
-unix.editor = [
-    [
-    'code',
-    '-w',
-    '-n',
-],
-#...
-]
+unix.editor = [ [ 'code', '-w', '-n', ] ]
 ```
 
 The structure of this variable is a list of lists. Every item in the outer list
@@ -1357,19 +1354,7 @@ this list, by inserting '`['flatpak', 'run', 'com.github.marktext.marktext']`':
 
 ```toml
 [app_args]
-unix.editor = [
-    [
-    'flatpak',
-    'run',
-    'com.github.marktext.marktext',
-],
-    [
-    'code',
-    '-w',
-    '-n',
-],
-#...
-]
+unix.editor = [ [ 'flatpak', 'run', 'com.github.marktext.marktext', ] ]
 ```
 
 Save the modified configuration file.  Next time you launch Tp-Note, the
@@ -1398,54 +1383,6 @@ Here, some examples you can adjust to your needs and taste:
     ],
   ]
   ```
-* _Neovim_ in _LXTerminal_:
-
-  ```toml
-  [app_args]
-  unix.editor = [
-    [
-      'lxterminal',
-      '--no-remote',
-      '-e',
-      'nvim',
-      '+colorscheme pablo',
-      '+set syntax=markdown',
-    ],
-  ]
-  ```
-
-* _Neovim_ in _Xterm_:
-
-  ```toml
-  [app_args]
-  unix.editor = [
-    [
-      'xterm',
-      '-fa',
-      'DejaVu Sans Mono',
-      '-fs',
-      '12',
-      '-e',
-      'nvim',
-      '+colorscheme pablo',
-      '+set syntax=markdown',
-    ],
-  ]
-  ```
-* _Neovim_ in _Alacritty_:
-
-  ```toml
-  [app_args]
-  unix.editor = [
-    [
-      'alacritty',
-      '-e',
-      'nvim',
-      '+colorscheme pablo',
-      '+set syntax=markdown',
-    ],
-  ]
-  ```
 
 * _Helix-editor_ in _XFCE4-Terminal_:
 
@@ -1460,6 +1397,51 @@ Here, some examples you can adjust to your needs and taste:
     ],
   ]
   ```
+
+* _Helix_ in _LXTerminal_:
+
+  ```toml
+  [app_args]
+  unix.editor = [
+    [
+      'lxterminal',
+      '--no-remote',
+      '-e',
+      'hx',
+    ],
+  ]
+  ```
+
+* _Helix_ in _Xterm_:
+
+  ```toml
+  [app_args]
+  unix.editor = [
+    [
+      'xterm',
+      '-fa',
+      'DejaVu Sans Mono',
+      '-fs',
+      '12',
+      '-e',
+      'hx',
+    ],
+  ]
+  ```
+
+* _Helix_ in _Alacritty_:
+
+  ```toml
+  [app_args]
+  unix.editor = [
+    [
+      'alacritty',
+      '-e',
+      'hx',
+    ],
+  ]
+  ```
+
 
 
 
@@ -1526,12 +1508,7 @@ potential detection candidates, e.g.:
 [[scheme]]
 name = "default"
 [scheme.tmpl]
-filter.get_lang = [
-    'en',
-    'fr',
-    'de',
-    'et'
-]
+filter.get_lang = [ 'en', 'fr', 'de', 'et' ]
 ```
 
 As natural language detection is CPU intensive, it is advised to limit the
@@ -1546,9 +1523,7 @@ which stands for “add all languages”:
 [[scheme]]
 name = "default"
 [scheme.tmpl]
-filter.get_lang = [
-    '+all',
-]
+filter.get_lang = [ '+all', ]
 ```
 
 Once the language is detected with the filter '`get_lang`', it passes another
@@ -1567,14 +1542,8 @@ The corresponding configuration looks like this:
 name = "default"
 [scheme.tmpl]
 filter.map_lang = [
-    [
-    'en',
-    'en-US',
-],
-    [
-    'de',
-    'de-DE',
-],
+    [ 'en', 'en-US', ],
+    [ 'de', 'de-DE', ],
 ]
 ```
 
@@ -1617,6 +1586,8 @@ If wished for, you can disable Tp-Note's language detection feature, by
 deleting all entries in the '`tmpl.filter.get_lang`' variable:
 
 ```toml
+[[scheme]]
+name = "default"
 [scheme.tmpl]
 filter.get_lang = []
 ```
@@ -1751,14 +1722,14 @@ _Sort-tags_ for new notes are generated with the '`tmpl.*_filename`'
 templates. Before changing the sort-tag generation scheme in these templates,
 make sure to enable the right set of potential sort-tag characters. 
 
-By default, the digits '`0`'-'`9`', the characters '`_`', '`-`', _space_,
-'`\t`' and '`.`' are recognized as being part of a *sort tag* when they appear
-at the beginning of a filename.  This set of characters can be modified with
-the '`filename.sort_tag.extra_chars`' configuration variable. If defined, the
-'`filename.sort_tag.separator`' (by default '`-`') marks the end of a
-sort tag without being part of it.  In addition, one special character
-'`filename.sort_tag.extra_separator`' (by default '`'`') might be inserted
-by the filename template directly after the '`-`' to avoid ambiguity.
+In the default scheme, the digits '`0`'-'`9`', all lower case letters and the
+characters '`_`', '`-`', '`.`' are recognized as being part of a *sort tag*
+when they appear at the beginning of a filename.  This set of characters can
+be modified with the '`filename.sort_tag.extra_chars`' configuration variable.
+If defined, the '`filename.sort_tag.separator`' (by default '`-`') marks the
+end of a sort tag without being part of it.  In addition, one special character
+'`filename.sort_tag.extra_separator`' (by default '`'`') might be inserted by
+the filename template directly after the '`-`' to avoid ambiguity.
 
 
 
@@ -1819,12 +1790,6 @@ with:
 
     [{{ path | filename }}](<../{{ path | filename }}>)
 
-Unlike early versions of Tp-Note, relative links can now start with
-`../`. This became possible with the introduction of link rewriting in
-the HTML rendition code of the viewer feature. Relative links are now
-always converted into absolute links before being sent to the browser.
-See subsection _Links to resources and other documents_ for more details
-about link rewriting.
 
 
 
@@ -1999,8 +1964,9 @@ The role of the '`tmpl_html.viewer`' template - discussed above - is
 taken over by the '`tmpl_html.exporter`' template: 
 
 ```toml
-{%- set ext = fm_file_ext | default(value=extension_default ) -%}
+[tmpl_html]
 exporter = '''
+{%- set ext = fm_file_ext | default(value=extension_default ) -%}
 <!DOCTYPE html>
 <html lang="{{ fm_lang | default(value='en') }}">
 <head>
@@ -2019,6 +1985,7 @@ exporter = '''
   </div>
 </body>
 </html>
+'''
 ```
 
 In this template the same _Tera_ variables as in '`tmpl_html.viewer`' are
