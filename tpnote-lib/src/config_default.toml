@@ -557,6 +557,7 @@ from_clipboard_yaml_content = """
     | remove(key='fm_author')\
     | remove(key='fm_date')\
     | remove(key='fm_lang')\
+    | remove(key='fm_scheme')\
     | remove(key='fm_sort_tag')\
     | to_yaml \
     | prepend(newline=true) \
