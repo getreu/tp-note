@@ -166,6 +166,18 @@ impl HttpResponse for ServerThread {
                 #[allow(dropping_references)]
                 drop(relpath);
 
+                // This is an alias for `/`, we send the main document and quit.
+                if abspath == self.context.dir_path {
+                    let html = self.render_content_and_error(&self.context.path)?;
+
+                    return self.respond_content_ok(
+                        Path::new("/"),
+                        0,
+                        "text/html",
+                        html.as_bytes(),
+                    );
+                }
+
                 //
                 // Condition 2: Check if we serve this kind of extension
                 let extension = &*abspath

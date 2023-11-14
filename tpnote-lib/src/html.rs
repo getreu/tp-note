@@ -499,7 +499,13 @@ impl<'a> Hyperlink for Link<'a> {
             _ => return None,
         };
         if <Link as Hyperlink>::is_local_fn(dest) {
-            Some(Path::new(dest.as_ref()))
+            // Strip URL fragment.
+            match (dest.rfind('#'), dest.rfind(['/', '\\'])) {
+                (Some(n), sep) if sep.is_some_and(|sep| n > sep) || sep.is_none() => {
+                    Some(Path::new(&dest.as_ref()[..n]))
+                }
+                _ => Some(Path::new(dest.as_ref())),
+            }
         } else {
             None
         }
@@ -1385,7 +1391,7 @@ mod tests {
     }
 
     #[test]
-    fn text_get_local_link_path() {
+    fn get_local_link_dest_path() {
         //
         let input = Link::Text2Dest(Cow::from("xyz"), Cow::from("/dir/3.0"), Cow::from("title"));
         assert_eq!(
@@ -1400,6 +1406,28 @@ mod tests {
             Cow::from("title"),
         );
         assert_eq!(input.get_local_link_dest_path(), None);
+
+        //
+        let input = Link::Text2Dest(Cow::from("xyz"), Cow::from("dir/doc.md"), Cow::from("xyz"));
+        let expected = Path::new("dir/doc.md");
+        let res = input.get_local_link_dest_path().unwrap();
+        assert_eq!(res, expected);
+
+        //
+        let input = Link::Text2Dest(Cow::from("xyz"), Cow::from("d#ir/doc.md"), Cow::from("xyz"));
+        let expected = Path::new("d#ir/doc.md");
+        let res = input.get_local_link_dest_path().unwrap();
+        assert_eq!(res, expected);
+
+        //
+        let input = Link::Text2Dest(
+            Cow::from("xyz"),
+            Cow::from("dir/doc.md#1"),
+            Cow::from("xyz"),
+        );
+        let expected = Path::new("dir/doc.md");
+        let res = input.get_local_link_dest_path().unwrap();
+        assert_eq!(res, expected);
     }
 
     #[test]
@@ -1523,6 +1551,29 @@ mod tests {
         let url = allowed_urls.read_recursive();
         println!("{:?}", allowed_urls.read_recursive());
         assert!(url.contains(&PathBuf::from("/abs/note path/dir/my note.md")));
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_rewrite_links3() {
+        use crate::config::LocalLinkKind;
+
+        let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
+        let input = "abd<a href=\"#1\"></a>abd".to_string();
+        let expected = "abd<a href=\"/abs/note path/#1\"></a>abd";
+        let root_path = Path::new("/my/");
+        let docdir = Path::new("/my/abs/note path/");
+        let output = rewrite_links(
+            input,
+            root_path,
+            docdir,
+            LocalLinkKind::Short,
+            false,
+            allowed_urls.clone(),
+        );
+        let url = allowed_urls.read_recursive();
+        println!("{:?}", allowed_urls.read_recursive());
+        assert!(url.contains(&PathBuf::from("/abs/note path/")));
         assert_eq!(output, expected);
     }
 }
