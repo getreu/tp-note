@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "TP-NOTE" "1" "2023-11-13" "Version 1.23.1" "Tp-Note documentation"
+.TH "TP-NOTE" "1" "2023-11-16" "Version 1.23.2" "Tp-Note documentation"
 .hy
 .SH NAME
 .PP
@@ -24,7 +24,7 @@
 .IP
 .nf
 \f[C]
-tpnote [-a ] [-b] [-c <FILE>] [-d <LEVEL>] [-e] [-l <LANG>]
+tpnote [-a ] [-b] [-c <FILE>] [-C <FILE>] [-d <LEVEL>] [-e] [-l <LANG>]
        [-p <NUM>] [-n] [-t] [-u] [-v] [-V] [-x <DIR>|\[aq]\[aq]|\[aq]-\[aq]]
        [<DIR>|<FILE>]
 \f[R]
@@ -569,7 +569,7 @@ The filename synchronization mechanism by default never does.
 \f[B]-a\f[R], \f[B]--add-header\f[R]
 .RS
 .PP
-Prepend a YAML header in case the text file does not have one.
+Prepends a YAML header in case the text file does not have one.
 The default template, deduces the `\f[V]title:\f[R]' and
 `\f[V]subtitle:\f[R]' header field from the filename.
 It\[cq]s sort-tag and file extension remain untouched.
@@ -598,14 +598,21 @@ data came from the clipboard.
 \f[B]-c\f[R] \f[I]FILE\f[R], \f[B]--config\f[R]=\f[I]FILE\f[R]
 .RS
 .PP
-Load the alternative config file \f[I]FILE\f[R] instead of the default
-one.
+Loads an additional configuration from the TOML formatted \f[I]FILE\f[R]
+and merges it into the default configuration.
+.RE
+.PP
+\f[B]-c\f[R] \f[I]FILE\f[R], \f[B]--config-defaults\f[R]=\f[I]FILE\f[R]
+.RS
+.PP
+Dumps the internal default configuration in TOML format into
+\f[I]FILE\f[R].
 .RE
 .PP
 \f[B]-d\f[R] \f[I]LEVEL\f[R], \f[B]--debug\f[R]=\f[I]LEVEL\f[R]
 .RS
 .PP
-Print additional log messages.
+Prints additional log messages.
 The debug level \f[I]LEVEL\f[R] must be one out of `\f[V]trace\f[R]',
 `\f[V]debug\f[R]', `\f[V]info\f[R]', `\f[V]warn\f[R]', `\f[V]error\f[R]'
 (default) or `\f[V]off\f[R]'.
@@ -767,7 +774,7 @@ viewer is launched.
 \f[B]-u\f[R], \f[B]--popup\f[R]
 .RS
 .PP
-Redirect log file entries into popup alert windows.
+Redirects log file entries into popup alert windows.
 Must be used together with the \f[B]--debug\f[R] option to have an
 effect.
 Note, that debug level `\f[V]error\f[R]' conditions will always trigger
@@ -811,7 +818,7 @@ debugging.
 \f[B]-x\f[R] \f[I]DIRECTORY\f[R], \f[B]--export\f[R]=\f[I]DIRECTORY\f[R]
 .RS
 .PP
-Print the note as HTML rendition into \f[I]DIRECTORY\f[R].
+Prints the note as HTML rendition into \f[I]DIRECTORY\f[R].
 `\f[V]-x -\f[R]' prints to \f[I]stdout\f[R].
 The empty string, e.g.\ `\f[V]--export=\f[R]' or
 `\f[V]-x \[dq]\[dq]\f[R]', defaults to the directory where the note file
@@ -824,7 +831,7 @@ windows.
 \f[B]--export-link-rewriting\f[R]=\f[I]MODE\f[R]
 .RS
 .PP
-Choose how local links in the exported HTML file are written out:
+Chooses how local links in the exported HTML file are written out:
 `\f[V]off\f[R]', `\f[V]short\f[R]' or `\f[V]long\f[R]' (default).
 No link rewriting occurs, for the \f[I]MODE\f[R] `\f[V]off\f[R]'.
 The \f[I]MODE\f[R] `\f[V]short\f[R]' rewrites all local relative links
@@ -1552,11 +1559,11 @@ For debugging, you can print out the merge result with
 .PP
 To write a custom configuration file, first start with a complete
 default configuration you can generate by invoking Tp-Note with
-`\f[V]-V -b -c\f[R]' (no `\f[V]-d\f[R]').
+`\f[V]-C\f[R]':
 .IP
 .nf
 \f[C]
-tpnote -V -b -c \[ti]/.config/tpnote/tpnote.toml
+tpnote -C \[ti]/.config/tpnote/tpnote.toml
 \f[R]
 .fi
 .PP
