@@ -63,10 +63,14 @@ pub struct Args {
     /// Batch mode: does not launch editor or viewer
     #[structopt(long, short = "b")]
     pub batch: bool,
-    /// Loads an additional configuration file or writes default
+    /// Loads (and merges) an additional configuration file
     #[structopt(long, short = "c")]
     pub config: Option<String>,
-    /// Console debug level: "trace", "debug", "info", "warn", "error" (default) or "off"
+    /// Dumps the internal default configuration into a file
+    #[structopt(long, short = "C")]
+    pub config_defaults: Option<String>,
+    /// Console debug level: "trace", "debug", "info", "warn", "error"
+    /// (default) or "off"
     #[structopt(long, short = "d")]
     pub debug: Option<LevelFilter>,
     /// Shows console debug messages also as popup windows
@@ -75,7 +79,7 @@ pub struct Args {
     /// Launches only the editor, no browser
     #[structopt(long, short = "e")]
     pub edit: bool,
-    /// Scheme for new notes: "default", "zettel", (see config. for more)
+    /// Scheme for new notes: "default", "zettel", (cf. `--config-defaults`)
     #[structopt(long, short = "s")]
     pub scheme: Option<String>,
     /// Forces console mode: opens console editor, no browser
@@ -87,8 +91,8 @@ pub struct Args {
     /// Disables filename synchronization
     #[structopt(long, short = "n")]
     pub no_filename_sync: bool,
-    /// Disables the automatic language detection and uses `<force-lang>` instead;
-    /// or, if `` use `TPNOTE_LANG` or `LANG`
+    /// Disables the automatic language detection and uses `<force-lang>`
+    /// instead; or, if `` use `TPNOTE_LANG` or `LANG`
     #[structopt(long, short = "l")]
     pub force_lang: Option<String>,
     /// Launches only the browser, no editor

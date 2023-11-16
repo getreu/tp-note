@@ -154,24 +154,24 @@ fn main() {
         };
     };
 
-    // Process `arg = `--config`.
-    // The output is YAML formatted for further automatic processing.
-    if ARGS.batch && ARGS.version && ARGS.debug.is_none() {
-        if let Some(path) = &ARGS.config {
-            let path = Path::new(&path);
+    // Process `arg = `--default-config`.
+    if let Some(path) = &ARGS.config_defaults {
+        let path = Path::new(&path);
 
-            if let Err(e) = Cfg::write_default_to_file(path) {
-                log::error!(
-                    "{}",
-                    ConfigFileError::ConfigFileWrite {
-                        error: e.to_string()
-                    }
-                    .to_string()
-                );
-                AppLogger::flush();
-                process::exit(5);
-            };
-        }
+        if let Err(e) = Cfg::write_default_to_file(path) {
+            log::error!(
+                "{}",
+                ConfigFileError::ConfigFileWrite {
+                    error: e.to_string()
+                }
+                .to_string()
+            );
+            AppLogger::flush();
+            process::exit(5);
+        };
+        // Exit.
+        AppLogger::flush();
+        process::exit(0);
     }
 
     // Process `arg = `--version`.

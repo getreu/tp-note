@@ -53,7 +53,7 @@ pub enum ConfigFileError {
     /// Remedy: check the path and permissions of the to be generated
     /// configuration file.
     #[error(
-        "Unable write a configuration file with default values:\n\
+        "Can not write the default configuration:\n\
         ---\n\
         {error}"
     )]
@@ -61,7 +61,7 @@ pub enum ConfigFileError {
 
     /// Remedy: restart, or check file permission of the configuration file.
     #[error(
-        "Unable to load or parse the (merged)\n\
+        "Can not load or parse the (merged)\n\
         configuration file(s):\n\
         ---\n\
         {error}\n\n\
