@@ -187,25 +187,32 @@ _Tp-Note_'s manual.
 ## Upgrading
 
 While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
-configuration file structure. In order not to lose the changes you made in
-this file, the installer does not replace it automatically with a new version.
-Instead, _Tp-Note_ renames the old configuration file and prompts:
+configuration file structure:
+
+```
+*** ERROR:
+Can not load or parse the (merged) configuration file(s):
+---
+invalid length 3, expected fewer elements in array in `viewer.served_mime_types`
 
 
-    NOTE: unable to load, parse or write the configuration file
-    ---
-    Reason:
-            Bad TOML data: missing field `extension_default` at line 1 column 1!
+Note: this error may occur after upgrading Tp-Note due to some incompatible
+configuration file changes.
 
-    Note: this error may occur after upgrading Tp-Note due
-    to some incompatible configuration file changes.
+Tp-Note renames and thus disables the last sourced configuration file.
 
-    Tp-Note backs up the existing configuration
-    file and creates a new one with default values.
+Additional technical details:
+*    Command line parameters:
+tpnote -b 
+*    Sourced configuration files:
+/home/joe/.config/tpnote/tpnote.toml
+```
 
-The configuration file backup is stored in the same directory as the newly
-created configuration file (cf. [Customization section] of _Tp-Note_'s
-man-page).
+The configuration file backup is stored in the same directory as the last
+sourced configuration file, e.g. `/home/joe/.config/tpnote/`.
+If Tp-Note sources more than one configuration file, consider the possibility
+of syntax errors in any of these files (cf. [Customization section] of
+Tp-Note_'s man-page).
 
 
 ## Building
