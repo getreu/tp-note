@@ -67,6 +67,7 @@ pub struct Args {
     #[structopt(long, short = "c")]
     pub config: Option<String>,
     /// Dumps the internal default configuration into a file
+    /// or stdout if `-`
     #[structopt(long, short = "C")]
     pub config_defaults: Option<String>,
     /// Console debug level: "trace", "debug", "info", "warn", "error"

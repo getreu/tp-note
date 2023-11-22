@@ -158,7 +158,7 @@ fn main() {
     if let Some(path) = &ARGS.config_defaults {
         let path = Path::new(&path);
 
-        if let Err(e) = Cfg::write_default_to_file(path) {
+        if let Err(e) = Cfg::write_default_to_file_or_stdout(path) {
             log::error!(
                 "{}",
                 ConfigFileError::ConfigFileWrite {

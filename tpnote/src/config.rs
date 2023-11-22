@@ -13,7 +13,7 @@ use serde::Serialize;
 use std::env;
 use std::fs;
 use std::fs::File;
-use std::io::Write;
+use std::io;
 use std::mem;
 use std::path::Path;
 use std::path::PathBuf;
@@ -357,12 +357,23 @@ impl Cfg {
         Ok(config)
     }
 
-    /// Writes the default configuration to `Path`.
-    pub(crate) fn write_default_to_file(config_path: &Path) -> Result<(), ConfigFileError> {
-        fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
-
-        let mut buffer = File::create(config_path)?;
-        buffer.write_all(Self::default_as_toml().as_bytes())?;
+    /// Writes the default configuration to `Path` or to `stdout` if
+    /// `config_path == -`.
+    pub(crate) fn write_default_to_file_or_stdout(
+        config_path: &Path,
+    ) -> Result<(), ConfigFileError> {
+        // These must live longer than `readable`, and thus are declared first:
+        let (mut stdout_write, mut file_write);
+        // On-Stack Dynamic Dispatch:
+        let writeable: &mut dyn io::Write = if config_path == Path::new("-") {
+            stdout_write = io::stdout();
+            &mut stdout_write
+        } else {
+            fs::create_dir_all(config_path.parent().unwrap_or_else(|| Path::new("")))?;
+            file_write = File::create(config_path)?;
+            &mut file_write
+        };
+        writeable.write_all(Self::default_as_toml().as_bytes())?;
         Ok(())
     }
 
