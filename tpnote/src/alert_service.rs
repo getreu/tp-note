@@ -34,16 +34,16 @@ lazy_static! {
     /// Hold `AlertService` in a static variable, that
     /// `AlertService::push_str()` can be called easily from everywhere.
     static ref ALERT_SERVICE: AlertService = AlertService {
-        /// The message queue accepting strings for being shown as
-        /// popup alert windows.
+        // The message queue accepting strings for being shown as
+        // popup alert windows.
         message_channel: {
             let (tx, rx) = sync_channel(QUEUE_LEN);
             (tx, Mutex::new(rx))
         },
-        /// This mutex does not hold any data. When it is locked, it indicates,
-        /// that the `AlertService` is still busy and should not get shut down.
+        // This mutex does not hold any data. When it is locked, it indicates,
+        // that the `AlertService` is still busy and should not get shut down.
         busy_lock: Mutex::new(()),
-        /// We start with no funtion pointer.
+        // We start with no funtion pointer.
         popup_alert: Mutex::new(None),
     };
 }

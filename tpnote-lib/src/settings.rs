@@ -161,9 +161,12 @@ impl Settings {
     /// (Re)read environment variables and store them in the global `SETTINGS`
     /// object. Some data originates from `LIB_CFG`.
     /// First sets `SETTINGS.current_scheme`:
-    /// 1. If `force_theme` is `Some(scheme)`, gets the index and stores result, or,
-    /// 2. if `force_theme` is `Some("")`, stores `lib_cfg.scheme_sync_default`, or,
-    /// 3. reads the environment variable `TPNOTE_SCHEME_NEW_DEFAULT` or, -if empty-
+    /// 1. If `force_theme` is `Some(scheme)`, gets the index and stores result,
+    ///    or,
+    /// 2. if `force_theme` is `Some("")`, stores `lib_cfg.scheme_sync_default`,
+    ///    or,
+    /// 3. reads the environment variable `TPNOTE_SCHEME_NEW_DEFAULT`
+    ///    or, -if empty-
     /// 4. copies `scheme_new_default` into `SETTINGS.curent_scheme`.
     /// Then, sets all other fields.
     /// `force_lang=Some(_)` disables the `get_lang` filter by setting
@@ -405,8 +408,8 @@ impl Settings {
     }
 
     /// Read keys and values from
-    /// `LIB_CFG.schemes[self.current_scheme].tmpl.filter_btmap_lang` in the `BTreeMap`.
-    /// Add the user's default language and region.
+    /// `LIB_CFG.schemes[self.current_scheme].tmpl.filter_btmap_lang` in the
+    /// `BTreeMap`. Add the user's default language and region.
     fn update_filter_map_lang_btmap(&mut self) {
         let mut btm = BTreeMap::new();
         let lib_cfg = LIB_CFG.read_recursive();
@@ -430,8 +433,8 @@ impl Settings {
     }
 
     /// Reads the environment variable `LANG_DETECTION`. If not empty,
-    /// parse the content and overwrite the `self.filter_get_lang` and
-    /// the `self.filter_map_lang` variables.
+    /// parse the content and overwrite the `self.filter_get_lang` and the
+    /// `self.filter_map_lang` variables.
     #[cfg(feature = "lang-detection")]
     fn update_env_lang_detection(&mut self) {
         if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {

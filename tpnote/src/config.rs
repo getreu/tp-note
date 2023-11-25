@@ -27,8 +27,8 @@ use tpnote_lib::config::LIB_CONFIG_DEFAULT_TOML;
 use tpnote_lib::context::Context;
 use tpnote_lib::filename::NotePathBuf;
 
-/// Set the minimum required configuration file version that is compatible with this
-/// Tp-Note version.
+/// Set the minimum required configuration file version that is compatible with
+/// this Tp-Note version.
 ///
 /// Examples how to use this constant. Choose one of the following:
 /// 1. Require some minimum version of the configuration file.
@@ -44,7 +44,8 @@ use tpnote_lib::filename::NotePathBuf;
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = PKG_VERSION;
 ///    ```
 ///
-/// 3. Disable minimum version check; all configuration file versions are allowed.
+/// 3. Disable minimum version check; all configuration file versions are
+///    allowed.
 ///
 ///    ```no_run
 ///    const MIN_CONFIG_FILE_VERSION: Option<&'static str> = None;
@@ -71,18 +72,16 @@ const CONFIG_FILENAME: &str = concat!(env!("CARGO_BIN_NAME"), ".toml");
 pub(crate) const GUI_CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
 
 /// This decides until what depth arrays are merged into the default
-/// configuration. Tables are always merged.
-/// Deeper arrays replace the default configuration.
-/// For our configuration this means, that `scheme` is merged and all other
-/// arrays are replaced.
+/// configuration. Tables are always merged. Deeper arrays replace the default
+/// configuration. For our configuration this means, that `scheme` is merged and
+/// all other arrays are replaced.
 pub(crate) const CONFIG_FILE_MERGE_DEPTH: isize = 2;
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cfg {
-    /// Version number of the configuration file as String -or-
-    /// a text message explaining why we could not load the
-    /// configuration file.
+    /// Version number of the configuration file as String -or- a text message
+    /// explaining why we could not load the configuration file.
     pub version: String,
     pub scheme_sync_default: String,
     pub scheme: Vec<Scheme>,
@@ -137,8 +136,8 @@ impl ::std::default::Default for ArgDefault {
     }
 }
 
-/// Configuration of clipboard behaviour, deserialized from the
-/// configuration file.
+/// Configuration of clipboard behaviour, deserialized from the configuration
+/// file.
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Clipboard {
     pub read_enabled: bool,
@@ -208,12 +207,11 @@ impl Cfg {
     /// default values.
     #[inline]
     fn from_files(config_paths: &[PathBuf]) -> Result<Cfg, ConfigFileError> {
-        /// `CONFIG_FILE_MERGE_DEPTH` controls whether a top-level array in the TOML
-        /// document is merged instead of overridden. This is useful for TOML
-        /// documents that use a top-level array of values like the `tpnote.toml`,
-        /// where one usually wants to override or add to the array instead of
-        /// replacing it altogether. Credits to the Helix editor for the code
-        /// in this method. The algorithm is slightly modified.
+        /// `CONFIG_FILE_MERGE_DEPTH` controls whether a top-level array in
+        /// the TOML document is merged instead of overridden. This is useful
+        /// for TOML documents that use a top-level array of values like the
+        /// `tpnote.toml`, where one usually wants to override or add to the
+        /// array instead of replacing it altogether.
         fn merge_toml_values(
             left: toml::Value,
             right: toml::Value,
@@ -227,11 +225,12 @@ impl Cfg {
 
             match (left, right) {
                 (Value::Array(mut left_items), Value::Array(right_items)) => {
-                    // The top-level arrays should be merged but nested arrays should
-                    // act as overrides. For the `tpnote.toml` config, this means
-                    // that you can specify a sub-set of schemes in an overriding
-                    // `tpnote.toml` but that nested arrays like
-                    // `schme.tmpl.fm_var_localization` are replaced instead of merged.
+                    // The top-level arrays should be merged but nested arrays
+                    // should act as overrides. For the `tpnote.toml` config,
+                    // this means that you can specify a sub-set of schemes in
+                    // an overriding `tpnote.toml` but that nested arrays like
+                    // `schme.tmpl.fm_var_localization` are replaced instead
+                    // of merged.
                     if merge_depth > 0 {
                         left_items.reserve(right_items.len());
                         for rvalue in right_items {
@@ -252,7 +251,6 @@ impl Cfg {
                     }
                 }
                 (Value::Table(mut left_map), Value::Table(right_map)) => {
-                    // We merge talbes at (almost) any depth
                     if merge_depth > -10 {
                         for (rname, rvalue) in right_map {
                             match left_map.remove(&rname) {
@@ -271,7 +269,6 @@ impl Cfg {
                         Value::Table(right_map)
                     }
                 }
-                // Catch everything else we didn't handle, and use the right value
                 (_, value) => value,
             }
         }
@@ -377,8 +374,8 @@ impl Cfg {
         Ok(())
     }
 
-    /// Backs up the existing configuration file and writes a new one with default
-    /// values.
+    /// Backs up the existing configuration file and writes a new one with
+    /// default values.
     pub(crate) fn backup_and_remove_last() -> Result<PathBuf, ConfigFileError> {
         if let Some(config_path) = CONFIG_PATHS.iter().filter(|p| p.exists()).last() {
             let mut config_path_bak = config_path.to_path_buf();
@@ -394,8 +391,8 @@ impl Cfg {
 
 lazy_static! {
     /// Reads and parses the configuration file "tp-note.toml". An alternative
-    /// filename (optionally with absolute path) can be given on the command line
-    /// with "--config".
+    /// filename (optionally with absolute path) can be given on the command
+    /// line with "--config".
     pub static ref CFG: Cfg = {
             Cfg::from_files(&CONFIG_PATHS)
                 .unwrap_or_else(|e|{
@@ -403,15 +400,16 @@ lazy_static! {
                     let mut cfg_file_loading = CFG_FILE_LOADING.write();
                     *cfg_file_loading = Err(e);
 
-                    // As we could not load the configuration file, we will use the default
-                    // configuration.
+                    // As we could not load the configuration file, we will use
+                    // the default configuration.
                     Cfg::default()
                 })
         };
 }
 
 lazy_static! {
-    /// Variable indicating with `Err` if the loading of the configuration file went wrong.
+    /// Variable indicating with `Err` if the loading of the configuration file
+    /// went wrong.
     pub static ref CFG_FILE_LOADING: RwLock<Result<(), ConfigFileError>> = RwLock::new(Ok(()));
 }
 
