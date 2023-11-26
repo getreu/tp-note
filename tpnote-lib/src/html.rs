@@ -180,9 +180,9 @@ trait Hyperlink {
     /// If `dest` in `Link::Text2Dest` contains only a sort
     /// tag as filename, expand the latter to a full filename.
     /// Otherwise, no action.
-    /// This method accesses the filesystem. Therefore `root_path`
-    /// is needed as parameter.
-    fn expand_shorthand_link(&mut self, root_path: &Path) -> Result<(), NoteError>;
+    /// This method accesses the filesystem. Therefore sometimes `prepend_path`
+    /// is needed as parameter and prepended.
+    fn expand_shorthand_link(&mut self, prepend_path: Option<&Path>) -> Result<(), NoteError>;
 
     /// This removes a possible scheme in `text`.
     /// Call this method only, when you sure that this
@@ -358,7 +358,7 @@ impl<'a> Hyperlink for Link<'a> {
     }
 
     //
-    fn expand_shorthand_link(&mut self, root_path: &Path) -> Result<(), NoteError> {
+    fn expand_shorthand_link(&mut self, prepend_path: Option<&Path>) -> Result<(), NoteError> {
         let shorthand_link = match self {
             Link::Text2Dest(_, dest, _) => dest,
             Link::Image2Dest(_, _, _, _, dest, _) => dest,
@@ -377,12 +377,15 @@ impl<'a> Hyperlink for Link<'a> {
         let shorthand_path = Path::new(shorthand_str);
 
         if let Some(sort_tag) = shorthand_str.is_valid_sort_tag() {
-            // Concatenate `root_path` and `shorthand_path`.
-            let shorthand_path = shorthand_path
-                .strip_prefix(MAIN_SEPARATOR_STR)
-                .unwrap_or(shorthand_path);
-            let mut full_shorthand_path = root_path.to_path_buf();
-            full_shorthand_path.push(shorthand_path);
+            let full_shorthand_path = if let Some(root_path) = prepend_path {
+                // Concatenate `root_path` and `shorthand_path`.
+                let shorthand_path = shorthand_path
+                    .strip_prefix(MAIN_SEPARATOR_STR)
+                    .unwrap_or(shorthand_path);
+                Cow::Owned(root_path.join(shorthand_path))
+            } else {
+                Cow::Borrowed(shorthand_path)
+            };
 
             // Search for the file.
             let found = full_shorthand_path
@@ -392,7 +395,9 @@ impl<'a> Hyperlink for Link<'a> {
             if let Some(path) = found {
                 // We prepended `root_path` before, we can safely strip it
                 // and unwrap.
-                let found_link = path.strip_prefix(root_path).unwrap();
+                let found_link = path
+                    .strip_prefix(prepend_path.unwrap_or(Path::new("")))
+                    .unwrap();
                 // Prepend `/`.
                 let mut found_link = Path::new(MAIN_SEPARATOR_STR)
                     .join(found_link)
@@ -680,8 +685,11 @@ pub fn rewrite_links(
         // Rewrite the local link.
         match link
             .rebase_local_link(root_path, docdir, rewrite_rel_paths, rewrite_abs_paths)
-            .and_then(|_| link.expand_shorthand_link(root_path))
-        {
+            .and_then(|_| {
+                link.expand_shorthand_link(
+                    (matches!(local_link_kind, LocalLinkKind::Short)).then_some(root_path),
+                )
+            }) {
             Ok(()) => {}
             Err(e) => {
                 let e = e.to_string();
