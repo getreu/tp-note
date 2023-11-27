@@ -1,10 +1,10 @@
 ---
-title:      TP-NOTE(1) Version 1.23.2 | Tp-Note documentation
+title:      TP-NOTE(1) Version 1.23.3 | Tp-Note documentation
 subtitle:   manpage
 author:     Jens Getreu
-version:    1.23.2
+version:    1.23.3
 filename_sync: false
-date:       2023-11-16
+date:       2023-11-27
 lang:       en-GB
 ---
 
