@@ -677,8 +677,8 @@ synchronization).
 
 Tp-Note considers a text file to be a valid note file, if its:
 
-* file extension is listed in one of the configuration file variables
-  '`filename.extension_*`'; if its
+* file extension is listed in one of the configuration file variable
+  '`filename.extensions`'; if its
 
 * content has a valid YAML header and
 
@@ -733,8 +733,8 @@ There is no restriction about the markup language being used in the note's text
 body. However, the default templates assume Markdown and the file extension
 '`.md`'. Both can be changed easily by adapting Tp-Note's configuration file.
 Besides the requirements concerning its header, a valid Tp-Note file must have
-a filename extension that is listed in one of the configuration file variables:
-'`filename.extension_*`'. The latter also determine which internal markup
+a filename extension that is listed in the configuration file variable:
+'`filename.extensions`'. The latter also determines which internal markup
 language render is called for Tp-Note's internal viewer.
 
 
@@ -876,19 +876,19 @@ link is displayed in the browser.
 
 | Local autolink                                 | What you see                      |
 |------------------------------------------------|-----------------------------------|
-| '`'<tpnote:dir/01ac-Tulips--red,%20yellow.md>`'| dir/01ac-Tulips--red,%20yellow.md |
-| '`'<tpnote:dir/01ac>`'                         | dir/01ac                          |
+| '`<tpnote:dir/01ac-Tulips--red,%20yellow.md>`' | dir/01ac-Tulips--red,%20yellow.md |
+| '`<tpnote:dir/01ac>`'                          | dir/01ac                          |
 |
 
 
-| Formatted local autolink                            | What you see                |
-|-----------------------------------------------------|-----------------------------|
-| '`'<tpnote:dir/01ac-Tulips--red,%20yellow.md?>`'    | Tulips--red, yellow         |
-| '`'<tpnote:dir/01ac?>`'                             | Tulips--red, yellow         |
-| '`'<tpnote:dir/01ac?:>`'                            | 01ac-Tulips--red, yellow.md |
-| '`'<tpnote:dir/01ac?:.>`'                           | 01ac-Tulips--red, yellow  	|
-| '`'<tpnote:dir/01ac?-:,>`'                          | Tulips--red                 |
-| '`'<tpnote:dir/01ac?--:,>`'                         | red                         |
+| Formatted local autolink                        | What you see                |
+|-------------------------------------------------|-----------------------------|
+| '`<tpnote:dir/01ac-Tulips--red,%20yellow.md?>`' | Tulips--red, yellow         |
+| '`<tpnote:dir/01ac?>`'                          | Tulips--red, yellow         |
+| '`<tpnote:dir/01ac?:>`'                         | 01ac-Tulips--red, yellow.md |
+| '`<tpnote:dir/01ac?:.>`'                        | 01ac-Tulips--red, yellow  	|
+| '`<tpnote:dir/01ac?-:,>`'                       | Tulips--red                 |
+| '`<tpnote:dir/01ac?--:,>`'                      | red                         |
 
 
 
@@ -1113,15 +1113,15 @@ by merging a series of configuration files from various locations into the
 default values. This  happens in the following order:
 
 1. Unix and MacOS only: '`/etc/tpnote/tpnote.toml`'
-2. The file where the environment variable '`TPNOTE_CONFIG`' points to.
+2. The file the environment variable '`TPNOTE_CONFIG`' points to.
 3. The user's configuration file:
    - Unix: '`~/.config/tpnote/tpnote.toml`'
    - Windows: '`C:\Users\<LOGIN>\AppData\Roaming\tpnote\config\tpnote.toml>`'
    - MacOS: '`/Users/<LOGIN>/Library/Application Support/tpnote`'
 4. At startup all parent directories of the note file path '`<PATH>`'are
    searched for a marker file named '`.tpnote.toml`'. If found, the document root
-   moves from '`/`' the found location. If present and its content is not empty,
-   Tp-Note interprets the file's content as configuration file.
+   moves from '`/`' to the found location. If present and its content is not
+   empty, Tp-Note interprets the file's content as configuration file.
 5. The file indicated by the command line parameter '`--config <FIlE>`'. 
 
 When Tp-Note starts, it first merges all available configuration files into
@@ -1341,21 +1341,13 @@ Then place a Tp-Note configuration in its search path (e.g.
 
 ```toml
 [app_args]
-unix.editor = [ [ 'code', '-w', '-n', ] ]
+unix.editor = [ [ 'flatpak', 'run', 'com.github.marktext.marktext', ] ]
 ```
 
 The structure of this variable is a list of lists. Every item in the outer list
 corresponds to one entire command line launching a different text editor, here
-_VSCode_.  When launching, Tp-Note searches through this list until it finds an
+_Marktext_. When launching, Tp-Note searches through this list until it finds an
 installed text editor on the system.
-
-In the next example, we register the _Mark Text_ editor at the first place in
-this list, by inserting '`['flatpak', 'run', 'com.github.marktext.marktext']`':
-
-```toml
-[app_args]
-unix.editor = [ [ 'flatpak', 'run', 'com.github.marktext.marktext', ] ]
-```
 
 Save the modified configuration file.  Next time you launch Tp-Note, the
 _Mark Text_-editor will open.
@@ -1651,6 +1643,11 @@ filenames, is markup language agnostic. However, there is one content template
 syntax varies depending on the markup language. Hence, you should not forget to
 modify the '`tmpl.annotate_file_content`' content template, when you
 change the default markup language defined in '`filename.extension_default`'.
+Tp-Notes comes with three internal renderers:
+
+* Markdown (file extension `.md`)
+* ReStructuredText (file extension `.rst`) and
+* Link only (file extension `.txtnote`) 
 
 
 ### Change default markup language to ReStructuredText
@@ -1807,7 +1804,7 @@ editor window.  A negative value delays the start of the text editor instead.
 
 Besides its core function, Tp-Note comes with several built-in markup
 renderer and viewer, allowing to work with different markup languages at the
-same time. The configuration file variable '`filename.extension`' determine
+same time. The configuration file variable '`filename.extensions`' determines
 which markup renderer is used for which note file extension. Depending on the
 markup language, this feature is more or less advanced and complete: _Markdown_
 (cf. '`Markdown`') is best supported and feature complete: It

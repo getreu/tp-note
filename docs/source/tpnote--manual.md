@@ -558,25 +558,35 @@ yourself.
 
 ## Minimum setup without file manager integration
 
-_Tp-Note_'s template engine can be tested and used without window manager
+_Tp-Note_'s template engine can be tested and used without file manager
 integration. Download the appropriate binary for your architecture and 
 place it in your `PATH`. See the 
-[Distribution](https://blog.getreu.net/projects/tp-note/#distribution) in the
+[Distribution](../projects/tp-note/#distribution) in the
 section in Tp-Note's Readme-document for more details.
+
+Bear in mind that the preferred way to install Tp-Note under Windows is the
+[Windows installer package](../projects/tp-note/#tp-note-microsoft-windows-installer-package). However, if you do not have the right to install
+software on your computer, you can place the [Tp-Note binary](../projects/tp-note/#various-binaries-for-windows-macos-and-linux) directly on your desktop. 
+
 
 
 
 ## Usage of the minimum setup
 
-To create a new note, either double-click on the _Tp-Note_-icon, or drag a
-folder or file and drop it on the _Tp-Note_-icon. This opens an editor with
-your new note.
+Once you have placed the `tpnote` binary in your `PATH` you can invoke Tp-Note
+on the command line by typing `tpnote` optionally followed by a directory path
+or a file path.
 
-For more comfort, I recommend integrating _Tp-Note_ into the file manager's
-context menu. See section [Optional integration with your file manager] for
-more details.  There you also will find a list of tested Markdown editors, if
-you wish to use one. _Tp-Note_ works with every Unicode text editor and
-Markdown editor (see section [Optional customization] and man-page for more
+Having a copy (or symbolic link) of Tp-Note's binary `tpnote` on your desktop,
+enables you to execute the following workflow: To create a new note, either
+double-click on the _Tp-Note_-icon, or drag and drop a folder or file and drop
+it on the _Tp-Note_-icon. This opens an editor with your new note.
+
+Anyway, for more comfort, I recommend integrating _Tp-Note_ into the file
+manager's context menu. See section [Optional integration with your file
+manager] for more details. There you also will find a list of tested Markdown
+editors, if you wish to use one. _Tp-Note_ works with every Unicode text editor
+and Markdown editor (see section [Optional customization] and man-page for more
 details).
 
 _Tp-Note_'s note files can be printed directly from the viewer (webbrowser)

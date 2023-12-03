@@ -866,8 +866,8 @@ with the key `\f[V]arg_default.export_link_rewriting\f[R]'.
 .PP
 Tp-Note considers a text file to be a valid note file, if its:
 .IP \[bu] 2
-file extension is listed in one of the configuration file variables
-`\f[V]filename.extension_*\f[R]'; if its
+file extension is listed in one of the configuration file variable
+`\f[V]filename.extensions\f[R]'; if its
 .IP \[bu] 2
 content has a valid YAML header and
 .IP \[bu] 2
@@ -932,9 +932,9 @@ However, the default templates assume Markdown and the file extension
 `\f[V].md\f[R]'.
 Both can be changed easily by adapting Tp-Note\[cq]s configuration file.
 Besides the requirements concerning its header, a valid Tp-Note file
-must have a filename extension that is listed in one of the
-configuration file variables: `\f[V]filename.extension_*\f[R]'.
-The latter also determine which internal markup language render is
+must have a filename extension that is listed in the configuration file
+variable: `\f[V]filename.extensions\f[R]'.
+The latter also determines which internal markup language render is
 called for Tp-Note\[cq]s internal viewer.
 .SS Links to resources and other documents
 .SS Link types
@@ -1189,12 +1189,12 @@ What you see
 T}
 _
 T{
-`\f[V]\[aq]<tpnote:dir/01ac-Tulips--red,%20yellow.md>\f[R]'
+`\f[V]<tpnote:dir/01ac-Tulips--red,%20yellow.md>\f[R]'
 T}@T{
 dir/01ac-Tulips\[en]red,%20yellow.md
 T}
 T{
-`\f[V]\[aq]<tpnote:dir/01ac>\f[R]'
+`\f[V]<tpnote:dir/01ac>\f[R]'
 T}@T{
 dir/01ac
 T}
@@ -1205,7 +1205,7 @@ T}
 .PP
 .TS
 tab(@);
-lw(45.2n) lw(24.8n).
+lw(44.0n) lw(26.0n).
 T{
 Formatted local autolink
 T}@T{
@@ -1213,32 +1213,32 @@ What you see
 T}
 _
 T{
-`\f[V]\[aq]<tpnote:dir/01ac-Tulips--red,%20yellow.md?>\f[R]'
+`\f[V]<tpnote:dir/01ac-Tulips--red,%20yellow.md?>\f[R]'
 T}@T{
 Tulips\[en]red, yellow
 T}
 T{
-`\f[V]\[aq]<tpnote:dir/01ac?>\f[R]'
+`\f[V]<tpnote:dir/01ac?>\f[R]'
 T}@T{
 Tulips\[en]red, yellow
 T}
 T{
-`\f[V]\[aq]<tpnote:dir/01ac?:>\f[R]'
+`\f[V]<tpnote:dir/01ac?:>\f[R]'
 T}@T{
 01ac-Tulips\[en]red, yellow.md
 T}
 T{
-`\f[V]\[aq]<tpnote:dir/01ac?:.>\f[R]'
+`\f[V]<tpnote:dir/01ac?:.>\f[R]'
 T}@T{
 01ac-Tulips\[en]red, yellow
 T}
 T{
-`\f[V]\[aq]<tpnote:dir/01ac?-:,>\f[R]'
+`\f[V]<tpnote:dir/01ac?-:,>\f[R]'
 T}@T{
 Tulips\[en]red
 T}
 T{
-`\f[V]\[aq]<tpnote:dir/01ac?--:,>\f[R]'
+`\f[V]<tpnote:dir/01ac?--:,>\f[R]'
 T}@T{
 red
 T}
@@ -1524,8 +1524,7 @@ This happens in the following order:
 .IP "1." 3
 Unix and MacOS only: `\f[V]/etc/tpnote/tpnote.toml\f[R]'
 .IP "2." 3
-The file where the environment variable `\f[V]TPNOTE_CONFIG\f[R]' points
-to.
+The file the environment variable `\f[V]TPNOTE_CONFIG\f[R]' points to.
 .IP "3." 3
 The user\[cq]s configuration file:
 .RS 4
@@ -1541,7 +1540,7 @@ MacOS: `\f[V]/Users/<LOGIN>/Library/Application Support/tpnote\f[R]'
 At startup all parent directories of the note file path
 `\f[V]<PATH>\f[R]\[cq]are searched for a marker file
 named'\f[V].tpnote.toml\f[R]`.
-If found, the document root moves from'\f[V]/\f[R]\[cq] the found
+If found, the document root moves from'\f[V]/\f[R]\[cq] to the found
 location.
 If present and its content is not empty, Tp-Note interprets the
 file\[cq]s content as configuration file.
@@ -1818,26 +1817,15 @@ content:
 .nf
 \f[C]
 [app_args]
-unix.editor = [ [ \[aq]code\[aq], \[aq]-w\[aq], \[aq]-n\[aq], ] ]
+unix.editor = [ [ \[aq]flatpak\[aq], \[aq]run\[aq], \[aq]com.github.marktext.marktext\[aq], ] ]
 \f[R]
 .fi
 .PP
 The structure of this variable is a list of lists.
 Every item in the outer list corresponds to one entire command line
-launching a different text editor, here \f[I]VSCode\f[R].
+launching a different text editor, here \f[I]Marktext\f[R].
 When launching, Tp-Note searches through this list until it finds an
 installed text editor on the system.
-.PP
-In the next example, we register the \f[I]Mark Text\f[R] editor at the
-first place in this list, by inserting
-`\f[V][\[aq]flatpak\[aq], \[aq]run\[aq], \[aq]com.github.marktext.marktext\[aq]]\f[R]':
-.IP
-.nf
-\f[C]
-[app_args]
-unix.editor = [ [ \[aq]flatpak\[aq], \[aq]run\[aq], \[aq]com.github.marktext.marktext\[aq], ] ]
-\f[R]
-.fi
 .PP
 Save the modified configuration file.
 Next time you launch Tp-Note, the \f[I]Mark Text\f[R]-editor will open.
@@ -2192,6 +2180,13 @@ Hence, you should not forget to modify the
 `\f[V]tmpl.annotate_file_content\f[R]' content template, when you change
 the default markup language defined in
 `\f[V]filename.extension_default\f[R]'.
+Tp-Notes comes with three internal renderers:
+.IP \[bu] 2
+Markdown (file extension \f[V].md\f[R])
+.IP \[bu] 2
+ReStructuredText (file extension \f[V].rst\f[R]) and
+.IP \[bu] 2
+Link only (file extension \f[V].txtnote\f[R])
 .SS Change default markup language to ReStructuredText
 .PP
 Tp-Note\[cq]s core function is a template system and as such it depends
@@ -2395,8 +2390,8 @@ A negative value delays the start of the text editor instead.
 Besides its core function, Tp-Note comes with several built-in markup
 renderer and viewer, allowing to work with different markup languages at
 the same time.
-The configuration file variable `\f[V]filename.extension\f[R]' determine
-which markup renderer is used for which note file extension.
+The configuration file variable `\f[V]filename.extensions\f[R]'
+determines which markup renderer is used for which note file extension.
 Depending on the markup language, this feature is more or less advanced
 and complete: \f[I]Markdown\f[R] (cf.\ `\f[V]Markdown\f[R]') is best
 supported and feature complete: It complies with the \f[I]Common
