@@ -18,6 +18,13 @@ about expressive filenames, then _Tp-Note_ might be the tool of your choice.
 As _Tp-Note_ synchronizes the note's filename with its document title, you
 will find your notes more easily.
 
+
+_On Tue, 2023-12-19 at 12:58 +1100, Dev Rain wrote:_
+
+> _Found Tp-Note awhile back and it has become part of my daily workflow, and
+> indeed part of my daily note-taking life. I wanted to extend my thanks; so 
+> thank you. dev.rain_
+
 _Tp-Note_ is available for Linux, Windows and MacOS. This manual illustrates
 its main use cases and how to get started:
 

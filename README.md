@@ -26,11 +26,15 @@ detects note file changes and updates the rendition accordingly.
 
 ![Screenshot](./assets/tpnote-screenshot.png)
 
-* Read more in [Tp-Note’s user manual]
+_On Tue, 2023-12-19 at 12:58 +1100, Dev Rain wrote:_
 
-* [Download Tp-Note]
+> _Found Tp-Note awhile back and it has become part of my daily workflow,
+> and indeed part of my daily note-taking life. I wanted to extend my
+> thanks; so thank you. 
+> dev.rain_
 
-* Project page: [Tp-Note - Minimalistic note-taking: save and edit your clipboard content as a note file]
+Read more in [Tp-Note’s user manual], [Download Tp-Note] or visit the project 
+page: [Tp-Note - Minimalistic note-taking].
 
 
 ---
@@ -354,7 +358,7 @@ Copyright:
 
 [Tp-Note’s user manual]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html
 [Download Tp-Note]: https://blog.getreu.net/projects/tp-note/index.html#distribution
-[Tp-Note - Minimalistic note taking: save and edit your clipboard content as a note file]: https://blog.getreu.net/projects/tp-note/
+[Tp-Note - Minimalistic note-taking]: https://blog.getreu.net/projects/tp-note/
 [Tp-Note - Most common use cases - YouTube]: https://www.youtube.com/watch?v=ODhPytPFtYY
 [Tp-Note's project page]: https://blog.getreu.net/projects/tp-note/
 [Tp-Note user manual - html]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html
