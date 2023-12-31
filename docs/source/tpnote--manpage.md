@@ -1654,43 +1654,61 @@ Tp-Notes comes with three internal renderers:
 
 Tp-Note's core function is a template system and as such it depends
 very little on the used markup language. The default templates are
-designed in a way that they contain almost no markup specific code. There
-is one little exception though. The following configuration variables
-affect the way new notes are created:
+designed in a way that they contain almost no markup specific code. Though there
+is one little exception in the '`annotate_file_content`' template. 
+For instance, to instruct Tp-Note to create `.rst` files, create a
+configuration file `~/.config/tpnote/tpnote.toml` with the following content:
 
-1. The file extension for new notes is defined as:
+```toml
+[[scheme]]
+name = "default"
+[scheme.filename]
+extension_default = 'rst'
 
-   ```toml
-   [[scheme]]
-   name = "default"
-   [scheme.filename]
-   extension_default='md'
-   ```
+[scheme.tmpl]
+annotate_file_content = """
+{%- set body_text = stdin ~ clipboard | trim -%}
+{%- if body_text != '' -%}
+   {%- set lang_test_text = body_text | cut -%}
+{%- else -%}
+   {%- set lang_test_text = path | file_stem  -%}
+{%- endif -%}
+---
+{{ path | trim_file_sort_tag | to_yaml(key='fm_title') }}
+{% if body_text | link_text !='' and
+      body_text | heading == body_text -%}
+{{ 'url' | to_yaml(key='fm_subtitle') -}}
+{%- else -%}
+{{ 'Note' | to_yaml(key='fm_subtitle') -}}
+{%- endif %}
+{{ username | capitalize | to_yaml(key='fm_author') }}
+{{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
+{{ lang_test_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
+---
 
-   Overwrite this setting with the configuration file:
+`<{{ path | file_name }}>`_ 
+{% if body_text != '' -%}
+{%- if body_text != body_text | heading %}
+---
+{% endif %}
+{{ body_text }}
+{% endif %}
+"""
 
-   ```toml
-   [[scheme]]
-   name = "default"
-   [scheme.filename]
-   extension_default='rst'
-   ```
+```
 
-   Alternatively, the above can be achieved by setting the environment variable
-   '`TPNOTE_EXTENSION_DEFAULT`':
+Note, that the variable `annotate_file_content` has remained largely unchanged
+(cf. `tpnote -C -`). Only the link definition in Markdown notation:
 
-   ```sh
-   TPNOTE_EXTENSION_DEFAULT="rst" tpnote
-   ```
+```
+[{{ path | file_name }}](<{{ path | file_name }}>)
+```
 
-2. Replace the following line in the template '`tmpl.annotate_file_content`'
-   that defines a hyperlink in Markdown format:
+has been replaced with its RestructuredText counterpart:
 
-       [{{ path | file_name }}](<{{ path | file_name }}>)
-
-   with the following line encoded in ReStructuredText syntax:
-
-       `<{{ path | file_name }}>`_
+```
+`<{{ path | file_name }}>`_
+```
 
 As a result, all future notes are created as '`*.rst`' files.
 

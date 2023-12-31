@@ -2193,47 +2193,54 @@ Tp-Note\[cq]s core function is a template system and as such it depends
 very little on the used markup language.
 The default templates are designed in a way that they contain almost no
 markup specific code.
-There is one little exception though.
-The following configuration variables affect the way new notes are
-created:
-.IP "1." 3
-The file extension for new notes is defined as:
-.RS 4
+Though there is one little exception in the
+`\f[V]annotate_file_content\f[R]' template.
+For instance, to instruct Tp-Note to create \f[V].rst\f[R] files, create
+a configuration file \f[V]\[ti]/.config/tpnote/tpnote.toml\f[R] with the
+following content:
 .IP
 .nf
 \f[C]
 [[scheme]]
 name = \[dq]default\[dq]
 [scheme.filename]
-extension_default=\[aq]md\[aq]
+extension_default = \[aq]rst\[aq]
+
+[scheme.tmpl]
+annotate_file_content = \[dq]\[dq]\[dq]
+{%- set body_text = stdin \[ti] clipboard | trim -%}
+{%- if body_text != \[aq]\[aq] -%}
+   {%- set lang_test_text = body_text | cut -%}
+{%- else -%}
+   {%- set lang_test_text = path | file_stem  -%}
+{%- endif -%}
+---
+{{ path | trim_file_sort_tag | to_yaml(key=\[aq]fm_title\[aq]) }}
+{% if body_text | link_text !=\[aq]\[aq] and
+      body_text | heading == body_text -%}
+{{ \[aq]url\[aq] | to_yaml(key=\[aq]fm_subtitle\[aq]) -}}
+{%- else -%}
+{{ \[aq]Note\[aq] | to_yaml(key=\[aq]fm_subtitle\[aq]) -}}
+{%- endif %}
+{{ username | capitalize | to_yaml(key=\[aq]fm_author\[aq]) }}
+{{ now() | date(format=\[aq]%Y-%m-%d\[aq]) | to_yaml(key=\[aq]fm_date\[aq]) }}
+{{ lang_test_text | get_lang | map_lang(default=lang) | to_yaml(key=\[aq]fm_lang\[aq]) }}
+---
+
+\[ga]<{{ path | file_name }}>\[ga]_ 
+{% if body_text != \[aq]\[aq] -%}
+{%- if body_text != body_text | heading %}
+---
+{% endif %}
+{{ body_text }}
+{% endif %}
+\[dq]\[dq]\[dq]
 \f[R]
 .fi
 .PP
-Overwrite this setting with the configuration file:
-.IP
-.nf
-\f[C]
-[[scheme]]
-name = \[dq]default\[dq]
-[scheme.filename]
-extension_default=\[aq]rst\[aq]
-\f[R]
-.fi
-.PP
-Alternatively, the above can be achieved by setting the environment
-variable `\f[V]TPNOTE_EXTENSION_DEFAULT\f[R]':
-.IP
-.nf
-\f[C]
-TPNOTE_EXTENSION_DEFAULT=\[dq]rst\[dq] tpnote
-\f[R]
-.fi
-.RE
-.IP "2." 3
-Replace the following line in the template
-`\f[V]tmpl.annotate_file_content\f[R]' that defines a hyperlink in
-Markdown format:
-.RS 4
+Note, that the variable \f[V]annotate_file_content\f[R] has remained
+largely unchanged (cf.\ \f[V]tpnote -C -\f[R]).
+Only the link definition in Markdown notation:
 .IP
 .nf
 \f[C]
@@ -2241,14 +2248,13 @@ Markdown format:
 \f[R]
 .fi
 .PP
-with the following line encoded in ReStructuredText syntax:
+has been replaced with its RestructuredText counterpart:
 .IP
 .nf
 \f[C]
 \[ga]<{{ path | file_name }}>\[ga]_
 \f[R]
 .fi
-.RE
 .PP
 As a result, all future notes are created as `\f[V]*.rst\f[R]' files.
 .SS Change the markup language for one specific note only
