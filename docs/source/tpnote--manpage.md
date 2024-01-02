@@ -1130,6 +1130,10 @@ correct, the last sourced configuration file is renamed (thus disabled) and
 Tp-Note starts with its internal default configuration. For debugging, you can
 print out the merge result with '`-V -b -d trace`'.
 
+```sh
+tpnote -V -b -d trace 2>&1 |less
+```
+
 To write a custom configuration file, first start with a complete default
 configuration you can generate by invoking Tp-Note with '`-C`':
 
@@ -2033,8 +2037,15 @@ to be viewed with a web browser. Tp-Note's configuration file contains a list
 location on Unix like operating systems. For other systems consult
 '`app_args.windows.browser`' and '`app_args.macos.browser`'. This list
 is executed top down until a web browser is found and launched. If you
-want to view your notes with a different web browser, simply modify the
-'`app_args.unix.browser`' list and put your favourite web browser on top.
+want to view your notes with a different web browser, simply overwrite the
+internal '`app_args.unix.browser`' list and put your favourite web browser on 
+top.
+
+```toml
+[app_args]
+unix.browser = [[ "chromium", "--new-window", "--incognito"]]
+```
+
 Alternatively, you can set the '`TPNOTE_BROWSER`' environment variable  (cf.
 examples in the chapter _ENVIRONMENT_VARIABLES_ below).
 

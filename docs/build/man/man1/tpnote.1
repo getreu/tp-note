@@ -1555,6 +1555,12 @@ If not correct, the last sourced configuration file is renamed (thus
 disabled) and Tp-Note starts with its internal default configuration.
 For debugging, you can print out the merge result with
 `\f[V]-V -b -d trace\f[R]'.
+.IP
+.nf
+\f[C]
+tpnote -V -b -d trace 2>&1 |less
+\f[R]
+.fi
 .PP
 To write a custom configuration file, first start with a complete
 default configuration you can generate by invoking Tp-Note with
@@ -2644,8 +2650,16 @@ For other systems consult `\f[V]app_args.windows.browser\f[R]' and
 This list is executed top down until a web browser is found and
 launched.
 If you want to view your notes with a different web browser, simply
-modify the `\f[V]app_args.unix.browser\f[R]' list and put your favourite
-web browser on top.
+overwrite the internal `\f[V]app_args.unix.browser\f[R]' list and put
+your favourite web browser on top.
+.IP
+.nf
+\f[C]
+[app_args]
+unix.browser = [[ \[dq]chromium\[dq], \[dq]--new-window\[dq], \[dq]--incognito\[dq]]]
+\f[R]
+.fi
+.PP
 Alternatively, you can set the `\f[V]TPNOTE_BROWSER\f[R]' environment
 variable (cf.
 examples in the chapter \f[I]ENVIRONMENT_VARIABLES\f[R] below).

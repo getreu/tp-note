@@ -101,7 +101,7 @@ unix.browser = [
     "--incognito",
 ],
     [
-    "chromium-browser",
+    "chromium",
     "--new-window",
     "--incognito",
 ],
