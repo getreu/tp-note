@@ -1601,7 +1601,7 @@ TPNOTE_LANG_DETECTION="" tpnote
 
 Be default, the front matter variable names are printed in English when creating
 new note files from templates. For example the header variable '`fm_subtitle`'
-is displayed as '`title:`' in the note's header.
+is displayed as '`subtitle:`' in the note's header.
 
 This translation relation is defined in the configuration file variable
 '`scheme.tmpl.fm_vars.localization`'. Consider the following 
@@ -1616,6 +1616,11 @@ fm_vars.localization = [
     ["fm_author", "author"],
     ["fm_date", "date"],
     ["fm_lang", "lang"],
+    ["fm_sort_tag", "sort_tag"],
+    ["fm_file_ext", "file_ext"],
+    ["fm_no_filename_sync", "no_filename_sync"],
+    ["fm_filename_sync", "filename_sync"],
+    ["fm_scheme", "scheme"],
 ]
 ```
 

@@ -115,11 +115,11 @@ extensions = [
 # The first item per line is the checked `fm_`-variable as it appears
 # in the templates.
 # The second item per line is the translated variable name as it appears in the
-# note file. For example, the expression `'fm_lang'|name` resolves to `lang`.
+# note file. For example, the expression `fm_lang` resolves to `lang`.
 # This allows to translate the templates into other human languages than English
 # without actually touching the templates itself.
 # For variables not listed below, only the prefix `fm_` is stripped and
-# no translation occurs, e.g. `'fm_unknown'|name` becomes `unknown`.
+# no translation occurs, e.g. `fm_unknown` becomes `unknown`.
 #
 
 fm_var.localization = [
@@ -154,7 +154,7 @@ fm_var.localization = [
 #    string representation contains solely characters of the
 #    `filename.sort_tag.extra_chars` set, digits or lowercase letters.
 #    The number of lowercase letters in a row is limited by
-#    `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`.
+#    `scheme.filename.sort_tag.letters_in_succession_max`.
 # *  `IsConfguredScheme`: Assert, that -if the variable is defined- the
 #    string equals to one of the `scheme.name` in the configuration file.
 #    IsConfiguredScheme,
