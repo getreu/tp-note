@@ -933,9 +933,9 @@ only 2 in a row are allowed (cf.
         09.9.1-Notes.md
 
   NB: None of the counters exceeds 3 digits (cf. 
-  '`filename.sort_tag.chronological.digits_in_succession_min`') which is the
-  criterium recognize a sequential sort-tag. The largest counter in this 
-  example is '`144`'.
+  '`filename.sort_tag.sequential.digits_in_succession_max`') which is the
+  criterium to recognize a sequence number sort-tag. The largest counter in 
+  these examples is '`144`', so all sort_tags are sequence numbers.
   
 
 * *Alphanumerical sequence number sort tag*
@@ -1537,6 +1537,7 @@ The corresponding configuration looks like this:
 [[scheme]]
 name = "default"
 [scheme.tmpl]
+filter.get_lang = [ 'en', 'fr', 'de', 'et' ]
 filter.map_lang = [
     [ 'en', 'en-US', ],
     [ 'de', 'de-DE', ],

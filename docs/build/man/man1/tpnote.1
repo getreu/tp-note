@@ -1306,9 +1306,10 @@ Tip: Always include the year with 4 digits in chronological sort-tags.
 .fi
 .PP
 NB: None of the counters exceeds 3 digits (cf.\ 
-`\f[V]filename.sort_tag.chronological.digits_in_succession_min\f[R]')
-which is the criterium recognize a sequential sort-tag.
-The largest counter in this example is `\f[V]144\f[R]'.
+`\f[V]filename.sort_tag.sequential.digits_in_succession_max\f[R]') which
+is the criterium to recognize a sequence number sort-tag.
+The largest counter in these examples is `\f[V]144\f[R]', so all
+sort_tags are sequence numbers.
 .RE
 .IP \[bu] 2
 \f[I]Alphanumerical sequence number sort tag\f[R]
@@ -2053,6 +2054,7 @@ The corresponding configuration looks like this:
 [[scheme]]
 name = \[dq]default\[dq]
 [scheme.tmpl]
+filter.get_lang = [ \[aq]en\[aq], \[aq]fr\[aq], \[aq]de\[aq], \[aq]et\[aq] ]
 filter.map_lang = [
     [ \[aq]en\[aq], \[aq]en-US\[aq], ],
     [ \[aq]de\[aq], \[aq]de-DE\[aq], ],
