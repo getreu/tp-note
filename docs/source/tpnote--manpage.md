@@ -1131,7 +1131,7 @@ Tp-Note starts with its internal default configuration. For debugging, you can
 print out the merge result with '`-V -b -d trace`'.
 
 ```sh
-tpnote -V -b -d trace 2>&1 |less
+tpnote -V -b -d trace  |less
 ```
 
 To write a custom configuration file, first start with a complete default
