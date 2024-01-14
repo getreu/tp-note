@@ -4017,7 +4017,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote"
-version = "1.23.3"
+version = "1.23.4"
 dependencies = [
  "arboard",
  "directories",
