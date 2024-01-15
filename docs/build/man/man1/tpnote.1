@@ -2211,6 +2211,9 @@ Though there is one little exception in the
 For instance, to instruct Tp-Note to create \f[V].rst\f[R] files, create
 a configuration file \f[V]\[ti]/.config/tpnote/tpnote.toml\f[R] with the
 following content:
+.PP
+First, create a configuration file
+`\f[V]\[ti]/.config/tpnote/tpnote.toml\f[R]' with:
 .IP
 .nf
 \f[C]
@@ -2218,42 +2221,27 @@ following content:
 name = \[dq]default\[dq]
 [scheme.filename]
 extension_default = \[aq]rst\[aq]
-
 [scheme.tmpl]
 annotate_file_content = \[dq]\[dq]\[dq]
-{%- set body_text = stdin \[ti] clipboard | trim -%}
-{%- if body_text != \[aq]\[aq] -%}
-   {%- set lang_test_text = body_text | cut -%}
-{%- else -%}
-   {%- set lang_test_text = path | file_stem  -%}
-{%- endif -%}
----
-{{ path | trim_file_sort_tag | to_yaml(key=\[aq]fm_title\[aq]) }}
-{% if body_text | link_text !=\[aq]\[aq] and
-      body_text | heading == body_text -%}
-{{ \[aq]url\[aq] | to_yaml(key=\[aq]fm_subtitle\[aq]) -}}
-{%- else -%}
-{{ \[aq]Note\[aq] | to_yaml(key=\[aq]fm_subtitle\[aq]) -}}
-{%- endif %}
-{{ username | capitalize | to_yaml(key=\[aq]fm_author\[aq]) }}
-{{ now() | date(format=\[aq]%Y-%m-%d\[aq]) | to_yaml(key=\[aq]fm_date\[aq]) }}
-{{ lang_test_text | get_lang | map_lang(default=lang) | to_yaml(key=\[aq]fm_lang\[aq]) }}
----
+COMPLETE HERE
+\[dq]\[dq]\[dq]
 
-\[ga]<{{ path | file_name }}>\[ga]_ 
-{% if body_text != \[aq]\[aq] -%}
-{%- if body_text != body_text | heading %}
----
-{% endif %}
-{{ body_text }}
-{% endif %}
+[[scheme]]
+name = \[dq]zettel\[dq]
+[scheme.filename]
+extension_default = \[aq]rst\[aq]
+[scheme.tmpl]
+annotate_file_content = \[dq]\[dq]\[dq]
+COMPLETE HERE
 \[dq]\[dq]\[dq]
 \f[R]
 .fi
 .PP
-Note, that the variable \f[V]annotate_file_content\f[R] has remained
-largely unchanged (cf.\ \f[V]tpnote -C -\f[R]).
-Only the link definition in Markdown notation:
+In the above replace the string `\f[V]COMPLETE HERE\f[R]' with the
+default values for the variables `\f[V]annotate_file_content\f[R]' you
+obtain with `\f[V]tpnote -C - | less\f[R]'.
+.PP
+Then, in \f[V]annotate_file_content\f[R] replace the line:
 .IP
 .nf
 \f[C]
@@ -2261,7 +2249,7 @@ Only the link definition in Markdown notation:
 \f[R]
 .fi
 .PP
-has been replaced with its RestructuredText counterpart:
+with its RestructuredText counterpart:
 .IP
 .nf
 \f[C]
@@ -2357,14 +2345,37 @@ When you are annotating an existing file on disk, the new note file is
 placed in the same directory by default.
 To configure Tp-Note to store the new note file in a subdirectory,
 let\[cq]s say `\f[V]Notes/\f[R]', instead, you need to modify the
-templates `\f[V]tmpl.annotate_file_filename\f[R]' and
-`\f[V]tmpl.annotate_file_content\f[R]':
+templates `\f[V]scheme.tmpl.annotate_file_filename\f[R]' and
+`\f[V]scheme.tmpl.annotate_file_content\f[R]':
 .PP
-Replace in `\f[V]tmpl.annotate_file_filename\f[R]' the string:
+First, create a configuration file
+`\f[V]\[ti]/.config/tpnote/tpnote.toml\f[R]' with:
 .IP
 .nf
 \f[C]
-{{ path | file_sort_tag }}
+[[scheme]]
+name = \[dq]default\[dq]
+
+[scheme.tmpl]
+annotate_file_content = \[dq]\[dq]\[dq]
+COMPLETE HERE
+\[dq]\[dq]\[dq]
+
+annotate_file_filename = \[dq]\[dq]\[dq]
+COMPLETE HERE
+\[dq]\[dq]\[dq]
+\f[R]
+.fi
+.PP
+In the above replace the string `\f[V]COMPLETE HERE\f[R]' with the
+default values for the variables you obtain with
+`\f[V]tpnote -C - | less\f[R]'.
+.PP
+Then, replace in `\f[V]annotate_file_filename\f[R]' the string:
+.IP
+.nf
+\f[C]
+{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\[rs]
 \f[R]
 .fi
 .PP
@@ -2372,15 +2383,15 @@ with:
 .IP
 .nf
 \f[C]
-Notes/{{ path | file_sort_tag }}
+Notes/{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\[rs]
 \f[R]
 .fi
 .PP
-and in `\f[V]tmpl.annotate_file_content\f[R]':
+and in `\f[V]annotate_file_content\f[R]':
 .IP
 .nf
 \f[C]
-[{{ path | filename }}](<{{ path | filename }}>)
+[{{ path | file_name }}](<{{ path | file_name }}>)
 \f[R]
 .fi
 .PP
@@ -2388,7 +2399,49 @@ with:
 .IP
 .nf
 \f[C]
-[{{ path | filename }}](<../{{ path | filename }}>)
+[{{ path | file_name }}](<../{{ path | file_name }}>)
+\f[R]
+.fi
+.PP
+In case you use the `\f[V]zettel\f[R]' scheme as well, append the
+following to your configuration file and repeat the above.
+.IP
+.nf
+\f[C]
+[[scheme]]
+name = \[dq]zettel\[dq]
+
+[scheme.tmpl]
+annotate_file_content = \[dq]\[dq]\[dq]
+COMPLETE HERE
+\[dq]\[dq]\[dq]
+
+annotate_file_filename = \[dq]\[dq]\[dq]
+COMPLETE HERE
+\[dq]\[dq]\[dq]
+\f[R]
+.fi
+.PP
+To test your configuration, place a `\f[V]test.pdf\f[R]' file in the
+current directory and annotate that file with:
+.IP
+.nf
+\f[C]
+tpnote test.pdf
+\f[R]
+.fi
+.PP
+This should create a new note file `\f[V]./Notes/test.pdf--Note.md\f[R]
+and open your web browser with a link to'\f[V]test.pdf\f[R]`.
+Clicking on that link, the pdf page should be shown.
+The default behaviour, without this customization, is to create the new
+note file'\f[V]./test.pdf--Note.md\f[R]\[cq] in the current directory.
+.PP
+To test the `\f[V]zettel\f[R]' scheme configuration invoke Tp-Note with:
+.IP
+.nf
+\f[C]
+tpnote -s zettel test.pdf
 \f[R]
 .fi
 .SS Customize the built-in note viewer

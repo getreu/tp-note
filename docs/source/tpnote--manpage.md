@@ -1669,52 +1669,39 @@ is one little exception in the '`annotate_file_content`' template.
 For instance, to instruct Tp-Note to create `.rst` files, create a
 configuration file `~/.config/tpnote/tpnote.toml` with the following content:
 
+First, create a configuration file '`~/.config/tpnote/tpnote.toml`' with:
+
 ```toml
 [[scheme]]
 name = "default"
 [scheme.filename]
 extension_default = 'rst'
-
 [scheme.tmpl]
 annotate_file_content = """
-{%- set body_text = stdin ~ clipboard | trim -%}
-{%- if body_text != '' -%}
-   {%- set lang_test_text = body_text | cut -%}
-{%- else -%}
-   {%- set lang_test_text = path | file_stem  -%}
-{%- endif -%}
----
-{{ path | trim_file_sort_tag | to_yaml(key='fm_title') }}
-{% if body_text | link_text !='' and
-      body_text | heading == body_text -%}
-{{ 'url' | to_yaml(key='fm_subtitle') -}}
-{%- else -%}
-{{ 'Note' | to_yaml(key='fm_subtitle') -}}
-{%- endif %}
-{{ username | capitalize | to_yaml(key='fm_author') }}
-{{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
-{{ lang_test_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
----
-
-`<{{ path | file_name }}>`_ 
-{% if body_text != '' -%}
-{%- if body_text != body_text | heading %}
----
-{% endif %}
-{{ body_text }}
-{% endif %}
+COMPLETE HERE
 """
 
+[[scheme]]
+name = "zettel"
+[scheme.filename]
+extension_default = 'rst'
+[scheme.tmpl]
+annotate_file_content = """
+COMPLETE HERE
+"""
 ```
 
-Note, that the variable `annotate_file_content` has remained largely unchanged
-(cf. `tpnote -C -`). Only the link definition in Markdown notation:
+In the above replace the string '`COMPLETE HERE`' with the default
+values for the variables '`annotate_file_content`' you obtain with 
+'`tpnote -C - | less`'.
+
+Then, in `annotate_file_content` replace the line:
 
 ```
 [{{ path | file_name }}](<{{ path | file_name }}>)
 ```
 
-has been replaced with its RestructuredText counterpart:
+with its RestructuredText counterpart:
 
 ```
 `<{{ path | file_name }}>`_
@@ -1796,26 +1783,79 @@ tpnote --batch --debug trace test.md
 When you are annotating an existing file on disk, the new note file is
 placed in the same directory by default. To configure Tp-Note to
 store the new note file in a subdirectory, let's say '`Notes/`', instead, you
-need to modify the templates '`tmpl.annotate_file_filename`' and
-'`tmpl.annotate_file_content`':
+need to modify the templates '`scheme.tmpl.annotate_file_filename`' and
+'`scheme.tmpl.annotate_file_content`':
 
-Replace in '`tmpl.annotate_file_filename`' the string:
+First, create a configuration file '`~/.config/tpnote/tpnote.toml`' with:
 
-    {{ path | file_sort_tag }}
+```toml
+[[scheme]]
+name = "default"
+
+[scheme.tmpl]
+annotate_file_content = """
+COMPLETE HERE
+"""
+
+annotate_file_filename = """
+COMPLETE HERE
+"""
+```
+
+In the above replace the string '`COMPLETE HERE`' with the default
+values for the variables you obtain with '`tpnote -C - | less`'.
+
+Then, replace in '`annotate_file_filename`' the string:
+
+    {{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 
 with:
 
-    Notes/{{ path | file_sort_tag }}
+    Notes/{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 
-and in '`tmpl.annotate_file_content`':
+and in '`annotate_file_content`':
 
-    [{{ path | filename }}](<{{ path | filename }}>)
+    [{{ path | file_name }}](<{{ path | file_name }}>)
 
 with:
 
-    [{{ path | filename }}](<../{{ path | filename }}>)
+    [{{ path | file_name }}](<../{{ path | file_name }}>)
 
+In case you use the '`zettel`' scheme as well, append the following
+to your configuration file and repeat the above.
 
+```toml
+[[scheme]]
+name = "zettel"
+
+[scheme.tmpl]
+annotate_file_content = """
+COMPLETE HERE
+"""
+
+annotate_file_filename = """
+COMPLETE HERE
+"""
+```
+
+To test your configuration, place a '`test.pdf`' file in the current directory
+and annotate that file with:
+
+```sh
+tpnote test.pdf
+```
+
+This should create a new note file '`./Notes/test.pdf--Note.md` and open
+your web browser with a link to '`test.pdf`'. Clicking on that link, the 
+pdf page should be shown. The default behaviour, without this 
+customization, is to create the new note file '`./test.pdf--Note.md`' in the
+current directory.
+
+To test the '`zettel`' scheme configuration invoke Tp-Note with:
+
+```sh
+tpnote -s zettel test.pdf
+```
 
 
 ## Customize the built-in note viewer
