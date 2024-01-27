@@ -11,6 +11,7 @@ ln -sf ../../../../target/x86_64-pc-windows-gnu .
 ln -sf ../../../../target/x86_64-unknown-linux-gnu .
 ln -sf ../../../../target/x86_64-unknown-linux-musl .
 ln -sf ../../../../target/armv7-unknown-linux-gnueabihf .
+ln -sf ../../../../target/aarch64-unknown-linux-gnu .
 ln -sf ../../../build/man/man1/tpnote.1.gz .
 
 

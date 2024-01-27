@@ -150,9 +150,13 @@ Repository:
 
       [x86_64-unknown-linux-musl/release/tpnote]
 
-* Binaries for Raspberry Pi:
+* Binaries for Raspberry Pi (32 bit):
 
     * [armv7-unknown-linux-gnueabihf/release/tpnote]
+
+* Binaries for Raspberry Pi (64 bit):
+
+    * [aarch64-unknown-linux-gnu/release/tpnote]
 
 
 ### Tp-Note NetBSD
@@ -380,6 +384,7 @@ Copyright:
 [x86_64-unknown-linux-gnu/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tpnote
 [x86_64-unknown-linux-musl/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tpnote
 [armv7-unknown-linux-gnueabihf/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/armv7-unknown-linux-gnueabihf/release/tpnote
+[aarch64-unknown-linux-gnu/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/aarch64-unknown-linux-gnu/release/tpnote
 [tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
 [tpnote.svg]: https://blog.getreu.net/projects/tp-note/images/tpnote.svg
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
