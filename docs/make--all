@@ -7,5 +7,5 @@ rm -r ./build
 ./make--index
 ./make--tpnote--manpage
 ./make--tpnote--manual
-./make--rustdoc-link
+./make--symlinks
 
