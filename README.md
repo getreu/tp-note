@@ -283,7 +283,7 @@ compile _Tp-Note_ yourself.
    **Recommended Linux console and server version**
 
    The full-featured version of _Tp-Note_ depends on GUI libraries like Xlib
-   that might not be available on a headless system. Either download the Musl
+   which might not be available on a headless system. Either download the Musl
    version [x86_64-unknown-linux-musl/release/tpnote] or compile _Tp-Note_
    yourself without default features:
 
@@ -315,7 +315,7 @@ compile _Tp-Note_ yourself.
 
 ## Cross compilation
 
-Debian makes it easy to cross-compile for foreign architectures. Here
+Debian makes it easy to cross-compile for foreign architectures. Here are
 some examples:
 
 * Target Musl:
@@ -335,6 +335,16 @@ some examples:
   
   CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=/usr/bin/arm-linux-gnueabihf-gcc \
     cargo build --target armv7-unknown-linux-gnueabihf --release
+  ```
+
+* Target Raspberry Pi (arm64, 64 bit):
+
+  ```sh
+  rustup target add aarch64-unknown-linux-gnu
+  sudo apt install crossbuild-essential-arm64
+  
+  CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/aarch64-linux-gnu-gcc \
+   cargo build  --target aarch64-unknown-linux-gnu --release
   ```
 
 * Target Windows:
