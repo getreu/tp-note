@@ -1,4 +1,4 @@
-# Tp-Note - Minimalistic note-taking
+# Tp-Note: Markup enhanced granular note-taking
 
 **Save and edit your clipboard content as a note file**
 

@@ -1,6 +1,6 @@
 ---
-title:    "Tp-Note: save and edit your clipboard content as a note file"
-subtitle: Organize your notes with your favourite editor and markup language
+title:    "Tp-Note: markup enhanced granular note-taking"
+subtitle: Save and edit your clipboard content as a note file
 author:   Jens Getreu
 date:     2024-04-14
 version:  1.23.4
@@ -9,7 +9,7 @@ lang:     en-GB
 ---
 
 Markup languages like *Markdown* [^1] are perfectly suited for fast
-note taking. Type your notes with your favourite text editor and observe
+note-taking. Type your notes with your favourite text editor and observe
 the live rendered text in your web browser.
 
 _Tp-Note_ helps you to quickly get started writing notes with its powerful

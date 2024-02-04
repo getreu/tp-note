@@ -13,7 +13,9 @@ lang:       en-GB
 
 # NAME
 
-_Tp-Note_ - save and edit your clipboard content as a note file.
+Tp-Note: Markup enhanced granular note-taking 
+
+Save and edit your clipboard content as a note file.
 
 
 
@@ -114,7 +116,7 @@ lang:       en-GB
 
 When '`<path>`' is a directory and the clipboard is not empty, the clipboard's
 content is stored in the variable '`{{ clipboard }}`'. In addition, if the
-content contains an hyperlink in Markdown format, the hyperlink's name can be
+content contains a hyperlink in Markdown format, the hyperlink's name can be
 accessed with '`{{ clipboard | link_text }}`', its URL with
 '`{{ clipboard | link_dest }}`' and its title with
 '`{{ clipboard | link_title }}`'. The new note is then created with the
@@ -149,7 +151,7 @@ Example: While launching Tp-Note the clipboard contains the string:
 tpnote "./03-Favorite Readings/"
 ```
 
-or
+Or:
 
 ``` sh
 cd "./03-Favorite Readings/"
@@ -213,7 +215,7 @@ I recommend:
 [The Rust Book](<https://doc.rust-lang.org/book/>)
 ```
 
-When analyzing the clipboard's content, Tp-Note searches for hyperlinks in
+When analysing the clipboard's content, Tp-Note searches for hyperlinks in
 Markdown, ReStructuredText, Asciidoc and HTML format. When successful, the
 content template uses the link text of the first hyperlink found as document
 title.
@@ -786,9 +788,9 @@ links do not break when the source and the destination documents are moved
 together.
 
 As mentioned above, the shortest way to refer to other Tp-Note documents, is
-indicating their sort-tag only, e.g. '`<tpnote:dir/123>.`' and 
+indicating their sort-tag only, e.g. '`<tpnote:dir/123>`' and 
 '`[my file](<tpnote:dir/123>)`'. If the other document is located in the same
-directory, the links are even shorter: '`<tpnote:123>.`' and 
+directory, the links are even shorter: '`<tpnote:123>`' and 
 '`[my file](<tpnote:123>)`'. 
 
 
@@ -804,10 +806,10 @@ allows you to fine-tune how local links are written out. Valid values are:
 
 In order to achieve this, the user must respect the following convention
 concerning absolute paths in local links in Tp-Note documents: When a document
-contains a  local link with an absolute path, the base of this path  is
+contains a local link with an absolute path, the base of this path is
 considered to be the directory where the marker file '`.tpnote.toml`' resides
 (or '`/`' in non exists). The option '`--export-link- rewriting`' decides how
-local links in the Tp-Note  document are converted when the HTML is generated.
+local links in the Tp-Note document are converted when the HTML is generated.
 If its value is '`short`', then local links with relative paths are converted to
 absolute paths. The base of the resulting path is where the '`.tpnote.toml`' file
 resides (or `/` if none exists).  Consider the following example 
@@ -839,7 +841,7 @@ The images in the resulting HTML will appear as
 Summary: The right '`--export-link-rewriting`' choice depends on how you view
 the resulting HTML: if you publish on a web server, then '`short`' might be
 a good choice (do not forget to place a marker file '`.tpnote.toml`' somewhere 
-in the document's path). If you view the  HTML file directly in your web 
+in the document's path). If you view the HTML file directly in your web 
 browser, better choose '`long`'. In this case, the present of a marker file will
 not affect the output.
 
@@ -1110,15 +1112,15 @@ encoded in customizable so-called filename templates (cf. section _Templates_).
 
 Tp-Note is shipped with a default internal configuration that can be customized
 by merging a series of configuration files from various locations into the 
-default values. This  happens in the following order:
+default values. This happens in the following order:
 
-1. Unix and MacOS only: '`/etc/tpnote/tpnote.toml`'
+1. Unix and macOS only: '`/etc/tpnote/tpnote.toml`'
 2. The file the environment variable '`TPNOTE_CONFIG`' points to.
 3. The user's configuration file:
    - Unix: '`~/.config/tpnote/tpnote.toml`'
    - Windows: '`C:\Users\<LOGIN>\AppData\Roaming\tpnote\config\tpnote.toml>`'
-   - MacOS: '`/Users/<LOGIN>/Library/Application Support/tpnote`'
-4. At startup all parent directories of the note file path '`<PATH>`'are
+   - macOS: '`/Users/<LOGIN>/Library/Application Support/tpnote`'
+4. At startup all parent directories of the note file path '`<PATH>`' are
    searched for a marker file named '`.tpnote.toml`'. If found, the document root
    moves from '`/`' to the found location. If present and its content is not
    empty, Tp-Note interprets the file's content as configuration file.
@@ -1199,7 +1201,7 @@ served_mime_types = [
 ## Register your own text editor
 
 There are two ways to modify the default file editor, Tp-Note launches
-when it starts: either you can modify the  configuration file variables
+when it starts: either you can modify the configuration file variables
 '`app_args.*.editor`' and '`app_args.*.editor_console`', or alternatively,
 you can set the '`TPNOTE_EDITOR`' environment variable (cf. examples in the
 chapter _ENVIRONMENT_VARIABLES_ below).
@@ -1273,9 +1275,9 @@ that your text editor does not fork! You can check this by launching the text
 editor from the command line: if the command prompt returns immediately, then
 the file editor forks the process. On the other hand everything is OK, when the
 command prompt only reappears at the moment the text editor is closed. Many text
-editors provide an option to restrain from forking: for example the _VScode_
-file editor can be launched with the '`--wait`' option, _Vim_ with '`--nofork`'
-or _Kate_ with '`--block`'. 
+editors provide an option to restrain from forking: for example the _Visual
+Studio Code_ file editor can be launched with the '`--wait`' option, _Vim_ with
+'`--nofork`' or _Kate_ with '`--block`'.
 
 
 However, Tp-Note also works with forking text editors. Although this should be
@@ -1758,7 +1760,7 @@ initially set up by any '`tmpl.*_filename`' template.
 
 Secondly, make sure that in filename templates '`tmpl.*_filename`', sort-tags 
 '`{{ path | file_sort_tag }}`' are never inserted directly. Instead, prepend the
-_sort_tag_ with  '`prepend(with_sort_tag=path|file_sort_tag)`' to the following
+_sort_tag_ with '`prepend(with_sort_tag=path|file_sort_tag)`' to the following
 expression, e.g.:
 
     {{ fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}
@@ -1847,7 +1849,7 @@ tpnote test.pdf
 
 This should create a new note file '`./Notes/test.pdf--Note.md` and open
 your web browser with a link to '`test.pdf`'. Clicking on that link, the 
-pdf page should be shown. The default behaviour, without this 
+PDF page should be shown. The default behaviour, without this 
 customization, is to create the new note file '`./test.pdf--Note.md`' in the
 current directory.
 
@@ -1879,7 +1881,7 @@ markup language, this feature is more or less advanced and complete: _Markdown_
 complies with the _Common Mark_ specification. The _ReStructuredText_ renderer
 (cf. '`Restructuredtext`') is quite new and still in experimental state.
 For all other supported markup languages Tp-Note provides a built-in markup
-source text viewer (cf.  '`PlainText`') that shows the note as
+source text viewer (cf. '`PlainText`') that shows the note as
 typed (without markup), but renders all hyperlinks to make them clickable.  In
 case none of the above rendition engines suit you, it is possible to disable
 the viewer feature selectively for some particular note file extensions: just
@@ -1933,7 +1935,7 @@ Specifically:
   variables_ above.
 
 * '`{{ viewer_doc_css_path }}`' is the CSS stylesheet path required to format
-  a HTML rendition of a Tp-Note document. This path is hard-wired and it is
+  an HTML rendition of a Tp-Note document. This path is hard-wired and it is
   understood by Tp-Note's internal web server.
 
 * '`{{ viewer_highlighting_css_path }}`' is the CSS stylesheet path required to
@@ -1945,7 +1947,7 @@ Specifically:
 
 * '`{{ doc_body_text | markup_to_html(extension=ext) | safe }}`' is the note's
   body as HTML rendition. The parameter '`extension`' designates the 
-  markup language as specified in the '`filename.extensions-*`' variables .
+  markup language as specified in the '`filename.extensions-*`' variables.
 
 * '`{{ doc_text | markup_to_html | safe }}`' is the note's raw text as HTML
   rendition with clickable hyperlinks.
@@ -2092,7 +2094,7 @@ top.
 unix.browser = [[ "chromium", "--new-window", "--incognito"]]
 ```
 
-Alternatively, you can set the '`TPNOTE_BROWSER`' environment variable  (cf.
+Alternatively, you can set the '`TPNOTE_BROWSER`' environment variable (cf.
 examples in the chapter _ENVIRONMENT_VARIABLES_ below).
 
 In case none of the listed browsers can be found, Tp-Note switches into a
@@ -2228,7 +2230,7 @@ In addition, Tp-Note defines the following variables:
   '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
 * '`{{ note_body_text }}`': is the content of the file '`{{ path }}`'
- b  points to. If the file does not start with a front matter, this variable holds
+  points to. If the file does not start with a front matter, this variable holds
   the whole content. Note, this variable is only available in the templates
   '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
@@ -2332,7 +2334,7 @@ some additional filters, i.e.:
 '`link_title`', '`map_lang`', '`prepend`', '`prepend(newline=true)`',
 '`prepend(with=...)`', '`prepend(with_sort_tag=...)`', '`remove(key=)`'
 '`sanit`', '`to_html`', '`to_yaml`', '`to_yaml(key=...)`', '`to_yaml(tab=...)`'
-and  '`trim_file_sort_tag`'.
+and '`trim_file_sort_tag`'.
 
 A filter is always used together with a variable. Here are some examples:
 
@@ -2558,7 +2560,7 @@ As discussed above, Tp-Note's built-in viewer sets up an HTTP server on the
 For security reasons, Tp-Note limits the set of files the viewer is
 able to publish. To summarize, a file is only served:
 
-1. when it is referenced in one of the currently viewed Tp-Note files,
+1. When it is referenced in one of the currently viewed Tp-Note files,
 2. when its file extension is registered with the '`viewer.served_mime_type`'
    list,
 3. if the number of so far viewed Tp-Note files,
@@ -2789,7 +2791,7 @@ Tp-Note it hosted on:
 
 # COPYING
 
-Copyright (C) 2016-2021 Jens Getreu
+Copyright (C) 2016-2024 Jens Getreu
 
 Licensed under either of
 

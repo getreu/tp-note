@@ -19,7 +19,9 @@
 .hy
 .SH NAME
 .PP
-\f[I]Tp-Note\f[R] - save and edit your clipboard content as a note file.
+Tp-Note: Markup enhanced granular note-taking
+.PP
+Save and edit your clipboard content as a note file.
 .SH SYNOPSIS
 .IP
 .nf
@@ -128,8 +130,8 @@ lang:       en-GB
 When `\f[V]<path>\f[R]' is a directory and the clipboard is not empty,
 the clipboard\[cq]s content is stored in the variable
 `\f[V]{{ clipboard }}\f[R]'.
-In addition, if the content contains an hyperlink in Markdown format,
-the hyperlink\[cq]s name can be accessed with
+In addition, if the content contains a hyperlink in Markdown format, the
+hyperlink\[cq]s name can be accessed with
 `\f[V]{{ clipboard | link_text }}\f[R]', its URL with
 `\f[V]{{ clipboard | link_dest }}\f[R]' and its title with
 `\f[V]{{ clipboard | link_title }}\f[R]'.
@@ -170,7 +172,7 @@ tpnote \[dq]./03-Favorite Readings/\[dq]
 \f[R]
 .fi
 .PP
-or
+Or:
 .IP
 .nf
 \f[C]
@@ -253,7 +255,7 @@ I recommend:
 \f[R]
 .fi
 .PP
-When analyzing the clipboard\[cq]s content, Tp-Note searches for
+When analysing the clipboard\[cq]s content, Tp-Note searches for
 hyperlinks in Markdown, ReStructuredText, Asciidoc and HTML format.
 When successful, the content template uses the link text of the first
 hyperlink found as document title.
@@ -1032,10 +1034,10 @@ the source and the destination documents are moved together.
 .PP
 As mentioned above, the shortest way to refer to other Tp-Note
 documents, is indicating their sort-tag only,
-e.g.\ `\f[V]<tpnote:dir/123>.\f[R]' and
+e.g.\ `\f[V]<tpnote:dir/123>\f[R]' and
 `\f[V][my file](<tpnote:dir/123>)\f[R]'.
 If the other document is located in the same directory, the links are
-even shorter: `\f[V]<tpnote:123>.\f[R]' and
+even shorter: `\f[V]<tpnote:123>\f[R]' and
 `\f[V][my file](<tpnote:123>)\f[R]'.
 .SS Local links in HTML export
 .PP
@@ -1523,7 +1525,7 @@ customized by merging a series of configuration files from various
 locations into the default values.
 This happens in the following order:
 .IP "1." 3
-Unix and MacOS only: `\f[V]/etc/tpnote/tpnote.toml\f[R]'
+Unix and macOS only: `\f[V]/etc/tpnote/tpnote.toml\f[R]'
 .IP "2." 3
 The file the environment variable `\f[V]TPNOTE_CONFIG\f[R]' points to.
 .IP "3." 3
@@ -1535,13 +1537,13 @@ Unix: `\f[V]\[ti]/.config/tpnote/tpnote.toml\f[R]'
 Windows:
 `\f[V]C:\[rs]Users\[rs]<LOGIN>\[rs]AppData\[rs]Roaming\[rs]tpnote\[rs]config\[rs]tpnote.toml>\f[R]'
 .IP \[bu] 2
-MacOS: `\f[V]/Users/<LOGIN>/Library/Application Support/tpnote\f[R]'
+macOS: `\f[V]/Users/<LOGIN>/Library/Application Support/tpnote\f[R]'
 .RE
 .IP "4." 3
 At startup all parent directories of the note file path
-`\f[V]<PATH>\f[R]\[cq]are searched for a marker file
-named'\f[V].tpnote.toml\f[R]`.
-If found, the document root moves from'\f[V]/\f[R]\[cq] to the found
+`\f[V]<PATH>\f[R]' are searched for a marker file named
+`\f[V].tpnote.toml\f[R]'.
+If found, the document root moves from `\f[V]/\f[R]' to the found
 location.
 If present and its content is not empty, Tp-Note interprets the
 file\[cq]s content as configuration file.
@@ -1740,9 +1742,9 @@ the process.
 On the other hand everything is OK, when the command prompt only
 reappears at the moment the text editor is closed.
 Many text editors provide an option to restrain from forking: for
-example the \f[I]VScode\f[R] file editor can be launched with the
-`\f[V]--wait\f[R]' option, \f[I]Vim\f[R] with `\f[V]--nofork\f[R]' or
-\f[I]Kate\f[R] with `\f[V]--block\f[R]'.
+example the \f[I]Visual Studio Code\f[R] file editor can be launched
+with the `\f[V]--wait\f[R]' option, \f[I]Vim\f[R] with
+`\f[V]--nofork\f[R]' or \f[I]Kate\f[R] with `\f[V]--block\f[R]'.
 .PP
 However, Tp-Note also works with forking text editors.
 Although this should be avoided, there is a possible workaround.
@@ -2433,7 +2435,7 @@ tpnote test.pdf
 .PP
 This should create a new note file `\f[V]./Notes/test.pdf--Note.md\f[R]
 and open your web browser with a link to'\f[V]test.pdf\f[R]`.
-Clicking on that link, the pdf page should be shown.
+Clicking on that link, the PDF page should be shown.
 The default behaviour, without this customization, is to create the new
 note file'\f[V]./test.pdf--Note.md\f[R]\[cq] in the current directory.
 .PP
@@ -2536,7 +2538,7 @@ All content template variables and filters are available.
 See section \f[I]Template variables\f[R] above.
 .IP \[bu] 2
 `\f[V]{{ viewer_doc_css_path }}\f[R]' is the CSS stylesheet path
-required to format a HTML rendition of a Tp-Note document.
+required to format an HTML rendition of a Tp-Note document.
 This path is hard-wired and it is understood by Tp-Note\[cq]s internal
 web server.
 .IP \[bu] 2
@@ -2552,7 +2554,7 @@ Not to be confounded with the dictionary variable
 `\f[V]{{ doc_body_text | markup_to_html(extension=ext) | safe }}\f[R]'
 is the note\[cq]s body as HTML rendition.
 The parameter `\f[V]extension\f[R]' designates the markup language as
-specified in the `\f[V]filename.extensions-*\f[R]' variables .
+specified in the `\f[V]filename.extensions-*\f[R]' variables.
 .IP \[bu] 2
 `\f[V]{{ doc_text | markup_to_html | safe }}\f[R]' is the note\[cq]s raw
 text as HTML rendition with clickable hyperlinks.
@@ -2886,7 +2888,7 @@ Note, this variable is only available in the templates
 templates below.
 .IP \[bu] 2
 `\f[V]{{ note_body_text }}\f[R]': is the content of the file
-`\f[V]{{ path }}\f[R]' b points to.
+`\f[V]{{ path }}\f[R]' points to.
 If the file does not start with a front matter, this variable holds the
 whole content.
 Note, this variable is only available in the templates
@@ -3289,7 +3291,7 @@ For security reasons, Tp-Note limits the set of files the viewer is able
 to publish.
 To summarize, a file is only served:
 .IP "1." 3
-when it is referenced in one of the currently viewed Tp-Note files,
+When it is referenced in one of the currently viewed Tp-Note files,
 .IP "2." 3
 when its file extension is registered with the
 `\f[V]viewer.served_mime_type\f[R]' list,
@@ -3617,7 +3619,7 @@ Gitlab: <https://gitlab.com/getreu/tp-note>.
 Github (mirror): <https://github.com/getreu/tp-note> and on
 .SH COPYING
 .PP
-Copyright (C) 2016-2021 Jens Getreu
+Copyright (C) 2016-2024 Jens Getreu
 .PP
 Licensed under either of
 .IP \[bu] 2
