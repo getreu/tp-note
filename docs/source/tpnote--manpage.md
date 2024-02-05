@@ -897,7 +897,9 @@ link is displayed in the browser.
 
 # METADATA FILENAME SYNCHRONIZATION
 
-Consider the following Tp-Note file:
+Consider the following Tp-Note filename generated with the _default_ 
+filename scheme (cf section "Filename synchronization schemes" for other
+schemes):
 
     20151208-Make this world a better place--Suggestions.md
 
@@ -1101,12 +1103,73 @@ namely in the opposite direction. Once the new header is prepended to the text
 file, a regular filename synchronization - as described above - is triggered and
 executed as described above.
 
-Technically, all rules and logic of how the synchronization is executed, are
+
+
+## Filename synchronization schemes
+
+Technically, the rules how the note's header relates to its filename are
 encoded in customizable so-called filename templates (cf. section _Templates_).
+These templates exist in two different variants referred to as _default scheme_
+and _zettel scheme_:
+
+1. The `'default'` scheme:
+
+   Example:
+
+   ``` yaml
+   ---
+   title:      1. The Beginning
+   subtitle:   Note
+   ---
+
+   Once upon a time...
+   ```
+
+   The filename synchronization template from the _default scheme_ set looks
+   like (simplified):
+
+       {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
+
+   It generates from the above example the filename: 
+   
+       20211031-1. The Beginning--Note.md 
 
 
+2. The '`zettel`' scheme:
+
+   Although the default scheme covers most of the daily note-taking,
+   Luhmann's _Zettelkasten_ knowledge management system requires slightly
+   different templates, hence the name _zettel scheme_.
+
+   The following example illustrates the header fields of a typical '`zettel`'
+   scheme note file:
+
+   ```yaml
+   ---
+   title:    Lemon
+   keywords:
+             - fruit
+             - round
+             - sour taste
+   scheme:   zettel
+   sort_tag: 2b3
+   ---
+   
+   The [lemon] belongs to the Rutaceae family.
+   [lemon]: https://en.wikipedia.org/wiki/Lemon
+   ```
+
+   The filename synchronization template from the _zettel scheme_ set looks 
+   like (simplified):
+    
+       {{ fm_sort_tag }}--{{ fm_title }}__{{ fm_keywords }}.{{ fm_file_ext }}
+
+   It generates the following filename:
+
+       2b3--Lemon__fruit_round_sour taste.md
 
 
+   
 
 # CUSTOMIZATION
 
@@ -1130,7 +1193,7 @@ When Tp-Note starts, it first merges all available configuration files into
 the default configuration. Then the resulting syntax is checked.  If not
 correct, the last sourced configuration file is renamed (thus disabled) and
 Tp-Note starts with its internal default configuration. For debugging, you can
-print out the merge result with '`-V -b -d trace`'.
+print out the merged result with '`-V -b -d trace`'.
 
 ```sh
 tpnote -V -b -d trace  |less
@@ -1167,7 +1230,7 @@ other variables remain untouched.
 
 ```toml
 [[scheme]]
-name='default'
+name="default"
 [scheme.filename]
 extension_default = "txt"
 ```
@@ -1176,7 +1239,7 @@ To add a custom scheme you must provide all variables:
 
 ```toml
 [[scheme]]
-name='my-custom-scheme'
+name="my-custom-scheme"
 [scheme.filename]
 # Insert all variables here.
 [scheme.tmpl]
@@ -1231,8 +1294,8 @@ and renames the note file if necessary.
 [app_args]
 unix.editor = [
   [
-    'kate',
-    '--block'
+    "kate",
+    "--block"
   ]
 ]
 ```
@@ -1250,7 +1313,7 @@ to insert the value of environment variables. Consider the following example:
 [app_args]
 windows.editor = [
     [
-    '{{ get_env(name="LOCALAPPDATA") }}\Programs\Microsoft VS Code\Code.exe',
+    "{{ get_env(name="LOCALAPPDATA") }}\Programs\Microsoft VS Code\Code.exe",
     "--new-window", "--wait",
     ]
 ]
@@ -1264,7 +1327,7 @@ the username '`Joe`' to '`C:\User\Joe\AppData\Local`' resulting in:
 [app_args]
 windows.editor = [
     [
-    'C:\User\Joe\AppData\Local\Programs\Microsoft VS Code\Code.exe',
+    "C:\User\Joe\AppData\Local\Programs\Microsoft VS Code\Code.exe",
     "--new-window", "--wait",
     ]
 ]
@@ -1347,7 +1410,7 @@ Then place a Tp-Note configuration in its search path (e.g.
 
 ```toml
 [app_args]
-unix.editor = [ [ 'flatpak', 'run', 'com.github.marktext.marktext', ] ]
+unix.editor = [ [ "flatpak", "run", "com.github.marktext.marktext", ] ]
 ```
 
 The structure of this variable is a list of lists. Every item in the outer list
@@ -1372,12 +1435,12 @@ Here, some examples you can adjust to your needs and taste:
   [app_args]
   unix.editor = [
     [
-      'xfce4-terminal',
-      '--disable-server',
-      '-x',
-      'nvim',
-      '+colorscheme pablo',
-      '+set syntax=markdown',
+      "xfce4-terminal",
+      "--disable-server",
+      "-x",
+      "nvim",
+      "+colorscheme pablo",
+      "+set syntax=markdown",
     ],
   ]
   ```
@@ -1388,10 +1451,10 @@ Here, some examples you can adjust to your needs and taste:
   [app_args]
   unix.editor = [
     [
-      'xfce4-terminal',
-      '--disable-server',
-      '-x',
-      'hx',
+      "xfce4-terminal",
+      "--disable-server",
+      "-x",
+      "hx",
     ],
   ]
   ```
@@ -1402,10 +1465,10 @@ Here, some examples you can adjust to your needs and taste:
   [app_args]
   unix.editor = [
     [
-      'lxterminal',
-      '--no-remote',
-      '-e',
-      'hx',
+      "lxterminal",
+      "--no-remote",
+      "-e",
+      "hx",
     ],
   ]
   ```
@@ -1416,13 +1479,13 @@ Here, some examples you can adjust to your needs and taste:
   [app_args]
   unix.editor = [
     [
-      'xterm',
-      '-fa',
-      'DejaVu Sans Mono',
-      '-fs',
-      '12',
-      '-e',
-      'hx',
+      "xterm",
+      "-fa",
+      "DejaVu Sans Mono",
+      "-fs",
+      "12",
+      "-e",
+      "hx",
     ],
   ]
   ```
@@ -1433,9 +1496,9 @@ Here, some examples you can adjust to your needs and taste:
   [app_args]
   unix.editor = [
     [
-      'alacritty',
-      '-e',
-      'hx',
+      "alacritty",
+      "-e",
+      "hx",
     ],
   ]
   ```
@@ -1455,12 +1518,15 @@ are regarded as Markdown files:
 name = "default"
 [scheme.filename]
 extensions = [
-  [ "txt", "Markdown" ],
-  [ "md", "Markdown" ],
-  [ "markdown", "Markdown" ],
-  [ "markdn", "Markdown" ],
-  [ "mdown", "Markdown" ],
-  [ "mdtxt", "Markdown" ],
+  ["txt", "Markdown"],
+  ["md", "Markdown"],
+  ["markdown", "Markdown"],
+  ["rst", "Restructuredtext"],
+  ["htmlnote", "Html"],
+  ["txtnote", "PlainText"],
+  ["adoc", "PlainText"],
+  ["mw", "PlainTextNoViewer"],
+  ["t2t", "PlainTextNoViewer"],
 ]
 ```
 
@@ -1470,7 +1536,7 @@ The default file extension for new note files is defined as:
 [[scheme]]
 name = "default"
 [scheme.filename]
-extension_default = 'md'
+extension_default = "md"
 ```
 
 If you prefer rather the file extension '`.markdown`' for new notes, write
@@ -1480,7 +1546,7 @@ a configuration file with:
 [[scheme]]
 name = "default"
 [scheme.filename]
-extension_default = 'markdown'
+extension_default = "markdown"
 ```
 
 This modification does not change how the note file's content is interpreted -
@@ -1506,7 +1572,7 @@ potential detection candidates, e.g.:
 [[scheme]]
 name = "default"
 [scheme.tmpl]
-filter.get_lang = [ 'en', 'fr', 'de', 'et' ]
+filter.get_lang = [ "en", "fr", "de", "et" ]
 ```
 
 As natural language detection is CPU intensive, it is advised to limit the
@@ -1521,7 +1587,7 @@ which stands for “add all languages”:
 [[scheme]]
 name = "default"
 [scheme.tmpl]
-filter.get_lang = [ '+all', ]
+filter.get_lang = [ "+all", ]
 ```
 
 Once the language is detected with the filter '`get_lang`', it passes another
@@ -1539,10 +1605,10 @@ The corresponding configuration looks like this:
 [[scheme]]
 name = "default"
 [scheme.tmpl]
-filter.get_lang = [ 'en', 'fr', 'de', 'et' ]
+filter.get_lang = [ "en", "fr", "de", "et" ]
 filter.map_lang = [
-    [ 'en', 'en-US', ],
-    [ 'de', 'de-DE', ],
+    [ "en", "en-US", ],
+    [ "de", "de-DE", ],
 ]
 ```
 
@@ -1677,7 +1743,7 @@ First, create a configuration file '`~/.config/tpnote/tpnote.toml`' with:
 [[scheme]]
 name = "default"
 [scheme.filename]
-extension_default = 'rst'
+extension_default = "rst"
 [scheme.tmpl]
 annotate_file_content = """
 COMPLETE HERE
@@ -1686,7 +1752,7 @@ COMPLETE HERE
 [[scheme]]
 name = "zettel"
 [scheme.filename]
-extension_default = 'rst'
+extension_default = "rst"
 [scheme.tmpl]
 annotate_file_content = """
 COMPLETE HERE
@@ -1964,19 +2030,22 @@ Specifically:
 * '`{{ my_val | to_html | safe }}`' is the HTML rendition of the '`my_val`'
   variable (c.f. section _Template filter_).
 
+* '`{{'fm_title' | name}}`' prints the localized name of the '`fm_title`'
+  variable, e.g. '`title`' in English or '`Titel`' in German.
+
 Alternatively, the header enclosed by '`<pre>...</pre>`' can also be rendered
 as a table:
 
 ```html
   <table class="fm">
     <tr>
-    <th class="fmkey">title:</th>
+    <th class="fmkey">{{'fm_title' | name}}:</th>
     <th class="fmval"><b>
         {{ fm_title| default(value='') | to_html | safe }}</b>
     </th>
   </tr>
     <tr>
-    <th class="fmkey">subtitle:</th>
+    <th class="fmkey">{{'fm_subtitle' | name}}:</th>
     <th class="fmval">
         {{ fm_subtitle | default(value='') | to_html | safe }}
     </th>

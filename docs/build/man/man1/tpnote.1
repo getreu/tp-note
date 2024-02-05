@@ -1247,7 +1247,9 @@ T}
 .TE
 .SH METADATA FILENAME SYNCHRONIZATION
 .PP
-Consider the following Tp-Note file:
+Consider the following Tp-Note filename generated with the
+\f[I]default\f[R] filename scheme (cf section \[lq]Filename
+synchronization schemes\[rq] for other schemes):
 .IP
 .nf
 \f[C]
@@ -1514,10 +1516,93 @@ header, namely in the opposite direction.
 Once the new header is prepended to the text file, a regular filename
 synchronization - as described above - is triggered and executed as
 described above.
+.SS Filename synchronization schemes
 .PP
-Technically, all rules and logic of how the synchronization is executed,
+Technically, the rules how the note\[cq]s header relates to its filename
 are encoded in customizable so-called filename templates (cf.\ section
 \f[I]Templates\f[R]).
+These templates exist in two different variants referred to as
+\f[I]default scheme\f[R] and \f[I]zettel scheme\f[R]:
+.IP "1." 3
+The \f[V]\[aq]default\[aq]\f[R] scheme:
+.RS 4
+.PP
+Example:
+.IP
+.nf
+\f[C]
+---
+title:      1. The Beginning
+subtitle:   Note
+---
+
+Once upon a time...
+\f[R]
+.fi
+.PP
+The filename synchronization template from the \f[I]default scheme\f[R]
+set looks like (simplified):
+.IP
+.nf
+\f[C]
+{{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
+\f[R]
+.fi
+.PP
+It generates from the above example the filename:
+.IP
+.nf
+\f[C]
+20211031-1. The Beginning--Note.md 
+\f[R]
+.fi
+.RE
+.IP "2." 3
+The `\f[V]zettel\f[R]' scheme:
+.RS 4
+.PP
+Although the default scheme covers most of the daily note-taking,
+Luhmann\[cq]s \f[I]Zettelkasten\f[R] knowledge management system
+requires slightly different templates, hence the name \f[I]zettel
+scheme\f[R].
+.PP
+The following example illustrates the header fields of a typical
+`\f[V]zettel\f[R]' scheme note file:
+.IP
+.nf
+\f[C]
+---
+title:    Lemon
+keywords:
+          - fruit
+          - round
+          - sour taste
+scheme:   zettel
+sort_tag: 2b3
+---
+
+The [lemon] belongs to the Rutaceae family.
+[lemon]: https://en.wikipedia.org/wiki/Lemon
+\f[R]
+.fi
+.PP
+The filename synchronization template from the \f[I]zettel scheme\f[R]
+set looks like (simplified):
+.IP
+.nf
+\f[C]
+{{ fm_sort_tag }}--{{ fm_title }}__{{ fm_keywords }}.{{ fm_file_ext }}
+\f[R]
+.fi
+.PP
+It generates the following filename:
+.IP
+.nf
+\f[C]
+2b3--Lemon__fruit_round_sour taste.md
+\f[R]
+.fi
+.RE
 .SH CUSTOMIZATION
 .PP
 Tp-Note is shipped with a default internal configuration that can be
@@ -1556,7 +1641,7 @@ into the default configuration.
 Then the resulting syntax is checked.
 If not correct, the last sourced configuration file is renamed (thus
 disabled) and Tp-Note starts with its internal default configuration.
-For debugging, you can print out the merge result with
+For debugging, you can print out the merged result with
 `\f[V]-V -b -d trace\f[R]'.
 .IP
 .nf
@@ -1607,7 +1692,7 @@ In the following example we merge the variable
 .nf
 \f[C]
 [[scheme]]
-name=\[aq]default\[aq]
+name=\[dq]default\[dq]
 [scheme.filename]
 extension_default = \[dq]txt\[dq]
 \f[R]
@@ -1618,7 +1703,7 @@ To add a custom scheme you must provide all variables:
 .nf
 \f[C]
 [[scheme]]
-name=\[aq]my-custom-scheme\[aq]
+name=\[dq]my-custom-scheme\[dq]
 [scheme.filename]
 # Insert all variables here.
 [scheme.tmpl]
@@ -1686,8 +1771,8 @@ necessary.
 [app_args]
 unix.editor = [
   [
-    \[aq]kate\[aq],
-    \[aq]--block\[aq]
+    \[dq]kate\[dq],
+    \[dq]--block\[dq]
   ]
 ]
 \f[R]
@@ -1710,7 +1795,7 @@ Consider the following example:
 [app_args]
 windows.editor = [
     [
-    \[aq]{{ get_env(name=\[dq]LOCALAPPDATA\[dq]) }}\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[aq],
+    \[dq]{{ get_env(name=\[dq]LOCALAPPDATA\[dq]) }}\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[dq],
     \[dq]--new-window\[dq], \[dq]--wait\[dq],
     ]
 ]
@@ -1727,7 +1812,7 @@ Windows for a user with the username `\f[V]Joe\f[R]' to
 [app_args]
 windows.editor = [
     [
-    \[aq]C:\[rs]User\[rs]Joe\[rs]AppData\[rs]Local\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[aq],
+    \[dq]C:\[rs]User\[rs]Joe\[rs]AppData\[rs]Local\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[dq],
     \[dq]--new-window\[dq], \[dq]--wait\[dq],
     ]
 ]
@@ -1826,7 +1911,7 @@ content:
 .nf
 \f[C]
 [app_args]
-unix.editor = [ [ \[aq]flatpak\[aq], \[aq]run\[aq], \[aq]com.github.marktext.marktext\[aq], ] ]
+unix.editor = [ [ \[dq]flatpak\[dq], \[dq]run\[dq], \[dq]com.github.marktext.marktext\[dq], ] ]
 \f[R]
 .fi
 .PP
@@ -1855,12 +1940,12 @@ Here, some examples you can adjust to your needs and taste:
 [app_args]
 unix.editor = [
   [
-    \[aq]xfce4-terminal\[aq],
-    \[aq]--disable-server\[aq],
-    \[aq]-x\[aq],
-    \[aq]nvim\[aq],
-    \[aq]+colorscheme pablo\[aq],
-    \[aq]+set syntax=markdown\[aq],
+    \[dq]xfce4-terminal\[dq],
+    \[dq]--disable-server\[dq],
+    \[dq]-x\[dq],
+    \[dq]nvim\[dq],
+    \[dq]+colorscheme pablo\[dq],
+    \[dq]+set syntax=markdown\[dq],
   ],
 ]
 \f[R]
@@ -1875,10 +1960,10 @@ unix.editor = [
 [app_args]
 unix.editor = [
   [
-    \[aq]xfce4-terminal\[aq],
-    \[aq]--disable-server\[aq],
-    \[aq]-x\[aq],
-    \[aq]hx\[aq],
+    \[dq]xfce4-terminal\[dq],
+    \[dq]--disable-server\[dq],
+    \[dq]-x\[dq],
+    \[dq]hx\[dq],
   ],
 ]
 \f[R]
@@ -1893,10 +1978,10 @@ unix.editor = [
 [app_args]
 unix.editor = [
   [
-    \[aq]lxterminal\[aq],
-    \[aq]--no-remote\[aq],
-    \[aq]-e\[aq],
-    \[aq]hx\[aq],
+    \[dq]lxterminal\[dq],
+    \[dq]--no-remote\[dq],
+    \[dq]-e\[dq],
+    \[dq]hx\[dq],
   ],
 ]
 \f[R]
@@ -1911,13 +1996,13 @@ unix.editor = [
 [app_args]
 unix.editor = [
   [
-    \[aq]xterm\[aq],
-    \[aq]-fa\[aq],
-    \[aq]DejaVu Sans Mono\[aq],
-    \[aq]-fs\[aq],
-    \[aq]12\[aq],
-    \[aq]-e\[aq],
-    \[aq]hx\[aq],
+    \[dq]xterm\[dq],
+    \[dq]-fa\[dq],
+    \[dq]DejaVu Sans Mono\[dq],
+    \[dq]-fs\[dq],
+    \[dq]12\[dq],
+    \[dq]-e\[dq],
+    \[dq]hx\[dq],
   ],
 ]
 \f[R]
@@ -1932,9 +2017,9 @@ unix.editor = [
 [app_args]
 unix.editor = [
   [
-    \[aq]alacritty\[aq],
-    \[aq]-e\[aq],
-    \[aq]hx\[aq],
+    \[dq]alacritty\[dq],
+    \[dq]-e\[dq],
+    \[dq]hx\[dq],
   ],
 ]
 \f[R]
@@ -1954,12 +2039,15 @@ extensions, that are regarded as Markdown files:
 name = \[dq]default\[dq]
 [scheme.filename]
 extensions = [
-  [ \[dq]txt\[dq], \[dq]Markdown\[dq] ],
-  [ \[dq]md\[dq], \[dq]Markdown\[dq] ],
-  [ \[dq]markdown\[dq], \[dq]Markdown\[dq] ],
-  [ \[dq]markdn\[dq], \[dq]Markdown\[dq] ],
-  [ \[dq]mdown\[dq], \[dq]Markdown\[dq] ],
-  [ \[dq]mdtxt\[dq], \[dq]Markdown\[dq] ],
+  [\[dq]txt\[dq], \[dq]Markdown\[dq]],
+  [\[dq]md\[dq], \[dq]Markdown\[dq]],
+  [\[dq]markdown\[dq], \[dq]Markdown\[dq]],
+  [\[dq]rst\[dq], \[dq]Restructuredtext\[dq]],
+  [\[dq]htmlnote\[dq], \[dq]Html\[dq]],
+  [\[dq]txtnote\[dq], \[dq]PlainText\[dq]],
+  [\[dq]adoc\[dq], \[dq]PlainText\[dq]],
+  [\[dq]mw\[dq], \[dq]PlainTextNoViewer\[dq]],
+  [\[dq]t2t\[dq], \[dq]PlainTextNoViewer\[dq]],
 ]
 \f[R]
 .fi
@@ -1971,7 +2059,7 @@ The default file extension for new note files is defined as:
 [[scheme]]
 name = \[dq]default\[dq]
 [scheme.filename]
-extension_default = \[aq]md\[aq]
+extension_default = \[dq]md\[dq]
 \f[R]
 .fi
 .PP
@@ -1983,7 +2071,7 @@ notes, write a configuration file with:
 [[scheme]]
 name = \[dq]default\[dq]
 [scheme.filename]
-extension_default = \[aq]markdown\[aq]
+extension_default = \[dq]markdown\[dq]
 \f[R]
 .fi
 .PP
@@ -2012,7 +2100,7 @@ candidates, e.g.:
 [[scheme]]
 name = \[dq]default\[dq]
 [scheme.tmpl]
-filter.get_lang = [ \[aq]en\[aq], \[aq]fr\[aq], \[aq]de\[aq], \[aq]et\[aq] ]
+filter.get_lang = [ \[dq]en\[dq], \[dq]fr\[dq], \[dq]de\[dq], \[dq]et\[dq] ]
 \f[R]
 .fi
 .PP
@@ -2032,7 +2120,7 @@ for \[lq]add all languages\[rq]:
 [[scheme]]
 name = \[dq]default\[dq]
 [scheme.tmpl]
-filter.get_lang = [ \[aq]+all\[aq], ]
+filter.get_lang = [ \[dq]+all\[dq], ]
 \f[R]
 .fi
 .PP
@@ -2056,10 +2144,10 @@ The corresponding configuration looks like this:
 [[scheme]]
 name = \[dq]default\[dq]
 [scheme.tmpl]
-filter.get_lang = [ \[aq]en\[aq], \[aq]fr\[aq], \[aq]de\[aq], \[aq]et\[aq] ]
+filter.get_lang = [ \[dq]en\[dq], \[dq]fr\[dq], \[dq]de\[dq], \[dq]et\[dq] ]
 filter.map_lang = [
-    [ \[aq]en\[aq], \[aq]en-US\[aq], ],
-    [ \[aq]de\[aq], \[aq]de-DE\[aq], ],
+    [ \[dq]en\[dq], \[dq]en-US\[dq], ],
+    [ \[dq]de\[dq], \[dq]de-DE\[dq], ],
 ]
 \f[R]
 .fi
@@ -2222,7 +2310,7 @@ First, create a configuration file
 [[scheme]]
 name = \[dq]default\[dq]
 [scheme.filename]
-extension_default = \[aq]rst\[aq]
+extension_default = \[dq]rst\[dq]
 [scheme.tmpl]
 annotate_file_content = \[dq]\[dq]\[dq]
 COMPLETE HERE
@@ -2231,7 +2319,7 @@ COMPLETE HERE
 [[scheme]]
 name = \[dq]zettel\[dq]
 [scheme.filename]
-extension_default = \[aq]rst\[aq]
+extension_default = \[dq]rst\[dq]
 [scheme.tmpl]
 annotate_file_content = \[dq]\[dq]\[dq]
 COMPLETE HERE
@@ -2574,6 +2662,10 @@ section \f[I]Template variables\f[R]).
 `\f[V]{{ my_val | to_html | safe }}\f[R]' is the HTML rendition of the
 `\f[V]my_val\f[R]' variable (c.f.
 section \f[I]Template filter\f[R]).
+.IP \[bu] 2
+`\f[V]{{\[aq]fm_title\[aq] | name}}\f[R]' prints the localized name of
+the `\f[V]fm_title\f[R]' variable, e.g.\ `\f[V]title\f[R]' in English or
+`\f[V]Titel\f[R]' in German.
 .PP
 Alternatively, the header enclosed by `\f[V]<pre>...</pre>\f[R]' can
 also be rendered as a table:
@@ -2582,13 +2674,13 @@ also be rendered as a table:
 \f[C]
   <table class=\[dq]fm\[dq]>
     <tr>
-    <th class=\[dq]fmkey\[dq]>title:</th>
+    <th class=\[dq]fmkey\[dq]>{{\[aq]fm_title\[aq] | name}}:</th>
     <th class=\[dq]fmval\[dq]><b>
         {{ fm_title| default(value=\[aq]\[aq]) | to_html | safe }}</b>
     </th>
   </tr>
     <tr>
-    <th class=\[dq]fmkey\[dq]>subtitle:</th>
+    <th class=\[dq]fmkey\[dq]>{{\[aq]fm_subtitle\[aq] | name}}:</th>
     <th class=\[dq]fmval\[dq]>
         {{ fm_subtitle | default(value=\[aq]\[aq]) | to_html | safe }}
     </th>
