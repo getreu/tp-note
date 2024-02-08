@@ -1,7 +1,7 @@
 //! Syntax highlighting for (inline) source code blocks in Markdown input.
 
 use crate::config::LIB_CFG;
-use pulldown_cmark::{CodeBlockKind, Event, Tag};
+use pulldown_cmark::{CodeBlockKind, Event, Tag, TagEnd};
 use syntect::highlighting::ThemeSet;
 use syntect::html::css_for_theme_with_class_style;
 use syntect::html::{ClassStyle, ClassedHTMLGenerator};
@@ -77,7 +77,7 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
             event = self.parent.next();
         }
 
-        debug_assert!(matches!(event, Some(Event::End(Tag::CodeBlock(_))),));
+        debug_assert!(matches!(event, Some(Event::End(TagEnd::CodeBlock))));
 
         if lang.as_ref() == "math" {
             return Some(Event::Html(
