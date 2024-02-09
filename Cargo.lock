@@ -4052,7 +4052,7 @@ dependencies = [
  "toml 0.8.10",
  "tpnote-lib",
  "webbrowser",
- "win32job 1.0.4",
+ "win32job",
  "windows-sys 0.52.0",
  "winresource",
 ]
@@ -4083,7 +4083,7 @@ dependencies = [
  "tera",
  "thiserror",
  "toml 0.8.10",
- "win32job 2.0.0",
+ "win32job",
  "windows-sys 0.52.0",
 ]
 
@@ -4468,16 +4468,6 @@ dependencies = [
  "raw-window-handle",
  "url",
  "web-sys",
-]
-
-[[package]]
-name = "win32job"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1e915da468fb933fad27a318d59e163b1c8ae079be5efc080ff75990d1555dd"
-dependencies = [
- "thiserror",
- "winapi",
 ]
 
 [[package]]

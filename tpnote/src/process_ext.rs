@@ -56,7 +56,7 @@ impl ChildExt for Child {
             // We create a job to monitor the wrapped child.
             let job = Job::create()?;
             let handle = me.as_raw_handle();
-            job.assign_process(handle)?;
+            job.assign_process(handle as isize)?;
             Ok(job)
         }
 
