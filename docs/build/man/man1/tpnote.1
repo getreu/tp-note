@@ -2058,6 +2058,28 @@ unix.editor = [
 \f[R]
 .fi
 .RE
+.IP \[bu] 2
+Flatpack Helix in XFCE4 terminal
+.RS 2
+.IP
+.nf
+\f[C]
+[app_args]
+unix.editor = [
+  [
+    \[dq]xfce4-terminal\[dq], \[dq]--disable-server\[dq], \[dq]-x\[dq],
+    \[dq]flatpak\[dq], \[dq]run\[dq], \[dq]com.helix_editor.Helix\[dq],
+  ],
+]
+
+unix.editor_console = [
+  [
+    \[dq]flatpak\[dq], \[dq]run\[dq], \[dq]com.helix_editor.Helix\[dq]
+  ],
+]
+\f[R]
+.fi
+.RE
 .SS Change the file extension for new note files
 .PP
 Tp-Note identifies the note\[cq]s markup language by its file extension

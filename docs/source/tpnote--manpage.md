@@ -1517,6 +1517,23 @@ Here, some examples you can adjust to your needs and taste:
   ]
   ```
 
+* Flatpack Helix in XFCE4 terminal
+
+  ```toml
+  [app_args]
+  unix.editor = [
+    [
+      "xfce4-terminal", "--disable-server", "-x",
+      "flatpak", "run", "com.helix_editor.Helix",
+    ],
+  ]
+  
+  unix.editor_console = [
+    [
+      "flatpak", "run", "com.helix_editor.Helix"
+    ],
+  ]
+  ```
 
 
 
