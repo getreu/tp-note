@@ -21,15 +21,18 @@ pub(crate) const HTML_EXT: &str = ".html";
 /// character.
 const FORMAT_SEPARATOR: char = '?';
 
+/// If followed directly after FORMAT_SEPARATOR, it selects the sort-tag
+/// for further matching.
+const FORMAT_ONLY_SORT_TAG: char = '#';
+
+/// If followed directly after FORMAT_SEPARATOR, it selects the the whole
+/// filename for further matching.
+const FORMAT_COMPLETE_FILENAME: &str = "?";
+
 /// A format string can be separated in a _from_ and _to_ part. This
 /// optional separator is placed after `FORMAT_SEPARATOR` and separates
 /// the _from_ and _to_ pattern.
-const FROM_TO_SEPARATOR: char = ':';
-
-/// A local path can carry a format string at the end.
-/// This marker must follow directly the `FORMAT_SEPARATOR` and shows only
-/// the sort-tag of the path.
-const FORMAT_ONLY_SORT_TAG: &str = "?";
+const FORMAT_FROM_TO_SEPARATOR: char = ':';
 
 /// If `rewrite_rel_path` and `dest` is relative, concatenate `docdir` and
 /// `dest`, then strip `root_path` from the left before returning.
@@ -461,22 +464,32 @@ impl<'a> Hyperlink for Link<'a> {
             .to_str()
             .unwrap_or_default();
 
-        match format.split_once(FROM_TO_SEPARATOR) {
-            // `?`, no `:`
+        // Select what to match:
+        let format = if format.starts_with(FORMAT_COMPLETE_FILENAME) {
+            // Keep complete filename.
+            format
+                .strip_prefix(FORMAT_COMPLETE_FILENAME)
+                .unwrap_or(format)
+        } else if format.starts_with(FORMAT_ONLY_SORT_TAG) {
+            // Keep only format-tag.
+            short_text = Path::new(path).disassemble().0;
+            format.strip_prefix(FORMAT_ONLY_SORT_TAG).unwrap_or(format)
+        } else {
+            // Keep only stem.
+            short_text = Path::new(path).disassemble().2;
+            format
+        };
+
+        match format.split_once(FORMAT_FROM_TO_SEPARATOR) {
+            // No `:`
             None => {
-                match format {
-                    FORMAT_ONLY_SORT_TAG => short_text = Path::new(path).disassemble().0,
-                    // Strip sort-tag, copy counter and ext, keep stem.
-                    "" => short_text = Path::new(path).disassemble().2,
-                    _ => {
-                        short_text = Path::new(path).disassemble().2;
-                        if let Some(idx) = short_text.rfind(format) {
-                            short_text = &short_text[..idx];
-                        };
-                    }
+                if !format.is_empty() {
+                    if let Some(idx) = short_text.find(format) {
+                        short_text = &short_text[..idx];
+                    };
                 }
             }
-            // `?` and `:`
+            // Some `:`
             Some((from, to)) => {
                 if !from.is_empty() {
                     if let Some(idx) = short_text.find(from) {
@@ -484,13 +497,12 @@ impl<'a> Hyperlink for Link<'a> {
                     };
                 }
                 if !to.is_empty() {
-                    if let Some(idx) = short_text.rfind(to) {
+                    if let Some(idx) = short_text.find(to) {
                         short_text = &short_text[..idx];
                     };
                 }
             }
         }
-        // no `?`
         // Store the result.
         let _ = std::mem::replace(text, Cow::Owned(short_text.to_string()));
         let _ = std::mem::replace(dest, Cow::Owned(path.to_string()));
@@ -1344,7 +1356,7 @@ mod tests {
             Cow::from("title"),
         );
         let expected = Link::Text2Dest(
-            Cow::from("My note--red_blue"),
+            Cow::from("My note--red"),
             Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
             Cow::from("title"),
         );
@@ -1355,7 +1367,7 @@ mod tests {
         //
         let mut input = Link::Text2Dest(
             Cow::from("does not matter"),
-            Cow::from("/dir/3.0-My note--red_blue_green.jpg?:"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg??"),
             Cow::from("title"),
         );
         let expected = Link::Text2Dest(
@@ -1370,11 +1382,26 @@ mod tests {
         //
         let mut input = Link::Text2Dest(
             Cow::from("does not matter"),
-            Cow::from("/dir/3.0-My note--red_blue_green.jpg?--:."),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg?#."),
             Cow::from("title"),
         );
         let expected = Link::Text2Dest(
-            Cow::from("red_blue_green"),
+            Cow::from("3"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
+            Cow::from("title"),
+        );
+        input.apply_format_attribute();
+        let output = input;
+        assert_eq!(output, expected);
+
+        //
+        let mut input = Link::Text2Dest(
+            Cow::from("does not matter"),
+            Cow::from("/dir/3.0-My note--red_blue_green.jpg??.:_"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("0-My note--red"),
             Cow::from("/dir/3.0-My note--red_blue_green.jpg"),
             Cow::from("title"),
         );

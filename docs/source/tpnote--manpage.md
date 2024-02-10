@@ -871,9 +871,23 @@ link is displayed in the browser.
 |------------------------------------------------------|---------------------|
 | '`[whatever](<dir/01ac-Tulips--red, yellow.md?>)`'   | Tulips--red, yellow |
 | '`[whatever](<dir/01ac?>)`'                          | Tulips--red, yellow |
-| '`[whatever](<dir/01ac??>)`'                         | 01ac                |
 | '`[whatever](<dir/01ac?,>)`'                         | Tulips--red         |
 | '`[whatever](<dir/01ac?-->)`'                        | Tulips              |
+| '`[whatever](<dir/01ac?--:,>)`'                      | red                 |
+| '`[whatever](<dir/01ac?#>)`'                         | 01ac                |
+| '`[whatever](<dir/01ac??>)`'                         | 01ac-Tulips--red, yellow.md |
+
+Observations: 
+
+1. The format operator '`?`' (not followed by a '`#`') strips the sort-tag,
+   the copy-counter and the filename extension. In other words, it keeps only 
+   the file stem.
+2. The string following '`?<to>`'  is the _to pattern_. '`<to>`' marks the end 
+3. The string before the colon is the _from pattern_, the string after the
+   colon is the _to pattern_: '`?<from>:<to>`'.
+   of the matching. Pattern are always searched from the start of the string.
+4. The operator '`?#`' prints the sort-tag. 
+5. The operator '`??`' prints the whole filename. 
 
 
 | Local autolink                                 | What you see                      |
@@ -887,11 +901,11 @@ link is displayed in the browser.
 |-------------------------------------------------|-----------------------------|
 | '`<tpnote:dir/01ac-Tulips--red,%20yellow.md?>`' | Tulips--red, yellow         |
 | '`<tpnote:dir/01ac?>`'                          | Tulips--red, yellow         |
-| '`<tpnote:dir/01ac?:>`'                         | 01ac-Tulips--red, yellow.md |
-| '`<tpnote:dir/01ac?:.>`'                        | 01ac-Tulips--red, yellow  	|
-| '`<tpnote:dir/01ac?-:,>`'                       | Tulips--red                 |
-| '`<tpnote:dir/01ac?--:,>`'                      | red                         |
-
+| '`<tpnote:dir/01ac??>`'                         | 01ac-Tulips--red, yellow.md |
+| '`<tpnote:dir/01ac??.>`'                        | 01ac-Tulips--red, yellow  	|
+| '`<tpnote:dir/01ac??:.>`'                       | 01ac-Tulips--red, yellow  	|
+| '`<tpnote:dir/01ac??-:,>`'                      | Tulips--red                 |
+| '`<tpnote:dir/01ac??--:,>`'                     | red                         |
 
 
 
