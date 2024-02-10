@@ -7,11 +7,11 @@ rustup target add x86_64-unknown-linux-musl
 # Windows needs: `sudo apt install binutils-mingw-w64 mingw-w64`
 rustup target add x86_64-pc-windows-gnu
 
-# cargo build \
-#  	--target x86_64-unknown-linux-gnu \
-#  	--target x86_64-unknown-linux-musl \
-#   --target x86_64-pc-windows-gnu \
-#  	--release
+cargo build \
+   --target x86_64-unknown-linux-gnu \
+   --target x86_64-unknown-linux-musl \
+   --target x86_64-pc-windows-gnu \
+   --release
 
 # Binary for Raspberry Pi (32 bit)
 rustup target add armv7-unknown-linux-gnueabihf
