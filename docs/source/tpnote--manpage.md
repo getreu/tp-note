@@ -879,15 +879,18 @@ link is displayed in the browser.
 
 Observations: 
 
-1. The format operator '`?`' (not followed by a '`#`') strips the sort-tag,
-   the copy-counter and the filename extension. In other words, it keeps only 
-   the file stem.
-2. The string following '`?<to>`'  is the _to pattern_. '`<to>`' marks the end 
-3. The string before the colon is the _from pattern_, the string after the
-   colon is the _to pattern_: '`?<from>:<to>`'.
-   of the matching. Pattern are always searched from the start of the string.
-4. The operator '`?#`' prints the sort-tag. 
-5. The operator '`??`' prints the whole filename. 
+1. The format operator '`?`' (not followed by a '`#`') strips the path,
+   the sort-tag, the copy-counter and the filename extension. In other words, it
+   keeps only the file stem.
+2. The string following the question mark is the _to pattern_: '`?<to>`'. It 
+   marks the exclusive end of the matching. 
+3. Consider the pattern '`?<from>:<to>`': The string before the colon is the 
+   _from pattern_, the string after the colon is the _to pattern_.
+   Patterns are always searched from the start of the string, e.g. in Latin
+   scripts from the left to the right.
+4. The format operator '`?#`' prints the sort-tag. 
+5. The format operator '`??`' prints the whole filename.
+6. All format operators can be optionally followed by a search pattern. 
 
 
 | Local autolink                                 | What you see                      |

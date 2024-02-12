@@ -1194,20 +1194,25 @@ T}
 Observations:
 .IP "1." 3
 The format operator `\f[V]?\f[R]' (not followed by a `\f[V]#\f[R]')
-strips the sort-tag, the copy-counter and the filename extension.
+strips the path, the sort-tag, the copy-counter and the filename
+extension.
 In other words, it keeps only the file stem.
 .IP "2." 3
-The string following `\f[V]?<to>\f[R]' is the \f[I]to pattern\f[R].
-`\f[V]<to>\f[R]' marks the end
+The string following the question mark is the \f[I]to pattern\f[R]:
+`\f[V]?<to>\f[R]'.
+It marks the exclusive end of the matching.
 .IP "3." 3
-The string before the colon is the \f[I]from pattern\f[R], the string
-after the colon is the \f[I]to pattern\f[R]: `\f[V]?<from>:<to>\f[R]'.
-of the matching.
-Pattern are always searched from the start of the string.
+Consider the pattern `\f[V]?<from>:<to>\f[R]': The string before the
+colon is the \f[I]from pattern\f[R], the string after the colon is the
+\f[I]to pattern\f[R].
+Patterns are always searched from the start of the string, e.g.\ in
+Latin scripts from the left to the right.
 .IP "4." 3
-The operator `\f[V]?#\f[R]' prints the sort-tag.
+The format operator `\f[V]?#\f[R]' prints the sort-tag.
 .IP "5." 3
-The operator `\f[V]??\f[R]' prints the whole filename.
+The format operator `\f[V]??\f[R]' prints the whole filename.
+.IP "6." 3
+All format operators can be optionally followed by a search pattern.
 .PP
 .TS
 tab(@);
