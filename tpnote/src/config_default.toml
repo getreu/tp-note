@@ -129,7 +129,7 @@ unix.editor = [
     [ "geany", "-s", "-i", "-m", ],
     [ "gedit", "-w", ],
     [ "mousepad", "--disable-server", ],
-    ["leafpad"],
+    [ "leafpad" ],
 ]
 
 # Default command line argument list when launching an external editor
@@ -139,6 +139,7 @@ unix.editor = [
 unix.editor_console = [
     ["hx"],
     ["nvim"],
+    ["mcedit"],
     ["nano"],
     ["vim"],
     ["emacs"],
@@ -209,6 +210,7 @@ macos.editor = [
 macos.editor_console = [
     ["hx"],
     ["nvim"],
+    ["mcedit"],
     ["nano"],
     ["pico"],
     ["vim"],
