@@ -421,135 +421,89 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
     ///            "\u{feff}---\r\ntitle:        |"));
     /// ```
     pub fn run(self) -> Result<PathBuf, NoteError> {
-        create_new_note_or_synchronize_filename::<T, F>(
-            self.input.path,
+        let scheme_sorce = match self.input.force_scheme {
+            Some(s) => SchemeSource::Force(s),
+            None => SchemeSource::SchemeNewDefault(self.input.scheme_new_default),
+        };
+
+        // Prevent the rest to run in parallel, other threads will block when they
+        // try to write.
+        let mut settings = SETTINGS.upgradable_read();
+
+        // Initialize settings.
+        settings.with_upgraded(|settings| settings.update(scheme_sorce, self.input.force_lang))?;
+
+        // First, generate a new note (if it does not exist), then parse its front_matter
+        // and finally rename the file, if it is not in sync with its front matter.
+
+        // Collect input data for templates.
+        let mut context = Context::from(self.input.path);
+        context.insert_content(
+            TMPL_VAR_CLIPBOARD,
+            TMPL_VAR_CLIPBOARD_HEADER,
             self.input.clipboard,
-            self.input.stdin,
-            self.input.tk_filter,
-            self.input.html_export,
-            self.input.scheme_new_default,
-            self.input.force_scheme,
-            self.input.force_lang,
-        )
-    }
-}
-
-#[inline]
-/// Create a new note by inserting `Tp-Note`'s environment in a template. If
-/// the note to be created exists already, append a so called `copy_counter` to
-/// the filename and try to save it again. In case this does not succeed either,
-/// increment the `copy_counter` until a free filename is found.
-/// The returned path points to the (new) note file on disk.
-/// Depending on the context, Tp-Note chooses one `TemplateKind` to operate
-/// (c.f. `tpnote_lib::template::TemplateKind::from()`).
-/// The `tk-filter` allows to overwrite this choice, e.g. you may set
-/// `TemplateKind::None` under certain circumstances. This way the caller
-/// can inject command line parameters like `--no-filename-sync`.
-/// If `html_export = Some((dir, local_link_kind))`, the function acts like
-/// like described above, but in addition it renders
-/// the note's content into HTML and saves the `.html` file in the
-/// directory `dir`. This optional HTML rendition is performed just before
-/// returning and does not affect any above described operation.
-/// `force_lang` disables the automatic language detection and uses `force_lang`
-/// instead; or, if `-` use the environment variable `TPNOTE_LANG` or, - if not
-/// defined - use the user's default language as reported from the operating
-/// system.
-///
-/// Returns the note's new or existing filename.
-/// Repeated calls, will reload the environment variables, but not
-/// the configuration file. This function is stateless.
-///
-#[allow(clippy::too_many_arguments)]
-fn create_new_note_or_synchronize_filename<T, F>(
-    path: &Path,
-    clipboard: &T,
-    stdin: &T,
-    tk_filter: F,
-    html_export: Option<(&Path, LocalLinkKind)>,
-    scheme_new_default: &str,
-    force_scheme: Option<&str>,
-    force_lang: Option<&str>,
-) -> Result<PathBuf, NoteError>
-where
-    T: Content,
-    F: Fn(TemplateKind) -> TemplateKind,
-{
-    let scheme_sorce = match force_scheme {
-        Some(s) => SchemeSource::Force(s),
-        None => SchemeSource::SchemeNewDefault(scheme_new_default),
-    };
-
-    // Prevent the rest to run in parallel, other threads will block when they
-    // try to write.
-    let mut settings = SETTINGS.upgradable_read();
-
-    // Initialize settings.
-    settings.with_upgraded(|settings| settings.update(scheme_sorce, force_lang))?;
-
-    // First, generate a new note (if it does not exist), then parse its front_matter
-    // and finally rename the file, if it is not in sync with its front matter.
-
-    // Collect input data for templates.
-    let mut context = Context::from(path);
-    context.insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, clipboard)?;
-    context.insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, stdin)?;
-
-    // `template_king` will tell us what to do.
-    let (template_kind, content) = TemplateKind::from::<T>(path, clipboard, stdin);
-    let template_kind = tk_filter(template_kind);
-
-    let n = match template_kind {
-        TemplateKind::FromDir
-        | TemplateKind::FromClipboardYaml
-        | TemplateKind::FromClipboard
-        | TemplateKind::AnnotateFile => {
-            // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
-            let mut n = Note::from_content_template(context, template_kind)?;
-            n.render_filename(template_kind)?;
-            // Check if the filename is not taken already
-            n.set_next_unused_rendered_filename()?;
-            n.save()?;
-            n
-        }
-
-        TemplateKind::FromTextFile => {
-            let mut n = Note::from_raw_text(context, content.unwrap(), template_kind)?;
-            // Render filename.
-            n.render_filename(template_kind)?;
-
-            // Save new note.
-            let context_path = n.context.path.clone();
-            n.set_next_unused_rendered_filename_or(&context_path)?;
-            n.save_and_delete_from(&context_path)?;
-            n
-        }
-
-        TemplateKind::SyncFilename => {
-            let mut n = Note::from_raw_text(context, content.unwrap(), TemplateKind::SyncFilename)?;
-
-            synchronize::<T>(&mut settings, &mut n)?;
-            n
-        }
-
-        TemplateKind::None => Note::from_raw_text(context, content.unwrap(), template_kind)?,
-    };
-
-    // Export HTML rendition, if wanted.
-    if let Some((dir, local_link_kind)) = html_export {
-        n.export_html(
-            &LIB_CFG.read_recursive().tmpl_html.exporter,
-            dir,
-            local_link_kind,
         )?;
-    }
+        context.insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, self.input.stdin)?;
 
-    // If no new filename was rendered, return the old one.
-    let mut n = n;
-    if n.rendered_filename == PathBuf::new() {
-        n.rendered_filename = n.context.path.clone();
-    }
+        // `template_king` will tell us what to do.
+        let (template_kind, content) =
+            TemplateKind::from::<T>(self.input.path, self.input.clipboard, self.input.stdin);
+        let template_kind = (self.input.tk_filter)(template_kind);
 
-    Ok(n.rendered_filename)
+        let n = match template_kind {
+            TemplateKind::FromDir
+            | TemplateKind::FromClipboardYaml
+            | TemplateKind::FromClipboard
+            | TemplateKind::AnnotateFile => {
+                // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
+                let mut n = Note::from_content_template(context, template_kind)?;
+                n.render_filename(template_kind)?;
+                // Check if the filename is not taken already
+                n.set_next_unused_rendered_filename()?;
+                n.save()?;
+                n
+            }
+
+            TemplateKind::FromTextFile => {
+                let mut n = Note::from_raw_text(context, content.unwrap(), template_kind)?;
+                // Render filename.
+                n.render_filename(template_kind)?;
+
+                // Save new note.
+                let context_path = n.context.path.clone();
+                n.set_next_unused_rendered_filename_or(&context_path)?;
+                n.save_and_delete_from(&context_path)?;
+                n
+            }
+
+            TemplateKind::SyncFilename => {
+                let mut n =
+                    Note::from_raw_text(context, content.unwrap(), TemplateKind::SyncFilename)?;
+
+                synchronize::<T>(&mut settings, &mut n)?;
+                n
+            }
+
+            TemplateKind::None => Note::from_raw_text(context, content.unwrap(), template_kind)?,
+        };
+
+        // Export HTML rendition, if wanted.
+        if let Some((dir, local_link_kind)) = self.input.html_export {
+            n.export_html(
+                &LIB_CFG.read_recursive().tmpl_html.exporter,
+                dir,
+                local_link_kind,
+            )?;
+        }
+
+        // If no new filename was rendered, return the old one.
+        let mut n = n;
+        if n.rendered_filename == PathBuf::new() {
+            n.rendered_filename = n.context.path.clone();
+        }
+
+        Ok(n.rendered_filename)
+    }
 }
 
 ///
