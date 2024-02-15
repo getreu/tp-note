@@ -14,7 +14,6 @@ use std::time::SystemTime;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::config::LIB_CFG_CACHE;
-use tpnote_lib::config::TMPL_HTML_VAR_DOC_ERROR;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
@@ -420,12 +419,16 @@ impl HttpResponse for ServerThread {
 
         let mut context = self.context.clone();
 
-        if context.path != abspath_doc {
+        if context.path == abspath_doc {
+            // Save JavaScript code for life updates.
+            context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &self.live_update_js);
+        } else {
             // This is not the base document, but some other Tp-Note document
             // we want to render. Store store its path.
             // `front_matter::assert_precondition()` needs this later.
             context.path = abspath_doc.to_path_buf();
             // Only the first base document is live updated.
+            // Overwrite the dynamic JavaScript.
             context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
         }
         match HtmlRenderer::viewer_page::<ContentString>(context, content)
@@ -467,15 +470,14 @@ impl HttpResponse for ServerThread {
             // special error page and return this instead.
             Err(e) => {
                 // Render error page providing all information we havStringe.
-                let mut context = self.context.clone();
-                context.insert(TMPL_HTML_VAR_DOC_ERROR, &e.to_string());
+                let context = self.context.clone();
                 let note_erroneous_content = <ContentString as Content>::open(&context.path)?;
-                HtmlRenderer::error_page(context, note_erroneous_content).map_err(|e| {
-                    ViewerError::RenderErrorPage {
+                HtmlRenderer::error_page(context, note_erroneous_content, &e.to_string()).map_err(
+                    |e| ViewerError::RenderErrorPage {
                         tmpl: "tmpl_html.viewer_error".to_string(),
                         source: e,
-                    }
-                })
+                    },
+                )
             }
         }
     }

@@ -138,6 +138,7 @@
 
 use crate::config::LocalLinkKind;
 use crate::config::LIB_CFG;
+use crate::config::TMPL_HTML_VAR_DOC_ERROR;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_HTML_VAR_DOC_TEXT;
 use crate::config::TMPL_VAR_CLIPBOARD;
@@ -595,7 +596,7 @@ impl HtmlRenderer {
     /// // We do not inject any JavaScript.
     /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".to_string());
     /// // Render.
-    /// let html = HtmlRenderer::viewer::<ContentString>(context, raw.into())
+    /// let html = HtmlRenderer::viewer_page::<ContentString>(context, raw.into())
     ///            .unwrap();
     /// // Check the HTML rendition.
     /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
@@ -630,7 +631,7 @@ impl HtmlRenderer {
     /// // Render.
     /// let content = ContentString::open(&context.path).unwrap();
     /// // You can plug in your own type (must impl. `Content`).
-    /// let html = HtmlRenderer::viewer(context, content).unwrap();
+    /// let html = HtmlRenderer::viewer_page(context, content).unwrap();
     /// // Check the HTML rendition.
     /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
     /// ```
@@ -667,7 +668,7 @@ impl HtmlRenderer {
     /// let mut context = Context::from(Path::new("/path/to/note.md"));
     /// // The exporter template does not insert any JavaScript.
     /// // Render.
-    /// let html = HtmlRenderer::exporter::<ContentString>(context, raw.into())
+    /// let html = HtmlRenderer::exporter_page::<ContentString>(context, raw.into())
     ///            .unwrap();
     /// // Check the HTML rendition.
     /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
@@ -694,8 +695,7 @@ impl HtmlRenderer {
     /// `parse_hyperlinks::renderer::text_rawlinks2html` and inserted in
     /// the `TMPL_HTML_VIEWER_ERROR` template (can be replace at runtime).
     /// This template expects the template variables `TMPL_VAR_PATH`
-    /// and `TMPL_HTML_VAR_VIEWER_DOC_JS` and `TMPL_HTML_VAR_NOTE_ERROR` in
-    /// `context` to be set.
+    /// and `TMPL_HTML_VAR_VIEWER_DOC_JS` in `context` to be set.
     /// NB: The value of `TMPL_VAR_PATH` equals `context.path`.
     ///
     /// ```rust
@@ -725,15 +725,13 @@ impl HtmlRenderer {
     /// // Start test
     /// let mut context = Context::from(&notefile);
     /// // We do not inject any JavaScript.
-    /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &e.to_string());
-    /// // We simulate an error;
-    /// context.insert(TMPL_HTML_VAR_DOC_ERROR, &e.to_string());
+    /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
     /// // Render.
     /// // Read from file.
     /// // You can plug in your own type (must impl. `Content`).
     /// let content = ContentString::open(&context.path).unwrap();
     /// let html = HtmlRenderer::error_page(
-    ///               context, content).unwrap();
+    ///               context, content, &e.to_string()).unwrap();
     /// // Check the HTML rendition.
     /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
     /// ```
@@ -741,9 +739,10 @@ impl HtmlRenderer {
     pub fn error_page<T: Content>(
         mut context: Context,
         note_erroneous_content: T,
+        error_message: &str,
     ) -> Result<String, NoteError> {
         // Insert.
-
+        context.insert(TMPL_HTML_VAR_DOC_ERROR, error_message);
         context.insert(TMPL_HTML_VAR_DOC_TEXT, &note_erroneous_content.as_str());
 
         let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer_error;

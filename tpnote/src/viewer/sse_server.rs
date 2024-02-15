@@ -19,7 +19,6 @@ use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::SystemTime;
-use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
 use tpnote_lib::context::Context;
 
 /// The TCP stream is read in chunks. This is the read buffer size.
@@ -72,6 +71,7 @@ pub fn manage_connections(
     // Store `doc_path` in the `context.path` and
     // in the Tera variable `TMPL_VAR_PATH`.
     let context = Context::from(&doc_path);
+    //
 
     log::info!(
         "Viewer listens to incomming requests.\n\
@@ -103,7 +103,6 @@ pub fn manage_connections(
                     let delivered_tpnote_docs = delivered_tpnote_docs.clone();
                     let conn_counter = conn_counter.clone();
                     let context = context.clone();
-
                     move || {
                         let mut st = ServerThread::new(
                             event_rx,
@@ -145,6 +144,10 @@ pub(crate) struct ServerThread {
     /// and in the Tera variable `TMPL_VAR_PATH`.
     /// Both are needed for rendering to HTML.
     pub(crate) context: Context,
+    /// Java Script injection code used by the root page for live updates.
+    /// Root pages insert this in their context with the key
+    /// `TMPL_HTML_VAR_VIEWR_DOC_JS`.
+    pub(crate) live_update_js: String,
 }
 
 impl ServerThread {
@@ -155,12 +158,12 @@ impl ServerThread {
         allowed_urls: Arc<RwLock<HashSet<PathBuf>>>,
         delivered_tpnote_docs: Arc<RwLock<HashSet<PathBuf>>>,
         conn_counter: Arc<()>,
-        mut context: Context,
+        context: Context,
     ) -> Self {
         let local_addr = stream.local_addr();
 
         // Compose JavaScript code.
-        let note_js = match local_addr {
+        let live_update_js = match local_addr {
             Ok(addr) => format!(
                 "{}{}:{}{}",
                 SSE_CLIENT_CODE1,
@@ -173,9 +176,6 @@ impl ServerThread {
             }
         };
 
-        // Save JavaScript code.
-        context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &note_js);
-
         Self {
             rx,
             stream,
@@ -183,6 +183,7 @@ impl ServerThread {
             delivered_tpnote_docs,
             conn_counter,
             context,
+            live_update_js,
         }
     }
 
