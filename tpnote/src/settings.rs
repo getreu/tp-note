@@ -1,6 +1,7 @@
 //! Reads the command line parameters and clipboard and exposes them as `static`
 //! variables.
 
+#[cfg(any(feature = "read-clipboard", feature = "viewer"))]
 use crate::config::CFG;
 #[cfg(feature = "read-clipboard")]
 use arboard::Clipboard;
