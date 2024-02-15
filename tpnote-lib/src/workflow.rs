@@ -40,7 +40,7 @@
 //! // You can plug in your own type (must impl. `Content`).
 //! let n = create_new_note_or_synchronize_filename::<ContentString, _>(
 //!        &notedir, &clipboard, &stdin, template_kind_filter,
-//!        &None, "default", None, None).unwrap();
+//!        None, "default", None, None).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -120,7 +120,7 @@
 //! // Here we plugin our own type (must implement `Content`).
 //! let n = create_new_note_or_synchronize_filename::<MyContentString, _>(
 //!        &notedir, &clipboard, &stdin, template_kind_filter,
-//!        &None, "default", None, None).unwrap();
+//!        None, "default", None, None).unwrap();
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -180,7 +180,7 @@ pub struct SyncFilenameOrCreateNew<'a, T, F> {
     clipboard: &'a T,
     stdin: &'a T,
     tk_filter: F,
-    html_export: &'a Option<(PathBuf, LocalLinkKind)>,
+    html_export: Option<(&'a Path, LocalLinkKind)>,
     force_scheme: Option<&'a str>,
     force_lang: Option<&'a str>,
 }
@@ -232,7 +232,7 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
                 clipboard,
                 stdin,
                 tk_filter,
-                html_export: &None,
+                html_export: None,
                 force_scheme: None,
                 force_lang: None,
             },
@@ -296,8 +296,8 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
     /// note file next to it.
     /// This optional HTML rendition is performed just before returning and does
     /// not affect any above described operation.
-    pub fn html_export(&mut self, html_export: &'a Option<(PathBuf, LocalLinkKind)>) {
-        self.input.html_export = html_export;
+    pub fn html_export(&mut self, path: &'a Path, local_link_kind: LocalLinkKind) {
+        self.input.html_export = Some((path, local_link_kind));
     }
 
     /// Overwrite the default scheme.
@@ -482,7 +482,7 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// // You can plug in your own type (must impl. `Content`).
 /// let n = create_new_note_or_synchronize_filename::<ContentString, _>(
 ///        &notedir, &clipboard, &stdin, template_kind_filter,
-///        &None, "default", None, None).unwrap();
+///        None, "default", None, None).unwrap();
 /// // Check result.
 /// assert!(n.as_os_str().to_str().unwrap()
 ///    .contains("my stdin-my clipboard--Note"));
@@ -502,7 +502,7 @@ pub fn create_new_note_or_synchronize_filename<T, F>(
     clipboard: &T,
     stdin: &T,
     tk_filter: F,
-    html_export: &Option<(PathBuf, LocalLinkKind)>,
+    html_export: Option<(&Path, LocalLinkKind)>,
     scheme_new_default: &str,
     force_scheme: Option<&str>,
     force_lang: Option<&str>,
@@ -576,7 +576,7 @@ where
         n.export_html(
             &LIB_CFG.read_recursive().tmpl_html.exporter,
             dir,
-            *local_link_kind,
+            local_link_kind,
         )?;
     }
 

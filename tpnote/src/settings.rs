@@ -223,17 +223,6 @@ lazy_static! {
 }
 
 lazy_static! {
-/// Shall the exporter rewrite relative links to absolute links?
-pub static ref HTML_EXPORT: Option<(PathBuf, LocalLinkKind)> = ARGS.export
-    // The expression after `or_else` is always `Some`, therefore it is
-    // save to `unwrap()`.
-    .as_ref().map(|dir| (dir.to_path_buf(), ARGS.export_link_rewriting
-            .unwrap_or(CFG.arg_default.export_link_rewriting))
-
-    );
-
-}
-lazy_static! {
 /// Read and canonicalize the `<path>` from the command line. If no
 /// `<path>` was given, use the current directory.
 pub static ref DOC_PATH: Result<PathBuf, std::io::Error> =
