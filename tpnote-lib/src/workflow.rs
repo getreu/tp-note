@@ -357,7 +357,7 @@ impl<'a> Workflow<SyncFilename<'a>> {
         // This does not fill any templates,
         let mut n = Note::from_raw_text(context, content, TemplateKind::SyncFilename)?;
 
-        synchronize::<T>(&mut settings, &mut n)?;
+        synchronize_filename::<T>(&mut settings, &mut n)?;
 
         Ok(n.rendered_filename)
     }
@@ -480,7 +480,7 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
                 let mut n =
                     Note::from_raw_text(context, content.unwrap(), TemplateKind::SyncFilename)?;
 
-                synchronize::<T>(&mut settings, &mut n)?;
+                synchronize_filename::<T>(&mut settings, &mut n)?;
                 n
             }
 
@@ -508,7 +508,7 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
 
 ///
 /// Helper function.
-fn synchronize<T: Content>(
+fn synchronize_filename<T: Content>(
     settings: &mut RwLockUpgradableReadGuard<Settings>,
     note: &mut Note<T>,
 ) -> Result<(), NoteError> {
