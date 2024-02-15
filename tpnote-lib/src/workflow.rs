@@ -163,17 +163,20 @@ use tera::Tera;
 use tera::Value;
 
 /// Typestate of the `WorkflowBuilder`.
+#[derive(Debug, Clone)]
 pub struct WorkflowBuilder<W> {
     input: W,
 }
 
 /// In this state the workflow will only synchronize the filename.
+#[derive(Debug, Clone)]
 pub struct SyncFilename<'a> {
     path: &'a Path,
 }
 
 /// In this state the workflow will either synchronize the filename of an
 /// existing note or, -if none exists- create a new note.
+#[derive(Debug, Clone)]
 pub struct SyncFilenameOrCreateNew<'a, T, F> {
     scheme_new_default: &'a str,
     path: &'a Path,
@@ -239,6 +242,51 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
         }
     }
 
+    /// Finalize the build.
+    pub fn build(self) -> Workflow<SyncFilename<'a>> {
+        Workflow { input: self.input }
+    }
+}
+
+impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
+    WorkflowBuilder<SyncFilenameOrCreateNew<'a, T, F>>
+{
+    /// Set a flag, that the workflow also stores an HTML-rendition of the
+    /// note file next to it.
+    /// This optional HTML rendition is performed just before returning and does
+    /// not affect any above described operation.
+    pub fn html_export(mut self, path: &'a Path, local_link_kind: LocalLinkKind) -> Self {
+        self.input.html_export = Some((path, local_link_kind));
+        self
+    }
+
+    /// Overwrite the default scheme.
+    pub fn force_scheme(mut self, force_scheme: &'a str) -> Self {
+        self.input.force_scheme = Some(force_scheme);
+        self
+    }
+
+    /// By default, the natural language, the note is written in is guessed
+    /// from the title and subtitle. This disables the automatic guessing
+    /// and forces the language.
+    pub fn force_lang(mut self, force_lang: &'a str) -> Self {
+        self.input.force_lang = Some(force_lang);
+        self
+    }
+
+    /// Finalize the build.
+    pub fn build(self) -> Workflow<SyncFilenameOrCreateNew<'a, T, F>> {
+        Workflow { input: self.input }
+    }
+}
+
+/// Holds the input data for the `run()` method.
+#[derive(Debug, Clone)]
+pub struct Workflow<W> {
+    input: W,
+}
+
+impl<'a> Workflow<SyncFilename<'a>> {
     /// Starts the "synchronize filename" workflow. Errors can occur in
     /// various ways, see `NoteError`.
     ///
@@ -248,6 +296,10 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
     /// disk. Finally, it returns the note's new or existing filename. Repeated
     /// calls, will reload the environment variables, but not the configuration
     /// file. This function is stateless.
+    ///
+    /// Note: this method holds an (upgradable read) lock on the `SETTINGS`
+    /// object to ensure that the `SETTINGS` content does not change. The lock
+    /// also prevents from concurrent execution.
     ///
     ///
     /// ## Example with `TemplateKind::SyncFilename`
@@ -276,6 +328,7 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
     ///
     /// // Build and run workflow.
     /// let n = WorkflowBuilder::new(&notefile)
+    ///      .build()
     ///      // You can plug in your own type (must impl. `Content`).
     ///      .run::<ContentString>()
     ///      .unwrap();
@@ -290,33 +343,17 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
 }
 
 impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
-    WorkflowBuilder<SyncFilenameOrCreateNew<'a, T, F>>
+    Workflow<SyncFilenameOrCreateNew<'a, T, F>>
 {
-    /// Set a flag, that the workflow also stores an HTML-rendition of the
-    /// note file next to it.
-    /// This optional HTML rendition is performed just before returning and does
-    /// not affect any above described operation.
-    pub fn html_export(&mut self, path: &'a Path, local_link_kind: LocalLinkKind) {
-        self.input.html_export = Some((path, local_link_kind));
-    }
-
-    /// Overwrite the default scheme.
-    pub fn force_scheme(&mut self, force_scheme: &'a str) {
-        self.input.force_scheme = Some(force_scheme);
-    }
-
-    /// By default, the natural language, the note is written in is guessed
-    /// from the title and subtitle. This disables the automatic guessing
-    /// and forces the language.
-    pub fn force_lang(&mut self, force_lang: &'a str) {
-        self.input.force_lang = Some(force_lang);
-    }
-
     /// Starts the "synchronize filename or create a new note" workflow.
     /// Returns the note's new or existing filename.  Repeated calls, will
     /// reload the environment variables, but not  the configuration file. This
     /// function is stateless.
     /// Errors can occur in various ways, see `NoteError`.
+    ///
+    /// Note: this method holds an (upgradable read) lock on the `SETTINGS`
+    /// object to ensure that the `SETTINGS` content does not change. The lock
+    /// also prevents from concurrent execution.
     ///
     ///
     /// ## Example with `TemplateKind::FromClipboard`
@@ -344,6 +381,8 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
     ///       // You can plug in your own type (must impl. `Content`).
     ///      .upgrade::<ContentString, _>(
     ///            "default", &clipboard, &stdin, template_kind_filter)
+    ///      .force_lang("de-DE")
+    ///      .build()
     ///      .run()
     ///      .unwrap();
     ///
