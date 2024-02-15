@@ -5,7 +5,6 @@ use crate::file_editor::launch_editor;
 use crate::settings::ARGS;
 use crate::settings::CLIPBOARD;
 use crate::settings::DOC_PATH;
-use crate::settings::HTML_EXPORT;
 use crate::settings::LAUNCH_EDITOR;
 use crate::settings::LAUNCH_VIEWER;
 use crate::settings::STDIN;
@@ -21,8 +20,7 @@ use std::thread;
 use std::time::Duration;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::error::NoteError;
-use tpnote_lib::workflow::create_new_note_or_synchronize_filename;
-use tpnote_lib::workflow::synchronize_filename;
+use tpnote_lib::workflow::WorkflowBuilder;
 
 /// Run Tp-Note and return the (modified) path to the (new) note file.
 /// 1. Create a new note by inserting `Tp-Note`'s environment in a template.
@@ -36,16 +34,31 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
     // log an error as WARN level instead of ERROR level.
     let launch_viewer;
 
-    match create_new_note_or_synchronize_filename::<ContentString, _>(
-        &path,
+    let mut workflow_builder = WorkflowBuilder::new(&path).upgrade::<ContentString, _>(
+        &CFG.arg_default.scheme,
         &*CLIPBOARD,
         &*STDIN,
         template_kind_filter,
-        &HTML_EXPORT,
-        &CFG.arg_default.scheme,
-        ARGS.scheme.as_deref(),
-        ARGS.force_lang.as_deref(),
-    ) {
+    );
+    if let Some(scheme) = ARGS.scheme.as_deref() {
+        workflow_builder = workflow_builder.force_scheme(scheme);
+    }
+
+    if let Some(lang) = ARGS.force_lang.as_deref() {
+        workflow_builder = workflow_builder.force_lang(lang);
+    }
+
+    if let Some(path) = &ARGS.export {
+        workflow_builder = workflow_builder.html_export(
+            path,
+            ARGS.export_link_rewriting
+                .unwrap_or(CFG.arg_default.export_link_rewriting),
+        );
+    }
+
+    let workflow = workflow_builder.build();
+
+    match workflow.run() {
         // Use the new `path` from now on.
         Ok(p) => {
             path = p;
@@ -115,7 +128,8 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
     };
 
     if *LAUNCH_EDITOR {
-        match synchronize_filename::<ContentString>(&path) {
+        let workflow = WorkflowBuilder::new(&path).build();
+        match workflow.run::<ContentString>() {
             // `path` has changed!
             Ok(p) => path = p,
             Err(e) => {
