@@ -561,195 +561,201 @@ fn synchronize_filename<T: Content>(
     Ok(())
 }
 
-/// Returns the HTML rendition of a `ContentString`. The markup rendition
-/// engine is determined, by the file extension of the variable `context.path`.
-/// The resulting HTML and other HTML template variables originating from
-/// `context` are inserted into the `TMPL_HTML_VIEWER` template (which can be
-/// replaced at runtime) before being returned. This function is stateless.
-///
-/// ```rust
-/// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
-/// use tpnote_lib::content::Content;
-/// use tpnote_lib::content::ContentString;
-/// use tpnote_lib::context::Context;
-/// use tpnote_lib::workflow::render_viewer_html;
-/// use std::env::temp_dir;
-/// use std::fs;
-/// use std::path::Path;
-///
-/// // Prepare test: create existing note file.
-/// let raw = String::from(r#"---
-/// title: "My day"
-/// subtitle: "Note"
-/// ---
-/// Body text
-/// "#);
-///
-/// // Start test
-/// let mut context = Context::from(Path::new("/path/to/note.md"));
-/// // We do not inject any JavaScript.
-/// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".to_string());
-/// // Render.
-/// let html = render_viewer_html::<ContentString>(context, raw.into())
-///            .unwrap();
-/// // Check the HTML rendition.
-/// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
-/// ```
-///
-/// A more elaborated example that reads from disk:
-///
-/// ```rust
-/// use tpnote_lib::config::LIB_CFG;
-/// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
-/// use tpnote_lib::content::Content;
-/// use tpnote_lib::content::ContentString;
-/// use tpnote_lib::context::Context;
-/// use tpnote_lib::workflow::render_viewer_html;
-/// use std::env::temp_dir;
-/// use std::fs;
-///
-/// // Prepare test: create existing note file.
-/// let raw = r#"---
-/// title: "My day2"
-/// subtitle: "Note"
-/// ---
-/// Body text
-/// "#;
-/// let notefile = temp_dir().join("20221030-My day2--Note.md");
-/// fs::write(&notefile, raw.as_bytes()).unwrap();
-///
-/// // Start test
-/// let mut context = Context::from(&notefile);
-/// // We do not inject any JavaScript.
-/// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".to_string());
-/// // Render.
-/// let content = ContentString::open(&context.path).unwrap();
-/// // You can plug in your own type (must impl. `Content`).
-/// let html = render_viewer_html(context, content).unwrap();
-/// // Check the HTML rendition.
-/// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
-/// ```
-pub fn render_viewer_html<T: Content>(context: Context, content: T) -> Result<String, NoteError> {
-    let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer;
-    render_html(context, content, tmpl_html)
-}
+/// High level API to render a note providing its `content` and some `context`.
+pub struct HtmlRenderer;
 
-/// Returns the HTML rendition of a `ContentString`. The markup rendition
-/// engine is determined, by the file extension of the variable `context.path`.
-/// The resulting HTML and other HTML template variables originating from
-/// `context` are inserted into the `TMPL_HTML_EXPORTER` template (which can be
-/// replaced at runtime) before being returned. This function is stateless.
-///
-/// ```rust
-/// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
-/// use tpnote_lib::content::Content;
-/// use tpnote_lib::content::ContentString;
-/// use tpnote_lib::context::Context;
-/// use tpnote_lib::workflow::render_exporter_html;
-/// use std::env::temp_dir;
-/// use std::fs;
-/// use std::path::Path;
-///
-/// // Prepare test: create existing note file.
-/// let raw = String::from(r#"---
-/// title: "My day"
-/// subtitle: "Note"
-/// ---
-/// Body text
-/// "#);
-///
-/// // Start test
-/// let mut context = Context::from(Path::new("/path/to/note.md"));
-/// // The exporter template does not insert any JavaScript.
-/// // Render.
-/// let html = render_exporter_html::<ContentString>(context, raw.into())
-///            .unwrap();
-/// // Check the HTML rendition.
-/// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
-/// ```
-pub fn render_exporter_html<T: Content>(context: Context, content: T) -> Result<String, NoteError> {
-    let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.exporter;
-    render_html(context, content, tmpl_html)
-}
+impl HtmlRenderer {
+    /// Returns the HTML rendition of a `ContentString`. The markup
+    /// rendition engine is determined, by the file extension of the variable
+    /// `context.path`. The resulting HTML and other HTML template variables
+    /// originating from `context` are inserted into the `TMPL_HTML_VIEWER`
+    /// template (which can be replaced at runtime) before being returned. This
+    /// function is stateless.
+    ///
+    /// ```rust
+    /// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::workflow::HtmlRenderer;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    /// use std::path::Path;
+    ///
+    /// // Prepare test: create existing note file.
+    /// let raw = String::from(r#"---
+    /// title: "My day"
+    /// subtitle: "Note"
+    /// ---
+    /// Body text
+    /// "#);
+    ///
+    /// // Start test
+    /// let mut context = Context::from(Path::new("/path/to/note.md"));
+    /// // We do not inject any JavaScript.
+    /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".to_string());
+    /// // Render.
+    /// let html = HtmlRenderer::viewer::<ContentString>(context, raw.into())
+    ///            .unwrap();
+    /// // Check the HTML rendition.
+    /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
+    /// ```
+    ///
+    /// A more elaborated example that reads from disk:
+    ///
+    /// ```rust
+    /// use tpnote_lib::config::LIB_CFG;
+    /// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::workflow::HtmlRenderer;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    ///
+    /// // Prepare test: create existing note file.
+    /// let raw = r#"---
+    /// title: "My day2"
+    /// subtitle: "Note"
+    /// ---
+    /// Body text
+    /// "#;
+    /// let notefile = temp_dir().join("20221030-My day2--Note.md");
+    /// fs::write(&notefile, raw.as_bytes()).unwrap();
+    ///
+    /// // Start test
+    /// let mut context = Context::from(&notefile);
+    /// // We do not inject any JavaScript.
+    /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".to_string());
+    /// // Render.
+    /// let content = ContentString::open(&context.path).unwrap();
+    /// // You can plug in your own type (must impl. `Content`).
+    /// let html = HtmlRenderer::viewer(context, content).unwrap();
+    /// // Check the HTML rendition.
+    /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
+    /// ```
+    pub fn viewer_page<T: Content>(context: Context, content: T) -> Result<String, NoteError> {
+        let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer;
+        Self::render(context, content, tmpl_html)
+    }
 
-/// Helper function.
-fn render_html<T: Content>(
-    context: Context,
-    content: T,
-    tmpl_html: &str,
-) -> Result<String, NoteError> {
-    let note = Note::from_raw_text(context, content, TemplateKind::None)?;
+    /// Returns the HTML rendition of a `ContentString`. The markup rendition
+    /// engine is determined, by the file extension of the variable `context.path`.
+    /// The resulting HTML and other HTML template variables originating from
+    /// `context` are inserted into the `TMPL_HTML_EXPORTER` template (which can be
+    /// replaced at runtime) before being returned. This function is stateless.
+    ///
+    /// ```rust
+    /// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::workflow::HtmlRenderer;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    /// use std::path::Path;
+    ///
+    /// // Prepare test: create existing note file.
+    /// let raw = String::from(r#"---
+    /// title: "My day"
+    /// subtitle: "Note"
+    /// ---
+    /// Body text
+    /// "#);
+    ///
+    /// // Start test
+    /// let mut context = Context::from(Path::new("/path/to/note.md"));
+    /// // The exporter template does not insert any JavaScript.
+    /// // Render.
+    /// let html = HtmlRenderer::exporter::<ContentString>(context, raw.into())
+    ///            .unwrap();
+    /// // Check the HTML rendition.
+    /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
+    /// ```
+    pub fn exporter_page<T: Content>(context: Context, content: T) -> Result<String, NoteError> {
+        let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.exporter;
+        Self::render(context, content, tmpl_html)
+    }
 
-    note.render_content_to_html(tmpl_html)
-}
+    /// Helper function.
+    fn render<T: Content>(
+        context: Context,
+        content: T,
+        tmpl_html: &str,
+    ) -> Result<String, NoteError> {
+        let note = Note::from_raw_text(context, content, TemplateKind::None)?;
 
-/// When the header can not be deserialized, the file located in
-/// `context.path` is rendered as "Error HTML page".
-/// The erroneous content is rendered to html with
-/// `parse_hyperlinks::renderer::text_rawlinks2html` and inserted in
-/// the `TMPL_HTML_VIEWER_ERROR` template (can be replace at runtime).
-/// This template expects the template variables `TMPL_VAR_PATH`
-/// and `TMPL_HTML_VAR_VIEWER_DOC_JS` and `TMPL_HTML_VAR_NOTE_ERROR` in
-/// `context` to be set.
-/// NB: The value of `TMPL_VAR_PATH` equals `context.path`.
-///
-/// ```rust
-/// use tpnote_lib::config::LIB_CFG;
-/// use tpnote_lib::config::TMPL_HTML_VAR_DOC_ERROR;
-/// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
-/// use tpnote_lib::content::Content;
-/// use tpnote_lib::content::ContentString;
-/// use tpnote_lib::context::Context;
-/// use tpnote_lib::error::NoteError;
-/// use tpnote_lib::workflow::render_erroneous_content_html;
-/// use std::env::temp_dir;
-/// use std::fs;
-///
-/// // Prepare test: create existing errorneous note file.
-/// let raw_error = r#"---
-/// title: "My day3"
-/// subtitle: "Note"
-/// --
-/// Body text
-/// "#;
-/// let notefile = temp_dir().join("20221030-My day3--Note.md");
-/// fs::write(&notefile, raw_error.as_bytes()).unwrap();
-/// let mut context = Context::from(&notefile);
-/// let e = NoteError::FrontMatterFieldMissing { field_name: "title".to_string() };
-///
-/// // Start test
-/// let mut context = Context::from(&notefile);
-/// // We do not inject any JavaScript.
-/// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &e.to_string());
-/// // We simulate an error;
-/// context.insert(TMPL_HTML_VAR_DOC_ERROR, &e.to_string());
-/// // Render.
-/// // Read from file.
-/// // You can plug in your own type (must impl. `Content`).
-/// let content = ContentString::open(&context.path).unwrap();
-/// let html = render_erroneous_content_html(
-///               context, content).unwrap();
-/// // Check the HTML rendition.
-/// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
-/// ```
-#[cfg(feature = "viewer")]
-pub fn render_erroneous_content_html<T: Content>(
-    mut context: Context,
-    note_erroneous_content: T,
-) -> Result<String, NoteError> {
-    // Insert.
+        note.render_content_to_html(tmpl_html)
+    }
 
-    context.insert(TMPL_HTML_VAR_DOC_TEXT, &note_erroneous_content.as_str());
+    /// When the header can not be deserialized, the file located in
+    /// `context.path` is rendered as "Error HTML page".
+    /// The erroneous content is rendered to html with
+    /// `parse_hyperlinks::renderer::text_rawlinks2html` and inserted in
+    /// the `TMPL_HTML_VIEWER_ERROR` template (can be replace at runtime).
+    /// This template expects the template variables `TMPL_VAR_PATH`
+    /// and `TMPL_HTML_VAR_VIEWER_DOC_JS` and `TMPL_HTML_VAR_NOTE_ERROR` in
+    /// `context` to be set.
+    /// NB: The value of `TMPL_VAR_PATH` equals `context.path`.
+    ///
+    /// ```rust
+    /// use tpnote_lib::config::LIB_CFG;
+    /// use tpnote_lib::config::TMPL_HTML_VAR_DOC_ERROR;
+    /// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::error::NoteError;
+    /// use tpnote_lib::workflow::HtmlRenderer;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    ///
+    /// // Prepare test: create existing errorneous note file.
+    /// let raw_error = r#"---
+    /// title: "My day3"
+    /// subtitle: "Note"
+    /// --
+    /// Body text
+    /// "#;
+    /// let notefile = temp_dir().join("20221030-My day3--Note.md");
+    /// fs::write(&notefile, raw_error.as_bytes()).unwrap();
+    /// let mut context = Context::from(&notefile);
+    /// let e = NoteError::FrontMatterFieldMissing { field_name: "title".to_string() };
+    ///
+    /// // Start test
+    /// let mut context = Context::from(&notefile);
+    /// // We do not inject any JavaScript.
+    /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &e.to_string());
+    /// // We simulate an error;
+    /// context.insert(TMPL_HTML_VAR_DOC_ERROR, &e.to_string());
+    /// // Render.
+    /// // Read from file.
+    /// // You can plug in your own type (must impl. `Content`).
+    /// let content = ContentString::open(&context.path).unwrap();
+    /// let html = HtmlRenderer::error_page(
+    ///               context, content).unwrap();
+    /// // Check the HTML rendition.
+    /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
+    /// ```
+    #[cfg(feature = "viewer")]
+    pub fn error_page<T: Content>(
+        mut context: Context,
+        note_erroneous_content: T,
+    ) -> Result<String, NoteError> {
+        // Insert.
 
-    let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer_error;
+        context.insert(TMPL_HTML_VAR_DOC_TEXT, &note_erroneous_content.as_str());
 
-    // Apply template.
-    let mut tera = Tera::default();
-    // Switch `autoescape_on()` only for HTML templates.
-    tera.autoescape_on(vec![ONE_OFF_TEMPLATE_NAME]);
-    tera.extend(&TERA)?;
-    let html = tera
-        .render_str(tmpl_html, &context)
-        .map_err(|e| note_error_tera_template!(e, "[html_tmpl] viewer_error".to_string()))?;
-    Ok(html)
+        let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer_error;
+
+        // Apply template.
+        let mut tera = Tera::default();
+        // Switch `autoescape_on()` only for HTML templates.
+        tera.autoescape_on(vec![ONE_OFF_TEMPLATE_NAME]);
+        tera.extend(&TERA)?;
+        let html = tera
+            .render_str(tmpl_html, &context)
+            .map_err(|e| note_error_tera_template!(e, "[html_tmpl] viewer_error".to_string()))?;
+        Ok(html)
+    }
 }

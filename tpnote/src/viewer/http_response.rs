@@ -22,8 +22,7 @@ use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::html::rewrite_links;
 use tpnote_lib::markup_language::MarkupLanguage;
-use tpnote_lib::workflow::render_erroneous_content_html;
-use tpnote_lib::workflow::render_viewer_html;
+use tpnote_lib::workflow::HtmlRenderer;
 
 /// Content from files are served in chunks.
 const TCP_WRITE_BUFFER_SIZE: usize = 0x1000;
@@ -429,7 +428,7 @@ impl HttpResponse for ServerThread {
             // Only the first base document is live updated.
             context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
         }
-        match render_viewer_html::<ContentString>(context, content)
+        match HtmlRenderer::viewer_page::<ContentString>(context, content)
             // Now scan the HTML result for links and store them in a Map
             // accessible to all threads.
             // Secondly, convert all relative links to absolute links.
@@ -471,11 +470,12 @@ impl HttpResponse for ServerThread {
                 let mut context = self.context.clone();
                 context.insert(TMPL_HTML_VAR_DOC_ERROR, &e.to_string());
                 let note_erroneous_content = <ContentString as Content>::open(&context.path)?;
-                render_erroneous_content_html::<ContentString>(context, note_erroneous_content)
-                    .map_err(|e| ViewerError::RenderErrorPage {
+                HtmlRenderer::error_page(context, note_erroneous_content).map_err(|e| {
+                    ViewerError::RenderErrorPage {
                         tmpl: "tmpl_html.viewer_error".to_string(),
                         source: e,
-                    })
+                    }
+                })
             }
         }
     }
