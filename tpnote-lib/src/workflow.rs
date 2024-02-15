@@ -20,8 +20,7 @@
 //! ```rust
 //! use tpnote_lib::content::Content;
 //! use tpnote_lib::content::ContentString;
-//! use tpnote_lib::workflow::synchronize_filename;
-//! use tpnote_lib::workflow::create_new_note_or_synchronize_filename;
+//! use tpnote_lib::workflow::WorkflowBuilder;
 //! use std::env::temp_dir;
 //! use std::fs;
 //! use std::path::Path;
@@ -36,11 +35,15 @@
 //! // There are no inhibitor rules to change the `TemplateKind`.
 //! let template_kind_filter = |tk|tk;
 //!
-//! // Start test.
-//! // You can plug in your own type (must impl. `Content`).
-//! let n = create_new_note_or_synchronize_filename::<ContentString, _>(
-//!        &notedir, &clipboard, &stdin, template_kind_filter,
-//!        None, "default", None, None).unwrap();
+//! // Build and run workflow.
+//! let n = WorkflowBuilder::new(&notedir)
+//!       // You can plug in your own type (must impl. `Content`).
+//!      .upgrade::<ContentString, _>(
+//!            "default", &clipboard, &stdin, template_kind_filter)
+//!      .build()
+//!      .run()
+//!      .unwrap();
+//!
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -61,7 +64,7 @@
 //! use std::path::Path;
 //! use tpnote_lib::content::Content;
 //! use tpnote_lib::content::ContentString;
-//! use tpnote_lib::workflow::create_new_note_or_synchronize_filename;
+//! use tpnote_lib::workflow::WorkflowBuilder;
 //! use std::env::temp_dir;
 //! use std::path::PathBuf;
 //! use std::fs;
@@ -116,11 +119,15 @@
 //! // There are no inhibitor rules to change the `TemplateKind`.
 //! let template_kind_filter = |tk|tk;
 //!
-//! // Start test.
-//! // Here we plugin our own type (must implement `Content`).
-//! let n = create_new_note_or_synchronize_filename::<MyContentString, _>(
-//!        &notedir, &clipboard, &stdin, template_kind_filter,
-//!        None, "default", None, None).unwrap();
+//! // Build and run workflow.
+//! let n = WorkflowBuilder::new(&notedir)
+//!       // You can plug in your own type (must impl. `Content`).
+//!      .upgrade::<MyContentString, _>(
+//!            "default", &clipboard, &stdin, template_kind_filter)
+//!      .build()
+//!      .run()
+//!      .unwrap();
+//!
 //! // Check result.
 //! assert!(n.as_os_str().to_str().unwrap()
 //!    .contains("--Note"));
@@ -420,39 +427,6 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
 /// Repeated calls, will reload the environment variables, but not
 /// the configuration file. This function is stateless.
 ///
-///
-/// ## Example with `TemplateKind::SyncFilename`
-///
-/// ```rust
-/// use tpnote_lib::content::ContentString;
-/// use tpnote_lib::workflow::synchronize_filename;
-/// use std::env::temp_dir;
-/// use std::fs;
-/// use std::path::Path;
-///
-/// // Prepare test: create existing note.
-/// let raw = r#"
-///
-/// ---
-/// title: "My day"
-/// subtitle: "Note"
-/// ---
-/// Body text
-/// "#;
-/// let notefile = temp_dir().join("20221030-hello.md");
-/// fs::write(&notefile, raw.as_bytes()).unwrap();
-///
-/// let expected = temp_dir().join("20221030-My day--Note.md");
-/// let _ = fs::remove_file(&expected);
-///
-/// // Start test.
-/// // You can plug in your own type (must impl. `Content`).
-/// let n = synchronize_filename::<ContentString>(&notefile).unwrap();
-///
-/// // Check result
-/// assert_eq!(n, expected);
-/// assert!(n.is_file());
-/// ```
 pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteError> {
     // Prevent the rest to run in parallel, other threads will block when they
     // try to write.
@@ -496,45 +470,6 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// Repeated calls, will reload the environment variables, but not
 /// the configuration file. This function is stateless.
 ///
-///
-/// ## Example with `TemplateKind::FromClipboard`
-///
-/// ```rust
-/// use tpnote_lib::content::Content;
-/// use tpnote_lib::content::ContentString;
-/// use tpnote_lib::workflow::create_new_note_or_synchronize_filename;
-/// use std::env::temp_dir;
-/// use std::path::PathBuf;
-/// use std::fs;
-///
-/// // Prepare test.
-/// let notedir = temp_dir();
-///
-/// let clipboard = ContentString::from("my clipboard\n".to_string());
-/// let stdin = ContentString::from("my stdin\n".to_string());
-/// // This is the condition to choose: `TemplateKind::FromClipboard`:
-/// assert!(clipboard.header().is_empty() && stdin.header().is_empty());
-/// assert!(!clipboard.body().is_empty() || !stdin.body().is_empty());
-/// let template_kind_filter = |tk|tk;
-///
-/// // Start test.
-/// // You can plug in your own type (must impl. `Content`).
-/// let n = create_new_note_or_synchronize_filename::<ContentString, _>(
-///        &notedir, &clipboard, &stdin, template_kind_filter,
-///        None, "default", None, None).unwrap();
-/// // Check result.
-/// assert!(n.as_os_str().to_str().unwrap()
-///    .contains("my stdin-my clipboard--Note"));
-/// assert!(n.is_file());
-/// let raw_note = fs::read_to_string(n).unwrap();
-///
-/// #[cfg(not(target_family = "windows"))]
-/// assert!(raw_note.starts_with(
-///            "\u{feff}---\ntitle:        |\n  my stdin\n  my clipboard"));
-/// #[cfg(target_family = "windows")]
-/// assert!(raw_note.starts_with(
-///            "\u{feff}---\r\ntitle:        |"));
-/// ```
 #[allow(clippy::too_many_arguments)]
 pub fn create_new_note_or_synchronize_filename<T, F>(
     path: &Path,
