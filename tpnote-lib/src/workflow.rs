@@ -345,7 +345,21 @@ impl<'a> Workflow<SyncFilename<'a>> {
     /// assert!(n.is_file());
     /// ```
     pub fn run<T: Content>(self) -> Result<PathBuf, NoteError> {
-        synchronize_filename::<T>(self.input.path)
+        // Prevent the rest to run in parallel, other threads will block when they
+        // try to write.
+        let mut settings = SETTINGS.upgradable_read();
+
+        // Collect input data for templates.
+        let context = Context::from(self.input.path);
+
+        let content = <T>::open(self.input.path).unwrap_or_default();
+
+        // This does not fill any templates,
+        let mut n = Note::from_raw_text(context, content, TemplateKind::SyncFilename)?;
+
+        synchronize::<T>(&mut settings, &mut n)?;
+
+        Ok(n.rendered_filename)
     }
 }
 
@@ -420,31 +434,6 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
     }
 }
 
-/// Open the note file `path` on disk and read its YAML front matter.
-/// Then calculate from the front matter how the filename should be to
-/// be in sync. If it is different, rename the note on disk.
-/// Returns the note's new or existing filename.
-/// Repeated calls, will reload the environment variables, but not
-/// the configuration file. This function is stateless.
-///
-pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteError> {
-    // Prevent the rest to run in parallel, other threads will block when they
-    // try to write.
-    let mut settings = SETTINGS.upgradable_read();
-
-    // Collect input data for templates.
-    let context = Context::from(path);
-
-    let content = <T>::open(path).unwrap_or_default();
-
-    // This does not fill any templates,
-    let mut n = Note::from_raw_text(context, content, TemplateKind::SyncFilename)?;
-
-    synchronize::<T>(&mut settings, &mut n)?;
-
-    Ok(n.rendered_filename)
-}
-
 #[inline]
 /// Create a new note by inserting `Tp-Note`'s environment in a template. If
 /// the note to be created exists already, append a so called `copy_counter` to
@@ -471,7 +460,7 @@ pub fn synchronize_filename<T: Content>(path: &Path) -> Result<PathBuf, NoteErro
 /// the configuration file. This function is stateless.
 ///
 #[allow(clippy::too_many_arguments)]
-pub fn create_new_note_or_synchronize_filename<T, F>(
+fn create_new_note_or_synchronize_filename<T, F>(
     path: &Path,
     clipboard: &T,
     stdin: &T,
