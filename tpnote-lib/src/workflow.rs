@@ -138,6 +138,7 @@
 
 use crate::config::LocalLinkKind;
 use crate::config::LIB_CFG;
+#[cfg(feature = "viewer")]
 use crate::config::TMPL_HTML_VAR_DOC_ERROR;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_HTML_VAR_DOC_TEXT;
