@@ -28,5 +28,5 @@ sanitize-filename-reader-friendly = "2.2.1"
 serde = { version = "1.0.196", features = ["derive"] }
 serde_yaml = "0.9.31"
 tera = { version = "1.19.1", default-features = true }
-thiserror = "1.0.56"
+thiserror = "1.0.57"
 toml = "0.8.10"

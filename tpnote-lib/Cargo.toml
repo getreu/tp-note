@@ -10,30 +10,29 @@ name = "tpnote-lib"
 readme = "README.md"
 repository.workspace = true
 rust-version.workspace = true
-version = "0.30.8"
+version = "0.31.0"
 
 [features]
 default = ["renderer", "viewer", "lang-detection"]
-renderer = ["dep:pulldown-cmark", "dep:rst_parser", "dep:rst_renderer", "dep:latex2mathml", "dep:syntect"]
 lang-detection = ["dep:lingua"]
+renderer = ["dep:pulldown-cmark", "dep:rst_parser", "dep:rst_renderer", "dep:latex2mathml", "dep:syntect"]
 viewer = []
 
 [dependencies]
 html-escape = "0.2.13"
+latex2mathml = { version = "0.2.3", optional = true }
 lazy_static.workspace = true
 lingua = { version = "1.6.2", optional = true }
 log.workspace = true
-#parse-hyperlinks = { path = "../../parse-hyperlinks/parse-hyperlinks" }
-parse-hyperlinks = "0.27.2"
+parking_lot.workspace = true
 # Plain text renderer.
-#parse-hyperlinks-extras = { path = "../../parse-hyperlinks/parse-hyperlinks-extras" }
+parse-hyperlinks = "0.27.2"
 parse-hyperlinks-extras = "0.27.2"
+#parse-hyperlinks-extras = { path = "../../parse-hyperlinks/parse-hyperlinks-extras" }
+#parse-hyperlinks = { path = "../../parse-hyperlinks/parse-hyperlinks" }
 percent-encoding = "2.3.1"
 # Markdown renderer.
 pulldown-cmark = { version = "0.10.0", default-features = false, features = ["simd", "html"], optional = true }
-latex2mathml = { version = "0.2.3", optional = true }
-parking_lot.workspace = true
-syntect = { version = "5.2.0", optional = true }
 # ReStructuredText renderer.
 rst_parser = { version = "0.4.0", optional = true }
 # ReStructuredText renderer.
@@ -44,6 +43,7 @@ serde_json = "1.0.113"
 serde.workspace = true
 serde_yaml.workspace = true
 substring = "1.4.5"
+syntect = { version = "5.2.0", optional = true }
 tera.workspace = true
 thiserror.workspace = true
 toml.workspace = true
