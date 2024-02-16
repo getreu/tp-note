@@ -148,6 +148,7 @@ pub fn set_test_default_settings() -> Result<(), LibCfgError> {
 }
 
 /// How should `update_settings` collect the right scheme?
+#[derive(Debug, Clone)]
 pub(crate) enum SchemeSource<'a> {
     /// Ingore `TPNOTE_SCHEME_NEW_DEFAULT`, take this.
     Force(&'a str),

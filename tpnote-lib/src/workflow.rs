@@ -186,13 +186,12 @@ pub struct SyncFilename<'a> {
 /// existing note or, -if none exists- create a new note.
 #[derive(Debug, Clone)]
 pub struct SyncFilenameOrCreateNew<'a, T, F> {
-    scheme_new_default: &'a str,
+    scheme_source: SchemeSource<'a>,
     path: &'a Path,
     clipboard: &'a T,
     stdin: &'a T,
     tk_filter: F,
     html_export: Option<(&'a Path, LocalLinkKind)>,
-    force_scheme: Option<&'a str>,
     force_lang: Option<&'a str>,
 }
 
@@ -238,13 +237,12 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
     ) -> WorkflowBuilder<SyncFilenameOrCreateNew<'a, T, F>> {
         WorkflowBuilder {
             input: SyncFilenameOrCreateNew {
+                scheme_source: SchemeSource::SchemeNewDefault(scheme_new_default),
                 path: self.input.path,
-                scheme_new_default,
                 clipboard,
                 stdin,
                 tk_filter,
                 html_export: None,
-                force_scheme: None,
                 force_lang: None,
             },
         }
@@ -269,8 +267,8 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
     }
 
     /// Overwrite the default scheme.
-    pub fn force_scheme(mut self, force_scheme: &'a str) -> Self {
-        self.input.force_scheme = Some(force_scheme);
+    pub fn force_scheme(mut self, scheme: &'a str) -> Self {
+        self.input.scheme_source = SchemeSource::Force(scheme);
         self
     }
 
@@ -422,17 +420,14 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
     ///            "\u{feff}---\r\ntitle:        |"));
     /// ```
     pub fn run(self) -> Result<PathBuf, NoteError> {
-        let scheme_sorce = match self.input.force_scheme {
-            Some(s) => SchemeSource::Force(s),
-            None => SchemeSource::SchemeNewDefault(self.input.scheme_new_default),
-        };
-
         // Prevent the rest to run in parallel, other threads will block when they
         // try to write.
         let mut settings = SETTINGS.upgradable_read();
 
         // Initialize settings.
-        settings.with_upgraded(|settings| settings.update(scheme_sorce, self.input.force_lang))?;
+        settings.with_upgraded(|settings| {
+            settings.update(self.input.scheme_source, self.input.force_lang)
+        })?;
 
         // First, generate a new note (if it does not exist), then parse its front_matter
         // and finally rename the file, if it is not in sync with its front matter.
