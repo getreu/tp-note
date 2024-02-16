@@ -203,7 +203,7 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
     /// 3. to a non-Tp-Note file that will be annotated.
     ///
     /// For cases 2. and 3. upgrade the `WorkflowBuilder` with
-    /// `sync_or_create_new` to add additional input data.
+    /// `upgrade()` to add additional input data.
     pub fn new(path: &'a Path) -> Self {
         Self {
             input: SyncFilename { path },
