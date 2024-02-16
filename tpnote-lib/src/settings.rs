@@ -93,7 +93,7 @@ pub(crate) struct Settings {
     pub lang: String,
     /// Extension without dot, e.g. `md`
     pub extension_default: String,
-    /// See defintion of type.
+    /// See definition of type.
     pub filter_get_lang: FilterGetLang,
     /// The keys and values from
     /// `LIB_CFG.schemes[settings.current_scheme].tmpl.filter_btmap_lang` in the `BTreeMap`
@@ -168,7 +168,7 @@ impl Settings {
     ///    or,
     /// 3. reads the environment variable `TPNOTE_SCHEME_NEW_DEFAULT`
     ///    or, -if empty-
-    /// 4. copies `scheme_new_default` into `SETTINGS.curent_scheme`.
+    /// 4. copies `scheme_new_default` into `SETTINGS.current_scheme`.
     /// Then, sets all other fields.
     /// `force_lang=Some(_)` disables the `get_lang` filter by setting
     /// `filter_get_lang` to `FilterGetLang::Disabled`.
@@ -481,7 +481,7 @@ impl Settings {
                 .map(|l| {
                     IsoCode639_1::from_str(l.trim()).map_err(|_| {
                         // The error path.
-                        // Produce list of all available langugages.
+                        // Produce list of all available languages.
                         let mut all_langs = lingua::Language::all()
                             .iter()
                             .map(|l| {

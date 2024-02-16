@@ -136,7 +136,7 @@ impl ::std::default::Default for ArgDefault {
     }
 }
 
-/// Configuration of clipboard behaviour, deserialized from the configuration
+/// Configuration of clipboard behavior, deserialized from the configuration
 /// file.
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Clipboard {
@@ -229,7 +229,7 @@ impl Cfg {
                     // should act as overrides. For the `tpnote.toml` config,
                     // this means that you can specify a sub-set of schemes in
                     // an overriding `tpnote.toml` but that nested arrays like
-                    // `schme.tmpl.fm_var_localization` are replaced instead
+                    // `scheme.tmpl.fm_var_localization` are replaced instead
                     // of merged.
                     if merge_depth > 0 {
                         left_items.reserve(right_items.len());

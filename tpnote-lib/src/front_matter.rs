@@ -25,7 +25,7 @@ use tera::Value;
 pub struct FrontMatter(pub tera::Map<String, tera::Value>);
 
 /// Helper function asserting that all the leaves of `val` have a certain type.
-/// The first parameter is the type to check recursivly.
+/// The first parameter is the type to check recursively.
 /// the second is a closure that evaluates to true or false.
 fn all_leaves(val: &Value, f: &dyn Fn(&Value) -> bool) -> bool {
     match &val {
@@ -214,7 +214,7 @@ impl FrontMatter {
 
 impl TryFrom<&str> for FrontMatter {
     type Error = NoteError;
-    /// Helper function deserialising the front-matter of the note file.
+    /// Helper function deserializing the front-matter of the note file.
     /// An empty header leads to an empty `tera::Map`; no error.
     fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
         let map: tera::Map<String, tera::Value> =

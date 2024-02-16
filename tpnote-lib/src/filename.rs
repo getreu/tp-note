@@ -228,7 +228,7 @@ impl NotePathBuf for PathBuf {
 pub trait NotePath {
     /// Helper function that decomposes a fully qualified path name
     /// into (`sort_tag`, `stem_copy_counter_ext`, `stem`, `copy_counter`, `ext`).
-    /// All sort-tag seprators and copy-counter separators/brackets are removed.
+    /// All sort-tag separators and copy-counter separators/brackets are removed.
     fn disassemble(&self) -> (&str, &str, &str, Option<usize>, &str);
 
     /// Compares with another `Path` to a Tp-Note file. They are considered equal
@@ -238,7 +238,7 @@ pub trait NotePath {
     /// Compare to all file extensions Tp-Note can open.
     fn has_tpnote_ext(&self) -> bool;
 
-    /// Check if a `Path` points to a file with a "wellformed" filename.
+    /// Check if a `Path` points to a file with a "well-formed" filename.
     fn has_wellformed_filename(&self) -> bool;
 
     /// Get the filename of the last created Tp-Note file in the directory
@@ -466,12 +466,12 @@ pub(crate) trait NotePathStr {
     /// Helper function that expects a filename in `self` und
     /// matches the copy counter at the end of string,
     /// returns the result and the copy counter.
-    /// This function removes all brackets and a potiential extra separator.
+    /// This function removes all brackets and a potential extra separator.
     /// The input must not contain a path, only a filename is allowed here.
     fn split_copy_counter(&self) -> (&str, Option<usize>);
 
     /// Helper function that expects a filename in `self`:
-    /// Greedliy match sort tag chars and return it as a subslice as first tuple
+    /// Greedily match sort tag chars and return it as a subslice as first tuple
     /// and the rest as second tuple: `(sort-tag, rest, is_sequential)`.
     /// The input must not contain a path, only a filename is allowed here.
     /// If `filename.sort_tag.separator` is defined, it must appear after the
@@ -479,7 +479,7 @@ pub(crate) trait NotePathStr {
     /// A sort-tag can not contain more than
     /// `FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX` lowercase letters in a row.
     /// If `ignore_sort_tag_separator=true` this split runs with the setting
-    /// `filename_sort_tag_speparator=""`.
+    /// `filename_sort_tag_separator=""`.
     /// If the boolean return value is true, the sort-tag satisfies the
     /// criteria for a sequential sort-tag.
     fn split_sort_tag(&self, ignore_sort_tag_separator: bool) -> (&str, &str, bool);
@@ -616,7 +616,7 @@ impl NotePathStr for str {
     }
 }
 
-/// A trait that interprets the implenting type as filename extension.
+/// A trait that interprets the implementing type as filename extension.
 pub(crate) trait Extension {
     /// Returns `True` if `self` is equal to one of the Tp-Note extensions
     /// registered in the configuration file `filename.extensions` table.

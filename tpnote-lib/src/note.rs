@@ -43,7 +43,7 @@ use std::time::SystemTime;
 use tera::Tera;
 
 /// This constant is used by Tera as template name for `tera::render_str()`.
-/// Unfortunately it is private there, this is why we must redifine it here.
+/// Unfortunately it is private there, this is why we must redefine it here.
 pub(crate) const ONE_OFF_TEMPLATE_NAME: &str = "__tera_one_off";
 
 #[derive(Debug, PartialEq)]

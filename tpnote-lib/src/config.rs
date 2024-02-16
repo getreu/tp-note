@@ -220,7 +220,7 @@ pub const TMPL_HTML_VAR_DOC_TEXT: &str = "doc_text";
 lazy_static! {
 /// Global variable containing the filename and template related configuration
 /// data. This can be changed by the consumer of this library. Once the
-/// initialisation done, this should remain static.
+/// initialization done, this should remain static.
 /// For session configuration see: `settings::SETTINGS`.
     pub static ref LIB_CFG: RwLock<LibCfg> = RwLock::new(LibCfg::default());
 }

@@ -210,10 +210,10 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
     }
 
     /// Upgrade the `WorkflowBuilder` to enable also the creation of new note
-    /// files. It requires providing additinal input data:
+    /// files. It requires providing additional input data:
     ///
     /// New notes are created by inserting `Tp-Note`'s environment
-    /// in a template. The template set being used, is detemined by
+    /// in a template. The template set being used, is determined by
     /// `scheme_new_default`. If the note to be created exists already, append
     /// a so called `copy_counter` to the filename and try to save it again. In
     /// case this does not succeed either, increment the `copy_counter` until a
@@ -705,7 +705,7 @@ impl HtmlRenderer {
     /// use std::env::temp_dir;
     /// use std::fs;
     ///
-    /// // Prepare test: create existing errorneous note file.
+    /// // Prepare test: create existing erroneous note file.
     /// let raw_error = r#"---
     /// title: "My day3"
     /// subtitle: "Note"

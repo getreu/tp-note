@@ -160,8 +160,8 @@ fn to_yaml_filter<S: BuildHasher>(
 /// The input can be of any type, the output type is `Value::String()`.
 /// Note: HTML templates escape HTML critical characters by default.
 /// To use the `to_hmtl` filter in HTML templates, add a `safe` filter in last
-/// postion. This is no risk, as the `to_html` filter always escapes string
-/// values automatically, regardles of the template type.
+/// position. This is no risk, as the `to_html` filter always escapes string
+/// values automatically, regardless of the template type.
 fn to_html_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
@@ -337,7 +337,7 @@ fn link_dest_filter<S: BuildHasher>(
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's text's name (link text).
-/// Unlinke the filter `link_dest`, it does not necessary return the first
+/// Unlike the filter `link_dest`, it does not necessary return the first
 /// finding. For example, it skips autolinks, local links and links
 /// with some URL in the link text.
 /// The input type must be `Value::String` and the output type is
@@ -660,7 +660,7 @@ fn find_last_created_file<S: BuildHasher>(
 /// Returns the default value if no match succeeds.
 /// Note, that only sequential sort-tags are incremented, for others or, if the
 /// input is empty, `default` is returned.
-/// The path in the input allows to check if the resulting sort-tag exsists
+/// The path in the input allows to check if the resulting sort-tag exists
 /// on disk already. If this is the case, a subcategory is appended to the
 /// resulting sort-tag.
 /// All input types are `Value::String`. The output type is `Value::String()`.

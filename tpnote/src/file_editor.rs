@@ -143,7 +143,7 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
                         && (args_list[i][args_list[i].len() - 2] == "-e"
                             || args_list[i][args_list[i].len() - 2] == "--command")
                     {
-                        // This is a teminal emulator command, but the
+                        // This is a terminal emulator command, but the
                         // application is not installed on this system.
                         // Silently ignore this flatpak command.
                         log::info!(

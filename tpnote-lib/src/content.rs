@@ -315,7 +315,7 @@ pub struct ContentRef<'a> {
 self_cell!(
 /// Holds the notes content in a string and two string slices
 /// `header`  and `body`.
-/// This struct is self referencial.
+/// This struct is self referential.
 /// It deals with operating system specific handling of newlines.
 /// The content of a note is stored as UTF-8 string with
 /// one `\n` character as newline. If present, a Byte Order Mark
@@ -336,7 +336,7 @@ self_cell!(
 /// `---` does not follow directly the BOM, it must be prepended
 /// by an empty line. In this case all text before is ignored:
 /// BOM + ignored text + empty line + `---`.
-/// Contract: the imput string does not contain `\r\n`. If
+/// Contract: the input string does not contain `\r\n`. If
 /// it may, use `Content::from_string_with_cr()` instead.
 ///
 /// ```rust
