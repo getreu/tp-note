@@ -41,15 +41,15 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
         template_kind_filter,
     );
     if let Some(scheme) = ARGS.scheme.as_deref() {
-        workflow_builder = workflow_builder.force_scheme(scheme);
+        workflow_builder.force_scheme(scheme);
     }
 
     if let Some(lang) = ARGS.force_lang.as_deref() {
-        workflow_builder = workflow_builder.force_lang(lang);
+        workflow_builder.force_lang(lang);
     }
 
     if let Some(path) = &ARGS.export {
-        workflow_builder = workflow_builder.html_export(
+        workflow_builder.html_export(
             path,
             ARGS.export_link_rewriting
                 .unwrap_or(CFG.arg_default.export_link_rewriting),

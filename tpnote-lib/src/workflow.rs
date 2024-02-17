@@ -262,23 +262,20 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
     /// note file next to it.
     /// This optional HTML rendition is performed just before returning and does
     /// not affect any above described operation.
-    pub fn html_export(mut self, path: &'a Path, local_link_kind: LocalLinkKind) -> Self {
+    pub fn html_export(&mut self, path: &'a Path, local_link_kind: LocalLinkKind) {
         self.input.html_export = Some((path, local_link_kind));
-        self
     }
 
     /// Overwrite the default scheme.
-    pub fn force_scheme(mut self, scheme: &'a str) -> Self {
+    pub fn force_scheme(&mut self, scheme: &'a str) {
         self.input.scheme_source = SchemeSource::Force(scheme);
-        self
     }
 
     /// By default, the natural language, the note is written in is guessed
     /// from the title and subtitle. This disables the automatic guessing
     /// and forces the language.
-    pub fn force_lang(mut self, force_lang: &'a str) -> Self {
+    pub fn force_lang(&mut self, force_lang: &'a str) {
         self.input.force_lang = Some(force_lang);
-        self
     }
 
     /// Finalize the build.
@@ -402,7 +399,6 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
     ///       // You can plug in your own type (must impl. `Content`).
     ///      .upgrade::<ContentString, _>(
     ///            "default", &clipboard, &stdin, template_kind_filter)
-    ///      .force_lang("de-DE")
     ///      .build()
     ///      .run()
     ///      .unwrap();
