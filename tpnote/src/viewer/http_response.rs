@@ -418,7 +418,6 @@ impl HttpResponse for ServerThread {
         let root_path = &self.context.root_path;
 
         let mut context = self.context.clone();
-
         if context.path == abspath_doc {
             // Save JavaScript code for life updates.
             context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &self.live_update_js);
@@ -426,11 +425,14 @@ impl HttpResponse for ServerThread {
             // This is not the base document, but some other Tp-Note document
             // we want to render. Store store its path.
             // `front_matter::assert_precondition()` needs this later.
+            // Also, the HTML template expects this to be set to the rendered
+            // document.
             context.path = abspath_doc.to_path_buf();
             // Only the first base document is live updated.
             // Overwrite the dynamic JavaScript.
             context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
         }
+
         match HtmlRenderer::viewer_page::<ContentString>(context, content)
             // Now scan the HTML result for links and store them in a Map
             // accessible to all threads.
@@ -469,8 +471,22 @@ impl HttpResponse for ServerThread {
             // We could not render the note properly. Instead we will render a
             // special error page and return this instead.
             Err(e) => {
-                // Render error page providing all information we havStringe.
-                let context = self.context.clone();
+                // Render error page providing all information we have.
+                let mut context = self.context.clone();
+                if context.path == abspath_doc {
+                    // Save JavaScript code for life updates.
+                    context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &self.live_update_js);
+                } else {
+                    // This is not the base document, but some other Tp-Note
+                    // document we want to render. Store store its path. The
+                    // HTML template expects this to be set to the rendered
+                    // document.
+                    context.path = abspath_doc.to_path_buf();
+                    // Only the first base document is live updated.
+                    // Overwrite the dynamic JavaScript.
+                    context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
+                }
+
                 let note_erroneous_content = <ContentString as Content>::open(&context.path)?;
                 HtmlRenderer::error_page(context, note_erroneous_content, &e.to_string()).map_err(
                     |e| ViewerError::RenderErrorPage {
