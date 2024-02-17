@@ -59,7 +59,7 @@ const ENV_VAR_USER: &str = "USER";
 #[cfg(not(target_family = "windows"))]
 const ENV_VAR_LANG: &str = "LANG";
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[allow(dead_code)]
 /// Indicates how the `get_lang` filter operates.
 pub(crate) enum FilterGetLang {
@@ -90,6 +90,7 @@ pub(crate) struct Settings {
     /// This has the format of a login name.
     pub author: String,
     /// [RFC 5646, Tags for the Identification of Languages](http://www.rfc-editor.org/rfc/rfc5646.txt)
+    /// This will be injected as `lang` variable into content templates.
     pub lang: String,
     /// Extension without dot, e.g. `md`
     pub extension_default: String,
@@ -161,7 +162,7 @@ pub(crate) enum SchemeSource<'a> {
 impl Settings {
     /// (Re)read environment variables and store them in the global `SETTINGS`
     /// object. Some data originates from `LIB_CFG`.
-    /// First sets `SETTINGS.current_scheme`:
+    /// First it sets `SETTINGS.current_scheme`:
     /// 1. If `force_theme` is `Some(scheme)`, gets the index and stores result,
     ///    or,
     /// 2. if `force_theme` is `Some("")`, stores `lib_cfg.scheme_sync_default`,
@@ -169,10 +170,10 @@ impl Settings {
     /// 3. reads the environment variable `TPNOTE_SCHEME_NEW_DEFAULT`
     ///    or, -if empty-
     /// 4. copies `scheme_new_default` into `SETTINGS.current_scheme`.
-    /// Then, sets all other fields.
+    /// Then, it sets all other fields.
     /// `force_lang=Some(_)` disables the `get_lang` filter by setting
     /// `filter_get_lang` to `FilterGetLang::Disabled`.
-    /// When `force_lang` is `Some(l)`, sets `SETTINGS.current_lang` with `l`.
+    /// When `force_lang` is true, it sets `SETTINGS.current_lang` with `l`.
     pub(crate) fn update(
         &mut self,
         scheme_source: SchemeSource,
@@ -182,9 +183,9 @@ impl Settings {
         self.update_author();
         self.update_extension_default();
         self.update_lang(force_lang);
-        self.update_filter_get_lang(force_lang);
+        self.update_filter_get_lang(force_lang.is_some());
         self.update_filter_map_lang_btmap();
-        self.update_env_lang_detection();
+        self.update_env_lang_detection(force_lang.is_some());
 
         log::trace!(
             "`SETTINGS` updated (reading config + env. vars.):\n{:#?}",
@@ -315,8 +316,8 @@ impl Settings {
     /// Errors are stored in the `FilterGetLang::Error(e)` variant.
     /// If `force_lang` is `Some(_)`, set `FilterGetLang::Disabled`
     #[cfg(feature = "lang-detection")]
-    fn update_filter_get_lang(&mut self, force_lang: Option<&str>) {
-        if force_lang.is_some() {
+    fn update_filter_get_lang(&mut self, force_lang: bool) {
+        if force_lang {
             self.filter_get_lang = FilterGetLang::Disabled;
             return;
         }
@@ -404,7 +405,7 @@ impl Settings {
 
     #[cfg(not(feature = "lang-detection"))]
     /// Disable filter.
-    fn update_filter_get_lang(&mut self, _force_lang: Option<&str>) {
+    fn update_filter_get_lang(&mut self, _force_lang: bool) {
         self.filter_get_lang = FilterGetLang::Disabled;
     }
 
@@ -436,8 +437,10 @@ impl Settings {
     /// Reads the environment variable `LANG_DETECTION`. If not empty,
     /// parse the content and overwrite the `self.filter_get_lang` and the
     /// `self.filter_map_lang` variables.
+    /// Finally, if `force_lang` is true, then it disables
+    /// `self.filter_get_lang`.
     #[cfg(feature = "lang-detection")]
-    fn update_env_lang_detection(&mut self) {
+    fn update_env_lang_detection(&mut self, force_lang: bool) {
         if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
             if env_var.is_empty() {
                 // Early return.
@@ -540,12 +543,18 @@ impl Settings {
                     self.filter_get_lang = FilterGetLang::Error(e);
                 }
             }
+
+            // Even is `force_lang` is set and the env. var. is not use,
+            // we always parse it (see code above) to identify errors.
+            if force_lang {
+                self.filter_get_lang = FilterGetLang::Disabled;
+            }
         }
     }
 
     /// Ignore the environment variable `LANG_DETECTION`.
     #[cfg(not(feature = "lang-detection"))]
-    fn update_env_lang_detection(&mut self) {
+    fn update_env_lang_detection(&mut self, _force_lang: bool) {
         if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
             if !env_var.is_empty() {
                 self.filter_get_lang = FilterGetLang::Disabled;
@@ -618,7 +627,7 @@ mod tests {
             lang: "en-GB".to_string(),
             ..Default::default()
         };
-        settings.update_filter_get_lang(None);
+        settings.update_filter_get_lang(false);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
             let output_filter_get_lang = ofgl
@@ -640,7 +649,7 @@ mod tests {
             lang: "it-IT".to_string(),
             ..Default::default()
         };
-        settings.update_filter_get_lang(None);
+        settings.update_filter_get_lang(false);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
             let output_filter_get_lang = ofgl
@@ -696,7 +705,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "fr-FR, de-DE, hu");
-        settings.update_env_lang_detection();
+        settings.update_env_lang_detection(false);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
             let output_filter_get_lang = ofgl
@@ -724,7 +733,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en-US");
-        settings.update_env_lang_detection();
+        settings.update_env_lang_detection(false);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
             let output_filter_get_lang = ofgl
@@ -750,7 +759,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, en-US");
-        settings.update_env_lang_detection();
+        settings.update_env_lang_detection(false);
 
         assert!(matches!(
             settings.filter_get_lang,
@@ -767,7 +776,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en");
-        settings.update_env_lang_detection();
+        settings.update_env_lang_detection(false);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
             let output_filter_get_lang = ofgl
@@ -793,7 +802,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, de-AT, en");
-        settings.update_env_lang_detection();
+        settings.update_env_lang_detection(false);
 
         assert!(matches!(
             settings.filter_get_lang,
@@ -803,6 +812,22 @@ mod tests {
         assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
         assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
 
+        // Test `force_lang`.
+        let mut settings = Settings {
+            lang: "en-GB".to_string(),
+            ..Default::default()
+        };
+        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "fr-FR, de-DE, hu");
+        settings.update_env_lang_detection(true);
+
+        // `force_lang` must disables the `get_lang` filter.
+        assert_eq!(settings.filter_get_lang, FilterGetLang::Disabled);
+
+        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
+        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
+        assert_eq!(output_filter_map_lang.get("fr").unwrap(), "fr-FR");
+        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
+
         //
         // Test empty env. var.
         let mut settings = Settings {
@@ -810,7 +835,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
-        settings.update_env_lang_detection();
+        settings.update_env_lang_detection(false);
 
         assert!(matches!(settings.filter_get_lang, FilterGetLang::Disabled));
         assert!(settings.filter_map_lang_btmap.is_none());
@@ -822,7 +847,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "en-GB, fr");
-        settings.update_env_lang_detection();
+        settings.update_env_lang_detection(false);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
             let output_filter_get_lang = ofgl
@@ -847,7 +872,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, xy-XY");
-        settings.update_env_lang_detection();
+        settings.update_env_lang_detection(false);
 
         assert!(matches!(settings.filter_get_lang, FilterGetLang::Error(..)));
         assert!(settings.filter_map_lang_btmap.is_none());
@@ -858,7 +883,7 @@ mod tests {
             ..Default::default()
         };
         env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
-        settings.update_env_lang_detection();
+        settings.update_env_lang_detection(false);
 
         assert!(matches!(settings.filter_get_lang, FilterGetLang::Disabled));
         assert!(settings.filter_map_lang_btmap.is_none());

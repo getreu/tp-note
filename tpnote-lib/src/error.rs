@@ -30,7 +30,7 @@ pub enum FileError {
 }
 
 /// Configuration file related semantic errors.
-#[derive(Debug, Error, Clone)]
+#[derive(Debug, Error, Clone, PartialEq)]
 pub enum LibCfgError {
     /// Remedy: Choose another scheme.
     #[error(
