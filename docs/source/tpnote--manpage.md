@@ -1216,34 +1216,32 @@ print out the merged result with '`-V -b -d trace`'.
 tpnote -V -b -d trace  |less
 ```
 
-To write a custom configuration file, first start with a complete default
-configuration you can generate by invoking Tp-Note with '`-C`':
+To write a custom configuration file, generate a template with '`-C`':
 
 ```sh
 tpnote -C ~/.config/tpnote/tpnote.toml
 ```
 
-After modifying the concerned variables, delete step by step all the remaining
-variables to keep your configuration file as small as possible.
-Also make sure you delete the '`version`' variable at the beginning. As some
-Tp-Note upgrade include a configuration file structure change, a small 
-configuration file increases the chance that it still merges.
+The template shows all variables with their defaults values. When you change
+a value, do not forget to uncomment the modified line to activate your change.
+Also make sure to keep the '`version`' variable at the beginning of the file
+commented out. As any Tp-Note upgrade might include a breaking change in the
+configuration file structure, try to keep your custom configuration small.
 
-Some filename and template related variables are grouped into a '`scheme`'. 
-The shipped configuration file lists two schemes: '`default`' and '`zettel`'.
-The scheme used when creating a new note, is selected by the commend line
-option '`--scheme`', the environment variable '`TPNOTE_SCHEME`' or the
-configuration variable '`arg_default.scheme`'. The scheme selected when
-synchronizing a Tp-Note header with its filename depends on the 
-value of the header variable '`scheme:`' which defaults to '`default`'
-(cf. '`scheme_sync_default`'). 
+Some filename and template related variables are grouped into a '`scheme`'. The
+shipped configuration file lists two schemes: '`default`' and '`zettel`'. The
+scheme used when creating a new note, is selected by the commend line option
+'`--scheme`', the environment variable '`TPNOTE_SCHEME`' or the configuration
+variable '`arg_default.scheme`'. The scheme selected when synchronizing a
+Tp-Note header with its filename depends on the value of the header variable
+'`scheme:`' which defaults to '`default`' (cf. '`scheme_sync_default`').
 
-Note, that the merging algorithm merges all values, except arrays. These 
-are usually replaced by the subsequent configuration file. There is one
-exception though: top level arrays are also merged. An example to this
-is the top level array '`[[scheme]]`'. In the following example we merge the
-variable '`extension_default = "txt"`' into the scheme '`default`' whereas all
-other variables remain untouched.
+Note, that the merging algorithm merges all values, except arrays. These are
+usually replaced by the subsequent configuration file. There is one exception
+though: top level arrays are also merged. An example to this is the top
+level array '`[[scheme]]`'. In the following example we overwrite the variable
+'`extension_default`' in the scheme '`default`'. All other variables remain
+untouched.
 
 ```toml
 [[scheme]]

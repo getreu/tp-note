@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "TP-NOTE" "1" "2024-02-17" "Version 1.23.7" "Tp-Note documentation"
+.TH "TP-NOTE" "1" "2024-02-17" "Version 1.23.6" "Tp-Note documentation"
 .hy
 .SH NAME
 .PP
@@ -1688,8 +1688,7 @@ tpnote -V -b -d trace  |less
 \f[R]
 .fi
 .PP
-To write a custom configuration file, first start with a complete
-default configuration you can generate by invoking Tp-Note with
+To write a custom configuration file, generate a template with
 `\f[V]-C\f[R]':
 .IP
 .nf
@@ -1698,13 +1697,14 @@ tpnote -C \[ti]/.config/tpnote/tpnote.toml
 \f[R]
 .fi
 .PP
-After modifying the concerned variables, delete step by step all the
-remaining variables to keep your configuration file as small as
-possible.
-Also make sure you delete the `\f[V]version\f[R]' variable at the
-beginning.
-As some Tp-Note upgrade include a configuration file structure change, a
-small configuration file increases the chance that it still merges.
+The template shows all variables with their defaults values.
+When you change a value, do not forget to uncomment the modified line to
+activate your change.
+Also make sure to keep the `\f[V]version\f[R]' variable at the beginning
+of the file commented out.
+As any Tp-Note upgrade might include a breaking change in the
+configuration file structure, try to keep your custom configuration
+small.
 .PP
 Some filename and template related variables are grouped into a
 `\f[V]scheme\f[R]'.
@@ -1723,9 +1723,9 @@ Note, that the merging algorithm merges all values, except arrays.
 These are usually replaced by the subsequent configuration file.
 There is one exception though: top level arrays are also merged.
 An example to this is the top level array `\f[V][[scheme]]\f[R]'.
-In the following example we merge the variable
-`\f[V]extension_default = \[dq]txt\[dq]\f[R]' into the scheme
-`\f[V]default\f[R]' whereas all other variables remain untouched.
+In the following example we overwrite the variable
+`\f[V]extension_default\f[R]' in the scheme `\f[V]default\f[R]'.
+All other variables remain untouched.
 .IP
 .nf
 \f[C]

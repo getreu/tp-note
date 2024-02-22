@@ -77,6 +77,19 @@ pub(crate) const GUI_CONFIG_DEFAULT_TOML: &str = include_str!("config_default.to
 /// all other arrays are replaced.
 pub(crate) const CONFIG_FILE_MERGE_DEPTH: isize = 2;
 
+pub(crate) const KEEP_IN_TOML_WHEN_COMMENTING: [&str; 10] = [
+    "### ",
+    "[[scheme]]",
+    "name = ",
+    "[scheme.filename]",
+    "[scheme.tmpl]",
+    "[tmpl_html]",
+    "[arg_default]",
+    "[clipboard]",
+    "[app_args]",
+    "[viewer]",
+];
+
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cfg {
@@ -370,7 +383,24 @@ impl Cfg {
             file_write = File::create(config_path)?;
             &mut file_write
         };
-        writeable.write_all(Self::default_as_toml().as_bytes())?;
+
+        let mut commented = String::new();
+        for l in Self::default_as_toml().lines() {
+            if l.is_empty() {
+                commented.push('\n');
+            } else if KEEP_IN_TOML_WHEN_COMMENTING
+                .iter()
+                .all(|&token| !l.starts_with(token))
+            {
+                commented.push_str("# ");
+                commented.push_str(l);
+                commented.push('\n');
+            } else {
+                commented.push_str(l);
+                commented.push('\n');
+            }
+        }
+        writeable.write_all(commented.as_bytes())?;
         Ok(())
     }
 

@@ -1,88 +1,89 @@
-# The fallback scheme for the `sync_filename` template choice, in case the
-# `scheme` header variable is empty or is not defined.
-# Not to be confused with `app_arg.scheme`!
+### The fallback scheme for the `sync_filename` template choice, in case the
+### `scheme` header variable is empty or is not defined.
+### Not to be confused with `app_arg.scheme`!
 scheme_sync_default = "default"
 
 
 
 
 [[scheme]]
-# The name of this scheme. The data is in `scheme_filename` and
-# `scheme.tmpl`.
+
+### The name of this scheme. The data is in `scheme_filename` and
+### `scheme.tmpl`.
 name = "default"
 
-# Filename related settings for the scheme `default`.
+### Filename related settings for the scheme `default`.
 [scheme.filename]
 
-# List of characters that can be part of a _sort tag_.
-# Besides the characters listed here, the digits `0..9` and
-# the lowercase letters `a..z` are always valid sort-tag characters. 
+### List of characters that can be part of a _sort tag_.
+### Besides the characters listed here, the digits `0..9` and
+### the lowercase letters `a..z` are always valid sort-tag characters. 
 sort_tag.extra_chars = ".-_="
 
-# If empty, the first character which is not in `filename.sort_tag.extra_chars`
-# marks the end of a sort tag.
-# If not empty, a _sort_tag_ is only valid, when is its followed by
-# `filename.sort_tag.separator`. A _sort_tag_ never ends with a
-# `filename.sort_tag.separator`, if it does it stripped. In other positions
-# the separator may appear.
+### If empty, the first character which is not in `filename.sort_tag.extra_chars`
+### marks the end of a sort tag.
+### If not empty, a _sort_tag_ is only valid, when is its followed by
+### `filename.sort_tag.separator`. A _sort_tag_ never ends with a
+### `filename.sort_tag.separator`, if it does it stripped. In other positions
+### the separator may appear.
 sort_tag.separator = "-"
 
-# In case the file stem starts with a character in `sort_tag.extra_chars` the
-# `sort_tag.extra_separator` character is inserted in order to separate both
-# parts when the filename is read next time.
+### In case the file stem starts with a character in `sort_tag.extra_chars` the
+### `sort_tag.extra_separator` character is inserted in order to separate both
+### parts when the filename is read next time.
 sort_tag.extra_separator = "'"
 
-# A sort-tag can have several counters. A counter can a set of digits or
-# a set of lower case letters. A valid sort-tag (sequential or chronological)
-# can have at most this number of letters in succession. 
+### A sort-tag can have several counters. A counter can a set of digits or
+### a set of lower case letters. A valid sort-tag (sequential or chronological)
+### can have at most this number of letters in succession. 
 sort_tag.letters_in_succession_max = 2
 
-# A criterium to decide if a sort tag is sequential or not: a sequential
-# sort-tag must have a maximum of this number of digits in succession.
-# We set this to `3` assuming, that the chronological sort-tag contains some 
-# year, e.g. # `20231028` or `2023-10-28`. We require sequential sort-tags 
-# to have shorter numbers to satisfy this criterium, e.g. `3.1.123` or `3a123`.
+### A criterium to decide if a sort tag is sequential or not: a sequential
+### sort-tag must have a maximum of this number of digits in succession.
+### We set this to `3` assuming, that the chronological sort-tag contains some 
+### year, e.g. # `20231028` or `2023-10-28`. We require sequential sort-tags 
+### to have shorter numbers to satisfy this criterium, e.g. `3.1.123` or `3a123`.
 sort_tag.sequential.digits_in_succession_max = 3
  
-# If the stem of a filename ends with a pattern, that is similar to a copy
-# counter, add this extra separator. It must be one of `TRIM_LINE_CHARS` (see
-# definition in crate: `sanitize_filename_reader_friendly`) because they are
-# known not to appear at the end of `sanitze()`'d strings. This is why they are
-# suitable here.
+### If the stem of a filename ends with a pattern, that is similar to a copy
+### counter, add this extra separator. It must be one of `TRIM_LINE_CHARS` (see
+### definition in crate: `sanitize_filename_reader_friendly`) because they are
+### known not to appear at the end of `sanitze()`'d strings. This is why they are
+### suitable here.
 copy_counter.extra_separator = "-"
 
-# Tp-Note may add a counter at the end of the filename when it can not save a
-# file because the name is taken already. This is the opening bracket search
-# pattern. Some examples: `"-"`, "'_'"", `"_-"`,`"-_"`, `"("` Can be empty.
+### Tp-Note may add a counter at the end of the filename when it can not save a
+### file because the name is taken already. This is the opening bracket search
+### pattern. Some examples: `"-"`, "'_'"", `"_-"`,`"-_"`, `"("` Can be empty.
 copy_counter.opening_brackets = "("
 
-# Tp-Note may add a counter at the end of the filename when it can not save a
-# file because the name is taken already. This is the closing bracket search
-# pattern. Some examples: `"-"`, "'_'"", `"_-"`,`"-_"`, `"("` Can be empty.
+### Tp-Note may add a counter at the end of the filename when it can not save a
+### file because the name is taken already. This is the closing bracket search
+### pattern. Some examples: `"-"`, "'_'"", `"_-"`,`"-_"`, `"("` Can be empty.
 copy_counter.closing_brackets = ")"
 
-# File extension of new _Tp-Note_ files.
-# NB: Do not forget to adapt the templates `tmpl.*` in case you set
-# this to another markup language.
+### File extension of new _Tp-Note_ files.
+### NB: Do not forget to adapt the templates `tmpl.*` in case you set
+### this to another markup language.
 extension_default = "md"
 
-# The variable `filename.extensions` list file extensions that Tp-Note
-# considers as its own note files. Tp-Note opens these files, reads their
-# YAML header and launches an external file editor and file viewer (web
-# browser). According to the markup language used, the appropriate renderer
-# is called to convert the note's content into HTML. Technically, the renderer
-# is selected by the `markup_to_html` filter in `tmpl_html` templates. The 
-# associated second value in the below list parametrizes the `markup_to_html` 
-# filter. Currently, Tp-Note renders the following markup languages: 
-# * `Markdown`, 
-# * `Restructuredtext`, 
-# * `Html`, 
-# * `PlainText` and 
-# * `PlainTextNoViewer`. 
-# When the renderer is `PlainTextNoViewer`, the viewer is disabled for note
-# files with this file extension. Otherwise, the rendered HTML is displayed to
-# the user via his web browser.
-# NB: The list is ordered to look for the most common extensions first.
+### The variable `filename.extensions` list file extensions that Tp-Note
+### considers as its own note files. Tp-Note opens these files, reads their
+### YAML header and launches an external file editor and file viewer (web
+### browser). According to the markup language used, the appropriate renderer
+### is called to convert the note's content into HTML. Technically, the renderer
+### is selected by the `markup_to_html` filter in `tmpl_html` templates. The 
+### associated second value in the below list parametrizes the `markup_to_html` 
+### filter. Currently, Tp-Note renders the following markup languages: 
+### * `Markdown`, 
+### * `Restructuredtext`, 
+### * `Html`, 
+### * `PlainText` and 
+### * `PlainTextNoViewer`. 
+### When the renderer is `PlainTextNoViewer`, the viewer is disabled for note
+### files with this file extension. Otherwise, the rendered HTML is displayed to
+### the user via his web browser.
+### NB: The list is ordered to look for the most common extensions first.
 extensions = [
   ["txt", "Markdown"],
   ["md", "Markdown"],
@@ -105,21 +106,21 @@ extensions = [
   ["t2t", "PlainTextNoViewer"],
 ]
 
-# Template related settings for the scheme `default`.
+### Template related settings for the scheme `default`.
 [scheme.tmpl]
 
-# After generating a new note with a content template, Tp-Note parses the
-# resulting front matter variables, which may be localized. The variables, are
-# then converted into front matter variables starting with `fm_`.
-# 
-# The first item per line is the checked `fm_`-variable as it appears
-# in the templates.
-# The second item per line is the translated variable name as it appears in the
-# note file. For example, the expression `fm_lang` resolves to `lang`.
-# This allows to translate the templates into other human languages than English
-# without actually touching the templates itself.
-# For variables not listed below, only the prefix `fm_` is stripped and
-# no translation occurs, e.g. `fm_unknown` becomes `unknown`.
+### After generating a new note with a content template, Tp-Note parses the
+### resulting front matter variables, which may be localized. The variables, are
+### then converted into front matter variables starting with `fm_`.
+### 
+### The first item per line is the checked `fm_`-variable as it appears
+### in the templates.
+### The second item per line is the translated variable name as it appears in the
+### note file. For example, the expression `fm_lang` resolves to `lang`.
+### This allows to translate the templates into other human languages than English
+### without actually touching the templates itself.
+### For variables not listed below, only the prefix `fm_` is stripped and
+### no translation occurs, e.g. `fm_unknown` becomes `unknown`.
 #
 
 fm_var.localization = [
@@ -135,36 +136,35 @@ fm_var.localization = [
     ["fm_scheme", "scheme"],
 ]
 
-# Before the front matter `fm_` variables are applied to a filename template,
-# their validity is checked.  The following table lists test, every value has to
-# pass. If one test fails the user is informed.
-# 
-# * `IsDefined`: Assert that the variable is defined in the template.
-# * `IsString`: Assert, that if the variable is defined, its type -or all
-#    subtypes- are `Value::String`.
-# * `IsNotEmptyString`: In addition to `IsString`, the condition asserts, that 
-#    the string -or all substrings-) are not empty.
-# * `IsNumber`: Assert, that if the variable is defined, its type -or all
-#    subtypes- are `Value::Number`.
-# * `IsBool`: Assert, that if the variable is defined, its type -or all
-#    subtypes- are `Value::Bool`.
-# * `IsNotCompound`: Assert, that if the variable is defined, its type is not
-#   `Value::Array` or `Value::Object`.
-# * `IsValidSortTag`: Assert, that if the variable is defined, the value's
-#    string representation contains solely characters of the
-#    `filename.sort_tag.extra_chars` set, digits or lowercase letters.
-#    The number of lowercase letters in a row is limited by
-#    `scheme.filename.sort_tag.letters_in_succession_max`.
-# *  `IsConfguredScheme`: Assert, that -if the variable is defined- the
-#    string equals to one of the `scheme.name` in the configuration file.
-#    IsConfiguredScheme,
-# * `IsTpnoteExtension`: Assert, that if the variable is defined, the values
-#    string representation is registered in one of the `filename.extension_*`
-#    configuraion file variables.
-# * `NoOperation` (default): A test that is always satisfied. For internal use
-#    only.
-#
-
+### Before the front matter `fm_` variables are applied to a filename template,
+### their validity is checked.  The following table lists test, every value has to
+### pass. If one test fails the user is informed.
+### 
+### * `IsDefined`: Assert that the variable is defined in the template.
+### * `IsString`: Assert, that if the variable is defined, its type -or all
+###    subtypes- are `Value::String`.
+### * `IsNotEmptyString`: In addition to `IsString`, the condition asserts, that 
+###    the string -or all substrings-) are not empty.
+### * `IsNumber`: Assert, that if the variable is defined, its type -or all
+###    subtypes- are `Value::Number`.
+### * `IsBool`: Assert, that if the variable is defined, its type -or all
+###    subtypes- are `Value::Bool`.
+### * `IsNotCompound`: Assert, that if the variable is defined, its type is not
+###   `Value::Array` or `Value::Object`.
+### * `IsValidSortTag`: Assert, that if the variable is defined, the value's
+###    string representation contains solely characters of the
+###    `filename.sort_tag.extra_chars` set, digits or lowercase letters.
+###    The number of lowercase letters in a row is limited by
+###    `scheme.filename.sort_tag.letters_in_succession_max`.
+### *  `IsConfguredScheme`: Assert, that -if the variable is defined- the
+###    string equals to one of the `scheme.name` in the configuration file.
+###    IsConfiguredScheme,
+### * `IsTpnoteExtension`: Assert, that if the variable is defined, the values
+###    string representation is registered in one of the `filename.extension_*`
+###    configuraion file variables.
+### * `NoOperation` (default): A test that is always satisfied. For internal use
+###    only.
+###
 fm_var.assertions = [
     ["fm_title", ["IsDefined", "IsString", "IsNotEmptyString", "IsNotCompound"]],
     ["fm_subtitle", ["IsString", "IsNotCompound"]],
@@ -177,52 +177,52 @@ fm_var.assertions = [
     ["fm_scheme", ["IsString", "IsConfiguredScheme"]],
 ]
 
-# A list of language tags, defining languages the `get_lang` filter tries
-# to identify in its input. The user's default language subtag, as reported 
-# from the operating system, is automatically added to the present list.
-# The language recognition feature is disabled, when the list is empty.
-# It is also disabled, when the user's default language, as reported from
-# the operating system, is not supported by the external language guessing
-# library _Lingua_. In both cases the filter returns the empty string.
+### A list of language tags, defining languages the `get_lang` filter tries
+### to identify in its input. The user's default language subtag, as reported 
+### from the operating system, is automatically added to the present list.
+### The language recognition feature is disabled, when the list is empty.
+### It is also disabled, when the user's default language, as reported from
+### the operating system, is not supported by the external language guessing
+### library _Lingua_. In both cases the filter returns the empty string.
 filter.get_lang = [ "en", "fr", "de", ]
 
-# Default values for the `map_lang` hash map filter, that are used to post
-# process the language recognition subtag as defined in `filter.get_lang`. The
-# key is the language subtag, the corresponding value adds a region subtag
-# completing the language tag. The default region subtags are chosen to be
-# compatible with the _LanguageTool_ grammar checker. In case a language
-# subtag has no key in the present hash map, the filter forwards the input
-# unchanged, e.g. the filter input `fr` results in `fr`.
-# One entry, derived from the user's default language - as reported from the
-# operating system - is automatically added to the present list. This
-# happens only when this language is not listed yet. For example,
-# consider the list `tmpl.filter.map_lang = &[&["en", "en-US"]]`: In this
-# case, the user's default language `fr_CA.UTF-8` is added as
-# `&["fr", "fr-CA"]`. But, if the user's default language were
-# `en_GB.UTF-8`, then it is _not_ added because an entry `&["en", "en-US"]`
-# exists already.
-# Note, that the empty input string results in the user's default language
-# tag - here `fr-CA` - as well.
+### Default values for the `map_lang` hash map filter, that are used to post
+### process the language recognition subtag as defined in `filter.get_lang`. The
+### key is the language subtag, the corresponding value adds a region subtag
+### completing the language tag. The default region subtags are chosen to be
+### compatible with the _LanguageTool_ grammar checker. In case a language
+### subtag has no key in the present hash map, the filter forwards the input
+### unchanged, e.g. the filter input `fr` results in `fr`.
+### One entry, derived from the user's default language - as reported from the
+### operating system - is automatically added to the present list. This
+### happens only when this language is not listed yet. For example,
+### consider the list `tmpl.filter.map_lang = &[&["en", "en-US"]]`: In this
+### case, the user's default language `fr_CA.UTF-8` is added as
+### `&["fr", "fr-CA"]`. But, if the user's default language were
+### `en_GB.UTF-8`, then it is _not_ added because an entry `&["en", "en-US"]`
+### exists already.
+### Note, that the empty input string results in the user's default language
+### tag - here `fr-CA` - as well.
 filter.map_lang = [
     [ "de", "de-DE", ],
     [ "et", "et-ET", ],
 ]
 
-# Default value used by `to_yaml_filter`.
-# The parameter `tmpl.filter.to_yaml_tab = n` indents the YAML values
-# `n` characters to the right of the first character of the key by inserting
-# additional spaces between the key and the value. `n==0` disables the
-# extra indentation.
+### Default value used by `to_yaml_filter`.
+### The parameter `tmpl.filter.to_yaml_tab = n` indents the YAML values
+### `n` characters to the right of the first character of the key by inserting
+### additional spaces between the key and the value. `n==0` disables the
+### extra indentation.
 filter.to_yaml_tab = 14
 
-# Default content template used when the command line argument `<sanit>`
-# is a directory. Can be changed through editing the configuration
-# file. The following variables are defined:
-# * `{{ path }}`: points to the directory where the new note will be created.
-# * `{{ dir_path }}` is in this context identical to `{{ path }}`.
-#   In addition, all environment variables can be used, e.g.
-#   `{{ get_env(name=\"LOGNAME\") }}` When placed in YAML front matter, the
-#   filter `to_yaml` must be appended to each variable.
+### Default content template used when the command line argument `<sanit>`
+### is a directory. Can be changed through editing the configuration
+### file. The following variables are defined:
+### * `{{ path }}`: points to the directory where the new note will be created.
+### * `{{ dir_path }}` is in this context identical to `{{ path }}`.
+###   In addition, all environment variables can be used, e.g.
+###   `{{ get_env(name=\"LOGNAME\") }}` When placed in YAML front matter, the
+###   filter `to_yaml` must be appended to each variable.
 from_dir_content = """
 {%- set title_text = dir_path | trim_file_sort_tag -%}
 ---
@@ -236,12 +236,12 @@ from_dir_content = """
 
 """
 
-# Default filename template for a new note file on disk. It implements the
-# sync criteria for note metadata in front matter and filename.
-# Useful variables in this context are:
-# `{{ title | sanit }}`, `{{ subtitle | sanit }}`, `{{ extension_default }}.
-# In general, in filename template, all variables (except `now` and
-# `extension_default` must be filtered by a `sanit` filter.
+### Default filename template for a new note file on disk. It implements the
+### sync criteria for note metadata in front matter and filename.
+### Useful variables in this context are:
+### `{{ title | sanit }}`, `{{ subtitle | sanit }}`, `{{ extension_default }}.
+### In general, in filename template, all variables (except `now` and
+### `extension_default` must be filtered by a `sanit` filter.
 from_dir_filename = """
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
@@ -249,17 +249,17 @@ from_dir_filename = """
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ extension_default | prepend(with='.') }}"""
 
-# Default template used, when the clipboard or the input stream `stdin`
-# contains a string and one the of these strings contains a valid YAML front
-# matter section. The clipboards body is in `{{ clipboard }}`, the header
-# is in `{{ clipboard_header }}`.  The stdin's body is in `{{ stdin }}`,
-# the header is in `{{ stdin_header }}`. First all variables defined in the
-# clipboard's front matter are registered, the ones defined in the input
-# stream `stdin`. The latter can overwrite the former.  One of the front
-# matters must define the `title` variable, which is then available in this
-# template as `{{ fm_title }}`.
-# When placed in YAML front matter, the filter `to_yaml` must be
-# appended to each variable.
+### Default template used, when the clipboard or the input stream `stdin`
+### contains a string and one the of these strings contains a valid YAML front
+### matter section. The clipboards body is in `{{ clipboard }}`, the header
+### is in `{{ clipboard_header }}`.  The stdin's body is in `{{ stdin }}`,
+### the header is in `{{ stdin_header }}`. First all variables defined in the
+### clipboard's front matter are registered, the ones defined in the input
+### stream `stdin`. The latter can overwrite the former.  One of the front
+### matters must define the `title` variable, which is then available in this
+### template as `{{ fm_title }}`.
+### When placed in YAML front matter, the filter `to_yaml` must be
+### appended to each variable.
 from_clipboard_yaml_content = """
 {%- set lang = fm_lang 
     | default(value = fm_title 
@@ -287,8 +287,8 @@ from_clipboard_yaml_content = """
 
 """
 
-# Default filename template used when the stdin or the clipboard contains a
-# string and one of them has a valid YAML header.
+### Default filename template used when the stdin or the clipboard contains a
+### string and one of them has a valid YAML header.
 from_clipboard_yaml_filename = """
 {%- if fm_sort_tag -%}
   {%- set tag = fm_sort_tag -%}
@@ -301,14 +301,14 @@ from_clipboard_yaml_filename = """
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
 
-# Default template used, when the clipboard or the input stream `stdin`
-# contains a string and this string has no valid YAML front matter section.
-# The clipboards content is in `{{ clipboard }}`, its truncated version in
-# `{{ clipboard | heading }}` When the clipboard contains a hyperlink in
-# Markdown or reStruncturedText format. See crate `parse-hyperlinks` for
-# details. For example: `[<link-name>](<link-url> "link-title")`, can be
-# accessed with the variables: `{{ clipboard | link_text }}`, `
-# {{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
+### Default template used, when the clipboard or the input stream `stdin`
+### contains a string and this string has no valid YAML front matter section.
+### The clipboards content is in `{{ clipboard }}`, its truncated version in
+### `{{ clipboard | heading }}` When the clipboard contains a hyperlink in
+### Markdown or reStruncturedText format. See crate `parse-hyperlinks` for
+### details. For example: `[<link-name>](<link-url> "link-title")`, can be
+### accessed with the variables: `{{ clipboard | link_text }}`, `
+### {{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
 from_clipboard_content = """
 {%- set first_link = stdin ~ clipboard | link_text_picky -%}
 {%- set first_lines = stdin ~ clipboard | heading -%}
@@ -337,7 +337,7 @@ from_clipboard_content = """
 
 """
 
-# Default filename template used when the stdin ~ clipboard contains a string.
+### Default filename template used when the stdin ~ clipboard contains a string.
 from_clipboard_filename = """
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
@@ -345,11 +345,11 @@ from_clipboard_filename = """
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ extension_default | prepend(with='.') }}"""
 
-# Default template used, when the opened text file (with a known file
-# extension) is missing a YAML front matter section. This template prepends
-# such a header. The template inserts information extracted from the input
-# filename and its creation date. `{{ path }}` points to the text file,
-# `{{ dir_path }}` to the directory where it is located.
+### Default template used, when the opened text file (with a known file
+### extension) is missing a YAML front matter section. This template prepends
+### such a header. The template inserts information extracted from the input
+### filename and its creation date. `{{ path }}` points to the text file,
+### `{{ dir_path }}` to the directory where it is located.
 from_text_file_content = """
 ---
 {{ path | file_stem | split(pat='--') | first | cut | to_yaml(key='fm_title') }}
@@ -357,15 +357,15 @@ from_text_file_content = """
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ doc_file_date | default(value=now()) | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
 {{ doc_body_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
-# {{ path | file_name | to_yaml(key='fm_orig_name', tab=12) }}
+### {{ path | file_name | to_yaml(key='fm_orig_name', tab=12) }}
 ---
 
 {{ doc_body_text }}
 """
 
-# Default filename template used when the input file (with a known
-# file extension) is missing a YAML front matter section.
-# The text file's sort-tag and file extension are preserved.
+### Default filename template used when the input file (with a known
+### file extension) is missing a YAML front matter section.
+### The text file's sort-tag and file extension are preserved.
 from_text_file_filename = """
 {%- if path | file_sort_tag != '' -%}
   {%- set tag = path | file_sort_tag -%}
@@ -376,9 +376,9 @@ from_text_file_filename = """
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ path | file_ext | prepend(with='.') }}"""
 
-# Default template used when the command line `<path>` parameter points to an
-# existing - to be annotated - non-`.md`-file. `{{ path}}` points to that
-# file, `{{ dir_path }}` to the directory where it is located.
+### Default template used when the command line `<path>` parameter points to an
+### existing - to be annotated - non-`.md`-file. `{{ path}}` points to that
+### file, `{{ dir_path }}` to the directory where it is located.
 annotate_file_content = """
 {%- set body_text = stdin ~ clipboard | trim -%}
 {%- if body_text != '' -%}
@@ -408,17 +408,17 @@ annotate_file_content = """
 {% endif %}
 """
 
-# Filename of a new note, that annotates an existing file on disk given in
-# `<path>`.
+### Filename of a new note, that annotates an existing file on disk given in
+### `<path>`.
 annotate_file_filename = """
 {%- set tag = path | file_sort_tag -%}
 {{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ extension_default | prepend(with='.') }}"""
 
-# Default filename template to test, if the filename of an existing note file
-# on disk, corresponds to the note's meta data stored in its front matter. If
-# it is not the case, the note's filename will be renamed.
+### Default filename template to test, if the filename of an existing note file
+### on disk, corresponds to the note's meta data stored in its front matter. If
+### it is not the case, the note's filename will be renamed.
 sync_filename = """
 {%- set tag = fm_sort_tag | default(value = path | file_sort_tag) | as_str -%}
 {{ fm_title | default(value='No title') | sanit | prepend(with_sort_tag=tag) }}\
@@ -657,7 +657,7 @@ from_text_file_content = """
 {{ doc_body_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
 {{ 'zettel' | to_yaml(key='fm_scheme') }}
 {{ tag | to_yaml(key='fm_sort_tag') }}
-# {{ path | file_name | to_yaml(key='fm_orig_name', tab=12) }}
+### {{ path | file_name | to_yaml(key='fm_orig_name', tab=12) }}
 ---
 
 {{ doc_body_text }}
@@ -753,16 +753,16 @@ sync_filename = """
 {{ keywords | sanit | prepend(with='__') }}\
 {{ fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}"""
 
-# This is the end of scheme "zettel"
+### This is the end of scheme "zettel"
 
 
 
-# This part is common for all schemes.
+### This part is common for all schemes.
 [tmpl_html]
 
-# HTML template to render regular viewer pages. Note: HTML templates escape HTML
-# critical symbols by default. To disable this feature for a specific variable,
-# add a `safe` filter in last position.
+### HTML template to render regular viewer pages. Note: HTML templates escape HTML
+### critical symbols by default. To disable this feature for a specific variable,
+### add a `safe` filter in last position.
 viewer = '''
 {%- set ext = fm_file_ext | default(value=path|file_ext) -%}
 <!DOCTYPE html>
@@ -829,7 +829,7 @@ viewer = '''
 </html>
 '''
 
-# HTML template to render the viewer-error page.
+### HTML template to render the viewer-error page.
 viewer_error = """
 <!DOCTYPE html>
 <html lang=\"en\">
@@ -857,8 +857,8 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 </html>
 """
 
-# A constant holding common CSS code, published by Tp-Note's viewer under the
-# `/viewer_doc.css` path.
+### A constant holding common CSS code, published by Tp-Note's viewer under the
+### `/viewer_doc.css` path.
 viewer_doc_css = """
 /* Tp-Note's viewer document CSS */
 table.fm {
@@ -908,19 +908,19 @@ h4, h5, h6 { font-size: 100% }
 h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 """
 
-# Loads the viewer's code syntax highlighting theme. The theme is converted
-# into additional CSS. Currently available are:
-# * `base16-ocean.dark`
-# * `base16-eighties.dark`
-# * `base16-mocha.dark`
-# * `base16-ocean.light`
-# * `InspiredGitHub`
-# * `Solarized (dark)`
-# * `Solarized (light)`
+### Loads the viewer's code syntax highlighting theme. The theme is converted
+### into additional CSS. Currently available are:
+### * `base16-ocean.dark`
+### * `base16-eighties.dark`
+### * `base16-mocha.dark`
+### * `base16-ocean.light`
+### * `InspiredGitHub`
+### * `Solarized (dark)`
+### * `Solarized (light)`
 viewer_highlighting_theme = "Solarized (light)"
 
-# HTML template used to render a note into HTML when the rendition is saved to
-# disk. Similar to `tmpl_html.viewer` but does not inject JavaScript code.
+### HTML template used to render a note into HTML when the rendition is saved to
+### disk. Similar to `tmpl_html.viewer` but does not inject JavaScript code.
 exporter = '''
 {%- set ext = fm_file_ext | default(value=path|file_ext) -%}
 <!DOCTYPE html>
@@ -986,19 +986,19 @@ exporter = '''
 </html>
 '''
 
-# Loads the exporter's code syntax highlighting theme. The theme is converted
-# into additional CSS. Currently available are:
-# * `base16-ocean.dark`
-# * `base16-eighties.dark`
-# * `base16-mocha.dark`
-# * `base16-ocean.light`
-# * `InspiredGitHub`
-# * `Solarized (dark)`
-# * `Solarized (light)`
+### Loads the exporter's code syntax highlighting theme. The theme is converted
+### into additional CSS. Currently available are:
+### * `base16-ocean.dark`
+### * `base16-eighties.dark`
+### * `base16-mocha.dark`
+### * `base16-ocean.light`
+### * `InspiredGitHub`
+### * `Solarized (dark)`
+### * `Solarized (light)`
 exporter_highlighting_theme = "Solarized (light)"
 
-# A constant holding common CSS code, inserted into exported HTML documents
-# with the template variable `{{ exporter_doc.css }}`. 
+### A constant holding common CSS code, inserted into exported HTML documents
+### with the template variable `{{ exporter_doc.css }}`. 
 exporter_doc_css = """
 /* Tp-Note's exporter document CSS */
 table.fm {

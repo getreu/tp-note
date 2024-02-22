@@ -1,73 +1,73 @@
 [arg_default]
 
-# Default value for the command line option `--debug`.  Determines the maximum
-# debug level events must have, to be logged.  If the command line option
-# `--debug` is present, its value will be used instead.
+### Default value for the command line option `--debug`.  Determines the maximum
+### debug level events must have, to be logged.  If the command line option
+### `--debug` is present, its value will be used instead.
 debug = "ERROR"
 
-# Default value for the command line flag `--edit` to disable file watcher,
-# (Markdown)-renderer, html server and a web browser launcher set to `true`.
+### Default value for the command line flag `--edit` to disable file watcher,
+### (Markdown)-renderer, html server and a web browser launcher set to `true`.
 edit = false
 
-# Default value for the command line flag `--no-filename-sync` to disable
-# the title to filename synchronization mechanism permanently.
-# If set to `true`, the corresponding command line flag is ignored.
+### Default value for the command line flag `--no-filename-sync` to disable
+### the title to filename synchronization mechanism permanently.
+### If set to `true`, the corresponding command line flag is ignored.
 no_filename_sync = false
 
-# Default value for the command line flag `--popup`. If the command line flag
-# `--popup` or `POPUP` is `true`, all log events will also trigger the
-# appearance of a popup alert window.  Note, that error level debug events
-# will always pop up, regardless of `--popup` and `POPUP` (unless
-# `--debug=off`).
+### Default value for the command line flag `--popup`. If the command line flag
+### `--popup` or `POPUP` is `true`, all log events will also trigger the
+### appearance of a popup alert window.  Note, that error level debug events
+### will always pop up, regardless of `--popup` and `POPUP` (unless
+### `--debug=off`).
 popup = true
 
-# This is the default scheme for new note files. Shipped schemes are
-# `default` and `zettel` (for _Zettelkasten_). See `[[scheme]] name` for
-# more schemes. Not to be confused with `scheme_sync_default`!
+### This is the default scheme for new note files. Shipped schemes are
+### `default` and `zettel` (for _Zettelkasten_). See `[[scheme]] name` for
+### more schemes. Not to be confused with `scheme_sync_default`!
 scheme = "default"
 
-# Default value for the command line flag `--tty`. _Tp-Note_ tries different
-# heuristics to detect weather a graphic environment is available or not. For
-# example, under Linux, the '`DISPLAY`' environment variable is evaluated. The
-# '`--tty`' flag disables the automatic detection and sets _Tp-Note_ in
-# "console" mode, where only the non GUI editor (see configuration variable:
-# '`app_args.editor_console`') and no viewer is launched. If this is set
-# to `true` _Tp-Note_ starts in console mode permanently.
+### Default value for the command line flag `--tty`. _Tp-Note_ tries different
+### heuristics to detect weather a graphic environment is available or not. For
+### example, under Linux, the '`DISPLAY`' environment variable is evaluated. The
+### '`--tty`' flag disables the automatic detection and sets _Tp-Note_ in
+### "console" mode, where only the non GUI editor (see configuration variable:
+### '`app_args.editor_console`') and no viewer is launched. If this is set
+### to `true` _Tp-Note_ starts in console mode permanently.
 tty = false
 
-# Default value for the command line flag `--add-header`. If unset,
-# _Tp-Note_ exits of when it tries to open a text file without a YAML
-# header. When this flag is set, the missing header is constructed by
-# means of the text file's filename and creation date.
+### Default value for the command line flag `--add-header`. If unset,
+### _Tp-Note_ exits of when it tries to open a text file without a YAML
+### header. When this flag is set, the missing header is constructed by
+### means of the text file's filename and creation date.
 add_header = true
 
-# Rewrite relative local links. 
-# Base: `FILENAME_ROOT_PATH_MARKER=".tpnote.toml"`.
+### Rewrite relative local links. 
+### Base: `FILENAME_ROOT_PATH_MARKER=".tpnote.toml"`.
 export_link_rewriting = "Long"
 
 
 
 [clipboard]
-# By default clipboard support is enabled, can be disabled
-# in config file. A false value here will set `empty_clipboard` to
-# false.
+
+### By default clipboard support is enabled, can be disabled
+### in config file. A false value here will set `empty_clipboard` to
+### false.
 read_enabled = true
 
-# Should the clipboard be emptied when Tp-Note closes?
-# Default value.
+### Should the clipboard be emptied when Tp-Note closes?
+### Default value.
 empty_enabled = true
 
 
 
 [app_args]
 
-# Default command line argument list when launching the web browser.
-# The list is executed item by item until an installed web browser is found.
-# `unix`-defaults are valid under Unix like target operating systems:
-# aix, android, dragonfly, emscripten, espidf, freebsd, fuchsia, haiku, horizon,
-# illumos, ios, l4re, linux, netbsd, nto, openbsd, redox, solaris, tvos,
-# unknown, vita, vxworks, wasi, watchos.
-
+### Default command line argument list when launching the web browser.
+### The list is executed item by item until an installed web browser is found.
+### `unix`-defaults are valid under Unix like target operating systems:
+### aix, android, dragonfly, emscripten, espidf, freebsd, fuchsia, haiku, horizon,
+### illumos, ios, l4re, linux, netbsd, nto, openbsd, redox, solaris, tvos,
+### unknown, vita, vxworks, wasi, watchos.
 unix.browser = [
     [
     "flatpak",
@@ -112,8 +112,8 @@ unix.browser = [
 ],
 ]
 
-# Default command line argument list when launching external editor.
-# The editor list is executed item by item until an editor is found.
+### Default command line argument list when launching external editor.
+### The editor list is executed item by item until an editor is found.
 unix.editor = [
     [ "alacritty", "-e", "hx", ],
     [ "alacritty", "-e", "nvim", ],
@@ -132,10 +132,10 @@ unix.editor = [
     [ "leafpad" ],
 ]
 
-# Default command line argument list when launching an external editor
-# and no graphical environment is available (`DISPLAY=''`).
-# This lists console file editors only.
-# The editor list is executed item by item until an editor is found.
+### Default command line argument list when launching an external editor
+### and no graphical environment is available (`DISPLAY=''`).
+### This lists console file editors only.
+### The editor list is executed item by item until an editor is found.
 unix.editor_console = [
     ["hx"],
     ["nvim"],
@@ -146,7 +146,7 @@ unix.editor_console = [
     ["vi"],
 ]
 
-# Defaults valid under Windows:
+### Defaults valid under Windows:
 windows.browser = [
     [
         "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
@@ -194,7 +194,7 @@ windows.editor_console = [
 ]
 
 
-# Defaults valid under MacOs:
+### Defaults valid under MacOs:
 macos.browser = [[]]
 
 macos.editor = [
@@ -222,40 +222,40 @@ macos.editor_console = [
 
 [viewer]
 
-# When Tp-Note starts, it launches two external applications: some text editor
-# and the viewer (web browser). By default, the two programs are launched at
-# the same time (`VIEWER_STARTUP_DELAY==0`). If `VIEWER_STARTUP_DELAY>0` the
-# viewer (web browser) will be launched `VIEWER_STARTUP_DELAY` milliseconds
-# after the text editor. If `VIEWER_STARTUP_DELAY<0` the viewer will be
-# started first. Common values are `-1000`, `0` and `1000`.
+### When Tp-Note starts, it launches two external applications: some text editor
+### and the viewer (web browser). By default, the two programs are launched at
+### the same time (`VIEWER_STARTUP_DELAY==0`). If `VIEWER_STARTUP_DELAY>0` the
+### viewer (web browser) will be launched `VIEWER_STARTUP_DELAY` milliseconds
+### after the text editor. If `VIEWER_STARTUP_DELAY<0` the viewer will be
+### started first. Common values are `-1000`, `0` and `1000`.
 startup_delay = 500
 
-# When set to true, the viewer feature is automatically disabled when
-# _Tp-Note_ encounters an `.md` file without header.  Experienced users can
-# set this to `true`. This setting is ignored, meaning is considered `false`,
-# if `ARG_DEFAULT_ADD_HEADER=true` or `ARGS.add_header=true` or
-# `ARGS.viewer=true`.
+### When set to true, the viewer feature is automatically disabled when
+### _Tp-Note_ encounters an `.md` file without header.  Experienced users can
+### set this to `true`. This setting is ignored, meaning is considered `false`,
+### if `ARG_DEFAULT_ADD_HEADER=true` or `ARGS.add_header=true` or
+### `ARGS.viewer=true`.
 missing_header_disables = false
 
-# How often should the file watcher check for changes?
-# Delay in milliseconds. Maximum value is 2000.
+### How often should the file watcher check for changes?
+### Delay in milliseconds. Maximum value is 2000.
 notify_period = 200
 
-# The maximum number of TCP connections the HTTP server can handle at the same
-# time. In general, the serving and live update of the HTML rendition of the
-# note file, requires normally 3 TCP connections: 1 old event channel (that is
-# still open from the previous update), 1 TCP connection to serve the HTML,
-# the local images (and referenced documents), and 1 new event channel.  In
-# practice, stale connection are not always closed immediately. Hence, 4 open
-# connections are not uncommon.
+### The maximum number of TCP connections the HTTP server can handle at the same
+### time. In general, the serving and live update of the HTML rendition of the
+### note file, requires normally 3 TCP connections: 1 old event channel (that is
+### still open from the previous update), 1 TCP connection to serve the HTML,
+### the local images (and referenced documents), and 1 new event channel.  In
+### practice, stale connection are not always closed immediately. Hence, 4 open
+### connections are not uncommon.
 tcp_connections_max = 16
 
-# Served file types with corresponding mime types.
-# The first entry per line is the file extension in lowercase(!), the second the
-# corresponding mime type.  Embedded files with types other than those listed
-# here are silently ignored.  Note, that image files must be located in the
-# same or in the note's parent directory.
-# NB: The list is ordered to look for the most common extensions first.
+### Served file types with corresponding mime types.
+### The first entry per line is the file extension in lowercase(!), the second the
+### corresponding mime type.  Embedded files with types other than those listed
+### here are silently ignored.  Note, that image files must be located in the
+### same or in the note's parent directory.
+### NB: The list is ordered to look for the most common extensions first.
 served_mime_types = [
     ["jpeg", "image/jpeg"],
     ["jpg", "image/jpeg"],
@@ -285,7 +285,7 @@ served_mime_types = [
     ["ogx", "application/ogg"],
 ]
 
-# For security reasons, Tp-Note's internal viewer only displays a limited
-# number of Tp-Note files when browsing between files. This variable limits
-# this number.
+### For security reasons, Tp-Note's internal viewer only displays a limited
+### number of Tp-Note files when browsing between files. This variable limits
+### this number.
 displayed_tpnote_count_max = 20
