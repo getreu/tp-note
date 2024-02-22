@@ -355,7 +355,7 @@ from_text_file_content = """
 {{ path | file_stem | split(pat='--') | first | cut | to_yaml(key='fm_title') }}
 {{ path | file_stem | split(pat='--') | nth(n=1) | cut | to_yaml(key='fm_subtitle') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
-{{ doc_file_date | default(value='') | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
+{{ doc_file_date | default(value=now()) | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
 {{ doc_body_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
 # {{ path | file_name | to_yaml(key='fm_orig_name', tab=12) }}
 ---
@@ -653,7 +653,7 @@ from_text_file_content = """
 {{ title | cut | to_yaml(key='fm_title') }}
 {{ keywords | split(pat='_') | to_yaml(key='fm_keywords') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
-{{ doc_file_date | default(value='') | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
+{{ doc_file_date | default(value=now()) | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
 {{ doc_body_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
 {{ 'zettel' | to_yaml(key='fm_scheme') }}
 {{ tag | to_yaml(key='fm_sort_tag') }}
