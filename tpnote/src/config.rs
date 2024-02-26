@@ -348,6 +348,7 @@ impl Cfg {
             let mut lib_cfg = LIB_CFG.write();
             lib_cfg.scheme_sync_default = config.scheme_sync_default.clone();
             lib_cfg.scheme = config.scheme.clone();
+            lib_cfg.tmpl_html = config.tmpl_html.clone();
 
             // Perform some additional semantic checks.
             lib_cfg.assert_validity()?;
