@@ -201,7 +201,7 @@ impl Context {
         match input_fm {
             Ok(ref fm) => {
                 log::trace!(
-                    "YAML front matter in the input stream \"{}\" stdin found:\n{:#?}",
+                    "Input stream from \"{}\" results in front matter:\n{:#?}",
                     tmpl_var,
                     &fm
                 )
