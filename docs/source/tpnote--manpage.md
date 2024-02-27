@@ -1,5 +1,5 @@
 ---
-title:      TP-NOTE(1) Version 1.23.6 | Tp-Note documentation
+title:      TP-NOTE(1) Version 1.23.8 | Tp-Note documentation
 subtitle:   manpage
 author:     Jens Getreu
 version:    1.23.8
@@ -912,6 +912,29 @@ Observations:
 
 
 
+## PRINTING NOTE FILES
+
+Tp-Note renders note files to HTML. The latter is either shown in the browser
+or can be exported with '`--export`'.  When exporting to HTML, hyperlinks
+are passed through an internal link rewriting engine that can be parametrized
+with '`--export-link-rewriting`'. The easiest way to print the resulting
+HTML, is to pipe it through an HTML to PDF converter, e.g. _weasyprint_ or
+_wkhtmktopdf_.
+
+```sh
+tpnote --export=- mynote.md | weasyprint - mynote.md.pdf
+```
+
+I prefer _weasyprint_ over _wkhtmltopdf_ because the latter is not maintained
+any more. Furthermore, weasyprint supports the 
+[CSS Paged Media](https://www.w3.org/TR/css-page-3/) standard allowing to
+include page layout directives into HTML. You can change the default page
+layout by modifying the HTML template with the '`tmpl_html.exporter_doc_css`'
+configuration file variable.
+ 
+
+
+
 # METADATA FILENAME SYNCHRONIZATION
 
 Consider the following Tp-Note filename generated with the _default_ 
@@ -1080,7 +1103,7 @@ file_ext:   rst
 ---
 ```
 
-This will change the file extension from '`.md`' to '`.rst`. The resulting
+This will change the file extension from '`.md`' to '`.rst`'. The resulting
 filename becomes '`20211101-1. The Beginning--Note.rst`'.
 
 Important: '`rst`' must be one of the registered file extensions
@@ -1101,8 +1124,8 @@ The metadata filename synchronization feature can be disabled permanently
 by setting the configuration file variable
 '`arg_default.no_filename_sync = true`'. To disable this feature for one time
 only, invoke Tp-Note with '`--no-filename-sync`'. To exclude a particular note
-from filename synchronization, add the YAML header field '`filename_sync:
-false`'.
+from filename synchronization, add the YAML header field 
+'`filename_sync: false`'.
 
 ``` yaml
 ---

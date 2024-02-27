@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "TP-NOTE" "1" "2024-02-27" "Version 1.23.6" "Tp-Note documentation"
+.TH "TP-NOTE" "1" "2024-02-27" "Version 1.23.8" "Tp-Note documentation"
 .hy
 .SH NAME
 .PP
@@ -1283,6 +1283,32 @@ T}@T{
 red
 T}
 .TE
+.SS PRINTING NOTE FILES
+.PP
+Tp-Note renders note files to HTML.
+The latter is either shown in the browser or can be exported with
+`\f[V]--export\f[R]'.
+When exporting to HTML, hyperlinks are passed through an internal link
+rewriting engine that can be parametrized with
+`\f[V]--export-link-rewriting\f[R]'.
+The easiest way to print the resulting HTML, is to pipe it through an
+HTML to PDF converter, e.g.\ \f[I]weasyprint\f[R] or
+\f[I]wkhtmktopdf\f[R].
+.IP
+.nf
+\f[C]
+tpnote --export=- mynote.md | weasyprint - mynote.md.pdf
+\f[R]
+.fi
+.PP
+I prefer \f[I]weasyprint\f[R] over \f[I]wkhtmltopdf\f[R] because the
+latter is not maintained any more.
+Furthermore, weasyprint supports the CSS Paged
+Media (https://www.w3.org/TR/css-page-3/) standard allowing to include
+page layout directives into HTML.
+You can change the default page layout by modifying the HTML template
+with the `\f[V]tmpl_html.exporter_doc_css\f[R]' configuration file
+variable.
 .SH METADATA FILENAME SYNCHRONIZATION
 .PP
 Consider the following Tp-Note filename generated with the
@@ -1507,9 +1533,9 @@ file_ext:   rst
 .fi
 .PP
 This will change the file extension from `\f[V].md\f[R]' to
-`\f[V].rst\f[R].
-The resulting filename
-becomes'\f[V]20211101-1. The Beginning--Note.rst\f[R]\[cq].
+`\f[V].rst\f[R]'.
+The resulting filename becomes
+`\f[V]20211101-1. The Beginning--Note.rst\f[R]'.
 .PP
 Important: `\f[V]rst\f[R]' must be one of the registered file extensions
 listed in the `\f[V]filename.extensions\f[R]' variable in Tp-Note\[cq]s
