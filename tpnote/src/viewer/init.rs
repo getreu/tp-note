@@ -90,7 +90,7 @@ impl Viewer {
         let watcher_handle: JoinHandle<_> = thread::spawn({
             let terminate_on_browser_disconnect = terminate_on_browser_disconnect.clone();
 
-            move || match FileWatcher::new(doc, event_tx_list, terminate_on_browser_disconnect) {
+            move || match FileWatcher::new(&doc, event_tx_list, terminate_on_browser_disconnect) {
                 Ok(mut w) => w.run(),
                 Err(e) => {
                     log::warn!("Can not start file watcher, giving up: {}", e);

@@ -6,9 +6,8 @@ use crate::viewer::sse_server::SseToken;
 use notify::RecursiveMode;
 use notify_debouncer_mini::Config;
 use notify_debouncer_mini::{new_debouncer_opt, DebouncedEvent, Debouncer};
-use std::ffi::{OsStr, OsString};
 use std::panic::panic_any;
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::mpsc::TrySendError;
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, SyncSender};
 use std::sync::{Arc, Mutex};
@@ -27,9 +26,6 @@ const WATCHER_TIMEOUT: u64 = 10;
 const WATCHER_MIN_UPTIME: u64 = 5;
 /// The `watcher` notifies about changes through `rx`.
 pub struct FileWatcher {
-    /// File to watch and render into HTML. We watch only one directory, so it
-    /// is enough to store only the filename for later comparison.
-    watched_file: OsString,
     /// Receiver for file changed messages.
     rx: Receiver<Result<Vec<DebouncedEvent>, notify::Error>>,
     /// We must store the `Debouncer` because it hold
@@ -50,7 +46,7 @@ impl FileWatcher {
     /// Constructor. `file` is the file to watch.
     pub fn new(
         // The file path of the file being watched.
-        watched_file: PathBuf,
+        watched_file: &Path,
         // A list of subscribers, that shall be informed when the watched
         // file has been changed.
         event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
@@ -73,12 +69,11 @@ impl FileWatcher {
         // Older versions of Notify did not detect this case reliably.
         debouncer
             .watcher()
-            .watch(&watched_file, RecursiveMode::NonRecursive)?;
+            .watch(watched_file, RecursiveMode::NonRecursive)?;
 
         log::debug!("File watcher started.");
 
         Ok(Self {
-            watched_file: watched_file.file_name().unwrap_or_default().to_owned(),
             rx,
             debouncer,
             event_tx_list,
