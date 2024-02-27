@@ -9,8 +9,6 @@ BIN_NAME="tpnote"
 EXE_NAME="$BIN_NAME.exe"
 BIN_VERSION="$(grep -e '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/' | head -n 1)"
 
-sudo /usr/local/bak/adjust-home_doc-permissions
-
 cd "$BUILD_DIR"
 
 docker run --rm --env Platform=x64 --env Version=$BIN_VERSION \
