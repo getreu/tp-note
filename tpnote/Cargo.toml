@@ -86,7 +86,7 @@ parking_lot.workspace = true
 percent-encoding = "2.3.1"
 # sanitize-filename-reader-friendly = { path = "../sanitize-filename-reader-friendly" }
 sanitize-filename-reader-friendly.workspace = true
-semver = "1.0.21"
+semver = "1.0.22"
 serde.workspace = true
 serde_yaml.workspace = true
 structopt = "0.3.26"
