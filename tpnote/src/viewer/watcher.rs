@@ -8,7 +8,7 @@ use notify_debouncer_mini::Config;
 use notify_debouncer_mini::{new_debouncer_opt, DebouncedEvent, Debouncer};
 use std::ffi::{OsStr, OsString};
 use std::panic::panic_any;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::mpsc::TrySendError;
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, SyncSender};
 use std::sync::{Arc, Mutex};
@@ -69,16 +69,11 @@ impl FileWatcher {
         let mut debouncer = new_debouncer_opt::<_, notify::PollWatcher>(debouncer_config, tx)?;
         // In theory watching only `file` is enough. Unfortunately some file
         // editors do not modify files directly. They first rename the existing
-        // file on disk and then  create a new file with the same filename. As
-        // a workaround, we watch the whole directory where the file resides.
-        // False positives, there could be other changes in this directory
-        // which are not related to `file`, are detected, as we only trigger
-        // the rendition to HTML when `debounced_event.path` corresponds to our
-        // watched file.
-        debouncer.watcher().watch(
-            watched_file.parent().unwrap_or_else(|| Path::new("./")),
-            RecursiveMode::NonRecursive,
-        )?;
+        // file on disk and then  create a new file with the same filename.
+        // Older versions of Notify did not detect this case reliably.
+        debouncer
+            .watcher()
+            .watch(&watched_file, RecursiveMode::NonRecursive)?;
 
         log::debug!("File watcher started.");
 
@@ -139,18 +134,11 @@ impl FileWatcher {
             log::trace!("File watcher event: {:?}", evnt);
 
             match evnt {
-                Ok(events) => {
-                    for e in events {
-                        if e.path
-                            .file_name()
-                            // Make this fail if the filename is unavailable.
-                            .unwrap_or_else(|| OsStr::new("***unknown filename***"))
-                            == self.watched_file
-                        {
-                            self.update(SseToken::Update)?;
-                            break; // Igonre all remaining events.
-                        }
-                    }
+                Ok(_events) => {
+                    // There can be more than one event in `event`, we
+                    // dont't care about the details as we watch only one
+                    // file.
+                    self.update(SseToken::Update)?;
                 }
                 Err(e) => return Err(e.into()),
             }
