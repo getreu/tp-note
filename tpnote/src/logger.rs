@@ -2,6 +2,7 @@
 
 #[cfg(feature = "message-box")]
 use crate::alert_service::AlertService;
+use crate::config::CARGO_BIN_NAME;
 #[cfg(feature = "message-box")]
 use crate::settings::ARGS;
 #[cfg(feature = "message-box")]
@@ -170,6 +171,11 @@ impl log::Log for AppLogger {
             if record.metadata().level() == Level::Error {
                 msg.push_str(&ERR_MSG_TAIL);
             };
+
+            // Only log Tp-Note errors. Silently ignore others.
+            if !record.metadata().target().starts_with(CARGO_BIN_NAME) {
+                return;
+            }
 
             // Log this to `stderr`.
             eprintln!("*** {}", msg);

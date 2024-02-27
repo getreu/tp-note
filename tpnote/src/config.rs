@@ -60,7 +60,7 @@ pub(crate) const AUTHOR: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 pub(crate) const COPYRIGHT_FROM: &str = "2020";
 
 /// Name of this executable (without the Windows ".exe" extension).
-const CARGO_BIN_NAME: &str = env!("CARGO_BIN_NAME");
+pub(crate) const CARGO_BIN_NAME: &str = env!("CARGO_BIN_NAME");
 
 /// Use the version number defined in `../Cargo.toml`.
 pub(crate) const PKG_VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");

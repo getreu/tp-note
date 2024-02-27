@@ -282,7 +282,7 @@ impl HttpResponse for ServerThread {
             self.stream.write_all(&buffer[..n])?;
         }
 
-        log::debug!(
+        log::trace!(
             "TCP port local {} to peer {}: 200 OK, served file: '{}'",
             self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
@@ -455,7 +455,7 @@ impl HttpResponse for ServerThread {
             Ok(html) => {
                 let mut delivered_tpnote_docs = self.delivered_tpnote_docs.write();
                 delivered_tpnote_docs.insert(abspath_doc.to_owned());
-                log::debug!(
+                log::trace!(
                     "Viewer: so far served Tp-Note documents: {}",
                     delivered_tpnote_docs
                         .iter()

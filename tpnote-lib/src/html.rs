@@ -732,7 +732,7 @@ pub fn rewrite_links(
     // Add the last `remaining`.
     html_out.push_str(rest);
 
-    log::debug!(
+    log::trace!(
         "Viewer: referenced allowed local files: {}",
         allowed_local_links
             .read_recursive()
