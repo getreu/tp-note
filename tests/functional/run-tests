@@ -20,7 +20,8 @@ cargo run -- -C "$PWD/tpnote.toml"
 # Remove all `date` lines of all templates.
 TP_NOTE_TEST_TOML="$PWD/tpnote-tmp.toml"
 grep -v -e "key='fm_date'"  "$PWD/tpnote.toml" > "$TP_NOTE_TEST_TOML"
-
+# Uncomment variables.
+sed -i -e 's/^# //g' "$TP_NOTE_TEST_TOML"
 
 
 ## Test 001: Synchronize meta data and filename

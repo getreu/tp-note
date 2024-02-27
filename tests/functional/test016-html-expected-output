@@ -3,8 +3,15 @@
 <head>
 <meta charset="utf-8">
 <title>Tulips</title>
-<style>
+<style type="text/css">
 /* Tp-Note's exporter document CSS */
+@page {
+  @bottom-center {
+    content: counter(page) "/" counter(pages);
+  } 
+  size: A4 portrait;
+}
+
 table.fm {
   font-weight: normal;
   margin-left: auto;
@@ -371,7 +378,7 @@ font-weight: bold;
  color: #657b83;
 }
 
-<!-- Customize the exporter CSS here -->
+/* Customize the viewer CSS here */
 </style>
 </head>
 <body>
