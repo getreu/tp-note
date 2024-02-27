@@ -974,9 +974,9 @@ thunar
 
 **Optional bonus 2: add a menu entry "Export note as Pdf"**
 
-First install the `wkhtmltopdf` filter program: [^5]
+First install the `weasyprint` filter program: 
 
-    sudo apt install wkhtmltopdf
+    sudo apt install weasyprint
 
 Then edit the system-wide Thunar configuration file:
 
@@ -988,7 +988,7 @@ Search for `</actions>` and replace it with: [^6]
 <action>
   <icon>accessories-text-editor</icon>
   <name>Tp-Note Export</name>
-  <command>tpnote --export=- %f | sed 's_&lt;_\r&lt;_g' -  | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>
+	<command>tpnote --export=- %f | weasyprint - %f.pdf</command>
   <description>Tp-Note Export</description>
   <patterns>*.txt; *.md;*.rst;*.adoc;*.txtnote</patterns>
   <text-files/>
@@ -1138,13 +1138,6 @@ press `[F3]` or `[Enter]`.
 
 [^4]: Versions for other operating systems and a Debian package are
       [available here](<https://blog.getreu.net/projects/tp-note/_downloads/>).
-
-[^5]: In order to get the page number rendered in Debian Buster, you need to upgrade
-      the package `wkhtmltopdf`: first remove the current version:
-      `sudo apt remove --purge wkhtmltopdf`, download:
-      `wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_amd64.deb` and
-      install the new version:
-      `sudo dpkg -i wkhtmltox_0.12.6-1.buster_amd64.deb`
 
 [^6]: The `sed` filter is a workaround of a [bug in wkhtmltopdf](<https://github.com/wkhtmltopdf/wkhtmltopdf/issues/4960>).
       Once this is solved, you can remove the `sed` command. Then the line 4 of the above listing becomes:
