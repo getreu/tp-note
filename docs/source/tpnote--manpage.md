@@ -2877,10 +2877,6 @@ valid YAML header with a '`title:`' field. In addition, when
 rendered without error.
 
 
-# KNOWN ISSUES
-
-* Windows: With Microsoft Edge as viewer front end, no live updates are
-  available. Workaround: install Firefox, Chromium or Chrome instead.
 
 
 # RESOURCES
