@@ -770,10 +770,10 @@ viewer = '''
 <head>
 <meta charset="UTF-8">
 <title>{{ fm_title }}</title>
-<link rel="stylesheet" href="{{ viewer_doc_css_path }}">
-<link rel="stylesheet" href="{{ viewer_highlighting_css_path }}">
-<style>
-<!-- Customize the viewer CSS here -->
+<link rel="stylesheet" href="{{ viewer_doc_css_path | safe}}">
+<link rel="stylesheet" href="{{ viewer_highlighting_css_path |safe }}">
+<style type="text/css">
+/* Customize the viewer CSS here */
 </style>
 </head>
 <body>
@@ -836,7 +836,7 @@ viewer_error = """
 <head>
 <meta charset=\"UTF-8\">
 <title>Syntax error</title>
-<style>
+<style type="text/css">
 .note-error { color: #523626; }
 pre { white-space: pre-wrap; }
 a { color: #316128; }
@@ -928,10 +928,10 @@ exporter = '''
 <head>
 <meta charset="utf-8">
 <title>{{ fm_title }}</title>
-<style>
+<style type="text/css">
 {{ exporter_doc_css | safe }}
 {{ exporter_highlighting_css | safe }}
-<!-- Customize the exporter CSS here -->
+/* Customize the viewer CSS here */
 </style>
 </head>
 <body>
@@ -987,7 +987,7 @@ exporter = '''
 '''
 
 ### Loads the exporter's code syntax highlighting theme. The theme is converted
-### into additional CSS. Currently available are:
+### into additional CSS. Currently, available are:
 ### * `base16-ocean.dark`
 ### * `base16-eighties.dark`
 ### * `base16-mocha.dark`
@@ -999,8 +999,16 @@ exporter_highlighting_theme = "Solarized (light)"
 
 ### A constant holding common CSS code, inserted into exported HTML documents
 ### with the template variable `{{ exporter_doc.css }}`. 
+### [CSS Paged Media Module Level 3](https://www.w3.org/TR/css-page-3/)
 exporter_doc_css = """
 /* Tp-Note's exporter document CSS */
+@page {
+  @bottom-center {
+    content: counter(page) "/" counter(pages);
+  } 
+  size: A4 portrait;
+}
+
 table.fm {
   font-weight: normal;
   margin-left: auto;
