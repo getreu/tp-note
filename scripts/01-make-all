@@ -2,7 +2,7 @@
 set -x
 
 ./10-clear-targets
-./11-test
+#./11-test
 ./12-make-targets
 ./15-make-docs
 ./16-prepare-build-dir

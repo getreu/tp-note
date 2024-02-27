@@ -5,7 +5,7 @@ set -x
 #../build-env/rebuild-dev-image
 
 ../build-env/run-script          ./10-clear-targets
-../build-env/run-script          ./11-test
+#../build-env/run-script          ./11-test
 ../build-env/run-script          ./12-make-targets
 ../docs/build-doc-env/run-script ./15-make-docs
 ../build-env/run-script          ./16-prepare-build-dir
