@@ -912,7 +912,7 @@ Observations:
 
 
 
-## PRINTING NOTE FILES
+## Printing note files
 
 Tp-Note renders note files to HTML. The latter is either shown in the browser
 or can be exported with '`--export`'.  When exporting to HTML, hyperlinks
