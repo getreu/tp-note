@@ -19,6 +19,7 @@
 
 #[cfg(feature = "message-box")]
 mod alert_service;
+mod clipboard;
 mod config;
 mod error;
 mod file_editor;
@@ -32,6 +33,7 @@ mod workflow;
 
 #[cfg(feature = "message-box")]
 use crate::alert_service::AlertService;
+use crate::clipboard::Clipboard;
 use crate::config::Cfg;
 use crate::config::AUTHOR;
 use crate::config::CFG;
@@ -39,17 +41,13 @@ use crate::config::CFG_FILE_LOADING;
 use crate::config::CONFIG_PATHS;
 use crate::config::COPYRIGHT_FROM;
 use crate::config::PKG_VERSION;
-#[cfg(feature = "read-clipboard")]
 use crate::error::WorkflowError;
 use crate::logger::AppLogger;
 use crate::settings::ARGS;
-#[cfg(feature = "read-clipboard")]
 use crate::settings::LAUNCH_EDITOR;
 #[cfg(feature = "message-box")]
 use crate::settings::RUNS_ON_CONSOLE;
 use crate::workflow::run;
-#[cfg(feature = "read-clipboard")]
-use arboard::Clipboard;
 use config::MIN_CONFIG_FILE_VERSION;
 use error::ConfigFileError;
 use semver::Version;
@@ -57,7 +55,6 @@ use serde::Serialize;
 use settings::CLIPBOARD;
 use std::path::Path;
 use std::process;
-#[cfg(feature = "read-clipboard")]
 use tpnote_lib::error::NoteError;
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -250,16 +247,13 @@ fn main() {
     AppLogger::flush();
 
     // Delete clipboard content.
-    #[cfg(feature = "read-clipboard")]
     if (*LAUNCH_EDITOR && !ARGS.batch && CFG.clipboard.read_enabled && CFG.clipboard.empty_enabled)
         || matches!(
             &res,
             Err(WorkflowError::Note(NoteError::InvalidInputYaml { .. }))
         )
     {
-        if let Ok(mut ctx) = Clipboard::new() {
-            let _ = ctx.set_text("".to_string());
-        };
+        Clipboard::empty();
     }
 
     if res.is_err() {

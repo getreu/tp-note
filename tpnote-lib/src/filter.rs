@@ -1217,7 +1217,11 @@ mod tests {
         let mut args = HashMap::new();
         // Select the "md" renderer.
         args.insert("extension".to_string(), to_value("md").unwrap());
+
+        #[cfg(feature = "renderer")]
         let expected = "<h1>Title</h1>\n<p>Hello World</p>\n".to_string();
+        #[cfg(not(feature = "renderer"))]
+        let expected = "".to_string();
 
         assert_eq!(
             markup_to_html_filter(&input, &args).unwrap(),
@@ -1662,6 +1666,7 @@ Some more text."#;
     }
 
     #[test]
+    #[cfg(feature = "lang-detection")]
     fn test_get_lang_filter() {
         //
         // Test `get_lang_filter()`

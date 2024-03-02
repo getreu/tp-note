@@ -621,6 +621,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "lang-detection")]
     fn test_update_filter_get_lang_setting() {
         // Test 1.
         let mut settings = Settings {
@@ -697,6 +698,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "lang-detection")]
     fn test_update_env_lang_detection() {
         // Test 1.
         // Test short `settings.lang`.

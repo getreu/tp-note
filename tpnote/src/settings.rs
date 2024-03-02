@@ -1,10 +1,9 @@
 //! Reads the command line parameters and clipboard and exposes them as `static`
 //! variables.
 
-#[cfg(any(feature = "read-clipboard", feature = "viewer"))]
+//#[cfg(any(feature = "read-clipboard", feature = "viewer"))]
+use crate::clipboard::Clipboard;
 use crate::config::CFG;
-#[cfg(feature = "read-clipboard")]
-use arboard::Clipboard;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use std::env;
@@ -204,22 +203,14 @@ lazy_static! {
 lazy_static! {
     /// Reads the clipboard, if there is any and empties it.
     pub static ref CLIPBOARD: ContentString = {
-        let mut buffer = String::new();
 
         // Concatenate clipboard content.
-        #[cfg(feature="read-clipboard")]
         if CFG.clipboard.read_enabled && !ARGS.batch {
-            if let Ok(mut ctx) = Clipboard::new(){
-                if let Ok(s) = ctx.get_text(){
-                    buffer.push_str(&s);
-                }
-            }
-        };
+            Clipboard::get()
+        } else {
+            ContentString::from_string_with_cr(String::new())
+        }
 
-        // `trim_end()` content without new allocation.
-        buffer.truncate(buffer.trim_end().len());
-
-        <ContentString as Content>::from_string_with_cr(buffer)
     };
 }
 

@@ -94,8 +94,8 @@ thiserror.workspace = true
 time = "0.3.34"
 tera.workspace = true
 toml.workspace = true
-#tpnote-lib = { path = "../tpnote-lib", default-features = false }
-tpnote-lib = { version = "0.32.1", default-features = false}
+tpnote-lib = { path = "../tpnote-lib", default-features = false }
+#tpnote-lib = { version = "0.32.1", default-features = false}
 webbrowser = { version = "0.8.12", optional = true }
 
 [target.'cfg(windows)'.dependencies]
