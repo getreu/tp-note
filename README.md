@@ -102,8 +102,9 @@ Repository:
 
 ## Distribution
 
+### Download installer packages and binaries
 
-### Tp-Note Microsoft Windows installer package
+#### Tp-Note Microsoft Windows installer package
 
 * Installer package for Windows:
 
@@ -114,17 +115,15 @@ Repository:
   when you click on the link “More info”, a ”Run anyway” button will appear
   allowing you to continue the installation process. In general, regardless
   of where a program comes from, I recommend checking every installable
-  file with [VirusTotal]
+  file with [VirusTotal].
 
-
-### Tp-Note Debian/Ubuntu installer package
+#### Tp-Note Debian/Ubuntu installer package
 
 * Package compiled for Debian:
 
   [x86_64-unknown-linux-gnu/debian/tpnote_latest_amd64.deb]
 
-
-### Various binaries for Windows, MacOS and Linux
+#### Various binaries for Windows, MacOS and Linux
 
 * Binaries for Ubuntu-Linux 18.04, Windows, MacOS:
 
@@ -159,9 +158,13 @@ Repository:
     * [aarch64-unknown-linux-gnu/release/tpnote]
 
 
-### Tp-Note NetBSD
 
-* An official package is available on NetBSD and other "pkgsrc" supported platforms.
+### Tp-Note in official package repositories
+
+#### Tp-Note on NetBSD
+
+* An official package is available on NetBSD and other "pkgsrc" supported 
+  platforms.
 
   To install Tp-Note on NetBSD, simply use the native package manager:
 
@@ -169,8 +172,36 @@ Repository:
   pkgin install tpnote
   ```
 
+#### Tp-Note on NixOS
 
-### Other ressources
+* An official package is available on NixOS (as of 2024-03-16, only on the
+  unstable branch):
+
+  ```nix
+   environment.systemPackages = [ pkgs.tpnote ]; 
+  ```
+
+#### Get Tp-Note with the Nix package manager
+
+* First install the [Nix package manager](https://nixos.org/download)
+  available for Linux, MacOS and Windows (WSL2). 
+  Alternatively, for Linux there are also [prebuilt Deb/Pacman/Rpm 
+  Nix installers](https://nix-community.github.io/nix-installers/)
+  available.
+  
+  Once you have the Nix package manager installed on your system, 
+  Tp-Note becomes available with:  
+
+  ```nix
+  nix-env -iA nixpkgs.tpnote
+  ```
+  Or, open a shell with Tp-Note installed:
+
+  ```nix
+  nix-shell -p tpnote
+  ```
+
+## Other resources
 
 * Copy the Unix man-page to `/usr/local/share/man/man1`:
 
@@ -189,7 +220,8 @@ system, the installation process is more or less automated. For Windows
 users the fully automated installation package [tpnote-latest-x86_64.msi]
 is available. For more information, please consult the [Distribution
 section](#distribution) above and the [Installation section] in
-_Tp-Note_'s manual.
+_Tp-Note_'s manual. 
+
 
 
 ## Upgrading
