@@ -196,7 +196,7 @@ lazy_static! {
         // `trim_end()` content without new allocation.
         buffer.truncate(buffer.trim_end().len());
 
-        <ContentString as Content>::from_string_with_cr(buffer)
+        ContentString::from_string_with_cr(buffer)
     };
 }
 
