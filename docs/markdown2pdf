@@ -1,0 +1,64 @@
+#!/bin/bash
+# Author: Jens Getreu
+
+# apt install pandoc weasyprint
+render () {
+    ### parse args
+
+    #set -x
+    InPath="$1"
+    InFile="${InPath##*/}"
+    InFileExt="${InPath##*.}"
+    InBase="${InFile%.*}"
+    InDir="${InPath%/*}"
+    if [ "$InDir" = "$InPath" ] ; then
+        InDir="."
+    fi
+
+    OutPath="$2"
+    OutFile="${OutPath##*/}"
+    OutBase="${OutFile%.*}"
+    OutDir="${OutPath%/*}"
+    if [ "$OutDir" = "$OutPath" ] ; then
+        OutDir="."
+    fi
+
+
+    ### Prepare
+
+    mkdir -p "$OutDir"
+
+    cp -r -L  "$InDir/assets/" "$OutDir"
+    cp "$InDir/print.css" "$OutDir"
+    cp "$InPath" "$OutDir"
+    pushd "$OutDir"
+
+    ### Generate XML
+
+    # unfortunately the chain does not honor --number-section yet
+
+    pandoc "$InFile" --from=markdown+yaml_metadata_block --to=pdf \
+      --pdf-engine=weasyprint --pdf-engine-opt="-s" \
+      --pdf-engine-opt="print.css" --number-sections -o "$OutFile"
+    rm -r "assets"
+    rm "$InFile"
+    rm "print.css"
+    popd
+
+}
+
+
+
+### Main
+# usage:
+# render FILE [FILE]
+# render report.md ./rendition/report.html
+
+if [[ -n "${2/[ ]*\n/}" ]] ; then
+        OutPath="$2"
+else
+        OutPath="${1%.*}.html" # $2 is empty
+fi
+render "$1" "$OutPath"
+
+

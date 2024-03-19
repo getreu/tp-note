@@ -41,7 +41,7 @@ page: [Tp-Note - Minimalistic note-taking].
 
 
 
-## Documentation
+# Documentation
 
 User documentation:
 
@@ -90,7 +90,7 @@ Developer documentation:
 
 
 
-## Source code
+# Source code
 
 Repository:
 
@@ -100,11 +100,11 @@ Repository:
 
 
 
-## Distribution
+# Distribution
 
-### Download installer packages and binaries
+## Download installer packages and binaries
 
-#### Tp-Note Microsoft Windows installer package
+### Tp-Note Microsoft Windows installer package
 
 * Installer package for Windows:
 
@@ -117,13 +117,13 @@ Repository:
   of where a program comes from, I recommend checking every installable
   file with [VirusTotal].
 
-#### Tp-Note Debian/Ubuntu installer package
+### Tp-Note Debian/Ubuntu installer package
 
 * Package compiled for Debian:
 
   [x86_64-unknown-linux-gnu/debian/tpnote_latest_amd64.deb]
 
-#### Various binaries for Windows, MacOS and Linux
+### Various binaries for Windows, MacOS and Linux
 
 * Binaries for Ubuntu-Linux 18.04, Windows, MacOS:
 
@@ -159,9 +159,9 @@ Repository:
 
 
 
-### Tp-Note in official package repositories
+## Tp-Note in official package repositories
 
-#### Tp-Note on NetBSD
+### Tp-Note on NetBSD
 
 * An official package is available on NetBSD and other "pkgsrc" supported 
   platforms.
@@ -172,7 +172,7 @@ Repository:
   pkgin install tpnote
   ```
 
-#### Tp-Note on NixOS
+### Tp-Note on NixOS
 
 * An official package is available on NixOS (as of 2024-03-16, only on the
   unstable branch):
@@ -181,7 +181,7 @@ Repository:
    environment.systemPackages = [ pkgs.tpnote ]; 
   ```
 
-#### Get Tp-Note with the Nix package manager
+### Get Tp-Note with the Nix package manager
 
 * First install the [Nix package manager](https://nixos.org/download)
   available for Linux, MacOS and Windows (WSL2). 
@@ -190,16 +190,15 @@ Repository:
   available.
   
   Once you have the Nix package manager installed on your system, 
-  Tp-Note becomes available with:  
-
-  ```nix
-  nix-env -iA nixpkgs.tpnote
-  ```
-  Or, open a shell with Tp-Note installed:
+  try out Tp-Note with:  
 
   ```nix
   nix-shell -p tpnote
   ```
+
+  or follow installation instructions here:
+  [NixOS packages - tpnote](https://search.nixos.org/packages?channel=unstable&show=tpnote&from=0&size=50&sort=relevance&type=packages&query=tpnote)
+  
 
 ## Other resources
 
@@ -213,7 +212,7 @@ Repository:
 
 
 
-## Installation
+# Installation
 
 Depending on the availability of installer packages for your operating
 system, the installation process is more or less automated. For Windows
@@ -255,7 +254,7 @@ of syntax errors in any of these files (cf. [Customization section] of
 Tp-Note_'s man-page).
 
 
-## Building
+# Building
 
 If the above precompiled binaries do not suite you, you can
 compile _Tp-Note_ yourself.
@@ -392,7 +391,7 @@ This project follows [Semantic Versioning].
 
 
 
-## About
+# About
 
 Author:
 

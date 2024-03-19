@@ -1120,7 +1120,6 @@ runs _Tp-Note_ in editing mode.
 To test the configuration, navigate to some `.md` note file and
 press `[F3]` or `[Enter]`.
 
----
 
 [^1]: _Tp-Note_ is preconfigured to work with many well-known external text
       editors: e.g.: `code`, `atom`, `retext`, `geany`, `gedit`, `mousepad`,
@@ -1135,9 +1134,6 @@ press `[F3]` or `[Enter]`.
 [^3]: At the moment I do not recommend using [Typora](<https://typora.io/#download>) because of
       this bug: [Errornous rendering when the value of the last header var
       is the empty string · Issue #4633 · typora/typora-issues](https://github.com/typora/typora-issues/issues/4633)
-
-[^4]: Versions for other operating systems and a Debian package are
-      [available here](<https://blog.getreu.net/projects/tp-note/_downloads/>).
 
 [^6]: The `sed` filter is a workaround of a [bug in wkhtmltopdf](<https://github.com/wkhtmltopdf/wkhtmltopdf/issues/4960>).
       Once this is solved, you can remove the `sed` command. Then the line 4 of the above listing becomes:

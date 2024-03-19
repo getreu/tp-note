@@ -6,7 +6,7 @@ mkdir --parents ./build/man/man1
 
 cat << EOT >./source/index.md
 ---
-title: "Tp-Note - Minimalistic note-taking"
+title: "Tp-Note - Markup enhanced granular note-taking"
 subtitle: "Save and edit your clipboard content as a note file"
 author: Jens Getreu
 ---
@@ -15,9 +15,11 @@ EOT
 
 tail --lines=+4 ./source/README.md >>./source/index.md
 
-./docbook52pdf ./source/index.md ./build/pdf/README.pdf
+#sed -i 's/http.*\.getreu\.net//g' ./source/index.md
+./markdown2html ./source/index.md ./build/html/index.html
 
-sed -i 's/http.*\.getreu\.net//g' ./source/index.md
-./docbook52html ./source/index.md ./build/html/index.html
+
+./markdown2pdf ./source/index.md ./build/pdf/README.pdf
+
 
 rm index.md

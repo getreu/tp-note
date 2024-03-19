@@ -4,6 +4,7 @@ build-edit-env
 *.html
 *.msi
 .vscode/
+.direnv
 tests/functional/test_output/
 docs/build/dist/
 docs/build/html/
