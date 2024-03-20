@@ -1350,8 +1350,9 @@ to insert the value of environment variables. Consider the following example:
 [app_args]
 windows.editor = [
     [
-    "{{ get_env(name="LOCALAPPDATA") }}\Programs\Microsoft VS Code\Code.exe",
-    "--new-window", "--wait",
+        "{{get_env(name=\"LOCALAPPDATA\")}}\\Programs\\Microsoft VS Code\\Code.exe",
+        "-n",
+        "-w",
     ]
 ]
 ```
@@ -1364,7 +1365,7 @@ the username '`Joe`' to '`C:\User\Joe\AppData\Local`' resulting in:
 [app_args]
 windows.editor = [
     [
-    "C:\User\Joe\AppData\Local\Programs\Microsoft VS Code\Code.exe",
+    "C:\\User\\Joe\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
     "--new-window", "--wait",
     ]
 ]

@@ -1703,8 +1703,9 @@ Consider the following example:
 [app_args]
 windows.editor = [
     [
-    \[dq]{{ get_env(name=\[dq]LOCALAPPDATA\[dq]) }}\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[dq],
-    \[dq]--new-window\[dq], \[dq]--wait\[dq],
+        \[dq]{{get_env(name=\[rs]\[dq]LOCALAPPDATA\[rs]\[dq])}}\[rs]\[rs]Programs\[rs]\[rs]Microsoft VS Code\[rs]\[rs]Code.exe\[dq],
+        \[dq]-n\[dq],
+        \[dq]-w\[dq],
     ]
 ]
 .EE
@@ -1718,7 +1719,7 @@ Windows for a user with the username `\f[CR]Joe\f[R]' to
 [app_args]
 windows.editor = [
     [
-    \[dq]C:\[rs]User\[rs]Joe\[rs]AppData\[rs]Local\[rs]Programs\[rs]Microsoft VS Code\[rs]Code.exe\[dq],
+    \[dq]C:\[rs]\[rs]User\[rs]\[rs]Joe\[rs]\[rs]AppData\[rs]\[rs]Local\[rs]\[rs]Programs\[rs]\[rs]Microsoft VS Code\[rs]\[rs]Code.exe\[dq],
     \[dq]--new-window\[dq], \[dq]--wait\[dq],
     ]
 ]
