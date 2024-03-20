@@ -1,6 +1,14 @@
 #!/bin/sh
-docker-compose run --name tpnote-dev --rm dev
+#set -x
 
-### This is equivalent to:
-# cd ..
-# docker run -it --env USER=dockeruser -v $(pwd):/home/dockeruser/project build-env_dev /bin/bash
+HOST_PROJECT_DIR="$(dirname $(pwd))"
+SCRIPT_DIR="$(basename $(pwd))"
+DOCKER_PROJECT_DIR="/home/project"
+
+podman run --privileged --group-add keep-groups \
+   --workdir "$DOCKER_PROJECT_DIR" \
+   -v $HOST_PROJECT_DIR:$DOCKER_PROJECT_DIR \
+   -i -t \
+   build-env-dev \
+   bash 
+

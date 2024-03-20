@@ -93,7 +93,7 @@ stages:
             condition: ne( variables['Agent.OS'], 'Windows_NT' )
             displayName: Build
           - script: |
-              sudo apt-get install pandoc docbook5-xml docbook-xsl-ns xsltproc fop xmlto libxml2-utils xmlstarlet
+              sudo apt-get install pandoc weasyprint
               cd '$(Build.SourcesDirectory)/docs/'
               './make--all'
             condition: eq( variables['Agent.OS'], 'Linux' )

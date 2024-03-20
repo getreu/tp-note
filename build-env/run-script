@@ -3,12 +3,12 @@
 
 HOST_PROJECT_DIR="$(dirname $(pwd))"
 SCRIPT_DIR="$(basename $(pwd))"
-DOCKER_PROJECT_DIR="/home/dockeruser/project"
-DOCKER_SCRIPT_DIR="$DOCKER_PROJECT_DIR/$SCRIPT_DIR"
+DOCKER_PROJECT_DIR="/home/project"
 
-docker run \
-   -it --env USER=dockeruser \
+podman run --privileged --group-add keep-groups \
+   --workdir "$DOCKER_PROJECT_DIR" \
    -v $HOST_PROJECT_DIR:$DOCKER_PROJECT_DIR \
+   -i -t \
    build-env-dev \
-   /bin/bash -c "cd $DOCKER_SCRIPT_DIR; ./$1"
+   bash -c "cd \"$SCRIPT_DIR\"; ./$1"
 

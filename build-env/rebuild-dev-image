@@ -2,7 +2,7 @@
 #docker-compose build
 
 ### This is equivalent:
-docker build -t build-env-dev - < Dockerfile
+podman build -t build-env-dev - < Dockerfile
 
 ### Stop all containers with:
 #docker stop $(docker ps -q)

@@ -1,0 +1,7 @@
+#!/bin/sh
+set -x
+
+### You might want to (re-)build the Docker image before:
+#./build-doc-env/rebuild-dev-image
+
+./build-doc-env/run-script       ./make--all

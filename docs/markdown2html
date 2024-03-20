@@ -37,7 +37,7 @@ render () {
 
     # unfortunately the chain does not honor --number-section yet
     pandoc -s --to=html --from=markdown+yaml_metadata_block \
-           --toc=true --number-sections -H "$CssPath" \
+           --toc --number-sections -H "$CssPath" \
            -o "$HtmlPath" "$InPath"
 
 }
