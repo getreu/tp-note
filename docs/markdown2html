@@ -26,20 +26,22 @@ render () {
 
     ### Prepare
 
-    HtmlPath="$OutDir/$OutBase.html"
-    CssPath="$OutDir/web.css"
     mkdir -p "$OutDir"
 
     cp -r -L  "$InDir/assets/" "$OutDir"
     cp "$InDir/web.css" "$OutDir"
+    cp "$InPath" "$OutDir"
+    CssPath="web.css"
+    HtmlPath="$OutBase.html"
 
     ### Generate HTML
-
-    # unfortunately the chain does not honor --number-section yet
+    cd "$OutDir"
     pandoc -s --to=html --from=markdown+yaml_metadata_block \
            --toc --number-sections -H "$CssPath" \
-           -o "$HtmlPath" "$InPath"
+           -o "$HtmlPath" "$InFile"
 
+    # Remove temp files
+    rm "$InFile"
 }
 
 

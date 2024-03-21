@@ -4,6 +4,7 @@ mkdir --parents ./build/html
 mkdir --parents ./build/html/_downloads
 mkdir --parents ./build/man/man1
 
+
 cat << EOT >./source/index.md
 ---
 title: "Tp-Note - Markup enhanced granular note-taking"
@@ -13,13 +14,10 @@ author: Jens Getreu
 
 EOT
 
-tail --lines=+4 ./source/README.md >>./source/index.md
+tail -n +4 ./source/README.md >> ./source/index.md
 
 #sed -i 's/http.*\.getreu\.net//g' ./source/index.md
 ./markdown2html ./source/index.md ./build/html/index.html
-
-
 ./markdown2pdf ./source/index.md ./build/pdf/README.pdf
 
-
-rm index.md
+rm ./source/index.md

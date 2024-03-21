@@ -1,0 +1,14 @@
+#!/bin/sh
+#set -x
+
+HOST_PROJECT_DIR="$(pwd)"
+SCRIPT_DIR=""
+DOCKER_PROJECT_DIR="/home/project"
+
+podman run --privileged --group-add keep-groups \
+   --workdir "$DOCKER_PROJECT_DIR" \
+   -v $HOST_PROJECT_DIR:$DOCKER_PROJECT_DIR \
+   -i -t \
+   build-doc-env-dev \
+   sh 
+

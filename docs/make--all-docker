@@ -1,7 +1,17 @@
 #!/bin/sh
-set -x
 
-### You might want to (re-)build the Docker image before:
-#./build-doc-env/rebuild-dev-image
+# Change to this script directory
+cd "${0%/*}"
+rm -r ./build
 
-./build-doc-env/run-script       ./make--all
+# Gather input
+cp ../README.md ./source
+cp ../assets/tpnote-screenshot.png ./source/assets
+cp ../assets/tpnote.svg ./source/assets
+
+# Build
+./build-doc-env/run-script ./make--index
+./build-doc-env/run-script ./make--tpnote--manpage
+./build-doc-env/run-script ./make--tpnote--manual
+./build-doc-env/run-script ./make--symlinks
+

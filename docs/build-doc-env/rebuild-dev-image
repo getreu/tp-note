@@ -1,0 +1,13 @@
+#!/bin/sh
+podman build -t build-doc-env-dev - < Dockerfile
+
+### Stop all containers with:
+#podman stop $(docker ps -q)
+
+### Remove unused images with:
+# podman image prune --all
+
+### Remove all dangling data, i.e. containers stopped, volumes excluding
+### containers and images with no containers:
+# podman system prune --all
+

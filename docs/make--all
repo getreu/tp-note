@@ -4,6 +4,12 @@
 cd "${0%/*}"
 rm -r ./build
 
+# Gather input
+cp ../README.md ./source
+cp ../assets/tpnote-screenshot.png ./source/assets
+cp ../assets/tpnote.svg ./source/assets
+
+# Build
 ./make--index
 ./make--tpnote--manpage
 ./make--tpnote--manual
