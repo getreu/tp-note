@@ -3,8 +3,8 @@ build-edit-env
 *.sw?
 *.html
 *.msi
+.direnv/
 .vscode/
-.direnv
 tests/functional/test_output/
 docs/build/dist/
 docs/build/html/
