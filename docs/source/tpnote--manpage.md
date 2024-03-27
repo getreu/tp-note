@@ -1776,11 +1776,13 @@ filenames, is markup language agnostic. However, there is one content template
 syntax varies depending on the markup language. Hence, you should not forget to
 modify the '`tmpl.annotate_file_content`' content template, when you
 change the default markup language defined in '`filename.extension_default`'.
-Tp-Notes comes with three internal renderers:
 
-* Markdown (file extension `.md`)
-* ReStructuredText (file extension `.rst`) and
-* Link only (file extension `.txtnote`) 
+Tp-Note's built-in viewer is not markup language agnostic. It comprises three
+different markup renderers (cf. section _Customize the built-in note viewer_):
+
+* _Markdown_ (file extension `.md`)
+* _Restructuredtext_ (file extension `.rst`) and
+* _PlainText_ (Link only renderer, file extension `.txtnote`) 
 
 
 ### Change default markup language to ReStructuredText
@@ -1983,7 +1985,41 @@ tpnote -s zettel test.pdf
 
 ## Customize the built-in note viewer
 
-**Delay the launch of the web browser**
+### Change the way how note files are rendered for viewing
+
+Tp-Note's note built-in viewer comprises three markup language renders:
+
+* '`Markdown`'_ (file extension `.md`)\
+  This renderer is CommonMark compatible and feature complete. It understands,
+  inline images, tables and LaTeX formula:
+
+  ````md
+  ```math
+  x^n + y^n = z^n
+  ```
+  ````
+
+  Inline formulas are enclosed in backtick and Dollar characters, 
+  e.g. '` `$\alpha$` `'.
+
+* '`Restructuredtext`' (file extension `.rst`)\
+  This renderer is experimental and covers only basic markup.
+
+* '`PlainText`' (link only renderer, file extension `.txtnote`)\
+  The purpose of this renderer is to make hyperlinks written in 
+  Markdown, ReStructuredText, Asciidoc, HTML, Wikitext syntax clickable.
+  Only hyperlinks are rendered, all other text is shown verbatim.
+
+The configuration file variable '`filename.extensions`' associates the above
+listed markup renderers with note file extensions. In case none of them
+suit you, it is possible to disable the viewer feature selectively for one
+particular note file extension by associating it with the pseudo
+'`PlainTextNoViewer`' renderer. If you wish to disable the viewer feature
+overall (for all file extensions), set the variable '`arg_default.edit =
+true`'.
+
+
+### Delay the launch of the web browser
 
 By default, Tp-Note launches two external programs: some text editor and a
 web browser. If wished for, the configuration variable
@@ -1991,26 +2027,8 @@ web browser. If wished for, the configuration variable
 milliseconds.  This way the web browser window will always appear on top of the
 editor window.  A negative value delays the start of the text editor instead.
 
-**Change the way how note files are rendered for viewing**
 
-Besides its core function, Tp-Note comes with several built-in markup
-renderer and viewer, allowing to work with different markup languages at the
-same time. The configuration file variable '`filename.extensions`' determines
-which markup renderer is used for which note file extension. Depending on the
-markup language, this feature is more or less advanced and complete: _Markdown_
-(cf. '`Markdown`') is best supported and feature complete: It
-complies with the _Common Mark_ specification. The _ReStructuredText_ renderer
-(cf. '`Restructuredtext`') is quite new and still in experimental state.
-For all other supported markup languages Tp-Note provides a built-in markup
-source text viewer (cf. '`PlainText`') that shows the note as
-typed (without markup), but renders all hyperlinks to make them clickable.  In
-case none of the above rendition engines suit you, it is possible to disable
-the viewer feature selectively for some particular note file extensions: just
-associate these extensions with the '`PlainTextNoViewer`' renderer. If
-you wish to disable the viewer feature overall, set the variable
-'`arg_default.edit = true`'.
-
-**Change the HTML rendition template**
+### Change the HTML rendition template
 
 After the markup rendition process, Tp-Note's built-in viewer generates its
 final HTML rendition through the customizable HTML templates
@@ -2147,7 +2165,7 @@ viewer_error = '''
 '''
 ```
 
-**Customize the built-in HTML exporter**
+### Customize the built-in HTML exporter
 
 Customizing Tp-Note's HTML export function works the same way as
 customizing the built-in viewer. There are some slight differences though:

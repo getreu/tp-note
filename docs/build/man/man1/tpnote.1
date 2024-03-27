@@ -2167,13 +2167,17 @@ Hence, you should not forget to modify the
 `\f[CR]tmpl.annotate_file_content\f[R]' content template, when you
 change the default markup language defined in
 `\f[CR]filename.extension_default\f[R]'.
-Tp-Notes comes with three internal renderers:
+.PP
+Tp-Note\[cq]s built-in viewer is not markup language agnostic.
+It comprises three different markup renderers (cf.\ section
+\f[I]Customize the built-in note viewer\f[R]):
 .IP \[bu] 2
-Markdown (file extension \f[CR].md\f[R])
+\f[I]Markdown\f[R] (file extension \f[CR].md\f[R])
 .IP \[bu] 2
-ReStructuredText (file extension \f[CR].rst\f[R]) and
+\f[I]Restructuredtext\f[R] (file extension \f[CR].rst\f[R]) and
 .IP \[bu] 2
-Link only (file extension \f[CR].txtnote\f[R])
+\f[I]PlainText\f[R] (Link only renderer, file extension
+\f[CR].txtnote\f[R])
 .SS Change default markup language to ReStructuredText
 Tp-Note\[cq]s core function is a template system and as such it depends
 very little on the used markup language.
@@ -2387,8 +2391,51 @@ with:
 tpnote -s zettel test.pdf
 .EE
 .SS Customize the built-in note viewer
-\f[B]Delay the launch of the web browser\f[R]
+.SS Change the way how note files are rendered for viewing
+Tp-Note\[cq]s note built-in viewer comprises three markup language
+renders:
+.IP \[bu] 2
+`\f[CR]Markdown\f[R]'_ (file extension \f[CR].md\f[R])
+.PD 0
+.P
+.PD
+This renderer is CommonMark compatible and feature complete.
+It understands, inline images, tables and LaTeX formula:
+.RS 2
+.IP
+.EX
+\[ga]\[ga]\[ga]math
+x\[ha]n + y\[ha]n = z\[ha]n
+\[ga]\[ga]\[ga]
+.EE
 .PP
+Inline formulas are enclosed in backtick and Dollar characters,
+e.g.\ `\f[CR]\f[R]\f[I]α\f[R]\f[CR]\f[R]'.
+.RE
+.IP \[bu] 2
+`\f[CR]Restructuredtext\f[R]' (file extension \f[CR].rst\f[R])
+.PD 0
+.P
+.PD
+This renderer is experimental and covers only basic markup.
+.IP \[bu] 2
+`\f[CR]PlainText\f[R]' (link only renderer, file extension
+\f[CR].txtnote\f[R])
+.PD 0
+.P
+.PD
+The purpose of this renderer is to make hyperlinks written in Markdown,
+ReStructuredText, Asciidoc, HTML, Wikitext syntax clickable.
+Only hyperlinks are rendered, all other text is shown verbatim.
+.PP
+The configuration file variable `\f[CR]filename.extensions\f[R]'
+associates the above listed markup renderers with note file extensions.
+In case none of them suit you, it is possible to disable the viewer
+feature selectively for one particular note file extension by
+associating it with the pseudo `\f[CR]PlainTextNoViewer\f[R]' renderer.
+If you wish to disable the viewer feature overall (for all file
+extensions), set the variable `\f[CR]arg_default.edit = true\f[R]'.
+.SS Delay the launch of the web browser
 By default, Tp-Note launches two external programs: some text editor and
 a web browser.
 If wished for, the configuration variable
@@ -2397,34 +2444,7 @@ browser some milliseconds.
 This way the web browser window will always appear on top of the editor
 window.
 A negative value delays the start of the text editor instead.
-.PP
-\f[B]Change the way how note files are rendered for viewing\f[R]
-.PP
-Besides its core function, Tp-Note comes with several built-in markup
-renderer and viewer, allowing to work with different markup languages at
-the same time.
-The configuration file variable `\f[CR]filename.extensions\f[R]'
-determines which markup renderer is used for which note file extension.
-Depending on the markup language, this feature is more or less advanced
-and complete: \f[I]Markdown\f[R] (cf.\ `\f[CR]Markdown\f[R]') is best
-supported and feature complete: It complies with the \f[I]Common
-Mark\f[R] specification.
-The \f[I]ReStructuredText\f[R] renderer
-(cf.\ `\f[CR]Restructuredtext\f[R]') is quite new and still in
-experimental state.
-For all other supported markup languages Tp-Note provides a built-in
-markup source text viewer (cf.\ `\f[CR]PlainText\f[R]') that shows the
-note as typed (without markup), but renders all hyperlinks to make them
-clickable.
-In case none of the above rendition engines suit you, it is possible to
-disable the viewer feature selectively for some particular note file
-extensions: just associate these extensions with the
-`\f[CR]PlainTextNoViewer\f[R]' renderer.
-If you wish to disable the viewer feature overall, set the variable
-`\f[CR]arg_default.edit = true\f[R]'.
-.PP
-\f[B]Change the HTML rendition template\f[R]
-.PP
+.SS Change the HTML rendition template
 After the markup rendition process, Tp-Note\[cq]s built-in viewer
 generates its final HTML rendition through the customizable HTML
 templates `\f[CR]tmpl_html.viewer\f[R]',
@@ -2576,9 +2596,7 @@ viewer_error = \[aq]\[aq]\[aq]
 </html>
 \[aq]\[aq]\[aq]
 .EE
-.PP
-\f[B]Customize the built-in HTML exporter\f[R]
-.PP
+.SS Customize the built-in HTML exporter
 Customizing Tp-Note\[cq]s HTML export function works the same way as
 customizing the built-in viewer.
 There are some slight differences though: The role of the
