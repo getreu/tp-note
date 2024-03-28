@@ -158,7 +158,6 @@ fm_var.localization = [
 ###    `scheme.filename.sort_tag.letters_in_succession_max`.
 ### *  `IsConfguredScheme`: Assert, that -if the variable is defined- the
 ###    string equals to one of the `scheme.name` in the configuration file.
-###    IsConfiguredScheme,
 ### * `IsTpnoteExtension`: Assert, that if the variable is defined, the values
 ###    string representation is registered in one of the `filename.extension_*`
 ###    configuraion file variables.
@@ -370,7 +369,7 @@ from_text_file_filename = """
 {%- if path | file_sort_tag != '' -%}
   {%- set tag = path | file_sort_tag -%}
 {%- else -%}
-  {%- set tag = doc_file_date | date(format='%Y%m%d') -%}
+  {%- set tag = doc_file_date | default(value=now()) | date(format='%Y%m%d') -%}
 {%- endif -%}
 {{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
@@ -643,7 +642,7 @@ from_text_file_content = """
 {%- if path | file_sort_tag != '' -%}
   {%- set tag = path | file_sort_tag -%}
 {%- else -%}
-  {%- set tag = doc_file_date | date(format='%Y%m%d') -%}
+  {%- set tag = doc_file_date | default(value=now()) | date(format='%Y%m%d') -%}
 {%- endif -%}
 
 {%- set file = file | file_stem -%}
@@ -670,7 +669,7 @@ from_text_file_filename = """
   {%- if path | file_sort_tag != '' -%}
     {%- set tag = path | file_sort_tag -%}
   {%- else -%}
-    {%- set tag = doc_file_date | date(format='%Y%m%d') -%}
+    {%- set tag = doc_file_date | default(value=now()) | date(format='%Y%m%d') -%}
   {%- endif -%}
 {%- endif -%}
 
