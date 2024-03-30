@@ -1,4 +1,6 @@
 #!/bin/sh
+# Change to this script directory
+cd $(dirname "$0")
 
 # Unit testing
 

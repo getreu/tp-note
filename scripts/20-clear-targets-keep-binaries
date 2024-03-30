@@ -1,5 +1,7 @@
 #!/bin/sh
 #set -x
+# Change to this script directory
+cd $(dirname "$0")
 
 cd ..
 find target -mindepth 2 -not -path "*/release/tpnote" \

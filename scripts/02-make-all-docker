@@ -1,16 +1,18 @@
 #!/bin/sh
 set -x
+# Change to this script directory
+cd $(dirname "$0")
 
 ### You might want to (re-)build the Docker image before:
 #../build-env/rebuild-dev-image
 
-../build-env/run-script          ./10-clear-targets
+../build-env/run-script          ./scripts/10-clear-targets
 #../build-env/run-script          ./11-test
-../build-env/run-script          ./12-make-targets
+../build-env/run-script          ./scripts/12-make-targets
                                  ./15-make-docs
-../build-env/run-script          ./16-prepare-build-dir
-../build-env/run-script          ./17-make-deb-package
+../build-env/run-script          ./scripts/16-prepare-build-dir
+../build-env/run-script          ./scripts/17-make-deb-package
 # The following starts its own Docker container:
                                  ./18-make-win-msi-package
-../build-env/run-script          ./19-symlink-installer
-../build-env/run-script          ./20-clear-targets-keep-binaries
+../build-env/run-script          ./scripts/19-symlink-installer
+../build-env/run-script          ./scripts/20-clear-targets-keep-binaries
