@@ -2376,10 +2376,12 @@ In addition, Tp-Note defines the following variables:
   the whole content. Note, this variable is only available in the templates
   '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
-* '`{{ note_file_date }}`': is the file system creation date of the file
-  '`{{ path }}`' points to. Note, this variable is only available in the
-  templates '`from_text_file_*`', '`sync_filename`' and the HTML templates
-  below.
+* '`{{ doc_file_date }}`': is the file system creation date of the file
+  '`{{ path }}`' points to. This variable is only available in the
+  templates '`from_text_file_*`', '`sync_filename`' and in HTML templates.
+  This condition implies, that '`{{ path }}`' points to a file.
+  Note: on some platforms and with some filesystems, the variable 
+  '`{{ doc_file_date }}`' might not be defined.
 
 * '`{{ clipboard }}`' is the complete clipboard text.  In case the clipboard's
   content starts with a YAML header, the latter does not appear in this
@@ -2584,18 +2586,18 @@ A filter is always used together with a variable. Here are some examples:
   into HTML. The '`to_html`' must be followed by a '`safe`' filter to pass
   through the HTML formatting of objects and arrays.
 
-* '`{{ note_body_text | get_lang }}`' determines the natural language of
-  the variable '`{{ note_body_text }}` and returns the result as ISO 639-1
+* '`{{ doc_body_text | get_lang }}`' determines the natural language of
+  the variable '`{{ doc_body_text }}` and returns the result as ISO 639-1
   language code. The template filter '`{{ get_lang }}`' can be configured with
   the configuration file variable '`tmpl.filter.get_lang`'. The latter
   defines a list of ISO 639-1 codes, the detection algorithm considers as
   possible language candidates. Keep this list as small as possible, because
   language detection is computationally expensive. A long candidate list may
   slow down the note file creation workflow. If the detection algorithm can not
-  determine the language of '`{{ note_body_text }}`', the filter '`get_lang`'
-  returns the empty string.
+  determine the language of '`{{ doc_body_text }}`', the filter 
+  '`{{ get_lang }}`' returns an empty string.
 
-* '`{{ note_body_text | get_lang | map_lang }}`' maps the detected ISO 638-1
+* '`{{ doc_body_text | get_lang | map_lang }}`' maps the detected ISO 638-1
   language code to a complete IETF BCP 47 language tag, usually containing the
   region subtag. For example the input '`en`' results in '`en-US`'. This
   additional mapping is useful because the detection algorithm can not
@@ -2605,10 +2607,15 @@ A filter is always used together with a variable. Here are some examples:
   configuration, the input is passed through, e.g. '`fr`' results in '`fr`', or,
   the empty string results in an empty string.
 
-* '`{{ note_body_text | get_lang | map_lang(default=lang) }}`' adds an
+* '`{{ doc_body_text | get_lang | map_lang(default=lang) }}`' adds an
   extra mapping for the '`map_lang`' filter: when the input of the
   '`map_lang`' filter is the empty string, then it's output becomes the value
   of the '`{{ lang }}`' variable.
+
+* '`{{ doc_file_date | default(value=now()) | date(format='%Y%m%d') }}`'
+  Returns the formatted date of the file '`{{ path }}`' points to. Defaults
+  to the current date in cases '`{{ doc_file_date }}`' is not defined (see
+  _Template variables_ section).
 
 
 

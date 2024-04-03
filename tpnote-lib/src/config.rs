@@ -107,6 +107,7 @@ pub const TMPL_VAR_USERNAME: &str = "username";
 /// If defined, the environment variable `TPNOTE_LANG` overwrites this value
 /// (all operating systems).
 pub const TMPL_VAR_LANG: &str = "lang";
+
 /// All the front matter fields serialized as text, exactly as they appear in
 /// the front matter.
 pub const TMPL_VAR_DOC_FM_TEXT: &str = "doc_fm_text";
@@ -120,6 +121,8 @@ pub const TMPL_VAR_DOC_BODY_TEXT: &str = "doc_body_text";
 /// The date is represented as an integer the way `std::time::SystemTime`
 /// resolves to on the platform. Only available in the
 /// `tmpl.from_text_file_content`, `tmpl.sync_filename` and HTML templates.
+/// Note: this variable might not be defined with some filesystems or on some
+/// platforms.  
 pub const TMPL_VAR_DOC_FILE_DATE: &str = "doc_file_date";
 
 /// Prefix prepended to front matter field names when a template variable

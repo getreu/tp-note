@@ -2843,11 +2843,14 @@ Note, this variable is only available in the templates
 `\f[CR]from_text_file_*\f[R]', `\f[CR]sync_filename\f[R]' and the HTML
 templates below.
 .IP \[bu] 2
-`\f[CR]{{ note_file_date }}\f[R]': is the file system creation date of
+`\f[CR]{{ doc_file_date }}\f[R]': is the file system creation date of
 the file `\f[CR]{{ path }}\f[R]' points to.
-Note, this variable is only available in the templates
-`\f[CR]from_text_file_*\f[R]', `\f[CR]sync_filename\f[R]' and the HTML
-templates below.
+This variable is only available in the templates
+`\f[CR]from_text_file_*\f[R]', `\f[CR]sync_filename\f[R]' and in HTML
+templates.
+This condition implies, that `\f[CR]{{ path }}\f[R]' points to a file.
+Note: on some platforms and with some filesystems, the variable
+`\f[CR]{{ doc_file_date }}\f[R]' might not be defined.
 .IP \[bu] 2
 `\f[CR]{{ clipboard }}\f[R]' is the complete clipboard text.
 In case the clipboard\[cq]s content starts with a YAML header, the
@@ -3107,9 +3110,9 @@ Otherwise, the YAML rendition is appended with a newline character.
 The `\f[CR]to_html\f[R]' must be followed by a `\f[CR]safe\f[R]' filter
 to pass through the HTML formatting of objects and arrays.
 .IP \[bu] 2
-`\f[CR]{{ note_body_text | get_lang }}\f[R]' determines the natural
-language of the variable `\f[CR]{{ note_body_text }}\f[R] and returns
-the result as ISO 639-1 language code.
+`\f[CR]{{ doc_body_text | get_lang }}\f[R]' determines the natural
+language of the variable `\f[CR]{{ doc_body_text }}\f[R] and returns the
+result as ISO 639-1 language code.
 The template filter'\f[CR]{{ get_lang }}\f[R]\[cq] can be configured
 with the configuration file variable `\f[CR]tmpl.filter.get_lang\f[R]'.
 The latter defines a list of ISO 639-1 codes, the detection algorithm
@@ -3118,12 +3121,12 @@ Keep this list as small as possible, because language detection is
 computationally expensive.
 A long candidate list may slow down the note file creation workflow.
 If the detection algorithm can not determine the language of
-`\f[CR]{{ note_body_text }}\f[R]', the filter `\f[CR]get_lang\f[R]'
-returns the empty string.
+`\f[CR]{{ doc_body_text }}\f[R]', the filter `\f[CR]{{ get_lang }}\f[R]'
+returns an empty string.
 .IP \[bu] 2
-`\f[CR]{{ note_body_text | get_lang | map_lang }}\f[R]' maps the
-detected ISO 638-1 language code to a complete IETF BCP 47 language tag,
-usually containing the region subtag.
+`\f[CR]{{ doc_body_text | get_lang | map_lang }}\f[R]' maps the detected
+ISO 638-1 language code to a complete IETF BCP 47 language tag, usually
+containing the region subtag.
 For example the input `\f[CR]en\f[R]' results in `\f[CR]en-US\f[R]'.
 This additional mapping is useful because the detection algorithm can
 not determine the region automatically.
@@ -3134,11 +3137,17 @@ filter configuration, the input is passed through, e.g.\ `\f[CR]fr\f[R]'
 results in `\f[CR]fr\f[R]', or, the empty string results in an empty
 string.
 .IP \[bu] 2
-`\f[CR]{{ note_body_text | get_lang | map_lang(default=lang) }}\f[R]'
+`\f[CR]{{ doc_body_text | get_lang | map_lang(default=lang) }}\f[R]'
 adds an extra mapping for the `\f[CR]map_lang\f[R]' filter: when the
 input of the `\f[CR]map_lang\f[R]' filter is the empty string, then
 it\[cq]s output becomes the value of the `\f[CR]{{ lang }}\f[R]'
 variable.
+.IP \[bu] 2
+`\f[CR]{{ doc_file_date | default(value=now()) | date(format=\[aq]%Y%m%d\[aq]) }}\f[R]'
+Returns the formatted date of the file `\f[CR]{{ path }}\f[R]' points
+to.
+Defaults to the current date in cases `\f[CR]{{ doc_file_date }}\f[R]'
+is not defined (see \f[I]Template variables\f[R] section).
 .SS Content template conventions
 Tp-Note distinguishes two template types: content templates are used to
 create the note\[cq]s content (front-matter and body) and the
