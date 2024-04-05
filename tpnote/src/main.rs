@@ -62,7 +62,7 @@ struct About {
     version: String,
     features: Vec<String>,
     searched_config_file_paths: Vec<String>,
-    found_config_files: Vec<String>,
+    sourced_config_files: Vec<String>,
     copyright: String,
 }
 
@@ -194,7 +194,7 @@ fn main() {
                 .iter()
                 .map(|p| p.to_str().unwrap_or_default().to_owned())
                 .collect(),
-            found_config_files: CONFIG_PATHS
+            sourced_config_files: CONFIG_PATHS
                 .iter()
                 .filter(|p| p.exists())
                 .map(|p| p.to_str().unwrap_or_default().to_owned())
