@@ -52,7 +52,7 @@ pub trait NotePathBuf {
     /// use tpnote_lib::filename::NotePathBuf;
     ///
     /// // Prepare test: make sure that there is no note file.
-    /// let mut notefile = temp_dir().join("20221101-My day--Note.md");
+    /// let mut notefile = temp_dir().join("20221102-My day--Note.md");
     /// let _ = fs::remove_file(&notefile);
     /// // The name should not change.
     /// let expected = notefile.clone();
