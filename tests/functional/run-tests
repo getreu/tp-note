@@ -1,6 +1,6 @@
 #!/bin/sh
+cd $(dirname $(realpath "$0"))
 
-cd `realpath .`
 TESTOUTPUT="test_output"
 PWD="$(pwd)/$TESTOUTPUT"
 unset TPNOTE_CONFIG
