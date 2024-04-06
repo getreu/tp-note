@@ -14,9 +14,11 @@
 //! Contract: although `LIB_CFG` is mutable at runtime, it is sourced only
 //! once at the start of Tp-Note. All modification terminates before accessing
 //! the high-level API in the `workflow` module of this crate.
+use crate::error::LibCfgError;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_viewer_highlighting_css;
-use crate::{error::LibCfgError, markup_language::MarkupLanguage};
+use crate::markup_language::InputConverter;
+use crate::markup_language::MarkupLanguage;
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
@@ -286,7 +288,7 @@ pub struct Filename {
     pub sort_tag: SortTag,
     pub copy_counter: CopyCounter,
     pub extension_default: String,
-    pub extensions: Vec<(String, MarkupLanguage)>,
+    pub extensions: Vec<(String, InputConverter, MarkupLanguage)>,
 }
 
 /// Configuration for sort-tag.
@@ -469,7 +471,7 @@ impl LibCfg {
                     extensions: {
                         let mut list = scheme.filename.extensions.iter().fold(
                             String::new(),
-                            |mut output, (k, _v)| {
+                            |mut output, (k, _v1, _v2)| {
                                 let _ = write!(output, "{k}, ");
                                 output
                             },

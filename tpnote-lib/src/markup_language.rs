@@ -5,6 +5,8 @@ use crate::error::NoteError;
 #[cfg(feature = "renderer")]
 use crate::highlight::SyntaxPreprocessor;
 use crate::settings::SETTINGS;
+#[cfg(feature = "renderer")]
+use html2md::parse_html;
 use parse_hyperlinks::renderer::text_links2html;
 use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
@@ -18,15 +20,52 @@ use std::path::Path;
 #[cfg(feature = "renderer")]
 use std::str::from_utf8;
 
+/// Availble converters for converting the input from stdin or the clipboard
+/// to HTML.
+#[derive(Default, Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
+pub enum InputConverter {
+    /// Convert from HTML to Markdown.
+    ToMarkdown,
+    /// Do not convert, just pass through.
+    #[default]
+    PassThrough,
+}
+
+impl InputConverter {
+    /// Returns a function that implements the `InputConverter` looked up in
+    /// the `extensions` table in the `extension` line.
+    /// When `extension` is not found in `extensions`, the function returns
+    /// the pass-through filter.
+    #[cfg(feature = "renderer")]
+    #[inline]
+    pub(crate) fn get(extension: &str) -> fn(String) -> String {
+        let settings = SETTINGS.read_recursive();
+        let scheme = &LIB_CFG.read_recursive().scheme[settings.current_scheme];
+
+        let mut input_converter = InputConverter::default();
+        for e in &scheme.filename.extensions {
+            if e.0 == *extension {
+                input_converter = e.1;
+                break;
+            }
+        }
+
+        match input_converter {
+            InputConverter::ToMarkdown => |s| parse_html(&s),
+            _ => |s| s,
+        }
+    }
+}
+
 /// The Markup language of the note content.
 #[derive(Default, Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
 pub enum MarkupLanguage {
     Markdown,
-    Restructuredtext,
+    ReStructuredText,
     Html,
     PlainText,
-    /// The exporter renders this, but the viewer is disabled.
-    PlainTextNoViewer,
+    /// The markup langugae is known, but the renderer is disabled.
+    RendererDisabled,
     /// This is a Tp-Note file, but we are not able to determine the
     /// MarkupLanguage at this point.
     Unkown,
@@ -49,10 +88,10 @@ impl MarkupLanguage {
     pub fn mine_type(&self) -> Option<&'static str> {
         match self {
             Self::Markdown => Some("text/markodwn"),
-            Self::Restructuredtext => Some("x-rst"),
+            Self::ReStructuredText => Some("x-rst"),
             Self::Html => Some("text/html"),
             Self::PlainText => Some("text/plain"),
-            Self::PlainTextNoViewer => Some("text/plain"),
+            Self::RendererDisabled => Some("text/plain"),
             Self::Unkown => Some("text/plain"),
             _ => None,
         }
@@ -75,7 +114,7 @@ impl MarkupLanguage {
     /// Every `MarkupLanguage` variant has an own internal HTML renderer:
     /// * `Markdown` is rendered according the "CommonMark" standard.
     /// * Currently only as small subset of ReStructuredText is rendered for
-    ///   `Restructuredtext`. This feature is experimental.
+    ///   `ReStructuredText`. This feature is experimental.
     /// * The `Html` renderer simply forwards the input without modification.
     /// * `PlainText` is rendered as raw text. Hyperlinks in Markdown,
     ///   ReStructuredText, AsciiDoc and WikiText syntax are detected and
@@ -103,7 +142,7 @@ impl MarkupLanguage {
             }
 
             #[cfg(feature = "renderer")]
-            Self::Restructuredtext => {
+            Self::ReStructuredText => {
                 // Note, that the current rst renderer requires files to end with a new line.
                 // <https://github.com/flying-sheep/rust-rst/issues/30>
                 let mut rest_input = input.trim_start();
@@ -123,7 +162,7 @@ impl MarkupLanguage {
 
             Self::Html => input.to_string(),
 
-            Self::PlainText | Self::PlainTextNoViewer => text_links2html(input),
+            Self::PlainText | Self::RendererDisabled => text_links2html(input),
 
             Self::Unkown => text_rawlinks2html(input),
 
@@ -134,6 +173,8 @@ impl MarkupLanguage {
 
 impl From<&Path> for MarkupLanguage {
     /// Is the file extension ` at the end of the given path listed in
+    /// `file.extensions`?  Return the corresponding `MarkupLanguage`.
+    /// Only the extension of `Path` is condidered here.
     /// `file.extensions`?
     #[inline]
     fn from(path: &Path) -> Self {
@@ -155,7 +196,7 @@ impl From<&str> for MarkupLanguage {
 
         for e in &scheme.filename.extensions {
             if e.0 == file_extension {
-                return e.1;
+                return e.2;
             }
         }
 

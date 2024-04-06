@@ -6,6 +6,8 @@ use crate::config::TMPL_VAR_FM_;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 use crate::filename::NotePathStr;
+#[cfg(feature = "renderer")]
+use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
 #[cfg(feature = "lang-detection")]
 use crate::settings::FilterGetLang;
@@ -33,6 +35,14 @@ const CUT_LEN_MAX: usize = 200;
 #[cfg(test)]
 pub const CUT_LEN_MAX: usize = 10;
 
+/// Pattern to detect HTML in stdin.
+#[cfg(feature = "renderer")]
+const HTML_PAT1: &str = "<html";
+
+/// Pattern to detect HTML in stdin.
+#[cfg(feature = "renderer")]
+const HTML_PAT2: &str = "<!doctype html";
+
 lazy_static! {
 /// Tera object with custom functions registered.
     pub static ref TERA: Tera = {
@@ -48,6 +58,7 @@ lazy_static! {
         tera.register_filter("file_name", file_name_filter);
         tera.register_filter("file_ext", file_ext_filter);
         tera.register_filter("find_last_created_file", find_last_created_file);
+        tera.register_filter("html_to_markup", html_to_markup_filter);
         tera.register_filter("incr_sort_tag", incr_sort_tag_filter);
         tera.register_filter("prepend", prepend_filter);
         tera.register_filter("append", append_filter);
@@ -239,6 +250,41 @@ pub(crate) fn name<'a>(scheme: &'a Scheme, input: &'a str) -> &'a str {
         || input.strip_prefix(TMPL_VAR_FM_).unwrap_or(input),
         |l| &l.1,
     )
+}
+
+/// A filter that converts incoming HTML into some target markup language.
+/// The parameter file `extension` indicates in what Markup
+/// language the input is written. When no `extension` is given, the filler
+/// does not convert, it just passes through.
+/// This filter only converts if the first line of the input stream contains the
+/// patterns `<html` or `<!DOCTYPE html`.
+fn html_to_markup_filter<S: BuildHasher>(
+    value: &Value,
+    #[allow(unused_variables)] args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    #[allow(unused_mut)]
+    let mut buffer = try_get_value!("html_to_markup", "value", String, value);
+
+    #[cfg(feature = "renderer")]
+    {
+        let firstline = buffer
+            .lines()
+            .next()
+            .unwrap_or_default()
+            .to_ascii_lowercase();
+        if firstline.contains(HTML_PAT1) || firstline.contains(HTML_PAT2) {
+            let extension = if let Some(ext) = args.get("extension") {
+                try_get_value!("markup_to_html", "extension", String, ext)
+            } else {
+                String::new()
+            };
+
+            let converter = InputConverter::get(&extension);
+            buffer = converter(buffer);
+        }
+    }
+
+    Ok(Value::String(buffer))
 }
 
 /// Takes the markup formatted input and renders it to HTML.

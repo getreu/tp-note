@@ -67,43 +67,58 @@ copy_counter.closing_brackets = ")"
 ### this to another markup language.
 extension_default = "md"
 
-### The variable `filename.extensions` list file extensions that Tp-Note
-### considers as its own note files. Tp-Note opens these files, reads their
-### YAML header and launches an external file editor and file viewer (web
-### browser). According to the markup language used, the appropriate renderer
-### is called to convert the note's content into HTML. Technically, the renderer
-### is selected by the `markup_to_html` filter in `tmpl_html` templates. The 
-### associated second value in the below list parametrizes the `markup_to_html` 
-### filter. Currently, Tp-Note renders the following markup languages: 
+### The variable `filename.extensions` lists all file extensions that Tp-Note
+### considers as its own note files. The list entry is a tuple defined as 
+### follows:
+###     Vec[(extension, 
+###          html_to_markup(extension),
+###          markup_to_html(extension)
+###     )]
+###
+### The templates `from_clipboard` and `from_clipboard_yaml` contain some
+### `html_to_markup(extension)` filters which convert HTML clipboard content
+### into markup formatted content. The second tuple value of the vector
+### parametrizes the `html_to_markup` filter. It determines which converter is
+### used. Currently, the following converters are implemented:
+### * `ToMarkdown` and 
+### * `PassThrough`.
+### 
+### When Tp-Note's viewer displays a note file, the HTML output is generated
+### with `tmpl_html` templates. The templates contain some 
+### `markup_to_html(extension)` filters which are parametrized by the third
+### value of the tuple. It determines which renderer is used.
+### Currently, the following renderers are implemented: 
 ### * `Markdown`, 
-### * `Restructuredtext`, 
-### * `Html`, 
+### * `ReStructuredText`, 
+### * `PassThrough`, 
 ### * `PlainText` and 
-### * `PlainTextNoViewer`. 
-### When the renderer is `PlainTextNoViewer`, the viewer is disabled for note
-### files with this file extension. Otherwise, the rendered HTML is displayed to
-### the user via his web browser.
+### * `RendererDisabled`. 
+###
+### Normally, the rendered HTML is displayed to the user via his web browser.
+### Only when the selected renderer for a certain file extension is 
+### `RendererDisabled`, then no viewer is started.
+###
 ### NB: The list is ordered to look for the most common extensions first.
 extensions = [
-  ["txt", "Markdown"],
-  ["md", "Markdown"],
-  ["rst", "Restructuredtext"],
-  ["htmlnote", "Html"],
-  ["txtnote", "PlainText"],
-  ["adoc", "PlainText"],
-  ["text", "Markdown"],
-  ["markdn", "Markdown"],
-  ["markdown", "Markdown"],
-  ["mdown", "Markdown"],
-  ["mdtext", "Markdown"],
-  ["mdtxt", "Markdown"],
-  ["mdwn", "Markdown"],
-  ["mkd", "Markdown"],
-  ["rest", "Restructuredtext"],
-  ["asciidoc", "PlainText"],
-  ["mediawiki", "PlainTextNoViewer"],
-  ["mw", "PlainTextNoViewer"],
-  ["t2t", "PlainTextNoViewer"],
+  ["txt", "PassThrough", "Markdown"],
+  ["md", "ToMarkdown", "Markdown"],
+  ["rst", "ToMarkdown", "ReStructuredText"],
+  ["htmlnote", "PassThrough", "Html"],
+  ["txtnote", "ToMarkdown", "PlainText"],
+  ["adoc", "PassThrough", "PlainText"],
+  ["text", "PassThrough", "Markdown"],
+  ["markdn", "ToMarkdown", "Markdown"],
+  ["markdown", "ToMarkdown", "Markdown"],
+  ["mdown", "ToMarkdown", "Markdown"],
+  ["mdtext", "ToMarkdown", "Markdown"],
+  ["mdtxt", "ToMarkdown", "Markdown"],
+  ["mdwn", "ToMarkdown", "Markdown"],
+  ["mkd", "ToMarkdown", "Markdown"],
+  ["rest", "PassThrough", "ReStructuredText"],
+  ["asciidoc", "PassThrough", "PlainText"],
+  ["mediawiki", "PassThrough", "RendererDisabled"],
+  ["mw", "PassThrough", "RendererDisabled"],
+  ["t2t", "PassThrough", "RendererDisabled"],
 ]
 
 ### Template related settings for the scheme `default`.
@@ -442,25 +457,25 @@ copy_counter.opening_brackets = "("
 copy_counter.closing_brackets = ")"
 extension_default = "md"
 extensions = [
-  ["txt", "Markdown"],
-  ["md", "Markdown"],
-  ["rst", "Restructuredtext"],
-  ["htmlnote", "Html"],
-  ["txtnote", "PlainText"],
-  ["adoc", "PlainText"],
-  ["text", "Markdown"],
-  ["markdn", "Markdown"],
-  ["markdown", "Markdown"],
-  ["mdown", "Markdown"],
-  ["mdtext", "Markdown"],
-  ["mdtxt", "Markdown"],
-  ["mdwn", "Markdown"],
-  ["mkd", "Markdown"],
-  ["rest", "Restructuredtext"],
-  ["asciidoc", "PlainText"],
-  ["mediawiki", "PlainTextNoViewer"],
-  ["mw", "PlainTextNoViewer"],
-  ["t2t", "PlainTextNoViewer"],
+  ["txt", "PassThrough", "Markdown"],
+  ["md", "ToMarkdown", "Markdown"],
+  ["rst", "ToMarkdown", "ReStructuredText"],
+  ["htmlnote", "PassThrough", "Html"],
+  ["txtnote", "ToMarkdown", "PlainText"],
+  ["adoc", "PassThrough", "PlainText"],
+  ["text", "PassThrough", "Markdown"],
+  ["markdn", "ToMarkdown", "Markdown"],
+  ["markdown", "ToMarkdown", "Markdown"],
+  ["mdown", "ToMarkdown", "Markdown"],
+  ["mdtext", "ToMarkdown", "Markdown"],
+  ["mdtxt", "ToMarkdown", "Markdown"],
+  ["mdwn", "ToMarkdown", "Markdown"],
+  ["mkd", "ToMarkdown", "Markdown"],
+  ["rest", "PassThrough", "ReStructuredText"],
+  ["asciidoc", "PassThrough", "PlainText"],
+  ["mediawiki", "PassThrough", "RendererDisabled"],
+  ["mw", "PassThrough", "RendererDisabled"],
+  ["t2t", "PassThrough", "RendererDisabled"],
 ]
 
 [scheme.tmpl]

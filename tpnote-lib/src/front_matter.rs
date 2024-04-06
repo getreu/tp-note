@@ -168,7 +168,7 @@ impl FrontMatter {
                                         use std::fmt::Write;
                                         let mut errstr = scheme.filename.extensions.iter().fold(
                                             String::new(),
-                                            |mut output, (k, _v)| {
+                                            |mut output, (k, _v1, _v2)| {
                                                 let _ = write!(output, "{k}, ");
                                                 output
                                             },

@@ -56,7 +56,7 @@ impl Viewer {
         match MarkupLanguage::from(&*doc) {
             // A master document with this file extension is exempted from being viewed.
             // We quit here and do not start the viewer.
-            MarkupLanguage::PlainTextNoViewer => return Ok(()),
+            MarkupLanguage::RendererDisabled => return Ok(()),
             // This should never happen, since non-Tp-Note files are viewed as text files.
             MarkupLanguage::None => return Err(ViewerError::MarkupLanguageNone),
             // All other cases: start viewer.
