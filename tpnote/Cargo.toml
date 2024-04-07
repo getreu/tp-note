@@ -63,7 +63,7 @@ default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detectio
 # the console from where you started Tp-Note in `stderr` only.
 # Disable this feature if you do not want error message boxes.
 message-box = ["dep:msgbox", "dep:notify-rust"]
-read-clipboard = ["dep:arboard"]
+read-clipboard = ["dep:clipboard-rs", "wl-clipboard-rs"]
 viewer = ["dep:notify", "dep:notify-debouncer-mini", "dep:httparse", "dep:webbrowser", "dep:httpdate", "tpnote-lib/viewer"]
 # This feature declaration is forwarded to `tpnote_lib` and not used in this
 # crate.
@@ -73,8 +73,7 @@ lang-detection = ["tpnote-lib/lang-detection"]
 renderer = ["tpnote-lib/renderer"]
 
 [dependencies]
-# arboard: when cross compiling for `armv7-unknown-linux-gnueabihf`: `apt install crossbuild-essential-armhf`
-arboard = { version = "3.3.2", optional = true, default-features = false, features = ["wayland-data-control"] }
+clipboard-rs = { version = "*", optional = true }
 directories = "5.0.1"
 httparse = { version = "1.8.0", optional = true }
 httpdate = { version = "1.0.3", optional = true }
@@ -109,6 +108,9 @@ windows-sys = { version = "0.52.0", features = [
          "Win32_Globalization",
          "Win32_System_SystemServices",
      ] }
+
+[target.'cfg(unix)'.dependencies]
+wl-clipboard-rs = { version = "0.8.1", optional = true }
 
 # All, but not linux.
 [target.'cfg(not(all(unix, not(target_os = "macos"))))'.dependencies]

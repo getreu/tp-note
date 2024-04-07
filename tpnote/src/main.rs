@@ -33,7 +33,7 @@ mod workflow;
 
 #[cfg(feature = "message-box")]
 use crate::alert_service::AlertService;
-use crate::clipboard::Clipboard;
+use crate::clipboard::TpClipboard;
 use crate::config::Cfg;
 use crate::config::AUTHOR;
 use crate::config::CFG;
@@ -253,7 +253,7 @@ fn main() {
             Err(WorkflowError::Note(NoteError::InvalidInputYaml { .. }))
         )
     {
-        Clipboard::empty();
+        TpClipboard::empty();
     }
 
     if res.is_err() {
