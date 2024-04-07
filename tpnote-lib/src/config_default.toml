@@ -275,6 +275,8 @@ from_dir_filename = """
 ### When placed in YAML front matter, the filter `to_yaml` must be
 ### appended to each variable.
 from_clipboard_yaml_content = """
+{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
 {%- set lang = fm_lang 
     | default(value = fm_title 
     | default(value=stdin~clipboard|heading) 
@@ -324,6 +326,8 @@ from_clipboard_yaml_filename = """
 ### accessed with the variables: `{{ clipboard | link_text }}`, `
 ### {{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
 from_clipboard_content = """
+{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
 {%- set first_link = stdin ~ clipboard | link_text_picky -%}
 {%- set first_lines = stdin ~ clipboard | heading -%}
 
@@ -394,6 +398,8 @@ from_text_file_filename = """
 ### existing - to be annotated - non-`.md`-file. `{{ path}}` points to that
 ### file, `{{ dir_path }}` to the directory where it is located.
 annotate_file_content = """
+{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
 {%- set body_text = stdin ~ clipboard | trim -%}
 {%- if body_text != '' -%}
    {%- set lang_test_text = body_text | cut -%}
@@ -545,6 +551,8 @@ from_dir_filename = """
 {{ extension_default | prepend(with='.') }}"""
 
 from_clipboard_yaml_content = """
+{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
 {%- if fm_sort_tag -%}
   {%- set tag = fm_sort_tag -%}
 {%- else -%}
@@ -583,6 +591,8 @@ from_clipboard_yaml_content = """
 """
 
 from_clipboard_yaml_filename = """
+{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
 {%- set keywords = '' -%}
 {%- for sub in fm_keywords | default(value=[]) -%}
 {%- set_global keywords = keywords~sub~'_' -%}
@@ -600,6 +610,8 @@ from_clipboard_yaml_filename = """
 {{ fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
 
 from_clipboard_content = """
+{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
 {%- set first_link = stdin ~ clipboard | link_text_picky | cut -%}
@@ -702,6 +714,8 @@ from_text_file_filename = """
 {{ path | file_ext | prepend(with='.') }}"""
 
 annotate_file_content = """
+{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
 {%- set body_text = stdin ~ clipboard | trim -%}
 {%- if body_text != '' -%}
    {%- set lang_test_text = body_text | cut -%}
