@@ -115,7 +115,7 @@ lang:       en-GB
 
 When '`<path>`' is a directory and the clipboard is not empty, the clipboard's
 content is stored in the variable '`{{ clipboard }}`'. In addition, if the
-content contains a hyperlink in Markdown format, the hyperlink's name can be
+content contains a hyperlink, the first hyperlink's name can be
 accessed with '`{{ clipboard | link_text }}`', its URL with
 '`{{ clipboard | link_dest }}`' and its title with
 '`{{ clipboard | link_title }}`'. The new note is then created with the
@@ -127,10 +127,11 @@ synchronizes the note's metadata and its filename with the template
 
 Note: this operation mode also empties the clipboard (configurable feature).
 
+
 **Clipboard simulation**
 
 When no mouse and clipboard is available, the clipboard feature can be
-simulated by feeding the clipboard data into `stdin`:
+simulated by feeding the clipboard data into `stdin`.
 
 ```sh
 echo "[The Rust Book](<https://doc.rust-lang.org/book/>)" | tpnote
@@ -139,6 +140,12 @@ echo "[The Rust Book](<https://doc.rust-lang.org/book/>)" | tpnote
 Tp-Note behaves here as if the clipboard contained the string:
 "`[The Rust Book](<https://doc.rust-lang.org/book/>)`".
 
+
+**HTML to Markdown conversion**
+
+In case the clipboard or the `stdin` stream contains HTML, the internal filter
+'`{{ clipboard | html_to_markup(extension=extension_default) }}`' converts the 
+stream into Markdown before being processed.  
 
 
 ### The clipboard contains a string
@@ -2530,6 +2537,11 @@ A filter is always used together with a variable. Here are some examples:
   of '`dir_path`' (which is the final directory name in '`{{ path }}`').
   Unlike the '`file_name`' filter (which also returns the final component),
   '`trim_file_sort_tag`' trims the sort tag if there is one.
+
+* '`{{ clipboard | html_to_markup(extension=extension_default) }}`' converts
+  optional HTML originating from the clipboard into the target markup language
+  specified by '`extension_default`' and the converter lookup table
+  '`filename.extensions`' (second tuple).
 
 * '`{{ clipboard | cut }}`' is the first 200 bytes from the clipboard.
 
