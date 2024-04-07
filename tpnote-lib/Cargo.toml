@@ -10,7 +10,7 @@ name = "tpnote-lib"
 readme = "README.md"
 repository.workspace = true
 rust-version.workspace = true
-version = "0.32.3"
+version = "0.33.0"
 
 [features]
 default = ["renderer", "viewer", "lang-detection"]
@@ -24,7 +24,7 @@ latex2mathml = { version = "0.2.3", optional = true }
 lazy_static.workspace = true
 lingua = { version = "1.6.2", optional = true }
 log.workspace = true
-fast_html2md = { version = "*", optional = true }
+fast_html2md = { version = "0.0.9", optional = true }
 parking_lot.workspace = true
 # Plain text renderer.
 parse-hyperlinks = "0.27.2"
