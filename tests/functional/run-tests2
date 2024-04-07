@@ -21,7 +21,7 @@ mkdir -p "$PWD"
 cargo run -- -C "$PWD/tpnote.toml"
 # Remove all `date` lines of all templates.
 TP_NOTE_TEST_TOML="$PWD/tpnote-tmp.toml"
-grep -v -e "key='fm_date'"  "$PWD/tpnote.toml" > "$TP_NOTE_TEST_TOML"
+grep -v -e "key='fm_date'" "$PWD/tpnote.toml" > "$TP_NOTE_TEST_TOML"
 # Uncomment variables.
 sed -i -e 's/^# //g' "$TP_NOTE_TEST_TOML"
 
@@ -496,5 +496,37 @@ else
     echo Commandline test 116 failed.
     exit 1
 fi
+
+
+
+
+
+## Test 017: Create a new note, based on a string supplied by clipboard
+
+#echo -n '<html><h1>Good news</h1></html>' | xclip -selection clipboard
+
+# Tp-Note can choose between `fi-Fi` and `en-US`. The latter should be 
+# found.
+:> "$PWD/03b--test.md"
+echo '<html><h1>Good news</h1></html>' | \
+LANG="fi_FI.UTF-8" LOGNAME="myuser" \
+TPNOTE_LANG_DETECTION="en-US" \
+	cargo run -- --batch \
+    		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/03c--Good news-==========__note.md"
+
+if diff "$OUTPUT_FILENAME" "test117-clipboard-expected-output"
+then
+    echo Commandline test 117 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 117 failed.
+    exit 1
+fi
+
+
+
+
 
 exit 0
