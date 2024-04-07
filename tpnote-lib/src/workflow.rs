@@ -228,7 +228,9 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
     ///
     /// Some templates insert the content of the clipboard or the standard
     /// input pipe. The input data (can be empty) must be provided with the
-    /// parameters `clipboard` and `stdin`.
+    /// parameters `clipboard` and `stdin`. The templates expect text with
+    /// markup or HTML. In case of HTML, the content must start with
+    /// `<!DOCTYPE html` or `<html`
     pub fn upgrade<T: Content, F: Fn(TemplateKind) -> TemplateKind>(
         self,
         scheme_new_default: &'a str,

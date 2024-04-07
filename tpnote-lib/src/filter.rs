@@ -35,17 +35,13 @@ const CUT_LEN_MAX: usize = 200;
 #[cfg(test)]
 pub const CUT_LEN_MAX: usize = 10;
 
-/// Pattern to detect HTML in stdin.
+/// Lowercase pattern to detect HTML in stdin.
 #[cfg(feature = "renderer")]
-const HTML_PAT1: &str = "<html";
+const HTML_PAT1: &str = "<!doctype html";
 
-/// Pattern to detect HTML in stdin.
+/// Lowercase pattern to detect HTML in stdin.
 #[cfg(feature = "renderer")]
-const HTML_PAT2: &str = "<!doctype html";
-
-/// Pattern to detect HTML in stdin.
-#[cfg(feature = "renderer")]
-const HTML_PAT3: &str = "<meta ";
+const HTML_PAT2: &str = "<html";
 
 lazy_static! {
 /// Tera object with custom functions registered.
@@ -260,8 +256,8 @@ pub(crate) fn name<'a>(scheme: &'a Scheme, input: &'a str) -> &'a str {
 /// The parameter file `extension` indicates in what Markup
 /// language the input is written. When no `extension` is given, the filler
 /// does not convert, it just passes through.
-/// This filter only converts if the first line of the input stream contains the
-/// patterns `<html` or `<!DOCTYPE html`.
+/// This filter only converts, if the first line of the input stream starts with
+/// the pattern `<html` or `<!DOCTYPE html`.
 fn html_to_markup_filter<S: BuildHasher>(
     value: &Value,
     #[allow(unused_variables)] args: &HashMap<String, Value, S>,
@@ -274,12 +270,8 @@ fn html_to_markup_filter<S: BuildHasher>(
         let firstline = buffer
             .lines()
             .next()
-            .unwrap_or_default()
-            .to_ascii_lowercase();
-        if firstline.contains(HTML_PAT1)
-            || firstline.contains(HTML_PAT2)
-            || firstline.contains(HTML_PAT3)
-        {
+            .map(|l| l.trim_start().to_ascii_lowercase());
+        if firstline.is_some_and(|l| l.starts_with(HTML_PAT1) || l.starts_with(HTML_PAT2)) {
             let extension = if let Some(ext) = args.get("extension") {
                 try_get_value!("markup_to_html", "extension", String, ext)
             } else {

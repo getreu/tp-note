@@ -14,23 +14,42 @@ use wl_clipboard_rs::copy;
 #[cfg(unix)]
 use wl_clipboard_rs::paste;
 
+/// Lowercase test pattern to check if there is a document type declaration
+/// already.
+#[cfg(feature = "read-clipboard")]
+const HTML_PAT1: &str = "<!doctype ";
+/// Prepend a marker declaration, in case the content is HTML.
+#[cfg(feature = "read-clipboard")]
+const HTML_PAT2: &str = "<!DOCTYPE html>";
+
 pub(crate) struct TpClipboard;
 
 impl TpClipboard {
     /// Get a snapshot of the Markdown representation of the clipboard content.
+    /// If the content contains HTML, the marker `<!DOCTYPE html>` is
+    /// prepended.
     #[cfg(feature = "read-clipboard")]
     pub(crate) fn get_content() -> Option<String> {
+        // Query Wayland clipboard.
         #[cfg(unix)]
         let wl_clipboard = match paste::get_contents(
             paste::ClipboardType::Regular,
             paste::Seat::Unspecified,
             paste::MimeType::TextWithPriority("text/html"),
         ) {
-            Ok((mut pipe_reader, _mime_type)) => {
+            Ok((mut pipe_reader, mime_type)) => {
                 let mut buffer = String::new();
                 match pipe_reader.read_to_string(&mut buffer) {
                     Ok(l) if l > 0 => {
-                        //if mime_type == "text/html" ..
+                        if mime_type == "text/html"
+                            && !buffer
+                                .lines()
+                                .next()
+                                .map(|l| l.trim_start().to_ascii_lowercase())
+                                .is_some_and(|l| l.starts_with(HTML_PAT1))
+                        {
+                            buffer.insert_str(0, HTML_PAT2);
+                        }
                         Some(buffer)
                     }
                     _ => None,
@@ -45,11 +64,20 @@ impl TpClipboard {
         wl_clipboard.or_else(|| {
             // Query X11 keyboard.
             let ctx: ClipboardContext = ClipboardContext::new().ok()?;
+            let buffer = if let Ok(mut html) = ctx.get_html() {
+                if !html
+                    .lines()
+                    .next()
+                    .map(|l| l.trim_start().to_ascii_lowercase())
+                    .is_some_and(|l| l.starts_with(HTML_PAT1))
+                {
+                    html.insert_str(0, HTML_PAT2);
+                }
+                html
+            } else {
+                ctx.get_text().unwrap_or_default()
+            };
 
-            let mut buffer = ctx.get_html().or_else(|_| ctx.get_text()).ok()?;
-
-            // `trim_end()` content without new allocation.
-            buffer.truncate(buffer.trim_end().len());
             Some(buffer)
         })
     }
