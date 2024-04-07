@@ -43,6 +43,10 @@ const HTML_PAT1: &str = "<html";
 #[cfg(feature = "renderer")]
 const HTML_PAT2: &str = "<!doctype html";
 
+/// Pattern to detect HTML in stdin.
+#[cfg(feature = "renderer")]
+const HTML_PAT3: &str = "<meta ";
+
 lazy_static! {
 /// Tera object with custom functions registered.
     pub static ref TERA: Tera = {
@@ -272,7 +276,10 @@ fn html_to_markup_filter<S: BuildHasher>(
             .next()
             .unwrap_or_default()
             .to_ascii_lowercase();
-        if firstline.contains(HTML_PAT1) || firstline.contains(HTML_PAT2) {
+        if firstline.contains(HTML_PAT1)
+            || firstline.contains(HTML_PAT2)
+            || firstline.contains(HTML_PAT3)
+        {
             let extension = if let Some(ext) = args.get("extension") {
                 try_get_value!("markup_to_html", "extension", String, ext)
             } else {
