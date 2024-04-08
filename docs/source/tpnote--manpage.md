@@ -128,6 +128,13 @@ synchronizes the note's metadata and its filename with the template
 Note: this operation mode also empties the clipboard (configurable feature).
 
 
+**HTML to Markdown conversion**
+
+In case the clipboard or the `stdin` stream contains HTML, the internal filter
+'`{{ clipboard | html_to_markup(extension=extension_default) }}`' converts the
+stream into Markdown before being processed.
+
+
 **Clipboard simulation**
 
 When no mouse and clipboard is available, the clipboard feature can be
@@ -140,12 +147,13 @@ echo "[The Rust Book](<https://doc.rust-lang.org/book/>)" | tpnote
 Tp-Note behaves here as if the clipboard contained the string:
 "`[The Rust Book](<https://doc.rust-lang.org/book/>)`".
 
+When you pipe HTML into Tp-Note, make sure that the stream starts with
+either '`<!DOCTYPE html`' or '`<html`', e.g.:
 
-**HTML to Markdown conversion**
+```sh
+echo '<!DOCTYPE html><h1>Hello World</h1>'| tpnote
+```
 
-In case the clipboard or the `stdin` stream contains HTML, the internal filter
-'`{{ clipboard | html_to_markup(extension=extension_default) }}`' converts the 
-stream into Markdown before being processed.  
 
 
 ### The clipboard contains a string
