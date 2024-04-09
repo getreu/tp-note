@@ -6,7 +6,7 @@ use crate::config::TMPL_VAR_FM_;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 use crate::filename::NotePathStr;
-#[cfg(feature = "renderer")]
+#[cfg(feature = "html-clipboard")]
 use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
 #[cfg(feature = "lang-detection")]
@@ -36,11 +36,11 @@ const CUT_LEN_MAX: usize = 200;
 pub const CUT_LEN_MAX: usize = 10;
 
 /// Lowercase pattern to detect HTML in stdin.
-#[cfg(feature = "renderer")]
+#[cfg(feature = "html-clipboard")]
 const HTML_PAT1: &str = "<!doctype html";
 
 /// Lowercase pattern to detect HTML in stdin.
-#[cfg(feature = "renderer")]
+#[cfg(feature = "html-clipboard")]
 const HTML_PAT2: &str = "<html";
 
 lazy_static! {
@@ -265,7 +265,7 @@ fn html_to_markup_filter<S: BuildHasher>(
     #[allow(unused_mut)]
     let mut buffer = try_get_value!("html_to_markup", "value", String, value);
 
-    #[cfg(feature = "renderer")]
+    #[cfg(feature = "html-clipboard")]
     {
         let firstline = buffer
             .lines()

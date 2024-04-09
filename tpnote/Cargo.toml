@@ -55,7 +55,7 @@ assets = [
 ]
 
 [features]
-default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detection"]
+default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detection", "html-clipboard"]
 
 # To disable features: `cargo build --no-default-features`
 # If you can do away with error message popup boxes (for example on a headless
@@ -64,6 +64,10 @@ default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detectio
 # Disable this feature if you do not want error message boxes.
 message-box = ["dep:msgbox", "dep:notify-rust"]
 read-clipboard = ["dep:clipboard-rs", "wl-clipboard-rs"]
+# When the feature `read-clipboard` is also enabled, the clipboard detects HTML.
+# This feature declaration is used in this crate and also forwarded to 
+# `tpnote_lib`.
+html-clipboard = ["tpnote-lib/html-clipboard"]
 viewer = ["dep:notify", "dep:notify-debouncer-mini", "dep:httparse", "dep:webbrowser", "dep:httpdate", "tpnote-lib/viewer"]
 # This feature declaration is forwarded to `tpnote_lib` and not used in this
 # crate.
@@ -93,8 +97,8 @@ thiserror.workspace = true
 time = "0.3.34"
 tera.workspace = true
 toml.workspace = true
-#tpnote-lib = { path = "../tpnote-lib", default-features = false }
-tpnote-lib = { version = "0.33.2", default-features = false}
+tpnote-lib = { path = "../tpnote-lib", default-features = false }
+#tpnote-lib = { version = "0.33.2", default-features = false}
 webbrowser = { version = "0.8.14", optional = true }
 
 

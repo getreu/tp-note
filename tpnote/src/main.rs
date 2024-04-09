@@ -176,6 +176,8 @@ fn main() {
     if ARGS.version {
         #[allow(unused_mut)]
         let mut features = Vec::new();
+        #[cfg(feature = "html-clipboard")]
+        features.push("html-clipboard".to_string());
         #[cfg(feature = "lang-detection")]
         features.push("lang-detection".to_string());
         #[cfg(feature = "message-box")]

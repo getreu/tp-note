@@ -35,7 +35,10 @@ impl TpClipboard {
         let wl_clipboard = match paste::get_contents(
             paste::ClipboardType::Regular,
             paste::Seat::Unspecified,
+            #[cfg(feature = "html-clipboard")]
             paste::MimeType::TextWithPriority("text/html"),
+            #[cfg(not(feature = "html-clipboard"))]
+            paste::MimeType::Text,
         ) {
             Ok((mut pipe_reader, mime_type)) => {
                 let mut buffer = String::new();
@@ -64,6 +67,7 @@ impl TpClipboard {
         wl_clipboard.or_else(|| {
             // Query X11 keyboard.
             let ctx: ClipboardContext = ClipboardContext::new().ok()?;
+            #[cfg(feature = "html-clipboard")]
             let buffer = if let Ok(mut html) = ctx.get_html() {
                 if !html
                     .lines()
@@ -77,6 +81,9 @@ impl TpClipboard {
             } else {
                 ctx.get_text().unwrap_or_default()
             };
+
+            #[cfg(not(feature = "html-clipboard"))]
+            let buffer = ctx.get_text().unwrap_or_default();
 
             Some(buffer)
         })
