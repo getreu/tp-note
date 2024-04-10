@@ -562,4 +562,18 @@ fi
 
 
 
+## Test 906:  Compilation --no-default-features --features html-clipboard
+cargo check --no-default-features \
+            --features html-clipboard >/dev/null
+
+if [ $? -eq 0 ]
+then
+    echo Commandline test 906 succeeded.
+else
+    echo Commandline test 906 failed.
+    exit 1
+fi
+
+
+
 exit 0
