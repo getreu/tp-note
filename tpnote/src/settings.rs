@@ -193,9 +193,6 @@ lazy_static! {
             let _ = handle.read_to_string(&mut buffer);
         }
 
-        // `trim_end()` content without new allocation.
-        buffer.truncate(buffer.trim_end().len());
-
         ContentString::from_string_with_cr(buffer)
     };
 }

@@ -275,8 +275,9 @@ from_dir_filename = """
 ### When placed in YAML front matter, the filter `to_yaml` must be
 ### appended to each variable.
 from_clipboard_yaml_content = """
+{%- set stdin = stdin | html_to_markup(extension=extension_default) | append(newline=true) -%}
 {%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
-{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
+{%- set input = stdin ~ clipboard | trim_end -%}
 {%- set lang = fm_lang 
     | default(value = fm_title 
     | default(value=stdin~clipboard|heading) 
@@ -299,7 +300,7 @@ from_clipboard_yaml_content = """
     | append(newline=true) }}\
 ---
 
-{{ stdin ~ clipboard | trim }}
+{{ input }}
 
 """
 
@@ -326,10 +327,11 @@ from_clipboard_yaml_filename = """
 ### accessed with the variables: `{{ clipboard | link_text }}`, `
 ### {{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
 from_clipboard_content = """
+{%- set stdin = stdin | html_to_markup(extension=extension_default) | append(newline=true) -%}
 {%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
-{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
-{%- set first_link = stdin ~ clipboard | link_text_picky -%}
-{%- set first_lines = stdin ~ clipboard | heading -%}
+{%- set input = stdin ~ clipboard | trim_end -%}
+{%- set first_link = input | link_text_picky -%}
+{%- set first_lines = input | heading -%}
 
 {%- if first_link != '' -%} 
   {%- set title_text = first_link -%}
@@ -337,8 +339,7 @@ from_clipboard_content = """
   {%- set title_text = first_lines -%}
 {%- endif -%}
 
-{%- if first_link !='' and
-          stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut -%}
+{%- if first_link !='' and input | cut | linebreaksbr == input | cut -%}
   {%- set subtitle_text = 'url' -%}
 {%- else -%}
   {%- set subtitle_text = 'Note' -%}
@@ -351,7 +352,7 @@ from_clipboard_content = """
 {{ title_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
 ---
 
-{{ stdin ~ clipboard | trim }}
+{{ input }}
 
 """
 
@@ -398,9 +399,9 @@ from_text_file_filename = """
 ### existing - to be annotated - non-`.md`-file. `{{ path}}` points to that
 ### file, `{{ dir_path }}` to the directory where it is located.
 annotate_file_content = """
+{%- set stdin = stdin | html_to_markup(extension=extension_default) | append(newline=true) -%}
 {%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
-{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
-{%- set body_text = stdin ~ clipboard | trim -%}
+{%- set body_text = stdin ~ clipboard | trim_end -%}
 {%- if body_text != '' -%}
    {%- set lang_test_text = body_text | cut -%}
 {%- else -%}
@@ -551,8 +552,9 @@ from_dir_filename = """
 {{ extension_default | prepend(with='.') }}"""
 
 from_clipboard_yaml_content = """
+{%- set stdin = stdin | html_to_markup(extension=extension_default) | append(newline=true) -%}
 {%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
-{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
+{%- set input = stdin ~ clipboard | trim_end -%}
 {%- if fm_sort_tag -%}
   {%- set tag = fm_sort_tag -%}
 {%- else -%}
@@ -586,13 +588,11 @@ from_clipboard_yaml_content = """
     | append(newline=true) }}\
 ---
 
-{{ stdin ~ clipboard | trim }}
+{{ input }}
 
 """
 
 from_clipboard_yaml_filename = """
-{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
-{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
 {%- set keywords = '' -%}
 {%- for sub in fm_keywords | default(value=[]) -%}
 {%- set_global keywords = keywords~sub~'_' -%}
@@ -610,12 +610,13 @@ from_clipboard_yaml_filename = """
 {{ fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
 
 from_clipboard_content = """
+{%- set stdin = stdin | html_to_markup(extension=extension_default) | append(newline=true) -%}
 {%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
-{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
+{%- set input = stdin ~ clipboard | trim_end -%}
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
-{%- set first_link = stdin ~ clipboard | link_text_picky | cut -%}
-{%- set first_lines = stdin ~ clipboard | heading | cut  -%}
+{%- set first_link = input | link_text_picky | cut -%}
+{%- set first_lines = input | heading | cut  -%}
 
 {%- if first_link != '' -%} 
   {%- set title_text = first_link -%}
@@ -623,8 +624,7 @@ from_clipboard_content = """
   {%- set title_text = first_lines -%}
 {%- endif -%}
 
-{%- if first_link !='' and
-          stdin ~ clipboard | cut | linebreaksbr == stdin ~ clipboard | cut -%}
+{%- if first_link !='' and input | cut | linebreaksbr == input | cut -%}
   {%- set keywords_text = ['url'] -%}
 {%- else -%}
   {%- set keywords_text = ['note'] -%}
@@ -639,7 +639,7 @@ from_clipboard_content = """
 {{ tag | to_yaml(key='fm_sort_tag') }}
 ---
 
-{{ stdin ~ clipboard | trim }}
+{{ input }}
 
 """
 
@@ -714,9 +714,9 @@ from_text_file_filename = """
 {{ path | file_ext | prepend(with='.') }}"""
 
 annotate_file_content = """
+{%- set stdin = stdin | html_to_markup(extension=extension_default) | append(newline=true) -%}
 {%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
-{%- set stdin = stdin | html_to_markup(extension=extension_default) -%}
-{%- set body_text = stdin ~ clipboard | trim -%}
+{%- set body_text = stdin ~ clipboard | trim_end -%}
 {%- if body_text != '' -%}
    {%- set lang_test_text = body_text | cut -%}
 {%- else -%}
