@@ -413,7 +413,7 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
     ///
     /// #[cfg(not(target_family = "windows"))]
     /// assert!(raw_note.starts_with(
-    ///            "\u{feff}---\ntitle:        |\n  my stdin\n  my clipboard"));
+    ///            "\u{feff}---\ntitle:        |-\n  my stdin\n  my clipboard"));
     /// #[cfg(target_family = "windows")]
     /// assert!(raw_note.starts_with(
     ///            "\u{feff}---\r\ntitle:        |"));

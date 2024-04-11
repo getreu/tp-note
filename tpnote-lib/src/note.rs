@@ -789,7 +789,7 @@ Body text
         // Check the title and subtitle in the note's header.
         assert_eq!(
             n.context.get("fm_title").unwrap().as_str(),
-            Some("std\nclp\n")
+            Some("std\nclp")
         );
 
         assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
@@ -807,7 +807,7 @@ Body text
         assert!(n.rendered_filename.is_file());
         let raw_note = fs::read_to_string(&n.rendered_filename).unwrap();
         #[cfg(not(target_family = "windows"))]
-        assert!(raw_note.starts_with("\u{feff}---\ntitle:        |\n  std\n  clp"));
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:        |-\n  std\n  clp"));
         #[cfg(target_family = "windows")]
         assert!(raw_note.starts_with("\u{feff}---\r\ntitle:"));
     }
@@ -857,7 +857,7 @@ Body text
         // You can plug in your own type (must impl. `Content`).
         let mut n: Note<ContentString> =
             Note::from_content_template(context, TemplateKind::FromClipboardYaml).unwrap();
-        let expected_body = "\nstdin bodymy clipboard\n\n";
+        let expected_body = "\nstdin body\nmy clipboard\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
         assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("my dir"));
