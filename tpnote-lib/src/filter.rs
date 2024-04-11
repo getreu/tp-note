@@ -258,6 +258,8 @@ pub(crate) fn name<'a>(scheme: &'a Scheme, input: &'a str) -> &'a str {
 /// does not convert, it just passes through.
 /// This filter only converts, if the first line of the input stream starts with
 /// the pattern `<html` or `<!DOCTYPE html`.
+/// In any case, the output of the converter is trimmed at the end
+/// (`trim_end()`).
 fn html_to_markup_filter<S: BuildHasher>(
     value: &Value,
     #[allow(unused_variables)] args: &HashMap<String, Value, S>,
@@ -282,6 +284,9 @@ fn html_to_markup_filter<S: BuildHasher>(
             buffer = converter(buffer);
         }
     }
+
+    // Trim end without reallocation.
+    buffer.truncate(buffer.trim_end().len());
 
     Ok(Value::String(buffer))
 }
