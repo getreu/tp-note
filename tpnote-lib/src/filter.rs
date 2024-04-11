@@ -614,10 +614,7 @@ fn prepend_filter<S: BuildHasher>(
     if let Some(Value::Bool(newline)) = args.get("newline") {
         if *newline && !res.is_empty() {
             let mut s = String::new();
-            #[cfg(not(target_family = "windows"))]
             s.push('\n');
-            #[cfg(target_family = "windows")]
-            s.push_str("\r\n");
             s.push_str(&res);
             res = s;
         }
@@ -651,10 +648,7 @@ fn append_filter<S: BuildHasher>(
     if let Some(newline) = args.get("newline") {
         let newline = try_get_value!("newline", "newline", bool, newline);
         if newline && !res.is_empty() {
-            #[cfg(not(target_family = "windows"))]
             res.push('\n');
-            #[cfg(target_family = "windows")]
-            res.push_str("\r\n");
         }
     };
 
@@ -1489,13 +1483,7 @@ mod tests {
         args.insert("newline".to_string(), to_value(true).unwrap());
         let result = prepend_filter(&to_value("1. My first chapter").unwrap(), &args);
         assert!(result.is_ok());
-        #[cfg(not(target_family = "windows"))]
         assert_eq!(result.unwrap(), to_value("\n-1. My first chapter").unwrap());
-        #[cfg(target_family = "windows")]
-        assert_eq!(
-            result.unwrap(),
-            to_value("\r\n-1. My first chapter").unwrap()
-        );
     }
 
     #[test]
@@ -1519,13 +1507,7 @@ mod tests {
         args.insert("newline".to_string(), to_value(true).unwrap());
         let result = append_filter(&to_value("1. My first chapter").unwrap(), &args);
         assert!(result.is_ok());
-        #[cfg(not(target_family = "windows"))]
         assert_eq!(result.unwrap(), to_value("1. My first chapter-\n").unwrap());
-        #[cfg(target_family = "windows")]
-        assert_eq!(
-            result.unwrap(),
-            to_value("1. My first chapter-\r\n").unwrap()
-        );
     }
 
     #[test]
