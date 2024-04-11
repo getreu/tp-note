@@ -45,6 +45,7 @@ impl TpClipboard {
                 match pipe_reader.read_to_string(&mut buffer) {
                     Ok(l) if l > 0 => {
                         if mime_type == "text/html"
+                            && !buffer.trim_start().is_empty()
                             && !buffer
                                 .lines()
                                 .next()
@@ -69,11 +70,12 @@ impl TpClipboard {
             let ctx: ClipboardContext = ClipboardContext::new().ok()?;
             #[cfg(feature = "html-clipboard")]
             let buffer = if let Ok(mut html) = ctx.get_html() {
-                if !html
-                    .lines()
-                    .next()
-                    .map(|l| l.trim_start().to_ascii_lowercase())
-                    .is_some_and(|l| l.starts_with(HTML_PAT1))
+                if !html.trim_start().is_empty()
+                    && !html
+                        .lines()
+                        .next()
+                        .map(|l| l.trim_start().to_ascii_lowercase())
+                        .is_some_and(|l| l.starts_with(HTML_PAT1))
                 {
                     html.insert_str(0, HTML_PAT2);
                 }
