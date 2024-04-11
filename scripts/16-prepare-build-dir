@@ -1,5 +1,5 @@
 #!/bin/sh
- set -x
+# set -x
 # Change to this script directory
 cd $(dirname "$0")
 
