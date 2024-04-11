@@ -31,6 +31,7 @@ impl TpClipboard {
     #[cfg(feature = "read-clipboard")]
     pub(crate) fn get_content() -> Option<String> {
         // Query Wayland clipboard.
+
         #[cfg(unix)]
         let wl_clipboard = match paste::get_contents(
             paste::ClipboardType::Regular,
@@ -68,8 +69,10 @@ impl TpClipboard {
         wl_clipboard.or_else(|| {
             // Query X11 keyboard.
             let ctx: ClipboardContext = ClipboardContext::new().ok()?;
+            let mut buffer = String::new();
+
             #[cfg(feature = "html-clipboard")]
-            let buffer = if let Ok(mut html) = ctx.get_html() {
+            if let Ok(mut html) = ctx.get_html() {
                 if !html.trim_start().is_empty()
                     && !html
                         .lines()
@@ -79,13 +82,12 @@ impl TpClipboard {
                 {
                     html.insert_str(0, HTML_PAT2);
                 }
-                html
-            } else {
-                ctx.get_text().unwrap_or_default()
+                buffer = html;
             };
 
-            #[cfg(not(feature = "html-clipboard"))]
-            let buffer = ctx.get_text().unwrap_or_default();
+            if buffer.is_empty() {
+                buffer = ctx.get_text().unwrap_or_default();
+            };
 
             Some(buffer)
         })
