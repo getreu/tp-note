@@ -574,6 +574,8 @@ fn file_name_filter<S: BuildHasher>(
 
 /// A Tera filter that prepends the string parameter `with`, but only if the
 /// input stream is not empty.
+/// In addition, the flag `newline` inserts a newline character at end of the
+/// result. In case the input stream is empty nothing is appended.
 /// When called with the strings parameter `with_sort_tag`, the filter
 /// prepends the sort-tag and all necessary sort-tag separator characters,
 /// regardless whether the input stream in empty or not.
@@ -621,7 +623,7 @@ fn prepend_filter<S: BuildHasher>(
 
 /// A Tera filter that appends the string parameter `with`. In addition, the
 /// flag `newline` inserts a newline character at end of the result. In
-/// case the input stream is empty, nothing is appended.
+/// case the input stream is empty,  nothing is appended.
 /// The input type, and the type of the parameter `with`  must be
 /// `Value::String`. The parameter `newline` must be a `Value::Bool` and the
 /// output type is `Value::String()`.
@@ -643,7 +645,7 @@ fn append_filter<S: BuildHasher>(
 
     if let Some(newline) = args.get("newline") {
         let newline = try_get_value!("newline", "newline", bool, newline);
-        if newline {
+        if newline && !res.is_empty() {
             #[cfg(not(target_family = "windows"))]
             res.push('\n');
             #[cfg(target_family = "windows")]
