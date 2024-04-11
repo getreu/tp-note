@@ -1,9 +1,8 @@
 #!/bin/sh
 #set -x
 
-SCRIPT_DIR="$(dirname $(realpath "$0"))"
-HOST_PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-SCRIPT_DIR="$(basename "$SCRIPT_DIR""$0")"
+THIS_DIR="$(dirname $(realpath "$0"))"
+HOST_PROJECT_DIR="$(dirname "$THIS_DIR")"
 DOCKER_PROJECT_DIR="/home/project"
 
 podman run --privileged --group-add keep-groups \
