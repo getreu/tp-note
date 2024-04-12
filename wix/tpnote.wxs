@@ -99,6 +99,7 @@
                                 Id='exe0'
                                 Name='tpnote.exe'
                                 DiskId='1'
+                                Checksum='yes'
                                 Source='tpnote.exe'
                                 KeyPath='yes'/>
 

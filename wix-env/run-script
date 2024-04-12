@@ -1,0 +1,15 @@
+#!/bin/sh
+#set -x
+
+THIS_DIR="$(dirname $(realpath "$0"))"
+HOST_PROJECT_DIR="$(dirname "$THIS_DIR")"
+DOCKER_PROJECT_DIR="/home/project"
+SCRIPT_DIR="scripts"
+
+podman run --privileged --group-add keep-groups \
+   --workdir "$DOCKER_PROJECT_DIR" \
+   -v $HOST_PROJECT_DIR:$DOCKER_PROJECT_DIR \
+   -i -t \
+   wix-env-dev \
+   sh -c "cd \"$SCRIPT_DIR\"; ./$1"
+
