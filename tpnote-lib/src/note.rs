@@ -401,6 +401,7 @@ impl<T: Content> Note<T> {
             file_write = OpenOptions::new()
                 .write(true)
                 .create(true)
+                .truncate(true)
                 .open(&html_path)?;
             &mut file_write
         };
