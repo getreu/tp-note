@@ -607,9 +607,9 @@ dependencies = [
 
 [[package]]
 name = "clipboard-rs"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "470d6eecdad248c8e397cee1f78bc88415fd31b168e765170cc23d2a121c8294"
+checksum = "076424ae61edd5669dd9e7c4047faf842ee25c4da238591cc2fde30d5b618d36"
 dependencies = [
  "clipboard-win",
  "cocoa 0.25.0",
@@ -4557,7 +4557,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote"
-version = "1.24.1"
+version = "1.24.2"
 dependencies = [
  "clipboard-rs",
  "directories",
@@ -4580,7 +4580,7 @@ dependencies = [
  "thiserror",
  "time",
  "toml 0.8.12",
- "tpnote-lib",
+ "tpnote-lib 0.34.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "webbrowser",
  "win32job",
  "windows-sys 0.52.0",
@@ -4590,7 +4590,40 @@ dependencies = [
 
 [[package]]
 name = "tpnote-lib"
-version = "0.34.2"
+version = "0.34.3"
+dependencies = [
+ "fast_html2md",
+ "html-escape",
+ "latex2mathml",
+ "lazy_static",
+ "lingua",
+ "log",
+ "parking_lot",
+ "parse-hyperlinks",
+ "parse-hyperlinks-extras",
+ "percent-encoding",
+ "pulldown-cmark",
+ "rst_parser",
+ "rst_renderer",
+ "sanitize-filename-reader-friendly",
+ "self_cell",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "substring",
+ "syntect",
+ "tera",
+ "thiserror",
+ "toml 0.8.12",
+ "win32job",
+ "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "tpnote-lib"
+version = "0.34.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "282cee60d7aa71e121ab29f4eb9e35cfd9fa8e0d89d1420992c63d12d9cc7908"
 dependencies = [
  "fast_html2md",
  "html-escape",
