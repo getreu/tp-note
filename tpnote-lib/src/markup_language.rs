@@ -22,6 +22,7 @@ use std::str::from_utf8;
 
 /// Availble converters for converting the input from stdin or the clipboard
 /// to HTML.
+#[non_exhaustive]
 #[derive(Default, Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
 pub enum InputConverter {
     /// Convert from HTML to Markdown.
@@ -58,6 +59,7 @@ impl InputConverter {
 }
 
 /// The Markup language of the note content.
+#[non_exhaustive]
 #[derive(Default, Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
 pub enum MarkupLanguage {
     Markdown,
