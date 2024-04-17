@@ -3,7 +3,7 @@ title:      TP-NOTE(1) Version 1.24.2 | Tp-Note documentation
 subtitle:   Unix manpage
 author:     Jens Getreu
 filename_sync: false
-date:       2024-04-12
+date:       2024-04-17
 lang:       en-GB
 ---
 
@@ -21,8 +21,9 @@ Save and edit your clipboard content as a note file.
 
 # SYNOPSIS
 
-    tpnote [-a ] [-b] [-c <FILE>] [-C <FILE>] [-d <LEVEL>] [-e] [-l <LANG>]
-           [-p <NUM>] [-n] [-t] [-u] [-v] [-V] [-x <DIR>|''|'-']
+    tpnote [-a ] [-b] [-c <FILE>] [-C <FILE>] [-d <LEVEL>] [-e] 
+           [-l <LANG>] [-p <NUM>] [-n] [-t] [-u] [-v] [-V] 
+           [-x <DIR>|''|'-']
            [<DIR>|<FILE>]
 
 
@@ -62,7 +63,7 @@ can be found in [Tp-Note's user manual] and at [Tp-Note's project page].
 
 
 
-# OPERATION MODES
+# CREATING NOTE FILES
 
 Tp-Note operates in 5 different modes, depending on its command line arguments
 and the clipboard state. Each mode is associated with one content template and
@@ -408,10 +409,20 @@ A little game designed for primary kids to revise vocabulary in classroom.
 
   ```sh
   #!/bin/sh
+  curl "$1" | tpnote
+  ```
+
+  Instead of Tp-Note's internal HTML to Markdown converter, you can 
+  alternatively use the external '`pandoc`' converter. This method offers the
+  advantage to also convert the HTML page's metadata. Currently, Tp-Note's
+  internal converter lacks this feature.
+
+  ```sh
+  #!/bin/sh
   curl "$1" | pandoc --standalone -f html -t markdown_strict+yaml_metadata_block | tpnote
   ```
 
-  and make it executable:
+  Do not forget to make it runnable:
 
   ```sh
   sudo chmod a+x /usr/local/bin/download
@@ -423,29 +434,10 @@ A little game designed for primary kids to revise vocabulary in classroom.
   download 'https://blog.getreu.net'
   ```
 
-* **Use case: synchronize recursively filenames and metadata**
-
-  The following synchronizes bidirectionally all filenames with the note's YAML
-  header data.
-
-  ```sh
-  TPNOTE_USER="John" find . -type f -name '*.md' -exec tpnote -a -b {} > /dev/null \;
-  ```
-
-  The direction of the synchronization depends on whether the '`.md`' file has
-  a valid YAML header or not:
-
-  * A YAML header is present and valid: the header fields might update
-    the filename (see template '`tmpl.sync_filename`'). A possible _sort-tag_
-    at the beginning of the filename remains untouched.
-
-  * No YAML header: a new header is prepended (see template
-    '`from_text_file_content`') and the filename might change slightly
-    (see template '`from_text_file_filename`'). A possible _sort-tag_
-    at the beginning of the filename remains untouched. If the filename
-    does not start with a sort tag, the file's creation date is prepended.
 
 
+
+# NOTE FILE MANIPULATION
 
 ## Editing notes
 
@@ -459,6 +451,59 @@ Example: edit the note from the previous example:
 cd "./03-Favorite Readings"
 tpnote 20211031-Favorite Readings--Note.md
 ```
+
+
+
+## Viewing notes
+
+Once Tp-Note has launched the user's file editor, it opens the note file,
+renders its content to HTML, launches the user's web browser and connects it to
+Tp-Note's internal web server. Then, Tp-Note watches the note file and
+re-renders the viewed HTML when the content changes. The note's file extension
+determines which internal renderer is activated. 
+
+Tp-Note's note built-in viewer comprises three markup language renders:
+
+* '`Markdown`'_ (file extension `.md`)\
+  This renderer is CommonMark compatible and feature complete. It understands,
+  inline images, tables and LaTeX formula:
+
+  ````md
+  ```math
+  x^n + y^n = z^n
+  ```
+  ````
+
+  Inline formulas are enclosed in backtick and Dollar characters, 
+  e.g. '``` `$\alpha$` ```' becomes '` `$\alpha$` `'.
+
+  Source code is highlighted when you annotate the programming
+  language (see also '`tmpl_html.viewer_highlighting_theme`' and
+  '`tmpl_html.exporter_highlighting_theme`'):
+
+  ````md
+  ```rust
+  pub fn main(){
+    let w = "world!";
+    println!("Hallo {:?}", w);
+  }
+  ```
+  ````
+
+* '`ReStructuredText`' (file extension `.rst`)\
+  This renderer is experimental and covers only basic markup.
+
+* '`PlainText`' (link only renderer, file extension `.txtnote`)\
+  The purpose of this renderer is to make hyperlinks written in 
+  Markdown, ReStructuredText, Asciidoc, HTML, Wikitext syntax clickable.
+  Only hyperlinks are rendered, all other text is shown verbatim.
+
+Tp-Note's webserver streams large media files without loading them into
+memory. Just refer to the media file as local link: 
+'`[my video](<dir/my video.mp4>)`'. Make sure, that the file extension of the
+video file is registered with '`viewer.served_mime_types`'.
+
+
 
 
 ## Automatic filename synchronization before and after editing
@@ -488,6 +533,54 @@ After closing the text editor, Tp-Note updates the filename automatically:
 Note: the sort tag '`20200306`' has not changed. The filename synchronization
 mechanism by default never does. (See below for more details about filename
 synchronization).
+
+
+
+## Printing note files
+
+Tp-Note renders note files to HTML. The latter is either shown in the browser
+or can be exported with '`--export`'.  When exporting to HTML, hyperlinks
+are passed through an internal link rewriting engine that can be parametrized
+with '`--export-link-rewriting`'. The easiest way to print the resulting
+HTML, is to pipe it through an HTML to PDF converter, e.g. _weasyprint_ or
+_wkhtmktopdf_.
+
+```sh
+tpnote --export=- mynote.md | weasyprint - mynote.md.pdf
+```
+
+I prefer _weasyprint_ over _wkhtmltopdf_ because the latter is not maintained
+any more. Furthermore, weasyprint supports the 
+[CSS Paged Media](https://www.w3.org/TR/css-page-3/) standard allowing to
+include page layout directives into HTML. You can change the default page
+layout by modifying the HTML template with the '`tmpl_html.exporter_doc_css`'
+configuration file variable.
+
+
+
+## Use Tp-Note in shell scripts
+
+* **Use case: synchronize recursively filenames and metadata**
+
+  The following synchronizes bidirectionally all filenames with the note's YAML
+  header data.
+
+  ```sh
+  TPNOTE_USER="John" find . -type f -name '*.md' -exec tpnote -a -b {} > /dev/null \;
+  ```
+
+  The direction of the synchronization depends on whether the '`.md`' file has
+  a valid YAML header or not:
+
+  * A YAML header is present and valid: the header fields might update
+    the filename (see template '`tmpl.sync_filename`'). A possible _sort-tag_
+    at the beginning of the filename remains untouched.
+
+  * No YAML header: a new header is prepended (see template
+    '`from_text_file_content`') and the filename might change slightly
+    (see template '`from_text_file_filename`'). A possible _sort-tag_
+    at the beginning of the filename remains untouched. If the filename
+    does not start with a sort tag, the file's creation date is prepended.
 
 
 
@@ -521,9 +614,10 @@ synchronization).
 >   Loads an additional configuration from the TOML formatted *FILE* 
     and merges it into the default configuration.
 
-**-c** *FILE*, **\--config-defaults**=*FILE*
+**-C** *FILE*, **\--config-defaults**=*FILE*
 
->   Dumps the internal default configuration in TOML format into *FILE*.
+>   Dumps the internal default configuration in TOML format into *FILE* or
+    stdout if *FILE* equals to '`-`', e.g. '`tpnote -C - | less`'.
 
 **-d** *LEVEL*, **\--debug**=*LEVEL*
 
@@ -924,28 +1018,6 @@ Observations:
 | '`<tpnote:dir/01ac??-:,>`'                      | Tulips--red                 |
 | '`<tpnote:dir/01ac??--:,>`'                     | red                         |
 
-
-
-## Printing note files
-
-Tp-Note renders note files to HTML. The latter is either shown in the browser
-or can be exported with '`--export`'.  When exporting to HTML, hyperlinks
-are passed through an internal link rewriting engine that can be parametrized
-with '`--export-link-rewriting`'. The easiest way to print the resulting
-HTML, is to pipe it through an HTML to PDF converter, e.g. _weasyprint_ or
-_wkhtmktopdf_.
-
-```sh
-tpnote --export=- mynote.md | weasyprint - mynote.md.pdf
-```
-
-I prefer _weasyprint_ over _wkhtmltopdf_ because the latter is not maintained
-any more. Furthermore, weasyprint supports the 
-[CSS Paged Media](https://www.w3.org/TR/css-page-3/) standard allowing to
-include page layout directives into HTML. You can change the default page
-layout by modifying the HTML template with the '`tmpl_html.exporter_doc_css`'
-configuration file variable.
- 
 
 
 
@@ -1591,7 +1663,7 @@ extensions = [
   ["txt", "Markdown"],
   ["md", "Markdown"],
   ["markdown", "Markdown"],
-  ["rst", "Restructuredtext"],
+  ["rst", "ReStructuredText"],
   ["htmlnote", "Html"],
   ["txtnote", "PlainText"],
   ["adoc", "PlainText"],
@@ -1796,11 +1868,11 @@ Tp-Note's built-in viewer is not markup language agnostic. It comprises three
 different markup renderers (cf. section _Customize the built-in note viewer_):
 
 * _Markdown_ (file extension `.md`)
-* _Restructuredtext_ (file extension `.rst`) and
+* _ReStructuredText_ (file extension `.rst`) and
 * _PlainText_ (Link only renderer, file extension `.txtnote`) 
 
 
-### Change default markup language to ReStructuredText
+### Change the default markup language to ReStructuredText
 
 Tp-Note's core function is a template system and as such it depends
 very little on the used markup language. The default templates are
@@ -1841,7 +1913,7 @@ Then, in `annotate_file_content` replace the line:
 [{{ path | file_name }}](<{{ path | file_name }}>)
 ```
 
-with its RestructuredText counterpart:
+with its ReStructuredText counterpart:
 
 ```
 `<{{ path | file_name }}>`_
@@ -2002,36 +2074,14 @@ tpnote -s zettel test.pdf
 
 ### Change the way how note files are rendered for viewing
 
-Tp-Note's note built-in viewer comprises three markup language renders:
-
-* '`Markdown`'_ (file extension `.md`)\
-  This renderer is CommonMark compatible and feature complete. It understands,
-  inline images, tables and LaTeX formula:
-
-  ````md
-  ```math
-  x^n + y^n = z^n
-  ```
-  ````
-
-  Inline formulas are enclosed in backtick and Dollar characters, 
-  e.g. '` `$\alpha$` `'.
-
-* '`Restructuredtext`' (file extension `.rst`)\
-  This renderer is experimental and covers only basic markup.
-
-* '`PlainText`' (link only renderer, file extension `.txtnote`)\
-  The purpose of this renderer is to make hyperlinks written in 
-  Markdown, ReStructuredText, Asciidoc, HTML, Wikitext syntax clickable.
-  Only hyperlinks are rendered, all other text is shown verbatim.
-
-The configuration file variable '`filename.extensions`' associates the above
-listed markup renderers with note file extensions. In case none of them
-suit you, it is possible to disable the viewer feature selectively for one
-particular note file extension by associating it with the pseudo
-'`PlainTextNoViewer`' renderer. If you wish to disable the viewer feature
-overall (for all file extensions), set the variable '`arg_default.edit =
-true`'.
+Currently, three markup renderers are available: '`Markdown`',
+'`ReStructuredText`' and '`PlainText`'. The configuration file variable
+'`filename.extensions`' associates several note file extensions with one of
+these markup renderers. In case none of them suit you, it is possible to
+disable the viewer feature selectively for one particular note file extension
+by associating it with the pseudo '`RendererDisabled`' renderer. If you wish to
+disable the viewer feature overall (for all file extensions), set the variable
+'`arg_default.edit = true`'.
 
 
 ### Delay the launch of the web browser
