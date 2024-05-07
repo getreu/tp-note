@@ -93,23 +93,23 @@ pub struct Args {
     #[structopt(long, short = "n")]
     pub no_filename_sync: bool,
     /// Disables the automatic language detection and uses `<force-lang>`
-    /// instead; or, if `` use `TPNOTE_LANG` or `LANG`
+    /// instead; or, if '' use `TPNOTE_LANG` or `LANG`
     #[structopt(long, short = "l")]
     pub force_lang: Option<String>,
     /// Launches only the browser, no editor
     #[structopt(long, short = "v")]
     pub view: bool,
-    /// `<dir>` as new note location or `<file>` to open or to annotate
+    /// `<dir>` the new note's location or `<file>` to open or to annotate
     #[structopt(name = "PATH", parse(from_os_str))]
     pub path: Option<PathBuf>,
     /// Prints version and exits
     #[structopt(long, short = "V")]
     pub version: bool,
-    /// Saves the HTML rendition in the `<export>`
-    /// directory, the note's dir if '' or stdout if '-'.
+    /// Saves the HTML rendition in the `<export>` directory,
+    /// the note's directory if '' or stdout if '-'.
     #[structopt(long, short = "x", parse(from_os_str))]
     pub export: Option<PathBuf>,
-    /// Exporter local link rewriting: "off", "short", "long (default)"
+    /// Exporter local link rewriting: "off", "short", "long" (default)
     #[structopt(long)]
     pub export_link_rewriting: Option<LocalLinkKind>,
 }
