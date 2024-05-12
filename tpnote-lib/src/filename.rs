@@ -965,14 +965,14 @@ mod tests {
     }
 
     #[test]
-    fn test_has_wellformed() {
+    fn test_has_wellformed_filename() {
         use crate::filename::NotePath;
         use std::path::Path;
 
         // Test long filename.
         assert!(&Path::new("long filename.ext").has_wellformed_filename());
 
-        // Test long file path, this fails.
+        // Test long file path.
         assert!(&Path::new("long directory name/long filename.ext").has_wellformed_filename());
 
         // Test dot file

@@ -650,17 +650,17 @@ impl<'a> Hyperlink for Link<'a> {
 /// Remark: The link's text property is never changed. However, there is
 /// one exception: when the link's text contains a string similar to URLs,
 /// starting with `http:` or `tpnote:`. In this case, the string is interpreted
-/// URL and only the stem of the filename is displayed, e.g.
-/// `<a ...>http:dir/my file.md</a>` is rewritten into `<a ...>my file</a>`.
+/// as URL and only the stem of the filename is displayed, e.g.
+/// `<a ...>http:dir/my file.md</a>` is replaced with `<a ...>my file</a>`.
 ///
 /// Before a local (converted) link is reinserted in the output HTML,
 /// a copy is inserted into `allowed_local_links` for further bookkeeping.
 ///
 /// decoded. After rewriting, the links are finally HTML escape encoded before
 /// the are reinserted in the output HTML of this function.
-/// NB2: It is guaranteed, that the resulting HTML document contains only local links
-/// to other documents within `root_path`. Deviant links displayed as `INVALID
-/// LOCAL LINK` and URL is discarded.
+/// NB2: It is guaranteed, that the resulting HTML document contains only local
+/// links to other documents within `root_path`. Deviant links displayed as
+/// `INVALID LOCAL LINK` and URL is discarded.
 pub fn rewrite_links(
     html_input: String,
     root_path: &Path,
