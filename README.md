@@ -174,8 +174,7 @@ Repository:
 
 ### Tp-Note on NixOS
 
-* An official package is available on NixOS (as of 2024-03-16, only on the
-  unstable branch):
+* An official package is available on NixOS:
 
   ```nix
    environment.systemPackages = [ pkgs.tpnote ]; 
@@ -301,13 +300,14 @@ compile _Tp-Note_ yourself.
 
    The use of notifications also removes former GTK dependencies. Anyway,
    if you prefer to see error messages on the console only, you can opt
-   out notifications and message boxes. In this case all error messages
-   are dumped on the console from where you started _Tp-Note_ into
-   `stderr`:
+   out notifications and message boxes by omitting the `message-box` feature. In
+   this case all error messages are dumped on the console from where you started
+   _Tp-Note_ into `stderr`:
 
    ```sh
-   cargo install --no-default-features \
-     --features read-clipboard,viewer,renderer,lang-detection tp-note
+   cargo install --no-default-features --features \
+     html-clipboard,lang-detection,read-clipboard,renderer,viewer \
+     tpnote
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
    ```
 
@@ -319,7 +319,8 @@ compile _Tp-Note_ yourself.
    yourself without default features:
 
    ```sh
-   cargo install --no-default-features --features renderer,lang-detection tp-note
+   cargo install --no-default-features \
+     --features lang-detection,renderer tpnote
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
    ```
 
