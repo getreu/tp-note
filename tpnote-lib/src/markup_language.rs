@@ -5,7 +5,7 @@ use crate::error::NoteError;
 #[cfg(feature = "renderer")]
 use crate::highlight::SyntaxPreprocessor;
 use crate::settings::SETTINGS;
-#[cfg(feature = "html-clipboard")]
+#[cfg(feature = "renderer")]
 use html2md::parse_html;
 use parse_hyperlinks::renderer::text_links2html;
 use parse_hyperlinks::renderer::text_rawlinks2html;
@@ -37,7 +37,7 @@ impl InputConverter {
     /// the `extensions` table in the `extension` line.
     /// When `extension` is not found in `extensions`, the function returns
     /// the pass-through filter.
-    #[cfg(feature = "html-clipboard")]
+    #[cfg(feature = "renderer")]
     #[inline]
     pub(crate) fn get(extension: &str) -> fn(String) -> String {
         let settings = SETTINGS.read_recursive();
