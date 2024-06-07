@@ -352,7 +352,13 @@ well as with the `--no-default-features` console only version.
   sudo apt install pandoc curl
   ```
 
-  Download and convert:
+  Download and convert the HTML input internally:
+  
+  ```bash
+  curl 'https://blog.getreu.net' | tpnote
+  ```
+
+  Or, let Pandoc do the HTML to Markdown conversion:
 
   ```bash
   curl 'https://blog.getreu.net' | pandoc -f html -t markdown_strict | tpnote
@@ -447,7 +453,7 @@ well as with the `--no-default-features` console only version.
   or, equivalent but shorter:
 
   ```bash
-  tpnote --export= './my_notes/20210209-debug--Note.md'
+  tpnote --export='' './my_notes/20210209-debug--Note.md'
   ```
 
   or, even shorter:
@@ -458,16 +464,16 @@ well as with the `--no-default-features` console only version.
 
 * Generate a PDF rendition of an existing note file :
 
-  Install the `wkhtmltopdf`-tool:
+  Install the `weasyprint`-tool:
 
   ```bash
-  sudo apt install wkhtmltopdf
+  sudo apt install  | weasyprint
   ```
 
   Generate the PDF rendition of the existing note `20210122-my--Note.md`:
 
   ```bash
-  tpnote -x - '20210122-my--Note.md' | wkhtmltopdf - '20210209-debug--Note.md.pdf'
+  tpnote -x - '20210122-my--Note.md' | weasyprint - 20210209-debug--Note.md.pdf'
   ```
 
 * View and follow hyperlinks in a note file:
@@ -599,7 +605,7 @@ details).
 _Tp-Note_'s note files can be printed directly from the viewer (webbrowser)
 window or first converted into `.html` with `tpnote -x '' mynote.md`. For other
 formats e.g. `.docx`, `.odt` and `.pdf` use [Pandoc](https://pandoc.org/)
-or `wkhtmltopdf`.
+or `weasyprint`.
 
 
 ```{=docbook}
@@ -982,7 +988,7 @@ Then edit the system-wide Thunar configuration file:
 
     sudo nano /etc/xdg/Thunar/uca.xml
 
-Search for `</actions>` and replace it with: [^6]
+Search for `</actions>` and replace it with:
 
 ```xml
 <action>
@@ -1134,10 +1140,6 @@ press `[F3]` or `[Enter]`.
 [^3]: At the moment I do not recommend using [Typora](<https://typora.io/#download>) because of
       this bug: [Errornous rendering when the value of the last header var
       is the empty string · Issue #4633 · typora/typora-issues](https://github.com/typora/typora-issues/issues/4633)
-
-[^6]: The `sed` filter is a workaround of a [bug in wkhtmltopdf](<https://github.com/wkhtmltopdf/wkhtmltopdf/issues/4960>).
-      Once this is solved, you can remove the `sed` command. Then the line 4 of the above listing becomes:
-      `<command>tpnote --export=- %f | wkhtmltopdf --footer-center "[page]/[topage]" -B 2cm -L 2cm -R 2cm -T 2cm - %f.pdf</command>`
 
 
 [Tp-Note's man-page]: http://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization
