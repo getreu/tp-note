@@ -275,7 +275,7 @@ impl NotePath for Path {
             .unwrap_or_default(); // Trim `sort_tag`.
 
         let (stem_copy_counter, ext) = if !ext.is_empty()
-            && ext.chars().all(|c| c.is_ascii_alphanumeric())
+            && ext.chars().all(|c| c.is_alphanumeric())
         {
             (
                 // This is a little faster than `stem_copy_counter_ext.file_stem()`.
