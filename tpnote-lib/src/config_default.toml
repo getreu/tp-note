@@ -8,7 +8,7 @@ scheme_sync_default = "default"
 
 [[scheme]]
 
-### The name of this scheme. The data is in `scheme_filename` and
+### The name of this scheme. The data is in `scheme.filename` and
 ### `scheme.tmpl`.
 name = "default"
 
