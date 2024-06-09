@@ -301,7 +301,10 @@ impl<T: Content> Note<T> {
         if !from_path.exclude_copy_counter_eq(&self.rendered_filename) {
             // rename file
             fs::rename(from_path, &self.rendered_filename)?;
-            log::trace!("File renamed to {:?}", self.rendered_filename);
+            log::trace!(
+                "File renamed to {}",
+                self.rendered_filename.to_str().unwrap_or_default()
+            );
         }
         Ok(())
     }
