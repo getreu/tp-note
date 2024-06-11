@@ -381,6 +381,22 @@ pub enum NoteError {
         source_str: String,
     },
 
+    /// Remedy: check YAML syntax in the input stream's front matter.
+    #[error(
+        "Invalid HTML in the input stream data found:\n\
+        {source_str}"
+    )]
+    InvalidHtml {
+        source_str: String,
+    },
+
+    /// Remedy: reconfigure `scheme.filename.extensions.1`.
+    #[error(
+        "Filter `html_to_markup` is disabled for this \n\
+        `extension_default` in table `scheme.filename.extensions.1`."
+    )]
+    HtmlToMarkupDisabled,
+
     /// Remedy: correct link path.
     #[error("<INVALID: {path}>")]
     InvalidLocalPath { path: String },

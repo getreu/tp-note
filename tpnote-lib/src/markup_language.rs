@@ -27,8 +27,10 @@ use std::str::from_utf8;
 pub enum InputConverter {
     /// Convert from HTML to Markdown.
     ToMarkdown,
-    /// Do not convert, just pass through.
+    /// Do not convert, through an error instead.
     #[default]
+    Disabled,
+    /// Do not convert, just pass through.
     PassThrough,
 }
 
@@ -36,10 +38,10 @@ impl InputConverter {
     /// Returns a function that implements the `InputConverter` looked up in
     /// the `extensions` table in the `extension` line.
     /// When `extension` is not found in `extensions`, the function returns
-    /// the pass-through filter.
+    /// an NoteError.
     #[cfg(feature = "renderer")]
     #[inline]
-    pub(crate) fn get(extension: &str) -> fn(String) -> String {
+    pub(crate) fn get(extension: &str) -> fn(String) -> Result<String, NoteError> {
         let settings = SETTINGS.read_recursive();
         let scheme = &LIB_CFG.read_recursive().scheme[settings.current_scheme];
 
@@ -52,8 +54,17 @@ impl InputConverter {
         }
 
         match input_converter {
-            InputConverter::ToMarkdown => |s| parse_html(&s),
-            _ => |s| s,
+            InputConverter::ToMarkdown => |s| {
+                Ok(parse_html(&s))
+                // // Alternative converter:
+                // use html2md_rs::to_md::safe_from_html_to_md;
+                // safe_from_html_to_md(s).map_err(|e| NoteError::InvalidHtml {
+                //   source_str: e.to_string() })
+            },
+            InputConverter::Disabled => {
+                |_: String| -> Result<String, NoteError> { Err(NoteError::HtmlToMarkupDisabled) }
+            }
+            _ => Ok,
         }
     }
 }

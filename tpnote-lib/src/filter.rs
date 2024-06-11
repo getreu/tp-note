@@ -281,7 +281,13 @@ fn html_to_markup_filter<S: BuildHasher>(
             };
 
             let converter = InputConverter::get(&extension);
-            buffer = converter(buffer);
+            buffer = match converter(buffer) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::warn!("{}", e.to_string());
+                    e.to_string()
+                },
+            };
         }
     }
 
