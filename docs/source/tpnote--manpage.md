@@ -115,11 +115,13 @@ lang:       en-GB
 ## Create a new note based on clipboard data
 
 When '`<path>`' is a directory and the clipboard is not empty, the clipboard's
-content is stored in the variable '`{{ clipboard }}`'. In addition, if the
+content is stored in the variables '`{{ txt_clipboard }}`' and 
+'`{{ html_clipboard }}`'. The latter contains the HTML rich text version
+of the clipboard content. In addition, if the
 content contains a hyperlink, the first hyperlink's name can be
-accessed with '`{{ clipboard | link_text }}`', its URL with
-'`{{ clipboard | link_dest }}`' and its title with
-'`{{ clipboard | link_title }}`'. The new note is then created with the
+accessed with '`{{ txt_clipboard | link_text }}`', its URL with
+'`{{ txt_clipboard | link_dest }}`' and its title with
+'`{{ txt_clipboard | link_title }}`'. The new note is then created with the
 '`tmpl.from_clipboard_content`' and the '`tmpl.from_clipboard_filename`'
 templates. Finally, the newly created note file is opened again with some
 external text editor. When the user closes the text editor, Tp-Note
@@ -131,9 +133,18 @@ Note: this operation mode also empties the clipboard (configurable feature).
 
 **HTML to Markdown conversion**
 
-In case the clipboard or the `stdin` stream contains HTML, the internal filter
-'`{{ clipboard | html_to_markup(extension=extension_default) }}`' converts the
-stream into Markdown before being processed.
+In case the clipboard stream contains HTML, the internal filter
+
+```
+{{ html_clipboard | html_to_markup(
+                          extension=extension_default, 
+                          default=txt_clipboard) 
+}}
+```
+ 
+converts the stream into Markdown before being processed. If the conversion
+fails or results in an empty string, the fallback value is
+'`{{ txt_clipboard }}`' 
 
 
 **Clipboard simulation**
@@ -2448,12 +2459,16 @@ In addition, Tp-Note defines the following variables:
   Note: on some platforms and with some filesystems, the variable 
   '`{{ doc_file_date }}`' might not be defined.
 
-* '`{{ clipboard }}`' is the complete clipboard text.  In case the clipboard's
-  content starts with a YAML header, the latter does not appear in this
-  variable.
+* '`{{ txt_clipboard }}`' is the complete '`plain/text`' clipboard text.  In
+  case the clipboard's content starts with a YAML header, only the non YAML
+  content is retained.
 
-* '`{{ clipboard_header }}`' is the YAML section of the clipboard data, if
-  one exists. Otherwise: empty string.
+* '`{{ txt_clipboard_header }}`' is the YAML header section of the clipboard
+  data, if it exists. If not, the variable is empty.
+
+* '`{{ html_clipboard }}`' and '`{{ html_clipboard_header }}`' contain the
+  same text as their '`txt_clipboard_*`' counterparts, but as HTML. This way
+  you can copy the destination of hyperlinks in addition to their link text.
 
 * '`{{ stdin }}`' is the complete text content originating from the input
   stream '`stdin`'. This stream can replace the clipboard when it is not
@@ -2538,12 +2553,13 @@ In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
 some additional filters, i.e.: 
 '`append(newline=true)`', '`append(with=...)`', '`cut`', '`file_copy_counter`',
-'`file_ext`', '`file_name`', '`file_sort_tag`', '`file_stem`', '`get_lang`',
-'`heading`', '`insert(key=..., value=...)`', '`link_dest`', '`link_text`',
-'`link_title`', '`map_lang`', '`prepend`', '`prepend(newline=true)`',
-'`prepend(with=...)`', '`prepend(with_sort_tag=...)`', '`remove(key=)`'
-'`sanit`', '`to_html`', '`to_yaml`', '`to_yaml(key=...)`', '`to_yaml(tab=...)`'
-and '`trim_file_sort_tag`'.
+'`file_ext`', '`file_name`', '`file_sort_tag`', '`file_stem`',
+'`get_lang`', '`heading`', '`html_to_markup(extension=..., default=...)`',
+'`insert(key=..., value=...)`', '`link_dest`', '`link_text`', '`link_title`',
+'`map_lang`', '`prepend`', '`prepend(newline=true)`', '`prepend(with=...)`',
+'`prepend(with_sort_tag=...)`', '`remove(key=)`' '`sanit`',
+'`to_html`', '`to_yaml`', '`to_yaml(key=...)`', '`to_yaml(tab=...)`' and
+'`trim_file_sort_tag`'.
 
 A filter is always used together with a variable. Here are some examples:
 
@@ -2596,23 +2612,23 @@ A filter is always used together with a variable. Here are some examples:
   Unlike the '`file_name`' filter (which also returns the final component),
   '`trim_file_sort_tag`' trims the sort tag if there is one.
 
-* '`{{ clipboard | html_to_markup(extension=extension_default) }}`' converts
-  optional HTML originating from the clipboard into the target markup language
-  specified by '`extension_default`' and the converter lookup table
-  '`filename.extensions`' (second tuple).
+* '`{{ html_clipboard | html_to_markup(extension=e, default=d) }}`' converts
+  the clipboard's HTML content into the target markup language
+  specified by '`e`'. If the conversion fails or results in an empty string,
+  stream the text '`d`' instead.
 
-* '`{{ clipboard | cut }}`' is the first 200 bytes from the clipboard.
+* '`{{ txt_clipboard | cut }}`' is the first 200 bytes from the clipboard.
 
-* '`{{ clipboard | heading }}`' is the clipboard's content until the
+* '`{{ html_clipboard | heading }}`' is the clipboard's content until the
   end of the first sentence, or the first newline.
 
-* '`{{ clipboard | link_text }}`' is the name of the first Markdown or
+* '`{{ html_clipboard | link_text }}`' is the name of the first Markdown or
   ReStructuredText formatted link in the clipboard.
 
-* '`{{ clipboard | link_dest }}`' is the URL of the first Markdown or
+* '`{{ html_clipboard | link_dest }}`' is the URL of the first Markdown or
   ReStruncturedText formatted link in the clipboard.
 
-* '`{{ clipboard | link_title }}`' is the title of the first Markdown or
+* '`{{ html_clipboard | link_title }}`' is the title of the first Markdown or
   ReStruncturedText formatted link in the clipboard.
 
 * '`{{ username | capitalize | to_yaml(key='author',tab=12) }}`' is the

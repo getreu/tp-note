@@ -104,13 +104,14 @@ lang:       en\-GB
 .EE
 .SS Create a new note based on clipboard data
 When `\f[CR]<path>\f[R]' is a directory and the clipboard is not empty,
-the clipboard\[cq]s content is stored in the variable
-`\f[CR]{{ clipboard }}\f[R]'.
+the clipboard\[cq]s content is stored in the variables
+`\f[CR]{{ txt_clipboard }}\f[R]' and `\f[CR]{{ html_clipboard }}\f[R]'.
+The latter contains the HTML rich text version of the clipboard content.
 In addition, if the content contains a hyperlink, the first
 hyperlink\[cq]s name can be accessed with
-`\f[CR]{{ clipboard | link_text }}\f[R]', its URL with
-`\f[CR]{{ clipboard | link_dest }}\f[R]' and its title with
-`\f[CR]{{ clipboard | link_title }}\f[R]'.
+`\f[CR]{{ txt_clipboard | link_text }}\f[R]', its URL with
+`\f[CR]{{ txt_clipboard | link_dest }}\f[R]' and its title with
+`\f[CR]{{ txt_clipboard | link_title }}\f[R]'.
 The new note is then created with the
 `\f[CR]tmpl.from_clipboard_content\f[R]' and the
 `\f[CR]tmpl.from_clipboard_filename\f[R]' templates.
@@ -125,10 +126,18 @@ feature).
 .PP
 \f[B]HTML to Markdown conversion\f[R]
 .PP
-In case the clipboard or the \f[CR]stdin\f[R] stream contains HTML, the
-internal filter
-`\f[CR]{{ clipboard | html_to_markup(extension=extension_default) }}\f[R]'
+In case the clipboard stream contains HTML, the internal filter
+.IP
+.EX
+{{ html_clipboard | html_to_markup(
+                          extension=extension_default, 
+                          default=txt_clipboard) 
+}}
+.EE
+.PP
 converts the stream into Markdown before being processed.
+If the conversion fails or results in an empty string, the fallback
+value is `\f[CR]{{ txt_clipboard }}\f[R]'
 .PP
 \f[B]Clipboard simulation\f[R]
 .PP
@@ -2929,13 +2938,20 @@ This condition implies, that `\f[CR]{{ path }}\f[R]' points to a file.
 Note: on some platforms and with some filesystems, the variable
 `\f[CR]{{ doc_file_date }}\f[R]' might not be defined.
 .IP \[bu] 2
-`\f[CR]{{ clipboard }}\f[R]' is the complete clipboard text.
-In case the clipboard\[cq]s content starts with a YAML header, the
-latter does not appear in this variable.
+`\f[CR]{{ txt_clipboard }}\f[R]' is the complete `\f[CR]plain/text\f[R]'
+clipboard text.
+In case the clipboard\[cq]s content starts with a YAML header, only the
+non YAML content is retained.
 .IP \[bu] 2
-`\f[CR]{{ clipboard_header }}\f[R]' is the YAML section of the clipboard
-data, if one exists.
-Otherwise: empty string.
+`\f[CR]{{ txt_clipboard_header }}\f[R]' is the YAML header section of
+the clipboard data, if it exists.
+If not, the variable is empty.
+.IP \[bu] 2
+`\f[CR]{{ html_clipboard }}\f[R]' and
+`\f[CR]{{ html_clipboard_header }}\f[R]' contain the same text as their
+`\f[CR]txt_clipboard_*\f[R]' counterparts, but as HTML.
+This way you can copy the destination of hyperlinks in addition to their
+link text.
 .IP \[bu] 2
 `\f[CR]{{ stdin }}\f[R]' is the complete text content originating from
 the input stream `\f[CR]stdin\f[R]'.
@@ -3043,6 +3059,7 @@ built\-in filters
 `\f[CR]cut\f[R]', `\f[CR]file_copy_counter\f[R]', `\f[CR]file_ext\f[R]',
 `\f[CR]file_name\f[R]', `\f[CR]file_sort_tag\f[R]',
 `\f[CR]file_stem\f[R]', `\f[CR]get_lang\f[R]', `\f[CR]heading\f[R]',
+`\f[CR]html_to_markup(extension=..., default=...)\f[R]',
 `\f[CR]insert(key=..., value=...)\f[R]', `\f[CR]link_dest\f[R]',
 `\f[CR]link_text\f[R]', `\f[CR]link_title\f[R]', `\f[CR]map_lang\f[R]',
 `\f[CR]prepend\f[R]', `\f[CR]prepend(newline=true)\f[R]',
@@ -3119,24 +3136,25 @@ Unlike the `\f[CR]file_name\f[R]' filter (which also returns the final
 component), `\f[CR]trim_file_sort_tag\f[R]' trims the sort tag if there
 is one.
 .IP \[bu] 2
-`\f[CR]{{ clipboard | html_to_markup(extension=extension_default) }}\f[R]'
-converts optional HTML originating from the clipboard into the target
-markup language specified by `\f[CR]extension_default\f[R]' and the
-converter lookup table `\f[CR]filename.extensions\f[R]' (second tuple).
+`\f[CR]{{ html_clipboard | html_to_markup(extension=e, default=d) }}\f[R]'
+converts the clipboard\[cq]s HTML content into the target markup
+language specified by `\f[CR]e\f[R]'.
+If the conversion fails or results in an empty string, stream the text
+`\f[CR]d\f[R]' instead.
 .IP \[bu] 2
-`\f[CR]{{ clipboard | cut }}\f[R]' is the first 200 bytes from the
+`\f[CR]{{ txt_clipboard | cut }}\f[R]' is the first 200 bytes from the
 clipboard.
 .IP \[bu] 2
-`\f[CR]{{ clipboard | heading }}\f[R]' is the clipboard\[cq]s content
-until the end of the first sentence, or the first newline.
+`\f[CR]{{ html_clipboard | heading }}\f[R]' is the clipboard\[cq]s
+content until the end of the first sentence, or the first newline.
 .IP \[bu] 2
-`\f[CR]{{ clipboard | link_text }}\f[R]' is the name of the first
+`\f[CR]{{ html_clipboard | link_text }}\f[R]' is the name of the first
 Markdown or ReStructuredText formatted link in the clipboard.
 .IP \[bu] 2
-`\f[CR]{{ clipboard | link_dest }}\f[R]' is the URL of the first
+`\f[CR]{{ html_clipboard | link_dest }}\f[R]' is the URL of the first
 Markdown or ReStruncturedText formatted link in the clipboard.
 .IP \[bu] 2
-`\f[CR]{{ clipboard | link_title }}\f[R]' is the title of the first
+`\f[CR]{{ html_clipboard | link_title }}\f[R]' is the title of the first
 Markdown or ReStruncturedText formatted link in the clipboard.
 .IP \[bu] 2
 `\f[CR]{{ username | capitalize | to_yaml(key=\[aq]author\[aq],tab=12) }}\f[R]'
