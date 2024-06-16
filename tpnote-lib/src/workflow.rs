@@ -28,10 +28,11 @@
 //! // Prepare test.
 //! let notedir = temp_dir();
 //!
-//! let clipboard = ContentString::default();
+//! let html_clipboard = ContentString::default();
+//! let txt_clipboard = ContentString::default();
 //! let stdin = ContentString::default();
 //! // This is the condition to choose: `TemplateKind::New`:
-//! assert!(clipboard.is_empty() || stdin.is_empty());
+//! assert!(html_clipboard.is_empty() && txt_clipboard.is_empty() &&stdin.is_empty());
 //! // There are no inhibitor rules to change the `TemplateKind`.
 //! let template_kind_filter = |tk|tk;
 //!
@@ -39,7 +40,7 @@
 //! let n = WorkflowBuilder::new(&notedir)
 //!       // You can plug in your own type (must impl. `Content`).
 //!      .upgrade::<ContentString, _>(
-//!            "default", &clipboard, &stdin, template_kind_filter)
+//!          "default", &html_clipboard, &txt_clipboard, &stdin, template_kind_filter)
 //!      .build()
 //!      .run()
 //!      .unwrap();
@@ -112,10 +113,12 @@
 //! // Prepare test.
 //! let notedir = temp_dir();
 //!
-//! let clipboard = MyContentString::default();
+//! let html_clipboard = MyContentString::default();
+//! let txt_clipboard = MyContentString::default();
 //! let stdin = MyContentString::default();
 //! // This is the condition to choose: `TemplateKind::New`:
-//! assert!(clipboard.is_empty() || stdin.is_empty());
+//! assert!(
+//!     html_clipboard.is_empty() || txt_clipboard.is_empty() || stdin.is_empty());
 //! // There are no inhibitor rules to change the `TemplateKind`.
 //! let template_kind_filter = |tk|tk;
 //!
@@ -123,7 +126,7 @@
 //! let n = WorkflowBuilder::new(&notedir)
 //!       // You can plug in your own type (must impl. `Content`).
 //!      .upgrade::<MyContentString, _>(
-//!            "default", &clipboard, &stdin, template_kind_filter)
+//!          "default", &html_clipboard, &txt_clipboard, &stdin, template_kind_filter)
 //!      .build()
 //!      .run()
 //!      .unwrap();
@@ -142,14 +145,16 @@ use crate::config::LIB_CFG;
 use crate::config::TMPL_HTML_VAR_DOC_ERROR;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_HTML_VAR_DOC_TEXT;
-use crate::config::TMPL_VAR_CLIPBOARD;
-use crate::config::TMPL_VAR_CLIPBOARD_HEADER;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_FILENAME_SYNC;
 use crate::config::TMPL_VAR_FM_NO_FILENAME_SYNC;
 use crate::config::TMPL_VAR_FM_SCHEME;
+use crate::config::TMPL_VAR_HTML_CLIPBOARD;
+use crate::config::TMPL_VAR_HTML_CLIPBOARD_HEADER;
 use crate::config::TMPL_VAR_STDIN;
 use crate::config::TMPL_VAR_STDIN_HEADER;
+use crate::config::TMPL_VAR_TXT_CLIPBOARD;
+use crate::config::TMPL_VAR_TXT_CLIPBOARD_HEADER;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
@@ -189,7 +194,8 @@ pub struct SyncFilename<'a> {
 pub struct SyncFilenameOrCreateNew<'a, T, F> {
     scheme_source: SchemeSource<'a>,
     path: &'a Path,
-    clipboard: &'a T,
+    html_clipboard: &'a T,
+    txt_clipboard: &'a T,
     stdin: &'a T,
     tk_filter: F,
     html_export: Option<(&'a Path, LocalLinkKind)>,
@@ -234,7 +240,8 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
     pub fn upgrade<T: Content, F: Fn(TemplateKind) -> TemplateKind>(
         self,
         scheme_new_default: &'a str,
-        clipboard: &'a T,
+        html_clipboard: &'a T,
+        txt_clipboard: &'a T,
         stdin: &'a T,
         tk_filter: F,
     ) -> WorkflowBuilder<SyncFilenameOrCreateNew<'a, T, F>> {
@@ -242,7 +249,8 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
             input: SyncFilenameOrCreateNew {
                 scheme_source: SchemeSource::SchemeNewDefault(scheme_new_default),
                 path: self.input.path,
-                clipboard,
+                html_clipboard,
+                txt_clipboard,
                 stdin,
                 tk_filter,
                 html_export: None,
@@ -389,31 +397,34 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
     /// // Prepare test.
     /// let notedir = temp_dir();
     ///
-    /// let clipboard = ContentString::from("my clipboard\n".to_string());
+    /// let html_clipboard = ContentString::from("my HTML clipboard\n".to_string());
+    /// let txt_clipboard = ContentString::from("my TXT clipboard\n".to_string());
     /// let stdin = ContentString::from("my stdin\n".to_string());
     /// // This is the condition to choose: `TemplateKind::FromClipboard`:
-    /// assert!(clipboard.header().is_empty() && stdin.header().is_empty());
-    /// assert!(!clipboard.body().is_empty() || !stdin.body().is_empty());
+    /// assert!(html_clipboard.header().is_empty()
+    ///            && txt_clipboard.header().is_empty()
+    ///            && stdin.header().is_empty());
+    /// assert!(!html_clipboard.body().is_empty() || !txt_clipboard.body().is_empty() || !stdin.body().is_empty());
     /// let template_kind_filter = |tk|tk;
     ///
     /// // Build and run workflow.
     /// let n = WorkflowBuilder::new(&notedir)
     ///       // You can plug in your own type (must impl. `Content`).
     ///      .upgrade::<ContentString, _>(
-    ///            "default", &clipboard, &stdin, template_kind_filter)
+    ///            "default", &html_clipboard, &txt_clipboard, &stdin, template_kind_filter)
     ///      .build()
     ///      .run()
     ///      .unwrap();
     ///
     /// // Check result.
     /// assert!(n.as_os_str().to_str().unwrap()
-    ///    .contains("my stdin-my clipboard--Note"));
+    ///    .contains("my stdin-my TXT clipboard--Note"));
     /// assert!(n.is_file());
     /// let raw_note = fs::read_to_string(n).unwrap();
     ///
     /// #[cfg(not(target_family = "windows"))]
     /// assert!(raw_note.starts_with(
-    ///            "\u{feff}---\ntitle:        |-\n  my stdin\n  my clipboard"));
+    ///            "\u{feff}---\ntitle:        |-\n  my stdin\n  my TXT clipboard"));
     /// #[cfg(target_family = "windows")]
     /// assert!(raw_note.starts_with(
     ///            "\u{feff}---\r\ntitle:        |"));
@@ -434,15 +445,24 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
         // Collect input data for templates.
         let mut context = Context::from(self.input.path);
         context.insert_content(
-            TMPL_VAR_CLIPBOARD,
-            TMPL_VAR_CLIPBOARD_HEADER,
-            self.input.clipboard,
+            TMPL_VAR_HTML_CLIPBOARD,
+            TMPL_VAR_HTML_CLIPBOARD_HEADER,
+            self.input.html_clipboard,
+        )?;
+        context.insert_content(
+            TMPL_VAR_TXT_CLIPBOARD,
+            TMPL_VAR_TXT_CLIPBOARD_HEADER,
+            self.input.txt_clipboard,
         )?;
         context.insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, self.input.stdin)?;
 
         // `template_king` will tell us what to do.
-        let (template_kind, content) =
-            TemplateKind::from::<T>(self.input.path, self.input.clipboard, self.input.stdin);
+        let (template_kind, content) = TemplateKind::from::<T>(
+            self.input.path,
+            self.input.html_clipboard,
+            self.input.txt_clipboard,
+            self.input.stdin,
+        );
         let template_kind = (self.input.tk_filter)(template_kind);
 
         let n = match template_kind {

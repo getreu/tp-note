@@ -269,6 +269,12 @@ fn html_to_markup_filter<S: BuildHasher>(
 
     #[cfg(feature = "renderer")]
     {
+        let default = if let Some(default_val) = args.get("default") {
+            try_get_value!("markup_to_html", "default", String, default_val)
+        } else {
+            String::new()
+        };
+
         let firstline = buffer
             .lines()
             .next()
@@ -282,12 +288,15 @@ fn html_to_markup_filter<S: BuildHasher>(
 
             let converter = InputConverter::get(&extension);
             buffer = match converter(buffer) {
-                Ok(s) => s,
+                Ok(converted) if converted.is_empty() => default,
+                Ok(converted) => converted,
                 Err(e) => {
-                    log::warn!("{}", e.to_string());
-                    e.to_string()
-                },
+                    log::info!("{}", e.to_string());
+                    default
+                }
             };
+        } else {
+            buffer = default;
         }
     }
 

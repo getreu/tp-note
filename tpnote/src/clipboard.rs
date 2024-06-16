@@ -15,6 +15,14 @@ use wl_clipboard_rs::copy;
 #[cfg(unix)]
 use wl_clipboard_rs::paste;
 
+/// Lowercase test pattern to check if there is a document type declaration
+/// already.
+#[cfg(feature = "read-clipboard")]
+const HTML_PAT1: &str = "<!doctype ";
+/// Prepend a marker declaration, in case the content is HTML.
+#[cfg(feature = "read-clipboard")]
+const HTML_PAT2: &str = "<!DOCTYPE html>";
+
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct SystemClipboard {
     pub html: ContentString,
@@ -41,7 +49,20 @@ impl SystemClipboard {
                 paste::Seat::Unspecified,
                 paste::MimeType::Specific("text/html"),
             ) {
-                let _ = pipe_reader.read_to_string(&mut html_content);
+                match pipe_reader.read_to_string(&mut html_content) {
+                    Ok(l) if l > 0 => {
+                        if !html_content.trim_start().is_empty()
+                            && !html_content
+                                .lines()
+                                .next()
+                                .map(|l| l.trim_start().to_ascii_lowercase())
+                                .is_some_and(|l| l.starts_with(HTML_PAT1))
+                        {
+                            html_content.insert_str(0, HTML_PAT2);
+                        }
+                    }
+                    _ => {}
+                }
             };
             // Plain teext clipboard content
             if let Ok((mut pipe_reader, _)) = paste::get_contents(
@@ -56,7 +77,16 @@ impl SystemClipboard {
         if html_content.is_empty() && txt_content.is_empty() {
             // Query X11 clipboard.
             if let Ok(ctx) = ClipboardContext::new() {
-                if let Ok(html) = ctx.get_html() {
+                if let Ok(mut html) = ctx.get_html() {
+                    if !html.trim_start().is_empty()
+                        && !html
+                            .lines()
+                            .next()
+                            .map(|l| l.trim_start().to_ascii_lowercase())
+                            .is_some_and(|l| l.starts_with(HTML_PAT1))
+                    {
+                        html.insert_str(0, HTML_PAT2);
+                    }
                     html_content = html;
                 };
                 if let Ok(txt) = ctx.get_text() {

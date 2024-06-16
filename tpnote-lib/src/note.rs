@@ -749,8 +749,9 @@ Body text
     fn test_from_content_template2() {
         // Example with `TemplateKind::FromClipboard`
 
-        use crate::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
+        use crate::config::{TMPL_VAR_HTML_CLIPBOARD, TMPL_VAR_HTML_CLIPBOARD_HEADER};
         use crate::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
+        use crate::config::{TMPL_VAR_TXT_CLIPBOARD, TMPL_VAR_TXT_CLIPBOARD_HEADER};
         use crate::content::Content;
         use crate::content::ContentString;
         use crate::context::Context;
@@ -772,28 +773,48 @@ Body text
 
         // Store the path in `context`.
         let mut context = Context::from(&notedir);
-        let clipboard = ContentString::from("clp\n".to_string());
+        let html_clipboard = ContentString::from("html_clp\n".to_string());
         context
-            .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
+            .insert_content(
+                TMPL_VAR_HTML_CLIPBOARD,
+                TMPL_VAR_HTML_CLIPBOARD_HEADER,
+                &html_clipboard,
+            )
+            .unwrap();
+        let txt_clipboard = ContentString::from("txt_clp\n".to_string());
+        context
+            .insert_content(
+                TMPL_VAR_TXT_CLIPBOARD,
+                TMPL_VAR_TXT_CLIPBOARD_HEADER,
+                &txt_clipboard,
+            )
             .unwrap();
         let stdin = ContentString::from("std\n".to_string());
         context
             .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
             .unwrap();
         // This is the condition to choose: `TemplateKind::FromClipboard`:
-        assert!(clipboard.header().is_empty() && stdin.header().is_empty());
-        assert!(!clipboard.body().is_empty() || !stdin.body().is_empty());
+        assert!(
+            html_clipboard.header().is_empty()
+                && txt_clipboard.header().is_empty()
+                && stdin.header().is_empty()
+        );
+        assert!(
+            !html_clipboard.body().is_empty()
+                && !txt_clipboard.body().is_empty()
+                && !stdin.body().is_empty()
+        );
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
         let mut n: Note<ContentString> =
             Note::from_content_template(context, TemplateKind::FromClipboard).unwrap();
-        let expected_body = "\nstd\nclp\n\n";
+        let expected_body = "\nstd\ntxt_clp\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
         assert_eq!(
             n.context.get("fm_title").unwrap().as_str(),
-            Some("std\nclp")
+            Some("std\ntxt_c")
         );
 
         assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
@@ -802,16 +823,17 @@ Body text
         n.save().unwrap();
 
         // Check the new note file.
+        println!("{:?}", n.rendered_filename);
         assert!(n
             .rendered_filename
             .as_os_str()
             .to_str()
             .unwrap()
-            .contains("std-clp--Note"));
+            .contains("std-txt_c--Note"));
         assert!(n.rendered_filename.is_file());
         let raw_note = fs::read_to_string(&n.rendered_filename).unwrap();
         #[cfg(not(target_family = "windows"))]
-        assert!(raw_note.starts_with("\u{feff}---\ntitle:        |-\n  std\n  clp"));
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:        |-\n  std\n  txt"));
         #[cfg(target_family = "windows")]
         assert!(raw_note.starts_with("\u{feff}---\r\ntitle:"));
     }
@@ -820,8 +842,9 @@ Body text
     fn test_from_content_template3() {
         // Example with `TemplateKind::FromClipboardYaml`
 
-        use crate::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
+        use crate::config::{TMPL_VAR_HTML_CLIPBOARD, TMPL_VAR_HTML_CLIPBOARD_HEADER};
         use crate::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
+        use crate::config::{TMPL_VAR_TXT_CLIPBOARD, TMPL_VAR_TXT_CLIPBOARD_HEADER};
         use crate::content::Content;
         use crate::content::ContentString;
         use crate::context::Context;
@@ -845,9 +868,21 @@ Body text
         // Run test.
         // Store the path in `context`.
         let mut context = Context::from(&notedir);
-        let clipboard = ContentString::from("my clipboard\n".to_string());
+        let html_clipboard = ContentString::from("my HTML clipboard\n".to_string());
+        let txt_clipboard = ContentString::from("my TXT clipboard\n".to_string());
         context
-            .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
+            .insert_content(
+                TMPL_VAR_HTML_CLIPBOARD,
+                TMPL_VAR_HTML_CLIPBOARD_HEADER,
+                &html_clipboard,
+            )
+            .unwrap();
+        context
+            .insert_content(
+                TMPL_VAR_TXT_CLIPBOARD,
+                TMPL_VAR_TXT_CLIPBOARD_HEADER,
+                &txt_clipboard,
+            )
             .unwrap();
         let stdin =
             ContentString::from("---\nsubtitle: \"this overwrites\"\n---\nstdin body".to_string());
@@ -855,13 +890,17 @@ Body text
             .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
             .unwrap();
         // This is the condition to choose: `TemplateKind::FromClipboardYaml`:
-        assert!(!clipboard.header().is_empty() || !stdin.header().is_empty());
+        assert!(
+            !html_clipboard.header().is_empty()
+                || !txt_clipboard.header().is_empty()
+                || !stdin.header().is_empty()
+        );
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
         let mut n: Note<ContentString> =
             Note::from_content_template(context, TemplateKind::FromClipboardYaml).unwrap();
-        let expected_body = "\nstdin body\nmy clipboard\n\n";
+        let expected_body = "\nstdin body\nmy TXT clipboard\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
         assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("my dir"));
@@ -895,8 +934,9 @@ Body text
     fn test_from_content_template4() {
         // Example with `TemplateKind::AnnotateFile`
 
-        use crate::config::{TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER};
+        use crate::config::{TMPL_VAR_HTML_CLIPBOARD, TMPL_VAR_HTML_CLIPBOARD_HEADER};
         use crate::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
+        use crate::config::{TMPL_VAR_TXT_CLIPBOARD, TMPL_VAR_TXT_CLIPBOARD_HEADER};
         use crate::content::Content;
         use crate::content::ContentString;
         use crate::context::Context;
@@ -924,9 +964,21 @@ Body text
         // Run the test.
         // Store the path in `context`.
         let mut context = Context::from(&non_notefile);
-        let clipboard = ContentString::from_string_with_cr("my clipboard\n".to_string());
+        let html_clipboard = ContentString::from("my HTML clipboard\n".to_string());
+        let txt_clipboard = ContentString::from("my TXT clipboard\n".to_string());
         context
-            .insert_content(TMPL_VAR_CLIPBOARD, TMPL_VAR_CLIPBOARD_HEADER, &clipboard)
+            .insert_content(
+                TMPL_VAR_HTML_CLIPBOARD,
+                TMPL_VAR_HTML_CLIPBOARD_HEADER,
+                &html_clipboard,
+            )
+            .unwrap();
+        context
+            .insert_content(
+                TMPL_VAR_TXT_CLIPBOARD,
+                TMPL_VAR_TXT_CLIPBOARD_HEADER,
+                &txt_clipboard,
+            )
             .unwrap();
         let stdin = ContentString::from_string_with_cr("my stdin\n".to_string());
         context
@@ -938,7 +990,7 @@ Body text
         let mut n: Note<ContentString> =
             Note::from_content_template(context, TemplateKind::AnnotateFile).unwrap();
         let expected_body =
-            "\n[20221030-some.pdf](<20221030-some.pdf>)\n\nmy stdin\nmy clipboard\n\n";
+            "\n[20221030-some.pdf](<20221030-some.pdf>)\n\nmy stdin\nmy TXT clipboard\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
         assert_eq!(

@@ -197,29 +197,31 @@ impl Context {
 
         // Can we find a front matter in the input stream? If yes, the
         // unmodified input stream is our new note content.
-        let input_fm = FrontMatter::try_from(input.header());
-        match input_fm {
-            Ok(ref fm) => {
-                log::trace!(
-                    "Input stream from \"{}\" results in front matter:\n{:#?}",
-                    tmpl_var,
-                    &fm
-                )
-            }
-            Err(ref e) => {
-                if !input.header().is_empty() {
-                    return Err(NoteError::InvalidInputYaml {
-                        tmpl_var: tmpl_var.to_string(),
-                        source_str: e.to_string(),
-                    });
+        if !input.header().is_empty() {
+            let input_fm = FrontMatter::try_from(input.header());
+            match input_fm {
+                Ok(ref fm) => {
+                    log::trace!(
+                        "Input stream from \"{}\" results in front matter:\n{:#?}",
+                        tmpl_var,
+                        &fm
+                    )
                 }
-            }
-        };
+                Err(ref e) => {
+                    if !input.header().is_empty() {
+                        return Err(NoteError::InvalidInputYaml {
+                            tmpl_var: tmpl_var.to_string(),
+                            source_str: e.to_string(),
+                        });
+                    }
+                }
+            };
 
-        // Register front matter.
-        // The variables registered here can be overwrite the ones from the clipboard.
-        if let Ok(fm) = input_fm {
-            self.insert_front_matter(&fm);
+            // Register front matter.
+            // The variables registered here can be overwrite the ones from the clipboard.
+            if let Ok(fm) = input_fm {
+                self.insert_front_matter(&fm);
+            }
         }
         Ok(())
     }

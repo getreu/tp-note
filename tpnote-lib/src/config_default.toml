@@ -80,6 +80,7 @@ extension_default = "md"
 ### into markup formatted content. The second tuple value of the vector
 ### parametrizes the `html_to_markup` filter. It determines which converter is
 ### used. Currently, the following converters are implemented:
+### * `Disabled`,
 ### * `ToMarkdown` and 
 ### * `PassThrough`.
 ### 
@@ -102,11 +103,11 @@ extension_default = "md"
 extensions = [
   ["txt", "PassThrough", "Markdown"],
   ["md", "ToMarkdown", "Markdown"],
-  ["rst", "ToMarkdown", "ReStructuredText"],
+  ["rst", "Disabled", "ReStructuredText"],
   ["htmlnote", "PassThrough", "Html"],
-  ["txtnote", "ToMarkdown", "PlainText"],
-  ["adoc", "PassThrough", "PlainText"],
-  ["text", "PassThrough", "Markdown"],
+  ["txtnote", "Disabled", "PlainText"],
+  ["adoc", "Disabled", "PlainText"],
+  ["text", "Disabled", "Markdown"],
   ["markdn", "ToMarkdown", "Markdown"],
   ["markdown", "ToMarkdown", "Markdown"],
   ["mdown", "ToMarkdown", "Markdown"],
@@ -114,11 +115,11 @@ extensions = [
   ["mdtxt", "ToMarkdown", "Markdown"],
   ["mdwn", "ToMarkdown", "Markdown"],
   ["mkd", "ToMarkdown", "Markdown"],
-  ["rest", "PassThrough", "ReStructuredText"],
-  ["asciidoc", "PassThrough", "PlainText"],
-  ["mediawiki", "PassThrough", "RendererDisabled"],
-  ["mw", "PassThrough", "RendererDisabled"],
-  ["t2t", "PassThrough", "RendererDisabled"],
+  ["rest", "Disabled", "ReStructuredText"],
+  ["asciidoc", "Disabled", "PlainText"],
+  ["mediawiki", "Disabled", "RendererDisabled"],
+  ["mw", "Disabled", "RendererDisabled"],
+  ["t2t", "Disabled", "RendererDisabled"],
 ]
 
 ### Template related settings for the scheme `default`.
@@ -275,8 +276,8 @@ from_dir_filename = """
 ### When placed in YAML front matter, the filter `to_yaml` must be
 ### appended to each variable.
 from_clipboard_yaml_content = """
-{%- set stdin = stdin | html_to_markup(extension=extension_default) | append(newline=true) -%}
-{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
+{%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim_end -%}
 {%- set lang = fm_lang 
     | default(value = fm_title 
@@ -327,8 +328,8 @@ from_clipboard_yaml_filename = """
 ### accessed with the variables: `{{ clipboard | link_text }}`, `
 ### {{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
 from_clipboard_content = """
-{%- set stdin = stdin | html_to_markup(extension=extension_default) | append(newline=true) -%}
-{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
+{%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim_end -%}
 {%- set first_link = input | link_text_picky -%}
 {%- set first_lines = input | heading -%}
@@ -399,8 +400,8 @@ from_text_file_filename = """
 ### existing - to be annotated - non-`.md`-file. `{{ path}}` points to that
 ### file, `{{ dir_path }}` to the directory where it is located.
 annotate_file_content = """
-{%- set stdin = stdin | html_to_markup(extension=extension_default) | append(newline=true) -%}
-{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
+{%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set body_text = stdin ~ clipboard | trim_end -%}
 {%- if body_text != '' -%}
    {%- set lang_test_text = body_text | cut -%}
@@ -552,8 +553,8 @@ from_dir_filename = """
 {{ extension_default | prepend(with='.') }}"""
 
 from_clipboard_yaml_content = """
-{%- set stdin = stdin | html_to_markup(extension=extension_default) | append(newline=true) -%}
-{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
+{%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim_end -%}
 {%- if fm_sort_tag -%}
   {%- set tag = fm_sort_tag -%}
@@ -610,8 +611,8 @@ from_clipboard_yaml_filename = """
 {{ fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
 
 from_clipboard_content = """
-{%- set stdin = stdin | html_to_markup(extension=extension_default) | append(newline=true) -%}
-{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
+{%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim_end -%}
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
@@ -714,8 +715,8 @@ from_text_file_filename = """
 {{ path | file_ext | prepend(with='.') }}"""
 
 annotate_file_content = """
-{%- set stdin = stdin | html_to_markup(extension=extension_default) | append(newline=true) -%}
-{%- set clipboard = clipboard | html_to_markup(extension=extension_default) -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
+{%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set body_text = stdin ~ clipboard | trim_end -%}
 {%- if body_text != '' -%}
    {%- set lang_test_text = body_text | cut -%}

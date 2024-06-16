@@ -35,12 +35,18 @@ impl TemplateKind {
     /// Constructor encoding the logic under what circumstances what template
     /// should be used.
     ///
-    pub fn from<T: Content>(path: &Path, clipboard: &T, stdin: &T) -> (Self, Option<T>) {
+    pub fn from<T: Content>(
+        path: &Path,
+        html_clipboard: &T,
+        txt_clipboard: &T,
+        stdin: &T,
+    ) -> (Self, Option<T>) {
         let stdin_is_empty = stdin.is_empty();
         let stdin_has_header = !stdin.header().is_empty();
 
-        let clipboard_is_empty = clipboard.is_empty();
-        let clipboard_has_header = !clipboard.header().is_empty();
+        let clipboard_is_empty = html_clipboard.is_empty() && txt_clipboard.is_empty();
+        let clipboard_has_header =
+            !html_clipboard.header().is_empty() || !txt_clipboard.header().is_empty();
 
         let input_stream_is_some = !stdin_is_empty || !clipboard_is_empty;
         let input_stream_has_header = stdin_has_header || clipboard_has_header;

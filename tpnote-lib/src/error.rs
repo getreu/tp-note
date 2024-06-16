@@ -386,9 +386,7 @@ pub enum NoteError {
         "Invalid HTML in the input stream data found:\n\
         {source_str}"
     )]
-    InvalidHtml {
-        source_str: String,
-    },
+    InvalidHtml { source_str: String },
 
     /// Remedy: reconfigure `scheme.filename.extensions.1`.
     #[error(
