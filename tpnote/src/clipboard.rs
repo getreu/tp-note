@@ -7,6 +7,7 @@ use clipboard_rs::ClipboardContext;
 #[cfg(feature = "read-clipboard")]
 #[cfg(unix)]
 use std::io::Read as _;
+use tpnote_lib::content::ContentString;
 #[cfg(feature = "read-clipboard")]
 #[cfg(unix)]
 use wl_clipboard_rs::copy;
@@ -14,90 +15,67 @@ use wl_clipboard_rs::copy;
 #[cfg(unix)]
 use wl_clipboard_rs::paste;
 
-/// Lowercase test pattern to check if there is a document type declaration
-/// already.
-#[cfg(feature = "read-clipboard")]
-const HTML_PAT1: &str = "<!doctype ";
-/// Prepend a marker declaration, in case the content is HTML.
-#[cfg(feature = "read-clipboard")]
-const HTML_PAT2: &str = "<!DOCTYPE html>";
+#[derive(Default, Debug, PartialEq, Eq)]
+pub struct SystemClipboard {
+    pub html: ContentString,
+    pub txt: ContentString,
+}
 
-pub(crate) struct TpClipboard;
-
-impl TpClipboard {
+impl SystemClipboard {
     /// Get a snapshot of the Markdown representation of the clipboard content.
     /// If the content contains HTML, the marker `<!DOCTYPE html>` is
     /// prepended.
     #[cfg(feature = "read-clipboard")]
-    pub(crate) fn get_content() -> Option<String> {
-        // Query Wayland clipboard.
+    pub(crate) fn new() -> Self {
+        use tpnote_lib::content::Content;
+
+        let mut txt_content = String::new();
+        let mut html_content = String::new();
 
         #[cfg(unix)]
-        let wl_clipboard = match paste::get_contents(
-            paste::ClipboardType::Regular,
-            paste::Seat::Unspecified,
-            #[cfg(feature = "html-clipboard")]
-            paste::MimeType::TextWithPriority("text/html"),
-            #[cfg(not(feature = "html-clipboard"))]
-            paste::MimeType::Text,
-        ) {
-            Ok((mut pipe_reader, mime_type)) => {
-                let mut buffer = String::new();
-                match pipe_reader.read_to_string(&mut buffer) {
-                    Ok(l) if l > 0 => {
-                        if mime_type == "text/html"
-                            && !buffer.trim_start().is_empty()
-                            && !buffer
-                                .lines()
-                                .next()
-                                .map(|l| l.trim_start().to_ascii_lowercase())
-                                .is_some_and(|l| l.starts_with(HTML_PAT1))
-                        {
-                            buffer.insert_str(0, HTML_PAT2);
-                        }
-                        Some(buffer)
-                    }
-                    _ => None,
-                }
+        {
+            // Query Wayland clipboard
+            // Html clipboard content
+            if let Ok((mut pipe_reader, _)) = paste::get_contents(
+                paste::ClipboardType::Regular,
+                paste::Seat::Unspecified,
+                paste::MimeType::Specific("text/html"),
+            ) {
+                let _ = pipe_reader.read_to_string(&mut html_content);
+            };
+            // Plain teext clipboard content
+            if let Ok((mut pipe_reader, _)) = paste::get_contents(
+                paste::ClipboardType::Regular,
+                paste::Seat::Unspecified,
+                paste::MimeType::Specific("plain/text"),
+            ) {
+                let _ = pipe_reader.read_to_string(&mut txt_content);
+            };
+        }
+
+        if html_content.is_empty() && txt_content.is_empty() {
+            // Query X11 clipboard.
+            if let Ok(ctx) = ClipboardContext::new() {
+                if let Ok(html) = ctx.get_html() {
+                    html_content = html;
+                };
+                if let Ok(txt) = ctx.get_text() {
+                    txt_content = txt;
+                };
             }
-            _ => None,
-        };
+        }
 
-        #[cfg(not(unix))]
-        let wl_clipboard = None;
-
-        wl_clipboard.or_else(|| {
-            // Query X11 keyboard.
-            let ctx: ClipboardContext = ClipboardContext::new().ok()?;
-            let mut buffer = String::new();
-
-            #[cfg(feature = "html-clipboard")]
-            if let Ok(mut html) = ctx.get_html() {
-                if !html.trim_start().is_empty()
-                    && !html
-                        .lines()
-                        .next()
-                        .map(|l| l.trim_start().to_ascii_lowercase())
-                        .is_some_and(|l| l.starts_with(HTML_PAT1))
-                {
-                    html.insert_str(0, HTML_PAT2);
-                }
-                buffer = html;
-            };
-
-            if buffer.is_empty() {
-                buffer = ctx.get_text().unwrap_or_default();
-            };
-
-            Some(buffer)
-        })
+        Self {
+            html: ContentString::from_string_with_cr(html_content),
+            txt: ContentString::from_string_with_cr(txt_content),
+        }
     }
 
     /// When the `read-clipboard` feature is disabled, always return `None`.
     #[inline]
     #[cfg(not(feature = "read-clipboard"))]
-    pub(crate) fn get_content() -> Option<String> {
-        None
+    pub(crate) fn new() -> Self {
+        Self::default()
     }
 
     /// Empty the clipboard.

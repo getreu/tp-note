@@ -3,11 +3,11 @@ use crate::config::CFG;
 use crate::error::WorkflowError;
 use crate::file_editor::launch_editor;
 use crate::settings::ARGS;
-use crate::settings::CLIPBOARD;
 use crate::settings::DOC_PATH;
 use crate::settings::LAUNCH_EDITOR;
 use crate::settings::LAUNCH_VIEWER;
 use crate::settings::STDIN;
+use crate::settings::SYSTEM_CLIPBOARD;
 use crate::template::template_kind_filter;
 #[cfg(feature = "viewer")]
 use crate::viewer::launch_viewer_thread;
@@ -36,7 +36,8 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
 
     let mut workflow_builder = WorkflowBuilder::new(&path).upgrade::<ContentString, _>(
         &CFG.arg_default.scheme,
-        &*CLIPBOARD,
+        &SYSTEM_CLIPBOARD.html,
+        &SYSTEM_CLIPBOARD.txt,
         &*STDIN,
         template_kind_filter,
     );

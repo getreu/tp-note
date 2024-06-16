@@ -33,7 +33,7 @@ mod workflow;
 
 #[cfg(feature = "message-box")]
 use crate::alert_service::AlertService;
-use crate::clipboard::TpClipboard;
+use crate::clipboard::SystemClipboard;
 use crate::config::Cfg;
 use crate::config::AUTHOR;
 use crate::config::CFG;
@@ -52,7 +52,7 @@ use config::MIN_CONFIG_FILE_VERSION;
 use error::ConfigFileError;
 use semver::Version;
 use serde::Serialize;
-use settings::CLIPBOARD;
+use settings::SYSTEM_CLIPBOARD;
 use std::path::Path;
 use std::process;
 use tpnote_lib::error::NoteError;
@@ -71,7 +71,7 @@ struct About {
 /// not match the program version.
 fn main() {
     // Read the clipboard before starting the logger.
-    lazy_static::initialize(&CLIPBOARD);
+    lazy_static::initialize(&SYSTEM_CLIPBOARD);
 
     // Setup logger.
     AppLogger::init();
@@ -176,8 +176,6 @@ fn main() {
     if ARGS.version {
         #[allow(unused_mut)]
         let mut features = Vec::new();
-        #[cfg(feature = "html-clipboard")]
-        features.push("html-clipboard".to_string());
         #[cfg(feature = "lang-detection")]
         features.push("lang-detection".to_string());
         #[cfg(feature = "message-box")]
@@ -255,7 +253,7 @@ fn main() {
             Err(WorkflowError::Note(NoteError::InvalidInputYaml { .. }))
         )
     {
-        TpClipboard::empty();
+        SystemClipboard::empty();
     }
 
     if res.is_err() {

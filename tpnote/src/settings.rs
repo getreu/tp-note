@@ -2,7 +2,7 @@
 //! variables.
 
 //#[cfg(any(feature = "read-clipboard", feature = "viewer"))]
-use crate::clipboard::TpClipboard;
+use crate::clipboard::SystemClipboard;
 use crate::config::CFG;
 use lazy_static::lazy_static;
 use log::LevelFilter;
@@ -199,16 +199,14 @@ lazy_static! {
 
 lazy_static! {
     /// Reads the clipboard, if there is any and empties it.
-    pub static ref CLIPBOARD: ContentString = {
+    pub static ref SYSTEM_CLIPBOARD: SystemClipboard = {
 
-        let mut ret = String::new();
         if CFG.clipboard.read_enabled && !ARGS.batch {
-            if let Some(s) = TpClipboard::get_content() {
-                ret = s;
-            }
-        }
+            SystemClipboard::new()
+        } else {
 
-        ContentString::from_string_with_cr(ret)
+        SystemClipboard::default()
+        }
     };
 }
 

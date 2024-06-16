@@ -55,7 +55,7 @@ assets = [
 ]
 
 [features]
-default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detection", "html-clipboard"]
+default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detection"]
 
 # To disable features: `cargo build --no-default-features`
 # If you can do away with error message popup boxes (for example on a headless
@@ -64,8 +64,6 @@ default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detectio
 # Disable this feature if you do not want error message boxes.
 message-box = ["dep:msgbox", "dep:notify-rust"]
 read-clipboard = ["dep:clipboard-rs", "wl-clipboard-rs"]
-# When the feature `read-clipboard` is also enabled, the clipboard detects HTML.
-html-clipboard = []
 viewer = ["dep:notify", "dep:notify-debouncer-mini", "dep:httparse", "dep:webbrowser", "dep:httpdate", "tpnote-lib/viewer"]
 # This feature declaration is forwarded to `tpnote_lib` and not used in this
 # crate.
