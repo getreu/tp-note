@@ -23,10 +23,10 @@ strip = "symbols"
 [workspace.dependencies]
 lazy_static = "1.4.0"
 log = { version = "0.4.21", features = ["serde"] }
-parking_lot = "0.12.1"
+parking_lot = "0.12.3"
 sanitize-filename-reader-friendly = "2.2.1"
-serde = { version = "1.0.197", features = ["derive"] }
+serde = { version = "1.0.203", features = ["derive"] }
 serde_yaml = "0.9.34"
-tera = { version = "1.19.1", default-features = true }
-thiserror = "1.0.58"
-toml = "0.8.12"
+tera = { version = "1.20.0", default-features = true }
+thiserror = "1.0.61"
+toml = "0.8.14"
