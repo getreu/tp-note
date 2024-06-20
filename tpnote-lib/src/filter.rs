@@ -6,7 +6,6 @@ use crate::config::TMPL_VAR_FM_;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 use crate::filename::NotePathStr;
-#[cfg(feature = "renderer")]
 use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
 #[cfg(feature = "lang-detection")]
@@ -36,11 +35,9 @@ const CUT_LEN_MAX: usize = 200;
 pub const CUT_LEN_MAX: usize = 10;
 
 /// Lowercase pattern to detect HTML in stdin.
-#[cfg(feature = "renderer")]
 const HTML_PAT1: &str = "<!doctype html";
 
 /// Lowercase pattern to detect HTML in stdin.
-#[cfg(feature = "renderer")]
 const HTML_PAT2: &str = "<html";
 
 lazy_static! {
@@ -267,37 +264,34 @@ fn html_to_markup_filter<S: BuildHasher>(
     #[allow(unused_mut)]
     let mut buffer = try_get_value!("html_to_markup", "value", String, value);
 
-    #[cfg(feature = "renderer")]
-    {
-        let default = if let Some(default_val) = args.get("default") {
-            try_get_value!("markup_to_html", "default", String, default_val)
+    let default = if let Some(default_val) = args.get("default") {
+        try_get_value!("markup_to_html", "default", String, default_val)
+    } else {
+        String::new()
+    };
+
+    let firstline = buffer
+        .lines()
+        .next()
+        .map(|l| l.trim_start().to_ascii_lowercase());
+    if firstline.is_some_and(|l| l.starts_with(HTML_PAT1) || l.starts_with(HTML_PAT2)) {
+        let extension = if let Some(ext) = args.get("extension") {
+            try_get_value!("markup_to_html", "extension", String, ext)
         } else {
             String::new()
         };
 
-        let firstline = buffer
-            .lines()
-            .next()
-            .map(|l| l.trim_start().to_ascii_lowercase());
-        if firstline.is_some_and(|l| l.starts_with(HTML_PAT1) || l.starts_with(HTML_PAT2)) {
-            let extension = if let Some(ext) = args.get("extension") {
-                try_get_value!("markup_to_html", "extension", String, ext)
-            } else {
-                String::new()
-            };
-
-            let converter = InputConverter::get(&extension);
-            buffer = match converter(buffer) {
-                Ok(converted) if converted.is_empty() => default,
-                Ok(converted) => converted,
-                Err(e) => {
-                    log::info!("{}", e.to_string());
-                    default
-                }
-            };
-        } else {
-            buffer = default;
-        }
+        let converter = InputConverter::get(&extension);
+        buffer = match converter(buffer) {
+            Ok(converted) if converted.is_empty() => default,
+            Ok(converted) => converted,
+            Err(e) => {
+                log::info!("{}", e.to_string());
+                default
+            }
+        };
+    } else {
+        buffer = default;
     }
 
     // Trim end without reallocation.

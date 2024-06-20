@@ -1,6 +1,5 @@
 //! Helper functions dealing with markup languages.
 use crate::config::LIB_CFG;
-#[cfg(feature = "renderer")]
 use crate::error::NoteError;
 #[cfg(feature = "renderer")]
 use crate::highlight::SyntaxPreprocessor;
@@ -39,7 +38,6 @@ impl InputConverter {
     /// the `extensions` table in the `extension` line.
     /// When `extension` is not found in `extensions`, the function returns
     /// an NoteError.
-    #[cfg(feature = "renderer")]
     #[inline]
     pub(crate) fn get(extension: &str) -> fn(String) -> Result<String, NoteError> {
         let settings = SETTINGS.read_recursive();
@@ -54,6 +52,7 @@ impl InputConverter {
         }
 
         match input_converter {
+            #[cfg(feature = "renderer")]
             InputConverter::ToMarkdown => |s| {
                 Ok(parse_html(&s))
                 // // Alternative converter:
