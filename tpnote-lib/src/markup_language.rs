@@ -26,10 +26,10 @@ use std::str::from_utf8;
 pub enum InputConverter {
     /// Convert from HTML to Markdown.
     ToMarkdown,
-    /// Do not convert, through an error instead.
+    /// Do not convert, return an error instead.
     #[default]
     Disabled,
-    /// Do not convert, just pass through.
+    /// Do not convert, just pass through wrapped in `Ok()`.
     PassThrough,
 }
 
