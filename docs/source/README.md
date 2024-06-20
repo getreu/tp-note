@@ -268,7 +268,8 @@ compile _Tp-Note_ yourself.
    ```
 
    A modern Linux desktop usually ships the required shared
-   libraries. Here is a list extracted form a Debian binary:
+   libraries. The following lists the required libraries the Tp-Note (Debian)
+   binary depends on:
 
    ```sh
    ldd target/x86_64-unknown-linux-gnu/release/tpnote 
