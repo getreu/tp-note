@@ -4537,7 +4537,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote"
-version = "1.24.3"
+version = "1.24.4"
 dependencies = [
  "clipboard-rs",
  "directories",

@@ -2,9 +2,9 @@
 # Change to this script directory
 cd $(dirname "$0")
 
-cargo update
-
-### Better do these manually
+### Better do these manually, to make sure that all dependencies work with 
+### the current `rustc` version.
+# cargo update
 # cargo upgrade
 
 rm -r ../target

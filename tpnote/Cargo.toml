@@ -24,7 +24,7 @@ path = "src/main.rs"
 [package.metadata.deb]
 name = "tpnote"
 maintainer = "Jens Getreu, <getreu@web.de>"
-copyright = "2020-2023, Jens Getreu <getreu@web.de>"
+copyright = "2020-2024, Jens Getreu <getreu@web.de>"
 depends = "$auto"
 revision=""
 extended-description = '''
