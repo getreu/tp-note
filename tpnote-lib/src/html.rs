@@ -635,29 +635,40 @@ impl<'a> Hyperlink for Link<'a> {
 #[inline]
 /// A helper function that scans the input HTML document in `html_input` for
 /// HTML hyperlinks. When it finds a relative URL (local link), it analyzes it's
-/// path.  A relative path is then converted into an absolute path, before the
-/// result is reinserted into the HTML document.
+/// path. Depending on the `local_link_kind` configuration, relative local 
+/// links are converted into absolute local links and eventually rebased.
 ///
-/// The base path for this conversion is `docdir`, the location of the HTML
-/// document.
-/// If not `rewrite_rel_paths`, relative local paths are not converted.
-/// Furthermore, all local _absolute_ (not converted) paths are prepended with
-/// `root_path`. All external URLs always remain untouched.
-/// If `rewrite_abs_paths` and the URL's path is absolute, it prepends
-/// `root_path`.
-/// Finally, if `rewrite_ext` is true and a local link points to a known
+/// In order to achieve this, the user must respect the following convention
+/// concerning absolute local links in Tp-Note documents: When a
+/// document contains a local link with an absolute path (absolute local link),
+/// the base of this path is considered to be the directory where the marker
+/// file ‘.tpnote.toml’ resides (or ‘/’ in non exists). The marker file
+/// directory is `root_path`.
+/// Furthermore, the parameter `docdir` contains the absolute path of the
+/// directory of the currently processed HTML document. The user guarantees that
+/// `docdir` is the base for all relative local links in the document.
+/// BTW: `docdir` must always start with `root_path`.
+/// 
+/// If `LocalLinkKind::Off`, relative local links are not converted. 
+/// If `LocalLinkKind::Short`, relative local links are converted into an
+/// absolute local links with  `root_path` as base directory.
+/// If `LocalLinkKind::Long`, in addition to the above, the resulting absolute
+/// local link is prepended with `root_path`.
+/// 
+/// If `rewrite_ext` is true and a local link points to a known
 /// Tp-Note file extension, then `.html` is appended to the converted link.
+///
 /// Remark: The link's text property is never changed. However, there is
 /// one exception: when the link's text contains a string similar to URLs,
 /// starting with `http:` or `tpnote:`. In this case, the string is interpreted
 /// as URL and only the stem of the filename is displayed, e.g.
 /// `<a ...>http:dir/my file.md</a>` is replaced with `<a ...>my file</a>`.
 ///
-/// Before a local (converted) link is reinserted in the output HTML,
-/// a copy is inserted into `allowed_local_links` for further bookkeeping.
+/// Finally, before a converted local link is reinserted in the output HTML, a
+/// copy of that link is kept in `allowed_local_links` for further bookkeeping.
 ///
-/// decoded. After rewriting, the links are finally HTML escape encoded before
-/// the are reinserted in the output HTML of this function.
+/// NB: All absolute URLs (starting with a domain) always remain untouched.
+///
 /// NB2: It is guaranteed, that the resulting HTML document contains only local
 /// links to other documents within `root_path`. Deviant links displayed as
 /// `INVALID LOCAL LINK` and URL is discarded.

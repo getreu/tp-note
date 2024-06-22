@@ -935,8 +935,8 @@ resides (or `/` if none exists).  Consider the following example
 '`--export-link-rewriting=short`':
 
 * The Tp-Note file '`/my/docs/car/bill.md`' contains
-* a local link with an absolute path: '`/car/scan.jpg`',
-* and another link with a relative path: '`./photo.jpg`'.
+* an absolute local link: '`/car/scan.jpg`',
+* and another relative local link: '`./photo.jpg`'.
 * The document root marker is: '`/my/docs/.tpnote.toml`'.
 
 The images in the resulting HTML will appear as
@@ -944,12 +944,13 @@ The images in the resulting HTML will appear as
 * '`/car/scan.jpg`'.
 * '`/car/photo.jpg`'.
 
-For '`--export-link-rewriting=short`', in addition to the above, all absolute
-paths in local links are rebased to '`/`''. Consider the following example:
+For '`--export-link-rewriting=long`', in addition to the above, all absolute
+paths in local links are prepended with the marker file's directory. Consider
+the following example:
 
 * The Tp-Note file '`/my/docs/car/bill.md`' contains
-* a link with an absolute path: '`/car/scan.jpg`',
-* and another link with a relative path: '`./photo.jpg`'.
+* an absolute local link: '`/car/scan.jpg`',
+* and another relative local link: '`./photo.jpg`'.
 * The document root marker is: '`/my/docs/.tpnote.toml`'.
 
 The images in the resulting HTML will appear as
@@ -961,8 +962,7 @@ Summary: The right '`--export-link-rewriting`' choice depends on how you view
 the resulting HTML: if you publish on a web server, then '`short`' might be
 a good choice (do not forget to place a marker file '`.tpnote.toml`' somewhere 
 in the document's path). If you view the HTML file directly in your web 
-browser, better choose '`long`'. In this case, the present of a marker file will
-not affect the output.
+browser, better choose '`long`'.
 
 
 ### Local links with format strings
@@ -1671,15 +1671,15 @@ are regarded as Markdown files:
 name = "default"
 [scheme.filename]
 extensions = [
-  ["txt", "Markdown"],
-  ["md", "Markdown"],
-  ["markdown", "Markdown"],
-  ["rst", "ReStructuredText"],
-  ["htmlnote", "Html"],
-  ["txtnote", "PlainText"],
-  ["adoc", "PlainText"],
-  ["mw", "PlainTextNoViewer"],
-  ["t2t", "PlainTextNoViewer"],
+  ["txt", "ToMarkdown", "Markdown"],
+  ["md", "ToMarkdown", "Markdown"],
+  ["rst", "Disabled", "ReStructuredText"],
+  ["htmlnote", "PassThrough", "Html"],
+  ["txtnote", "Disabled", "PlainText"],
+  ["adoc", "Disabled", "PlainText"],
+  ["text", "ToMarkdown", "Markdown"],
+  ["markdn", "ToMarkdown", "Markdown"],
+  ["markdown", "ToMarkdown", "Markdown"],
 ]
 ```
 
@@ -2234,7 +2234,7 @@ viewer_error = '''
 <pre>{{ doc_error }}</pre>
 <hr>
 </div>
-{{ doc_text | markup_to_html | safe }}y
+{{ doc_text | markup_to_html | safe }}
 <script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
@@ -2330,7 +2330,7 @@ with '`tpnote --debug debug --popup --view`'.
 
 All _TP-Note_'s workflows are customizable through its templates which
 are grouped in the '`[scheme.tmpl]`' and in the '`[scheme.tmpl_html]`'
-section of Tp-Nots's configuration file. This chapter deals with
+section of Tp-Note's configuration file. This chapter deals with
 '`[scheme.tmpl]`' templates which are responsible for generating Tp-Note files.
 '`[scheme.tmpl_html]`' templates concern only Tp-Note's viewer feature and are
 discussed in the chapters: Customize the built-in note viewer_ and _Choose your
