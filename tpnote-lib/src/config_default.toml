@@ -101,13 +101,13 @@ extension_default = "md"
 ###
 ### NB: The list is ordered to look for the most common extensions first.
 extensions = [
-  ["txt", "PassThrough", "Markdown"],
+  ["txt", "ToMarkdown", "Markdown"],
   ["md", "ToMarkdown", "Markdown"],
   ["rst", "Disabled", "ReStructuredText"],
   ["htmlnote", "PassThrough", "Html"],
   ["txtnote", "Disabled", "PlainText"],
   ["adoc", "Disabled", "PlainText"],
-  ["text", "Disabled", "Markdown"],
+  ["text", "ToMarkdown", "Markdown"],
   ["markdn", "ToMarkdown", "Markdown"],
   ["markdown", "ToMarkdown", "Markdown"],
   ["mdown", "ToMarkdown", "Markdown"],
