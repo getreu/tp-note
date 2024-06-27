@@ -1,9 +1,9 @@
 { pkgs ? import <nixpkgs> {} }:
 pkgs.mkShell {
   nativeBuildInputs = with pkgs; [ 
-    rustup
-    cargo-edit 
-    gcc 
+    cargo
+    cargo-edit
+    rustc 
     rustfmt 
     clippy 
     rust-analyzer
