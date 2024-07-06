@@ -5,9 +5,7 @@ use crate::error::NoteError;
 use crate::highlight::SyntaxPreprocessor;
 use crate::settings::SETTINGS;
 #[cfg(feature = "renderer")]
-use htmlproc;
-#[cfg(feature = "renderer")]
-use mdka::from_html;
+use html2md::parse_html;
 use parse_hyperlinks::renderer::text_links2html;
 use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
@@ -20,14 +18,6 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 #[cfg(feature = "renderer")]
 use std::str::from_utf8;
-
-/// Ommit HTML `<span>` before converting to Markdown.
-#[cfg(feature = "renderer")]
-const TARGET_TAGS: &[&str; 1] = &["span"];
-
-/// Ommit HTML `<... style="..."n>` before converting to Markdown.
-#[cfg(feature = "renderer")]
-const TARGET_ATTR: &[&str; 1] = &["style"];
 
 /// Availble converters for converting the input from stdin or the clipboard
 /// to HTML.
@@ -64,16 +54,15 @@ impl InputConverter {
         match input_converter {
             #[cfg(feature = "renderer")]
             InputConverter::ToMarkdown => |s| {
-                Ok(from_html(&htmlproc::omit_enclosure::manipulate(
-                    &htmlproc::omit_attr::manipulate(&s, TARGET_ATTR),
-                    TARGET_TAGS,
-                )))
+                Ok(parse_html(&s))
+                // // Alternative converter:
+                // use html2md_rs::to_md::safe_from_html_to_md;
+                // safe_from_html_to_md(s).map_err(|e| NoteError::InvalidHtml {
+                //   source_str: e.to_string() })
             },
-
             InputConverter::Disabled => {
                 |_: String| -> Result<String, NoteError> { Err(NoteError::HtmlToMarkupDisabled) }
             }
-
             _ => Ok,
         }
     }
