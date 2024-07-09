@@ -261,7 +261,8 @@ impl From<&str> for MarkupLanguage {
 #[cfg(test)]
 mod tests {
 
-    use crate::markup_language::MarkupLanguage;
+    use super::InputConverter;
+    use super::MarkupLanguage;
     use std::path::Path;
 
     #[test]
@@ -280,6 +281,33 @@ mod tests {
         //
         let ext = "md";
         assert_eq!(MarkupLanguage::from(ext), MarkupLanguage::Markdown);
+    }
+
+    #[test]
+    fn test_input_converter() {
+        let ic = InputConverter::get("md");
+        let source: &str =
+            "<div id=\"videopodcast\">outside <span id=\"pills\">inside</span>\n</div>";
+        let expect: &str = "outside inside";
+
+        let result = ic(source.to_string());
+        assert_eq!(result.unwrap(), expect);
+    }
+
+    #[test]
+    fn test_filter_tags() {
+        let source: &str =
+            "A<div id=\"videopodcast\">out<p>side <span id=\"pills\">inside</span>\n</div>B";
+        let expect: &str = "Aout<p>side inside\nB";
+
+        let result = InputConverter::filter_tags(source.to_string());
+        assert_eq!(result, expect);
+
+        let source: &str = "A<B<C <div>D<E<p>F<>G";
+        let expect: &str = "A<B<C D<E<p>F<>G";
+
+        let result = InputConverter::filter_tags(source.to_string());
+        assert_eq!(result, expect);
     }
 }
 // `rewrite_rel_links=true`
