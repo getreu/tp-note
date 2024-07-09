@@ -102,6 +102,9 @@ impl InputConverter {
         }
         if i > 0 {
             res.push_str(&text[i..]);
+            if res != text {
+                log::trace!("`html_to_markup` filter: removed tags in \"{}\"", text);
+            }
             res
         } else {
             text
