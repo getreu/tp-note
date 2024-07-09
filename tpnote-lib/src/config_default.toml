@@ -465,13 +465,13 @@ copy_counter.opening_brackets = "("
 copy_counter.closing_brackets = ")"
 extension_default = "md"
 extensions = [
-  ["txt", "PassThrough", "Markdown"],
+  ["txt", "ToMarkdown", "Markdown"],
   ["md", "ToMarkdown", "Markdown"],
-  ["rst", "ToMarkdown", "ReStructuredText"],
+  ["rst", "Disabled", "ReStructuredText"],
   ["htmlnote", "PassThrough", "Html"],
-  ["txtnote", "ToMarkdown", "PlainText"],
-  ["adoc", "PassThrough", "PlainText"],
-  ["text", "PassThrough", "Markdown"],
+  ["txtnote", "Disabled", "PlainText"],
+  ["adoc", "Disabled", "PlainText"],
+  ["text", "ToMarkdown", "Markdown"],
   ["markdn", "ToMarkdown", "Markdown"],
   ["markdown", "ToMarkdown", "Markdown"],
   ["mdown", "ToMarkdown", "Markdown"],
@@ -479,12 +479,13 @@ extensions = [
   ["mdtxt", "ToMarkdown", "Markdown"],
   ["mdwn", "ToMarkdown", "Markdown"],
   ["mkd", "ToMarkdown", "Markdown"],
-  ["rest", "PassThrough", "ReStructuredText"],
-  ["asciidoc", "PassThrough", "PlainText"],
-  ["mediawiki", "PassThrough", "RendererDisabled"],
-  ["mw", "PassThrough", "RendererDisabled"],
-  ["t2t", "PassThrough", "RendererDisabled"],
+  ["rest", "Disabled", "ReStructuredText"],
+  ["asciidoc", "Disabled", "PlainText"],
+  ["mediawiki", "Disabled", "RendererDisabled"],
+  ["mw", "Disabled", "RendererDisabled"],
+  ["t2t", "Disabled", "RendererDisabled"],
 ]
+
 
 [scheme.tmpl]
 fm_var.localization = [
