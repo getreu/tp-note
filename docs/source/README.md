@@ -306,8 +306,8 @@ compile _Tp-Note_ yourself.
    _Tp-Note_ into `stderr`:
 
    ```sh
-   cargo install --no-default-features --features \
-     html-clipboard,lang-detection,read-clipboard,renderer,viewer \
+   cargo install --no-default-features \
+     --features lang-detection,read-clipboard,renderer,viewer \
      tpnote
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
    ```
