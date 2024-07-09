@@ -5,19 +5,23 @@ use crate::error::NoteError;
 use crate::highlight::SyntaxPreprocessor;
 use crate::settings::SETTINGS;
 #[cfg(feature = "renderer")]
-use html2md::parse_html;
+use html2md;
 use parse_hyperlinks::renderer::text_links2html;
 use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
 use pulldown_cmark::{html, Options, Parser};
 #[cfg(feature = "renderer")]
-use rst_parser::parse;
+use rst_parser;
 #[cfg(feature = "renderer")]
 use rst_renderer::render_html;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 #[cfg(feature = "renderer")]
 use std::str::from_utf8;
+
+/// Ommit HTML `<span....>` after converting to Markdown.
+#[cfg(feature = "renderer")]
+const FILTERED_TAGS: &[&str; 4] = &["<span", "</span>", "<div", "</div>"];
 
 /// Availble converters for converting the input from stdin or the clipboard
 /// to HTML.
@@ -53,17 +57,54 @@ impl InputConverter {
 
         match input_converter {
             #[cfg(feature = "renderer")]
-            InputConverter::ToMarkdown => |s| {
-                Ok(parse_html(&s))
-                // // Alternative converter:
-                // use html2md_rs::to_md::safe_from_html_to_md;
-                // safe_from_html_to_md(s).map_err(|e| NoteError::InvalidHtml {
-                //   source_str: e.to_string() })
-            },
+            InputConverter::ToMarkdown => |s| Ok(Self::filter_tags(html2md::parse_html(&s))),
+
             InputConverter::Disabled => {
                 |_: String| -> Result<String, NoteError> { Err(NoteError::HtmlToMarkupDisabled) }
             }
+
             _ => Ok,
+        }
+    }
+
+    /// Filters the `TARGET_TAGS`, e.g. `<span...>`, `</span>`, `<div...>`
+    /// and `<div>` in `text`.
+    /// Contract: the input substring `...` does not contain the characters
+    /// `>` or `\n`.
+    #[cfg(feature = "renderer")]
+    fn filter_tags(text: String) -> String {
+        let mut res = String::new();
+        let mut i = 0;
+        while let Some(mut start) = text[i..].find('<') {
+            if let Some(mut end) = text[i + start..].find('>') {
+                end += 1;
+                // Move on if there is another opening bracket.
+                if let Some(new_start) = text[i + start + 1..i + start + end].rfind('<') {
+                    start += new_start + 1;
+                    end -= new_start + 1;
+                }
+
+                // Is this a tag listed in `TARGET_TAGS`?
+                let filter_tag = FILTERED_TAGS
+                    .iter()
+                    .any(|&pat| text[i + start..i + start + end].starts_with(pat));
+
+                if filter_tag {
+                    res.push_str(&text[i..i + start]);
+                } else {
+                    res.push_str(&text[i..i + start + end]);
+                };
+                i = i + start + end;
+            } else {
+                res.push_str(&text[i..i + start + 1]);
+                i = i + start + 1;
+            }
+        }
+        if i > 0 {
+            res.push_str(&text[i..]);
+            res
+        } else {
+            text
         }
     }
 }
@@ -164,7 +205,7 @@ impl MarkupLanguage {
                 }
                 // Write to String buffer.
                 let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
-                parse(rest_input.trim_start())
+                rst_parser::parse(rest_input.trim_start())
                     .and_then(|doc| render_html(&doc, &mut html_output, false))
                     .map_or_else(
                         |e| NoteError::RstParse { msg: e.to_string() }.to_string(),
