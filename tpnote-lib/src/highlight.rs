@@ -54,17 +54,21 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
     type Item = Event<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        // Detect inline LaTeX.
         let lang = match self.parent.next()? {
-            Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => lang,
-            // Detect inline LaTeX.
-            Event::Code(c) if c.len() > 1 && c.starts_with('$') && c.ends_with('$') => {
+            Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) if !lang.is_empty() => lang,
+            Event::InlineMath(c) => {
                 return Some(Event::Html(
-                    latex2mathml::latex_to_mathml(
-                        &c[1..c.len() - 1],
-                        latex2mathml::DisplayStyle::Inline,
-                    )
-                    .unwrap_or_else(|e| e.to_string())
-                    .into(),
+                    latex2mathml::latex_to_mathml(c.as_ref(), latex2mathml::DisplayStyle::Inline)
+                        .unwrap_or_else(|e| e.to_string())
+                        .into(),
+                ));
+            }
+            Event::DisplayMath(c) => {
+                return Some(Event::Html(
+                    latex2mathml::latex_to_mathml(c.as_ref(), latex2mathml::DisplayStyle::Block)
+                        .unwrap_or_else(|e| e.to_string())
+                        .into(),
                 ));
             }
             other => return Some(other),
@@ -130,18 +134,41 @@ mod test {
     #[test]
     fn test_latex_math() {
         // Inline math.
-        let input: &str = "casual `$\\sum_{n=0}^\\infty \\frac{1}{n!}$` text";
+        let input: &str = "casual $\\sum_{n=0}^\\infty \\frac{1}{n!}$ text";
 
         let expected = "<p>casual <math xmlns=";
 
-        let parser = Parser::new(input);
+        let options = Options::all();
+        let parser = Parser::new_ext(input, options);
         let processed = SyntaxPreprocessor::new(parser);
 
         let mut rendered = String::new();
         html::push_html(&mut rendered, processed);
+        println!("Rendered: {}", rendered);
         assert!(rendered.starts_with(expected));
 
-        // Block math
+        // Block math 1
+        let input = "text\n$$\nR(X, Y)Z = \\nabla_X\\nabla_Y Z - \
+            \\nabla_Y \\nabla_X Z - \\nabla_{[X, Y]} Z\n$$";
+
+        let expected = "<p>text\n\
+            <math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\">\
+            <mi>R</mi><mo>(</mo><mi>X</mi><mo>,</mo><mi>Y</mi><mo>)</mo>\
+            <mi>Z</mi><mo>=</mo><msub><mo>∇</mo><mi>X</mi></msub><msub><mo>∇</mo>\
+            <mi>Y</mi></msub><mi>Z</mi><mo>-</mo><msub><mo>∇</mo><mi>Y</mi></msub>\
+            <msub><mo>∇</mo><mi>X</mi></msub><mi>Z</mi><mo>-</mo><msub><mo>∇</mo>\
+            <mrow><mo>[</mo><mi>X</mi><mo>,</mo><mi>Y</mi><mo>]</mo></mrow></msub>\
+            <mi>Z</mi></math></p>\n";
+
+        let options = Options::all();
+        let parser = Parser::new_ext(input, options);
+        let processed = SyntaxPreprocessor::new(parser);
+
+        let mut rendered = String::new();
+        html::push_html(&mut rendered, processed);
+        assert_eq!(rendered, expected);
+
+        // Block math 2
         let input = "text\n```math\nR(X, Y)Z = \\nabla_X\\nabla_Y Z - \
             \\nabla_Y \\nabla_X Z - \\nabla_{[X, Y]} Z\n```";
 
@@ -154,7 +181,8 @@ mod test {
             <mrow><mo>[</mo><mi>X</mi><mo>,</mo><mi>Y</mi><mo>]</mo></mrow></msub>\
             <mi>Z</mi></math>";
 
-        let parser = Parser::new(input);
+        let options = Options::all();
+        let parser = Parser::new_ext(input, options);
         let processed = SyntaxPreprocessor::new(parser);
 
         let mut rendered = String::new();
@@ -185,8 +213,8 @@ mod test {
     fn test_plain_text() {
         let input: &str = "```\nSome\nText\n```";
 
-        let expected = "<pre><code><span class=\"text plain\">\
-            Some\nText\n</span></code></pre>";
+        let expected = "<pre><code>\
+            Some\nText\n</code></pre>\n";
 
         let parser = Parser::new(input);
         let processed = SyntaxPreprocessor::new(parser);
