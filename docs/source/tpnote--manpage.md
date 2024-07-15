@@ -477,16 +477,25 @@ Tp-Note's note built-in viewer comprises three markup language renders:
 
 * '`Markdown`'_ (file extension `.md`)\
   This renderer is CommonMark compatible and feature complete. It understands,
-  inline images, tables and LaTeX formula:
+  heading attributes, inline images, tables, task lists, footnotes, 
+  strike-through and LaTeX formula:
 
-  ````md
+  ````latex
   ```math
   x^n + y^n = z^n
   ```
   ````
 
-  Inline formulas are enclosed in backtick and Dollar characters, 
-  e.g. '``` `$\alpha$` ```' becomes '` `$\alpha$` `'.
+  Or:
+
+  ````
+  $$
+  x^n + y^n = z^n
+  $$
+  ````
+
+  Inline formulas are enclosed between Dollar characters, 
+  e.g. '``` $\alpha$ ```' becomes '` `$\alpha$` `'.
 
   Source code is highlighted when you annotate the programming
   language (see also '`tmpl_html.viewer_highlighting_theme`' and
@@ -500,6 +509,17 @@ Tp-Note's note built-in viewer comprises three markup language renders:
   }
   ```
   ````
+
+  Heading attributes:
+
+  ```md
+  # text { #id .class1 .class2 myattr other_attr=myvalue }
+  ```
+
+  is interpreted as a level 1 heading with the content text, ID '`id`', classes
+  '`class1`' and '`class2`' and custom attributes '`myattr`' (without value)
+  and '`other_attr`' with value '`myvalue`'. Note that ID, classes, and custom
+  attributes should be space-separated.
 
 * '`ReStructuredText`' (file extension `.rst`)\
   This renderer is experimental and covers only basic markup.
