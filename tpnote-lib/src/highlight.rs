@@ -57,6 +57,18 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
         // Detect inline LaTeX.
         let lang = match self.parent.next()? {
             Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) if !lang.is_empty() => lang,
+            // This is the deprecheated inline math syntax.
+            // It is kept here for backwards compatibility.
+            Event::Code(c) if c.len() > 1 && c.starts_with('$') && c.ends_with('$') => {
+                return Some(Event::Html(
+                    latex2mathml::latex_to_mathml(
+                        &c[1..c.len() - 1],
+                        latex2mathml::DisplayStyle::Inline,
+                    )
+                    .unwrap_or_else(|e| e.to_string())
+                    .into(),
+                ));
+            }
             Event::InlineMath(c) => {
                 return Some(Event::Html(
                     latex2mathml::latex_to_mathml(c.as_ref(), latex2mathml::DisplayStyle::Inline)
@@ -147,6 +159,22 @@ mod test {
         println!("Rendered: {}", rendered);
         assert!(rendered.starts_with(expected));
 
+        //
+        // Deprecheated inline math.
+        // This code might be removed later.
+        let input: &str = "casual `$\\sum_{n=0}^\\infty \\frac{1}{n!}$` text";
+
+        let expected = "<p>casual <math xmlns=";
+
+        let options = Options::all();
+        let parser = Parser::new_ext(input, options);
+        let processed = SyntaxPreprocessor::new(parser);
+
+        let mut rendered = String::new();
+        html::push_html(&mut rendered, processed);
+        assert!(rendered.starts_with(expected));
+
+        //
         // Block math 1
         let input = "text\n$$\nR(X, Y)Z = \\nabla_X\\nabla_Y Z - \
             \\nabla_Y \\nabla_X Z - \\nabla_{[X, Y]} Z\n$$";
