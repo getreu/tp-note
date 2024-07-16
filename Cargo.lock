@@ -4547,7 +4547,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote"
-version = "1.24.6"
+version = "1.24.7"
 dependencies = [
  "clipboard-rs",
  "directories",
@@ -4570,7 +4570,7 @@ dependencies = [
  "thiserror",
  "time",
  "toml 0.8.14",
- "tpnote-lib 0.35.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tpnote-lib 0.35.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "webbrowser",
  "win32job",
  "windows-sys 0.52.0",
@@ -4580,7 +4580,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote-lib"
-version = "0.35.2"
+version = "0.35.3"
 dependencies = [
  "fast_html2md",
  "html-escape",
@@ -4611,9 +4611,9 @@ dependencies = [
 
 [[package]]
 name = "tpnote-lib"
-version = "0.35.2"
+version = "0.35.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b829bb34143fa68977b3987dc0f80fb3c3f68fe3c1771891138487ff06f3e108"
+checksum = "04b8690b402a8fa7062e54e7e023b69a12cbc301acadc0c8b69e0574066a08e8"
 dependencies = [
  "fast_html2md",
  "html-escape",
