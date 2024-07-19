@@ -23,33 +23,34 @@ sort_tag.extra_chars = ".-_="
 ### If empty, the first character which is not in `filename.sort_tag.extra_chars`
 ### marks the end of a sort tag.
 ### If not empty, a _sort_tag_ is only valid, when is its followed by
-### `filename.sort_tag.separator`. A _sort_tag_ never ends with a
-### `filename.sort_tag.separator`, if it does it stripped. In other positions
-### the separator may appear.
+### `filename.sort_tag.separator`. A _sort_tag_ itself may contain separators,
+### but must not end with one.
 sort_tag.separator = "-"
 
-### In case the file stem starts with a character in `sort_tag.extra_chars` the
-### `sort_tag.extra_separator` character is inserted in order to separate both
-### parts when the filename is read next time.
+### In case the file stem starts with a character in `sort_tag.extra_chars` a
+### `sort_tag.extra_separator` character may be inserted in order to tell
+### the sort tag apart reliably.
 sort_tag.extra_separator = "'"
 
-### A sort-tag can have several counters. A counter can a set of digits or
+### A sort-tag can have several counters. A counter is a set of digits or
 ### a set of lower case letters. A valid sort-tag (sequential or chronological)
 ### can have at most this number of letters in succession. 
 sort_tag.letters_in_succession_max = 2
 
-### A criterium to decide if a sort tag is sequential or not: a sequential
-### sort-tag must have a maximum of this number of digits in succession.
-### We set this to `3` assuming, that the chronological sort-tag contains some 
-### year, e.g. # `20231028` or `2023-10-28`. We require sequential sort-tags 
-### to have shorter numbers to satisfy this criterium, e.g. `3.1.123` or `3a123`.
+### The criterion to tell if a sort tag is sequential or not: 
+### a sequential sort-tag must have at most `digits_in_succession_max ` number
+### of digits in succession. By default, this is set to `3` assuming, that a
+### chronological sort-tag usually contains some year information, e.g.
+### `20231028` or `2023-10-28` with at least 4 digits. On the other hand,
+### we require sequential sort-tags to have shorter numbers to satisfy this
+### criterion, e.g. `3.1.123` or `3a123`.
 sort_tag.sequential.digits_in_succession_max = 3
  
 ### If the stem of a filename ends with a pattern, that is similar to a copy
 ### counter, add this extra separator. It must be one of `TRIM_LINE_CHARS` (see
 ### definition in crate: `sanitize_filename_reader_friendly`) because they are
-### known not to appear at the end of `sanitze()`'d strings. This is why they are
-### suitable here.
+### known not to appear at the end of `sanitze()`'d strings. This is why they
+### are suitable here.
 copy_counter.extra_separator = "-"
 
 ### Tp-Note may add a counter at the end of the filename when it can not save a
