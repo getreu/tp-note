@@ -1877,6 +1877,11 @@ fm_vars.localization = [
     ["fm_author", "Autor"],
     ["fm_date", "Datum"],
     ["fm_lang", "Sprache"],
+    ["fm_sort_tag", "Kennzeichen"],
+    ["fm_file_ext", "Datei_ext"],
+    ["fm_no_filename_sync", "Keine_Sync"],
+    ["fm_filename_sync", "Dateinamensync"],
+    ["fm_scheme", "Schema"],
 ]
 ```
 
@@ -2611,7 +2616,7 @@ A filter is always used together with a variable. Here are some examples:
   dot (period), e.g. '`txt`' or '`md`'.
 
 * '`{{ path | file_ext | prepend(with='.') }}`' is '`{{ path }}`'’s file
-  extension with dot (period), e.g. '`.md`' or '`.md`'.
+  extension with dot (period), e.g. '`.txt`' or '`.md`'.
 
 * '`{{ path | trim_file_sort_tag }}`' returns the final component of '`path`'
   which might be a directory name or a file name. Unlike the '`file_name`'
