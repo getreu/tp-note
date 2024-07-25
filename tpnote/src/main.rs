@@ -207,8 +207,7 @@ fn main() {
             ),
         };
 
-        let mut msg = serde_yaml::to_string(&about).unwrap_or_else(|_| "unknown".to_string());
-        msg.push_str("---");
+        let msg = serde_yaml::to_string(&about).unwrap_or_else(|_| "unknown".to_string());
 
         // Print on console.
         println!("{}", msg);
