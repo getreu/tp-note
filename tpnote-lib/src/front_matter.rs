@@ -138,7 +138,7 @@ impl FrontMatter {
                                 let docpath = docpath.to_str().unwrap_or_default();
 
                                 let (dirpath, filename) =
-                                    docpath.rsplit_once(['/', '\\']).unwrap_or(("", &docpath));
+                                    docpath.rsplit_once(['/', '\\']).unwrap_or(("", docpath));
                                 let sort_tag = filename.split_sort_tag(false).0;
                                 // No further check if filename(path) has no sort-tag
                                 // or if sort-tags are identical.

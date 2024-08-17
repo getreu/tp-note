@@ -498,7 +498,7 @@ impl LibCfg {
         {
             let hl_theme_set = ThemeSet::load_defaults();
             let hl_theme_name = &self.tmpl_html.viewer_highlighting_theme;
-            if !hl_theme_name.is_empty() && hl_theme_set.themes.get(hl_theme_name).is_none() {
+            if !hl_theme_name.is_empty() && !hl_theme_set.themes.contains_key(hl_theme_name) {
                 return Err(LibCfgError::HighlightingThemeName {
                     var: "viewer_highlighting_theme".to_string(),
                     value: hl_theme_name.to_owned(),
@@ -512,7 +512,7 @@ impl LibCfg {
                 });
             };
             let hl_theme_name = &self.tmpl_html.exporter_highlighting_theme;
-            if !hl_theme_name.is_empty() && hl_theme_set.themes.get(hl_theme_name).is_none() {
+            if !hl_theme_name.is_empty() && !hl_theme_set.themes.contains_key(hl_theme_name) {
                 return Err(LibCfgError::HighlightingThemeName {
                     var: "exporter_highlighting_theme".to_string(),
                     value: hl_theme_name.to_owned(),
