@@ -577,7 +577,9 @@ mod tests {
     #[test]
     fn test_update_author_setting() {
         let mut settings = Settings::default();
-        env::set_var(ENV_VAR_LOGNAME, "testauthor");
+        unsafe {
+            env::set_var(ENV_VAR_LOGNAME, "testauthor");
+        }
         settings.update_author();
         assert_eq!(settings.author, "testauthor");
     }
@@ -585,12 +587,16 @@ mod tests {
     #[test]
     fn test_update_extension_default_setting() {
         let mut settings = Settings::default();
-        env::set_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT, "markdown");
+        unsafe {
+            env::set_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT, "markdown");
+        }
         settings.update_extension_default();
         assert_eq!(settings.extension_default, "markdown");
 
         let mut settings = Settings::default();
-        std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
+        unsafe {
+            std::env::remove_var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT);
+        }
         settings.update_extension_default();
         assert_eq!(settings.extension_default, "md");
     }
@@ -600,22 +606,28 @@ mod tests {
     fn test_update_lang_setting() {
         // Test 1
         let mut settings = Settings::default();
-        env::remove_var(ENV_VAR_TPNOTE_LANG);
-        env::set_var(ENV_VAR_LANG, "en_GB.UTF-8");
+        unsafe {
+            env::remove_var(ENV_VAR_TPNOTE_LANG);
+            env::set_var(ENV_VAR_LANG, "en_GB.UTF-8");
+        }
         settings.update_lang(None);
         assert_eq!(settings.lang, "en-GB");
 
         // Test empty input.
         let mut settings = Settings::default();
-        env::remove_var(ENV_VAR_TPNOTE_LANG);
-        env::set_var(ENV_VAR_LANG, "");
+        unsafe {
+            env::remove_var(ENV_VAR_TPNOTE_LANG);
+            env::set_var(ENV_VAR_LANG, "");
+        }
         settings.update_lang(None);
         assert_eq!(settings.lang, "");
 
         // Test precedence of `TPNOTE_LANG`.
         let mut settings = Settings::default();
-        env::set_var(ENV_VAR_TPNOTE_LANG, "it-IT");
-        env::set_var(ENV_VAR_LANG, "en_GB.UTF-8");
+        unsafe {
+            env::set_var(ENV_VAR_TPNOTE_LANG, "it-IT");
+            env::set_var(ENV_VAR_LANG, "en_GB.UTF-8");
+        }
         settings.update_lang(None);
         assert_eq!(settings.lang, "it-IT");
     }
@@ -706,7 +718,7 @@ mod tests {
             lang: "en-GB".to_string(),
             ..Default::default()
         };
-        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "fr-FR, de-DE, hu");
+        unsafe { env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "fr-FR, de-DE, hu") };
         settings.update_env_lang_detection(false);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
@@ -734,7 +746,7 @@ mod tests {
             lang: "en-GB".to_string(),
             ..Default::default()
         };
-        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en-US");
+        unsafe { env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en-US") };
         settings.update_env_lang_detection(false);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
@@ -760,7 +772,7 @@ mod tests {
             lang: "en-GB".to_string(),
             ..Default::default()
         };
-        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, en-US");
+        unsafe { env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, en-US") };
         settings.update_env_lang_detection(false);
 
         assert!(matches!(
@@ -777,7 +789,7 @@ mod tests {
             lang: "en-GB".to_string(),
             ..Default::default()
         };
-        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en");
+        unsafe { env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, de-AT, en") };
         settings.update_env_lang_detection(false);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
@@ -803,7 +815,7 @@ mod tests {
             lang: "en-GB".to_string(),
             ..Default::default()
         };
-        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, de-AT, en");
+        unsafe { env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, +all, de-AT, en") };
         settings.update_env_lang_detection(false);
 
         assert!(matches!(
@@ -819,7 +831,7 @@ mod tests {
             lang: "en-GB".to_string(),
             ..Default::default()
         };
-        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "fr-FR, de-DE, hu");
+        unsafe { env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "fr-FR, de-DE, hu") };
         settings.update_env_lang_detection(true);
 
         // `force_lang` must disables the `get_lang` filter.
@@ -836,7 +848,7 @@ mod tests {
             lang: "".to_string(),
             ..Default::default()
         };
-        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
+        unsafe { env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "") };
         settings.update_env_lang_detection(false);
 
         assert!(matches!(settings.filter_get_lang, FilterGetLang::Disabled));
@@ -848,7 +860,7 @@ mod tests {
             lang: "xy-XY".to_string(),
             ..Default::default()
         };
-        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "en-GB, fr");
+        unsafe { env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "en-GB, fr") };
         settings.update_env_lang_detection(false);
 
         if let FilterGetLang::SomeLanguages(ofgl) = settings.filter_get_lang {
@@ -873,7 +885,9 @@ mod tests {
             lang: "en-GB".to_string(),
             ..Default::default()
         };
-        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, xy-XY");
+        unsafe {
+            env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "de-DE, xy-XY");
+        }
         settings.update_env_lang_detection(false);
 
         assert!(matches!(settings.filter_get_lang, FilterGetLang::Error(..)));
@@ -884,7 +898,9 @@ mod tests {
             lang: "en-GB".to_string(),
             ..Default::default()
         };
-        env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
+        unsafe {
+            env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "");
+        }
         settings.update_env_lang_detection(false);
 
         assert!(matches!(settings.filter_get_lang, FilterGetLang::Disabled));
