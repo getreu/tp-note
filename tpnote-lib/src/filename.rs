@@ -314,6 +314,7 @@ impl NotePath for Path {
     /// * if the filename is not empty, and
     ///   * if the filename is a dot file (len >1 and without whitespace), or
     ///   * if the filename has an extension.
+    ///
     /// A valid extension must not contain whitespace.
     ///
     /// ```rust

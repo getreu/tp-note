@@ -165,6 +165,7 @@ fn to_yaml_filter<S: BuildHasher>(
 /// * `Value::Array`: `<ul class="fm">` and `<li class="fm">`,
 /// * `Value::String`: no tag,
 /// * Other non-string basic types: `<code class="fm">`.
+///
 /// The input can be of any type, the output type is `Value::String()`.
 /// Note: HTML templates escape HTML critical characters by default.
 /// To use the `to_hmtl` filter in HTML templates, add a `safe` filter in last
@@ -977,7 +978,7 @@ struct FirstHyperlink<'a> {
 }
 
 impl<'a> FirstHyperlink<'a> {
-    /// Parse a markdown formatted hyperlink and stores the result in `Self`.
+    /// Parse the first markup formatted hyperlink and stores the result in `Self`.
     fn from(i: &'a str) -> Option<Self> {
         let mut hlinks = MarkupLink::new(i, false);
         hlinks
@@ -988,7 +989,8 @@ impl<'a> FirstHyperlink<'a> {
             .map(|(text, dest, title)| FirstHyperlink { text, dest, title })
     }
 
-    ///
+    /// Parse the first markup formatted hyperlink and stores the result in `Self`.
+    /// If this first link is an autolink, return `None`.
     fn from_picky(i: &'a str) -> Option<Self> {
         let mut hlinks = MarkupLink::new(i, false);
 

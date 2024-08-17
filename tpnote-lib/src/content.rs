@@ -215,6 +215,7 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
     /// 5. followed by `\n---\n` or `\n...\n`,
     /// 6. optionally followed by some `\t` and/or some ` `,
     /// 7. optionally followed by `\n`.
+    ///
     /// The remaining bytes are the "body".
     ///
     /// Alternatively, a YAML metadata block may occur anywhere in the document, but if it is not

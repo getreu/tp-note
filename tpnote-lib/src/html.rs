@@ -129,6 +129,7 @@ trait Hyperlink {
     /// * `Link::Text2Dest`: strips a possible scheme in local `dest`.
     /// * `Link::Image2Dest`: strip local scheme in `dest`.
     /// * `Link::Image`: strip local scheme in `src`.
+    ///
     ///  No action if not local.
     fn strip_local_scheme(&mut self);
 
@@ -138,6 +139,7 @@ trait Hyperlink {
     /// True if the link is:
     /// * `Link::Text2Dest` and the link text equals the link destination, or
     /// * `Link::Image` and the links `alt` equals the link source.
+    ///
     /// WARNING: place this test after `decode_html_escape_and_percent()`
     /// and before: `rebase_local_link`, `expand_shorthand_link`,
     /// `rewrite_autolink` and `apply_format_attribute`.
@@ -162,6 +164,7 @@ trait Hyperlink {
     ///    return `dest`.
     /// 3. If `rewrite_ext==true` and the link points to a known Tp-Note file
     ///    extension, then `.html` is appended to the converted link.
+    ///
     /// Remark: The _anchor's text property_ is never changed. However, there
     /// is one exception: when the text contains a URL starting with `http:` or
     /// `https:`, only the file stem is kept. Example, the anchor text property:
@@ -196,7 +199,7 @@ trait Hyperlink {
     /// by one or two patterns. It is appended to to `dest` or `src`.
     /// Processing details:
     /// 1. Extract some a possible formatting attribute string in `dest`
-    /// (`Link::Text2Dest`) or `src` (`Link::Image`) after `?`.
+    ///    (`Link::Text2Dest`) or `src` (`Link::Image`) after `?`.
     /// 2. Extract the _path_ before `?` in `dest` or `src`.
     /// 3. Apply the formatting to _path_.
     /// 4. Store the result by overwriting `text` or `alt`.
@@ -635,7 +638,7 @@ impl<'a> Hyperlink for Link<'a> {
 #[inline]
 /// A helper function that scans the input HTML document in `html_input` for
 /// HTML hyperlinks. When it finds a relative URL (local link), it analyzes it's
-/// path. Depending on the `local_link_kind` configuration, relative local 
+/// path. Depending on the `local_link_kind` configuration, relative local
 /// links are converted into absolute local links and eventually rebased.
 ///
 /// In order to achieve this, the user must respect the following convention
@@ -648,13 +651,13 @@ impl<'a> Hyperlink for Link<'a> {
 /// directory of the currently processed HTML document. The user guarantees that
 /// `docdir` is the base for all relative local links in the document.
 /// BTW: `docdir` must always start with `root_path`.
-/// 
-/// If `LocalLinkKind::Off`, relative local links are not converted. 
+///
+/// If `LocalLinkKind::Off`, relative local links are not converted.
 /// If `LocalLinkKind::Short`, relative local links are converted into an
 /// absolute local links with  `root_path` as base directory.
 /// If `LocalLinkKind::Long`, in addition to the above, the resulting absolute
 /// local link is prepended with `root_path`.
-/// 
+///
 /// If `rewrite_ext` is true and a local link points to a known
 /// Tp-Note file extension, then `.html` is appended to the converted link.
 ///

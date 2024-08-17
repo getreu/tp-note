@@ -170,6 +170,7 @@ impl Settings {
     /// 3. reads the environment variable `TPNOTE_SCHEME_NEW_DEFAULT`
     ///    or, -if empty-
     /// 4. copies `scheme_new_default` into `SETTINGS.current_scheme`.
+    ///
     /// Then, it sets all other fields.
     /// `force_lang=Some(_)` disables the `get_lang` filter by setting
     /// `filter_get_lang` to `FilterGetLang::Disabled`.
