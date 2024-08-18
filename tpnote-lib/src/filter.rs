@@ -22,6 +22,7 @@ use std::collections::HashMap;
 use std::hash::BuildHasher;
 use std::path::Path;
 use std::path::PathBuf;
+use tera::Map;
 use tera::{try_get_value, Result as TeraResult, Tera, Value};
 
 /// Filter parameter of the `cut_filter()` limiting the maximum length of
@@ -103,7 +104,19 @@ fn to_yaml_filter<S: BuildHasher>(
         m.insert(k.to_owned(), val.to_owned());
         serde_yaml::to_string(&m).unwrap()
     } else {
-        serde_yaml::to_string(&val).unwrap()
+        match &val {
+            Value::Object(map) => {
+                let mut m = Map::new();
+                for (k, v) in map.into_iter() {
+                    //
+                    let new_k = name(scheme, k);
+                    m.insert(new_k.to_owned(), v.to_owned());
+                }
+                let o = serde_json::Value::Object(m);
+                serde_yaml::to_string(&o).unwrap()
+            }
+            &oo => serde_yaml::to_string(oo).unwrap(),
+        }
     };
 
     // Translate the empty set, into an empty string and return it.
@@ -843,9 +856,7 @@ fn remove_filter<S: BuildHasher>(
 
     if let Some(outkey) = args.get("key") {
         let outkey = try_get_value!("remove", "key", String, outkey);
-        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
-        let outkey = name(scheme, &outkey);
-        let _ = map.remove(outkey);
+        let _ = map.remove(&outkey);
     };
 
     Ok(Value::Object(map))

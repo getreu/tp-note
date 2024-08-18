@@ -848,7 +848,7 @@ viewer = '''
                          remove(key='fm_lang')
   %}
     <tr>
-    <th class="fmkeygrey">{{ k }}:</th>
+    <th class="fmkeygrey">{{ k | name }}:</th>
     <th class="fmvalgrey">{{ v | to_html | safe }}</th>
   </tr>
   {% endfor %}
@@ -1006,7 +1006,7 @@ exporter = '''
                          remove(key='fm_lang')
   %}
     <tr>
-    <th class="fmkeygrey">{{ k }}:</th>
+    <th class="fmkeygrey">{{ k | name }}:</th>
     <th class="fmvalgrey">{{ v | to_html | safe }}</th>
   </tr>
   {% endfor %}

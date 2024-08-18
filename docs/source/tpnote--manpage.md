@@ -1889,6 +1889,32 @@ Keep in mind, that the templates do not change! Templates refer to a header
 variable with an identifier starting with '`fm_`', The identifier 
 corresponds to the first column of the above table.
 
+As an example, consider the following localization:
+
+```toml
+[[scheme]]
+name = "default"
+fm_vars.localization = [
+    ["fm_foo", "FOO"],
+]
+
+```
+
+The front matter variable '`FOO:`' is internally in templates represented 
+as '`fm_foo`'. For example, the template '`tmpl_html.viewer`' may contain the
+expression '`{{ fm_foo | name }}`' which is then printed as '`FOO`'.
+
+NB: In general, a variable with the key '`fm_bar`' may contain a nested map:
+
+```json
+"fm_bar": Object {
+            "baz": String("Hello"),
+        }
+```
+
+The (de-)localization occurs only at the root map level. All nested keys 
+names, e.g. '`baz`' remain untouched.
+
 
 
 ## Change the default markup language
@@ -2228,7 +2254,7 @@ as a table:
                          remove(key='fm_subtitle')|
   %}
     <tr>
-    <th class="fmkeygrey">{{ k }}:</th>
+    <th class="fmkeygrey">{{ k | name }}:</th>
     <th class="fmvalgrey">{{ v | to_html | safe }}</th>
   </tr>
   {% endfor %}

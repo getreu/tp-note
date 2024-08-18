@@ -130,12 +130,9 @@ impl Context {
         let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
         let vars = &scheme.tmpl.fm_var.localization;
         for (key, value) in fm.iter() {
-            // First we register a copy with the original variable name.
+            // This delocalizes the variable name and prepends `fm_` to its name.
             // NB: We also insert `Value::Array` and `Value::Object`
             // variants, No flattening occurs here.
-            fm_all_map.insert(key.to_string(), value.to_owned());
-
-            // This replaces an alias name by an `fm`-name.
             let fm_key = vars.iter().find(|&l| &l.1 == key).map_or_else(
                 || {
                     let mut s = TMPL_VAR_FM_.to_string();
@@ -144,7 +141,10 @@ impl Context {
                 },
                 |l| Cow::Borrowed(&l.0),
             );
-            self.ct.insert(fm_key.as_ref(), &value);
+            self.ct.insert(fm_key.as_ref(), value);
+
+            // Store a copy in `fm_all`.
+            fm_all_map.insert(fm_key.to_string(), value.clone());
         }
         // Register the collection as `Object(Map<String, Value>)`.
         self.ct.insert(TMPL_VAR_FM_ALL, &fm_all_map);

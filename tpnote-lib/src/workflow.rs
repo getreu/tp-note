@@ -146,6 +146,7 @@ use crate::config::TMPL_HTML_VAR_DOC_ERROR;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_HTML_VAR_DOC_TEXT;
 use crate::config::TMPL_VAR_FM_;
+use crate::config::TMPL_VAR_FM_ALL;
 use crate::config::TMPL_VAR_FM_FILENAME_SYNC;
 use crate::config::TMPL_VAR_FM_NO_FILENAME_SYNC;
 use crate::config::TMPL_VAR_FM_SCHEME;
@@ -528,8 +529,12 @@ fn synchronize_filename<T: Content>(
     note: &mut Note<T>,
 ) -> Result<(), NoteError> {
     let no_filename_sync = match (
-        note.context.get(TMPL_VAR_FM_FILENAME_SYNC),
-        note.context.get(TMPL_VAR_FM_NO_FILENAME_SYNC),
+        note.context
+            .get(TMPL_VAR_FM_ALL)
+            .and_then(|v| v.get(TMPL_VAR_FM_FILENAME_SYNC)),
+        note.context
+            .get(TMPL_VAR_FM_ALL)
+            .and_then(|v| v.get(TMPL_VAR_FM_NO_FILENAME_SYNC)),
     ) {
         // By default we sync.
         (None, None) => false,
@@ -550,7 +555,11 @@ fn synchronize_filename<T: Content>(
 
     // Shall we switch the `settings.current_theme`?
     // If `fm_scheme` is defined, prefer this value.
-    match note.context.get(TMPL_VAR_FM_SCHEME).as_ref() {
+    match note
+        .context
+        .get(TMPL_VAR_FM_ALL)
+        .and_then(|v| v.get(TMPL_VAR_FM_SCHEME))
+    {
         Some(Value::String(s)) if !s.is_empty() => {
             // Initialize `SETTINGS`.
             settings.with_upgraded(|settings| settings.update(SchemeSource::Force(s), None))?;
