@@ -486,6 +486,7 @@ impl<T: Content> Note<T> {
 mod tests {
     use super::Context;
     use super::FrontMatter;
+    use crate::config::TMPL_VAR_FM_ALL;
     use serde_json::json;
     use std::path::Path;
     use tera::Value;
@@ -561,7 +562,7 @@ mod tests {
         let mut expected = Context::from(Path::new("a/b/test.md"));
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
-        (*expected).insert("fm_all".to_string(), &tmp2); // Map()
+        (*expected).insert(TMPL_VAR_FM_ALL.to_string(), &tmp2); // Map()
 
         input1.insert_front_matter(&input2);
         let result = input1;
@@ -677,7 +678,7 @@ Body text
         assert!(!n.content.header().is_empty());
         assert_eq!(
             n.context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_title")
                 .unwrap()
@@ -686,7 +687,7 @@ Body text
         );
         assert_eq!(
             n.context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_subtitle")
                 .unwrap()
@@ -745,7 +746,7 @@ Body text
         // Check the title and subtitle in the note's header.
         assert_eq!(
             n.context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_title")
                 .unwrap()
@@ -754,7 +755,7 @@ Body text
         );
         assert_eq!(
             n.context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_subtitle")
                 .unwrap()
@@ -843,7 +844,7 @@ Body text
         // Check the title and subtitle in the note's header.
         assert_eq!(
             n.context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_title")
                 .unwrap()
@@ -853,7 +854,7 @@ Body text
 
         assert_eq!(
             n.context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_subtitle")
                 .unwrap()
@@ -947,7 +948,7 @@ Body text
         // Check the title and subtitle in the note's header.
         assert_eq!(
             n.context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_title")
                 .unwrap()
@@ -957,7 +958,7 @@ Body text
 
         assert_eq!(
             n.context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_subtitle")
                 .unwrap()
@@ -1050,7 +1051,7 @@ Body text
         // Check the title and subtitle in the note's header.
         assert_eq!(
             n.context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_title")
                 .unwrap()
@@ -1059,7 +1060,7 @@ Body text
         );
         assert_eq!(
             n.context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_subtitle")
                 .unwrap()

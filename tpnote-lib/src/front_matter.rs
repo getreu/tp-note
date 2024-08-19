@@ -253,6 +253,7 @@ impl DerefMut for FrontMatter {
 mod tests {
     use std::path::Path;
 
+    use crate::config::TMPL_VAR_FM_ALL;
     use crate::error::NoteError;
     use crate::front_matter::FrontMatter;
     use serde_json::json;
@@ -336,7 +337,7 @@ mod tests {
         let mut expected = Context::from(Path::new("a/b/test.md"));
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
-        (*expected).insert("fm_all".to_string(), &tmp2); // Map()
+        (*expected).insert(TMPL_VAR_FM_ALL.to_string(), &tmp2); // Map()
 
         input1.insert_front_matter(&input2);
         let result = input1;

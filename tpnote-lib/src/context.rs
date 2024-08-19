@@ -284,6 +284,8 @@ impl DerefMut for Context {
 #[cfg(test)]
 mod tests {
 
+    use crate::config::TMPL_VAR_FM_ALL;
+
     #[test]
     fn test_insert_front_matter() {
         use crate::context::Context;
@@ -295,7 +297,7 @@ mod tests {
 
         assert_eq!(
             &context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_title")
                 .unwrap()
@@ -304,7 +306,7 @@ mod tests {
         );
         assert_eq!(
             &context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_some")
                 .unwrap()
@@ -313,7 +315,7 @@ mod tests {
         );
         assert_eq!(
             &context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_title")
                 .unwrap()
@@ -322,7 +324,7 @@ mod tests {
         );
         assert_eq!(
             &context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_some")
                 .unwrap()
@@ -343,7 +345,7 @@ mod tests {
 
         assert_eq!(
             &context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_title")
                 .unwrap()
@@ -352,7 +354,7 @@ mod tests {
         );
         assert_eq!(
             &context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_some")
                 .unwrap()
@@ -361,7 +363,7 @@ mod tests {
         );
         assert_eq!(
             &context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_title")
                 .unwrap()
@@ -370,7 +372,7 @@ mod tests {
         );
         assert_eq!(
             &context
-                .get("fm_all")
+                .get(TMPL_VAR_FM_ALL)
                 .unwrap()
                 .get("fm_some")
                 .unwrap()
