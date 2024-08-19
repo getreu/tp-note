@@ -274,10 +274,10 @@ nothing
 ```
 
 Technically, the creation of the new note is performed
-using the YAML header variables: '`{{ fm_title }}`',
-'`{{ fm_subtitle }}`', '`{{ fm_author }}`', '`{{ fm_date }}`',
-'`{{ fm_lang }}`', '`{{ fm_sort_tag }}`' and
-'`{{ fm_file_ext }}`' which are evaluated with the
+using the YAML header variables: '`{{ fm.fm_title }}`',
+'`{{ fm.fm_subtitle }}`', '`{{ fm.fm_author }}`', '`{{ fm.fm_date }}`',
+'`{{ fm.fm_lang }}`', '`{{ fm.fm_sort_tag }}`' and
+'`{{ fm.fm_file_ext }}`' which are evaluated with the
 '`tmpl.from_clipboard_yaml_content`' and the
 '`tmpl.from_clipboard_yaml_filename`' templates.
 
@@ -1062,9 +1062,9 @@ schemes):
 
 The filename has 4 parts:
 
-    {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
+    {{ fm.fm_sort_tag }}-{{ fm.fm_title }}--{{ fm.fm_subtitle }}.{{ fm.fm_file_ext }}
 
-The '`-`' between '`{{ fm_sort_tag }}`' and '`{{ fm_title }}`' is hereafter
+The '`-`' between '`{{ fm.fm_sort_tag }}`' and '`{{ fm.fm_title }}`' is hereafter
 referred to as _sort-tag separator_ (cf. '`filename.sort_tag.separator`').
 
 A so-called _sort tag_ is an alphanumerical prefix at the beginning of the
@@ -1140,9 +1140,9 @@ new note file.  Otherwise, the new note gets a chronological sort tag of today.
 A note's filename is said to be in sync with its metadata, when the following
 holds (slightly simplified, see '`tmpl.sync_filename`'):
 
-> filename on disk without *sort tag* == '`{{ fm_title }}--{{ fm_subtitle }}.md`'
+> filename on disk without *sort tag* == '`{{ fm.fm_title }}--{{ fm.fm_subtitle }}.md`'
 
-^[The variables '`{{ fm_title }}`' and '`{{ fm_subtitle }}`' reflect the values
+^[The variables '`{{ fm.fm_title }}`' and '`{{ fm.fm_subtitle }}`' reflect the values
 in the note's front matter.]
 
 Example, consider the following document with the filename:
@@ -1285,7 +1285,7 @@ and _zettel scheme_:
    The filename synchronization template from the _default scheme_ set looks
    like (simplified):
 
-       {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
+       {{ fm.fm_sort_tag }}-{{ fm.fm_title }}--{{ fm.fm_subtitle }}.{{ fm.fm_file_ext }}
 
    It generates from the above example the filename: 
    
@@ -1319,7 +1319,7 @@ and _zettel scheme_:
    The filename synchronization template from the _zettel scheme_ set looks 
    like (simplified):
     
-       {{ fm_sort_tag }}--{{ fm_title }}__{{ fm_keywords }}.{{ fm_file_ext }}
+       {{ fm.fm_sort_tag }}--{{ fm.fm_title }}__{{ fm.fm_keywords }}.{{ fm.fm_file_ext }}
 
    It generates the following filename:
 
@@ -1841,7 +1841,7 @@ TPNOTE_LANG_DETECTION="" tpnote
 ## Localize the note's front matter
 
 Be default, the front matter variable names are printed in English when creating
-new note files from templates. For example the header variable '`fm_subtitle`'
+new note files from templates. For example the header variable '`fm.fm_subtitle`'
 is displayed as '`subtitle:`' in the note's header.
 
 This translation relation is defined in the configuration file variable
@@ -1886,7 +1886,7 @@ fm_vars.localization = [
 ```
 
 Keep in mind, that the templates do not change! Templates refer to a header
-variable with an identifier starting with '`fm_`', The identifier 
+variable with an identifier starting with '`fm.fm_`', The identifier 
 corresponds to the first column of the above table.
 
 As an example, consider the following localization:
@@ -1901,13 +1901,13 @@ fm_vars.localization = [
 ```
 
 The front matter variable '`FOO:`' is internally in templates represented 
-as '`fm_foo`'. For example, the template '`tmpl_html.viewer`' may contain the
-expression '`{{ fm_foo | name }}`' which is then printed as '`FOO`'.
+as '`fm.fm_foo`'. For example, the template '`tmpl_html.viewer`' may contain the
+expression '`{{ fm.fm_foo | name }}`' which is then printed as '`FOO`'.
 
-NB: In general, a variable with the key '`fm_bar`' may contain a nested map:
+NB: In general, a variable with the key '`fm.fm_bar`' may contain a nested map:
 
 ```json
-"fm_bar": Object {
+"fm.fm_bar": Object {
             "baz": String("Hello"),
         }
 ```
@@ -2035,7 +2035,7 @@ Secondly, make sure that in filename templates '`tmpl.*_filename`', sort-tags
 _sort_tag_ with '`prepend(with_sort_tag=path|file_sort_tag)`' to the following
 expression, e.g.:
 
-    {{ fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}
+    {{ fm.fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}
 
 The filter '`prepend(with_sort_tag=<...>)`' decides whether to insert the
 '`sort_tag.separator="-"`' and/or the '`sort_tag.extra_separator="'"`'
@@ -2081,11 +2081,11 @@ values for the variables you obtain with '`tpnote -C - | less`'.
 
 Then, replace in '`annotate_file_filename`' the string:
 
-    {{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
+    {{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
 
 with:
 
-    Notes/{{ fm_title | sanit | prepend(with_sort_tag=tag) }}\
+    Notes/{{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
 
 and in '`annotate_file_content`':
 
@@ -2171,12 +2171,12 @@ the '`tmpl_html.viewer`' template, illustrates the available variables:
 ```toml
 [tmpl_html]
 viewer = '''
-{%- set ext = fm_file_ext | default(value=extension_default ) -%}
+{%- set ext = fm.fm_file_ext | default(value=extension_default ) -%}
 <!DOCTYPE html>
-<html lang="{{ fm_lang | default(value='en') }}">
+<html lang="{{ fm.fm_lang | default(value='en') }}">
 <head>
 <meta charset="utf-8">
-<title>{{ fm_title }}</title>
+<title>{{ fm.fm_title }}</title>
 <link rel="stylesheet" href="{{ viewer_doc_css_path }}">
 <link rel="stylesheet" href="{{ viewer_highlighting_css_path }}">
   </head>
@@ -2194,9 +2194,9 @@ viewer = '''
 
 Specifically:
 
-* '`{{ fm_* }}`' are the deserialized header variables. Note, that the header
+* '`{{ fm.fm_* }}`' are the deserialized header variables. Note, that the header
   variables may be localized, e.g. '`Untertitel`'. Nevertheless, in templates
-  always use the English version, e.g. '`fm_subtitle`'. All content
+  always use the English version, e.g. '`fm.fm_subtitle`'. All content
   template variables and filters are available. See section _Template
   variables_ above.
 
@@ -2209,7 +2209,7 @@ Specifically:
   by Tp-Note's internal web server.
 
 * '`{{ doc_fm_text }}`' is the raw UTF-8 copy of the header. Not to be
-  confounded with the dictionary variable '`{{ fm_all }}`'.
+  confounded with the dictionary variable '`{{ fm }}`'.
 
 * '`{{ doc_body_text | markup_to_html(extension=ext) | safe }}`' is the note's
   body as HTML rendition. The parameter '`extension`' designates the 
@@ -2230,7 +2230,7 @@ Specifically:
 * '`{{ my_val | to_html | safe }}`' is the HTML rendition of the '`my_val`'
   variable (c.f. section _Template filter_).
 
-* '`{{'fm_title' | name}}`' prints the localized name of the '`fm_title`'
+* '`{{'fm.fm_title' | name}}`' prints the localized name of the '`fm.fm_title`'
   variable, e.g. '`title`' in English or '`Titel`' in German.
 
 Alternatively, the header enclosed by '`<pre>...</pre>`' can also be rendered
@@ -2239,19 +2239,19 @@ as a table:
 ```html
   <table class="fm">
     <tr>
-    <th class="fmkey">{{'fm_title' | name}}:</th>
+    <th class="fmkey">{{'fm.fm_title' | name}}:</th>
     <th class="fmval"><b>
-        {{ fm_title| default(value='') | to_html | safe }}</b>
+        {{ fm.fm_title| default(value='') | to_html | safe }}</b>
     </th>
   </tr>
     <tr>
-    <th class="fmkey">{{'fm_subtitle' | name}}:</th>
+    <th class="fmkey">{{'fm.fm_subtitle' | name}}:</th>
     <th class="fmval">
-        {{ fm_subtitle | default(value='') | to_html | safe }}
+        {{ fm.fm_subtitle | default(value='') | to_html | safe }}
     </th>
   </tr>
-  {% for k, v in fm_all| remove(key='fm_title')|
-                         remove(key='fm_subtitle')|
+  {% for k, v in fm | remove(key='fm_title')|
+                      remove(key='fm_subtitle')|
   %}
     <tr>
     <th class="fmkeygrey">{{ k | name }}:</th>
@@ -2262,7 +2262,7 @@ as a table:
 ```
 
 The error page template '`tmpl_html.viewer_error`' (see below)
-does not provide '`fm_*`' variables, because of possible header syntax
+does not provide '`fm.fm_*`' variables, because of possible header syntax
 errors. Instead, the variable '`{{ doc_error }}`' contains the error
 message as raw UTF-8 and the variable 
 '`{{ doc_text | markup_to_html | safe }}`' the HTML rendition of the text source
@@ -2302,12 +2302,12 @@ taken over by the '`tmpl_html.exporter`' template:
 ```toml
 [tmpl_html]
 exporter = '''
-{%- set ext = fm_file_ext | default(value=extension_default ) -%}
+{%- set ext = fm.fm_file_ext | default(value=extension_default ) -%}
 <!DOCTYPE html>
-<html lang="{{ fm_lang | default(value='en') }}">
+<html lang="{{ fm.fm_lang | default(value='en') }}">
 <head>
 <meta charset="utf-8">
-<title>{{ fm_title }}</title>
+<title>{{ fm.fm_title }}</title>
 <style>
 {{ exporter_doc_css | safe }}
 {{ exporter_highlighting_css | safe }}
@@ -2432,9 +2432,9 @@ Each content template has a corresponding filename template, e.g.:
 As the name suggests, the role of a filename template is to determine the
 filename of the new note. This is done by evaluating (deserializing) it's YAML
 header. The values of the note's YAML header fields are can be accessed in
-filename templates through various '`{{ fm_<key> }}`' dynamically created
+filename templates through various '`{{ fm.fm_<key> }}`' dynamically created
 template variables. For example the value of the YAML header field '`title:`'
-can be accessed with '`{{ fm_title }}`'. Once the filename is set, Tp-Note
+can be accessed with '`{{ fm.fm_title }}`'. Once the filename is set, Tp-Note
 writes out the new note on disk.
 
 Most of the above templates are dedicated to the creation of new note files.
@@ -2494,11 +2494,11 @@ In addition, Tp-Note defines the following variables:
   and only the directory path is retained. If '`{{ path }}`' points to a
   directory, '`{{ dir_path }}`' equals '`{{ path }}`'.
 
-* '`{{ note_fm_text }}`': is the header as raw text of the file '`{{ path }}`'
+* '`{{ doc_fm_text }}`': is the header as raw text of the file '`{{ path }}`'
   points to.  Note, this variable is only available in the templates
   '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
-* '`{{ note_body_text }}`': is the content of the file '`{{ path }}`'
+* '`{{ doc_body_text }}`': is the content of the file '`{{ path }}`'
   points to. If the file does not start with a front matter, this variable holds
   the whole content. Note, this variable is only available in the templates
   '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
@@ -2543,53 +2543,53 @@ In addition, Tp-Note defines the following variables:
   If defined, the environment variable '`TPNOTE_LANG`' overwrites the value
   of '`{{ lang }}`' (all operating systems).
 
-The following '`{{ fm_* }}`' variables are typically generated, _after_ a
+The following '`{{ fm.fm_* }}`' variables are typically generated, _after_ a
 content template was filled in with data: For example a field named '`title:`'
 in the content template '`tmpl.from_dir_content`' will generate the variable
-'`fm_title`' which can then be used in the corresponding
-'`tmpl.from_dir_filename`' filename template. '`{{ fm_* }}`' variables are
+'`fm.fm_title`' which can then be used in the corresponding
+'`tmpl.from_dir_filename`' filename template. '`{{ fm.fm_* }}`' variables are
 generated dynamically. This means, a YAML front-matter variable '`foo:`' in a
-note will generate a '`{{ fm_foo }}`' template variable. On the other hand, a
-missing '`foo:`' will cause '`{{ fm_foo }}`' to be undefined.
+note will generate a '`{{ fm.fm_foo }}`' template variable. On the other hand, a
+missing '`foo:`' will cause '`{{ fm.fm_foo }}`' to be undefined.
 Please note, that the header variables may be localized, e.g. '`Untertitel:`'.
-Nevertheless, in templates always use the English version, e.g. '`fm_subtitle`'.
+Nevertheless, in templates always use the English version, e.g. '`fm.fm_subtitle`'.
 
-It is to be observed that '`{{ fm_* }}`' variables are only available in
+It is to be observed that '`{{ fm.fm_* }}`' variables are only available in
 filename templates and in the '`tmpl.from_clipboard_yaml_content`' content
 template.
 
-* '`{{ fm_title }}`' is the '`title:`' as indicated in the YAML front-matter of
+* '`{{ fm.fm_title }}`' is the '`title:`' as indicated in the YAML front-matter of
   the note.
 
-* '`{{ fm_subtitle }}`' is the '`subtitle:`' as indicated in the YAML front
+* '`{{ fm.fm_subtitle }}`' is the '`subtitle:`' as indicated in the YAML front
   matter of the note.
 
-* '`{{ fm_author }}`' is the '`author:`' as indicated in the YAML front-matter
+* '`{{ fm.fm_author }}`' is the '`author:`' as indicated in the YAML front-matter
   of the note.
 
-* '`{{ fm_lang }}`' is the '`lang:`' as indicated in the YAML front-matter of
+* '`{{ fm.fm_lang }}`' is the '`lang:`' as indicated in the YAML front-matter of
   the note.
 
-* '`{{ fm_file_ext }}`' holds the value of the optional YAML header variable
+* '`{{ fm.fm_file_ext }}`' holds the value of the optional YAML header variable
   '`file_ext:`' (e.g. '`file_ext: rst`').
 
-* '`{{ fm_sort_tag }}`': The sort tag variable as defined in the YAML front
+* '`{{ fm.fm_sort_tag }}`': The sort tag variable as defined in the YAML front
   matter of this note (e.g. '`sort_tag: '20200312'`').
 
-* '`{{ fm_all }}`': is a collection (map) of all defined '`{{ fm_* }}`'
+* '`{{ fm }}`': is a collection (map) of all defined '`{{ fm.fm_* }}`'
   variables.  It is used in the '`tmpl.from_clipboard_yaml_content`' template,
   typically in a loop like:
 
   ```yaml
-  {% for key, value in fm_all %}{{ key }}: {{ value | json_encode }}
+  {% for key, value in fm %}{{ key }}: {{ value | json_encode }}
   {% endfor %}
   ```
 
-Important: there is no guarantee, that any of the above '`{{ fm_* }}`'
+Important: there is no guarantee, that any of the above '`{{ fm.fm_* }}`'
 variables are defined! Depending on the last content template result, certain
 variables might be undefined. Please take into consideration, that a defined
 variable might contain the empty string '`""`'. Creating a new note file
-with a content template, the note's header is parsed into '`{{ fm_* }}`'
+with a content template, the note's header is parsed into '`{{ fm.fm_* }}`'
 variables. The latter are then type checked according configurable rules.
 The rules are defined in '`tmpl.filter.assert_precondition`'
 
@@ -2689,37 +2689,37 @@ A filter is always used together with a variable. Here are some examples:
   key to the capitalized username, e.g.: '`autor:      John`'. Note, the
   first letter of '`John`' starts at the tabulator position '`tab=12`'.
 
-* '`{{ fm_subtitle | sanit }}`' is the note's subtitle as defined in its front
+* '`{{ fm.fm_subtitle | sanit }}`' is the note's subtitle as defined in its front
   matter, sanitized in a file system friendly form. Special characters are
   omitted or replaced by '`-`' and '`_`'. See the section _Filename template
   convention_ for more details about this filter.
 
-* '`{{ fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}`' is the
+* '`{{ fm.fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}`' is the
   note's title as defined in its front-matter. Same as above, but
   the title string is prepended with the note's _sort_tag_ and with a
   '`filename.sort_tag.separator`' (by default '`-`'). Eventually, a second
   '`filename.sort_tag.extra_separator`' (by default '`''`') is inserted
   after the first to guarantee, that one of the separators unequivocally
   marks the end of the _sort_tag_. This might be necessary to avoid
-  ambiguity in case the '`fm_title`' starts with a character defined in the
+  ambiguity in case the '`fm.fm_title`' starts with a character defined in the
   '`filename.sort_tag.extra_chars`' set.
 
-* '`{{ fm_all | remove(key='fm_title') | remove(key='fm_author') | to_yaml }}`'
-  renders the collection (map) '`fm_all`', exclusive of the
-  variables '`fm_title`' and '`fm_author`' to YAML. Note, that the filter
+* '`{{ fm | remove(key='fm_title') | remove(key='fm_author') | to_yaml }}`'
+  renders the collection (map) '`fm`', exclusive of the
+  variables '`fm.fm_title`' and '`fm.fm_author`' to YAML. Note, that the filter
   '`to_yaml`' has no parameter '`key`' in this context.
 
-* '`{{ fm_all | insert(key='fm_author', value='Getreu') | to_yaml}}`' takes
-  the collection (map) '`fm_all`', inserts the key/value '`fm_author`'/'`Jens`'
+* '`{{ fm | insert(key='fm_author', value='Getreu') | to_yaml}}`' takes
+  the collection (map) '`fm`', inserts the key/value '`fm_author`'/'`Jens`'
   and renders the result into YAML. Note, that the filter '`to_yaml`' has no
   parameter '`key`' in this context.
 
-* '`{{ fm_all | to_yaml | append(newline=true) }}`' 
-  renders the collection (map) '`fm_all`' into YAML. If the collection is empty,
+* '`{{ fm | to_yaml | append(newline=true) }}`' 
+  renders the collection (map) '`fm`' into YAML. If the collection is empty,
   the result is the empty string. Otherwise, the YAML rendition is appended with
   a newline character.
 
-* '`{{ fm_all | to_html | safe }}`' renders the collection (map) '`fm_*`' 
+* '`{{ fm | to_html | safe }}`' renders the collection (map) '`fm.fm_*`' 
   into HTML. The '`to_html`' must be followed by a '`safe`' filter to pass
   through the HTML formatting of objects and arrays.
 
@@ -2816,7 +2816,7 @@ unequivocally. For example, when the input string starts with a digit
 '`1-The Show Begins`' becomes '`'1-The Show Begins`'.
 The '`prepend(with_sort_tag=<...>)`' filter must be applied to the first
 variable, e.g. 
-'`{{ fm_title | sanit | prepend(with_separator=path|file_sort_tag )}`'. 
+'`{{ fm.fm_title | sanit | prepend(with_separator=path|file_sort_tag )}`'. 
 This way, it is always possible to univocally distinguish the sort-tag from the
 rest of the filename. Note, the default sort-tag separators can be changed with
 the configuration variables

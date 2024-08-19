@@ -79,9 +79,9 @@ impl<T: Content> Note<T> {
     /// Panics otherwise. Use `Note::from_content_template()` in those cases.
     ///
     /// This adds the following variables to the context:
-    /// * `TMPL_VAR_NOTE_FM_TEXT`,
-    /// * `TMPL_VAR_NOTE_BODY_TEXT`,
-    /// * `TMPL_VAR_NOTE_FILE_DATE` (optional: only if a file `context.path`
+    /// * `TMPL_VAR_DOC_FM_TEXT`,
+    /// * `TMPL_VAR_DOC_BODY_TEXT`,
+    /// * `TMPL_VAR_DOC_FILE_DATE` (optional: only if a file `context.path`
     ///   exists on disk),
     /// * all front matter variables (see `FrontMatter::try_from_content()`)
     ///
