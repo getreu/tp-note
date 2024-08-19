@@ -301,7 +301,7 @@ mod tests {
             &context
                 .get("fm_all")
                 .unwrap()
-                .get("title")
+                .get("fm_title")
                 .unwrap()
                 .to_string(),
             r#""My Stdin.""#
@@ -310,7 +310,7 @@ mod tests {
             &context
                 .get("fm_all")
                 .unwrap()
-                .get("some")
+                .get("fm_some")
                 .unwrap()
                 .to_string(),
             r#""text""#
@@ -336,7 +336,7 @@ mod tests {
             &context
                 .get("fm_all")
                 .unwrap()
-                .get("title")
+                .get("fm_title")
                 .unwrap()
                 .to_string(),
             r#""My Stdin.""#
@@ -345,7 +345,7 @@ mod tests {
             &context
                 .get("fm_all")
                 .unwrap()
-                .get("some")
+                .get("fm_some")
                 .unwrap()
                 .to_string(),
             r#""text""#

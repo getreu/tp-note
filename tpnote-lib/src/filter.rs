@@ -1393,7 +1393,7 @@ mod tests {
         //
         let input = json!({"title": "my title", "subtitle": "my subtitle"});
         let mut args = HashMap::new();
-        args.insert("key".to_string(), to_value("fm_title").unwrap());
+        args.insert("key".to_string(), to_value("title").unwrap());
         let expected = json!({"subtitle": "my subtitle"});
         let result = remove_filter(&input, &args);
         //eprintln!("{:?}", result);
