@@ -334,12 +334,6 @@ mod tests {
         let input2 = FrontMatter(tmp);
 
         let mut expected = Context::from(Path::new("a/b/test.md"));
-        (*expected).insert("fm_file_ext".to_string(), &json!("md")); // String
-        (*expected).insert("fm_height".to_string(), &json!(1.23)); // Number()
-        (*expected).insert("fm_count".to_string(), &json!(2)); // Number()
-        (*expected).insert("fm_neg".to_string(), &json!(-1)); // Number()
-        (*expected).insert("fm_flag".to_string(), &json!(true)); // Bool()
-        (*expected).insert("fm_numbers".to_string(), &json!([1, 3, 5])); // String()!
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
         (*expected).insert("fm_all".to_string(), &tmp2); // Map()

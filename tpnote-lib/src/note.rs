@@ -559,12 +559,6 @@ mod tests {
         let input2 = FrontMatter(tmp);
 
         let mut expected = Context::from(Path::new("a/b/test.md"));
-        (*expected).insert("fm_file_ext".to_string(), &json!("md")); // String
-        (*expected).insert("fm_height".to_string(), &json!(1.23)); // Number()
-        (*expected).insert("fm_count".to_string(), &json!(2)); // Number()
-        (*expected).insert("fm_neg".to_string(), &json!(-1)); // Number()
-        (*expected).insert("fm_flag".to_string(), &json!(true)); // Bool()
-        (*expected).insert("fm_numbers".to_string(), &json!([1, 3, 5])); // String()!
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
         (*expected).insert("fm_all".to_string(), &tmp2); // Map()
@@ -681,9 +675,22 @@ Body text
         let mut n =
             Note::from_raw_text(context.clone(), content, TemplateKind::FromTextFile).unwrap();
         assert!(!n.content.header().is_empty());
-        assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("hello "));
         assert_eq!(
-            n.context.get("fm_subtitle").unwrap().as_str(),
+            n.context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_title")
+                .unwrap()
+                .as_str(),
+            Some("hello ")
+        );
+        assert_eq!(
+            n.context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_subtitle")
+                .unwrap()
+                .as_str(),
             Some(" world")
         );
         assert_eq!(n.content.body().trim(), raw);
@@ -736,8 +743,24 @@ Body text
         assert_eq!(n.content.borrow_dependent().body, "\n\n");
 
         // Check the title and subtitle in the note's header.
-        assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("my dir"));
-        assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
+        assert_eq!(
+            n.context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_title")
+                .unwrap()
+                .as_str(),
+            Some("my dir")
+        );
+        assert_eq!(
+            n.context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_subtitle")
+                .unwrap()
+                .as_str(),
+            Some("Note")
+        );
         n.render_filename(TemplateKind::FromDir).unwrap();
         n.set_next_unused_rendered_filename().unwrap();
         n.save().unwrap();
@@ -819,11 +842,24 @@ Body text
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
         assert_eq!(
-            n.context.get("fm_title").unwrap().as_str(),
+            n.context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_title")
+                .unwrap()
+                .as_str(),
             Some("std\ntxt_c")
         );
 
-        assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
+        assert_eq!(
+            n.context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_subtitle")
+                .unwrap()
+                .as_str(),
+            Some("Note")
+        );
         n.render_filename(TemplateKind::FromClipboard).unwrap();
         n.set_next_unused_rendered_filename().unwrap();
         n.save().unwrap();
@@ -909,10 +945,23 @@ Body text
         let expected_body = "\nstdin body\nmy TXT clipboard\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
-        assert_eq!(n.context.get("fm_title").unwrap().as_str(), Some("my dir"));
+        assert_eq!(
+            n.context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_title")
+                .unwrap()
+                .as_str(),
+            Some("my dir")
+        );
 
         assert_eq!(
-            n.context.get("fm_subtitle").unwrap().as_str(),
+            n.context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_subtitle")
+                .unwrap()
+                .as_str(),
             // Remember: in debug titles are very short. The code only works,
             // because the string is pure ASCII (not UTF-8).
             Some(&"this overwrites"[..CUT_LEN_MAX - 1])
@@ -1000,10 +1049,23 @@ Body text
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
         assert_eq!(
-            n.context.get("fm_title").unwrap().as_str(),
+            n.context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_title")
+                .unwrap()
+                .as_str(),
             Some("some.pdf")
         );
-        assert_eq!(n.context.get("fm_subtitle").unwrap().as_str(), Some("Note"));
+        assert_eq!(
+            n.context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_subtitle")
+                .unwrap()
+                .as_str(),
+            Some("Note")
+        );
 
         n.render_filename(TemplateKind::AnnotateFile).unwrap();
         n.set_next_unused_rendered_filename().unwrap();

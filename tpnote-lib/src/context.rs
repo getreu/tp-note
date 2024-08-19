@@ -141,7 +141,6 @@ impl Context {
                 },
                 |l| Cow::Borrowed(&l.0),
             );
-            self.ct.insert(fm_key.as_ref(), value);
 
             // Store a copy in `fm_all`.
             fm_all_map.insert(fm_key.to_string(), value.clone());
@@ -182,7 +181,9 @@ impl Context {
     /// assert_eq!(&context.get("stdin_header").unwrap().to_string(),
     ///     r#""title: \"My Stdin.\"""#);
     /// // "fm_title" is dynamically generated from the header variable "title".
-    /// assert_eq!(&context.get("fm_title").unwrap().to_string(),
+    /// assert_eq!(&context
+    ///            .get("fm_all").unwrap()
+    ///            .get("fm_title").unwrap().to_string(),
     ///     r#""My Stdin.""#);
     /// ```
     pub fn insert_content(
@@ -293,10 +294,23 @@ mod tests {
             .insert_front_matter(&FrontMatter::try_from("title: My Stdin.\nsome: text").unwrap());
 
         assert_eq!(
-            &context.get("fm_title").unwrap().to_string(),
+            &context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_title")
+                .unwrap()
+                .to_string(),
             r#""My Stdin.""#
         );
-        assert_eq!(&context.get("fm_some").unwrap().to_string(), r#""text""#);
+        assert_eq!(
+            &context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_some")
+                .unwrap()
+                .to_string(),
+            r#""text""#
+        );
         assert_eq!(
             &context
                 .get("fm_all")
@@ -328,10 +342,23 @@ mod tests {
         context.insert_front_matter(&FrontMatter::try_from("some: text").unwrap());
 
         assert_eq!(
-            &context.get("fm_title").unwrap().to_string(),
+            &context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_title")
+                .unwrap()
+                .to_string(),
             r#""My Stdin.""#
         );
-        assert_eq!(&context.get("fm_some").unwrap().to_string(), r#""text""#);
+        assert_eq!(
+            &context
+                .get("fm_all")
+                .unwrap()
+                .get("fm_some")
+                .unwrap()
+                .to_string(),
+            r#""text""#
+        );
         assert_eq!(
             &context
                 .get("fm_all")
