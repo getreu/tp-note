@@ -142,7 +142,7 @@ impl Context {
                 |l| Cow::Borrowed(&l.0),
             );
 
-            // Store a copy in `fm_all`.
+            // Store a copy in `fm`.
             fm_all_map.insert(fm_key.to_string(), value.clone());
         }
         // Register the collection as `Object(Map<String, Value>)`.
@@ -182,7 +182,7 @@ impl Context {
     ///     r#""title: \"My Stdin.\"""#);
     /// // "fm_title" is dynamically generated from the header variable "title".
     /// assert_eq!(&context
-    ///            .get("fm_all").unwrap()
+    ///            .get("fm").unwrap()
     ///            .get("fm_title").unwrap().to_string(),
     ///     r#""My Stdin.""#);
     /// ```

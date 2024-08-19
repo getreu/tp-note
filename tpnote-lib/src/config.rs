@@ -142,7 +142,7 @@ pub const TMPL_VAR_FM_: &str = "fm_";
 /// Contains a Hash Map with all front matter fields. Lists are flattened
 /// into strings. These variables are only available in the
 /// `tmpl.from_text_file_content`, `tmpl.sync_filename` and HTML templates.
-pub const TMPL_VAR_FM_ALL: &str = "fm_all";
+pub const TMPL_VAR_FM_ALL: &str = "fm";
 
 /// If present, this header variable can switch the `settings.current_theme`
 /// before the filename template is processed.

@@ -128,16 +128,16 @@ extensions = [
 
 ### After generating a new note with a content template, Tp-Note parses the
 ### resulting front matter variables, which may be localized. The variables, are
-### then converted into front matter variables starting with `fm_all.fm_`.
+### then converted into front matter variables starting with `fm.fm_`.
 ### 
-### The first item per line is the checked `fm_all.fm_`-variable as it appears
+### The first item per line is the checked `fm.fm_`-variable as it appears
 ### in the templates.
 ### The second item per line is the translated variable name as it appears in the
-### note file. For example, the expression `fm_all.fm_lang` resolves to `lang`.
+### note file. For example, the expression `fm.fm_lang` resolves to `lang`.
 ### This allows to translate the templates into other human languages than English
 ### without actually touching the templates itself.
-### For variables not listed below, only the prefix `fm_all.fm_` is stripped and
-### no translation occurs, e.g. `fm_all.fm_unknown` becomes `unknown`.
+### For variables not listed below, only the prefix `fm.fm_` is stripped and
+### no translation occurs, e.g. `fm.fm_unknown` becomes `unknown`.
 #
 
 fm_var.localization = [
@@ -153,7 +153,7 @@ fm_var.localization = [
     ["fm_scheme", "scheme"],
 ]
 
-### Before the front matter `fm_all.fm_` variables are applied to a filename template,
+### Before the front matter `fm.fm_` variables are applied to a filename template,
 ### their validity is checked.  The following table lists test, every value has to
 ### pass. If one test fails the user is informed.
 ### 
@@ -261,8 +261,8 @@ from_dir_content = """
 from_dir_filename = """
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
-{{ fm_all.fm_title | sanit | prepend(with_sort_tag=tag) }}\
-{{ fm_all.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ extension_default | prepend(with='.') }}"""
 
 ### Default template used, when the clipboard or the input stream `stdin`
@@ -273,25 +273,25 @@ from_dir_filename = """
 ### clipboard's front matter are registered, the ones defined in the input
 ### stream `stdin`. The latter can overwrite the former.  One of the front
 ### matters must define the `title` variable, which is then available in this
-### template as `{{ fm_all.fm_title }}`.
+### template as `{{ fm.fm_title }}`.
 ### When placed in YAML front matter, the filter `to_yaml` must be
 ### appended to each variable.
 from_clipboard_yaml_content = """
 {%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
 {%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim_end -%}
-{%- set lang = fm_all.fm_lang 
-    | default(value = fm_all.fm_title 
+{%- set lang = fm.fm_lang 
+    | default(value = fm.fm_title 
     | default(value=stdin~clipboard|heading) 
     | get_lang 
     | map_lang(default=lang) )  -%}
 ---
-{{ fm_all.fm_title | default(value = path|trim_file_sort_tag) | cut | to_yaml(key='fm_title') }}
-{{ fm_all.fm_subtitle | default(value = 'Note') | cut | to_yaml(key='fm_subtitle') }}
-{{ fm_all.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
-{{ fm_all.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
+{{ fm.fm_title | default(value = path|trim_file_sort_tag) | cut | to_yaml(key='fm_title') }}
+{{ fm.fm_subtitle | default(value = 'Note') | cut | to_yaml(key='fm_subtitle') }}
+{{ fm.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
+{{ fm.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
-{{ fm_all \
+{{ fm \
     | remove(key='fm_title')\
     | remove(key='fm_subtitle')\
     | remove(key='fm_author')\
@@ -309,16 +309,16 @@ from_clipboard_yaml_content = """
 ### Default filename template used when the stdin or the clipboard contains a
 ### string and one of them has a valid YAML header.
 from_clipboard_yaml_filename = """
-{%- if fm_all.fm_sort_tag -%}
-  {%- set tag = fm_all.fm_sort_tag -%}
+{%- if fm.fm_sort_tag -%}
+  {%- set tag = fm.fm_sort_tag -%}
 {%- else -%}
   {%- set tag_default = now() | date(format='%Y%m%d') -%}
   {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
 {%- endif -%}
 
-{{ fm_all.fm_title | sanit | prepend(with_sort_tag=tag) }}\
-{{ fm_all.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
-{{ fm_all.fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
+{{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ fm.fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
 
 ### Default template used, when the clipboard or the input stream `stdin`
 ### contains a string and this string has no valid YAML front matter section.
@@ -362,8 +362,8 @@ from_clipboard_content = """
 from_clipboard_filename = """
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
-{{ fm_all.fm_title | sanit | prepend(with_sort_tag=tag) }}\
-{{ fm_all.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ extension_default | prepend(with='.') }}"""
 
 ### Default template used, when the opened text file (with a known file
@@ -393,8 +393,8 @@ from_text_file_filename = """
 {%- else -%}
   {%- set tag = doc_file_date | default(value=now()) | date(format='%Y%m%d') -%}
 {%- endif -%}
-{{ fm_all.fm_title | sanit | prepend(with_sort_tag=tag) }}\
-{{ fm_all.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ path | file_ext | prepend(with='.') }}"""
 
 ### Default template used when the command line `<path>` parameter points to an
@@ -435,18 +435,18 @@ annotate_file_content = """
 ### `<path>`.
 annotate_file_filename = """
 {%- set tag = path | file_sort_tag -%}
-{{ fm_all.fm_title | sanit | prepend(with_sort_tag=tag) }}\
-{{ fm_all.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
 {{ extension_default | prepend(with='.') }}"""
 
 ### Default filename template to test, if the filename of an existing note file
 ### on disk, corresponds to the note's meta data stored in its front matter. If
 ### it is not the case, the note's filename will be renamed.
 sync_filename = """
-{%- set tag = fm_all.fm_sort_tag | default(value = path | file_sort_tag) | as_str -%}
-{{ fm_all.fm_title | default(value='No title') | sanit | prepend(with_sort_tag=tag) }}\
-{{ fm_all.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
-{{ fm_all.fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}
+{%- set tag = fm.fm_sort_tag | default(value = path | file_sort_tag) | as_str -%}
+{{ fm.fm_title | default(value='No title') | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
+{{ fm.fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}
 """
 
 
@@ -539,18 +539,18 @@ from_dir_content = """
 
 from_dir_filename = """
 {%- set keywords = '' -%}
-{%- for sub in fm_all.fm_keywords | default(value=[]) -%}
+{%- for sub in fm.fm_keywords | default(value=[]) -%}
 {%- set_global keywords = keywords~sub~'_' -%}
 {%- endfor -%}
 
-{%- if fm_all.fm_sort_tag -%}
-  {%- set tag = fm_all.fm_sort_tag -%}
+{%- if fm.fm_sort_tag -%}
+  {%- set tag = fm.fm_sort_tag -%}
 {%- else -%}
   {%- set tag_default = now() | date(format='%Y%m%d') -%}
   {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
 {%- endif -%}
 
-{{ fm_all.fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ keywords | default(value='') | sanit | prepend(with='__') }}\
 {{ extension_default | prepend(with='.') }}"""
 
@@ -558,27 +558,27 @@ from_clipboard_yaml_content = """
 {%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
 {%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim_end -%}
-{%- if fm_all.fm_sort_tag -%}
-  {%- set tag = fm_all.fm_sort_tag -%}
+{%- if fm.fm_sort_tag -%}
+  {%- set tag = fm.fm_sort_tag -%}
 {%- else -%}
   {%- set tag_default = now() | date(format='%Y%m%d') -%}
   {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
 {%- endif -%}
 
-{%- set lang = fm_all.fm_lang 
-    | default(value = fm_all.fm_title 
+{%- set lang = fm.fm_lang 
+    | default(value = fm.fm_title 
     | default(value=stdin~clipboard|heading) 
     | get_lang 
     | map_lang(default=lang) )  -%}
 ---
-{{ fm_all.fm_title | default(value = path|trim_file_sort_tag) | cut | to_yaml(key='fm_title') }}
-{{ fm_all.fm_keywords | default(value = ['note']) | to_yaml(key='fm_keywords') }}
-{{ fm_all.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
-{{ fm_all.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
+{{ fm.fm_title | default(value = path|trim_file_sort_tag) | cut | to_yaml(key='fm_title') }}
+{{ fm.fm_keywords | default(value = ['note']) | to_yaml(key='fm_keywords') }}
+{{ fm.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
+{{ fm.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
 {{ 'zettel' | to_yaml(key='fm_scheme') }}
 {{ tag | to_yaml(key='fm_sort_tag') }}
-{{ fm_all \
+{{ fm \
     | remove(key='fm_title')\
     | remove(key='fm_keywords')\
     | remove(key='fm_author')\
@@ -597,20 +597,20 @@ from_clipboard_yaml_content = """
 
 from_clipboard_yaml_filename = """
 {%- set keywords = '' -%}
-{%- for sub in fm_all.fm_keywords | default(value=[]) -%}
+{%- for sub in fm.fm_keywords | default(value=[]) -%}
 {%- set_global keywords = keywords~sub~'_' -%}
 {%- endfor -%}
 
-{%- if fm_all.fm_sort_tag -%}
-  {%- set tag = fm_all.fm_sort_tag -%}
+{%- if fm.fm_sort_tag -%}
+  {%- set tag = fm.fm_sort_tag -%}
 {%- else -%}
   {%- set tag_default = now() | date(format='%Y%m%d') -%}
   {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
 {%- endif -%}
 
-{{ fm_all.fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ keywords | default(value=['']) | sanit | prepend(with='__') }}\
-{{ fm_all.fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
+{{ fm.fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
 
 from_clipboard_content = """
 {%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
@@ -648,18 +648,18 @@ from_clipboard_content = """
 
 from_clipboard_filename = """
 {%- set keywords = '' -%}
-{%- for sub in fm_all.fm_keywords | default(value=[]) -%}
+{%- for sub in fm.fm_keywords | default(value=[]) -%}
 {%- set_global keywords = keywords~sub~'_' -%}
 {%- endfor -%}
 
-{%- if fm_all.fm_sort_tag -%}
-  {%- set tag = fm_all.fm_sort_tag -%}
+{%- if fm.fm_sort_tag -%}
+  {%- set tag = fm.fm_sort_tag -%}
 {%- else -%}
   {%- set tag_default = now() | date(format='%Y%m%d') -%}
   {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
 {%- endif -%}
 
-{{ fm_all.fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ keywords | default(value=['']) | sanit | prepend(with='__') }}\
 {{ extension_default | prepend(with='.') }}"""
 
@@ -693,8 +693,8 @@ from_text_file_content = """
 """
 
 from_text_file_filename = """
-{%- if fm_all.fm_sort_tag -%}
-  {%- set tag = fm_all.fm_sort_tag -%}
+{%- if fm.fm_sort_tag -%}
+  {%- set tag = fm.fm_sort_tag -%}
 {%- else -%}
   {%- if path | file_sort_tag != '' -%}
     {%- set tag = path | file_sort_tag -%}
@@ -704,15 +704,15 @@ from_text_file_filename = """
 {%- endif -%}
 
 {%- set keywords = '' -%}
-{%- if fm_all.fm_keywords | as_str == fm_all.fm_keywords -%}
-  {%- set keywords = fm_all.fm_keywords -%}
+{%- if fm.fm_keywords | as_str == fm.fm_keywords -%}
+  {%- set keywords = fm.fm_keywords -%}
 {%- else -%}
-  {%- for sub in fm_all.fm_keywords | default(value=[]) -%}
+  {%- for sub in fm.fm_keywords | default(value=[]) -%}
     {%- set_global keywords = keywords~sub~'_' -%}
   {%- endfor -%}
 {%- endif -%}
 
-{{ fm_all.fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ keywords | sanit | prepend(with='__') }}\
 {{ path | file_ext | prepend(with='.') }}"""
 
@@ -753,36 +753,36 @@ annotate_file_content = """
 
 annotate_file_filename = """
 {%- set keywords = '' -%}
-{%- for sub in fm_all.fm_keywords | default(value=[]) -%}
+{%- for sub in fm.fm_keywords | default(value=[]) -%}
 {%- set_global keywords = keywords~sub~'_' -%}
 {%- endfor -%}
 
-{%- if fm_all.fm_sort_tag -%}
-  {%- set tag = fm_all.fm_sort_tag -%}
+{%- if fm.fm_sort_tag -%}
+  {%- set tag = fm.fm_sort_tag -%}
 {%- else -%}
   {%- set tag = path | file_sort_tag -%}
 {%- endif -%}
 
-{{ fm_all.fm_title | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ keywords | default(value='') | sanit | prepend(with='__') }}\
 {{ extension_default | prepend(with='.') }}"""
 
 sync_filename = """
 {%- set keywords = '' -%}
-{%- set fm_keywords = fm_all.fm_keywords | default(value='') -%}
+{%- set fm_keywords = fm.fm_keywords | default(value='') -%}
 {%- if fm_keywords | as_str == fm_keywords -%}
   {%- set_global keywords = fm_keywords -%}
 {%- else -%}
-  {%- for sub in fm_all.fm_keywords -%}
+  {%- for sub in fm.fm_keywords -%}
     {%- set_global keywords = keywords~sub~'_' -%}
   {%- endfor -%}
 {%- endif -%}
 
-{%- set tag = fm_all.fm_sort_tag | default(value = path | file_sort_tag) | as_str -%}
+{%- set tag = fm.fm_sort_tag | default(value = path | file_sort_tag) | as_str -%}
 
-{{ fm_all.fm_title | default(value='No title') | sanit | prepend(with_sort_tag=tag) }}\
+{{ fm.fm_title | default(value='No title') | sanit | prepend(with_sort_tag=tag) }}\
 {{ keywords | sanit | prepend(with='__') }}\
-{{ fm_all.fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}"""
+{{ fm.fm_file_ext | default(value = path | file_ext) | prepend(with='.') }}"""
 
 ### This is the end of scheme "zettel"
 
@@ -795,12 +795,12 @@ sync_filename = """
 ### critical symbols by default. To disable this feature for a specific variable,
 ### add a `safe` filter in last position.
 viewer = '''
-{%- set ext = fm_all.fm_file_ext | default(value=path|file_ext) -%}
+{%- set ext = fm.fm_file_ext | default(value=path|file_ext) -%}
 <!DOCTYPE html>
-<html lang="{{ fm_all.fm_lang | default(value='en') }}">
+<html lang="{{ fm.fm_lang | default(value='en') }}">
 <head>
 <meta charset="UTF-8">
-<title>{{ fm_all.fm_title }}</title>
+<title>{{ fm.fm_title }}</title>
 <link rel="stylesheet" href="{{ viewer_doc_css_path | safe}}">
 <link rel="stylesheet" href="{{ viewer_highlighting_css_path |safe }}">
 <style type="text/css">
@@ -811,36 +811,36 @@ viewer = '''
   <table class="fm">
     <tr>
     <th class="fmkey">{{'fm_title' | name}}:</th>
-    <th class="fmval"><b>{{ fm_all.fm_title | default(value='') | to_html | safe }}</b></th>
+    <th class="fmval"><b>{{ fm.fm_title | default(value='') | to_html | safe }}</b></th>
   </tr>
-  {% if fm_all.fm_subtitle %}
+  {% if fm.fm_subtitle %}
     <tr>
     <th class="fmkey">{{'fm_subtitle' | name}}:</th>
-    <th class="fmval">{{ fm_all.fm_subtitle | default(value='') | to_html | safe }}</th>
+    <th class="fmval">{{ fm.fm_subtitle | default(value='') | to_html | safe }}</th>
   </tr>
   {% endif %}
-  {% if fm_all.fm_keywords %}
+  {% if fm.fm_keywords %}
     <tr>
     <th class="fmkeygrey">{{'fm_keywords' | name}}:</th>
-    <th class="fmvalgrey">{{ fm_all.fm_keywords | default(value='') | to_html | safe }}</th>
+    <th class="fmvalgrey">{{ fm.fm_keywords | default(value='') | to_html | safe }}</th>
   </tr>
   {% endif %}
     <tr>
     <th class="fmkeygrey">{{'fm_author' | name}}:</th>
-    <th class="fmvalgrey">{{ fm_all.fm_author | default(value='') |to_html | safe }}</th>
+    <th class="fmvalgrey">{{ fm.fm_author | default(value='') |to_html | safe }}</th>
   </tr>
     <tr>
     <th class="fmkeygrey">{{'fm_date' | name}}:</th>
-    <th class="fmvalgrey">{{ fm_all.fm_date | default(value='')| to_html | safe }}</th>
+    <th class="fmvalgrey">{{ fm.fm_date | default(value='')| to_html | safe }}</th>
   </tr>
     <tr>
     <th class="fmkeygrey">{{'fm_lang' | name}}:</th>
-    <th class="fmvalgrey">{{ fm_all.fm_lang | default(value='') |to_html | safe }}</th>
+    <th class="fmvalgrey">{{ fm.fm_lang | default(value='') |to_html | safe }}</th>
   </tr>
-  {% if fm_all | length > 5 %}
+  {% if fm | length > 5 %}
     <tr><th colspan=2;\"/>&nbsp<th/</tr>
   {% endif %}
-  {% for k, v in fm_all| remove(key='fm_title')|
+  {% for k, v in fm| remove(key='fm_title')|
                          remove(key='fm_subtitle')|
                          remove(key='fm_keywords')|
                          remove(key='fm_author')|
@@ -953,12 +953,12 @@ viewer_highlighting_theme = "Solarized (light)"
 ### HTML template used to render a note into HTML when the rendition is saved to
 ### disk. Similar to `tmpl_html.viewer` but does not inject JavaScript code.
 exporter = '''
-{%- set ext = fm_all.fm_file_ext | default(value=path|file_ext) -%}
+{%- set ext = fm.fm_file_ext | default(value=path|file_ext) -%}
 <!DOCTYPE html>
-<html lang="{{ fm_all.fm_lang | default(value='en') }}">
+<html lang="{{ fm.fm_lang | default(value='en') }}">
 <head>
 <meta charset="utf-8">
-<title>{{ fm_all.fm_title }}</title>
+<title>{{ fm.fm_title }}</title>
 <style type="text/css">
 {{ exporter_doc_css | safe }}
 {{ exporter_highlighting_css | safe }}
@@ -969,36 +969,36 @@ exporter = '''
   <table class="fm">
     <tr>
     <th class="fmkey">{{'fm_title' | name}}:</th>
-    <th class="fmval"><b>{{ fm_all.fm_title | default(value='') | to_html | safe }}</b></th>
+    <th class="fmval"><b>{{ fm.fm_title | default(value='') | to_html | safe }}</b></th>
   </tr>
-  {% if fm_all.fm_subtitle %}
+  {% if fm.fm_subtitle %}
     <tr>
     <th class="fmkey">{{'fm_subtitle' | name}}:</th>
-    <th class="fmval">{{ fm_all.fm_subtitle | default(value='') | to_html | safe }}</th>
+    <th class="fmval">{{ fm.fm_subtitle | default(value='') | to_html | safe }}</th>
   </tr>
   {% endif %}
-  {% if fm_all.fm_keywords %}
+  {% if fm.fm_keywords %}
     <tr>
     <th class="fmkeygrey">{{'fm_keywords' | name}}:</th>
-    <th class="fmvalgrey">{{ fm_all.fm_keywords | default(value='') | to_html | safe }}</th>
+    <th class="fmvalgrey">{{ fm.fm_keywords | default(value='') | to_html | safe }}</th>
   </tr>
   {% endif %}
     <tr>
     <th class="fmkeygrey">{{'fm_author' | name}}:</th>
-    <th class="fmvalgrey">{{ fm_all.fm_author | default(value='') |to_html | safe }}</th>
+    <th class="fmvalgrey">{{ fm.fm_author | default(value='') |to_html | safe }}</th>
   </tr>
     <tr>
     <th class="fmkeygrey">{{'fm_date' | name}}:</th>
-    <th class="fmvalgrey">{{ fm_all.fm_date | default(value='')| to_html | safe }}</th>
+    <th class="fmvalgrey">{{ fm.fm_date | default(value='')| to_html | safe }}</th>
   </tr>
     <tr>
     <th class="fmkeygrey">{{'fm_lang' | name}}:</th>
-    <th class="fmvalgrey">{{ fm_all.fm_lang | default(value='') |to_html | safe }}</th>
+    <th class="fmvalgrey">{{ fm.fm_lang | default(value='') |to_html | safe }}</th>
   </tr>
-  {% if fm_all | length > 5 %}
+  {% if fm | length > 5 %}
     <tr><th colspan=2;\"/>&nbsp<th/</tr>
   {% endif %}
-  {% for k, v in fm_all| remove(key='fm_title')|
+  {% for k, v in fm| remove(key='fm_title')|
                          remove(key='fm_subtitle')|
                          remove(key='fm_keywords')|
                          remove(key='fm_author')|
