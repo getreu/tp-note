@@ -55,6 +55,7 @@ use serde::Serialize;
 use settings::SYSTEM_CLIPBOARD;
 use std::path::Path;
 use std::process;
+use std::sync::LazyLock;
 use tpnote_lib::error::NoteError;
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -71,13 +72,13 @@ struct About {
 /// not match the program version.
 fn main() {
     // Read the clipboard before starting the logger.
-    lazy_static::initialize(&SYSTEM_CLIPBOARD);
+    LazyLock::force(&SYSTEM_CLIPBOARD);
 
     // Setup logger.
     AppLogger::init();
 
     // Read configuration file, or write one if none exists.
-    lazy_static::initialize(&CFG);
+    LazyLock::force(&CFG);
 
     // Set the debug level. Only use config file value if
     // no command-line-option `--debug` is present.

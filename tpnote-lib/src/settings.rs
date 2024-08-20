@@ -135,10 +135,8 @@ impl Default for Settings {
 pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(DEFAULT_SETTINGS);
 
 #[cfg(test)]
-lazy_static::lazy_static! {
 /// Global default for `SETTINGS` in test environments.
-pub(crate) static ref SETTINGS: RwLock<Settings> = RwLock::new(DEFAULT_SETTINGS);
-}
+pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(DEFAULT_SETTINGS);
 
 /// Like `Settings::update`, with `scheme_source = SchemeSource::Force("default")`
 /// and `force_lang = None`.

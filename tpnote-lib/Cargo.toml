@@ -22,7 +22,6 @@ viewer = []
 fast_html2md = { version = "0.0.9", optional = true }
 html-escape = "0.2.13"
 latex2mathml = { version = "0.2.3", optional = true }
-lazy_static.workspace = true
 lingua = { version = "1.6.2", optional = true }
 log.workspace = true
 parking_lot.workspace = true

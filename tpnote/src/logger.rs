@@ -10,7 +10,6 @@ use crate::settings::RUNS_ON_CONSOLE;
 use crate::CONFIG_PATHS;
 #[cfg(feature = "message-box")]
 use crate::PKG_VERSION;
-use lazy_static::lazy_static;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
 #[cfg(not(all(unix, not(target_os = "macos"))))]
@@ -21,20 +20,21 @@ use msgbox::IconType;
 use notify_rust::{Hint, Notification, Timeout};
 use parking_lot::RwLock;
 use std::env;
+use std::sync::LazyLock;
 
 #[cfg(feature = "message-box")]
 /// Window title of the message alert box.
 const ALERT_DIALOG_TITLE: &str = "Tp-Note";
 
 #[cfg(feature = "message-box")]
-lazy_static! {
-    /// Window title followed by version.
-    pub static ref ALERT_DIALOG_TITLE_LINE: String = format!(
+/// Window title followed by version.
+pub static ALERT_DIALOG_TITLE_LINE: LazyLock<String> = LazyLock::new(|| {
+    format!(
         "{} (v{})",
         &ALERT_DIALOG_TITLE,
         PKG_VERSION.unwrap_or("unknown")
-    );
-}
+    )
+});
 
 /// Pops up an error message notification and prints `msg`.
 /// Blocks until the user closes the window.
@@ -70,39 +70,35 @@ fn popup_alert(msg: &str) {
     let _ = msgbox::create(&ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
 }
 
-lazy_static! {
-    /// Some additional debugging information added to the end of error messages.
-    pub static ref ERR_MSG_TAIL: String = {
-        use std::fmt::Write;
+/// Some additional debugging information added to the end of error messages.
+pub static ERR_MSG_TAIL: LazyLock<String> = LazyLock::new(|| {
+    use std::fmt::Write;
 
-        let mut args_str = String::new();
-        for argument in env::args() {
-            args_str.push_str(argument.as_str());
-            args_str.push(' ');
-        };
+    let mut args_str = String::new();
+    for argument in env::args() {
+        args_str.push_str(argument.as_str());
+        args_str.push(' ');
+    }
 
-        format!(
-            "\n\
+    format!(
+        "\n\
             \n\
             Additional technical details:\n\
             *    Command line parameters:\n\
             {}\n\
             *    Sourced configuration files:\n\
             {}",
-            args_str,
-            CONFIG_PATHS
-               .iter()
-               .filter(|p|p.exists())
-               .map(|p| p.to_str().unwrap_or_default())
-               .fold(
-                   String::new(),
-                   |mut output, p| {
-                       let _ = writeln!(output, "{p}");
-                       output
-                   }
-               )
-        )};
-}
+        args_str,
+        CONFIG_PATHS
+            .iter()
+            .filter(|p| p.exists())
+            .map(|p| p.to_str().unwrap_or_default())
+            .fold(String::new(), |mut output, p| {
+                let _ = writeln!(output, "{p}");
+                output
+            })
+    )
+});
 
 /// If `true`, all future log events will trigger the opening of a popup
 /// alert window. Otherwise only `Level::Error` will do.

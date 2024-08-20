@@ -19,12 +19,12 @@ use crate::error::LibCfgError;
 use crate::highlight::get_viewer_highlighting_css;
 use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
-use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::{Deserialize, Serialize};
 use std::fmt::Write;
 use std::str::FromStr;
+use std::sync::LazyLock;
 #[cfg(feature = "renderer")]
 use syntect::highlighting::ThemeSet;
 
@@ -230,13 +230,11 @@ pub const TMPL_HTML_VAR_DOC_ERROR: &str = "doc_error";
 #[allow(dead_code)]
 pub const TMPL_HTML_VAR_DOC_TEXT: &str = "doc_text";
 
-lazy_static! {
 /// Global variable containing the filename and template related configuration
 /// data. This can be changed by the consumer of this library. Once the
 /// initialization done, this should remain static.
 /// For session configuration see: `settings::SETTINGS`.
-    pub static ref LIB_CFG: RwLock<LibCfg> = RwLock::new(LibCfg::default());
-}
+pub static LIB_CFG: LazyLock<RwLock<LibCfg>> = LazyLock::new(|| RwLock::new(LibCfg::default()));
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
@@ -541,11 +539,10 @@ impl Default for LibCfg {
     }
 }
 
-lazy_static! {
 /// Global variable containing the filename and template related configuration
 /// data.
-    pub static ref LIB_CFG_CACHE: RwLock<LibCfgCache> = RwLock::new(LibCfgCache::new());
-}
+pub static LIB_CFG_CACHE: LazyLock<RwLock<LibCfgCache>> =
+    LazyLock::new(|| RwLock::new(LibCfgCache::new()));
 
 /// Configuration data, deserialized and preprocessed.
 #[derive(Debug, Serialize, Deserialize)]

@@ -11,7 +11,6 @@ use crate::markup_language::MarkupLanguage;
 #[cfg(feature = "lang-detection")]
 use crate::settings::FilterGetLang;
 use crate::settings::SETTINGS;
-use lazy_static::lazy_static;
 #[cfg(feature = "lang-detection")]
 use lingua::{LanguageDetector, LanguageDetectorBuilder};
 use parse_hyperlinks::iterator::MarkupLink;
@@ -22,6 +21,7 @@ use std::collections::HashMap;
 use std::hash::BuildHasher;
 use std::path::Path;
 use std::path::PathBuf;
+use std::sync::LazyLock;
 use tera::Map;
 use tera::{try_get_value, Result as TeraResult, Tera, Value};
 
@@ -41,46 +41,44 @@ const HTML_PAT1: &str = "<!doctype html";
 /// Lowercase pattern to detect HTML in stdin.
 const HTML_PAT2: &str = "<html";
 
-lazy_static! {
 /// Tera object with custom functions registered.
-    pub static ref TERA: Tera = {
-        let mut tera = Tera::default();
-        tera.register_filter("append", append_filter);
-        tera.register_filter("cut", cut_filter);
-        tera.register_filter("file_copy_counter", file_copy_counter_filter);
-        tera.register_filter("file_ext", file_ext_filter);
-        tera.register_filter("file_name", file_name_filter);
-        tera.register_filter("file_sort_tag", file_sort_tag_filter);
-        tera.register_filter("file_stem", file_stem_filter);
-        tera.register_filter("file_copy_counter", file_copy_counter_filter);
-        tera.register_filter("file_name", file_name_filter);
-        tera.register_filter("file_ext", file_ext_filter);
-        tera.register_filter("find_last_created_file", find_last_created_file);
-        tera.register_filter("html_to_markup", html_to_markup_filter);
-        tera.register_filter("incr_sort_tag", incr_sort_tag_filter);
-        tera.register_filter("prepend", prepend_filter);
-        tera.register_filter("append", append_filter);
-        tera.register_filter("remove", remove_filter);
-        tera.register_filter("insert", insert_filter);
-        tera.register_filter("get_lang", get_lang_filter);
-        tera.register_filter("heading", heading_filter);
-        tera.register_filter("insert", insert_filter);
-        tera.register_filter("link_dest", link_dest_filter);
-        tera.register_filter("link_text", link_text_filter);
-        tera.register_filter("link_text_picky", link_text_picky_filter);
-        tera.register_filter("link_title", link_title_filter);
-        tera.register_filter("map_lang", map_lang_filter);
-        tera.register_filter("markup_to_html", markup_to_html_filter);
-        tera.register_filter("name", name_filter);
-        tera.register_filter("prepend", prepend_filter);
-        tera.register_filter("remove", remove_filter);
-        tera.register_filter("sanit", sanit_filter);
-        tera.register_filter("to_html", to_html_filter);
-        tera.register_filter("to_yaml", to_yaml_filter);
-        tera.register_filter("trim_file_sort_tag", trim_file_sort_tag_filter);
-        tera
-    };
-}
+pub static TERA: LazyLock<Tera> = LazyLock::new(|| {
+    let mut tera = Tera::default();
+    tera.register_filter("append", append_filter);
+    tera.register_filter("cut", cut_filter);
+    tera.register_filter("file_copy_counter", file_copy_counter_filter);
+    tera.register_filter("file_ext", file_ext_filter);
+    tera.register_filter("file_name", file_name_filter);
+    tera.register_filter("file_sort_tag", file_sort_tag_filter);
+    tera.register_filter("file_stem", file_stem_filter);
+    tera.register_filter("file_copy_counter", file_copy_counter_filter);
+    tera.register_filter("file_name", file_name_filter);
+    tera.register_filter("file_ext", file_ext_filter);
+    tera.register_filter("find_last_created_file", find_last_created_file);
+    tera.register_filter("html_to_markup", html_to_markup_filter);
+    tera.register_filter("incr_sort_tag", incr_sort_tag_filter);
+    tera.register_filter("prepend", prepend_filter);
+    tera.register_filter("append", append_filter);
+    tera.register_filter("remove", remove_filter);
+    tera.register_filter("insert", insert_filter);
+    tera.register_filter("get_lang", get_lang_filter);
+    tera.register_filter("heading", heading_filter);
+    tera.register_filter("insert", insert_filter);
+    tera.register_filter("link_dest", link_dest_filter);
+    tera.register_filter("link_text", link_text_filter);
+    tera.register_filter("link_text_picky", link_text_picky_filter);
+    tera.register_filter("link_title", link_title_filter);
+    tera.register_filter("map_lang", map_lang_filter);
+    tera.register_filter("markup_to_html", markup_to_html_filter);
+    tera.register_filter("name", name_filter);
+    tera.register_filter("prepend", prepend_filter);
+    tera.register_filter("remove", remove_filter);
+    tera.register_filter("sanit", sanit_filter);
+    tera.register_filter("to_html", to_html_filter);
+    tera.register_filter("to_yaml", to_yaml_filter);
+    tera.register_filter("trim_file_sort_tag", trim_file_sort_tag_filter);
+    tera
+});
 
 /// A filter converting any input `tera::Value` into a `tera::Value::String(s)`
 /// with `s` being the YAML representation of the object. The input can be of

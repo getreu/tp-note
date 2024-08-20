@@ -1,12 +1,12 @@
 //! Receives strings by a message channel, queues them and displays them
 //! one by one in popup alert windows.
 
-use lazy_static::lazy_static;
 use std::sync::mpsc::sync_channel;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::RecvTimeoutError;
 use std::sync::mpsc::SendError;
 use std::sync::mpsc::SyncSender;
+use std::sync::LazyLock;
 use std::sync::Mutex;
 use std::thread;
 use std::thread::sleep;
@@ -30,10 +30,10 @@ const KEEP_ALIVE: u64 = 1000;
 /// 10 just to be sure.
 const FLUSH_TIMEOUT: u64 = 10;
 
-lazy_static! {
-    /// Hold `AlertService` in a static variable, that
-    /// `AlertService::push_str()` can be called easily from everywhere.
-    static ref ALERT_SERVICE: AlertService = AlertService {
+/// Hold `AlertService` in a static variable, that
+/// `AlertService::push_str()` can be called easily from everywhere.
+static ALERT_SERVICE: LazyLock<AlertService> = LazyLock::new(|| {
+    AlertService {
         // The message queue accepting strings for being shown as
         // popup alert windows.
         message_channel: {
@@ -45,8 +45,8 @@ lazy_static! {
         busy_lock: Mutex::new(()),
         // We start with no funtion pointer.
         popup_alert: Mutex::new(None),
-    };
-}
+    }
+});
 
 pub struct AlertService {
     /// The message queue accepting strings for being shown as
@@ -67,7 +67,7 @@ impl AlertService {
     pub fn init(popup_alert: fn(&str)) {
         // Setup the `AlertService`.
         // Set up the channel now.
-        lazy_static::initialize(&ALERT_SERVICE);
+        LazyLock::force(&ALERT_SERVICE);
         *ALERT_SERVICE.popup_alert.lock().unwrap() = Some(popup_alert);
         thread::spawn(move || {
             // this will block until the previous message has been received

@@ -5,7 +5,6 @@ use crate::settings::ARGS;
 use crate::settings::DOC_PATH;
 use crate::settings::ENV_VAR_TPNOTE_CONFIG;
 use directories::ProjectDirs;
-use lazy_static::lazy_static;
 use log::LevelFilter;
 use parking_lot::RwLock;
 use serde::Deserialize;
@@ -17,6 +16,7 @@ use std::io;
 use std::mem;
 use std::path::Path;
 use std::path::PathBuf;
+use std::sync::LazyLock;
 use tera::Tera;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::Scheme;
@@ -184,7 +184,7 @@ pub struct Viewer {
 impl ::std::default::Default for Cfg {
     fn default() -> Self {
         // Make sure that we parse the `LIB_CONFIG_DEFAULT_TOML` first.
-        lazy_static::initialize(&LIB_CFG);
+        LazyLock::force(&LIB_CFG);
 
         toml::from_str(&Cfg::default_as_toml()).expect(
             "Error in default configuration in source file:\n\
@@ -420,70 +420,60 @@ impl Cfg {
     }
 }
 
-lazy_static! {
-    /// Reads and parses the configuration file "tp-note.toml". An alternative
-    /// filename (optionally with absolute path) can be given on the command
-    /// line with "--config".
-    pub static ref CFG: Cfg = {
-            Cfg::from_files(&CONFIG_PATHS)
-                .unwrap_or_else(|e|{
-                    // Remember that something went wrong.
-                    let mut cfg_file_loading = CFG_FILE_LOADING.write();
-                    *cfg_file_loading = Err(e);
+/// Reads and parses the configuration file "tp-note.toml". An alternative
+/// filename (optionally with absolute path) can be given on the command
+/// line with "--config".
+pub static CFG: LazyLock<Cfg> = LazyLock::new(|| {
+    Cfg::from_files(&CONFIG_PATHS).unwrap_or_else(|e| {
+        // Remember that something went wrong.
+        let mut cfg_file_loading = CFG_FILE_LOADING.write();
+        *cfg_file_loading = Err(e);
 
-                    // As we could not load the configuration file, we will use
-                    // the default configuration.
-                    Cfg::default()
-                })
-        };
-}
+        // As we could not load the configuration file, we will use
+        // the default configuration.
+        Cfg::default()
+    })
+});
 
-lazy_static! {
-    /// Variable indicating with `Err` if the loading of the configuration file
-    /// went wrong.
-    pub static ref CFG_FILE_LOADING: RwLock<Result<(), ConfigFileError>> = RwLock::new(Ok(()));
-}
+/// Variable indicating with `Err` if the loading of the configuration file
+/// went wrong.
+pub static CFG_FILE_LOADING: LazyLock<RwLock<Result<(), ConfigFileError>>> =
+    LazyLock::new(|| RwLock::new(Ok(())));
 
-lazy_static! {
 /// This is where the Tp-Note searches for its configuration files.
-    pub static ref CONFIG_PATHS : Vec<PathBuf> = {
+pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
+    let mut config_path: Vec<PathBuf> = vec![];
 
-        let mut config_path: Vec<PathBuf> = vec![];
+    #[cfg(unix)]
+    config_path.push(PathBuf::from("/etc/tpnote/tpnote.toml"));
 
-        #[cfg(unix)]
-        config_path.push(PathBuf::from("/etc/tpnote/tpnote.toml"));
-
-
-        // Config path comes from the environment variable.
-            if let Ok(env_config) = env::var(ENV_VAR_TPNOTE_CONFIG) {
-               config_path.push(PathBuf::from(env_config));
-            };
-        // Config comes from the standard configuration file location.
-        if let Some(usr_config) = ProjectDirs::from("rs", "", CARGO_BIN_NAME){
-
-            let mut config = PathBuf::from(usr_config.config_dir());
-            config.push(Path::new(CONFIG_FILENAME));
-            config_path.push(config);
-        };
-
-        // Is there a `FILENAME_ROOT_PATH_MARKER` file?
-        if let Some(root_path) = DOC_PATH.as_deref().ok()
-            .map(|doc_path| {
-                        let mut root_path = Context::from(doc_path).root_path;
-                        root_path.push(FILENAME_ROOT_PATH_MARKER);
-                        root_path
-            }){
-            config_path.push(root_path);
-        };
-
-        if let Some(commandline_path) = &ARGS.config {
-                // Config path comes from command line.
-                config_path.push(PathBuf::from(commandline_path));
-        };
-
-        config_path
+    // Config path comes from the environment variable.
+    if let Ok(env_config) = env::var(ENV_VAR_TPNOTE_CONFIG) {
+        config_path.push(PathBuf::from(env_config));
     };
-}
+    // Config comes from the standard configuration file location.
+    if let Some(usr_config) = ProjectDirs::from("rs", "", CARGO_BIN_NAME) {
+        let mut config = PathBuf::from(usr_config.config_dir());
+        config.push(Path::new(CONFIG_FILENAME));
+        config_path.push(config);
+    };
+
+    // Is there a `FILENAME_ROOT_PATH_MARKER` file?
+    if let Some(root_path) = DOC_PATH.as_deref().ok().map(|doc_path| {
+        let mut root_path = Context::from(doc_path).root_path;
+        root_path.push(FILENAME_ROOT_PATH_MARKER);
+        root_path
+    }) {
+        config_path.push(root_path);
+    };
+
+    if let Some(commandline_path) = &ARGS.config {
+        // Config path comes from command line.
+        config_path.push(PathBuf::from(commandline_path));
+    };
+
+    config_path
+});
 
 #[cfg(test)]
 mod tests {
