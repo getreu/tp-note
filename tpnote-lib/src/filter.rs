@@ -82,16 +82,18 @@ lazy_static! {
     };
 }
 
-/// A filter converting an input `tera::Value::Object` into a
-/// `tera::Value::String(s)` with `s` being the YAML representation of the
-/// object. When the optional parameter `key='k'` is given, the input is
-/// the corresponding value.
+/// A filter converting any input `tera::Value` into a `tera::Value::String(s)`
+/// with `s` being the YAML representation of the object. The input can be of
+/// any type, the output type is alwasy a `Value::String()`.
+/// If the input type is `tera::Value::Object`, all top level keys starting with
+/// `fm_` are  localized (see `fm_var.localization`).
+/// When the optional parameter `key='k'` is given, the input is regarded as
+/// the corresponding value to this key.
 /// The optional parameter `tab=n` indents the YAML values `n` characters to
 /// the right of the first character of the key by inserting additional spaces
 /// between the key and the value. When `tab=n` is given, it has precedence
 /// over the  default value, read from the configuration file variable
 /// `tmpl.filter.to_yaml_tab`.
-/// The input can be of any type, the output type is `Value::String()`.
 fn to_yaml_filter<S: BuildHasher>(
     val: &Value,
     args: &HashMap<String, Value, S>,
@@ -180,6 +182,8 @@ fn to_yaml_filter<S: BuildHasher>(
 /// * Other non-string basic types: `<code class="fm">`.
 ///
 /// The input can be of any type, the output type is `Value::String()`.
+/// If the input type is `Value::Object`, all top level keys starting with
+/// `fm_` are  localized (see `fm_var.localization`).
 /// Note: HTML templates escape HTML critical characters by default.
 /// To use the `to_hmtl` filter in HTML templates, add a `safe` filter in last
 /// position. This is no risk, as the `to_html` filter always escapes string
@@ -188,13 +192,13 @@ fn to_html_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    fn tag_to_html(val: Value, output: &mut String) {
+    fn tag_to_html(val: Value, is_root: bool, output: &mut String) {
         match val {
             Value::Array(a) => {
                 output.push_str("<ul class=\"fm\">");
                 for i in a {
                     output.push_str("<li class=\"fm\">");
-                    tag_to_html(i, output);
+                    tag_to_html(i, false, output);
                     output.push_str("</li>");
                 }
                 output.push_str("</ul>");
@@ -204,12 +208,24 @@ fn to_html_filter<S: BuildHasher>(
 
             Value::Object(map) => {
                 output.push_str("<blockquote class=\"fm\">");
-                for (k, v) in map {
-                    output.push_str("<div class=\"fm\">");
-                    output.push_str(&k);
-                    output.push_str(": ");
-                    tag_to_html(v, output);
-                    output.push_str("</div>");
+                if is_root {
+                    let scheme =
+                        &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+                    for (k, v) in map {
+                        output.push_str("<div class=\"fm\">");
+                        output.push_str(name(scheme, &k));
+                        output.push_str(": ");
+                        tag_to_html(v, false, output);
+                        output.push_str("</div>");
+                    }
+                } else {
+                    for (k, v) in map {
+                        output.push_str("<div class=\"fm\">");
+                        output.push_str(&k);
+                        output.push_str(": ");
+                        tag_to_html(v, false, output);
+                        output.push_str("</div>");
+                    }
                 }
                 output.push_str("</blockquote>");
             }
@@ -223,7 +239,7 @@ fn to_html_filter<S: BuildHasher>(
     }
 
     let mut html = String::new();
-    tag_to_html(value.to_owned(), &mut html);
+    tag_to_html(value.to_owned(), true, &mut html);
 
     Ok(Value::String(html))
 }
