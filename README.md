@@ -119,7 +119,7 @@ Repository:
 
 ### Tp-Note Debian/Ubuntu installer package
 
-* Package compiled for Debian:
+* Package compiled for Debian/Ubuntu:
 
   [x86_64-unknown-linux-gnu/debian/tpnote_latest_amd64.deb]
 
@@ -145,7 +145,7 @@ Repository:
 
     * [x86_64-unknown-linux-gnu/release/tpnote]
 
-    * The following "musl" version also works on headless system.
+    * The following "musl" version also works on a headless system.
 
       [x86_64-unknown-linux-musl/release/tpnote]
 
@@ -268,8 +268,7 @@ compile _Tp-Note_ yourself.
    ```
 
    A modern Linux desktop usually ships the required shared
-   libraries. The following lists the required libraries the Tp-Note (Debian)
-   binary depends on:
+   libraries. Here is a list:
 
    ```sh
    ldd target/x86_64-unknown-linux-gnu/release/tpnote 
@@ -299,8 +298,7 @@ compile _Tp-Note_ yourself.
    desktop environment that follows the XDG specification, e.g. KDE,
    Gnome, XFCE, LXDC, Mate (and probably also most others).
 
-   The use of notifications also removes former GTK dependencies. Anyway,
-   if you prefer to see error messages on the console only, you can opt
+   If you prefer to see error messages on the console only, you can opt
    out notifications and message boxes by omitting the `message-box` feature. In
    this case all error messages are dumped on the console from where you started
    _Tp-Note_ into `stderr`:
