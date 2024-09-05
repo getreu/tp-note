@@ -248,28 +248,30 @@ and observe the file on the disk.
 
 ## Best practice
 
-_Tp-Note's_ greatest advantage is it's flexibility. It easily integrates with
+_Tp-Note's_ greatest advantage is its flexibility. It easily integrates with
 your workflow.  As people work differently, there is no best usage either.
-Nevertheless, after having used _Tp-Note_ for some months now, here my personal
+Nevertheless, after having used _Tp-Note_ for some years now, here my personal
 preferences and configuration:
 
 * [Tp-Note](https://blog.getreu.net/projects/tp-note/)
 * Addon for Firefox: [Copy Selection as Markdown]
-* Markdown editor : [Apostrophe]
-  <!--or [Typora](https://typora.io/)-->
-* Integration with the file manager (start entry in context menue) as described below.
+* Helix file editor : [Helix]
+* Integration with the file manager (start entry in context menu) as described below.
 
-My favourite Markdown editor at the moment is [Apostrophe].
-I like its clean and simple interface helping me to stay focused on the content
-while writing.[^3]
+Even though there are dedicated Markdown file editors for prose writing like
+the excellent [Apostrophe] editor, I prefer the ergonomics of a modal editor.
+My favourite at the moment is [Helix]. Please refer to the blog post
+[Note talking with Helix, Tp-Note and LanguageTool](https://blog.getreu.net/20220828-tp-note-new8/) to set up [Helix] for prose writing.
 
 When copying extracts from a web-page, I often need to preserve its hyperlinks.
-For this, the Firefox browser addon [Copy Selection as Markdown] is very handy.
-It precedes the copied extract with a hyperlink to the origin of the webpage.
-When _TP-Note_ reads the extract from the clipboard, it uses the first Markdown
-hyperlink it can find for composing the note's title and its filename on disk.
-This is why the web page's name ends up automatically in the note's title and
-filename.  Here a sample work flow:
+When Tp-Note detects HTML in the clipboard, it automatically tries to convert
+the HTML content into Markdown. Nevertheless, you may prefer using an external
+converter instead. The Firefox browser add-on [Copy Selection as Markdown]
+for example, precedes the copied extract with a hyperlink to the origin of the
+webpage. When _TP-Note_ reads the extract from the clipboard, it uses the first
+Markdown hyperlink it can find for composing the note's title and its filename
+on disk. This way the web page's name ends up automatically in the note's
+title and filename. Here a sample work flow:
 
 ![A webpage to copy extracts from](assets/workflow5-1.png){width=12cm}
 
@@ -289,11 +291,12 @@ takes care of interpreting the clipboard's content and generating the file on
 disk.
 
 [Apostrophe]: https://apps.gnome.org/en-GB/app/org.gnome.gitlab.somas.Apostrophe/
+[Helix]: https://helix-editor.com/ 
 [Copy Selection as Markdown]: https://addons.mozilla.org/en-GB/firefox/addon/copy-selection-as-markdown/?src=search
 
 
 
-## Note taking for system administrators (and console lovers)
+## Note-taking for system administrators (and console lovers)
 
 As _Tp-Note_ makes extensive use of the clipboard, it mainly targets desktop
 systems running a graphical environment. But also when working on the console
@@ -307,7 +310,7 @@ echo  "Some clipboard content" | tpnote
 
 ### Typical workflows
 
-The following examples work with the full featured version of _Tp-Note_ as
+The following examples work with the full-featured version of _Tp-Note_ as
 well as with the `--no-default-features` console only version.
 
 * Document a downloaded file:
@@ -414,7 +417,13 @@ well as with the `--no-default-features` console only version.
   just for a one-shot, type:
 
   ```bash
-  FILE=$(tpnote --batch); vi "$FILE"; tpnote --batch "$FILE"
+  TPNOTE_EDITOR="geany" tpnote
+  ```
+
+  Make sure that your editor is not forking. Another example:
+
+  ```sh
+  TPNOTE_EDITOR="kate --block" tpnote
   ```
 
 * Create a new note overwriting the template's default for `subtitle`:
@@ -1136,10 +1145,5 @@ press `[F3]` or `[Enter]`.
 
 [^2]: The compulsory trailing `-` separator is not considered to be part of a
       sort-tag, although dashes within the sort-tag are allowed.
-
-[^3]: At the moment I do not recommend using [Typora](<https://typora.io/#download>) because of
-      this bug: [Errornous rendering when the value of the last header var
-      is the empty string · Issue #4633 · typora/typora-issues](https://github.com/typora/typora-issues/issues/4633)
-
 
 [Tp-Note's man-page]: http://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization
