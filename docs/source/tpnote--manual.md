@@ -1095,34 +1095,45 @@ runs _Tp-Note_ in editing mode.
    sudo apt install mc lynx
    ```
 
-2. Edit `mc`'s configuration file `/etc/mc/mc.ext`:
+2. Edit `mc`'s system-wide configuration file `/etc/mc/mc.ext.ini`:
 
    ```bash
-   sudo nano /etc/mc/mc.ext
+   sudo nano /etc/mc/mc.ext.ini
    ```
 
-3. Find the following lines (Debian 11+):
+   Or, edit the user's configuration file `~/.config/mc/mc.ext.ini`:
+
+   ```bash
+   nano ~/.config/mc/mc.ext.ini
+   ```
+    
+
+3. Find the following lines ():
 
    ```
-   shell/i/.md
-          Include=editor
+   [markdown]
+   Regex=\.(md|mkd)$
+   ShellIgnoreCase=true
+   Include=editor
    ```
 
    and disable them:
 
    ```
-   #shell/i/.md
-   #       Include=editor
+   # [markdown]
+   # Regex=\.(md|mkd)$
+   # ShellIgnoreCase=true
+   # Include=editor
    ```
 
-4. Replace the line `default/*` with:
+4. Replace the line `[Default]` with:
 
    ```bash
-   regex/i/.(txt|md|rst|adoc|txtnote)$
+   regex=\\.(md|rst|adoc|txtnote)$
        Open=tpnote %f
        View=if HTML=`tpnote -b -n -x - %f`; then (echo $"HTML" | lynx --stdin); else less    %f; fi
 
-   default/*
+   [Default]
    ```
 
 5. Restart all instances of `mc` :
