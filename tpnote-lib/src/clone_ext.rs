@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
-pub(crate) trait CloneExt<'b> {
+pub trait CloneExt<'b> {
     /// Clone a `Cow` without memory allocation.
     /// Note, the original must outlive the clone! Use case:
-    /// ```text
+    /// ```no_run
     /// use crate::tpnote_lib::clone_ext::CloneExt;
     /// use std::borrow::Cow;
     /// fn do_something_or_nothing(v: Cow<str>) -> Cow<str> {
@@ -14,6 +14,7 @@ pub(crate) trait CloneExt<'b> {
     ///         v
     ///     }
     /// }
+    ///
     /// // Sometimes, we only have a `&Cow`, but we need a `Cow`!
     /// let a: &Cow<str> = &Cow::Owned("world!".to_string());
     /// let b: Cow<str>  = a.shallow_clone();
