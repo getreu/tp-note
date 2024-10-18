@@ -645,10 +645,6 @@ files.
 Please consult _Tp-Note_'s manual page for more information about the
 debugging options `--debug` and `--popup` and how to use them.
 
-BTW: Under Windows, when you see only Chinese characters in the _Notepad_
-text editor, update Windows to the latest version or install
-[Notepad++](https://notepad-plus-plus.org/).
-
 
 
 ## Optional customization
