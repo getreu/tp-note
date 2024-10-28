@@ -19,7 +19,9 @@ use std::path::Path;
 #[cfg(feature = "renderer")]
 use std::str::from_utf8;
 
-/// Ommit HTML `<span....>` after converting to Markdown.
+/// The filter `filter_tags()` ommits HTML `<span....>` after converting to
+/// Markdown.
+#[cfg(test)] // Currently the `filter_tags()` filter is not used in the code.
 #[cfg(feature = "renderer")]
 const FILTERED_TAGS: &[&str; 4] = &["<span", "</span>", "<div", "</div>"];
 
@@ -57,7 +59,7 @@ impl InputConverter {
 
         match input_converter {
             #[cfg(feature = "renderer")]
-            InputConverter::ToMarkdown => |s| Ok(Self::filter_tags(html2md::parse_html(&s))),
+            InputConverter::ToMarkdown => |s| Ok(html2md::parse_html(&s, true)),
 
             InputConverter::Disabled => {
                 |_: String| -> Result<String, NoteError> { Err(NoteError::HtmlToMarkupDisabled) }
@@ -71,6 +73,7 @@ impl InputConverter {
     /// and `<div>` in `text`.
     /// Contract: the input substring `...` does not contain the characters
     /// `>` or `\n`.
+    #[cfg(test)] // Currently the `filter_tags()` filter is not used in the code.
     #[cfg(feature = "renderer")]
     fn filter_tags(text: String) -> String {
         let mut res = String::new();
@@ -84,7 +87,7 @@ impl InputConverter {
                     end -= new_start + 1;
                 }
 
-                // Is this a tag listed in `TARGET_TAGS`?
+                // Is this a tag listed in `FILTERED_TAGS`?
                 let filter_tag = FILTERED_TAGS
                     .iter()
                     .any(|&pat| text[i + start..i + start + end].starts_with(pat));
@@ -291,7 +294,15 @@ mod tests {
         let ic = InputConverter::get("md");
         let source: &str =
             "<div id=\"videopodcast\">outside <span id=\"pills\">inside</span>\n</div>";
-        let expect: &str = "outside inside";
+        let expect: &str = "outsideinside";
+
+        let result = ic(source.to_string());
+        assert_eq!(result.unwrap(), expect);
+
+        //
+        // [Commonmark: Example 489](https://spec.commonmark.org/0.31.2/#example-489)
+        let source: &str = r#"<p><a href="/my%20uri">link</a></p>"#;
+        let expect: &str = "[link](</my uri>)";
 
         let result = ic(source.to_string());
         assert_eq!(result.unwrap(), expect);
