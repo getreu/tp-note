@@ -456,13 +456,14 @@ fi
 
 # Tp-Note can choose between `fi-Fi` and `en-US`. The latter should be 
 # found.
+:> "$PWD/03b-test.md"
 echo '<html><h1>Good news</h1></html>' | \
 LANG="fi_FI.UTF-8" LOGNAME="myuser" \
 TPNOTE_LANG_DETECTION="en-US" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-Good news-==========--Note.md"
+OUTPUT_FILENAME="$PWD/03c-Good news--Note.md"
 
 if diff "$OUTPUT_FILENAME" "test017-clipboard-expected-output"
 then
