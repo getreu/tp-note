@@ -571,7 +571,8 @@ impl<'a> Hyperlink for Link<'a> {
             if s == val {
                 val
             } else {
-                Cow::Owned(s.to_string())
+                // No cloning happens here, because we own s already.
+                Cow::Owned(s.into_owned())
             }
         }
         // Replace Windows backslash, then HTML escape encode.
@@ -585,7 +586,8 @@ impl<'a> Hyperlink for Link<'a> {
             if s == val {
                 val
             } else {
-                Cow::Owned(s.to_string())
+                // No cloning happens here, because we own s already.
+                Cow::Owned(s.into_owned())
             }
         }
 
