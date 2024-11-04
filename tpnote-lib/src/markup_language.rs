@@ -11,13 +11,13 @@ use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
 use pulldown_cmark::{html, Options, Parser};
 #[cfg(feature = "renderer")]
-use rst_parser;
-#[cfg(feature = "renderer")]
-use rst_renderer::render_html;
+use rst_renderer;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 #[cfg(feature = "renderer")]
 use std::str::from_utf8;
+#[cfg(feature = "renderer")]
+use uo_rst_parser;
 
 /// The filter `filter_tags()` ommits HTML `<span....>` after converting to
 /// Markdown.
@@ -211,8 +211,9 @@ impl MarkupLanguage {
                 }
                 // Write to String buffer.
                 let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
-                rst_parser::parse(rest_input.trim_start())
-                    .and_then(|doc| render_html(&doc, &mut html_output, false))
+                const STANDALONE: bool = false; // Don't wrap in `<!doctype html><html></html>`.
+                uo_rst_parser::parse(rest_input.trim_start())
+                    .map(|doc| rst_renderer::render_html(&doc, &mut html_output, STANDALONE))
                     .map_or_else(
                         |e| NoteError::RstParse { msg: e.to_string() }.to_string(),
                         |_| from_utf8(&html_output).unwrap_or_default().to_string(),
@@ -287,41 +288,62 @@ mod tests {
         //
         let ext = "md";
         assert_eq!(MarkupLanguage::from(ext), MarkupLanguage::Markdown);
+
+        //
+        let ext = "rst";
+        assert_eq!(MarkupLanguage::from(ext), MarkupLanguage::ReStructuredText);
     }
 
     #[test]
-    fn test_input_converter() {
-        let ic = InputConverter::get("md");
-        let source: &str =
-            "<div id=\"videopodcast\">outside <span id=\"pills\">inside</span>\n</div>";
-        let expect: &str = "outsideinside";
+    fn test_markuplanguage_render() {
+        // Markdown
+        let input = "[Link text](https://domain.invalid/)";
+        let expected: &str = "<p><a href=\"https://domain.invalid/\">Link text</a></p>\n";
 
-        let result = ic(source.to_string());
-        assert_eq!(result.unwrap(), expect);
+        let result = MarkupLanguage::Markdown.render(input);
+        assert_eq!(result, expected);
+
+        // ReStructuredText
+        let input = "`Link text <https://domain.invalid/>`_";
+        let expected: &str = "<p><a href=\"https://domain.invalid/\">Link text</a></p>\n";
+
+        let result = MarkupLanguage::ReStructuredText.render(input);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_input_converter_md() {
+        let ic = InputConverter::get("md");
+        let input: &str =
+            "<div id=\"videopodcast\">outside <span id=\"pills\">inside</span>\n</div>";
+        let expected: &str = "outsideinside";
+
+        let result = ic(input.to_string());
+        assert_eq!(result.unwrap(), expected);
 
         //
         // [Commonmark: Example 489](https://spec.commonmark.org/0.31.2/#example-489)
-        let source: &str = r#"<p><a href="/my%20uri">link</a></p>"#;
-        let expect: &str = "[link](</my uri>)";
+        let input: &str = r#"<p><a href="/my%20uri">link</a></p>"#;
+        let expected: &str = "[link](</my uri>)";
 
-        let result = ic(source.to_string());
-        assert_eq!(result.unwrap(), expect);
+        let result = ic(input.to_string());
+        assert_eq!(result.unwrap(), expected);
     }
 
     #[test]
     fn test_filter_tags() {
-        let source: &str =
+        let input: &str =
             "A<div id=\"videopodcast\">out<p>side <span id=\"pills\">inside</span>\n</div>B";
-        let expect: &str = "Aout<p>side inside\nB";
+        let expected: &str = "Aout<p>side inside\nB";
 
-        let result = InputConverter::filter_tags(source.to_string());
-        assert_eq!(result, expect);
+        let result = InputConverter::filter_tags(input.to_string());
+        assert_eq!(result, expected);
 
-        let source: &str = "A<B<C <div>D<E<p>F<>G";
-        let expect: &str = "A<B<C D<E<p>F<>G";
+        let input: &str = "A<B<C <div>D<E<p>F<>G";
+        let expected: &str = "A<B<C D<E<p>F<>G";
 
-        let result = InputConverter::filter_tags(source.to_string());
-        assert_eq!(result, expect);
+        let result = InputConverter::filter_tags(input.to_string());
+        assert_eq!(result, expected);
     }
 }
 // `rewrite_rel_links=true`
