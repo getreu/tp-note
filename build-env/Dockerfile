@@ -8,6 +8,7 @@ RUN rustup target add x86_64-unknown-linux-musl
 
 # Add RaspberryPi target
 RUN rustup target add armv7-unknown-linux-gnueabihf
+
 RUN rustup target add aarch64-unknown-linux-gnu
 
 # Cross compile for Windows
@@ -29,6 +30,9 @@ RUN cargo install cargo-deb
 ### use with
 # cargo deb --target=x86_64-unknown-linux-gnu
 
+RUN rustup component add --target x86_64-unknown-linux-musl  rust-src
+RUN rustup component add --target armv7-unknown-linux-gnueabihf  rust-src
+RUN rustup component add --target aarch64-unknown-linux-gnu  rust-src
 
 COPY . .
 
