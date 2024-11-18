@@ -3090,13 +3090,8 @@ at your option.
 
 ## Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally
-submitted for inclusion in the work by you, as defined in the Apache-2.0
-licence, shall be dual licensed as above, without any additional terms
-or conditions. Licensed under the Apache Licence, Version 2.0 (the
-"Licence"); you may not use this file except in compliance with the
-Licence.
-
+By contributing to this project, you agree to transfer the copyright 
+ownership of your contribution to Jens Getreu.
 
 
 
