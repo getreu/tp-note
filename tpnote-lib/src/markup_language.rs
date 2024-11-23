@@ -11,13 +11,13 @@ use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
 use pulldown_cmark::{html, Options, Parser};
 #[cfg(feature = "renderer")]
+use rst_parser;
+#[cfg(feature = "renderer")]
 use rst_renderer;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 #[cfg(feature = "renderer")]
 use std::str::from_utf8;
-#[cfg(feature = "renderer")]
-use uo_rst_parser;
 
 /// The filter `filter_tags()` ommits HTML `<span....>` after converting to
 /// Markdown.
@@ -204,15 +204,11 @@ impl MarkupLanguage {
             Self::ReStructuredText => {
                 // Note, that the current rst renderer requires files to end with a new line.
                 // <https://github.com/flying-sheep/rust-rst/issues/30>
-                let mut rest_input = input.trim_start();
-                // The rst parser accepts only exactly one newline at the end.
-                while rest_input.ends_with("\n\n") {
-                    rest_input = &rest_input[..rest_input.len() - 1];
-                }
+                let rest_input = input.trim_start();
                 // Write to String buffer.
                 let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
                 const STANDALONE: bool = false; // Don't wrap in `<!doctype html><html></html>`.
-                uo_rst_parser::parse(rest_input.trim_start())
+                rst_parser::parse(rest_input.trim_start())
                     .map(|doc| rst_renderer::render_html(&doc, &mut html_output, STANDALONE))
                     .map_or_else(
                         |e| NoteError::RstParse { msg: e.to_string() }.to_string(),
