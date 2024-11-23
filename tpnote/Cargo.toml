@@ -73,7 +73,7 @@ lang-detection = ["tpnote-lib/lang-detection"]
 renderer = ["tpnote-lib/renderer"]
 
 [dependencies]
-clipboard-rs = { version = "0.2.1", optional = true }
+clipboard-rs = { version = "0.2.2", optional = true }
 directories = "5.0.1"
 httparse = { version = "1.9.5", optional = true }
 httpdate = { version = "1.0.3", optional = true }
