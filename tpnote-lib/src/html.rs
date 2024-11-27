@@ -454,7 +454,7 @@ impl<'a> Hyperlink for Link<'a> {
 
         // We assume, that `dest` had been expanded already, so we can extract
         // the full filename here.
-        // If ever it ends with a format string we it it. Otherwise we quit
+        // If ever it ends with a format string we apply it. Otherwise we quit
         // the method and do nothing.
         let (path, format) = match dest.split_once(FORMAT_SEPARATOR) {
             Some(s) => s,
