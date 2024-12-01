@@ -793,18 +793,18 @@ configuration file variable.
     '`short`' or '`long`' (default). No link rewriting occurs, for the *MODE*
     '`off`'. The *MODE* '`short`' rewrites all local relative links to absolute
     links, whose base is the first parent directory containing the marker
-    file '`.tpnote.toml`'. NB, the directory of the marker file defines the
+    file '`tpnote.toml`'. NB, the directory of the marker file defines the
     base for all absolute local links in your Tp-Note file! The mode '`long`'
     rewrites *all* local links to absolute links whose base is the system's root
     directory '`/`'. For relative local links this is performed by prepending
     the path to the note file. Absolute local links get the path to the marker
-    file '`.tpnote.toml`' prepended. In case you do not place a '`.tpnote.toml`'
+    file '`tpnote.toml`' prepended. In case you do not place a '`tpnote.toml`'
     file in a parent directory, the base for absolute local links in your note
     file is interpreted as '`/`'.
     
 >   The right *MODE* choice depends on how you view the resulting HTML:
     if you publish on a web server, then '`short`' might be a good choice. Do 
-    not forget to place a marker file '`.tpnote.toml`' somewhere in the
+    not forget to place a marker file '`tpnote.toml`' somewhere in the
     document's path. If you view the HTML file directly in your web browser,
     better choose '`long`'. In this case, the present of a marker file will not
     affect the output.
@@ -908,7 +908,7 @@ understands:
 Remarks:
  
 * The base for absolute local links is the first parent directory containing
-  the marker file '`.tpnote.toml`'. If absent, absolute local links refer
+  the marker file '`tpnote.toml`'. If absent, absolute local links refer
   to the root directory '`/`'.
 * *Shorthand link*: Instead of writing out the full link destination, e.g. 
   '`[my doc](<./docs/20230508-my note.md>)`', you can shorten the link to
@@ -946,18 +946,18 @@ allows you to fine-tune how local links are written out. Valid values are:
 In order to achieve this, the user must respect the following convention
 concerning absolute paths in local links in Tp-Note documents: When a document
 contains a local link with an absolute path, the base of this path is
-considered to be the directory where the marker file '`.tpnote.toml`' resides
+considered to be the directory where the marker file '`tpnote.toml`' resides
 (or '`/`' in non exists). The option '`--export-link- rewriting`' decides how
 local links in the Tp-Note document are converted when the HTML is generated.
 If its value is '`short`', then local links with relative paths are converted to
-absolute paths. The base of the resulting path is where the '`.tpnote.toml`' file
+absolute paths. The base of the resulting path is where the '`tpnote.toml`' file
 resides (or `/` if none exists).  Consider the following example 
 '`--export-link-rewriting=short`':
 
 * The Tp-Note file '`/my/docs/car/bill.md`' contains
 * an absolute local link: '`/car/scan.jpg`',
 * and another relative local link: '`./photo.jpg`'.
-* The document root marker is: '`/my/docs/.tpnote.toml`'.
+* The document root marker is: '`/my/docs/tpnote.toml`'.
 
 The images in the resulting HTML will appear as
 
@@ -971,7 +971,7 @@ the following example:
 * The Tp-Note file '`/my/docs/car/bill.md`' contains
 * an absolute local link: '`/car/scan.jpg`',
 * and another relative local link: '`./photo.jpg`'.
-* The document root marker is: '`/my/docs/.tpnote.toml`'.
+* The document root marker is: '`/my/docs/tpnote.toml`'.
 
 The images in the resulting HTML will appear as
 
@@ -980,7 +980,7 @@ The images in the resulting HTML will appear as
 
 Summary: The right '`--export-link-rewriting`' choice depends on how you view
 the resulting HTML: if you publish on a web server, then '`short`' might be
-a good choice (do not forget to place a marker file '`.tpnote.toml`' somewhere 
+a good choice (do not forget to place a marker file '`tpnote.toml`' somewhere 
 in the document's path). If you view the HTML file directly in your web 
 browser, better choose '`long`'.
 
@@ -1341,7 +1341,7 @@ default values. This happens in the following order:
    - Windows: '`C:\Users\<LOGIN>\AppData\Roaming\tpnote\config\tpnote.toml>`'
    - macOS: '`/Users/<LOGIN>/Library/Application Support/tpnote`'
 4. At startup all parent directories of the note file path '`<PATH>`' are
-   searched for a marker file named '`.tpnote.toml`'. If found, the document root
+   searched for a marker file named '`tpnote.toml`'. If found, the document root
    moves from '`/`' to the found location. If present and its content is not
    empty, Tp-Note interprets the file's content as configuration file.
 5. The file indicated by the command line parameter '`--config <FIlE>`'. 
@@ -2852,7 +2852,7 @@ able to publish. To summarize, a file is only served:
 3. if the number of so far viewed Tp-Note files,
    '`viewer.displayed_tpnote_count_max`' is not exceeded,
 4. when it's located under a directory containing a marker file named
-   '`.tpnote.toml`' (without marker file this condition is void).
+   '`tpnote.toml`' (without marker file this condition is void).
 
 The HTTP server runs as long as the launched web browser window is open.
 Note, that the server not only exposes the displayed note file, but also all
@@ -2868,10 +2868,10 @@ serves only files whose file extensions are registered with the
 disabling the _follow links to other Tp-Note files_ feature by removing all
 '`text/*`' mime types from that list.
 
-Another security feature is the '`.tpnote.toml`' marker file. When Tp-Note
+Another security feature is the '`tpnote.toml`' marker file. When Tp-Note
 opens a note file, it checks all directories above, one by one, until it
-finds the marker file '`.tpnote.toml`'. Tp-Note's viewer will never serve a file
-located outside the root directory and its children. When no '`.tpnote.toml`'
+finds the marker file '`tpnote.toml`'. Tp-Note's viewer will never serve a file
+located outside the root directory and its children. When no '`tpnote.toml`'
 file is found, the root directory is set to '`/`', which disables this
 security feature.
 

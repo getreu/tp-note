@@ -45,7 +45,7 @@ pub const FILENAME_LEN_MAX: usize =
 
 /// The appearance of a file with this filename marks the position of
 /// `TMPL_VAR_ROOT_PATH`.
-pub const FILENAME_ROOT_PATH_MARKER: &str = ".tpnote.toml";
+pub const FILENAME_ROOT_PATH_MARKER: &str = "tpnote.toml";
 
 /// When a filename is taken already, Tp-Note adds a copy
 /// counter number in the range of `0..COPY_COUNTER_MAX`
