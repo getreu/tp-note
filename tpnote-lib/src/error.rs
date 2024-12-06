@@ -381,7 +381,7 @@ pub enum NoteError {
         source_str: String,
     },
 
-    /// Remedy: check YAML syntax in the input stream's front matter.
+    /// Remedy: check HTML syntax in the input stream data.
     #[error(
         "Invalid HTML in the input stream data found:\n\
         {source_str}"
