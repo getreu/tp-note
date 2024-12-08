@@ -30,6 +30,8 @@ RUN cargo install cargo-deb
 ### use with
 # cargo deb --target=x86_64-unknown-linux-gnu
 
+RUN rustup component add rust-src llvm-tools rustfmt
+
 RUN rustup component add --target x86_64-unknown-linux-musl  rust-src
 RUN rustup component add --target armv7-unknown-linux-gnueabihf  rust-src
 RUN rustup component add --target aarch64-unknown-linux-gnu  rust-src
