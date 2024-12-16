@@ -15,11 +15,11 @@ version = "0.37.0"
 [features]
 default = ["renderer", "viewer", "lang-detection"]
 lang-detection = ["dep:lingua"]
-renderer = ["dep:pulldown-cmark", "dep:rst_parser", "dep:rst_renderer", "dep:latex2mathml", "dep:syntect", "dep:fast_html2md"]
+renderer = ["dep:pulldown-cmark", "dep:rst_parser", "dep:rst_renderer", "dep:latex2mathml", "dep:syntect", "dep:htmd"]
 viewer = []
 
 [dependencies]
-fast_html2md = { version = "0.0.21", optional = true }
+htmd = { version = "0.1", optional = true }
 html-escape = "0.2.13"
 latex2mathml = { version = "0.2.3", optional = true }
 lingua = { version = "1.6.2", optional = true }

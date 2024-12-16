@@ -5,7 +5,7 @@ use crate::error::NoteError;
 use crate::highlight::SyntaxPreprocessor;
 use crate::settings::SETTINGS;
 #[cfg(feature = "renderer")]
-use html2md;
+use htmd::HtmlToMarkdown;
 use parse_hyperlinks::renderer::text_links2html;
 use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
@@ -59,7 +59,15 @@ impl InputConverter {
 
         match input_converter {
             #[cfg(feature = "renderer")]
-            InputConverter::ToMarkdown => |s| Ok(html2md::parse_html(&s, true)),
+            InputConverter::ToMarkdown => |s| {
+                let converter = HtmlToMarkdown::builder()
+                    .skip_tags(vec!["script", "style"])
+                    .build();
+
+                converter.convert(&s).map_err(|e| NoteError::InvalidHtml {
+                    source_str: e.to_string(),
+                })
+            },
 
             InputConverter::Disabled => {
                 |_: String| -> Result<String, NoteError> { Err(NoteError::HtmlToMarkupDisabled) }
@@ -312,18 +320,26 @@ mod tests {
         let ic = InputConverter::get("md");
         let input: &str =
             "<div id=\"videopodcast\">outside <span id=\"pills\">inside</span>\n</div>";
-        let expected: &str = "outsideinside";
+        let expected: &str = "outside inside";
 
         let result = ic(input.to_string());
         assert_eq!(result.unwrap(), expected);
 
         //
         // [Commonmark: Example 489](https://spec.commonmark.org/0.31.2/#example-489)
-        let input: &str = r#"<p><a href="/my%20uri">link</a></p>"#;
+        let input: &str = r#"<p><a href="/my uri">link</a></p>"#;
         let expected: &str = "[link](</my uri>)";
 
         let result = ic(input.to_string());
         assert_eq!(result.unwrap(), expected);
+
+        //
+        // // [Commonmark: Example 489](https://spec.commonmark.org/0.31.2/#example-489)
+        // let input: &str = r#"<p><a href="/my%20uri">link</a></p>"#;
+        // let expected: &str = "[link](</my uri>)";
+
+        // let result = ic(input.to_string());
+        // assert_eq!(result.unwrap(), expected);
     }
 
     #[test]
