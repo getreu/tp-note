@@ -25,8 +25,8 @@ RUN apt-get -y install binutils-mingw-w64 mingw-w64
 # Some dependencies need Python, `mc` is for convenience.
 RUN apt-get -y install zip python3
 
-# Helper to make deb packages.
-RUN cargo install cargo-deb
+# Helper to make deb packages and install `cargo upgrade`.
+RUN cargo install --locked cargo-deb cargo-edit
 ### use with
 # cargo deb --target=x86_64-unknown-linux-gnu
 
