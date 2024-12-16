@@ -309,7 +309,7 @@ fn html_to_markup_filter<S: BuildHasher>(
             String::new()
         };
 
-        let converter = InputConverter::get(&extension);
+        let converter = InputConverter::build(&extension);
         buffer = match converter(buffer) {
             Ok(converted) if converted.is_empty() => default,
             Ok(converted) => converted,

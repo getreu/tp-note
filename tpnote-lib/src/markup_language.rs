@@ -45,7 +45,7 @@ impl InputConverter {
     /// When `extension` is not found in `extensions`, the function returns
     /// an NoteError.
     #[inline]
-    pub(crate) fn get(extension: &str) -> fn(String) -> Result<String, NoteError> {
+    pub(crate) fn build(extension: &str) -> fn(String) -> Result<String, NoteError> {
         let settings = SETTINGS.read_recursive();
         let scheme = &LIB_CFG.read_recursive().scheme[settings.current_scheme];
 
@@ -317,7 +317,7 @@ mod tests {
 
     #[test]
     fn test_input_converter_md() {
-        let ic = InputConverter::get("md");
+        let ic = InputConverter::build("md");
         let input: &str =
             "<div id=\"videopodcast\">outside <span id=\"pills\">inside</span>\n</div>";
         let expected: &str = "outside inside";
