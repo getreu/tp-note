@@ -1,4 +1,4 @@
-# Tp-Note: Markup enhanced granular note-taking
+﻿# Tp-Note: Markup enhanced granular note-taking
 
 **Save and edit your clipboard content as a note file**
 
@@ -225,7 +225,7 @@ _Tp-Note_'s manual.
 ## Upgrading
 
 While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
-configuration file structure:
+configuration file structure, e.g.:
 
 ```
 *** ERROR:
@@ -246,11 +246,12 @@ tpnote -b
 /home/joe/.config/tpnote/tpnote.toml
 ```
 
-The configuration file backup is stored in the same directory as the last
+Mote, the configuration file backup is stored in the same directory as the last
 sourced configuration file, e.g. `/home/joe/.config/tpnote/`.
 If Tp-Note sources more than one configuration file, consider the possibility
 of syntax errors in any of these files (cf. [Customization section] of
-Tp-Note_'s man-page).
+Tp-Note's man-page).
+
 
 
 # Building
@@ -259,28 +260,7 @@ If the above precompiled binaries do not suite you, you can
 compile _Tp-Note_ yourself.
 
 
-1. [Install Rust], e.g.
-
-   ```sh
-   curl https://sh.rustup.rs -sSf | sh
-
-   sudo apt install build-essential    
-   ```
-
-   A modern Linux desktop usually ships the required shared
-   libraries. Here is a list:
-
-   ```sh
-   ldd target/x86_64-unknown-linux-gnu/release/tpnote 
-	    linux-vdso.so.1
-	    libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1
-	    librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1
-	    libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0
-	    libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6
-	    libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2
-	    libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6
-	    /lib64/ld-linux-x86-64.so.2
-   ```
+1. [Install Rust]
 
 2. Download, compile and install _Tp-Note_:
 
@@ -289,26 +269,24 @@ compile _Tp-Note_ yourself.
    ```sh
    cargo install tpnote
    sudo cp ~/.cargo/bin/tpnote /usr/local/bin
-   # Copy icon
-   sudo cp assets/tpnote.svg /usr/local/share/icons
+   # Download icon
+   cd /usr/local/share/icons
+   sudo wget https://blog.getreu.net/projects/tp-note/assets/tpnote.svg
    ```
 
-   Unlike previous Linux versions (<= 1.19.13), Tp-Note displays errors
-   and debug messages as notifications. This requires a Linux/BSD based
-   desktop environment that follows the XDG specification, e.g. KDE,
-   Gnome, XFCE, LXDC, Mate (and probably also most others).
+   On Linux, Tp-Note displays errors and debug messages as notifications.
+   This requires a Linux/BSD based desktop environment that follows the XDG
+   specification, e.g. KDE, Gnome, XFCE, LXDC, Mate (and most
+   others).[^no-message-box]
 
-   If you prefer to see error messages on the console only, you can opt
-   out notifications and message boxes by omitting the `message-box` feature. In
-   this case all error messages are dumped on the console from where you started
-   _Tp-Note_ into `stderr`:
+   [^no-message-box]: In case an XDG desktop environment is not available, you
+       can opt out notifications and message boxes by omitting the `message-box`
+       feature by adding 
+      `--no-default-features --features lang-detection,read-clipboard,renderer,viewer`
+      to `cargo install tpnote`. 
+      Now, all error messages are dumped on the console from
+      where you started _Tp-Note_ into `stderr`.
 
-   ```sh
-   cargo install --no-default-features \
-     --features lang-detection,read-clipboard,renderer,viewer \
-     tpnote
-   sudo cp ~/.cargo/bin/tpnote /usr/local/bin
-   ```
 
    **Recommended Linux console and server version**
 
@@ -330,18 +308,15 @@ compile _Tp-Note_ yourself.
 
    **Building on Windows and macOS**
 
-   Build the full-featured version with:
+   Build the full-featured version[^win] with:
 
        cargo install tpnote
 
-   When building for Windows or macOS, it does not make sense to exclude the
-   `message-box` feature, because - under Windows and macOS - it does not rely
-   on the notification library. Instead, it uses direct OS-API calls for
+   [^win]: When building for Windows or macOS, it does not make sense to exclude
+   the `message-box` feature, because - under Windows and macOS - it does not
+   rely on the notification library. Instead, it uses direct OS-API calls for
    popping up alert boxes. As these calls have no footprint in binary size or
    speed, always keep the `message-box` feature compiled in.
-
-   See also the user manual for a more detailed installation description.
-
 
 
 ## Cross compilation
@@ -427,9 +402,10 @@ Copyright:
 [armv7-unknown-linux-gnueabihf/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/armv7-unknown-linux-gnueabihf/release/tpnote
 [aarch64-unknown-linux-gnu/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/aarch64-unknown-linux-gnu/release/tpnote
 [tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
-[tpnote.svg]: https://blog.getreu.net/projects/tp-note/images/tpnote.svg
+[tpnote.svg]: https://blog.getreu.net/projects/tp-note/assets/tpnote.svg
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
 [Installation section]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html#installation
 [Customization section]: https://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization
 [Install Rust]: https://www.rust-lang.org/tools/install
 [Semantic Versioning]: https://semver.org/
+
