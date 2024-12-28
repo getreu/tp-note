@@ -81,7 +81,7 @@ proposed title and add other content. When the text editor closes, Tp-Note
 synchronizes the note's metadata and its filename. This operation is performed
 with the '`tmpl.sync_filename`' template.
 
-Example: the clipboard is empty and '`<path>`' is a directory (or empty):
+Use case: the clipboard is empty and '`<path>`' is a directory (or empty):
 
 ``` sh
 tpnote "./03-Favorite Readings/"
@@ -170,7 +170,7 @@ echo '<!DOCTYPE html><h1>Hello World</h1>'| tpnote
 
 ### The clipboard contains a string
 
-Example: While launching Tp-Note the clipboard contains the string:
+Use case: While launching Tp-Note the clipboard contains the string:
 "`Who Moved My Cheese?\n\nChapter 2`" and '`<path>`' is a directory.
 
 ``` sh
@@ -216,7 +216,7 @@ date, the note's title and subtitle.
 
 ### The clipboard contains a hyperlink
 
-Example: '`<path>`' is a directory, the clipboard is not empty and it contains
+Use case: '`<path>`' is a directory, the clipboard is not empty and it contains
 the string: '`I recommend:\n[The Rust Book](https://doc.rust-lang.org/book/)`'.
 
 ```sh
@@ -249,7 +249,7 @@ title.
 
 ### The clipboard contains a string with a YAML header
 
-Example: '`<path>`' is a directory, the clipboard is not empty and contains
+Use case: '`<path>`' is a directory, the clipboard is not empty and contains
 the string: '`---\ntitle: Todo\nfile_ext: mdtxt\n---\nnothing`'.
 
 ```sh
@@ -332,7 +332,7 @@ templates: '`tmpl.annotate_file_content`' and
 an external text editor. After editing the file, it will be - if necessary -
 renamed to be in sync with the note's metadata.
 
-Example:
+For example:
 
 ``` sh
 :> "Classic Shell Scripting.pdf"
@@ -456,7 +456,7 @@ Unless invoked with '`--batch`' or '`--view`', Tp-Note launches an external
 text editor after creating a new note. This also happens when '`<path>`' points
 to an existing '`.md`'-file.
 
-Example: edit the note from the previous example:
+For example: open and edit an existing note file:
 
 ``` bash
 cd "./03-Favorite Readings"
@@ -545,7 +545,7 @@ note, Tp-Note will replicate that change in the note's filename. As a result,
 *all your note's filenames always correspond to their metadata*, which helps
 to retrieve your notes in large data pools.
 
-Example:
+For example:
 
 ```sh
 tpnote "20200306-Favorite Readings--Note.md"
@@ -1073,7 +1073,7 @@ numerical digits and lowercase letters, a _sort tag_ may contain any
 combination of '`_`', '`-`', '`=`' and '`.`' (cf. 
 '`filename.sort_tag.extra_chars`'). If a sort-tag contains lowercase letters, 
 only 2 in a row are allowed (cf. 
-'`filename.sort_tag.letters_in_succession_max `'). Examples:
+'`filename.sort_tag.letters_in_succession_max `'). For example:
 
 * *Chronological sort tag*
 
@@ -1145,7 +1145,7 @@ holds (slightly simplified, see '`tmpl.sync_filename`'):
 ^[The variables '`{{ fm.fm_title }}`' and '`{{ fm.fm_subtitle }}`' reflect the values
 in the note's front matter.]
 
-Example, consider the following document with the filename:
+For example, consider the following document with the filename:
 
     20211031-My file.md
 
@@ -1271,7 +1271,7 @@ and _zettel scheme_:
 
 1. The `'default'` scheme:
 
-   Example:
+   For example:
 
    ``` yaml
    ---
@@ -1866,7 +1866,7 @@ fm_vars.localization = [
 ```
 
 To change the natural language of the displayed header variable names,
-modify the second column of the above table. Example:
+modify the second column of the above table. For example:
 
 ```toml
 [[scheme]]
@@ -3022,7 +3022,7 @@ TPNOTE\_EDITOR\_CONSOLE
     precedence over the configuration file variable '`app_args.editor_console`',
     which defines the command line parameters for invoking a terminal based text
     editor, such as Emacs, Vim or Helix. Otherwise, the syntax and the operation
-    are the same as with '`TPNOTE_EDITOR` hereinabove'. Example of use:
+    are the same as with '`TPNOTE_EDITOR` hereinabove'. For example:
 
 >   ```sh
 >   sudo TPNOTE_EDITOR_CONSOLE="nvim" tpnote
