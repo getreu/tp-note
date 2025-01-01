@@ -92,8 +92,8 @@ thiserror.workspace = true
 time = "0.3.37"
 tera.workspace = true
 toml.workspace = true
-#tpnote-lib = { path = "../tpnote-lib", default-features = false }
-tpnote-lib = { version = "0.37.1", default-features = false}
+tpnote-lib = { path = "../tpnote-lib", default-features = false }
+#tpnote-lib = { version = "0.37.1", default-features = false}
 webbrowser = { version = "1.0.3", optional = true }
 
 
