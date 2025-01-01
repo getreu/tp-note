@@ -2603,7 +2603,7 @@ consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
 some additional filters, i.e.: 
-'`append(newline=true)`', '`append(with=...)`', '`cut`', '`file_copy_counter`',
+'`append(newline=true)`', '`append(with=...)`', '`trunc`', '`file_copy_counter`',
 '`file_ext`', '`file_name`', '`file_sort_tag`', '`file_stem`',
 '`get_lang`', '`heading`',  '`html_heading`', 
 '`html_to_markup(extension=..., default=...)`', '`insert(key=..., value=...)`',
@@ -2669,7 +2669,7 @@ A filter is always used together with a variable. Here are some examples:
   specified by '`e`'. If the conversion fails or results in an empty string,
   stream the text '`d`' instead.
 
-* '`{{ txt_clipboard | cut }}`' is the first 200 bytes from the clipboard.
+* '`{{ txt_clipboard | trunc }}`' is the first 200 bytes from the clipboard.
 
 * '`{{ txt_clipboard | heading }}`' is the clipboard's content until the
   end of the first sentence, or the first newline.
