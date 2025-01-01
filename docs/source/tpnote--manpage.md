@@ -2605,9 +2605,10 @@ filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
 some additional filters, i.e.: 
 '`append(newline=true)`', '`append(with=...)`', '`cut`', '`file_copy_counter`',
 '`file_ext`', '`file_name`', '`file_sort_tag`', '`file_stem`',
-'`get_lang`', '`heading`', '`html_to_markup(extension=..., default=...)`',
-'`insert(key=..., value=...)`', '`link_dest`', '`link_text`', '`link_title`',
-'`map_lang`', '`prepend`', '`prepend(newline=true)`', '`prepend(with=...)`',
+'`get_lang`', '`heading`',  '`html_heading`', 
+'`html_to_markup(extension=..., default=...)`', '`insert(key=..., value=...)`',
+'`link_dest`', '`link_text`', '`link_title`', '`map_lang`', '`prepend`', 
+'`prepend(newline=true)`', '`prepend(with=...)`',
 '`prepend(with_sort_tag=...)`', '`remove(key=)`' '`sanit`',
 '`to_html`', '`to_yaml`', '`to_yaml(key=...)`', '`to_yaml(tab=...)`' and
 '`trim_file_sort_tag`'.
@@ -2670,8 +2671,12 @@ A filter is always used together with a variable. Here are some examples:
 
 * '`{{ txt_clipboard | cut }}`' is the first 200 bytes from the clipboard.
 
-* '`{{ html_clipboard | heading }}`' is the clipboard's content until the
+* '`{{ txt_clipboard | heading }}`' is the clipboard's content until the
   end of the first sentence, or the first newline.
+
+* '`{{ html_clipboard | html_heading }}`' searches in the HTML clipboard
+  input, for e.g '`<h2>HEADING</h2>`', and returns the first HTML heading, e.g. 
+  '`HEADING`'.
 
 * '`{{ html_clipboard | link_text }}`' is the name of the first Markdown or
   ReStructuredText formatted link in the clipboard.
