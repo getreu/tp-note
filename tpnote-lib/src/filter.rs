@@ -73,6 +73,7 @@ pub static TERA: LazyLock<Tera> = LazyLock::new(|| {
     tera.register_filter("markup_to_html", markup_to_html_filter);
     tera.register_filter("name", name_filter);
     tera.register_filter("prepend", prepend_filter);
+    tera.register_filter("replace_empty", replace_empty_filter);
     tera.register_filter("remove", remove_filter);
     tera.register_filter("sanit", sanit_filter);
     tera.register_filter("to_html", to_html_filter);
@@ -427,7 +428,7 @@ fn link_dest_filter<S: BuildHasher>(
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's text's name (link text).
-/// Unlike the filter `link_dest`, it does not necessary return the first
+/// Unlike the filter `link_dest`, it does not necessarily return the first
 /// finding. For example, it skips autolinks, local links and links
 /// with some URL in the link text.
 /// If not found, it returns the empty string.
@@ -633,6 +634,27 @@ fn file_name_filter<S: BuildHasher>(
         .to_owned();
 
     Ok(Value::String(filename))
+}
+
+/// A Tera filter that replace the input string with the parameter `with`, but
+/// only if the input stream is empty.
+/// The input type and the type of the parameter `with`
+/// must be a `Value::String`.
+fn replace_empty_filter<S: BuildHasher>(
+    value: &Value,
+    args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let input = try_get_value!("replace_empty", "value", String, value);
+
+    let mut res = input;
+
+    if let Some(with) = args.get("with") {
+        let with = try_get_value!("replace_empty", "with", String, with);
+        if res.is_empty() {
+            res = with;
+        };
+    }
+    Ok(Value::String(res))
 }
 
 /// A Tera filter that prepends the string parameter `with`, but only if the
@@ -1594,6 +1616,23 @@ mod tests {
         let result = insert_filter(&input, &args);
         //eprintln!("{:?}", result);
         assert_eq!(result.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_replace_emtpy_filter() {
+        // Do not replace.
+        let mut args = HashMap::new();
+        args.insert("with".to_string(), to_value("new string").unwrap());
+        let result = replace_empty_filter(&to_value("non empty string").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("non empty string").unwrap());
+
+        // Replace.
+        let mut args = HashMap::new();
+        args.insert("with".to_string(), to_value("new string").unwrap());
+        let result = replace_empty_filter(&to_value("").unwrap(), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), to_value("new string").unwrap());
     }
 
     #[test]
