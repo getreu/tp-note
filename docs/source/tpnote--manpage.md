@@ -2609,9 +2609,9 @@ some additional filters, i.e.:
 '`html_to_markup(extension=..., default=...)`', '`insert(key=..., value=...)`',
 '`link_dest`', '`link_text`', '`link_title`', '`map_lang`', '`prepend`', 
 '`prepend(newline=true)`', '`prepend(with=...)`',
-'`prepend(with_sort_tag=...)`', '`remove(key=)`' '`sanit`',
-'`to_html`', '`to_yaml`', '`to_yaml(key=...)`', '`to_yaml(tab=...)`' and
-'`trim_file_sort_tag`'.
+'`prepend(with_sort_tag=...)`', '`remove(key=)`', '`replace_empty(with=...)`',
+'`sanit`', '`to_html`', '`to_yaml`', '`to_yaml(key=...)`', '`to_yaml(tab=...)`'
+and '`trim_file_sort_tag`'.
 
 A filter is always used together with a variable. Here are some examples:
 
@@ -2708,6 +2708,10 @@ A filter is always used together with a variable. Here are some examples:
   marks the end of the _sort_tag_. This might be necessary to avoid
   ambiguity in case the '`fm.fm_title`' starts with a character defined in the
   '`filename.sort_tag.extra_chars`' set.
+
+* '`{{ fm.title | replace_empty(with='no title')`' forwards the input unchanged. 
+  In case the input is the empty string, the '`with`' string is forwarded 
+  instead.
 
 * '`{{ fm | remove(key='fm_title') | remove(key='fm_author') | to_yaml }}`'
   renders the collection (map) '`fm`', exclusive of the
