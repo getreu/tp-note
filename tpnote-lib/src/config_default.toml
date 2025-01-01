@@ -242,7 +242,7 @@ filter.to_yaml_tab = 14
 from_dir_content = """
 {%- set title_text = dir_path | trim_file_sort_tag -%}
 ---
-{{ title_text | cut | to_yaml(key='fm_title') }}
+{{ title_text | trunc | to_yaml(key='fm_title') }}
 {{ 'Note' | to_yaml(key='fm_subtitle') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
@@ -286,8 +286,8 @@ from_clipboard_yaml_content = """
     | get_lang 
     | map_lang(default=lang) )  -%}
 ---
-{{ fm.fm_title | default(value = path|trim_file_sort_tag) | cut | to_yaml(key='fm_title') }}
-{{ fm.fm_subtitle | default(value = 'Note') | cut | to_yaml(key='fm_subtitle') }}
+{{ fm.fm_title | default(value = path|trim_file_sort_tag) | trunc | to_yaml(key='fm_title') }}
+{{ fm.fm_subtitle | default(value = 'Note') | trunc | to_yaml(key='fm_subtitle') }}
 {{ fm.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
 {{ fm.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
@@ -341,13 +341,13 @@ from_clipboard_content = """
   {%- set title_text = first_lines -%}
 {%- endif -%}
 
-{%- if first_link !='' and input | cut | linebreaksbr == input | cut -%}
+{%- if first_link !='' and input | trunc | linebreaksbr == input | trunc -%}
   {%- set subtitle_text = 'url' -%}
 {%- else -%}
   {%- set subtitle_text = 'Note' -%}
 {%- endif -%}
 ---
-{{ title_text | cut | to_yaml(key='fm_title') }}
+{{ title_text | trunc | to_yaml(key='fm_title') }}
 {{ subtitle_text | to_yaml(key='fm_subtitle') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
@@ -373,8 +373,8 @@ from_clipboard_filename = """
 ### `{{ dir_path }}` to the directory where it is located.
 from_text_file_content = """
 ---
-{{ path | file_stem | split(pat='--') | first | cut | to_yaml(key='fm_title') }}
-{{ path | file_stem | split(pat='--') | nth(n=1) | cut | to_yaml(key='fm_subtitle') }}
+{{ path | file_stem | split(pat='--') | first | trunc | to_yaml(key='fm_title') }}
+{{ path | file_stem | split(pat='--') | nth(n=1) | trunc | to_yaml(key='fm_subtitle') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ doc_file_date | default(value=now()) | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
 {{ doc_body_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
@@ -405,7 +405,7 @@ annotate_file_content = """
 {%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set body_text = stdin ~ clipboard | trim_end -%}
 {%- if body_text != '' -%}
-   {%- set lang_test_text = body_text | cut -%}
+   {%- set lang_test_text = body_text | trunc -%}
 {%- else -%}
    {%- set lang_test_text = path | file_stem  -%}
 {%- endif -%}
@@ -525,7 +525,7 @@ from_dir_content = """
 {%- set keywords = ['note'] -%}
 {%- set title_text = dir_path | trim_file_sort_tag -%}
 ---
-{{ title_text | cut | to_yaml(key='fm_title') }}
+{{ title_text | trunc | to_yaml(key='fm_title') }}
 {{ keywords | to_yaml(key='keywords') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
@@ -571,7 +571,7 @@ from_clipboard_yaml_content = """
     | get_lang 
     | map_lang(default=lang) )  -%}
 ---
-{{ fm.fm_title | default(value = path|trim_file_sort_tag) | cut | to_yaml(key='fm_title') }}
+{{ fm.fm_title | default(value = path|trim_file_sort_tag) | trunc | to_yaml(key='fm_title') }}
 {{ fm.fm_keywords | default(value = ['note']) | to_yaml(key='fm_keywords') }}
 {{ fm.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
 {{ fm.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
@@ -618,8 +618,8 @@ from_clipboard_content = """
 {%- set input = stdin ~ clipboard | trim_end -%}
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
-{%- set first_link = input | link_text_picky | cut -%}
-{%- set first_lines = input | heading | cut  -%}
+{%- set first_link = input | link_text_picky | trunc -%}
+{%- set first_lines = input | heading | trunc -%}
 
 {%- if first_link != '' -%} 
   {%- set title_text = first_link -%}
@@ -627,7 +627,7 @@ from_clipboard_content = """
   {%- set title_text = first_lines -%}
 {%- endif -%}
 
-{%- if first_link !='' and input | cut | linebreaksbr == input | cut -%}
+{%- if first_link !='' and input | trunc | linebreaksbr == input | trunc -%}
   {%- set keywords_text = ['url'] -%}
 {%- else -%}
   {%- set keywords_text = ['note'] -%}
@@ -679,7 +679,7 @@ from_text_file_content = """
 {%- set title = file | split(pat='__') | first -%}
 {%- set keywords = file | split(pat='__') | nth(n=1) -%}
 ---
-{{ title | cut | to_yaml(key='fm_title') }}
+{{ title | trunc | to_yaml(key='fm_title') }}
 {{ keywords | split(pat='_') | to_yaml(key='fm_keywords') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ doc_file_date | default(value=now()) | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
@@ -721,7 +721,7 @@ annotate_file_content = """
 {%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set body_text = stdin ~ clipboard | trim_end -%}
 {%- if body_text != '' -%}
-   {%- set lang_test_text = body_text | cut -%}
+   {%- set lang_test_text = body_text | trunc -%}
 {%- else -%}
    {%- set lang_test_text = path | file_stem -%}
 {%- endif -%}

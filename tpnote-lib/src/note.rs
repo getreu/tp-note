@@ -891,7 +891,7 @@ Body text
         use crate::content::Content;
         use crate::content::ContentString;
         use crate::context::Context;
-        use crate::filter::CUT_LEN_MAX;
+        use crate::filter::TRUNC_LEN_MAX;
         use crate::note::Note;
         use crate::settings::Settings;
         use crate::settings::SETTINGS;
@@ -965,7 +965,7 @@ Body text
                 .as_str(),
             // Remember: in debug titles are very short. The code only works,
             // because the string is pure ASCII (not UTF-8).
-            Some(&"this overwrites"[..CUT_LEN_MAX - 1])
+            Some(&"this overwrites"[..TRUNC_LEN_MAX - 1])
         );
         n.render_filename(TemplateKind::FromClipboardYaml).unwrap();
         n.set_next_unused_rendered_filename().unwrap();
@@ -977,7 +977,7 @@ Body text
             .as_os_str()
             .to_str()
             .unwrap()
-            .contains(&"my dir--this overwrites"[..CUT_LEN_MAX - 1]));
+            .contains(&"my dir--this overwrites"[..TRUNC_LEN_MAX - 1]));
         assert!(n.rendered_filename.is_file());
         let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
         #[cfg(not(target_family = "windows"))]

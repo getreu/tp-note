@@ -25,15 +25,15 @@ use std::sync::LazyLock;
 use tera::Map;
 use tera::{try_get_value, Result as TeraResult, Tera, Value};
 
-/// Filter parameter of the `cut_filter()` limiting the maximum length of
+/// Filter parameter of the `trunc_filter()` limiting the maximum length of
 /// template variables. The filter is usually used to in the note's front matter
 /// as title. For example: the title should not be too long, because it will end
 /// up as part of the filename when the note is saved to disk. Filenames of some
 /// operating systems are limited to 255 bytes.
 #[cfg(not(test))]
-const CUT_LEN_MAX: usize = 200;
+const TRUNC_LEN_MAX: usize = 200;
 #[cfg(test)]
-pub const CUT_LEN_MAX: usize = 10;
+pub const TRUNC_LEN_MAX: usize = 10;
 
 /// Lowercase pattern to detect HTML in stdin.
 const HTML_PAT1: &str = "<!doctype html";
@@ -45,7 +45,6 @@ const HTML_PAT2: &str = "<html";
 pub static TERA: LazyLock<Tera> = LazyLock::new(|| {
     let mut tera = Tera::default();
     tera.register_filter("append", append_filter);
-    tera.register_filter("cut", cut_filter);
     tera.register_filter("file_copy_counter", file_copy_counter_filter);
     tera.register_filter("file_ext", file_ext_filter);
     tera.register_filter("file_name", file_name_filter);
@@ -79,6 +78,7 @@ pub static TERA: LazyLock<Tera> = LazyLock::new(|| {
     tera.register_filter("to_html", to_html_filter);
     tera.register_filter("to_yaml", to_yaml_filter);
     tera.register_filter("trim_file_sort_tag", trim_file_sort_tag_filter);
+    tera.register_filter("trunc", trunc_filter);
     tera
 });
 
@@ -478,17 +478,17 @@ fn html_heading_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that truncates the input stream and returns the
-/// max `CUT_LEN_MAX` bytes of valid UTF-8.
+/// max `TRUNC_LEN_MAX` bytes of valid UTF-8.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn cut_filter<S: BuildHasher>(
+fn trunc_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("cut", "value", String, value);
+    let input = try_get_value!("trunc", "value", String, value);
 
     let mut short = "";
-    for i in (0..CUT_LEN_MAX).rev() {
+    for i in (0..TRUNC_LEN_MAX).rev() {
         if let Some(s) = input.get(..i) {
             short = s;
             break;
@@ -1780,11 +1780,11 @@ Some more text."#;
     }
 
     #[test]
-    fn test_cut_filter() {
+    fn test_trunc_filter() {
         let args = HashMap::new();
         // Test Markdown link in clipboard.
         let input = "Jens Getreu's blog";
-        let output = cut_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = trunc_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("Jens Getr", output);
     }
 
