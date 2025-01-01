@@ -68,6 +68,7 @@ pub static TERA: LazyLock<Tera> = LazyLock::new(|| {
     tera.register_filter("link_text", link_text_filter);
     tera.register_filter("link_text_picky", link_text_picky_filter);
     tera.register_filter("link_title", link_title_filter);
+    tera.register_filter("html_heading", html_heading_filter);
     tera.register_filter("map_lang", map_lang_filter);
     tera.register_filter("markup_to_html", markup_to_html_filter);
     tera.register_filter("name", name_filter);
@@ -394,6 +395,7 @@ fn sanit_filter<S: BuildHasher>(
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's name (link text).
+/// If not found, it returns the empty string.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
 fn link_text_filter<S: BuildHasher>(
@@ -409,6 +411,7 @@ fn link_text_filter<S: BuildHasher>(
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's URL.
+/// If not found, it returns the empty string.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
 fn link_dest_filter<S: BuildHasher>(
@@ -427,6 +430,7 @@ fn link_dest_filter<S: BuildHasher>(
 /// Unlike the filter `link_dest`, it does not necessary return the first
 /// finding. For example, it skips autolinks, local links and links
 /// with some URL in the link text.
+/// If not found, it returns the empty string.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
 fn link_text_picky_filter<S: BuildHasher>(
@@ -442,6 +446,7 @@ fn link_text_picky_filter<S: BuildHasher>(
 
 /// A Tera filter that searches for the first Markdown or reStructuredText link
 /// in the input stream and returns the link's title.
+/// If not found, it returns the empty string.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
 fn link_title_filter<S: BuildHasher>(
@@ -453,6 +458,22 @@ fn link_title_filter<S: BuildHasher>(
     let hyperlink = FirstHyperlink::from(&p).unwrap_or_default();
 
     Ok(Value::String(hyperlink.title.to_string()))
+}
+
+/// A Tera filter that searches for the first HTML heading
+/// in the HTML input stream and returns the heading text.
+/// If not found, it returns the empty string.
+/// The input type must be `Value::String` and the output type is
+/// `Value::String()`
+fn html_heading_filter<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let p = try_get_value!("html_heading", "value", String, value);
+
+    let html_heading = FirstHtmlHeading::from(&p).unwrap_or_default();
+
+    Ok(Value::String(html_heading.0.to_string()))
 }
 
 /// A Tera filter that truncates the input stream and returns the
@@ -992,6 +1013,126 @@ fn map_lang_filter<S: BuildHasher>(
     };
 
     Ok(Value::String(res.to_owned()))
+}
+
+#[derive(Debug, Eq, PartialEq, Default)]
+/// Represents the first heading in an HTML document.
+struct FirstHtmlHeading<'a>(Cow<'a, str>);
+
+impl<'a> FirstHtmlHeading<'a> {
+    /// Parse the HTML input `i` and return the first HTML heading found.
+    fn from(html: &'a str) -> Option<Self> {
+        /// A pattern to search for HTML heading tags.
+        const HTML_HEADING_OPENING_TAG: &[&str; 6] = &["<h1", "<h2", "<h3", "<h4", "<h5", "<h6"];
+
+        /// A pattern to search for HTML heading tags.
+        const HTML_HEADING_CLOSING_TAG: &[&str; 6] =
+            &["</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>"];
+
+        let mut i = 0;
+        let mut heading_start = None;
+        let mut heading_end = None;
+
+        // Find opening tag.
+        while let Some(mut tag_start) = html[i..].find('<') {
+            if let Some(mut tag_end) = html[i + tag_start..].find('>') {
+                tag_end += 1;
+                // Move on if there is another opening bracket.
+                if let Some(new_start) = html[i + tag_start + 1..i + tag_start + tag_end].rfind('<')
+                {
+                    tag_start += new_start + 1;
+                    tag_end -= new_start + 1;
+                }
+
+                // Is this a tag listed in `HTML_HEADING_OPENING_TAGS`?
+                heading_start = HTML_HEADING_OPENING_TAG
+                    .iter()
+                    .any(|&pat| html[i + tag_start..i + tag_start + tag_end].starts_with(pat))
+                    // Store the index after the opening tag.
+                    .then_some(i + tag_start + tag_end);
+
+                if heading_start.is_some() {
+                    break;
+                } else {
+                    i += tag_start + tag_end;
+                }
+            } else {
+                break;
+            }
+        }
+
+        // Search for the closing tag.
+
+        // Find closing tag.
+        if let Some(mut i) = heading_start {
+            while let Some(mut tag_start) = html[i..].find('<') {
+                if let Some(mut tag_end) = html[i + tag_start..].find('>') {
+                    tag_end += 1;
+                    // Move on if there is another opening bracket.
+                    if let Some(new_start) =
+                        html[i + tag_start + 1..i + tag_start + tag_end].rfind('<')
+                    {
+                        tag_start += new_start + 1;
+                        tag_end -= new_start + 1;
+                    }
+
+                    // Is this a tag listed in `HTML_HEADING_OPENING_TAGS`?
+                    heading_end = HTML_HEADING_CLOSING_TAG
+                        .iter()
+                        .any(|&pat| html[i + tag_start..i + tag_start + tag_end].starts_with(pat))
+                        // Store the index before the closing tag.
+                        .then_some(i + tag_start);
+
+                    if heading_end.is_some() {
+                        break;
+                    } else {
+                        i += tag_start + tag_end;
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+
+        // Get Heading slice.
+        let mut heading = "";
+        if let (Some(heading_start), Some(heading_end)) = (heading_start, heading_end) {
+            heading = &html[heading_start..heading_end];
+        }
+        if heading.is_empty() {
+            return None;
+        }
+
+        // Remove HTNL tags inside heading.
+        let mut cleaned_heading = String::new();
+        let mut inside_tag = false;
+        for c in heading.chars() {
+            if c == '<' {
+                inside_tag = true;
+            } else if c == '>' {
+                inside_tag = false;
+            } else if !inside_tag {
+                cleaned_heading.push(c);
+            }
+        }
+        if cleaned_heading.is_empty() {
+            return None;
+        }
+
+        // Decode HTML entyties.
+        let output: Cow<str> = if cleaned_heading == heading {
+            html_escape::decode_html_entities(heading)
+        } else {
+            Cow::Owned(html_escape::decode_html_entities(&cleaned_heading).into_owned())
+        };
+
+        // Pack the output into newtype.
+        if output.is_empty() {
+            None
+        } else {
+            Some(FirstHtmlHeading(output))
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Default)]
@@ -1609,6 +1750,58 @@ Some more text."#;
     }
 
     #[test]
+    fn test_first_html_heading() {
+        // Test case: No heading in the HTML
+        let html = "<p>No heading here</p>";
+        assert_eq!(FirstHtmlHeading::from(html), None);
+
+        // Test case: H1 heading
+        let html = "<h1>Heading 1</h1>";
+        assert_eq!(
+            FirstHtmlHeading::from(html),
+            Some(FirstHtmlHeading(Cow::Borrowed("Heading 1")))
+        );
+
+        // Test case: Nested tags within a heading
+        let html = "<h2>Heading <span>with</span> nested tags</h2>";
+        assert_eq!(
+            FirstHtmlHeading::from(html),
+            Some(FirstHtmlHeading(Cow::Borrowed("Heading with nested tags")))
+        );
+
+        // Test case: HTML entities within a heading
+        let html = "<h3>Heading with &lt;html entities&gt;</h3>";
+        assert_eq!(
+            FirstHtmlHeading::from(html),
+            Some(FirstHtmlHeading(Cow::Borrowed(
+                "Heading with <html entities>"
+            )))
+        );
+
+        // Test case: Multiple headings in the HTML
+        let html = "<h4>First Heading</h4><h5>Second Heading</h5>";
+        assert_eq!(
+            FirstHtmlHeading::from(html),
+            Some(FirstHtmlHeading(Cow::Borrowed("First Heading")))
+        );
+
+        // Test case: Heading without a closing tag
+        let html = "<h1>Heading without closing tag";
+        assert_eq!(FirstHtmlHeading::from(html), None);
+
+        // Test case: Empty heading
+        let html = "<h6></h6>";
+        assert_eq!(FirstHtmlHeading::from(html), None);
+
+        // Test case: Heading with attributes
+        let html = "<h1 class=\"title\">Heading with attributes</h1>";
+        assert_eq!(
+            FirstHtmlHeading::from(html),
+            Some(FirstHtmlHeading(Cow::Borrowed("Heading with attributes")))
+        );
+    }
+
+    #[test]
     fn test_heading_filter() {
         let args = HashMap::new();
 
@@ -1651,6 +1844,75 @@ Some more text."#;
         let output = heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         // This string is shortened.
         assert_eq!("It helps", output);
+    }
+
+    #[test]
+    fn test_html_heading_filter() {
+        let args = HashMap::new();
+
+        //
+        // Test find first heading.
+        let input = "Some text.<h1>Heading 1</h1>Get quickly\
+            started writing notes.";
+        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        // This string is shortened.
+        assert_eq!("Heading 1", output);
+
+        //
+        let input = "Some text.<h1 style=\"font-size:60px;\">\
+            Heading 1</h1>Get quickly\
+            started writing notes.";
+        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        // This string is shortened.
+        assert_eq!("Heading 1", output);
+
+        //
+        let input = "Some text.<h2>Heading &amp;1</h2>Get quickly\
+            started writing notes.";
+        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        // This string is shortened.
+        assert_eq!("Heading &1", output);
+
+        //
+        let input = "Some text.<p>No Heading 1</p>Get quickly\
+            started writing notes.";
+        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        // This string is shortened.
+        assert_eq!("", output);
+
+        //
+        let input = "Some text.<h1>No Heading 1</p>Get quickly\
+            started writing notes.";
+        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        // This string is shortened.
+        assert_eq!("", output);
+
+        //
+        let input = "Some text.<p>No Heading 1</h1>Get quickly\
+            started writing notes.";
+        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        // This string is shortened.
+        assert_eq!("", output);
+
+        //
+        let input = "Some text.<p>No <h1>Heading 1</h1>Get quickly\
+            started writing notes.";
+        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        // This string is shortened.
+        assert_eq!("Heading 1", output);
+
+        //
+        let input = "Some text.<p>No <h1>Heading<br> 1</h1>Get quickly\
+            started writing notes.";
+        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        // This string is shortened.
+        assert_eq!("Heading 1", output);
+
+        //
+        let input = "<p>No <h1>Heading 1</h1> <h1>Heading 2</h1> text";
+        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        // This string is shortened.
+        assert_eq!("Heading 1", output);
     }
 
     #[test]
