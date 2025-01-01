@@ -849,7 +849,7 @@ Body text
                 .get("fm_title")
                 .unwrap()
                 .as_str(),
-            Some("std\ntxt_c")
+            Some("std")
         );
 
         assert_eq!(
@@ -866,17 +866,18 @@ Body text
         n.save().unwrap();
 
         // Check the new note file.
-        println!("{:?}", n.rendered_filename);
+        // println!("{:?}", n.rendered_filename);
         assert!(n
             .rendered_filename
             .as_os_str()
             .to_str()
             .unwrap()
-            .contains("std-txt_c--Note"));
+            .contains("std--Note"));
         assert!(n.rendered_filename.is_file());
         let raw_note = fs::read_to_string(&n.rendered_filename).unwrap();
+        println!("{}", raw_note);
         #[cfg(not(target_family = "windows"))]
-        assert!(raw_note.starts_with("\u{feff}---\ntitle:        |-\n  std\n  txt"));
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:        std"));
         #[cfg(target_family = "windows")]
         assert!(raw_note.starts_with("\u{feff}---\r\ntitle:"));
     }

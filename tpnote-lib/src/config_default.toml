@@ -322,25 +322,23 @@ from_clipboard_yaml_filename = """
 
 ### Default template used, when the clipboard or the input stream `stdin`
 ### contains a string and this string has no valid YAML front matter section.
-### The clipboards content is in `{{ clipboard }}`, its truncated version in
-### `{{ clipboard | heading }}` When the clipboard contains a hyperlink in
-### Markdown or reStruncturedText format. See crate `parse-hyperlinks` for
-### details. For example: `[<link-name>](<link-url> "link-title")`, can be
-### accessed with the variables: `{{ clipboard | link_text }}`, `
-### {{ clipboard | link_dest }}` and `{{ clipboard | linkttitle }}`.
 from_clipboard_content = """
+{%- set title_text = stdin | html_heading 
+         | replace_empty(with = stdin | link_text_picky )
+         | replace_empty(with = stdin | link_text )
+         | replace_empty(with = stdin | heading )
+         | replace_empty(with = html_clipboard | html_heading )
+         | replace_empty(with = html_clipboard | link_text_picky )
+         | replace_empty(with = txt_clipboard | link_text_picky )
+         | replace_empty(with = html_clipboard | link_text )
+         | replace_empty(with = txt_clipboard | link_text )
+         | replace_empty(with = txt_clipboard | heading )
+         | trim
+ -%}
 {%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
 {%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim_end -%}
-{%- set first_link = input | link_text_picky -%}
-{%- set first_lines = input | heading -%}
-
-{%- if first_link != '' -%} 
-  {%- set title_text = first_link -%}
-{%- else -%}
-  {%- set title_text = first_lines -%}
-{%- endif -%}
-
+{%- set first_link = input | link_text_picky | trunc -%}
 {%- if first_link !='' and input | trunc | linebreaksbr == input | trunc -%}
   {%- set subtitle_text = 'url' -%}
 {%- else -%}
@@ -613,27 +611,31 @@ from_clipboard_yaml_filename = """
 {{ fm.fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
 
 from_clipboard_content = """
+{%- set title_text = stdin | html_heading 
+         | replace_empty(with = stdin | link_text_picky )
+         | replace_empty(with = stdin | link_text )
+         | replace_empty(with = stdin | heading )
+         | replace_empty(with = html_clipboard | html_heading )
+         | replace_empty(with = html_clipboard | link_text_picky )
+         | replace_empty(with = txt_clipboard | link_text_picky )
+         | replace_empty(with = html_clipboard | link_text )
+         | replace_empty(with = txt_clipboard | link_text )
+         | replace_empty(with = txt_clipboard | heading )
+         | trim
+ -%}
 {%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
 {%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim_end -%}
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
 {%- set first_link = input | link_text_picky | trunc -%}
-{%- set first_lines = input | heading | trunc -%}
-
-{%- if first_link != '' -%} 
-  {%- set title_text = first_link -%}
-{%- else -%}
-  {%- set title_text = first_lines -%}
-{%- endif -%}
-
 {%- if first_link !='' and input | trunc | linebreaksbr == input | trunc -%}
   {%- set keywords_text = ['url'] -%}
 {%- else -%}
   {%- set keywords_text = ['note'] -%}
 {%- endif -%}
 ---
-{{ title_text | to_yaml(key='fm_title') }}
+{{ title_text | trunc | to_yaml(key='fm_title') }}
 {{ keywords_text | to_yaml(key='fm_keywords') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}

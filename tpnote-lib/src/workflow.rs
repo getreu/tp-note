@@ -419,16 +419,16 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
     ///
     /// // Check result.
     /// assert!(n.as_os_str().to_str().unwrap()
-    ///    .contains("my stdin-my TXT clipboard--Note"));
+    ///    .contains("my stdin--Note"));
     /// assert!(n.is_file());
     /// let raw_note = fs::read_to_string(n).unwrap();
     ///
     /// #[cfg(not(target_family = "windows"))]
     /// assert!(raw_note.starts_with(
-    ///            "\u{feff}---\ntitle:        |-\n  my stdin\n  my TXT clipboard"));
+    ///            "\u{feff}---\ntitle:        my stdin"));
     /// #[cfg(target_family = "windows")]
     /// assert!(raw_note.starts_with(
-    ///            "\u{feff}---\r\ntitle:        |"));
+    ///            "\u{feff}---\r\ntitle:"));
     /// ```
     pub fn run(self) -> Result<PathBuf, NoteError> {
         // Prevent the rest to run in parallel, other threads will block when they
