@@ -15,14 +15,6 @@ use wl_clipboard_rs::copy;
 #[cfg(unix)]
 use wl_clipboard_rs::paste;
 
-/// Lowercase test pattern to check if there is a document type declaration
-/// already.
-#[cfg(feature = "read-clipboard")]
-const HTML_PAT1: &str = "<!doctype ";
-/// Prepend a marker declaration, in case the content is HTML.
-#[cfg(feature = "read-clipboard")]
-const HTML_PAT2: &str = "<!DOCTYPE html>";
-
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct SystemClipboard {
     pub html: ContentString,
@@ -35,7 +27,7 @@ impl SystemClipboard {
     /// prepended.
     #[cfg(feature = "read-clipboard")]
     pub(crate) fn new() -> Self {
-        use tpnote_lib::content::Content;
+        use tpnote_lib::{content::Content, html::HtmlStream};
 
         let mut txt_content = String::new();
         let mut html_content = String::new();
@@ -51,15 +43,13 @@ impl SystemClipboard {
             ) {
                 match pipe_reader.read_to_string(&mut html_content) {
                     Ok(l) if l > 0 => {
-                        if !html_content.trim_start().is_empty()
-                            && !html_content
-                                .lines()
-                                .next()
-                                .map(|l| l.trim_start().to_ascii_lowercase())
-                                .is_some_and(|l| l.starts_with(HTML_PAT1))
-                        {
-                            html_content.insert_str(0, HTML_PAT2);
-                        }
+                        html_content = HtmlStream::prepend_start_tag(html_content)
+                            .map_err(|e| {
+                                log::warn!("HTML Wayland clipboard: {}", e);
+                                e
+                            })
+                            // Ignore error and continue with empty string.
+                            .unwrap_or_default();
                     }
                     _ => {}
                 }
@@ -77,17 +67,14 @@ impl SystemClipboard {
         if html_content.is_empty() && txt_content.is_empty() {
             // Query X11 clipboard.
             if let Ok(ctx) = ClipboardContext::new() {
-                if let Ok(mut html) = ctx.get_html() {
-                    if !html.trim_start().is_empty()
-                        && !html
-                            .lines()
-                            .next()
-                            .map(|l| l.trim_start().to_ascii_lowercase())
-                            .is_some_and(|l| l.starts_with(HTML_PAT1))
-                    {
-                        html.insert_str(0, HTML_PAT2);
-                    }
-                    html_content = html;
+                if let Ok(html) = ctx.get_html() {
+                    html_content = HtmlStream::prepend_start_tag(html)
+                        .map_err(|e| {
+                            log::warn!("HTML X11 clipboard: {}", e);
+                            e
+                        })
+                        // Ignore error and continue with empty string.
+                        .unwrap_or_default();
                 };
                 if let Ok(txt) = ctx.get_text() {
                     txt_content = txt;

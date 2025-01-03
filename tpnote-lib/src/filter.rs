@@ -6,6 +6,7 @@ use crate::config::TMPL_VAR_FM_;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 use crate::filename::NotePathStr;
+use crate::html::HtmlStream;
 use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
 #[cfg(feature = "lang-detection")]
@@ -34,12 +35,6 @@ use tera::{try_get_value, Result as TeraResult, Tera, Value};
 const TRUNC_LEN_MAX: usize = 200;
 #[cfg(test)]
 pub const TRUNC_LEN_MAX: usize = 10;
-
-/// Lowercase pattern to detect HTML in stdin.
-const HTML_PAT1: &str = "<!doctype html";
-
-/// Lowercase pattern to detect HTML in stdin.
-const HTML_PAT2: &str = "<html";
 
 /// Tera object with custom functions registered.
 pub static TERA: LazyLock<Tera> = LazyLock::new(|| {
@@ -304,7 +299,7 @@ fn html_to_markup_filter<S: BuildHasher>(
         .lines()
         .next()
         .map(|l| l.trim_start().to_ascii_lowercase());
-    if firstline.is_some_and(|l| l.starts_with(HTML_PAT1) || l.starts_with(HTML_PAT2)) {
+    if firstline.is_some_and(|l| HtmlStream::has_start_tag(&l)) {
         let extension = if let Some(ext) = args.get("extension") {
             try_get_value!("markup_to_html", "extension", String, ext)
         } else {

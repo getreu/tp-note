@@ -1,5 +1,6 @@
 //! Helper functions dealing with HTML conversion.
 use crate::clone_ext::CloneExt;
+use crate::error::InputStreamError;
 use crate::filename::{NotePath, NotePathStr};
 use crate::{config::LocalLinkKind, error::NoteError};
 use html_escape;
@@ -763,6 +764,60 @@ pub fn rewrite_links(
 
     html_out
     // The `RwLockWriteGuard` is released here.
+}
+
+pub struct HtmlStream;
+
+impl HtmlStream {
+    /// Pattern 1 to check if this is HTML.
+    const START_TAG_PAT1: &'static str = "<html";
+    /// Pattern 1 to check if this is HTML.
+    const START_TAG_PAT2: &'static str = "<!doctype html";
+    /// Lowercase test pattern to check if there is a document type declaration
+    /// already.
+    const START_TAG_PAT3: &'static str = "<!doctype ";
+    /// Tag to insert if there is no start tag.
+    const START_TAG: &'static str = "<!DOCTYPE html>";
+    /// Return `true` when the input stream starts with  `<!DOCTYPE html`
+    /// or `<html` (or lowercase variants).
+    pub fn has_start_tag(html: &str) -> bool {
+        let html2 = html
+            .trim_start()
+            .lines()
+            .next()
+            .map(|l| l.to_ascii_lowercase());
+        html2.as_ref().is_some_and(|l| {
+            l.starts_with(Self::START_TAG_PAT1) || l.starts_with(Self::START_TAG_PAT2)
+        })
+    }
+
+    /// If the input does not start with `<!DOCTYPE html` or `<html`
+    /// (or lowercase variants), then insert `<!DOCTYPE html>`.
+    /// Returns `InputStreamError::NonHtmlDoctype` if there is another Doctype
+    /// already.
+    pub fn prepend_start_tag(html: String) -> Result<String, InputStreamError> {
+        let html2 = html
+            .trim_start()
+            .lines()
+            .next()
+            .map(|l| l.to_ascii_lowercase());
+
+        if html2.as_ref().is_some_and(|l| {
+            l.starts_with(Self::START_TAG_PAT1) || l.starts_with(Self::START_TAG_PAT2)
+        }) {
+            // There is an HTML tag already. Nothing to do.
+            return Ok(html);
+        }
+
+        if html2.is_some_and(|l| l.starts_with(Self::START_TAG_PAT3)) {
+            // There is a Doctype other then HTML.
+            return Err(InputStreamError::NonHtmlDoctype);
+        }
+
+        let mut html = html;
+        html.insert_str(0, Self::START_TAG);
+        Ok(html)
+    }
 }
 
 #[cfg(test)]
