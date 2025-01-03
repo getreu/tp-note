@@ -10,6 +10,8 @@ use std::io::Write;
 use std::path::Path;
 use substring::Substring;
 
+use crate::html::HtmlStream;
+
 /// As all text before the header marker `"---"` is ignored, this
 /// constant limits the maximum number of characters that are skipped
 /// before the header starts. In other words: the header
@@ -230,6 +232,14 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
         if content.is_empty() {
             return ("", "");
         };
+
+        // If this is HTML content, leave the header empty.
+        // TODO: In the future the header might be constructed from
+        // the "meta" HTML fields. Though I am not sure if something meaningful
+        // can be found in HTML clipboard meta data.
+        if HtmlStream::has_start_tag(content) {
+            return ("", content);
+        }
 
         const HEADER_START_TAG: &str = "---";
         let fm_start = if content.starts_with(HEADER_START_TAG) {
