@@ -766,12 +766,13 @@ pub fn rewrite_links(
     // The `RwLockWriteGuard` is released here.
 }
 
+/// This trait deals with tagged HTML data.
 pub struct HtmlStream;
 
 impl HtmlStream {
     /// Pattern 1 to check if this is HTML.
     const START_TAG_PAT1: &'static str = "<html";
-    /// Pattern 1 to check if this is HTML.
+    /// Pattern 2 to check if this is HTML.
     const START_TAG_PAT2: &'static str = "<!doctype html";
     /// Lowercase test pattern to check if there is a document type declaration
     /// already.
@@ -836,7 +837,46 @@ mod tests {
         sync::Arc,
     };
 
-    use super::Hyperlink;
+    use super::*;
+
+    #[test]
+    fn test_has_start_tag() {
+        // Test cases where the start tag is present.
+        assert!(HtmlStream::has_start_tag("<html>"));
+        assert!(HtmlStream::has_start_tag("<!DOCTYPE html>"));
+        assert!(HtmlStream::has_start_tag("   <html>"));
+        assert!(HtmlStream::has_start_tag("   <!DOCTYPE html>"));
+
+        // Test cases where the start tag is not present.
+        assert!(!HtmlStream::has_start_tag("<!DOCTYPE other>"));
+        assert!(!HtmlStream::has_start_tag("<body>"));
+        assert!(!HtmlStream::has_start_tag("   <body>"));
+    }
+
+    #[test]
+    fn test_prepend_start_tag() {
+        // Test case where the start tag is already present.
+        assert_eq!(
+            HtmlStream::prepend_start_tag("<html>".to_string()).unwrap(),
+            "<html>".to_string()
+        );
+        assert_eq!(
+            HtmlStream::prepend_start_tag("<!DOCTYPE html>".to_string()).unwrap(),
+            "<!DOCTYPE html>".to_string()
+        );
+
+        // Test case where the start tag needs to be inserted.
+        assert_eq!(
+            HtmlStream::prepend_start_tag("<body>".to_string()).unwrap(),
+            "<!DOCTYPE html><body>".to_string()
+        );
+
+        // Test case where there is another doctype.
+        assert_eq!(
+            HtmlStream::prepend_start_tag("<!DOCTYPE other>".to_string()).unwrap_err(),
+            InputStreamError::NonHtmlDoctype
+        );
+    }
 
     #[test]
     fn test_assemble_link() {

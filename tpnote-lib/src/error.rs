@@ -9,7 +9,7 @@ use thiserror::Error;
 pub const FRONT_MATTER_ERROR_MAX_LINES: usize = 20;
 
 /// Error related the clipboard or Stdin input stream.
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq)]
 pub enum InputStreamError {
     /// Remedy: Prepend HTML input data with `<!DOCTYPE html>` or `<html>`.
     /// with a doctype other than `<!DOCTYPE html>`.
