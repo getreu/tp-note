@@ -77,12 +77,16 @@ pub const TMPL_VAR_DIR_PATH: &str = "dir_path";
 /// as base directory
 pub const TMPL_VAR_ROOT_PATH: &str = "root_path";
 
-/// Contains the meta header (if any) of the HTML clipboard content.
+/// Contains the YAML header (if any) of the HTML clipboard content.
 /// Otherwise the empty string.
+/// Note: as current HTML clipboard provider never send YAML headers (yet),
+/// expect this to be empty.
 pub const TMPL_VAR_HTML_CLIPBOARD_HEADER: &str = "html_clipboard_header";
 
 /// If there is a meta header in the HTML clipboard, this contains
 /// the body only. Otherwise, it contains the whole clipboard content.
+/// Note: as current HTML clipboard provider never send YAML headers (yet),
+/// expect this to be the whole HTML clipboard.
 pub const TMPL_VAR_HTML_CLIPBOARD: &str = "html_clipboard";
 
 /// Contains the YAML header (if any) of the plain text clipboard content.
