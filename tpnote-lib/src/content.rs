@@ -18,8 +18,22 @@ use crate::html::HtmlStream;
 /// must start within the first `BEFORE_HEADER_MAX_IGNORED_CHARS`.
 const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 
-/// Provides cheap access to the header with `header()`, the body
+/// This trait represents Tp-Note content.
+/// The content is devided into header and body.
+/// The header is the YAML meta data describing the body.
+/// In some cases the header might be empty, e.g. when the data comes from
+/// the clipboard (the `txt_clipboard` data might come with a header).
+/// The body is flat UTF-8 markup formatted text, e.g. in
+/// Markdown or in ReStructuredText.
+/// A special case is HTML data in the body, originating from the HTML
+/// clipboard. Here, the body always starts with an HTML start tag
+/// (for details see the `html::HtmlStream` trait) and the header is always
+/// empty.
+///
+/// The trait provides cheap access to the header with `header()`, the body
 /// with `body()`, and the whole raw text with `as_str()`.
+/// Implementers should cache the `header()` and `body()` function results in
+/// oder to keep these as cheap as possible.
 ///
 /// ```rust
 /// use tpnote_lib::content::Content;
