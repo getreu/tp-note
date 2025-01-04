@@ -207,9 +207,60 @@ Note, that not only the note\[cq]s content is created with a template,
 but also its filename: The `\f[CR]tmpl.from_clipboard_filename\f[R]'
 filename template concatenates the current date, the note\[cq]s title
 and subtitle.
+.SS The clipboard contains a heading
+Use case: open a web page in your web browser and select some text with
+it\[cq]s heading.
+Then copy the content into your (HTML) clipboard:
+.IP
+.EX
+<h1>Cinderella</h1>
+by the Brothers Grimm
+.EE
+.PP
+Launch Tp\-Note:
+.IP
+.EX
+mkdir \[aq]Fary tales\[aq]
+tpnote \[aq]./Fary tales\[aq]
+.EE
+.PP
+Tp\-Note\[cq]s templates `\f[CR]tmpl.from_clipboard_content\f[R]' and
+`\f[CR]tmpl.from_clipboard_filename\f[R]' create the following document:
+.IP
+.EX
+\&./Fary tales/20250104\-Cinderella\-\-Notes.md
+.EE
+.IP
+.EX
+\-\-\-
+title:        Cinderella
+subtitle:     Note
+author:       Getreu
+date:         2025\-01\-04
+lang:         de\-DE
+\-\-\-
+
+# Cinderella
+
+by the Brothers Grimm
+.EE
+.PP
+Tp\-Note searches for the first heading tag `\f[CR]<h1>\f[R]',
+`\f[CR]<h2>\f[R]', `\f[CR]<h3>\f[R]' etc.
+in the HTML clipboard and uses the finding as title for the new Tp\-Note
+document.
+.PP
+NB: you can achieve the same result by piping the clipboard content into
+Tp\-Note:
+.IP
+.EX
+mkdir \[aq]Fary tales\[aq]
+echo \[aq]<!DOCTYPE html><h1>Cinderella</h1>by the Brothers Grimm\[aq]\[rs]
+   | tpnote \[aq]./Fary tales\[aq]
+.EE
 .SS The clipboard contains a hyperlink
 Use case: `\f[CR]<path>\f[R]' is a directory, the clipboard is not empty
-and it contains the string:
+and contains the string:
 `\f[CR]I recommend:\[rs]n[The Rust Book](https://doc.rust\-lang.org/book/)\f[R]'.
 .IP
 .EX
@@ -3110,17 +3161,19 @@ built\-in filters
 .UE \c
 , Tp\-Note comes with some additional filters, i.e.:
 `\f[CR]append(newline=true)\f[R]', `\f[CR]append(with=...)\f[R]',
-`\f[CR]cut\f[R]', `\f[CR]file_copy_counter\f[R]', `\f[CR]file_ext\f[R]',
-`\f[CR]file_name\f[R]', `\f[CR]file_sort_tag\f[R]',
-`\f[CR]file_stem\f[R]', `\f[CR]get_lang\f[R]', `\f[CR]heading\f[R]',
+`\f[CR]trunc\f[R]', `\f[CR]file_copy_counter\f[R]',
+`\f[CR]file_ext\f[R]', `\f[CR]file_name\f[R]',
+`\f[CR]file_sort_tag\f[R]', `\f[CR]file_stem\f[R]',
+`\f[CR]get_lang\f[R]', `\f[CR]heading\f[R]', `\f[CR]html_heading\f[R]',
 `\f[CR]html_to_markup(extension=..., default=...)\f[R]',
 `\f[CR]insert(key=..., value=...)\f[R]', `\f[CR]link_dest\f[R]',
 `\f[CR]link_text\f[R]', `\f[CR]link_title\f[R]', `\f[CR]map_lang\f[R]',
 `\f[CR]prepend\f[R]', `\f[CR]prepend(newline=true)\f[R]',
 `\f[CR]prepend(with=...)\f[R]', `\f[CR]prepend(with_sort_tag=...)\f[R]',
-`\f[CR]remove(key=)\f[R]' `\f[CR]sanit\f[R]', `\f[CR]to_html\f[R]',
-`\f[CR]to_yaml\f[R]', `\f[CR]to_yaml(key=...)\f[R]',
-`\f[CR]to_yaml(tab=...)\f[R]' and `\f[CR]trim_file_sort_tag\f[R]'.
+`\f[CR]remove(key=)\f[R]', `\f[CR]replace_empty(with=...)\f[R]',
+`\f[CR]sanit\f[R]', `\f[CR]to_html\f[R]', `\f[CR]to_yaml\f[R]',
+`\f[CR]to_yaml(key=...)\f[R]', `\f[CR]to_yaml(tab=...)\f[R]' and
+`\f[CR]trim_file_sort_tag\f[R]'.
 .PP
 A filter is always used together with a variable.
 Here are some examples:
@@ -3196,11 +3249,15 @@ language specified by `\f[CR]e\f[R]'.
 If the conversion fails or results in an empty string, stream the text
 `\f[CR]d\f[R]' instead.
 .IP \[bu] 2
-`\f[CR]{{ txt_clipboard | cut }}\f[R]' is the first 200 bytes from the
+`\f[CR]{{ txt_clipboard | trunc }}\f[R]' is the first 200 bytes from the
 clipboard.
 .IP \[bu] 2
-`\f[CR]{{ html_clipboard | heading }}\f[R]' is the clipboard\[cq]s
+`\f[CR]{{ txt_clipboard | heading }}\f[R]' is the clipboard\[cq]s
 content until the end of the first sentence, or the first newline.
+.IP \[bu] 2
+`\f[CR]{{ html_clipboard | html_heading }}\f[R]' searches in the HTML
+clipboard input, for e.g `\f[CR]<h2>HEADING</h2>\f[R]', and returns the
+first HTML heading, e.g.\  `\f[CR]HEADING\f[R]'.
 .IP \[bu] 2
 `\f[CR]{{ html_clipboard | link_text }}\f[R]' is the name of the first
 Markdown or ReStructuredText formatted link in the clipboard.
@@ -3240,6 +3297,11 @@ guarantee, that one of the separators unequivocally marks the end of the
 This might be necessary to avoid ambiguity in case the
 `\f[CR]fm.fm_title\f[R]' starts with a character defined in the
 `\f[CR]filename.sort_tag.extra_chars\f[R]' set.
+.IP \[bu] 2
+`\f[CR]{{ fm.title | replace_empty(with=\[aq]no title\[aq])\f[R]'
+forwards the input unchanged.
+In case the input is the empty string, the `\f[CR]with\f[R]' string is
+forwarded instead.
 .IP \[bu] 2
 `\f[CR]{{ fm | remove(key=\[aq]fm_title\[aq]) | remove(key=\[aq]fm_author\[aq]) | to_yaml }}\f[R]'
 renders the collection (map) `\f[CR]fm\f[R]', exclusive of the variables

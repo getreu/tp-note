@@ -74,7 +74,7 @@ common workflows.
 
 
 
-## Fast start note taking (when the lecture starts)
+## Fast start note-taking (when the lecture starts)
 
 ![The folder in which the new note will be created.](assets/workflow1-1.png){width="10cm"}
 
@@ -99,11 +99,49 @@ right-click on some empty white space.
 
 
 
+## Copy a chapter from a web page
+
+![Open a web page in your browser](assets/Cinderella1.png)
+
+![Select and copy a chapter with its heading](assets/Cinderella2.png)
+
+![Launch Tp-Note within your file browser](assets/Cinderella3.png)
+
+![Your file editor and web browser open](assets/Cinderella4.png)
+
+Tp-Note created the following content:
+
+```yaml
+---
+title:        Aschenputtel (Cinderella)
+subtitle:     Note
+author:       Getreu
+date:         2025-01-04
+lang:         en-US
+---
+
+# _Aschenputtel (Cinderella)_
+
+### by the Brothers Grimm
+
+* * *
+
+ ![](https://stenzel.ucdavis.edu/180/anthology/aschen.jpg)
+
+**T**he wife of a rich man fell sick,
+```
+
+
+
+![Observe the new note file in the filesystem](assets/Cinderella5.png)
+
+
+
 ## Taking notes about a file
 
-![We want to take a note about a pdf](assets/workflow2-1.png){width="9cm"}
+![Select the file to be annotated and launch Tp-Note](assets/workflow2-1.png){width="9cm"}
 
-![The new unmodified note created automatically](assets/workflow2-2.png){width="11cm"}
+![Tp-Note created the above content](assets/workflow2-2.png){width="11cm"}
 
 The source code of the note shows the link with its target. The left-click, opens the `.odt` document.
 
@@ -122,6 +160,7 @@ lang:       en-GB
 ![Annotate](assets/workflow2-3.png){width="11cm"}
 
 ![The new note file on disk after closing the editor](assets/workflow2-4.png){width="8cm"}
+
 
 
 
@@ -165,8 +204,10 @@ lang:       en-GB
 ![Copy a link in Markdown format](assets/workflow3-2.png){width="11cm"}
 
 To copy a link in Markdown format a browser addon is needed. I recommend the
-addons [Copy as Markdown] and [Copy Selection as Markdown] available
-for Firefox.
+addon [Copy Selection as Markdown] available
+for Firefox[^alternative]. 
+
+[^alternative]: If [Copy Selection as Markdown] does not suit you, try [Copy as Markdown].
 
 [Copy as Markdown]: https://addons.mozilla.org/en-GB/firefox/search/?q=copy%20as%20markdown
 [Copy Selection as Markdown]: https://addons.mozilla.org/en-GB/firefox/addon/copy-selection-as-markdown/?src=search
@@ -584,7 +625,7 @@ _Tp-Note_'s template engine can be tested and used without file manager
 integration. Download the appropriate binary for your architecture and 
 place it in your `PATH`. See the 
 [Distribution](../projects/tp-note/#distribution) in the
-section in Tp-Note's Readme-document for more details.
+section in Tp-Note's "Readme" document for more details.
 
 Bear in mind that the preferred way to install Tp-Note under Windows is the
 [Windows installer package](../projects/tp-note/#tp-note-microsoft-windows-installer-package). However, if you do not have the right to install
@@ -606,12 +647,12 @@ it on the _Tp-Note_-icon. This opens an editor with your new note.
 
 Anyway, for more comfort, I recommend integrating _Tp-Note_ into the file
 manager's context menu. See section [Optional integration with your file
-manager] for more details. There you also will find a list of tested Markdown
-editors, if you wish to use one. _Tp-Note_ works with every Unicode text editor
+manager] for more details. There you also find a list of tested Markdown
+editors, if you wish to use one. _Tp-Note_ works with any Unicode text editor
 and Markdown editor (see section [Optional customization] and man-page for more
 details).
 
-_Tp-Note_'s note files can be printed directly from the viewer (webbrowser)
+_Tp-Note_'s note files can be printed directly from the viewer (web browser)
 window or first converted into `.html` with `tpnote -x '' mynote.md`. For other
 formats e.g. `.docx`, `.odt` and `.pdf` use [Pandoc](https://pandoc.org/)
 or `weasyprint`.

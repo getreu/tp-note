@@ -214,9 +214,62 @@ the note's content is created with a template, but also its filename: The
 date, the note's title and subtitle.
 
 
+
+### The clipboard contains a heading
+
+Use case: open a web page in your web browser and select some text with it's 
+heading. Then copy the content into your (HTML) clipboard:
+
+```html
+<h1>Cinderella</h1>
+by the Brothers Grimm
+```
+
+Launch Tp-Note:
+
+```sh
+mkdir 'Fary tales'
+tpnote './Fary tales'
+```
+
+Tp-Note's templates '`tmpl.from_clipboard_content`' and
+'`tmpl.from_clipboard_filename`' create the following document:
+
+    ./Fary tales/20250104-Cinderella--Notes.md
+
+```yaml
+---
+title:        Cinderella
+subtitle:     Note
+author:       Getreu
+date:         2025-01-04
+lang:         de-DE
+---
+
+# Cinderella
+
+by the Brothers Grimm
+
+```
+
+Tp-Note searches for the first heading tag '`<h1>`', '`<h2>`', '`<h3>`'
+etc. in the HTML clipboard and uses the finding as title for the new 
+Tp-Note document.
+
+NB: you can achieve the same result by piping the clipboard content into 
+Tp-Note:
+
+```sh
+mkdir 'Fary tales'
+echo '<!DOCTYPE html><h1>Cinderella</h1>by the Brothers Grimm'\
+   | tpnote './Fary tales'
+```
+
+
+
 ### The clipboard contains a hyperlink
 
-Use case: '`<path>`' is a directory, the clipboard is not empty and it contains
+Use case: '`<path>`' is a directory, the clipboard is not empty and contains
 the string: '`I recommend:\n[The Rust Book](https://doc.rust-lang.org/book/)`'.
 
 ```sh
