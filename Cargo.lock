@@ -4305,7 +4305,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote-lib"
-version = "0.37.1"
+version = "0.38.0"
 dependencies = [
  "htmd",
  "html-escape",
