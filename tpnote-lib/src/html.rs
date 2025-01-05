@@ -766,67 +766,112 @@ pub fn rewrite_links(
     // The `RwLockWriteGuard` is released here.
 }
 
-/// This trait deals with tagged HTML data.
-pub struct HtmlStream;
+/// This trait deals with tagged HTML `&str` data.
+pub trait HtmlStr {
+    /// Lowercase pattern to check if this is a Doctype tag.
+    const TAG_DOCTYPE_PAT: &'static str = "<!doctype";
+    /// Lowercase pattern to check if this Doctype is HTML.
+    const TAG_DOCTYPE_HTML_PAT: &'static str = "<!doctype html";
+    /// Doctype HTML tag. This is inserted by
+    /// `<HtmlString>.prepend_html_start_tag()`
+    const TAG_DOCTYPE_HTML: &'static str = "<!DOCTYPE html>";
+    /// Pattern to check if f this is an HTML start tag.
+    const START_TAG_HTML_PAT: &'static str = "<html";
+    /// HTML end tag.
+    const END_TAG_HTML: &'static str = "</html>";
 
-impl HtmlStream {
-    /// Pattern 1 to check if this is HTML.
-    const START_TAG_PAT1: &'static str = "<html";
-    /// Pattern 2 to check if this is HTML.
-    const START_TAG_PAT2: &'static str = "<!doctype html";
-    /// Lowercase test pattern to check if there is a document type declaration
-    /// already.
-    const START_TAG_PAT3: &'static str = "<!doctype ";
-    /// Tag to insert if there is no start tag.
-    const START_TAG: &'static str = "<!DOCTYPE html>";
-    /// Return `true` when the input stream starts with  `<!DOCTYPE html`
-    /// or `<html` (or lowercase variants).
-    pub fn has_start_tag(html: &str) -> bool {
-        let html2 = html
+    /// We consider `self` empty, when it equals to `<!DOCTYPE html...>` or
+    /// when it is empty.
+    fn is_empty_html(&self) -> bool;
+
+    /// We consider `html` empty, when it equals to `<!DOCTYPE html...>` or
+    /// when it is empty.
+    /// This is identical to `is_empty_html()`, but does not pull in
+    /// additional trait bounds.
+    fn is_empty_html2(html: &str) -> bool {
+        html.is_empty_html()
+    }
+
+    /// True if stream starts with `<!DOCTYPE html...>`.
+    fn has_html_start_tag(&self) -> bool;
+
+    /// True if `html` starts with `<!DOCTYPE html...>`.
+    /// This is identical to `has_html_start_tag()`, but does not pull in
+    /// additional trait bounds.
+    fn has_html_start_tag2(html: &str) -> bool {
+        html.has_html_start_tag()
+    }
+}
+
+impl HtmlStr for str {
+    fn is_empty_html(&self) -> bool {
+        let html = self
+            .trim_start()
+            .lines()
+            .next()
+            .map(|l| l.to_ascii_lowercase())
+            .unwrap_or_default();
+        html.is_empty()
+            || (html.as_str().starts_with(Self::TAG_DOCTYPE_HTML_PAT)
+            // The next closing braket must be in last position.
+         && html.find('>').unwrap_or_default() == html.len()-1)
+    }
+
+    fn has_html_start_tag(&self) -> bool {
+        let html = self
             .trim_start()
             .lines()
             .next()
             .map(|l| l.to_ascii_lowercase());
-        html2.as_ref().is_some_and(|l| {
-            l.starts_with(Self::START_TAG_PAT1) || l.starts_with(Self::START_TAG_PAT2)
-        })
+        html.as_ref()
+            .is_some_and(|l| l.starts_with(Self::TAG_DOCTYPE_HTML_PAT))
     }
+}
 
-    /// If the input does not start with `<!DOCTYPE html` or `<html`
+pub trait HtmlString: Sized {
+    /// If the input does not start with `<!DOCTYPE html`
     /// (or lowercase variants), then insert `<!DOCTYPE html>`.
     /// Returns `InputStreamError::NonHtmlDoctype` if there is another Doctype
     /// already.
-    pub fn prepend_start_tag(html: String) -> Result<String, InputStreamError> {
-        let html2 = html
+    fn prepend_html_start_tag(self) -> Result<Self, InputStreamError>;
+}
+
+/// This trait deals with tagged HTML `String` data.
+impl HtmlString for String {
+    fn prepend_html_start_tag(self) -> Result<Self, InputStreamError> {
+        // Bring `HtmlStr` methods into scope.
+        use crate::html::HtmlStr;
+
+        let html2 = self
             .trim_start()
             .lines()
             .next()
-            .map(|l| l.to_ascii_lowercase());
+            .map(|l| l.to_ascii_lowercase())
+            .unwrap_or_default();
 
-        if html2.as_ref().is_some_and(|l| {
-            l.starts_with(Self::START_TAG_PAT1) || l.starts_with(Self::START_TAG_PAT2)
-        }) {
-            // There is an HTML tag already. Nothing to do.
-            return Ok(html);
-        }
-
-        if html2.is_some_and(|l| l.starts_with(Self::START_TAG_PAT3)) {
+        if html2.starts_with(<str as HtmlStr>::TAG_DOCTYPE_HTML_PAT) {
+            // Has a start tag already.
+            Ok(self)
+        } else if !html2.starts_with(<str as HtmlStr>::TAG_DOCTYPE_PAT) {
+            // Insert HTML Doctype tag.
+            let mut html = self;
+            html.insert_str(0, <str as HtmlStr>::TAG_DOCTYPE_HTML);
+            Ok(html)
+        } else {
             // There is a Doctype other then HTML.
-            return Err(InputStreamError::NonHtmlDoctype);
+            Err(InputStreamError::NonHtmlDoctype)
         }
-
-        let mut html = html;
-        html.insert_str(0, Self::START_TAG);
-        Ok(html)
     }
 }
 
 #[cfg(test)]
 mod tests {
 
+    use crate::error::InputStreamError;
     use crate::error::NoteError;
     use crate::html::assemble_link;
     use crate::html::rewrite_links;
+    use crate::html::Hyperlink;
     use parking_lot::RwLock;
     use parse_hyperlinks::parser::Link;
     use parse_hyperlinks_extras::parser::parse_html::take_link;
@@ -836,47 +881,6 @@ mod tests {
         path::{Path, PathBuf},
         sync::Arc,
     };
-
-    use super::*;
-
-    #[test]
-    fn test_has_start_tag() {
-        // Test cases where the start tag is present.
-        assert!(HtmlStream::has_start_tag("<html>"));
-        assert!(HtmlStream::has_start_tag("<!DOCTYPE html>"));
-        assert!(HtmlStream::has_start_tag("   <html>"));
-        assert!(HtmlStream::has_start_tag("   <!DOCTYPE html>"));
-
-        // Test cases where the start tag is not present.
-        assert!(!HtmlStream::has_start_tag("<!DOCTYPE other>"));
-        assert!(!HtmlStream::has_start_tag("<body>"));
-        assert!(!HtmlStream::has_start_tag("   <body>"));
-    }
-
-    #[test]
-    fn test_prepend_start_tag() {
-        // Test case where the start tag is already present.
-        assert_eq!(
-            HtmlStream::prepend_start_tag("<html>".to_string()).unwrap(),
-            "<html>".to_string()
-        );
-        assert_eq!(
-            HtmlStream::prepend_start_tag("<!DOCTYPE html>".to_string()).unwrap(),
-            "<!DOCTYPE html>".to_string()
-        );
-
-        // Test case where the start tag needs to be inserted.
-        assert_eq!(
-            HtmlStream::prepend_start_tag("<body>".to_string()).unwrap(),
-            "<!DOCTYPE html><body>".to_string()
-        );
-
-        // Test case where there is another doctype.
-        assert_eq!(
-            HtmlStream::prepend_start_tag("<!DOCTYPE other>".to_string()).unwrap_err(),
-            InputStreamError::NonHtmlDoctype
-        );
-    }
 
     #[test]
     fn test_assemble_link() {
@@ -1721,5 +1725,118 @@ mod tests {
         println!("{:?}", allowed_urls.read_recursive());
         assert!(url.contains(&PathBuf::from("/abs/note path/")));
         assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_is_empty_html() {
+        // Bring new methods into scope.
+        use crate::html::HtmlStr;
+
+        // Test where input is '<!DOCTYPE html>'
+        // See: [HTML doctype declaration](https://www.w3schools.com/tags/tag_doctype.ASP)
+        assert!(String::from("<!DOCTYPE html>").is_empty_html());
+
+        // This should fail:
+        assert!(!String::from("<!DOCTYPE html>>").is_empty_html());
+
+        // Test where input is '<!DOCTYPE html>'
+        // See: [HTML doctype declaration](https://www.w3schools.com/tags/tag_doctype.ASP)
+        assert!(String::from(
+            " <!DOCTYPE HTML PUBLIC \
+            \"-//W3C//DTD HTML 4.01 Transitional//EN\" \
+            \"http://www.w3.org/TR/html4/loose.dtd\">"
+        )
+        .is_empty_html());
+
+        // Test where input is '<!DOCTYPE html>'
+        // See: [HTML doctype declaration](https://www.w3schools.com/tags/tag_doctype.ASP)
+        assert!(String::from(
+            " <!DOCTYPE html PUBLIC \
+            \"-//W3C//DTD XHTML 1.1//EN\" \
+            \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">"
+        )
+        .is_empty_html());
+
+        // Test where input is '<!DOCTYPE html>Some content'
+        assert!(!String::from("<!DOCTYPE html>Some content").is_empty_html());
+
+        // Test where input is an empty string
+        assert!(String::from("").is_empty_html());
+
+        // Test where input is not empty HTML.
+        // Convention: we consider empty only `` or `<!DOCTYPE html>`.
+        assert!(!String::from("<html></html>").is_empty_html());
+
+        // Test where input is not empty HTML with doctype
+        // Convention: we consider empty only `` or `<!DOCTYPE html>`.
+        assert!(!String::from("<!DOCTYPE html><html></html>").is_empty_html());
+    }
+
+    #[test]
+    fn test_has_html_start_tag() {
+        // Bring new methods into scope.
+        use crate::html::HtmlStr;
+
+        // Test where input is '<!DOCTYPE html>Some content'
+        assert!(String::from("<!DOCTYPE html>Some content").has_html_start_tag());
+
+        // This fails because we require be convention `<!DOCTYPE html>` as
+        // first tag
+        assert!(!String::from("<html>Some content</html>").has_html_start_tag());
+
+        // This fails because we require be convention `<!DOCTYPE html>` as
+        // first tag
+        assert!(!String::from("<HTML>").has_html_start_tag());
+
+        // Test where input starts with spaces
+        assert!(String::from("  <!doctype html>Some content").has_html_start_tag());
+
+        // Test where input is a non-HTML doctype
+        assert!(!String::from("<!DOCTYPE other>").has_html_start_tag());
+
+        // Test where input is an empty string
+        assert!(!String::from("").has_html_start_tag());
+    }
+
+    #[test]
+    fn test_prepend_html_start_tag() {
+        // Bring new methods into scope.
+        use crate::html::HtmlString;
+
+        // Test where input already has doctype HTML
+        assert_eq!(
+            String::from("<!DOCTYPE html>Some content").prepend_html_start_tag(),
+            Ok(String::from("<!DOCTYPE html>Some content"))
+        );
+
+        // Test where input already has doctype HTML
+        assert_eq!(
+            String::from("<!DOCTYPE html>").prepend_html_start_tag(),
+            Ok(String::from("<!DOCTYPE html>"))
+        );
+
+        // Test where input has no HTML tag
+        assert_eq!(
+            String::from("<html>Some content").prepend_html_start_tag(),
+            Ok(String::from("<!DOCTYPE html><html>Some content"))
+        );
+
+        // Test where input has a non-HTML doctype
+        assert_eq!(
+            String::from("<!DOCTYPE other>").prepend_html_start_tag(),
+            Err(InputStreamError::NonHtmlDoctype)
+        );
+
+        // Test where input has no HTML tag
+        assert_eq!(
+            String::from("Some content").prepend_html_start_tag(),
+            Ok(String::from("<!DOCTYPE html>Some content"))
+        );
+
+        // Test where input is an empty string
+        assert_eq!(
+            String::from("").prepend_html_start_tag(),
+            Ok(String::from("<!DOCTYPE html>"))
+        );
     }
 }

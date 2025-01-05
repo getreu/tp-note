@@ -10,8 +10,6 @@ use std::io::Write;
 use std::path::Path;
 use substring::Substring;
 
-use crate::html::HtmlStream;
-
 /// As all text before the header marker `"---"` is ignored, this
 /// constant limits the maximum number of characters that are skipped
 /// before the header starts. In other words: the header
@@ -240,6 +238,8 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
     /// 2. followed by header bytes,
     /// 3. same as above ...
     fn split(content: &str) -> (&str, &str) {
+        // Bring in scope `HtmlString`.
+        use crate::html::HtmlStr;
         // Remove BOM
         let content = content.trim_start_matches('\u{feff}');
 
@@ -251,7 +251,7 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
         // TODO: In the future the header might be constructed from
         // the "meta" HTML fields. Though I am not sure if something meaningful
         // can be found in HTML clipboard meta data.
-        if HtmlStream::has_start_tag(content) {
+        if content.has_html_start_tag() {
             return ("", content);
         }
 

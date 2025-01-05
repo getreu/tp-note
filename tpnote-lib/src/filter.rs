@@ -6,7 +6,6 @@ use crate::config::TMPL_VAR_FM_;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 use crate::filename::NotePathStr;
-use crate::html::HtmlStream;
 use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
 #[cfg(feature = "lang-detection")]
@@ -286,6 +285,9 @@ fn html_to_markup_filter<S: BuildHasher>(
     value: &Value,
     #[allow(unused_variables)] args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
+    // Bring new methods into scope.
+    use crate::html::HtmlStr;
+
     #[allow(unused_mut)]
     let mut buffer = try_get_value!("html_to_markup", "value", String, value);
 
@@ -299,7 +301,7 @@ fn html_to_markup_filter<S: BuildHasher>(
         .lines()
         .next()
         .map(|l| l.trim_start().to_ascii_lowercase());
-    if firstline.is_some_and(|l| HtmlStream::has_start_tag(&l)) {
+    if firstline.is_some_and(|l| l.as_str().has_html_start_tag()) {
         let extension = if let Some(ext) = args.get("extension") {
             try_get_value!("markup_to_html", "extension", String, ext)
         } else {

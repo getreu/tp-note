@@ -27,7 +27,9 @@ impl SystemClipboard {
     /// prepended.
     #[cfg(feature = "read-clipboard")]
     pub(crate) fn new() -> Self {
-        use tpnote_lib::{content::Content, html::HtmlStream};
+        // Bring new methods into scope.
+        use tpnote_lib::content::Content;
+        use tpnote_lib::html::HtmlString;
 
         let mut txt_content = String::new();
         let mut html_content = String::new();
@@ -43,7 +45,8 @@ impl SystemClipboard {
             ) {
                 match pipe_reader.read_to_string(&mut html_content) {
                     Ok(l) if l > 0 => {
-                        html_content = HtmlStream::prepend_start_tag(html_content)
+                        html_content = html_content
+                            .prepend_html_start_tag()
                             .map_err(|e| {
                                 log::warn!("HTML Wayland clipboard: {}", e);
                                 e
@@ -68,7 +71,8 @@ impl SystemClipboard {
             // Query X11 clipboard.
             if let Ok(ctx) = ClipboardContext::new() {
                 if let Ok(html) = ctx.get_html() {
-                    html_content = HtmlStream::prepend_start_tag(html)
+                    html_content = html
+                        .prepend_html_start_tag()
                         .map_err(|e| {
                             log::warn!("HTML X11 clipboard: {}", e);
                             e

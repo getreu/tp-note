@@ -1,5 +1,6 @@
 //!Abstractions for content templates and filename templates.
 use crate::filename::NotePath;
+use crate::html::HtmlStr;
 use crate::settings::SETTINGS;
 use crate::{config::LIB_CFG, content::Content};
 use std::path::Path;
@@ -44,7 +45,8 @@ impl TemplateKind {
         let stdin_is_empty = stdin.is_empty();
         let stdin_has_header = !stdin.header().is_empty();
 
-        let clipboard_is_empty = html_clipboard.is_empty() && txt_clipboard.is_empty();
+        let clipboard_is_empty =
+            <str as HtmlStr>::is_empty_html2(html_clipboard.as_str()) && txt_clipboard.is_empty();
         let clipboard_has_header =
             !html_clipboard.header().is_empty() || !txt_clipboard.header().is_empty();
 
