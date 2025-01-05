@@ -1,6 +1,5 @@
 //!Abstractions for content templates and filename templates.
 use crate::filename::NotePath;
-use crate::html::HtmlStr;
 use crate::settings::SETTINGS;
 use crate::{config::LIB_CFG, content::Content};
 use std::path::Path;
@@ -33,9 +32,12 @@ pub enum TemplateKind {
 }
 
 impl TemplateKind {
-    /// Constructor encoding the logic under what circumstances what template
-    /// should be used.
-    ///
+    /// A constructor returning the tuple `(template_kind, Some(content))`.
+    /// `template_kind` is the result of the logic calculating under what
+    /// circumstances what template should be used.
+    /// If `path` has a Tp-Note extension (e.g. `.md`) and the file indicated by
+    /// `path` could be opened and loaed from disk, `Some(content)` contains
+    /// its content. Otherwise `None` is returned.
     pub fn from<T: Content>(
         path: &Path,
         html_clipboard: &T,
@@ -45,8 +47,7 @@ impl TemplateKind {
         let stdin_is_empty = stdin.is_empty();
         let stdin_has_header = !stdin.header().is_empty();
 
-        let clipboard_is_empty =
-            <str as HtmlStr>::is_empty_html2(html_clipboard.as_str()) && txt_clipboard.is_empty();
+        let clipboard_is_empty = html_clipboard.is_empty() && txt_clipboard.is_empty();
         let clipboard_has_header =
             !html_clipboard.header().is_empty() || !txt_clipboard.header().is_empty();
 
@@ -178,5 +179,53 @@ impl TemplateKind {
             Self::SyncFilename => "tmpl.sync_filename",
             Self::None => "`TemplateKind::None` has no filename template",
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::content::ContentString;
+
+    use super::*;
+
+    #[test]
+    fn test_template_kind_from() {
+        // Some data in the clipboard.
+        let tk = TemplateKind::from(
+            Path::new("."),
+            &ContentString::from("my html input".to_string()),
+            &ContentString::from("".to_string()),
+            &ContentString::from("".to_string()),
+        );
+        assert_eq!(tk, (TemplateKind::FromClipboard, None));
+
+        // Some data in the clipboard.
+        let tk = TemplateKind::from(
+            Path::new("."),
+            &ContentString::from("".to_string()),
+            &ContentString::from("my txt clipboard".to_string()),
+            &ContentString::from("".to_string()),
+        );
+        assert_eq!(tk, (TemplateKind::FromClipboard, None));
+
+        //
+        // No data in the clipboard.
+        let tk = TemplateKind::from(
+            Path::new("."),
+            &ContentString::from("".to_string()),
+            &ContentString::from("".to_string()),
+            &ContentString::from("".to_string()),
+        );
+        assert_eq!(tk, (TemplateKind::FromDir, None));
+
+        //
+        // No data in the clipboard.
+        let tk = TemplateKind::from(
+            Path::new("."),
+            &ContentString::from("<!DOCTYPE html>".to_string()),
+            &ContentString::from("".to_string()),
+            &ContentString::from("".to_string()),
+        );
+        assert_eq!(tk, (TemplateKind::FromDir, None));
     }
 }

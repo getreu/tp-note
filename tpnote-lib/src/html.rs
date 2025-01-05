@@ -805,16 +805,20 @@ pub trait HtmlStr {
 
 impl HtmlStr for str {
     fn is_empty_html(&self) -> bool {
+        if self.is_empty() {
+            return true;
+        }
+
         let html = self
             .trim_start()
             .lines()
             .next()
             .map(|l| l.to_ascii_lowercase())
             .unwrap_or_default();
-        html.is_empty()
-            || (html.as_str().starts_with(Self::TAG_DOCTYPE_HTML_PAT)
+
+        html.as_str().starts_with(Self::TAG_DOCTYPE_HTML_PAT)
             // The next closing braket must be in last position.
-         && html.find('>').unwrap_or_default() == html.len()-1)
+            && html.find('>').unwrap_or_default() == html.len()-1
     }
 
     fn has_html_start_tag(&self) -> bool {
@@ -859,7 +863,7 @@ impl HtmlString for String {
             Ok(html)
         } else {
             // There is a Doctype other then HTML.
-            Err(InputStreamError::NonHtmlDoctype)
+            Err(InputStreamError::NonHtmlDoctype { html: html2 })
         }
     }
 }

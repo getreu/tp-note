@@ -10,6 +10,8 @@ use std::io::Write;
 use std::path::Path;
 use substring::Substring;
 
+use crate::error::InputStreamError;
+
 /// As all text before the header marker `"---"` is ignored, this
 /// constant limits the maximum number of characters that are skipped
 /// before the header starts. In other words: the header
@@ -156,6 +158,17 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
     /// Return the body below the second `---`.
     fn body(&self) -> &str;
 
+    /// Constructor that accepts and store HTML imput in the body.
+    /// If the HTML input does not start with `<!DOCTYPE html...>` it is
+    /// automatically prepended.
+    /// If the input starts with another DOCTYPE than HTMl, return
+    /// `InputStreamError::NonHtmlDoctype`.
+    fn from_html(input: String) -> Result<Self, InputStreamError> {
+        use crate::html::HtmlString;
+        let input = input.prepend_html_start_tag()?;
+        Ok(Self::from(input))
+    }
+
     /// Writes the note to disk with `new_file_path` as filename.
     /// If `new_file_path` contains missing directories, they will be
     /// created on the fly.
@@ -214,7 +227,10 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
 
     /// True if the header and body is empty.
     fn is_empty(&self) -> bool {
-        self.header().is_empty() && self.body().is_empty()
+        // Bring methods into scope. Overwrites `is_empty()`.
+        use crate::html::HtmlStr;
+        // `.is_empty_html()` is true for `""` or only `<!DOCTYPE html...>`.
+        self.header().is_empty() && (self.body().is_empty_html())
     }
 
     /// Helper function that splits the content into header and body.
