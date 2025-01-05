@@ -1,4 +1,4 @@
-!/bin/sh
+#!/bin/sh
 # #set -x
 # # Change to this script directory
 # cd $(dirname "$0")
