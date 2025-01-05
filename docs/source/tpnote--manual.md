@@ -2,8 +2,8 @@
 title:    "Tp-Note: markup enhanced granular note-taking"
 subtitle: Save and edit your clipboard content as a note file
 author:   Jens Getreu
-date:     2024-12-25
-version:  1.24.12
+date:     2025-01-05
+version:  1.25.0
 filename_sync: false
 lang:     en-GB
 ---
@@ -28,12 +28,12 @@ _On Tue, 2023-12-19 at 12:58 +1100, Dev Rain wrote:_
 _Tp-Note_ is available for Linux, Windows and MacOS. This manual illustrates
 its main use cases and how to get started:
 
-1. Fast start note taking (when the lecture starts).
+1. Fast start note-taking (when the lecture starts).
 2. Take a note about an existing or downloaded file.
 3. Bookmark and comment a hyperlink.
 4. Copy and annotate a page from a book.
 5. Best practice.
-6. Note taking for system administrators.
+6. Note-taking for system administrators.
 
 If you want to customize _Tp-Note_ with your own templates or if you want to
 use another markup language than Markdown, please consult [Tp-Note's man-page] for
