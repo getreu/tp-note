@@ -163,6 +163,25 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
     /// automatically prepended.
     /// If the input starts with another DOCTYPE than HTMl, return
     /// `InputStreamError::NonHtmlDoctype`.
+    ///
+    /// ```rust
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    ///
+    /// let c = ContentString::from_html(String::from(
+    ///     "Some HTML content")).unwrap();
+    /// assert_eq!(c.header(), "");
+    /// assert_eq!(c.body(), "<!DOCTYPE html>Some HTML content");
+    ///
+    /// let c = ContentString::from_html(String::from(
+    ///     "<!DOCTYPE html>Some HTML content")).unwrap();
+    /// assert_eq!(c.header(), "");
+    /// assert_eq!(c.body(), "<!DOCTYPE html>Some HTML content");
+    ///
+    /// let c = ContentString::from_html(String::from(
+    ///     "<!DOCTYPE xml>Some HTML content"));
+    /// assert!(c.is_err());
+    /// ```
     fn from_html(input: String) -> Result<Self, InputStreamError> {
         use crate::html::HtmlString;
         let input = input.prepend_html_start_tag()?;
@@ -226,6 +245,42 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
     }
 
     /// True if the header and body is empty.
+    ///
+    /// ```rust
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    ///
+    /// let c = ContentString::from(
+    ///     "".to_string());
+    /// assert_eq!(c.header(), "");
+    /// assert_eq!(c.body(), "");
+    /// assert!(c.is_empty());
+    ///
+    /// let c = ContentString::from(
+    ///     "Some content".to_string());
+    /// assert_eq!(c.header(), "");
+    /// assert_eq!(c.body(), "Some content");
+    /// assert!(!c.is_empty());
+    ///
+    /// let c = ContentString::from_html(
+    ///     "".to_string()).unwrap();
+    /// assert_eq!(c.header(), "");
+    /// assert_eq!(c.body(), "<!DOCTYPE html>");
+    /// assert!(c.is_empty());
+    ///
+    /// let c = ContentString::from_html(
+    ///     "Some HTML content".to_string()).unwrap();
+    /// assert_eq!(c.header(), "");
+    /// assert_eq!(c.body(), "<!DOCTYPE html>Some HTML content");
+    /// assert!(!c.is_empty());
+    ///
+    ///
+    /// let c = ContentString::from(
+    ///      String::from("---\ntitle: My note\n---\n"));
+    /// assert_eq!(c.header(), "title: My note");
+    /// assert_eq!(c.body(), "");
+    /// assert!(!c.is_empty());
+    /// ```
     fn is_empty(&self) -> bool {
         // Bring methods into scope. Overwrites `is_empty()`.
         use crate::html::HtmlStr;
