@@ -29,7 +29,6 @@ impl SystemClipboard {
     pub(crate) fn new() -> Self {
         // Bring new methods into scope.
         use tpnote_lib::content::Content;
-        use tpnote_lib::html::HtmlString;
 
         let mut txt_content = String::new();
         let mut html_content = String::new();
@@ -45,25 +44,19 @@ impl SystemClipboard {
             ) {
                 match pipe_reader.read_to_string(&mut html_content) {
                     Ok(l) if l > 0 => {
-                        html_content = html_content
-                            .prepend_html_start_tag()
-                            .map_err(|e| {
-                                log::warn!("HTML Wayland clipboard: {}", e);
-                                e
-                            })
-                            // Ignore error and continue with empty string.
-                            .unwrap_or_default();
+                        log::trace!("Got HTML Wayland clipboard:\n {}", html_content);
                     }
                     _ => {}
                 }
             };
-            // Plain teext clipboard content
+            // Plain text clipboard content
             if let Ok((mut pipe_reader, _)) = paste::get_contents(
                 paste::ClipboardType::Regular,
                 paste::Seat::Unspecified,
                 paste::MimeType::Specific("plain/text"),
             ) {
                 let _ = pipe_reader.read_to_string(&mut txt_content);
+                log::trace!("Got text Wayland clipboard:\n {}", txt_content);
             };
         }
 
@@ -71,24 +64,24 @@ impl SystemClipboard {
             // Query X11 clipboard.
             if let Ok(ctx) = ClipboardContext::new() {
                 if let Ok(html) = ctx.get_html() {
-                    html_content = html
-                        .prepend_html_start_tag()
-                        .map_err(|e| {
-                            log::warn!("HTML X11 clipboard: {}", e);
-                            e
-                        })
-                        // Ignore error and continue with empty string.
-                        .unwrap_or_default();
+                    log::trace!("Got HTML non-wayland clipboard:\n {}", html_content);
+                    html_content = html;
                 };
                 if let Ok(txt) = ctx.get_text() {
                     txt_content = txt;
+                    log::trace!("Got text non-wayland clipboard:\n {}", txt_content);
                 };
             }
         }
 
         Self {
-            html: ContentString::from_string_with_cr(html_content),
-            txt: ContentString::from_string_with_cr(txt_content),
+            html: ContentString::from_html(html_content)
+                .map_err(|e| {
+                    log::error!("Could not interpret HTML clipboard:\n{}", e);
+                })
+                // Ignore error and continue with empty string.
+                .unwrap_or_default(),
+            txt: ContentString::from(txt_content),
         }
     }
 

@@ -8,17 +8,17 @@ use thiserror::Error;
 /// note file. This constant limits the number of text lines that are printed.
 pub const FRONT_MATTER_ERROR_MAX_LINES: usize = 20;
 
-/// Error related the clipboard or Stdin input stream.
+/// Error related to the clipboard or `stdin` input stream.
 #[derive(Debug, Error, PartialEq)]
 pub enum InputStreamError {
     /// Remedy: Prepend HTML input data with `<!DOCTYPE html>` or `<html>`.
-    /// with a doctype other than `<!DOCTYPE html>`.
+    /// with a doc type other than `<!DOCTYPE html>`.
     #[error(
-        "The HTML input stream from the clipboard or\n\
-         from stdin starts with a doctype other than\n\
-         \"<!DOCTYPE html>\"."
+        "The HTML input stream starts with a doctype other than\n\
+         \"<!DOCTYPE html>\":\n\
+         {html}"
     )]
-    NonHtmlDoctype,
+    NonHtmlDoctype { html: String },
 }
 
 /// Configuration file related filesystem and syntax errors.

@@ -863,7 +863,9 @@ impl HtmlString for String {
             Ok(html)
         } else {
             // There is a Doctype other then HTML.
-            Err(InputStreamError::NonHtmlDoctype { html: html2 })
+            Err(InputStreamError::NonHtmlDoctype {
+                html: self.chars().take(25).collect::<String>(),
+            })
         }
     }
 }
@@ -1828,7 +1830,9 @@ mod tests {
         // Test where input has a non-HTML doctype
         assert_eq!(
             String::from("<!DOCTYPE other>").prepend_html_start_tag(),
-            Err(InputStreamError::NonHtmlDoctype)
+            Err(InputStreamError::NonHtmlDoctype {
+                html: "<!DOCTYPE other>".to_string()
+            })
         );
 
         // Test where input has no HTML tag
