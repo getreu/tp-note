@@ -173,6 +173,9 @@ pub static RUNS_ON_CONSOLE: LazyLock<bool> = LazyLock::new(|| {
 
 /// Reads the input stream stdin if there is any.
 pub static STDIN: LazyLock<ContentString> = LazyLock::new(|| {
+    // Bring new methods into scope.
+    use tpnote_lib::html::HtmlStr;
+
     let mut buffer = String::new();
 
     // Read stdin().
@@ -183,7 +186,12 @@ pub static STDIN: LazyLock<ContentString> = LazyLock::new(|| {
         let _ = handle.read_to_string(&mut buffer);
     }
 
-    ContentString::from_string_with_cr(buffer)
+    // Guess if this is an HTML stream.
+    if buffer.is_html_unchecked() {
+        ContentString::from_html(buffer).unwrap_or_else(|e| ContentString::from(e.to_string()))
+    } else {
+        ContentString::from(buffer)
+    }
 });
 
 /// Reads the clipboard, if there is any and empties it.

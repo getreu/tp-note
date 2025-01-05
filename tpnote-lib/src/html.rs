@@ -801,6 +801,16 @@ pub trait HtmlStr {
     fn has_html_start_tag2(html: &str) -> bool {
         html.has_html_start_tag()
     }
+
+    /// Some heuristics to guess if the input stream contains HTML.
+    /// Current implementation:
+    /// True if:
+    ///
+    /// * The stream starts with `<!DOCTYPE html ...>`, or
+    /// * the stream starts with `<html ...>`    
+    ///
+    /// This function does not check if the recognized HTML is valid.
+    fn is_html_unchecked(&self) -> bool;
 }
 
 impl HtmlStr for str {
@@ -829,6 +839,20 @@ impl HtmlStr for str {
             .map(|l| l.to_ascii_lowercase());
         html.as_ref()
             .is_some_and(|l| l.starts_with(Self::TAG_DOCTYPE_HTML_PAT))
+    }
+
+    fn is_html_unchecked(&self) -> bool {
+        let html = self
+            .trim_start()
+            .lines()
+            .next()
+            .map(|l| l.to_ascii_lowercase());
+        html.as_ref().is_some_and(|l| {
+            (l.starts_with(Self::TAG_DOCTYPE_HTML_PAT)
+                && l[Self::TAG_DOCTYPE_HTML_PAT.len()..].contains('>'))
+                || (l.starts_with(Self::START_TAG_HTML_PAT)
+                    && l[Self::START_TAG_HTML_PAT.len()..].contains('>'))
+        })
     }
 }
 
@@ -1802,6 +1826,48 @@ mod tests {
 
         // Test where input is an empty string
         assert!(!String::from("").has_html_start_tag());
+    }
+
+    #[test]
+    fn test_is_html_unchecked() {
+        // Bring new methods into scope.
+        use crate::html::HtmlStr;
+
+        // Test with <!DOCTYPE html> tag
+        let html = "<!doctype html>";
+        assert!(html.is_html_unchecked());
+
+        // Test with <!DOCTYPE html> tag
+        let html = "<!doctype html abc>def";
+        assert!(html.is_html_unchecked());
+
+        // Test with <!DOCTYPE html> tag
+        let html = "<!doctype html";
+        assert!(!html.is_html_unchecked());
+
+        // Test with <html> tag
+        let html = "<html><body></body></html>";
+        assert!(html.is_html_unchecked());
+
+        // Test with <html> tag
+        let html = "<html abc>def";
+        assert!(html.is_html_unchecked());
+
+        // Test with <html> tag
+        let html = "<html abc def";
+        assert!(!html.is_html_unchecked());
+
+        // Test with leading whitespace
+        let html = "   <!doctype html><html><body></body></html>";
+        assert!(html.is_html_unchecked());
+
+        // Test with non-html content
+        let html = "<!DOCTYPE xml><root></root>";
+        assert!(!html.is_html_unchecked());
+
+        // Test with partial <!DOCTYPE> tag
+        let html = "<!doctype>";
+        assert!(!html.is_html_unchecked());
     }
 
     #[test]
