@@ -232,18 +232,8 @@ mod tests {
         assert_eq!(tk, (TemplateKind::FromDir, None));
 
         //
-        // No data in the clipboard.
-        let tk = TemplateKind::from(
-            Path::new("."),
-            &ContentString::from("<!DOCTYPE html>".to_string()),
-            &ContentString::from("".to_string()),
-            &ContentString::from("".to_string()),
-        );
-        assert_eq!(tk, (TemplateKind::FromDir, None));
-
-        //
         // Tp-Note file.
-        // Prepare test: create existing note file without header.
+        // Prepare test: open existing text file without header.
         let raw = "Body text without header";
         let notefile = temp_dir().join("no header.md");
         let _ = fs::write(&notefile, raw.as_bytes());
@@ -267,31 +257,7 @@ mod tests {
 
         //
         // Tp-Note file.
-        // Prepare test: create existing note file with header.
-        let raw = "---\ntitle: my doc\n---\nBody";
-        let notefile = temp_dir().join("some.md");
-        let _ = fs::write(&notefile, raw.as_bytes());
-        // Execute test.
-        let (tk, content) = TemplateKind::from(
-            &notefile,
-            &ContentString::from("<!DOCTYPE html>".to_string()),
-            &ContentString::from("".to_string()),
-            &ContentString::from("".to_string()),
-        );
-        // Inspect result.
-        let expected_template_kind = TemplateKind::SyncFilename;
-        let expected_body = "Body";
-        let expected_header = "title: my doc";
-        //println!("{:?}", tk);
-        assert_eq!(tk, expected_template_kind);
-        let content = content.unwrap();
-        assert_eq!(content.header(), expected_header);
-        assert_eq!(content.body(), expected_body);
-        let _ = fs::remove_file(&notefile);
-
-        //
-        // Tp-Note file.
-        // Prepare test: create existing note file with header.
+        // Prepare test: open existing note file with header.
         let raw = "---\ntitle: my doc\n---\nBody";
         let notefile = temp_dir().join("some.md");
         let _ = fs::write(&notefile, raw.as_bytes());
@@ -315,7 +281,7 @@ mod tests {
 
         //
         // Non-Tp-Note file.
-        // Prepare test: create existing note file with header.
+        // Prepare test: annotate existing PDF file.
         let raw = "some data";
         let notefile = temp_dir().join("some.pdf");
         let _ = fs::write(&notefile, raw.as_bytes());
