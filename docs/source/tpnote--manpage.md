@@ -3139,7 +3139,7 @@ Tp-Note it hosted on:
 
 # COPYING
 
-Copyright (C) 2016-2024 Jens Getreu
+Copyright © 2016-2025 Jens Getreu
 
 Licensed under either of
 
