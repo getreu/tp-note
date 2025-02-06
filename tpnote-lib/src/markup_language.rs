@@ -5,7 +5,7 @@ use crate::error::NoteError;
 use crate::highlight::SyntaxPreprocessor;
 use crate::settings::SETTINGS;
 #[cfg(feature = "renderer")]
-use htmd::HtmlToMarkdown;
+use html2md;
 use parse_hyperlinks::renderer::text_links2html;
 use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
@@ -60,13 +60,17 @@ impl InputConverter {
         match input_converter {
             #[cfg(feature = "renderer")]
             InputConverter::ToMarkdown => |s| {
-                let converter = HtmlToMarkdown::builder()
+                /* // Alternative:
+                use htmd;
+                let converter = htmd::HtmlToMarkdown::builder()
                     .skip_tags(vec!["script", "style"])
                     .build();
 
                 converter.convert(&s).map_err(|e| NoteError::InvalidHtml {
                     source_str: e.to_string(),
                 })
+                */
+                Ok(html2md::parse_html(&s))
             },
 
             InputConverter::Disabled => {
