@@ -25,10 +25,13 @@ RUN apt-get -y install binutils-mingw-w64 mingw-w64
 # Some dependencies need Python, `mc` is for convenience.
 RUN apt-get -y install zip python3
 
-# Helper to make deb packages and install `cargo upgrade`.
-RUN cargo install --locked cargo-deb cargo-edit
-### use with
-# cargo deb --target=x86_64-unknown-linux-gnu
+# Helper to make deb packages. Use with:
+#     cargo deb --target=x86_64-unknown-linux-gnu
+RUN cargo install --locked cargo-deb
+
+# Install `cargo upgrade`.
+RUN apt-get -y install libssl-dev
+RUN cargo install --locked --version 0.13.0 cargo-edit
 
 RUN rustup component add rust-src llvm-tools rustfmt
 
