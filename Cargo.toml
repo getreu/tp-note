@@ -21,11 +21,11 @@ version = "1.25.1"
 strip = "symbols"
 
 [workspace.dependencies]
-log = { version = "0.4.22", features = ["serde"] }
+log = { version = "0.4.25", features = ["serde"] }
 parking_lot = "0.12.3"
 sanitize-filename-reader-friendly = "2.2.1"
 serde = { version = "1.0.217", features = ["derive"] }
 serde_yaml = "0.9.34"
 tera = { version = "1.20.0", default-features = true }
-thiserror = "2.0.9"
-toml = "0.8.19"
+thiserror = "2.0.11"
+toml = "0.8.20"

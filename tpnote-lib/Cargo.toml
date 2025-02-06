@@ -19,7 +19,6 @@ renderer = ["dep:pulldown-cmark", "dep:rst_parser", "dep:rst_renderer", "dep:lat
 viewer = []
 
 [dependencies]
-#Alternative (no table conversion): htmd = { version = "0.1", optional = true }
 html2md = { version = "0.2.15", optional = true }
 html-escape = "0.2.13"
 latex2mathml = { version = "0.2.3", optional = true }
@@ -40,7 +39,7 @@ rst_parser = { version = "0.4.1", optional = true }
 rst_renderer = { version = "0.4.1", optional = true }
 sanitize-filename-reader-friendly.workspace = true
 self_cell = "1.1.0"
-serde_json = "1.0.134"
+serde_json = "1.0.138"
 serde.workspace = true
 serde_yaml.workspace = true
 substring = "1.4.5"
@@ -51,7 +50,7 @@ toml.workspace = true
 
 
 [target.'cfg(windows)'.dependencies]
-win32job = "2.0.0"
+win32job = "2.0.1"
 windows-sys = { version = "0.59.0", features = [
          #"Win32_Foundation",
          #"Win32_Security",
