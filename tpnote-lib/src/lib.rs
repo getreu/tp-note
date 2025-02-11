@@ -27,6 +27,8 @@ mod front_matter;
 #[cfg(feature = "renderer")]
 pub mod highlight;
 pub mod html;
+#[cfg(feature = "renderer")]
+pub mod html2md;
 pub mod markup_language;
 mod note;
 pub mod settings;

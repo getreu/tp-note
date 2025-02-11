@@ -3,9 +3,9 @@ use crate::config::LIB_CFG;
 use crate::error::NoteError;
 #[cfg(feature = "renderer")]
 use crate::highlight::SyntaxPreprocessor;
-use crate::settings::SETTINGS;
 #[cfg(feature = "renderer")]
-use html2md;
+use crate::html2md::convert_html_to_md;
+use crate::settings::SETTINGS;
 use parse_hyperlinks::renderer::text_links2html;
 use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
@@ -59,19 +59,7 @@ impl InputConverter {
 
         match input_converter {
             #[cfg(feature = "renderer")]
-            InputConverter::ToMarkdown => |s| {
-                /* // Alternative:
-                use htmd;
-                let converter = htmd::HtmlToMarkdown::builder()
-                    .skip_tags(vec!["script", "style"])
-                    .build();
-
-                converter.convert(&s).map_err(|e| NoteError::InvalidHtml {
-                    source_str: e.to_string(),
-                })
-                */
-                Ok(html2md::parse_html(&s))
-            },
+            InputConverter::ToMarkdown => |s| convert_html_to_md(&s),
 
             InputConverter::Disabled => {
                 |_: String| -> Result<String, NoteError> { Err(NoteError::HtmlToMarkupDisabled) }
@@ -338,12 +326,12 @@ mod tests {
         assert_eq!(result.unwrap(), expected);
 
         //
-        // // [Commonmark: Example 489](https://spec.commonmark.org/0.31.2/#example-489)
-        // let input: &str = r#"<p><a href="/my%20uri">link</a></p>"#;
-        // let expected: &str = "[link](</my uri>)";
+        // [Commonmark: Example 489](https://spec.commonmark.org/0.31.2/#example-489)
+        let input: &str = r#"<p><a href="/my%20uri">link</a></p>"#;
+        let expected: &str = "[link](</my uri>)";
 
-        // let result = ic(input.to_string());
-        // assert_eq!(result.unwrap(), expected);
+        let result = ic(input.to_string());
+        assert_eq!(result.unwrap(), expected);
     }
 
     #[test]
