@@ -332,6 +332,14 @@ mod tests {
 
         let result = ic(input.to_string());
         assert_eq!(result.unwrap(), expected);
+
+        //
+        // We want ATX style headers.
+        let input: &str = r#"<p><h1>Title</h1></p>"#;
+        let expected: &str = "# Title";
+
+        let result = ic(input.to_string());
+        assert_eq!(result.unwrap(), expected);
     }
 
     #[test]
