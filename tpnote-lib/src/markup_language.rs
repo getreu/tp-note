@@ -318,6 +318,13 @@ mod tests {
         assert_eq!(result.unwrap(), expected);
 
         //
+        let input: &str = r#"<p><a href="/my_uri">link</a></p>"#;
+        let expected: &str = "[link](/my_uri)";
+
+        let result = ic(input.to_string());
+        assert_eq!(result.unwrap(), expected);
+
+        //
         // [Commonmark: Example 489](https://spec.commonmark.org/0.31.2/#example-489)
         let input: &str = r#"<p><a href="/my uri">link</a></p>"#;
         let expected: &str = "[link](</my uri>)";
