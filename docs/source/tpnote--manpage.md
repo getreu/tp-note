@@ -1,9 +1,9 @@
 ---
-title:      TP-NOTE(1) Version 1.25.1 | Tp-Note documentation
+title:      TP-NOTE(1) Version 1.25.2 | Tp-Note documentation
 subtitle:   Unix manpage
 author:     Jens Getreu
 filename_sync: false
-date:       2025-01-05
+date:       2025-02-11
 lang:       en-GB
 ---
 

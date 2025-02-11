@@ -24,7 +24,7 @@ path = "src/main.rs"
 [package.metadata.deb]
 name = "tpnote"
 maintainer = "Jens Getreu, <getreu@web.de>"
-copyright = "2020-2024, Jens Getreu <getreu@web.de>"
+copyright = "2020-2025, Jens Getreu <getreu@web.de>"
 depends = "$auto"
 revision=""
 extended-description = '''
@@ -92,8 +92,8 @@ thiserror.workspace = true
 time = "0.3.37"
 tera.workspace = true
 toml.workspace = true
-tpnote-lib = { path = "../tpnote-lib", default-features = false }
-#tpnote-lib = { version = "0.39.1", default-features = false}
+#tpnote-lib = { path = "../tpnote-lib", default-features = false }
+tpnote-lib = { version = "0.39.1", default-features = false}
 webbrowser = { version = "1.0.3", optional = true }
 
 
