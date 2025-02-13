@@ -871,10 +871,26 @@ viewer_error = """
 <meta charset=\"UTF-8\">
 <title>Syntax error</title>
 <style type="text/css">
-.note-error { color: #523626; }
+@media (prefers-color-scheme: dark) {
+  .note-error { color: #e5948d; }
+  h1, h2, h3, h4, h5, h6 { color: #8db2e5; }
+  a { color: #8de594; }
+  body {
+    background: #292929;
+    color: #eeeeee;
+  }
+}
+@media (prefers-color-scheme: light) {
+  .note-error { color: #523626; }
+  h1, h2, h3, h4, h5, h6 { color: #263292; }
+  a { color: #316128; }
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+}
 pre { white-space: pre-wrap; }
-a { color: #316128; }
-h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
+h1, h2, h3, h4, h5, h6 { font-family:sans-serif; }
 </style>
 </head>
 <body>
@@ -895,12 +911,39 @@ h1, h2, h3, h4, h5, h6 { color: #d3af2c; font-family:sans-serif; }
 ### `/viewer_doc.css` path.
 viewer_doc_css = """
 /* Tp-Note's viewer document CSS */
+@media (prefers-color-scheme: dark) {
+  h1, h2, h3, h4, h5, h6 { color: #8db2e5; }
+  em { color: #e5c08d; }
+  a { color: #8de594; }
+  body {
+    background: #292929;
+    color: #eeeeee;
+  }
+  table.fm { background-color: #363636; }
+  th.fmkey{ color: #cdcdcd; }
+  th.fmval{ color: #dee58d; }
+  th.fmkeygrey{ color: #999999; }
+  th.fmvalgrey{ color: #999999; }
+}
+@media (prefers-color-scheme: light) {
+  h1, h2, h3, h4, h5, h6 { color: #263292; }
+  em { color: #523626; }
+  a { color: #316128; }
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+  table.fm { background-color: #f3f2e4; }
+  th.fmkey{ color: #444444; }
+  th.fmval{ color: #316128; }
+  th.fmkeygrey{ color: grey; }
+  th.fmvalgrey{ color: grey; }
+}
 table.fm {
   font-weight: normal;
   margin-left: auto;
   margin-right: auto;
   padding: 4px;
-  background-color: #f3f2e4;
   border:1px solid grey;
 }
 th.fmkey, th.fmkeygrey {
@@ -913,14 +956,13 @@ th.fmval, th.fmvalgrey {
   padding-left:10px;
   padding-right:20px;
 }
-th.fmkey{ color:#444444; text-align:right; vertical-align:top;}
+th.fmkey{ text-align:right; vertical-align:top;}
 th.fmval{
-  color:#316128;
   text-align:left;
   font-family:sans-serif;
 }
-th.fmkeygrey{ color:grey; text-align:right; vertical-align:top;}
-th.fmvalgrey{ color:grey; text-align:left; }
+th.fmkeygrey{ text-align:right; vertical-align:top;}
+th.fmvalgrey{ text-align:left; }
 ul.fm {
   padding-left: 15px;
   margin: 0px;
@@ -933,13 +975,11 @@ blockquote.fm {
   padding-left: 15px
 }
 pre { white-space: pre-wrap; }
-em { color: #523626; }
-a { color: #316128; }
 h1 { font-size: 150% }
 h2 { font-size: 132% }
 h3 { font-size: 115% }
 h4, h5, h6 { font-size: 100% }
-h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
+h1, h2, h3, h4, h5, h6 { font-family:sans-serif; }
 """
 
 ### Loads the viewer's code syntax highlighting theme. The theme is converted
