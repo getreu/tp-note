@@ -1,0 +1,40 @@
+[package]
+name = "tpnote-html2md"
+version = "0.2.15"
+edition = "2018"
+authors = ["Oleg `Kanedias` Chernovskiy <kanedias@house-of-maker.online>",
+           "Jens Getreu <getreu@web.de>"]
+
+description = "HTML to Markdown converter library"
+repository = "https://gitlab.com/getreu/tpnote-html2md"
+readme = "README.md"
+keywords = ["html", "markdown", "converter"]
+categories = ["development-tools", "parsing", "parser-implementations"]
+license = "MIT"
+
+
+[lib]
+name = "html2md"
+crate-type = ["rlib", "dylib", "staticlib"]
+
+[dependencies]
+# string_cache_codegen = "0.4.2" # Needed for markup5ever
+lazy_static = "1.4.0"
+html5ever = "0.27.0"
+markup5ever_rcdom = "0.3.0"
+regex = "1.4.2"
+percent-encoding = "2.1.0"
+
+[dev-dependencies]
+spectral = "0.6.0"
+pretty_assertions = "0.7.2"
+indoc = "1.0.3"
+
+[profile.release]
+debug = false
+lto = true
+panic = 'abort'
+
+# To use this project on Android we need JNI
+[target.'cfg(target_os="android")'.dependencies]
+jni = { version = "0.19.0", default-features = false }
