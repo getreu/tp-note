@@ -43,7 +43,7 @@ impl TagHandler for ImgHandler {
 
         if height.is_some() || width.is_some() || align.is_some() {
             // need to handle it as inline html to preserve attributes we support
-            let mut identity = IdentityHandler::default();
+            let mut identity = IdentityHandler;
             identity.handle(tag, printer);
         } else {
             // need to escape URL if it contains spaces

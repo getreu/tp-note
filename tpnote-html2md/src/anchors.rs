@@ -19,7 +19,7 @@ impl TagHandler for AnchorHandler {
         // Check for a `name` attribute. If it exists, we can't support this
         // in markdown, so we must emit this tag unchanged.
         if get_tag_attr(tag, "name").is_some() {
-            let mut identity = IdentityHandler::default();
+            let mut identity = IdentityHandler;
             identity.handle(tag, printer);
             self.emit_unchanged = true;
         }

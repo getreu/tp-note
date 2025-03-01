@@ -115,7 +115,7 @@ fn walk(
     result: &mut StructuredPrinter,
     custom: &HashMap<String, Box<dyn TagHandlerFactory>>,
 ) {
-    let mut handler: Box<dyn TagHandler> = Box::new(DummyHandler::default());
+    let mut handler: Box<dyn TagHandler> = Box::new(DummyHandler);
     let mut tag_name = String::default();
     match input.data {
         NodeData::Document | NodeData::Doctype { .. } | NodeData::ProcessingInstruction { .. } => {}
@@ -147,7 +147,7 @@ fn walk(
             let inside_pre = result.parent_chain.iter().any(|tag| tag == "pre");
             if inside_pre {
                 // don't add any html tags inside the pre section
-                handler = Box::new(DummyHandler::default());
+                handler = Box::new(DummyHandler);
             } else if custom.contains_key(&tag_name) {
                 // have user-supplied factory, instantiate a handler for this tag
                 let factory = custom.get(&tag_name).unwrap();
@@ -156,9 +156,7 @@ fn walk(
                 // no user-supplied factory, take one of built-in ones
                 handler = match tag_name.as_ref() {
                     // containers
-                    "div" | "section" | "header" | "footer" => {
-                        Box::new(ContainerHandler::default())
-                    }
+                    "div" | "section" | "header" | "footer" => Box::new(ContainerHandler),
                     // pagination, breaks
                     "p" | "br" | "hr" => Box::new(ParagraphHandler::default()),
                     "q" | "cite" | "blockquote" => Box::new(QuoteHandler::default()),
@@ -172,17 +170,17 @@ fn walk(
                     "img" => Box::new(ImgHandler::default()),
                     "a" => Box::new(AnchorHandler::default()),
                     // lists
-                    "ol" | "ul" | "menu" => Box::new(ListHandler::default()),
+                    "ol" | "ul" | "menu" => Box::new(ListHandler),
                     "li" => Box::new(ListItemHandler::default()),
                     // as-is
-                    "sub" | "sup" => Box::new(IdentityHandler::default()),
+                    "sub" | "sup" => Box::new(IdentityHandler),
                     // tables, handled fully internally as markdown can't have nested content in tables
                     // supports only single tables as of now
-                    "table" => Box::new(TableHandler::default()),
-                    "iframe" => Box::new(IframeHandler::default()),
+                    "table" => Box::new(TableHandler),
+                    "iframe" => Box::new(IframeHandler),
                     // other
-                    "html" | "head" | "body" => Box::new(DummyHandler::default()),
-                    _ => Box::new(DummyHandler::default()),
+                    "html" | "head" | "body" => Box::new(DummyHandler),
+                    _ => Box::new(DummyHandler),
                 };
             }
         }

@@ -72,7 +72,7 @@ impl TagHandler for IframeHandler {
         }
 
         // not found, use generic implementation
-        let mut identity = IdentityHandler::default();
+        let mut identity = IdentityHandler;
         identity.handle(tag, printer);
     }
 
