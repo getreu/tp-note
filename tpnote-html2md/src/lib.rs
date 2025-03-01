@@ -203,13 +203,12 @@ fn walk(
 
         walk(child, result, custom);
 
-        match child.data {
-            NodeData::Element { ref name, .. } => result
+        if let NodeData::Element { ref name, .. } = child.data {
+            result
                 .siblings
                 .get_mut(&current_depth)
                 .unwrap()
-                .push(name.local.to_string()),
-            _ => {}
+                .push(name.local.to_string())
         };
     }
 
