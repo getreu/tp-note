@@ -64,13 +64,13 @@ fn test_escaping() {
 #[test]
 fn test_escaping_mid_hyphens() {
     let md = parse_html(r#"<h1>This is a header with-hyphen!</h1>"#);
-    assert_eq!(md, "This is a header with-hyphen!\n==========")
+    assert_eq!(md, "# This is a header with-hyphen!")
 }
 
 #[test]
 fn test_escaping_start_hyphens() {
     let md = parse_html(r#"<h1>- This is a header with starting hyphen!</h1>"#);
-    assert_eq!(md, "\\- This is a header with starting hyphen!\n==========")
+    assert_eq!(md, "# - This is a header with starting hyphen!")
 }
 
 #[test]
@@ -83,10 +83,7 @@ fn test_escaping_start_sharp() {
 #[test]
 fn test_escaping_start_hyphens_space() {
     let md = parse_html(r#"<h1>   - This is a header with starting hyphen!</h1>"#);
-    assert_eq!(
-        md,
-        " \\- This is a header with starting hyphen!\n=========="
-    )
+    assert_eq!(md, "#  - This is a header with starting hyphen!")
 }
 
 #[test]
@@ -107,14 +104,7 @@ fn test_headers() {
     );
     assert_eq!(
         md,
-        "\
-MARC-FS
-==========
-
-[Mail.ru](http://Mail.ru) Cloud filesystem written for FUSE
-
-Synopsis
-----------"
+        "# MARC-FS\n\n[Mail.ru](http://Mail.ru) Cloud filesystem written for FUSE\n\n## Synopsis"
     )
 }
 
