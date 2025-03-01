@@ -126,8 +126,7 @@ fn walk(
                 // this is preformatted text, insert as-is
                 result.append_str(&text);
             } else if !(text.trim().is_empty()
-                && (result.data.chars().last() == Some('\n')
-                    || result.data.chars().last() == Some(' ')))
+                && (result.data.ends_with('\n') || result.data.ends_with(' ')))
             {
                 // in case it's not just a whitespace after the newline or another whitespace
 
