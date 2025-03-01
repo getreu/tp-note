@@ -57,22 +57,20 @@ pub struct HtmlCherryPickHandler {
 
 impl TagHandler for HtmlCherryPickHandler {
     fn handle(&mut self, tag: &Handle, printer: &mut StructuredPrinter) {
-        match tag.data {
-            NodeData::Element {
-                ref name,
-                ref attrs,
-                ..
-            } => {
-                let attrs = attrs.borrow();
-                self.tag_name = name.local.to_string();
+        if let NodeData::Element {
+            ref name,
+            ref attrs,
+            ..
+        } = tag.data
+        {
+            let attrs = attrs.borrow();
+            self.tag_name = name.local.to_string();
 
-                printer.append_str(&format!("<{}", self.tag_name));
-                for attr in attrs.iter() {
-                    printer.append_str(&format!(" {}=\"{}\"", attr.name.local, attr.value));
-                }
-                printer.append_str(">");
+            printer.append_str(&format!("<{}", self.tag_name));
+            for attr in attrs.iter() {
+                printer.append_str(&format!(" {}=\"{}\"", attr.name.local, attr.value));
             }
-            _ => (),
+            printer.append_str(">");
         }
     }
 

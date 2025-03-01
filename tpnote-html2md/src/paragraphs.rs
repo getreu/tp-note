@@ -16,12 +16,9 @@ impl TagHandler for ParagraphHandler {
         };
 
         // insert newlines at the start of paragraph
-        match self.paragraph_type.as_ref() {
-            "p" => {
-                printer.insert_newline();
-                printer.insert_newline();
-            }
-            _ => {}
+        if self.paragraph_type == "p" {
+            printer.insert_newline();
+            printer.insert_newline();
         }
     }
 
