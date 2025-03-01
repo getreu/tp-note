@@ -39,6 +39,7 @@ impl TagHandler for TableHandler {
             // detect max column width
             for row in &rows {
                 let cells = collect_children(row, any_matcher);
+                #[allow(clippy::needless_range_loop)]
                 for index in 0..column_count {
                     // from regular rows
                     if let Some(cell) = cells.get(index) {
@@ -53,6 +54,7 @@ impl TagHandler for TableHandler {
         for (idx, row) in rows.iter().enumerate() {
             table_markup.push('|');
             let cells = collect_children(row, any_matcher);
+            #[allow(clippy::needless_range_loop)]
             for index in 0..column_count {
                 // we need to fill all cells in a column, even if some rows don't have enough
                 let padded_cell_text = pad_cell_text(&cells.get(index), column_widths[index]);
@@ -65,6 +67,7 @@ impl TagHandler for TableHandler {
                 // first row is a header row
                 // add header-body divider row
                 table_markup.push('|');
+                #[allow(clippy::needless_range_loop)]
                 for index in 0..column_count {
                     let width = column_widths[index];
                     if width < 3 {
