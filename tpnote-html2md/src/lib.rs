@@ -318,6 +318,7 @@ pub trait TagHandler {
 
 /// FFI variant for HTML -> Markdown conversion for calling from other languages
 #[no_mangle]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub extern "C" fn parse(html: *const c_char) -> *const c_char {
     let in_html = unsafe { CStr::from_ptr(html) };
     let out_md = parse_html(&in_html.to_string_lossy());
