@@ -138,7 +138,7 @@ fn walk(
                 }
                 let minified_text = EXCESSIVE_WHITESPACE_PATTERN.replace_all(&text, " ");
                 let minified_text = minified_text.trim_matches(|ch: char| ch == '\n' || ch == '\r');
-                result.append_str(&minified_text);
+                result.append_str(minified_text);
             }
         }
         NodeData::Comment { .. } => {} // ignore comments
@@ -188,7 +188,7 @@ fn walk(
 
     // handle this tag, while it's not in parent chain
     // and doesn't have child siblings
-    handler.handle(&input, result);
+    handler.handle(input, result);
 
     // save this tag name as parent for child nodes
     result.parent_chain.push(tag_name.to_string()); // e.g. it was ["body"] and now it's ["body", "p"]
@@ -231,7 +231,7 @@ fn walk(
 fn escape_markdown(result: &StructuredPrinter, text: &str) -> String {
     // always escape bold/italic/strikethrough
     let mut data = MARKDOWN_MIDDLE_KEYCHARS
-        .replace_all(&text, "\\$0")
+        .replace_all(text, "\\$0")
         .to_string();
 
     // if we're at the start of the line we need to escape list- and quote-starting sequences
@@ -251,7 +251,7 @@ fn escape_markdown(result: &StructuredPrinter, text: &str) -> String {
 /// Clears excessive punctuation that would be trimmed by renderer anyway
 fn clean_markdown(text: &str) -> String {
     // remove redundant newlines
-    let intermediate = EMPTY_LINE_PATTERN.replace_all(&text, ""); // empty line with trailing spaces, replace with just newline
+    let intermediate = EMPTY_LINE_PATTERN.replace_all(text, ""); // empty line with trailing spaces, replace with just newline
     let intermediate = EXCESSIVE_NEWLINE_PATTERN.replace_all(&intermediate, "\n\n"); // > 3 newlines - not handled by markdown anyway
     let intermediate = TRAILING_SPACE_PATTERN.replace_all(&intermediate, "$1"); // trim space if it's just one
     let intermediate = LEADING_NEWLINES_PATTERN.replace_all(&intermediate, ""); // trim leading newlines

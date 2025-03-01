@@ -24,16 +24,16 @@ impl TagHandler for TableHandler {
         {
             // detect row count
             let most_big_row = rows.iter().max_by(|left, right| {
-                collect_children(&left, any_matcher)
+                collect_children(left, any_matcher)
                     .len()
-                    .cmp(&collect_children(&right, any_matcher).len())
+                    .cmp(&collect_children(right, any_matcher).len())
             });
             if most_big_row.is_none() {
                 // we don't have rows with content at all
                 return;
             }
             // have rows with content, set column count
-            column_count = collect_children(&most_big_row.unwrap(), any_matcher).len();
+            column_count = collect_children(most_big_row.unwrap(), any_matcher).len();
             column_widths = vec![3; column_count];
 
             // detect max column width
@@ -181,11 +181,11 @@ fn find_children(tag: &Handle, name: &str) -> Vec<Handle> {
     let mut result: Vec<Handle> = vec![];
     let children = tag.children.borrow();
     for child in children.iter() {
-        if tag_name(&child) == name {
+        if tag_name(child) == name {
             result.push(child.clone());
         }
 
-        let mut descendants = find_children(&child, name);
+        let mut descendants = find_children(child, name);
         result.append(&mut descendants);
     }
 
