@@ -76,7 +76,7 @@ pub fn parse_html_custom(
     let mut result = StructuredPrinter::default();
     walk(&dom.document, &mut result, custom);
 
-    return clean_markdown(&result.data);
+    clean_markdown(&result.data)
 }
 
 /// Main function of this library. Parses incoming HTML, converts it into Markdown
@@ -94,13 +94,13 @@ pub fn parse_html_extended(html: &str) -> String {
     struct SpanAsIsTagFactory;
     impl TagHandlerFactory for SpanAsIsTagFactory {
         fn instantiate(&self) -> Box<dyn TagHandler> {
-            return Box::new(HtmlCherryPickHandler::default());
+            Box::new(HtmlCherryPickHandler::default())
         }
     }
 
     let mut tag_factory: HashMap<String, Box<dyn TagHandlerFactory>> = HashMap::new();
     tag_factory.insert(String::from("span"), Box::new(SpanAsIsTagFactory {}));
-    return parse_html_custom(html, &tag_factory);
+    parse_html_custom(html, &tag_factory)
 }
 
 /// Recursively walk through all DOM tree and handle all elements according to
@@ -243,7 +243,7 @@ fn escape_markdown(result: &StructuredPrinter, text: &str) -> String {
 
     // no handling of more complicated cases such as
     // ![] or []() ones, for now this will suffice
-    return data;
+    data
 }
 
 /// Called after all processing has been finished
@@ -257,7 +257,7 @@ fn clean_markdown(text: &str) -> String {
     let intermediate = LEADING_NEWLINES_PATTERN.replace_all(&intermediate, ""); // trim leading newlines
     let intermediate = LAST_WHITESPACE_PATTERN.replace_all(&intermediate, ""); // trim last newlines
 
-    return intermediate.into_owned();
+    intermediate.into_owned()
 }
 
 /// Intermediate result of HTML -> Markdown conversion.
@@ -314,7 +314,7 @@ pub trait TagHandler {
     fn after_handle(&mut self, printer: &mut StructuredPrinter);
 
     fn skip_descendants(&self) -> bool {
-        return false;
+        false
     }
 }
 

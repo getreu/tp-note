@@ -123,7 +123,7 @@ impl TagHandler for TableHandler {
     fn after_handle(&mut self, _printer: &mut StructuredPrinter) {}
 
     fn skip_descendants(&self) -> bool {
-        return true;
+        true
     }
 }
 
@@ -163,16 +163,16 @@ fn pad_cell_text(tag: &Option<&Handle>, column_width: usize) -> String {
         result.push_str(&" ".repeat(pad_len));
     }
 
-    return result;
+    result
 }
 
 /// Extracts tag name from passed tag
 /// Returns empty string if it's not an html element
 fn tag_name(tag: &Handle) -> String {
-    return match tag.data {
+    match tag.data {
         NodeData::Element { ref name, .. } => name.local.to_string(),
         _ => String::new(),
-    };
+    }
 }
 
 /// Find descendants of this tag with tag name `name`
@@ -189,7 +189,7 @@ fn find_children(tag: &Handle, name: &str) -> Vec<Handle> {
         result.append(&mut descendants);
     }
 
-    return result;
+    result
 }
 
 /// Collect direct children that satisfy the predicate
@@ -207,7 +207,7 @@ where
         }
     }
 
-    return result;
+    result
 }
 
 /// Convert html tag to text. This collects all tag children in correct order where they're observed
@@ -217,5 +217,5 @@ fn to_text(tag: &Handle) -> String {
     walk(tag, &mut printer, &HashMap::default());
 
     let result = clean_markdown(&printer.data);
-    return result.replace("\n", "<br/>");
+    result.replace("\n", "<br/>")
 }

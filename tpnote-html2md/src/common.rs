@@ -7,8 +7,8 @@ pub fn get_tag_attr(tag: &Handle, attr_name: &str) -> Option<String> {
             let requested_attr = attrs
                 .iter()
                 .find(|attr| attr.name.local.to_string() == attr_name);
-            return requested_attr.map(|attr| attr.value.to_string());
+            requested_attr.map(|attr| attr.value.to_string())
         }
-        _ => return None,
+        _ => None,
     }
 }

@@ -43,7 +43,7 @@ impl TagHandler for IdentityHandler {
     }
 
     fn skip_descendants(&self) -> bool {
-        return true;
+        true
     }
 
     fn after_handle(&mut self, _printer: &mut StructuredPrinter) {}
@@ -72,12 +72,12 @@ impl TagHandler for HtmlCherryPickHandler {
                 }
                 printer.append_str(">");
             }
-            _ => return,
+            _ => (),
         }
     }
 
     fn skip_descendants(&self) -> bool {
-        return false;
+        false
     }
 
     fn after_handle(&mut self, printer: &mut StructuredPrinter) {

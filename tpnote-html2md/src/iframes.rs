@@ -82,6 +82,6 @@ impl TagHandler for IframeHandler {
     }
 
     fn skip_descendants(&self) -> bool {
-        return true;
+        true
     }
 }
