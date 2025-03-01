@@ -81,8 +81,8 @@ impl TagHandler for ListItemHandler {
         // list element, not an empty line
         let index = self.start_pos;
         while index < printer.data.len() {
-            if printer.data.bytes().nth(index) == Some(b'\n')
-                || printer.data.bytes().nth(index) == Some(b' ')
+            if printer.data.as_bytes().get(index) == Some(&b'\n')
+                || printer.data.as_bytes().get(index) == Some(&b' ')
             {
                 printer.data.remove(index);
             } else {
@@ -94,7 +94,7 @@ impl TagHandler for ListItemHandler {
         // list item except first should be indented with at least 1 space
         let mut index = printer.data.len();
         while index > self.start_pos {
-            if printer.data.bytes().nth(index) == Some(b'\n') {
+            if printer.data.as_bytes().get(index) == Some(&b'\n') {
                 printer.insert_str(index + 1, &" ".repeat(padding));
             }
             index -= 1;
