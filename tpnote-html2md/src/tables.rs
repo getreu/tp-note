@@ -1,27 +1,33 @@
-use super::{walk, clean_markdown};
-use super::TagHandler;
 use super::StructuredPrinter;
+use super::TagHandler;
+use super::{clean_markdown, walk};
 
-use std::{collections::HashMap, cmp};
+use std::{cmp, collections::HashMap};
 
-use markup5ever_rcdom::{Handle,NodeData};
+use markup5ever_rcdom::{Handle, NodeData};
 
 #[derive(Default)]
 pub struct TableHandler;
 
 impl TagHandler for TableHandler {
-
     fn handle(&mut self, tag: &Handle, printer: &mut StructuredPrinter) {
         let mut table_markup = String::new();
-        let any_matcher = |cell: &Handle| { let name = tag_name(cell); name == "td" || name == "th" };
+        let any_matcher = |cell: &Handle| {
+            let name = tag_name(cell);
+            name == "td" || name == "th"
+        };
 
         // detect cell width, counts
-        let column_count : usize;
-        let mut column_widths : Vec<usize>;
+        let column_count: usize;
+        let mut column_widths: Vec<usize>;
         let rows = find_children(tag, "tr");
         {
             // detect row count
-            let most_big_row = rows.iter().max_by(|left, right| collect_children(&left, any_matcher).len().cmp(&collect_children(&right, any_matcher).len()));
+            let most_big_row = rows.iter().max_by(|left, right| {
+                collect_children(&left, any_matcher)
+                    .len()
+                    .cmp(&collect_children(&right, any_matcher).len())
+            });
             if most_big_row.is_none() {
                 // we don't have rows with content at all
                 return;
@@ -47,7 +53,8 @@ impl TagHandler for TableHandler {
         for (idx, row) in rows.iter().enumerate() {
             table_markup.push('|');
             let cells = collect_children(row, any_matcher);
-            for index in 0..column_count { // we need to fill all cells in a column, even if some rows don't have enough
+            for index in 0..column_count {
+                // we need to fill all cells in a column, even if some rows don't have enough
                 let padded_cell_text = pad_cell_text(&cells.get(index), column_widths[index]);
                 table_markup.push_str(&padded_cell_text);
                 table_markup.push('|');
@@ -74,19 +81,33 @@ impl TagHandler for TableHandler {
                         alignment = match header_cell.data {
                             NodeData::Element { ref attrs, .. } => {
                                 let attrs = attrs.borrow();
-                                let align_attr = attrs.iter().find(|attr| attr.name.local.to_string() == "align");
-                                align_attr.map(|attr| attr.value.to_string()).unwrap_or_default()
+                                let align_attr = attrs
+                                    .iter()
+                                    .find(|attr| attr.name.local.to_string() == "align");
+                                align_attr
+                                    .map(|attr| attr.value.to_string())
+                                    .unwrap_or_default()
                             }
-                            _ => String::new()
+                            _ => String::new(),
                         };
                     }
 
                     // push lines according to alignment, fallback to default behaviour
                     match alignment.as_ref() {
-                        "left" => { table_markup.push(':'); table_markup.push_str(&"-".repeat(width - 1)); }
-                        "center" => { table_markup.push(':'); table_markup.push_str(&"-".repeat(width - 2)); table_markup.push(':'); }
-                        "right" => { table_markup.push_str(&"-".repeat(width - 1)); table_markup.push(':'); }
-                        _ => table_markup.push_str(&"-".repeat(width))
+                        "left" => {
+                            table_markup.push(':');
+                            table_markup.push_str(&"-".repeat(width - 1));
+                        }
+                        "center" => {
+                            table_markup.push(':');
+                            table_markup.push_str(&"-".repeat(width - 2));
+                            table_markup.push(':');
+                        }
+                        "right" => {
+                            table_markup.push_str(&"-".repeat(width - 1));
+                            table_markup.push(':');
+                        }
+                        _ => table_markup.push_str(&"-".repeat(width)),
                     }
                     table_markup.push('|');
                 }
@@ -99,9 +120,7 @@ impl TagHandler for TableHandler {
         printer.append_str(&table_markup);
     }
 
-    fn after_handle(&mut self, _printer: &mut StructuredPrinter) {
-
-    }
+    fn after_handle(&mut self, _printer: &mut StructuredPrinter) {}
 
     fn skip_descendants(&self) -> bool {
         return true;
@@ -152,13 +171,13 @@ fn pad_cell_text(tag: &Option<&Handle>, column_width: usize) -> String {
 fn tag_name(tag: &Handle) -> String {
     return match tag.data {
         NodeData::Element { ref name, .. } => name.local.to_string(),
-        _ => String::new()
-    }
+        _ => String::new(),
+    };
 }
 
 /// Find descendants of this tag with tag name `name`
 /// This includes both direct children and descendants
-fn  find_children(tag: &Handle, name: &str) -> Vec<Handle> {
+fn find_children(tag: &Handle, name: &str) -> Vec<Handle> {
     let mut result: Vec<Handle> = vec![];
     let children = tag.children.borrow();
     for child in children.iter() {
@@ -176,7 +195,9 @@ fn  find_children(tag: &Handle, name: &str) -> Vec<Handle> {
 /// Collect direct children that satisfy the predicate
 /// This doesn't include descendants
 fn collect_children<P>(tag: &Handle, predicate: P) -> Vec<Handle>
-where P: Fn(&Handle) -> bool {
+where
+    P: Fn(&Handle) -> bool,
+{
     let mut result: Vec<Handle> = vec![];
     let children = tag.children.borrow();
     for child in children.iter() {
@@ -191,10 +212,9 @@ where P: Fn(&Handle) -> bool {
 
 /// Convert html tag to text. This collects all tag children in correct order where they're observed
 /// and concatenates their text, recursively.
-fn  to_text(tag: &Handle) -> String {
+fn to_text(tag: &Handle) -> String {
     let mut printer = StructuredPrinter::default();
     walk(tag, &mut printer, &HashMap::default());
-
 
     let result = clean_markdown(&printer.data);
     return result.replace("\n", "<br/>");

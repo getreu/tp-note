@@ -1,22 +1,21 @@
-use super::TagHandler;
 use super::StructuredPrinter;
+use super::TagHandler;
 
 use markup5ever_rcdom::Handle;
 
 #[derive(Default)]
 pub struct QuoteHandler {
-    start_pos: usize
+    start_pos: usize,
 }
 
 impl TagHandler for QuoteHandler {
-
     fn handle(&mut self, _tag: &Handle, printer: &mut StructuredPrinter) {
         self.start_pos = printer.data.len();
         printer.insert_newline();
     }
 
     fn after_handle(&mut self, printer: &mut StructuredPrinter) {
-        // replace all newlines with newline + > 
+        // replace all newlines with newline + >
         let quote = "> ";
         let mut index = printer.data.len();
         while index > self.start_pos {

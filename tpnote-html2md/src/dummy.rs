@@ -84,4 +84,3 @@ impl TagHandler for HtmlCherryPickHandler {
         printer.append_str(&format!("</{}>", self.tag_name));
     }
 }
-

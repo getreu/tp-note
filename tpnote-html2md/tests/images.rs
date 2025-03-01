@@ -6,13 +6,19 @@ use pretty_assertions::assert_eq;
 #[test]
 fn test_image_native_simple() {
     let md = parse_html("<img src=\"https://i.redd.it/vesfbmwfkz811.png\" alt=\"image of Linus holding his laptop\" title=\"Daddy Linus\" />");
-    assert_eq!(md, "![image of Linus holding his laptop](https://i.redd.it/vesfbmwfkz811.png \"Daddy Linus\")")
+    assert_eq!(
+        md,
+        "![image of Linus holding his laptop](https://i.redd.it/vesfbmwfkz811.png \"Daddy Linus\")"
+    )
 }
 
 #[test]
 fn test_image_native_without_title() {
     let md = parse_html("<img src=\"https://i.redd.it/l0ne52x7fh611.png\" alt=\"image of usual kill -9 sequence\" />");
-    assert_eq!(md, "![image of usual kill -9 sequence](https://i.redd.it/l0ne52x7fh611.png)")
+    assert_eq!(
+        md,
+        "![image of usual kill -9 sequence](https://i.redd.it/l0ne52x7fh611.png)"
+    )
 }
 
 #[test]
@@ -37,9 +43,11 @@ fn test_image_src_issue() {
 #[test]
 fn test_image_with_space_issue() {
     let md = parse_html("<img src=\"https://i.redd.it/l0ne 52x7f h611.png\" alt=\"image of usual kill -9 sequence\" />");
-    assert_eq!(md, "![image of usual kill -9 sequence](https://i.redd.it/l0ne%2052x7f%20h611.png)")
+    assert_eq!(
+        md,
+        "![image of usual kill -9 sequence](https://i.redd.it/l0ne%2052x7f%20h611.png)"
+    )
 }
-
 
 #[test]
 fn test_image_with_query_issue() {
@@ -50,5 +58,8 @@ fn test_image_with_query_issue() {
 #[test]
 fn test_image_with_unsupported_html_and_quotes_in_alt() {
     let md = parse_html(r#"<img alt="A &quot;pipe&quot;" src="a.png" width="13" />"#);
-    assert_eq!(md, r#"<img alt="A &quot;pipe&quot;" src="a.png" width="13">"#)
+    assert_eq!(
+        md,
+        r#"<img alt="A &quot;pipe&quot;" src="a.png" width="13">"#
+    )
 }

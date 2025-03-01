@@ -3,20 +3,25 @@ extern crate html2md;
 use html2md::parse_html;
 use pretty_assertions::assert_eq;
 
-
 #[test]
 fn test_list_simple() {
-    let md = parse_html(r#"<p><ul><li>Seven things has lady Lackless</li><li>Keeps them underneath her black dress</li><li>One a thing that's not for wearing</li></ul></p>"#);
-    assert_eq!(md, "\
+    let md = parse_html(
+        r#"<p><ul><li>Seven things has lady Lackless</li><li>Keeps them underneath her black dress</li><li>One a thing that's not for wearing</li></ul></p>"#,
+    );
+    assert_eq!(
+        md,
+        "\
 * Seven things has lady Lackless
 * Keeps them underneath her black dress
-* One a thing that's not for wearing")
+* One a thing that's not for wearing"
+    )
 }
 
 #[test]
 fn test_list_formatted() {
     // let's use some some broken html
-    let md = parse_html(r#"
+    let md = parse_html(
+        r#"
         <ul><p>
             <li>You should NEVER see this error
                 <ul>
@@ -29,8 +34,11 @@ fn test_list_formatted() {
             <li>Ain't no use jiving</li>
             <li>Ain't no use joking</li>
             <li>EVERYTHING IS BROKEN
-    "#);
-    assert_eq!(md, "\
+    "#,
+    );
+    assert_eq!(
+        md,
+        "\
 * You should NEVER see this error
   * Broken lines, broken strings
   * Broken threads, broken springs
@@ -39,12 +47,14 @@ fn test_list_formatted() {
 
 * Ain't no use jiving
 * Ain't no use joking
-* EVERYTHING IS BROKEN")
+* EVERYTHING IS BROKEN"
+    )
 }
 
 #[test]
 fn test_list_stackedit() {
-    let md = parse_html(r#"
+    let md = parse_html(
+        r#"
     <ul>
         <li>
             <p>You should NEVER see this error</p>
@@ -72,8 +82,11 @@ fn test_list_stackedit() {
             <li>
             <p>EVERYTHING IS BROKEN</p>
             </li>
-    </ul>"#);
-    assert_eq!(md, "\
+    </ul>"#,
+    );
+    assert_eq!(
+        md,
+        "\
 * You should NEVER see this error
 
   * Broken lines, broken strings
@@ -88,12 +101,14 @@ fn test_list_stackedit() {
 
 * Ain’t no use joking
 
-* EVERYTHING IS BROKEN")
+* EVERYTHING IS BROKEN"
+    )
 }
 
 #[test]
 fn test_list_stackedit_add_brs() {
-    let md = parse_html(r#"
+    let md = parse_html(
+        r#"
     <ul>
         <li>
             <p>You should NEVER see this error</p>
@@ -123,8 +138,11 @@ fn test_list_stackedit_add_brs() {
             <li>
             <p>EVERYTHING IS BROKEN</p>
             </li>
-    </ul>"#);
-    assert_eq!(md, "\
+    </ul>"#,
+    );
+    assert_eq!(
+        md,
+        "\
 * You should NEVER see this error
 
   * Broken lines, broken strings
@@ -139,12 +157,14 @@ fn test_list_stackedit_add_brs() {
 
 * Ain’t no use joking
 
-* EVERYTHING IS BROKEN")
+* EVERYTHING IS BROKEN"
+    )
 }
 
 #[test]
 fn test_list_multiline() {
-    let md = parse_html(r#"
+    let md = parse_html(
+        r#"
         <ol>
             <li>
                 <p>In the heat and the rains</p>
@@ -153,20 +173,25 @@ fn test_list_multiline() {
             
             </li>
         </ol>
-    "#);
-    assert_eq!(md, "\
+    "#,
+    );
+    assert_eq!(
+        md,
+        "\
 1. In the heat and the rains
 
    With whips and chains
 
    Just to see him fly  
-   So many die!")
+   So many die!"
+    )
 }
 
 #[test]
 fn test_list_multiline_formatted() {
     // let's use some some broken html
-    let md = parse_html(r#"
+    let md = parse_html(
+        r#"
         <ul><p>
             <li>You should NEVER see this error
                 <ul>
@@ -181,8 +206,11 @@ fn test_list_multiline_formatted() {
                     </li>
                 </ul>
             </li>
-    "#);
-    assert_eq!(md, "\
+    "#,
+    );
+    assert_eq!(
+        md,
+        "\
 * You should NEVER see this error
   * Broken lines, broken strings
   * Broken threads, broken springs
@@ -192,30 +220,37 @@ fn test_list_multiline_formatted() {
 
     Ain't no use joking
 
-    EVERYTHING IS BROKEN")
+    EVERYTHING IS BROKEN"
+    )
 }
 
 #[test]
 fn test_list_ordered() {
     // let's use some some broken html
-    let md = parse_html(r#"
+    let md = parse_html(
+        r#"
         <ol>
             <li>Now did you read the news today?</li>
             <li>They say the danger's gone away</li>
             <li>Well I can see the fire still alight</li>
             <li>Burning into the night</li>
         </ol>
-    "#);
-    assert_eq!(md, "\
+    "#,
+    );
+    assert_eq!(
+        md,
+        "\
 1. Now did you read the news today?
 2. They say the danger's gone away
 3. Well I can see the fire still alight
-4. Burning into the night")
+4. Burning into the night"
+    )
 }
 
 #[test]
 fn test_list_text_prevsibling() {
-    let md = parse_html(r#"
+    let md = parse_html(
+        r#"
         Phrases to describe me:
         <ul>
             <li>Awesome</li>
@@ -224,13 +259,17 @@ fn test_list_text_prevsibling() {
             <li>Can count to five</li>
             <li>Learning to count to six B)</li>
         </ul>
-    "#);
-    assert_eq!(md, "\
+    "#,
+    );
+    assert_eq!(
+        md,
+        "\
 Phrases to describe me:
 
 * Awesome
 * Cool
 * Awesome and cool
 * Can count to five
-* Learning to count to six B)")
+* Learning to count to six B)"
+    )
 }

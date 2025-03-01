@@ -1,15 +1,14 @@
-use super::TagHandler;
 use super::StructuredPrinter;
+use super::TagHandler;
 
-use markup5ever_rcdom::{Handle,NodeData};
+use markup5ever_rcdom::{Handle, NodeData};
 
 #[derive(Default)]
 pub struct CodeHandler {
-    code_type: String
+    code_type: String,
 }
 
 impl CodeHandler {
-
     /// Used in both starting and finishing handling
     fn do_handle(&mut self, printer: &mut StructuredPrinter, start: bool) {
         let immediate_parent = printer.parent_chain.last().unwrap().to_owned();
@@ -28,7 +27,7 @@ impl CodeHandler {
                 if !start {
                     printer.insert_newline();
                 }
-            },
+            }
             "code" | "samp" => printer.append_str("`"),
             _ => {}
         }
@@ -36,11 +35,10 @@ impl CodeHandler {
 }
 
 impl TagHandler for CodeHandler {
-
     fn handle(&mut self, tag: &Handle, printer: &mut StructuredPrinter) {
         self.code_type = match tag.data {
             NodeData::Element { ref name, .. } => name.local.to_string(),
-            _ => String::new()
+            _ => String::new(),
         };
 
         self.do_handle(printer, true);

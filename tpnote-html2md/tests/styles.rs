@@ -11,7 +11,8 @@ fn test_styles_with_spaces() {
 
 #[test]
 fn test_styles_with_newlines() {
-    let md = parse_html(r#"
+    let md = parse_html(
+        r#"
 And she said:<br/>
 <s>We are all just prisoners here<br/>
 <u> Of our own device<br/>  </s>
@@ -20,13 +21,17 @@ They gathered for the feast<br/>
 <em>They stab it with their steely knives</em><br/>
 <strong>But they just can't kill the beast<br/></strong>
     
-"#);
-    assert_eq!(md, "\
+"#,
+    );
+    assert_eq!(
+        md,
+        "\
 And she said:  
 ~~We are all just prisoners here  
  Of our own device~~  
 And in the master's chambers  
 They gathered for the feast  
 *They stab it with their steely knives*  
-**But they just can't kill the beast**")
+**But they just can't kill the beast**"
+    )
 }

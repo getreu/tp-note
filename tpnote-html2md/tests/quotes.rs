@@ -1,35 +1,48 @@
 extern crate html2md;
 
 use html2md::parse_html;
-use pretty_assertions::assert_eq;
 use indoc::indoc;
+use pretty_assertions::assert_eq;
 
 #[test]
 fn test_quotes() {
-    let md = parse_html("<p><blockquote>here's a quote\n next line of it</blockquote>And some text after it</p>");
-    assert_eq!(md, "\
+    let md = parse_html(
+        "<p><blockquote>here's a quote\n next line of it</blockquote>And some text after it</p>",
+    );
+    assert_eq!(
+        md,
+        "\
 > here's a quote next line of it
 
-And some text after it")
+And some text after it"
+    )
 }
 
 #[test]
 fn test_quotes2() {
     let md = parse_html("<p><blockquote>here's<blockquote>nested quote!</blockquote> a quote\n next line of it</blockquote></p>");
-    assert_eq!(md, "\
+    assert_eq!(
+        md,
+        "\
 > here's
 > > nested quote!
 >
->  a quote next line of it")
+>  a quote next line of it"
+    )
 }
 
 #[test]
 fn test_blockquotes() {
-    let md = parse_html("<blockquote>Quote at the start of the message</blockquote>Should not crash the parser");
-    assert_eq!(md, "\
+    let md = parse_html(
+        "<blockquote>Quote at the start of the message</blockquote>Should not crash the parser",
+    );
+    assert_eq!(
+        md,
+        "\
 > Quote at the start of the message
 
-Should not crash the parser")
+Should not crash the parser"
+    )
 }
 
 #[test]

@@ -1,5 +1,5 @@
-use super::TagHandler;
 use super::StructuredPrinter;
+use super::TagHandler;
 
 use crate::common::get_tag_attr;
 use crate::dummy::IdentityHandler;
@@ -14,11 +14,10 @@ const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'<').add(b'>').ad
 /// inline HTML-formatted image and Markdown native one
 #[derive(Default)]
 pub struct ImgHandler {
-    block_mode: bool
+    block_mode: bool,
 }
 
 impl TagHandler for ImgHandler {
-
     fn handle(&mut self, tag: &Handle, printer: &mut StructuredPrinter) {
         // hack: detect if the image has associated style and has display in block mode
         let style_tag = get_tag_attr(tag, "src");
@@ -54,11 +53,14 @@ impl TagHandler for ImgHandler {
                 img_url = utf8_percent_encode(&img_url, FRAGMENT).to_string();
             }
 
-            printer.append_str(
-                &format!("![{}]({}{})", 
-                    alt.unwrap_or_default(), 
-                    &img_url,
-                    title.map(|value| format!(" \"{}\"", value)).unwrap_or_default()));
+            printer.append_str(&format!(
+                "![{}]({}{})",
+                alt.unwrap_or_default(),
+                &img_url,
+                title
+                    .map(|value| format!(" \"{}\"", value))
+                    .unwrap_or_default()
+            ));
         }
     }
 

@@ -1,18 +1,22 @@
-use super::TagHandler;
 use super::StructuredPrinter;
+use super::TagHandler;
 
 use markup5ever_rcdom::Handle;
 
 /// gets all list elements registered by a `StructuredPrinter` in reverse order
 fn list_hierarchy(printer: &mut StructuredPrinter) -> Vec<&String> {
-    printer.parent_chain.iter().rev().filter(|&tag| tag == "ul" || tag == "ol" || tag == "menu").collect()
+    printer
+        .parent_chain
+        .iter()
+        .rev()
+        .filter(|&tag| tag == "ul" || tag == "ol" || tag == "menu")
+        .collect()
 }
 
 #[derive(Default)]
 pub struct ListHandler;
 
 impl TagHandler for ListHandler {
-
     /// we're entering "ul" or "ol" tag, no "li" handling here
     fn handle(&mut self, _tag: &Handle, printer: &mut StructuredPrinter) {
         printer.insert_newline();
@@ -33,11 +37,10 @@ impl TagHandler for ListHandler {
 #[derive(Default)]
 pub struct ListItemHandler {
     start_pos: usize,
-    list_type: String
+    list_type: String,
 }
 
 impl TagHandler for ListItemHandler {
-
     fn handle(&mut self, _tag: &Handle, printer: &mut StructuredPrinter) {
         {
             let parent_lists = list_hierarchy(printer);
@@ -61,7 +64,7 @@ impl TagHandler for ListItemHandler {
         match self.list_type.as_ref() {
             "ul" | "menu" => printer.append_str("* "), // unordered list: *, *, *
             "ol" => printer.append_str(&(order.to_string() + ". ")), // ordered list: 1, 2, 3
-            _ => {} // never happens
+            _ => {}                                    // never happens
         }
 
         self.start_pos = printer.data.len();
@@ -71,14 +74,16 @@ impl TagHandler for ListItemHandler {
         let padding = match self.list_type.as_ref() {
             "ul" => 2,
             "ol" => 3,
-            _ => 4
+            _ => 4,
         };
 
-        // need to cleanup leading newlines, <p> inside <li> should produce valid 
+        // need to cleanup leading newlines, <p> inside <li> should produce valid
         // list element, not an empty line
         let index = self.start_pos;
         while index < printer.data.len() {
-            if printer.data.bytes().nth(index) == Some(b'\n') || printer.data.bytes().nth(index) == Some(b' ') {
+            if printer.data.bytes().nth(index) == Some(b'\n')
+                || printer.data.bytes().nth(index) == Some(b' ')
+            {
                 printer.data.remove(index);
             } else {
                 break;

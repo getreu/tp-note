@@ -5,7 +5,8 @@ use pretty_assertions::assert_eq;
 
 #[test]
 fn test_tables() {
-    let md = parse_html(r#"<table>
+    let md = parse_html(
+        r#"<table>
   <thead>
     <tr>
       <th scope='col'>Minor1</th>
@@ -22,17 +23,22 @@ fn test_tables() {
       <td>col4</td>
     </tr>
   </tbody>
-</table>"#);
+</table>"#,
+    );
 
-    assert_eq!(md, "\
+    assert_eq!(
+        md,
+        "\
 |Minor1|Minor2|Minor3|Minor4|
 |------|------|------|------|
-| col1 | col2 | col3 | col4 |");
+| col1 | col2 | col3 | col4 |"
+    );
 }
 
 #[test]
 fn test_tables_invalid_more_headers() {
-    let md = parse_html(r#"<table>
+    let md = parse_html(
+        r#"<table>
   <thead>
     <tr>
       <th scope='col'>Minor1</th>
@@ -51,17 +57,22 @@ fn test_tables_invalid_more_headers() {
       <td>col4</td>
     </tr>
   </tbody>
-</table>"#);
+</table>"#,
+    );
 
-    assert_eq!(md, "\
+    assert_eq!(
+        md,
+        "\
 |Minor1|Minor2|Minor3|Minor4|Minor5|Minor6|
 |------|------|------|------|------|------|
-| col1 | col2 | col3 | col4 |      |      |");
+| col1 | col2 | col3 | col4 |      |      |"
+    );
 }
 
 #[test]
 fn test_tables_invalid_more_rows() {
-    let md = parse_html(r#"<table>
+    let md = parse_html(
+        r#"<table>
   <thead>
     <tr>
       <th scope='col'>Minor1</th>
@@ -76,17 +87,22 @@ fn test_tables_invalid_more_rows() {
       <td>col4</td>
     </tr>
   </tbody>
-</table>"#);
+</table>"#,
+    );
 
-    assert_eq!(md, "\
+    assert_eq!(
+        md,
+        "\
 |Minor1|Minor2|    |    |
 |------|------|----|----|
-| col1 | col2 |col3|col4|");
+| col1 | col2 |col3|col4|"
+    );
 }
 
 #[test]
 fn test_tables_odd_column_width() {
-    let md = parse_html(r#"<table>
+    let md = parse_html(
+        r#"<table>
   <thead>
     <tr>
       <th scope='col'>Minor</th>
@@ -99,17 +115,22 @@ fn test_tables_odd_column_width() {
       <td>col2</td>
     </tr>
   </tbody>
-</table>"#);
+</table>"#,
+    );
 
-    assert_eq!(md, "\
+    assert_eq!(
+        md,
+        "\
 |Minor|Major|
 |-----|-----|
-|col1 |col2 |");
+|col1 |col2 |"
+    );
 }
 
 #[test]
 fn test_tables_alignment() {
-    let md = parse_html(r#"<table>
+    let md = parse_html(
+        r#"<table>
   <thead>
     <tr>
       <th align='right'>Minor1</th>
@@ -126,17 +147,22 @@ fn test_tables_alignment() {
       <td>col4</td>
     </tr>
   </tbody>
-</table>"#);
+</table>"#,
+    );
 
-    assert_eq!(md, "\
+    assert_eq!(
+        md,
+        "\
 |Minor1|Minor2|Minor3|Minor4|
 |-----:|:----:|-----:|:-----|
-| col1 | col2 | col3 | col4 |");
+| col1 | col2 | col3 | col4 |"
+    );
 }
 
 #[test]
 fn test_tables_wild_example() {
-    let md = parse_html(r#"
+    let md = parse_html(
+        r#"
 <table style="width: 100%;">
     <thead>
     <tr>
@@ -182,7 +208,8 @@ fn test_tables_wild_example() {
         <td style="width: 16.6667%;"><br></td>
     </tr>
     </tbody>
-</table>"#);
+</table>"#,
+    );
 
     assert_eq!(md, "\
 |          One ring           |         Patterns         |              Titanic              |   |   |   |
