@@ -45,7 +45,7 @@ impl TagHandler for IframeHandler {
         //let width = get_tag_attr(tag, "width");
         //let height = get_tag_attr(tag, "height");
 
-        if src == None {
+        if src.is_none() {
             return;
         }
 
