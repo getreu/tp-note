@@ -125,7 +125,7 @@ fn walk(
             if inside_pre {
                 // this is preformatted text, insert as-is
                 result.append_str(&text);
-            } else if !(text.trim().len() == 0
+            } else if !(text.trim().is_empty()
                 && (result.data.chars().last() == Some('\n')
                     || result.data.chars().last() == Some(' ')))
             {
