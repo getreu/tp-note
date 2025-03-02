@@ -31,14 +31,14 @@ parse-hyperlinks-extras = "0.27.2"
 #parse-hyperlinks = { path = "../../parse-hyperlinks/parse-hyperlinks" }
 percent-encoding = "2.3.1"
 # Markdown renderer.
-pulldown-cmark = { version = "0.12", default-features = false, features = ["simd", "html"], optional = true }
+pulldown-cmark = { version = "0.13", default-features = false, features = ["simd", "html"], optional = true }
 # ReStructuredText renderer.
 rst_parser = { version = "0.4.1", optional = true }
 # ReStructuredText renderer.
 rst_renderer = { version = "0.4.1", optional = true }
 sanitize-filename-reader-friendly.workspace = true
 self_cell = "1.1.0"
-serde_json = "1.0.138"
+serde_json = "1.0.139"
 serde.workspace = true
 serde_yaml.workspace = true
 substring = "1.4.5"
@@ -51,7 +51,7 @@ tpnote-html2md = { path = "../tpnote-html2md", optional = true }
 
 
 [target.'cfg(windows)'.dependencies]
-win32job = "2.0.1"
+win32job = "2.0.2"
 windows-sys = { version = "0.59.0", features = [
          #"Win32_Foundation",
          #"Win32_Security",

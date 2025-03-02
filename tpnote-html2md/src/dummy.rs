@@ -1,6 +1,5 @@
 use super::StructuredPrinter;
 use super::TagHandler;
-
 use html5ever::serialize;
 use html5ever::serialize::{SerializeOpts, TraversalScope};
 use markup5ever_rcdom::{Handle, NodeData, SerializableHandle};

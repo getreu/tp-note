@@ -21,13 +21,13 @@ crate-type = ["rlib", "dylib", "staticlib"]
 # string_cache_codegen = "0.4.2" # Needed for markup5ever
 html5ever = "0.27.0"
 markup5ever_rcdom = "0.3.0"
-regex = "1.4.2"
-percent-encoding = "2.1.0"
+regex = "1.11.1"
+percent-encoding = "2.3.1"
 
 [dev-dependencies]
 spectral = "0.6.0"
-pretty_assertions = "0.7.2"
-indoc = "1.0.3"
+pretty_assertions = "1.4.1"
+indoc = "2.0.5"
 
 [profile.release]
 debug = false
@@ -36,4 +36,4 @@ panic = 'abort'
 
 # To use this project on Android we need JNI
 [target.'cfg(target_os="android")'.dependencies]
-jni = { version = "0.19.0", default-features = false }
+jni = { version = "0.21.1", default-features = false }
