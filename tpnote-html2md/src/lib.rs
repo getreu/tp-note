@@ -1,7 +1,6 @@
-use lazy_static::lazy_static;
-
 use std::boxed::Box;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
@@ -44,19 +43,20 @@ use crate::quotes::QuoteHandler;
 use crate::styles::StyleHandler;
 use crate::tables::TableHandler;
 
-lazy_static! {
-    static ref EXCESSIVE_WHITESPACE_PATTERN: Regex = Regex::new("\\s{2,}").unwrap();   // for HTML on-the-fly cleanup
-
-    static ref EMPTY_LINE_PATTERN: Regex = Regex::new("(?m)^ +$").unwrap();            // for Markdown post-processing
-    static ref EXCESSIVE_NEWLINE_PATTERN: Regex = Regex::new("\\n{3,}").unwrap();      // for Markdown post-processing
-    static ref TRAILING_SPACE_PATTERN: Regex = Regex::new("(?m)(\\S) $").unwrap();     // for Markdown post-processing
-    static ref LEADING_NEWLINES_PATTERN: Regex = Regex::new("^\\n+").unwrap();         // for Markdown post-processing
-    static ref LAST_WHITESPACE_PATTERN: Regex = Regex::new("\\s+$").unwrap();          // for Markdown post-processing
-
-    static ref START_OF_LINE_PATTERN: Regex = Regex::new("(^|\\n) *$").unwrap();                  // for Markdown escaping
-    static ref MARKDOWN_STARTONLY_KEYCHARS: Regex = Regex::new(r"^(\s*)([=>+\-#])").unwrap();     // for Markdown escaping
-    static ref MARKDOWN_MIDDLE_KEYCHARS: Regex = Regex::new(r"[<>*\\_~]").unwrap();               // for Markdown escaping
-}
+static EXCESSIVE_WHITESPACE_PATTERN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new("\\s{2,}").unwrap()); // for HTML on-the-fly cleanup
+static EMPTY_LINE_PATTERN: LazyLock<Regex> = LazyLock::new(|| Regex::new("(?m)^ +$").unwrap()); // for Markdown post-processing
+static EXCESSIVE_NEWLINE_PATTERN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new("\\n{3,}").unwrap()); // for Markdown post-processing
+static TRAILING_SPACE_PATTERN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new("(?m)(\\S) $").unwrap()); // for Markdown post-processing
+static LEADING_NEWLINES_PATTERN: LazyLock<Regex> = LazyLock::new(|| Regex::new("^\\n+").unwrap()); // for Markdown post-processing
+static LAST_WHITESPACE_PATTERN: LazyLock<Regex> = LazyLock::new(|| Regex::new("\\s+$").unwrap()); // for Markdown post-processing
+static START_OF_LINE_PATTERN: LazyLock<Regex> = LazyLock::new(|| Regex::new("(^|\\n) *$").unwrap()); // for Markdown escaping
+static MARKDOWN_STARTONLY_KEYCHARS: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(\s*)([=>+\-#])").unwrap()); // for Markdown escaping
+static MARKDOWN_MIDDLE_KEYCHARS: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"[<>*\\_~]").unwrap()); // for Markdown escaping
 
 /// Custom variant of main function. Allows to pass custom tag<->tag factory pairs
 /// in order to register custom tag hadler for tags you want.
