@@ -12,12 +12,15 @@ use crate::CONFIG_PATHS;
 use crate::PKG_VERSION;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
-#[cfg(not(all(unix, not(target_os = "macos"))))]
+#[cfg(target_os = "windows")]
 #[cfg(feature = "message-box")]
 use msgbox::IconType;
 #[cfg(all(unix, not(target_os = "macos")))]
 #[cfg(feature = "message-box")]
-use notify_rust::{Hint, Notification, Timeout};
+use notify_rust::Hint;
+#[cfg(not(target_os = "windows"))]
+#[cfg(feature = "message-box")]
+use notify_rust::{Notification, Timeout};
 use parking_lot::RwLock;
 use std::env;
 use std::sync::LazyLock;
@@ -40,31 +43,39 @@ pub static ALERT_DIALOG_TITLE_LINE: LazyLock<String> = LazyLock::new(|| {
 /// Blocks until the user closes the window.
 /// Under Linux no notifications will be shown when
 /// `log::max_level=Level::Trace`.
-#[cfg(all(unix, not(target_os = "macos")))]
+#[cfg(not(target_os = "windows"))]
 #[cfg(feature = "message-box")]
 fn popup_alert(msg: &str) {
     if log::max_level() == Level::Trace {
         return;
     }
-    if let Ok(handle) = Notification::new()
+
+    let mut n = Notification::new();
+    let n = n
         .summary(&ALERT_DIALOG_TITLE_LINE)
         .body(msg)
         .icon("tpnote")
-        .appname("tpnote")
-        .hint(Hint::Resident(true)) // Does not work on Kde.
+        .appname("tpnote");
+
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let n = n.hint(Hint::Resident(true));
+
+    if let Ok(_handle) = n
+        // Does not work on Kde.
         .timeout(Timeout::Never) // Works on Kde and Gnome.
         .show()
     {
-        handle.wait_for_action(|_action| { // Only available in Linux.
-             // if "__closed" == _action {
-             //     println!("the notification was closed")
-             // }
-        })
+        // // Only available in Linux.
+        // _handle.wait_for_action(|_action| {
+        //     if "__closed" == _action {
+        //         println!("the notification was closed")
+        //     }
+        // })
     };
 }
 /// Pops up an error message box and prints `msg`.
 /// Blocks until the user closes the window.
-#[cfg(not(all(unix, not(target_os = "macos"))))]
+#[cfg(target_os = "windows")]
 #[cfg(feature = "message-box")]
 fn popup_alert(msg: &str) {
     let _ = msgbox::create(&ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);

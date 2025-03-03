@@ -111,11 +111,11 @@ windows-sys = { version = "0.59.0", features = [
 [target.'cfg(unix)'.dependencies]
 wl-clipboard-rs = { version = "0.9.1", optional = true }
 
-# All, but not linux.
-[target.'cfg(not(all(unix, not(target_os = "macos"))))'.dependencies]
+# Windows only.
+[target.'cfg(target_os = "windows")'.dependencies]
 # msgbox: On Debian Linux you need to: sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
 msgbox = { version = "0.7.0", optional = true }
 
-# Only Linux, MacOs excluded.
-[target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
+# Only Linux, MacOs included.
+[target.'cfg(not(target_os = "windows"))'.dependencies]
 notify-rust = { version = "4.11.5", optional = true }
