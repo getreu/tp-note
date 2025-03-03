@@ -1,7 +1,7 @@
 # Run with `nix develop` 
 
 {
-  description = "A Hunspell-like spell-checking library in Rust";
+  description = "Tp-Note: minimalistic note-taking";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";

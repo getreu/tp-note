@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=rust:1.80.1-slim-bullseye
+ARG BASE_IMAGE=rust:1.81-slim-bullseye
 WORKDIR /home/project
 
 FROM $BASE_IMAGE as planner

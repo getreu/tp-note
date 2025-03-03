@@ -11,6 +11,7 @@ readme = "README.md"
 keywords = ["html", "markdown", "converter"]
 categories = ["development-tools", "parsing", "parser-implementations"]
 license = "MIT"
+rust-version.workspace = true
 
 
 [lib]
