@@ -15,7 +15,7 @@ license = "MIT"
 
 [lib]
 name = "html2md"
-crate-type = ["rlib", "dylib", "staticlib"]
+#target_env="musl"crate-type = ["rlib", "dylib", "staticlib"]
 
 [dependencies]
 html5ever = "0.27.0"
@@ -26,10 +26,10 @@ percent-encoding = "2.3.1"
 [dev-dependencies]
 indoc = "2.0.5"
 
-[profile.release]
-debug = false
-lto = true
-panic = 'abort'
+# [profile.release]
+# debug = false
+# lto = true
+# panic = 'abort'
 
 # To use this project on Android we need JNI
 [target.'cfg(target_os="android")'.dependencies]
