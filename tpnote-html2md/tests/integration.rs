@@ -10,7 +10,7 @@ use indoc::indoc;
 #[ignore]
 fn test_marcfs() {
     let mut html = String::new();
-    let mut html_file = File::open("test-samples/marcfs-readme.html").unwrap();
+    let mut html_file = File::open("tests/input/marcfs-readme.html").unwrap();
     html_file
         .read_to_string(&mut html)
         .expect("File must be readable");
@@ -23,8 +23,8 @@ fn test_marcfs() {
 fn test_cheatsheet() {
     let mut html = String::new();
     let mut md = String::new();
-    let mut html_file = File::open("test-samples/markdown-cheatsheet.html").unwrap();
-    let mut md_file = File::open("test-samples/markdown-cheatsheet.md").unwrap();
+    let mut html_file = File::open("tests/input/markdown-cheatsheet.html").unwrap();
+    let mut md_file = File::open("tests/input/markdown-cheatsheet.md").unwrap();
     html_file
         .read_to_string(&mut html)
         .expect("File must be readable");
@@ -40,7 +40,7 @@ fn test_cheatsheet() {
 #[test]
 fn test_list_newlines() {
     let mut html = String::new();
-    let mut html_file = File::open("test-samples/dybr-bug-with-list-newlines.html").unwrap();
+    let mut html_file = File::open("tests/input/dybr-bug-with-list-newlines.html").unwrap();
     html_file
         .read_to_string(&mut html)
         .expect("File must be readable");
@@ -52,7 +52,7 @@ fn test_list_newlines() {
 #[test]
 fn test_lists_from_text() {
     let mut html = String::new();
-    let mut html_file = File::open("test-samples/dybr-bug-with-lists-from-text.html").unwrap();
+    let mut html_file = File::open("tests/input/dybr-bug-with-lists-from-text.html").unwrap();
     html_file
         .read_to_string(&mut html)
         .expect("File must be readable");
@@ -65,7 +65,7 @@ fn test_lists_from_text() {
 #[test]
 fn test_strong_inside_link() {
     let mut html = String::new();
-    let mut html_file = File::open("test-samples/dybr-bug-with-strong-inside-link.html").unwrap();
+    let mut html_file = File::open("tests/input/dybr-bug-with-strong-inside-link.html").unwrap();
     html_file
         .read_to_string(&mut html)
         .expect("File must be readable");
@@ -76,7 +76,7 @@ fn test_strong_inside_link() {
 #[test]
 fn test_tables_with_newlines() {
     let mut html = String::new();
-    let mut html_file = File::open("test-samples/dybr-bug-with-tables-masked.html").unwrap();
+    let mut html_file = File::open("tests/input/dybr-bug-with-tables-masked.html").unwrap();
     html_file
         .read_to_string(&mut html)
         .expect("File must be readable");
@@ -95,7 +95,7 @@ fn test_tables_with_newlines() {
 #[test]
 fn test_tables2() {
     let mut html = String::new();
-    let mut html_file = File::open("test-samples/dybr-bug-with-tables-2-masked.html").unwrap();
+    let mut html_file = File::open("tests/input/dybr-bug-with-tables-2-masked.html").unwrap();
     html_file
         .read_to_string(&mut html)
         .expect("File must be readable");
