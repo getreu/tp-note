@@ -62,7 +62,7 @@ default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detectio
 # system), no GTK is required. In this case all error messages will appear on
 # the console from where you started Tp-Note in `stderr` only.
 # Disable this feature if you do not want error message boxes.
-message-box = ["dep:msgbox", "dep:notify-rust"]
+message-box = ["dep:win-msgbox", "dep:notify-rust"]
 read-clipboard = ["dep:clipboard-rs", "wl-clipboard-rs"]
 viewer = ["dep:notify", "dep:notify-debouncer-mini", "dep:httparse", "dep:webbrowser", "dep:httpdate", "tpnote-lib/viewer"]
 # This feature declaration is forwarded to `tpnote_lib` and not used in this
@@ -113,8 +113,7 @@ wl-clipboard-rs = { version = "0.9.1", optional = true }
 
 # Windows only.
 [target.'cfg(target_os = "windows")'.dependencies]
-# msgbox: On Debian Linux you need to: sudo apt-get install -y xorg-dev libxcb-xfixes0-dev libxcb-shape0-dev libgtk-3-dev
-msgbox = { version = "0.7.0", optional = true }
+win-msgbox = { version = "0.2.1", optional = true }
 
 # Only Linux, MacOs included.
 [target.'cfg(not(target_os = "windows"))'.dependencies]

@@ -12,9 +12,6 @@ use crate::CONFIG_PATHS;
 use crate::PKG_VERSION;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
-#[cfg(target_os = "windows")]
-#[cfg(feature = "message-box")]
-use msgbox::IconType;
 #[cfg(all(unix, not(target_os = "macos")))]
 #[cfg(feature = "message-box")]
 use notify_rust::Hint;
@@ -24,6 +21,9 @@ use notify_rust::{Notification, Timeout};
 use parking_lot::RwLock;
 use std::env;
 use std::sync::LazyLock;
+#[cfg(target_os = "windows")]
+#[cfg(feature = "message-box")]
+use win_msgbox::{information, Okay};
 
 #[cfg(feature = "message-box")]
 /// Window title of the message alert box.
@@ -78,7 +78,10 @@ fn popup_alert(msg: &str) {
 #[cfg(target_os = "windows")]
 #[cfg(feature = "message-box")]
 fn popup_alert(msg: &str) {
-    let _ = msgbox::create(&ALERT_DIALOG_TITLE_LINE, msg, IconType::Info);
+    // Silently ignore `show()` error.
+    let _ = information::<Okay>(msg)
+        .title(&ALERT_DIALOG_TITLE_LINE)
+        .show();
 }
 
 /// Some additional debugging information added to the end of error messages.
