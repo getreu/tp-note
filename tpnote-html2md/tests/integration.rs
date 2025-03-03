@@ -1,12 +1,10 @@
 extern crate html2md;
-extern crate spectral;
 
 use html2md::parse_html;
 use std::fs::File;
 use std::io::prelude::*;
 
 use indoc::indoc;
-use spectral::prelude::*;
 
 #[test]
 #[ignore]
@@ -47,8 +45,8 @@ fn test_list_newlines() {
         .read_to_string(&mut html)
         .expect("File must be readable");
     let result = parse_html(&html);
-    assert_that(&result).contains(".\n\nxxx xxxx");
-    assert_that(&result).contains("xx x.\n\nxxxxx:");
+    assert!((result).contains(".\n\nxxx xxxx"));
+    assert!((result).contains("xx x.\n\nxxxxx:"));
 }
 
 #[test]
@@ -59,9 +57,9 @@ fn test_lists_from_text() {
         .read_to_string(&mut html)
         .expect("File must be readable");
     let result = parse_html(&html);
-    assert_that(&result).contains("\\- x xxxx xxxxx xx xxxxxxxxxx");
-    assert_that(&result).contains("\\- x xxxx xxxxxxxx xxxxxxxxx xxxxxx xxx x xxxxxxxx xxxx");
-    assert_that(&result).contains("\\- xxxx xxxxxxxx");
+    assert!((result).contains("\\- x xxxx xxxxx xx xxxxxxxxxx"));
+    assert!((result).contains("\\- x xxxx xxxxxxxx xxxxxxxxx xxxxxx xxx x xxxxxxxx xxxx"));
+    assert!((result).contains("\\- xxxx xxxxxxxx"));
 }
 
 #[test]
@@ -72,7 +70,7 @@ fn test_strong_inside_link() {
         .read_to_string(&mut html)
         .expect("File must be readable");
     let result = parse_html(&html);
-    assert_that(&result).contains("[**Just God**](http://fanfics.me/ficXXXXXXX)");
+    assert!((result).contains("[**Just God**](http://fanfics.me/ficXXXXXXX)"));
 }
 
 #[test]
@@ -91,11 +89,11 @@ fn test_tables_with_newlines() {
         .filter(|line| !line.ends_with("|"))
         .collect();
 
-    assert_that(&invalid_table_lines).is_empty();
+    assert!((invalid_table_lines).is_empty());
 }
 
 #[test]
-fn test_tables_crash2() {
+fn test_tables2() {
     let mut html = String::new();
     let mut html_file = File::open("test-samples/dybr-bug-with-tables-2-masked.html").unwrap();
     html_file
@@ -103,11 +101,11 @@ fn test_tables_crash2() {
         .expect("File must be readable");
     let table_with_vertical_header = parse_html(&html);
 
-    assert_that!(table_with_vertical_header).contains(indoc! {"
+    assert!((table_with_vertical_header).contains(indoc! {"
         |Current Conditions:|Open all year. No reservations. No services.|
         |-------------------|--------------------------------------------|
         |   Reservations:   |              No reservations.              |
         |       Fees        |                  No fee.                   |
         |      Water:       |                 No water.                  |"
-    });
+    }));
 }
