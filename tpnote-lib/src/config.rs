@@ -14,6 +14,7 @@
 //! Contract: although `LIB_CFG` is mutable at runtime, it is sourced only
 //! once at the start of Tp-Note. All modification terminates before accessing
 //! the high-level API in the `workflow` module of this crate.
+use crate::error;
 use crate::error::LibCfgError;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_viewer_highlighting_css;
@@ -342,6 +343,45 @@ impl LibCfg {
         }
     }
 
+    pub fn from_map(map: HashMap<String, Value>) -> Result<Self, error::LibCfgError> {
+        // `from_files()` start
+        let mut lib_cfg_input: LibCfgInput = toml::from_str(LIB_CONFIG_DEFAULT_TOML)?;
+        // Now we merge all `scheme` into a copy of `base_scheme` and
+        // parse the result into a `Vec<Scheme>`.
+        //
+        // Here we keep the result after merging and parsing.
+        let mut schemes: Vec<Scheme> = vec![];
+        // Get `theme`s in `config` as toml array. Clears the map as it is not
+        // needed any more.
+        if let Some(toml::Value::Array(lib_cfg_scheme)) = lib_cfg_input
+            .scheme
+            .drain()
+            // Silently ignore all potential toml variables other than `scheme`.
+            .filter(|(k, _)| k == "scheme")
+            .map(|(_, v)| v)
+            .next()
+        {
+            // Merge all `s` into a `base_scheme`, parse the result into a `Scheme`
+            // and collect a `Vector`.
+            schemes = lib_cfg_scheme
+                .into_iter()
+                .map(|v| LibCfg::merge_toml_values(lib_cfg_input.base_scheme.clone(), v, 0))
+                .map(|v| v.try_into().map_err(|e| e.into()))
+                .collect::<Result<Vec<Scheme>, LibCfgError>>()?;
+        }
+        let lib_cfg_input = lib_cfg_input; // Freeze.
+
+        let res = LibCfg {
+            // Copy the parts of `config` into `LIB_CFG`.
+            scheme_sync_default: lib_cfg_input.scheme_sync_default.clone(),
+            scheme: schemes,
+            tmpl_html: lib_cfg_input.tmpl_html.clone(),
+        };
+        // Perform some additional semantic checks.
+        res.assert_validity()?;
+        Ok(res)
+    }
+
     /// Returns the index of a named scheme. If no scheme with that name can be
     /// be found, return `LibCfgError::SchemeNotFound`.
     pub fn scheme_idx(&self, name: &str) -> Result<usize, LibCfgError> {
@@ -367,6 +407,54 @@ impl LibCfg {
                 },
                 |(i, _)| Ok(i),
             )
+    }
+}
+
+/// Reads the file `./config_default.toml` (`LIB_CONFIG_DEFAULT_TOML`) into
+/// `LibCfg`. Panics if this is not possible.
+impl Default for LibCfg {
+    fn default() -> Self {
+        let mut lib_cfg_input: LibCfgInput = toml::from_str(LIB_CONFIG_DEFAULT_TOML)
+            .expect("Syntax error in  LIB_CONFIG_DEFAULT_TOML");
+        // Now we merge all `scheme` into a copy of `base_scheme` and
+        // parse the result into a `Vec<Scheme>`.
+        //
+        // Here we keep the result after merging and parsing.
+        let mut schemes: Vec<Scheme> = vec![];
+        // Get `theme`s in `config` as toml array. Clears the map as it is not
+        // needed any more.
+        if let Some(toml::Value::Array(lib_cfg_scheme)) = lib_cfg_input
+            .scheme
+            .drain()
+            // Silently ignore all potential toml variables other than `scheme`.
+            .filter(|(k, _)| k == "scheme")
+            .map(|(_, v)| v)
+            .next()
+        {
+            // Merge all `s` into a `base_scheme`, parse the result into a `Scheme`
+            // and collect a `Vector`.
+            schemes = lib_cfg_scheme
+                .into_iter()
+                .map(|v| LibCfg::merge_toml_values(lib_cfg_input.base_scheme.clone(), v, 0))
+                .map(|v| v.try_into().map_err(|e| e.into()))
+                .collect::<Result<Vec<Scheme>, LibCfgError>>()
+                .expect(
+                    "Error whlie merging `scheme` into `base_scheme` \
+                     in LIB_CONFIG_DEFAULT_TOML",
+                );
+        }
+        let lib_cfg_input = lib_cfg_input; // Freeze.
+
+        let res = LibCfg {
+            // Copy the parts of `config` into `LIB_CFG`.
+            scheme_sync_default: lib_cfg_input.scheme_sync_default.clone(),
+            scheme: schemes,
+            tmpl_html: lib_cfg_input.tmpl_html.clone(),
+        };
+        // Perform some additional semantic checks.
+        res.assert_validity()
+            .expect("Data in LIB_CONFIG_DEFAULT_TOML not valid");
+        res
     }
 }
 
@@ -619,16 +707,6 @@ impl LibCfg {
         }
 
         Ok(())
-    }
-}
-
-/// Defaults are sourced from file `tpnote-lib/src/config_default.toml`.
-impl Default for LibCfg {
-    fn default() -> Self {
-        toml::from_str(LIB_CONFIG_DEFAULT_TOML).expect(
-            "Error in default configuration in source file:\n\
-                 `tpnote-lib/src/config_default.toml`",
-        )
     }
 }
 

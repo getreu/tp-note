@@ -176,6 +176,9 @@ pub enum LibCfgError {
         value: String,
         available: String,
     },
+
+    #[error(transparent)]
+    Deserialize(#[from] toml::de::Error),
 }
 
 #[derive(Debug, Error)]
