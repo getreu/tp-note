@@ -20,9 +20,9 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 use tera::Tera;
 use toml::Value;
+use tpnote_lib::config::LibCfg;
 use tpnote_lib::config::LibCfgRaw;
 use tpnote_lib::config::LocalLinkKind;
-use tpnote_lib::config::Scheme;
 use tpnote_lib::config::TmplHtml;
 use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 use tpnote_lib::config::LIB_CFG;
@@ -74,12 +74,6 @@ const CONFIG_FILENAME: &str = concat!(env!("CARGO_BIN_NAME"), ".toml");
 /// Default configuration.
 pub(crate) const GUI_CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
 
-/// This decides until what depth arrays are merged into the default
-/// configuration. Tables are always merged. Deeper arrays replace the default
-/// configuration. For our configuration this means, that `scheme` is merged and
-/// all other arrays are replaced.
-pub(crate) const CONFIG_FILE_MERGE_DEPTH: isize = 2;
-
 pub(crate) const KEEP_IN_TOML_WHEN_COMMENTING: [&str; 10] = [
     "### ",
     "[[scheme]]",
@@ -99,15 +93,8 @@ pub struct Cfg {
     /// Version number of the configuration file as String -or- a text message
     /// explaining why we could not load the configuration file.
     pub version: String,
-    pub scheme_sync_default: String,
-    /// This is the base scheme, from which all instantiated schemes inherit.
-    pub base_scheme: Value,
-    /// This is a `Vec<Scheme>` in which the `Scheme` definitions are not
-    /// complete. Only after merging it into a copy of `base_scheme` we can
-    /// parse it into a `Scheme` structs. The result is not kept here, it is
-    /// stored into `LibCfg` struct instead.
     #[serde(flatten)]
-    pub scheme: HashMap<String, Value>,
+    pub unused: HashMap<String, Value>,
     pub arg_default: ArgDefault,
     pub clipboard: Clipboard,
     pub app_args: OsType<AppArgs>,
@@ -259,9 +246,7 @@ impl Cfg {
             })
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
-            .fold(base_config, |a, b| {
-                LibCfgRaw::merge_toml_values(a, b, CONFIG_FILE_MERGE_DEPTH)
-            });
+            .fold(base_config, LibCfgRaw::merge);
 
         // We can not use the logger here, it is too early.
         if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
@@ -271,57 +256,14 @@ impl Cfg {
             );
         }
 
-        // This parses all config into structs, except `scheme` which are
-        // still `toml::Value`s.
-        let mut config: Cfg = config.try_into()?;
-
-        // Now we merge all `scheme` into a copy of `base_scheme` and
-        // parse the result into a `Vec<Scheme>`.
-        //
-        // Here we keep the result after merging and parsing.
-        let mut schemes: Vec<Scheme> = vec![];
-        // Get `theme`s in `config` as toml array. Clears the map as it is not
-        // needed any more.
-        if let Some(toml::Value::Array(config_scheme)) = config
-            .scheme
-            .drain()
-            // Silently ignore all potential toml variables other than `scheme`.
-            .filter(|(k, _)| k == "scheme")
-            .map(|(_, v)| v)
-            .next()
+        // Parse Values into the `lib_cfg` and `cfg` configuration struct.
+        let lib_cfg = config.clone().try_into::<LibCfgRaw>()?;
+        let lib_cfg = LibCfg::from_raw(lib_cfg)?;
         {
-            // Merge all `s` into a `base_scheme`, parse the result into a `Scheme`
-            // and collect a `Vector`.
-            schemes = config_scheme
-                .into_iter()
-                .map(|v| LibCfgRaw::merge_toml_values(config.base_scheme.clone(), v, 0))
-                .map(|v| v.try_into().map_err(|e| e.into()))
-                .collect::<Result<Vec<Scheme>, ConfigFileError>>()?;
-        }
-
-        render_tmpl(&mut config.app_args.unix.browser);
-        render_tmpl(&mut config.app_args.unix.editor);
-        render_tmpl(&mut config.app_args.unix.editor_console);
-
-        render_tmpl(&mut config.app_args.windows.browser);
-        render_tmpl(&mut config.app_args.windows.editor);
-        render_tmpl(&mut config.app_args.windows.editor_console);
-
-        render_tmpl(&mut config.app_args.macos.browser);
-        render_tmpl(&mut config.app_args.macos.editor);
-        render_tmpl(&mut config.app_args.macos.editor_console);
-
-        let config = config; // Freeze.
-
-        {
-            // Copy the parts of `config` into `LIB_CFG`.
-            let mut lib_cfg = LIB_CFG.write();
-            lib_cfg.scheme_sync_default = config.scheme_sync_default.clone();
-            lib_cfg.scheme = schemes;
-            lib_cfg.tmpl_html = config.tmpl_html.clone();
-
-            // Perform some additional semantic checks.
-            lib_cfg.assert_validity()?;
+            // Copy the  `lib_cfg` into `LIB_CFG`.
+            let mut c = LIB_CFG.write();
+            *c = lib_cfg; // Release lock.
+                          //_cfg;
 
             // We can not use the logger here, it is too early.
             if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
@@ -330,10 +272,32 @@ impl Cfg {
                     `scheme`s into copies of `base_scheme`:\
                     \n\n{:#?}\
                     \n\n\n\n\n",
-                    lib_cfg
+                    *c
                 );
             }
-        }
+        } // Release lock.
+
+        //
+        // This parses all config into structs, except `scheme` which are
+        // still `toml::Value`s.
+        let mut cfg = config.try_into::<Cfg>()?;
+
+        // Delete unused.
+        cfg.unused = HashMap::new();
+
+        render_tmpl(&mut cfg.app_args.unix.browser);
+        render_tmpl(&mut cfg.app_args.unix.editor);
+        render_tmpl(&mut cfg.app_args.unix.editor_console);
+
+        render_tmpl(&mut cfg.app_args.windows.browser);
+        render_tmpl(&mut cfg.app_args.windows.editor);
+        render_tmpl(&mut cfg.app_args.windows.editor_console);
+
+        render_tmpl(&mut cfg.app_args.macos.browser);
+        render_tmpl(&mut cfg.app_args.macos.editor);
+        render_tmpl(&mut cfg.app_args.macos.editor_console);
+
+        let cfg = cfg; // Freeze.
 
         // We can not use the logger here, it is too early.
         if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
@@ -341,11 +305,11 @@ impl Cfg {
                 "\n\n\n\n\n*** Configuration part 2 after applied templates:\
                 \n\n{:#?}\
                 \n\n\n\n\n",
-                config
+                cfg
             );
         }
         // First check passed.
-        Ok(config)
+        Ok(cfg)
     }
 
     /// Writes the default configuration to `Path` or to `stdout` if

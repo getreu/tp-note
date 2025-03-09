@@ -243,6 +243,12 @@ pub const TMPL_HTML_VAR_DOC_TEXT: &str = "doc_text";
 /// For session configuration see: `settings::SETTINGS`.
 pub static LIB_CFG: LazyLock<RwLock<LibCfg>> = LazyLock::new(|| RwLock::new(LibCfg::default()));
 
+/// This decides until what depth arrays are merged into the default
+/// configuration. Tables are always merged. Deeper arrays replace the default
+/// configuration. For our configuration this means, that `scheme` is merged and
+/// all other arrays are replaced.
+pub(crate) const CONFIG_FILE_MERGE_DEPTH: isize = 2;
+
 impl LibCfg {
     /// Constructor expecting a `LibCfgRaw` struct as input.
     pub fn from_raw(mut raw: LibCfgRaw) -> Result<Self, error::LibCfgError> {
@@ -262,7 +268,8 @@ impl LibCfg {
             .next()
         {
             // Merge all `s` into a `base_scheme`, parse the result into a `Scheme`
-            // and collect a `Vector`.
+            // and collect a `Vector`. `merge_depth=0` means we never append
+            // to left hand arrays, we always overwrite them.
             schemes = lib_cfg_scheme
                 .into_iter()
                 .map(|v| LibCfgRaw::merge_toml_values(raw.base_scheme.clone(), v, 0))
@@ -339,13 +346,32 @@ pub struct LibCfgRaw {
 }
 
 impl LibCfgRaw {
-    /// `merge_depth` controls whether a top-level array in
-    /// the TOML document is merged instead of overridden. This is useful
-    /// for TOML documents that use a top-level (`merge_depth=1`) array of
-    /// values like the `tpnote.toml`, where one usually wants to override or
-    /// add to the array instead of replacing it altogether.
-    /// `merge_depth=0` means all arrays are overridden.
-    pub fn merge_toml_values(
+    #[inline]
+    /// Merges configuration values from the right-hand side into the
+    /// left-hand side and returns the result. The top level element must be
+    /// `toml::Value::Table`. The table is a set of key and value pairs. If
+    /// this value is a `Value::Array`, then the right-hand array is appended
+    /// to the left-hand array, otherwise the right replaces left. Only top
+    /// level `Value::Array`s, meaning those who are exactly one level below
+    /// `Value::Table` are appended (`CONFIG_FILE_MERGE_PEPTH=2`).
+    pub fn merge(left: toml::Value, right: toml::Value) -> toml::Value {
+        Self::merge_toml_values(left, right, CONFIG_FILE_MERGE_DEPTH)
+    }
+
+    /// Merges configuration values from the right-hand side into the
+    /// left-hand side and returns the result. The top level element is usually
+    /// a `toml::Value::Table`. The table is a set of key and value pairs.
+    /// The values here can be compound data types, i.e. `Value::Table` or
+    /// `Value::Array`.
+    /// `merge_depth` controls whether a top-level array in the TOML document
+    /// is appended to instead of overridden. This is useful for TOML documents
+    /// that have a top-level arrays (`merge_depth=2`) like `[[scheme]]` in
+    /// `tpnote.toml`. For top level arrays, one usually wants to append the
+    /// right-hand array to the left-hand array instead of just replacing the
+    /// left-hand array with the right-hand array. If you set `merge_depth=0`,
+    /// all arrays whatever level they have, are always overridden by the
+    /// right-hand side.
+    pub(crate) fn merge_toml_values(
         left: toml::Value,
         right: toml::Value,
         merge_depth: isize,
