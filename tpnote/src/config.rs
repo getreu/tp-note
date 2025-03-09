@@ -20,6 +20,7 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 use tera::Tera;
 use toml::Value;
+use tpnote_lib::config::LibCfg;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::Scheme;
 use tpnote_lib::config::TmplHtml;
@@ -225,71 +226,6 @@ impl Cfg {
         config_default_toml
     }
 
-    /// `merge_depth` controls whether a top-level array in
-    /// the TOML document is merged instead of overridden. This is useful
-    /// for TOML documents that use a top-level (`merge_depth=1`) array of
-    /// values like the `tpnote.toml`, where one usually wants to override or
-    /// add to the array instead of replacing it altogether.
-    /// `merge_depth=0` means all arrays are overridden.
-    fn merge_toml_values(left: toml::Value, right: toml::Value, merge_depth: isize) -> toml::Value {
-        use toml::Value;
-
-        fn get_name(v: &Value) -> Option<&str> {
-            v.get("name").and_then(Value::as_str)
-        }
-
-        match (left, right) {
-            (Value::Array(mut left_items), Value::Array(right_items)) => {
-                // The top-level arrays should be merged but nested arrays
-                // should act as overrides. For the `tpnote.toml` config,
-                // this means that you can specify a sub-set of schemes in
-                // an overriding `tpnote.toml` but that nested arrays like
-                // `scheme.tmpl.fm_var_localization` are replaced instead
-                // of merged.
-                if merge_depth > 0 {
-                    left_items.reserve(right_items.len());
-                    for rvalue in right_items {
-                        let lvalue = get_name(&rvalue)
-                            .and_then(|rname| {
-                                left_items.iter().position(|v| get_name(v) == Some(rname))
-                            })
-                            .map(|lpos| left_items.remove(lpos));
-                        let mvalue = match lvalue {
-                            Some(lvalue) => {
-                                Self::merge_toml_values(lvalue, rvalue, merge_depth - 1)
-                            }
-                            None => rvalue,
-                        };
-                        left_items.push(mvalue);
-                    }
-                    Value::Array(left_items)
-                } else {
-                    Value::Array(right_items)
-                }
-            }
-            (Value::Table(mut left_map), Value::Table(right_map)) => {
-                if merge_depth > -10 {
-                    for (rname, rvalue) in right_map {
-                        match left_map.remove(&rname) {
-                            Some(lvalue) => {
-                                let merged_value =
-                                    Self::merge_toml_values(lvalue, rvalue, merge_depth - 1);
-                                left_map.insert(rname, merged_value);
-                            }
-                            None => {
-                                left_map.insert(rname, rvalue);
-                            }
-                        }
-                    }
-                    Value::Table(left_map)
-                } else {
-                    Value::Table(right_map)
-                }
-            }
-            (_, value) => value,
-        }
-    }
-
     /// Parse the configuration file if it exists. Otherwise write one with
     /// default values.
     #[inline]
@@ -324,7 +260,7 @@ impl Cfg {
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
             .fold(base_config, |a, b| {
-                Self::merge_toml_values(a, b, CONFIG_FILE_MERGE_DEPTH)
+                LibCfg::merge_toml_values(a, b, CONFIG_FILE_MERGE_DEPTH)
             });
 
         // We can not use the logger here, it is too early.
@@ -358,7 +294,7 @@ impl Cfg {
             // and collect a `Vector`.
             schemes = config_scheme
                 .into_iter()
-                .map(|v| Cfg::merge_toml_values(config.base_scheme.clone(), v, 0))
+                .map(|v| LibCfg::merge_toml_values(config.base_scheme.clone(), v, 0))
                 .map(|v| v.try_into().map_err(|e| e.into()))
                 .collect::<Result<Vec<Scheme>, ConfigFileError>>()?;
         }

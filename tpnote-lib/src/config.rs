@@ -273,6 +273,75 @@ pub struct LibCfg {
 }
 
 impl LibCfg {
+    /// `merge_depth` controls whether a top-level array in
+    /// the TOML document is merged instead of overridden. This is useful
+    /// for TOML documents that use a top-level (`merge_depth=1`) array of
+    /// values like the `tpnote.toml`, where one usually wants to override or
+    /// add to the array instead of replacing it altogether.
+    /// `merge_depth=0` means all arrays are overridden.
+    pub fn merge_toml_values(
+        left: toml::Value,
+        right: toml::Value,
+        merge_depth: isize,
+    ) -> toml::Value {
+        use toml::Value;
+
+        fn get_name(v: &Value) -> Option<&str> {
+            v.get("name").and_then(Value::as_str)
+        }
+
+        match (left, right) {
+            (Value::Array(mut left_items), Value::Array(right_items)) => {
+                // The top-level arrays should be merged but nested arrays
+                // should act as overrides. For the `tpnote.toml` config,
+                // this means that you can specify a sub-set of schemes in
+                // an overriding `tpnote.toml` but that nested arrays like
+                // `scheme.tmpl.fm_var_localization` are replaced instead
+                // of merged.
+                if merge_depth > 0 {
+                    left_items.reserve(right_items.len());
+                    for rvalue in right_items {
+                        let lvalue = get_name(&rvalue)
+                            .and_then(|rname| {
+                                left_items.iter().position(|v| get_name(v) == Some(rname))
+                            })
+                            .map(|lpos| left_items.remove(lpos));
+                        let mvalue = match lvalue {
+                            Some(lvalue) => {
+                                Self::merge_toml_values(lvalue, rvalue, merge_depth - 1)
+                            }
+                            None => rvalue,
+                        };
+                        left_items.push(mvalue);
+                    }
+                    Value::Array(left_items)
+                } else {
+                    Value::Array(right_items)
+                }
+            }
+            (Value::Table(mut left_map), Value::Table(right_map)) => {
+                if merge_depth > -10 {
+                    for (rname, rvalue) in right_map {
+                        match left_map.remove(&rname) {
+                            Some(lvalue) => {
+                                let merged_value =
+                                    Self::merge_toml_values(lvalue, rvalue, merge_depth - 1);
+                                left_map.insert(rname, merged_value);
+                            }
+                            None => {
+                                left_map.insert(rname, rvalue);
+                            }
+                        }
+                    }
+                    Value::Table(left_map)
+                } else {
+                    Value::Table(right_map)
+                }
+            }
+            (_, value) => value,
+        }
+    }
+
     /// Returns the index of a named scheme. If no scheme with that name can be
     /// be found, return `LibCfgError::SchemeNotFound`.
     pub fn scheme_idx(&self, name: &str) -> Result<usize, LibCfgError> {
