@@ -22,11 +22,13 @@ use crate::markup_language::MarkupLanguage;
 use parking_lot::RwLock;
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fmt::Write;
 use std::str::FromStr;
 use std::sync::LazyLock;
 #[cfg(feature = "renderer")]
 use syntect::highlighting::ThemeSet;
+use toml::Value;
 
 /// Default library configuration as TOML.
 pub const LIB_CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
@@ -241,6 +243,24 @@ pub const TMPL_HTML_VAR_DOC_TEXT: &str = "doc_text";
 pub static LIB_CFG: LazyLock<RwLock<LibCfg>> = LazyLock::new(|| RwLock::new(LibCfg::default()));
 
 /// Configuration data, deserialized from the configuration file.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LibCfgInput {
+    /// The fallback scheme for the `sync_filename` template choice, if the
+    /// `scheme` header variable is empty or is not defined.
+    pub scheme_sync_default: String,
+    /// This is the base scheme, from which all instantiated schemes inherit.
+    pub base_scheme: Value,
+    /// This is a `Vec<Scheme>` in which the `Scheme` definitions are not
+    /// complete. Only after merging it into a copy of `base_scheme` we can
+    /// parse it into a `Scheme` structs. The result is not kept here, it is
+    /// stored into `LibCfg` struct instead.
+    #[serde(flatten)]
+    pub scheme: HashMap<String, Value>,
+    /// Configuration of HTML templates.
+    pub tmpl_html: TmplHtml,
+}
+
+/// Configuration data processed.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LibCfg {
     /// The fallback scheme for the `sync_filename` template choice, if the
