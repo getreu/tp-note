@@ -570,16 +570,21 @@ mod tests {
         let _cfg = Cfg::from_files(&[userconfig]).unwrap();
         {
             let lib_cfg = LIB_CFG.read();
+            // The schemes come from the config file `scheme`.
             assert_eq!(lib_cfg.scheme.len(), 2);
             assert_eq!(lib_cfg.scheme[0].name, "zettel");
             assert_eq!(lib_cfg.scheme[0].filename.sort_tag.separator, "--");
-            assert_eq!(lib_cfg.scheme[1].name, "default");
-            assert_eq!(lib_cfg.scheme[1].filename.sort_tag.separator, "---");
-            assert_eq!(lib_cfg.scheme[1].tmpl.fm_var.localization.len(), 1);
             assert_eq!(
                 lib_cfg.scheme[1].tmpl.fm_var.localization[0],
                 ("fm_foo".to_string(), "foofoo".to_string())
             );
+            // This originates from `base_scheme`.
+            assert_eq!(lib_cfg.scheme[0].filename.extension_default, "md");
+            assert_eq!(lib_cfg.scheme[0].filename.sort_tag.extra_separator, '\'');
+            assert_eq!(lib_cfg.scheme[1].name, "default");
+            assert_eq!(lib_cfg.scheme[1].filename.sort_tag.separator, "---");
+            assert_eq!(lib_cfg.scheme[1].tmpl.fm_var.localization.len(), 1);
+            assert_eq!(lib_cfg.scheme[1].filename.extension_default, "md");
         } // Free `LIB_CFG` lock.
 
         //
