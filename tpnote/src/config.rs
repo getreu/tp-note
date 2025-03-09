@@ -9,6 +9,7 @@ use log::LevelFilter;
 use parking_lot::RwLock;
 use serde::Deserialize;
 use serde::Serialize;
+use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::fs::File;
@@ -18,6 +19,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 use tera::Tera;
+use toml::Value;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::Scheme;
 use tpnote_lib::config::TmplHtml;
@@ -97,7 +99,14 @@ pub struct Cfg {
     /// explaining why we could not load the configuration file.
     pub version: String,
     pub scheme_sync_default: String,
-    pub scheme: Vec<Scheme>,
+    /// This is the base scheme, from which all instantiated schemes inherit.
+    pub base_scheme: Value,
+    /// This is a `Vec<Scheme>` in which the `Scheme` definitions are not
+    /// complete. Only after merging it into a copy of `base_scheme` we can
+    /// parse it into a `Scheme` structs. The result is not kept here, it is
+    /// stored into `LibCfg` struct instead.
+    #[serde(flatten)]
+    pub scheme: HashMap<String, Value>,
     pub arg_default: ArgDefault,
     pub clipboard: Clipboard,
     pub app_args: OsType<AppArgs>,
@@ -216,76 +225,75 @@ impl Cfg {
         config_default_toml
     }
 
+    /// `merge_depth` controls whether a top-level array in
+    /// the TOML document is merged instead of overridden. This is useful
+    /// for TOML documents that use a top-level (`merge_depth=1`) array of
+    /// values like the `tpnote.toml`, where one usually wants to override or
+    /// add to the array instead of replacing it altogether.
+    /// `merge_depth=0` means all arrays are overridden.
+    fn merge_toml_values(left: toml::Value, right: toml::Value, merge_depth: isize) -> toml::Value {
+        use toml::Value;
+
+        fn get_name(v: &Value) -> Option<&str> {
+            v.get("name").and_then(Value::as_str)
+        }
+
+        match (left, right) {
+            (Value::Array(mut left_items), Value::Array(right_items)) => {
+                // The top-level arrays should be merged but nested arrays
+                // should act as overrides. For the `tpnote.toml` config,
+                // this means that you can specify a sub-set of schemes in
+                // an overriding `tpnote.toml` but that nested arrays like
+                // `scheme.tmpl.fm_var_localization` are replaced instead
+                // of merged.
+                if merge_depth > 0 {
+                    left_items.reserve(right_items.len());
+                    for rvalue in right_items {
+                        let lvalue = get_name(&rvalue)
+                            .and_then(|rname| {
+                                left_items.iter().position(|v| get_name(v) == Some(rname))
+                            })
+                            .map(|lpos| left_items.remove(lpos));
+                        let mvalue = match lvalue {
+                            Some(lvalue) => {
+                                Self::merge_toml_values(lvalue, rvalue, merge_depth - 1)
+                            }
+                            None => rvalue,
+                        };
+                        left_items.push(mvalue);
+                    }
+                    Value::Array(left_items)
+                } else {
+                    Value::Array(right_items)
+                }
+            }
+            (Value::Table(mut left_map), Value::Table(right_map)) => {
+                if merge_depth > -10 {
+                    for (rname, rvalue) in right_map {
+                        match left_map.remove(&rname) {
+                            Some(lvalue) => {
+                                let merged_value =
+                                    Self::merge_toml_values(lvalue, rvalue, merge_depth - 1);
+                                left_map.insert(rname, merged_value);
+                            }
+                            None => {
+                                left_map.insert(rname, rvalue);
+                            }
+                        }
+                    }
+                    Value::Table(left_map)
+                } else {
+                    Value::Table(right_map)
+                }
+            }
+            (_, value) => value,
+        }
+    }
+
     /// Parse the configuration file if it exists. Otherwise write one with
     /// default values.
     #[inline]
     fn from_files(config_paths: &[PathBuf]) -> Result<Cfg, ConfigFileError> {
-        /// `CONFIG_FILE_MERGE_DEPTH` controls whether a top-level array in
-        /// the TOML document is merged instead of overridden. This is useful
-        /// for TOML documents that use a top-level array of values like the
-        /// `tpnote.toml`, where one usually wants to override or add to the
-        /// array instead of replacing it altogether.
-        fn merge_toml_values(
-            left: toml::Value,
-            right: toml::Value,
-            merge_depth: isize,
-        ) -> toml::Value {
-            use toml::Value;
-
-            fn get_name(v: &Value) -> Option<&str> {
-                v.get("name").and_then(Value::as_str)
-            }
-
-            match (left, right) {
-                (Value::Array(mut left_items), Value::Array(right_items)) => {
-                    // The top-level arrays should be merged but nested arrays
-                    // should act as overrides. For the `tpnote.toml` config,
-                    // this means that you can specify a sub-set of schemes in
-                    // an overriding `tpnote.toml` but that nested arrays like
-                    // `scheme.tmpl.fm_var_localization` are replaced instead
-                    // of merged.
-                    if merge_depth > 0 {
-                        left_items.reserve(right_items.len());
-                        for rvalue in right_items {
-                            let lvalue = get_name(&rvalue)
-                                .and_then(|rname| {
-                                    left_items.iter().position(|v| get_name(v) == Some(rname))
-                                })
-                                .map(|lpos| left_items.remove(lpos));
-                            let mvalue = match lvalue {
-                                Some(lvalue) => merge_toml_values(lvalue, rvalue, merge_depth - 1),
-                                None => rvalue,
-                            };
-                            left_items.push(mvalue);
-                        }
-                        Value::Array(left_items)
-                    } else {
-                        Value::Array(right_items)
-                    }
-                }
-                (Value::Table(mut left_map), Value::Table(right_map)) => {
-                    if merge_depth > -10 {
-                        for (rname, rvalue) in right_map {
-                            match left_map.remove(&rname) {
-                                Some(lvalue) => {
-                                    let merged_value =
-                                        merge_toml_values(lvalue, rvalue, merge_depth - 1);
-                                    left_map.insert(rname, merged_value);
-                                }
-                                None => {
-                                    left_map.insert(rname, rvalue);
-                                }
-                            }
-                        }
-                        Value::Table(left_map)
-                    } else {
-                        Value::Table(right_map)
-                    }
-                }
-                (_, value) => value,
-            }
-        }
-
         // Runs through all strings and renders config values as templates.
         // No variables are set in this context. But you can use environment
         // variables in templates: e.g.:
@@ -316,7 +324,7 @@ impl Cfg {
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
             .fold(base_config, |a, b| {
-                merge_toml_values(a, b, CONFIG_FILE_MERGE_DEPTH)
+                Self::merge_toml_values(a, b, CONFIG_FILE_MERGE_DEPTH)
             });
 
         // We can not use the logger here, it is too early.
@@ -327,7 +335,33 @@ impl Cfg {
             );
         }
 
+        // This parses all config into structs, except `scheme` which are
+        // still `toml::Value`s.
         let mut config: Cfg = config.try_into()?;
+
+        // Now we merge all `scheme` into a copy of `base_scheme` and
+        // parse the result into a `Vec<Scheme>`.
+        //
+        // Here we keep the result after merging and parsing.
+        let mut schemes: Vec<Scheme> = vec![];
+        // Get `theme`s in `config` as toml array. Clears the map as it is not
+        // needed any more.
+        if let Some(toml::Value::Array(config_scheme)) = config
+            .scheme
+            .drain()
+            // Silently ignore all potential toml variables other than `scheme`.
+            .filter(|(k, _)| k == "scheme")
+            .map(|(_, v)| v)
+            .next()
+        {
+            // Merge all `s` into a `base_scheme`, parse the result into a `Scheme`
+            // and collect a `Vector`.
+            schemes = config_scheme
+                .into_iter()
+                .map(|v| Cfg::merge_toml_values(config.base_scheme.clone(), v, 0))
+                .map(|v| v.try_into().map_err(|e| e.into()))
+                .collect::<Result<Vec<Scheme>, ConfigFileError>>()?;
+        }
 
         render_tmpl(&mut config.app_args.unix.browser);
         render_tmpl(&mut config.app_args.unix.editor);
@@ -347,23 +381,33 @@ impl Cfg {
             // Copy the parts of `config` into `LIB_CFG`.
             let mut lib_cfg = LIB_CFG.write();
             lib_cfg.scheme_sync_default = config.scheme_sync_default.clone();
-            lib_cfg.scheme = config.scheme.clone();
+            lib_cfg.scheme = schemes;
             lib_cfg.tmpl_html = config.tmpl_html.clone();
 
             // Perform some additional semantic checks.
             lib_cfg.assert_validity()?;
+
+            // We can not use the logger here, it is too early.
+            if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
+                println!(
+                    "\n\n\n\n\n*** Configuration part 1 after merging \
+                    `scheme`s into copies of `base_scheme`:\
+                    \n\n{:#?}\
+                    \n\n\n\n\n",
+                    lib_cfg
+                );
+            }
         }
 
         // We can not use the logger here, it is too early.
         if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
             println!(
-                "\n\n\n\n\n*** Configuration after applied templates:\n\n\
-                {:#?}\
+                "\n\n\n\n\n*** Configuration part 2 after applied templates:\
+                \n\n{:#?}\
                 \n\n\n\n\n",
                 config
             );
         }
-
         // First check passed.
         Ok(config)
     }
@@ -420,7 +464,7 @@ impl Cfg {
     }
 }
 
-/// Reads and parses the configuration file "tp-note.toml". An alternative
+/// Reads and parses the configuration file "tpnote.toml". An alternative
 /// filename (optionally with absolute path) can be given on the command
 /// line with "--config".
 pub static CFG: LazyLock<Cfg> = LazyLock::new(|| {
@@ -477,12 +521,15 @@ pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
 
 #[cfg(test)]
 mod tests {
+    use tpnote_lib::config::LIB_CFG;
+
     use super::Cfg;
     use std::env::temp_dir;
     use std::fs;
 
     #[test]
     fn test_cfg_from_file() {
+        //
         // Prepare test: some mini config file.
         let raw = "\
         [arg_default]
@@ -494,6 +541,7 @@ mod tests {
         let cfg = Cfg::from_files(&[userconfig]).unwrap();
         assert_eq!(cfg.arg_default.scheme, "zettel");
 
+        //
         // Prepare test: create existing note.
         let raw = "\
         [viewer]
@@ -506,6 +554,7 @@ mod tests {
         assert_eq!(cfg.viewer.served_mime_types.len(), 1);
         assert_eq!(cfg.viewer.served_mime_types[0].0, "abc");
 
+        //
         // Prepare test: create existing note.
         let raw = "\
         [[scheme]]
@@ -518,28 +567,35 @@ mod tests {
         let userconfig = temp_dir().join("tpnote.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
-        let cfg = Cfg::from_files(&[userconfig]).unwrap();
-        assert_eq!(cfg.scheme.len(), 2);
-        assert_eq!(cfg.scheme[0].name, "zettel");
-        assert_eq!(cfg.scheme[0].filename.sort_tag.separator, "--");
-        assert_eq!(cfg.scheme[1].name, "default");
-        assert_eq!(cfg.scheme[1].filename.sort_tag.separator, "---");
-        assert_eq!(cfg.scheme[1].tmpl.fm_var.localization.len(), 1);
-        assert_eq!(
-            cfg.scheme[1].tmpl.fm_var.localization[0],
-            ("fm_foo".to_string(), "foofoo".to_string())
-        );
+        let _cfg = Cfg::from_files(&[userconfig]).unwrap();
+        {
+            let lib_cfg = LIB_CFG.read();
+            assert_eq!(lib_cfg.scheme.len(), 2);
+            assert_eq!(lib_cfg.scheme[0].name, "zettel");
+            assert_eq!(lib_cfg.scheme[0].filename.sort_tag.separator, "--");
+            assert_eq!(lib_cfg.scheme[1].name, "default");
+            assert_eq!(lib_cfg.scheme[1].filename.sort_tag.separator, "---");
+            assert_eq!(lib_cfg.scheme[1].tmpl.fm_var.localization.len(), 1);
+            assert_eq!(
+                lib_cfg.scheme[1].tmpl.fm_var.localization[0],
+                ("fm_foo".to_string(), "foofoo".to_string())
+            );
+        } // Free `LIB_CFG` lock.
 
+        //
         // Prepare test: merge (replace) the default config into itself.
         let raw = Cfg::default_as_toml();
         let userconfig = temp_dir().join("tpnote.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
-        let cfg = Cfg::from_files(&[userconfig]).unwrap();
-        // `len=2` means that `scheme.default` is replaced by `scheme.default`
-        // and `scheme.zettel` is replaced `scheme.zettel`.
-        assert_eq!(cfg.scheme.len(), 2);
-        assert_eq!(cfg.scheme[0].name, "default");
-        assert_eq!(cfg.scheme[1].name, "zettel");
+        let _cfg = Cfg::from_files(&[userconfig]).unwrap();
+        {
+            let lib_cfg = LIB_CFG.read();
+            // `len=2` means that `scheme.default` is replaced by `scheme.default`
+            // and `scheme.zettel` is replaced `scheme.zettel`.
+            assert_eq!(lib_cfg.scheme.len(), 2);
+            assert_eq!(lib_cfg.scheme[0].name, "default");
+            assert_eq!(lib_cfg.scheme[1].name, "zettel");
+        } // Free lock.
     }
 }
