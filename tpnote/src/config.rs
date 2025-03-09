@@ -20,7 +20,7 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 use tera::Tera;
 use toml::Value;
-use tpnote_lib::config::LibCfg;
+use tpnote_lib::config::LibCfgRaw;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::Scheme;
 use tpnote_lib::config::TmplHtml;
@@ -260,7 +260,7 @@ impl Cfg {
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
             .fold(base_config, |a, b| {
-                LibCfg::merge_toml_values(a, b, CONFIG_FILE_MERGE_DEPTH)
+                LibCfgRaw::merge_toml_values(a, b, CONFIG_FILE_MERGE_DEPTH)
             });
 
         // We can not use the logger here, it is too early.
@@ -294,7 +294,7 @@ impl Cfg {
             // and collect a `Vector`.
             schemes = config_scheme
                 .into_iter()
-                .map(|v| LibCfg::merge_toml_values(config.base_scheme.clone(), v, 0))
+                .map(|v| LibCfgRaw::merge_toml_values(config.base_scheme.clone(), v, 0))
                 .map(|v| v.try_into().map_err(|e| e.into()))
                 .collect::<Result<Vec<Scheme>, ConfigFileError>>()?;
         }
