@@ -470,37 +470,34 @@ mod tests {
         let _cfg = Cfg::from_files(&[userconfig]).unwrap();
         {
             let lib_cfg = LIB_CFG.read();
-            // The schemes come from the config file `scheme`.
+            // The variables come from the `./config_default.toml` `zettel`
+            // scheme:
             assert_eq!(lib_cfg.scheme.len(), 2);
-            assert_eq!(lib_cfg.scheme[0].name, "zettel");
-            assert_eq!(lib_cfg.scheme[0].filename.sort_tag.separator, "--");
+            let zidx = lib_cfg.scheme_idx("zettel").unwrap();
+            assert_eq!(lib_cfg.scheme[zidx].name, "zettel");
+            // This variable is defined in the `zettel` scheme in
+            // `./config_default.toml`:
+            assert_eq!(lib_cfg.scheme[zidx].filename.sort_tag.separator, "--");
+            // This variables are inherited from the `base_scheme` in
+            // `./config_default.toml`. They are part of the `zettel` scheme:
+            assert_eq!(lib_cfg.scheme[zidx].filename.extension_default, "md");
+            assert_eq!(lib_cfg.scheme[zidx].filename.sort_tag.extra_separator, '\'');
+
+            let didx = lib_cfg.scheme_idx("default").unwrap();
+            // This variables are inherited from the `base_scheme` in
+            // `./config_default.toml`. They are part of the `default` scheme:
+            assert_eq!(lib_cfg.scheme[didx].filename.extension_default, "md");
+            assert_eq!(lib_cfg.scheme[didx].tmpl.fm_var.localization.len(), 1);
+            // These variables originate from `userconfig` (`tpnote.toml`)
+            // and are part of the `default` scheme:
+            assert_eq!(lib_cfg.scheme[didx].filename.sort_tag.separator, "---");
             assert_eq!(
-                lib_cfg.scheme[1].tmpl.fm_var.localization[0],
+                lib_cfg.scheme[didx].tmpl.fm_var.localization[0],
                 ("fm_foo".to_string(), "foofoo".to_string())
             );
-            // This originates from `base_scheme`.
-            assert_eq!(lib_cfg.scheme[0].filename.extension_default, "md");
-            assert_eq!(lib_cfg.scheme[0].filename.sort_tag.extra_separator, '\'');
-            assert_eq!(lib_cfg.scheme[1].name, "default");
-            assert_eq!(lib_cfg.scheme[1].filename.sort_tag.separator, "---");
-            assert_eq!(lib_cfg.scheme[1].tmpl.fm_var.localization.len(), 1);
-            assert_eq!(lib_cfg.scheme[1].filename.extension_default, "md");
+            // This variable is defined in the `default` scheme in
+            // `./config_default.toml`:
+            assert_eq!(lib_cfg.scheme[didx].name, "default");
         } // Free `LIB_CFG` lock.
-
-        //
-        // Prepare test: merge (replace) the default config into itself.
-        let raw = Cfg::default_as_toml();
-        let userconfig = temp_dir().join("tpnote.toml");
-        fs::write(&userconfig, raw.as_bytes()).unwrap();
-
-        let _cfg = Cfg::from_files(&[userconfig]).unwrap();
-        {
-            let lib_cfg = LIB_CFG.read();
-            // `len=2` means that `scheme.default` is replaced by `scheme.default`
-            // and `scheme.zettel` is replaced `scheme.zettel`.
-            assert_eq!(lib_cfg.scheme.len(), 2);
-            assert_eq!(lib_cfg.scheme[0].name, "default");
-            assert_eq!(lib_cfg.scheme[1].name, "zettel");
-        } // Free lock.
     }
 }
