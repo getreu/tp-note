@@ -1,143 +1,9 @@
-//! Tp-Note's high level API.<!-- The low level API is documented
-//! in the module `tpnote_lib::note`. -->
+//! Tp-Note's high level HTML rendering API.
 //!
-//! How to integrate this in your text editor code?
-//! First, call `create_new_note_or_synchronize_filename()`
-//! with the first positional command line parameter `<path>`.
-//! Then open the new text file with the returned path in your
-//! text editor. After modifying the text, saving it and closing your
-//! text editor, call `synchronize_filename()`.
-//! The returned path points to the possibly renamed note file.
-//!
-//! Tp-Note is customizable at runtime by modifying its configuration stored in
-//! `crate::config::LIB_CFG` before executing the functions in this
-//! module (see type definition and documentation in `crate::config::LibCfg`).
-//! All functions in this API are stateless.
-//!
-//!
-//! ## Example with `TemplateKind::New`
-//!
-//! ```rust
-//! use tpnote_lib::content::Content;
-//! use tpnote_lib::content::ContentString;
-//! use tpnote_lib::workflow::WorkflowBuilder;
-//! use std::env::temp_dir;
-//! use std::fs;
-//! use std::path::Path;
-//!
-//! // Prepare test.
-//! let notedir = temp_dir();
-//!
-//! let html_clipboard = ContentString::default();
-//! let txt_clipboard = ContentString::default();
-//! let stdin = ContentString::default();
-//! // This is the condition to choose: `TemplateKind::New`:
-//! assert!(html_clipboard.is_empty() && txt_clipboard.is_empty() &&stdin.is_empty());
-//! // There are no inhibitor rules to change the `TemplateKind`.
-//! let template_kind_filter = |tk|tk;
-//!
-//! // Build and run workflow.
-//! let n = WorkflowBuilder::new(&notedir)
-//!       // You can plug in your own type (must impl. `Content`).
-//!      .upgrade::<ContentString, _>(
-//!          "default", &html_clipboard, &txt_clipboard, &stdin, template_kind_filter)
-//!      .build()
-//!      .run()
-//!      .unwrap();
-//!
-//! // Check result.
-//! assert!(n.as_os_str().to_str().unwrap()
-//!    .contains("--Note"));
-//! assert!(n.is_file());
-//! let raw_note = fs::read_to_string(n).unwrap();
-//! #[cfg(not(target_family = "windows"))]
-//! assert!(raw_note.starts_with("\u{feff}---\ntitle:"));
-//! #[cfg(target_family = "windows")]
-//! assert!(raw_note.starts_with("\u{feff}---\r\ntitle:"));
-//! ```
-//!
-//! The internal data storage for the note's content is `ContentString`
-//! which implements the `Content` trait. Now we modify slightly
-//! the above example to showcase, how to overwrite
-//! one of the trait's methods.
-//!
-//! ```rust
-//! use std::path::Path;
-//! use tpnote_lib::content::Content;
-//! use tpnote_lib::content::ContentString;
-//! use tpnote_lib::workflow::WorkflowBuilder;
-//! use std::env::temp_dir;
-//! use std::path::PathBuf;
-//! use std::fs;
-//! use std::fs::OpenOptions;
-//! use std::io::Write;
-//! use std::ops::Deref;
-//!
-//! #[derive(Default, Debug, Eq, PartialEq)]
-//! // We need a newtype because of the orphan rule.
-//! pub struct MyContentString(ContentString);
-//!
-//! impl From<String> for MyContentString {
-//!     fn from(input: String) -> Self {
-//!         MyContentString(ContentString::from(input))
-//!     }
-//! }
-//!
-//! impl AsRef<str> for MyContentString {
-//!     fn as_ref(&self) -> &str {
-//!         self.0.as_ref()
-//!     }
-//! }
-//!
-//! impl Content for MyContentString {
-//!     // Now we overwrite one method to show how to plugin custom code.
-//!     fn save_as(&self, new_file_path: &Path) -> Result<(), std::io::Error> {
-//!         let mut outfile = OpenOptions::new()
-//!             .write(true)
-//!             .create(true)
-//!             .open(&new_file_path)?;
-//!         // We do not save the content to disk, we write intstead:
-//!         write!(outfile, "Simulation")?;
-//!         Ok(())
-//!     }
-//!    fn header(&self) -> &str {
-//!        self.0.header()
-//!    }
-//!
-//!    fn body(&self) -> &str {
-//!        self.0.header()
-//!    }
-//!
-//! }
-//!
-//! // Prepare test.
-//! let notedir = temp_dir();
-//!
-//! let html_clipboard = MyContentString::default();
-//! let txt_clipboard = MyContentString::default();
-//! let stdin = MyContentString::default();
-//! // This is the condition to choose: `TemplateKind::New`:
-//! assert!(
-//!     html_clipboard.is_empty() || txt_clipboard.is_empty() || stdin.is_empty());
-//! // There are no inhibitor rules to change the `TemplateKind`.
-//! let template_kind_filter = |tk|tk;
-//!
-//! // Build and run workflow.
-//! let n = WorkflowBuilder::new(&notedir)
-//!       // You can plug in your own type (must impl. `Content`).
-//!      .upgrade::<MyContentString, _>(
-//!          "default", &html_clipboard, &txt_clipboard, &stdin, template_kind_filter)
-//!      .build()
-//!      .run()
-//!      .unwrap();
-//!
-//! // Check result.
-//! assert!(n.as_os_str().to_str().unwrap()
-//!    .contains("--Note"));
-//! assert!(n.is_file());
-//! let raw_note = fs::read_to_string(n).unwrap();
-//! assert_eq!(raw_note, "Simulation");
-//! ```
+//! A set of functions that take a `Context` type and a `Content` type (or raw
+//! text) and return the HTML rendition of the content. The API is completely
+//! stateless. All functions read the `LIB_CFG` global variable to read the
+//! configuration stored in `LibCfg.tmpl_html`.
 
 use crate::config::LocalLinkKind;
 use crate::config::LIB_CFG;
@@ -371,6 +237,39 @@ impl HtmlRenderer {
     /// `doc_path` is used. `-` dumps the rendition to STDOUT. The filename
     /// of the html rendition is the same as in `doc_path`, but with `.html`
     /// appended.
+    ///
+    /// ```rust
+    /// use tpnote_lib::config::LIB_CFG;
+    /// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
+    /// use tpnote_lib::config::LocalLinkKind;
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::html_renderer::HtmlRenderer;
+    /// use std::env::temp_dir;
+    /// use std::fs;
+    /// use std::path::Path;
+    ///
+    /// // Prepare test: create existing note file.
+    /// let raw = r#"---
+    /// title: "My day3"
+    /// subtitle: "Note"
+    /// ---
+    /// Body text
+    /// "#;
+    /// let notefile = temp_dir().join("20221030-My day3--Note.md");
+    /// fs::write(&notefile, raw.as_bytes()).unwrap();
+    ///
+    /// // Start test
+    /// let content = ContentString::open(&notefile).unwrap();
+    /// // You can plug in your own type (must impl. `Content`).
+    /// HtmlRenderer::save_exporter_page(
+    ///        &notefile, content, Path::new(""), LocalLinkKind::Long).unwrap();
+    /// // Check the HTML rendition.
+    /// let expected_file = temp_dir().join("20221030-My day3--Note.md.html");
+    /// let html = fs::read_to_string(expected_file).unwrap();
+    /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
+    /// ```
     pub fn save_exporter_page<T: Content>(
         doc_path: &Path,
         content: T,
