@@ -478,7 +478,7 @@ impl HttpResponse for ServerThread {
                     context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &self.live_update_js);
                 } else {
                     // This is not the base document, but some other Tp-Note
-                    // document we want to render. Store store its path. The
+                    // document we want to render. Store its path. The
                     // HTML template expects this to be set to the rendered
                     // document.
                     context.path = abspath_doc.to_path_buf();
