@@ -11,7 +11,7 @@ scheme_sync_default = "default"
 ### `scheme.tmpl`.
 name = "base_scheme"
 
-### Filename related settings for the scheme `default`.
+### Filename related settings for the base scheme.
 [base_scheme.filename]
 
 ### List of characters that can be part of a _sort tag_.
@@ -122,7 +122,7 @@ extensions = [
   ["t2t", "Disabled", "RendererDisabled"],
 ]
 
-### Template related settings for the scheme `default`.
+### Template related settings for the base scheme.
 [base_scheme.tmpl]
 
 ### After generating a new note with a content template, Tp-Note parses the
