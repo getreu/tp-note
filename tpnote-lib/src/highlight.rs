@@ -9,11 +9,9 @@ use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
 /// Get the viewer syntax highlighting CSS configuration.
-pub(crate) fn get_viewer_highlighting_css() -> String {
-    let lib_cfg = LIB_CFG.read_recursive();
+pub(crate) fn get_viewer_highlighting_css(theme_name: &str) -> String {
     let ts = ThemeSet::load_defaults();
 
-    let theme_name = &lib_cfg.tmpl_html.viewer_highlighting_theme;
     ts.themes
         .get(theme_name)
         .and_then(|theme| {

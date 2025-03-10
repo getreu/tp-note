@@ -13,7 +13,6 @@ use std::str;
 use std::time::SystemTime;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::LIB_CFG;
-use tpnote_lib::config::LIB_CFG_CACHE;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
@@ -107,8 +106,9 @@ impl HttpResponse for ServerThread {
                     Path::new(&TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE),
                     MAX_AGE,
                     "text/css",
-                    LIB_CFG_CACHE
+                    LIB_CFG
                         .read_recursive()
+                        .tmpl_html
                         .viewer_highlighting_css
                         .as_bytes(),
                 )?;

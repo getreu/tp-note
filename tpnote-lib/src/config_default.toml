@@ -953,7 +953,7 @@ h1, h2, h3, h4, h5, h6 { font-family:sans-serif; }
 """
 
 ### Loads the viewer's code syntax highlighting theme. The theme is converted
-### into additional CSS. Currently available are:
+### into additional CSS. Currently, available are:
 ### * `base16-ocean.dark`
 ### * `base16-eighties.dark`
 ### * `base16-mocha.dark`
@@ -962,6 +962,11 @@ h1, h2, h3, h4, h5, h6 { font-family:sans-serif; }
 ### * `Solarized (dark)`
 ### * `Solarized (light)`
 viewer_highlighting_theme = "Solarized (light)"
+
+### When left empty, the css is calculated automatically from
+### `viewer_highlighting_theme`. This is what you usually want. Anyway, if none
+### of the above themes fits, you can provide a custom css here.
+viewer_highlighting_css = ""
 
 ### HTML template used to render a note into HTML when the rendition is saved to
 ### disk. Similar to `tmpl_html.viewer` but does not inject JavaScript code.

@@ -251,6 +251,14 @@ pub(crate) const CONFIG_FILE_MERGE_DEPTH: isize = 2;
 
 impl LibCfg {
     /// Constructor expecting a `LibCfgRaw` struct as input.
+    /// The variables `LibCfgRaw.scheme` and
+    /// `LibCfgRaw.html_tmpl.viewer_highlighting_css` are processed before
+    /// storing in `Self`:
+    /// * The entries in `LibCfgRaw.scheme` are merged into copies of
+    ///   `LibCfgRaw.base_scheme` and the results are stored in `LibCfg.scheme`
+    /// * If `LibCfgRaw.html_tmpl.viewer_highlighting_css` is empty,
+    ///   a css is calculated from `tmpl.viewer_highlighting_theme`
+    ///   and stored in `LibCfg.html_tmpl.viewer_highlighting_css`.
     pub fn from_raw(mut raw: LibCfgRaw) -> Result<Self, error::LibCfgError> {
         // Now we merge all `scheme` into a copy of `base_scheme` and
         // parse the result into a `Vec<Scheme>`.
@@ -276,13 +284,27 @@ impl LibCfg {
                 .map(|v| v.try_into().map_err(|e| e.into()))
                 .collect::<Result<Vec<Scheme>, LibCfgError>>()?;
         }
-        let lib_cfg_input = raw; // Freeze.
+        let raw = raw; // Freeze.
 
+        // Now calculate `LibCfgRaw.tmpl_html.viewer_highlighting_css`:
+        let mut tmpl_html = raw.tmpl_html;
+        #[cfg(feature = "renderer")]
+        let css = if !tmpl_html.viewer_highlighting_css.is_empty() {
+            tmpl_html.viewer_highlighting_css
+        } else {
+            get_viewer_highlighting_css(&tmpl_html.viewer_highlighting_theme)
+        };
+        #[cfg(not(feature = "renderer"))]
+        let css = String::new();
+
+        tmpl_html.viewer_highlighting_css = css;
+
+        // Store the result:
         let res = LibCfg {
             // Copy the parts of `config` into `LIB_CFG`.
-            scheme_sync_default: lib_cfg_input.scheme_sync_default.clone(),
+            scheme_sync_default: raw.scheme_sync_default,
             scheme: schemes,
-            tmpl_html: lib_cfg_input.tmpl_html.clone(),
+            tmpl_html,
         };
         // Perform some additional semantic checks.
         res.assert_validity()?;
@@ -533,6 +555,8 @@ pub struct TmplHtml {
     pub viewer_error: String,
     pub viewer_doc_css: String,
     pub viewer_highlighting_theme: String,
+    #[serde(default)]
+    pub viewer_highlighting_css: String,
     pub exporter: String,
     pub exporter_doc_css: String,
     pub exporter_highlighting_theme: String,
@@ -696,31 +720,6 @@ impl LibCfg {
         }
 
         Ok(())
-    }
-}
-
-/// Global variable containing the filename and template related configuration
-/// data.
-pub static LIB_CFG_CACHE: LazyLock<RwLock<LibCfgCache>> =
-    LazyLock::new(|| RwLock::new(LibCfgCache::new()));
-
-/// Configuration data, deserialized and preprocessed.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LibCfgCache {
-    /// The result of an expensive calculation:
-    /// `crate::highlight::get_viewer_highlighting_css()` with
-    /// `lib_cfg.tmpl_html.viewer_highlighting_theme` as input.
-    pub viewer_highlighting_css: String,
-}
-
-impl LibCfgCache {
-    fn new() -> Self {
-        Self {
-            #[cfg(feature = "renderer")]
-            viewer_highlighting_css: get_viewer_highlighting_css(),
-            #[cfg(not(feature = "renderer"))]
-            viewer_highlighting_css: String::new(),
-        }
     }
 }
 
