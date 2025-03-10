@@ -23,8 +23,6 @@ use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 use crate::filter::TERA;
 use crate::front_matter::FrontMatter;
-#[cfg(feature = "renderer")]
-use crate::highlight::get_exporter_highlighting_css;
 use crate::html::rewrite_links;
 use crate::html::HTML_EXT;
 use crate::note_error_tera_template;
@@ -451,7 +449,7 @@ impl<T: Content> Note<T> {
         #[cfg(feature = "renderer")]
         html_context.insert(
             TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS,
-            &get_exporter_highlighting_css(),
+            &LIB_CFG.read_recursive().tmpl_html.exporter_highlighting_css,
         );
 
         // Insert the raw CSS

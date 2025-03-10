@@ -1,6 +1,5 @@
 //! Syntax highlighting for (inline) source code blocks in Markdown input.
 
-use crate::config::LIB_CFG;
 use pulldown_cmark::{CodeBlockKind, Event, Tag, TagEnd};
 use syntect::highlighting::ThemeSet;
 use syntect::html::css_for_theme_with_class_style;
@@ -9,23 +8,9 @@ use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
 /// Get the viewer syntax highlighting CSS configuration.
-pub(crate) fn get_viewer_highlighting_css(theme_name: &str) -> String {
+pub(crate) fn get_highlighting_css(theme_name: &str) -> String {
     let ts = ThemeSet::load_defaults();
 
-    ts.themes
-        .get(theme_name)
-        .and_then(|theme| {
-            css_for_theme_with_class_style(theme, syntect::html::ClassStyle::Spaced).ok()
-        })
-        .unwrap_or_default()
-}
-
-/// Get the exporter syntax highlighting CSS configuration.
-pub(crate) fn get_exporter_highlighting_css() -> String {
-    let lib_cfg = LIB_CFG.read_recursive();
-    let ts = ThemeSet::load_defaults();
-
-    let theme_name = &lib_cfg.tmpl_html.exporter_highlighting_theme;
     ts.themes
         .get(theme_name)
         .and_then(|theme| {

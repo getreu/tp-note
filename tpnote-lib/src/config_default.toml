@@ -965,7 +965,7 @@ viewer_highlighting_theme = "Solarized (light)"
 
 ### When left empty, the css is calculated automatically from
 ### `viewer_highlighting_theme`. This is what you usually want. Anyway, if none
-### of the above themes fits, you can provide a custom css here.
+### of the above themes fits, you can provide a custom CSS here.
 viewer_highlighting_css = ""
 
 ### HTML template used to render a note into HTML when the rendition is saved to
@@ -1045,6 +1045,11 @@ exporter = '''
 ### * `Solarized (dark)`
 ### * `Solarized (light)`
 exporter_highlighting_theme = "Solarized (light)"
+
+### When left empty, the css is calculated automatically from
+### `exporter_highlighting_theme`. This is what you usually want. Anyway, if
+### none of the above themes fits, you can provide a custom CSS here.
+exporter_highlighting_css = ""
 
 ### A constant holding common CSS code, inserted into exported HTML documents
 ### with the template variable `{{ exporter_doc.css }}`. 

@@ -17,7 +17,7 @@
 use crate::error;
 use crate::error::LibCfgError;
 #[cfg(feature = "renderer")]
-use crate::highlight::get_viewer_highlighting_css;
+use crate::highlight::get_highlighting_css;
 use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
 use parking_lot::RwLock;
@@ -251,14 +251,16 @@ pub(crate) const CONFIG_FILE_MERGE_DEPTH: isize = 2;
 
 impl LibCfg {
     /// Constructor expecting a `LibCfgRaw` struct as input.
-    /// The variables `LibCfgRaw.scheme` and
-    /// `LibCfgRaw.html_tmpl.viewer_highlighting_css` are processed before
+    /// The variables `LibCfgRaw.scheme`,
+    /// `LibCfgRaw.html_tmpl.viewer_highlighting_css` and
+    /// `LibCfgRaw.html_tmpl.exporter_highlighting_css` are processed before
     /// storing in `Self`:
     /// * The entries in `LibCfgRaw.scheme` are merged into copies of
     ///   `LibCfgRaw.base_scheme` and the results are stored in `LibCfg.scheme`
     /// * If `LibCfgRaw.html_tmpl.viewer_highlighting_css` is empty,
     ///   a css is calculated from `tmpl.viewer_highlighting_theme`
     ///   and stored in `LibCfg.html_tmpl.viewer_highlighting_css`.
+    /// * Do the same for `LibCfgRaw.html_tmpl.exporter_highlighting_css`.
     pub fn from_raw(mut raw: LibCfgRaw) -> Result<Self, error::LibCfgError> {
         // Now we merge all `scheme` into a copy of `base_scheme` and
         // parse the result into a `Vec<Scheme>`.
@@ -286,18 +288,30 @@ impl LibCfg {
         }
         let raw = raw; // Freeze.
 
-        // Now calculate `LibCfgRaw.tmpl_html.viewer_highlighting_css`:
         let mut tmpl_html = raw.tmpl_html;
+        // Now calculate `LibCfgRaw.tmpl_html.viewer_highlighting_css`:
         #[cfg(feature = "renderer")]
         let css = if !tmpl_html.viewer_highlighting_css.is_empty() {
             tmpl_html.viewer_highlighting_css
         } else {
-            get_viewer_highlighting_css(&tmpl_html.viewer_highlighting_theme)
+            get_highlighting_css(&tmpl_html.viewer_highlighting_theme)
         };
         #[cfg(not(feature = "renderer"))]
         let css = String::new();
 
         tmpl_html.viewer_highlighting_css = css;
+
+        // Calculate `LibCfgRaw.tmpl_html.exporter_highlighting_css`:
+        #[cfg(feature = "renderer")]
+        let css = if !tmpl_html.exporter_highlighting_css.is_empty() {
+            tmpl_html.exporter_highlighting_css
+        } else {
+            get_highlighting_css(&tmpl_html.exporter_highlighting_theme)
+        };
+        #[cfg(not(feature = "renderer"))]
+        let css = String::new();
+
+        tmpl_html.exporter_highlighting_css = css;
 
         // Store the result:
         let res = LibCfg {
@@ -555,11 +569,11 @@ pub struct TmplHtml {
     pub viewer_error: String,
     pub viewer_doc_css: String,
     pub viewer_highlighting_theme: String,
-    #[serde(default)]
     pub viewer_highlighting_css: String,
     pub exporter: String,
     pub exporter_doc_css: String,
     pub exporter_highlighting_theme: String,
+    pub exporter_highlighting_css: String,
 }
 
 impl LibCfg {
