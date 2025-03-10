@@ -19,8 +19,8 @@ use tpnote_lib::config::{LocalLinkKind, TMPL_VAR_PATH};
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::html::rewrite_links;
+use tpnote_lib::html_renderer::HtmlRenderer;
 use tpnote_lib::markup_language::MarkupLanguage;
-use tpnote_lib::workflow::HtmlRenderer;
 
 /// Content from files are served in chunks.
 const TCP_WRITE_BUFFER_SIZE: usize = 0x1000;

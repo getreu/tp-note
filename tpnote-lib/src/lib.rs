@@ -13,8 +13,8 @@
 //! implementation details. Roughly speaking, the input path correspond to
 //! _Tp-Note_'s first positional command line parameter and the output path is
 //! the same that is printed to stdout after usage. The main consumer of
-//! `tpnote-lib`'s high-level API is the module `workflow` in the `tpnote`
-//! crate.
+//! `tpnote-lib`'s high-level API is the module `workflow` and `html_renderer`
+//! in the `tpnote` crate.
 //!
 pub mod clone_ext;
 pub mod config;
@@ -29,6 +29,7 @@ pub mod highlight;
 pub mod html;
 #[cfg(feature = "renderer")]
 pub mod html2md;
+pub mod html_renderer;
 pub mod markup_language;
 mod note;
 pub mod settings;
