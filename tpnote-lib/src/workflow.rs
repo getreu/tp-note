@@ -161,6 +161,8 @@ use crate::context::Context;
 use crate::error::NoteError;
 #[cfg(feature = "viewer")]
 use crate::filter::TERA;
+use crate::html::rewrite_links;
+use crate::html::HTML_EXT;
 use crate::note::Note;
 #[cfg(feature = "viewer")]
 use crate::note::ONE_OFF_TEMPLATE_NAME;
@@ -170,9 +172,16 @@ use crate::settings::SchemeSource;
 use crate::settings::Settings;
 use crate::settings::SETTINGS;
 use crate::template::TemplateKind;
+use parking_lot::RwLock;
 use parking_lot::RwLockUpgradableReadGuard;
+use std::collections::HashSet;
+use std::fs::OpenOptions;
+use std::io;
+use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
+use std::str::FromStr;
+use std::sync::Arc;
 #[cfg(feature = "viewer")]
 use tera::Tera;
 use tera::Value;
@@ -503,19 +512,20 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
             TemplateKind::None => Note::from_raw_text(context, content.unwrap(), template_kind)?,
         };
 
-        // Export HTML rendition, if wanted.
-        if let Some((dir, local_link_kind)) = self.input.html_export {
-            n.export_html(
-                &LIB_CFG.read_recursive().tmpl_html.exporter,
-                dir,
-                local_link_kind,
-            )?;
-        }
-
         // If no new filename was rendered, return the old one.
         let mut n = n;
         if n.rendered_filename == PathBuf::new() {
             n.rendered_filename = n.context.path.clone();
+        }
+
+        // Export HTML rendition, if wanted.
+        if let Some((export_dir, local_link_kind)) = self.input.html_export {
+            HtmlRenderer::save_exporter_page(
+                &n.rendered_filename,
+                n.content,
+                export_dir,
+                local_link_kind,
+            )?;
         }
 
         Ok(n.rendered_filename)
@@ -779,5 +789,82 @@ impl HtmlRenderer {
             .render_str(tmpl_html, &context)
             .map_err(|e| note_error_tera_template!(e, "[html_tmpl] viewer_error".to_string()))?;
         Ok(html)
+    }
+
+    /// Renders `doc_path` with `content` into HTML and saves the result in
+    /// `export_dir`. If `export_dir` is the empty string, the directory of
+    /// `doc_path` is used. `-` dumps the rendition to STDOUT. The filename
+    /// of the html rendition is the same as in `doc_path`, but with `.html`
+    /// appended.
+    pub fn save_exporter_page<T: Content>(
+        doc_path: &Path,
+        content: T,
+        export_dir: &Path,
+        local_link_kind: LocalLinkKind,
+    ) -> Result<(), NoteError> {
+        let context = Context::from(doc_path);
+
+        let doc_path = context.path.clone();
+        let doc_dir = context.dir_path.clone();
+
+        // Determine filename of html-file.
+        let html_path = match export_dir {
+            p if p == Path::new("") => {
+                let mut s = doc_path.as_path().to_str().unwrap_or_default().to_string();
+                s.push_str(HTML_EXT);
+                PathBuf::from_str(&s).unwrap_or_default()
+            }
+            p if p == Path::new("-") => PathBuf::new(),
+            p => {
+                let mut html_filename = doc_path
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_str()
+                    .unwrap_or_default()
+                    .to_string();
+                html_filename.push_str(HTML_EXT);
+                let mut p = p.to_path_buf();
+                p.push(PathBuf::from(html_filename));
+                p
+            }
+        };
+
+        if html_path == Path::new("") {
+            log::debug!("Rendering HTML to STDOUT (`{:?}`)", export_dir);
+        } else {
+            log::debug!("Rendering HTML into: {:?}", html_path);
+        };
+
+        // These must live longer than `writeable`, and thus are declared first:
+        let (mut stdout_write, mut file_write);
+        // We need to ascribe the type to get dynamic dispatch.
+        let writeable: &mut dyn Write = if html_path == Path::new("") {
+            stdout_write = io::stdout();
+            &mut stdout_write
+        } else {
+            file_write = OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open(&html_path)?;
+            &mut file_write
+        };
+
+        // Render HTML.
+        let root_path = context.root_path.clone();
+        let html = Self::exporter_page(context, content)?;
+        let html = rewrite_links(
+            html,
+            &root_path,
+            &doc_dir,
+            local_link_kind,
+            // Do append `.html` to `.md` in links.
+            true,
+            Arc::new(RwLock::new(HashSet::new())),
+        );
+
+        // Write HTML rendition.
+        writeable.write_all(html.as_bytes())?;
+        Ok(())
     }
 }

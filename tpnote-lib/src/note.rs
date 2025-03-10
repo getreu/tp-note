@@ -5,7 +5,6 @@
 //! parsing its front matter.
 //! NB: The high level API is in the module `tpnote_lib::workflow`.
 
-use crate::config::LocalLinkKind;
 use crate::config::LIB_CFG;
 use crate::config::TMPL_HTML_VAR_EXPORTER_DOC_CSS;
 use crate::config::TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS;
@@ -23,20 +22,12 @@ use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
 use crate::filter::TERA;
 use crate::front_matter::FrontMatter;
-use crate::html::rewrite_links;
-use crate::html::HTML_EXT;
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
-use parking_lot::RwLock;
-use std::collections::HashSet;
 use std::default::Default;
 use std::fs::File;
-use std::fs::OpenOptions;
-use std::io;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::str;
-use std::sync::Arc;
 use std::time::SystemTime;
 use tera::Tera;
 
@@ -322,110 +313,6 @@ impl<T: Content> Note<T> {
         Ok(())
     }
 
-    /// Renders `self` into HTML and saves the result in `export_dir`. If
-    /// `export_dir` is the empty string, the directory of `note_path` is
-    /// used. `-` dumps the rendition to STDOUT.
-    /// This function reads `self.rendered_filename` or - if empty -
-    /// `self.context.path` is used to determine the filename of the
-    /// html rendition.
-    pub fn export_html(
-        &self,
-        html_template: &str,
-        export_dir: &Path,
-        local_link_kind: LocalLinkKind,
-    ) -> Result<(), NoteError> {
-        // Determine filename of html-file.
-        let mut html_path = PathBuf::new();
-        let current_path = if self.rendered_filename != PathBuf::new() {
-            &self.rendered_filename
-        } else {
-            &self.context.path
-        };
-
-        let current_dir_path = current_path.parent().unwrap_or_else(|| Path::new(""));
-
-        if export_dir
-            .as_os_str()
-            .to_str()
-            .unwrap_or_default()
-            .is_empty()
-        {
-            html_path = current_path
-                .parent()
-                .unwrap_or_else(|| Path::new(""))
-                .to_path_buf();
-            let mut html_filename = current_path
-                .file_name()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default()
-                .to_string();
-            html_filename.push_str(".html");
-            html_path.push(PathBuf::from(html_filename.as_str()));
-        } else if export_dir.display().to_string() != "-" {
-            html_path = export_dir.to_owned();
-            let mut html_filename = current_path
-                .file_name()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default()
-                .to_string();
-            html_filename.push_str(HTML_EXT);
-            html_path.push(PathBuf::from(html_filename.as_str()));
-        } else {
-            // `export_dir` points to `-` and `html_path` is empty.
-        }
-
-        if html_path
-            .as_os_str()
-            .to_str()
-            .unwrap_or_default()
-            .is_empty()
-        {
-            log::debug!("Rendering HTML to STDOUT (`{:?}`)", export_dir);
-        } else {
-            log::debug!("Rendering HTML into: {:?}", html_path);
-        };
-
-        // These must live longer than `writeable`, and thus are declared first:
-        let (mut stdout_write, mut file_write);
-        // We need to ascribe the type to get dynamic dispatch.
-        let writeable: &mut dyn Write = if html_path
-            .as_os_str()
-            .to_str()
-            .unwrap_or_default()
-            .is_empty()
-        {
-            stdout_write = io::stdout();
-            &mut stdout_write
-        } else {
-            file_write = OpenOptions::new()
-                .write(true)
-                .create(true)
-                .truncate(true)
-                .open(&html_path)?;
-            &mut file_write
-        };
-
-        // Write HTML rendition.
-        writeable.write_all(
-            self.render_content_to_html(html_template)
-                .map(|html| {
-                    rewrite_links(
-                        html,
-                        &self.context.root_path,
-                        current_dir_path,
-                        local_link_kind,
-                        // Do append `.html` to `.md` in links.
-                        true,
-                        Arc::new(RwLock::new(HashSet::new())),
-                    )
-                })?
-                .as_bytes(),
-        )?;
-        Ok(())
-    }
-
     #[inline]
     /// Calls the appropriate markup renderer.
     /// This template expects the template variable
@@ -466,6 +353,12 @@ impl<T: Content> Note<T> {
         html_context.insert(
             TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH,
             TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE,
+        );
+
+        log::trace!(
+            "Available substitution variables for the HTML template:\
+            \n{:#?}",
+            html_context
         );
 
         let mut tera = Tera::default();
