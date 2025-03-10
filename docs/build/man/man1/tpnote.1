@@ -1776,16 +1776,16 @@ small.
 .PP
 Some filename and template related variables are grouped into a
 `\f[CR]scheme\f[R]'.
-The shipped configuration file lists two schemes: `\f[CR]default\f[R]'
-and `\f[CR]zettel\f[R]'.
+The shipped configuration file lists three schemes:
+`\f[CR]default\f[R]', `\f[CR]zettel\f[R]' and `\f[CR]rst\f[R]'.
 The scheme used when creating a new note, is selected by the commend
 line option `\f[CR]\-\-scheme\f[R]', the environment variable
 `\f[CR]TPNOTE_SCHEME\f[R]' or the configuration variable
 `\f[CR]arg_default.scheme\f[R]'.
 The scheme selected when synchronizing a Tp\-Note header with its
 filename depends on the value of the header variable
-`\f[CR]scheme:\f[R]' which defaults to `\f[CR]default\f[R]'
-(cf.\ `\f[CR]scheme_sync_default\f[R]').
+`\f[CR]scheme:\f[R]' which defaults to `\f[CR]default\f[R]' (cf.
+`\f[CR]scheme_sync_default\f[R]').
 .PP
 Note, that the merging algorithm merges all values, except arrays.
 These are usually replaced by the subsequent configuration file.
@@ -1802,15 +1802,16 @@ name=\[dq]default\[dq]
 extension_default = \[dq]txt\[dq]
 .EE
 .PP
-To add a custom scheme you must provide all variables:
+To add a custom scheme you must explicitly overwrite all variables that
+differ from the base scheme \f[CR]base_scheme\f[R]:
 .IP
 .EX
 \f[B][[scheme]]\f[R]
 name=\[dq]my\-custom\-scheme\[dq]
 \f[B][scheme.filename]\f[R]
-\f[I]# Insert all variables here.\f[R]
+\f[I]# Insert all variables here, that differ from \[ga]base_scheme\[ga].\f[R]
 \f[B][scheme.tmpl]\f[R]
-\f[I]# Insert all variables here.\f[R]
+\f[I]# Insert all variables here, that differ from \[ga]base_scheme\[ga].\f[R]
 .EE
 .PP
 The following example illustrates how non\-top\-level arrays are
@@ -2406,65 +2407,73 @@ The default templates are designed in a way that they contain almost no
 markup specific code.
 Though there is one little exception in the
 `\f[CR]annotate_file_content\f[R]' template.
-For instance, to instruct Tp\-Note to create \f[CR].rst\f[R] files,
-create a configuration file \f[CR]\[ti]/.config/tpnote/tpnote.toml\f[R]
-with the following content:
+There is dedicated scheme named `\f[CR]rst\f[R]' that reflects the
+diversion concerning `\f[CR]annotate_file_content\f[R]'.
 .PP
-First, create a configuration file
-`\f[CR]\[ti]/.config/tpnote/tpnote.toml\f[R]' with:
+When you open an existing note file, Tp\-Note detects the note
+file\[cq]s markup language from its file extension.
+To open a note written in ReStructuredText just type:
+.IP
+.EX
+tpnote mynote.rst
+.EE
+.PP
+To create a new ReStructuredText note invoke Tp\-Note with:
+.IP
+.EX
+tpnote \-\-scheme rst
+.EE
+.PP
+Or, to make ReStructuredText default for all new notes, write a
+configuration file \f[CR]\[ti]/.config/tpnote/tpnote.toml\f[R] with the
+following content:
+.IP
+.EX
+\f[B][arg_default]\f[R]
+scheme=\[dq]rst\[dq]
+.EE
+.PP
+How does this work?
+If you are not interested in internal details, skip this section.
+As mentioned above, the `\f[CR]rst\f[R]' scheme diverges very little
+from the `\f[CR]default\f[R]' scheme.
+This is how the scheme is internally defined:
 .IP
 .EX
 \f[B][[scheme]]\f[R]
-name = \[dq]default\[dq]
+name = \[dq]rst\[dq]
 \f[B][scheme.filename]\f[R]
 extension_default = \[dq]rst\[dq]
 \f[B][scheme.tmpl]\f[R]
 annotate_file_content = \[dq]\[dq]\[dq]
-COMPLETE HERE
-\[dq]\[dq]\[dq]
-
-\f[B][[scheme]]\f[R]
-name = \[dq]zettel\[dq]
-\f[B][scheme.filename]\f[R]
-extension_default = \[dq]rst\[dq]
-\f[B][scheme.tmpl]\f[R]
-annotate_file_content = \[dq]\[dq]\[dq]
-COMPLETE HERE
+\&...SKIPPED CODE...
+\[ga]<{{ path | file_name }}>\[ga]_
 \[dq]\[dq]\[dq]
 .EE
 .PP
-In the above replace the string `\f[CR]COMPLETE HERE\f[R]' with the
-default values for the variables `\f[CR]annotate_file_content\f[R]' you
-obtain with `\f[CR]tpnote \-C \- | less\f[R]'.
-.PP
-Then, in \f[CR]annotate_file_content\f[R] replace the line:
+The only template containing markup language specific code is the
+`\f[CR]annotate_file_content\f[R]' template.
+This is why the default template definition
+(cf.\ `\f[CR]base_scheme\f[R]') is overwritten in the above
+`\f[CR]rst\f[R]' scheme configuration.
+The whole template code is too long to be presented here, but it
+contains originally (cf.\ `\f[CR]base_scheme\f[R]') a line defining a
+hyperlink written in Markdown:
 .IP
 .EX
+\&...SKIPPED CODE...
 [{{ path | file_name }}](<{{ path | file_name }}>)
 .EE
 .PP
-with its ReStructuredText counterpart:
+The `\f[CR]annotate_file_content\f[R]' template in the above
+`\f[CR]rst\f[R]' scheme is identical to the `\f[CR]default\f[R]' scheme,
+except that the Markdown line was replaced with its ReStructuredText
+counterpart:
 .IP
 .EX
+\&...SKIPPED CODE...
 \[ga]<{{ path | file_name }}>\[ga]_
 .EE
-.PP
-As a result, all future notes are created as `\f[CR]*.rst\f[R]' files.
-.SS Change the markup language for one specific note only
-You can change the Markup language of a specific note by adding the
-variable `\f[CR]file_ext:\f[R]' to its YAML header.
-For example, for ReStructuredText add:
-.IP
-.EX
-\-\-\-
-title\f[B]:\f[R]    some note
-file_ext\f[B]:\f[R] rst
-\-\-\-
-.EE
-.PP
-When Tp\-Note triggers the next filename synchronization, the filename
-extension of the note file will change to `\f[CR].rst\f[R]'.
-The above modification applies to the current note only.
 .SS Change the sort tag character set
 \f[I]Sort\-tags\f[R] for new notes are generated with the
 `\f[CR]tmpl.*_filename\f[R]' templates.

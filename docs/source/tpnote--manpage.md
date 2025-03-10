@@ -1421,13 +1421,14 @@ Also make sure to keep the '`version`' variable at the beginning of the file
 commented out. As any Tp-Note upgrade might include a breaking change in the
 configuration file structure, try to keep your custom configuration small.
 
-Some filename and template related variables are grouped into a '`scheme`'. The
-shipped configuration file lists two schemes: '`default`' and '`zettel`'. The
-scheme used when creating a new note, is selected by the commend line option
-'`--scheme`', the environment variable '`TPNOTE_SCHEME`' or the configuration
-variable '`arg_default.scheme`'. The scheme selected when synchronizing a
-Tp-Note header with its filename depends on the value of the header variable
-'`scheme:`' which defaults to '`default`' (cf. '`scheme_sync_default`').
+Some filename and template related variables are grouped into a '`scheme`'.
+The shipped configuration file lists two schemes: '`default`' and '`zettel`'.
+The scheme used when creating a new note, is selected by the
+commend line option '`--scheme`', the environment variable '`TPNOTE_SCHEME`'
+or the configuration variable '`arg_default.scheme`'. The scheme selected
+when synchronizing a Tp-Note header with its filename depends on the value
+of the header variable '`scheme:`' which defaults to '`default`' (cf.
+'`scheme_sync_default`').
 
 Note, that the merging algorithm merges all values, except arrays. These are
 usually replaced by the subsequent configuration file. There is one exception
@@ -1443,15 +1444,16 @@ name="default"
 extension_default = "txt"
 ```
 
-To add a custom scheme you must provide all variables:
+To add a custom scheme you must explicitly overwrite all variables that differ
+from the base scheme `base_scheme`:
 
 ```toml
 [[scheme]]
 name="my-custom-scheme"
 [scheme.filename]
-# Insert all variables here.
+# Insert all variables here, that differ from `base_scheme`.
 [scheme.tmpl]
-# Insert all variables here.
+# Insert all variables here, that differ from `base_scheme`.
 ```
 
 The following example illustrates how non-top-level arrays are overwritten
@@ -1992,67 +1994,54 @@ different markup renderers (cf. section _Customize the built-in note viewer_):
 Tp-Note's core function is a template system and as such it depends
 very little on the used markup language. The default templates are
 designed in a way that they contain almost no markup specific code. Though there
-is one little exception in the '`annotate_file_content`' template. 
-For instance, to instruct Tp-Note to create `.rst` files, create a
-configuration file `~/.config/tpnote/tpnote.toml` with the following content:
+is one little exception in the '`annotate_file_content`' template.
 
-First, create a configuration file '`~/.config/tpnote/tpnote.toml`' with:
+When you open an existing note file, Tp-Note detects the note file's markup
+language from its file extension. To open a note written in ReStructuredText
+just type:
 
-```toml
-[[scheme]]
-name = "default"
-[scheme.filename]
-extension_default = "rst"
-[scheme.tmpl]
-annotate_file_content = """
-COMPLETE HERE
-"""
-
-[[scheme]]
-name = "zettel"
-[scheme.filename]
-extension_default = "rst"
-[scheme.tmpl]
-annotate_file_content = """
-COMPLETE HERE
-"""
+```sh
+tpnote mynote.rst
 ```
 
-In the above replace the string '`COMPLETE HERE`' with the default
-values for the variables '`annotate_file_content`' you obtain with 
-'`tpnote -C - | less`'.
+To create a new ReStructuredText note invoke Tp-Note with:
 
-Then, in `annotate_file_content` replace the line:
-
-```
-[{{ path | file_name }}](<{{ path | file_name }}>)
+```sh
+TPNOTE_EXTENSION_DEFAULT=rst tpnote
 ```
 
-with its ReStructuredText counterpart:
-
-```
-`<{{ path | file_name }}>`_
-```
-
-As a result, all future notes are created as '`*.rst`' files.
-
-
-### Change the markup language for one specific note only
-
-You can change the Markup language of a specific note by adding the variable
-'`file_ext:`' to its YAML header. For example, for ReStructuredText add:
+You can change the Markup language of a specific note file by adding the
+variable '`file_ext:`' to its YAML header. For example, for ReStructuredText
+add:
 
 ```yaml
 ---
 title:    some note
 file_ext: rst
 ---
+````
+
+To make ReStructuredText the default markup language for all future new notes,
+write a configuration file '`~/.config/tpnote/tpnote.toml`' with the following
+content:
+
+```toml
+[base_scheme.filename]
+extension_default="rst"
 ```
 
-When Tp-Note triggers the next filename synchronization, the filename
-extension of the note file will change to '`.rst`'. The above modification
-applies to the current note only.
+Or, if you wish to apply the change only to notes created with the '`zettel`'
+scheme set:
 
+```toml
+[[scheme]]
+name = 'zettel'
+[scheme.filename]
+extension_default="rst"
+```
+
+This overwrites the '`extension_default`' variable of the '`zettel`' scheme,
+but leaves the '`default`' scheme untouched.
 
 
 ## Change the sort tag character set
