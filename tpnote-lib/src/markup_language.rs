@@ -202,9 +202,8 @@ impl MarkupLanguage {
 
             #[cfg(feature = "renderer")]
             Self::ReStructuredText => {
-                // Note, that the current rst renderer requires files to end with a new line.
-                // <https://github.com/flying-sheep/rust-rst/issues/30>
-                let rest_input = input.trim_start();
+                // Note, that the current rst renderer requires files to end with no new line.
+                let rest_input = input.trim();
                 // Write to String buffer.
                 let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
                 const STANDALONE: bool = false; // Don't wrap in `<!doctype html><html></html>`.
