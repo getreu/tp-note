@@ -469,6 +469,7 @@ if diff "$OUTPUT_FILENAME" "test017-clipboard-expected-output"
 then
     echo Commandline test 017 succeeded.
     rm "$OUTPUT_FILENAME"
+    rm "$PWD/03b-test.md"
 else
     echo Commandline test 017 failed.
     exit 1
@@ -476,10 +477,35 @@ fi
 
 
 
+## Test 018: Create a new note annotating some existing file
+INPUT_FILENAME="$PWD/test018-some english file to annotate.pdf"
+
+# Input file can be empty
+:>"$INPUT_FILENAME"
+
+TPNOTE_EXTENSION_DEFAULT="rst" LANG="en_US.UTF-8" LOGNAME="myuser" \
+    cargo run -- --batch \
+    --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME" >/dev/null 2>&1
+
+OUTPUT_FILENAME="${INPUT_FILENAME}--Note.rst"
+
+if diff "$OUTPUT_FILENAME" "test018-annotate-expected-output"
+then
+echo Commandline test 018 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 018 failed.
+    exit 1
+fi
 
 
 
-./run-tests2
+
+./run-tests2 || exit 1
+
+
 
 
 
