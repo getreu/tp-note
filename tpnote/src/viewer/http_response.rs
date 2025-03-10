@@ -11,11 +11,11 @@ use std::io::{Read, Write};
 use std::path::Path;
 use std::str;
 use std::time::SystemTime;
-use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
+use tpnote_lib::config::{LocalLinkKind, TMPL_VAR_PATH};
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::html::rewrite_links;
@@ -482,6 +482,7 @@ impl HttpResponse for ServerThread {
                     // HTML template expects this to be set to the rendered
                     // document.
                     context.path = abspath_doc.to_path_buf();
+                    context.insert(TMPL_VAR_PATH, &abspath_doc.to_path_buf());
                     // Only the first base document is live updated.
                     // Overwrite the dynamic JavaScript.
                     context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
