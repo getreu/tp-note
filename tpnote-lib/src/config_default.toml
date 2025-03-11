@@ -882,16 +882,16 @@ h1, h2, h3, h4, h5, h6 { font-family:sans-serif; }
 viewer_doc_css = """
 /* Tp-Note's viewer document CSS */
 @media (prefers-color-scheme: dark) {
-  h1, h2, h3, h4, h5, h6 { color: #8db2e5; }
-  em { color: #e5c08d; }
-  a { color: #8de594; }
+  h1, h2, h3, h4, h5, h6 { color: #86abc1; }
+  em { color: #cfba8b; }
+  a { color: #99be70; }
   body {
-    background: #292929;
-    color: #eeeeee;
+    background: #202020;
+    color: #f3f2db;
   }
-  table.fm { background-color: #363636; }
+  table.fm { background-color: #303030; }
   th.fmkey{ color: #cdcdcd; }
-  th.fmval{ color: #dee58d; }
+  th.fmval{ color: #c9c65e; }
   th.fmkeygrey{ color: #999999; }
   th.fmvalgrey{ color: #999999; }
 }
