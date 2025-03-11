@@ -20,6 +20,7 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 use tera::Tera;
 use toml::Value;
+use tpnote_lib::config::CfgVal;
 use tpnote_lib::config::LibCfg;
 use tpnote_lib::config::LibCfgRaw;
 use tpnote_lib::config::LocalLinkKind;
@@ -235,7 +236,8 @@ impl Cfg {
 
         //
         // `from_files()` start
-        let base_config = toml::from_str(&Self::default_as_toml())?;
+        let base_config = CfgVal::from_str(GUI_CONFIG_DEFAULT_TOML)?;
+        base_config.extend(CfgVal::from_str(LIB_CONFIG_DEFAULT_TOML)?);
 
         let config = config_paths
             .iter()
@@ -246,7 +248,7 @@ impl Cfg {
             })
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
-            .fold(base_config, LibCfgRaw::merge);
+            .fold(base_config, CfgVal::merge);
 
         // We can not use the logger here, it is too early.
         if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
