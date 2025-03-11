@@ -408,6 +408,13 @@ annotate_file_content = """
 {%- else -%}
    {%- set lang_test_text = path | file_stem  -%}
 {%- endif -%}
+
+{%- set fname = path | file_name -%}
+{%- if extension_default != 'rst' -%}
+   {%- set link = '[' ~ fname ~ '](<' ~ fname ~ '>)' -%}
+{%- else -%}
+   {%- set link = '`<' ~ fname ~ '>`_' -%}
+  {%- endif -%}
 ---
 {{ path | trim_file_sort_tag | to_yaml(key='fm_title') }}
 {% if body_text | link_text !='' and
@@ -421,7 +428,7 @@ annotate_file_content = """
 {{ lang_test_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
 ---
 
-[{{ path | file_name }}](<{{ path | file_name }}>)
+{{ link }}
 {% if body_text != '' -%}
 {%- if body_text != body_text | heading %}
 ---
@@ -690,6 +697,13 @@ annotate_file_content = """
 {%- else -%}
 {%- set keywords = ['note'] -%}
 {%- endif -%}
+
+{%- set fname = path | file_name -%}
+{%- if extension_default != 'rst' -%}
+   {%- set link = '[' ~ fname ~ '](<' ~ fname ~ '>)' -%}
+{%- else -%}
+   {%- set link = '`<' ~ fname ~ '>`_' -%}
+  {%- endif -%}
 ---
 {{ path | trim_file_sort_tag | to_yaml(key='fm_title') }}
 {{ keywords | to_yaml(key='fm_keywords') }}
@@ -700,7 +714,7 @@ annotate_file_content = """
 {{ path | file_sort_tag | to_yaml(key='fm_sort_tag') }}
 ---
 
-[{{ path | file_name }}](<{{ path | file_name }}>)
+{{ link }}
 {%- if body_text != '' -%}
 {%- if body_text != body_text | heading -%}
 --
