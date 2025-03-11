@@ -802,3 +802,26 @@ pub enum Assertion {
     #[default]
     NoOperation,
 }
+
+/// A newtype holding configuration data.
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+struct CfgVal(toml::map::Map<String, Value>);
+
+impl CfgVal {
+    /// Constructor taking a text to deserialize.
+    /// Throws an error if the deserialized root element is not a
+    /// `Value::Table`.
+    fn from_str(input: &str) -> Result<Self, error::LibCfgError> {
+        let v = toml::from_str(input)?;
+        if let Value::Table(map) = v {
+            Ok(Self(map))
+        } else {
+            Err(LibCfgError::CfgValInputIsNotTable)
+        }
+    }
+
+    // Append key, value pairs from other to `self`.
+    fn extend(&mut self, other: Self) {
+        self.0.extend(other.0);
+    }
+}

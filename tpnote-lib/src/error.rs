@@ -45,6 +45,12 @@ pub enum FileError {
 /// Configuration file related semantic errors.
 #[derive(Debug, Error, Clone, PartialEq)]
 pub enum LibCfgError {
+    /// CfgVal can only be deserialized with data whose root element
+    /// is a `Value::Table`.
+    /// This should not happen. Please file a bug report.
+    #[error("Input data root must be a `Value::Table`")]
+    CfgValInputIsNotTable,
+
     /// Remedy: Choose another scheme.
     #[error(
         "Configuration file error in section:\n\
