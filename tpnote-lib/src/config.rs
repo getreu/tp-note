@@ -282,7 +282,7 @@ impl LibCfg {
             // to left hand arrays, we always overwrite them.
             schemes = lib_cfg_scheme
                 .into_iter()
-                .map(|v| LibCfgRaw::merge_toml_values(raw.base_scheme.clone(), v, 0))
+                .map(|v| CfgVal::merge_toml_values(raw.base_scheme.clone(), v, 0))
                 .map(|v| v.try_into().map_err(|e| e.into()))
                 .collect::<Result<Vec<Scheme>, LibCfgError>>()?;
         }
@@ -379,96 +379,6 @@ pub struct LibCfgRaw {
     pub scheme: HashMap<String, Value>,
     /// Configuration of HTML templates.
     pub tmpl_html: TmplHtml,
-}
-
-impl LibCfgRaw {
-    #[inline]
-    /// Merges configuration values from the right-hand side into the
-    /// left-hand side and returns the result. The top level element must be
-    /// `toml::Value::Table`. The table is a set of key and value pairs. If
-    /// this value is a `Value::Array`, then the right-hand array is appended
-    /// to the left-hand array, otherwise the right replaces left. Only top
-    /// level `Value::Array`s, meaning those who are exactly one level below
-    /// `Value::Table` are appended (`CONFIG_FILE_MERGE_PEPTH=2`).
-    pub fn merge(left: toml::Value, right: toml::Value) -> toml::Value {
-        Self::merge_toml_values(left, right, CONFIG_FILE_MERGE_DEPTH)
-    }
-
-    /// Merges configuration values from the right-hand side into the
-    /// left-hand side and returns the result. The top level element is usually
-    /// a `toml::Value::Table`. The table is a set of key and value pairs.
-    /// The values here can be compound data types, i.e. `Value::Table` or
-    /// `Value::Array`.
-    /// `merge_depth` controls whether a top-level array in the TOML document
-    /// is appended to instead of overridden. This is useful for TOML documents
-    /// that have a top-level arrays (`merge_depth=2`) like `[[scheme]]` in
-    /// `tpnote.toml`. For top level arrays, one usually wants to append the
-    /// right-hand array to the left-hand array instead of just replacing the
-    /// left-hand array with the right-hand array. If you set `merge_depth=0`,
-    /// all arrays whatever level they have, are always overridden by the
-    /// right-hand side.
-    pub(crate) fn merge_toml_values(
-        left: toml::Value,
-        right: toml::Value,
-        merge_depth: isize,
-    ) -> toml::Value {
-        use toml::Value;
-
-        fn get_name(v: &Value) -> Option<&str> {
-            v.get("name").and_then(Value::as_str)
-        }
-
-        match (left, right) {
-            (Value::Array(mut left_items), Value::Array(right_items)) => {
-                // The top-level arrays should be merged but nested arrays
-                // should act as overrides. For the `tpnote.toml` config,
-                // this means that you can specify a sub-set of schemes in
-                // an overriding `tpnote.toml` but that nested arrays like
-                // `scheme.tmpl.fm_var_localization` are replaced instead
-                // of merged.
-                if merge_depth > 0 {
-                    left_items.reserve(right_items.len());
-                    for rvalue in right_items {
-                        let lvalue = get_name(&rvalue)
-                            .and_then(|rname| {
-                                left_items.iter().position(|v| get_name(v) == Some(rname))
-                            })
-                            .map(|lpos| left_items.remove(lpos));
-                        let mvalue = match lvalue {
-                            Some(lvalue) => {
-                                Self::merge_toml_values(lvalue, rvalue, merge_depth - 1)
-                            }
-                            None => rvalue,
-                        };
-                        left_items.push(mvalue);
-                    }
-                    Value::Array(left_items)
-                } else {
-                    Value::Array(right_items)
-                }
-            }
-            (Value::Table(mut left_map), Value::Table(right_map)) => {
-                if merge_depth > -10 {
-                    for (rname, rvalue) in right_map {
-                        match left_map.remove(&rname) {
-                            Some(lvalue) => {
-                                let merged_value =
-                                    Self::merge_toml_values(lvalue, rvalue, merge_depth - 1);
-                                left_map.insert(rname, merged_value);
-                            }
-                            None => {
-                                left_map.insert(rname, rvalue);
-                            }
-                        }
-                    }
-                    Value::Table(left_map)
-                } else {
-                    Value::Table(right_map)
-                }
-            }
-            (_, value) => value,
-        }
-    }
 }
 
 /// Configuration data processed.
@@ -805,13 +715,13 @@ pub enum Assertion {
 
 /// A newtype holding configuration data.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-struct CfgVal(toml::map::Map<String, Value>);
+pub struct CfgVal(toml::map::Map<String, Value>);
 
 impl CfgVal {
     /// Constructor taking a text to deserialize.
     /// Throws an error if the deserialized root element is not a
     /// `Value::Table`.
-    fn from_str(input: &str) -> Result<Self, error::LibCfgError> {
+    pub fn from_str(input: &str) -> Result<Self, error::LibCfgError> {
         let v = toml::from_str(input)?;
         if let Value::Table(map) = v {
             Ok(Self(map))
@@ -821,7 +731,100 @@ impl CfgVal {
     }
 
     // Append key, value pairs from other to `self`.
-    fn extend(&mut self, other: Self) {
+    pub fn extend(&mut self, other: Self) {
         self.0.extend(other.0);
+    }
+
+    #[inline]
+    /// Merges configuration values from `other` into `self`
+    /// and returns the result. The top level element is a set of key and value
+    /// pairs (map). If one of its values is a `Value::Array`, then the
+    /// corresponding array from `other` is appended.
+    /// Otherwise the corresponding `other` value replaces the `self` value.
+    /// Deeper nested `Value::Array`s are never appended but always replaced
+    /// (`CONFIG_FILE_MERGE_PEPTH=2`).
+    pub fn merge(self, other: Self) -> Self {
+        let left = Value::Table(self.0);
+        let right = Value::Table(other.0);
+        let res = Self::merge_toml_values(left, right, CONFIG_FILE_MERGE_DEPTH);
+        // Invariant: when left and right are `Value::Table`, then `res`
+        // must be a `Value::Table` also.
+        if let Value::Table(map) = res {
+            Self(map)
+        } else {
+            unreachable!()
+        }
+    }
+
+    /// Merges configuration values from the right-hand side into the
+    /// left-hand side and returns the result. The top level element is usually
+    /// a `toml::Value::Table`. The table is a set of key and value pairs.
+    /// The values here can be compound data types, i.e. `Value::Table` or
+    /// `Value::Array`.
+    /// `merge_depth` controls whether a top-level array in the TOML document
+    /// is appended to instead of overridden. This is useful for TOML documents
+    /// that have a top-level arrays (`merge_depth=2`) like `[[scheme]]` in
+    /// `tpnote.toml`. For top level arrays, one usually wants to append the
+    /// right-hand array to the left-hand array instead of just replacing the
+    /// left-hand array with the right-hand array. If you set `merge_depth=0`,
+    /// all arrays whatever level they have, are always overridden by the
+    /// right-hand side.
+    fn merge_toml_values(left: toml::Value, right: toml::Value, merge_depth: isize) -> toml::Value {
+        use toml::Value;
+
+        fn get_name(v: &Value) -> Option<&str> {
+            v.get("name").and_then(Value::as_str)
+        }
+
+        match (left, right) {
+            (Value::Array(mut left_items), Value::Array(right_items)) => {
+                // The top-level arrays should be merged but nested arrays
+                // should act as overrides. For the `tpnote.toml` config,
+                // this means that you can specify a sub-set of schemes in
+                // an overriding `tpnote.toml` but that nested arrays like
+                // `scheme.tmpl.fm_var_localization` are replaced instead
+                // of merged.
+                if merge_depth > 0 {
+                    left_items.reserve(right_items.len());
+                    for rvalue in right_items {
+                        let lvalue = get_name(&rvalue)
+                            .and_then(|rname| {
+                                left_items.iter().position(|v| get_name(v) == Some(rname))
+                            })
+                            .map(|lpos| left_items.remove(lpos));
+                        let mvalue = match lvalue {
+                            Some(lvalue) => {
+                                Self::merge_toml_values(lvalue, rvalue, merge_depth - 1)
+                            }
+                            None => rvalue,
+                        };
+                        left_items.push(mvalue);
+                    }
+                    Value::Array(left_items)
+                } else {
+                    Value::Array(right_items)
+                }
+            }
+            (Value::Table(mut left_map), Value::Table(right_map)) => {
+                if merge_depth > -10 {
+                    for (rname, rvalue) in right_map {
+                        match left_map.remove(&rname) {
+                            Some(lvalue) => {
+                                let merged_value =
+                                    Self::merge_toml_values(lvalue, rvalue, merge_depth - 1);
+                                left_map.insert(rname, merged_value);
+                            }
+                            None => {
+                                left_map.insert(rname, rvalue);
+                            }
+                        }
+                    }
+                    Value::Table(left_map)
+                } else {
+                    Value::Table(right_map)
+                }
+            }
+            (_, value) => value,
+        }
     }
 }
