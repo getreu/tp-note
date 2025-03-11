@@ -17,12 +17,12 @@ use std::io;
 use std::mem;
 use std::path::Path;
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::sync::LazyLock;
 use tera::Tera;
 use toml::Value;
 use tpnote_lib::config::CfgVal;
 use tpnote_lib::config::LibCfg;
-use tpnote_lib::config::LibCfgRaw;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::TmplHtml;
 use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
@@ -236,10 +236,15 @@ impl Cfg {
 
         //
         // `from_files()` start
-        let base_config = CfgVal::from_str(GUI_CONFIG_DEFAULT_TOML)?;
+        let mut base_config = CfgVal::from_str(GUI_CONFIG_DEFAULT_TOML)?;
         base_config.extend(CfgVal::from_str(LIB_CONFIG_DEFAULT_TOML)?);
+        base_config.insert(
+            "version".to_string(),
+            Value::String(PKG_VERSION.unwrap_or_default().to_string()),
+        );
 
-        let config = config_paths
+        // Merge all config files from various locations.
+        let cfg_val = config_paths
             .iter()
             .filter_map(|file| {
                 std::fs::read_to_string(file)
@@ -254,13 +259,12 @@ impl Cfg {
         if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
             println!(
                 "*** Merged configuration from all config files:\n\n{:#?}",
-                config
+                cfg_val
             );
         }
 
-        // Parse Values into the `lib_cfg` and `cfg` configuration struct.
-        let lib_cfg = config.clone().try_into::<LibCfgRaw>()?;
-        let lib_cfg = LibCfg::from_raw(lib_cfg)?;
+        // Parse Values into the `lib_cfg`.
+        let lib_cfg = LibCfg::try_from(cfg_val.clone())?;
         {
             // Copy the  `lib_cfg` into `LIB_CFG`.
             let mut c = LIB_CFG.write();
@@ -280,13 +284,13 @@ impl Cfg {
         } // Release lock.
 
         //
-        // This parses all config into structs, except `scheme` which are
-        // still `toml::Value`s.
-        let mut cfg = config.try_into::<Cfg>()?;
+        // Parse the result into the struct `Cfg`.
+        let mut cfg: Cfg = cfg_val.to_value().try_into()?;
 
         // Delete unused.
         cfg.unused = HashMap::new();
 
+        // Fill in potential templates.
         render_tmpl(&mut cfg.app_args.unix.browser);
         render_tmpl(&mut cfg.app_args.unix.editor);
         render_tmpl(&mut cfg.app_args.unix.editor_console);

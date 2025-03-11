@@ -1,7 +1,8 @@
-//! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
-//! and exposes the configuration as the `static` variable `LIB_CFG` behind a
+//! Set configuration defaults by reading the internal default
+//! configuration file `LIB_CONFIG_DEFAULT_TOML`. After processing, the
+//! configuration data is exposed via the variable `LIB_CFG` behind a
 //! mutex. This makes it possible to modify all configuration defaults
-//! (and templates) at runtime.
+//! (including templates) at runtime.
 //!
 //! ```rust
 //! use tpnote_lib::config::LIB_CFG;
@@ -11,10 +12,11 @@
 //! (*lib_cfg).scheme[i].filename.copy_counter.extra_separator = '@'.to_string();
 //! ```
 //!
-//! Contract: although `LIB_CFG` is mutable at runtime, it is sourced only
-//! once at the start of Tp-Note. All modification terminates before accessing
-//! the high-level API in the `workflow` module of this crate.
-use crate::error;
+//! Contract to be uphold by the user of this API:
+//! seeing that `LIB_CFG` is mutable at runtime, it must be sourced before the
+//! start of Tp-Note. All modification of `LIB_CFG` is terminated before
+//! accessing the high-level API in the `workflow` module of this crate.
+
 use crate::error::LibCfgError;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_highlighting_css;
@@ -250,81 +252,6 @@ pub static LIB_CFG: LazyLock<RwLock<LibCfg>> = LazyLock::new(|| RwLock::new(LibC
 pub(crate) const CONFIG_FILE_MERGE_DEPTH: isize = 2;
 
 impl LibCfg {
-    /// Constructor expecting a `LibCfgRaw` struct as input.
-    /// The variables `LibCfgRaw.scheme`,
-    /// `LibCfgRaw.html_tmpl.viewer_highlighting_css` and
-    /// `LibCfgRaw.html_tmpl.exporter_highlighting_css` are processed before
-    /// storing in `Self`:
-    /// * The entries in `LibCfgRaw.scheme` are merged into copies of
-    ///   `LibCfgRaw.base_scheme` and the results are stored in `LibCfg.scheme`
-    /// * If `LibCfgRaw.html_tmpl.viewer_highlighting_css` is empty,
-    ///   a css is calculated from `tmpl.viewer_highlighting_theme`
-    ///   and stored in `LibCfg.html_tmpl.viewer_highlighting_css`.
-    /// * Do the same for `LibCfgRaw.html_tmpl.exporter_highlighting_css`.
-    pub fn from_raw(mut raw: LibCfgRaw) -> Result<Self, error::LibCfgError> {
-        // Now we merge all `scheme` into a copy of `base_scheme` and
-        // parse the result into a `Vec<Scheme>`.
-        //
-        // Here we keep the result after merging and parsing.
-        let mut schemes: Vec<Scheme> = vec![];
-        // Get `theme`s in `config` as toml array. Clears the map as it is not
-        // needed any more.
-        if let Some(toml::Value::Array(lib_cfg_scheme)) = raw
-            .scheme
-            .drain()
-            // Silently ignore all potential toml variables other than `scheme`.
-            .filter(|(k, _)| k == "scheme")
-            .map(|(_, v)| v)
-            .next()
-        {
-            // Merge all `s` into a `base_scheme`, parse the result into a `Scheme`
-            // and collect a `Vector`. `merge_depth=0` means we never append
-            // to left hand arrays, we always overwrite them.
-            schemes = lib_cfg_scheme
-                .into_iter()
-                .map(|v| CfgVal::merge_toml_values(raw.base_scheme.clone(), v, 0))
-                .map(|v| v.try_into().map_err(|e| e.into()))
-                .collect::<Result<Vec<Scheme>, LibCfgError>>()?;
-        }
-        let raw = raw; // Freeze.
-
-        let mut tmpl_html = raw.tmpl_html;
-        // Now calculate `LibCfgRaw.tmpl_html.viewer_highlighting_css`:
-        #[cfg(feature = "renderer")]
-        let css = if !tmpl_html.viewer_highlighting_css.is_empty() {
-            tmpl_html.viewer_highlighting_css
-        } else {
-            get_highlighting_css(&tmpl_html.viewer_highlighting_theme)
-        };
-        #[cfg(not(feature = "renderer"))]
-        let css = String::new();
-
-        tmpl_html.viewer_highlighting_css = css;
-
-        // Calculate `LibCfgRaw.tmpl_html.exporter_highlighting_css`:
-        #[cfg(feature = "renderer")]
-        let css = if !tmpl_html.exporter_highlighting_css.is_empty() {
-            tmpl_html.exporter_highlighting_css
-        } else {
-            get_highlighting_css(&tmpl_html.exporter_highlighting_theme)
-        };
-        #[cfg(not(feature = "renderer"))]
-        let css = String::new();
-
-        tmpl_html.exporter_highlighting_css = css;
-
-        // Store the result:
-        let res = LibCfg {
-            // Copy the parts of `config` into `LIB_CFG`.
-            scheme_sync_default: raw.scheme_sync_default,
-            scheme: schemes,
-            tmpl_html,
-        };
-        // Perform some additional semantic checks.
-        res.assert_validity()?;
-        Ok(res)
-    }
-
     /// Returns the index of a named scheme. If no scheme with that name can be
     /// be found, return `LibCfgError::SchemeNotFound`.
     pub fn scheme_idx(&self, name: &str) -> Result<usize, LibCfgError> {
@@ -351,142 +278,6 @@ impl LibCfg {
                 |(i, _)| Ok(i),
             )
     }
-}
-
-/// Reads the file `./config_default.toml` (`LIB_CONFIG_DEFAULT_TOML`) into
-/// `LibCfg`. Panics if this is not possible.
-impl Default for LibCfg {
-    fn default() -> Self {
-        let raw: LibCfgRaw = toml::from_str(LIB_CONFIG_DEFAULT_TOML)
-            .expect("Syntax error in  LIB_CONFIG_DEFAULT_TOML");
-        Self::from_raw(raw).expect("Error parsing LIB_CONFIG_DEFAULT_TOML into LibCfg")
-    }
-}
-
-/// Configuration data, deserialized from the configuration file.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LibCfgRaw {
-    /// The fallback scheme for the `sync_filename` template choice, if the
-    /// `scheme` header variable is empty or is not defined.
-    pub scheme_sync_default: String,
-    /// This is the base scheme, from which all instantiated schemes inherit.
-    pub base_scheme: Value,
-    /// This is a `Vec<Scheme>` in which the `Scheme` definitions are not
-    /// complete. Only after merging it into a copy of `base_scheme` we can
-    /// parse it into a `Scheme` structs. The result is not kept here, it is
-    /// stored into `LibCfg` struct instead.
-    #[serde(flatten)]
-    pub scheme: HashMap<String, Value>,
-    /// Configuration of HTML templates.
-    pub tmpl_html: TmplHtml,
-}
-
-/// Configuration data processed.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LibCfg {
-    /// The fallback scheme for the `sync_filename` template choice, if the
-    /// `scheme` header variable is empty or is not defined.
-    pub scheme_sync_default: String,
-    /// Configuration of `Scheme`.
-    pub scheme: Vec<Scheme>,
-    /// Configuration of HTML templates.
-    pub tmpl_html: TmplHtml,
-}
-
-/// Configuration data, deserialized from the configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Scheme {
-    pub name: String,
-    /// Configuration of filename parsing.
-    pub filename: Filename,
-    /// Configuration of content and filename templates.
-    pub tmpl: Tmpl,
-}
-
-/// Configuration of filename parsing, deserialized from the
-/// configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Filename {
-    pub sort_tag: SortTag,
-    pub copy_counter: CopyCounter,
-    pub extension_default: String,
-    pub extensions: Vec<(String, InputConverter, MarkupLanguage)>,
-}
-
-/// Configuration for sort-tag.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SortTag {
-    pub extra_chars: String,
-    pub separator: String,
-    pub extra_separator: char,
-    pub letters_in_succession_max: u8,
-    pub sequential: Sequential,
-}
-
-/// Requirements for chronological sort tags.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Sequential {
-    pub digits_in_succession_max: u8,
-}
-
-/// Configuration for copy-counter.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct CopyCounter {
-    pub extra_separator: String,
-    pub opening_brackets: String,
-    pub closing_brackets: String,
-}
-
-/// Filename templates and content templates, deserialized from the
-/// configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Tmpl {
-    pub fm_var: FmVar,
-    pub filter: Filter,
-    pub from_dir_content: String,
-    pub from_dir_filename: String,
-    pub from_clipboard_yaml_content: String,
-    pub from_clipboard_yaml_filename: String,
-    pub from_clipboard_content: String,
-    pub from_clipboard_filename: String,
-    pub from_text_file_content: String,
-    pub from_text_file_filename: String,
-    pub annotate_file_content: String,
-    pub annotate_file_filename: String,
-    pub sync_filename: String,
-}
-
-/// Configuration describing how to localize and check front matter variables.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct FmVar {
-    pub localization: Vec<(String, String)>,
-    pub assertions: Vec<(String, Vec<Assertion>)>,
-}
-
-/// Configuration related to various Tera template filters.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Filter {
-    pub get_lang: Vec<String>,
-    pub map_lang: Vec<Vec<String>>,
-    pub to_yaml_tab: u64,
-}
-
-/// Configuration for the HTML exporter feature, deserialized from the
-/// configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct TmplHtml {
-    pub viewer: String,
-    pub viewer_error: String,
-    pub viewer_doc_css: String,
-    pub viewer_highlighting_theme: String,
-    pub viewer_highlighting_css: String,
-    pub exporter: String,
-    pub exporter_doc_css: String,
-    pub exporter_highlighting_theme: String,
-    pub exporter_highlighting_css: String,
-}
-
-impl LibCfg {
     /// Perform some semantic consistency checks.
     /// * `sort_tag.extra_separator` must NOT be in `sort_tag.extra_chars`.
     /// * `sort_tag.extra_separator` must NOT be in `0..9`.
@@ -647,6 +438,260 @@ impl LibCfg {
     }
 }
 
+/// Reads the file `./config_default.toml` (`LIB_CONFIG_DEFAULT_TOML`) into
+/// `LibCfg`. Panics if this is not possible.
+impl Default for LibCfg {
+    fn default() -> Self {
+        let raw: LibCfgRaw = toml::from_str(LIB_CONFIG_DEFAULT_TOML)
+            .expect("Syntax error in  LIB_CONFIG_DEFAULT_TOML");
+        raw.try_into()
+            .expect("Error parsing LIB_CONFIG_DEFAULT_TOML into LibCfg")
+    }
+}
+
+impl TryFrom<LibCfgRaw> for LibCfg {
+    type Error = LibCfgError;
+
+    /// Constructor expecting a `LibCfgRaw` struct as input.
+    /// The variables `LibCfgRaw.scheme`,
+    /// `LibCfgRaw.html_tmpl.viewer_highlighting_css` and
+    /// `LibCfgRaw.html_tmpl.exporter_highlighting_css` are processed before
+    /// storing in `Self`:
+    /// * The entries in `LibCfgRaw.scheme` are merged into copies of
+    ///   `LibCfgRaw.base_scheme` and the results are stored in `LibCfg.scheme`
+    /// * If `LibCfgRaw.html_tmpl.viewer_highlighting_css` is empty,
+    ///   a css is calculated from `tmpl.viewer_highlighting_theme`
+    ///   and stored in `LibCfg.html_tmpl.viewer_highlighting_css`.
+    /// * Do the same for `LibCfgRaw.html_tmpl.exporter_highlighting_css`.
+    fn try_from(lib_cfg_raw: LibCfgRaw) -> Result<Self, Self::Error> {
+        let mut raw = lib_cfg_raw;
+        // Now we merge all `scheme` into a copy of `base_scheme` and
+        // parse the result into a `Vec<Scheme>`.
+        //
+        // Here we keep the result after merging and parsing.
+        let mut schemes: Vec<Scheme> = vec![];
+        // Get `theme`s in `config` as toml array. Clears the map as it is not
+        // needed any more.
+        if let Some(toml::Value::Array(lib_cfg_scheme)) = raw
+            .scheme
+            .drain()
+            // Silently ignore all potential toml variables other than `scheme`.
+            .filter(|(k, _)| k == "scheme")
+            .map(|(_, v)| v)
+            .next()
+        {
+            // Merge all `s` into a `base_scheme`, parse the result into a `Scheme`
+            // and collect a `Vector`. `merge_depth=0` means we never append
+            // to left hand arrays, we always overwrite them.
+            schemes = lib_cfg_scheme
+                .into_iter()
+                .map(|v| CfgVal::merge_toml_values(raw.base_scheme.clone(), v, 0))
+                .map(|v| v.try_into().map_err(|e| e.into()))
+                .collect::<Result<Vec<Scheme>, LibCfgError>>()?;
+        }
+        let raw = raw; // Freeze.
+
+        let mut tmpl_html = raw.tmpl_html;
+        // Now calculate `LibCfgRaw.tmpl_html.viewer_highlighting_css`:
+        #[cfg(feature = "renderer")]
+        let css = if !tmpl_html.viewer_highlighting_css.is_empty() {
+            tmpl_html.viewer_highlighting_css
+        } else {
+            get_highlighting_css(&tmpl_html.viewer_highlighting_theme)
+        };
+        #[cfg(not(feature = "renderer"))]
+        let css = String::new();
+
+        tmpl_html.viewer_highlighting_css = css;
+
+        // Calculate `LibCfgRaw.tmpl_html.exporter_highlighting_css`:
+        #[cfg(feature = "renderer")]
+        let css = if !tmpl_html.exporter_highlighting_css.is_empty() {
+            tmpl_html.exporter_highlighting_css
+        } else {
+            get_highlighting_css(&tmpl_html.exporter_highlighting_theme)
+        };
+        #[cfg(not(feature = "renderer"))]
+        let css = String::new();
+
+        tmpl_html.exporter_highlighting_css = css;
+
+        // Store the result:
+        let res = LibCfg {
+            // Copy the parts of `config` into `LIB_CFG`.
+            scheme_sync_default: raw.scheme_sync_default,
+            scheme: schemes,
+            tmpl_html,
+        };
+        // Perform some additional semantic checks.
+        res.assert_validity()?;
+        Ok(res)
+    }
+}
+
+impl TryFrom<CfgVal> for LibCfg {
+    type Error = LibCfgError;
+
+    fn try_from(cfg_val: CfgVal) -> Result<Self, Self::Error> {
+        let c = LibCfgRaw::try_from(cfg_val)?;
+        LibCfg::try_from(c)
+    }
+}
+
+/// Configuration data, deserialized from the configuration file.
+/// This defines the structure of the configuration file.
+/// Its default values are stored in serialized form in
+/// `LIB_CONFIG_DEFAULT_TOML`.
+#[derive(Debug, Serialize, Deserialize)]
+struct LibCfgRaw {
+    /// The fallback scheme for the `sync_filename` template choice, if the
+    /// `scheme` header variable is empty or is not defined.
+    pub scheme_sync_default: String,
+    /// This is the base scheme, from which all instantiated schemes inherit.
+    pub base_scheme: Value,
+    /// This is a `Vec<Scheme>` in which the `Scheme` definitions are not
+    /// complete. Only after merging it into a copy of `base_scheme` we can
+    /// parse it into a `Scheme` structs. The result is not kept here, it is
+    /// stored into `LibCfg` struct instead.
+    #[serde(flatten)]
+    pub scheme: HashMap<String, Value>,
+    /// Configuration of HTML templates.
+    pub tmpl_html: TmplHtml,
+}
+
+impl TryFrom<CfgVal> for LibCfgRaw {
+    type Error = LibCfgError;
+
+    fn try_from(cfg_val: CfgVal) -> Result<Self, Self::Error> {
+        let value: toml::Value = cfg_val.into();
+        Ok(value.try_into()?)
+    }
+}
+
+/// Processed configuration data.
+///
+/// Its structure is different form the input form defined in `LibCfgRaw` (see
+/// example in `LIB_CONFIG_DEFAULT_TOML`).
+/// For conversion use:
+///
+/// ```rust
+/// use tpnote_lib::config::LIB_CONFIG_DEFAULT_TOML;
+/// use tpnote_lib::config::LibCfg;
+/// use tpnote_lib::config::CfgVal;
+/// use std::str::FromStr;
+///
+/// let cfg_val = CfgVal::from_str(LIB_CONFIG_DEFAULT_TOML).unwrap();
+///
+/// // Run test.
+/// let lib_cfg = LibCfg::try_from(cfg_val).unwrap();
+///
+/// // Check.
+/// assert_eq!(lib_cfg.scheme_sync_default, "default")
+/// ```
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LibCfg {
+    /// The fallback scheme for the `sync_filename` template choice, if the
+    /// `scheme` header variable is empty or is not defined.
+    pub scheme_sync_default: String,
+    /// Configuration of `Scheme`.
+    pub scheme: Vec<Scheme>,
+    /// Configuration of HTML templates.
+    pub tmpl_html: TmplHtml,
+}
+
+/// Configuration data, deserialized from the configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Scheme {
+    pub name: String,
+    /// Configuration of filename parsing.
+    pub filename: Filename,
+    /// Configuration of content and filename templates.
+    pub tmpl: Tmpl,
+}
+
+/// Configuration of filename parsing, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Filename {
+    pub sort_tag: SortTag,
+    pub copy_counter: CopyCounter,
+    pub extension_default: String,
+    pub extensions: Vec<(String, InputConverter, MarkupLanguage)>,
+}
+
+/// Configuration for sort-tag.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SortTag {
+    pub extra_chars: String,
+    pub separator: String,
+    pub extra_separator: char,
+    pub letters_in_succession_max: u8,
+    pub sequential: Sequential,
+}
+
+/// Requirements for chronological sort tags.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Sequential {
+    pub digits_in_succession_max: u8,
+}
+
+/// Configuration for copy-counter.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CopyCounter {
+    pub extra_separator: String,
+    pub opening_brackets: String,
+    pub closing_brackets: String,
+}
+
+/// Filename templates and content templates, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Tmpl {
+    pub fm_var: FmVar,
+    pub filter: Filter,
+    pub from_dir_content: String,
+    pub from_dir_filename: String,
+    pub from_clipboard_yaml_content: String,
+    pub from_clipboard_yaml_filename: String,
+    pub from_clipboard_content: String,
+    pub from_clipboard_filename: String,
+    pub from_text_file_content: String,
+    pub from_text_file_filename: String,
+    pub annotate_file_content: String,
+    pub annotate_file_filename: String,
+    pub sync_filename: String,
+}
+
+/// Configuration describing how to localize and check front matter variables.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FmVar {
+    pub localization: Vec<(String, String)>,
+    pub assertions: Vec<(String, Vec<Assertion>)>,
+}
+
+/// Configuration related to various Tera template filters.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Filter {
+    pub get_lang: Vec<String>,
+    pub map_lang: Vec<Vec<String>>,
+    pub to_yaml_tab: u64,
+}
+
+/// Configuration for the HTML exporter feature, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TmplHtml {
+    pub viewer: String,
+    pub viewer_error: String,
+    pub viewer_doc_css: String,
+    pub viewer_highlighting_theme: String,
+    pub viewer_highlighting_css: String,
+    pub exporter: String,
+    pub exporter_doc_css: String,
+    pub exporter_highlighting_theme: String,
+    pub exporter_highlighting_css: String,
+}
+
 /// Defines the way the HTML exporter rewrites local links.
 /// The command line option `--export-link-rewriting` expects this enum.
 /// Consult the manpage for details.
@@ -717,22 +762,48 @@ pub enum Assertion {
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CfgVal(toml::map::Map<String, Value>);
 
+/// This API deals with configuration values.
+///
 impl CfgVal {
-    /// Constructor taking a text to deserialize.
-    /// Throws an error if the deserialized root element is not a
-    /// `Value::Table`.
-    pub fn from_str(input: &str) -> Result<Self, error::LibCfgError> {
-        let v = toml::from_str(input)?;
-        if let Value::Table(map) = v {
-            Ok(Self(map))
-        } else {
-            Err(LibCfgError::CfgValInputIsNotTable)
-        }
-    }
-
-    // Append key, value pairs from other to `self`.
+    /// Append key, value pairs from other to `self`.
+    ///
+    /// ```rust
+    /// use tpnote_lib::config::CfgVal;
+    /// use std::str::FromStr;
+    ///
+    /// let toml1 = "\
+    /// [arg_default]
+    /// scheme = 'zettel'
+    /// ";
+    ///
+    /// let toml2 = "\
+    /// [base_scheme]
+    /// name = 'some name'
+    /// ";
+    ///
+    /// let mut cfg1 = CfgVal::from_str(toml1).unwrap();
+    /// let cfg2 = CfgVal::from_str(toml2).unwrap();
+    ///
+    /// let expected = CfgVal::from_str("\
+    /// [arg_default]
+    /// scheme = 'zettel'
+    /// [base_scheme]
+    /// name = 'some name'
+    /// ").unwrap();
+    ///
+    /// // Run test
+    /// cfg1.extend(cfg2);
+    ///
+    /// assert_eq!(cfg1, expected);
+    ///
+    #[inline]
     pub fn extend(&mut self, other: Self) {
         self.0.extend(other.0);
+    }
+
+    #[inline]
+    pub fn insert(&mut self, key: String, val: Value) {
+        self.0.insert(key, val); //
     }
 
     #[inline]
@@ -743,6 +814,39 @@ impl CfgVal {
     /// Otherwise the corresponding `other` value replaces the `self` value.
     /// Deeper nested `Value::Array`s are never appended but always replaced
     /// (`CONFIG_FILE_MERGE_PEPTH=2`).
+    /// Append key, value pairs from other to `self`.
+    ///
+    /// ```rust
+    /// use tpnote_lib::config::CfgVal;
+    /// use std::str::FromStr;
+    ///
+    /// let toml1 = "\
+    /// version = '1.0.0'
+    /// [[scheme]]
+    /// name = 'default'
+    /// ";
+    /// let toml2 = "\
+    /// version = '2.0.0'
+    /// [[scheme]]
+    /// name = 'zettel'
+    /// ";
+    ///
+    /// let mut cfg1 = CfgVal::from_str(toml1).unwrap();
+    /// let cfg2 = CfgVal::from_str(toml2).unwrap();
+    ///
+    /// let expected = CfgVal::from_str("\
+    /// version = '2.0.0'
+    /// [[scheme]]
+    /// name = 'default'
+    /// [[scheme]]
+    /// name = 'zettel'
+    /// ").unwrap();
+    ///
+    /// // Run test
+    /// let res = cfg1.merge(cfg2);
+    ///
+    /// assert_eq!(res, expected);
+    ///
     pub fn merge(self, other: Self) -> Self {
         let left = Value::Table(self.0);
         let right = Value::Table(other.0);
@@ -826,5 +930,52 @@ impl CfgVal {
             }
             (_, value) => value,
         }
+    }
+
+    /// Convert to `toml::Value`.
+    ///
+    /// ```rust
+    /// use tpnote_lib::config::CfgVal;
+    /// use std::str::FromStr;
+    ///
+    /// let toml1 = "\
+    /// version = 1
+    /// [[scheme]]
+    /// name = 'default'
+    /// ";
+    ///
+    /// let cfg1 = CfgVal::from_str(toml1).unwrap();
+    ///
+    /// let expected: toml::Value = toml::from_str(toml1).unwrap();
+    ///
+    /// // Run test
+    /// let res = cfg1.to_value();
+    ///
+    /// assert_eq!(res, expected);
+    ///
+    pub fn to_value(self) -> toml::Value {
+        Value::Table(self.0)
+    }
+}
+
+impl FromStr for CfgVal {
+    type Err = LibCfgError;
+
+    /// Constructor taking a text to deserialize.
+    /// Throws an error if the deserialized root element is not a
+    /// `Value::Table`.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let v = toml::from_str(s)?;
+        if let Value::Table(map) = v {
+            Ok(Self(map))
+        } else {
+            Err(LibCfgError::CfgValInputIsNotTable)
+        }
+    }
+}
+
+impl From<CfgVal> for toml::Value {
+    fn from(cfg_val: CfgVal) -> Self {
+        cfg_val.to_value()
     }
 }
