@@ -1776,8 +1776,8 @@ small.
 .PP
 Some filename and template related variables are grouped into a
 `\f[CR]scheme\f[R]'.
-The shipped configuration file lists three schemes:
-`\f[CR]default\f[R]', `\f[CR]zettel\f[R]' and `\f[CR]rst\f[R]'.
+The shipped configuration file lists two schemes: `\f[CR]default\f[R]'
+and `\f[CR]zettel\f[R]'.
 The scheme used when creating a new note, is selected by the commend
 line option `\f[CR]\-\-scheme\f[R]', the environment variable
 `\f[CR]TPNOTE_SCHEME\f[R]' or the configuration variable
@@ -2407,8 +2407,6 @@ The default templates are designed in a way that they contain almost no
 markup specific code.
 Though there is one little exception in the
 `\f[CR]annotate_file_content\f[R]' template.
-There is dedicated scheme named `\f[CR]rst\f[R]' that reflects the
-diversion concerning `\f[CR]annotate_file_content\f[R]'.
 .PP
 When you open an existing note file, Tp\-Note detects the note
 file\[cq]s markup language from its file extension.
@@ -2421,59 +2419,31 @@ tpnote mynote.rst
 To create a new ReStructuredText note invoke Tp\-Note with:
 .IP
 .EX
-tpnote \-\-scheme rst
+TPNOTE_EXTENSION_DEFAULT=rst tpnote
 .EE
 .PP
-Or, to make ReStructuredText default for all new notes, write a
-configuration file \f[CR]\[ti]/.config/tpnote/tpnote.toml\f[R] with the
-following content:
+To make ReStructuredText the default markup language for all new notes,
+write a configuration file `\f[CR]\[ti]/.config/tpnote/tpnote.toml\f[R]'
+with the following content:
 .IP
 .EX
-\f[B][arg_default]\f[R]
-scheme=\[dq]rst\[dq]
+\f[B][base_scheme.filename]\f[R]
+extension_default=\[dq]rst\[dq]
 .EE
 .PP
-How does this work?
-If you are not interested in internal details, skip this section.
-As mentioned above, the `\f[CR]rst\f[R]' scheme diverges very little
-from the `\f[CR]default\f[R]' scheme.
-This is how the scheme is internally defined:
+Or, if you wish to apply this only to notes created with the
+`\f[CR]zettel\f[R]' scheme set:
 .IP
 .EX
 \f[B][[scheme]]\f[R]
-name = \[dq]rst\[dq]
+name = \[aq]zettel\[aq]
 \f[B][scheme.filename]\f[R]
-extension_default = \[dq]rst\[dq]
-\f[B][scheme.tmpl]\f[R]
-annotate_file_content = \[dq]\[dq]\[dq]
-\&...SKIPPED CODE...
-\[ga]<{{ path | file_name }}>\[ga]_
-\[dq]\[dq]\[dq]
+extension_default=\[dq]rst\[dq]
 .EE
 .PP
-The only template containing markup language specific code is the
-`\f[CR]annotate_file_content\f[R]' template.
-This is why the default template definition
-(cf.\ `\f[CR]base_scheme\f[R]') is overwritten in the above
-`\f[CR]rst\f[R]' scheme configuration.
-The whole template code is too long to be presented here, but it
-contains originally (cf.\ `\f[CR]base_scheme\f[R]') a line defining a
-hyperlink written in Markdown:
-.IP
-.EX
-\&...SKIPPED CODE...
-[{{ path | file_name }}](<{{ path | file_name }}>)
-.EE
-.PP
-The `\f[CR]annotate_file_content\f[R]' template in the above
-`\f[CR]rst\f[R]' scheme is identical to the `\f[CR]default\f[R]' scheme,
-except that the Markdown line was replaced with its ReStructuredText
-counterpart:
-.IP
-.EX
-\&...SKIPPED CODE...
-\[ga]<{{ path | file_name }}>\[ga]_
-.EE
+This overwrites the `\f[CR]extension_default\f[R]' variable of the
+`\f[CR]zettel\f[R]' scheme, but leaves the `\f[CR]default\f[R]' scheme
+untouched.
 .SS Change the sort tag character set
 \f[I]Sort\-tags\f[R] for new notes are generated with the
 `\f[CR]tmpl.*_filename\f[R]' templates.
