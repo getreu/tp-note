@@ -1,3 +1,4 @@
+//! Extension trait adding a `shallow_clone()` method to `Cow`.
 use std::borrow::Cow;
 
 pub trait CloneExt<'b> {

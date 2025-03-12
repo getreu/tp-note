@@ -856,6 +856,7 @@ impl HtmlStr for str {
     }
 }
 
+/// This trait deals with tagged HTML `String` data.
 pub trait HtmlString: Sized {
     /// If the input does not start with `<!DOCTYPE html`
     /// (or lowercase variants), then insert `<!DOCTYPE html>`.
@@ -864,7 +865,6 @@ pub trait HtmlString: Sized {
     fn prepend_html_start_tag(self) -> Result<Self, InputStreamError>;
 }
 
-/// This trait deals with tagged HTML `String` data.
 impl HtmlString for String {
     fn prepend_html_start_tag(self) -> Result<Self, InputStreamError> {
         // Bring `HtmlStr` methods into scope.
