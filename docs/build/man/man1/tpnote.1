@@ -2422,16 +2422,28 @@ To create a new ReStructuredText note invoke Tp\-Note with:
 TPNOTE_EXTENSION_DEFAULT=rst tpnote
 .EE
 .PP
-To make ReStructuredText the default markup language for all new notes,
-write a configuration file `\f[CR]\[ti]/.config/tpnote/tpnote.toml\f[R]'
-with the following content:
+You can change the Markup language of a specific note file by adding the
+variable `\f[CR]file_ext:\f[R]' to its YAML header.
+For example, for ReStructuredText add:
+.IP
+.EX
+\-\-\-
+title\f[B]:\f[R]    some note
+file_ext\f[B]:\f[R] rst
+\-\-\-
+.EE
+.PP
+To make ReStructuredText the default markup language for all future new
+notes, write a configuration file
+`\f[CR]\[ti]/.config/tpnote/tpnote.toml\f[R]' with the following
+content:
 .IP
 .EX
 \f[B][base_scheme.filename]\f[R]
 extension_default=\[dq]rst\[dq]
 .EE
 .PP
-Or, if you wish to apply this only to notes created with the
+Or, if you wish to apply the change only to notes created with the
 `\f[CR]zettel\f[R]' scheme set:
 .IP
 .EX
