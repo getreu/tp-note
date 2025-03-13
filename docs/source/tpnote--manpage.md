@@ -1444,6 +1444,18 @@ name="default"
 extension_default = "txt"
 ```
 
+When your changes apply to all schemes, the best way is to modify the base
+scheme ('`base_scheme`') instead, since all schemes inherit their (default)
+values from the base scheme:
+
+```toml
+[base_scheme.filename]
+extension_default = "txt"
+```
+
+Make sure, that your change is not explicitly overwritten in a scheme
+definition, as the latter takes precedence.
+
 To add a custom scheme you must explicitly overwrite all variables that differ
 from the base scheme `base_scheme`:
 
@@ -1761,9 +1773,7 @@ extensions = [
 The default file extension for new note files is defined as:
 
 ```toml
-[[scheme]]
-name = "default"
-[scheme.filename]
+[base_scheme.filename]
 extension_default = "md"
 ```
 
@@ -1771,9 +1781,7 @@ If you prefer rather the file extension '`.markdown`' for new notes, write
 a configuration file with:
 
 ```toml
-[[scheme]]
-name = "default"
-[scheme.filename]
+[base_scheme.filename]
 extension_default = "markdown"
 ```
 
@@ -1797,9 +1805,7 @@ containing a list of ISO 639-1 encoded languages, the algorithm considers as
 potential detection candidates, e.g.:
 
 ```toml
-[[scheme]]
-name = "default"
-[scheme.tmpl]
+[base_scheme.tmpl]
 filter.get_lang = [ "en", "fr", "de", "et" ]
 ```
 
@@ -1812,9 +1818,7 @@ enable all available detection candidates with the pseudo language code '`+all`'
 which stands for “add all languages”:
 
 ```toml
-[[scheme]]
-name = "default"
-[scheme.tmpl]
+[base_scheme.tmpl]
 filter.get_lang = [ "+all", ]
 ```
 
@@ -1830,9 +1834,7 @@ this region information, to work properly.
 The corresponding configuration looks like this:
 
 ```toml
-[[scheme]]
-name = "default"
-[scheme.tmpl]
+[base_scheme.tmpl]
 filter.get_lang = [ "en", "fr", "de", "et" ]
 filter.map_lang = [
     [ "en", "en-US", ],
@@ -1879,9 +1881,7 @@ If wished for, you can disable Tp-Note's language detection feature, by
 deleting all entries in the '`tmpl.filter.get_lang`' variable:
 
 ```toml
-[[scheme]]
-name = "default"
-[scheme.tmpl]
+[base_scheme.tmpl]
 filter.get_lang = []
 ```
 
@@ -1904,8 +1904,7 @@ This translation relation is defined in the configuration file variable
 simplified example:
 
 ```toml
-[[scheme]]
-name = "default"
+[base_scheme.tmpl]
 fm_vars.localization = [
     ["fm_title", "title"],
     ["fm_subtitle", "subtitle"],
@@ -1925,7 +1924,7 @@ modify the second column of the above table. For example:
 
 ```toml
 [[scheme]]
-name = "default"
+[base_scheme.tmpl]
 fm_vars.localization = [
     ["fm_title", "Titel"],
     ["fm_subtitle", "Untertitel"],
@@ -1947,8 +1946,7 @@ corresponds to the first column of the above table.
 As an example, consider the following localization:
 
 ```toml
-[[scheme]]
-name = "default"
+[base_scheme.tmpl]
 fm_vars.localization = [
     ["fm_foo", "FOO"],
 ]
@@ -2105,10 +2103,7 @@ need to modify the templates '`scheme.tmpl.annotate_file_filename`' and
 First, create a configuration file '`~/.config/tpnote/tpnote.toml`' with:
 
 ```toml
-[[scheme]]
-name = "default"
-
-[scheme.tmpl]
+[base_scheme.tmpl]
 annotate_file_content = """
 COMPLETE HERE
 """
@@ -2137,13 +2132,12 @@ with:
 
     [{{ path | file_name }}](<../{{ path | file_name }}>)
 
-In case you use the '`zettel`' scheme as well, append the following
+In case you use the '`zettel`' scheme as well, repeat the above section and append the following
 to your configuration file and repeat the above.
 
 ```toml
 [[scheme]]
-name = "zettel"
-
+name = 'zettel'
 [scheme.tmpl]
 annotate_file_content = """
 COMPLETE HERE
@@ -3086,6 +3080,15 @@ TPNOTE\_EXTENSION\_DEFAULT
     of new note files. In order to activate the appropriate markup renderer
     make sure, that the value given here is listed in 
     '`filename.extensions`'.
+>
+>   For example, to create a new reStructuredText note file type:
+
+>   ```sh
+>   TPNOTE_EXTENSION_DEFAULT=rst" tpnote
+>   ```
+
+>   Common values are: '`md`' (default, Markdown), '`txt`' (Markdown),
+    '`rst`' (reStructuredText) and '`txtnote`' (text with hyperlinks).
 
 TPNOTE_SCHEME
 

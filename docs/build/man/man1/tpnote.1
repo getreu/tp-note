@@ -1802,6 +1802,18 @@ name=\[dq]default\[dq]
 extension_default = \[dq]txt\[dq]
 .EE
 .PP
+When your changes apply to all schemes, the best way is to modify the
+base scheme (`\f[CR]base_scheme\f[R]') instead, since all schemes
+inherit their (default) values from the base scheme:
+.IP
+.EX
+\f[B][base_scheme.filename]\f[R]
+extension_default = \[dq]txt\[dq]
+.EE
+.PP
+Make sure, that your change is not explicitly overwritten in a scheme
+definition, as the latter takes precedence.
+.PP
 To add a custom scheme you must explicitly overwrite all variables that
 differ from the base scheme \f[CR]base_scheme\f[R]:
 .IP
@@ -2155,9 +2167,7 @@ extensions = [
 The default file extension for new note files is defined as:
 .IP
 .EX
-\f[B][[scheme]]\f[R]
-name = \[dq]default\[dq]
-\f[B][scheme.filename]\f[R]
+\f[B][base_scheme.filename]\f[R]
 extension_default = \[dq]md\[dq]
 .EE
 .PP
@@ -2165,9 +2175,7 @@ If you prefer rather the file extension `\f[CR].markdown\f[R]' for new
 notes, write a configuration file with:
 .IP
 .EX
-\f[B][[scheme]]\f[R]
-name = \[dq]default\[dq]
-\f[B][scheme.filename]\f[R]
+\f[B][base_scheme.filename]\f[R]
 extension_default = \[dq]markdown\[dq]
 .EE
 .PP
@@ -2191,9 +2199,7 @@ variable `\f[CR]tmpl.filter.get_lang\f[R]' containing a list of ISO
 candidates, e.g.:
 .IP
 .EX
-\f[B][[scheme]]\f[R]
-name = \[dq]default\[dq]
-\f[B][scheme.tmpl]\f[R]
+\f[B][base_scheme.tmpl]\f[R]
 filter.get_lang = [ \[dq]en\[dq], \[dq]fr\[dq], \[dq]de\[dq], \[dq]et\[dq] ]
 .EE
 .PP
@@ -2209,9 +2215,7 @@ candidates with the pseudo language code `\f[CR]+all\f[R]' which stands
 for \[lq]add all languages\[rq]:
 .IP
 .EX
-\f[B][[scheme]]\f[R]
-name = \[dq]default\[dq]
-\f[B][scheme.tmpl]\f[R]
+\f[B][base_scheme.tmpl]\f[R]
 filter.get_lang = [ \[dq]+all\[dq], ]
 .EE
 .PP
@@ -2231,9 +2235,7 @@ information, to work properly.
 The corresponding configuration looks like this:
 .IP
 .EX
-\f[B][[scheme]]\f[R]
-name = \[dq]default\[dq]
-\f[B][scheme.tmpl]\f[R]
+\f[B][base_scheme.tmpl]\f[R]
 filter.get_lang = [ \[dq]en\[dq], \[dq]fr\[dq], \[dq]de\[dq], \[dq]et\[dq] ]
 filter.map_lang = [
     [ \[dq]en\[dq], \[dq]en\-US\[dq], ],
@@ -2288,9 +2290,7 @@ feature, by deleting all entries in the
 `\f[CR]tmpl.filter.get_lang\f[R]' variable:
 .IP
 .EX
-\f[B][[scheme]]\f[R]
-name = \[dq]default\[dq]
-\f[B][scheme.tmpl]\f[R]
+\f[B][base_scheme.tmpl]\f[R]
 filter.get_lang = []
 .EE
 .PP
@@ -2310,8 +2310,7 @@ This translation relation is defined in the configuration file variable
 Consider the following simplified example:
 .IP
 .EX
-\f[B][[scheme]]\f[R]
-name = \[dq]default\[dq]
+\f[B][base_scheme.tmpl]\f[R]
 fm_vars.localization = [
     [\[dq]fm_title\[dq], \[dq]title\[dq]],
     [\[dq]fm_subtitle\[dq], \[dq]subtitle\[dq]],
@@ -2332,7 +2331,7 @@ For example:
 .IP
 .EX
 \f[B][[scheme]]\f[R]
-name = \[dq]default\[dq]
+\f[B][base_scheme.tmpl]\f[R]
 fm_vars.localization = [
     [\[dq]fm_title\[dq], \[dq]Titel\[dq]],
     [\[dq]fm_subtitle\[dq], \[dq]Untertitel\[dq]],
@@ -2355,8 +2354,7 @@ the above table.
 As an example, consider the following localization:
 .IP
 .EX
-\f[B][[scheme]]\f[R]
-name = \[dq]default\[dq]
+\f[B][base_scheme.tmpl]\f[R]
 fm_vars.localization = [
     [\[dq]fm_foo\[dq], \[dq]FOO\[dq]],
 ]
@@ -2525,10 +2523,7 @@ First, create a configuration file
 `\f[CR]\[ti]/.config/tpnote/tpnote.toml\f[R]' with:
 .IP
 .EX
-\f[B][[scheme]]\f[R]
-name = \[dq]default\[dq]
-
-\f[B][scheme.tmpl]\f[R]
+\f[B][base_scheme.tmpl]\f[R]
 annotate_file_content = \[dq]\[dq]\[dq]
 COMPLETE HERE
 \[dq]\[dq]\[dq]
@@ -2566,13 +2561,13 @@ with:
 [{{ path | file_name }}](<../{{ path | file_name }}>)
 .EE
 .PP
-In case you use the `\f[CR]zettel\f[R]' scheme as well, append the
-following to your configuration file and repeat the above.
+In case you use the `\f[CR]zettel\f[R]' scheme as well, repeat the above
+section and append the following to your configuration file and repeat
+the above.
 .IP
 .EX
 \f[B][[scheme]]\f[R]
-name = \[dq]zettel\[dq]
-
+name = \[aq]zettel\[aq]
 \f[B][scheme.tmpl]\f[R]
 annotate_file_content = \[dq]\[dq]\[dq]
 COMPLETE HERE
@@ -3732,6 +3727,20 @@ variable `\f[CR]filename.extension_default\f[R]', which defines the file
 extension of new note files.
 In order to activate the appropriate markup renderer make sure, that the
 value given here is listed in `\f[CR]filename.extensions\f[R]'.
+.PP
+For example, to create a new reStructuredText note file type:
+.RE
+.RS
+.IP
+.EX
+TPNOTE_EXTENSION_DEFAULT=rst\[dq] tpnote
+.EE
+.RE
+.RS
+.PP
+Common values are: `\f[CR]md\f[R]' (default, Markdown), `\f[CR]txt\f[R]'
+(Markdown), `\f[CR]rst\f[R]' (reStructuredText) and `\f[CR]txtnote\f[R]'
+(text with hyperlinks).
 .RE
 .PP
 TPNOTE_SCHEME
