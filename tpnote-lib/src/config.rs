@@ -759,12 +759,17 @@ pub enum Assertion {
 }
 
 /// A newtype holding configuration data.
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, Default)]
 pub struct CfgVal(toml::map::Map<String, Value>);
 
 /// This API deals with configuration values.
 ///
 impl CfgVal {
+    /// Constructor returning an empty map.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Append key, value pairs from other to `self`.
     ///
     /// ```rust
