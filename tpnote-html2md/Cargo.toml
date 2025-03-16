@@ -6,7 +6,7 @@ authors = ["Oleg `Kanedias` Chernovskiy <kanedias@house-of-maker.online>",
            "Jens Getreu <getreu@web.de>"]
 
 description = "HTML to Markdown converter library"
-repository = "https://gitlab.com/getreu/tpnote-html2md"
+repository = "https://gitlab.com/getreu/tp-note"
 readme = "README.md"
 keywords = ["html", "markdown", "converter"]
 categories = ["development-tools", "parsing", "parser-implementations"]
