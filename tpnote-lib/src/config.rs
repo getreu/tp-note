@@ -549,15 +549,19 @@ struct LibCfgRaw {
     pub scheme_sync_default: String,
     /// This is the base scheme, from which all instantiated schemes inherit.
     pub base_scheme: Value,
-    /// This is a `Vec<Scheme>` in which the `Scheme` definitions are not
-    /// complete. Only after merging it into a copy of `base_scheme` we can
-    /// parse it into a `Scheme` structs. The result is not kept here, it is
-    /// stored into `LibCfg` struct instead.
+    /// This flatten into a `scheme=Vec<Scheme>` in which the `Scheme`
+    /// definitions are not complete. Only after merging it into a copy of
+    /// `base_scheme` we can parse it into a `Scheme` structs. The result is not
+    /// kept here, it is stored into `LibCfg` struct instead.
     #[serde(flatten)]
     pub scheme: HashMap<String, Value>,
     /// Configuration of HTML templates.
     pub tmpl_html: TmplHtml,
 }
+
+/// An array of field names after deserialization.
+pub const LIB_CFG_RAW_FIELD_NAMES: [&str; 4] =
+    ["scheme_sync_default", "base_scheme", "scheme", "tmpl_html"];
 
 impl TryFrom<CfgVal> for LibCfgRaw {
     type Error = LibCfgError;

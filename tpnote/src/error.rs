@@ -50,6 +50,14 @@ pub enum ConfigFileError {
     )]
     ConfigFileBackup { error: String },
 
+    /// Remedy: Compare your config file structure with the default one
+    /// (`--config-defaults`).
+    #[error(
+        "Unknown top level key(s) in configuration file:\n\
+        {error:?}"
+    )]
+    ConfigFileUnkownFieldName { error: Vec<String> },
+
     /// Remedy: check the path and permissions of the to be generated
     /// configuration file.
     #[error(

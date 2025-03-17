@@ -27,6 +27,7 @@ use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::TmplHtml;
 use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 use tpnote_lib::config::LIB_CFG;
+use tpnote_lib::config::LIB_CFG_RAW_FIELD_NAMES;
 use tpnote_lib::config::LIB_CONFIG_DEFAULT_TOML;
 use tpnote_lib::context::Context;
 use tpnote_lib::filename::NotePathBuf;
@@ -84,7 +85,7 @@ pub struct Cfg {
     /// explaining why we could not load the configuration file.
     pub version: String,
     #[serde(flatten)]
-    pub unused: HashMap<String, Value>,
+    pub extra_fields: HashMap<String, Value>,
     pub arg_default: ArgDefault,
     pub clipboard: Clipboard,
     pub app_args: OsType<AppArgs>,
@@ -276,8 +277,20 @@ impl Cfg {
         // Parse the result into the struct `Cfg`.
         let mut cfg: Cfg = cfg_val.to_value().try_into()?;
 
-        // Delete unused.
-        cfg.unused = HashMap::new();
+        // Collect unused field names.
+        // We know that all keys collected in `extra_fields` must be
+        // top level keys in `LIB_CFG`.
+        let unused: Vec<String> = cfg
+            .extra_fields
+            .into_keys()
+            .filter(|k| !LIB_CFG_RAW_FIELD_NAMES.contains(&k.as_str()))
+            .collect::<Vec<String>>();
+        if !unused.is_empty() {
+            return Err(ConfigFileError::ConfigFileUnkownFieldName { error: unused });
+        };
+
+        // Remove already processed items.
+        cfg.extra_fields = HashMap::new();
 
         // Fill in potential templates.
         render_tmpl(&mut cfg.app_args.unix.browser);
@@ -416,6 +429,7 @@ pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
 
 #[cfg(test)]
 mod tests {
+    use crate::error::ConfigFileError;
     use tpnote_lib::config::LIB_CFG;
 
     use super::Cfg;
@@ -448,6 +462,20 @@ mod tests {
         let cfg = Cfg::from_files(&[userconfig]).unwrap();
         assert_eq!(cfg.viewer.served_mime_types.len(), 1);
         assert_eq!(cfg.viewer.served_mime_types[0].0, "abc");
+
+        //
+        // Prepare test: some mini config file.
+        let raw = "\
+        unknown_field_name = 'aha'
+        ";
+        let userconfig = temp_dir().join("tpnote.toml");
+        fs::write(&userconfig, raw.as_bytes()).unwrap();
+
+        let cfg = Cfg::from_files(&[userconfig]).unwrap_err();
+        assert!(matches!(
+            cfg,
+            ConfigFileError::ConfigFileUnkownFieldName { .. }
+        ));
 
         //
         // Prepare test: create existing note.
