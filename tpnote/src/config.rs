@@ -75,18 +75,7 @@ const CONFIG_FILENAME: &str = concat!(env!("CARGO_BIN_NAME"), ".toml");
 /// Default configuration.
 pub(crate) const GUI_CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
 
-pub(crate) const KEEP_IN_TOML_WHEN_COMMENTING: [&str; 10] = [
-    "### ",
-    "[[scheme]]",
-    "name = ",
-    "[scheme.filename]",
-    "[scheme.tmpl]",
-    "[tmpl_html]",
-    "[arg_default]",
-    "[clipboard]",
-    "[app_args]",
-    "[viewer]",
-];
+pub(crate) const KEEP_IN_TOML_WHEN_COMMENTING: [&str; 4] = ["### ", "[", "name=", "name ="];
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
