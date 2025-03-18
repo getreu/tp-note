@@ -251,6 +251,164 @@ pub static LIB_CFG: LazyLock<RwLock<LibCfg>> = LazyLock::new(|| RwLock::new(LibC
 /// all other arrays are replaced.
 pub(crate) const CONFIG_FILE_MERGE_DEPTH: isize = 2;
 
+/// Unprocessed configuration data, deserialized from the configuration file.
+/// This defines the structure of the configuration file.
+/// Its default values are stored in serialized form in
+/// `LIB_CONFIG_DEFAULT_TOML`.
+#[derive(Debug, Serialize, Deserialize)]
+struct LibCfgRaw {
+    /// The fallback scheme for the `sync_filename` template choice, if the
+    /// `scheme` header variable is empty or is not defined.
+    pub scheme_sync_default: String,
+    /// This is the base scheme, from which all instantiated schemes inherit.
+    pub base_scheme: Value,
+    /// This flatten into a `scheme=Vec<Scheme>` in which the `Scheme`
+    /// definitions are not complete. Only after merging it into a copy of
+    /// `base_scheme` we can parse it into a `Scheme` structs. The result is not
+    /// kept here, it is stored into `LibCfg` struct instead.
+    #[serde(flatten)]
+    pub scheme: HashMap<String, Value>,
+    /// Configuration of HTML templates.
+    pub tmpl_html: TmplHtml,
+}
+
+/// An array of field names after deserialization.
+pub const LIB_CFG_RAW_FIELD_NAMES: [&str; 4] =
+    ["scheme_sync_default", "base_scheme", "scheme", "tmpl_html"];
+
+impl TryFrom<CfgVal> for LibCfgRaw {
+    type Error = LibCfgError;
+
+    fn try_from(cfg_val: CfgVal) -> Result<Self, Self::Error> {
+        let value: toml::Value = cfg_val.into();
+        Ok(value.try_into()?)
+    }
+}
+
+/// Configuration data, deserialized from the configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Scheme {
+    pub name: String,
+    /// Configuration of filename parsing.
+    pub filename: Filename,
+    /// Configuration of content and filename templates.
+    pub tmpl: Tmpl,
+}
+
+/// Configuration of filename parsing, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Filename {
+    pub sort_tag: SortTag,
+    pub copy_counter: CopyCounter,
+    pub extension_default: String,
+    pub extensions: Vec<(String, InputConverter, MarkupLanguage)>,
+}
+
+/// Configuration for sort-tag.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SortTag {
+    pub extra_chars: String,
+    pub separator: String,
+    pub extra_separator: char,
+    pub letters_in_succession_max: u8,
+    pub sequential: Sequential,
+}
+
+/// Requirements for chronological sort tags.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Sequential {
+    pub digits_in_succession_max: u8,
+}
+
+/// Configuration for copy-counter.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CopyCounter {
+    pub extra_separator: String,
+    pub opening_brackets: String,
+    pub closing_brackets: String,
+}
+
+/// Filename templates and content templates, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Tmpl {
+    pub fm_var: FmVar,
+    pub filter: Filter,
+    pub from_dir_content: String,
+    pub from_dir_filename: String,
+    pub from_clipboard_yaml_content: String,
+    pub from_clipboard_yaml_filename: String,
+    pub from_clipboard_content: String,
+    pub from_clipboard_filename: String,
+    pub from_text_file_content: String,
+    pub from_text_file_filename: String,
+    pub annotate_file_content: String,
+    pub annotate_file_filename: String,
+    pub sync_filename: String,
+}
+
+/// Configuration describing how to localize and check front matter variables.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FmVar {
+    pub localization: Vec<(String, String)>,
+    pub assertions: Vec<(String, Vec<Assertion>)>,
+}
+
+/// Configuration related to various Tera template filters.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Filter {
+    pub get_lang: Vec<String>,
+    pub map_lang: Vec<Vec<String>>,
+    pub to_yaml_tab: u64,
+}
+
+/// Configuration for the HTML exporter feature, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TmplHtml {
+    pub viewer: String,
+    pub viewer_error: String,
+    pub viewer_doc_css: String,
+    pub viewer_highlighting_theme: String,
+    pub viewer_highlighting_css: String,
+    pub exporter: String,
+    pub exporter_doc_css: String,
+    pub exporter_highlighting_theme: String,
+    pub exporter_highlighting_css: String,
+}
+
+/// Processed configuration data.
+///
+/// Its structure is different form the input form defined in `LibCfgRaw` (see
+/// example in `LIB_CONFIG_DEFAULT_TOML`).
+/// For conversion use:
+///
+/// ```rust
+/// use tpnote_lib::config::LIB_CONFIG_DEFAULT_TOML;
+/// use tpnote_lib::config::LibCfg;
+/// use tpnote_lib::config::CfgVal;
+/// use std::str::FromStr;
+///
+/// let cfg_val = CfgVal::from_str(LIB_CONFIG_DEFAULT_TOML).unwrap();
+///
+/// // Run test.
+/// let lib_cfg = LibCfg::try_from(cfg_val).unwrap();
+///
+/// // Check.
+/// assert_eq!(lib_cfg.scheme_sync_default, "default")
+/// ```
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LibCfg {
+    /// The fallback scheme for the `sync_filename` template choice, if the
+    /// `scheme` header variable is empty or is not defined.
+    pub scheme_sync_default: String,
+    /// Configuration of `Scheme`.
+    pub scheme: Vec<Scheme>,
+    /// Configuration of HTML templates.
+    pub tmpl_html: TmplHtml,
+}
+
 impl LibCfg {
     /// Returns the index of a named scheme. If no scheme with that name can be
     /// be found, return `LibCfgError::SchemeNotFound`.
@@ -457,12 +615,12 @@ impl TryFrom<LibCfgRaw> for LibCfg {
     /// `LibCfgRaw.html_tmpl.viewer_highlighting_css` and
     /// `LibCfgRaw.html_tmpl.exporter_highlighting_css` are processed before
     /// storing in `Self`:
-    /// * The entries in `LibCfgRaw.scheme` are merged into copies of
-    ///   `LibCfgRaw.base_scheme` and the results are stored in `LibCfg.scheme`
-    /// * If `LibCfgRaw.html_tmpl.viewer_highlighting_css` is empty,
-    ///   a css is calculated from `tmpl.viewer_highlighting_theme`
-    ///   and stored in `LibCfg.html_tmpl.viewer_highlighting_css`.
-    /// * Do the same for `LibCfgRaw.html_tmpl.exporter_highlighting_css`.
+    /// 1. The entries in `LibCfgRaw.scheme` are merged into copies of
+    ///    `LibCfgRaw.base_scheme` and the results are stored in `LibCfg.scheme`
+    /// 2. If `LibCfgRaw.html_tmpl.viewer_highlighting_css` is empty,
+    ///    a css is calculated from `tmpl.viewer_highlighting_theme`
+    ///    and stored in `LibCfg.html_tmpl.viewer_highlighting_css`.
+    /// 3.  Do the same for `LibCfgRaw.html_tmpl.exporter_highlighting_css`.
     fn try_from(lib_cfg_raw: LibCfgRaw) -> Result<Self, Self::Error> {
         let mut raw = lib_cfg_raw;
         // Now we merge all `scheme` into a copy of `base_scheme` and
@@ -529,6 +687,21 @@ impl TryFrom<LibCfgRaw> for LibCfg {
     }
 }
 
+/// This constructor accepts as input the newtype `CfgVal` containing
+/// a `toml::map::Map<String, Value>`. Each `String` is the name of a top
+/// level configuration variable.
+/// The inner Map is expected to be a data structure that can be copied into
+/// the internal temporary variable `LibCfgRaw`. This internal varable
+/// is then processed and the result is stored in a `LibCfg` struct. For details
+/// see the `impl TryFrom<LibCfgRaw> for LibCfg`. The processing occurs as
+/// follows:
+///
+/// 1. Merge each incomplete `CfgVal(key="scheme")` into
+///    `CfgVal(key="base_scheme")` and
+///    store the resulting `scheme` struct in `LibCfg.scheme`.
+/// 2. If `CfgVal(key="html_tmpl.viewer_highlighting_css")` is empty, generate
+///    the value from `CfgVal(key="tmpl.viewer_highlighting_theme")`.
+/// 3. Do the same for `CfgVal(key="html_tmpl.exporter_highlighting_css")`.
 impl TryFrom<CfgVal> for LibCfg {
     type Error = LibCfgError;
 
@@ -536,164 +709,6 @@ impl TryFrom<CfgVal> for LibCfg {
         let c = LibCfgRaw::try_from(cfg_val)?;
         LibCfg::try_from(c)
     }
-}
-
-/// Configuration data, deserialized from the configuration file.
-/// This defines the structure of the configuration file.
-/// Its default values are stored in serialized form in
-/// `LIB_CONFIG_DEFAULT_TOML`.
-#[derive(Debug, Serialize, Deserialize)]
-struct LibCfgRaw {
-    /// The fallback scheme for the `sync_filename` template choice, if the
-    /// `scheme` header variable is empty or is not defined.
-    pub scheme_sync_default: String,
-    /// This is the base scheme, from which all instantiated schemes inherit.
-    pub base_scheme: Value,
-    /// This flatten into a `scheme=Vec<Scheme>` in which the `Scheme`
-    /// definitions are not complete. Only after merging it into a copy of
-    /// `base_scheme` we can parse it into a `Scheme` structs. The result is not
-    /// kept here, it is stored into `LibCfg` struct instead.
-    #[serde(flatten)]
-    pub scheme: HashMap<String, Value>,
-    /// Configuration of HTML templates.
-    pub tmpl_html: TmplHtml,
-}
-
-/// An array of field names after deserialization.
-pub const LIB_CFG_RAW_FIELD_NAMES: [&str; 4] =
-    ["scheme_sync_default", "base_scheme", "scheme", "tmpl_html"];
-
-impl TryFrom<CfgVal> for LibCfgRaw {
-    type Error = LibCfgError;
-
-    fn try_from(cfg_val: CfgVal) -> Result<Self, Self::Error> {
-        let value: toml::Value = cfg_val.into();
-        Ok(value.try_into()?)
-    }
-}
-
-/// Processed configuration data.
-///
-/// Its structure is different form the input form defined in `LibCfgRaw` (see
-/// example in `LIB_CONFIG_DEFAULT_TOML`).
-/// For conversion use:
-///
-/// ```rust
-/// use tpnote_lib::config::LIB_CONFIG_DEFAULT_TOML;
-/// use tpnote_lib::config::LibCfg;
-/// use tpnote_lib::config::CfgVal;
-/// use std::str::FromStr;
-///
-/// let cfg_val = CfgVal::from_str(LIB_CONFIG_DEFAULT_TOML).unwrap();
-///
-/// // Run test.
-/// let lib_cfg = LibCfg::try_from(cfg_val).unwrap();
-///
-/// // Check.
-/// assert_eq!(lib_cfg.scheme_sync_default, "default")
-/// ```
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LibCfg {
-    /// The fallback scheme for the `sync_filename` template choice, if the
-    /// `scheme` header variable is empty or is not defined.
-    pub scheme_sync_default: String,
-    /// Configuration of `Scheme`.
-    pub scheme: Vec<Scheme>,
-    /// Configuration of HTML templates.
-    pub tmpl_html: TmplHtml,
-}
-
-/// Configuration data, deserialized from the configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Scheme {
-    pub name: String,
-    /// Configuration of filename parsing.
-    pub filename: Filename,
-    /// Configuration of content and filename templates.
-    pub tmpl: Tmpl,
-}
-
-/// Configuration of filename parsing, deserialized from the
-/// configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Filename {
-    pub sort_tag: SortTag,
-    pub copy_counter: CopyCounter,
-    pub extension_default: String,
-    pub extensions: Vec<(String, InputConverter, MarkupLanguage)>,
-}
-
-/// Configuration for sort-tag.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SortTag {
-    pub extra_chars: String,
-    pub separator: String,
-    pub extra_separator: char,
-    pub letters_in_succession_max: u8,
-    pub sequential: Sequential,
-}
-
-/// Requirements for chronological sort tags.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Sequential {
-    pub digits_in_succession_max: u8,
-}
-
-/// Configuration for copy-counter.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct CopyCounter {
-    pub extra_separator: String,
-    pub opening_brackets: String,
-    pub closing_brackets: String,
-}
-
-/// Filename templates and content templates, deserialized from the
-/// configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Tmpl {
-    pub fm_var: FmVar,
-    pub filter: Filter,
-    pub from_dir_content: String,
-    pub from_dir_filename: String,
-    pub from_clipboard_yaml_content: String,
-    pub from_clipboard_yaml_filename: String,
-    pub from_clipboard_content: String,
-    pub from_clipboard_filename: String,
-    pub from_text_file_content: String,
-    pub from_text_file_filename: String,
-    pub annotate_file_content: String,
-    pub annotate_file_filename: String,
-    pub sync_filename: String,
-}
-
-/// Configuration describing how to localize and check front matter variables.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct FmVar {
-    pub localization: Vec<(String, String)>,
-    pub assertions: Vec<(String, Vec<Assertion>)>,
-}
-
-/// Configuration related to various Tera template filters.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Filter {
-    pub get_lang: Vec<String>,
-    pub map_lang: Vec<Vec<String>>,
-    pub to_yaml_tab: u64,
-}
-
-/// Configuration for the HTML exporter feature, deserialized from the
-/// configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct TmplHtml {
-    pub viewer: String,
-    pub viewer_error: String,
-    pub viewer_doc_css: String,
-    pub viewer_highlighting_theme: String,
-    pub viewer_highlighting_css: String,
-    pub exporter: String,
-    pub exporter_doc_css: String,
-    pub exporter_highlighting_theme: String,
-    pub exporter_highlighting_css: String,
 }
 
 /// Defines the way the HTML exporter rewrites local links.
