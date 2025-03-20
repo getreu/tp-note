@@ -7,8 +7,8 @@ scheme_sync_default = "default"
 ### This is the base scheme all schemes (instantiations) inherit from.
 [base_scheme]
 
-### The name of this scheme. The data is in `scheme.filename` and
-### `scheme.tmpl`.
+### The name of the base scheme. Its data is in `base_scheme.filename` and
+### `base_scheme.tmpl`.
 name = "base_scheme"
 
 ### Filename related settings for the base scheme.
