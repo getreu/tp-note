@@ -1,3 +1,5 @@
+use crate::markup5ever_rcdom;
+
 use markup5ever_rcdom::{Handle, NodeData};
 
 pub fn get_tag_attr(tag: &Handle, attr_name: &str) -> Option<String> {

@@ -1,5 +1,6 @@
 use crate::common::get_tag_attr;
 use crate::dummy::IdentityHandler;
+use crate::markup5ever_rcdom;
 use percent_encoding::percent_decode_str;
 
 use super::StructuredPrinter;

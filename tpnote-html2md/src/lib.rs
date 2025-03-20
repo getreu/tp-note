@@ -22,6 +22,7 @@ pub mod headers;
 pub mod iframes;
 pub mod images;
 pub mod lists;
+pub mod markup5ever_rcdom;
 pub mod paragraphs;
 pub mod quotes;
 pub mod styles;

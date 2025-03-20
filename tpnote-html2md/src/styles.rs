@@ -1,3 +1,5 @@
+use crate::markup5ever_rcdom;
+
 use super::StructuredPrinter;
 use super::TagHandler;
 

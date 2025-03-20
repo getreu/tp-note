@@ -3,6 +3,7 @@ use super::TagHandler;
 
 use crate::common::get_tag_attr;
 use crate::dummy::IdentityHandler;
+use crate::markup5ever_rcdom;
 
 use markup5ever_rcdom::Handle;
 
