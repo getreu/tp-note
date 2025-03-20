@@ -76,7 +76,7 @@ const CONFIG_FILENAME: &str = concat!(env!("CARGO_BIN_NAME"), ".toml");
 /// Default configuration.
 pub(crate) const GUI_CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
 
-pub(crate) const KEEP_IN_TOML_WHEN_COMMENTING: [&str; 4] = ["### ", "[", "name=", "name ="];
+pub(crate) const DO_NOT_COMMENT_IF_LINE_STARTS_WITH: [&str; 3] = ["###", "[", "name ="];
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
@@ -341,7 +341,7 @@ impl Cfg {
         for l in Self::default_as_toml().lines() {
             if l.is_empty() {
                 commented.push('\n');
-            } else if KEEP_IN_TOML_WHEN_COMMENTING
+            } else if DO_NOT_COMMENT_IF_LINE_STARTS_WITH
                 .iter()
                 .all(|&token| !l.starts_with(token))
             {

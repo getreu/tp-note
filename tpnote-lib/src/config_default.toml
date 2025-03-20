@@ -137,8 +137,6 @@ extensions = [
 ### without actually touching the templates itself.
 ### For variables not listed below, only the prefix `fm.fm_` is stripped and
 ### no translation occurs, e.g. `fm.fm_unknown` becomes `unknown`.
-#
-
 fm_var.localization = [
     ["fm_title", "title"],
     ["fm_subtitle", "subtitle"],
