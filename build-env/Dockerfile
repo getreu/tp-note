@@ -3,6 +3,8 @@ WORKDIR /home/project
 
 FROM $BASE_IMAGE as planner
 
+RUN rustup component add rust-src llvm-tools rustfmt
+
 # Add Musl target
 RUN rustup target add x86_64-unknown-linux-musl
 
@@ -27,17 +29,13 @@ RUN apt-get -y install zip python3
 
 # Helper to make deb packages. Use with:
 #     cargo deb --target=x86_64-unknown-linux-gnu
-RUN cargo install --locked cargo-deb
+RUN cargo install --locked --version 2.11.2 cargo-deb
 
 # Install `cargo upgrade`.
 RUN apt-get -y install libssl-dev
 RUN cargo install --locked --version 0.13.0 cargo-edit
 
-RUN rustup component add rust-src llvm-tools rustfmt
 
-RUN rustup component add --target x86_64-unknown-linux-musl  rust-src
-RUN rustup component add --target armv7-unknown-linux-gnueabihf  rust-src
-RUN rustup component add --target aarch64-unknown-linux-gnu  rust-src
 
 COPY . .
 
