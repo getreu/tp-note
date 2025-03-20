@@ -1,6 +1,6 @@
 [package]
 name = "tpnote-html2md"
-version = "0.2.16"
+version = "0.2.17"
 edition = "2018"
 authors = ["Oleg `Kanedias` Chernovskiy <kanedias@house-of-maker.online>",
            "Jens Getreu <getreu@web.de>"]

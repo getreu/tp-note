@@ -3802,7 +3802,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote-html2md"
-version = "0.2.16"
+version = "0.2.17"
 dependencies = [
  "html5ever",
  "indoc",
