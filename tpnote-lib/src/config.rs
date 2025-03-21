@@ -57,7 +57,7 @@ pub const FILENAME_ROOT_PATH_MARKER: &str = "tpnote.toml";
 /// at the end.
 pub const FILENAME_COPY_COUNTER_MAX: usize = 400;
 
-/// A filename extension, if prensent, is separated by a dot.
+/// A filename extension, if present, is separated by a dot.
 pub(crate) const FILENAME_EXTENSION_SEPARATOR_DOT: char = '.';
 
 /// A dotfile starts with a dot.
@@ -77,7 +77,7 @@ pub const TMPL_VAR_PATH: &str = "path";
 pub const TMPL_VAR_DIR_PATH: &str = "dir_path";
 
 /// The root directory of the current note. This is the first directory,
-/// that upwards from `TMPL_VAR_DIR_PATH`, contains a file named
+/// that upwards from `TMPL_VAR_DIR_PATH` contains a file named
 /// `FILENAME_ROOT_PATH_MARKER`. The root directory is used by Tp-Note's viewer
 /// as base directory
 pub const TMPL_VAR_ROOT_PATH: &str = "root_path";
@@ -140,7 +140,7 @@ pub const TMPL_VAR_DOC_BODY_TEXT: &str = "doc_body_text";
 /// The date is represented as an integer the way `std::time::SystemTime`
 /// resolves to on the platform. Only available in the
 /// `tmpl.from_text_file_content`, `tmpl.sync_filename` and HTML templates.
-/// Note: this variable might not be defined with some filesystems or on some
+/// Note: this variable might not be defined with some file systems or on some
 /// platforms.  
 pub const TMPL_VAR_DOC_FILE_DATE: &str = "doc_file_date";
 
@@ -157,39 +157,39 @@ pub const TMPL_VAR_FM_ALL: &str = "fm";
 /// before the filename template is processed.
 pub const TMPL_VAR_FM_SCHEME: &str = "fm_scheme";
 
-/// By default, the template `tmpl.sync_filename` defines the function of
-/// of this variable as follows:
+/// By default, the template `tmpl.sync_filename` defines the function of this
+/// variable as follows:
 /// Contains the value of the front matter field `file_ext` and determines the
 /// markup language used to render the document. When the field is missing the
 /// markup language is derived from the note's filename extension.
 ///
 /// This is a dynamically generated variable originating from the front matter
 /// of the current note. As all front matter variables, its value is copied as
-/// it is without modification.  Here, the only special treatment is, when
+/// it is without modification. Here, the only special treatment is, when
 /// analyzing the front matter, it is verified, that the value of this variable
 /// is registered in one of the `filename.extensions_*` variables.
 pub const TMPL_VAR_FM_FILE_EXT: &str = "fm_file_ext";
 
-/// By default, the template `tmpl.sync_filename` defines the function of
-/// of this variable as follows:
+/// By default, the template `tmpl.sync_filename` defines the function of this
+/// variable as follows:
 /// If this variable is defined, the _sort tag_ of the filename is replaced with
-/// the value of this variable next time the filename is synchronized.  If not
+/// the value of this variable next time the filename is synchronized. If not
 /// defined, the sort tag of the filename is never changed.
 ///
 /// This is a dynamically generated variable originating from the front matter
 /// of the current note. As all front matter variables, its value is copied as
-/// it is without modification.  Here, the only special treatment is, when
+/// it is without modification. Here, the only special treatment is, when
 /// analyzing the front matter, it is verified, that all the characters of the
 /// value of this variable are listed in `filename.sort_tag.extra_chars`.
 pub const TMPL_VAR_FM_SORT_TAG: &str = "fm_sort_tag";
 
-/// Contains the value of the front matter field `no_filename_sync`.  When set
+/// Contains the value of the front matter field `no_filename_sync`. When set
 /// to `no_filename_sync:` or `no_filename_sync: true`, the filename
-/// synchronisation mechanism is disabled for this note file.  Depreciated
-/// in favour of `TMPL_VAR_FM_FILENAME_SYNC`.
+/// synchronization mechanism is disabled for this note file. Depreciated
+/// in favor of `TMPL_VAR_FM_FILENAME_SYNC`.
 pub const TMPL_VAR_FM_NO_FILENAME_SYNC: &str = "fm_no_filename_sync";
 
-/// Contains the value of the front matter field `filename_sync`.  When set to
+/// Contains the value of the front matter field `filename_sync`. When set to
 /// `filename_sync: false`, the filename synchronization mechanism is
 /// disabled for this note file. Default value is `true`.
 pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
@@ -411,7 +411,7 @@ pub struct LibCfg {
 
 impl LibCfg {
     /// Returns the index of a named scheme. If no scheme with that name can be
-    /// be found, return `LibCfgError::SchemeNotFound`.
+    /// found, return `LibCfgError::SchemeNotFound`.
     pub fn scheme_idx(&self, name: &str) -> Result<usize, LibCfgError> {
         self.scheme
             .iter()
@@ -691,7 +691,7 @@ impl TryFrom<LibCfgRaw> for LibCfg {
 /// a `toml::map::Map<String, Value>`. Each `String` is the name of a top
 /// level configuration variable.
 /// The inner Map is expected to be a data structure that can be copied into
-/// the internal temporary variable `LibCfgRaw`. This internal varable
+/// the internal temporary variable `LibCfgRaw`. This internal variable
 /// is then processed and the result is stored in a `LibCfg` struct. For details
 /// see the `impl TryFrom<LibCfgRaw> for LibCfg`. The processing occurs as
 /// follows:

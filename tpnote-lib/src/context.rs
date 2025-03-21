@@ -32,7 +32,7 @@ pub struct Context {
     pub dir_path: PathBuf,
     /// `dir_path` is a subdirectory of `root_path`. `root_path` is the
     /// first directory, that upwards from `dir_path`, contains a file named
-    /// `FILENAME_ROOT_PATH_MARKER` (or, `/` if not marker file can be found).
+    /// `FILENAME_ROOT_PATH_MARKER` (or `/` if no marker file can be found).
     /// The root directory is interpreted by Tp-Note's viewer as its base
     /// directory: only files within this directory are served.
     pub root_path: PathBuf,
@@ -81,7 +81,7 @@ impl Context {
                 .to_path_buf()
         };
 
-        // Get the root dir.
+        // Get the root directory.
         let mut root_path = Path::new("");
 
         for anc in dir_path.ancestors() {
@@ -192,7 +192,7 @@ impl Context {
         tmpl_var_header: &str,
         input: &impl Content,
     ) -> Result<(), NoteError> {
-        // Register input .
+        // Register input.
         (*self).insert(tmpl_var_header, input.header());
         (*self).insert(tmpl_var, input.body());
 
@@ -227,7 +227,7 @@ impl Context {
         Ok(())
     }
 
-    /// Captures _Tp-Note_'s environment and stores it as variables in a
+    /// Captures Tp-Note's environment and stores it as variables in a
     /// `context` collection. The variables are needed later to populate
     /// a context template and a filename template.
     ///
@@ -265,7 +265,7 @@ impl Context {
     }
 }
 
-/// Auto-dereference for convenient access to `tera::Context`.
+/// Auto dereferences for convenient access to `tera::Context`.
 impl Deref for Context {
     type Target = tera::Context;
 
@@ -274,7 +274,7 @@ impl Deref for Context {
     }
 }
 
-/// Auto-dereference for convenient access to `tera::Context`.
+/// Auto dereferences for convenient access to `tera::Context`.
 impl DerefMut for Context {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.ct

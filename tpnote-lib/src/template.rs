@@ -25,7 +25,7 @@ pub enum TemplateKind {
     /// text file with a valid YAML header (with a `title:` field).
     SyncFilename,
     /// No templates are used, but the file is still parsed in order to render it
-    /// later to HTML (c.f. `<Note>.render_content_to_html()` and
+    /// later to HTML (cf. `<Note>.render_content_to_html()` and
     /// `<Note>.export_html()`).
     #[default]
     None,
@@ -36,7 +36,7 @@ impl TemplateKind {
     /// `template_kind` is the result of the logic calculating under what
     /// circumstances what template should be used.
     /// If `path` has a Tp-Note extension (e.g. `.md`) and the file indicated by
-    /// `path` could be opened and loaed from disk, `Some(content)` contains
+    /// `path` could be opened and loaded from disk, `Some(content)` contains
     /// its content. Otherwise `None` is returned.
     pub fn from<T: Content>(
         path: &Path,

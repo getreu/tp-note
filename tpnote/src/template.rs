@@ -5,7 +5,7 @@ use crate::settings::ARGS;
 use tpnote_lib::template::TemplateKind;
 
 /// Helper function to inhibit template application according to
-/// commandline parameters.
+/// command line parameters.
 pub(crate) fn template_kind_filter(template_kind: TemplateKind) -> TemplateKind {
     // Treat inhibitors:
     match template_kind {

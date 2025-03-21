@@ -4,7 +4,7 @@
 scheme_sync_default = "default"
 
 
-### This is the base scheme all schemes (instantiations) inherit from.
+### This is the base scheme all schemes inherit from.
 [base_scheme]
 
 ### The name of the base scheme. Its data is in `base_scheme.filename` and
@@ -52,12 +52,12 @@ sort_tag.sequential.digits_in_succession_max = 3
 ### are suitable here.
 copy_counter.extra_separator = "-"
 
-### Tp-Note may add a counter at the end of the filename when it can not save a
+### Tp-Note may add a counter at the end of the filename when it cannot save a
 ### file because the name is taken already. This is the opening bracket search
 ### pattern. Some examples: `"-"`, "'_'"", `"_-"`,`"-_"`, `"("` Can be empty.
 copy_counter.opening_brackets = "("
 
-### Tp-Note may add a counter at the end of the filename when it can not save a
+### Tp-Note may add a counter at the end of the filename when it cannot save a
 ### file because the name is taken already. This is the closing bracket search
 ### pattern. Some examples: `"-"`, "'_'"", `"_-"`,`"-_"`, `"("` Can be empty.
 copy_counter.closing_brackets = ")"
@@ -78,7 +78,7 @@ extension_default = "md"
 ### The templates `from_clipboard` and `from_clipboard_yaml` contain some
 ### `html_to_markup(extension)` filters which convert HTML clipboard content
 ### into markup formatted content. The second tuple value of the vector
-### parametrizes the `html_to_markup` filter. It determines which converter is
+### parameterizes the `html_to_markup` filter. It determines which converter is
 ### used. Currently, the following converters are implemented:
 ### * `Disabled`,
 ### * `ToMarkdown` and 
@@ -151,7 +151,7 @@ fm_var.localization = [
 ]
 
 ### Before the front matter `fm.fm_` variables are applied to a filename template,
-### their validity is checked.  The following table lists test, every value has to
+### their validity is checked. The following table lists test, every value has to
 ### pass. If one test fails the user is informed.
 ### 
 ### * `IsDefined`: Assert that the variable is defined in the template.
@@ -174,7 +174,7 @@ fm_var.localization = [
 ###    string equals to one of the `scheme.name` in the configuration file.
 ### * `IsTpnoteExtension`: Assert, that if the variable is defined, the values
 ###    string representation is registered in one of the `filename.extension_*`
-###    configuraion file variables.
+###    configuration file variables.
 ### * `NoOperation` (default): A test that is always satisfied. For internal use
 ###    only.
 ###
@@ -267,10 +267,10 @@ from_dir_filename = """
 ### matter section. This input data is considered to be a complete Tp-Note
 ### file content with (eventually incomplete) YAML header.
 ### The clipboards body is in `{{ txt_clipboard }}`, the header
-### is in `{{txt clipboard_header }}`.  The stdin's body is in `{{ stdin }}`,
+### is in `{{txt clipboard_header }}`. The stdin's body is in `{{ stdin }}`,
 ### the header is in `{{ stdin_header }}`. First all variables defined in the
 ### clipboard's front matter are registered, the ones defined in the input
-### stream `stdin`. The latter can overwrite the former.  One of the front
+### stream `stdin`. The latter can overwrite the former. One of the front
 ### matters must define the `title` variable, which is then available in this
 ### template as `{{ fm.fm_title }}`.
 ### When placed in YAML front matter, the filter `to_yaml` must be
@@ -961,7 +961,7 @@ h1, h2, h3, h4, h5, h6 { font-family:sans-serif; }
 ### * `Solarized (light)`
 viewer_highlighting_theme = "Solarized (light)"
 
-### When left empty, the css is calculated automatically from
+### When left empty, the CSS is calculated automatically from
 ### `viewer_highlighting_theme`. This is what you usually want. Anyway, if none
 ### of the above themes fits, you can provide a custom CSS here.
 viewer_highlighting_css = ""
@@ -1044,7 +1044,7 @@ exporter = '''
 ### * `Solarized (light)`
 exporter_highlighting_theme = "Solarized (light)"
 
-### When left empty, the css is calculated automatically from
+### When left empty, the CSS is calculated automatically from
 ### `exporter_highlighting_theme`. This is what you usually want. Anyway, if
 ### none of the above themes fits, you can provide a custom CSS here.
 exporter_highlighting_css = ""

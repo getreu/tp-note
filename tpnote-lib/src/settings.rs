@@ -149,11 +149,11 @@ pub fn set_test_default_settings() -> Result<(), LibCfgError> {
 /// How should `update_settings` collect the right scheme?
 #[derive(Debug, Clone)]
 pub(crate) enum SchemeSource<'a> {
-    /// Ingore `TPNOTE_SCHEME_NEW_DEFAULT`, take this.
+    /// Ignore `TPNOTE_SCHEME_NEW_DEFAULT`, take this.
     Force(&'a str),
     /// Take the value `lib_cfg.scheme_sync_default`.
     SchemeSyncDefault,
-    /// Take `TPNOTE_SCHEME_NEW_DEFAULT`, or, if not defined take this.
+    /// Take `TPNOTE_SCHEME_NEW_DEFAULT` or -if not defined- take this.
     SchemeNewDefault(&'a str),
 }
 
@@ -344,7 +344,7 @@ impl Settings {
             .map(|l| {
                 IsoCode639_1::from_str(l).map_err(|_| {
                     // The error path.
-                    // Produce list of all available langugages.
+                    // Produce list of all available languages.
                     let mut all_langs = lingua::Language::all()
                         .iter()
                         .map(|l| {
@@ -543,8 +543,8 @@ impl Settings {
                 }
             }
 
-            // Even is `force_lang` is set and the env. var. is not use,
-            // we always parse it (see code above) to identify errors.
+            // Even is `force_lang` is set and the environment variable is not
+            // in use, we always parse it (see code above) to identify errors.
             if force_lang {
                 self.filter_get_lang = FilterGetLang::Disabled;
             }

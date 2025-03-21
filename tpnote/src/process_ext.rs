@@ -1,5 +1,5 @@
 //! Module extending the process handling.
-//!
+
 #[cfg(target_family = "windows")]
 use std::os::windows::io::AsRawHandle;
 use std::process::Child;

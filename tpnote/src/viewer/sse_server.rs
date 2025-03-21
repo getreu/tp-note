@@ -1,5 +1,5 @@
 //! Server-sent-event server for the note viewer feature.
-//! This module contains also the web browser Javascript client code.
+//! This module contains also the web browser JavaScript client code.
 
 use crate::config::CFG;
 use crate::viewer::error::ViewerError;
@@ -24,11 +24,11 @@ use tpnote_lib::context::Context;
 /// The TCP stream is read in chunks. This is the read buffer size.
 const TCP_READ_BUFFER_SIZE: usize = 0x400;
 
-/// Javascript client code, part 1
-/// Refresh on WTFiles events.
+/// JavaScript client code, part 1
+/// Refresh on `WTFiles` events.
 pub const SSE_CLIENT_CODE1: &str = r#"
     var evtSource = new EventSource("http://"#;
-/// Javascript client code, part 2
+/// JavaScript client code, part 2
 /// Save last scroll position into local storage.
 /// Jump to the last saved scroll position.
 pub const SSE_CLIENT_CODE2: &str = r#"/events");
@@ -48,8 +48,8 @@ const SSE_EVENT_PATH: &str = "/events";
 /// Server-Sent-Event tokens our HTTP client has registered to receive.
 #[derive(Debug, Clone, Copy)]
 pub enum SseToken {
-    /// Server-Sent-Event token to request nothing but check if the client is still
-    /// there.
+    /// Server-Sent-Event token to request nothing but check if the client is
+    /// still there.
     Ping,
     /// Server-Sent-Event token to request a page update.
     Update,
@@ -371,7 +371,7 @@ impl ServerThread {
 
                 // Serve all other documents.
                 _ => self.respond(&path)?,
-            }; // end of match path
+            }; // End of match path
         } // Go to 'tcp_connection loop start
 
         log::trace!(

@@ -33,7 +33,7 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 /// The trait provides cheap access to the header with `header()`, the body
 /// with `body()`, and the whole raw text with `as_str()`.
 /// Implementers should cache the `header()` and `body()` function results in
-/// oder to keep these as cheap as possible.
+/// order to keep these as cheap as possible.
 ///
 /// ```rust
 /// use tpnote_lib::content::Content;
@@ -54,7 +54,7 @@ const BEFORE_HEADER_MAX_IGNORED_CHARS: usize = 1024;
 /// ```
 ///
 /// The `Content` trait allows to plug in your own storage back end if
-/// `ContentString` does not suit you. In addtion to the example shown below,
+/// `ContentString` does not suit you. In addition to the example shown below,
 /// you can overwrite `Content::open()` and `Content::save_as()` as well.
 ///
 /// ```rust
@@ -123,7 +123,7 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
 
     /// Constructor that reads a structured document with a YAML header
     /// and body. All `\r\n` are converted to `\n` if there are any.
-    /// If not, no memory allocation occurs and the buffer remains untouched.
+    /// If not no memory allocation occurs and the buffer remains untouched.
     ///
     /// ```rust
     /// use tpnote_lib::content::Content;
@@ -152,13 +152,13 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default + From<String> 
         Self::from(input)
     }
 
-    /// Return a reference to theader part in between `---`
+    /// Return a reference to the inner part in between `---`
     fn header(&self) -> &str;
 
     /// Return the body below the second `---`.
     fn body(&self) -> &str;
 
-    /// Constructor that accepts and store HTML imput in the body.
+    /// Constructor that accepts and store HTML input in the body.
     /// If the HTML input does not start with `<!DOCTYPE html...>` it is
     /// automatically prepended.
     /// If the input starts with another DOCTYPE than HTMl, return
@@ -411,7 +411,7 @@ pub struct ContentRef<'a> {
 
 self_cell!(
 /// Holds the notes content in a string and two string slices
-/// `header`  and `body`.
+/// `header` and `body`.
 /// This struct is self referential.
 /// It deals with operating system specific handling of newlines.
 /// The content of a note is stored as UTF-8 string with

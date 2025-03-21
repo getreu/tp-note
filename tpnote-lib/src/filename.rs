@@ -120,7 +120,7 @@ impl NotePathBuf for PathBuf {
             filename.push_str(&scheme.filename.sort_tag.separator);
         }
         // Does the beginning of `stem` look like a sort-tag?
-        // Make sure, that the path can not be misinterpreted, even if a
+        // Make sure, that the path cannot be misinterpreted, even if a
         // `sort_tag.separator` would follow.
         let mut test_path = String::from(stem);
         test_path.push_str(&scheme.filename.sort_tag.separator);
@@ -301,7 +301,7 @@ impl NotePath for Path {
     }
 
     /// Returns `True` if the path in `self` ends with an extension, that Tp-
-    /// Note considers as it's own file. To do so, the extension is compared
+    /// Note considers as it's own file. To do so the extension is compared
     /// to all items in the registered `filename.extensions` table in the
     /// configuration file.
     fn has_tpnote_ext(&self) -> bool {
@@ -464,9 +464,9 @@ pub(crate) trait NotePathStr {
     /// The input may contain a path as long as it ends with a filename.
     fn has_tpnote_ext(&self) -> bool;
 
-    /// Helper function that expects a filename in `self` und
-    /// matches the copy counter at the end of string,
-    /// returns the result and the copy counter.
+    /// Helper function that expects a filename in `self`, matches the copy
+    /// counter at the end of string and  returns the result and the copy
+    /// counter.
     /// This function removes all brackets and a potential extra separator.
     /// The input must not contain a path, only a filename is allowed here.
     fn split_copy_counter(&self) -> (&str, Option<usize>);
@@ -477,7 +477,7 @@ pub(crate) trait NotePathStr {
     /// The input must not contain a path, only a filename is allowed here.
     /// If `filename.sort_tag.separator` is defined, it must appear after the
     /// sort-tag (without being part of it). Otherwise the sort-tag is discarded.
-    /// A sort-tag can not contain more than
+    /// A sort-tag cannot contain more than
     /// `FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX` lowercase letters in a row.
     /// If `ignore_sort_tag_separator=true` this split runs with the setting
     /// `filename_sort_tag_separator=""`.
@@ -675,7 +675,7 @@ mod tests {
         let res = PathBuf::from_disassembled("1234", "", None, "md");
         assert_eq!(res, Path::new("1234-'.md"));
 
-        // This is a special case, that can not be disassembled properly.
+        // This is a special case, that cannot be disassembled properly.
         let res = PathBuf::from_disassembled("1234", "'5678--subtitle", Some(9), "md");
         assert_eq!(res, Path::new("1234-'5678--subtitle(9).md"));
 
@@ -685,7 +685,7 @@ mod tests {
         let res = PathBuf::from_disassembled("", "(1)", Some(9), "md");
         assert_eq!(res, Path::new("(1)-(9).md"));
 
-        // This is a special case, that can not be disassembled properly.
+        // This is a special case, that cannot be disassembled properly.
         let res = PathBuf::from_disassembled("", "(1)-", Some(9), "md");
         assert_eq!(res, Path::new("(1)-(9).md"));
     }

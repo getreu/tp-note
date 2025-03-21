@@ -54,6 +54,7 @@ pub(crate) trait HttpResponse {
     ) -> Result<(), ViewerError>;
     // fn respond_forbidden(&mut self, reqpath: &Path) -> Result<(), ViewerError>;
     // fn respond_no_content_ok(&mut self) -> Result<(), ViewerError>;
+
     /// Write HTTP "not found" response.
     fn respond_not_found(&mut self, reqpath: &Path) -> Result<(), ViewerError>;
     /// Write HTTP method "not allowed" response.
@@ -243,7 +244,7 @@ impl HttpResponse for ServerThread {
                     self.respond_not_found(&abspath)?;
                 }
             }
-        }; // end of match path
+        }; // End of match path
         Ok(())
     }
 
@@ -442,7 +443,7 @@ impl HttpResponse for ServerThread {
                     html,
                     root_path,
                     abspath_dir,
-                    // Do convert rel. to abs. links.
+                    // Do convert relative to abs absolute links.
                     // Do not convert abs. links.
                     LocalLinkKind::Short,
                     // Do not append `.html` to `.md` links.

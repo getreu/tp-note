@@ -1,5 +1,5 @@
 //! Tp-Note's low level API, creating a memory representation of a
-//! note file by inserting _Tp-Note_'s
+//! note file by inserting Tp-Note's
 //! environment data in some templates. If the note exists on disk already,
 //! the memory representation is established be reading the note file and
 //! parsing its front matter.
@@ -171,7 +171,7 @@ impl<T: Content> Note<T> {
             *context
         );
 
-        // render template
+        // Render template
 
         let content: T = T::from({
             let mut tera = Tera::default();
@@ -194,7 +194,7 @@ impl<T: Content> Note<T> {
             content.body().trim()
         );
 
-        // deserialize the rendered template
+        // Deserialize the rendered template
         let fm = FrontMatter::try_from(content.header())?;
 
         context.insert_front_matter(&fm);
@@ -215,7 +215,7 @@ impl<T: Content> Note<T> {
             "Available substitution variables for the filename template:\n{:#?}",
             *self.context
         );
-        // render template
+        // Render template
         let mut file_path = self.context.dir_path.to_owned();
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
@@ -288,7 +288,7 @@ impl<T: Content> Note<T> {
         debug_assert_ne!(self.rendered_filename, PathBuf::new());
 
         if !from_path.exclude_copy_counter_eq(&self.rendered_filename) {
-            // rename file
+            // Rename file
             fs::rename(from_path, &self.rendered_filename)?;
             log::trace!(
                 "File renamed to {}",

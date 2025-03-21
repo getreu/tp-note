@@ -55,7 +55,7 @@ const ENV_VAR_DISPLAY: &str = "DISPLAY";
 /// viewer feature, that currently renders only Markdown, ReStructuredText and
 /// HTML. Note, that there is also some limited support for Asciidoc and
 /// WikiText. The note's rendition with its hyperlinks is live updated and
-/// displayed in the user's webbrowser.
+/// displayed in the user's web browser.
 pub struct Args {
     /// Prepends YAML header if missing
     #[structopt(long, short = "a")]
@@ -126,7 +126,7 @@ pub static LAUNCH_EDITOR: LazyLock<bool> = LazyLock::new(|| {
 });
 
 #[cfg(feature = "viewer")]
-/// Shall we launch the internal http server and the external browser?
+/// Shall we launch the internal HTTP server and the external browser?
 pub static LAUNCH_VIEWER: LazyLock<bool> = LazyLock::new(|| {
     !ARGS.batch
         && ARGS.export.is_none()
@@ -138,7 +138,7 @@ pub static LAUNCH_VIEWER: LazyLock<bool> = LazyLock::new(|| {
 });
 
 #[cfg(not(feature = "viewer"))]
-/// Shall we launch the internal http server and the external browser?
+/// Shall we launch the internal HTTP server and the external browser?
 pub static LAUNCH_VIEWER: LazyLock<bool> = LazyLock::new(|| false);
 
 /// Do we run on a console?

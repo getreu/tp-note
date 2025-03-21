@@ -26,8 +26,8 @@ const FORMAT_SEPARATOR: char = '?';
 /// for further matching.
 const FORMAT_ONLY_SORT_TAG: char = '#';
 
-/// If followed directly after FORMAT_SEPARATOR, it selects the the whole
-/// filename for further matching.
+/// If followed directly after FORMAT_SEPARATOR, it selects the whole filename
+/// for further matching.
 const FORMAT_COMPLETE_FILENAME: &str = "?";
 
 /// A format string can be separated in a _from_ and _to_ part. This
@@ -90,7 +90,7 @@ fn assemble_link(
     // (strip_prefix will not work).
     debug_assert!(docdir.starts_with(root_path));
 
-    // Caculate the output.
+    // Calculate the output.
     let mut link = match (rewrite_rel_paths, rewrite_abs_paths, dest_is_relative) {
         // *** Relative links.
         // Result: "/" + docdir.strip(root_path) + dest
@@ -187,17 +187,17 @@ trait Hyperlink {
     /// If `dest` in `Link::Text2Dest` contains only a sort
     /// tag as filename, expand the latter to a full filename.
     /// Otherwise, no action.
-    /// This method accesses the filesystem. Therefore sometimes `prepend_path`
+    /// This method accesses the file system. Therefore sometimes `prepend_path`
     /// is needed as parameter and prepended.
     fn expand_shorthand_link(&mut self, prepend_path: Option<&Path>) -> Result<(), NoteError>;
 
     /// This removes a possible scheme in `text`.
-    /// Call this method only, when you sure that this
+    /// Call this method only when you sure that this
     /// is an autolink by testing with `is_autolink()`.
     fn rewrite_autolink(&mut self);
 
-    /// A formatting attribute is a format string starting with `?  followed
-    /// by one or two patterns. It is appended to to `dest` or `src`.
+    /// A formatting attribute is a format string starting with `?` followed
+    /// by one or two patterns. It is appended to `dest` or `src`.
     /// Processing details:
     /// 1. Extract some a possible formatting attribute string in `dest`
     ///    (`Link::Text2Dest`) or `src` (`Link::Image`) after `?`.
@@ -224,7 +224,7 @@ trait Hyperlink {
     /// Renders `Link::Text2Dest`, `Link::Image2Dest` and `Link::Image`
     /// to HTML. Some characters in `dest` or `src` might be HTML
     /// escape encoded. This does not percent encode at all, because
-    /// we know, that the result will be inserted in an UTF-8 template.
+    /// we know, that the result will be inserted later in an UTF-8 template.
     fn to_html(&self) -> String;
 }
 
@@ -645,15 +645,15 @@ impl<'a> Hyperlink for Link<'a> {
 /// links are converted into absolute local links and eventually rebased.
 ///
 /// In order to achieve this, the user must respect the following convention
-/// concerning absolute local links in Tp-Note documents: When a
-/// document contains a local link with an absolute path (absolute local link),
-/// the base of this path is considered to be the directory where the marker
-/// file ‘.tpnote.toml’ resides (or ‘/’ in non exists). The marker file
-/// directory is `root_path`.
-/// Furthermore, the parameter `docdir` contains the absolute path of the
-/// directory of the currently processed HTML document. The user guarantees that
-/// `docdir` is the base for all relative local links in the document.
-/// BTW: `docdir` must always start with `root_path`.
+/// concerning absolute local links in Tp-Note documents:
+/// 1. When a document contains a local link with an absolute path (absolute
+///    local link), the base of this path is considered to be the directory
+///    where the marker file ‘.tpnote.toml’ resides (or ‘/’ in non exists). The
+///    marker file directory is `root_path`.
+/// 2. Furthermore, the parameter `docdir` contains the absolute path of the
+///    directory of the currently processed HTML document. The user guarantees
+///    that `docdir` is the base for all relative local links in the document.
+///    Note: `docdir` must always start with `root_path`.
 ///
 /// If `LocalLinkKind::Off`, relative local links are not converted.
 /// If `LocalLinkKind::Short`, relative local links are converted into an
@@ -827,7 +827,7 @@ impl HtmlStr for str {
             .unwrap_or_default();
 
         html.as_str().starts_with(Self::TAG_DOCTYPE_HTML_PAT)
-            // The next closing braket must be in last position.
+            // The next closing bracket must be in last position.
             && html.find('>').unwrap_or_default() == html.len()-1
     }
 
@@ -1833,27 +1833,27 @@ mod tests {
         // Bring new methods into scope.
         use crate::html::HtmlStr;
 
-        // Test with <!DOCTYPE html> tag
+        // Test with `<!DOCTYPE html>` tag
         let html = "<!doctype html>";
         assert!(html.is_html_unchecked());
 
-        // Test with <!DOCTYPE html> tag
+        // Test with `<!DOCTYPE html>` tag
         let html = "<!doctype html abc>def";
         assert!(html.is_html_unchecked());
 
-        // Test with <!DOCTYPE html> tag
+        // Test with `<!DOCTYPE html>` tag
         let html = "<!doctype html";
         assert!(!html.is_html_unchecked());
 
-        // Test with <html> tag
+        // Test with `<html>` tag
         let html = "<html><body></body></html>";
         assert!(html.is_html_unchecked());
 
-        // Test with <html> tag
+        // Test with `<html>` tag
         let html = "<html abc>def";
         assert!(html.is_html_unchecked());
 
-        // Test with <html> tag
+        // Test with `<html>` tag
         let html = "<html abc def";
         assert!(!html.is_html_unchecked());
 
@@ -1865,7 +1865,7 @@ mod tests {
         let html = "<!DOCTYPE xml><root></root>";
         assert!(!html.is_html_unchecked());
 
-        // Test with partial <!DOCTYPE> tag
+        // Test with partial `<!DOCTYPE>` tag
         let html = "<!doctype>";
         assert!(!html.is_html_unchecked());
     }

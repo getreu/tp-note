@@ -15,13 +15,13 @@ impl CodeHandler {
     fn do_handle(&mut self, printer: &mut StructuredPrinter, start: bool) {
         let immediate_parent = printer.parent_chain.last().unwrap().to_owned();
         if self.code_type == "code" && immediate_parent == "pre" {
-            // we are already in "code" mode
+            // We are already in "code" mode.
             return;
         }
 
         match self.code_type.as_ref() {
             "pre" => {
-                // code block should have its own paragraph
+                // Code blocks should have its own paragraph
                 if start {
                     printer.insert_newline();
                 }

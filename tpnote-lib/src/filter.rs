@@ -78,15 +78,15 @@ pub static TERA: LazyLock<Tera> = LazyLock::new(|| {
 
 /// A filter converting any input `tera::Value` into a `tera::Value::String(s)`
 /// with `s` being the YAML representation of the object. The input can be of
-/// any type, the output type is alwasy a `Value::String()`.
+/// any type, the output type is always a `Value::String()`.
 /// If the input type is `tera::Value::Object`, all top level keys starting with
-/// `fm_` are  localized (see `fm_var.localization`).
+/// `fm_` are localized (see `fm_var.localization`).
 /// When the optional parameter `key='k'` is given, the input is regarded as
 /// the corresponding value to this key.
 /// The optional parameter `tab=n` indents the YAML values `n` characters to
 /// the right of the first character of the key by inserting additional spaces
 /// between the key and the value. When `tab=n` is given, it has precedence
-/// over the  default value, read from the configuration file variable
+/// over the default value, read from the configuration file variable
 /// `tmpl.filter.to_yaml_tab`.
 fn to_yaml_filter<S: BuildHasher>(
     val: &Value,
@@ -169,7 +169,7 @@ fn to_yaml_filter<S: BuildHasher>(
 }
 
 /// A filter that coverts a `tera::Value` tree into an HTML representation,
-/// with following HTLM tags:
+/// with following HTML tags:
 /// * `Value::Object`: `<blockquote class="fm">` and `<div class="fm">`,
 /// * `Value::Array`: `<ul class="fm">` and `<li class="fm">`,
 /// * `Value::String`: no tag,
@@ -177,7 +177,7 @@ fn to_yaml_filter<S: BuildHasher>(
 ///
 /// The input can be of any type, the output type is `Value::String()`.
 /// If the input type is `Value::Object`, all top level keys starting with
-/// `fm_` are  localized (see `fm_var.localization`).
+/// `fm_` are localized (see `fm_var.localization`).
 /// Note: HTML templates escape HTML critical characters by default.
 /// To use the `to_hmtl` filter in HTML templates, add a `safe` filter in last
 /// position. This is no risk, as the `to_html` filter always escapes string
@@ -391,7 +391,7 @@ fn sanit_filter<S: BuildHasher>(
     Ok(Value::String(res))
 }
 
-/// A Tera filter that searches for the first Markdown or reStructuredText link
+/// A Tera filter that searches for the first Markdown or ReStructuredText link
 /// in the input stream and returns the link's name (link text).
 /// If not found, it returns the empty string.
 /// The input type must be `Value::String` and the output type is
@@ -407,7 +407,7 @@ fn link_text_filter<S: BuildHasher>(
     Ok(Value::String(hyperlink.text.to_string()))
 }
 
-/// A Tera filter that searches for the first Markdown or reStructuredText link
+/// A Tera filter that searches for the first Markdown or ReStructuredText link
 /// in the input stream and returns the link's URL.
 /// If not found, it returns the empty string.
 /// The input type must be `Value::String` and the output type is
@@ -423,7 +423,7 @@ fn link_dest_filter<S: BuildHasher>(
     Ok(Value::String(hyperlink.dest.to_string()))
 }
 
-/// A Tera filter that searches for the first Markdown or reStructuredText link
+/// A Tera filter that searches for the first Markdown or ReStructuredText link
 /// in the input stream and returns the link's text's name (link text).
 /// Unlike the filter `link_dest`, it does not necessarily return the first
 /// finding. For example, it skips autolinks, local links and links
@@ -442,7 +442,7 @@ fn link_text_picky_filter<S: BuildHasher>(
     Ok(Value::String(hyperlink.text.to_string()))
 }
 
-/// A Tera filter that searches for the first Markdown or reStructuredText link
+/// A Tera filter that searches for the first Markdown or ReStructuredText link
 /// in the input stream and returns the link's title.
 /// If not found, it returns the empty string.
 /// The input type must be `Value::String` and the output type is
@@ -661,7 +661,7 @@ fn replace_empty_filter<S: BuildHasher>(
 /// When called with the strings parameter `with_sort_tag`, the filter
 /// prepends the sort-tag and all necessary sort-tag separator characters,
 /// regardless whether the input stream in empty or not.
-/// The input type, and the type of the parameter `with` and   `with_sort_tag`
+/// The input type, and the type of the parameter `with` and `with_sort_tag`
 /// must be `Value::String`. The parameter `newline` must be a `Value::Bool` and
 /// the output type is `Value::String()`.
 fn prepend_filter<S: BuildHasher>(
@@ -702,8 +702,8 @@ fn prepend_filter<S: BuildHasher>(
 
 /// A Tera filter that appends the string parameter `with`. In addition, the
 /// flag `newline` inserts a newline character at end of the result. In
-/// case the input stream is empty,  nothing is appended.
-/// The input type, and the type of the parameter `with`  must be
+/// case the input stream is empty, nothing is appended.
+/// The input type, and the type of the parameter `with` must be
 /// `Value::String`. The parameter `newline` must be a `Value::Bool` and the
 /// output type is `Value::String()`.
 fn append_filter<S: BuildHasher>(
@@ -805,7 +805,7 @@ fn incr_sort_tag_filter<S: BuildHasher>(
         return Ok(Value::String(default));
     }
 
-    // Start analysing the input.
+    // Start analyzing the input.
     let (prefix, digits) = match input_sort_tag.rfind(|c: char| !c.is_ascii_digit()) {
         Some(idx) => (&input_sort_tag[..idx + 1], &input_sort_tag[idx + 1..]),
         None => ("", input_sort_tag),
@@ -944,7 +944,7 @@ fn insert_filter<S: BuildHasher>(
 /// A Tera filter telling which natural language some provided textual data is
 /// written in. It returns the ISO 639-1 code representations of the detected
 /// language. This filter only acts on `String` types. All other types are
-/// passed through. Returns the empty string in case the language can not be
+/// passed through. Returns the empty string in case the language cannot be
 /// detected reliably.
 /// All input types must be `Value::String()`, output type is `Value::String(0)`
 #[cfg(feature = "lang-detection")]
@@ -1122,7 +1122,7 @@ impl<'a> FirstHtmlHeading<'a> {
             return None;
         }
 
-        // Remove HTNL tags inside heading.
+        // Remove HTML tags inside heading.
         let mut cleaned_heading = String::new();
         let mut inside_tag = false;
         for c in heading.chars() {
@@ -1138,7 +1138,7 @@ impl<'a> FirstHtmlHeading<'a> {
             return None;
         }
 
-        // Decode HTML entyties.
+        // Decode HTML entities.
         let output: Cow<str> = if cleaned_heading == heading {
             html_escape::decode_html_entities(heading)
         } else {

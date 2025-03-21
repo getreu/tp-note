@@ -17,15 +17,14 @@ use std::time::Duration;
 /// show one alert window at the same time, they must be queued.
 pub const QUEUE_LEN: usize = 30;
 
-/// The `AlertService` reports to be busy as long as there
-/// is is a message window open and beyond that also
-/// `KEEP_ALIVE` milliseconds after the last
-/// message window got closed by the user.
+/// The `AlertService` reports to be busy as long as there is a message window
+/// open and beyond that also `KEEP_ALIVE` milliseconds after the last message
+/// window got closed by the user.
 #[cfg(feature = "message-box")]
 const KEEP_ALIVE: u64 = 1000;
 
 /// Extra timeout for the `flush()` method, before it checks if there is still
-/// an open popup alert window.  We wait a moment just in case that there are
+/// an open popup alert window. We wait a moment just in case that there are
 /// pending messages we have not received yet. 1 millisecond is enough, we wait
 /// 10 just to be sure.
 const FLUSH_TIMEOUT: u64 = 10;
@@ -43,7 +42,7 @@ static ALERT_SERVICE: LazyLock<AlertService> = LazyLock::new(|| {
         // This mutex does not hold any data. When it is locked, it indicates,
         // that the `AlertService` is still busy and should not get shut down.
         busy_lock: Mutex::new(()),
-        // We start with no funtion pointer.
+        // We start with no function pointer.
         popup_alert: Mutex::new(None),
     }
 });
@@ -70,7 +69,7 @@ impl AlertService {
         LazyLock::force(&ALERT_SERVICE);
         *ALERT_SERVICE.popup_alert.lock().unwrap() = Some(popup_alert);
         thread::spawn(move || {
-            // this will block until the previous message has been received
+            // This will block until the previous message has been received.
             AlertService::run();
         });
     }

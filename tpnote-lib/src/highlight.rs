@@ -19,7 +19,7 @@ pub(crate) fn get_highlighting_css(theme_name: &str) -> String {
         .unwrap_or_default()
 }
 
-/// A wraper for a `pulldown_cmark` event iterator.
+/// A wrapper for a `pulldown_cmark` event iterator.
 #[derive(Debug, Default)]
 pub struct SyntaxPreprocessor<'a, I: Iterator<Item = Event<'a>>> {
     parent: I,
@@ -40,7 +40,7 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
         // Detect inline LaTeX.
         let lang = match self.parent.next()? {
             Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) if !lang.is_empty() => lang,
-            // This is the deprecheated inline math syntax.
+            // This is the depreciated inline math syntax.
             // It is kept here for backwards compatibility.
             Event::Code(c) if c.len() > 1 && c.starts_with('$') && c.ends_with('$') => {
                 return Some(Event::Html(
@@ -143,7 +143,7 @@ mod test {
         assert!(rendered.starts_with(expected));
 
         //
-        // Deprecheated inline math.
+        // Depreciated inline math.
         // This code might be removed later.
         let input: &str = "casual `$\\sum_{n=0}^\\infty \\frac{1}{n!}$` text";
 
