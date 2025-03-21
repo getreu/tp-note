@@ -10,9 +10,10 @@ use tpnote_lib::error::NoteError;
 #[derive(Debug, Error)]
 pub enum ViewerError {
     /// In `update()` every HTTP client in `event_tx_list`
-    /// receives a TCP message. If the client does not ACK
-    /// it is removed from the list. An empty list means,
-    /// that all clients have disconnected.
+    /// receives a TCP message. If the client does not
+    /// acknowledge this message, it is removed from the
+    /// list. An empty list means that all clients have
+    /// disconnected.
     #[error("All subscribers have disconnected.")]
     AllSubscriberDiconnected,
 

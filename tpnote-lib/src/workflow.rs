@@ -215,7 +215,7 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
     /// case this does not succeed either, increment the `copy_counter` until a
     /// free filename is found. The returned path points to the (new) note file
     /// on disk. Depending on the context, Tp-Note chooses one `TemplateKind`
-    /// to operate (c.f. `tpnote_lib::template::TemplateKind::from()`).
+    /// to operate (cf. `tpnote_lib::template::TemplateKind::from()`).
     /// The `tk-filter` allows to overwrite this choice, e.g. you may set
     /// `TemplateKind::None` under certain circumstances. This way the caller
     /// can disable the filename synchronization and inject behavior like
@@ -300,7 +300,7 @@ impl<'a> Workflow<SyncFilename<'a>> {
     /// calls, will reload the environment variables, but not the configuration
     /// file. This function is stateless.
     ///
-    /// Note: this method holds an (upgradable read) lock on the `SETTINGS`
+    /// Note: this method holds an (upgradeable read) lock on the `SETTINGS`
     /// object to ensure that the `SETTINGS` content does not change. The lock
     /// also prevents from concurrent execution.
     ///
@@ -363,12 +363,12 @@ impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
     Workflow<SyncFilenameOrCreateNew<'a, T, F>>
 {
     /// Starts the "synchronize filename or create a new note" workflow.
-    /// Returns the note's new or existing filename.  Repeated calls, will
-    /// reload the environment variables, but not  the configuration file. This
+    /// Returns the note's new or existing filename. Repeated calls, will
+    /// reload the environment variables, but not the configuration file. This
     /// function is stateless.
     /// Errors can occur in various ways, see `NoteError`.
     ///
-    /// Note: this method holds an (upgradable read) lock on the `SETTINGS`
+    /// Note: this method holds an (upgradeable read) lock on the `SETTINGS`
     /// object to ensure that the `SETTINGS` content does not change. The lock
     /// also prevents from concurrent execution.
     ///

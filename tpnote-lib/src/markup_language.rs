@@ -19,14 +19,14 @@ use std::path::Path;
 #[cfg(feature = "renderer")]
 use std::str::from_utf8;
 
-/// The filter `filter_tags()` ommits HTML `<span....>` after converting to
+/// The filter `filter_tags()` omits HTML `<span....>` after converting to
 /// Markdown.
 #[cfg(test)] // Currently the `filter_tags()` filter is not used in the code.
 #[cfg(feature = "renderer")]
 const FILTERED_TAGS: &[&str; 4] = &["<span", "</span>", "<div", "</div>"];
 
-/// Availble converters for converting the input from stdin or the clipboard
-/// to HTML.
+/// Available converters for converting the input from standard input or the
+/// clipboard to HTML.
 #[non_exhaustive]
 #[derive(Default, Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
 pub enum InputConverter {
@@ -43,7 +43,7 @@ impl InputConverter {
     /// Returns a function that implements the `InputConverter` looked up in
     /// the `extensions` table in the `extension` line.
     /// When `extension` is not found in `extensions`, the function returns
-    /// an NoteError.
+    /// a `NoteError`.
     #[inline]
     pub(crate) fn build(extension: &str) -> fn(String) -> Result<String, NoteError> {
         let settings = SETTINGS.read_recursive();
@@ -123,7 +123,7 @@ pub enum MarkupLanguage {
     ReStructuredText,
     Html,
     PlainText,
-    /// The markup langugae is known, but the renderer is disabled.
+    /// The markup language is known, but the renderer is disabled.
     RendererDisabled,
     /// This is a Tp-Note file, but we are not able to determine the
     /// MarkupLanguage at this point.
@@ -202,7 +202,8 @@ impl MarkupLanguage {
 
             #[cfg(feature = "renderer")]
             Self::ReStructuredText => {
-                // Note, that the current rst renderer requires files to end with no new line.
+                // Note, that the current ReStructuredText renderer requires
+                // files to end with no new line.
                 let rest_input = input.trim();
                 // Write to String buffer.
                 let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
@@ -228,9 +229,8 @@ impl MarkupLanguage {
 
 impl From<&Path> for MarkupLanguage {
     /// Is the file extension ` at the end of the given path listed in
-    /// `file.extensions`?  Return the corresponding `MarkupLanguage`.
-    /// Only the extension of `Path` is condidered here.
-    /// `file.extensions`?
+    /// `file.extensions`? Return the corresponding `MarkupLanguage`.
+    /// Only the extension of `Path` is considered here.
     #[inline]
     fn from(path: &Path) -> Self {
         let file_extension = path
@@ -324,7 +324,7 @@ mod tests {
         assert_eq!(result.unwrap(), expected);
 
         //
-        // [Commonmark: Example 489](https://spec.commonmark.org/0.31.2/#example-489)
+        // [CommonMark: Example 489](https://spec.commonmark.org/0.31.2/#example-489)
         let input: &str = r#"<p><a href="/my uri">link</a></p>"#;
         let expected: &str = "[link](</my uri>)";
 
@@ -332,7 +332,7 @@ mod tests {
         assert_eq!(result.unwrap(), expected);
 
         //
-        // [Commonmark: Example 489](https://spec.commonmark.org/0.31.2/#example-489)
+        // [CommonMark: Example 489](https://spec.commonmark.org/0.31.2/#example-489)
         let input: &str = r#"<p><a href="/my%20uri">link</a></p>"#;
         let expected: &str = "[link](</my uri>)";
 

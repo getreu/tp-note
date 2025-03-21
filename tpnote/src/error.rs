@@ -37,7 +37,7 @@ pub enum WorkflowError {
     IoRef(#[from] &'static std::io::Error),
 }
 
-/// Error related to the filesystem and to invoking external applications.
+/// Error related to the file system and to invoking external applications.
 #[derive(Debug, Error)]
 pub enum ConfigFileError {
     /// Remedy: delete or rename the configuration file.

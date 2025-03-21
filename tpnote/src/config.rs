@@ -1,4 +1,4 @@
-//! Set configuration defaults, reads and writes _Tp-Note_'s configuration file
+//! Set configuration defaults, reads and writes _Tp-Note's_ configuration file
 //! and exposes the configuration as `static` variable.
 use crate::error::ConfigFileError;
 use crate::settings::ARGS;
@@ -64,7 +64,7 @@ pub(crate) const AUTHOR: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
 /// Copyright.
 pub(crate) const COPYRIGHT_FROM: &str = "2020";
 
-/// Name of this executable (without the Windows ".exe" extension).
+/// Name of this executable (without the Windows `.exe` extension).
 pub(crate) const CARGO_BIN_NAME: &str = env!("CARGO_BIN_NAME");
 
 /// Use the version number defined in `../Cargo.toml`.
@@ -245,7 +245,7 @@ impl Cfg {
             .into_iter()
             .fold(base_config, CfgVal::merge);
 
-        // We can not use the logger here, it is too early.
+        // We cannot he logger here, it is too early.
         if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
             println!(
                 "*** Merged configuration from all config files:\n\n{:#?}",
@@ -256,12 +256,12 @@ impl Cfg {
         // Parse Values into the `lib_cfg`.
         let lib_cfg = LibCfg::try_from(cfg_val.clone())?;
         {
-            // Copy the  `lib_cfg` into `LIB_CFG`.
+            // Copy the `lib_cfg` into `LIB_CFG`.
             let mut c = LIB_CFG.write();
             *c = lib_cfg; // Release lock.
                           //_cfg;
 
-            // We can not use the logger here, it is too early.
+            // We cannot use the logger here, it is too early.
             if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
                 println!(
                     "\n\n\n\n\n*** Configuration part 1 after merging \
@@ -307,7 +307,7 @@ impl Cfg {
 
         let cfg = cfg; // Freeze.
 
-        // We can not use the logger here, it is too early.
+        // We cannot use the logger here, it is too early.
         if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
             println!(
                 "\n\n\n\n\n*** Configuration part 2 after applied templates:\

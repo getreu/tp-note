@@ -66,11 +66,13 @@ fn popup_alert(msg: &str) {
         .show()
     {
         // // Only available in Linux.
+        // ```rust
         // _handle.wait_for_action(|_action| {
         //     if "__closed" == _action {
         //         println!("the notification was closed")
         //     }
         // })
+        // ```
     };
 }
 /// Pops up an error message box and prints `msg`.
@@ -123,7 +125,7 @@ static APP_LOGGER: AppLogger = AppLogger;
 
 /// All methods here are stateless (without _self_). Instead, their state is
 /// stored in a global variable `APP_LOGGER` in order to simplify the API for
-/// the caller.  As all the methods are stateless, the caller does not need to
+/// the caller. As all the methods are stateless, the caller does not need to
 /// carry around any (state) struct. For example, just `AppLogger::log(...)`
 /// will do.
 impl AppLogger {

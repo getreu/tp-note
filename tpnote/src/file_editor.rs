@@ -1,4 +1,4 @@
-//! Launch the user's favourite file editor.
+//! Launch the user's favorite file editor.
 
 use crate::config::CFG;
 use crate::error::ConfigFileError;
@@ -15,10 +15,10 @@ use std::process::Stdio;
 
 #[inline]
 /// Launch some external text editor. The editor can be chosen through
-/// _Tp-Note_'s configuration file. This function searches the lists
-/// `CFG.app_args.editor_console` or `CFG.app_args.editor` until it finds an installed
-/// text editor. Once the editor is launched, the function blocks until the user
-/// closes the editor window.
+/// Tp-Note's configuration file. This function searches the lists
+/// `CFG.app_args.editor_console` or `CFG.app_args.editor` until it finds an
+/// installed text editor. Once the editor is launched, the function blocks
+/// until the user closes the editor window.
 pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
     // Both lists have always the same number of items.
     let mut args_list = Vec::new();
@@ -92,7 +92,8 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
             && args_list[i].len() >= 3
             && args_list[i][0] == "run"
         {
-            // Check if the flatpak is installed on this system with `flatpak info <app>`.
+            // Check if the Flatpak is installed on this system with
+            // `flatpak info <app>`.
             if let Ok(ecode) = Command::new(executable_list[i])
                 .args(["info", args_list[i][1]])
                 .stderr(Stdio::null())
@@ -100,8 +101,9 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
                 .status()
             {
                 if !ecode.success() {
-                    // This is a flatpak command, but the application is not installed on this system.
-                    // Silently ignore this flatpak command.
+                    // This is a Flatpak command, but the application is not
+                    // installed on this system. Silently ignore this Flatpak
+                    // command.
                     log::info!("Flatpak executable \"{}\" not found.", args_list[i][1]);
                     continue;
                 };

@@ -16,7 +16,7 @@ use std::time::Instant;
 
 /// Even if there is no file modification, after `WATCHER_TIMEOUT` seconds,
 /// the watcher sends an `update` request to the connected web browsers in
-/// oder to check if there are still subscribers connected. The value's unit
+/// order to check if there are still subscribers connected. The value's unit
 /// is seconds.
 const WATCHER_TIMEOUT: u64 = 10;
 
@@ -57,15 +57,15 @@ impl FileWatcher {
         // We use the same value for `timeout` and `Some(tick_rate)`.
         let notify_period = Duration::from_millis(CFG.viewer.notify_period);
         let backend_config = notify::Config::default().with_poll_interval(notify_period);
-        // debouncer configuration
+        // Debouncer configuration
         let debouncer_config = Config::default()
             .with_timeout(notify_period)
             .with_notify_config(backend_config);
-        // select backend via fish operator, here PollWatcher backend
+        // Select backend via fish operator, here PollWatcher backend
         let mut debouncer = new_debouncer_opt::<_, notify::PollWatcher>(debouncer_config, tx)?;
         // In theory watching only `file` is enough. Unfortunately some file
         // editors do not modify files directly. They first rename the existing
-        // file on disk and then  create a new file with the same filename.
+        // file on disk and then create a new file with the same filename.
         // Older versions of Notify did not detect this case reliably.
         debouncer
             .watcher()
@@ -120,9 +120,10 @@ impl FileWatcher {
                     }
                     continue;
                 }
-                // The  sending half of a channel (or sync_channel) is `Disconnected`,
-                // implies that no further messages will ever be received.
-                // As this should never happen, we panic this thread then.
+                // The sending half of a channel (or sync_channel) is
+                // `Disconnected`, implies that no further messages will ever be
+                // received. As this should never happen, we panic this thread
+                // then.
                 Err(RecvTimeoutError::Disconnected) => panic_any("RecvTimeoutError::Disconnected"),
             };
 
@@ -131,7 +132,7 @@ impl FileWatcher {
             match evnt {
                 Ok(_events) => {
                     // There can be more than one event in `event`, we
-                    // dont't care about the details as we watch only one
+                    // don't care about the details as we watch only one
                     // file.
                     self.update(SseToken::Update)?;
                 }

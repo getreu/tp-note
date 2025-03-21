@@ -1,4 +1,4 @@
-//! Launch the user's favourite web browser.
+//! Launch the user's favorite web browser.
 use crate::config::CFG;
 use crate::error::ConfigFileError;
 use crate::process_ext::ChildExt;
@@ -102,7 +102,7 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
             && args_list[i].len() >= 3
             && args_list[i][0] == "run"
         {
-            // Check if the flatpak is installed on this system with `flatpak info <app>`.
+            // Check if the Flatpak is installed on this system with `flatpak info <app>`.
             if let Ok(ecode) = Command::new(executable_list[i])
                 .args(["info", args_list[i][1]])
                 .stderr(Stdio::null())
@@ -110,8 +110,8 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
                 .status()
             {
                 if !ecode.success() {
-                    // This is a flatpak command, but the application is not installed on this system.
-                    // Silently ignore this flatpak command.
+                    // This is a Flatpak command, but the application is not installed on this system.
+                    // Silently ignore this Flatpak command.
                     log::info!("Flatpak executable \"{}\" not found.", args_list[i][1]);
                     continue;
                 };

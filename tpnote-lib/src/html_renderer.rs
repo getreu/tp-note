@@ -163,7 +163,7 @@ impl HtmlRenderer {
         note.render_content_to_html(tmpl_html)
     }
 
-    /// When the header can not be deserialized, the file located in
+    /// When the header cannot be deserialized, the file located in
     /// `context.path` is rendered as "Error HTML page".
     /// The erroneous content is rendered to html with
     /// `parse_hyperlinks::renderer::text_rawlinks2html` and inserted in

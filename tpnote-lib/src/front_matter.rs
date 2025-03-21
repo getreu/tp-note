@@ -26,7 +26,7 @@ pub struct FrontMatter(pub tera::Map<String, tera::Value>);
 
 /// Helper function asserting that all the leaves of `val` have a certain type.
 /// The first parameter is the type to check recursively.
-/// the second is a closure that evaluates to true or false.
+/// The second is a closure that evaluates to true or false.
 fn all_leaves(val: &Value, f: &dyn Fn(&Value) -> bool) -> bool {
     match &val {
         Value::Array(a) => {
@@ -233,7 +233,7 @@ impl TryFrom<&str> for FrontMatter {
     }
 }
 
-/// Auto-dereference for convenient access to `tera::Map`.
+/// Auto dereferences for convenient access to `tera::Map`.
 impl Deref for FrontMatter {
     type Target = tera::Map<String, tera::Value>;
 
@@ -242,7 +242,7 @@ impl Deref for FrontMatter {
     }
 }
 
-/// Auto-dereference for convenient access to `tera::Map`.
+/// Auto dereferences for convenient access to `tera::Map`.
 impl DerefMut for FrontMatter {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0

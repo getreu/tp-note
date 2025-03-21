@@ -1,12 +1,12 @@
 [arg_default]
 
-### Default value for the command line option `--debug`.  Determines the maximum
-### debug level events must have, to be logged.  If the command line option
+### Default value for the command line option `--debug`. Determines the maximum
+### debug level events must have, to be logged. If the command line option
 ### `--debug` is present, its value will be used instead.
 debug = "ERROR"
 
 ### Default value for the command line flag `--edit` to disable file watcher,
-### (Markdown)-renderer, html server and a web browser launcher set to `true`.
+### (Markdown)-renderer, HTML server and a web browser launcher set to `true`.
 edit = false
 
 ### Default value for the command line flag `--no-filename-sync` to disable
@@ -16,7 +16,7 @@ no_filename_sync = false
 
 ### Default value for the command line flag `--popup`. If the command line flag
 ### `--popup` or `POPUP` is `true`, all log events will also trigger the
-### appearance of a popup alert window.  Note, that error level debug events
+### appearance of a popup alert window. Note, that error level debug events
 ### will always pop up, regardless of `--popup` and `POPUP` (unless
 ### `--debug=off`).
 popup = true
@@ -231,7 +231,7 @@ macos.editor_console = [
 startup_delay = 500
 
 ### When set to true, the viewer feature is automatically disabled when
-### _Tp-Note_ encounters an `.md` file without header.  Experienced users can
+### _Tp-Note_ encounters an `.md` file without header. Experienced users can
 ### set this to `true`. This setting is ignored, meaning is considered `false`,
 ### if `ARG_DEFAULT_ADD_HEADER=true` or `ARGS.add_header=true` or
 ### `ARGS.viewer=true`.
@@ -251,10 +251,10 @@ notify_period = 200
 tcp_connections_max = 16
 
 ### Served file types with corresponding mime types.
-### The first entry per line is the file extension in lowercase(!), the second the
-### corresponding mime type.  Embedded files with types other than those listed
-### here are silently ignored.  Note, that image files must be located in the
-### same or in the note's parent directory.
+### The first entry per line is the file extension in lowercase(!), the second
+### the corresponding mime type. Embedded files with types other than those
+### listed here are silently ignored. Note, that image files must be located in
+### the same or in the note's parent directory.
 ### NB: The list is ordered to look for the most common extensions first.
 served_mime_types = [
     ["jpeg", "image/jpeg"],

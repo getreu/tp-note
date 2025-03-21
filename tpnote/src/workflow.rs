@@ -23,7 +23,7 @@ use tpnote_lib::error::NoteError;
 use tpnote_lib::workflow::WorkflowBuilder;
 
 /// Run Tp-Note and return the (modified) path to the (new) note file.
-/// 1. Create a new note by inserting `Tp-Note`'s environment in a template.
+/// 1. Create a new note by inserting Tp-Note's environment in a template.
 /// 2. If the note to be created exists already, open it, read the YAML front
 ///    matter and synchronize the filename if necessary.
 /// 3. Open the new note in an external editor (configurable).
@@ -158,7 +158,7 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
 
 #[inline]
 pub(crate) fn run() -> Result<PathBuf, WorkflowError> {
-    // process arg = <path>
+    // Process arg = <path>
     let doc_path = DOC_PATH.as_deref()?;
     run_workflow(doc_path.to_path_buf())
 }

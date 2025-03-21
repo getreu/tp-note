@@ -11,7 +11,7 @@ pub const FRONT_MATTER_ERROR_MAX_LINES: usize = 20;
 /// Error related to the clipboard or `stdin` input stream.
 #[derive(Debug, Error, PartialEq)]
 pub enum InputStreamError {
-    /// Remedy: Prepend HTML input data with `<!DOCTYPE html>` or `<html>`.
+    /// Remedy: Prepend HTML input data with `<!DOCTYPE html>` or `<html>`
     /// with a doc type other than `<!DOCTYPE html>`.
     #[error(
         "The HTML input stream starts with a doctype other than\n\
@@ -21,7 +21,7 @@ pub enum InputStreamError {
     NonHtmlDoctype { html: String },
 }
 
-/// Configuration file related filesystem and syntax errors.
+/// Configuration file related file system and syntax errors.
 #[derive(Debug, Error)]
 pub enum FileError {
     /// Remedy: delete all files in configuration file directory.
@@ -45,7 +45,7 @@ pub enum FileError {
 /// Configuration file related semantic errors.
 #[derive(Debug, Error, Clone, PartialEq)]
 pub enum LibCfgError {
-    /// CfgVal can only be deserialized with data whose root element
+    /// `CfgVal` can only be deserialized with data whose root element
     /// is a `Value::Table`.
     /// This should not happen. Please file a bug report.
     #[error("Input data root must be a `Value::Table`")]
@@ -431,7 +431,7 @@ pub enum NoteError {
     #[error("Can not read file:\n\t {path:?}\n{source}")]
     Read { path: PathBuf, source: io::Error },
 
-    /// Remedy: check reStructuredText syntax.
+    /// Remedy: check ReStructuredText syntax.
     #[error("Can not parse reStructuredText input:\n{msg}")]
     #[cfg(feature = "renderer")]
     RstParse { msg: String },

@@ -1,4 +1,4 @@
-//! Abstact the clipboard handling.
+//! Abstract the clipboard handling.
 
 #[cfg(feature = "read-clipboard")]
 use clipboard_rs::Clipboard;
