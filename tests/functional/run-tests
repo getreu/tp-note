@@ -503,6 +503,33 @@ fi
 
 
 
+
+## Test 019: Create a new note, based on a string supplied by clipboard
+
+#echo -n 'Good morning' | xclip -selection clipboard
+
+# Tp-Note can choose between `fi-Fi`, `en-US`, `de-DE` and `fr`.
+echo -e "Parlez-vous français?\nIch spreche Französisch nur ein bisschen.\nA little bit is better than nothing." | \
+LANG="fi_FI.UTF-8" LOGNAME="myuser" \
+TPNOTE_LANG_DETECTION="en-US,de-DE,fr" \
+	cargo run -- --batch \
+    		--config  "$TP_NOTE_TEST_TOML" "$PWD" # >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-Parlez-vous français--Note.md"
+
+if diff "$OUTPUT_FILENAME" "test019-clipboard-expected-output"
+then
+    echo Commandline test 019 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 019 failed.
+    exit 1
+fi
+
+
+
+
+
 ./run-tests2 || exit 1
 
 
