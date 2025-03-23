@@ -48,6 +48,7 @@ pub static TERA: LazyLock<Tera> = LazyLock::new(|| {
     tera.register_filter("file_name", file_name_filter);
     tera.register_filter("file_ext", file_ext_filter);
     tera.register_filter("find_last_created_file", find_last_created_file);
+    tera.register_filter("flatten_array", flatten_array_filter);
     tera.register_filter("html_to_markup", html_to_markup_filter);
     tera.register_filter("incr_sort_tag", incr_sort_tag_filter);
     tera.register_filter("prepend", prepend_filter);
@@ -1047,6 +1048,22 @@ fn map_lang_filter<S: BuildHasher>(
     };
 
     Ok(res)
+}
+
+/// If the input is of type `Value::Array[<a>]` and if the array has
+/// exactly one element, then the array is flattened to `<a>`. In all other
+/// cases the input is passed through.
+fn flatten_array_filter<S: BuildHasher>(
+    value: &Value,
+    _args: &HashMap<String, Value, S>,
+) -> TeraResult<Value> {
+    let val = try_get_value!("flatten_array", "value", Value, value);
+
+    // In `input` is empty return default.
+    match val {
+        Value::Array(v) if v.len() == 1 => Ok(v[0].clone()),
+        _ => Ok(val),
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Default)]
@@ -2151,6 +2168,29 @@ Some more text."#;
         assert_eq!(tera::to_value(["test"]).unwrap(), output);
 
         drop(_settings);
+    }
+
+    #[test]
+    fn test_flatten_array_filter() {
+        // This is passed through.
+        let args = HashMap::new();
+        let input = ["de-DE", "fr", "et-ET"];
+        let output = flatten_array_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("de-DE", output[0]);
+        assert_eq!("fr", output[1]);
+        assert_eq!("et-ET", output[2]);
+
+        // This is passed through.
+        let args = HashMap::new();
+        let input = "de-DE";
+        let output = flatten_array_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("de-DE", output);
+
+        // This is flattened.
+        let args = HashMap::new();
+        let input = ["de-DE"];
+        let output = flatten_array_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("de-DE", output);
     }
 
     #[test]
