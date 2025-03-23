@@ -2639,11 +2639,11 @@ consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
 some additional filters, i.e.: 
-'`append(newline=true)`', '`append(with=...)`', '`trunc`', '`file_copy_counter`',
-'`file_ext`', '`file_name`', '`file_sort_tag`', '`file_stem`',
-'`get_lang`', '`heading`',  '`html_heading`', 
+'`append(newline=true)`', '`append(with=...)`', '`trunc`',
+'`file_copy_counter`', '`file_ext`', '`file_name`', '`file_sort_tag`',
+'`file_stem`', '`flatten_array`', '`get_lang`', '`heading`', '`html_heading`',
 '`html_to_markup(extension=..., default=...)`', '`insert(key=..., value=...)`',
-'`link_dest`', '`link_text`', '`link_title`', '`map_lang`', '`prepend`', 
+'`link_dest`', '`link_text`', '`link_title`', '`map_lang`', '`prepend`',
 '`prepend(newline=true)`', '`prepend(with=...)`',
 '`prepend(with_sort_tag=...)`', '`remove(key=)`', '`replace_empty(with=...)`',
 '`sanit`', '`to_html`', '`to_yaml`', '`to_yaml(key=...)`', '`to_yaml(tab=...)`'
@@ -2687,13 +2687,13 @@ A filter is always used together with a variable. Here are some examples:
   the sort tag if there is one.
 
 * '`{{ dir_path | find_last_created_file | incr_sort_tag(default="") }}`'
-  searches '`dir_path`' for the most recently created Tp-Note file,
-  extracts the sort-tag from this file, increments the sort-tag and returns the 
-  result. If the incrementation fails, the '`default`' value is returned.
-  This can happen, when the input sort-tag contains characters of the set
-  '`tmpl.filter.incr_sort_tag.default_if_contains`'. Or, if the to be
-  incremented counter (a sequential sort-tag usually has more than one counter)
-  has more than '`tmpl.filter.incr_sort_tag.default_if_greater`' digits.
+  searches '`dir_path`' for the most recently created Tp-Note file, extracts
+  the sort-tag from its file name and increments it. If the incremented
+  sort-tag (e.g. '`13`') exists on disk in the note's directory already,
+  the incrementation is performed by "branching" instead (e.g. '`12a`').
+  If the incrementation fails, for example because the input sort-tag is a
+  chronological sort-tag type or because it is empty, the '`default`' value is
+  returned.
 
 * '`{{ dir_path | trim_file_sort_tag }}`' returns the final component
   of '`dir_path`' (which is the final directory name in '`{{ path }}`').
@@ -2702,8 +2702,8 @@ A filter is always used together with a variable. Here are some examples:
 
 * '`{{ html_clipboard | html_to_markup(extension=e, default=d) }}`' converts
   the clipboard's HTML content into the target markup language
-  specified by '`e`'. If the conversion fails or results in an empty string,
-  stream the text '`d`' instead.
+  specified by '`{{ e }}`', e.g. '`md`'. If the conversion fails or results in
+  an empty string, stream the content of the variable '`{{ d }}`' instead.
 
 * '`{{ txt_clipboard | trunc }}`' is the first 200 bytes from the clipboard.
 
@@ -2768,31 +2768,45 @@ A filter is always used together with a variable. Here are some examples:
   into HTML. The '`to_html`' must be followed by a '`safe`' filter to pass
   through the HTML formatting of objects and arrays.
 
-* '`{{ doc_body_text | get_lang }}`' determines the natural language of
-  the variable '`{{ doc_body_text }}` and returns the result as ISO 639-1
-  language code. The template filter '`{{ get_lang }}`' can be configured with
-  the configuration file variable '`tmpl.filter.get_lang`'. The latter
-  defines a list of ISO 639-1 codes, the detection algorithm considers as
-  possible language candidates. Keep this list as small as possible, because
-  language detection is computationally expensive. A long candidate list may
-  slow down the note file creation workflow. If the detection algorithm can not
-  determine the language of '`{{ doc_body_text }}`', the filter 
-  '`{{ get_lang }}`' returns an empty string.
+* '`{{ doc_body_text | get_lang | unique }}`' determines the natural
+  languages of the text in the variable '`{{ doc_body_text }}` and returns
+  the result as an array of ISO 639-1 language codes. The template filter
+  '`{{ get_lang }}`' can be configured with the configuration file variable
+  '`tmpl.filter.get_lang`'. The latter defines those ISO 639-1 codes, the
+  detection algorithm considers as potential language candidates. Keep this list
+  as small as possible, because language detection is computationally expensive.
+  A long candidate list may slow down the note file creation workflow. The
+  detected languages are listed as `'Value::Array`' in the order of their
+  appearance. To list a language only once, we add the '`unique`' filter at
+  the end. If the detection algorithm can not determine the language of '`{{
+  doc_body_text }}`', the filter '`{{ get_lang }}`' returns en empty array.
 
-* '`{{ doc_body_text | get_lang | map_lang }}`' maps the detected ISO 638-1
-  language code to a complete IETF BCP 47 language tag, usually containing the
-  region subtag. For example the input '`en`' results in '`en-US`'. This
-  additional mapping is useful because the detection algorithm can not
-  determine the region automatically. The mapping can be configured by
-  adjusting the configuration file variable '`tmpl.filter.map_lang`'.
-  If a language is not listed in the '`tmpl.filter.map_lang`' filter
-  configuration, the input is passed through, e.g. '`fr`' results in '`fr`', or,
-  the empty string results in an empty string.
+* '`{{ doc_body_text | get_lang | unique | map_lang }}`': The '`map_lang`'
+  filter extends the detected ISO 638-1 language codes to complete IETF
+  BCP 47 language tags, usually containing a region subtag. For example
+  the input '`en`' results in '`en-US`'. This additional mapping is useful
+  because the detection algorithm can not determine the region automatically.
+  The mapping can be configured by adjusting the configuration file
+  variable '`tmpl.filter.map_lang`'. If a language is not listed in the
+  '`tmpl.filter.map_lang`' filter configuration, the input is passed through,
+  e.g. '`fr`' results in '`fr`'.
 
-* '`{{ doc_body_text | get_lang | map_lang(default=lang) }}`' adds an
-  extra mapping for the '`map_lang`' filter: when the input of the
-  '`map_lang`' filter is the empty string, then it's output becomes the value
-  of the '`{{ lang }}`' variable.
+* '`{{ doc_body_text | get_lang | unique | map_lang(default=lang) }}`' adds an
+  extra mapping to the '`map_lang`' filter: when the input of the '`map_lang`'
+  filter is an empty `Value::Array`, then '`{{ lang }}`' is added as single
+  item. '`{{ lang }}`' is expected to be a ISO 638-1 language code, e.g. '`en`'.
+  Depending on the '`tmpl.filter.map_lang`' configuration, the exemplary
+  '`en`' input may be converted to '`en-US`' or '`en-GB`'.
+
+* '`{{ doc_body_text | get_lang | ... | flatten_array | to_yaml }}`':
+  Arrays are usually printed with '`to_yaml`' as item lists. When a list
+  contains exactly one item, the filter '`flatten_array`' flattens that list.
+  This way the single item is printed as such and not as a list with only one
+  item. Lists with two or more items are not flattened. They are passed through
+  without modification.
+
+* '`{{ doc_body_text | get_lang | ... | first | to_yaml }}`' returns the
+  first detected language as '`Value::String`'.
 
 * '`{{ doc_file_date | default(value=now()) | date(format='%Y%m%d') }}`'
   Returns the formatted date of the file '`{{ path }}`' points to. Defaults

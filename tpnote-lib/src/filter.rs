@@ -785,7 +785,7 @@ fn find_last_created_file<S: BuildHasher>(
 /// Note, that only sequential sort-tags are incremented, for others or, if the
 /// input is empty, `default` is returned.
 /// The path in the input allows to check if the resulting sort-tag exists
-/// on disk already. If this is the case, a subcategory is appended to the
+/// on disk already. If this is the case, a subcounter is appended to the
 /// resulting sort-tag.
 /// All input types are `Value::String`. The output type is `Value::String()`.
 fn incr_sort_tag_filter<S: BuildHasher>(
@@ -999,16 +999,17 @@ fn get_lang_filter<S: BuildHasher>(
     Ok(Value::String("".to_owned()))
 }
 
-/// A mapper for ISO 639 codes adding some region information, e.g.
+/// A mapper that is usually used to convert ISO 639 codes to IETF language tags
+/// by appending some region information, e.g.
 /// `en` to `en-US` or `de` to `de-DE`. Configure the mapping with
 /// `tmpl.filter.map_lang`:
 ///
 /// `Fn: Array(<Vec<String>>) -> Value::Array(<Vec<String>>)`
 ///
 /// If the input `<String>` is a key in `tmpl.filter.map_lang`, it is replaced
-/// with the corresponding value. An input string without mapping definition in
-/// `tmpl.filter.map_lang` is passed through as such.
-/// In case the optional parameter `default` of type `Value::String` is given,
+/// with the corresponding value. If the input does not correspond to a key in
+/// `tmpl.filter.map_lang`, it is passed through as such.
+/// In case the optional parameter `default` (type `Value::String`) is given,
 /// e.g. `map_lang(default="abc")`, then an empty input array is mapped to
 /// `Value::Array(Vec::from("abc"))`.
 /// Only inputs of types `Value::Array(<Vec<String>>]` are mapped, all other
@@ -1050,7 +1051,7 @@ fn map_lang_filter<S: BuildHasher>(
     Ok(res)
 }
 
-/// If the input is of type `Value::Array[<a>]` and if the array has
+/// If the input is of type `Value::Array(<Vec<a>>)` and if the array has
 /// exactly one element, then the array is flattened to `<a>`. In all other
 /// cases the input is passed through.
 fn flatten_array_filter<S: BuildHasher>(
