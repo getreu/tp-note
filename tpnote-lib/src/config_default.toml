@@ -277,12 +277,9 @@ from_dir_filename = """
 ### appended to each variable.
 from_clipboard_yaml_content = """
 {%- set stdin = stdin | append(newline=true) -%}
-{%- set input = stdin ~ txt_clipboard | trim_end -%}
+{%- set input = stdin ~ txt_clipboard | trim -%}
 {%- set lang = fm.fm_lang 
-    | default(value = fm.fm_title 
-    | default(value=input|heading) 
-    | get_lang 
-    | map_lang(default=lang) )
+    | default(value = input | get_lang | map_lang(default=lang) )
 -%}
 ---
 {{ fm.fm_title | default(value = path|trim_file_sort_tag) | trunc | to_yaml(key='fm_title') }}
@@ -337,6 +334,9 @@ from_clipboard_content = """
 {%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
 {%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim_end -%}
+{%- set lang = fm.fm_lang 
+    | default(value = input | get_lang | map_lang(default=lang) )
+-%}
 {%- set first_link = input | link_text_picky | trunc -%}
 {%- if first_link !='' and input | trunc | linebreaksbr == input | trunc -%}
   {%- set subtitle_text = 'url' -%}
@@ -348,7 +348,7 @@ from_clipboard_content = """
 {{ subtitle_text | to_yaml(key='fm_subtitle') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
-{{ title_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
+{{ lang | to_yaml(key='fm_lang') }}
 ---
 
 {{ input }}
@@ -516,12 +516,9 @@ from_dir_filename = """
 
 from_clipboard_yaml_content = """
 {%- set stdin = stdin | append(newline=true) -%}
-{%- set input = stdin ~ txt_clipboard | trim_end -%}
+{%- set input = stdin ~ txt_clipboard | trim -%}
 {%- set lang = fm.fm_lang 
-    | default(value = fm.fm_title 
-    | default(value=input|heading) 
-    | get_lang 
-    | map_lang(default=lang) )
+    | default(value = input | get_lang | map_lang(default=lang) )
 -%}
 {%- if fm.fm_sort_tag -%}
   {%- set tag = fm.fm_sort_tag -%}
@@ -587,6 +584,9 @@ from_clipboard_content = """
 {%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
 {%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim_end -%}
+{%- set lang = fm.fm_lang 
+    | default(value = input | get_lang | map_lang(default=lang) )
+-%}
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
 {%- set first_link = input | link_text_picky | trunc -%}
@@ -600,7 +600,7 @@ from_clipboard_content = """
 {{ keywords_text | to_yaml(key='fm_keywords') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
-{{ title_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
+{{ lang | to_yaml(key='fm_lang') }}
 {{ 'zettel' | to_yaml(key='scheme') }}
 {{ tag | to_yaml(key='fm_sort_tag') }}
 ---
