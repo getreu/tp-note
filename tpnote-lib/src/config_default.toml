@@ -243,7 +243,7 @@ from_dir_content = """
 {{ 'Note' | to_yaml(key='fm_subtitle') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
-{{ title_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
+{{ title_text | get_lang | map_lang(default=lang) | flatten_array | to_yaml(key='fm_lang') }}
 ---
 
 
@@ -286,7 +286,7 @@ from_clipboard_yaml_content = """
 {{ fm.fm_subtitle | default(value = 'Note') | trunc | to_yaml(key='fm_subtitle') }}
 {{ fm.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
 {{ fm.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
-{{ lang | to_yaml(key='fm_lang') }}
+{{ lang | flatten_array | to_yaml(key='fm_lang') }}
 {{ fm \
     | remove(key='fm_title')\
     | remove(key='fm_subtitle')\
@@ -348,7 +348,7 @@ from_clipboard_content = """
 {{ subtitle_text | to_yaml(key='fm_subtitle') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
-{{ lang | to_yaml(key='fm_lang') }}
+{{ lang | flatten_array | to_yaml(key='fm_lang') }}
 ---
 
 {{ input }}
@@ -374,7 +374,7 @@ from_text_file_content = """
 {{ path | file_stem | split(pat='--') | nth(n=1) | trunc | to_yaml(key='fm_subtitle') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ doc_file_date | default(value=now()) | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
-{{ doc_body_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
+{{ doc_body_text | get_lang | map_lang(default=lang) | flatten_array | to_yaml(key='fm_lang') }}
 ### {{ path | file_name | to_yaml(key='fm_orig_name', tab=12) }}
 ---
 
@@ -423,7 +423,7 @@ annotate_file_content = """
 {%- endif %}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
-{{ lang_test_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
+{{ lang_test_text | get_lang | map_lang(default=lang) | flatten_array | to_yaml(key='fm_lang') }}
 ---
 
 {{ link }}
@@ -489,7 +489,7 @@ from_dir_content = """
 {{ keywords | to_yaml(key='keywords') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
-{{ title_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
+{{ title_text | get_lang | map_lang(default=lang) | flatten_array | to_yaml(key='fm_lang') }}
 {{ 'zettel' | to_yaml(key='fm_scheme') }}
 {{ tag | to_yaml(key='sort_tag') }}
 ---
@@ -531,7 +531,7 @@ from_clipboard_yaml_content = """
 {{ fm.fm_keywords | default(value = ['note']) | to_yaml(key='fm_keywords') }}
 {{ fm.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
 {{ fm.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
-{{ lang | to_yaml(key='fm_lang') }}
+{{ lang | flatten_array | to_yaml(key='fm_lang') }}
 {{ 'zettel' | to_yaml(key='fm_scheme') }}
 {{ tag | to_yaml(key='fm_sort_tag') }}
 {{ fm \
@@ -600,7 +600,7 @@ from_clipboard_content = """
 {{ keywords_text | to_yaml(key='fm_keywords') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
-{{ lang | to_yaml(key='fm_lang') }}
+{{ lang | flatten_array | to_yaml(key='fm_lang') }}
 {{ 'zettel' | to_yaml(key='scheme') }}
 {{ tag | to_yaml(key='fm_sort_tag') }}
 ---
@@ -646,7 +646,7 @@ from_text_file_content = """
 {{ keywords | split(pat='_') | to_yaml(key='fm_keywords') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ doc_file_date | default(value=now()) | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
-{{ doc_body_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
+{{ doc_body_text | get_lang | map_lang(default=lang) | flatten_array | to_yaml(key='fm_lang') }}
 {{ 'zettel' | to_yaml(key='fm_scheme') }}
 {{ tag | to_yaml(key='fm_sort_tag') }}
 ### {{ path | file_name | to_yaml(key='fm_orig_name', tab=12) }}
@@ -707,7 +707,7 @@ annotate_file_content = """
 {{ keywords | to_yaml(key='fm_keywords') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
-{{ lang_test_text | get_lang | map_lang(default=lang) | to_yaml(key='fm_lang') }}
+{{ lang_test_text | get_lang | map_lang(default=lang) | flatten_array | to_yaml(key='fm_lang') }}
 {{ 'zettel' | to_yaml(key='fm_scheme') }}
 {{ path | file_sort_tag | to_yaml(key='fm_sort_tag') }}
 ---
