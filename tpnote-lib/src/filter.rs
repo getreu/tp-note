@@ -941,12 +941,11 @@ fn insert_filter<S: BuildHasher>(
     Ok(Value::Object(map))
 }
 
-/// A Tera filter telling which natural language some provided textual data is
-/// written in. It returns the ISO 639-1 code representations of the detected
-/// language. This filter only acts on `String` types. All other types are
-/// passed through. Returns the empty string in case the language cannot be
-/// detected reliably.
-/// All input types must be `Value::String()`, output type is `Value::String(0)`
+/// A Tera filter telling in which natural language(s) the input text is
+/// written. It returns an array of ISO 639-1 code representations listing the
+/// detected languages. The input type must be a `Value::String`. The output
+/// type is `Value::Array(<Vec<Value::String>>)`. If no language can be
+/// reliably identified, the output is the empty array `Value::Array(vec![])`.
 #[cfg(feature = "lang-detection")]
 fn get_lang_filter<S: BuildHasher>(
     value: &Value,
@@ -956,7 +955,7 @@ fn get_lang_filter<S: BuildHasher>(
     let input = input.trim();
     // Return early if there is no input text.
     if input.is_empty() {
-        return Ok(Value::String("".to_string()));
+        return Ok(Value::Array(vec![]));
     }
 
     let settings = SETTINGS.read_recursive();
@@ -977,19 +976,18 @@ fn get_lang_filter<S: BuildHasher>(
             LanguageDetectorBuilder::from_all_languages()
         }
         FilterGetLang::Error(e) => return Err(tera::Error::from(e.to_string())),
-        _ => return Ok(Value::String("".to_string())),
+        _ => return Ok(Value::Array(vec![])),
     }
     .build();
 
-    let detected_language = detector
-        .detect_language_of(input)
-        .map(|l| format!("{}", l.iso_code_639_1()))
-        // If not languages can be detected, this returns the empty
-        // string.
-        .unwrap_or_default();
-    log::debug!("Language '{}' in input detected.", detected_language);
+    let detected_languages: tera::Value = detector
+        .detect_multiple_languages_of(input)
+        .iter()
+        .map(|&l| l.language().iso_code_639_1().to_string())
+        .inspect(|l| log::debug!("Language: '{}' in input detected.", l))
+        .collect();
 
-    Ok(Value::String(detected_language))
+    Ok(detected_languages)
 }
 
 #[cfg(not(feature = "lang-detection"))]
@@ -1002,36 +1000,53 @@ fn get_lang_filter<S: BuildHasher>(
 
 /// A mapper for ISO 639 codes adding some region information, e.g.
 /// `en` to `en-US` or `de` to `de-DE`. Configure the mapping with
-/// `tmpl.filter.map_lang`.
-/// An input value without mapping definition is passed through.
-/// When the optional parameter `default` is given, e.g.
-/// `map_lang(default=val)`, an empty input string is mapped to `val`.
-/// All input types must be `Value::String()`, the output type is
-/// `Value::String(0)`
+/// `tmpl.filter.map_lang`:
+///
+/// `Fn: Array(<Vec<String>>) -> Value::Array(<Vec<String>>)`
+///
+/// If the input `<String>` is a key in `tmpl.filter.map_lang`, it is replaced
+/// with the corresponding value. An input string without mapping definition in
+/// `tmpl.filter.map_lang` is passed through as such.
+/// In case the optional parameter `default` of type `Value::String` is given,
+/// e.g. `map_lang(default="abc")`, then an empty input array is mapped to
+/// `Value::Array(Vec::from("abc"))`.
+/// Only inputs of types `Value::Array(<Vec<String>>]` are mapped, all other
+/// types are passed through.
 fn map_lang_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("map_lang", "value", String, value);
+    let input = try_get_value!("map_lang", "value", Value, value);
 
-    let input = input.trim();
-    if input.is_empty() {
-        if let Some(default) = args.get("default") {
-            let default = try_get_value!("map_lang", "default", String, default);
-            return Ok(Value::String(default));
-        } else {
-            return Ok(Value::String("".to_owned()));
-        };
-    };
+    // In `input` is empty return default.
+    if input
+        .as_array()
+        .is_some_and(|a| a.is_empty() || a.iter().all(|v| v.as_str().is_some_and(|s| s.is_empty())))
+    {
+        return Ok(args
+            .get("default")
+            .map(|v| Value::Array(Vec::from([v.to_owned()])))
+            .unwrap_or(input));
+    }
+
+    // Set up converter.
     let settings = SETTINGS.read_recursive();
-
-    let res = if let Some(btm) = &settings.filter_map_lang_btmap {
-        btm.get(input).map(|v| &v[..]).unwrap_or(input)
-    } else {
-        input
+    let convert = |v: Value| {
+        if let (Value::String(s), Some(btm)) = (&v, &settings.filter_map_lang_btmap) {
+            btm.get(s)
+                .map(|new_v| Value::String(new_v.to_owned()))
+                .unwrap_or(v)
+        } else {
+            v
+        }
+    };
+    // Do conversion.
+    let res = match input {
+        Value::Array(a) => a.into_iter().map(convert).collect(),
+        _ => input,
     };
 
-    Ok(Value::String(res.to_owned()))
+    Ok(res)
 }
 
 #[derive(Debug, Eq, PartialEq, Default)]
@@ -2058,27 +2073,37 @@ Some more text."#;
         let args = HashMap::new();
         let input = "Das große Haus";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("de", output);
+        assert_eq!("de", output[0]);
 
         let args = HashMap::new();
         let input = "Il est venu trop tard";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("fr", output);
+        assert_eq!("fr", output[0]);
 
         let args = HashMap::new();
         let input = "How to set up a roof rack";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("en", output);
+        assert_eq!("en", output[0]);
 
         let args = HashMap::new();
         let input = "1917039480 50198%-328470";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("", output);
+        assert_eq!(Value::Array(vec![]), output);
 
         let args = HashMap::new();
         let input = " \t\n ";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("", output);
+        assert_eq!(Value::Array(vec![]), output);
+
+        let args = HashMap::new();
+        let input = "Parlez-vous français? \
+        Ich spreche Französisch nur ein bisschen. \
+        A little bit is better than nothing.";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!("fr", output[0]);
+        assert_eq!("de", output[1]);
+        assert_eq!("en", output[2]);
+
         // Release the lock.
         drop(_settings);
     }
@@ -2099,25 +2124,31 @@ Some more text."#;
         let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
 
         let args = HashMap::new();
-        let input = "de";
+        let input = ["de"];
         let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("de-DE", output);
+        assert_eq!(tera::to_value(["de-DE"]).unwrap(), output);
+
+        let args = HashMap::new();
+        let input = ["de", "fr"];
+        let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        assert_eq!(tera::to_value(["de-DE", "fr"]).unwrap(), output);
 
         let args = HashMap::new();
         let input = "xyz";
         let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("xyz", output);
 
-        let args = HashMap::new();
-        let input = " \t\n ";
-        let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(to_value("").unwrap(), output);
+        let mut args = HashMap::new();
+        args.insert("default".to_string(), to_value("test").unwrap());
+        let input = Value::Null;
+        let output = map_lang_filter(&input, &args).unwrap_or_default();
+        assert_eq!(Value::Null, output);
 
         let mut args = HashMap::new();
         args.insert("default".to_string(), to_value("test").unwrap());
-        let input = " \t\n ";
+        let input = [""];
         let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("test".to_string(), output);
+        assert_eq!(tera::to_value(["test"]).unwrap(), output);
 
         drop(_settings);
     }
