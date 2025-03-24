@@ -2,7 +2,7 @@
 authors.workspace = true
 categories.workspace = true
 description.workspace = true
-documentation.workspace = true
+documentation = "https://docs.rs/tpnote-lib/latest/tpnote_lib/"
 edition.workspace = true
 homepage.workspace = true
 license.workspace = true
