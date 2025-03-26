@@ -61,7 +61,6 @@ pub trait NotePathBuf {
     /// notefile.set_next_unused();
     /// assert_eq!(notefile, expected);
     /// ```
-
     fn set_next_unused(&mut self) -> Result<(), FileError>;
 
     /// Shortens the stem of a filename so that
@@ -102,7 +101,6 @@ pub trait NotePathBuf {
 
 impl NotePathBuf for PathBuf {
     #[inline]
-
     fn from_disassembled(
         sort_tag: &str,
         stem: &str,
