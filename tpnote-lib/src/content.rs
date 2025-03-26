@@ -493,7 +493,7 @@ impl AsRef<str> for ContentString {
 /// Concatenates the header and the body and prints the content.
 /// This function is expensive as it involves copying the
 /// whole content.
-impl<'a> fmt::Display for ContentRef<'a> {
+impl fmt::Display for ContentRef<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = if self.header.is_empty() {
             self.body.to_string()

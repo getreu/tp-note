@@ -228,7 +228,7 @@ trait Hyperlink {
     fn to_html(&self) -> String;
 }
 
-impl<'a> Hyperlink for Link<'a> {
+impl Hyperlink for Link<'_> {
     #[inline]
     fn decode_ampersand_and_percent(&mut self) {
         // HTML escape decode value.

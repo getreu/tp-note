@@ -289,7 +289,7 @@ pub struct Workflow<W> {
     input: W,
 }
 
-impl<'a> Workflow<SyncFilename<'a>> {
+impl Workflow<SyncFilename<'_>> {
     /// Starts the "synchronize filename" workflow. Errors can occur in
     /// various ways, see `NoteError`.
     ///
@@ -359,8 +359,8 @@ impl<'a> Workflow<SyncFilename<'a>> {
     }
 }
 
-impl<'a, T: Content, F: Fn(TemplateKind) -> TemplateKind>
-    Workflow<SyncFilenameOrCreateNew<'a, T, F>>
+impl<T: Content, F: Fn(TemplateKind) -> TemplateKind>
+    Workflow<SyncFilenameOrCreateNew<'_, T, F>>
 {
     /// Starts the "synchronize filename or create a new note" workflow.
     /// Returns the note's new or existing filename. Repeated calls, will
