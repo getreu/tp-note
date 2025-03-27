@@ -1006,19 +1006,26 @@ fn get_lang_filter<S: BuildHasher>(
 ///
 /// `Fn: Array(<Vec<String>>) -> Value::Array(<Vec<String>>)`
 ///
+/// The input and output type is `Value::Array(<Vec<String>>)`.
 /// If the input `<String>` is a key in `tmpl.filter.map_lang`, it is replaced
 /// with the corresponding value. If the input does not correspond to a key in
 /// `tmpl.filter.map_lang`, it is passed through as such.
 /// In case the optional parameter `default` (type `Value::String`) is given,
 /// e.g. `map_lang(default="abc")`, then an empty input array is mapped to
 /// `Value::Array(Vec::from("abc"))`.
-/// Only inputs of types `Value::Array(<Vec<String>>]` are mapped, all other
-/// types are passed through.
 fn map_lang_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let input = try_get_value!("map_lang", "value", Value, value);
+
+    // Type check.
+    if !input
+        .as_array()
+        .is_some_and(|a| a.iter().all(|s| s.is_string()))
+    {
+        return Err("input must be an array of strings".into());
+    }
 
     // In `input` is empty return default.
     if input
@@ -1051,14 +1058,19 @@ fn map_lang_filter<S: BuildHasher>(
     Ok(res)
 }
 
-/// If the input is of type `Value::Array(<Vec<a>>)` and if the array has
-/// exactly one element, then the array is flattened to `<a>`. In all other
-/// cases the input is passed through.
+/// The input must be of type `Value::Array(<Vec<a>>)`. If the array has
+/// exactly one element, then the array is flattened to `<a>` otherwise the
+/// input is passed through.
 fn flatten_array_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     let val = try_get_value!("flatten_array", "value", Value, value);
+
+    // Type check.
+    if !value.is_array() {
+        return Err("input must be of type array".into());
+    }
 
     // In `input` is empty return default.
     match val {
@@ -2151,11 +2163,6 @@ Some more text."#;
         let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!(tera::to_value(["de-DE", "fr"]).unwrap(), output);
 
-        let args = HashMap::new();
-        let input = "xyz";
-        let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("xyz", output);
-
         let mut args = HashMap::new();
         args.insert("default".to_string(), to_value("test").unwrap());
         let input = Value::Null;
@@ -2167,6 +2174,16 @@ Some more text."#;
         let input = [""];
         let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!(tera::to_value(["test"]).unwrap(), output);
+
+        let args = HashMap::new();
+        let input = "this is not an arry";
+        let output = map_lang_filter(&to_value(input).unwrap(), &args);
+        assert!(output.is_err());
+
+        let args = HashMap::new();
+        let input = [3, 5, 8];
+        let output = map_lang_filter(&to_value(input).unwrap(), &args);
+        assert!(output.is_err());
 
         drop(_settings);
     }
@@ -2181,11 +2198,11 @@ Some more text."#;
         assert_eq!("fr", output[1]);
         assert_eq!("et-ET", output[2]);
 
-        // This is passed through.
+        // This input is rejected.
         let args = HashMap::new();
         let input = "de-DE";
-        let output = flatten_array_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("de-DE", output);
+        let output = flatten_array_filter(&to_value(input).unwrap(), &args);
+        assert!(output.is_err());
 
         // This is flattened.
         let args = HashMap::new();
