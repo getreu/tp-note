@@ -3792,7 +3792,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote"
-version = "1.25.5"
+version = "1.25.6"
 dependencies = [
  "clipboard-rs",
  "directories",
@@ -3813,7 +3813,7 @@ dependencies = [
  "thiserror 2.0.12",
  "time",
  "toml",
- "tpnote-lib",
+ "tpnote-lib 0.41.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "webbrowser",
  "win-msgbox",
  "win32job",
@@ -3851,7 +3851,39 @@ dependencies = [
 
 [[package]]
 name = "tpnote-lib"
-version = "0.41.0"
+version = "0.41.1"
+dependencies = [
+ "html-escape",
+ "latex2mathml",
+ "lingua",
+ "log",
+ "parking_lot",
+ "parse-hyperlinks",
+ "parse-hyperlinks-extras",
+ "percent-encoding",
+ "pulldown-cmark",
+ "rst_parser",
+ "rst_renderer",
+ "sanitize-filename-reader-friendly",
+ "self_cell",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "substring",
+ "syntect",
+ "tera",
+ "thiserror 2.0.12",
+ "toml",
+ "tpnote-html2md 0.2.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "win32job",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "tpnote-lib"
+version = "0.41.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69ea0007c18142623e8385fb2709c5ec512a57b9f57f66b5811db328653169fa"
 dependencies = [
  "html-escape",
  "latex2mathml",
