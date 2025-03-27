@@ -1,4 +1,6 @@
 //! Extends the built-in Tera filters.
+//! All custom filters check the type of their input variables at runtime and
+//! throw an error if the type is other than specified.
 use crate::config::Scheme;
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
