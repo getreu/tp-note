@@ -130,7 +130,7 @@ impl Default for Settings {
     }
 }
 
-/// Global mutable varible of type `Settings`.
+/// Global mutable variable of type `Settings`.
 #[cfg(not(test))]
 pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(DEFAULT_SETTINGS);
 
