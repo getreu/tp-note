@@ -358,9 +358,17 @@ pub struct FmVar {
 /// Configuration related to various Tera template filters.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Filter {
-    pub get_lang: Vec<String>,
+    pub get_lang: GetLang,
     pub map_lang: Vec<Vec<String>>,
     pub to_yaml_tab: u64,
+}
+
+/// Configuration related to various Tera template filters.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetLang {
+    pub languages: Vec<String>,
+    pub multilingual: bool,
+    pub minimum_relative_distance: f64,
 }
 
 /// Configuration for the HTML exporter feature, deserialized from the
@@ -552,6 +560,16 @@ impl LibCfg {
                         list.truncate(list.len().saturating_sub(2));
                         list
                     },
+                });
+            }
+
+            // Assert that `filter.get_lang.minimum_relative_distance` is
+            // between `0.0` and `0.99`.
+            let dist = scheme.tmpl.filter.get_lang.minimum_relative_distance;
+            if !(0.0..=0.99).contains(&dist) {
+                return Err(LibCfgError::MinimumRelativeDistanceInvalid {
+                    scheme_name: scheme.name.to_string(),
+                    dist,
                 });
             }
         }

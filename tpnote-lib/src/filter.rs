@@ -956,33 +956,58 @@ fn get_lang_filter<S: BuildHasher>(
     }
 
     let settings = SETTINGS.read_recursive();
-    let detector: LanguageDetector = match &settings.filter_get_lang {
-        FilterGetLang::SomeLanguages(iso_codes) => {
+
+    let (detector, multilingual): (LanguageDetector, &bool) = match &settings.filter_get_lang {
+        FilterGetLang::SomeLanguages(iso_codes, multilingual, minimum_relative_distance) => {
             log::trace!(
                 "Execute template filter `get_lang` \
                         with languages candiates: {:?}",
                 iso_codes,
             );
-            LanguageDetectorBuilder::from_iso_codes_639_1(iso_codes)
+            (
+                LanguageDetectorBuilder::from_iso_codes_639_1(iso_codes)
+                    .with_minimum_relative_distance(*minimum_relative_distance)
+                    .build(),
+                multilingual,
+            )
         }
-        FilterGetLang::AllLanguages => {
+        FilterGetLang::AllLanguages(multilingual, minimum_relative_distance) => {
             log::trace!(
                 "Execute template filter `get_lang` \
                         with all available languages",
             );
-            LanguageDetectorBuilder::from_all_languages()
+            (
+                LanguageDetectorBuilder::from_all_languages()
+                    .with_minimum_relative_distance(*minimum_relative_distance)
+                    .build(),
+                multilingual,
+            )
         }
         FilterGetLang::Error(e) => return Err(tera::Error::from(e.to_string())),
         _ => return Ok(Value::Array(vec![])),
-    }
-    .build();
+    };
 
-    let detected_languages: tera::Value = detector
-        .detect_multiple_languages_of(input)
-        .iter()
-        .map(|&l| l.language().iso_code_639_1().to_string())
-        .inspect(|l| log::debug!("Language: '{}' in input detected.", l))
-        .collect();
+    let detected_languages: tera::Value = if *multilingual {
+        detector
+            .detect_multiple_languages_of(input)
+            .into_iter()
+            .map(|l| l.language().iso_code_639_1().to_string())
+            .inspect(|l| log::debug!("Language(s): '{}' in input detected.", l))
+            .collect()
+    } else {
+        let val: Value = detector
+            .detect_language_of(input)
+            .into_iter()
+            .map(|l| l.iso_code_639_1().to_string())
+            .inspect(|l| log::debug!("Language: '{}' in input detected.", l))
+            .collect();
+        debug_assert!(val.is_array());
+        debug_assert!(val.as_array().is_some_and(|a| a.len() <= 1));
+        debug_assert!(val
+            .as_array()
+            .is_some_and(|a| a.is_empty() || a[0].is_string()));
+        val
+    };
 
     Ok(detected_languages)
 }
@@ -2084,11 +2109,11 @@ Some more text."#;
 
         // The `get_lang` filter requires an initialized `SETTINGS` object.
         // Lock the config object for this test.
-        let filter_get_lang = FilterGetLang::SomeLanguages(vec![
-            IsoCode639_1::DE,
-            IsoCode639_1::EN,
-            IsoCode639_1::FR,
-        ]);
+        let filter_get_lang = FilterGetLang::SomeLanguages(
+            vec![IsoCode639_1::DE, IsoCode639_1::EN, IsoCode639_1::FR],
+            true,
+            0.2,
+        );
 
         let mut settings = SETTINGS.write();
         *settings = Settings::default();
@@ -2098,37 +2123,98 @@ Some more text."#;
 
         let args = HashMap::new();
         let input = "Das große Haus";
-        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
         assert_eq!("de", output[0]);
 
         let args = HashMap::new();
         let input = "Il est venu trop tard";
-        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
         assert_eq!("fr", output[0]);
 
         let args = HashMap::new();
         let input = "How to set up a roof rack";
-        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
         assert_eq!("en", output[0]);
 
         let args = HashMap::new();
         let input = "1917039480 50198%-328470";
-        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
         assert_eq!(Value::Array(vec![]), output);
 
         let args = HashMap::new();
         let input = " \t\n ";
-        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
         assert_eq!(Value::Array(vec![]), output);
 
         let args = HashMap::new();
         let input = "Parlez-vous français? \
         Ich spreche Französisch nur ein bisschen. \
         A little bit is better than nothing.";
-        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
         assert_eq!("fr", output[0]);
         assert_eq!("de", output[1]);
         assert_eq!("en", output[2]);
+
+        // Release the lock.
+        drop(_settings);
+    }
+
+    #[test]
+    #[cfg(feature = "lang-detection")]
+    fn test_get_lang_filter2() {
+        //
+        // Test `get_lang_filter()`
+        use crate::settings::Settings;
+        use lingua::IsoCode639_1;
+        use tera::to_value;
+
+        // The `get_lang` filter requires an initialized `SETTINGS` object.
+        // Lock the config object for this test.
+        let filter_get_lang = FilterGetLang::SomeLanguages(
+            vec![IsoCode639_1::DE, IsoCode639_1::EN, IsoCode639_1::FR],
+            // This time we monolingual detection
+            false,
+            0.2,
+        );
+
+        let mut settings = SETTINGS.write();
+        *settings = Settings::default();
+        settings.filter_get_lang = filter_get_lang;
+        // This locks `SETTINGS` for further write access in this scope.
+        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
+
+        let args = HashMap::new();
+        let input = "Das große Haus";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
+        assert_eq!("de", output[0]);
+
+        let args = HashMap::new();
+        let input = "Il est venu trop tard";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
+        assert_eq!("fr", output[0]);
+
+        let args = HashMap::new();
+        let input = "How to set up a roof rack";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
+        assert_eq!("en", output[0]);
+
+        let args = HashMap::new();
+        let input = "1917039480 50198%-328470";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
+        assert_eq!(Value::Array(vec![]), output);
+
+        let args = HashMap::new();
+        let input = " \t\n ";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
+        assert_eq!(Value::Array(vec![]), output);
+
+        let args = HashMap::new();
+        let input = "Parlez-vous français? \
+        Ich spreche Französisch nur ein bisschen. \
+        A little bit is better than nothing.";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
+        assert_eq!(output.as_array().unwrap().len(), 1);
+        assert_eq!("de", output[0]);
 
         // Release the lock.
         drop(_settings);

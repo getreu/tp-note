@@ -65,9 +65,20 @@ pub enum LibCfgError {
         schemes: String,
     },
 
+    /// Remedy: Choose a value in the given interval.
+    #[error(
+        "Configuration file error in [base_scheme] or in section:\n\
+        \t[[scheme]]\n\
+        \tname = \"{scheme_name}\"
+        \t[scheme.tmpl]\n\
+        \tfilter.get_lang.minimum_relative_distance={dist}\n\
+        must be between 0.0 and 0.99."
+    )]
+    MinimumRelativeDistanceInvalid { scheme_name: String, dist: f64 },
+
     /// Remedy: Choose another `sort_tag.extra_separator` character.
     #[error(
-        "Configuration file error in section:\n\
+        "Configuration file error in [base_scheme] or in section:\n\
         \t[[scheme]]\n\
         \tname = \"{scheme_name}\"
         \t[scheme.filename]\n\
@@ -85,7 +96,7 @@ pub enum LibCfgError {
     /// Remedy: Choose another `extension_default` out of
     /// `extensions[..].0`.
     #[error(
-        "Configuration file error in section:\n\
+        "Configuration file error in [base_scheme] or in section:\n\
         \t[[scheme]]\n\
         \tname = \"{scheme_name}\"
         \t[scheme.filename]\n\
@@ -101,7 +112,7 @@ pub enum LibCfgError {
 
     /// Remedy: Insert `sort_tag.separator` in `sort_tag.extra_chars`.
     #[error(
-        "Configuration file error in section:\n\
+        "Configuration file error in [base_scheme] or in section:\n\
         \t[[scheme]]\n\
         \tname = \"{scheme_name}\"
         \t[scheme.filename]\n\
@@ -119,7 +130,7 @@ pub enum LibCfgError {
 
     /// Remedy: Choose a `copy_counter.extra_separator` in the set.
     #[error(
-        "Configuration file error in section:\n\
+        "Configuration file error in [base_scheme] or in section:\n\
         \t[[scheme]]\n\
         \tname = \"{scheme_name}\"
         \t[scheme.filename]\n\

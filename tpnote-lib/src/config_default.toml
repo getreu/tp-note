@@ -198,8 +198,37 @@ fm_var.assertions = [
 ### The language recognition feature is disabled, when the list is empty.
 ### It is also disabled, when the user's default language, as reported from
 ### the operating system, is not supported by the external language guessing
-### library _Lingua_. In both cases the filter returns the empty string.
-filter.get_lang = [ "en", "fr", "de", ]
+### library Lingua. In both cases the filter returns always the empty array.
+filter.get_lang.languages = [ "en", "fr", "de", ]
+
+### Shall the `get_lang` filter try to find other languages than the first?
+### When `multilingual` is `false` the `get_lang` filter outputs an array
+### with zero or one item. Otherwise, there can be more than one items when
+### more languages are found. If you never mix languages in one note file,
+### you can set this value to `false`. In the `false` setting only one
+### language, one out of `filter.get_lang.languages` might be detected and
+### reported.
+filter.get_lang.multilingual = true
+
+### Sets the desired value for the minimum relative distance measure. By
+### default, the Lingua library returns the most likely language for a given
+### input text. However, there are certain words that are spelled the same in
+### more than one language. The word prologue, for instance, is both a valid
+### English and French word. Lingua would output either English or French which
+### might be wrong in the given context. For cases like that, it is possible
+### to specify a minimum relative distance that the logarithmized and summed up
+### probabilities for each possible language have to satisfy. Be aware that the
+### distance between the language probabilities is dependent on the length of
+### the input text. The longer the input text, the larger the distance between
+### the languages. So if you want to classify very short text phrases, do not
+### set the minimum relative distance too high. Otherwise, `get_lang` will
+### return most results as empty array, which is the return value for cases
+### where language detection is not reliably possible. Valid values are between
+### `0.0` and `0.99`. A low value finds more languages, but can lead to false
+### positives. NB: Languages not listed in `filter.get_lang.languages` are
+### never searched for, independent of the `minimum_relative_distance` value
+### set here.  
+filter.get_lang.minimum_relative_distance = 0.2
 
 ### Default values for the `map_lang` hash map filter, that are used to post
 ### process the language recognition subtag as defined in `filter.get_lang`.
