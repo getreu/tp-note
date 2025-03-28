@@ -938,7 +938,7 @@ Body text
         let mut n: Note<ContentString> =
             Note::from_content_template(context, TemplateKind::AnnotateFile).unwrap();
         let expected_body =
-            "\n[20221030-some.pdf](<20221030-some.pdf>)\n\nmy stdin\nmy TXT clipboard\n\n";
+            "\n[20221030-some.pdf](<20221030-some.pdf>)\n\n---\n\nmy stdin\nmy TXT clipboard\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
         assert_eq!(
