@@ -450,13 +450,7 @@ annotate_file_content = """
 {%- endif -%}
 ---
 
-{{ link }}
-{% if body_text != '' -%}
-{%- if body_text != body_text | heading %}
----
-{% endif %}
-{{ body_text }}
-{% endif %}
+{{ link }}{{ body_text | prepend(with='\n\n---\n\n')}}
 """
 
 ### Filename of a new note, that annotates an existing file on disk given in
@@ -757,13 +751,7 @@ annotate_file_content = """
 {{ path | file_sort_tag | to_yaml(key='fm_sort_tag') }}
 ---
 
-{{ link }}
-{%- if body_text != '' -%}
-{%- if body_text != body_text | heading -%}
---
-{%- endif -%}
-{{ body_text }}
-{%- endif -%}
+{{ link }}{{ body_text | prepend(with='\n\n---\n\n')}}
 """
 
 annotate_file_filename = """
