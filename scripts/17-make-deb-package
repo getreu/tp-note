@@ -3,6 +3,8 @@
 cd $(dirname "$0")
 cd ..
 
+rustup override set 1.81.0
+
 # Cargo deb saves the built package in
 # target/x86_64-unknown-linux-gnu/debian
 cargo deb --package tpnote --target=x86_64-unknown-linux-gnu
