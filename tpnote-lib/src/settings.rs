@@ -62,8 +62,8 @@ const ENV_VAR_LANG: &str = "LANG";
 #[derive(Debug, PartialEq)]
 #[allow(dead_code)]
 /// Indicates how the `get_lang` filter operates.
-/// The `boot` type in some variants is a copy of the configuration file
-/// variable `filter.get_lang.multilingual`.
+/// The `boot` type in some variants is true if the configuration file
+/// variable `filter.get_lang.model` equals to `mode::Multilingual D`.
 /// The `f64` type in some variants is a copy of the configuration file
 /// variable `filter.get_lang.minimum_relative_distance`.
 pub(crate) enum FilterGetLang {
@@ -322,6 +322,8 @@ impl Settings {
     /// `FilterGetLang::Disabled`
     #[cfg(feature = "lang-detection")]
     fn update_filter_get_lang(&mut self, force_lang: bool) {
+        use crate::config::Mode;
+
         if force_lang {
             self.filter_get_lang = FilterGetLang::Disabled;
             return;
@@ -331,7 +333,7 @@ impl Settings {
         let current_scheme = &lib_cfg.scheme[self.current_scheme];
 
         // Check if disabled in config file.
-        if !current_scheme.tmpl.filter.get_lang.enable {
+        if matches!(current_scheme.tmpl.filter.get_lang.mode, Mode::Disable) {
             self.filter_get_lang = FilterGetLang::Disabled;
             return;
         }
@@ -384,7 +386,7 @@ impl Settings {
                 if all_languages_selected {
                     // Store result.
                     self.filter_get_lang = FilterGetLang::AllLanguages(
-                        current_scheme.tmpl.filter.get_lang.multilingual,
+                        matches!(current_scheme.tmpl.filter.get_lang.mode, Mode::Multilingual),
                         current_scheme
                             .tmpl
                             .filter
@@ -412,7 +414,7 @@ impl Settings {
                         }),
                         _ => FilterGetLang::SomeLanguages(
                             iso_codes,
-                            current_scheme.tmpl.filter.get_lang.multilingual,
+                            matches!(current_scheme.tmpl.filter.get_lang.mode, Mode::Multilingual),
                             current_scheme
                                 .tmpl
                                 .filter
@@ -469,6 +471,8 @@ impl Settings {
     /// `self.filter_get_lang`.
     #[cfg(feature = "lang-detection")]
     fn update_env_lang_detection(&mut self, force_lang: bool) {
+        use crate::config::Mode;
+
         if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
             if env_var.is_empty() {
                 // Early return.
@@ -557,7 +561,7 @@ impl Settings {
 
                     if all_languages_selected {
                         self.filter_get_lang = FilterGetLang::AllLanguages(
-                            current_scheme.tmpl.filter.get_lang.multilingual,
+                            matches!(current_scheme.tmpl.filter.get_lang.mode, Mode::Multilingual),
                             current_scheme
                                 .tmpl
                                 .filter
@@ -572,7 +576,10 @@ impl Settings {
                             }),
                             _ => FilterGetLang::SomeLanguages(
                                 iso_codes,
-                                current_scheme.tmpl.filter.get_lang.multilingual,
+                                matches!(
+                                    current_scheme.tmpl.filter.get_lang.mode,
+                                    Mode::Multilingual
+                                ),
                                 current_scheme
                                     .tmpl
                                     .filter

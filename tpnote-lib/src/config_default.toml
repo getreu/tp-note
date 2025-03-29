@@ -192,10 +192,18 @@ fm_var.assertions = [
     ["fm_scheme", ["IsString", "IsConfiguredScheme"]],
 ]
 
-### If this is `false` the natural language detection algorithm is disabled.
-### The environment variable `TPNOTE_LANG_DETECTION, if set to a non empty
-### string, overwrites this setting.
-filter.get_lang.enable = true
+### The operation mode of the `get_lang` filter.
+###
+### * Disable:
+###    The `get_lang` filter is disabled. No language guessing occurs.
+### * Monolingual:
+###   The algorithm of the `get_lang` filter assumes, that the input is
+###   monolingual. Only one language is searched and reported.
+### * Multilingual:
+###   The algorithm of the `get_lang` filter assumes, that the input is
+###   monolingual. If present in the input, more than one language can be
+###   reported.
+filter.get_lang.mode = "Multilingual"
 
 ### A list of language tags, defining languages the `get_lang` filter tries
 ### to identify in its input. The user's default language subtag, as reported 
@@ -207,15 +215,6 @@ filter.get_lang.enable = true
 ### The environment variable `TPNOTE_LANG_DETECTION, if set, overwrites this
 ### setting.
 filter.get_lang.languages = [ "en", "fr", "de", ]
-
-### Shall the `get_lang` filter try to find other languages than the first?
-### When `multilingual` is `false` the `get_lang` filter outputs an array
-### with zero or one item. Otherwise, there can be more than one items when
-### more languages are found. If you never mix languages in one note file,
-### you can set this value to `false`. In the `false` setting only one
-### language, one out of `filter.get_lang.languages` might be detected and
-### reported.
-filter.get_lang.multilingual = true
 
 ### Sets the desired value for the minimum relative distance measure. By
 ### default, the Lingua library returns the most likely language for a given

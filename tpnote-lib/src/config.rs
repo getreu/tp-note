@@ -366,10 +366,23 @@ pub struct Filter {
 /// Configuration related to various Tera template filters.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetLang {
-    pub enable: bool,
+    pub mode: Mode,
     pub languages: Vec<String>,
-    pub multilingual: bool,
     pub minimum_relative_distance: f64,
+}
+
+#[derive(Default, Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
+pub enum Mode {
+    // The `get_lang` filter is disabled. No language guessing occurs.
+    Disable,
+    // The algorithm of the `get_lang` filter assumes, that the input is
+    // monolingual. Only one language is searched and reported.
+    Monolingual,
+    // The algorithm of the `get_lang` filter assumes, that the input is
+    // monolingual. If present in the input, more than one language can be
+    // reported.
+    #[default]
+    Multilingual,
 }
 
 /// Configuration for the HTML exporter feature, deserialized from the
