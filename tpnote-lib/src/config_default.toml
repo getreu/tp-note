@@ -212,10 +212,10 @@ filter.get_lang.mode = "Multilingual"
 ### language, as reported from the operating system, is not supported by the
 ### external language guessing library Lingua. In this case the filter returns
 ### always the empty array.
-### If the list `only_languages` is empty, the algorithm searches for all
+### If the list `language_candiates` is empty, the algorithm searches for all
 ### available languages (currently 75). The environment variable
 ### `TPNOTE_LANG_DETECTION, if set, overwrites this setting.
-filter.get_lang.only_languages = [ "en", "fr", "de", ]
+filter.get_lang.language_candidates = [ "EN", "FR", "DE" ]
 
 ### Sets the desired value for the minimum relative distance measure. By
 ### default, the Lingua library returns the most likely language for a given

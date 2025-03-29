@@ -10,8 +10,6 @@ use crate::filename::NotePathBuf;
 use crate::filename::NotePathStr;
 use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
-#[cfg(feature = "lang-detection")]
-use crate::settings::FilterGetLang;
 use crate::settings::SETTINGS;
 #[cfg(feature = "lang-detection")]
 use lingua::{LanguageDetector, LanguageDetectorBuilder};
@@ -948,6 +946,8 @@ fn get_lang_filter<S: BuildHasher>(
     value: &Value,
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
+    use crate::config::Mode;
+
     let input = try_get_value!("get_lang", "value", String, value);
     let input = input.trim();
     // Return early if there is no input text.
@@ -957,56 +957,60 @@ fn get_lang_filter<S: BuildHasher>(
 
     let settings = SETTINGS.read_recursive();
 
-    let (detector, multilingual): (LanguageDetector, &bool) = match &settings.filter_get_lang {
-        FilterGetLang::SomeLanguages(iso_codes, multilingual, minimum_relative_distance) => {
-            log::trace!(
-                "Execute template filter `get_lang` \
+    // Check if we can return early.
+    match &settings.filter_get_lang.mode {
+        Mode::Disable => return Ok(Value::Array(vec![])),
+
+        Mode::Error(e) => return Err(tera::Error::from(e.to_string())),
+        _ => {}
+    }
+
+    // Build `LanguageDetector`.
+    let detector: LanguageDetector = if !&settings.filter_get_lang.language_candidates.is_empty() {
+        log::trace!(
+            "Execute template filter `get_lang` \
                         with languages candiates: {:?}",
-                iso_codes,
-            );
-            (
-                LanguageDetectorBuilder::from_iso_codes_639_1(iso_codes)
-                    .with_minimum_relative_distance(*minimum_relative_distance)
-                    .build(),
-                multilingual,
-            )
-        }
-        FilterGetLang::AllLanguages(multilingual, minimum_relative_distance) => {
-            log::trace!(
-                "Execute template filter `get_lang` \
+            &settings.filter_get_lang.language_candidates,
+        );
+
+        LanguageDetectorBuilder::from_iso_codes_639_1(&settings.filter_get_lang.language_candidates)
+            .with_minimum_relative_distance(settings.filter_get_lang.minimum_relative_distance)
+            .build()
+    } else {
+        log::trace!(
+            "Execute template filter `get_lang` \
                         with all available languages",
-            );
-            (
-                LanguageDetectorBuilder::from_all_languages()
-                    .with_minimum_relative_distance(*minimum_relative_distance)
-                    .build(),
-                multilingual,
-            )
-        }
-        FilterGetLang::Error(e) => return Err(tera::Error::from(e.to_string())),
-        _ => return Ok(Value::Array(vec![])),
+        );
+        LanguageDetectorBuilder::from_all_languages()
+            .with_minimum_relative_distance(settings.filter_get_lang.minimum_relative_distance)
+            .build()
     };
 
-    let detected_languages: tera::Value = if *multilingual {
-        detector
+    // Detect languages.
+    let detected_languages: tera::Value = match &settings.filter_get_lang.mode {
+        Mode::Multilingual => detector
             .detect_multiple_languages_of(input)
             .into_iter()
             .map(|l| l.language().iso_code_639_1().to_string())
             .inspect(|l| log::debug!("Language(s): '{}' in input detected.", l))
-            .collect()
-    } else {
-        let val: Value = detector
-            .detect_language_of(input)
-            .into_iter()
-            .map(|l| l.iso_code_639_1().to_string())
-            .inspect(|l| log::debug!("Language: '{}' in input detected.", l))
-            .collect();
-        debug_assert!(val.is_array());
-        debug_assert!(val.as_array().is_some_and(|a| a.len() <= 1));
-        debug_assert!(val
-            .as_array()
-            .is_some_and(|a| a.is_empty() || a[0].is_string()));
-        val
+            .collect(),
+
+        Mode::Monolingual => {
+            let val: Value = detector
+                .detect_language_of(input)
+                .into_iter()
+                .map(|l| l.iso_code_639_1().to_string())
+                .inspect(|l| log::debug!("Language: '{}' in input detected.", l))
+                .collect();
+            debug_assert!(val.is_array());
+            debug_assert!(val.as_array().is_some_and(|a| a.len() <= 1));
+            debug_assert!(val
+                .as_array()
+                .is_some_and(|a| a.is_empty() || a[0].is_string()));
+            val
+        }
+        Mode::Disable => unreachable!(),
+        Mode::Error(_) => unreachable!(),
     };
 
     Ok(detected_languages)
@@ -2102,18 +2106,19 @@ Some more text."#;
     #[test]
     #[cfg(feature = "lang-detection")]
     fn test_get_lang_filter() {
-        //
-        // Test `get_lang_filter()`
-        use crate::settings::Settings;
+        use crate::{
+            config::{GetLang, Mode},
+            settings::Settings,
+        };
         use lingua::IsoCode639_1;
 
         // The `get_lang` filter requires an initialized `SETTINGS` object.
         // Lock the config object for this test.
-        let filter_get_lang = FilterGetLang::SomeLanguages(
-            vec![IsoCode639_1::DE, IsoCode639_1::EN, IsoCode639_1::FR],
-            true,
-            0.2,
-        );
+        let filter_get_lang = GetLang {
+            mode: Mode::Multilingual,
+            language_candidates: vec![IsoCode639_1::DE, IsoCode639_1::EN, IsoCode639_1::FR],
+            minimum_relative_distance: 0.2,
+        };
 
         let mut settings = SETTINGS.write();
         *settings = Settings::default();
@@ -2162,20 +2167,20 @@ Some more text."#;
     #[test]
     #[cfg(feature = "lang-detection")]
     fn test_get_lang_filter2() {
-        //
-        // Test `get_lang_filter()`
-        use crate::settings::Settings;
+        use crate::{
+            config::{GetLang, Mode},
+            settings::Settings,
+        };
         use lingua::IsoCode639_1;
         use tera::to_value;
 
         // The `get_lang` filter requires an initialized `SETTINGS` object.
         // Lock the config object for this test.
-        let filter_get_lang = FilterGetLang::SomeLanguages(
-            vec![IsoCode639_1::DE, IsoCode639_1::EN, IsoCode639_1::FR],
-            // This time we monolingual detection
-            false,
-            0.2,
-        );
+        let filter_get_lang = GetLang {
+            mode: Mode::Monolingual,
+            language_candidates: vec![IsoCode639_1::DE, IsoCode639_1::EN, IsoCode639_1::FR],
+            minimum_relative_distance: 0.2,
+        };
 
         let mut settings = SETTINGS.write();
         *settings = Settings::default();

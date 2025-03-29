@@ -354,7 +354,7 @@ pub struct FmVar {
 }
 
 /// Configuration related to various Tera template filters.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct Filter {
     pub get_lang: GetLang,
     pub map_lang: Vec<Vec<String>>,
@@ -362,28 +362,31 @@ pub struct Filter {
 }
 
 /// Configuration related to various Tera template filters.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct GetLang {
     pub mode: Mode,
     #[cfg(feature = "lang-detection")]
-    pub only_languages: Vec<IsoCode639_1>,
+    pub language_candidates: Vec<IsoCode639_1>,
     #[cfg(not(feature = "lang-detection"))]
-    pub only_languages: Vec<String>,
+    pub language_candidates: Vec<String>,
     pub minimum_relative_distance: f64,
 }
 
-#[derive(Default, Debug, Hash, Clone, Eq, PartialEq, Deserialize, Serialize, Copy)]
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Mode {
-    // The `get_lang` filter is disabled. No language guessing occurs.
+    /// The `get_lang` filter is disabled. No language guessing occurs.
     Disable,
-    // The algorithm of the `get_lang` filter assumes, that the input is
-    // monolingual. Only one language is searched and reported.
+    /// The algorithm of the `get_lang` filter assumes, that the input is
+    /// monolingual. Only one language is searched and reported.
     Monolingual,
-    // The algorithm of the `get_lang` filter assumes, that the input is
-    // monolingual. If present in the input, more than one language can be
-    // reported.
+    /// The algorithm of the `get_lang` filter assumes, that the input is
+    /// monolingual. If present in the input, more than one language can be
+    /// reported.
     #[default]
     Multilingual,
+    /// Variant to represent the error state for an invalid `GetLang` object.
+    #[serde(skip)]
+    Error(LibCfgError),
 }
 
 /// Configuration for the HTML exporter feature, deserialized from the
@@ -576,6 +579,10 @@ impl LibCfg {
                         list
                     },
                 });
+            }
+
+            if let Mode::Error(e) = &scheme.tmpl.filter.get_lang.mode {
+                return Err(e.clone());
             }
 
             // Assert that `filter.get_lang.minimum_relative_distance` is

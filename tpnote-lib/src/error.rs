@@ -152,14 +152,14 @@ pub enum LibCfgError {
     ParseLocalLinkKind,
 
     /// Remedy: check the ISO 639-1 codes in the configuration variable
-    /// `tmpl.filter.get_lang` and make sure that they are supported, by
-    /// checking `tpnote -V`.
+    /// `tmpl.filter.get_lang.language_candidates` and make sure that they are
+    /// supported, by checking `tpnote -V`.
     #[error(
         "The ISO 639-1 language subtag `{language_code}`\n\
          in the configuration file variable\n\
-         `tmpl.filter.get_lang` or in the environment\n\
-         variable `TPNOTE_LANG_DETECTION` is not supported.\n\
-         All listed codes must be part of the set:\n\
+         `tmpl.filter.get_lang.language_candidates` or in the\n\
+         environment variable `TPNOTE_LANG_DETECTION` is not\n\
+         supported. All listed codes must be part of the set:\n\
          {all_langs}."
     )]
     ParseLanguageCode {
@@ -168,8 +168,9 @@ pub enum LibCfgError {
     },
 
     /// Remedy: add one more ISO 639-1 code in the configuration variable
-    /// `tmpl.filter.get_lang` (or in `TPNOTE_LANG_DETECTION`) and make
-    /// sure that the code is supported, by checking `tpnote -V`.
+    /// `tmpl.filter.get_lang.language_candidates` (or in
+    /// `TPNOTE_LANG_DETECTION`) and make sure that the code is supported, by
+    /// checking `tpnote -V`.
     #[error(
         "Not enough languages to choose from.\n\
          The list of ISO 639-1 language subtags\n\
