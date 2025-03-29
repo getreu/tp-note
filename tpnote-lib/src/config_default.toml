@@ -215,7 +215,7 @@ filter.get_lang.mode = "Multilingual"
 ### If the list `language_candiates` is empty, the algorithm searches for all
 ### available languages (currently 75). The environment variable
 ### `TPNOTE_LANG_DETECTION, if set, overwrites this setting.
-filter.get_lang.language_candidates = [ "EN", "FR", "DE" ]
+filter.get_lang.language_candidates = [ "en", "fr", "de" ]
 
 ### Sets the desired value for the minimum relative distance measure. By
 ### default, the Lingua library returns the most likely language for a given

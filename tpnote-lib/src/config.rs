@@ -363,6 +363,7 @@ pub struct Filter {
 
 /// Configuration related to various Tera template filters.
 #[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[serde(try_from = "GetLangIntermediate")]
 pub struct GetLang {
     pub mode: Mode,
     #[cfg(feature = "lang-detection")]
@@ -370,6 +371,63 @@ pub struct GetLang {
     #[cfg(not(feature = "lang-detection"))]
     pub language_candidates: Vec<String>,
     pub minimum_relative_distance: f64,
+}
+
+/// Configuration related to various Tera template filters.
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+struct GetLangIntermediate {
+    pub mode: Mode,
+    pub language_candidates: Vec<String>,
+    pub minimum_relative_distance: f64,
+}
+
+impl TryFrom<GetLangIntermediate> for GetLang {
+    type Error = LibCfgError; // Use String as error type just for simplicity
+
+    fn try_from(value: GetLangIntermediate) -> Result<Self, Self::Error> {
+        let GetLangIntermediate {
+            mode,
+            language_candidates,
+            minimum_relative_distance,
+        } = value;
+
+        #[cfg(feature = "lang-detection")]
+        let language_candidates: Vec<IsoCode639_1> = language_candidates
+            .iter()
+            // No `to_uppercase()` required, this is done automatically by
+            // `IsoCode639_1::from_str`.
+            .map(|l| {
+                IsoCode639_1::from_str(l.trim())
+                    // Emit proper error message.
+                    .map_err(|_| {
+                        // The error path.
+                        // Produce list of all available languages.
+                        let mut all_langs = lingua::Language::all()
+                            .iter()
+                            .map(|l| {
+                                let mut s = l.iso_code_639_1().to_string();
+                                s.push_str(", ");
+                                s
+                            })
+                            .collect::<Vec<String>>();
+                        all_langs.sort();
+                        let mut all_langs = all_langs.into_iter().collect::<String>();
+                        all_langs.truncate(all_langs.len() - ", ".len());
+                        // Insert data into error object.
+                        LibCfgError::ParseLanguageCode {
+                            language_code: l.into(),
+                            all_langs,
+                        }
+                    })
+            })
+            .collect::<Result<Vec<IsoCode639_1>, LibCfgError>>()?;
+
+        Ok(GetLang {
+            mode,
+            language_candidates,
+            minimum_relative_distance,
+        })
+    }
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
