@@ -341,96 +341,49 @@ impl Settings {
             return;
         }
 
-        // Read and convert ISO codes from config object.
-        match current_scheme
-            .tmpl
-            .filter
-            .get_lang
-            .only_languages
-            .iter()
-            .map(|l| {
-                IsoCode639_1::from_str(l).map_err(|_| {
-                    // The error path.
-                    // Produce list of all available languages.
-                    let mut all_langs = lingua::Language::all()
-                        .iter()
-                        .map(|l| {
-                            let mut s = l.iso_code_639_1().to_string();
-                            s.push_str(", ");
-                            s
-                        })
-                        .collect::<Vec<String>>();
-                    all_langs.sort();
-                    let mut all_langs = all_langs.into_iter().collect::<String>();
-                    all_langs.truncate(all_langs.len() - ", ".len());
-                    // Insert data into error object.
-                    LibCfgError::ParseLanguageCode {
-                        language_code: l.into(),
-                        all_langs,
-                    }
-                })
-            })
-            .collect::<Result<Vec<IsoCode639_1>, LibCfgError>>()
-        {
-            // The happy path.
-            Ok(mut iso_codes) => {
-                if iso_codes.is_empty() {
-                    // Store result.
-                    self.filter_get_lang = FilterGetLang::AllLanguages(
-                        matches!(current_scheme.tmpl.filter.get_lang.mode, Mode::Multilingual),
-                        current_scheme
-                            .tmpl
-                            .filter
-                            .get_lang
-                            .minimum_relative_distance,
-                    );
-                } else {
-                    // Add the user's language subtag as reported from the OS.
-                    // Silently ignore if anything goes wrong here.
-                    if !self.lang.is_empty() {
-                        if let Some((lang_subtag, _)) = self.lang.split_once('-') {
-                            if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
-                                if !iso_codes.contains(&iso_code) {
-                                    iso_codes.push(iso_code);
-                                }
-                            }
+        // Read ISO codes from config object.
+        let mut iso_codes = current_scheme.tmpl.filter.get_lang.only_languages.clone();
+        if iso_codes.is_empty() {
+            // Store result.
+            self.filter_get_lang = FilterGetLang::AllLanguages(
+                matches!(current_scheme.tmpl.filter.get_lang.mode, Mode::Multilingual),
+                current_scheme
+                    .tmpl
+                    .filter
+                    .get_lang
+                    .minimum_relative_distance,
+            );
+        } else {
+            // Add the user's language subtag as reported from the OS.
+            // Silently ignore if anything goes wrong here.
+            if !self.lang.is_empty() {
+                if let Some((lang_subtag, _)) = self.lang.split_once('-') {
+                    if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
+                        if !iso_codes.contains(&iso_code) {
+                            iso_codes.push(iso_code);
                         }
-                    }
-
-                    // Check if there are at least 2 languages in the list.
-                    self.filter_get_lang = match iso_codes.len() {
-                        0 => FilterGetLang::AllLanguages(
-                            matches!(current_scheme.tmpl.filter.get_lang.mode, Mode::Multilingual),
-                            current_scheme
-                                .tmpl
-                                .filter
-                                .get_lang
-                                .minimum_relative_distance,
-                        ),
-                        1 => FilterGetLang::Error(LibCfgError::NotEnoughLanguageCodes {
-                            language_code: iso_codes[0].to_string(),
-                        }),
-                        _ => FilterGetLang::SomeLanguages(
-                            iso_codes,
-                            matches!(current_scheme.tmpl.filter.get_lang.mode, Mode::Multilingual),
-                            current_scheme
-                                .tmpl
-                                .filter
-                                .get_lang
-                                .minimum_relative_distance,
-                        ),
                     }
                 }
             }
-            // The error path.
-            Err(e) =>
-            // Store error.
-            {
-                self.filter_get_lang = FilterGetLang::Error(e);
+
+            // Check if there are at least 2 languages in the list.
+            self.filter_get_lang = match iso_codes.len() {
+                0 => unreachable!(),
+                1 => FilterGetLang::Error(LibCfgError::NotEnoughLanguageCodes {
+                    language_code: iso_codes[0].to_string(),
+                }),
+                _ => FilterGetLang::SomeLanguages(
+                    iso_codes,
+                    matches!(current_scheme.tmpl.filter.get_lang.mode, Mode::Multilingual),
+                    current_scheme
+                        .tmpl
+                        .filter
+                        .get_lang
+                        .minimum_relative_distance,
+                ),
             }
         }
     }
-
     #[cfg(not(feature = "lang-detection"))]
     /// Disable filter.
     fn update_filter_get_lang(&mut self, _force_lang: bool) {

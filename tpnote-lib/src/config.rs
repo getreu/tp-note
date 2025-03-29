@@ -22,6 +22,8 @@ use crate::error::LibCfgError;
 use crate::highlight::get_highlighting_css;
 use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
+#[cfg(feature = "lang-detection")]
+use lingua::IsoCode639_1;
 use parking_lot::RwLock;
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::{Deserialize, Serialize};
@@ -363,6 +365,9 @@ pub struct Filter {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetLang {
     pub mode: Mode,
+    #[cfg(feature = "lang-detection")]
+    pub only_languages: Vec<IsoCode639_1>,
+    #[cfg(not(feature = "lang-detection"))]
     pub only_languages: Vec<String>,
     pub minimum_relative_distance: f64,
 }
