@@ -192,6 +192,11 @@ fm_var.assertions = [
     ["fm_scheme", ["IsString", "IsConfiguredScheme"]],
 ]
 
+### If this is `false` the natural language detection algorithm is disabled.
+### The environment variable `TPNOTE_LANG_DETECTION, if set to a non empty
+### string, overwrites this setting.
+filter.get_lang.enable = true
+
 ### A list of language tags, defining languages the `get_lang` filter tries
 ### to identify in its input. The user's default language subtag, as reported 
 ### from the operating system, is automatically added to the present list.
@@ -199,6 +204,8 @@ fm_var.assertions = [
 ### It is also disabled, when the user's default language, as reported from
 ### the operating system, is not supported by the external language guessing
 ### library Lingua. In both cases the filter returns always the empty array.
+### The environment variable `TPNOTE_LANG_DETECTION, if set, overwrites this
+### setting.
 filter.get_lang.languages = [ "en", "fr", "de", ]
 
 ### Shall the `get_lang` filter try to find other languages than the first?

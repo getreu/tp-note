@@ -366,6 +366,7 @@ pub struct Filter {
 /// Configuration related to various Tera template filters.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetLang {
+    pub enable: bool,
     pub languages: Vec<String>,
     pub multilingual: bool,
     pub minimum_relative_distance: f64,

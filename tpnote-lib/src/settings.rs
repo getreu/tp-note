@@ -317,7 +317,9 @@ impl Settings {
     /// If `SETTINGS.filter_get_lang` contains a tag `TMPL_FILTER_GET_LANG_ALL`,
     /// all languages are selected by setting `FilterGetLang::AllLanguages`.
     /// Errors are stored in the `FilterGetLang::Error(e)` variant.
-    /// If `force_lang` is `Some(_)`, set `FilterGetLang::Disabled`
+    /// If `force_lang` is `Some(_)` or if the configuration file variable
+    /// `current_scheme.tmpl.filter.get_lang.enable` is `false`, set
+    /// `FilterGetLang::Disabled`
     #[cfg(feature = "lang-detection")]
     fn update_filter_get_lang(&mut self, force_lang: bool) {
         if force_lang {
@@ -327,6 +329,12 @@ impl Settings {
 
         let lib_cfg = LIB_CFG.read_recursive();
         let current_scheme = &lib_cfg.scheme[self.current_scheme];
+
+        // Check if disabled in config file.
+        if !current_scheme.tmpl.filter.get_lang.enable {
+            self.filter_get_lang = FilterGetLang::Disabled;
+            return;
+        }
 
         let mut all_languages_selected = false;
         // Read and convert ISO codes from config object.
