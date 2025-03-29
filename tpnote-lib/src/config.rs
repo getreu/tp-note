@@ -194,10 +194,6 @@ pub const TMPL_VAR_FM_NO_FILENAME_SYNC: &str = "fm_no_filename_sync";
 /// disabled for this note file. Default value is `true`.
 pub const TMPL_VAR_FM_FILENAME_SYNC: &str = "fm_filename_sync";
 
-/// A pseudo language tag for the `get_lang_filter`. When placed in the
-/// `TMP_FILTER_GET_LANG` list, all available languages are selected.
-pub const TMPL_FILTER_GET_LANG_ALL: &str = "+all";
-
 /// HTML template variable containing the automatically generated JavaScript
 /// code to be included in the HTML rendition.
 pub const TMPL_HTML_VAR_VIEWER_DOC_JS: &str = "viewer_doc_js";
@@ -367,7 +363,7 @@ pub struct Filter {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetLang {
     pub mode: Mode,
-    pub languages: Vec<String>,
+    pub only_languages: Vec<String>,
     pub minimum_relative_distance: f64,
 }
 

@@ -208,13 +208,14 @@ filter.get_lang.mode = "Multilingual"
 ### A list of language tags, defining languages the `get_lang` filter tries
 ### to identify in its input. The user's default language subtag, as reported 
 ### from the operating system, is automatically added to the present list.
-### The language recognition feature is disabled, when the list is empty.
-### It is also disabled, when the user's default language, as reported from
-### the operating system, is not supported by the external language guessing
-### library Lingua. In both cases the filter returns always the empty array.
-### The environment variable `TPNOTE_LANG_DETECTION, if set, overwrites this
-### setting.
-filter.get_lang.languages = [ "en", "fr", "de", ]
+### The language recognition feature is disabled, when the user's default
+### language, as reported from the operating system, is not supported by the
+### external language guessing library Lingua. In this case the filter returns
+### always the empty array.
+### If the list `only_languages` is empty, the algorithm searches for all
+### available languages (currently 75). The environment variable
+### `TPNOTE_LANG_DETECTION, if set, overwrites this setting.
+filter.get_lang.only_languages = [ "en", "fr", "de", ]
 
 ### Sets the desired value for the minimum relative distance measure. By
 ### default, the Lingua library returns the most likely language for a given

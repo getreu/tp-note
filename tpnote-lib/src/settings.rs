@@ -4,8 +4,6 @@
 //! order to follow changes in the related environment variables.
 
 use crate::config::LIB_CFG;
-#[cfg(feature = "lang-detection")]
-use crate::config::TMPL_FILTER_GET_LANG_ALL;
 use crate::error::LibCfgError;
 #[cfg(feature = "lang-detection")]
 use lingua;
@@ -35,6 +33,10 @@ pub const ENV_VAR_TPNOTE_EXTENSION_DEFAULT: &str = "TPNOTE_EXTENSION_DEFAULT";
 /// accessible as `{{ lang }}` template variable and used in various
 /// templates.
 pub const ENV_VAR_TPNOTE_LANG: &str = "TPNOTE_LANG";
+
+/// A pseudo language tag for the `get_lang_filter`. When placed in the
+/// `ENV_VAR_TPNOTE_LANG` list, all available languages are selected.
+pub const ENV_VAR_TPNOTE_LANG_PLUS_ALL: &str = "+all";
 
 /// Name of the environment variable, that can be optionally
 /// used to overwrite the user's `tmpl.filter.get_lang` and `tmpl.filter.map_lang`
@@ -314,8 +316,9 @@ impl Settings {
     /// `LIB_CFG.schemes[settings.scheme].tmpl.filter.get_lang`, add the user's
     /// default language subtag and store them in `SETTINGS.filter_get_lang`
     /// as `FilterGetLang::SomeLanguages(l)` `enum` variant.
-    /// If `SETTINGS.filter_get_lang` contains a tag `TMPL_FILTER_GET_LANG_ALL`,
-    /// all languages are selected by setting `FilterGetLang::AllLanguages`.
+    /// If `LIB_CFG.schemes[..].tmpl.filter.get_lang.only_languages`
+    /// is empty then all languages are selected by setting
+    /// `FilterGetLang::AllLanguages`.
     /// Errors are stored in the `FilterGetLang::Error(e)` variant.
     /// If `force_lang` is `Some(_)` or if the configuration file variable
     /// `current_scheme.tmpl.filter.get_lang.enable` is `false`, set
@@ -338,25 +341,13 @@ impl Settings {
             return;
         }
 
-        let mut all_languages_selected = false;
         // Read and convert ISO codes from config object.
         match current_scheme
             .tmpl
             .filter
             .get_lang
-            .languages
+            .only_languages
             .iter()
-            // Skip if this is the pseudo tag for all languages.
-            .filter(|&l| {
-                if l == TMPL_FILTER_GET_LANG_ALL {
-                    all_languages_selected = true;
-                    // Skip this string.
-                    false
-                } else {
-                    // Continue.
-                    true
-                }
-            })
             .map(|l| {
                 IsoCode639_1::from_str(l).map_err(|_| {
                     // The error path.
@@ -383,7 +374,7 @@ impl Settings {
         {
             // The happy path.
             Ok(mut iso_codes) => {
-                if all_languages_selected {
+                if iso_codes.is_empty() {
                     // Store result.
                     self.filter_get_lang = FilterGetLang::AllLanguages(
                         matches!(current_scheme.tmpl.filter.get_lang.mode, Mode::Multilingual),
@@ -408,7 +399,14 @@ impl Settings {
 
                     // Check if there are at least 2 languages in the list.
                     self.filter_get_lang = match iso_codes.len() {
-                        0 => FilterGetLang::Disabled,
+                        0 => FilterGetLang::AllLanguages(
+                            matches!(current_scheme.tmpl.filter.get_lang.mode, Mode::Multilingual),
+                            current_scheme
+                                .tmpl
+                                .filter
+                                .get_lang
+                                .minimum_relative_distance,
+                        ),
                         1 => FilterGetLang::Error(LibCfgError::NotEnoughLanguageCodes {
                             language_code: iso_codes[0].to_string(),
                         }),
@@ -504,7 +502,7 @@ impl Settings {
                 })
                 // Check if this is the pseudo tag `TMPL_FILTER_GET_LANG_ALL `.
                 .filter(|&l| {
-                    if l == TMPL_FILTER_GET_LANG_ALL {
+                    if l == ENV_VAR_TPNOTE_LANG_PLUS_ALL {
                         all_languages_selected = true;
                         // Skip this string.
                         false
