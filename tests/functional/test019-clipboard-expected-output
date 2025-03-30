@@ -2,9 +2,8 @@
 title:        Parlez-vous français
 subtitle:     Note
 author:       Myuser
-lang:         fr
+lang:         de-DE
 languages:
-              - fr
               - de-DE
               - en-US
 ---

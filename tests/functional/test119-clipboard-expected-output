@@ -3,9 +3,8 @@ title:        Parlez-vous français
 keywords:
               - note
 author:       Myuser
-lang:         fr
+lang:         de-DE
 languages:
-              - fr
               - de-DE
               - en-US
 scheme:       zettel
