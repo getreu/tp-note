@@ -89,7 +89,7 @@ const DEFAULT_SETTINGS: Settings = Settings {
     lang: String::new(),
     extension_default: String::new(),
     filter_get_lang: GetLang {
-        mode: Mode::Disable,
+        mode: Mode::Disabled,
         language_candidates: vec![],
         minimum_relative_distance: 0.0,
     },
@@ -313,12 +313,12 @@ impl Settings {
 
         // `force_lang` disables the filter.
         if force_lang {
-            self.filter_get_lang.mode = Mode::Disable;
+            self.filter_get_lang.mode = Mode::Disabled;
             return;
         }
 
         // Check if disabled in config file. Early return.
-        if matches!(self.filter_get_lang.mode, Mode::Disable) {
+        if matches!(self.filter_get_lang.mode, Mode::Disabled) {
             return;
         }
 
@@ -353,7 +353,7 @@ impl Settings {
     #[cfg(not(feature = "lang-detection"))]
     /// Disable filter.
     fn update_filter_get_lang(&mut self, _force_lang: bool) {
-        self.filter_get_lang.mode = Mode::Disable;
+        self.filter_get_lang.mode = Mode::Disabled;
     }
 
     /// Read keys and values from
@@ -393,7 +393,7 @@ impl Settings {
         if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
             if env_var.is_empty() {
                 // Early return.
-                self.filter_get_lang.mode = Mode::Disable;
+                self.filter_get_lang.mode = Mode::Disabled;
                 self.filter_map_lang_btmap = None;
                 log::debug!(
                     "Empty env. var. `{}` disables the `lang-detection` feature.",
@@ -476,12 +476,12 @@ impl Settings {
                     // Store result.
                     if all_languages_selected {
                         self.filter_get_lang.language_candidates = vec![];
-                        if matches!(self.filter_get_lang.mode, Mode::Disable) {
+                        if matches!(self.filter_get_lang.mode, Mode::Disabled) {
                             self.filter_get_lang.mode = Mode::Multilingual;
                         }
                     } else {
                         match iso_codes.len() {
-                            0 => self.filter_get_lang.mode = Mode::Disable,
+                            0 => self.filter_get_lang.mode = Mode::Disabled,
                             1 => {
                                 self.filter_get_lang.mode =
                                     Mode::Error(LibCfgError::NotEnoughLanguageCodes {
@@ -490,7 +490,7 @@ impl Settings {
                             }
                             _ => {
                                 self.filter_get_lang.language_candidates = iso_codes;
-                                if matches!(self.filter_get_lang.mode, Mode::Disable) {
+                                if matches!(self.filter_get_lang.mode, Mode::Disabled) {
                                     self.filter_get_lang.mode = Mode::Multilingual;
                                 }
                             }
@@ -509,7 +509,7 @@ impl Settings {
             // Even is `force_lang` is set and the environment variable is not
             // in use, we always parse it (see code above) to identify errors.
             if force_lang {
-                self.filter_get_lang.mode = Mode::Disable;
+                self.filter_get_lang.mode = Mode::Disabled;
             }
         }
     }
@@ -519,7 +519,7 @@ impl Settings {
     fn update_env_lang_detection(&mut self, _force_lang: bool) {
         if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
             if !env_var.is_empty() {
-                self.filter_get_lang.mode = Mode::Disable;
+                self.filter_get_lang.mode = Mode::Disabled;
                 self.filter_map_lang_btmap = None;
                 log::debug!(
                     "Ignoring the env. var. `{}`. The `lang-detection` feature \
@@ -785,7 +785,7 @@ mod tests {
         settings.update_env_lang_detection(true);
 
         // `force_lang` must disables the `get_lang` filter.
-        assert_eq!(settings.filter_get_lang.mode, Mode::Disable);
+        assert_eq!(settings.filter_get_lang.mode, Mode::Disabled);
 
         let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
         assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
@@ -801,7 +801,7 @@ mod tests {
         unsafe { env::set_var(ENV_VAR_TPNOTE_LANG_DETECTION, "") };
         settings.update_env_lang_detection(false);
 
-        assert_eq!(settings.filter_get_lang.mode, Mode::Disable);
+        assert_eq!(settings.filter_get_lang.mode, Mode::Disabled);
         assert!(settings.filter_map_lang_btmap.is_none());
 
         //
@@ -852,7 +852,7 @@ mod tests {
         }
         settings.update_env_lang_detection(false);
 
-        assert!(matches!(settings.filter_get_lang.mode, Mode::Disable));
+        assert!(matches!(settings.filter_get_lang.mode, Mode::Disabled));
         assert!(settings.filter_map_lang_btmap.is_none());
     }
 }

@@ -961,7 +961,7 @@ fn get_lang_filter<S: BuildHasher>(
 
     // Check if we can return early.
     match &settings.filter_get_lang.mode {
-        Mode::Disable => return Ok(Value::Array(vec![])),
+        Mode::Disabled => return Ok(Value::Array(vec![])),
 
         Mode::Error(e) => return Err(tera::Error::from(e.to_string())),
         _ => {}
@@ -1011,7 +1011,7 @@ fn get_lang_filter<S: BuildHasher>(
                 .is_some_and(|a| a.is_empty() || a[0].is_string()));
             val
         }
-        Mode::Disable => unreachable!(),
+        Mode::Disabled => unreachable!(),
         Mode::Error(_) => unreachable!(),
     };
 

@@ -766,7 +766,7 @@ impl TryFrom<GetLangIntermediate> for GetLang {
 #[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Mode {
     /// The `get_lang` filter is disabled. No language guessing occurs.
-    Disable,
+    Disabled,
     /// The algorithm of the `get_lang` filter assumes, that the input is
     /// monolingual. Only one language is searched and reported.
     Monolingual,

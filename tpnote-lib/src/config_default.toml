@@ -194,7 +194,7 @@ fm_var.assertions = [
 
 ### The operation mode of the `get_lang` filter.
 ###
-### * Disable:
+### * Disabled:
 ###    The `get_lang` filter is disabled. No language guessing occurs.
 ### * Monolingual:
 ###   The algorithm of the `get_lang` filter assumes, that the input is
@@ -231,10 +231,10 @@ filter.get_lang.language_candidates = [ "en", "fr", "de" ]
 ### set the minimum relative distance too high. Otherwise, `get_lang` will
 ### return most results as empty array, which is the return value for cases
 ### where language detection is not reliably possible. Valid values are between
-### `0.0` and `0.99`. A low value finds more languages, but can lead to false
-### positives. NB: Languages not listed in `filter.get_lang.languages` are
-### never searched for, independent of the `minimum_relative_distance` value
-### set here.  
+### `0.0` and `0.99`. A low value finds more languages, but can lead to more
+### false positives.
+### NB: Languages not listed in `language_candidates` are never searched for,
+### independent of the `minimum_relative_distance` value set here.
 filter.get_lang.minimum_relative_distance = 0.2
 
 ### Default values for the `map_lang` hash map filter, that are used to post
