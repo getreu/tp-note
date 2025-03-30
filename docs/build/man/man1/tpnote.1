@@ -2194,13 +2194,13 @@ filter named `\f[CR]get_lang\f[R]', which is used in various Tera
 content templates `\f[CR]tmpl.*_content\f[R]' in Tp\-Note\[cq]s
 configuration file.
 The filter `\f[CR]get_lang\f[R]' is parametrized by the configuration
-variable `\f[CR]tmpl.filter.get_lang\f[R]' containing a list of ISO
-639\-1 encoded languages, the algorithm considers as potential detection
-candidates, e.g.:
+variables `\f[CR]tmpl.filter.get_lang.*\f[R]' containing e.g.\ a list of
+ISO 639\-1 encoded languages, the algorithm considers as potential
+detection candidates, e.g.:
 .IP
 .EX
 \f[B][base_scheme.tmpl]\f[R]
-filter.get_lang = [ \[dq]en\[dq], \[dq]fr\[dq], \[dq]de\[dq], \[dq]et\[dq] ]
+filter.get_lang.langauage_candidates = [ \[dq]en\[dq], \[dq]fr\[dq], \[dq]de\[dq], \[dq]et\[dq] ]
 .EE
 .PP
 As natural language detection is CPU intensive, it is advised to limit
@@ -2211,12 +2211,38 @@ creation takes time.
 As a rule of thumb, with all languages enabled the creation of new notes
 can take up to 4 seconds on my computer.
 Nevertheless, it is possible to enable all available detection
-candidates with the pseudo language code `\f[CR]+all\f[R]' which stands
-for \[lq]add all languages\[rq]:
+candidates with the empty array:
 .IP
 .EX
 \f[B][base_scheme.tmpl]\f[R]
-filter.get_lang = [ \[dq]+all\[dq], ]
+filter.get_lang.langauage_candidates = []
+.EE
+.PP
+The language detection algorithm can be fine\-tuned with:
+.IP
+.EX
+\f[B][base_scheme.tmpl]\f[R]
+filter.get_lang.minimum_relative_distance = 0.2
+.EE
+.PP
+Valid values are between \f[CR]0.0\f[R] and \f[CR]0.99\f[R].
+A low value finds more languages, but can lead to more false positives.
+NB: Languages not listed in \f[CR]language_candidates\f[R] are never
+searched for, independent of the \f[CR]minimum_relative_distance\f[R]
+value set here.
+.PP
+The algorithm can search for multiple languages in the input text:
+.IP
+.EX
+\f[B][base_scheme.tmpl]\f[R]
+filter.get_lang.mode = \[dq]Multilingual\[dq]
+.EE
+.PP
+If the input text is usually written in one language only, set:
+.IP
+.EX
+\f[B][base_scheme.tmpl]\f[R]
+filter.get_lang.mode = \[dq]Monolingual\[dq]
 .EE
 .PP
 Once the language is detected with the filter `\f[CR]get_lang\f[R]', it
@@ -2236,7 +2262,7 @@ The corresponding configuration looks like this:
 .IP
 .EX
 \f[B][base_scheme.tmpl]\f[R]
-filter.get_lang = [ \[dq]en\[dq], \[dq]fr\[dq], \[dq]de\[dq], \[dq]et\[dq] ]
+filter.get_lang.languages_candidates = [ \[dq]en\[dq], \[dq]fr\[dq], \[dq]de\[dq], \[dq]et\[dq] ]
 filter.map_lang = [
     [ \[dq]en\[dq], \[dq]en\-US\[dq], ],
     [ \[dq]de\[dq], \[dq]de\-DE\[dq], ],
@@ -2255,8 +2281,9 @@ Subsequent entries that differ only in the region subtag, e.g.
 are ignored.
 .PP
 Note, that the environment variable `\f[CR]TPNOTE_LANG_DETECTION\f[R]'
-\- if set \- takes precedence over the `\f[CR]tmpl.filter.get_lang\f[R]'
-and `\f[CR]tmpl.filter.map_lang\f[R]' settings.
+\- if set \- takes precedence over the
+`\f[CR]tmpl.filter.get_lang.language_candidates\f[R]' and
+`\f[CR]tmpl.filter.map_lang\f[R]' settings.
 This allows configuring the language detection feature system\-wide
 without touching Tp\-Note\[cq]s configuration file.
 The following example achieves the equivalent result to the
@@ -2286,12 +2313,11 @@ tpnote \-d trace \-b
 .EE
 .PP
 If wished for, you can disable Tp\-Note\[cq]s language detection
-feature, by deleting all entries in the
-`\f[CR]tmpl.filter.get_lang\f[R]' variable:
+feature:
 .IP
 .EX
 \f[B][base_scheme.tmpl]\f[R]
-filter.get_lang = []
+filter.get_lang.mode = \[dq]Disabled\[dq]
 .EE
 .PP
 Like above, you can achieve the same with:

@@ -1800,13 +1800,13 @@ input: the header field '`title:`' or the first sentence of the text body.
 The natural language detection algorithm is implemented as a template filter
 named '`get_lang`', which is used in various Tera content templates
 '`tmpl.*_content`' in Tp-Note's configuration file. The filter '`get_lang`'
-is parametrized by the configuration variable '`tmpl.filter.get_lang`'
-containing a list of ISO 639-1 encoded languages, the algorithm considers as
-potential detection candidates, e.g.:
+is parametrized by the configuration variables '`tmpl.filter.get_lang.*`'
+containing e.g. a list of ISO 639-1 encoded languages, the algorithm considers
+as potential detection candidates, e.g.:
 
 ```toml
 [base_scheme.tmpl]
-filter.get_lang = [ "en", "fr", "de", "et" ]
+filter.get_lang.langauage_candidates = [ "en", "fr", "de", "et" ]
 ```
 
 As natural language detection is CPU intensive, it is advised to limit the
@@ -1814,12 +1814,37 @@ number of detection candidates to 5 or 6, depending on how fast your computer
 is. The more language candidates you include, the longer the note file creation
 takes time. As a rule of thumb, with all languages enabled the creation of new
 notes can take up to 4 seconds on my computer. Nevertheless, it is possible to
-enable all available detection candidates with the pseudo language code '`+all`'
-which stands for “add all languages”:
+enable all available detection candidates with the empty array:
 
 ```toml
 [base_scheme.tmpl]
-filter.get_lang = [ "+all", ]
+filter.get_lang.langauage_candidates = []
+```
+
+The language detection algorithm can be fine-tuned with:
+
+```toml
+[base_scheme.tmpl]
+filter.get_lang.minimum_relative_distance = 0.2
+```
+
+Valid values are between `0.0` and `0.99`. A low value finds more
+languages, but can lead to more false positives. NB: Languages not listed
+in `language_candidates` are never searched for, independent of the
+`minimum_relative_distance` value set here.
+
+The algorithm can search for multiple languages in the input text:
+
+```toml
+[base_scheme.tmpl]
+filter.get_lang.mode = "Multilingual"
+```
+
+If the input text is usually written in one language only, set:
+
+```toml
+[base_scheme.tmpl]
+filter.get_lang.mode = "Monolingual"
 ```
 
 Once the language is detected with the filter '`get_lang`', it passes another
@@ -1835,7 +1860,7 @@ The corresponding configuration looks like this:
 
 ```toml
 [base_scheme.tmpl]
-filter.get_lang = [ "en", "fr", "de", "et" ]
+filter.get_lang.languages_candidates = [ "en", "fr", "de", "et" ]
 filter.map_lang = [
     [ "en", "en-US", ],
     [ "de", "de-DE", ],
@@ -1851,10 +1876,11 @@ Subsequent entries that differ only in the region subtag, e.g.
 '`['en', 'en- GB'], ['en', 'en-US']`' are ignored.
 
 Note, that the environment variable '`TPNOTE_LANG_DETECTION`' - if set -
-takes precedence over the '`tmpl.filter.get_lang`' and '`tmpl.filter.map_lang`'
-settings. This allows configuring the language detection feature system-wide
-without touching Tp-Note's configuration file. The following example achieves
-the equivalent result to the configuration hereinabove:
+takes precedence over the '`tmpl.filter.get_lang.language_candidates`' and
+'`tmpl.filter.map_lang`' settings. This allows configuring the language
+detection feature system-wide without touching Tp-Note's configuration file.
+The following example achieves the equivalent result to the configuration
+hereinabove:
 
 ```sh
 TPNOTE_LANG_DETECTION="en-US, fr, de-DE, et" tpnote
@@ -1877,12 +1903,11 @@ For debugging observe the value of '`SETTINGS`' in the debug log with:
 tpnote -d trace -b
 ```
 
-If wished for, you can disable Tp-Note's language detection feature, by
-deleting all entries in the '`tmpl.filter.get_lang`' variable:
+If wished for, you can disable Tp-Note's language detection feature:
 
 ```toml
 [base_scheme.tmpl]
-filter.get_lang = []
+filter.get_lang.mode = "Disabled"
 ```
 
 Like above, you can achieve the same with:
