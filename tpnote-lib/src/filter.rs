@@ -949,6 +949,7 @@ fn get_lang_filter<S: BuildHasher>(
     _args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
     use crate::config::Mode;
+    use itertools::Itertools;
 
     let input = try_get_value!("get_lang", "value", String, value);
     let input = input.trim();
@@ -971,7 +972,7 @@ fn get_lang_filter<S: BuildHasher>(
     let detector: LanguageDetector = if !&settings.filter_get_lang.language_candidates.is_empty() {
         log::trace!(
             "Execute template filter `get_lang` \
-                        with languages candiates: {:?}",
+                        with languages candidates: {:?}",
             &settings.filter_get_lang.language_candidates,
         );
 
@@ -990,12 +991,72 @@ fn get_lang_filter<S: BuildHasher>(
 
     // Detect languages.
     let detected_languages: tera::Value = match &settings.filter_get_lang.mode {
-        Mode::Multilingual => detector
-            .detect_multiple_languages_of(input)
-            .into_iter()
-            .map(|l| l.language().iso_code_639_1().to_string())
-            .inspect(|l| log::debug!("Language(s): '{}' in input detected.", l))
-            .collect(),
+        Mode::Multilingual => {
+            // TODO
+            let consecutive_words_min = 5;
+            let words_total_percentage_min = 10;
+
+            let words_total = input.split_whitespace().count();
+            let words_min = [consecutive_words_min, words_total / 3]; // TODO
+            let words_min = words_min.iter().min().unwrap();
+
+            let words_distribution: HashMap<String, usize> = detector
+                .detect_multiple_languages_of(input)
+                .into_iter()
+                // Filter too short word sequences.
+                .filter(|l| {
+                    let allow_through = l.word_count() >= *words_min;
+                    log::trace!(
+                        "Language(s) detected: {}, {}, {}: {:?}",
+                        l.language().iso_code_639_1().to_string(),
+                        l.word_count(),
+                        allow_through,
+                        input[l.start_index()..l.end_index()]
+                            .chars()
+                            .take(50)
+                            .collect::<String>()
+                    );
+                    allow_through
+                })
+                .map(|l| (l.language().iso_code_639_1().to_string(), l.word_count()))
+                .into_grouping_map_by(|n| n.0.clone())
+                .aggregate(|acc, _key, val| Some(acc.unwrap_or(0) + val.1));
+
+            // Descending order sort.
+            let words_distribution: Vec<(String, usize)> = words_distribution
+                .into_iter()
+                .sorted_by_key(|l| usize::MAX - l.1)
+                .collect();
+            log::debug!(
+                "Languages distribution per word count:\n {:?}",
+                words_distribution
+            );
+
+            // Filter languages, whose words do not occur sufficiently in total.
+            let words_distribution_total: usize = words_distribution.iter().map(|l| l.1).sum();
+            let words_total_min: usize =
+                words_distribution_total * words_total_percentage_min / 100;
+            let languages = words_distribution
+                .into_iter()
+                .filter(|(l, wc)| {
+                    if *wc >= words_total_min {
+                        true
+                    } else {
+                        let words_percentage = wc * 100 / words_distribution_total;
+                        log::debug!(
+                            "Language `{}` rejected: not enough words in total ({}%<{}%)",
+                            l,
+                            words_percentage,
+                            words_total_percentage_min
+                        );
+                        false
+                    }
+                })
+                .map(|(l, _)| l)
+                .collect::<Vec<String>>();
+
+            languages.into()
+        }
 
         Mode::Monolingual => {
             let val: Value = detector
@@ -2156,11 +2217,24 @@ Some more text."#;
         let args = HashMap::new();
         let input = "Parlez-vous français? \
         Ich spreche Französisch nur ein bisschen. \
+        A little bit is better than nothing. \
+        Noch mehr Deutsch. \
+        Bien-sûr, je parle un peu. Qu'est-ce que tu veux?";
+        let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
+        assert_eq!("fr", output[0]); // 11 words: 40.7%
+        assert_eq!("de", output[1]); // 10 words: 37.4%
+        assert_eq!("en", output[2]); //  6 words: 22.2%
+        assert_eq!(output.as_array().unwrap().len(), 3);
+
+        let args = HashMap::new();
+        let input = "Parlez-vous français? \
+        Ich spreche Französisch nur ein bisschen. \
         A little bit is better than nothing.";
         let output = get_lang_filter(&to_value(input).unwrap(), &args).unwrap();
-        assert_eq!("fr", output[0]);
-        assert_eq!("de", output[1]);
-        assert_eq!("en", output[2]);
+        assert_eq!("de", output[0]); //  7 words: 46.7%
+        assert_eq!("en", output[1]); //  6 words: 40.0%
+                                     //  2 words: 13.3% (fr rejected, not enough words)
+        assert_eq!(output.as_array().unwrap().len(), 2);
 
         // Release the lock.
         drop(_settings);
