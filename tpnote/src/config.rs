@@ -21,7 +21,6 @@ use std::str::FromStr;
 use std::sync::LazyLock;
 use tera::Tera;
 use toml::Value;
-use tpnote_lib::config::CfgVal;
 use tpnote_lib::config::LibCfg;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::TmplHtml;
@@ -29,6 +28,7 @@ use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::config::LIB_CFG_RAW_FIELD_NAMES;
 use tpnote_lib::config::LIB_CONFIG_DEFAULT_TOML;
+use tpnote_lib::config_value::CfgVal;
 use tpnote_lib::context::Context;
 use tpnote_lib::filename::NotePathBuf;
 

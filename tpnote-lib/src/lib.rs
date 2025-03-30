@@ -18,6 +18,7 @@
 //!
 pub mod clone_ext;
 pub mod config;
+pub mod config_value;
 pub mod content;
 pub mod context;
 pub mod error;
