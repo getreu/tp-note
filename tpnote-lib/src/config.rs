@@ -249,27 +249,6 @@ pub static LIB_CFG: LazyLock<RwLock<LibCfg>> = LazyLock::new(|| RwLock::new(LibC
 /// all other arrays are replaced.
 pub(crate) const CONFIG_FILE_MERGE_DEPTH: isize = 2;
 
-/// Unprocessed configuration data, deserialized from the configuration file.
-/// This defines the structure of the configuration file.
-/// Its default values are stored in serialized form in
-/// `LIB_CONFIG_DEFAULT_TOML`.
-#[derive(Debug, Serialize, Deserialize)]
-struct LibCfgRaw {
-    /// The fallback scheme for the `sync_filename` template choice, if the
-    /// `scheme` header variable is empty or is not defined.
-    pub scheme_sync_default: String,
-    /// This is the base scheme, from which all instantiated schemes inherit.
-    pub base_scheme: Value,
-    /// This flatten into a `scheme=Vec<Scheme>` in which the `Scheme`
-    /// definitions are not complete. Only after merging it into a copy of
-    /// `base_scheme` we can parse it into a `Scheme` structs. The result is not
-    /// kept here, it is stored into `LibCfg` struct instead.
-    #[serde(flatten)]
-    pub scheme: HashMap<String, Value>,
-    /// Configuration of HTML templates.
-    pub tmpl_html: TmplHtml,
-}
-
 /// An array of field names after deserialization.
 pub const LIB_CFG_RAW_FIELD_NAMES: [&str; 4] =
     ["scheme_sync_default", "base_scheme", "scheme", "tmpl_html"];
@@ -474,13 +453,35 @@ pub struct TmplHtml {
 /// assert_eq!(lib_cfg.scheme_sync_default, "default")
 /// ```
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(try_from = "LibCfgRaw")]
+#[serde(try_from = "LibCfgIntermediate")]
 pub struct LibCfg {
     /// The fallback scheme for the `sync_filename` template choice, if the
     /// `scheme` header variable is empty or is not defined.
     pub scheme_sync_default: String,
     /// Configuration of `Scheme`.
     pub scheme: Vec<Scheme>,
+    /// Configuration of HTML templates.
+    pub tmpl_html: TmplHtml,
+}
+
+/// Unprocessed configuration data, deserialized from the configuration file.
+/// This is an intermediate representation of `LibCfg`.
+/// This defines the structure of the configuration file.
+/// Its default values are stored in serialized form in
+/// `LIB_CONFIG_DEFAULT_TOML`.
+#[derive(Debug, Serialize, Deserialize)]
+struct LibCfgIntermediate {
+    /// The fallback scheme for the `sync_filename` template choice, if the
+    /// `scheme` header variable is empty or is not defined.
+    pub scheme_sync_default: String,
+    /// This is the base scheme, from which all instantiated schemes inherit.
+    pub base_scheme: Value,
+    /// This flatten into a `scheme=Vec<Scheme>` in which the `Scheme`
+    /// definitions are not complete. Only after merging it into a copy of
+    /// `base_scheme` we can parse it into a `Scheme` structs. The result is not
+    /// kept here, it is stored into `LibCfg` struct instead.
+    #[serde(flatten)]
+    pub scheme: HashMap<String, Value>,
     /// Configuration of HTML templates.
     pub tmpl_html: TmplHtml,
 }
@@ -695,7 +696,7 @@ impl Default for LibCfg {
     }
 }
 
-impl TryFrom<LibCfgRaw> for LibCfg {
+impl TryFrom<LibCfgIntermediate> for LibCfg {
     type Error = LibCfgError;
 
     /// Constructor expecting a `LibCfgRaw` struct as input.
@@ -709,7 +710,7 @@ impl TryFrom<LibCfgRaw> for LibCfg {
     ///    a css is calculated from `tmpl.viewer_highlighting_theme`
     ///    and stored in `LibCfg.html_tmpl.viewer_highlighting_css`.
     /// 3.  Do the same for `LibCfgRaw.html_tmpl.exporter_highlighting_css`.
-    fn try_from(lib_cfg_raw: LibCfgRaw) -> Result<Self, Self::Error> {
+    fn try_from(lib_cfg_raw: LibCfgIntermediate) -> Result<Self, Self::Error> {
         let mut raw = lib_cfg_raw;
         // Now we merge all `scheme` into a copy of `base_scheme` and
         // parse the result into a `Vec<Scheme>`.
