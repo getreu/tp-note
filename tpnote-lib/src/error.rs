@@ -69,7 +69,7 @@ pub enum LibCfgError {
     #[error(
         "Configuration file error in [base_scheme] or in section:\n\
         \t[[scheme]]\n\
-        \tname = \"{scheme_name}\"
+        \tname = \"{scheme_name}\"\n\
         \t[scheme.tmpl]\n\
         \tfilter.get_lang.minimum_relative_distance={dist}\n\
         must be between 0.0 and 0.99."
