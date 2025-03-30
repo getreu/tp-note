@@ -248,185 +248,6 @@ pub static LIB_CFG: LazyLock<RwLock<LibCfg>> = LazyLock::new(|| RwLock::new(LibC
 pub const LIB_CFG_RAW_FIELD_NAMES: [&str; 4] =
     ["scheme_sync_default", "base_scheme", "scheme", "tmpl_html"];
 
-/// Configuration data, deserialized from the configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Scheme {
-    pub name: String,
-    /// Configuration of filename parsing.
-    pub filename: Filename,
-    /// Configuration of content and filename templates.
-    pub tmpl: Tmpl,
-}
-
-/// Configuration of filename parsing, deserialized from the
-/// configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Filename {
-    pub sort_tag: SortTag,
-    pub copy_counter: CopyCounter,
-    pub extension_default: String,
-    pub extensions: Vec<(String, InputConverter, MarkupLanguage)>,
-}
-
-/// Configuration for sort-tag.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SortTag {
-    pub extra_chars: String,
-    pub separator: String,
-    pub extra_separator: char,
-    pub letters_in_succession_max: u8,
-    pub sequential: Sequential,
-}
-
-/// Requirements for chronological sort tags.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Sequential {
-    pub digits_in_succession_max: u8,
-}
-
-/// Configuration for copy-counter.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct CopyCounter {
-    pub extra_separator: String,
-    pub opening_brackets: String,
-    pub closing_brackets: String,
-}
-
-/// Filename templates and content templates, deserialized from the
-/// configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Tmpl {
-    pub fm_var: FmVar,
-    pub filter: Filter,
-    pub from_dir_content: String,
-    pub from_dir_filename: String,
-    pub from_clipboard_yaml_content: String,
-    pub from_clipboard_yaml_filename: String,
-    pub from_clipboard_content: String,
-    pub from_clipboard_filename: String,
-    pub from_text_file_content: String,
-    pub from_text_file_filename: String,
-    pub annotate_file_content: String,
-    pub annotate_file_filename: String,
-    pub sync_filename: String,
-}
-
-/// Configuration describing how to localize and check front matter variables.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct FmVar {
-    pub localization: Vec<(String, String)>,
-    pub assertions: Vec<(String, Vec<Assertion>)>,
-}
-
-/// Configuration related to various Tera template filters.
-#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct Filter {
-    pub get_lang: GetLang,
-    pub map_lang: Vec<Vec<String>>,
-    pub to_yaml_tab: u64,
-}
-
-/// Configuration related to various Tera template filters.
-#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
-#[serde(try_from = "GetLangIntermediate")]
-pub struct GetLang {
-    pub mode: Mode,
-    #[cfg(feature = "lang-detection")]
-    pub language_candidates: Vec<IsoCode639_1>,
-    #[cfg(not(feature = "lang-detection"))]
-    pub language_candidates: Vec<String>,
-    pub minimum_relative_distance: f64,
-}
-
-/// Configuration related to various Tera template filters.
-#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
-struct GetLangIntermediate {
-    pub mode: Mode,
-    pub language_candidates: Vec<String>,
-    pub minimum_relative_distance: f64,
-}
-
-impl TryFrom<GetLangIntermediate> for GetLang {
-    type Error = LibCfgError; // Use String as error type just for simplicity
-
-    fn try_from(value: GetLangIntermediate) -> Result<Self, Self::Error> {
-        let GetLangIntermediate {
-            mode,
-            language_candidates,
-            minimum_relative_distance,
-        } = value;
-
-        #[cfg(feature = "lang-detection")]
-        let language_candidates: Vec<IsoCode639_1> = language_candidates
-            .iter()
-            // No `to_uppercase()` required, this is done automatically by
-            // `IsoCode639_1::from_str`.
-            .map(|l| {
-                IsoCode639_1::from_str(l.trim())
-                    // Emit proper error message.
-                    .map_err(|_| {
-                        // The error path.
-                        // Produce list of all available languages.
-                        let mut all_langs = lingua::Language::all()
-                            .iter()
-                            .map(|l| {
-                                let mut s = l.iso_code_639_1().to_string();
-                                s.push_str(", ");
-                                s
-                            })
-                            .collect::<Vec<String>>();
-                        all_langs.sort();
-                        let mut all_langs = all_langs.into_iter().collect::<String>();
-                        all_langs.truncate(all_langs.len() - ", ".len());
-                        // Insert data into error object.
-                        LibCfgError::ParseLanguageCode {
-                            language_code: l.into(),
-                            all_langs,
-                        }
-                    })
-            })
-            .collect::<Result<Vec<IsoCode639_1>, LibCfgError>>()?;
-
-        Ok(GetLang {
-            mode,
-            language_candidates,
-            minimum_relative_distance,
-        })
-    }
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub enum Mode {
-    /// The `get_lang` filter is disabled. No language guessing occurs.
-    Disable,
-    /// The algorithm of the `get_lang` filter assumes, that the input is
-    /// monolingual. Only one language is searched and reported.
-    Monolingual,
-    /// The algorithm of the `get_lang` filter assumes, that the input is
-    /// monolingual. If present in the input, more than one language can be
-    /// reported.
-    #[default]
-    Multilingual,
-    /// Variant to represent the error state for an invalid `GetLang` object.
-    #[serde(skip)]
-    Error(LibCfgError),
-}
-
-/// Configuration for the HTML exporter feature, deserialized from the
-/// configuration file.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct TmplHtml {
-    pub viewer: String,
-    pub viewer_error: String,
-    pub viewer_doc_css: String,
-    pub viewer_highlighting_theme: String,
-    pub viewer_highlighting_css: String,
-    pub exporter: String,
-    pub exporter_doc_css: String,
-    pub exporter_highlighting_theme: String,
-    pub exporter_highlighting_css: String,
-}
-
 /// Processed configuration data.
 ///
 /// Its structure is different form the input form defined in `LibCfgRaw` (see
@@ -793,6 +614,185 @@ impl TryFrom<CfgVal> for LibCfg {
         let value: toml::Value = cfg_val.into();
         Ok(value.try_into()?)
     }
+}
+
+/// Configuration data, deserialized from the configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Scheme {
+    pub name: String,
+    /// Configuration of filename parsing.
+    pub filename: Filename,
+    /// Configuration of content and filename templates.
+    pub tmpl: Tmpl,
+}
+
+/// Configuration of filename parsing, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Filename {
+    pub sort_tag: SortTag,
+    pub copy_counter: CopyCounter,
+    pub extension_default: String,
+    pub extensions: Vec<(String, InputConverter, MarkupLanguage)>,
+}
+
+/// Configuration for sort-tag.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SortTag {
+    pub extra_chars: String,
+    pub separator: String,
+    pub extra_separator: char,
+    pub letters_in_succession_max: u8,
+    pub sequential: Sequential,
+}
+
+/// Requirements for chronological sort tags.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Sequential {
+    pub digits_in_succession_max: u8,
+}
+
+/// Configuration for copy-counter.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CopyCounter {
+    pub extra_separator: String,
+    pub opening_brackets: String,
+    pub closing_brackets: String,
+}
+
+/// Filename templates and content templates, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Tmpl {
+    pub fm_var: FmVar,
+    pub filter: Filter,
+    pub from_dir_content: String,
+    pub from_dir_filename: String,
+    pub from_clipboard_yaml_content: String,
+    pub from_clipboard_yaml_filename: String,
+    pub from_clipboard_content: String,
+    pub from_clipboard_filename: String,
+    pub from_text_file_content: String,
+    pub from_text_file_filename: String,
+    pub annotate_file_content: String,
+    pub annotate_file_filename: String,
+    pub sync_filename: String,
+}
+
+/// Configuration describing how to localize and check front matter variables.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FmVar {
+    pub localization: Vec<(String, String)>,
+    pub assertions: Vec<(String, Vec<Assertion>)>,
+}
+
+/// Configuration related to various Tera template filters.
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct Filter {
+    pub get_lang: GetLang,
+    pub map_lang: Vec<Vec<String>>,
+    pub to_yaml_tab: u64,
+}
+
+/// Configuration related to various Tera template filters.
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[serde(try_from = "GetLangIntermediate")]
+pub struct GetLang {
+    pub mode: Mode,
+    #[cfg(feature = "lang-detection")]
+    pub language_candidates: Vec<IsoCode639_1>,
+    #[cfg(not(feature = "lang-detection"))]
+    pub language_candidates: Vec<String>,
+    pub minimum_relative_distance: f64,
+}
+
+/// Configuration related to various Tera template filters.
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+struct GetLangIntermediate {
+    pub mode: Mode,
+    pub language_candidates: Vec<String>,
+    pub minimum_relative_distance: f64,
+}
+
+impl TryFrom<GetLangIntermediate> for GetLang {
+    type Error = LibCfgError; // Use String as error type just for simplicity
+
+    fn try_from(value: GetLangIntermediate) -> Result<Self, Self::Error> {
+        let GetLangIntermediate {
+            mode,
+            language_candidates,
+            minimum_relative_distance,
+        } = value;
+
+        #[cfg(feature = "lang-detection")]
+        let language_candidates: Vec<IsoCode639_1> = language_candidates
+            .iter()
+            // No `to_uppercase()` required, this is done automatically by
+            // `IsoCode639_1::from_str`.
+            .map(|l| {
+                IsoCode639_1::from_str(l.trim())
+                    // Emit proper error message.
+                    .map_err(|_| {
+                        // The error path.
+                        // Produce list of all available languages.
+                        let mut all_langs = lingua::Language::all()
+                            .iter()
+                            .map(|l| {
+                                let mut s = l.iso_code_639_1().to_string();
+                                s.push_str(", ");
+                                s
+                            })
+                            .collect::<Vec<String>>();
+                        all_langs.sort();
+                        let mut all_langs = all_langs.into_iter().collect::<String>();
+                        all_langs.truncate(all_langs.len() - ", ".len());
+                        // Insert data into error object.
+                        LibCfgError::ParseLanguageCode {
+                            language_code: l.into(),
+                            all_langs,
+                        }
+                    })
+            })
+            .collect::<Result<Vec<IsoCode639_1>, LibCfgError>>()?;
+
+        Ok(GetLang {
+            mode,
+            language_candidates,
+            minimum_relative_distance,
+        })
+    }
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub enum Mode {
+    /// The `get_lang` filter is disabled. No language guessing occurs.
+    Disable,
+    /// The algorithm of the `get_lang` filter assumes, that the input is
+    /// monolingual. Only one language is searched and reported.
+    Monolingual,
+    /// The algorithm of the `get_lang` filter assumes, that the input is
+    /// monolingual. If present in the input, more than one language can be
+    /// reported.
+    #[default]
+    Multilingual,
+    /// Variant to represent the error state for an invalid `GetLang` object.
+    #[serde(skip)]
+    Error(LibCfgError),
+}
+
+/// Configuration for the HTML exporter feature, deserialized from the
+/// configuration file.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TmplHtml {
+    pub viewer: String,
+    pub viewer_error: String,
+    pub viewer_doc_css: String,
+    pub viewer_highlighting_theme: String,
+    pub viewer_highlighting_css: String,
+    pub exporter: String,
+    pub exporter_doc_css: String,
+    pub exporter_highlighting_theme: String,
+    pub exporter_highlighting_css: String,
 }
 
 /// Defines the way the HTML exporter rewrites local links.
