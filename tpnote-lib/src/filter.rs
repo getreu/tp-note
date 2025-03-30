@@ -12,6 +12,8 @@ use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
 use crate::settings::SETTINGS;
 #[cfg(feature = "lang-detection")]
+pub(crate) use lingua::IsoCode639_1; // Reexport this type.
+#[cfg(feature = "lang-detection")]
 use lingua::{LanguageDetector, LanguageDetectorBuilder};
 use parse_hyperlinks::iterator::MarkupLink;
 use parse_hyperlinks::parser::Link;

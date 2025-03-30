@@ -19,12 +19,12 @@
 
 use crate::config_value::CfgVal;
 use crate::error::LibCfgError;
+#[cfg(feature = "lang-detection")]
+use crate::filter::IsoCode639_1;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_highlighting_css;
 use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
-#[cfg(feature = "lang-detection")]
-use lingua::IsoCode639_1;
 use parking_lot::RwLock;
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::{Deserialize, Serialize};
