@@ -274,15 +274,6 @@ struct LibCfgRaw {
 pub const LIB_CFG_RAW_FIELD_NAMES: [&str; 4] =
     ["scheme_sync_default", "base_scheme", "scheme", "tmpl_html"];
 
-impl TryFrom<CfgVal> for LibCfgRaw {
-    type Error = LibCfgError;
-
-    fn try_from(cfg_val: CfgVal) -> Result<Self, Self::Error> {
-        let value: toml::Value = cfg_val.into();
-        Ok(value.try_into()?)
-    }
-}
-
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Scheme {
@@ -483,6 +474,7 @@ pub struct TmplHtml {
 /// assert_eq!(lib_cfg.scheme_sync_default, "default")
 /// ```
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(try_from = "LibCfgRaw")]
 pub struct LibCfg {
     /// The fallback scheme for the `sync_filename` template choice, if the
     /// `scheme` header variable is empty or is not defined.
@@ -698,9 +690,7 @@ impl LibCfg {
 /// `LibCfg`. Panics if this is not possible.
 impl Default for LibCfg {
     fn default() -> Self {
-        let raw: LibCfgRaw = toml::from_str(LIB_CONFIG_DEFAULT_TOML)
-            .expect("Syntax error in  LIB_CONFIG_DEFAULT_TOML");
-        raw.try_into()
+        toml::from_str(LIB_CONFIG_DEFAULT_TOML)
             .expect("Error parsing LIB_CONFIG_DEFAULT_TOML into LibCfg")
     }
 }
@@ -804,8 +794,8 @@ impl TryFrom<CfgVal> for LibCfg {
     type Error = LibCfgError;
 
     fn try_from(cfg_val: CfgVal) -> Result<Self, Self::Error> {
-        let c = LibCfgRaw::try_from(cfg_val)?;
-        LibCfg::try_from(c)
+        let value: toml::Value = cfg_val.into();
+        Ok(value.try_into()?)
     }
 }
 
