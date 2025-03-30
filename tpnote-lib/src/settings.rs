@@ -156,8 +156,8 @@ impl Settings {
     ///
     /// Then, it sets all other fields.
     /// `force_lang=Some(_)` disables the `get_lang` filter by setting
-    /// `filter_get_lang` to `FilterGetLang::Disabled`.
-    /// When `force_lang` is true, it sets `SETTINGS.current_lang` with `l`.
+    /// `filter_get_lang.mode` to `Mode::Disabled`.
+    /// When `force_lang(l)` is `Some`, it sets `SETTINGS.lang` to `l`.
     pub(crate) fn update(
         &mut self,
         scheme_source: SchemeSource,
@@ -291,20 +291,25 @@ impl Settings {
         self.lang = lang;
     }
 
-    /// Read language list from
-    /// `LIB_CFG.schemes[settings.scheme].tmpl.filter.get_lang`, add the user's
-    /// default language subtag and store them in `SETTINGS.filter_get_lang`
-    /// as `FilterGetLang::SomeLanguages(l)` `enum` variant.
-    /// If `LIB_CFG.schemes[..].tmpl.filter.get_lang.only_languages`
-    /// is empty then all languages are selected by setting
-    /// `FilterGetLang::AllLanguages`.
-    /// Errors are stored in the `FilterGetLang::Error(e)` variant.
-    /// If `force_lang` is `Some(_)` or if the configuration file variable
-    /// `current_scheme.tmpl.filter.get_lang.enable` is `false`, set
-    /// `FilterGetLang::Disabled`
+    /// Copies the settings form
+    /// `LIB_CFG.schemes[settings.scheme].tmpl.filter.get_lang` into
+    /// `SETTINGS.filter_get_lang`. Then append the user's
+    /// default language subtag to
+    /// `SETTINGS.filter_get_lang.language_candidates`.
+    /// Errors are stored in the `SETTINGS.filter.get_lang.mode` `Mode::Error(e)` variant.
+    /// If `force_lang` is `true`, set
+    /// `SETTINGS.filter_get_lang.mode = Mode::Disabled`.
     #[cfg(feature = "lang-detection")]
     fn update_filter_get_lang(&mut self, force_lang: bool) {
         use crate::config::Mode;
+
+        {
+            let lib_cfg = LIB_CFG.read_recursive();
+            let current_scheme = &lib_cfg.scheme[self.current_scheme];
+
+            // Start form config.
+            self.filter_get_lang = current_scheme.tmpl.filter.get_lang.clone();
+        } // Release lock.
 
         // `force_lang` disables the filter.
         if force_lang {
@@ -312,17 +317,10 @@ impl Settings {
             return;
         }
 
-        let lib_cfg = LIB_CFG.read_recursive();
-        let current_scheme = &lib_cfg.scheme[self.current_scheme];
-
         // Check if disabled in config file. Early return.
-        if matches!(current_scheme.tmpl.filter.get_lang.mode, Mode::Disable) {
-            self.filter_get_lang.mode = Mode::Disable;
+        if matches!(self.filter_get_lang.mode, Mode::Disable) {
             return;
         }
-
-        // Start form config.
-        self.filter_get_lang = current_scheme.tmpl.filter.get_lang.clone();
 
         // Read ISO codes from config object.
         let iso_codes = &mut self.filter_get_lang.language_candidates;
@@ -386,8 +384,8 @@ impl Settings {
     /// Reads the environment variable `LANG_DETECTION`. If not empty,
     /// parse the content and overwrite the `self.filter_get_lang` and the
     /// `self.filter_map_lang` variables.
-    /// Finally, if `force_lang` is true, then it disables
-    /// `self.filter_get_lang`.
+    /// Finally, if `force_lang` is true, then it sets
+    /// `self.filter_get_lang.mode` Mode::Disabled.
     #[cfg(feature = "lang-detection")]
     fn update_env_lang_detection(&mut self, force_lang: bool) {
         use crate::config::Mode;
