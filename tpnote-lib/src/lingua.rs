@@ -191,18 +191,34 @@ mod tests {
         Noch mehr Deutsch. \
         Bien-sûr, je parle un peu. Qu'est-ce que tu veux?";
         let output = get_lang(input).unwrap();
-        assert_eq!("fr", output[0]); // 11 words: 40.7%
-        assert_eq!("de", output[1]); // 10 words: 37.4%
-        assert_eq!("en", output[2]); //  6 words: 22.2%
+
+        // Execute template filter `get_lang` with languages candidates: [EN, FR, DE, ET]
+        // Language(s) detected: fr, 2, false: "Parlez-vous français?"
+        // Language(s) detected: de, 7, true: "Ich spreche Französisch nur ein bisschen."
+        // Language(s) detected: en, 6, true: "little bit is better than nothing."
+        // Language(s) detected: de, 3, false: "Noch mehr Deutsch."
+        // Language(s) detected: fr, 9, true: "Bien-sûr, je parle un peu. Qu'est-ce que tu veux?"
+        // Languages distribution per word count: [("fr", 9), ("de", 7), ("en", 6)]
+
+        assert_eq!("fr", output[0]);
+        assert_eq!("de", output[1]);
+        assert_eq!("en", output[2]);
         assert_eq!(output.len(), 3);
 
         let input = "Parlez-vous français? \
         Ich spreche Französisch nur ein bisschen. \
         A little bit is better than nothing.";
         let output = get_lang(input).unwrap();
-        assert_eq!("de", output[0]); //  7 words: 46.7%
-        assert_eq!("en", output[1]); //  6 words: 40.0%
-                                     //  2 words: 13.3% (fr rejected, not enough words)
+
+        // Scheme index: 0, applying the content template: `tmpl.from_clipboard_content`
+        // Execute template filter `get_lang` with languages candidates: [EN, FR, DE, ET]
+        // Language(s) detected: fr, 2, false: "Parlez-vous français?"
+        // Language(s) detected: de, 7, true: "Ich spreche Französisch nur ein bisschen."
+        // Language(s) detected: en, 6, true: "little bit is better than nothing."
+        // Languages distribution per word count: [("de", 7), ("en", 6)]
+
+        assert_eq!("de", output[0]);
+        assert_eq!("en", output[1]);
         assert_eq!(output.len(), 2);
 
         // Release the lock.
