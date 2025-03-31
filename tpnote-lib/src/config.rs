@@ -19,10 +19,10 @@
 
 use crate::config_value::CfgVal;
 use crate::error::LibCfgError;
-#[cfg(feature = "lang-detection")]
-use crate::filter::IsoCode639_1;
 #[cfg(feature = "renderer")]
 use crate::highlight::get_highlighting_css;
+#[cfg(feature = "lang-detection")]
+use crate::lingua::IsoCode639_1;
 use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
 use parking_lot::RwLock;

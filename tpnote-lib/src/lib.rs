@@ -31,6 +31,8 @@ pub mod html;
 #[cfg(feature = "renderer")]
 pub mod html2md;
 pub mod html_renderer;
+#[cfg(feature = "lang-detection")]
+pub mod lingua;
 pub mod markup_language;
 mod note;
 pub mod settings;
