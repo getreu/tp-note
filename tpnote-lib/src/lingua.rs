@@ -38,7 +38,7 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
         );
 
         LanguageDetectorBuilder::from_iso_codes_639_1(&settings.filter_get_lang.language_candidates)
-            .with_minimum_relative_distance(settings.filter_get_lang.minimum_relative_distance)
+            .with_minimum_relative_distance(settings.filter_get_lang.relative_distance_min)
             .build()
     } else {
         log::trace!(
@@ -46,7 +46,7 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
                         with all available languages",
         );
         LanguageDetectorBuilder::from_all_languages()
-            .with_minimum_relative_distance(settings.filter_get_lang.minimum_relative_distance)
+            .with_minimum_relative_distance(settings.filter_get_lang.relative_distance_min)
             .build()
     };
 
@@ -156,7 +156,7 @@ mod tests {
         let filter_get_lang = GetLang {
             mode: Mode::Multilingual,
             language_candidates: vec![IsoCode639_1::DE, IsoCode639_1::EN, IsoCode639_1::FR],
-            minimum_relative_distance: 0.2,
+            relative_distance_min: 0.2,
             consecutive_words_min: 5,
             words_total_percentage_min: 10,
         };
@@ -233,7 +233,7 @@ mod tests {
         let filter_get_lang = GetLang {
             mode: Mode::Monolingual,
             language_candidates: vec![IsoCode639_1::DE, IsoCode639_1::EN, IsoCode639_1::FR],
-            minimum_relative_distance: 0.2,
+            relative_distance_min: 0.2,
             consecutive_words_min: 5,
             words_total_percentage_min: 10,
         };

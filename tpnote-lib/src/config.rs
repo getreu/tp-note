@@ -452,9 +452,9 @@ impl LibCfg {
                 return Err(e.clone());
             }
 
-            // Assert that `filter.get_lang.minimum_relative_distance` is
+            // Assert that `filter.get_lang.relative_distance_min` is
             // between `0.0` and `0.99`.
-            let dist = scheme.tmpl.filter.get_lang.minimum_relative_distance;
+            let dist = scheme.tmpl.filter.get_lang.relative_distance_min;
             if !(0.0..=0.99).contains(&dist) {
                 return Err(LibCfgError::MinimumRelativeDistanceInvalid {
                     scheme_name: scheme.name.to_string(),
@@ -703,7 +703,7 @@ pub struct GetLang {
     pub language_candidates: Vec<IsoCode639_1>,
     #[cfg(not(feature = "lang-detection"))]
     pub language_candidates: Vec<String>,
-    pub minimum_relative_distance: f64,
+    pub relative_distance_min: f64,
     pub consecutive_words_min: usize,
     pub words_total_percentage_min: usize,
 }
@@ -713,7 +713,7 @@ pub struct GetLang {
 struct GetLangIntermediate {
     pub mode: Mode,
     pub language_candidates: Vec<String>,
-    pub minimum_relative_distance: f64,
+    pub relative_distance_min: f64,
     pub consecutive_words_min: usize,
     pub words_total_percentage_min: usize,
 }
@@ -725,7 +725,7 @@ impl TryFrom<GetLangIntermediate> for GetLang {
         let GetLangIntermediate {
             mode,
             language_candidates,
-            minimum_relative_distance,
+            relative_distance_min,
             consecutive_words_min,
             words_total_percentage_min,
         } = value;
@@ -764,7 +764,7 @@ impl TryFrom<GetLangIntermediate> for GetLang {
         Ok(GetLang {
             mode,
             language_candidates,
-            minimum_relative_distance,
+            relative_distance_min,
             consecutive_words_min,
             words_total_percentage_min,
         })

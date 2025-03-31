@@ -71,7 +71,7 @@ pub enum LibCfgError {
         \t[[scheme]]\n\
         \tname = \"{scheme_name}\"\n\
         \t[scheme.tmpl]\n\
-        \tfilter.get_lang.minimum_relative_distance={dist}\n\
+        \tfilter.get_lang.relative_distance_min={dist}\n\
         must be between 0.0 and 0.99."
     )]
     MinimumRelativeDistanceInvalid { scheme_name: String, dist: f64 },

@@ -234,8 +234,8 @@ filter.get_lang.language_candidates = [ "en", "fr", "de" ]
 ### `0.0` and `0.99`. A low value finds more languages, but can lead to more
 ### false positives.
 ### NB: Languages not listed in `language_candidates` are never searched for,
-### independent of the `minimum_relative_distance` value set here.
-filter.get_lang.minimum_relative_distance = 0.3
+### independent of the `relative_distance_min` value set here.
+filter.get_lang.relative_distance_min = 0.3
 
 ### TODO
 filter.get_lang.consecutive_words_min  = 7

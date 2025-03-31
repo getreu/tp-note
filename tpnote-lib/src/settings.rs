@@ -91,7 +91,7 @@ const DEFAULT_SETTINGS: Settings = Settings {
     filter_get_lang: GetLang {
         mode: Mode::Disabled,
         language_candidates: vec![],
-        minimum_relative_distance: 0.0,
+        relative_distance_min: 0.0,
         consecutive_words_min: 0,
         words_total_percentage_min: 0,
     },
