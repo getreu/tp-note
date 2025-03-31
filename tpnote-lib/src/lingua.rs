@@ -199,11 +199,7 @@ mod tests {
         // Language(s) detected: de, 3, false: "Noch mehr Deutsch."
         // Language(s) detected: fr, 9, true: "Bien-sûr, je parle un peu. Qu'est-ce que tu veux?"
         // Languages distribution per word count: [("fr", 9), ("de", 7), ("en", 6)]
-
-        assert_eq!("fr", output[0]);
-        assert_eq!("de", output[1]);
-        assert_eq!("en", output[2]);
-        assert_eq!(output.len(), 3);
+        assert_eq!(output, ["fr", "de", "en"]);
 
         let input = "Parlez-vous français? \
         Ich spreche Französisch nur ein bisschen. \
@@ -216,10 +212,7 @@ mod tests {
         // Language(s) detected: de, 7, true: "Ich spreche Französisch nur ein bisschen."
         // Language(s) detected: en, 6, true: "little bit is better than nothing."
         // Languages distribution per word count: [("de", 7), ("en", 6)]
-
-        assert_eq!("de", output[0]);
-        assert_eq!("en", output[1]);
-        assert_eq!(output.len(), 2);
+        assert_eq!(output, ["de", "en"]);
 
         // Release the lock.
         drop(_settings);
