@@ -80,7 +80,7 @@ pub(crate) struct Settings {
     /// The keys and values from
     /// `LIB_CFG.schemes[settings.current_scheme].tmpl.filter_btmap_lang` in the `BTreeMap`
     /// with the user's default language and region added.
-    pub filter_map_lang_btmap: Option<BTreeMap<String, String>>,
+    pub map_lang_filter_btmap: Option<BTreeMap<String, String>>,
 }
 
 const DEFAULT_SETTINGS: Settings = Settings {
@@ -95,7 +95,7 @@ const DEFAULT_SETTINGS: Settings = Settings {
         consecutive_words_min: 0,
         words_total_percentage_min: 0,
     },
-    filter_map_lang_btmap: None,
+    map_lang_filter_btmap: None,
 };
 
 impl Default for Settings {
@@ -170,7 +170,7 @@ impl Settings {
         self.update_extension_default();
         self.update_lang(force_lang);
         self.update_get_lang_filter(force_lang.is_some());
-        self.update_filter_map_lang_btmap();
+        self.update_map_lang_filter_btmap();
         self.update_env_lang_detection(force_lang.is_some());
 
         log::trace!(
@@ -361,7 +361,7 @@ impl Settings {
     /// Read keys and values from
     /// `LIB_CFG.schemes[self.current_scheme].tmpl.filter_btmap_lang` in the
     /// `BTreeMap`. Add the user's default language and region.
-    fn update_filter_map_lang_btmap(&mut self) {
+    fn update_map_lang_filter_btmap(&mut self) {
         let mut btm = BTreeMap::new();
         let lib_cfg = LIB_CFG.read_recursive();
         for l in &lib_cfg.scheme[self.current_scheme].tmpl.filter.map_lang {
@@ -380,12 +380,12 @@ impl Settings {
         }
 
         // Store result.
-        self.filter_map_lang_btmap = Some(btm);
+        self.map_lang_filter_btmap = Some(btm);
     }
 
     /// Reads the environment variable `LANG_DETECTION`. If not empty,
     /// parse the content and overwrite the `self.get_lang_filter` and the
-    /// `self.filter_map_lang` variables.
+    /// `self.map_lang_filter` variables.
     /// Finally, if `force_lang` is true, then it sets
     /// `self.get_lang_filter.mode` Mode::Disabled.
     #[cfg(feature = "lang-detection")]
@@ -396,7 +396,7 @@ impl Settings {
             if env_var.is_empty() {
                 // Early return.
                 self.get_lang_filter.mode = Mode::Disabled;
-                self.filter_map_lang_btmap = None;
+                self.map_lang_filter_btmap = None;
                 log::debug!(
                     "Empty env. var. `{}` disables the `lang-detection` feature.",
                     ENV_VAR_TPNOTE_LANG_DETECTION
@@ -498,7 +498,7 @@ impl Settings {
                             }
                         }
                     }
-                    self.filter_map_lang_btmap = Some(hm);
+                    self.map_lang_filter_btmap = Some(hm);
                 }
                 // The error path.
                 Err(e) =>
@@ -522,7 +522,7 @@ impl Settings {
         if let Ok(env_var) = env::var(ENV_VAR_TPNOTE_LANG_DETECTION) {
             if !env_var.is_empty() {
                 self.get_lang_filter.mode = Mode::Disabled;
-                self.filter_map_lang_btmap = None;
+                self.map_lang_filter_btmap = None;
                 log::debug!(
                     "Ignoring the env. var. `{}`. The `lang-detection` feature \
                  is not included in this build.",
@@ -640,19 +640,19 @@ mod tests {
     }
 
     #[test]
-    fn test_update_filter_map_lang_hmap_setting() {
+    fn test_update_map_lang_filter_hmap_setting() {
         // Test 1.
         let mut settings = Settings {
             lang: "it-IT".to_string(),
             ..Default::default()
         };
-        settings.update_filter_map_lang_btmap();
+        settings.update_map_lang_filter_btmap();
 
-        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
+        let output_map_lang_filter = settings.map_lang_filter_btmap.unwrap();
 
-        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
-        assert_eq!(output_filter_map_lang.get("et").unwrap(), "et-ET");
-        assert_eq!(output_filter_map_lang.get("it").unwrap(), "it-IT");
+        assert_eq!(output_map_lang_filter.get("de").unwrap(), "de-DE");
+        assert_eq!(output_map_lang_filter.get("et").unwrap(), "et-ET");
+        assert_eq!(output_map_lang_filter.get("it").unwrap(), "it-IT");
 
         //
         // Test short `settings.lang`.
@@ -660,13 +660,13 @@ mod tests {
             lang: "it".to_string(),
             ..Default::default()
         };
-        settings.update_filter_map_lang_btmap();
+        settings.update_map_lang_filter_btmap();
 
-        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
+        let output_map_lang_filter = settings.map_lang_filter_btmap.unwrap();
 
-        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
-        assert_eq!(output_filter_map_lang.get("et").unwrap(), "et-ET");
-        assert_eq!(output_filter_map_lang.get("it"), None);
+        assert_eq!(output_map_lang_filter.get("de").unwrap(), "de-DE");
+        assert_eq!(output_map_lang_filter.get("et").unwrap(), "et-ET");
+        assert_eq!(output_map_lang_filter.get("it"), None);
     }
 
     #[test]
@@ -693,10 +693,10 @@ mod tests {
             .collect::<String>();
         assert_eq!(output_get_lang_filter, "fr de hu en ");
 
-        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
-        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
-        assert_eq!(output_filter_map_lang.get("fr").unwrap(), "fr-FR");
-        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
+        let output_map_lang_filter = settings.map_lang_filter_btmap.unwrap();
+        assert_eq!(output_map_lang_filter.get("de").unwrap(), "de-DE");
+        assert_eq!(output_map_lang_filter.get("fr").unwrap(), "fr-FR");
+        assert_eq!(output_map_lang_filter.get("en").unwrap(), "en-GB");
 
         //
         // Test 2.
@@ -719,9 +719,9 @@ mod tests {
             .collect::<String>();
         assert_eq!(output_get_lang_filter, "de de en ");
 
-        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
-        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
-        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-US");
+        let output_map_lang_filter = settings.map_lang_filter_btmap.unwrap();
+        assert_eq!(output_map_lang_filter.get("de").unwrap(), "de-DE");
+        assert_eq!(output_map_lang_filter.get("en").unwrap(), "en-US");
 
         //
         // Test 3.
@@ -734,9 +734,9 @@ mod tests {
 
         assert!(settings.get_lang_filter.language_candidates.is_empty());
 
-        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
-        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
-        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-US");
+        let output_map_lang_filter = settings.map_lang_filter_btmap.unwrap();
+        assert_eq!(output_map_lang_filter.get("de").unwrap(), "de-DE");
+        assert_eq!(output_map_lang_filter.get("en").unwrap(), "en-US");
 
         //
         // Test 4.
@@ -759,9 +759,9 @@ mod tests {
             .collect::<String>();
         assert_eq!(output_get_lang_filter, "de de en ");
 
-        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
-        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
-        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
+        let output_map_lang_filter = settings.map_lang_filter_btmap.unwrap();
+        assert_eq!(output_map_lang_filter.get("de").unwrap(), "de-DE");
+        assert_eq!(output_map_lang_filter.get("en").unwrap(), "en-GB");
 
         //
         // Test 5.
@@ -774,9 +774,9 @@ mod tests {
 
         assert!(settings.get_lang_filter.language_candidates.is_empty());
 
-        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
-        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
-        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
+        let output_map_lang_filter = settings.map_lang_filter_btmap.unwrap();
+        assert_eq!(output_map_lang_filter.get("de").unwrap(), "de-DE");
+        assert_eq!(output_map_lang_filter.get("en").unwrap(), "en-GB");
 
         // Test `force_lang`.
         let mut settings = Settings {
@@ -789,10 +789,10 @@ mod tests {
         // `force_lang` must disables the `get_lang` filter.
         assert_eq!(settings.get_lang_filter.mode, Mode::Disabled);
 
-        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
-        assert_eq!(output_filter_map_lang.get("de").unwrap(), "de-DE");
-        assert_eq!(output_filter_map_lang.get("fr").unwrap(), "fr-FR");
-        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
+        let output_map_lang_filter = settings.map_lang_filter_btmap.unwrap();
+        assert_eq!(output_map_lang_filter.get("de").unwrap(), "de-DE");
+        assert_eq!(output_map_lang_filter.get("fr").unwrap(), "fr-FR");
+        assert_eq!(output_map_lang_filter.get("en").unwrap(), "en-GB");
 
         //
         // Test empty env. var.
@@ -804,7 +804,7 @@ mod tests {
         settings.update_env_lang_detection(false);
 
         assert_eq!(settings.get_lang_filter.mode, Mode::Disabled);
-        assert!(settings.filter_map_lang_btmap.is_none());
+        assert!(settings.map_lang_filter_btmap.is_none());
 
         //
         // Test faulty `settings.lang`.
@@ -827,8 +827,8 @@ mod tests {
             .collect::<String>();
         assert_eq!(output_get_lang_filter, "en fr ");
 
-        let output_filter_map_lang = settings.filter_map_lang_btmap.unwrap();
-        assert_eq!(output_filter_map_lang.get("en").unwrap(), "en-GB");
+        let output_map_lang_filter = settings.map_lang_filter_btmap.unwrap();
+        assert_eq!(output_map_lang_filter.get("en").unwrap(), "en-GB");
 
         //
         // Test faulty entry in list.
@@ -842,7 +842,7 @@ mod tests {
         settings.update_env_lang_detection(false);
 
         assert!(matches!(settings.get_lang_filter.mode, Mode::Error(..)));
-        assert!(settings.filter_map_lang_btmap.is_none());
+        assert!(settings.map_lang_filter_btmap.is_none());
         //
         // Test empty list.
         let mut settings = Settings {
@@ -855,6 +855,6 @@ mod tests {
         settings.update_env_lang_detection(false);
 
         assert!(matches!(settings.get_lang_filter.mode, Mode::Disabled));
-        assert!(settings.filter_map_lang_btmap.is_none());
+        assert!(settings.map_lang_filter_btmap.is_none());
     }
 }

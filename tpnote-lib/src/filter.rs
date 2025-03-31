@@ -1002,7 +1002,7 @@ fn map_lang_filter<S: BuildHasher>(
     // Set up converter.
     let settings = SETTINGS.read_recursive();
     let convert = |v: Value| {
-        if let (Value::String(s), Some(btm)) = (&v, &settings.filter_map_lang_btmap) {
+        if let (Value::String(s), Some(btm)) = (&v, &settings.map_lang_filter_btmap) {
             btm.get(s)
                 .map(|new_v| Value::String(new_v.to_owned()))
                 .unwrap_or(v)
@@ -2045,11 +2045,11 @@ Some more text."#;
         // `Test `map_lang_filter()`
         use crate::settings::Settings;
 
-        let mut filter_map_lang_btmap = BTreeMap::new();
-        filter_map_lang_btmap.insert("de".to_string(), "de-DE".to_string());
+        let mut map_lang_filter_btmap = BTreeMap::new();
+        map_lang_filter_btmap.insert("de".to_string(), "de-DE".to_string());
         let mut settings = SETTINGS.write();
         *settings = Settings::default();
-        settings.filter_map_lang_btmap = Some(filter_map_lang_btmap);
+        settings.map_lang_filter_btmap = Some(map_lang_filter_btmap);
 
         // This locks `SETTINGS` for further write access in this scope.
         let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);

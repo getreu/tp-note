@@ -58,7 +58,8 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
             let words_total_percentage_min = settings.get_lang_filter.words_total_percentage_min;
 
             let words_total = input.split_whitespace().count();
-            let words_min = [consecutive_words_min, words_total / 3]; // TODO
+            // `words_total / 3` relaxes the criteria for very shot input texts.
+            let words_min = [consecutive_words_min, words_total / 3];
             let words_min = words_min.iter().min().unwrap();
             log::trace!(
                 "Language snippets with less than {} words will be ignored.",
