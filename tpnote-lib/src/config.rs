@@ -704,6 +704,8 @@ pub struct GetLang {
     #[cfg(not(feature = "lang-detection"))]
     pub language_candidates: Vec<String>,
     pub minimum_relative_distance: f64,
+    pub consecutive_words_min: usize,
+    pub words_total_percentage_min: usize,
 }
 
 /// Configuration related to various Tera template filters.
@@ -712,6 +714,8 @@ struct GetLangIntermediate {
     pub mode: Mode,
     pub language_candidates: Vec<String>,
     pub minimum_relative_distance: f64,
+    pub consecutive_words_min: usize,
+    pub words_total_percentage_min: usize,
 }
 
 impl TryFrom<GetLangIntermediate> for GetLang {
@@ -722,6 +726,8 @@ impl TryFrom<GetLangIntermediate> for GetLang {
             mode,
             language_candidates,
             minimum_relative_distance,
+            consecutive_words_min,
+            words_total_percentage_min,
         } = value;
 
         #[cfg(feature = "lang-detection")]
@@ -759,6 +765,8 @@ impl TryFrom<GetLangIntermediate> for GetLang {
             mode,
             language_candidates,
             minimum_relative_distance,
+            consecutive_words_min,
+            words_total_percentage_min,
         })
     }
 }

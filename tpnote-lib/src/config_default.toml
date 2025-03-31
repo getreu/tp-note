@@ -235,7 +235,13 @@ filter.get_lang.language_candidates = [ "en", "fr", "de" ]
 ### false positives.
 ### NB: Languages not listed in `language_candidates` are never searched for,
 ### independent of the `minimum_relative_distance` value set here.
-filter.get_lang.minimum_relative_distance = 0.2
+filter.get_lang.minimum_relative_distance = 0.3
+
+### TODO
+filter.get_lang.consecutive_words_min  = 7
+
+### TODO
+filter.get_lang.words_total_percentage_min = 10
 
 ### Default values for the `map_lang` hash map filter, that are used to post
 ### process the language recognition subtag as defined in `filter.get_lang`.

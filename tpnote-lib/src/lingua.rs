@@ -54,8 +54,8 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
     let detected_languages: Vec<String> = match &settings.filter_get_lang.mode {
         Mode::Multilingual => {
             // TODO
-            let consecutive_words_min = 5;
-            let words_total_percentage_min = 10;
+            let consecutive_words_min = settings.filter_get_lang.consecutive_words_min;
+            let words_total_percentage_min = settings.filter_get_lang.words_total_percentage_min;
 
             let words_total = input.split_whitespace().count();
             let words_min = [consecutive_words_min, words_total / 3]; // TODO
@@ -110,7 +110,7 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
                         true
                     } else {
                         let words_percentage = wc * 100 / words_distribution_total;
-                        log::debug!(
+                        log::info!(
                             "Language `{}` rejected: not enough words in total ({}%<{}%)",
                             l,
                             words_percentage,
@@ -157,6 +157,8 @@ mod tests {
             mode: Mode::Multilingual,
             language_candidates: vec![IsoCode639_1::DE, IsoCode639_1::EN, IsoCode639_1::FR],
             minimum_relative_distance: 0.2,
+            consecutive_words_min: 5,
+            words_total_percentage_min: 10,
         };
 
         let mut settings = SETTINGS.write();
@@ -232,6 +234,8 @@ mod tests {
             mode: Mode::Monolingual,
             language_candidates: vec![IsoCode639_1::DE, IsoCode639_1::EN, IsoCode639_1::FR],
             minimum_relative_distance: 0.2,
+            consecutive_words_min: 5,
+            words_total_percentage_min: 10,
         };
 
         let mut settings = SETTINGS.write();

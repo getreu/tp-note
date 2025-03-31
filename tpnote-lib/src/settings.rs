@@ -92,6 +92,8 @@ const DEFAULT_SETTINGS: Settings = Settings {
         mode: Mode::Disabled,
         language_candidates: vec![],
         minimum_relative_distance: 0.0,
+        consecutive_words_min: 0,
+        words_total_percentage_min: 0,
     },
     filter_map_lang_btmap: None,
 };
