@@ -22,7 +22,7 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
     let settings = SETTINGS.read_recursive();
 
     // Check if we can return early.
-    match &settings.filter_get_lang.mode {
+    match &settings.get_lang_filter.mode {
         Mode::Disabled => return Ok(vec![]),
 
         Mode::Error(e) => return Err(e.clone()),
@@ -30,15 +30,15 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
     }
 
     // Build `LanguageDetector`.
-    let detector: LanguageDetector = if !&settings.filter_get_lang.language_candidates.is_empty() {
+    let detector: LanguageDetector = if !&settings.get_lang_filter.language_candidates.is_empty() {
         log::trace!(
             "Execute template filter `get_lang` \
                         with languages candidates: {:?}",
-            &settings.filter_get_lang.language_candidates,
+            &settings.get_lang_filter.language_candidates,
         );
 
-        LanguageDetectorBuilder::from_iso_codes_639_1(&settings.filter_get_lang.language_candidates)
-            .with_minimum_relative_distance(settings.filter_get_lang.relative_distance_min)
+        LanguageDetectorBuilder::from_iso_codes_639_1(&settings.get_lang_filter.language_candidates)
+            .with_minimum_relative_distance(settings.get_lang_filter.relative_distance_min)
             .build()
     } else {
         log::trace!(
@@ -46,16 +46,16 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
                         with all available languages",
         );
         LanguageDetectorBuilder::from_all_languages()
-            .with_minimum_relative_distance(settings.filter_get_lang.relative_distance_min)
+            .with_minimum_relative_distance(settings.get_lang_filter.relative_distance_min)
             .build()
     };
 
     // Detect languages.
-    let detected_languages: Vec<String> = match &settings.filter_get_lang.mode {
+    let detected_languages: Vec<String> = match &settings.get_lang_filter.mode {
         Mode::Multilingual => {
             // TODO
-            let consecutive_words_min = settings.filter_get_lang.consecutive_words_min;
-            let words_total_percentage_min = settings.filter_get_lang.words_total_percentage_min;
+            let consecutive_words_min = settings.get_lang_filter.consecutive_words_min;
+            let words_total_percentage_min = settings.get_lang_filter.words_total_percentage_min;
 
             let words_total = input.split_whitespace().count();
             let words_min = [consecutive_words_min, words_total / 3]; // TODO
@@ -153,7 +153,7 @@ mod tests {
 
         // The `get_lang` filter requires an initialized `SETTINGS` object.
         // Lock the config object for this test.
-        let filter_get_lang = GetLang {
+        let get_lang_filter = GetLang {
             mode: Mode::Multilingual,
             language_candidates: vec![IsoCode639_1::DE, IsoCode639_1::EN, IsoCode639_1::FR],
             relative_distance_min: 0.2,
@@ -163,7 +163,7 @@ mod tests {
 
         let mut settings = SETTINGS.write();
         *settings = Settings::default();
-        settings.filter_get_lang = filter_get_lang;
+        settings.get_lang_filter = get_lang_filter;
         // This locks `SETTINGS` for further write access in this scope.
         let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
 
@@ -230,7 +230,7 @@ mod tests {
 
         // The `get_lang` filter requires an initialized `SETTINGS` object.
         // Lock the config object for this test.
-        let filter_get_lang = GetLang {
+        let get_lang_filter = GetLang {
             mode: Mode::Monolingual,
             language_candidates: vec![IsoCode639_1::DE, IsoCode639_1::EN, IsoCode639_1::FR],
             relative_distance_min: 0.2,
@@ -240,7 +240,7 @@ mod tests {
 
         let mut settings = SETTINGS.write();
         *settings = Settings::default();
-        settings.filter_get_lang = filter_get_lang;
+        settings.get_lang_filter = get_lang_filter;
         // This locks `SETTINGS` for further write access in this scope.
         let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
 
