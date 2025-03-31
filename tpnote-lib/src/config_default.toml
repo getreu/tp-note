@@ -277,7 +277,7 @@ filter.to_yaml_tab = 14
 ###   filter `to_yaml` must be appended to each variable.
 from_dir_content = """
 {%- set title_text = dir_path | trim_file_sort_tag -%}
-{%- set languages = title_text | get_lang | unique | map_lang(default=lang) -%}
+{%- set languages = title_text | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 ---
 {{ title_text | trunc | to_yaml(key='fm_title') }}
@@ -323,7 +323,7 @@ from_clipboard_yaml_content = """
 {%- set stdin = stdin | append(newline=true) -%}
 {%- set input = stdin ~ txt_clipboard | trim -%}
 {%- set languages = fm.fm_languages
-    | default(value = input | get_lang | unique | map_lang(default=lang) ) -%}
+    | default(value = input | get_lang | map_lang(default=lang) ) -%}
 {%- set lang = fm.fm_lang | default(value = languages | first ) -%}
 ---
 {{ fm.fm_title | default(value = path|trim_file_sort_tag) | trunc | to_yaml(key='fm_title') }}
@@ -382,7 +382,7 @@ from_clipboard_content = """
 {%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
 {%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim_end -%}
-{%- set languages = input | get_lang | unique | map_lang(default=lang) -%}
+{%- set languages = input | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 {%- set first_link = input | link_text_picky | trunc -%}
 {%- if first_link !='' and input | trunc | linebreaksbr == input | trunc -%}
@@ -419,7 +419,7 @@ from_clipboard_filename = """
 ### filename and its creation date. `{{ path }}` points to the text file,
 ### `{{ dir_path }}` to the directory where it is located.
 from_text_file_content = """
-{%- set languages = doc_body_text | get_lang | unique | map_lang(default=lang) -%}
+{%- set languages = doc_body_text | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 ---
 {{ path | file_stem | split(pat='--') | first | trunc | to_yaml(key='fm_title') }}
@@ -461,7 +461,7 @@ annotate_file_content = """
 {%- else -%}
    {%- set lang_test_text = path | file_stem  -%}
 {%- endif -%}
-{%- set languages = lang_test_text | get_lang | unique | map_lang(default=lang) -%}
+{%- set languages = lang_test_text | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 
 {%- set fname = path | file_name -%}
@@ -535,7 +535,7 @@ sort_tag.separator = "--"
 
 from_dir_content = """
 {%- set title_text = dir_path | trim_file_sort_tag -%}
-{%- set languages = title_text | get_lang | unique | map_lang(default=lang) -%}
+{%- set languages = title_text | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
@@ -577,7 +577,7 @@ from_clipboard_yaml_content = """
 {%- set stdin = stdin | append(newline=true) -%}
 {%- set input = stdin ~ txt_clipboard | trim -%}
 {%- set languages = fm.fm_languages
-    | default(value = input | get_lang | unique | map_lang(default=lang) ) -%}
+    | default(value = input | get_lang | map_lang(default=lang) ) -%}
 {%- set lang = fm.fm_lang | default(value = languages | first ) -%}
 {%- if fm.fm_sort_tag -%}
   {%- set tag = fm.fm_sort_tag -%}
@@ -647,7 +647,7 @@ from_clipboard_content = """
 {%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
 {%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim_end -%}
-{%- set languages = input | get_lang | unique | map_lang(default=lang) -%}
+{%- set languages = input | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 {%- set tag_default = now() | date(format='%Y%m%d') -%}
 {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
@@ -706,7 +706,7 @@ from_text_file_content = """
 {%- set file = file | file_stem -%}
 {%- set title = file | split(pat='__') | first -%}
 {%- set keywords = file | split(pat='__') | nth(n=1) -%}
-{%- set languages = doc_body_text | get_lang | unique | map_lang(default=lang) -%}
+{%- set languages = doc_body_text | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 ---
 {{ title | trunc | to_yaml(key='fm_title') }}
@@ -758,7 +758,7 @@ annotate_file_content = """
 {%- else -%}
    {%- set lang_test_text = path | file_stem -%}
 {%- endif -%}
-{%- set languages = lang_test_text | get_lang | unique | map_lang(default=lang) -%}
+{%- set languages = lang_test_text | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 
 {%- if body_text | link_text !='' and
