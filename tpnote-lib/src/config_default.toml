@@ -217,8 +217,10 @@ filter.get_lang.mode = "Multilingual"
 ### `TPNOTE_LANG_DETECTION, if set, overwrites this setting.
 filter.get_lang.language_candidates = [ "en", "fr", "de" ]
 
-### Sets the desired value for the minimum relative distance measure. By
-### default, the Lingua library returns the most likely language for a given
+### Sets the desired value for the minimum relative distance measure.
+### This is one of the parameters with which false positives can be reduced
+### when determining natural language with the `get_lang` filter.
+### By default, the Lingua library returns the most likely language for a given
 ### input text. However, there are certain words that are spelled the same in
 ### more than one language. The word prologue, for instance, is both a valid
 ### English and French word. Lingua would output either English or French which
@@ -237,10 +239,16 @@ filter.get_lang.language_candidates = [ "en", "fr", "de" ]
 ### independent of the `relative_distance_min` value set here.
 filter.get_lang.relative_distance_min = 0.3
 
-### TODO
+### Sets the minimum amount of consecutive words in one language to be
+### considered when detecting languages in the input text. This is one of
+### the parameters with which false positives can be reduced when determining
+### natural language with the `get_lang` filter.
 filter.get_lang.consecutive_words_min  = 7
 
-### TODO
+### Set the minimum word count ratio in percent a language must appear in
+### the input text to be reported. This is one of the parameters with which
+### false positives can be reduced when determining natural language with the
+### `get_lang` filter.
 filter.get_lang.words_total_percentage_min = 10
 
 ### Default values for the `map_lang` hash map filter, that are used to post

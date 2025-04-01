@@ -1820,26 +1820,6 @@ enable all available detection candidates with the empty array:
 [base_scheme.tmpl]
 filter.get_lang.langauage_candidates = []
 ```
-
-The language detection algorithm can be fine-tuned with:
-
-```toml
-[base_scheme.tmpl]
-filter.get_lang.minimum_relative_distance = 0.2
-```
-
-Valid values are between `0.0` and `0.99`. A low value finds more
-languages, but can lead to more false positives. NB: Languages not listed
-in `language_candidates` are never searched for, independent of the
-`minimum_relative_distance` value set here.
-
-The algorithm can search for multiple languages in the input text:
-
-```toml
-[base_scheme.tmpl]
-filter.get_lang.mode = "Multilingual"
-```
-
 If the input text is usually written in one language only, set:
 
 ```toml
@@ -1847,9 +1827,35 @@ If the input text is usually written in one language only, set:
 filter.get_lang.mode = "Monolingual"
 ```
 
-Once the language is detected with the filter '`get_lang`', it passes another
+The algorithm can also search for multiple languages in the input text:
+
+```toml
+[base_scheme.tmpl]
+filter.get_lang.mode = "Multilingual"
+```
+
+The language detection algorithm can be fine-tuned with:
+
+```toml
+[base_scheme.tmpl]
+filter.get_lang.minimum_relative_distance = 0.3
+filter.get_lang.consecutive_words_min  = 7
+filter.get_lang.words_total_percentage_min = 10
+```
+
+The above parameters can reduce false positives when determining the
+natural language with the '`get_lang`' filter. Setting them to 0 finds
+more languages, but leads to more false positives. A higher value
+enforces criteria to ignore some words when guessing the languages. The
+'`minimum_relative_distance `' excludes words that appear in more than one
+language. Valid values are between '`0.0`' and '`0.99`'.
+'`consecutive_words_min`' sets the minimum of consecutive words in one language
+to be considered. '`words_total_percentage_min`' set the minimum word count
+ratio in percent a language must appear in the input text to be reported.
+
+Once the language is detected with the '`get_lang`' filter, it passes another
 filter called '`map_lang`'. This filter maps the result of '`get_lang`' -
-encoded as ISO 639-1 code - to an IETF language tag. For example, '`en`' is
+encoded as ISO 639-1 codes - to IETF language tags. For example, '`en`' is
 replaced with '`en-US`' or '`de`' with '`de-DE`'. This additional filtering
 is useful, because the detection algorithm can not figure out the region code
 (e.g. `-US` or `-DE`) by itself. Instead, the region code is appended in a

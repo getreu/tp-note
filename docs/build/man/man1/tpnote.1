@@ -2218,26 +2218,6 @@ candidates with the empty array:
 filter.get_lang.langauage_candidates = []
 .EE
 .PP
-The language detection algorithm can be fine\-tuned with:
-.IP
-.EX
-\f[B][base_scheme.tmpl]\f[R]
-filter.get_lang.minimum_relative_distance = 0.2
-.EE
-.PP
-Valid values are between \f[CR]0.0\f[R] and \f[CR]0.99\f[R].
-A low value finds more languages, but can lead to more false positives.
-NB: Languages not listed in \f[CR]language_candidates\f[R] are never
-searched for, independent of the \f[CR]minimum_relative_distance\f[R]
-value set here.
-.PP
-The algorithm can search for multiple languages in the input text:
-.IP
-.EX
-\f[B][base_scheme.tmpl]\f[R]
-filter.get_lang.mode = \[dq]Multilingual\[dq]
-.EE
-.PP
 If the input text is usually written in one language only, set:
 .IP
 .EX
@@ -2245,10 +2225,40 @@ If the input text is usually written in one language only, set:
 filter.get_lang.mode = \[dq]Monolingual\[dq]
 .EE
 .PP
-Once the language is detected with the filter `\f[CR]get_lang\f[R]', it
+The algorithm can also search for multiple languages in the input text:
+.IP
+.EX
+\f[B][base_scheme.tmpl]\f[R]
+filter.get_lang.mode = \[dq]Multilingual\[dq]
+.EE
+.PP
+The language detection algorithm can be fine\-tuned with:
+.IP
+.EX
+\f[B][base_scheme.tmpl]\f[R]
+filter.get_lang.minimum_relative_distance = 0.3
+filter.get_lang.consecutive_words_min  = 7
+filter.get_lang.words_total_percentage_min = 10
+.EE
+.PP
+The above parameters can reduce false positives when determining the
+natural language with the `\f[CR]get_lang\f[R]' filter.
+Setting them to 0 finds more languages, but leads to more false
+positives.
+A higher value enforces criteria to ignore some words when guessing the
+languages.
+The `\f[CR]minimum_relative_distance\f[R]' excludes words that appear in
+more than one language.
+Valid values are between `\f[CR]0.0\f[R]' and `\f[CR]0.99\f[R]'.
+`\f[CR]consecutive_words_min\f[R]' sets the minimum of consecutive words
+in one language to be considered.
+`\f[CR]words_total_percentage_min\f[R]' set the minimum word count ratio
+in percent a language must appear in the input text to be reported.
+.PP
+Once the language is detected with the `\f[CR]get_lang\f[R]' filter, it
 passes another filter called `\f[CR]map_lang\f[R]'.
 This filter maps the result of `\f[CR]get_lang\f[R]' \- encoded as ISO
-639\-1 code \- to an IETF language tag.
+639\-1 codes \- to IETF language tags.
 For example, `\f[CR]en\f[R]' is replaced with `\f[CR]en\-US\f[R]' or
 `\f[CR]de\f[R]' with `\f[CR]de\-DE\f[R]'.
 This additional filtering is useful, because the detection algorithm can
