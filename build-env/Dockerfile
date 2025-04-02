@@ -3,18 +3,26 @@ WORKDIR /home/project
 
 FROM $BASE_IMAGE as planner
 
-RUN rustup component add rust-src llvm-tools rustfmt
+RUN  rustup override set 1.81.0
+
+# We need theses components
+RUN rustup set profile default
+
+# This is the default target
+RUN rustup target add x86_64-unknown-linux-gnu
 
 # Add Musl target
 RUN rustup target add x86_64-unknown-linux-musl
 
 # Add RaspberryPi target
 RUN rustup target add armv7-unknown-linux-gnueabihf
-
 RUN rustup target add aarch64-unknown-linux-gnu
 
 # Cross compile for Windows
 RUN rustup target add x86_64-pc-windows-gnu
+
+# Probably we do not need this
+RUN rustup component add rustc cargo rustfmt rust-std clippy rust-docs rust-std # llvm-tools
 
 # Tp-Note needs some libs for crosscompilation.
 RUN apt update

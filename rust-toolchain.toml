@@ -1,3 +1,5 @@
 [toolchain]
 channel = "1.81"
-components = ["rustfmt", "rust-src", "llvm-tools-preview"]
+components = ["rustc", "cargo", "rustfmt", "rust-std", "clippy", "rust-docs", "rust-std"]
+targets = [ "x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl", "x86_64-pc-windows-gnu", "armv7-unknown-linux-gnueabihf", "aarch64-unknown-linux-gnu" ]
+profile = "default"
