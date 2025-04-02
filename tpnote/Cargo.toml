@@ -117,4 +117,4 @@ win-msgbox = { version = "0.2.1", optional = true }
 
 # Only Linux, MacOs included.
 [target.'cfg(not(target_os = "windows"))'.dependencies]
-notify-rust = { version = "4.11.5", optional = true }
+notify-rust = { version = "4.11.6", optional = true }
