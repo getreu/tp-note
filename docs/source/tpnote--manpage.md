@@ -1806,7 +1806,7 @@ as potential detection candidates, e.g.:
 
 ```toml
 [base_scheme.tmpl]
-filter.get_lang.langauage_candidates = [ "en", "fr", "de", "et" ]
+filter.get_lang.language_candidates = [ "en", "fr", "de", "et" ]
 ```
 
 As natural language detection is CPU intensive, it is advised to limit the
@@ -1818,7 +1818,7 @@ enable all available detection candidates with the empty array:
 
 ```toml
 [base_scheme.tmpl]
-filter.get_lang.langauage_candidates = []
+filter.get_lang.language_candidates = []
 ```
 If the input text is usually written in one language only, set:
 
@@ -1866,7 +1866,7 @@ The corresponding configuration looks like this:
 
 ```toml
 [base_scheme.tmpl]
-filter.get_lang.languages_candidates = [ "en", "fr", "de", "et" ]
+filter.get_lang.language_candidates = [ "en", "fr", "de", "et" ]
 filter.map_lang = [
     [ "en", "en-US", ],
     [ "de", "de-DE", ],
@@ -1955,7 +1955,6 @@ To change the natural language of the displayed header variable names,
 modify the second column of the above table. For example:
 
 ```toml
-[[scheme]]
 [base_scheme.tmpl]
 fm_vars.localization = [
     ["fm_title", "Titel"],
@@ -1992,7 +1991,7 @@ expression '`{{ fm.fm_foo | name }}`' which is then printed as '`FOO`'.
 
 NB: In general, a variable with the key '`fm.fm_bar`' may contain a nested map:
 
-```json
+```
 "fm.fm_bar": Object {
             "baz": String("Hello"),
         }

@@ -2200,7 +2200,7 @@ detection candidates, e.g.:
 .IP
 .EX
 \f[B][base_scheme.tmpl]\f[R]
-filter.get_lang.langauage_candidates = [ \[dq]en\[dq], \[dq]fr\[dq], \[dq]de\[dq], \[dq]et\[dq] ]
+filter.get_lang.language_candidates = [ \[dq]en\[dq], \[dq]fr\[dq], \[dq]de\[dq], \[dq]et\[dq] ]
 .EE
 .PP
 As natural language detection is CPU intensive, it is advised to limit
@@ -2215,7 +2215,7 @@ candidates with the empty array:
 .IP
 .EX
 \f[B][base_scheme.tmpl]\f[R]
-filter.get_lang.langauage_candidates = []
+filter.get_lang.language_candidates = []
 .EE
 .PP
 If the input text is usually written in one language only, set:
@@ -2272,7 +2272,7 @@ The corresponding configuration looks like this:
 .IP
 .EX
 \f[B][base_scheme.tmpl]\f[R]
-filter.get_lang.languages_candidates = [ \[dq]en\[dq], \[dq]fr\[dq], \[dq]de\[dq], \[dq]et\[dq] ]
+filter.get_lang.language_candidates = [ \[dq]en\[dq], \[dq]fr\[dq], \[dq]de\[dq], \[dq]et\[dq] ]
 filter.map_lang = [
     [ \[dq]en\[dq], \[dq]en\-US\[dq], ],
     [ \[dq]de\[dq], \[dq]de\-DE\[dq], ],
@@ -2367,7 +2367,6 @@ modify the second column of the above table.
 For example:
 .IP
 .EX
-\f[B][[scheme]]\f[R]
 \f[B][base_scheme.tmpl]\f[R]
 fm_vars.localization = [
     [\[dq]fm_title\[dq], \[dq]Titel\[dq]],
@@ -2408,8 +2407,8 @@ NB: In general, a variable with the key `\f[CR]fm.fm_bar\f[R]' may
 contain a nested map:
 .IP
 .EX
-\f[B]\[dq]fm.fm_bar\[dq]:\f[R] \f[B]Object\f[R] {
-            \[dq]baz\[dq]: \f[B]String(\f[R]\[dq]Hello\[dq]\f[B])\f[R],
+\[dq]fm.fm_bar\[dq]: Object {
+            \[dq]baz\[dq]: String(\[dq]Hello\[dq]),
         }
 .EE
 .PP
