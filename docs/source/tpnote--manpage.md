@@ -1931,12 +1931,12 @@ new note files from templates. For example the header variable '`fm.fm_subtitle`
 is displayed as '`subtitle:`' in the note's header.
 
 This translation relation is defined in the configuration file variable
-'`scheme.tmpl.fm_vars.localization`'. Consider the following 
+'`scheme.tmpl.fm_var.localization`'. Consider the following 
 simplified example:
 
 ```toml
 [base_scheme.tmpl]
-fm_vars.localization = [
+fm_var.localization = [
     ["fm_title", "title"],
     ["fm_subtitle", "subtitle"],
     ["fm_author", "author"],
@@ -1956,7 +1956,7 @@ modify the second column of the above table. For example:
 
 ```toml
 [base_scheme.tmpl]
-fm_vars.localization = [
+fm_var.localization = [
     ["fm_title", "Titel"],
     ["fm_subtitle", "Untertitel"],
     ["fm_author", "Autor"],
@@ -1979,7 +1979,7 @@ As an example, consider the following localization:
 
 ```toml
 [base_scheme.tmpl]
-fm_vars.localization = [
+fm_var.localization = [
     ["fm_foo", "FOO"],
 ]
 
