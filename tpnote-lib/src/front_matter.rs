@@ -2,20 +2,10 @@
 //! In this documentation, the terms “YAML header”, ”header” and ”front matter"
 //! are used as synonyms for the note's meta data block at the beginning
 //! of the text file. Technically this is a wrapper around a `tera::Map`.
-use crate::config::Assertion;
-use crate::config::LIB_CFG;
-use crate::error::LibCfgError;
 use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
-use crate::filename::Extension;
-use crate::filename::NotePath;
-use crate::filename::NotePathStr;
-use crate::filter::name;
-use crate::settings::SETTINGS;
-use std::matches;
 use std::ops::Deref;
 use std::ops::DerefMut;
-use std::path::Path;
 use std::str;
 use tera::Value;
 
@@ -27,7 +17,7 @@ pub struct FrontMatter(pub tera::Map<String, tera::Value>);
 /// Helper function asserting that all the leaves of `val` have a certain type.
 /// The first parameter is the type to check recursively.
 /// The second is a closure that evaluates to true or false.
-fn all_leaves(val: &Value, f: &dyn Fn(&Value) -> bool) -> bool {
+pub(crate) fn all_leaves(val: &Value, f: &dyn Fn(&Value) -> bool) -> bool {
     match &val {
         Value::Array(a) => {
             for i in a.iter() {
@@ -49,167 +39,6 @@ fn all_leaves(val: &Value, f: &dyn Fn(&Value) -> bool) -> bool {
         }
     }
     true
-}
-
-impl FrontMatter {
-    /// Checks if the front matter variables satisfy preconditions.
-    /// The path is the path to the current document.
-    #[inline]
-    pub fn assert_precoditions(&self, docpath: &Path) -> Result<(), NoteError> {
-        let lib_cfg = &LIB_CFG.read_recursive();
-        let scheme = &lib_cfg.scheme[SETTINGS.read_recursive().current_scheme];
-        for (key, conditions) in scheme.tmpl.fm_var.assertions.iter() {
-            let localized_key = name(scheme, key);
-            if let Some(value) = self.get(localized_key) {
-                for cond in conditions {
-                    match cond {
-                        Assertion::IsDefined => {}
-
-                        Assertion::IsString => {
-                            if !all_leaves(value, &|v| matches!(v, Value::String(..))) {
-                                return Err(NoteError::FrontMatterFieldIsNotString {
-                                    field_name: localized_key.to_owned(),
-                                });
-                            }
-                        }
-
-                        Assertion::IsNotEmptyString => {
-                            if !all_leaves(value, &|v| {
-                                matches!(v, Value::String(..)) && v.as_str() != Some("")
-                            }) {
-                                return Err(NoteError::FrontMatterFieldIsEmptyString {
-                                    field_name: localized_key.to_owned(),
-                                });
-                            }
-                        }
-
-                        Assertion::IsNumber => {
-                            if !all_leaves(value, &|v| matches!(v, Value::Number(..))) {
-                                return Err(NoteError::FrontMatterFieldIsNotNumber {
-                                    field_name: localized_key.to_owned(),
-                                });
-                            }
-                        }
-
-                        Assertion::IsBool => {
-                            if !all_leaves(value, &|v| matches!(v, Value::Bool(..))) {
-                                return Err(NoteError::FrontMatterFieldIsNotBool {
-                                    field_name: localized_key.to_owned(),
-                                });
-                            }
-                        }
-
-                        Assertion::IsNotCompound => {
-                            if matches!(value, Value::Array(..))
-                                || matches!(value, Value::Object(..))
-                            {
-                                return Err(NoteError::FrontMatterFieldIsCompound {
-                                    field_name: localized_key.to_owned(),
-                                });
-                            }
-                        }
-
-                        Assertion::IsValidSortTag => {
-                            let fm_sort_tag = value.as_str().unwrap_or_default();
-                            if !fm_sort_tag.is_empty() {
-                                // Check for forbidden characters.
-                                let (_, rest, is_sequential) = fm_sort_tag.split_sort_tag(true);
-                                if !rest.is_empty() {
-                                    return Err(NoteError::FrontMatterFieldIsInvalidSortTag {
-                                        sort_tag: fm_sort_tag.to_owned(),
-                                        sort_tag_extra_chars: scheme
-                                            .filename
-                                            .sort_tag
-                                            .extra_chars
-                                            .escape_default()
-                                            .to_string(),
-                                        filename_sort_tag_letters_in_succession_max: scheme
-                                            .filename
-                                            .sort_tag
-                                            .letters_in_succession_max,
-                                    });
-                                }
-
-                                // Check for duplicate sequential sort-tags.
-                                if !is_sequential {
-                                    // No further checks.
-                                    return Ok(());
-                                }
-                                let docpath = docpath.to_str().unwrap_or_default();
-
-                                let (dirpath, filename) =
-                                    docpath.rsplit_once(['/', '\\']).unwrap_or(("", docpath));
-                                let sort_tag = filename.split_sort_tag(false).0;
-                                // No further check if filename(path) has no sort-tag
-                                // or if sort-tags are identical.
-                                if sort_tag.is_empty() || sort_tag == fm_sort_tag {
-                                    return Ok(());
-                                }
-                                let dirpath = Path::new(dirpath);
-
-                                if let Some(other_file) =
-                                    dirpath.has_file_with_sort_tag(fm_sort_tag)
-                                {
-                                    return Err(NoteError::FrontMatterFieldIsDuplicateSortTag {
-                                        sort_tag: fm_sort_tag.to_string(),
-                                        existing_file: other_file,
-                                    });
-                                }
-                            }
-                        }
-
-                        Assertion::IsTpnoteExtension => {
-                            let file_ext = value.as_str().unwrap_or_default();
-
-                            if !file_ext.is_empty() && !(*file_ext).is_tpnote_ext() {
-                                return Err(NoteError::FrontMatterFieldIsNotTpnoteExtension {
-                                    extension: file_ext.to_string(),
-                                    extensions: {
-                                        use std::fmt::Write;
-                                        let mut errstr = scheme.filename.extensions.iter().fold(
-                                            String::new(),
-                                            |mut output, (k, _v1, _v2)| {
-                                                let _ = write!(output, "{k}, ");
-                                                output
-                                            },
-                                        );
-                                        errstr.truncate(errstr.len().saturating_sub(2));
-                                        errstr
-                                    },
-                                });
-                            }
-                        }
-
-                        Assertion::IsConfiguredScheme => {
-                            let fm_scheme = value.as_str().unwrap_or_default();
-                            match lib_cfg.scheme_idx(fm_scheme) {
-                                Ok(_) => {}
-                                Err(LibCfgError::SchemeNotFound {
-                                    scheme_name,
-                                    schemes,
-                                }) => {
-                                    return Err(NoteError::SchemeNotFound {
-                                        scheme_val: scheme_name,
-                                        scheme_key: localized_key.to_string(),
-                                        schemes,
-                                    })
-                                }
-                                Err(e) => return Err(e.into()),
-                            };
-                        }
-
-                        Assertion::NoOperation => {}
-                    } //
-                }
-                //
-            } else if conditions.contains(&Assertion::IsDefined) {
-                return Err(NoteError::FrontMatterFieldMissing {
-                    field_name: localized_key.to_owned(),
-                });
-            }
-        }
-        Ok(())
-    }
 }
 
 impl TryFrom<&str> for FrontMatter {
@@ -251,10 +80,7 @@ impl DerefMut for FrontMatter {
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
-
     use crate::config::TMPL_VAR_FM_ALL;
-    use crate::error::NoteError;
     use crate::front_matter::FrontMatter;
     use serde_json::json;
     use tera::Value;
@@ -360,151 +186,6 @@ mod tests {
         let front_matter = FrontMatter::try_from(content.header()).unwrap();
         assert_eq!(front_matter.get("title"), Some(&json!("My day")));
         assert_eq!(front_matter.get("subtitle"), Some(&json!("Note")));
-    }
-
-    #[test]
-    fn test_assert_preconditions() {
-        // Check `tmpl.filter.assert_preconditions` in
-        // `tpnote_lib/src/config_default.toml` to understand these tests.
-        use crate::front_matter::FrontMatter;
-        use serde_json::json;
-
-        //
-        // Is empty.
-        let input = "";
-        let res = FrontMatter::try_from(input).unwrap();
-        assert!(matches!(
-            res.assert_precoditions(Path::new("does not matter"))
-                .unwrap_err(),
-            NoteError::FrontMatterFieldMissing { .. }
-        ));
-
-        //
-        // Ok as long as no other file with that sort-tag exists.
-        let input = "# document start
-        title: The book
-        sort_tag:    123b";
-        let res = FrontMatter::try_from(input).unwrap();
-        assert!(matches!(
-            res.assert_precoditions(Path::new("./03b-test.md")),
-            Ok(())
-        ));
-
-        //
-        // Should not be a compound type.
-        let input = "# document start
-        title: The book
-        sort_tag:
-        -    1234
-        -    456";
-        let res = FrontMatter::try_from(input).unwrap();
-        assert!(matches!(
-            res.assert_precoditions(Path::new("does not matter"))
-                .unwrap_err(),
-            NoteError::FrontMatterFieldIsCompound { .. }
-        ));
-
-        //
-        // Should not be a compound type.
-        let input = "# document start
-        title: The book
-        sort_tag:
-          first:  1234
-          second: 456";
-        let res = FrontMatter::try_from(input).unwrap();
-        assert!(matches!(
-            res.assert_precoditions(Path::new("does not matter"))
-                .unwrap_err(),
-            NoteError::FrontMatterFieldIsCompound { .. }
-        ));
-
-        //
-        // Not registered file extension.
-        let input = "# document start
-        title: The book
-        file_ext:    xyz";
-        let res = FrontMatter::try_from(input).unwrap();
-        assert!(matches!(
-            res.assert_precoditions(Path::new("does not matter"))
-                .unwrap_err(),
-            NoteError::FrontMatterFieldIsNotTpnoteExtension { .. }
-        ));
-
-        //
-        // Check `bool`
-        let input = "# document start
-        title: The book
-        filename_sync: error, here should be a bool";
-        let res = FrontMatter::try_from(input).unwrap();
-        assert!(matches!(
-            res.assert_precoditions(Path::new("does not matter"))
-                .unwrap_err(),
-            NoteError::FrontMatterFieldIsNotBool { .. }
-        ));
-
-        //
-        let input = "# document start
-        title: my title
-        subtitle: my subtitle
-        ";
-        let expected = json!({"title": "my title", "subtitle": "my subtitle"});
-        let expected = expected.as_object().unwrap();
-
-        let output = FrontMatter::try_from(input).unwrap();
-        assert_eq!(&output.0, expected);
-
-        let input = "# document start
-        title: my title
-        file_ext: ''
-        ";
-
-        //
-        let expected = json!({"title": "my title", "file_ext": ""});
-        let expected = expected.as_object().unwrap();
-
-        let output = FrontMatter::try_from(input).unwrap();
-        assert_eq!(&output.0, expected);
-
-        //
-        let input = "# document start
-        title: ''
-        subtitle: my subtitle
-        ";
-        let output = FrontMatter::try_from(input).unwrap();
-        assert!(matches!(
-            output
-                .assert_precoditions(Path::new("does not matter"))
-                .unwrap_err(),
-            NoteError::FrontMatterFieldIsEmptyString { .. }
-        ));
-
-        //
-        let input = "# document start
-        title: My doc
-        author: 
-        - First author
-        - Second author
-        ";
-        let output = FrontMatter::try_from(input).unwrap();
-        assert!(output
-            .assert_precoditions(Path::new("does not matter"))
-            .is_ok());
-
-        //
-        let input = "# document start
-        title: My doc
-        subtitle: my subtitle
-        author:
-        - First title
-        - 1234
-        ";
-        let output = FrontMatter::try_from(input).unwrap();
-        assert!(matches!(
-            output
-                .assert_precoditions(Path::new("does not matter"))
-                .unwrap_err(),
-            NoteError::FrontMatterFieldIsNotString { .. }
-        ));
     }
 
     #[test]
