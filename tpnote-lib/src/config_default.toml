@@ -302,6 +302,9 @@ from_dir_content = """
 {% if languages | length > 1 -%}
 {{ languages | to_yaml(key='fm_languages') | append(newline=true) }}
 {%- endif -%}
+{% if scheme_sync_default != current_scheme -%}
+{{ current_scheme | to_yaml(key='fm_scheme') | append(newline=true) }}
+{%- endif -%}
 ---
 
 
@@ -358,6 +361,9 @@ from_clipboard_yaml_content = """
     | to_yaml \
     | prepend(newline=true) \
     | append(newline=true) }}\
+{% if scheme_sync_default != current_scheme -%}
+{{ current_scheme | to_yaml(key='fm_scheme') | append(newline=true) }}
+{%- endif -%}
 ---
 
 {{ input }}
@@ -413,6 +419,9 @@ from_clipboard_content = """
 {% if languages | length > 1 -%}
 {{ languages | to_yaml(key='fm_languages') | append(newline=true) }}
 {%- endif -%}
+{% if scheme_sync_default != current_scheme -%}
+{{ current_scheme | to_yaml(key='fm_scheme') | append(newline=true) }}
+{%- endif -%}
 ---
 
 {{ input }}
@@ -445,6 +454,9 @@ from_text_file_content = """
 {{ languages | to_yaml(key='fm_languages') | append(newline=true) }}
 {%- endif -%}
 ### {{ path | file_name | to_yaml(key='fm_orig_name', tab=12) }}
+{% if scheme_sync_default != current_scheme -%}
+{{ current_scheme | to_yaml(key='fm_scheme') | append(newline=true) }}
+{%- endif -%}
 ---
 
 {{ doc_body_text }}
@@ -497,6 +509,9 @@ annotate_file_content = """
 {{ lang | to_yaml(key='fm_lang') }}
 {% if languages | length > 1 -%}
 {{ languages | to_yaml(key='fm_languages') | append(newline=true) }}
+{%- endif -%}
+{% if scheme_sync_default != current_scheme -%}
+{{ current_scheme | to_yaml(key='fm_scheme') | append(newline=true) }}
 {%- endif -%}
 ---
 
