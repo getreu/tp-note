@@ -6,6 +6,7 @@ use crate::config::TMPL_VAR_DIR_PATH;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_ALL;
+use crate::config::TMPL_VAR_FM_SCHEME;
 use crate::config::TMPL_VAR_LANG;
 use crate::config::TMPL_VAR_PATH;
 use crate::config::TMPL_VAR_ROOT_PATH;
@@ -130,7 +131,42 @@ impl Context {
             })
             .unwrap_or_default();
 
-        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+        // Collect all localized scheme field names.
+        // Example: `["scheme", "scheme", "Schema"]`
+        let localized_scheme_names: Vec<String> = LIB_CFG
+            .read_recursive()
+            .scheme
+            .iter()
+            .map(|s| {
+                s.tmpl
+                    .fm_var
+                    .localization
+                    .iter()
+                    .find_map(|(k, v)| (k == TMPL_VAR_FM_SCHEME).then_some(v.to_owned()))
+            })
+            .collect::<Option<Vec<String>>>()
+            .unwrap_or_default();
+
+        // Search for localized scheme names in front matter.
+        // `(scheme_idx, field_value)`. Example: `(2, "Deutsch")`
+        let localized_scheme: Option<(usize, &str)> = localized_scheme_names
+            .iter()
+            .enumerate()
+            .find_map(|(i, k)| fm.0.get(k).and_then(|s| s.as_str()).map(|s| (i, s)));
+
+        let scheme = if let Some((scheme, _)) = localized_scheme {
+            {
+                log::trace!(
+                    "Using scheme field in front matter as current scheme: {:?}",
+                    localized_scheme
+                );
+                scheme
+            }
+        } else {
+            SETTINGS.read_recursive().current_scheme
+        };
+        let scheme = &LIB_CFG.read_recursive().scheme[scheme];
+
         let vars = &scheme.tmpl.fm_var.localization;
         for (key, value) in fm.iter() {
             // This delocalizes the variable name and prepends `fm_` to its name.

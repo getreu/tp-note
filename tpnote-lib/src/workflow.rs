@@ -359,9 +359,7 @@ impl Workflow<SyncFilename<'_>> {
     }
 }
 
-impl<T: Content, F: Fn(TemplateKind) -> TemplateKind>
-    Workflow<SyncFilenameOrCreateNew<'_, T, F>>
-{
+impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCreateNew<'_, T, F>> {
     /// Starts the "synchronize filename or create a new note" workflow.
     /// Returns the note's new or existing filename. Repeated calls, will
     /// reload the environment variables, but not the configuration file. This
