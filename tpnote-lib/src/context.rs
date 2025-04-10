@@ -8,6 +8,7 @@ use crate::config::TMPL_VAR_FM_ALL;
 use crate::config::TMPL_VAR_LANG;
 use crate::config::TMPL_VAR_PATH;
 use crate::config::TMPL_VAR_ROOT_PATH;
+use crate::config::TMPL_VAR_SCHEME_SYNC_DEFAULT;
 use crate::config::TMPL_VAR_USERNAME;
 use crate::content::Content;
 use crate::error::NoteError;
@@ -107,6 +108,7 @@ impl Context {
             dir_path,
             root_path,
         };
+        context.insert_config_vars();
         context.insert_settings();
         context
     }
@@ -262,6 +264,37 @@ impl Context {
 
         // Get the user's language tag.
         (*self).insert(TMPL_VAR_LANG, &settings.lang);
+    }
+
+    /// Insert some configuration variables into the context so that they
+    /// can be used in the templates.
+    ///
+    /// This function add the keys:
+    /// TMPL_VAR_SCHEME_SYNC_DEFAULT.
+    ///
+    /// ```
+    /// use std::path::Path;
+    /// use tpnote_lib::config::TMPL_VAR_SCHEME_SYNC_DEFAULT;
+    /// use tpnote_lib::settings::set_test_default_settings;
+    /// use tpnote_lib::context::Context;
+    /// set_test_default_settings().unwrap();
+    ///
+    /// // The constructor calls `context.insert_settings()` before returning.
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+    ///
+    /// // When the note's YAML header does not contain a `scheme:` field,
+    /// // the `default` scheme is used.
+    /// assert_eq!(&context.get(TMPL_VAR_SCHEME_SYNC_DEFAULT).unwrap().to_string(),
+    ///     &format!("\"default\""));
+    /// ```
+    fn insert_config_vars(&mut self) {
+        let lib_cfg = LIB_CFG.read_recursive();
+
+        // Default extension for new notes as defined in the configuration file.
+        (*self).insert(
+            TMPL_VAR_SCHEME_SYNC_DEFAULT,
+            lib_cfg.scheme_sync_default.as_str(),
+        );
     }
 }
 

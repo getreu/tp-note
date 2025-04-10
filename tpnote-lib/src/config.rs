@@ -117,6 +117,12 @@ pub const TMPL_VAR_STDIN: &str = "stdin";
 /// configuration file.
 pub const TMPL_VAR_EXTENSION_DEFAULT: &str = "extension_default";
 
+/// Contains the name of the default scheme when no `scheme:` field is
+/// present in the note's YAML header.
+/// This value defined in the configuration file under the same name and
+/// copied from there.
+pub const TMPL_VAR_SCHEME_SYNC_DEFAULT: &str = "scheme_sync_default";
+
 /// Contains the content of the first non empty environment variable
 /// `LOGNAME`, `USERNAME` or `USER`.
 pub const TMPL_VAR_USERNAME: &str = "username";
