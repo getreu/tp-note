@@ -1,6 +1,7 @@
 //! Extends the built-in Tera filters.
 use crate::config::FILENAME_ROOT_PATH_MARKER;
 use crate::config::LIB_CFG;
+use crate::config::TMPL_VAR_CURRENT_SCHEME;
 use crate::config::TMPL_VAR_DIR_PATH;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
@@ -234,11 +235,16 @@ impl Context {
     /// a context template and a filename template.
     ///
     /// This function add the keys:
-    /// TMPL_VAR_EXTENSION_DEFAULT, TMPL_VAR_USERNAME and TMPL_VAR_LANG.
+    ///
+    /// * `TMPL_VAR_EXTENSION_DEFAULT`
+    /// * `TMPL_VAR_USERNAME`
+    /// * `TMPL_VAR_LANG`
+    /// * `TMPL_VAR_CURRENT_SCHEME`
     ///
     /// ```
     /// use std::path::Path;
     /// use tpnote_lib::config::TMPL_VAR_EXTENSION_DEFAULT;
+    /// use tpnote_lib::config::TMPL_VAR_CURRENT_SCHEME;
     /// use tpnote_lib::settings::set_test_default_settings;
     /// use tpnote_lib::context::Context;
     /// set_test_default_settings().unwrap();
@@ -249,6 +255,9 @@ impl Context {
     /// // For most platforms `context.get("extension_default")` is `md`
     /// assert_eq!(&context.get(TMPL_VAR_EXTENSION_DEFAULT).unwrap().to_string(),
     ///     &format!("\"md\""));
+    /// // `Settings.current_scheme` is by default the `default` scheme.
+    /// assert_eq!(&context.get(TMPL_VAR_CURRENT_SCHEME).unwrap().to_string(),
+    ///     &format!("\"default\""));
     /// ```
     fn insert_settings(&mut self) {
         let settings = SETTINGS.read_recursive();
@@ -258,6 +267,14 @@ impl Context {
             TMPL_VAR_EXTENSION_DEFAULT,
             settings.extension_default.as_str(),
         );
+
+        {
+            let lib_cfg = LIB_CFG.read_recursive();
+            (*self).insert(
+                TMPL_VAR_CURRENT_SCHEME,
+                &lib_cfg.scheme[settings.current_scheme].name,
+            );
+        } // Release `lib_cfg` here.
 
         // Search for UNIX, Windows and MacOS user-names.
         (*self).insert(TMPL_VAR_USERNAME, &settings.author);

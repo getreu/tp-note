@@ -113,6 +113,9 @@ pub const TMPL_VAR_STDIN_HEADER: &str = "stdin_header";
 /// body only. Otherwise, it contains the whole input stream.
 pub const TMPL_VAR_STDIN: &str = "stdin";
 
+/// Contains the name of the selected scheme.
+pub const TMPL_VAR_CURRENT_SCHEME: &str = "current_scheme";
+
 /// Contains the default file extension for new note files as defined in the
 /// configuration file.
 pub const TMPL_VAR_EXTENSION_DEFAULT: &str = "extension_default";
