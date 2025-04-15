@@ -13,6 +13,7 @@ use crate::config::TMPL_HTML_VAR_DOC_ERROR;
 use crate::config::TMPL_HTML_VAR_DOC_TEXT;
 use crate::content::Content;
 use crate::context::Context;
+use crate::context::HasSettings;
 use crate::error::NoteError;
 #[cfg(feature = "viewer")]
 use crate::filter::TERA;
@@ -109,9 +110,12 @@ impl HtmlRenderer {
     /// // Check the HTML rendition.
     /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
     /// ```
-    pub fn viewer_page<T: Content>(context: Context, content: T) -> Result<String, NoteError> {
+    pub fn viewer_page<T: Content>(
+        context: Context<HasSettings>,
+        content: T,
+    ) -> Result<String, NoteError> {
         let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer;
-        Self::render(context, content, tmpl_html)
+        HtmlRenderer::render(context, content, tmpl_html)
     }
 
     /// Returns the HTML rendition of a `ContentString`. The markup rendition
@@ -147,18 +151,21 @@ impl HtmlRenderer {
     /// // Check the HTML rendition.
     /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
     /// ```
-    pub fn exporter_page<T: Content>(context: Context, content: T) -> Result<String, NoteError> {
+    pub fn exporter_page<T: Content>(
+        context: Context<HasSettings>,
+        content: T,
+    ) -> Result<String, NoteError> {
         let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.exporter;
-        Self::render(context, content, tmpl_html)
+        HtmlRenderer::render(context, content, tmpl_html)
     }
 
     /// Helper function.
     fn render<T: Content>(
-        context: Context,
+        context: Context<HasSettings>,
         content: T,
         tmpl_html: &str,
     ) -> Result<String, NoteError> {
-        let note = Note::from_raw_text(context, content, TemplateKind::None)?;
+        let note = Note::<T>::from_raw_text(context, content, TemplateKind::None)?;
 
         note.render_content_to_html(tmpl_html)
     }
@@ -211,7 +218,7 @@ impl HtmlRenderer {
     /// ```
     #[cfg(feature = "viewer")]
     pub fn error_page<T: Content>(
-        mut context: Context,
+        mut context: Context<HasSettings>,
         note_erroneous_content: T,
         error_message: &str,
     ) -> Result<String, NoteError> {
@@ -326,7 +333,7 @@ impl HtmlRenderer {
 
         // Render HTML.
         let root_path = context.root_path.clone();
-        let html = Self::exporter_page(context, content)?;
+        let html = Self::exporter_page::<T>(context, content)?;
         let html = rewrite_links(
             html,
             &root_path,

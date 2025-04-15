@@ -12,11 +12,12 @@ use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH;
 use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
 use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH;
 use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
-use crate::config::TMPL_VAR_DOC_BODY_TEXT;
+// TODO move this away to context
 use crate::config::TMPL_VAR_DOC_FILE_DATE;
-use crate::config::TMPL_VAR_DOC_FM_TEXT;
 use crate::content::Content;
 use crate::context::Context;
+use crate::context::HasFrontMatter;
+use crate::context::HasSettings;
 use crate::error::NoteError;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
@@ -25,6 +26,7 @@ use crate::front_matter::FrontMatter;
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
 use std::default::Default;
+use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::str;
@@ -35,16 +37,16 @@ use tera::Tera;
 /// Unfortunately it is private there, this is why we must redefine it here.
 pub(crate) const ONE_OFF_TEMPLATE_NAME: &str = "__tera_one_off";
 
-#[derive(Debug, PartialEq)]
+//#[derive(Debug, PartialEq)]
 /// Represents a note.
 /// 1. The `ContentString`'s header is deserialized into `FrontMatter`.
 /// 2. `FrontMatter` is stored in `Context` with some environment data.
 /// 3. `Context` data is filled in some filename template.
 /// 4. The result is stored in `rendered_filename`.
-pub struct Note<T> {
+pub struct Note<T: Content> {
     /// Captured environment of _Tp-Note_ that
     /// is used to fill in templates.
-    pub context: Context,
+    pub context: Context<HasFrontMatter>,
     /// The full text content of the note, including
     /// its front matter.
     pub content: T,
@@ -53,7 +55,6 @@ pub struct Note<T> {
     pub rendered_filename: PathBuf,
 }
 
-use std::fs;
 impl<T: Content> Note<T> {
     /// Constructor creating a `Note` memory representation from the raw text
     /// provided by the `content` object. No file content is read from disk.
@@ -75,17 +76,12 @@ impl<T: Content> Note<T> {
     /// * all front matter variables (see `FrontMatter::try_from_content()`)
     ///
     pub fn from_raw_text(
-        mut context: Context,
+        mut context: Context<HasSettings>,
         content: T,
         template_kind: TemplateKind,
-    ) -> Result<Self, NoteError> {
-        // Register context variables:
-        // Register the raw serialized header text.
-        let header = &content.header();
-        (*context).insert(TMPL_VAR_DOC_FM_TEXT, &header);
-        //We also keep the body.
+    ) -> Result<Note<T>, NoteError> {
+        let header = content.header();
         let body = content.body();
-        (*context).insert(TMPL_VAR_DOC_BODY_TEXT, &body);
 
         // Get the file's creation date. Fail silently.
         if let Ok(file) = File::open(&context.path) {
@@ -117,14 +113,14 @@ impl<T: Content> Note<T> {
         // Deserialize the note's header read from disk.
         // Store the front matter in the context for later use in templates.
         let fm = FrontMatter::try_from(content.header())?;
-        context.insert_front_matter(&fm);
+        let context = context.insert_front_matter(&fm);
 
         match template_kind {
             TemplateKind::SyncFilename =>
             // No rendering to markdown is required. `content` is read from disk and left untouched.
             {
                 context.assert_precoditions()?;
-                Ok(Self {
+                Ok(Note::<T> {
                     context,
                     content,
                     rendered_filename: PathBuf::new(),
@@ -135,13 +131,17 @@ impl<T: Content> Note<T> {
             // A rendition to HTML may follow.
             {
                 context.assert_precoditions()?;
-                Ok(Self {
+                Ok(Note::<T> {
                     context,
                     content,
                     rendered_filename: PathBuf::new(),
                 })
             }
-            TemplateKind::FromTextFile => Self::from_content_template(context, template_kind),
+            TemplateKind::FromTextFile => {
+                let mut context = context;
+                context.insert_content(header, body);
+                Note::<T>::from_content_template(context, TemplateKind::FromTextFile)
+            }
             // This should not happen. Use `Self::from_content_template()` instead.
             _ => {
                 panic!(
@@ -163,17 +163,17 @@ impl<T: Content> Note<T> {
     /// Panics if this is the case.
     ///
     pub fn from_content_template(
-        mut context: Context,
+        mut context: Context<HasFrontMatter>,
         template_kind: TemplateKind,
     ) -> Result<Note<T>, NoteError> {
+        // Add content to context.
         log::trace!(
             "Available substitution variables for the content template:\n{:#?}",
             *context
         );
 
         // Render template
-
-        let content: T = T::from({
+        let new_content: T = T::from({
             let mut tera = Tera::default();
             tera.extend(&TERA)?;
 
@@ -190,19 +190,20 @@ impl<T: Content> Note<T> {
 
         log::debug!(
             "Rendered content template:\n---\n{}\n---\n{}",
-            content.header(),
-            content.body().trim()
+            new_content.header(),
+            new_content.body().trim()
         );
 
         // Deserialize the rendered template
-        let fm = FrontMatter::try_from(content.header())?;
+        let fm = FrontMatter::try_from(new_content.header())?;
 
-        context.insert_front_matter(&fm);
+        // We add more front matter. This might overwrite some fields.
+        context.insert_more_front_matter(&fm);
 
         // Return new note.
         Ok(Note {
             context,
-            content,
+            content: new_content,
             rendered_filename: PathBuf::new(),
         })
     }
@@ -326,6 +327,9 @@ impl<T: Content> Note<T> {
 
         let mut html_context = self.context.clone();
 
+        // Insert raw header and body.
+        html_context.insert_content(self.content.header(), self.content.body());
+
         // Insert the raw CSS
         html_context.insert(
             TMPL_HTML_VAR_EXPORTER_DOC_CSS,
@@ -447,16 +451,16 @@ mod tests {
         tmp2.insert("fm_flag".to_string(), json!(true)); // Bool()
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // Array([Numbers()..])!
 
-        let mut input1 = Context::from(Path::new("a/b/test.md"));
+        let input1 = Context::from(Path::new("a/b/test.md"));
         let input2 = FrontMatter(tmp);
 
         let mut expected = Context::from(Path::new("a/b/test.md"));
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
         (*expected).insert(TMPL_VAR_FM_ALL.to_string(), &tmp2); // Map()
+        let expected = expected.tag_has_front_matter();
 
-        input1.insert_front_matter(&input2);
-        let result = input1;
+        let result = input1.insert_front_matter(&input2);
 
         assert_eq!(result, expected);
     }
@@ -489,7 +493,9 @@ Body text
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
-        let mut n = Note::from_raw_text(context, content, TemplateKind::SyncFilename).unwrap();
+        let mut n =
+            Note::<ContentString>::from_raw_text(context, content, TemplateKind::SyncFilename)
+                .unwrap();
         n.render_filename(TemplateKind::SyncFilename).unwrap();
         n.set_next_unused_rendered_filename_or(&n.context.path.clone())
             .unwrap();
@@ -532,7 +538,8 @@ Body text
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
-        let n = Note::from_raw_text(context, content, TemplateKind::None).unwrap();
+        let n: Note<ContentString> =
+            Note::<ContentString>::from_raw_text(context, content, TemplateKind::None).unwrap();
         // Check the HTML rendition.
         let html = n
             .render_content_to_html(&LIB_CFG.read_recursive().tmpl_html.viewer)
@@ -564,8 +571,12 @@ Body text
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
-        let mut n =
-            Note::from_raw_text(context.clone(), content, TemplateKind::FromTextFile).unwrap();
+        let mut n = Note::<ContentString>::from_raw_text(
+            context.clone(),
+            content,
+            TemplateKind::FromTextFile,
+        )
+        .unwrap();
         assert!(!n.content.header().is_empty());
         assert_eq!(
             n.context
@@ -626,11 +637,13 @@ Body text
 
         // Store the path in `context`.
         let context = Context::from(&notedir);
+        //
+        let context = context.tag_has_front_matter();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
-        let mut n: Note<ContentString> =
-            Note::from_content_template(context, TemplateKind::FromDir).unwrap();
+        let mut n =
+            Note::<ContentString>::from_content_template(context, TemplateKind::FromDir).unwrap();
         assert!(n.content.header().starts_with("title:        my dir"));
         assert_eq!(n.content.borrow_dependent().body, "\n\n");
 
@@ -693,10 +706,11 @@ Body text
         let notedir = temp_dir();
 
         // Store the path in `context`.
-        let mut context = Context::from(&notedir);
+        let context = Context::from(&notedir);
+        let mut context = context.tag_has_front_matter();
         let html_clipboard = ContentString::from("html_clp\n".to_string());
         context
-            .insert_content(
+            .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_HTML_CLIPBOARD,
                 TMPL_VAR_HTML_CLIPBOARD_HEADER,
                 &html_clipboard,
@@ -704,7 +718,7 @@ Body text
             .unwrap();
         let txt_clipboard = ContentString::from("txt_clp\n".to_string());
         context
-            .insert_content(
+            .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_TXT_CLIPBOARD,
                 TMPL_VAR_TXT_CLIPBOARD_HEADER,
                 &txt_clipboard,
@@ -712,7 +726,11 @@ Body text
             .unwrap();
         let stdin = ContentString::from("std\n".to_string());
         context
-            .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
+            .insert_front_matter_and_content_from_another_note(
+                TMPL_VAR_STDIN,
+                TMPL_VAR_STDIN_HEADER,
+                &stdin,
+            )
             .unwrap();
         // This is the condition to choose: `TemplateKind::FromClipboard`:
         assert!(
@@ -728,8 +746,9 @@ Body text
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
-        let mut n: Note<ContentString> =
-            Note::from_content_template(context, TemplateKind::FromClipboard).unwrap();
+        let mut n =
+            Note::<ContentString>::from_content_template(context, TemplateKind::FromClipboard)
+                .unwrap();
         let expected_body = "\nstd\ntxt_clp\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
@@ -802,18 +821,19 @@ Body text
 
         // Run test.
         // Store the path in `context`.
-        let mut context = Context::from(&notedir);
+        let context = Context::from(&notedir);
+        let mut context = context.tag_has_front_matter();
         let html_clipboard = ContentString::from("my HTML clipboard\n".to_string());
         let txt_clipboard = ContentString::from("my TXT clipboard\n".to_string());
         context
-            .insert_content(
+            .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_HTML_CLIPBOARD,
                 TMPL_VAR_HTML_CLIPBOARD_HEADER,
                 &html_clipboard,
             )
             .unwrap();
         context
-            .insert_content(
+            .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_TXT_CLIPBOARD,
                 TMPL_VAR_TXT_CLIPBOARD_HEADER,
                 &txt_clipboard,
@@ -822,7 +842,11 @@ Body text
         let stdin =
             ContentString::from("---\nsubtitle: \"this overwrites\"\n---\nstdin body".to_string());
         context
-            .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
+            .insert_front_matter_and_content_from_another_note(
+                TMPL_VAR_STDIN,
+                TMPL_VAR_STDIN_HEADER,
+                &stdin,
+            )
             .unwrap();
         // This is the condition to choose: `TemplateKind::FromClipboardYaml`:
         assert!(
@@ -833,8 +857,9 @@ Body text
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
-        let mut n: Note<ContentString> =
-            Note::from_content_template(context, TemplateKind::FromClipboardYaml).unwrap();
+        let mut n =
+            Note::<ContentString>::from_content_template(context, TemplateKind::FromClipboardYaml)
+                .unwrap();
         let expected_body = "\nstdin body\nmy TXT clipboard\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
@@ -911,18 +936,19 @@ Body text
 
         // Run the test.
         // Store the path in `context`.
-        let mut context = Context::from(&non_notefile);
+        let context = Context::from(&non_notefile);
+        let mut context = context.tag_has_front_matter();
         let html_clipboard = ContentString::from("my HTML clipboard\n".to_string());
         let txt_clipboard = ContentString::from("my TXT clipboard\n".to_string());
         context
-            .insert_content(
+            .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_HTML_CLIPBOARD,
                 TMPL_VAR_HTML_CLIPBOARD_HEADER,
                 &html_clipboard,
             )
             .unwrap();
         context
-            .insert_content(
+            .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_TXT_CLIPBOARD,
                 TMPL_VAR_TXT_CLIPBOARD_HEADER,
                 &txt_clipboard,
@@ -930,13 +956,18 @@ Body text
             .unwrap();
         let stdin = ContentString::from_string_with_cr("my stdin\n".to_string());
         context
-            .insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, &stdin)
+            .insert_front_matter_and_content_from_another_note(
+                TMPL_VAR_STDIN,
+                TMPL_VAR_STDIN_HEADER,
+                &stdin,
+            )
             .unwrap();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
-        let mut n: Note<ContentString> =
-            Note::from_content_template(context, TemplateKind::AnnotateFile).unwrap();
+        let mut n =
+            Note::<ContentString>::from_content_template(context, TemplateKind::AnnotateFile)
+                .unwrap();
         let expected_body =
             "\n[20221030-some.pdf](<20221030-some.pdf>)\n\n---\n\nmy stdin\nmy TXT clipboard\n";
         assert_eq!(n.content.body(), expected_body);

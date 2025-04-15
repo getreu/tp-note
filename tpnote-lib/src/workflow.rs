@@ -351,7 +351,7 @@ impl Workflow<SyncFilename<'_>> {
         let content = <T>::open(self.input.path).unwrap_or_default();
 
         // This does not fill any templates,
-        let mut n = Note::from_raw_text(context, content, TemplateKind::SyncFilename)?;
+        let mut n = Note::<T>::from_raw_text(context, content, TemplateKind::SyncFilename)?;
 
         synchronize_filename::<T>(&mut settings, &mut n)?;
 
@@ -430,20 +430,25 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
         // and finally rename the file, if it is not in sync with its front matter.
 
         // Collect input data for templates.
-        let mut context = Context::from(self.input.path);
-        context.insert_content(
+        let context = Context::from(self.input.path);
+        let mut context_clipboard_stdin = context.clone().tag_has_front_matter();
+        context_clipboard_stdin.insert_front_matter_and_content_from_another_note(
             TMPL_VAR_HTML_CLIPBOARD,
             TMPL_VAR_HTML_CLIPBOARD_HEADER,
             self.input.html_clipboard,
         )?;
-        context.insert_content(
+        context_clipboard_stdin.insert_front_matter_and_content_from_another_note(
             TMPL_VAR_TXT_CLIPBOARD,
             TMPL_VAR_TXT_CLIPBOARD_HEADER,
             self.input.txt_clipboard,
         )?;
-        context.insert_content(TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER, self.input.stdin)?;
+        context_clipboard_stdin.insert_front_matter_and_content_from_another_note(
+            TMPL_VAR_STDIN,
+            TMPL_VAR_STDIN_HEADER,
+            self.input.stdin,
+        )?;
 
-        // `template_king` will tell us what to do.
+        // `template_kind` will tell us what to do.
         let (template_kind, content) = TemplateKind::from::<T>(
             self.input.path,
             self.input.html_clipboard,
@@ -458,7 +463,8 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             | TemplateKind::FromClipboard
             | TemplateKind::AnnotateFile => {
                 // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
-                let mut n = Note::from_content_template(context, template_kind)?;
+                let mut n =
+                    Note::<T>::from_content_template(context_clipboard_stdin, template_kind)?;
                 n.render_filename(template_kind)?;
                 // Check if the filename is not taken already
                 n.set_next_unused_rendered_filename()?;
@@ -467,7 +473,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             }
 
             TemplateKind::FromTextFile => {
-                let mut n = Note::from_raw_text(context, content.unwrap(), template_kind)?;
+                let mut n = Note::<T>::from_raw_text(context, content.unwrap(), template_kind)?;
                 // Render filename.
                 n.render_filename(template_kind)?;
 
@@ -479,14 +485,19 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             }
 
             TemplateKind::SyncFilename => {
-                let mut n =
-                    Note::from_raw_text(context, content.unwrap(), TemplateKind::SyncFilename)?;
+                let mut n = Note::<T>::from_raw_text(
+                    context,
+                    content.unwrap(),
+                    TemplateKind::SyncFilename,
+                )?;
 
                 synchronize_filename::<T>(&mut settings, &mut n)?;
                 n
             }
 
-            TemplateKind::None => Note::from_raw_text(context, content.unwrap(), template_kind)?,
+            TemplateKind::None => {
+                Note::<T>::from_raw_text(context, content.unwrap(), template_kind)?
+            }
         };
 
         // If no new filename was rendered, return the old one.
@@ -512,6 +523,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
 ///
 /// Helper function.
 fn synchronize_filename<T: Content>(
+    // TODO remove this?
     settings: &mut RwLockUpgradableReadGuard<Settings>,
     note: &mut Note<T>,
 ) -> Result<(), NoteError> {

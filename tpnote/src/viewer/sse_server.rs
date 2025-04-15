@@ -19,7 +19,7 @@ use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::SystemTime;
-use tpnote_lib::context::Context;
+use tpnote_lib::context::{Context, HasSettings};
 
 /// The TCP stream is read in chunks. This is the read buffer size.
 const TCP_READ_BUFFER_SIZE: usize = 0x400;
@@ -143,7 +143,7 @@ pub(crate) struct ServerThread {
     /// The constructor stores the path of the note document in `context.path`
     /// and in the Tera variable `TMPL_VAR_PATH`.
     /// Both are needed for rendering to HTML.
-    pub(crate) context: Context,
+    pub(crate) context: Context<HasSettings>,
     /// Java Script injection code used by the root page for live updates.
     /// Root pages insert this in their context with the key
     /// `TMPL_HTML_VAR_VIEWR_DOC_JS`.
@@ -158,7 +158,7 @@ impl ServerThread {
         allowed_urls: Arc<RwLock<HashSet<PathBuf>>>,
         delivered_tpnote_docs: Arc<RwLock<HashSet<PathBuf>>>,
         conn_counter: Arc<()>,
-        context: Context,
+        context: Context<HasSettings>,
     ) -> Self {
         let local_addr = stream.local_addr();
 

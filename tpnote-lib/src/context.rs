@@ -6,6 +6,8 @@ use crate::config::FILENAME_ROOT_PATH_MARKER;
 use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_CURRENT_SCHEME;
 use crate::config::TMPL_VAR_DIR_PATH;
+use crate::config::TMPL_VAR_DOC_BODY_TEXT;
+use crate::config::TMPL_VAR_DOC_FM_TEXT;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_ALL;
@@ -26,109 +28,147 @@ use crate::front_matter::all_leaves;
 use crate::front_matter::FrontMatter;
 use crate::settings::SETTINGS;
 use std::borrow::Cow;
+use std::marker::PhantomData;
 use std::matches;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::path::Path;
 use std::path::PathBuf;
 
-/// Tiny wrapper around "Tera context" with some additional information.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Context {
-    /// Collection of substitution variables.
-    ct: tera::Context,
-    /// First positional command line argument.
-    pub path: PathBuf,
-    /// The directory (only) path corresponding to the first positional
-    /// command line argument. The is our working directory and
-    /// the directory where the note file is (will be) located.
-    pub dir_path: PathBuf,
-    /// `dir_path` is a subdirectory of `root_path`. `root_path` is the
-    /// first directory, that upwards from `dir_path`, contains a file named
-    /// `FILENAME_ROOT_PATH_MARKER` (or `/` if no marker file can be found).
-    /// The root directory is interpreted by Tp-Note's viewer as its base
-    /// directory: only files within this directory are served.
-    pub root_path: PathBuf,
-}
+/// A type state describing the amount and type of data the `Context` type
+/// contains.
+pub trait ContextState {}
 
-/// A thin wrapper around `tera::Context` storing some additional
-/// information.
-///
-impl Context {
-    /// Constructor: `path` is the first positional command line parameter
-    /// `<path>` (see man page). `path` must point to a directory or
-    /// a file.
+#[derive(Debug, PartialEq, Clone)]
+/// The `Context` has the following initialized and valid fields: `path`,
+/// `dir_path`, `root_path` and `ct` contains data from `insert_config_vars()`
+/// and `insert_settings()`.
+pub struct HasSettings;
+
+#[derive(Debug, PartialEq, Clone)]
+/// In addition to `HasSettings`, the `context.ct` contains fields deserialized
+/// from some note's front matter. When a `Context` is associated with a
+/// `Content` (e.g. in a `Note`), the `fm.` variables in `Context` correspond
+/// to the header fields in `Content`
+pub struct HasFrontMatter;
+
+#[derive(Debug, PartialEq, Clone)]
+/// The `Context` object is in an invalid state. Either it was not initialized
+/// or its data does not correspond any more to the `Content` it represents.
+pub struct Invalid;
+
+/// The `from()` method was executed.
+/// The `insert_config_vars()` method was executed.
+/// The `insert_settings()` method was executed.
+impl ContextState for HasSettings {}
+
+/// The `insert_front_matter()` method was executed.
+impl ContextState for HasFrontMatter {}
+
+/// The state of this object is invalid. Do not use.
+impl ContextState for Invalid {}
+
+/// These methods are available in all `ContentState` states.
+impl<S: ContextState> Context<S> {
+    // Transition to a fault state.
+    pub fn mark_as_invalid(self) -> Context<Invalid> {
+        Context {
+            ct: self.ct,
+            path: self.path,
+            dir_path: self.dir_path,
+            root_path: self.root_path,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Insert some configuration variables into the context so that they
+    /// can be used in the templates.
     ///
-    /// A copy of `path` is stored in `self.ct` as key `TMPL_VAR_PATH`. It
-    /// directory path as key `TMPL_VAR_DIR_PATH`.
+    /// This function add the keys:
+    /// TMPL_VAR_SCHEME_SYNC_DEFAULT.
     ///
-    /// ```rust
+    /// ```
     /// use std::path::Path;
+    /// use tpnote_lib::config::TMPL_VAR_SCHEME_SYNC_DEFAULT;
     /// use tpnote_lib::settings::set_test_default_settings;
-    /// use tpnote_lib::config::TMPL_VAR_DIR_PATH;
-    /// use tpnote_lib::config::TMPL_VAR_PATH;
     /// use tpnote_lib::context::Context;
     /// set_test_default_settings().unwrap();
     ///
+    /// // The constructor calls `context.insert_settings()` before returning.
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     ///
-    /// assert_eq!(context.path, Path::new("/path/to/mynote.md"));
-    /// assert_eq!(context.dir_path, Path::new("/path/to/"));
-    /// assert_eq!(&context.get(TMPL_VAR_PATH).unwrap().to_string(),
-    ///             r#""/path/to/mynote.md""#);
-    /// assert_eq!(&context.get(TMPL_VAR_DIR_PATH).unwrap().to_string(),
-    ///             r#""/path/to""#);
+    /// // When the note's YAML header does not contain a `scheme:` field,
+    /// // the `default` scheme is used.
+    /// assert_eq!(&context.get(TMPL_VAR_SCHEME_SYNC_DEFAULT).unwrap().to_string(),
+    ///     &format!("\"default\""));
     /// ```
-    ///
-    pub fn from(path: &Path) -> Self {
-        let mut ct = tera::Context::new();
-        let path = path.to_path_buf();
+    fn insert_config_vars(&mut self) {
+        let lib_cfg = LIB_CFG.read_recursive();
 
-        // `dir_path` is a directory as fully qualified path, ending
-        // by a separator.
-        let dir_path = if path.is_dir() {
-            path.clone()
-        } else {
-            path.parent()
-                .unwrap_or_else(|| Path::new("./"))
-                .to_path_buf()
-        };
-
-        // Get the root directory.
-        let mut root_path = Path::new("");
-
-        for anc in dir_path.ancestors() {
-            root_path = anc;
-            let mut p = anc.to_owned();
-            p.push(Path::new(FILENAME_ROOT_PATH_MARKER));
-            if p.is_file() {
-                break;
-            }
-        }
-        let root_path = root_path.to_owned();
-        debug_assert!(dir_path.starts_with(&root_path));
-
-        // Register the canonicalized fully qualified file name.
-        ct.insert(TMPL_VAR_PATH, &path);
-        ct.insert(TMPL_VAR_DIR_PATH, &dir_path);
-        ct.insert(TMPL_VAR_ROOT_PATH, &root_path);
-
-        // Insert environment.
-        let mut context = Self {
-            ct,
-            path,
-            dir_path,
-            root_path,
-        };
-        context.insert_config_vars();
-        context.insert_settings();
-        context
+        // Default extension for new notes as defined in the configuration file.
+        (*self).insert(
+            TMPL_VAR_SCHEME_SYNC_DEFAULT,
+            lib_cfg.scheme_sync_default.as_str(),
+        );
     }
 
-    /// Inserts the YAML front header variables in the context for later use
+    /// Captures Tp-Note's environment and stores it as variables in a
+    /// `context` collection. The variables are needed later to populate
+    /// a context template and a filename template.
+    ///
+    /// This function add the keys:
+    ///
+    /// * `TMPL_VAR_EXTENSION_DEFAULT`
+    /// * `TMPL_VAR_USERNAME`
+    /// * `TMPL_VAR_LANG`
+    /// * `TMPL_VAR_CURRENT_SCHEME`
+    ///
+    /// ```
+    /// use std::path::Path;
+    /// use tpnote_lib::config::TMPL_VAR_EXTENSION_DEFAULT;
+    /// use tpnote_lib::config::TMPL_VAR_CURRENT_SCHEME;
+    /// use tpnote_lib::settings::set_test_default_settings;
+    /// use tpnote_lib::context::Context;
+    /// set_test_default_settings().unwrap();
+    ///
+    /// // The constructor calls `context.insert_settings()` before returning.
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+    ///
+    /// // For most platforms `context.get("extension_default")` is `md`
+    /// assert_eq!(&context.get(TMPL_VAR_EXTENSION_DEFAULT).unwrap().to_string(),
+    ///     &format!("\"md\""));
+    /// // `Settings.current_scheme` is by default the `default` scheme.
+    /// assert_eq!(&context.get(TMPL_VAR_CURRENT_SCHEME).unwrap().to_string(),
+    ///     &format!("\"default\""));
+    /// ```
+    fn insert_settings(&mut self) {
+        let settings = SETTINGS.read_recursive();
+
+        // Default extension for new notes as defined in the configuration file.
+        (*self).insert(
+            TMPL_VAR_EXTENSION_DEFAULT,
+            settings.extension_default.as_str(),
+        );
+
+        {
+            let lib_cfg = LIB_CFG.read_recursive();
+            (*self).insert(
+                TMPL_VAR_CURRENT_SCHEME,
+                &lib_cfg.scheme[settings.current_scheme].name,
+            );
+        } // Release `lib_cfg` here.
+
+        // Search for UNIX, Windows and MacOS user-names.
+        (*self).insert(TMPL_VAR_USERNAME, &settings.author);
+
+        // Get the user's language tag.
+        (*self).insert(TMPL_VAR_LANG, &settings.lang);
+    }
+
+    /// Inserts the YAML front header variables into the context for later use
     /// with templates.
     ///
-    pub(crate) fn insert_front_matter(&mut self, fm: &FrontMatter) {
+    fn insert_front_matter2(&mut self, fm: &FrontMatter) {
         let mut fm_all_map = self
             .ct
             .remove(TMPL_VAR_FM_ALL)
@@ -197,169 +237,130 @@ impl Context {
         // Register the collection as `Object(Map<String, Value>)`.
         self.ct.insert(TMPL_VAR_FM_ALL, &fm_all_map);
     }
+}
 
-    /// Inserts clipboard or stdin data into the context. The data may
-    /// contain some copied text with or without a YAML header. The latter
-    /// usually carries front matter variable. These are added separately via
-    /// `insert_front_matter()`. The `input` data below is registered with
-    /// the key name given by `tmpl_var`. Typical names are `"clipboard"` or
-    /// `"stdin"`. If the below `input` contains a valid YAML header, it will be
-    /// registered in the context with the key name given by `tmpl_var_header`.
-    /// This string is typically one of `clipboard_header` or `std_header`. The
-    /// raw data that will be inserted into the context.
+/// Tiny wrapper around "Tera context" with some additional information.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Context<S: ContextState + ?Sized> {
+    /// Collection of substitution variables.
+    ct: tera::Context,
+    /// First positional command line argument.
+    pub path: PathBuf,
+    /// The directory (only) path corresponding to the first positional
+    /// command line argument. The is our working directory and
+    /// the directory where the note file is (will be) located.
+    pub dir_path: PathBuf,
+    /// `dir_path` is a subdirectory of `root_path`. `root_path` is the
+    /// first directory, that upwards from `dir_path`, contains a file named
+    /// `FILENAME_ROOT_PATH_MARKER` (or `/` if no marker file can be found).
+    /// The root directory is interpreted by Tp-Note's viewer as its base
+    /// directory: only files within this directory are served.
+    pub root_path: PathBuf,
+    /// Rust requires usage of generic parameters, here `S`.
+    _marker: PhantomData<S>,
+}
+
+/// A thin wrapper around `tera::Context` storing some additional
+/// information.
+///
+impl Context<Invalid> {
+    /// Constructor: `path` is the first positional command line parameter
+    /// `<path>` (see man page). `path` must point to a directory or
+    /// a file.
+    ///
+    /// A copy of `path` is stored in `self.ct` as key `TMPL_VAR_PATH`. It
+    /// directory path as key `TMPL_VAR_DIR_PATH`.
     ///
     /// ```rust
     /// use std::path::Path;
     /// use tpnote_lib::settings::set_test_default_settings;
+    /// use tpnote_lib::config::TMPL_VAR_DIR_PATH;
+    /// use tpnote_lib::config::TMPL_VAR_PATH;
     /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
     /// set_test_default_settings().unwrap();
     ///
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
     ///
-    /// context.insert_content("clipboard", "clipboard_header",
-    ///      &ContentString::from(String::from("Data from clipboard.")));
-    /// assert_eq!(&context.get("clipboard").unwrap().to_string(),
-    ///     "\"Data from clipboard.\"");
-    ///
-    /// context.insert_content("stdin", "stdin_header",
-    ///      &ContentString::from("---\ntitle: \"My Stdin.\"\n---\nbody".to_string()));
-    /// assert_eq!(&context.get("stdin").unwrap().to_string(),
-    ///     r#""body""#);
-    /// assert_eq!(&context.get("stdin_header").unwrap().to_string(),
-    ///     r#""title: \"My Stdin.\"""#);
-    /// // "fm_title" is dynamically generated from the header variable "title".
-    /// assert_eq!(&context
-    ///            .get("fm").unwrap()
-    ///            .get("fm_title").unwrap().to_string(),
-    ///     r#""My Stdin.""#);
+    /// assert_eq!(context.path, Path::new("/path/to/mynote.md"));
+    /// assert_eq!(context.dir_path, Path::new("/path/to/"));
+    /// assert_eq!(&context.get(TMPL_VAR_PATH).unwrap().to_string(),
+    ///             r#""/path/to/mynote.md""#);
+    /// assert_eq!(&context.get(TMPL_VAR_DIR_PATH).unwrap().to_string(),
+    ///             r#""/path/to""#);
     /// ```
-    pub fn insert_content(
-        &mut self,
-        tmpl_var: &str,
-        tmpl_var_header: &str,
-        input: &impl Content,
-    ) -> Result<(), NoteError> {
-        // Register input.
-        (*self).insert(tmpl_var_header, input.header());
-        (*self).insert(tmpl_var, input.body());
+    ///
+    pub fn from(path: &Path) -> Context<HasSettings> {
+        let mut ct = tera::Context::new();
+        let path = path.to_path_buf();
 
-        // Can we find a front matter in the input stream? If yes, the
-        // unmodified input stream is our new note content.
-        if !input.header().is_empty() {
-            let input_fm = FrontMatter::try_from(input.header());
-            match input_fm {
-                Ok(ref fm) => {
-                    log::trace!(
-                        "Input stream from \"{}\" results in front matter:\n{:#?}",
-                        tmpl_var,
-                        &fm
-                    )
-                }
-                Err(ref e) => {
-                    if !input.header().is_empty() {
-                        return Err(NoteError::InvalidInputYaml {
-                            tmpl_var: tmpl_var.to_string(),
-                            source_str: e.to_string(),
-                        });
-                    }
-                }
-            };
+        // `dir_path` is a directory as fully qualified path, ending
+        // by a separator.
+        let dir_path = if path.is_dir() {
+            path.clone()
+        } else {
+            path.parent()
+                .unwrap_or_else(|| Path::new("./"))
+                .to_path_buf()
+        };
 
-            // Register front matter.
-            // The variables registered here can be overwrite the ones from the clipboard.
-            if let Ok(fm) = input_fm {
-                self.insert_front_matter(&fm);
+        // Get the root directory.
+        let mut root_path = Path::new("");
+
+        for anc in dir_path.ancestors() {
+            root_path = anc;
+            let mut p = anc.to_owned();
+            p.push(Path::new(FILENAME_ROOT_PATH_MARKER));
+            if p.is_file() {
+                break;
             }
         }
-        Ok(())
+        let root_path = root_path.to_owned();
+        debug_assert!(dir_path.starts_with(&root_path));
+
+        // Register the canonicalized fully qualified file name.
+        ct.insert(TMPL_VAR_PATH, &path);
+        ct.insert(TMPL_VAR_DIR_PATH, &dir_path);
+        ct.insert(TMPL_VAR_ROOT_PATH, &root_path);
+
+        // Insert environment.
+        let mut context = Context {
+            ct,
+            path,
+            dir_path,
+            root_path,
+            _marker: PhantomData,
+        };
+        context.insert_config_vars();
+        context.insert_settings();
+        context
+    }
+}
+
+impl Context<HasSettings> {
+    pub fn insert_front_matter(mut self, fm: &FrontMatter) -> Context<HasFrontMatter> {
+        Context::insert_front_matter2(&mut self, fm);
+        Context {
+            ct: self.ct,
+            path: self.path,
+            dir_path: self.dir_path,
+            root_path: self.root_path,
+            _marker: PhantomData,
+        }
     }
 
-    /// Captures Tp-Note's environment and stores it as variables in a
-    /// `context` collection. The variables are needed later to populate
-    /// a context template and a filename template.
-    ///
-    /// This function add the keys:
-    ///
-    /// * `TMPL_VAR_EXTENSION_DEFAULT`
-    /// * `TMPL_VAR_USERNAME`
-    /// * `TMPL_VAR_LANG`
-    /// * `TMPL_VAR_CURRENT_SCHEME`
-    ///
-    /// ```
-    /// use std::path::Path;
-    /// use tpnote_lib::config::TMPL_VAR_EXTENSION_DEFAULT;
-    /// use tpnote_lib::config::TMPL_VAR_CURRENT_SCHEME;
-    /// use tpnote_lib::settings::set_test_default_settings;
-    /// use tpnote_lib::context::Context;
-    /// set_test_default_settings().unwrap();
-    ///
-    /// // The constructor calls `context.insert_settings()` before returning.
-    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
-    ///
-    /// // For most platforms `context.get("extension_default")` is `md`
-    /// assert_eq!(&context.get(TMPL_VAR_EXTENSION_DEFAULT).unwrap().to_string(),
-    ///     &format!("\"md\""));
-    /// // `Settings.current_scheme` is by default the `default` scheme.
-    /// assert_eq!(&context.get(TMPL_VAR_CURRENT_SCHEME).unwrap().to_string(),
-    ///     &format!("\"default\""));
-    /// ```
-    fn insert_settings(&mut self) {
-        let settings = SETTINGS.read_recursive();
-
-        // Default extension for new notes as defined in the configuration file.
-        (*self).insert(
-            TMPL_VAR_EXTENSION_DEFAULT,
-            settings.extension_default.as_str(),
-        );
-
-        {
-            let lib_cfg = LIB_CFG.read_recursive();
-            (*self).insert(
-                TMPL_VAR_CURRENT_SCHEME,
-                &lib_cfg.scheme[settings.current_scheme].name,
-            );
-        } // Release `lib_cfg` here.
-
-        // Search for UNIX, Windows and MacOS user-names.
-        (*self).insert(TMPL_VAR_USERNAME, &settings.author);
-
-        // Get the user's language tag.
-        (*self).insert(TMPL_VAR_LANG, &settings.lang);
+    /// Sometimes no front matter is available to add.
+    pub fn tag_has_front_matter(self) -> Context<HasFrontMatter> {
+        Context {
+            ct: self.ct,
+            path: self.path,
+            dir_path: self.dir_path,
+            root_path: self.root_path,
+            _marker: PhantomData,
+        }
     }
+}
 
-    /// Insert some configuration variables into the context so that they
-    /// can be used in the templates.
-    ///
-    /// This function add the keys:
-    /// TMPL_VAR_SCHEME_SYNC_DEFAULT.
-    ///
-    /// ```
-    /// use std::path::Path;
-    /// use tpnote_lib::config::TMPL_VAR_SCHEME_SYNC_DEFAULT;
-    /// use tpnote_lib::settings::set_test_default_settings;
-    /// use tpnote_lib::context::Context;
-    /// set_test_default_settings().unwrap();
-    ///
-    /// // The constructor calls `context.insert_settings()` before returning.
-    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
-    ///
-    /// // When the note's YAML header does not contain a `scheme:` field,
-    /// // the `default` scheme is used.
-    /// assert_eq!(&context.get(TMPL_VAR_SCHEME_SYNC_DEFAULT).unwrap().to_string(),
-    ///     &format!("\"default\""));
-    /// ```
-    fn insert_config_vars(&mut self) {
-        let lib_cfg = LIB_CFG.read_recursive();
-
-        // Default extension for new notes as defined in the configuration file.
-        (*self).insert(
-            TMPL_VAR_SCHEME_SYNC_DEFAULT,
-            lib_cfg.scheme_sync_default.as_str(),
-        );
-    }
-
+impl Context<HasFrontMatter> {
     /// Checks if the front matter variables satisfy preconditions.
     /// The path is the path to the current document.
     #[inline]
@@ -536,10 +537,109 @@ impl Context {
         }
         Ok(())
     }
+
+    /// Although this context has front matter already, it is possible to
+    /// add more front matter. This might overwrite some fields.
+    pub fn insert_more_front_matter(&mut self, fm: &FrontMatter) {
+        Context::insert_front_matter2(self, fm);
+    }
+
+    /// Inserts clipboard or stdin data into the context. The data may contain
+    /// some copied text with or without a YAML header. The latter usually
+    /// carries front matter variables. The `input` data below is registered
+    /// with the key name given by `tmpl_var_body_name`. Typical names are
+    /// `"clipboard"` or `"stdin"`. If the below `input` contains a valid
+    /// YAML header, it will be registered in the context with the key name
+    /// given by `tmpl_var_header_name`. The templates expect the key names
+    /// `clipboard_header` or `std_header`. The raw header text will be
+    /// inserted with this key name.
+    ///
+    /// ```rust
+    /// use std::path::Path;
+    /// use tpnote_lib::settings::set_test_default_settings;
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// set_test_default_settings().unwrap();
+    ///
+    /// let context = Context::from(&Path::new("/path/to/mynote.md"));
+    /// let mut context = context.tag_has_front_matter();
+    ///
+    /// context.insert_front_matter_and_content_from_another_note(
+    ///      "clipboard", "clipboard_header",
+    ///      &ContentString::from(String::from("Data from clipboard.")));
+    /// assert_eq!(&context.get("clipboard").unwrap().to_string(),
+    ///     "\"Data from clipboard.\"");
+    ///
+    /// context.insert_front_matter_and_content_from_another_note(
+    ///      "stdin", "stdin_header",
+    ///      &ContentString::from("---\ntitle: \"My Stdin.\"\n---\nbody".to_string()));
+    /// assert_eq!(&context.get("stdin").unwrap().to_string(),
+    ///     r#""body""#);
+    /// assert_eq!(&context.get("stdin_header").unwrap().to_string(),
+    ///     r#""title: \"My Stdin.\"""#);
+    /// // "fm_title" is dynamically generated from the header variable "title".
+    /// assert_eq!(&context
+    ///            .get("fm").unwrap()
+    ///            .get("fm_title").unwrap().to_string(),
+    ///     r#""My Stdin.""#);
+    /// ```
+    pub fn insert_front_matter_and_content_from_another_note(
+        // TODO: split this in:
+        // `insert_front_matter_from_another_content()`
+        // `insert_content()`
+        &mut self,
+        tmpl_var_body_name: &str,
+        tmpl_var_header_name: &str,
+        input: &impl Content,
+    ) -> Result<(), NoteError> {
+        // Register input.
+        (*self).insert(tmpl_var_header_name, input.header());
+        (*self).insert(tmpl_var_body_name, input.body());
+
+        // Can we find a front matter in the input stream? If yes, the
+        // unmodified input stream is our new note content.
+        if !input.header().is_empty() {
+            let input_fm = FrontMatter::try_from(input.header());
+            match input_fm {
+                Ok(ref fm) => {
+                    log::trace!(
+                        "Input stream from \"{}\" results in front matter:\n{:#?}",
+                        tmpl_var_body_name,
+                        &fm
+                    )
+                }
+                Err(ref e) => {
+                    if !input.header().is_empty() {
+                        return Err(NoteError::InvalidInputYaml {
+                            tmpl_var: tmpl_var_body_name.to_string(),
+                            source_str: e.to_string(),
+                        });
+                    }
+                }
+            };
+
+            // Register front matter.
+            // The variables registered here can be overwrite the ones from the clipboard.
+            if let Ok(fm) = input_fm {
+                self.insert_front_matter2(&fm);
+            }
+        }
+        Ok(())
+    }
+
+    // Insert `header` in `TMPL_VAR_DOC_FM_TEXT, and `body` in
+    // `TMPL_VAR_DOC_BODY_TEXT`,.
+    pub fn insert_content(&mut self, header: &str, body: &str) {
+        // Register the raw serialized header text.
+        self.insert(TMPL_VAR_DOC_FM_TEXT, &header);
+        //We also keep the body.
+        self.insert(TMPL_VAR_DOC_BODY_TEXT, &body);
+    }
 }
 
 /// Auto dereferences for convenient access to `tera::Context`.
-impl Deref for Context {
+impl<S: ContextState> Deref for Context<S> {
     type Target = tera::Context;
 
     fn deref(&self) -> &Self::Target {
@@ -548,7 +648,7 @@ impl Deref for Context {
 }
 
 /// Auto dereferences for convenient access to `tera::Context`.
-impl DerefMut for Context {
+impl<S: ContextState> DerefMut for Context<S> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.ct
     }
@@ -565,8 +665,8 @@ mod tests {
         use crate::context::Context;
         use crate::front_matter::FrontMatter;
         use std::path::Path;
-        let mut context = Context::from(Path::new("/path/to/mynote.md"));
-        context
+        let context = Context::from(Path::new("/path/to/mynote.md"));
+        let context = context
             .insert_front_matter(&FrontMatter::try_from("title: My Stdin.\nsome: text").unwrap());
 
         assert_eq!(
@@ -612,10 +712,11 @@ mod tests {
         use crate::context::Context;
         use crate::front_matter::FrontMatter;
         use std::path::Path;
-        let mut context = Context::from(Path::new("/path/to/mynote.md"));
-        context.insert_front_matter(&FrontMatter::try_from("title: My Stdin.").unwrap());
+        let context = Context::from(Path::new("/path/to/mynote.md"));
+        let mut context =
+            context.insert_front_matter(&FrontMatter::try_from("title: My Stdin.").unwrap());
 
-        context.insert_front_matter(&FrontMatter::try_from("some: text").unwrap());
+        context.insert_more_front_matter(&FrontMatter::try_from("some: text").unwrap());
 
         assert_eq!(
             &context
@@ -666,8 +767,8 @@ mod tests {
         // Is empty.
         let input = "";
         let fm = FrontMatter::try_from(input).unwrap();
-        let mut cx = Context::from(Path::new("does not matter"));
-        cx.insert_front_matter(&fm);
+        let cx = Context::from(Path::new("does not matter"));
+        let cx = cx.insert_front_matter(&fm);
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -680,8 +781,8 @@ mod tests {
         title: The book
         sort_tag:    123b";
         let fm = FrontMatter::try_from(input).unwrap();
-        let mut cx = Context::from(Path::new("./03b-test.md"));
-        cx.insert_front_matter(&fm);
+        let cx = Context::from(Path::new("./03b-test.md"));
+        let cx = cx.insert_front_matter(&fm);
 
         assert!(matches!(cx.assert_precoditions(), Ok(())));
 
@@ -693,8 +794,9 @@ mod tests {
         -    1234
         -    456";
         let fm = FrontMatter::try_from(input).unwrap();
-        let mut cx = Context::from(Path::new("does not matter"));
-        cx.insert_front_matter(&fm);
+        let cx = Context::from(Path::new("does not matter"));
+        let cx = cx.insert_front_matter(&fm);
+
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
             NoteError::FrontMatterFieldIsCompound { .. }
@@ -708,8 +810,9 @@ mod tests {
           first:  1234
           second: 456";
         let fm = FrontMatter::try_from(input).unwrap();
-        let mut cx = Context::from(Path::new("does not matter"));
-        cx.insert_front_matter(&fm);
+        let cx = Context::from(Path::new("does not matter"));
+        let cx = cx.insert_front_matter(&fm);
+
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
             NoteError::FrontMatterFieldIsCompound { .. }
@@ -721,8 +824,9 @@ mod tests {
         title: The book
         file_ext:    xyz";
         let fm = FrontMatter::try_from(input).unwrap();
-        let mut cx = Context::from(Path::new("does not matter"));
-        cx.insert_front_matter(&fm);
+        let cx = Context::from(Path::new("does not matter"));
+        let cx = cx.insert_front_matter(&fm);
+
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
             NoteError::FrontMatterFieldIsNotTpnoteExtension { .. }
@@ -734,8 +838,9 @@ mod tests {
         title: The book
         filename_sync: error, here should be a bool";
         let fm = FrontMatter::try_from(input).unwrap();
-        let mut cx = Context::from(Path::new("does not matter"));
-        cx.insert_front_matter(&fm);
+        let cx = Context::from(Path::new("does not matter"));
+        let cx = cx.insert_front_matter(&fm);
+
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
             NoteError::FrontMatterFieldIsNotBool { .. }
@@ -749,8 +854,8 @@ mod tests {
         let expected = json!({"fm_title": "my title", "fm_subtitle": "my subtitle"});
 
         let fm = FrontMatter::try_from(input).unwrap();
-        let mut cx = Context::from(Path::new("does not matter"));
-        cx.insert_front_matter(&fm);
+        let cx = Context::from(Path::new("does not matter"));
+        let cx = cx.insert_front_matter(&fm);
         assert_eq!(cx.get(TMPL_VAR_FM_ALL).unwrap(), &expected);
 
         //
@@ -761,8 +866,8 @@ mod tests {
         let expected = json!({"fm_title": "my title", "fm_file_ext": ""});
 
         let fm = FrontMatter::try_from(input).unwrap();
-        let mut cx = Context::from(Path::new("does not matter"));
-        cx.insert_front_matter(&fm);
+        let cx = Context::from(Path::new("does not matter"));
+        let cx = cx.insert_front_matter(&fm);
         assert_eq!(cx.get(TMPL_VAR_FM_ALL).unwrap(), &expected);
 
         //
@@ -771,8 +876,9 @@ mod tests {
         subtitle: my subtitle
         ";
         let fm = FrontMatter::try_from(input).unwrap();
-        let mut cx = Context::from(Path::new("does not matter"));
-        cx.insert_front_matter(&fm);
+        let cx = Context::from(Path::new("does not matter"));
+        let cx = cx.insert_front_matter(&fm);
+
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
             NoteError::FrontMatterFieldIsEmptyString { .. }
@@ -786,8 +892,9 @@ mod tests {
         - Second author
         ";
         let fm = FrontMatter::try_from(input).unwrap();
-        let mut cx = Context::from(Path::new("does not matter"));
-        cx.insert_front_matter(&fm);
+        let cx = Context::from(Path::new("does not matter"));
+        let cx = cx.insert_front_matter(&fm);
+
         assert!(cx.assert_precoditions().is_ok());
 
         //
@@ -799,8 +906,9 @@ mod tests {
         - 1234
         ";
         let fm = FrontMatter::try_from(input).unwrap();
-        let mut cx = Context::from(Path::new("does not matter"));
-        cx.insert_front_matter(&fm);
+        let cx = Context::from(Path::new("does not matter"));
+        let cx = cx.insert_front_matter(&fm);
+
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
             NoteError::FrontMatterFieldIsNotString { .. }
