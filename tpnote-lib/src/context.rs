@@ -40,6 +40,11 @@ use std::path::PathBuf;
 pub trait ContextState {}
 
 #[derive(Debug, PartialEq, Clone)]
+/// The `Context` object is in an invalid state. Either it was not initialized
+/// or its data does not correspond any more to the `Content` it represents.
+pub struct Invalid;
+
+#[derive(Debug, PartialEq, Clone)]
 /// The `Context` has the following initialized and valid fields: `path`,
 /// `dir_path`, `root_path` and `ct` contains data from `insert_config_vars()`
 /// and `insert_settings()`.
@@ -53,9 +58,12 @@ pub struct HasSettings;
 pub struct HasFrontMatter;
 
 #[derive(Debug, PartialEq, Clone)]
-/// The `Context` object is in an invalid state. Either it was not initialized
-/// or its data does not correspond any more to the `Content` it represents.
-pub struct Invalid;
+/// The context has assembled enough information to be passed to a
+/// content or filename template renderer.
+pub struct ReadyToRender;
+
+/// The state of this object is invalid. Do not use.
+impl ContextState for Invalid {}
 
 /// The `from()` method was executed.
 /// The `insert_config_vars()` method was executed.
@@ -65,8 +73,8 @@ impl ContextState for HasSettings {}
 /// The `insert_front_matter()` method was executed.
 impl ContextState for HasFrontMatter {}
 
-/// The state of this object is invalid. Do not use.
-impl ContextState for Invalid {}
+/// The `insert_front_matter()` method was executed.
+impl ContextState for ReadyToRender {}
 
 /// These methods are available in all `ContentState` states.
 impl<S: ContextState> Context<S> {
@@ -348,8 +356,19 @@ impl Context<HasSettings> {
         }
     }
 
-    /// Sometimes no front matter is available to add.
+    /// Sometimes no front matter is available to add. We go to the next stage.
     pub fn tag_has_front_matter(self) -> Context<HasFrontMatter> {
+        Context {
+            ct: self.ct,
+            path: self.path,
+            dir_path: self.dir_path,
+            root_path: self.root_path,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Sometimes no front matter is available to add. We go to the last stage.
+    pub fn tag_ready_to_render(self) -> Context<ReadyToRender> {
         Context {
             ct: self.ct,
             path: self.path,
@@ -444,6 +463,36 @@ impl Context<HasSettings> {
 }
 
 impl Context<HasFrontMatter> {
+    // Insert `header` in `TMPL_VAR_DOC_FM_TEXT, and `body` in
+    // `TMPL_VAR_DOC_BODY_TEXT`,.
+    pub fn insert_content(mut self, header: &str, body: &str) -> Context<ReadyToRender> {
+        // Register the raw serialized header text.
+        self.insert(TMPL_VAR_DOC_FM_TEXT, &header);
+        //We also keep the body.
+        self.insert(TMPL_VAR_DOC_BODY_TEXT, &body);
+
+        Context {
+            ct: self.ct,
+            path: self.path,
+            dir_path: self.dir_path,
+            root_path: self.root_path,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Show, that we are done.
+    pub fn tag_ready_to_render(self) -> Context<ReadyToRender> {
+        Context {
+            ct: self.ct,
+            path: self.path,
+            dir_path: self.dir_path,
+            root_path: self.root_path,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl Context<ReadyToRender> {
     /// Checks if the front matter variables satisfy preconditions.
     /// The path is the path to the current document.
     #[inline]
@@ -621,19 +670,15 @@ impl Context<HasFrontMatter> {
         Ok(())
     }
 
-    /// Although this context has front matter already, it is possible to
-    /// add more front matter. This might overwrite some fields.
-    pub fn insert_more_front_matter(&mut self, fm: &FrontMatter) {
-        Context::insert_front_matter2(self, fm);
-    }
-
-    // Insert `header` in `TMPL_VAR_DOC_FM_TEXT, and `body` in
-    // `TMPL_VAR_DOC_BODY_TEXT`,.
-    pub fn insert_content(&mut self, header: &str, body: &str) {
-        // Register the raw serialized header text.
-        self.insert(TMPL_VAR_DOC_FM_TEXT, &header);
-        //We also keep the body.
-        self.insert(TMPL_VAR_DOC_BODY_TEXT, &body);
+    /// In case we want to reuse this context for the next rendition.
+    pub fn tag_has_settings(self) -> Context<HasSettings> {
+        Context {
+            ct: self.ct,
+            path: self.path,
+            dir_path: self.dir_path,
+            root_path: self.root_path,
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -712,10 +757,11 @@ mod tests {
         use crate::front_matter::FrontMatter;
         use std::path::Path;
         let context = Context::from(Path::new("/path/to/mynote.md"));
-        let mut context =
+        let context =
             context.insert_front_matter(&FrontMatter::try_from("title: My Stdin.").unwrap());
-
-        context.insert_more_front_matter(&FrontMatter::try_from("some: text").unwrap());
+        let context = context.tag_ready_to_render().tag_has_settings();
+        let context = context.insert_front_matter(&FrontMatter::try_from("some: text").unwrap());
+        let context = context.tag_ready_to_render();
 
         assert_eq!(
             &context
@@ -768,6 +814,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter"));
         let cx = cx.insert_front_matter(&fm);
+        let cx = cx.tag_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -782,6 +829,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("./03b-test.md"));
         let cx = cx.insert_front_matter(&fm);
+        let cx = cx.tag_ready_to_render();
 
         assert!(matches!(cx.assert_precoditions(), Ok(())));
 
@@ -795,6 +843,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter"));
         let cx = cx.insert_front_matter(&fm);
+        let cx = cx.tag_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -811,6 +860,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter"));
         let cx = cx.insert_front_matter(&fm);
+        let cx = cx.tag_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -825,6 +875,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter"));
         let cx = cx.insert_front_matter(&fm);
+        let cx = cx.tag_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -839,6 +890,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter"));
         let cx = cx.insert_front_matter(&fm);
+        let cx = cx.tag_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -877,6 +929,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter"));
         let cx = cx.insert_front_matter(&fm);
+        let cx = cx.tag_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -893,6 +946,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter"));
         let cx = cx.insert_front_matter(&fm);
+        let cx = cx.tag_ready_to_render();
 
         assert!(cx.assert_precoditions().is_ok());
 
@@ -907,6 +961,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter"));
         let cx = cx.insert_front_matter(&fm);
+        let cx = cx.tag_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),

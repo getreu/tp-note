@@ -16,8 +16,8 @@ use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
 use crate::config::TMPL_VAR_DOC_FILE_DATE;
 use crate::content::Content;
 use crate::context::Context;
-use crate::context::HasFrontMatter;
 use crate::context::HasSettings;
+use crate::context::ReadyToRender;
 use crate::error::NoteError;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
@@ -46,7 +46,7 @@ pub(crate) const ONE_OFF_TEMPLATE_NAME: &str = "__tera_one_off";
 pub struct Note<T: Content> {
     /// Captured environment of _Tp-Note_ that
     /// is used to fill in templates.
-    pub context: Context<HasFrontMatter>,
+    pub context: Context<ReadyToRender>,
     /// The full text content of the note, including
     /// its front matter.
     pub content: T,
@@ -116,9 +116,9 @@ impl<T: Content> Note<T> {
         let context = context.insert_front_matter(&fm);
 
         match template_kind {
-            TemplateKind::SyncFilename =>
             // No rendering to markdown is required. `content` is read from disk and left untouched.
-            {
+            TemplateKind::SyncFilename => {
+                let context = context.tag_ready_to_render();
                 context.assert_precoditions()?;
                 Ok(Note {
                     context,
@@ -126,10 +126,10 @@ impl<T: Content> Note<T> {
                     rendered_filename: PathBuf::new(),
                 })
             }
-            TemplateKind::None =>
             // No rendering to markdown is required. `content` is read from disk and left untouched.
             // A rendition to HTML may follow.
-            {
+            TemplateKind::None => {
+                let context = context.tag_ready_to_render();
                 context.assert_precoditions()?;
                 Ok(Note {
                     context,
@@ -138,8 +138,7 @@ impl<T: Content> Note<T> {
                 })
             }
             TemplateKind::FromTextFile => {
-                let mut context = context;
-                context.insert_content(header, body);
+                let context = context.insert_content(header, body);
                 Note::from_content_template(context, TemplateKind::FromTextFile)
             }
             // This should not happen. Use `Self::from_content_template()` instead.
@@ -163,7 +162,7 @@ impl<T: Content> Note<T> {
     /// Panics if this is the case.
     ///
     pub fn from_content_template(
-        mut context: Context<HasFrontMatter>,
+        context: Context<ReadyToRender>,
         template_kind: TemplateKind,
     ) -> Result<Note<T>, NoteError> {
         // Add content to context.
@@ -197,8 +196,10 @@ impl<T: Content> Note<T> {
         // Deserialize the rendered template
         let fm = FrontMatter::try_from(new_content.header())?;
 
-        // We add more front matter. This might overwrite some fields.
-        context.insert_more_front_matter(&fm);
+        let context = context
+            .tag_has_settings()
+            .insert_front_matter(&fm)
+            .tag_ready_to_render();
 
         // Return new note.
         Ok(Note {
@@ -325,10 +326,7 @@ impl<T: Content> Note<T> {
     ) -> Result<String, NoteError> {
         // Deserialize.
 
-        let mut html_context = self.context.clone();
-
-        // Insert raw header and body.
-        html_context.insert_content(self.content.header(), self.content.body());
+        let mut html_context = self.context.clone().tag_has_settings();
 
         // Insert the raw CSS
         html_context.insert(
@@ -358,6 +356,9 @@ impl<T: Content> Note<T> {
             TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH,
             TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE,
         );
+
+        let html_context = html_context.tag_has_front_matter();
+        let html_context = html_context.insert_content(self.content.header(), self.content.body());
 
         log::trace!(
             "Available substitution variables for the HTML template:\
@@ -458,9 +459,10 @@ mod tests {
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
         (*expected).insert(TMPL_VAR_FM_ALL.to_string(), &tmp2); // Map()
-        let expected = expected.tag_has_front_matter();
+        let expected = expected.tag_ready_to_render();
 
         let result = input1.insert_front_matter(&input2);
+        let result = result.tag_ready_to_render();
 
         assert_eq!(result, expected);
     }
@@ -638,7 +640,7 @@ Body text
         // Store the path in `context`.
         let context = Context::from(&notedir);
         //
-        let context = context.tag_has_front_matter();
+        let context = context.tag_ready_to_render();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -743,7 +745,7 @@ Body text
                 && !stdin.body().is_empty()
         );
 
-        let context = context.tag_has_front_matter();
+        let context = context.tag_ready_to_render();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -855,7 +857,7 @@ Body text
                 || !stdin.header().is_empty()
         );
 
-        let context = context.tag_has_front_matter();
+        let context = context.tag_ready_to_render();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -964,7 +966,7 @@ Body text
             )
             .unwrap();
 
-        let context = context.tag_has_front_matter();
+        let context = context.tag_ready_to_render();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
