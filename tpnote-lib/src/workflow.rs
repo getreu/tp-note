@@ -431,7 +431,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
 
         // Collect input data for templates.
         let context = Context::from(self.input.path);
-        let mut context_clipboard_stdin = context.clone().tag_has_front_matter();
+        let mut context_clipboard_stdin = context.clone();
         context_clipboard_stdin.insert_front_matter_and_content_from_another_note(
             TMPL_VAR_HTML_CLIPBOARD,
             TMPL_VAR_HTML_CLIPBOARD_HEADER,
@@ -463,7 +463,10 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             | TemplateKind::FromClipboard
             | TemplateKind::AnnotateFile => {
                 // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
-                let mut n = Note::from_content_template(context_clipboard_stdin, template_kind)?;
+                // All these template do not refer to existing front matter,
+                // as there is none yet.
+                let context = context_clipboard_stdin.tag_has_front_matter();
+                let mut n = Note::from_content_template(context, template_kind)?;
                 n.render_filename(template_kind)?;
                 // Check if the filename is not taken already
                 n.set_next_unused_rendered_filename()?;

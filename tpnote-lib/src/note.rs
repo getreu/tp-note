@@ -706,8 +706,7 @@ Body text
         let notedir = temp_dir();
 
         // Store the path in `context`.
-        let context = Context::from(&notedir);
-        let mut context = context.tag_has_front_matter();
+        let mut context = Context::from(&notedir);
         let html_clipboard = ContentString::from("html_clp\n".to_string());
         context
             .insert_front_matter_and_content_from_another_note(
@@ -743,6 +742,8 @@ Body text
                 && !txt_clipboard.body().is_empty()
                 && !stdin.body().is_empty()
         );
+
+        let context = context.tag_has_front_matter();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -821,8 +822,7 @@ Body text
 
         // Run test.
         // Store the path in `context`.
-        let context = Context::from(&notedir);
-        let mut context = context.tag_has_front_matter();
+        let mut context = Context::from(&notedir);
         let html_clipboard = ContentString::from("my HTML clipboard\n".to_string());
         let txt_clipboard = ContentString::from("my TXT clipboard\n".to_string());
         context
@@ -854,6 +854,8 @@ Body text
                 || !txt_clipboard.header().is_empty()
                 || !stdin.header().is_empty()
         );
+
+        let context = context.tag_has_front_matter();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -936,8 +938,7 @@ Body text
 
         // Run the test.
         // Store the path in `context`.
-        let context = Context::from(&non_notefile);
-        let mut context = context.tag_has_front_matter();
+        let mut context = Context::from(&non_notefile);
         let html_clipboard = ContentString::from("my HTML clipboard\n".to_string());
         let txt_clipboard = ContentString::from("my TXT clipboard\n".to_string());
         context
@@ -962,6 +963,8 @@ Body text
                 &stdin,
             )
             .unwrap();
+
+        let context = context.tag_has_front_matter();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).

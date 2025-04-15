@@ -358,6 +358,89 @@ impl Context<HasSettings> {
             _marker: PhantomData,
         }
     }
+
+    /// Inserts clipboard or stdin data into the context. The data may contain
+    /// some copied text with or without a YAML header. The latter usually
+    /// carries front matter variables. The `input` data below is registered
+    /// with the key name given by `tmpl_var_body_name`. Typical names are
+    /// `"clipboard"` or `"stdin"`. If the below `input` contains a valid
+    /// YAML header, it will be registered in the context with the key name
+    /// given by `tmpl_var_header_name`. The templates expect the key names
+    /// `clipboard_header` or `std_header`. The raw header text will be
+    /// inserted with this key name.
+    ///
+    /// ```rust
+    /// use std::path::Path;
+    /// use tpnote_lib::settings::set_test_default_settings;
+    /// use tpnote_lib::context::Context;
+    /// use tpnote_lib::content::Content;
+    /// use tpnote_lib::content::ContentString;
+    /// set_test_default_settings().unwrap();
+    ///
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+    ///
+    /// context.insert_front_matter_and_content_from_another_note(
+    ///      "clipboard", "clipboard_header",
+    ///      &ContentString::from(String::from("Data from clipboard.")));
+    /// assert_eq!(&context.get("clipboard").unwrap().to_string(),
+    ///     "\"Data from clipboard.\"");
+    ///
+    /// context.insert_front_matter_and_content_from_another_note(
+    ///      "stdin", "stdin_header",
+    ///      &ContentString::from("---\ntitle: \"My Stdin.\"\n---\nbody".to_string()));
+    /// assert_eq!(&context.get("stdin").unwrap().to_string(),
+    ///     r#""body""#);
+    /// assert_eq!(&context.get("stdin_header").unwrap().to_string(),
+    ///     r#""title: \"My Stdin.\"""#);
+    /// // "fm_title" is dynamically generated from the header variable "title".
+    /// assert_eq!(&context
+    ///            .get("fm").unwrap()
+    ///            .get("fm_title").unwrap().to_string(),
+    ///     r#""My Stdin.""#);
+    /// ```
+    pub fn insert_front_matter_and_content_from_another_note(
+        // TODO: split this in:
+        // `insert_front_matter_from_another_content()`
+        // `insert_content()`
+        &mut self,
+        tmpl_var_body_name: &str,
+        tmpl_var_header_name: &str,
+        input: &impl Content,
+    ) -> Result<(), NoteError> {
+        // Register input.
+        (*self).insert(tmpl_var_header_name, input.header());
+        (*self).insert(tmpl_var_body_name, input.body());
+
+        // Can we find a front matter in the input stream? If yes, the
+        // unmodified input stream is our new note content.
+        if !input.header().is_empty() {
+            let input_fm = FrontMatter::try_from(input.header());
+            match input_fm {
+                Ok(ref fm) => {
+                    log::trace!(
+                        "Input stream from \"{}\" results in front matter:\n{:#?}",
+                        tmpl_var_body_name,
+                        &fm
+                    )
+                }
+                Err(ref e) => {
+                    if !input.header().is_empty() {
+                        return Err(NoteError::InvalidInputYaml {
+                            tmpl_var: tmpl_var_body_name.to_string(),
+                            source_str: e.to_string(),
+                        });
+                    }
+                }
+            };
+
+            // Register front matter.
+            // The variables registered here can be overwrite the ones from the clipboard.
+            if let Ok(fm) = input_fm {
+                self.insert_front_matter2(&fm);
+            }
+        }
+        Ok(())
+    }
 }
 
 impl Context<HasFrontMatter> {
@@ -542,90 +625,6 @@ impl Context<HasFrontMatter> {
     /// add more front matter. This might overwrite some fields.
     pub fn insert_more_front_matter(&mut self, fm: &FrontMatter) {
         Context::insert_front_matter2(self, fm);
-    }
-
-    /// Inserts clipboard or stdin data into the context. The data may contain
-    /// some copied text with or without a YAML header. The latter usually
-    /// carries front matter variables. The `input` data below is registered
-    /// with the key name given by `tmpl_var_body_name`. Typical names are
-    /// `"clipboard"` or `"stdin"`. If the below `input` contains a valid
-    /// YAML header, it will be registered in the context with the key name
-    /// given by `tmpl_var_header_name`. The templates expect the key names
-    /// `clipboard_header` or `std_header`. The raw header text will be
-    /// inserted with this key name.
-    ///
-    /// ```rust
-    /// use std::path::Path;
-    /// use tpnote_lib::settings::set_test_default_settings;
-    /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// set_test_default_settings().unwrap();
-    ///
-    /// let context = Context::from(&Path::new("/path/to/mynote.md"));
-    /// let mut context = context.tag_has_front_matter();
-    ///
-    /// context.insert_front_matter_and_content_from_another_note(
-    ///      "clipboard", "clipboard_header",
-    ///      &ContentString::from(String::from("Data from clipboard.")));
-    /// assert_eq!(&context.get("clipboard").unwrap().to_string(),
-    ///     "\"Data from clipboard.\"");
-    ///
-    /// context.insert_front_matter_and_content_from_another_note(
-    ///      "stdin", "stdin_header",
-    ///      &ContentString::from("---\ntitle: \"My Stdin.\"\n---\nbody".to_string()));
-    /// assert_eq!(&context.get("stdin").unwrap().to_string(),
-    ///     r#""body""#);
-    /// assert_eq!(&context.get("stdin_header").unwrap().to_string(),
-    ///     r#""title: \"My Stdin.\"""#);
-    /// // "fm_title" is dynamically generated from the header variable "title".
-    /// assert_eq!(&context
-    ///            .get("fm").unwrap()
-    ///            .get("fm_title").unwrap().to_string(),
-    ///     r#""My Stdin.""#);
-    /// ```
-    pub fn insert_front_matter_and_content_from_another_note(
-        // TODO: split this in:
-        // `insert_front_matter_from_another_content()`
-        // `insert_content()`
-        &mut self,
-        tmpl_var_body_name: &str,
-        tmpl_var_header_name: &str,
-        input: &impl Content,
-    ) -> Result<(), NoteError> {
-        // Register input.
-        (*self).insert(tmpl_var_header_name, input.header());
-        (*self).insert(tmpl_var_body_name, input.body());
-
-        // Can we find a front matter in the input stream? If yes, the
-        // unmodified input stream is our new note content.
-        if !input.header().is_empty() {
-            let input_fm = FrontMatter::try_from(input.header());
-            match input_fm {
-                Ok(ref fm) => {
-                    log::trace!(
-                        "Input stream from \"{}\" results in front matter:\n{:#?}",
-                        tmpl_var_body_name,
-                        &fm
-                    )
-                }
-                Err(ref e) => {
-                    if !input.header().is_empty() {
-                        return Err(NoteError::InvalidInputYaml {
-                            tmpl_var: tmpl_var_body_name.to_string(),
-                            source_str: e.to_string(),
-                        });
-                    }
-                }
-            };
-
-            // Register front matter.
-            // The variables registered here can be overwrite the ones from the clipboard.
-            if let Ok(fm) = input_fm {
-                self.insert_front_matter2(&fm);
-            }
-        }
-        Ok(())
     }
 
     // Insert `header` in `TMPL_VAR_DOC_FM_TEXT, and `body` in
