@@ -490,15 +490,12 @@ impl HttpResponse for ServerThread {
                 }
 
                 let note_erroneous_content = <ContentString as Content>::open(&context.path)?;
-                HtmlRenderer::error_page::<ContentString>(
-                    context,
-                    note_erroneous_content,
-                    &e.to_string(),
+                HtmlRenderer::error_page(context, note_erroneous_content, &e.to_string()).map_err(
+                    |e| ViewerError::RenderErrorPage {
+                        tmpl: "tmpl_html.viewer_error".to_string(),
+                        source: e,
+                    },
                 )
-                .map_err(|e| ViewerError::RenderErrorPage {
-                    tmpl: "tmpl_html.viewer_error".to_string(),
-                    source: e,
-                })
             }
         }
     }

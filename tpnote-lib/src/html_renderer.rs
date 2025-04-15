@@ -165,7 +165,7 @@ impl HtmlRenderer {
         content: T,
         tmpl_html: &str,
     ) -> Result<String, NoteError> {
-        let note = Note::<T>::from_raw_text(context, content, TemplateKind::None)?;
+        let note = Note::from_raw_text(context, content, TemplateKind::None)?;
 
         note.render_content_to_html(tmpl_html)
     }
@@ -333,7 +333,7 @@ impl HtmlRenderer {
 
         // Render HTML.
         let root_path = context.root_path.clone();
-        let html = Self::exporter_page::<T>(context, content)?;
+        let html = Self::exporter_page(context, content)?;
         let html = rewrite_links(
             html,
             &root_path,

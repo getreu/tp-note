@@ -351,9 +351,9 @@ impl Workflow<SyncFilename<'_>> {
         let content = <T>::open(self.input.path).unwrap_or_default();
 
         // This does not fill any templates,
-        let mut n = Note::<T>::from_raw_text(context, content, TemplateKind::SyncFilename)?;
+        let mut n = Note::from_raw_text(context, content, TemplateKind::SyncFilename)?;
 
-        synchronize_filename::<T>(&mut settings, &mut n)?;
+        synchronize_filename(&mut settings, &mut n)?;
 
         Ok(n.rendered_filename)
     }
@@ -449,7 +449,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
         )?;
 
         // `template_kind` will tell us what to do.
-        let (template_kind, content) = TemplateKind::from::<T>(
+        let (template_kind, content) = TemplateKind::from(
             self.input.path,
             self.input.html_clipboard,
             self.input.txt_clipboard,
@@ -463,8 +463,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             | TemplateKind::FromClipboard
             | TemplateKind::AnnotateFile => {
                 // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
-                let mut n =
-                    Note::<T>::from_content_template(context_clipboard_stdin, template_kind)?;
+                let mut n = Note::from_content_template(context_clipboard_stdin, template_kind)?;
                 n.render_filename(template_kind)?;
                 // Check if the filename is not taken already
                 n.set_next_unused_rendered_filename()?;
@@ -473,7 +472,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             }
 
             TemplateKind::FromTextFile => {
-                let mut n = Note::<T>::from_raw_text(context, content.unwrap(), template_kind)?;
+                let mut n = Note::from_raw_text(context, content.unwrap(), template_kind)?;
                 // Render filename.
                 n.render_filename(template_kind)?;
 
@@ -485,19 +484,14 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             }
 
             TemplateKind::SyncFilename => {
-                let mut n = Note::<T>::from_raw_text(
-                    context,
-                    content.unwrap(),
-                    TemplateKind::SyncFilename,
-                )?;
+                let mut n =
+                    Note::from_raw_text(context, content.unwrap(), TemplateKind::SyncFilename)?;
 
-                synchronize_filename::<T>(&mut settings, &mut n)?;
+                synchronize_filename(&mut settings, &mut n)?;
                 n
             }
 
-            TemplateKind::None => {
-                Note::<T>::from_raw_text(context, content.unwrap(), template_kind)?
-            }
+            TemplateKind::None => Note::from_raw_text(context, content.unwrap(), template_kind)?,
         };
 
         // If no new filename was rendered, return the old one.

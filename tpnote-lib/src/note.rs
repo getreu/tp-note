@@ -120,7 +120,7 @@ impl<T: Content> Note<T> {
             // No rendering to markdown is required. `content` is read from disk and left untouched.
             {
                 context.assert_precoditions()?;
-                Ok(Note::<T> {
+                Ok(Note {
                     context,
                     content,
                     rendered_filename: PathBuf::new(),
@@ -131,7 +131,7 @@ impl<T: Content> Note<T> {
             // A rendition to HTML may follow.
             {
                 context.assert_precoditions()?;
-                Ok(Note::<T> {
+                Ok(Note {
                     context,
                     content,
                     rendered_filename: PathBuf::new(),
@@ -140,7 +140,7 @@ impl<T: Content> Note<T> {
             TemplateKind::FromTextFile => {
                 let mut context = context;
                 context.insert_content(header, body);
-                Note::<T>::from_content_template(context, TemplateKind::FromTextFile)
+                Note::from_content_template(context, TemplateKind::FromTextFile)
             }
             // This should not happen. Use `Self::from_content_template()` instead.
             _ => {
