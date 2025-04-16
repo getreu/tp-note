@@ -411,8 +411,14 @@ pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
     };
 
     // Is there a `FILENAME_ROOT_PATH_MARKER` file?
+    // At this point, we ignore a file error silently. Next time,
+    // `Context::new()` is executed, we report this error to the user.
     if let Some(root_path) = DOC_PATH.as_deref().ok().map(|doc_path| {
-        let mut root_path = Context::from(doc_path).root_path;
+        let mut root_path = if let Ok(context) = Context::from(doc_path) {
+            context.root_path
+        } else {
+            PathBuf::new()
+        };
         root_path.push(FILENAME_ROOT_PATH_MARKER);
         root_path
     }) {

@@ -67,7 +67,7 @@ impl HtmlRenderer {
     /// "#);
     ///
     /// // Start test
-    /// let mut context = Context::from(Path::new("/path/to/note.md"));
+    /// let mut context = Context::from(Path::new("/path/to/note.md")).unwrap();
     /// // We do not inject any JavaScript.
     /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".to_string());
     /// // Render.
@@ -100,7 +100,7 @@ impl HtmlRenderer {
     /// fs::write(&notefile, raw.as_bytes()).unwrap();
     ///
     /// // Start test
-    /// let mut context = Context::from(&notefile);
+    /// let mut context = Context::from(&notefile).unwrap();
     /// // We do not inject any JavaScript.
     /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".to_string());
     /// // Render.
@@ -143,7 +143,7 @@ impl HtmlRenderer {
     /// "#);
     ///
     /// // Start test
-    /// let mut context = Context::from(Path::new("/path/to/note.md"));
+    /// let mut context = Context::from(Path::new("/path/to/note.md")).unwrap();
     /// // The exporter template does not insert any JavaScript.
     /// // Render.
     /// let html = HtmlRenderer::exporter_page::<ContentString>(context, raw.into())
@@ -204,7 +204,7 @@ impl HtmlRenderer {
     /// let e = NoteError::FrontMatterFieldMissing { field_name: "title".to_string() };
     ///
     /// // Start test
-    /// let mut context = Context::from(&notefile);
+    /// let mut context = Context::from(&notefile).unwrap();
     /// // We do not inject any JavaScript.
     /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
     /// // Render.
@@ -283,7 +283,7 @@ impl HtmlRenderer {
         export_dir: &Path,
         local_link_kind: LocalLinkKind,
     ) -> Result<(), NoteError> {
-        let context = Context::from(doc_path);
+        let context = Context::from(doc_path)?;
 
         let doc_path = context.path.clone();
         let doc_dir = context.dir_path.clone();

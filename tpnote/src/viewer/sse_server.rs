@@ -70,7 +70,7 @@ pub fn manage_connections(
     let conn_counter = Arc::new(());
     // Store `doc_path` in the `context.path` and
     // in the Tera variable `TMPL_VAR_PATH`.
-    let context = Context::from(&doc_path);
+    let context = Context::from(&doc_path).expect("can not access document path");
     //
 
     log::info!(

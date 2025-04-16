@@ -346,7 +346,7 @@ impl Workflow<SyncFilename<'_>> {
         let mut settings = SETTINGS.upgradable_read();
 
         // Collect input data for templates.
-        let context = Context::from(self.input.path);
+        let context = Context::from(self.input.path)?;
 
         let content = <T>::open(self.input.path).unwrap_or_default();
 
@@ -430,7 +430,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
         // and finally rename the file, if it is not in sync with its front matter.
 
         // Collect input data for templates.
-        let context = Context::from(self.input.path);
+        let context = Context::from(self.input.path)?;
         let mut context_clipboard_stdin = context.clone();
         context_clipboard_stdin.insert_front_matter_and_content_from_another_note(
             TMPL_VAR_HTML_CLIPBOARD,

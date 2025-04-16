@@ -157,10 +157,10 @@ mod tests {
         tmp2.insert("fm_flag".to_string(), json!(true)); // Bool()
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // Array([Numbers()..])!
 
-        let input1 = Context::from(Path::new("a/b/test.md"));
+        let input1 = Context::from(Path::new("a/b/test.md")).unwrap();
         let input2 = FrontMatter(tmp);
 
-        let mut expected = Context::from(Path::new("a/b/test.md"));
+        let mut expected = Context::from(Path::new("a/b/test.md")).unwrap();
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
         (*expected).insert(TMPL_VAR_FM_ALL.to_string(), &tmp2); // Map()

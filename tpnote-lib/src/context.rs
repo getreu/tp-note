@@ -19,6 +19,7 @@ use crate::config::TMPL_VAR_ROOT_PATH;
 use crate::config::TMPL_VAR_SCHEME_SYNC_DEFAULT;
 use crate::config::TMPL_VAR_USERNAME;
 use crate::content::Content;
+use crate::error::FileError;
 use crate::error::LibCfgError;
 use crate::error::NoteError;
 use crate::filename::Extension;
@@ -141,7 +142,7 @@ impl<S: ContextState> Context<S> {
     /// set_test_default_settings().unwrap();
     ///
     /// // The constructor calls `context.insert_settings()` before returning.
-    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md")).unwrap();
     ///
     /// // When the note's YAML header does not contain a `scheme:` field,
     /// // the `default` scheme is used.
@@ -178,7 +179,7 @@ impl<S: ContextState> Context<S> {
     /// set_test_default_settings().unwrap();
     ///
     /// // The constructor calls `context.insert_settings()` before returning.
-    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md")).unwrap();
     ///
     /// // For most platforms `context.get("extension_default")` is `md`
     /// assert_eq!(&context.get(TMPL_VAR_EXTENSION_DEFAULT).unwrap().to_string(),
@@ -328,7 +329,7 @@ impl Context<Invalid> {
     /// use tpnote_lib::context::Context;
     /// set_test_default_settings().unwrap();
     ///
-    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md")).unwrap();
     ///
     /// assert_eq!(context.path, Path::new("/path/to/mynote.md"));
     /// assert_eq!(context.dir_path, Path::new("/path/to/"));
@@ -338,7 +339,7 @@ impl Context<Invalid> {
     ///             r#""/path/to""#);
     /// ```
     ///
-    pub fn from(path: &Path) -> Context<HasSettings> {
+    pub fn from(path: &Path) -> Result<Context<HasSettings>, FileError> {
         let mut ct = tera::Context::new();
         let path = path.to_path_buf();
 
@@ -373,18 +374,16 @@ impl Context<Invalid> {
 
         // Get the file's creation date. Fail silently.
         if let Ok(file) = File::open(&path) {
-            if let Ok(metadata) = file.metadata() {
-                if let Ok(time) = metadata.created() {
-                    ct.insert(
-                        TMPL_VAR_DOC_FILE_DATE,
-                        &time
-                            .duration_since(SystemTime::UNIX_EPOCH)
-                            .unwrap_or_default()
-                            .as_secs(),
-                    );
-                }
-            }
-        }
+            let metadata = file.metadata()?;
+            let time = metadata.created()?;
+            ct.insert(
+                TMPL_VAR_DOC_FILE_DATE,
+                &time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs(),
+            )
+        };
 
         // Insert environment.
         let mut context = Context {
@@ -396,7 +395,7 @@ impl Context<Invalid> {
         };
         context.insert_config_vars();
         context.insert_settings();
-        context
+        Ok(context)
     }
 }
 
@@ -453,7 +452,7 @@ impl Context<HasSettings> {
     /// use tpnote_lib::content::ContentString;
     /// set_test_default_settings().unwrap();
     ///
-    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"));
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md")).unwrap();
     ///
     /// context.insert_front_matter_and_content_from_another_note(
     ///      "clipboard", "clipboard_header",
@@ -766,7 +765,7 @@ mod tests {
         use crate::context::Context;
         use crate::front_matter::FrontMatter;
         use std::path::Path;
-        let context = Context::from(Path::new("/path/to/mynote.md"));
+        let context = Context::from(Path::new("/path/to/mynote.md")).unwrap();
         let context = context
             .insert_front_matter(&FrontMatter::try_from("title: My Stdin.\nsome: text").unwrap());
 
@@ -813,7 +812,7 @@ mod tests {
         use crate::context::Context;
         use crate::front_matter::FrontMatter;
         use std::path::Path;
-        let context = Context::from(Path::new("/path/to/mynote.md"));
+        let context = Context::from(Path::new("/path/to/mynote.md")).unwrap();
         let context = context
             .insert_front_matter(&FrontMatter::try_from("title: My Stdin.\nsome: text").unwrap());
         let context = context.tag_ready_to_render();
@@ -867,7 +866,7 @@ mod tests {
         // Is empty.
         let input = "";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter"));
+        let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
         let cx = cx.tag_ready_to_render();
 
@@ -882,7 +881,7 @@ mod tests {
         title: The book
         sort_tag:    123b";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("./03b-test.md"));
+        let cx = Context::from(Path::new("./03b-test.md")).unwrap();
         let cx = cx.insert_front_matter(&fm);
         let cx = cx.tag_ready_to_render();
 
@@ -896,7 +895,7 @@ mod tests {
         -    1234
         -    456";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter"));
+        let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
         let cx = cx.tag_ready_to_render();
 
@@ -913,7 +912,7 @@ mod tests {
           first:  1234
           second: 456";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter"));
+        let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
         let cx = cx.tag_ready_to_render();
 
@@ -928,7 +927,7 @@ mod tests {
         title: The book
         file_ext:    xyz";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter"));
+        let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
         let cx = cx.tag_ready_to_render();
 
@@ -943,7 +942,7 @@ mod tests {
         title: The book
         filename_sync: error, here should be a bool";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter"));
+        let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
         let cx = cx.tag_ready_to_render();
 
@@ -960,7 +959,7 @@ mod tests {
         let expected = json!({"fm_title": "my title", "fm_subtitle": "my subtitle"});
 
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter"));
+        let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
         assert_eq!(cx.get(TMPL_VAR_FM_ALL).unwrap(), &expected);
 
@@ -972,7 +971,7 @@ mod tests {
         let expected = json!({"fm_title": "my title", "fm_file_ext": ""});
 
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter"));
+        let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
         assert_eq!(cx.get(TMPL_VAR_FM_ALL).unwrap(), &expected);
 
@@ -982,7 +981,7 @@ mod tests {
         subtitle: my subtitle
         ";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter"));
+        let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
         let cx = cx.tag_ready_to_render();
 
@@ -999,7 +998,7 @@ mod tests {
         - Second author
         ";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter"));
+        let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
         let cx = cx.tag_ready_to_render();
 
@@ -1014,7 +1013,7 @@ mod tests {
         - 1234
         ";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter"));
+        let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
         let cx = cx.tag_ready_to_render();
 

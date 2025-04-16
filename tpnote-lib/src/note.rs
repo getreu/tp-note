@@ -429,10 +429,10 @@ mod tests {
         tmp2.insert("fm_flag".to_string(), json!(true)); // Bool()
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // Array([Numbers()..])!
 
-        let input1 = Context::from(Path::new("a/b/test.md"));
+        let input1 = Context::from(Path::new("a/b/test.md")).unwrap();
         let input2 = FrontMatter(tmp);
 
-        let mut expected = Context::from(Path::new("a/b/test.md"));
+        let mut expected = Context::from(Path::new("a/b/test.md")).unwrap();
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
         (*expected).insert(TMPL_VAR_FM_ALL.to_string(), &tmp2); // Map()
@@ -468,7 +468,7 @@ Body text
         let expected = temp_dir().join("20221031-My day--Note.md");
         let _ = fs::remove_file(&expected);
         // Start test.
-        let context = Context::from(&notefile);
+        let context = Context::from(&notefile).unwrap();
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
@@ -511,7 +511,7 @@ Body text
         fs::write(&notefile, raw.as_bytes()).unwrap();
         // Start test
         // Only minimal context is needed, because no templates are applied later.
-        let mut context = Context::from(&notefile);
+        let mut context = Context::from(&notefile).unwrap();
         // We do not inject any JavaScript.
         context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".to_string());
         // Create note object.
@@ -546,7 +546,7 @@ Body text
         let expected = temp_dir().join("20221030-hello--world.md");
         let _ = fs::remove_file(&expected);
         // Start test.
-        let context = Context::from(&notefile);
+        let context = Context::from(&notefile).unwrap();
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
@@ -615,7 +615,7 @@ Body text
         fs::create_dir_all(&notedir).unwrap();
 
         // Store the path in `context`.
-        let context = Context::from(&notedir);
+        let context = Context::from(&notedir).unwrap();
         //
         let context = context.tag_ready_to_render();
 
@@ -685,7 +685,7 @@ Body text
         let notedir = temp_dir();
 
         // Store the path in `context`.
-        let mut context = Context::from(&notedir);
+        let mut context = Context::from(&notedir).unwrap();
         let html_clipboard = ContentString::from("html_clp\n".to_string());
         context
             .insert_front_matter_and_content_from_another_note(
@@ -801,7 +801,7 @@ Body text
 
         // Run test.
         // Store the path in `context`.
-        let mut context = Context::from(&notedir);
+        let mut context = Context::from(&notedir).unwrap();
         let html_clipboard = ContentString::from("my HTML clipboard\n".to_string());
         let txt_clipboard = ContentString::from("my TXT clipboard\n".to_string());
         context
@@ -917,7 +917,7 @@ Body text
 
         // Run the test.
         // Store the path in `context`.
-        let mut context = Context::from(&non_notefile);
+        let mut context = Context::from(&non_notefile).unwrap();
         let html_clipboard = ContentString::from("my HTML clipboard\n".to_string());
         let txt_clipboard = ContentString::from("my TXT clipboard\n".to_string());
         context
