@@ -196,14 +196,13 @@ impl<T: Content> Note<T> {
         // Deserialize the rendered template
         let fm = FrontMatter::try_from(new_content.header())?;
 
-        let context = context
-            .tag_has_settings()
+        let new_context = Context::from_context_path(&context)
             .insert_front_matter(&fm)
             .tag_ready_to_render();
 
         // Return new note.
         Ok(Note {
-            context,
+            context: new_context,
             content: new_content,
             rendered_filename: PathBuf::new(),
         })
@@ -318,15 +317,13 @@ impl<T: Content> Note<T> {
     #[inline]
     /// Calls the appropriate markup renderer.
     /// This template expects the template variable
-    /// `TMPL_HTML_VAR_VIEWER_DOC_JS` in `self.context` to be set.
+    /// `TMPL_HTML_VAR_VIEWER_DOC_JS` in `self.context.ct` to be set.
     pub fn render_content_to_html(
         &self,
         // HTML template for this rendition.
         tmpl: &str,
     ) -> Result<String, NoteError> {
-        // Deserialize.
-
-        let mut html_context = self.context.clone().tag_has_settings();
+        let mut html_context = self.context.clone().tag_has_front_matter();
 
         // Insert the raw CSS
         html_context.insert(
@@ -357,7 +354,6 @@ impl<T: Content> Note<T> {
             TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE,
         );
 
-        let html_context = html_context.tag_has_front_matter();
         let html_context = html_context.insert_content(self.content.header(), self.content.body());
 
         log::trace!(

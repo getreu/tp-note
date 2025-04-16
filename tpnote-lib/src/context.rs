@@ -82,11 +82,41 @@ impl<S: ContextState> Context<S> {
     pub fn mark_as_invalid(self) -> Context<Invalid> {
         Context {
             ct: self.ct,
+            // TODO: remove redundancy here.
             path: self.path,
+            // TODO: remove redundancy here.
             dir_path: self.dir_path,
+            // TODO: remove redundancy here.
             root_path: self.root_path,
             _marker: PhantomData,
         }
+    }
+
+    /// Constructor. Unlike `from()` this constructor does not access
+    /// the file system to detect `dir_path` and `root_path`. It copies
+    /// these values from the passed `context`.
+    pub fn from_context_path(context: &Context<S>) -> Context<HasSettings> {
+        let path = context.path.clone();
+        let dir_path = context.dir_path.clone();
+        let root_path = context.root_path.clone();
+
+        let mut ct = tera::Context::new();
+        // Register the canonicalized fully qualified file name.
+        ct.insert(TMPL_VAR_PATH, &path);
+        ct.insert(TMPL_VAR_DIR_PATH, &dir_path);
+        ct.insert(TMPL_VAR_ROOT_PATH, &root_path);
+
+        let mut new_context = Context {
+            ct,
+            path,
+            dir_path,
+            root_path,
+            _marker: PhantomData,
+        };
+
+        new_context.insert_config_vars();
+        new_context.insert_settings();
+        new_context
     }
 
     /// Insert some configuration variables into the context so that they
@@ -345,6 +375,7 @@ impl Context<Invalid> {
 }
 
 impl Context<HasSettings> {
+    /// Merges `fm` into `self.ct`.
     pub fn insert_front_matter(mut self, fm: &FrontMatter) -> Context<HasFrontMatter> {
         Context::insert_front_matter2(&mut self, fm);
         Context {
@@ -437,7 +468,7 @@ impl Context<HasSettings> {
             match input_fm {
                 Ok(ref fm) => {
                     log::trace!(
-                        "Input stream from \"{}\" results in front matter:\n{:#?}",
+                        "Input stream from \"{}\" generates the front matter variables:\n{:#?}",
                         tmpl_var_body_name,
                         &fm
                     )
@@ -670,8 +701,8 @@ impl Context<ReadyToRender> {
         Ok(())
     }
 
-    /// In case we want to reuse this context for the next rendition.
-    pub fn tag_has_settings(self) -> Context<HasSettings> {
+    /// Go back to `HasFrontMatter` state.
+    pub fn tag_has_front_matter(self) -> Context<HasFrontMatter> {
         Context {
             ct: self.ct,
             path: self.path,
@@ -757,10 +788,8 @@ mod tests {
         use crate::front_matter::FrontMatter;
         use std::path::Path;
         let context = Context::from(Path::new("/path/to/mynote.md"));
-        let context =
-            context.insert_front_matter(&FrontMatter::try_from("title: My Stdin.").unwrap());
-        let context = context.tag_ready_to_render().tag_has_settings();
-        let context = context.insert_front_matter(&FrontMatter::try_from("some: text").unwrap());
+        let context = context
+            .insert_front_matter(&FrontMatter::try_from("title: My Stdin.\nsome: text").unwrap());
         let context = context.tag_ready_to_render();
 
         assert_eq!(
