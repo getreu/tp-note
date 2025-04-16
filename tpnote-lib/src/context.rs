@@ -7,6 +7,7 @@ use crate::config::LIB_CFG;
 use crate::config::TMPL_VAR_CURRENT_SCHEME;
 use crate::config::TMPL_VAR_DIR_PATH;
 use crate::config::TMPL_VAR_DOC_BODY_TEXT;
+use crate::config::TMPL_VAR_DOC_FILE_DATE;
 use crate::config::TMPL_VAR_DOC_FM_TEXT;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
@@ -28,12 +29,14 @@ use crate::front_matter::all_leaves;
 use crate::front_matter::FrontMatter;
 use crate::settings::SETTINGS;
 use std::borrow::Cow;
+use std::fs::File;
 use std::marker::PhantomData;
 use std::matches;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::path::Path;
 use std::path::PathBuf;
+use std::time::SystemTime;
 
 /// A type state describing the amount and type of data the `Context` type
 /// contains.
@@ -93,8 +96,8 @@ impl<S: ContextState> Context<S> {
     }
 
     /// Constructor. Unlike `from()` this constructor does not access
-    /// the file system to detect `dir_path` and `root_path`. It copies
-    /// these values from the passed `context`.
+    /// the file system in order to detect `dir_path` and `root_path` and the
+    /// file creation date. It copies these values from the passed `context`.
     pub fn from_context_path(context: &Context<S>) -> Context<HasSettings> {
         let path = context.path.clone();
         let dir_path = context.dir_path.clone();
@@ -105,6 +108,11 @@ impl<S: ContextState> Context<S> {
         ct.insert(TMPL_VAR_PATH, &path);
         ct.insert(TMPL_VAR_DIR_PATH, &dir_path);
         ct.insert(TMPL_VAR_ROOT_PATH, &root_path);
+
+        // Keep file creation date.
+        if let Some(time) = context.get(TMPL_VAR_DOC_FILE_DATE) {
+            ct.insert(TMPL_VAR_DOC_FILE_DATE, time);
+        }
 
         let mut new_context = Context {
             ct,
@@ -307,7 +315,10 @@ impl Context<Invalid> {
     /// a file.
     ///
     /// A copy of `path` is stored in `self.ct` as key `TMPL_VAR_PATH`. It
-    /// directory path as key `TMPL_VAR_DIR_PATH`.
+    /// directory path as key `TMPL_VAR_DIR_PATH`. The root directory, where
+    /// the marker file `tpnote.toml` was found, is stored with the key
+    /// `TMPL_VAR_ROOT_PATH`. If `path` points to a file, its file creation
+    /// date is stored with the key `TMPL_VAR_DOC_FILE_DATE`.
     ///
     /// ```rust
     /// use std::path::Path;
@@ -359,6 +370,21 @@ impl Context<Invalid> {
         ct.insert(TMPL_VAR_PATH, &path);
         ct.insert(TMPL_VAR_DIR_PATH, &dir_path);
         ct.insert(TMPL_VAR_ROOT_PATH, &root_path);
+
+        // Get the file's creation date. Fail silently.
+        if let Ok(file) = File::open(&path) {
+            if let Ok(metadata) = file.metadata() {
+                if let Ok(time) = metadata.created() {
+                    ct.insert(
+                        TMPL_VAR_DOC_FILE_DATE,
+                        &time
+                            .duration_since(SystemTime::UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_secs(),
+                    );
+                }
+            }
+        }
 
         // Insert environment.
         let mut context = Context {

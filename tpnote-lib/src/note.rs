@@ -12,8 +12,6 @@ use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH;
 use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
 use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH;
 use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
-// TODO move this away to context
-use crate::config::TMPL_VAR_DOC_FILE_DATE;
 use crate::content::Content;
 use crate::context::Context;
 use crate::context::HasSettings;
@@ -27,10 +25,8 @@ use crate::note_error_tera_template;
 use crate::template::TemplateKind;
 use std::default::Default;
 use std::fs;
-use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::str;
-use std::time::SystemTime;
 use tera::Tera;
 
 /// This constant is used by Tera as template name for `tera::render_str()`.
@@ -76,27 +72,12 @@ impl<T: Content> Note<T> {
     /// * all front matter variables (see `FrontMatter::try_from_content()`)
     ///
     pub fn from_raw_text(
-        mut context: Context<HasSettings>,
+        context: Context<HasSettings>,
         content: T,
         template_kind: TemplateKind,
     ) -> Result<Note<T>, NoteError> {
         let header = content.header();
         let body = content.body();
-
-        // Get the file's creation date. Fail silently.
-        if let Ok(file) = File::open(&context.path) {
-            if let Ok(metadata) = file.metadata() {
-                if let Ok(time) = metadata.created() {
-                    (*context).insert(
-                        TMPL_VAR_DOC_FILE_DATE,
-                        &time
-                            .duration_since(SystemTime::UNIX_EPOCH)
-                            .unwrap_or_default()
-                            .as_secs(),
-                    );
-                }
-            }
-        }
 
         if matches!(template_kind, TemplateKind::FromTextFile) && !header.is_empty() {
             // If the text file is supposed to have no header and there is one,
