@@ -65,7 +65,7 @@ impl<T: Content> Note<T> {
     /// Panics otherwise. Use `Note::from_content_template()` in those cases.
     ///
     /// This adds the following variables to the context:
-    /// * `TMPL_VAR_DOC_FM_TEXT`,
+    /// * `TMPL_VAR_DOC_HEADER '`,
     /// * `TMPL_VAR_DOC`,
     /// * `TMPL_VAR_DOC_FILE_DATE` (optional: only if a file `context.path`
     ///   exists on disk),

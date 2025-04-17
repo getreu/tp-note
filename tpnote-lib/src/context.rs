@@ -8,7 +8,7 @@ use crate::config::TMPL_VAR_CURRENT_SCHEME;
 use crate::config::TMPL_VAR_DIR_PATH;
 use crate::config::TMPL_VAR_DOC;
 use crate::config::TMPL_VAR_DOC_FILE_DATE;
-use crate::config::TMPL_VAR_DOC_FM_TEXT;
+use crate::config::TMPL_VAR_DOC_HEADER;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_ALL;
@@ -529,11 +529,11 @@ impl Context<HasSettings> {
 }
 
 impl Context<HasFrontMatter> {
-    // Insert `header` in `TMPL_VAR_DOC_FM_TEXT, and `body` in
+    // Insert `header` in `TMPL_VAR_DOC_HEADER, and `body` in
     // `TMPL_VAR_DOC`,.
     pub fn insert_content(mut self, header: &str, body: &str) -> Context<ReadyToRender> {
         // Register the raw serialized header text.
-        self.insert(TMPL_VAR_DOC_FM_TEXT, &header);
+        self.insert(TMPL_VAR_DOC_HEADER, &header);
         //We also keep the body.
         self.insert(TMPL_VAR_DOC, &body);
 
