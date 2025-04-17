@@ -465,23 +465,32 @@ impl Context<HasSettings> {
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md")).unwrap();
     ///
     /// context.insert_front_matter_and_content_from_another_note(
-    ///      "clipboard", "clipboard_header",
-    ///      &ContentString::from(String::from("Data from clipboard.")));
-    /// assert_eq!(&context.get("clipboard").unwrap().to_string(),
+    ///      "txt_clipboard", "txt_clipboard_header",
+    ///      &ContentString::from_string(String::from("Data from clipboard."),
+    ///          "txt_clipboard_header".to_string(),
+    ///          "txt_clipboard".to_string(),
+    ///      )
+    /// );
+    /// assert_eq!(&context.get("txt_clipboard").unwrap().to_string(),
     ///     "\"Data from clipboard.\"");
     ///
     /// context.insert_front_matter_and_content_from_another_note(
     ///      "stdin", "stdin_header",
-    ///      &ContentString::from("---\ntitle: \"My Stdin.\"\n---\nbody".to_string()));
+    ///      &ContentString::from_string(
+    ///          "---\ntitle: My Stdin.\n---\nbody".to_string(),
+    ///          "stdin_header".to_string(),
+    ///          "stdin".to_string(),
+    ///      )
+    /// );
     /// assert_eq!(&context.get("stdin").unwrap().to_string(),
-    ///     r#""body""#);
+    ///     "\"body\"");
     /// assert_eq!(&context.get("stdin_header").unwrap().to_string(),
-    ///     r#""title: \"My Stdin.\"""#);
+    ///     "\"title: My Stdin.\"");
     /// // "fm_title" is dynamically generated from the header variable "title".
     /// assert_eq!(&context
     ///            .get("fm").unwrap()
     ///            .get("fm_title").unwrap().to_string(),
-    ///     r#""My Stdin.""#);
+    ///      "\"My Stdin.\"");
     /// ```
     pub fn insert_front_matter_and_content_from_another_note(
         // TODO: split this in:

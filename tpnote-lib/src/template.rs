@@ -196,18 +196,26 @@ mod tests {
         // Some data in the clipboard.
         let tk = TemplateKind::from(
             Path::new("."),
-            &ContentString::from("my html input".to_string()),
-            &ContentString::from("".to_string()),
-            &ContentString::from("".to_string()),
+            &ContentString::from_string(
+                "my HTML clipboard\n".to_string(),
+                "html_clipboard_header".to_string(),
+                "html_clipboard".to_string(),
+            ),
+            &ContentString::default(),
+            &ContentString::default(),
         );
         assert_eq!(tk, (TemplateKind::FromClipboard, None));
 
         // Some data in the clipboard.
         let tk = TemplateKind::from(
             Path::new("."),
-            &ContentString::from("".to_string()),
-            &ContentString::from("my txt clipboard".to_string()),
-            &ContentString::from("".to_string()),
+            &ContentString::default(),
+            &ContentString::from_string(
+                "my TXT clipboard\n".to_string(),
+                "txt_clipboard_header".to_string(),
+                "txt_clipboard".to_string(),
+            ),
+            &ContentString::default(),
         );
         assert_eq!(tk, (TemplateKind::FromClipboard, None));
 
@@ -215,9 +223,9 @@ mod tests {
         // No data in the clipboard.
         let tk = TemplateKind::from(
             Path::new("."),
-            &ContentString::from("".to_string()),
-            &ContentString::from("".to_string()),
-            &ContentString::from("".to_string()),
+            &ContentString::default(),
+            &ContentString::default(),
+            &ContentString::default(),
         );
         assert_eq!(tk, (TemplateKind::FromDir, None));
 
@@ -225,9 +233,13 @@ mod tests {
         // No data in the clipboard.
         let tk = TemplateKind::from(
             Path::new("."),
-            &ContentString::from("<!DOCTYPE html>".to_string()),
-            &ContentString::from("".to_string()),
-            &ContentString::from("".to_string()),
+            &ContentString::from_string(
+                "<!DOCTYPE html>".to_string(),
+                "html_clipboard_header".to_string(),
+                "html_clipboard".to_string(),
+            ),
+            &ContentString::default(),
+            &ContentString::default(),
         );
         assert_eq!(tk, (TemplateKind::FromDir, None));
 
@@ -240,9 +252,13 @@ mod tests {
         // Execute test.
         let (tk, content) = TemplateKind::from(
             &notefile,
-            &ContentString::from("<!DOCTYPE html>".to_string()),
-            &ContentString::from("".to_string()),
-            &ContentString::from("".to_string()),
+            &ContentString::from_string(
+                "<!DOCTYPE html>".to_string(),
+                "html_clipboard_header".to_string(),
+                "html_clipboard".to_string(),
+            ),
+            &ContentString::default(),
+            &ContentString::default(),
         );
         // Inspect result.
         let expected_template_kind = TemplateKind::FromTextFile;
@@ -264,9 +280,13 @@ mod tests {
         // Execute test.
         let (tk, content) = TemplateKind::from(
             &notefile,
-            &ContentString::from("<!DOCTYPE html>".to_string()),
-            &ContentString::from("".to_string()),
-            &ContentString::from("".to_string()),
+            &ContentString::from_string(
+                "<!DOCTYPE html>".to_string(),
+                "html_clipboard_header".to_string(),
+                "html_clipboard".to_string(),
+            ),
+            &ContentString::default(),
+            &ContentString::default(),
         );
         // Inspect result.
         let expected_template_kind = TemplateKind::SyncFilename;
@@ -288,9 +308,13 @@ mod tests {
         // Execute test.
         let (tk, content) = TemplateKind::from(
             &notefile,
-            &ContentString::from("<!DOCTYPE html>".to_string()),
-            &ContentString::from("".to_string()),
-            &ContentString::from("".to_string()),
+            &ContentString::from_string(
+                "<!DOCTYPE html>".to_string(),
+                "html_clipboard_header".to_string(),
+                "html_clipboard".to_string(),
+            ),
+            &ContentString::default(),
+            &ContentString::default(),
         );
         // Inspect result.
         let expected_template_kind = TemplateKind::AnnotateFile;

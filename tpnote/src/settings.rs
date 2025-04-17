@@ -13,6 +13,8 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 use structopt::StructOpt;
 use tpnote_lib::config::LocalLinkKind;
+use tpnote_lib::config::TMPL_VAR_STDIN;
+use tpnote_lib::config::TMPL_VAR_STDIN_HEADER;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 
@@ -188,9 +190,24 @@ pub static STDIN: LazyLock<ContentString> = LazyLock::new(|| {
 
     // Guess if this is an HTML stream.
     if buffer.is_html_unchecked() {
-        ContentString::from_html(buffer).unwrap_or_else(|e| ContentString::from(e.to_string()))
+        ContentString::from_html(
+            buffer,
+            TMPL_VAR_STDIN_HEADER.to_string(),
+            TMPL_VAR_STDIN.to_string(),
+        )
+        .unwrap_or_else(|e| {
+            ContentString::from_string(
+                e.to_string(),
+                TMPL_VAR_STDIN_HEADER.to_string(),
+                TMPL_VAR_STDIN.to_string(),
+            )
+        })
     } else {
-        ContentString::from(buffer)
+        ContentString::from_string(
+            buffer,
+            TMPL_VAR_STDIN_HEADER.to_string(),
+            TMPL_VAR_STDIN.to_string(),
+        )
     }
 });
 

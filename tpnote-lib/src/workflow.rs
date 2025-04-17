@@ -77,12 +77,6 @@
 //! // We need a newtype because of the orphan rule.
 //! pub struct MyContentString(ContentString);
 //!
-//! impl From<String> for MyContentString {
-//!     fn from(input: String) -> Self {
-//!         MyContentString(ContentString::from(input))
-//!     }
-//! }
-//!
 //! impl AsRef<str> for MyContentString {
 //!     fn as_ref(&self) -> &str {
 //!         self.0.as_ref()
@@ -395,9 +389,21 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
     /// // Prepare test.
     /// let notedir = temp_dir();
     ///
-    /// let html_clipboard = ContentString::from("my HTML clipboard\n".to_string());
-    /// let txt_clipboard = ContentString::from("my TXT clipboard\n".to_string());
-    /// let stdin = ContentString::from("my stdin\n".to_string());
+    /// let html_clipboard = ContentString::from_string(
+    ///     "my HTML clipboard\n".to_string(),
+    ///     "html_clipboard_header".to_string(),
+    ///     "html_clipboard".to_string()
+    /// );
+    /// let txt_clipboard = ContentString::from_string(
+    ///     "my TXT clipboard\n".to_string(),
+    ///     "txt_clipboard_header".to_string(),
+    ///     "txt_clipboard".to_string()
+    /// );
+    /// let stdin = ContentString::from_string(
+    ///     "my stdin\n".to_string(),
+    ///     "stdin_header".to_string(),
+    ///     "stdin".to_string()
+    /// );
     /// // This is the condition to choose: `TemplateKind::FromClipboard`:
     /// assert!(html_clipboard.header().is_empty()
     ///            && txt_clipboard.header().is_empty()

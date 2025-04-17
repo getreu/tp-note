@@ -12,6 +12,8 @@ use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH;
 use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
 use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH;
 use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
+use crate::config::TMPL_VAR_DOC;
+use crate::config::TMPL_VAR_DOC_HEADER;
 use crate::content::Content;
 use crate::context::Context;
 use crate::context::HasSettings;
@@ -153,20 +155,24 @@ impl<T: Content> Note<T> {
         );
 
         // Render template
-        let new_content: T = T::from({
-            let mut tera = Tera::default();
-            tera.extend(&TERA)?;
+        let new_content: T = T::from_string(
+            {
+                let mut tera = Tera::default();
+                tera.extend(&TERA)?;
 
-            // Panics, if the content template does not exist (see contract).
-            // Returns an error, when the rendition goes wrong.
-            tera.render_str(&template_kind.get_content_template(), &context)
-                .map_err(|e| {
-                    note_error_tera_template!(
-                        e,
-                        template_kind.get_content_template_name().to_string()
-                    )
-                })?
-        });
+                // Panics, if the content template does not exist (see contract).
+                // Returns an error, when the rendition goes wrong.
+                tera.render_str(&template_kind.get_content_template(), &context)
+                    .map_err(|e| {
+                        note_error_tera_template!(
+                            e,
+                            template_kind.get_content_template_name().to_string()
+                        )
+                    })?
+            },
+            TMPL_VAR_DOC_HEADER.to_string(),
+            TMPL_VAR_DOC.to_string(),
+        );
 
         log::debug!(
             "Rendered content template:\n---\n{}\n---\n{}",
@@ -686,7 +692,11 @@ Body text
 
         // Store the path in `context`.
         let mut context = Context::from(&notedir).unwrap();
-        let html_clipboard = ContentString::from("html_clp\n".to_string());
+        let html_clipboard = ContentString::from_string(
+            "html_clp\n".to_string(),
+            "html_clipboard_header".to_string(),
+            "html clipboard".to_string(),
+        );
         context
             .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_HTML_CLIPBOARD,
@@ -694,7 +704,11 @@ Body text
                 &html_clipboard,
             )
             .unwrap();
-        let txt_clipboard = ContentString::from("txt_clp\n".to_string());
+        let txt_clipboard = ContentString::from_string(
+            "txt_clp\n".to_string(),
+            "txt_clipboard_header".to_string(),
+            "txt clipboard".to_string(),
+        );
         context
             .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_TXT_CLIPBOARD,
@@ -702,7 +716,11 @@ Body text
                 &txt_clipboard,
             )
             .unwrap();
-        let stdin = ContentString::from("std\n".to_string());
+        let stdin = ContentString::from_string(
+            "std\n".to_string(),
+            "stdin_header".to_string(),
+            "stdin".to_string(),
+        );
         context
             .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_STDIN,
@@ -802,8 +820,16 @@ Body text
         // Run test.
         // Store the path in `context`.
         let mut context = Context::from(&notedir).unwrap();
-        let html_clipboard = ContentString::from("my HTML clipboard\n".to_string());
-        let txt_clipboard = ContentString::from("my TXT clipboard\n".to_string());
+        let html_clipboard = ContentString::from_string(
+            "my HTML clipboard\n".to_string(),
+            "html_clipboard_header".to_string(),
+            "html_clipboard".to_string(),
+        );
+        let txt_clipboard = ContentString::from_string(
+            "my TXT clipboard\n".to_string(),
+            "txt_clipboard_header".to_string(),
+            "txt_clipboard".to_string(),
+        );
         context
             .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_HTML_CLIPBOARD,
@@ -818,8 +844,11 @@ Body text
                 &txt_clipboard,
             )
             .unwrap();
-        let stdin =
-            ContentString::from("---\nsubtitle: \"this overwrites\"\n---\nstdin body".to_string());
+        let stdin = ContentString::from_string(
+            "---\nsubtitle: \"this overwrites\"\n---\nstdin body".to_string(),
+            "stdin_header".to_string(),
+            "stdin".to_string(),
+        );
         context
             .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_STDIN,
@@ -918,8 +947,16 @@ Body text
         // Run the test.
         // Store the path in `context`.
         let mut context = Context::from(&non_notefile).unwrap();
-        let html_clipboard = ContentString::from("my HTML clipboard\n".to_string());
-        let txt_clipboard = ContentString::from("my TXT clipboard\n".to_string());
+        let html_clipboard = ContentString::from_string(
+            "my HTML clipboard\n".to_string(),
+            "html_clipboard_header".to_string(),
+            "html_clipboard".to_string(),
+        );
+        let txt_clipboard = ContentString::from_string(
+            "my TXT clipboard\n".to_string(),
+            "txt_clipboard_header".to_string(),
+            "txt_clipboard".to_string(),
+        );
         context
             .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_HTML_CLIPBOARD,

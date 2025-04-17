@@ -59,19 +59,19 @@ impl HtmlRenderer {
     /// use std::path::Path;
     ///
     /// // Prepare test: create existing note file.
-    /// let raw = String::from(r#"---
-    /// title: "My day"
-    /// subtitle: "Note"
+    /// let content = ContentString::from_string(String::from(r#"---
+    /// title: My day
+    /// subtitle: Note
     /// ---
     /// Body text
-    /// "#);
+    /// "#), "doc_header".to_string(), "doc".to_string());
     ///
     /// // Start test
     /// let mut context = Context::from(Path::new("/path/to/note.md")).unwrap();
     /// // We do not inject any JavaScript.
     /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".to_string());
     /// // Render.
-    /// let html = HtmlRenderer::viewer_page::<ContentString>(context, raw.into())
+    /// let html = HtmlRenderer::viewer_page::<ContentString>(context, content)
     ///            .unwrap();
     /// // Check the HTML rendition.
     /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
@@ -91,8 +91,8 @@ impl HtmlRenderer {
     ///
     /// // Prepare test: create existing note file.
     /// let raw = r#"---
-    /// title: "My day2"
-    /// subtitle: "Note"
+    /// title: My day2
+    /// subtitle: Note
     /// ---
     /// Body text
     /// "#;
@@ -135,18 +135,17 @@ impl HtmlRenderer {
     /// use std::path::Path;
     ///
     /// // Prepare test: create existing note file.
-    /// let raw = String::from(r#"---
+    /// let content= ContentString::from_string(String::from(r#"---
     /// title: "My day"
     /// subtitle: "Note"
     /// ---
     /// Body text
-    /// "#);
+    /// "#), "doc_header".to_string(), "doc".to_string());
     ///
     /// // Start test
     /// let mut context = Context::from(Path::new("/path/to/note.md")).unwrap();
-    /// // The exporter template does not insert any JavaScript.
     /// // Render.
-    /// let html = HtmlRenderer::exporter_page::<ContentString>(context, raw.into())
+    /// let html = HtmlRenderer::exporter_page::<ContentString>(context, content)
     ///            .unwrap();
     /// // Check the HTML rendition.
     /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
