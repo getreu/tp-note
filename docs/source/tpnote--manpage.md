@@ -2252,7 +2252,7 @@ viewer = '''
   <pre class="doc-header">{{ doc_fm_text }}</pre>
   <hr>
   <div class="doc-body">
-    {{ doc_body_text | markup_to_html(extension=ext) | safe }}
+    {{ doc | markup_to_html(extension=ext) | safe }}
   </div>
   <script>{{ viewer_doc_js | safe }}</script>
 </body>
@@ -2279,12 +2279,9 @@ Specifically:
 * '`{{ doc_fm_text }}`' is the raw UTF-8 copy of the header. Not to be
   confounded with the dictionary variable '`{{ fm }}`'.
 
-* '`{{ doc_body_text | markup_to_html(extension=ext) | safe }}`' is the note's
+* '`{{ doc | markup_to_html(extension=ext) | safe }}`' is the note's
   body as HTML rendition. The parameter '`extension`' designates the 
   markup language as specified in the '`filename.extensions-*`' variables.
-
-* '`{{ doc_text | markup_to_html | safe }}`' is the note's raw text as HTML
-  rendition with clickable hyperlinks.
 
 * '`{{ viewer_doc_js | safe }}`' is the JavaScript browser code for live
   updates.
@@ -2385,7 +2382,7 @@ exporter = '''
   <pre class="doc-header">{{ doc_fm_text }}</pre>
   <hr>
   <div class="doc-body">
-    {{ doc_body_text| markup_to_html(extension=ext) | safe }}
+    {{ doc | markup_to_html(extension=ext) | safe }}
   </div>
 </body>
 </html>
@@ -2566,7 +2563,7 @@ In addition, Tp-Note defines the following variables:
   points to.  Note, this variable is only available in the templates
   '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
-* '`{{ doc_body_text }}`': is the content of the file '`{{ path }}`'
+* '`{{ doc }}`': is the content of the file '`{{ path }}`'
   points to. If the file does not start with a front matter, this variable holds
   the whole content. Note, this variable is only available in the templates
   '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
@@ -2800,8 +2797,8 @@ A filter is always used together with a variable. Here are some examples:
   into HTML. The '`to_html`' must be followed by a '`safe`' filter to pass
   through the HTML formatting of objects and arrays.
 
-* '`{{ doc_body_text | get_lang | unique }}`' determines the natural
-  languages of the text in the variable '`{{ doc_body_text }}` and returns
+* '`{{ doc | get_lang | unique }}`' determines the natural
+  languages of the text in the variable '`{{ doc }}` and returns
   the result as an array of ISO 639-1 language codes. The template filter
   '`{{ get_lang }}`' can be configured with the configuration file variable
   '`tmpl.filter.get_lang`'. The latter defines those ISO 639-1 codes, the
@@ -2811,9 +2808,9 @@ A filter is always used together with a variable. Here are some examples:
   detected languages are listed as `'Value::Array`' in the order of their
   appearance. To list a language only once, we add the '`unique`' filter at
   the end. If the detection algorithm can not determine the language of '`{{
-  doc_body_text }}`', the filter '`{{ get_lang }}`' returns en empty array.
+  doc }}`', the filter '`{{ get_lang }}`' returns en empty array.
 
-* '`{{ doc_body_text | get_lang | unique | map_lang }}`': The '`map_lang`'
+* '`{{ doc | get_lang | unique | map_lang }}`': The '`map_lang`'
   filter extends the detected ISO 638-1 language codes to complete IETF
   BCP 47 language tags, usually containing a region subtag. For example
   the input '`en`' results in '`en-US`'. This additional mapping is useful
@@ -2823,21 +2820,21 @@ A filter is always used together with a variable. Here are some examples:
   '`tmpl.filter.map_lang`' filter configuration, the input is passed through,
   e.g. '`fr`' results in '`fr`'.
 
-* '`{{ doc_body_text | get_lang | unique | map_lang(default=lang) }}`' adds an
+* '`{{ doc | get_lang | unique | map_lang(default=lang) }}`' adds an
   extra mapping to the '`map_lang`' filter: when the input of the '`map_lang`'
   filter is an empty `Value::Array`, then '`{{ lang }}`' is added as single
   item. '`{{ lang }}`' is expected to be a ISO 638-1 language code, e.g. '`en`'.
   Depending on the '`tmpl.filter.map_lang`' configuration, the exemplary
   '`en`' input may be converted to '`en-US`' or '`en-GB`'.
 
-* '`{{ doc_body_text | get_lang | ... | flatten_array | to_yaml }}`':
+* '`{{ doc | get_lang | ... | flatten_array | to_yaml }}`':
   Arrays are usually printed with '`to_yaml`' as item lists. When a list
   contains exactly one item, the filter '`flatten_array`' flattens that list.
   This way the single item is printed as such and not as a list with only one
   item. Lists with two or more items are not flattened. They are passed through
   without modification.
 
-* '`{{ doc_body_text | get_lang | ... | first | to_yaml }}`' returns the
+* '`{{ doc | get_lang | ... | first | to_yaml }}`' returns the
   first detected language as '`Value::String`'.
 
 * '`{{ doc_file_date | default(value=now()) | date(format='%Y%m%d') }}`'

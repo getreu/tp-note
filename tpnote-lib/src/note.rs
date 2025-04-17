@@ -66,7 +66,7 @@ impl<T: Content> Note<T> {
     ///
     /// This adds the following variables to the context:
     /// * `TMPL_VAR_DOC_FM_TEXT`,
-    /// * `TMPL_VAR_DOC_BODY_TEXT`,
+    /// * `TMPL_VAR_DOC`,
     /// * `TMPL_VAR_DOC_FILE_DATE` (optional: only if a file `context.path`
     ///   exists on disk),
     /// * all front matter variables (see `FrontMatter::try_from_content()`)

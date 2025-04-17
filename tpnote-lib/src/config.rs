@@ -146,7 +146,7 @@ pub const TMPL_VAR_DOC_FM_TEXT: &str = "doc_fm_text";
 /// Contains the body of the file the command line option `<path>`
 /// points to. Only available in the `tmpl.from_text_file_content`,
 /// `tmpl.sync_filename` and HTML templates.
-pub const TMPL_VAR_DOC_BODY_TEXT: &str = "doc_body_text";
+pub const TMPL_VAR_DOC: &str = "doc";
 
 /// Contains the date of the file the command line option `<path>` points to.
 /// The date is represented as an integer the way `std::time::SystemTime`

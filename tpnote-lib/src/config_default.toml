@@ -442,7 +442,7 @@ from_clipboard_filename = """
 ### filename and its creation date. `{{ path }}` points to the text file,
 ### `{{ dir_path }}` to the directory where it is located.
 from_text_file_content = """
-{%- set languages = doc_body_text | get_lang | map_lang(default=lang) -%}
+{%- set languages = doc | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 ---
 {{ path | file_stem | split(pat='--') | first | trunc | to_yaml(key='fm_title') }}
@@ -459,7 +459,7 @@ from_text_file_content = """
 {%- endif -%}
 ---
 
-{{ doc_body_text }}
+{{ doc }}
 """
 
 ### Default filename template used when the input file (with a known
@@ -735,7 +735,7 @@ from_text_file_content = """
 {%- set file = file | file_stem -%}
 {%- set title = file | split(pat='__') | first -%}
 {%- set keywords = file | split(pat='__') | nth(n=1) -%}
-{%- set languages = doc_body_text | get_lang | map_lang(default=lang) -%}
+{%- set languages = doc | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 ---
 {{ title | trunc | to_yaml(key='fm_title') }}
@@ -751,7 +751,7 @@ from_text_file_content = """
 ### {{ path | file_name | to_yaml(key='fm_orig_name', tab=12) }}
 ---
 
-{{ doc_body_text }}
+{{ doc }}
 """
 
 from_text_file_filename = """
@@ -945,7 +945,7 @@ viewer = '''
   </tr>
   {% endfor %}
   </table>
-  <div class="doc-body">{{ doc_body_text | markup_to_html(extension=ext) | safe }}
+  <div class="doc-body">{{ doc | markup_to_html(extension=ext) | safe }}
   </div>
   <script>{{ viewer_doc_js | safe }}</script>
 </body>
@@ -1171,7 +1171,7 @@ exporter = '''
   </tr>
   {% endfor %}
   </table>
-  <div class="doc-body">{{ doc_body_text| markup_to_html(extension=ext) | safe }}
+  <div class="doc-body">{{ doc | markup_to_html(extension=ext) | safe }}
   </div>
 </body>
 </html>
