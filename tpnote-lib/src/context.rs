@@ -382,8 +382,11 @@ impl Context<Invalid> {
         // Get the file's creation date. Fail silently.
         let file_creation_date = if let Ok(file) = File::open(&path) {
             let metadata = file.metadata()?;
-            let time = metadata.created()?;
-            Some(time)
+            if let Ok(time) = metadata.created().or_else(|_| metadata.modified()) {
+                Some(time)
+            } else {
+                None
+            }
         } else {
             None
         };
@@ -463,25 +466,21 @@ impl Context<HasSettings> {
     /// set_test_default_settings().unwrap();
     ///
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md")).unwrap();
-    ///
-    /// context.insert_front_matter_and_content_from_another_note(
-    ///      "txt_clipboard", "txt_clipboard_header",
-    ///      &ContentString::from_string(String::from("Data from clipboard."),
+    /// let c1 =  ContentString::from_string(String::from("Data from clipboard."),
     ///          "txt_clipboard_header".to_string(),
     ///          "txt_clipboard".to_string(),
-    ///      )
     /// );
-    /// assert_eq!(&context.get("txt_clipboard").unwrap().to_string(),
-    ///     "\"Data from clipboard.\"");
-    ///
-    /// context.insert_front_matter_and_content_from_another_note(
-    ///      "stdin", "stdin_header",
-    ///      &ContentString::from_string(
+    /// let c2 = ContentString::from_string(
     ///          "---\ntitle: My Stdin.\n---\nbody".to_string(),
     ///          "stdin_header".to_string(),
     ///          "stdin".to_string(),
-    ///      )
     /// );
+    /// let c = vec![&c1, &c2];
+    ///
+    /// context.insert_front_matter_and_content_from_clipboards(&c).unwrap();
+    ///
+    /// assert_eq!(&context.get("txt_clipboard").unwrap().to_string(),
+    ///     "\"Data from clipboard.\"");
     /// assert_eq!(&context.get("stdin").unwrap().to_string(),
     ///     "\"body\"");
     /// assert_eq!(&context.get("stdin_header").unwrap().to_string(),
@@ -492,45 +491,45 @@ impl Context<HasSettings> {
     ///            .get("fm_title").unwrap().to_string(),
     ///      "\"My Stdin.\"");
     /// ```
-    pub fn insert_front_matter_and_content_from_another_note(
+    pub fn insert_front_matter_and_content_from_clipboards(
         // TODO: split this in:
         // `insert_front_matter_from_another_content()`
         // `insert_content()`
         &mut self,
-        tmpl_var_body_name: &str,
-        tmpl_var_header_name: &str,
-        input: &impl Content,
+        clipboards: &Vec<&impl Content>,
     ) -> Result<(), NoteError> {
-        // Register input.
-        (*self).insert(tmpl_var_header_name, input.header());
-        (*self).insert(tmpl_var_body_name, input.body());
+        for clip in clipboards {
+            // Register input.
+            (*self).insert(clip.header_name(), clip.header());
+            (*self).insert(clip.body_name(), clip.body());
 
-        // Can we find a front matter in the input stream? If yes, the
-        // unmodified input stream is our new note content.
-        if !input.header().is_empty() {
-            let input_fm = FrontMatter::try_from(input.header());
-            match input_fm {
-                Ok(ref fm) => {
-                    log::trace!(
-                        "Input stream from \"{}\" generates the front matter variables:\n{:#?}",
-                        tmpl_var_body_name,
-                        &fm
-                    )
-                }
-                Err(ref e) => {
-                    if !input.header().is_empty() {
-                        return Err(NoteError::InvalidInputYaml {
-                            tmpl_var: tmpl_var_body_name.to_string(),
-                            source_str: e.to_string(),
-                        });
+            // Can we find a front matter in the input stream? If yes, the
+            // unmodified input stream is our new note content.
+            if !clip.header().is_empty() {
+                let input_fm = FrontMatter::try_from(clip.header());
+                match input_fm {
+                    Ok(ref fm) => {
+                        log::trace!(
+                            "Input stream from \"{}\" generates the front matter variables:\n{:#?}",
+                            clip.body(),
+                            &fm
+                        )
                     }
-                }
-            };
+                    Err(ref e) => {
+                        if !clip.header().is_empty() {
+                            return Err(NoteError::InvalidInputYaml {
+                                tmpl_var: clip.body_name().to_string(),
+                                source_str: e.to_string(),
+                            });
+                        }
+                    }
+                };
 
-            // Register front matter.
-            // The variables registered here can be overwrite the ones from the clipboard.
-            if let Ok(fm) = input_fm {
-                self.insert_front_matter2(&fm);
+                // Register front matter.
+                // The variables registered here can be overwrite the ones from the clipboard.
+                if let Ok(fm) = input_fm {
+                    self.insert_front_matter2(&fm);
+                }
             }
         }
         Ok(())

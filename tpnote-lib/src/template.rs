@@ -1,4 +1,5 @@
 //!Abstractions for content templates and filename templates.
+use crate::config::{TMPL_VAR_HTML_CLIPBOARD, TMPL_VAR_STDIN, TMPL_VAR_TXT_CLIPBOARD};
 use crate::filename::NotePath;
 use crate::settings::SETTINGS;
 use crate::{config::LIB_CFG, content::Content};
@@ -38,20 +39,35 @@ impl TemplateKind {
     /// If `path` has a Tp-Note extension (e.g. `.md`) and the file indicated by
     /// `path` could be opened and loaded from disk, `Some(content)` contains
     /// its content. Otherwise `None` is returned.
-    pub fn from<T: Content>(
-        path: &Path,
-        html_clipboard: &T,
-        txt_clipboard: &T,
-        stdin: &T,
-    ) -> (Self, Option<T>) {
-        let stdin_is_empty = stdin.is_empty();
-        let stdin_has_header = !stdin.header().is_empty();
+    pub fn from<T: Content>(path: &Path, clipboards: &[&T]) -> (Self, Option<T>) {
+        //
+        let html_clipboard = clipboards
+            .iter()
+            .find(|&&c| c.body_name() == TMPL_VAR_HTML_CLIPBOARD);
+        let txt_clipboard = clipboards
+            .iter()
+            .find(|&&c| c.body_name() == TMPL_VAR_TXT_CLIPBOARD);
+        let stdin = clipboards
+            .iter()
+            .find(|&&c| c.body_name() == TMPL_VAR_STDIN);
 
-        let clipboard_is_empty = html_clipboard.is_empty() && txt_clipboard.is_empty();
-        let clipboard_has_header =
-            !html_clipboard.header().is_empty() || !txt_clipboard.header().is_empty();
+        //let stdin_is_empty = stdin.is_empty();
+        let stdin_is_empty = !stdin.is_some_and(|c| !c.is_empty());
+
+        // let stdin_has_header = !stdin.header().is_empty();
+        let stdin_has_header = stdin.is_some_and(|c| !c.header().is_empty());
+
+        // let clipboard_is_empty = html_clipboard.is_empty() && txt_clipboard.is_empty();
+        let clipboard_is_empty = !(html_clipboard.is_some_and(|c| !c.is_empty())
+            || txt_clipboard.is_some_and(|c| !c.is_empty()));
+
+        // let clipboard_has_header =
+        //     !html_clipboard.header().is_empty() || !txt_clipboard.header().is_empty();
+        let clipboard_has_header = html_clipboard.is_some_and(|c| !c.header().is_empty())
+            || txt_clipboard.is_some_and(|c| !c.header().is_empty());
 
         let input_stream_is_some = !stdin_is_empty || !clipboard_is_empty;
+
         let input_stream_has_header = stdin_has_header || clipboard_has_header;
 
         let path_is_dir = path.is_dir();
@@ -184,6 +200,7 @@ impl TemplateKind {
 
 #[cfg(test)]
 mod tests {
+    use crate::content::Content;
     use crate::content::ContentString;
 
     use super::*;
@@ -194,53 +211,53 @@ mod tests {
         use std::fs;
 
         // Some data in the clipboard.
-        let tk = TemplateKind::from(
-            Path::new("."),
-            &ContentString::from_string(
-                "my HTML clipboard\n".to_string(),
-                "html_clipboard_header".to_string(),
-                "html_clipboard".to_string(),
-            ),
-            &ContentString::default(),
-            &ContentString::default(),
+        let c1 = &ContentString::from_string(
+            "my HTML clipboard\n".to_string(),
+            "html_clipboard_header".to_string(),
+            "html_clipboard".to_string(),
         );
+        let c2 = &ContentString::default();
+        let c3 = &ContentString::default();
+        let v = vec![c1, c2, c3];
+
+        let tk = TemplateKind::from(Path::new("."), &v);
         assert_eq!(tk, (TemplateKind::FromClipboard, None));
 
+        //
         // Some data in the clipboard.
-        let tk = TemplateKind::from(
-            Path::new("."),
-            &ContentString::default(),
-            &ContentString::from_string(
-                "my TXT clipboard\n".to_string(),
-                "txt_clipboard_header".to_string(),
-                "txt_clipboard".to_string(),
-            ),
-            &ContentString::default(),
+        let c1 = &ContentString::default();
+        let c2 = &ContentString::from_string(
+            "my TXT clipboard\n".to_string(),
+            "txt_clipboard_header".to_string(),
+            "txt_clipboard".to_string(),
         );
+        let c3 = &ContentString::default();
+        let v = vec![c1, c2, c3];
+
+        let tk = TemplateKind::from(Path::new("."), &v);
         assert_eq!(tk, (TemplateKind::FromClipboard, None));
 
         //
         // No data in the clipboard.
-        let tk = TemplateKind::from(
-            Path::new("."),
-            &ContentString::default(),
-            &ContentString::default(),
-            &ContentString::default(),
-        );
+        let c1 = &ContentString::default();
+        let c2 = &ContentString::default();
+        let c3 = &ContentString::default();
+        let v = vec![c1, c2, c3];
+        let tk = TemplateKind::from(Path::new("."), &v);
         assert_eq!(tk, (TemplateKind::FromDir, None));
 
         //
         // No data in the clipboard.
-        let tk = TemplateKind::from(
-            Path::new("."),
-            &ContentString::from_string(
-                "<!DOCTYPE html>".to_string(),
-                "html_clipboard_header".to_string(),
-                "html_clipboard".to_string(),
-            ),
-            &ContentString::default(),
-            &ContentString::default(),
+        let c1 = &ContentString::from_string(
+            "<!DOCTYPE html>".to_string(),
+            "html_clipboard_header".to_string(),
+            "html_clipboard".to_string(),
         );
+        let c2 = &ContentString::default();
+        let c3 = &ContentString::default();
+        let v = vec![c1, c2, c3];
+
+        let tk = TemplateKind::from(Path::new("."), &v);
         assert_eq!(tk, (TemplateKind::FromDir, None));
 
         //
@@ -250,16 +267,16 @@ mod tests {
         let notefile = temp_dir().join("no header.md");
         let _ = fs::write(&notefile, raw.as_bytes());
         // Execute test.
-        let (tk, content) = TemplateKind::from(
-            &notefile,
-            &ContentString::from_string(
-                "<!DOCTYPE html>".to_string(),
-                "html_clipboard_header".to_string(),
-                "html_clipboard".to_string(),
-            ),
-            &ContentString::default(),
-            &ContentString::default(),
+        let c1 = &ContentString::from_string(
+            "<!DOCTYPE html>".to_string(),
+            "html_clipboard_header".to_string(),
+            "html_clipboard".to_string(),
         );
+        let c2 = &ContentString::default();
+        let c3 = &ContentString::default();
+        let v = vec![c1, c2, c3];
+
+        let (tk, content) = TemplateKind::from(&notefile, &v);
         // Inspect result.
         let expected_template_kind = TemplateKind::FromTextFile;
         let expected_body = "Body text without header";
@@ -278,16 +295,16 @@ mod tests {
         let notefile = temp_dir().join("some.md");
         let _ = fs::write(&notefile, raw.as_bytes());
         // Execute test.
-        let (tk, content) = TemplateKind::from(
-            &notefile,
-            &ContentString::from_string(
-                "<!DOCTYPE html>".to_string(),
-                "html_clipboard_header".to_string(),
-                "html_clipboard".to_string(),
-            ),
-            &ContentString::default(),
-            &ContentString::default(),
+        let c1 = &ContentString::from_string(
+            "<!DOCTYPE html>".to_string(),
+            "html_clipboard_header".to_string(),
+            "html_clipboard".to_string(),
         );
+        let c2 = &ContentString::default();
+        let c3 = &ContentString::default();
+        let v = vec![c1, c2, c3];
+
+        let (tk, content) = TemplateKind::from(&notefile, &v);
         // Inspect result.
         let expected_template_kind = TemplateKind::SyncFilename;
         let expected_body = "Body";
@@ -306,16 +323,16 @@ mod tests {
         let notefile = temp_dir().join("some.pdf");
         let _ = fs::write(&notefile, raw.as_bytes());
         // Execute test.
-        let (tk, content) = TemplateKind::from(
-            &notefile,
-            &ContentString::from_string(
-                "<!DOCTYPE html>".to_string(),
-                "html_clipboard_header".to_string(),
-                "html_clipboard".to_string(),
-            ),
-            &ContentString::default(),
-            &ContentString::default(),
+        let c1 = &ContentString::from_string(
+            "<!DOCTYPE html>".to_string(),
+            "html_clipboard_header".to_string(),
+            "html_clipboard".to_string(),
         );
+        let c2 = &ContentString::default();
+        let c3 = &ContentString::default();
+        let v = vec![c1, c2, c3];
+
+        let (tk, content) = TemplateKind::from(&notefile, &v);
         // Inspect result.
         let expected_template_kind = TemplateKind::AnnotateFile;
         assert_eq!(tk, expected_template_kind);

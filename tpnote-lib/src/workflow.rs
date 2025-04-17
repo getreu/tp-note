@@ -31,6 +31,7 @@
 //! let html_clipboard = ContentString::default();
 //! let txt_clipboard = ContentString::default();
 //! let stdin = ContentString::default();
+//! let v = vec![&html_clipboard, &txt_clipboard, &stdin];
 //! // This is the condition to choose: `TemplateKind::New`:
 //! assert!(html_clipboard.is_empty() && txt_clipboard.is_empty() &&stdin.is_empty());
 //! // There are no inhibitor rules to change the `TemplateKind`.
@@ -40,7 +41,7 @@
 //! let n = WorkflowBuilder::new(&notedir)
 //!       // You can plug in your own type (must impl. `Content`).
 //!      .upgrade::<ContentString, _>(
-//!          "default", &html_clipboard, &txt_clipboard, &stdin, template_kind_filter)
+//!          "default", v, template_kind_filter)
 //!      .build()
 //!      .run()
 //!      .unwrap();
@@ -121,6 +122,7 @@
 //! let html_clipboard = MyContentString::default();
 //! let txt_clipboard = MyContentString::default();
 //! let stdin = MyContentString::default();
+//! let v = vec![&html_clipboard, &txt_clipboard, &stdin];
 //! // This is the condition to choose: `TemplateKind::New`:
 //! assert!(
 //!     html_clipboard.is_empty() || txt_clipboard.is_empty() || stdin.is_empty());
@@ -131,7 +133,7 @@
 //! let n = WorkflowBuilder::new(&notedir)
 //!       // You can plug in your own type (must impl. `Content`).
 //!      .upgrade::<MyContentString, _>(
-//!          "default", &html_clipboard, &txt_clipboard, &stdin, template_kind_filter)
+//!          "default", v, template_kind_filter)
 //!      .build()
 //!      .run()
 //!      .unwrap();
@@ -150,12 +152,6 @@ use crate::config::TMPL_VAR_FM_ALL;
 use crate::config::TMPL_VAR_FM_FILENAME_SYNC;
 use crate::config::TMPL_VAR_FM_NO_FILENAME_SYNC;
 use crate::config::TMPL_VAR_FM_SCHEME;
-use crate::config::TMPL_VAR_HTML_CLIPBOARD;
-use crate::config::TMPL_VAR_HTML_CLIPBOARD_HEADER;
-use crate::config::TMPL_VAR_STDIN;
-use crate::config::TMPL_VAR_STDIN_HEADER;
-use crate::config::TMPL_VAR_TXT_CLIPBOARD;
-use crate::config::TMPL_VAR_TXT_CLIPBOARD_HEADER;
 use crate::content::Content;
 use crate::context::Context;
 use crate::error::NoteError;
@@ -188,9 +184,7 @@ pub struct SyncFilename<'a> {
 pub struct SyncFilenameOrCreateNew<'a, T, F> {
     scheme_source: SchemeSource<'a>,
     path: &'a Path,
-    html_clipboard: &'a T,
-    txt_clipboard: &'a T,
-    stdin: &'a T,
+    clipboards: Vec<&'a T>,
     tk_filter: F,
     html_export: Option<(&'a Path, LocalLinkKind)>,
     force_lang: Option<&'a str>,
@@ -227,25 +221,21 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
     /// `--no-filename-sync`.
     ///
     /// Some templates insert the content of the clipboard or the standard
-    /// input pipe. The input data (can be empty) must be provided with the
-    /// parameters `clipboard` and `stdin`. The templates expect text with
-    /// markup or HTML. In case of HTML, the content must start with
+    /// input pipe. The input data (can be empty) is provided with a
+    /// vector of `Content` named `clipboards`. The templates expect text with
+    /// markup or HTML. In case of HTML, the `Content.body` must start with
     /// `<!DOCTYPE html` or `<html`
     pub fn upgrade<T: Content, F: Fn(TemplateKind) -> TemplateKind>(
         self,
         scheme_new_default: &'a str,
-        html_clipboard: &'a T,
-        txt_clipboard: &'a T,
-        stdin: &'a T,
+        clipboards: Vec<&'a T>,
         tk_filter: F,
     ) -> WorkflowBuilder<SyncFilenameOrCreateNew<'a, T, F>> {
         WorkflowBuilder {
             input: SyncFilenameOrCreateNew {
                 scheme_source: SchemeSource::SchemeNewDefault(scheme_new_default),
                 path: self.input.path,
-                html_clipboard,
-                txt_clipboard,
-                stdin,
+                clipboards,
                 tk_filter,
                 html_export: None,
                 force_lang: None,
@@ -404,6 +394,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
     ///     "stdin_header".to_string(),
     ///     "stdin".to_string()
     /// );
+    /// let v = vec![&html_clipboard, &txt_clipboard, &stdin];
     /// // This is the condition to choose: `TemplateKind::FromClipboard`:
     /// assert!(html_clipboard.header().is_empty()
     ///            && txt_clipboard.header().is_empty()
@@ -415,7 +406,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
     /// let n = WorkflowBuilder::new(&notedir)
     ///       // You can plug in your own type (must impl. `Content`).
     ///      .upgrade::<ContentString, _>(
-    ///            "default", &html_clipboard, &txt_clipboard, &stdin, template_kind_filter)
+    ///            "default", v, template_kind_filter)
     ///      .build()
     ///      .run()
     ///      .unwrap();
@@ -447,31 +438,10 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
         // and finally rename the file, if it is not in sync with its front matter.
 
         // Collect input data for templates.
-        let context = Context::from(self.input.path)?;
-        let mut context_clipboard_stdin = context.clone();
-        context_clipboard_stdin.insert_front_matter_and_content_from_another_note(
-            TMPL_VAR_HTML_CLIPBOARD,
-            TMPL_VAR_HTML_CLIPBOARD_HEADER,
-            self.input.html_clipboard,
-        )?;
-        context_clipboard_stdin.insert_front_matter_and_content_from_another_note(
-            TMPL_VAR_TXT_CLIPBOARD,
-            TMPL_VAR_TXT_CLIPBOARD_HEADER,
-            self.input.txt_clipboard,
-        )?;
-        context_clipboard_stdin.insert_front_matter_and_content_from_another_note(
-            TMPL_VAR_STDIN,
-            TMPL_VAR_STDIN_HEADER,
-            self.input.stdin,
-        )?;
+        let mut context = Context::from(self.input.path)?;
 
         // `template_kind` will tell us what to do.
-        let (template_kind, content) = TemplateKind::from(
-            self.input.path,
-            self.input.html_clipboard,
-            self.input.txt_clipboard,
-            self.input.stdin,
-        );
+        let (template_kind, content) = TemplateKind::from(self.input.path, &self.input.clipboards);
         let template_kind = (self.input.tk_filter)(template_kind);
 
         let n = match template_kind {
@@ -482,8 +452,12 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
                 // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
                 // All these template do not refer to existing front matter,
                 // as there is none yet.
-                let context = context_clipboard_stdin.set_state_ready_to_render();
-                let mut n = Note::from_content_template(context, template_kind)?;
+                context.insert_front_matter_and_content_from_clipboards(&self.input.clipboards)?;
+
+                let mut n = Note::from_content_template(
+                    context.set_state_ready_to_render(),
+                    template_kind,
+                )?;
                 n.render_filename(template_kind)?;
                 // Check if the filename is not taken already
                 n.set_next_unused_rendered_filename()?;
@@ -492,6 +466,8 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             }
 
             TemplateKind::FromTextFile => {
+                context.insert_front_matter_and_content_from_clipboards(&self.input.clipboards)?;
+
                 let mut n = Note::from_raw_text(context, content.unwrap(), template_kind)?;
                 // Render filename.
                 n.render_filename(template_kind)?;

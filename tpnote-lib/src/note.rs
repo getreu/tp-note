@@ -668,9 +668,6 @@ Body text
     fn test_from_content_template2() {
         // Example with `TemplateKind::FromClipboard`
 
-        use crate::config::{TMPL_VAR_HTML_CLIPBOARD, TMPL_VAR_HTML_CLIPBOARD_HEADER};
-        use crate::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
-        use crate::config::{TMPL_VAR_TXT_CLIPBOARD, TMPL_VAR_TXT_CLIPBOARD_HEADER};
         use crate::content::Content;
         use crate::content::ContentString;
         use crate::context::Context;
@@ -695,39 +692,23 @@ Body text
         let html_clipboard = ContentString::from_string(
             "html_clp\n".to_string(),
             "html_clipboard_header".to_string(),
-            "html clipboard".to_string(),
+            "html_clipboard".to_string(),
         );
-        context
-            .insert_front_matter_and_content_from_another_note(
-                TMPL_VAR_HTML_CLIPBOARD,
-                TMPL_VAR_HTML_CLIPBOARD_HEADER,
-                &html_clipboard,
-            )
-            .unwrap();
         let txt_clipboard = ContentString::from_string(
             "txt_clp\n".to_string(),
             "txt_clipboard_header".to_string(),
-            "txt clipboard".to_string(),
+            "txt_clipboard".to_string(),
         );
-        context
-            .insert_front_matter_and_content_from_another_note(
-                TMPL_VAR_TXT_CLIPBOARD,
-                TMPL_VAR_TXT_CLIPBOARD_HEADER,
-                &txt_clipboard,
-            )
-            .unwrap();
         let stdin = ContentString::from_string(
             "std\n".to_string(),
             "stdin_header".to_string(),
             "stdin".to_string(),
         );
+        let v = vec![&html_clipboard, &txt_clipboard, &stdin];
         context
-            .insert_front_matter_and_content_from_another_note(
-                TMPL_VAR_STDIN,
-                TMPL_VAR_STDIN_HEADER,
-                &stdin,
-            )
+            .insert_front_matter_and_content_from_clipboards(&v)
             .unwrap();
+
         // This is the condition to choose: `TemplateKind::FromClipboard`:
         assert!(
             html_clipboard.header().is_empty()
@@ -794,9 +775,6 @@ Body text
     fn test_from_content_template3() {
         // Example with `TemplateKind::FromClipboardYaml`
 
-        use crate::config::{TMPL_VAR_HTML_CLIPBOARD, TMPL_VAR_HTML_CLIPBOARD_HEADER};
-        use crate::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
-        use crate::config::{TMPL_VAR_TXT_CLIPBOARD, TMPL_VAR_TXT_CLIPBOARD_HEADER};
         use crate::content::Content;
         use crate::content::ContentString;
         use crate::context::Context;
@@ -830,31 +808,15 @@ Body text
             "txt_clipboard_header".to_string(),
             "txt_clipboard".to_string(),
         );
-        context
-            .insert_front_matter_and_content_from_another_note(
-                TMPL_VAR_HTML_CLIPBOARD,
-                TMPL_VAR_HTML_CLIPBOARD_HEADER,
-                &html_clipboard,
-            )
-            .unwrap();
-        context
-            .insert_front_matter_and_content_from_another_note(
-                TMPL_VAR_TXT_CLIPBOARD,
-                TMPL_VAR_TXT_CLIPBOARD_HEADER,
-                &txt_clipboard,
-            )
-            .unwrap();
         let stdin = ContentString::from_string(
             "---\nsubtitle: \"this overwrites\"\n---\nstdin body".to_string(),
             "stdin_header".to_string(),
             "stdin".to_string(),
         );
+        let v = vec![&html_clipboard, &txt_clipboard, &stdin];
+
         context
-            .insert_front_matter_and_content_from_another_note(
-                TMPL_VAR_STDIN,
-                TMPL_VAR_STDIN_HEADER,
-                &stdin,
-            )
+            .insert_front_matter_and_content_from_clipboards(&v)
             .unwrap();
         // This is the condition to choose: `TemplateKind::FromClipboardYaml`:
         assert!(
@@ -917,9 +879,6 @@ Body text
     fn test_from_content_template4() {
         // Example with `TemplateKind::AnnotateFile`
 
-        use crate::config::{TMPL_VAR_HTML_CLIPBOARD, TMPL_VAR_HTML_CLIPBOARD_HEADER};
-        use crate::config::{TMPL_VAR_STDIN, TMPL_VAR_STDIN_HEADER};
-        use crate::config::{TMPL_VAR_TXT_CLIPBOARD, TMPL_VAR_TXT_CLIPBOARD_HEADER};
         use crate::content::Content;
         use crate::content::ContentString;
         use crate::context::Context;
@@ -957,31 +916,15 @@ Body text
             "txt_clipboard_header".to_string(),
             "txt_clipboard".to_string(),
         );
-        context
-            .insert_front_matter_and_content_from_another_note(
-                TMPL_VAR_HTML_CLIPBOARD,
-                TMPL_VAR_HTML_CLIPBOARD_HEADER,
-                &html_clipboard,
-            )
-            .unwrap();
-        context
-            .insert_front_matter_and_content_from_another_note(
-                TMPL_VAR_TXT_CLIPBOARD,
-                TMPL_VAR_TXT_CLIPBOARD_HEADER,
-                &txt_clipboard,
-            )
-            .unwrap();
         let stdin = ContentString::from_string_with_cr(
             "my stdin\n".to_string(),
             "stdin_header".to_string(),
             "stdin".to_string(),
         );
+        let v = vec![&html_clipboard, &txt_clipboard, &stdin];
+
         context
-            .insert_front_matter_and_content_from_another_note(
-                TMPL_VAR_STDIN,
-                TMPL_VAR_STDIN_HEADER,
-                &stdin,
-            )
+            .insert_front_matter_and_content_from_clipboards(&v)
             .unwrap();
 
         let context = context.set_state_ready_to_render();

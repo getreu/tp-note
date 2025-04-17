@@ -36,9 +36,7 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
 
     let mut workflow_builder = WorkflowBuilder::new(&path).upgrade::<ContentString, _>(
         &CFG.arg_default.scheme,
-        &SYSTEM_CLIPBOARD.html,
-        &SYSTEM_CLIPBOARD.txt,
-        &*STDIN,
+        vec![&SYSTEM_CLIPBOARD.html, &SYSTEM_CLIPBOARD.txt, &*STDIN],
         template_kind_filter,
     );
     if let Some(scheme) = ARGS.scheme.as_deref() {
