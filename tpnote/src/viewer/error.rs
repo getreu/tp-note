@@ -3,7 +3,7 @@ use crate::error::ConfigFileError;
 use core::str::Utf8Error;
 use std::sync::mpsc::RecvError;
 use thiserror::Error;
-use tpnote_lib::error::NoteError;
+use tpnote_lib::error::{FileError, NoteError};
 
 /// Represents an error in the viewer feature.
 /// Hint: to see this error restart _Tp-Note_ with `--debug debug`.
@@ -51,6 +51,10 @@ pub enum ViewerError {
     )]
     RenderErrorPage { tmpl: String, source: NoteError },
 
+    /// File access error.
+    #[error(transparent)]
+    File(#[from] FileError),
+
     /// Watcher error.
     #[error(transparent)]
     Notify(#[from] notify::Error),
@@ -67,7 +71,7 @@ pub enum ViewerError {
     /// Forward `FileError::ApplicationReturn` and `FileError::NoApplicationFound needed by
     /// `viewer::web_browser`.
     #[error(transparent)]
-    File(#[from] ConfigFileError),
+    ConfigFile(#[from] ConfigFileError),
 
     /// Forward errors from `error::NoteError` when rendering the page.
     #[error(transparent)]

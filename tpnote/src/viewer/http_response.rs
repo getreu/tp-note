@@ -11,13 +11,14 @@ use std::io::{Read, Write};
 use std::path::Path;
 use std::str;
 use std::time::SystemTime;
+use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
-use tpnote_lib::config::{LocalLinkKind, TMPL_VAR_PATH};
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
+use tpnote_lib::context::Context;
 use tpnote_lib::html::rewrite_links;
 use tpnote_lib::html_renderer::HtmlRenderer;
 use tpnote_lib::markup_language::MarkupLanguage;
@@ -412,37 +413,38 @@ impl HttpResponse for ServerThread {
         Ok(())
     }
 
-    fn render_content_and_error(&self, abspath_doc: &Path) -> Result<String, ViewerError> {
+    fn render_content_and_error(&self, maybe_other_doc: &Path) -> Result<String, ViewerError> {
         // First decompose header and body, then deserialize header.
-        let content = ContentString::open(abspath_doc)?;
-        let abspath_dir = abspath_doc.parent().unwrap_or_else(|| Path::new("/"));
-        let root_path = &self.context.root_path;
+        let content = ContentString::open(maybe_other_doc)?;
 
-        let mut context = self.context.clone();
-        if context.path == abspath_doc {
+        // Do we render `self.path` or some other document?
+        let html_context = if self.context.path == maybe_other_doc {
+            let mut html_context = Context::from_context_path(&self.context);
             // Save JavaScript code for life updates.
-            context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &self.live_update_js);
+            html_context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &self.live_update_js);
+            html_context
         } else {
             // This is not the base document, but some other Tp-Note document
             // we want to render. Store store its path.
             // `front_matter::assert_precondition()` needs this later.
             // Also, the HTML template expects this to be set to the rendered
             // document.
-            context.path = abspath_doc.to_path_buf();
+            let mut html_context = Context::from(maybe_other_doc)?;
             // Only the first base document is live updated.
             // Overwrite the dynamic JavaScript.
-            context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
-        }
+            html_context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
+            html_context
+        };
 
-        match HtmlRenderer::viewer_page::<ContentString>(context, content)
+        match HtmlRenderer::viewer_page::<ContentString>(html_context.clone(), content)
             // Now scan the HTML result for links and store them in a Map
             // accessible to all threads.
             // Secondly, convert all relative links to absolute links.
             .map(|html| {
                 rewrite_links(
                     html,
-                    root_path,
-                    abspath_dir,
+                    &html_context.root_path,
+                    &html_context.dir_path,
                     // Do convert relative to abs absolute links.
                     // Do not convert abs. links.
                     LocalLinkKind::Short,
@@ -455,7 +457,7 @@ impl HttpResponse for ServerThread {
             // If the rendition went well, return the HTML.
             Ok(html) => {
                 let mut delivered_tpnote_docs = self.delivered_tpnote_docs.write();
-                delivered_tpnote_docs.insert(abspath_doc.to_owned());
+                delivered_tpnote_docs.insert(maybe_other_doc.to_owned());
                 log::trace!(
                     "Viewer: so far served Tp-Note documents: {}",
                     delivered_tpnote_docs
@@ -473,29 +475,12 @@ impl HttpResponse for ServerThread {
             // special error page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
-                let mut context = self.context.clone();
-                if context.path == abspath_doc {
-                    // Save JavaScript code for life updates.
-                    context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &self.live_update_js);
-                } else {
-                    // This is not the base document, but some other Tp-Note
-                    // document we want to render. Store its path. The
-                    // HTML template expects this to be set to the rendered
-                    // document.
-                    context.path = abspath_doc.to_path_buf();
-                    context.insert(TMPL_VAR_PATH, &abspath_doc.to_path_buf());
-                    // Only the first base document is live updated.
-                    // Overwrite the dynamic JavaScript.
-                    context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
-                }
-
-                let note_erroneous_content = <ContentString as Content>::open(&context.path)?;
-                HtmlRenderer::error_page(context, note_erroneous_content, &e.to_string()).map_err(
-                    |e| ViewerError::RenderErrorPage {
+                let note_erroneous_content = <ContentString as Content>::open(&html_context.path)?;
+                HtmlRenderer::error_page(html_context, note_erroneous_content, &e.to_string())
+                    .map_err(|e| ViewerError::RenderErrorPage {
                         tmpl: "tmpl_html.viewer_error".to_string(),
                         source: e,
-                    },
-                )
+                    })
             }
         }
     }
