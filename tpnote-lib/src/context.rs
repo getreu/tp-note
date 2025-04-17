@@ -80,6 +80,27 @@ impl ContextState for HasFrontMatter {}
 /// The `insert_front_matter()` method was executed.
 impl ContextState for ReadyToRender {}
 
+/// Tiny wrapper around "Tera context" with some additional information.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Context<S: ContextState + ?Sized> {
+    /// Collection of substitution variables.
+    ct: tera::Context,
+    /// First positional command line argument.
+    pub path: PathBuf,
+    /// The directory (only) path corresponding to the first positional
+    /// command line argument. The is our working directory and
+    /// the directory where the note file is (will be) located.
+    pub dir_path: PathBuf,
+    /// `dir_path` is a subdirectory of `root_path`. `root_path` is the
+    /// first directory, that upwards from `dir_path`, contains a file named
+    /// `FILENAME_ROOT_PATH_MARKER` (or `/` if no marker file can be found).
+    /// The root directory is interpreted by Tp-Note's viewer as its base
+    /// directory: only files within this directory are served.
+    pub root_path: PathBuf,
+    /// Rust requires usage of generic parameters, here `S`.
+    _marker: PhantomData<S>,
+}
+
 /// These methods are available in all `ContentState` states.
 impl<S: ContextState> Context<S> {
     // Transition to a fault state.
@@ -289,27 +310,6 @@ impl<S: ContextState> Context<S> {
         // Register the collection as `Object(Map<String, Value>)`.
         self.ct.insert(TMPL_VAR_FM_ALL, &fm_all_map);
     }
-}
-
-/// Tiny wrapper around "Tera context" with some additional information.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Context<S: ContextState + ?Sized> {
-    /// Collection of substitution variables.
-    ct: tera::Context,
-    /// First positional command line argument.
-    pub path: PathBuf,
-    /// The directory (only) path corresponding to the first positional
-    /// command line argument. The is our working directory and
-    /// the directory where the note file is (will be) located.
-    pub dir_path: PathBuf,
-    /// `dir_path` is a subdirectory of `root_path`. `root_path` is the
-    /// first directory, that upwards from `dir_path`, contains a file named
-    /// `FILENAME_ROOT_PATH_MARKER` (or `/` if no marker file can be found).
-    /// The root directory is interpreted by Tp-Note's viewer as its base
-    /// directory: only files within this directory are served.
-    pub root_path: PathBuf,
-    /// Rust requires usage of generic parameters, here `S`.
-    _marker: PhantomData<S>,
 }
 
 /// A thin wrapper around `tera::Context` storing some additional
