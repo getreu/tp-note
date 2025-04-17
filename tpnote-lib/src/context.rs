@@ -97,6 +97,8 @@ pub struct Context<S: ContextState + ?Sized> {
     /// The root directory is interpreted by Tp-Note's viewer as its base
     /// directory: only files within this directory are served.
     pub root_path: PathBuf,
+    /// If `path` points to a file, we store its creation date here.
+    pub doc_file_date: Option<SystemTime>,
     /// Rust requires usage of generic parameters, here `S`.
     _marker: PhantomData<S>,
 }
@@ -110,30 +112,24 @@ impl<S: ContextState> Context<S> {
             path: self.path,
             dir_path: self.dir_path,
             root_path: self.root_path,
+            doc_file_date: self.doc_file_date,
             _marker: PhantomData,
         }
     }
 
     /// Constructor. Unlike `from()` this constructor does not access
-    /// the file system in order to detect `dir_path` and `root_path` and the
-    /// file creation date. It copies these values from the passed `context`.
+    /// the file system in order to detect `dir_path`, `root_path` and
+    /// `doc_file_date`. It copies these values from the passed `context`.
+    /// Use this constructor when you are sure that the above date has
+    /// not changed since you instantiated `context`. In this case you
+    /// can avoid repeated file access.
     pub fn from_context_path(context: &Context<S>) -> Context<HasSettings> {
-        let path = context.path.clone();
-        let dir_path = context.dir_path.clone();
-        let root_path = context.root_path.clone();
-
-        let mut ct = tera::Context::new();
-
-        // Keep file creation date.
-        if let Some(time) = context.get(TMPL_VAR_DOC_FILE_DATE) {
-            ct.insert(TMPL_VAR_DOC_FILE_DATE, time);
-        }
-
         let mut new_context = Context {
-            ct,
-            path,
-            dir_path,
-            root_path,
+            ct: tera::Context::new(),
+            path: context.path.clone(),
+            dir_path: context.dir_path.clone(),
+            root_path: context.root_path.clone(),
+            doc_file_date: context.doc_file_date,
             _marker: PhantomData,
         };
 
@@ -147,11 +143,23 @@ impl<S: ContextState> Context<S> {
     /// `TMPL_VAR_PATH` in sync with `self.path`,
     /// `TMPL_VAR_DIR_PATH` in sync with `self.dir_path` and
     /// `TMPL_VAR_ROOT_PATH` in sync with `self.root_path`.
+    /// `TMPL_VAR_DOC_FILE_DATE` in sync with `self.doc_file_date`.
     /// Synchronization is performed by copying the latter to the former.
     fn sync_paths_to_map(&mut self) {
         self.ct.insert(TMPL_VAR_PATH, &self.path);
         self.ct.insert(TMPL_VAR_DIR_PATH, &self.dir_path);
         self.ct.insert(TMPL_VAR_ROOT_PATH, &self.root_path);
+        if let Some(time) = self.doc_file_date {
+            self.ct.insert(
+                TMPL_VAR_DOC_FILE_DATE,
+                &time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs(),
+            )
+        } else {
+            self.ct.remove(TMPL_VAR_DOC_FILE_DATE);
+        };
     }
 
     /// Insert some configuration variables into the context so that they
@@ -345,7 +353,6 @@ impl Context<Invalid> {
     /// ```
     ///
     pub fn from(path: &Path) -> Result<Context<HasSettings>, FileError> {
-        let mut ct = tera::Context::new();
         let path = path.to_path_buf();
 
         // `dir_path` is a directory as fully qualified path, ending
@@ -372,32 +379,26 @@ impl Context<Invalid> {
         let root_path = root_path.to_owned();
         debug_assert!(dir_path.starts_with(&root_path));
 
-        // Register the canonicalized fully qualified file name.
-        ct.insert(TMPL_VAR_PATH, &path);
-        ct.insert(TMPL_VAR_DIR_PATH, &dir_path);
-        ct.insert(TMPL_VAR_ROOT_PATH, &root_path);
-
         // Get the file's creation date. Fail silently.
-        if let Ok(file) = File::open(&path) {
+        let file_creation_date = if let Ok(file) = File::open(&path) {
             let metadata = file.metadata()?;
             let time = metadata.created()?;
-            ct.insert(
-                TMPL_VAR_DOC_FILE_DATE,
-                &time
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_secs(),
-            )
+            Some(time)
+        } else {
+            None
         };
 
         // Insert environment.
         let mut context = Context {
-            ct,
+            ct: tera::Context::new(),
             path,
             dir_path,
             root_path,
+            doc_file_date: file_creation_date,
             _marker: PhantomData,
         };
+
+        context.sync_paths_to_map();
         context.insert_config_vars();
         context.insert_settings();
         Ok(context)
@@ -413,6 +414,7 @@ impl Context<HasSettings> {
             path: self.path,
             dir_path: self.dir_path,
             root_path: self.root_path,
+            doc_file_date: self.doc_file_date,
             _marker: PhantomData,
         }
     }
@@ -424,6 +426,7 @@ impl Context<HasSettings> {
             path: self.path,
             dir_path: self.dir_path,
             root_path: self.root_path,
+            doc_file_date: self.doc_file_date,
             _marker: PhantomData,
         }
     }
@@ -436,6 +439,7 @@ impl Context<HasSettings> {
             path: self.path,
             dir_path: self.dir_path,
             root_path: self.root_path,
+            doc_file_date: self.doc_file_date,
             _marker: PhantomData,
         }
     }
@@ -540,6 +544,7 @@ impl Context<HasFrontMatter> {
             path: self.path,
             dir_path: self.dir_path,
             root_path: self.root_path,
+            doc_file_date: self.doc_file_date,
             _marker: PhantomData,
         }
     }
@@ -552,6 +557,7 @@ impl Context<HasFrontMatter> {
             path: self.path,
             dir_path: self.dir_path,
             root_path: self.root_path,
+            doc_file_date: self.doc_file_date,
             _marker: PhantomData,
         }
     }
@@ -742,6 +748,7 @@ impl Context<ReadyToRender> {
             path: self.path,
             dir_path: self.dir_path,
             root_path: self.root_path,
+            doc_file_date: self.doc_file_date,
             _marker: PhantomData,
         }
     }
