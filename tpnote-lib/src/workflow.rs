@@ -518,9 +518,12 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
 }
 
 ///
-/// Helper function.
+/// Helper function. We take `RwLockUpgradableReadGuard<Settings>` as parameter
+/// with a unique `mut` pointer because:
+/// 1. It serves as a lock to prevent several instances of
+///    `synchronize_filename` from running in parallel.
+/// 2. We need write access to `SETTINGS` in this function.
 fn synchronize_filename<T: Content>(
-    // TODO remove this?
     settings: &mut RwLockUpgradableReadGuard<Settings>,
     note: &mut Note<T>,
 ) -> Result<(), NoteError> {
