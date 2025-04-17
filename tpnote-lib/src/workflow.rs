@@ -99,13 +99,24 @@
 //!         // We do not save the content to disk, we write intstead:
 //!         write!(outfile, "Simulation")?;
 //!         Ok(())
-//!     }
+//!    }
+//!    // The rest we delegate.
+//!    fn from_string(
+//!          input: String, header_name: String, body_name: String) -> Self {
+//!       MyContentString(
+//!           ContentString::from_string(input, header_name, body_name))
+//!    }
 //!    fn header(&self) -> &str {
 //!        self.0.header()
 //!    }
-//!
+//!    fn header_name(&self) -> &str {
+//!        self.0.header_name()
+//!    }
 //!    fn body(&self) -> &str {
 //!        self.0.header()
+//!    }
+//!    fn body_name(&self) -> &str {
+//!        self.0.body_name()
 //!    }
 //!
 //! }

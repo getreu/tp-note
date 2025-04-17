@@ -934,7 +934,11 @@ Body text
                 &txt_clipboard,
             )
             .unwrap();
-        let stdin = ContentString::from_string_with_cr("my stdin\n".to_string());
+        let stdin = ContentString::from_string_with_cr(
+            "my stdin\n".to_string(),
+            "stdin_header".to_string(),
+            "stdin".to_string(),
+        );
         context
             .insert_front_matter_and_content_from_another_note(
                 TMPL_VAR_STDIN,
