@@ -86,11 +86,8 @@ impl<S: ContextState> Context<S> {
     pub fn mark_as_invalid(self) -> Context<Invalid> {
         Context {
             ct: self.ct,
-            // TODO: remove redundancy here.
             path: self.path,
-            // TODO: remove redundancy here.
             dir_path: self.dir_path,
-            // TODO: remove redundancy here.
             root_path: self.root_path,
             _marker: PhantomData,
         }
@@ -105,10 +102,6 @@ impl<S: ContextState> Context<S> {
         let root_path = context.root_path.clone();
 
         let mut ct = tera::Context::new();
-        // Register the canonicalized fully qualified file name.
-        ct.insert(TMPL_VAR_PATH, &path);
-        ct.insert(TMPL_VAR_DIR_PATH, &dir_path);
-        ct.insert(TMPL_VAR_ROOT_PATH, &root_path);
 
         // Keep file creation date.
         if let Some(time) = context.get(TMPL_VAR_DOC_FILE_DATE) {
@@ -123,9 +116,21 @@ impl<S: ContextState> Context<S> {
             _marker: PhantomData,
         };
 
+        new_context.sync_paths_to_map();
         new_context.insert_config_vars();
         new_context.insert_settings();
         new_context
+    }
+
+    /// Helper function that keeps the values with the `self.ct` key
+    /// `TMPL_VAR_PATH` in sync with `self.path`,
+    /// `TMPL_VAR_DIR_PATH` in sync with `self.dir_path` and
+    /// `TMPL_VAR_ROOT_PATH` in sync with `self.root_path`.
+    /// Synchronization is performed by copying the latter to the former.
+    fn sync_paths_to_map(&mut self) {
+        self.ct.insert(TMPL_VAR_PATH, &self.path);
+        self.ct.insert(TMPL_VAR_DIR_PATH, &self.dir_path);
+        self.ct.insert(TMPL_VAR_ROOT_PATH, &self.root_path);
     }
 
     /// Insert some configuration variables into the context so that they
@@ -424,7 +429,8 @@ impl Context<HasSettings> {
     }
 
     /// Sometimes no front matter is available to add. We go to the last stage.
-    pub fn tag_ready_to_render(self) -> Context<ReadyToRender> {
+    pub fn tag_ready_to_render(mut self) -> Context<ReadyToRender> {
+        self.sync_paths_to_map();
         Context {
             ct: self.ct,
             path: self.path,
@@ -527,6 +533,8 @@ impl Context<HasFrontMatter> {
         //We also keep the body.
         self.insert(TMPL_VAR_DOC_BODY_TEXT, &body);
 
+        self.sync_paths_to_map();
+
         Context {
             ct: self.ct,
             path: self.path,
@@ -537,7 +545,8 @@ impl Context<HasFrontMatter> {
     }
 
     /// Show, that we are done.
-    pub fn tag_ready_to_render(self) -> Context<ReadyToRender> {
+    pub fn tag_ready_to_render(mut self) -> Context<ReadyToRender> {
+        self.sync_paths_to_map();
         Context {
             ct: self.ct,
             path: self.path,
