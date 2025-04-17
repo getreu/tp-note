@@ -164,10 +164,10 @@ mod tests {
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
         (*expected).insert(TMPL_VAR_FM_ALL.to_string(), &tmp2); // Map()
-        let expected = expected.tag_ready_to_render();
+        let expected = expected.set_state_ready_to_render();
 
         let result = input1.insert_front_matter(&input2);
-        let result = result.tag_ready_to_render();
+        let result = result.set_state_ready_to_render();
 
         assert_eq!(result, expected);
     }

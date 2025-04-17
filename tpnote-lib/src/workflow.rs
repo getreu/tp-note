@@ -465,7 +465,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
                 // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
                 // All these template do not refer to existing front matter,
                 // as there is none yet.
-                let context = context_clipboard_stdin.tag_ready_to_render();
+                let context = context_clipboard_stdin.set_state_ready_to_render();
                 let mut n = Note::from_content_template(context, template_kind)?;
                 n.render_filename(template_kind)?;
                 // Check if the filename is not taken already

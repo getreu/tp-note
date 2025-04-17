@@ -418,7 +418,7 @@ impl Context<HasSettings> {
     }
 
     /// Sometimes no front matter is available to add. We go to the next stage.
-    pub fn tag_has_front_matter(self) -> Context<HasFrontMatter> {
+    pub fn set_state_has_front_matter(self) -> Context<HasFrontMatter> {
         Context {
             ct: self.ct,
             path: self.path,
@@ -429,7 +429,7 @@ impl Context<HasSettings> {
     }
 
     /// Sometimes no front matter is available to add. We go to the last stage.
-    pub fn tag_ready_to_render(mut self) -> Context<ReadyToRender> {
+    pub fn set_state_ready_to_render(mut self) -> Context<ReadyToRender> {
         self.sync_paths_to_map();
         Context {
             ct: self.ct,
@@ -545,7 +545,7 @@ impl Context<HasFrontMatter> {
     }
 
     /// Show, that we are done.
-    pub fn tag_ready_to_render(mut self) -> Context<ReadyToRender> {
+    pub fn set_state_ready_to_render(mut self) -> Context<ReadyToRender> {
         self.sync_paths_to_map();
         Context {
             ct: self.ct,
@@ -736,7 +736,7 @@ impl Context<ReadyToRender> {
     }
 
     /// Go back to `HasFrontMatter` state.
-    pub fn tag_has_front_matter(self) -> Context<HasFrontMatter> {
+    pub fn set_state_has_front_matter(self) -> Context<HasFrontMatter> {
         Context {
             ct: self.ct,
             path: self.path,
@@ -824,7 +824,7 @@ mod tests {
         let context = Context::from(Path::new("/path/to/mynote.md")).unwrap();
         let context = context
             .insert_front_matter(&FrontMatter::try_from("title: My Stdin.\nsome: text").unwrap());
-        let context = context.tag_ready_to_render();
+        let context = context.set_state_ready_to_render();
 
         assert_eq!(
             &context
@@ -877,7 +877,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.tag_ready_to_render();
+        let cx = cx.set_state_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -892,7 +892,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("./03b-test.md")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.tag_ready_to_render();
+        let cx = cx.set_state_ready_to_render();
 
         assert!(matches!(cx.assert_precoditions(), Ok(())));
 
@@ -906,7 +906,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.tag_ready_to_render();
+        let cx = cx.set_state_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -923,7 +923,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.tag_ready_to_render();
+        let cx = cx.set_state_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -938,7 +938,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.tag_ready_to_render();
+        let cx = cx.set_state_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -953,7 +953,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.tag_ready_to_render();
+        let cx = cx.set_state_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -992,7 +992,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.tag_ready_to_render();
+        let cx = cx.set_state_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -1009,7 +1009,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.tag_ready_to_render();
+        let cx = cx.set_state_ready_to_render();
 
         assert!(cx.assert_precoditions().is_ok());
 
@@ -1024,7 +1024,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.tag_ready_to_render();
+        let cx = cx.set_state_ready_to_render();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),

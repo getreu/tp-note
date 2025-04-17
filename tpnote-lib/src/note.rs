@@ -99,7 +99,7 @@ impl<T: Content> Note<T> {
         match template_kind {
             // No rendering to markdown is required. `content` is read from disk and left untouched.
             TemplateKind::SyncFilename => {
-                let context = context.tag_ready_to_render();
+                let context = context.set_state_ready_to_render();
                 context.assert_precoditions()?;
                 Ok(Note {
                     context,
@@ -110,7 +110,7 @@ impl<T: Content> Note<T> {
             // No rendering to markdown is required. `content` is read from disk and left untouched.
             // A rendition to HTML may follow.
             TemplateKind::None => {
-                let context = context.tag_ready_to_render();
+                let context = context.set_state_ready_to_render();
                 context.assert_precoditions()?;
                 Ok(Note {
                     context,
@@ -179,7 +179,7 @@ impl<T: Content> Note<T> {
 
         let new_context = Context::from_context_path(&context)
             .insert_front_matter(&fm)
-            .tag_ready_to_render();
+            .set_state_ready_to_render();
 
         // Return new note.
         Ok(Note {
@@ -304,7 +304,7 @@ impl<T: Content> Note<T> {
         // HTML template for this rendition.
         tmpl: &str,
     ) -> Result<String, NoteError> {
-        let mut html_context = self.context.clone().tag_has_front_matter();
+        let mut html_context = self.context.clone().set_state_has_front_matter();
 
         // Insert the raw CSS
         html_context.insert(
@@ -436,10 +436,10 @@ mod tests {
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
         (*expected).insert(TMPL_VAR_FM_ALL.to_string(), &tmp2); // Map()
-        let expected = expected.tag_ready_to_render();
+        let expected = expected.set_state_ready_to_render();
 
         let result = input1.insert_front_matter(&input2);
-        let result = result.tag_ready_to_render();
+        let result = result.set_state_ready_to_render();
 
         assert_eq!(result, expected);
     }
@@ -617,7 +617,7 @@ Body text
         // Store the path in `context`.
         let context = Context::from(&notedir).unwrap();
         //
-        let context = context.tag_ready_to_render();
+        let context = context.set_state_ready_to_render();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -722,7 +722,7 @@ Body text
                 && !stdin.body().is_empty()
         );
 
-        let context = context.tag_ready_to_render();
+        let context = context.set_state_ready_to_render();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -834,7 +834,7 @@ Body text
                 || !stdin.header().is_empty()
         );
 
-        let context = context.tag_ready_to_render();
+        let context = context.set_state_ready_to_render();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -943,7 +943,7 @@ Body text
             )
             .unwrap();
 
-        let context = context.tag_ready_to_render();
+        let context = context.set_state_ready_to_render();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
