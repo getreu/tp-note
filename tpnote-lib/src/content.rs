@@ -405,8 +405,12 @@ pub struct ContentRef<'a> {
     /// When no `---` is found, this is empty.
     /// `header` is always trimmed.
     pub header: &'a str,
+    /// A name associated with this header. Used in templates.
+    pub header_name: String,
     /// Skip optional BOM and optional header and keep the rest.
     pub body: &'a str,
+    /// A name associated with this body. Used in templates.
+    pub body_name: String,
 }
 
 self_cell!(
@@ -457,7 +461,12 @@ impl From<String> for ContentString {
     fn from(input: String) -> Self {
         ContentString::new(input, |owner: &String| {
             let (header, body) = ContentString::split(owner);
-            ContentRef { header, body }
+            ContentRef {
+                header,
+                header_name: String::new(),
+                body,
+                body_name: String::new(),
+            }
         })
     }
 }
