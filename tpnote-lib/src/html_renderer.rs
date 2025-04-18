@@ -41,12 +41,16 @@ use tera::Tera;
 pub struct HtmlRenderer;
 
 impl HtmlRenderer {
-    /// Returns the HTML rendition of a `ContentString`. The markup
-    /// rendition engine is determined, by the file extension of the variable
-    /// `context.path`. The resulting HTML and other HTML template variables
-    /// originating from `context` are inserted into the `TMPL_HTML_VIEWER`
-    /// template (which can be replaced at runtime) before being returned. This
-    /// function is stateless.
+    /// Returns the HTML rendition of a `ContentString`.
+    ///
+    /// The markup to HTML rendition engine is determined by the file extension
+    /// of the variable `context.path`. The resulting HTML and other HTML
+    /// template variables originating from `context` are inserted into the
+    /// `TMPL_HTML_VIEWER` template before being returned.
+    /// `context` is expected to have at least all `HasSettings` keys
+    /// and the additional key `TMPL_HTML_VAR_VIEWER_DOC_JS` set and valid.
+    /// All other keys are ignored.
+    /// This function is stateless.
     ///
     /// ```rust
     /// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
@@ -118,11 +122,15 @@ impl HtmlRenderer {
         HtmlRenderer::render(context, content, tmpl_html)
     }
 
-    /// Returns the HTML rendition of a `ContentString`. The markup rendition
-    /// engine is determined, by the file extension of the variable `context.path`.
-    /// The resulting HTML and other HTML template variables originating from
-    /// `context` are inserted into the `TMPL_HTML_EXPORTER` template (which can be
-    /// replaced at runtime) before being returned. This function is stateless.
+    /// Returns the HTML rendition of a `ContentString`.
+    /// The markup to HTML rendition engine is determined by the file extension
+    /// of the variable `context.path`. The resulting HTML and other HTML
+    /// template variables originating from `context` are inserted into the
+    /// `TMPL_HTML_EXPORTER` template before being returned.
+    /// `context` is expected to have at least all `HasSettings` keys
+    /// and the additional key `TMPL_HTML_VAR_VIEWER_DOC_JS` set and valid.
+    /// All other keys are ignored.
+    /// This function is stateless.
     ///
     /// ```rust
     /// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
@@ -171,12 +179,15 @@ impl HtmlRenderer {
 
     /// When the header cannot be deserialized, the file located in
     /// `context.path` is rendered as "Error HTML page".
+    ///
     /// The erroneous content is rendered to html with
     /// `parse_hyperlinks::renderer::text_rawlinks2html` and inserted in
-    /// the `TMPL_HTML_VIEWER_ERROR` template (can be replace at runtime).
-    /// This template expects the template variables `TMPL_VAR_PATH`
-    /// and `TMPL_HTML_VAR_VIEWER_DOC_JS` in `context` to be set.
-    /// NB: The value of `TMPL_VAR_PATH` equals `context.path`.
+    /// the `TMPL_HTML_VIEWER_ERROR` template (which can be configured at
+    /// runtime).
+    /// `context` is expected to have at least all `HasSettings` keys
+    /// and the additional key `TMPL_HTML_VAR_VIEWER_DOC_JS` set and valid.
+    /// All other keys are ignored.
+    /// This function is stateless.
     ///
     /// ```rust
     /// use tpnote_lib::config::LIB_CFG;
@@ -241,7 +252,7 @@ impl HtmlRenderer {
     /// Renders `doc_path` with `content` into HTML and saves the result in
     /// `export_dir`. If `export_dir` is the empty string, the directory of
     /// `doc_path` is used. `-` dumps the rendition to STDOUT. The filename
-    /// of the html rendition is the same as in `doc_path`, but with `.html`
+    /// of the HTML rendition is the same as in `doc_path` but with `.html`
     /// appended.
     ///
     /// ```rust
