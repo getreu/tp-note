@@ -206,13 +206,6 @@ pub enum NoteError {
     #[error("<NONE FOUND: {path}...>")]
     CanNotExpandShorthandLink { path: String },
 
-    /// Remedy: report this error. It should not happen.
-    #[error("Can not prepend header. File has one already: \n{existing_header}")]
-    CannotPrependHeader { existing_header: String },
-
-    #[error(transparent)]
-    File(#[from] FileError),
-
     /// Remedy: Choose another scheme.
     #[error(
         "Invalid header variable value: no scheme `{scheme_val}` found.\n\
@@ -433,12 +426,6 @@ pub enum NoteError {
     #[error("<INVALID: {path}>")]
     InvalidLocalPath { path: String },
 
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-
-    #[error(transparent)]
-    ParseLanguageCode(#[from] LibCfgError),
-
     /// Remedy: check the file permission of the note file.
     #[error("Can not read file:\n\t {path:?}\n{source}")]
     Read { path: PathBuf, source: io::Error },
@@ -467,6 +454,15 @@ pub enum NoteError {
         source_str: String,
         template_str: String,
     },
+
+    #[error(transparent)]
+    File(#[from] FileError),
+
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+
+    #[error(transparent)]
+    ParseLanguageCode(#[from] LibCfgError),
 
     #[error(transparent)]
     Utf8Conversion {

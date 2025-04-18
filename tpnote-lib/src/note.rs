@@ -10,6 +10,7 @@ use crate::config::TMPL_HTML_VAR_EXPORTER_DOC_CSS;
 use crate::config::TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS;
 use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH;
 use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
+use crate::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
 use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH;
 use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
 use crate::config::TMPL_VAR_DOC;
@@ -73,34 +74,21 @@ impl<T: Content> Note<T> {
     ///   exists on disk),
     /// * all front matter variables (see `FrontMatter::try_from_content()`)
     ///
+    /// Contract:
+    /// * `content.body_name == TMPL_VAR_DOC`,
+    ///
     pub fn from_raw_text(
         context: Context<HasSettings>,
         content: T,
         template_kind: TemplateKind,
     ) -> Result<Note<T>, NoteError> {
-        let header = content.header();
-        let body = content.body();
-
-        if matches!(template_kind, TemplateKind::FromTextFile) && !header.is_empty() {
-            // If the text file is supposed to have no header and there is one,
-            // then return error.
-            return Err(NoteError::CannotPrependHeader {
-                existing_header: header
-                    .lines()
-                    .take(5)
-                    .map(|s| s.to_string())
-                    .collect::<String>(),
-            });
-        };
-
-        // Deserialize the note's header read from disk.
-        // Store the front matter in the context for later use in templates.
-        let fm = FrontMatter::try_from(content.header())?;
-        let context = context.insert_front_matter(&fm);
-
         match template_kind {
             // No rendering to markdown is required. `content` is read from disk and left untouched.
             TemplateKind::SyncFilename => {
+                // Deserialize the note's header read from disk.
+                // Store the front matter in the context for later use in templates.
+                let fm = FrontMatter::try_from(content.header())?;
+                let context = context.insert_front_matter(&fm);
                 let context = context.set_state_ready_to_render();
                 context.assert_precoditions()?;
                 Ok(Note {
@@ -121,8 +109,17 @@ impl<T: Content> Note<T> {
                 })
             }
             TemplateKind::FromTextFile => {
-                let context = context.insert_content(header, body);
-                Note::from_content_template(context, TemplateKind::FromTextFile)
+                // This is part of the contract for this template:
+                debug_assert!(content.header().is_empty());
+                debug_assert!(!content.body().is_empty());
+                let mut context = context;
+                // This template expects the key `TMPL_VAR_DOC` which is
+                // inserted with `content`.
+                context.insert_front_matter_and_raw_text_from_content(&vec![&content])?;
+                Note::from_content_template(
+                    context.set_state_ready_to_render(),
+                    TemplateKind::FromTextFile,
+                )
             }
             // This should not happen. Use `Self::from_content_template()` instead.
             _ => {
@@ -302,28 +299,49 @@ impl<T: Content> Note<T> {
     }
 
     #[inline]
-    /// Calls the appropriate markup renderer.
-    /// This template expects the template variable
-    /// `TMPL_HTML_VAR_VIEWER_DOC_JS` in `self.context.ct` to be set.
+    /// Renders `self.content` to HTML by calling the appropriate markup
+    /// renderer. The `html_tmpl` injects JavaScript code with the
+    /// key `TMPL_HTML_VAR_VIEWER_DOC_JS`. This code is provided with the key
+    /// `TMPL_HTML_VAR_VIEWER_DOC_JS` in `self.context.ct` and must to be set.
+    ///
+    /// Contract:
+    /// * `self.context` is in a valid `HasSettings` state. All other keys
+    ///    except `TMPL_HTML_VAR_VIEWER_DOC_JS` are ignored.
+    /// * `self.content.body_name == TMPL_VAR_DOC`. The HTML template expects
+    ///   this name.
+    /// * The `html_tmpl` expects `content` to have a header with at least one
+    ///   `title:` field.
+    ///
     pub fn render_content_to_html(
         &self,
         // HTML template for this rendition.
         tmpl: &str,
     ) -> Result<String, NoteError> {
-        let mut html_context = self.context.clone().set_state_has_front_matter();
+        let mut html_context = Context::from_context_path(&self.context);
 
-        // Insert the raw CSS
-        html_context.insert(
-            TMPL_HTML_VAR_EXPORTER_DOC_CSS,
-            &LIB_CFG.read_recursive().tmpl_html.exporter_doc_css,
-        );
+        // Copy `TMPL_HTML_VAR_VIEWER_DOC_JS`
+        if let Some(val) = self.context.get(TMPL_HTML_VAR_VIEWER_DOC_JS) {
+            html_context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, val);
+        }
 
-        // Insert the raw CSS
-        #[cfg(feature = "renderer")]
-        html_context.insert(
-            TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS,
-            &LIB_CFG.read_recursive().tmpl_html.exporter_highlighting_css,
-        );
+        html_context.insert_front_matter_and_raw_text_from_content(&vec![&self.content])?;
+
+        {
+            let lib_cfg = &LIB_CFG.read_recursive();
+
+            // Insert the raw CSS
+            html_context.insert(
+                TMPL_HTML_VAR_EXPORTER_DOC_CSS,
+                &(lib_cfg.tmpl_html.exporter_doc_css),
+            );
+
+            // Insert the raw CSS
+            #[cfg(feature = "renderer")]
+            html_context.insert(
+                TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS,
+                &(lib_cfg.tmpl_html.exporter_highlighting_css),
+            );
+        } // Drop `lib_cfg`.
 
         // Insert the raw CSS
         #[cfg(not(feature = "renderer"))]
@@ -340,8 +358,6 @@ impl<T: Content> Note<T> {
             TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH,
             TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE,
         );
-
-        let html_context = html_context.insert_content(self.content.header(), self.content.body());
 
         log::trace!(
             "Available substitution variables for the HTML template:\
