@@ -452,7 +452,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
                 // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
                 // All these template do not refer to existing front matter,
                 // as there is none yet.
-                context.insert_front_matter_and_content_from_clipboards(&self.input.clipboards)?;
+                context.insert_front_matter_and_raw_text_from_content(&self.input.clipboards)?;
 
                 let mut n = Note::from_content_template(
                     context.set_state_ready_to_render(),
@@ -466,7 +466,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             }
 
             TemplateKind::FromTextFile => {
-                context.insert_front_matter_and_content_from_clipboards(&self.input.clipboards)?;
+                context.insert_front_matter_and_raw_text_from_content(&self.input.clipboards)?;
 
                 let mut n = Note::from_raw_text(context, content.unwrap(), template_kind)?;
                 // Render filename.

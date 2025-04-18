@@ -477,7 +477,7 @@ impl Context<HasSettings> {
     /// );
     /// let c = vec![&c1, &c2];
     ///
-    /// context.insert_front_matter_and_content_from_clipboards(&c).unwrap();
+    /// context.insert_front_matter_and_raw_text_from_content(&c).unwrap();
     ///
     /// assert_eq!(&context.get("txt_clipboard").unwrap().to_string(),
     ///     "\"Data from clipboard.\"");
@@ -491,7 +491,7 @@ impl Context<HasSettings> {
     ///            .get("fm_title").unwrap().to_string(),
     ///      "\"My Stdin.\"");
     /// ```
-    pub fn insert_front_matter_and_content_from_clipboards(
+    pub fn insert_front_matter_and_raw_text_from_content(
         // TODO: split this in:
         // `insert_front_matter_from_another_content()`
         // `insert_content()`
