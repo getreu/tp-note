@@ -18,7 +18,7 @@ use crate::config::TMPL_VAR_DOC_HEADER;
 use crate::content::Content;
 use crate::context::Context;
 use crate::context::HasSettings;
-use crate::context::ReadyToRender;
+use crate::context::ReadyForTemplate;
 use crate::error::NoteError;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
@@ -45,7 +45,7 @@ pub(crate) const ONE_OFF_TEMPLATE_NAME: &str = "__tera_one_off";
 pub struct Note<T: Content> {
     /// Captured environment of _Tp-Note_ that
     /// is used to fill in templates.
-    pub context: Context<ReadyToRender>,
+    pub context: Context<ReadyForTemplate>,
     /// The full text content of the note, including
     /// its front matter.
     pub content: T,
@@ -67,16 +67,6 @@ impl<T: Content> Note<T> {
     ///
     /// Panics otherwise. Use `Note::from_content_template()` in those cases.
     ///
-    /// This adds the following variables to the context:
-    /// * `TMPL_VAR_DOC_HEADER '`,
-    /// * `TMPL_VAR_DOC`,
-    /// * `TMPL_VAR_DOC_FILE_DATE` (optional: only if a file `context.path`
-    ///   exists on disk),
-    /// * all front matter variables (see `FrontMatter::try_from_content()`)
-    ///
-    /// Contract:
-    /// * `content.body_name == TMPL_VAR_DOC`,
-    ///
     pub fn from_raw_text(
         context: Context<HasSettings>,
         content: T,
@@ -89,7 +79,7 @@ impl<T: Content> Note<T> {
                 // Store the front matter in the context for later use in templates.
                 let fm = FrontMatter::try_from(content.header())?;
                 let context = context.insert_front_matter(&fm);
-                let context = context.set_state_ready_to_render();
+                let context = context.set_state_ready_for_template();
                 context.assert_precoditions()?;
                 Ok(Note {
                     context,
@@ -100,7 +90,7 @@ impl<T: Content> Note<T> {
             // No rendering to markdown is required. `content` is read from disk and left untouched.
             // A rendition to HTML may follow.
             TemplateKind::None => {
-                let context = context.set_state_ready_to_render();
+                let context = context.set_state_ready_for_template();
                 context.assert_precoditions()?;
                 Ok(Note {
                     context,
@@ -117,7 +107,7 @@ impl<T: Content> Note<T> {
                 // inserted with `content`.
                 context.insert_front_matter_and_raw_text_from_content(&vec![&content])?;
                 Note::from_content_template(
-                    context.set_state_ready_to_render(),
+                    context.set_state_ready_for_template(),
                     TemplateKind::FromTextFile,
                 )
             }
@@ -142,7 +132,7 @@ impl<T: Content> Note<T> {
     /// Panics if this is the case.
     ///
     pub fn from_content_template(
-        context: Context<ReadyToRender>,
+        context: Context<ReadyForTemplate>,
         template_kind: TemplateKind,
     ) -> Result<Note<T>, NoteError> {
         // Add content to context.
@@ -182,7 +172,7 @@ impl<T: Content> Note<T> {
 
         let new_context = Context::from_context_path(&context)
             .insert_front_matter(&fm)
-            .set_state_ready_to_render();
+            .set_state_ready_for_template();
 
         // Return new note.
         Ok(Note {
@@ -317,6 +307,8 @@ impl<T: Content> Note<T> {
         // HTML template for this rendition.
         tmpl: &str,
     ) -> Result<String, NoteError> {
+        self.context.debug_assert_paths_and_map_in_sync();
+
         let mut html_context = Context::from_context_path(&self.context);
 
         // Copy `TMPL_HTML_VAR_VIEWER_DOC_JS`
@@ -458,10 +450,10 @@ mod tests {
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
         (*expected).insert(TMPL_VAR_FM_ALL.to_string(), &tmp2); // Map()
-        let expected = expected.set_state_ready_to_render();
+        let expected = expected.set_state_ready_for_template();
 
         let result = input1.insert_front_matter(&input2);
-        let result = result.set_state_ready_to_render();
+        let result = result.set_state_ready_for_template();
 
         assert_eq!(result, expected);
     }
@@ -639,7 +631,7 @@ Body text
         // Store the path in `context`.
         let context = Context::from(&notedir).unwrap();
         //
-        let context = context.set_state_ready_to_render();
+        let context = context.set_state_ready_for_template();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -737,7 +729,7 @@ Body text
                 && !stdin.body().is_empty()
         );
 
-        let context = context.set_state_ready_to_render();
+        let context = context.set_state_ready_for_template();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -841,7 +833,7 @@ Body text
                 || !stdin.header().is_empty()
         );
 
-        let context = context.set_state_ready_to_render();
+        let context = context.set_state_ready_for_template();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -943,7 +935,7 @@ Body text
             .insert_front_matter_and_raw_text_from_content(&v)
             .unwrap();
 
-        let context = context.set_state_ready_to_render();
+        let context = context.set_state_ready_for_template();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).

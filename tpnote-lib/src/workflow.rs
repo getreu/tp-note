@@ -455,7 +455,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
                 context.insert_front_matter_and_raw_text_from_content(&self.input.clipboards)?;
 
                 let mut n = Note::from_content_template(
-                    context.set_state_ready_to_render(),
+                    context.set_state_ready_for_template(),
                     template_kind,
                 )?;
                 n.render_filename(template_kind)?;

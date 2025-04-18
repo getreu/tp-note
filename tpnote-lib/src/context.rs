@@ -62,7 +62,7 @@ pub struct HasFrontMatter;
 #[derive(Debug, PartialEq, Clone)]
 /// The context has assembled enough information to be passed to a
 /// content or filename template renderer.
-pub struct ReadyToRender;
+pub struct ReadyForTemplate;
 
 /// The state of this object is invalid. Do not use.
 impl ContextState for Invalid {}
@@ -75,8 +75,8 @@ impl ContextState for HasSettings {}
 /// The `insert_front_matter()` method was executed.
 impl ContextState for HasFrontMatter {}
 
-/// The `insert_front_matter()` method was executed.
-impl ContextState for ReadyToRender {}
+/// The `Context` has all data for the intended template.
+impl ContextState for ReadyForTemplate {}
 
 /// Tiny wrapper around "Tera context" with some additional information.
 #[derive(Clone, Debug, PartialEq)]
@@ -141,7 +141,8 @@ impl<S: ContextState> Context<S> {
     /// `TMPL_VAR_PATH` in sync with `self.path`,
     /// `TMPL_VAR_DIR_PATH` in sync with `self.dir_path` and
     /// `TMPL_VAR_ROOT_PATH` in sync with `self.root_path`.
-    /// `TMPL_VAR_DOC_FILE_DATE` in sync with `self.doc_file_date`.
+    /// `TMPL_VAR_DOC_FILE_DATE` in sync with `self.doc_file_date` (only if
+    /// available).
     /// Synchronization is performed by copying the latter to the former.
     fn sync_paths_to_map(&mut self) {
         self.ct.insert(TMPL_VAR_PATH, &self.path);
@@ -158,6 +159,41 @@ impl<S: ContextState> Context<S> {
         } else {
             self.ct.remove(TMPL_VAR_DOC_FILE_DATE);
         };
+    }
+
+    /// Helper function that asserts;
+    /// `TMPL_VAR_PATH` in sync with `self.path`,
+    /// `TMPL_VAR_DIR_PATH` in sync with `self.dir_path` and
+    /// `TMPL_VAR_ROOT_PATH` in sync with `self.root_path`.
+    /// `TMPL_VAR_DOC_FILE_DATE` in sync with `self.doc_file_date` (only if
+    /// available).
+    /// This data is intentionally redundant, this is why we check if it is
+    /// still in sync.
+    pub fn debug_assert_paths_and_map_in_sync(&self) {
+        debug_assert_eq!(
+            self.ct.get(TMPL_VAR_PATH).unwrap().as_str(),
+            self.path.to_str()
+        );
+        debug_assert_eq!(
+            self.ct.get(TMPL_VAR_DIR_PATH).unwrap().as_str(),
+            self.dir_path.to_str()
+        );
+        debug_assert_eq!(
+            self.ct.get(TMPL_VAR_ROOT_PATH).unwrap().as_str(),
+            self.root_path.to_str()
+        );
+        debug_assert_eq!(
+            if let Some(val) = self.ct.get(TMPL_VAR_DOC_FILE_DATE) {
+                val.as_number().unwrap().as_u64().unwrap()
+            } else {
+                0
+            },
+            if let Some(st) = self.doc_file_date {
+                st.duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs()
+            } else {
+                0
+            }
+        );
     }
 
     /// Insert some configuration variables into the context so that they
@@ -433,8 +469,8 @@ impl Context<HasSettings> {
     }
 
     /// Sometimes no front matter is available to add. We go to the last stage.
-    pub fn set_state_ready_to_render(mut self) -> Context<ReadyToRender> {
-        self.sync_paths_to_map();
+    pub fn set_state_ready_for_template(self) -> Context<ReadyForTemplate> {
+        self.debug_assert_paths_and_map_in_sync();
         Context {
             ct: self.ct,
             path: self.path,
@@ -490,12 +526,10 @@ impl Context<HasSettings> {
     ///      "\"My Stdin.\"");
     /// ```
     pub fn insert_front_matter_and_raw_text_from_content(
-        // TODO: split this in:
-        // `insert_front_matter_from_another_content()`
-        // `insert_content()`
         &mut self,
         clipboards: &Vec<&impl Content>,
     ) -> Result<(), NoteError> {
+        //
         for clip in clipboards {
             // Register input.
             (*self).insert(clip.header_name(), clip.header());
@@ -536,8 +570,8 @@ impl Context<HasSettings> {
 
 impl Context<HasFrontMatter> {
     /// Show, that we are done.
-    pub fn set_state_ready_to_render(mut self) -> Context<ReadyToRender> {
-        self.sync_paths_to_map();
+    pub fn set_state_ready_for_template(self) -> Context<ReadyForTemplate> {
+        self.debug_assert_paths_and_map_in_sync();
         Context {
             ct: self.ct,
             path: self.path,
@@ -549,7 +583,7 @@ impl Context<HasFrontMatter> {
     }
 }
 
-impl Context<ReadyToRender> {
+impl Context<ReadyForTemplate> {
     /// Checks if the front matter variables satisfy preconditions.
     /// The path is the path to the current document.
     #[inline]
@@ -817,7 +851,7 @@ mod tests {
         let context = Context::from(Path::new("/path/to/mynote.md")).unwrap();
         let context = context
             .insert_front_matter(&FrontMatter::try_from("title: My Stdin.\nsome: text").unwrap());
-        let context = context.set_state_ready_to_render();
+        let context = context.set_state_ready_for_template();
 
         assert_eq!(
             &context
@@ -870,7 +904,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.set_state_ready_to_render();
+        let cx = cx.set_state_ready_for_template();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -885,7 +919,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("./03b-test.md")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.set_state_ready_to_render();
+        let cx = cx.set_state_ready_for_template();
 
         assert!(matches!(cx.assert_precoditions(), Ok(())));
 
@@ -899,7 +933,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.set_state_ready_to_render();
+        let cx = cx.set_state_ready_for_template();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -916,7 +950,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.set_state_ready_to_render();
+        let cx = cx.set_state_ready_for_template();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -931,7 +965,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.set_state_ready_to_render();
+        let cx = cx.set_state_ready_for_template();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -946,7 +980,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.set_state_ready_to_render();
+        let cx = cx.set_state_ready_for_template();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -985,7 +1019,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.set_state_ready_to_render();
+        let cx = cx.set_state_ready_for_template();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
@@ -1002,7 +1036,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.set_state_ready_to_render();
+        let cx = cx.set_state_ready_for_template();
 
         assert!(cx.assert_precoditions().is_ok());
 
@@ -1017,7 +1051,7 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        let cx = cx.set_state_ready_to_render();
+        let cx = cx.set_state_ready_for_template();
 
         assert!(matches!(
             cx.assert_precoditions().unwrap_err(),
