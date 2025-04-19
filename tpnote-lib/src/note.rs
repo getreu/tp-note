@@ -18,7 +18,7 @@ use crate::config::TMPL_VAR_DOC_HEADER;
 use crate::content::Content;
 use crate::context::Context;
 use crate::context::HasSettings;
-use crate::context::ReadyForTemplate;
+use crate::context::ReadyForContentTemplate;
 use crate::error::NoteError;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
@@ -45,7 +45,7 @@ pub(crate) const ONE_OFF_TEMPLATE_NAME: &str = "__tera_one_off";
 pub struct Note<T: Content> {
     /// Captured environment of _Tp-Note_ that
     /// is used to fill in templates.
-    pub context: Context<ReadyForTemplate>,
+    pub context: Context<ReadyForContentTemplate>,
     /// The full text content of the note, including
     /// its front matter.
     pub content: T,
@@ -80,7 +80,7 @@ impl<T: Content> Note<T> {
                 // Store the front matter in the context for later use in templates.
                 let fm = FrontMatter::try_from(content.header())?;
                 let context = context.insert_front_matter(&fm);
-                let context = context.set_state_ready_for_template();
+                let context = context.set_state_ready_for_content_template();
                 context.assert_precoditions()?;
                 Ok(Note {
                     context,
@@ -93,7 +93,7 @@ impl<T: Content> Note<T> {
             TemplateKind::None => {
                 let context = context
                     .insert_front_matter_and_raw_text_from_existing_content(&vec![&content])?
-                    .set_state_ready_for_template();
+                    .set_state_ready_for_content_template();
                 context.assert_precoditions()?;
                 Ok(Note {
                     context,
@@ -122,7 +122,7 @@ impl<T: Content> Note<T> {
     /// Panics if this is the case.
     ///
     pub fn from_content_template(
-        context: Context<ReadyForTemplate>,
+        context: Context<ReadyForContentTemplate>,
         template_kind: TemplateKind,
     ) -> Result<Note<T>, NoteError> {
         // Add content to context.
@@ -169,7 +169,7 @@ impl<T: Content> Note<T> {
 
         let new_context = Context::from_context_path(&context)
             .insert_front_matter(&fm)
-            .set_state_ready_for_template();
+            .set_state_ready_for_content_template();
 
         // Return new note.
         Ok(Note {
@@ -567,7 +567,7 @@ Body text
         // Change `ContextState` to `ReadyForTemplate`.
         let context = context
             .insert_front_matter(&FrontMatter::try_from("").unwrap())
-            .set_state_ready_for_template();
+            .set_state_ready_for_content_template();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -665,7 +665,7 @@ Body text
                 && !stdin.body().is_empty()
         );
 
-        let context = context.set_state_ready_for_template();
+        let context = context.set_state_ready_for_content_template();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -769,7 +769,7 @@ Body text
                 || !stdin.header().is_empty()
         );
 
-        let context = context.set_state_ready_for_template();
+        let context = context.set_state_ready_for_content_template();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -870,7 +870,7 @@ Body text
         let context = context
             .insert_front_matter_and_raw_text_from_existing_content(&v)
             .unwrap()
-            .set_state_ready_for_template();
+            .set_state_ready_for_content_template();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -935,7 +935,7 @@ Body text
         let context = context
             .insert_front_matter_and_raw_text_from_existing_content(&vec![&content])
             .unwrap()
-            .set_state_ready_for_template();
+            .set_state_ready_for_content_template();
         // You can plug in your own type (must impl. `Content`).
         let mut n = Note::<ContentString>::from_content_template(
             context.clone(),
