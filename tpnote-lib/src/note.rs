@@ -143,6 +143,13 @@ impl<T: Content> Note<T> {
             *context
         );
 
+        debug_assert!(match template_kind {
+            TemplateKind::SyncFilename => panic!("`TemplateKind::SyncFilename` not allowed here"),
+
+            TemplateKind::None => panic!("`TemplateKind::None` not allowed here"),
+            _ => true,
+        });
+
         // Render template
         let new_content: T = T::from_string(
             {
