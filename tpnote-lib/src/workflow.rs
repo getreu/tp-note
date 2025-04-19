@@ -346,7 +346,7 @@ impl Workflow<SyncFilename<'_>> {
         let content = <T>::open(self.input.path).unwrap_or_default();
 
         // This does not fill any templates,
-        let mut n = Note::from_raw_text(context, content, TemplateKind::SyncFilename)?;
+        let mut n = Note::from_existing_content(context, content, TemplateKind::SyncFilename)?;
 
         synchronize_filename(&mut settings, &mut n)?;
 
@@ -468,7 +468,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             TemplateKind::FromTextFile => {
                 context.insert_front_matter_and_raw_text_from_content(&self.input.clipboards)?;
 
-                let mut n = Note::from_raw_text(context, content.unwrap(), template_kind)?;
+                let mut n = Note::from_existing_content(context, content.unwrap(), template_kind)?;
                 // Render filename.
                 n.render_filename(template_kind)?;
 
@@ -481,13 +481,13 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
 
             TemplateKind::SyncFilename => {
                 let mut n =
-                    Note::from_raw_text(context, content.unwrap(), TemplateKind::SyncFilename)?;
+                    Note::from_existing_content(context, content.unwrap(), TemplateKind::SyncFilename)?;
 
                 synchronize_filename(&mut settings, &mut n)?;
                 n
             }
 
-            TemplateKind::None => Note::from_raw_text(context, content.unwrap(), template_kind)?,
+            TemplateKind::None => Note::from_existing_content(context, content.unwrap(), template_kind)?,
         };
 
         // If no new filename was rendered, return the old one.

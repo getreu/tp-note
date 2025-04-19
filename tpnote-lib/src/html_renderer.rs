@@ -172,7 +172,7 @@ impl HtmlRenderer {
         content: T,
         tmpl_html: &str,
     ) -> Result<String, NoteError> {
-        let note = Note::from_raw_text(context, content, TemplateKind::None)?;
+        let note = Note::from_existing_content(context, content, TemplateKind::None)?;
 
         note.render_content_to_html(tmpl_html)
     }

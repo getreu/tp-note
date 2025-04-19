@@ -55,19 +55,21 @@ pub struct Note<T: Content> {
 }
 
 impl<T: Content> Note<T> {
-    /// Constructor creating a `Note` memory representation from the raw text
-    /// provided by the `content` object. No file content is read from disk.
-    /// If `template_kind` is `TemplateKind::FromTextFile`, the raw text is
-    /// passed through the `tmp.from_text_file_content` template.
+    /// Constructor creating a `Note` memory representation of some content
+    /// that exists outside of Tp-Note provided by the `content` object. No file
+    /// content is read from disk.
     ///
-    /// Contract: `template_kind` should be one of:
+    /// In case of `TemplateKind::SyncFilename` the `content` is required to
+    /// have a header with front matter.
+    ///
+    /// Contract: `template_kind` must be one of:
     /// * `TemplateKind::SyncFilename`,
     /// * `TemplateKind::None` or
     /// * `TemplateKind::FromTextFile`.
     ///
     /// Panics otherwise. Use `Note::from_content_template()` in those cases.
     ///
-    pub fn from_raw_text(
+    pub fn from_existing_content(
         context: Context<HasSettings>,
         content: T,
         template_kind: TemplateKind,
@@ -459,7 +461,7 @@ mod tests {
     }
 
     #[test]
-    fn test_from_raw_text1() {
+    fn test_from_existing_content1() {
         //
         // Example with `TemplateKind::SyncFilename`
         //
@@ -486,9 +488,12 @@ Body text
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
-        let mut n =
-            Note::<ContentString>::from_raw_text(context, content, TemplateKind::SyncFilename)
-                .unwrap();
+        let mut n = Note::<ContentString>::from_existing_content(
+            context,
+            content,
+            TemplateKind::SyncFilename,
+        )
+        .unwrap();
         n.render_filename(TemplateKind::SyncFilename).unwrap();
         n.set_next_unused_rendered_filename_or(&n.context.path.clone())
             .unwrap();
@@ -499,7 +504,7 @@ Body text
     }
 
     #[test]
-    fn test_from_raw_text2() {
+    fn test_from_existing_content2() {
         // Example with `TemplateKind::None`
         //
         //    This constructor is called, when `Note` is solely created for
@@ -532,7 +537,8 @@ Body text
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
         let n: Note<ContentString> =
-            Note::<ContentString>::from_raw_text(context, content, TemplateKind::None).unwrap();
+            Note::<ContentString>::from_existing_content(context, content, TemplateKind::None)
+                .unwrap();
         // Check the HTML rendition.
         let html = n
             .render_content_to_html(&LIB_CFG.read_recursive().tmpl_html.viewer)
@@ -541,7 +547,7 @@ Body text
     }
 
     #[test]
-    fn test_from_text_file3() {
+    fn test_from_existing_content3() {
         //
         // Example with `TemplateKind::FromTextFile`
         //
@@ -564,7 +570,7 @@ Body text
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
-        let mut n = Note::<ContentString>::from_raw_text(
+        let mut n = Note::<ContentString>::from_existing_content(
             context.clone(),
             content,
             TemplateKind::FromTextFile,
