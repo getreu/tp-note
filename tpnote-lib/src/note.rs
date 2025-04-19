@@ -91,7 +91,9 @@ impl<T: Content> Note<T> {
             // No rendering to markdown is required. `content` is read from disk and left untouched.
             // A rendition to HTML may follow.
             TemplateKind::None => {
-                let context = context.set_state_ready_for_template();
+                let context = context
+                    .insert_front_matter_and_raw_text_from_existing_content(&vec![&content])?
+                    .set_state_ready_for_template();
                 context.assert_precoditions()?;
                 Ok(Note {
                     context,
@@ -304,15 +306,12 @@ impl<T: Content> Note<T> {
     ) -> Result<String, NoteError> {
         self.context.debug_assert_paths_and_map_in_sync();
 
-        let mut html_context = Context::from_context_path(&self.context);
+        let mut html_context = self.context.clone();
 
         // Copy `TMPL_HTML_VAR_VIEWER_DOC_JS`
         if let Some(val) = self.context.get(TMPL_HTML_VAR_VIEWER_DOC_JS) {
             html_context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, val);
         }
-
-        let mut html_context = html_context
-            .insert_front_matter_and_raw_text_from_existing_content(&vec![&self.content])?;
 
         {
             let lib_cfg = &LIB_CFG.read_recursive();
@@ -446,10 +445,9 @@ mod tests {
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
         (*expected).insert(TMPL_VAR_FM_ALL.to_string(), &tmp2); // Map()
-        let expected = expected.set_state_ready_for_template();
+        let expected = expected.insert_front_matter(&FrontMatter::try_from("").unwrap());
 
         let result = input1.insert_front_matter(&input2);
-        let result = result.set_state_ready_for_template();
 
         assert_eq!(result, expected);
     }
@@ -566,8 +564,10 @@ Body text
 
         // Store the path in `context`.
         let context = Context::from(&notedir).unwrap();
-        //
-        let context = context.set_state_ready_for_template();
+        // Change `ContextState` to `ReadyForTemplate`.
+        let context = context
+            .insert_front_matter(&FrontMatter::try_from("").unwrap())
+            .set_state_ready_for_template();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).

@@ -465,19 +465,6 @@ impl Context<HasSettings> {
         }
     }
 
-    /// Mark this to be ready.
-    pub fn set_state_ready_for_template(self) -> Context<ReadyForTemplate> {
-        self.debug_assert_paths_and_map_in_sync();
-        Context {
-            ct: self.ct,
-            path: self.path,
-            dir_path: self.dir_path,
-            root_path: self.root_path,
-            doc_file_date: self.doc_file_date,
-            _marker: PhantomData,
-        }
-    }
-
     /// Inserts clipboard data, stdin data and/or existing note file content
     /// into the context. The data may contain some copied text with or without
     /// a YAML header. The latter usually carries front matter variables.
