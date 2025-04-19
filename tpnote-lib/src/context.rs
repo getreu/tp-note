@@ -75,7 +75,7 @@ pub struct HasExistingContent;
 /// `Content` (e.g. in a `Note`), the `fm.` variables in `Context` correspond
 /// to the header fields in `Content`.
 /// This is the state that all `<Note>.context` is guarantied to have.
-pub struct HasOwnFrontMatter;
+pub struct ReadyForFilenameTemplate;
 
 #[derive(Debug, PartialEq, Clone)]
 /// The context has assembled enough information to be passed to a
@@ -104,7 +104,7 @@ impl ContextState for HasSettings {}
 impl ContextState for HasExistingContent {}
 
 /// The `insert_front_matter()` method was executed.
-impl ContextState for HasOwnFrontMatter {}
+impl ContextState for ReadyForFilenameTemplate {}
 
 /// The `Context` has all data for the intended template.
 impl ContextState for ReadyForContentTemplate {}
@@ -481,7 +481,7 @@ impl Context<Invalid> {
 
 impl Context<HasSettings> {
     /// Merges `fm` into `self.ct`.
-    pub fn insert_front_matter(mut self, fm: &FrontMatter) -> Context<HasOwnFrontMatter> {
+    pub fn insert_front_matter(mut self, fm: &FrontMatter) -> Context<ReadyForFilenameTemplate> {
         Context::insert_front_matter2(&mut self, fm);
         Context {
             ct: self.ct,
@@ -644,7 +644,7 @@ impl Context<HasExistingContent> {
     }
 }
 
-impl Context<HasOwnFrontMatter> {
+impl Context<ReadyForFilenameTemplate> {
     /// Checks if the front matter variables satisfy preconditions.
     /// The path is the path to the current document.
     #[inline]

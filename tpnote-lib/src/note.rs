@@ -9,9 +9,9 @@ use crate::config::TMPL_VAR_DOC;
 use crate::config::TMPL_VAR_DOC_HEADER;
 use crate::content::Content;
 use crate::context::Context;
-use crate::context::HasOwnFrontMatter;
 use crate::context::HasSettings;
 use crate::context::ReadyForContentTemplate;
+use crate::context::ReadyForFilenameTemplate;
 use crate::error::NoteError;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
@@ -38,7 +38,7 @@ pub(crate) const ONE_OFF_TEMPLATE_NAME: &str = "__tera_one_off";
 pub struct Note<T: Content> {
     /// Captured environment of _Tp-Note_ that
     /// is used to fill in templates.
-    pub context: Context<HasOwnFrontMatter>,
+    pub context: Context<ReadyForFilenameTemplate>,
     /// The full text content of the note, including
     /// its front matter.
     pub content: T,
@@ -271,7 +271,7 @@ impl<T: Content> Note<T> {
     /// `viewer_doc_js`.
     ///
     /// Contract:
-    /// * `self.context` is in a valid `HasOwnFrontMatter` state.
+    /// * `self.context` is in a valid `ReadyForFilenameTemplate` state.
     /// * `self.content.body_name == TMPL_VAR_DOC`. The HTML template expects
     ///   this name.
     /// * The `html_tmpl` template expects `content` to have a header with:
