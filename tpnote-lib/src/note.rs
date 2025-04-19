@@ -65,7 +65,6 @@ impl<T: Content> Note<T> {
     /// Contract: `template_kind` must be one of:
     /// * `TemplateKind::SyncFilename`,
     /// * `TemplateKind::None` or
-    /// * `TemplateKind::FromTextFile`.
     ///
     /// Panics otherwise. Use `Note::from_content_template()` in those cases.
     ///
@@ -99,19 +98,6 @@ impl<T: Content> Note<T> {
                     content,
                     rendered_filename: PathBuf::new(),
                 })
-            }
-            TemplateKind::FromTextFile => {
-                // This is part of the contract for this template:
-                debug_assert!(content.header().is_empty());
-                debug_assert!(!content.body().is_empty());
-                let mut context = context;
-                // This template expects the key `TMPL_VAR_DOC` which is
-                // inserted with `content`.
-                context.insert_front_matter_and_raw_text_from_existing_content(&vec![&content])?;
-                Note::from_content_template(
-                    context.set_state_ready_for_template(),
-                    TemplateKind::FromTextFile,
-                )
             }
             // This should not happen. Use `Self::from_content_template()` instead.
             _ => {
@@ -325,7 +311,7 @@ impl<T: Content> Note<T> {
             html_context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, val);
         }
 
-        html_context
+        let mut html_context = html_context
             .insert_front_matter_and_raw_text_from_existing_content(&vec![&self.content])?;
 
         {
@@ -555,70 +541,6 @@ Body text
     }
 
     #[test]
-    fn test_from_existing_content3() {
-        //
-        // Example with `TemplateKind::FromTextFile`
-        //
-        use crate::content::Content;
-        use crate::content::ContentString;
-        use crate::context::Context;
-        use crate::note::Note;
-        use crate::template::TemplateKind;
-        use std::env::temp_dir;
-        use std::fs;
-
-        // Prepare test: create existing note file without header.
-        let raw = "Body text without header";
-        let notefile = temp_dir().join("20221030-hello -- world.md");
-        let _ = fs::write(&notefile, raw.as_bytes());
-        let expected = temp_dir().join("20221030-hello--world.md");
-        let _ = fs::remove_file(&expected);
-        // Start test.
-        let context = Context::from(&notefile).unwrap();
-        // Create note object.
-        let content = <ContentString as Content>::open(&notefile).unwrap();
-        // You can plug in your own type (must impl. `Content`).
-        let mut n = Note::<ContentString>::from_existing_content(
-            context.clone(),
-            content,
-            TemplateKind::FromTextFile,
-        )
-        .unwrap();
-        assert!(!n.content.header().is_empty());
-        assert_eq!(
-            n.context
-                .get(TMPL_VAR_FM_ALL)
-                .unwrap()
-                .get("fm_title")
-                .unwrap()
-                .as_str(),
-            Some("hello ")
-        );
-        assert_eq!(
-            n.context
-                .get(TMPL_VAR_FM_ALL)
-                .unwrap()
-                .get("fm_subtitle")
-                .unwrap()
-                .as_str(),
-            Some(" world")
-        );
-        assert_eq!(n.content.body().trim(), raw);
-        n.render_filename(TemplateKind::FromTextFile).unwrap();
-        n.set_next_unused_rendered_filename().unwrap();
-        n.save_and_delete_from(&context.path).unwrap();
-
-        // Check the new file with header
-        assert_eq!(&n.rendered_filename, &expected);
-        assert!(n.rendered_filename.is_file());
-        let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
-        #[cfg(not(target_family = "windows"))]
-        assert!(raw_note.starts_with("\u{feff}---\ntitle:        'hello '"));
-        #[cfg(target_family = "windows")]
-        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:        'hello '"));
-    }
-
-    #[test]
     fn test_from_content_template1() {
         // Example with `TemplateKind::New`
         //
@@ -710,7 +632,7 @@ Body text
         let notedir = temp_dir();
 
         // Store the path in `context`.
-        let mut context = Context::from(&notedir).unwrap();
+        let context = Context::from(&notedir).unwrap();
         let html_clipboard = ContentString::from_string(
             "html_clp\n".to_string(),
             "html_clipboard_header".to_string(),
@@ -727,7 +649,7 @@ Body text
             "stdin".to_string(),
         );
         let v = vec![&html_clipboard, &txt_clipboard, &stdin];
-        context
+        let context = context
             .insert_front_matter_and_raw_text_from_existing_content(&v)
             .unwrap();
 
@@ -819,7 +741,7 @@ Body text
 
         // Run test.
         // Store the path in `context`.
-        let mut context = Context::from(&notedir).unwrap();
+        let context = Context::from(&notedir).unwrap();
         let html_clipboard = ContentString::from_string(
             "my HTML clipboard\n".to_string(),
             "html_clipboard_header".to_string(),
@@ -837,7 +759,7 @@ Body text
         );
         let v = vec![&html_clipboard, &txt_clipboard, &stdin];
 
-        context
+        let context = context
             .insert_front_matter_and_raw_text_from_existing_content(&v)
             .unwrap();
         // This is the condition to choose: `TemplateKind::FromClipboardYaml`:
@@ -927,7 +849,7 @@ Body text
 
         // Run the test.
         // Store the path in `context`.
-        let mut context = Context::from(&non_notefile).unwrap();
+        let context = Context::from(&non_notefile).unwrap();
         let html_clipboard = ContentString::from_string(
             "my HTML clipboard\n".to_string(),
             "html_clipboard_header".to_string(),
@@ -945,11 +867,10 @@ Body text
         );
         let v = vec![&html_clipboard, &txt_clipboard, &stdin];
 
-        context
+        let context = context
             .insert_front_matter_and_raw_text_from_existing_content(&v)
-            .unwrap();
-
-        let context = context.set_state_ready_for_template();
+            .unwrap()
+            .set_state_ready_for_template();
 
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
@@ -986,5 +907,72 @@ Body text
         // Check the new note file.
         assert_eq!(n.rendered_filename, expected);
         fs::remove_file(n.rendered_filename).unwrap();
+    }
+
+    #[test]
+    fn test_from_existing_content5() {
+        //
+        // Example with `TemplateKind::FromTextFile`
+        //
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::note::Note;
+        use crate::template::TemplateKind;
+        use std::env::temp_dir;
+        use std::fs;
+
+        // Prepare test: create existing note file without header.
+        let raw = "Body text without header";
+        let notefile = temp_dir().join("20221030-hello -- world.md");
+        let _ = fs::write(&notefile, raw.as_bytes());
+        let expected = temp_dir().join("20221030-hello--world.md");
+        let _ = fs::remove_file(&expected);
+        // Start test.
+        let context = Context::from(&notefile).unwrap();
+        // Create note object.
+        let content = <ContentString as Content>::open(&notefile).unwrap();
+        let context = context
+            .insert_front_matter_and_raw_text_from_existing_content(&vec![&content])
+            .unwrap()
+            .set_state_ready_for_template();
+        // You can plug in your own type (must impl. `Content`).
+        let mut n = Note::<ContentString>::from_content_template(
+            context.clone(),
+            TemplateKind::FromTextFile,
+        )
+        .unwrap();
+        assert!(!n.content.header().is_empty());
+        assert_eq!(
+            n.context
+                .get(TMPL_VAR_FM_ALL)
+                .unwrap()
+                .get("fm_title")
+                .unwrap()
+                .as_str(),
+            Some("hello ")
+        );
+        assert_eq!(
+            n.context
+                .get(TMPL_VAR_FM_ALL)
+                .unwrap()
+                .get("fm_subtitle")
+                .unwrap()
+                .as_str(),
+            Some(" world")
+        );
+        assert_eq!(n.content.body().trim(), raw);
+        n.render_filename(TemplateKind::FromTextFile).unwrap();
+        n.set_next_unused_rendered_filename().unwrap();
+        n.save_and_delete_from(&context.path).unwrap();
+
+        // Check the new file with header
+        assert_eq!(&n.rendered_filename, &expected);
+        assert!(n.rendered_filename.is_file());
+        let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
+        #[cfg(not(target_family = "windows"))]
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:        'hello '"));
+        #[cfg(target_family = "windows")]
+        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:        'hello '"));
     }
 }

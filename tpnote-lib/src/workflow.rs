@@ -438,7 +438,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
         // and finally rename the file, if it is not in sync with its front matter.
 
         // Collect input data for templates.
-        let mut context = Context::from(self.input.path)?;
+        let context = Context::from(self.input.path)?;
 
         // `template_kind` will tell us what to do.
         let (template_kind, content) = TemplateKind::from(self.input.path, &self.input.clipboards);
@@ -452,14 +452,11 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
                 // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
                 // All these template do not refer to existing front matter,
                 // as there is none yet.
-                context.insert_front_matter_and_raw_text_from_existing_content(
-                    &self.input.clipboards,
-                )?;
+                let context = context
+                    .insert_front_matter_and_raw_text_from_existing_content(&self.input.clipboards)?
+                    .set_state_ready_for_template();
 
-                let mut n = Note::from_content_template(
-                    context.set_state_ready_for_template(),
-                    template_kind,
-                )?;
+                let mut n = Note::from_content_template(context, template_kind)?;
                 n.render_filename(template_kind)?;
                 // Check if the filename is not taken already
                 n.set_next_unused_rendered_filename()?;
@@ -468,11 +465,18 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             }
 
             TemplateKind::FromTextFile => {
-                context.insert_front_matter_and_raw_text_from_existing_content(
-                    &self.input.clipboards,
-                )?;
+                // This is part of the contract for this template:
+                let content = content.unwrap();
+                debug_assert!(&content.header().is_empty());
+                debug_assert!(!&content.body().is_empty());
 
-                let mut n = Note::from_existing_content(context, content.unwrap(), template_kind)?;
+                let context = context
+                    .insert_front_matter_and_raw_text_from_existing_content(&self.input.clipboards)?
+                    .insert_front_matter_and_raw_text_from_existing_content(&vec![&content])?;
+
+                let context = context.set_state_ready_for_template();
+
+                let mut n = Note::from_content_template(context, TemplateKind::FromTextFile)?;
                 // Render filename.
                 n.render_filename(template_kind)?;
 

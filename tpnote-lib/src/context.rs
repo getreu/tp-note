@@ -53,10 +53,16 @@ pub struct Invalid;
 pub struct HasSettings;
 
 #[derive(Debug, PartialEq, Clone)]
+/// In addition to `HasSettings`, this context contains front matter and
+/// raw text of exiting contents, e.g.: clipboards or an existing note file
+/// on disk.
+pub struct HasExistingContent;
+
+#[derive(Debug, PartialEq, Clone)]
 /// In addition to `HasSettings`, the `context.ct` contains fields deserialized
 /// from some note's front matter. When a `Context` is associated with a
 /// `Content` (e.g. in a `Note`), the `fm.` variables in `Context` correspond
-/// to the header fields in `Content`
+/// to the header fields in `Content`.
 pub struct HasFrontMatter;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -71,6 +77,9 @@ impl ContextState for Invalid {}
 /// The `insert_config_vars()` method was executed.
 /// The `insert_settings()` method was executed.
 impl ContextState for HasSettings {}
+
+/// The `insert_front_matter_and_raw_text_from_existing_content()` method was executed.
+impl ContextState for HasExistingContent {}
 
 /// The `insert_front_matter()` method was executed.
 impl ContextState for HasFrontMatter {}
@@ -456,19 +465,7 @@ impl Context<HasSettings> {
         }
     }
 
-    /// Sometimes no front matter is available to add. We go to the next stage.
-    pub fn set_state_has_front_matter(self) -> Context<HasFrontMatter> {
-        Context {
-            ct: self.ct,
-            path: self.path,
-            dir_path: self.dir_path,
-            root_path: self.root_path,
-            doc_file_date: self.doc_file_date,
-            _marker: PhantomData,
-        }
-    }
-
-    /// Sometimes no front matter is available to add. We go to the last stage.
+    /// Mark this to be ready.
     pub fn set_state_ready_for_template(self) -> Context<ReadyForTemplate> {
         self.debug_assert_paths_and_map_in_sync();
         Context {
@@ -511,7 +508,8 @@ impl Context<HasSettings> {
     /// );
     /// let c = vec![&c1, &c2];
     ///
-    /// context.insert_front_matter_and_raw_text_from_existing_content(&c).unwrap();
+    /// let context = context
+    ///     .insert_front_matter_and_raw_text_from_existing_content(&c).unwrap();
     ///
     /// assert_eq!(&context.get("txt_clipboard").unwrap().to_string(),
     ///     "\"Data from clipboard.\"");
@@ -526,9 +524,29 @@ impl Context<HasSettings> {
     ///      "\"My Stdin.\"");
     /// ```
     pub fn insert_front_matter_and_raw_text_from_existing_content(
-        &mut self,
+        self,
         clipboards: &Vec<&impl Content>,
-    ) -> Result<(), NoteError> {
+    ) -> Result<Context<HasExistingContent>, NoteError> {
+        let context: Context<HasExistingContent> = Context {
+            ct: self.ct,
+            path: self.path,
+            dir_path: self.dir_path,
+            root_path: self.root_path,
+            doc_file_date: self.doc_file_date,
+            _marker: PhantomData,
+        };
+
+        let context = context.insert_front_matter_and_raw_text_from_existing_content(clipboards)?;
+        Ok(context)
+    }
+}
+
+impl Context<HasExistingContent> {
+    /// See function of the same name for Context<HasSettings>.
+    pub fn insert_front_matter_and_raw_text_from_existing_content(
+        mut self,
+        clipboards: &Vec<&impl Content>,
+    ) -> Result<Context<HasExistingContent>, NoteError> {
         //
         for clip in clipboards {
             // Register input.
@@ -564,7 +582,20 @@ impl Context<HasSettings> {
                 }
             }
         }
-        Ok(())
+        Ok(self)
+    }
+
+    /// Mark this to be ready.
+    pub fn set_state_ready_for_template(self) -> Context<ReadyForTemplate> {
+        self.debug_assert_paths_and_map_in_sync();
+        Context {
+            ct: self.ct,
+            path: self.path,
+            dir_path: self.dir_path,
+            root_path: self.root_path,
+            doc_file_date: self.doc_file_date,
+            _marker: PhantomData,
+        }
     }
 }
 
