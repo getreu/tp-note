@@ -4,9 +4,18 @@ use tera::Value;
 use crate::config::Assertion;
 use crate::config::FILENAME_ROOT_PATH_MARKER;
 use crate::config::LIB_CFG;
+use crate::config::TMPL_HTML_VAR_EXPORTER_DOC_CSS;
+use crate::config::TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS;
+use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH;
+use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
+use crate::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
+use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH;
+use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
 use crate::config::TMPL_VAR_CURRENT_SCHEME;
 use crate::config::TMPL_VAR_DIR_PATH;
+use crate::config::TMPL_VAR_DOC;
 use crate::config::TMPL_VAR_DOC_FILE_DATE;
+use crate::config::TMPL_VAR_DOC_HEADER;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_ALL;
@@ -71,6 +80,11 @@ pub struct HasOwnFrontMatter;
 /// content template renderer.
 pub struct ReadyForContentTemplate;
 
+#[derive(Debug, PartialEq, Clone)]
+/// The context has assembled enough information to be passed to a
+/// content template renderer.
+pub struct ReadyForHtmlTemplate;
+
 /// The state of this object is invalid. Do not use.
 impl ContextState for Invalid {}
 
@@ -87,6 +101,9 @@ impl ContextState for HasOwnFrontMatter {}
 
 /// The `Context` has all data for the intended template.
 impl ContextState for ReadyForContentTemplate {}
+
+/// The `Context` has all data for the intended template.
+impl ContextState for ReadyForHtmlTemplate {}
 
 /// Tiny wrapper around "Tera context" with some additional information.
 #[derive(Clone, Debug, PartialEq)]
@@ -768,6 +785,72 @@ impl Context<HasOwnFrontMatter> {
     /// Show, that we are done.
     pub fn set_state_ready_for_content_template(self) -> Context<ReadyForContentTemplate> {
         self.debug_assert_paths_and_map_in_sync();
+        Context {
+            ct: self.ct,
+            path: self.path,
+            dir_path: self.dir_path,
+            root_path: self.root_path,
+            doc_file_date: self.doc_file_date,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Inserts the following variables into `self`:
+    ///
+    /// * `TMPL_HTML_VAR_VIEWER_DOC_JS` from `viewer_doc_js`
+    /// * `TMPL_VAR_DOC_HEADER` from `content.header()`
+    /// * `TMPL_VAR_DOC` from `content.body()`
+    /// * `TMPL_HTML_VAR_EXPORTER_DOC_CSS`
+    /// * `TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS`
+    /// * `TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS`
+    /// * `TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH`
+    /// * `TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE`
+    /// * `TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH`
+    /// * `TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE`
+    ///
+    pub fn insert_raw_content_and_css(
+        mut self,
+        content: &impl Content,
+        viewer_doc_js: &str,
+    ) -> Context<ReadyForHtmlTemplate> {
+        //
+        self.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, viewer_doc_js);
+
+        self.insert(TMPL_VAR_DOC_HEADER, content.header());
+        self.insert(TMPL_VAR_DOC, content.body());
+
+        {
+            let lib_cfg = &LIB_CFG.read_recursive();
+
+            // Insert the raw CSS
+            self.insert(
+                TMPL_HTML_VAR_EXPORTER_DOC_CSS,
+                &(lib_cfg.tmpl_html.exporter_doc_css),
+            );
+
+            // Insert the raw CSS
+            #[cfg(feature = "renderer")]
+            self.insert(
+                TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS,
+                &(lib_cfg.tmpl_html.exporter_highlighting_css),
+            );
+        } // Drop `lib_cfg`.
+
+        // Insert the raw CSS
+        #[cfg(not(feature = "renderer"))]
+        self.insert(TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS, "");
+
+        // Insert the web server path to get the Tp-Note's CSS loaded.
+        self.insert(
+            TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH,
+            TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE,
+        );
+
+        // Insert the web server path to get the highlighting CSS loaded.
+        self.insert(
+            TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH,
+            TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE,
+        );
         Context {
             ct: self.ct,
             path: self.path,

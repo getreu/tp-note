@@ -5,14 +5,6 @@
 //! parsing its front matter.
 //! NB: The high level API is in the module `tpnote_lib::workflow`.
 
-use crate::config::LIB_CFG;
-use crate::config::TMPL_HTML_VAR_EXPORTER_DOC_CSS;
-use crate::config::TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS;
-use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH;
-use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
-use crate::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
-use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH;
-use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
 use crate::config::TMPL_VAR_DOC;
 use crate::config::TMPL_VAR_DOC_HEADER;
 use crate::content::Content;
@@ -275,66 +267,28 @@ impl<T: Content> Note<T> {
     #[inline]
     /// Renders `self.content` to HTML by calling the appropriate markup
     /// renderer. The `html_tmpl` injects JavaScript code with the
-    /// key `TMPL_HTML_VAR_VIEWER_DOC_JS`. This code is provided with the key
-    /// `TMPL_HTML_VAR_VIEWER_DOC_JS` in `self.context.ct` and must to be set.
+    /// key `TMPL_HTML_VAR_VIEWER_DOC_JS`. This code is provided with
+    /// `viewer_doc_js`.
     ///
     /// Contract:
-    /// * `self.context` is in a valid `HasSettings` state. All other keys
-    ///    except `TMPL_HTML_VAR_VIEWER_DOC_JS` are ignored.
+    /// * `self.context` is in a valid `HasOwnFrontMatter` state.
     /// * `self.content.body_name == TMPL_VAR_DOC`. The HTML template expects
     ///   this name.
-    /// * The `html_tmpl` expects `content` to have a header with at least one
-    ///   `title:` field.
+    /// * The `html_tmpl` template expects `content` to have a header with:
+    ///   a `title:` field.
     ///
     pub fn render_content_to_html(
         &self,
         // HTML template for this rendition.
         tmpl: &str,
+        // JavaScript for live update code injection.
+        viewer_doc_js: &str,
     ) -> Result<String, NoteError> {
         self.context.debug_assert_paths_and_map_in_sync();
 
-        let mut html_context = self.context.clone();
+        let html_context = self.context.clone();
 
-        html_context.insert(TMPL_VAR_DOC_HEADER, self.content.header());
-        html_context.insert(TMPL_VAR_DOC, self.content.body());
-
-        // Copy `TMPL_HTML_VAR_VIEWER_DOC_JS`
-        if let Some(val) = self.context.get(TMPL_HTML_VAR_VIEWER_DOC_JS) {
-            html_context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, val);
-        }
-
-        {
-            let lib_cfg = &LIB_CFG.read_recursive();
-
-            // Insert the raw CSS
-            html_context.insert(
-                TMPL_HTML_VAR_EXPORTER_DOC_CSS,
-                &(lib_cfg.tmpl_html.exporter_doc_css),
-            );
-
-            // Insert the raw CSS
-            #[cfg(feature = "renderer")]
-            html_context.insert(
-                TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS,
-                &(lib_cfg.tmpl_html.exporter_highlighting_css),
-            );
-        } // Drop `lib_cfg`.
-
-        // Insert the raw CSS
-        #[cfg(not(feature = "renderer"))]
-        html_context.insert(TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS, "");
-
-        // Insert the web server path to get the Tp-Note's CSS loaded.
-        html_context.insert(
-            TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH,
-            TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE,
-        );
-
-        // Insert the web server path to get the highlighting CSS loaded.
-        html_context.insert(
-            TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH,
-            TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE,
-        );
+        let html_context = html_context.insert_raw_content_and_css(&self.content, viewer_doc_js);
 
         log::trace!(
             "Available substitution variables for the HTML template:\
@@ -523,7 +477,7 @@ Body text
                 .unwrap();
         // Check the HTML rendition.
         let html = n
-            .render_content_to_html(&LIB_CFG.read_recursive().tmpl_html.viewer)
+            .render_content_to_html(&LIB_CFG.read_recursive().tmpl_html.viewer, "")
             .unwrap();
         assert!(html.starts_with("<!DOCTYPE html>\n<html"))
     }
