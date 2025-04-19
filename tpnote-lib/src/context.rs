@@ -238,6 +238,26 @@ pub struct Context<S: ContextState + ?Sized> {
 
 /// The methods below are available in all `ContentState` states.
 impl<S: ContextState> Context<S> {
+    /// Getter for `self.path`.
+    pub fn get_path(&self) -> &Path {
+        self.path.as_path()
+    }
+
+    /// Getter for `self.dir_path`.
+    pub fn get_dir_path(&self) -> &Path {
+        self.dir_path.as_path()
+    }
+
+    /// Getter for `self.root_path`.
+    pub fn get_root_path(&self) -> &Path {
+        self.root_path.as_path()
+    }
+
+    /// Getter for `self.doc_file_date`.
+    pub fn get_doc_file_date(&self) -> Option<SystemTime> {
+        self.doc_file_date
+    }
+
     /// Transition to the fault state.
     pub fn mark_as_invalid(self) -> Context<Invalid> {
         Context {
