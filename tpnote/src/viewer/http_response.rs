@@ -14,7 +14,6 @@ use std::time::SystemTime;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
-use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
@@ -418,42 +417,43 @@ impl HttpResponse for ServerThread {
         let content = ContentString::open(maybe_other_doc)?;
 
         // Do we render `self.path` or some other document?
-        let html_context = if self.context.path == maybe_other_doc {
-            let mut html_context = Context::from_context_path(&self.context);
-            // Save JavaScript code for life updates.
-            html_context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &self.live_update_js);
-            html_context
+        let (html_context, viewer_doc_js) = if self.context.path == maybe_other_doc {
+            let html_context = Context::from_context_path(&self.context);
+            (html_context, self.live_update_js.as_str())
         } else {
             // This is not the base document, but some other Tp-Note document
             // we want to render. Store store its path.
             // `front_matter::assert_precondition()` needs this later.
             // Also, the HTML template expects this to be set to the rendered
             // document.
-            let mut html_context = Context::from(maybe_other_doc)?;
+            let html_context = Context::from(maybe_other_doc)?;
             // Only the first base document is live updated.
             // Overwrite the dynamic JavaScript.
-            html_context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
-            html_context
+            (html_context, "")
         };
 
-        match HtmlRenderer::viewer_page::<ContentString>(html_context.clone(), content)
-            // Now scan the HTML result for links and store them in a Map
-            // accessible to all threads.
-            // Secondly, convert all relative links to absolute links.
-            .map(|html| {
-                rewrite_links(
-                    html,
-                    &html_context.root_path,
-                    &html_context.dir_path,
-                    // Do convert relative to abs absolute links.
-                    // Do not convert abs. links.
-                    LocalLinkKind::Short,
-                    // Do not append `.html` to `.md` links.
-                    false,
-                    // We clone only the RWlock, not the data.
-                    self.allowed_urls.clone(),
-                )
-            }) {
+        match HtmlRenderer::viewer_page::<ContentString>(
+            html_context.clone(),
+            content,
+            viewer_doc_js,
+        )
+        // Now scan the HTML result for links and store them in a Map
+        // accessible to all threads.
+        // Secondly, convert all relative links to absolute links.
+        .map(|html| {
+            rewrite_links(
+                html,
+                &html_context.root_path,
+                &html_context.dir_path,
+                // Do convert relative to abs absolute links.
+                // Do not convert abs. links.
+                LocalLinkKind::Short,
+                // Do not append `.html` to `.md` links.
+                false,
+                // We clone only the RWlock, not the data.
+                self.allowed_urls.clone(),
+            )
+        }) {
             // If the rendition went well, return the HTML.
             Ok(html) => {
                 let mut delivered_tpnote_docs = self.delivered_tpnote_docs.write();
@@ -476,11 +476,16 @@ impl HttpResponse for ServerThread {
             Err(e) => {
                 // Render error page providing all information we have.
                 let note_erroneous_content = <ContentString as Content>::open(&html_context.path)?;
-                HtmlRenderer::error_page(html_context, note_erroneous_content, &e.to_string())
-                    .map_err(|e| ViewerError::RenderErrorPage {
-                        tmpl: "tmpl_html.viewer_error".to_string(),
-                        source: e,
-                    })
+                HtmlRenderer::error_page(
+                    html_context,
+                    note_erroneous_content,
+                    &e.to_string(),
+                    self.live_update_js.as_str(),
+                )
+                .map_err(|e| ViewerError::RenderErrorPage {
+                    tmpl: "tmpl_html.viewer_error".to_string(),
+                    source: e,
+                })
             }
         }
     }

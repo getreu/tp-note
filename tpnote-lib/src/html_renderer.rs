@@ -11,6 +11,7 @@ use crate::config::LIB_CFG;
 use crate::config::TMPL_HTML_VAR_DOC_ERROR;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_HTML_VAR_DOC_TEXT;
+use crate::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
 use crate::content::Content;
 use crate::context::Context;
 use crate::context::HasSettings;
@@ -47,13 +48,9 @@ impl HtmlRenderer {
     /// of the variable `context.path`. The resulting HTML and other HTML
     /// template variables originating from `context` are inserted into the
     /// `TMPL_HTML_VIEWER` template before being returned.
-    /// `context` is expected to have at least all `HasSettings` keys
-    /// and the additional key `TMPL_HTML_VAR_VIEWER_DOC_JS` set and valid.
-    /// All other keys are ignored.
     /// This function is stateless.
     ///
     /// ```rust
-    /// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
     /// use tpnote_lib::content::Content;
     /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::context::Context;
@@ -73,9 +70,8 @@ impl HtmlRenderer {
     /// // Start test
     /// let mut context = Context::from(Path::new("/path/to/note.md")).unwrap();
     /// // We do not inject any JavaScript.
-    /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".to_string());
     /// // Render.
-    /// let html = HtmlRenderer::viewer_page::<ContentString>(context, content)
+    /// let html = HtmlRenderer::viewer_page::<ContentString>(context, content, "")
     ///            .unwrap();
     /// // Check the HTML rendition.
     /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
@@ -85,7 +81,6 @@ impl HtmlRenderer {
     ///
     /// ```rust
     /// use tpnote_lib::config::LIB_CFG;
-    /// use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
     /// use tpnote_lib::content::Content;
     /// use tpnote_lib::content::ContentString;
     /// use tpnote_lib::context::Context;
@@ -106,20 +101,22 @@ impl HtmlRenderer {
     /// // Start test
     /// let mut context = Context::from(&notefile).unwrap();
     /// // We do not inject any JavaScript.
-    /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".to_string());
     /// // Render.
     /// let content = ContentString::open(&context.path).unwrap();
     /// // You can plug in your own type (must impl. `Content`).
-    /// let html = HtmlRenderer::viewer_page(context, content).unwrap();
+    /// let html = HtmlRenderer::viewer_page(context, content, "").unwrap();
     /// // Check the HTML rendition.
     /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
     /// ```
     pub fn viewer_page<T: Content>(
         context: Context<HasSettings>,
         content: T,
+        // Java Script live updater inject code. Will be inserted into
+        // `tmpl_html.viewer`.
+        viewer_doc_js: &str,
     ) -> Result<String, NoteError> {
         let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer;
-        HtmlRenderer::render(context, content, tmpl_html)
+        HtmlRenderer::render(context, content, viewer_doc_js, tmpl_html)
     }
 
     /// Returns the HTML rendition of a `ContentString`.
@@ -163,18 +160,19 @@ impl HtmlRenderer {
         content: T,
     ) -> Result<String, NoteError> {
         let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.exporter;
-        HtmlRenderer::render(context, content, tmpl_html)
+        HtmlRenderer::render(context, content, "", tmpl_html)
     }
 
     /// Helper function.
     fn render<T: Content>(
         context: Context<HasSettings>,
         content: T,
+        viewer_doc_js: &str,
         tmpl_html: &str,
     ) -> Result<String, NoteError> {
         let note = Note::from_existing_content(context, content, TemplateKind::None)?;
 
-        note.render_content_to_html(tmpl_html)
+        note.render_content_to_html(tmpl_html, viewer_doc_js)
     }
 
     /// When the header cannot be deserialized, the file located in
@@ -222,7 +220,7 @@ impl HtmlRenderer {
     /// // You can plug in your own type (must impl. `Content`).
     /// let content = ContentString::open(&context.path).unwrap();
     /// let html = HtmlRenderer::error_page(
-    ///               context, content, &e.to_string()).unwrap();
+    ///               context, content, &e.to_string(), "").unwrap();
     /// // Check the HTML rendition.
     /// assert!(html.starts_with("<!DOCTYPE html>\n<html"))
     /// ```
@@ -231,7 +229,13 @@ impl HtmlRenderer {
         mut context: Context<HasSettings>,
         note_erroneous_content: T,
         error_message: &str,
+        // Java Script live updater inject code. Will be inserted into
+        // `tmpl_html.viewer`.
+        viewer_doc_js: &str,
     ) -> Result<String, NoteError> {
+        //
+        context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, viewer_doc_js);
+
         // Insert.
         context.insert(TMPL_HTML_VAR_DOC_ERROR, error_message);
         context.insert(TMPL_HTML_VAR_DOC_TEXT, &note_erroneous_content.as_str());
