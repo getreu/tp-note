@@ -902,20 +902,6 @@ impl Context<HasOwnFrontMatter> {
     }
 }
 
-impl Context<ReadyForContentTemplate> {
-    /// Go back to `HasFrontMatter` state.
-    pub fn set_state_has_front_matter(self) -> Context<HasOwnFrontMatter> {
-        Context {
-            ct: self.ct,
-            path: self.path,
-            dir_path: self.dir_path,
-            root_path: self.root_path,
-            doc_file_date: self.doc_file_date,
-            _marker: PhantomData,
-        }
-    }
-}
-
 /// Auto dereferences for convenient access to `tera::Context`.
 impl<S: ContextState> Deref for Context<S> {
     type Target = tera::Context;
