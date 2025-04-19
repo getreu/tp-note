@@ -43,7 +43,6 @@ use std::fs::File;
 use std::marker::PhantomData;
 use std::matches;
 use std::ops::Deref;
-use std::ops::DerefMut;
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::SystemTime;
@@ -59,8 +58,8 @@ pub struct Invalid;
 
 #[derive(Debug, PartialEq, Clone)]
 /// The `Context` has the following initialized and valid fields: `path`,
-/// `dir_path`, `root_path` and `ct` contains data from `insert_config_vars()`
-/// and `insert_settings()`.
+/// `dir_path`, `root_path` and `ct`. The context `ct` contains data from
+/// `insert_config_vars()` and `insert_settings()`.
 pub struct HasSettings;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -258,7 +257,7 @@ impl<S: ContextState> Context<S> {
         let lib_cfg = LIB_CFG.read_recursive();
 
         // Default extension for new notes as defined in the configuration file.
-        (*self).insert(
+        self.ct.insert(
             TMPL_VAR_SCHEME_SYNC_DEFAULT,
             lib_cfg.scheme_sync_default.as_str(),
         );
@@ -297,24 +296,24 @@ impl<S: ContextState> Context<S> {
         let settings = SETTINGS.read_recursive();
 
         // Default extension for new notes as defined in the configuration file.
-        (*self).insert(
+        self.ct.insert(
             TMPL_VAR_EXTENSION_DEFAULT,
             settings.extension_default.as_str(),
         );
 
         {
             let lib_cfg = LIB_CFG.read_recursive();
-            (*self).insert(
+            self.ct.insert(
                 TMPL_VAR_CURRENT_SCHEME,
                 &lib_cfg.scheme[settings.current_scheme].name,
             );
         } // Release `lib_cfg` here.
 
         // Search for UNIX, Windows and MacOS user-names.
-        (*self).insert(TMPL_VAR_USERNAME, &settings.author);
+        self.ct.insert(TMPL_VAR_USERNAME, &settings.author);
 
         // Get the user's language tag.
-        (*self).insert(TMPL_VAR_LANG, &settings.lang);
+        self.ct.insert(TMPL_VAR_LANG, &settings.lang);
     }
 
     /// Inserts the YAML front header variables into the context for later use
@@ -388,6 +387,12 @@ impl<S: ContextState> Context<S> {
         }
         // Register the collection as `Object(Map<String, Value>)`.
         self.ct.insert(TMPL_VAR_FM_ALL, &fm_all_map);
+    }
+
+    /// Insert a key/val pair directly. Only available in tests.
+    #[cfg(test)]
+    pub(crate) fn insert(&mut self, key: &str, val: &tera::Value) {
+        self.ct.insert(key, val);
     }
 }
 
@@ -570,10 +575,11 @@ impl Context<HasSettings> {
         viewer_doc_js: &str,
     ) -> Context<ReadyForHtmlErrorTemplate> {
         //
-        self.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, viewer_doc_js);
+        self.ct.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, viewer_doc_js);
 
-        self.insert(TMPL_HTML_VAR_DOC_ERROR, error_message);
-        self.insert(TMPL_HTML_VAR_DOC_TEXT, &note_erroneous_content.as_str());
+        self.ct.insert(TMPL_HTML_VAR_DOC_ERROR, error_message);
+        self.ct
+            .insert(TMPL_HTML_VAR_DOC_TEXT, &note_erroneous_content.as_str());
 
         Context {
             ct: self.ct,
@@ -587,7 +593,7 @@ impl Context<HasSettings> {
 }
 
 impl Context<HasExistingContent> {
-    /// See function of the same name for Context<HasSettings>.
+    /// See function of the same name in `impl Context<HasSettings>`.
     pub fn insert_front_matter_and_raw_text_from_existing_content(
         mut self,
         clipboards: &Vec<&impl Content>,
@@ -595,8 +601,8 @@ impl Context<HasExistingContent> {
         //
         for clip in clipboards {
             // Register input.
-            (*self).insert(clip.header_name(), clip.header());
-            (*self).insert(clip.body_name(), clip.body());
+            self.ct.insert(clip.header_name(), clip.header());
+            self.ct.insert(clip.body_name(), clip.body());
 
             // Can we find a front matter in the input stream? If yes, the
             // unmodified input stream is our new note content.
@@ -854,23 +860,23 @@ impl Context<ReadyForFilenameTemplate> {
         viewer_doc_js: &str,
     ) -> Context<ReadyForHtmlTemplate> {
         //
-        self.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, viewer_doc_js);
+        self.ct.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, viewer_doc_js);
 
-        self.insert(TMPL_VAR_DOC_HEADER, content.header());
-        self.insert(TMPL_VAR_DOC, content.body());
+        self.ct.insert(TMPL_VAR_DOC_HEADER, content.header());
+        self.ct.insert(TMPL_VAR_DOC, content.body());
 
         {
             let lib_cfg = &LIB_CFG.read_recursive();
 
             // Insert the raw CSS
-            self.insert(
+            self.ct.insert(
                 TMPL_HTML_VAR_EXPORTER_DOC_CSS,
                 &(lib_cfg.tmpl_html.exporter_doc_css),
             );
 
             // Insert the raw CSS
             #[cfg(feature = "renderer")]
-            self.insert(
+            self.ct.insert(
                 TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS,
                 &(lib_cfg.tmpl_html.exporter_highlighting_css),
             );
@@ -878,16 +884,16 @@ impl Context<ReadyForFilenameTemplate> {
 
         // Insert the raw CSS
         #[cfg(not(feature = "renderer"))]
-        self.insert(TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS, "");
+        self.ct.insert(TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS, "");
 
         // Insert the web server path to get the Tp-Note's CSS loaded.
-        self.insert(
+        self.ct.insert(
             TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH,
             TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE,
         );
 
         // Insert the web server path to get the highlighting CSS loaded.
-        self.insert(
+        self.ct.insert(
             TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH,
             TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE,
         );
@@ -908,13 +914,6 @@ impl<S: ContextState> Deref for Context<S> {
 
     fn deref(&self) -> &Self::Target {
         &self.ct
-    }
-}
-
-/// Auto dereferences for convenient access to `tera::Context`.
-impl<S: ContextState> DerefMut for Context<S> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.ct
     }
 }
 

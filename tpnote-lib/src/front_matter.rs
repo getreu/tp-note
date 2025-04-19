@@ -163,7 +163,8 @@ mod tests {
         let mut expected = Context::from(Path::new("a/b/test.md")).unwrap();
         tmp2.remove("fm_numbers");
         tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
-        (*expected).insert(TMPL_VAR_FM_ALL.to_string(), &tmp2); // Map()
+        let tmp2 = tera::Value::from(tmp2);
+        expected.insert(TMPL_VAR_FM_ALL, &tmp2); // Map()
         let expected = expected.insert_front_matter(&FrontMatter::try_from("").unwrap());
 
         let result = input1.insert_front_matter(&input2);

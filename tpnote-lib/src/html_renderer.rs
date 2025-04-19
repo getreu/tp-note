@@ -209,7 +209,6 @@ impl HtmlRenderer {
     /// // Start test
     /// let mut context = Context::from(&notefile).unwrap();
     /// // We do not inject any JavaScript.
-    /// context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, "");
     /// // Render.
     /// // Read from file.
     /// // You can plug in your own type (must impl. `Content`).
