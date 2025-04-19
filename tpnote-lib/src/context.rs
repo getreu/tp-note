@@ -63,7 +63,7 @@ pub struct HasExistingContent;
 /// from some note's front matter. When a `Context` is associated with a
 /// `Content` (e.g. in a `Note`), the `fm.` variables in `Context` correspond
 /// to the header fields in `Content`.
-pub struct HasFrontMatter;
+pub struct HasOwnFrontMatter;
 
 #[derive(Debug, PartialEq, Clone)]
 /// The context has assembled enough information to be passed to a
@@ -82,7 +82,7 @@ impl ContextState for HasSettings {}
 impl ContextState for HasExistingContent {}
 
 /// The `insert_front_matter()` method was executed.
-impl ContextState for HasFrontMatter {}
+impl ContextState for HasOwnFrontMatter {}
 
 /// The `Context` has all data for the intended template.
 impl ContextState for ReadyForContentTemplate {}
@@ -453,7 +453,7 @@ impl Context<Invalid> {
 
 impl Context<HasSettings> {
     /// Merges `fm` into `self.ct`.
-    pub fn insert_front_matter(mut self, fm: &FrontMatter) -> Context<HasFrontMatter> {
+    pub fn insert_front_matter(mut self, fm: &FrontMatter) -> Context<HasOwnFrontMatter> {
         Context::insert_front_matter2(&mut self, fm);
         Context {
             ct: self.ct,
@@ -586,7 +586,7 @@ impl Context<HasExistingContent> {
     }
 }
 
-impl Context<HasFrontMatter> {
+impl Context<HasOwnFrontMatter> {
     /// Show, that we are done.
     pub fn set_state_ready_for_content_template(self) -> Context<ReadyForContentTemplate> {
         self.debug_assert_paths_and_map_in_sync();
@@ -780,7 +780,7 @@ impl Context<ReadyForContentTemplate> {
     }
 
     /// Go back to `HasFrontMatter` state.
-    pub fn set_state_has_front_matter(self) -> Context<HasFrontMatter> {
+    pub fn set_state_has_front_matter(self) -> Context<HasOwnFrontMatter> {
         Context {
             ct: self.ct,
             path: self.path,
