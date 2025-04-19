@@ -4,6 +4,8 @@ use tera::Value;
 use crate::config::Assertion;
 use crate::config::FILENAME_ROOT_PATH_MARKER;
 use crate::config::LIB_CFG;
+use crate::config::TMPL_HTML_VAR_DOC_ERROR;
+use crate::config::TMPL_HTML_VAR_DOC_TEXT;
 use crate::config::TMPL_HTML_VAR_EXPORTER_DOC_CSS;
 use crate::config::TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS;
 use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH;
@@ -85,6 +87,11 @@ pub struct ReadyForContentTemplate;
 /// content template renderer.
 pub struct ReadyForHtmlTemplate;
 
+#[derive(Debug, PartialEq, Clone)]
+/// The context has assembled enough information to be passed to a
+/// content template renderer.
+pub struct ReadyForHtmlErrorTemplate;
+
 /// The state of this object is invalid. Do not use.
 impl ContextState for Invalid {}
 
@@ -104,6 +111,9 @@ impl ContextState for ReadyForContentTemplate {}
 
 /// The `Context` has all data for the intended template.
 impl ContextState for ReadyForHtmlTemplate {}
+
+/// The `Context` has all data for the intended template.
+impl ContextState for ReadyForHtmlErrorTemplate {}
 
 /// Tiny wrapper around "Tera context" with some additional information.
 #[derive(Clone, Debug, PartialEq)]
@@ -543,6 +553,36 @@ impl Context<HasSettings> {
 
         let context = context.insert_front_matter_and_raw_text_from_existing_content(clipboards)?;
         Ok(context)
+    }
+
+    /// This adds the following variables to `self`:
+    ///
+    /// * `TMPL_HTML_VAR_VIEWER_DOC_JS` from `viewer_doc_js`
+    /// * `TMPL_HTML_VAR_DOC_ERROR` from `error_message`
+    /// * `TMPL_HTML_VAR_DOC_TEXT` from `note_erroneous_content`
+    ///
+    pub fn insert_error_content(
+        mut self,
+        note_erroneous_content: &impl Content,
+        error_message: &str,
+        // Java Script live updater inject code. Will be inserted into
+        // `tmpl_html.viewer`.
+        viewer_doc_js: &str,
+    ) -> Context<ReadyForHtmlErrorTemplate> {
+        //
+        self.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, viewer_doc_js);
+
+        self.insert(TMPL_HTML_VAR_DOC_ERROR, error_message);
+        self.insert(TMPL_HTML_VAR_DOC_TEXT, &note_erroneous_content.as_str());
+
+        Context {
+            ct: self.ct,
+            path: self.path,
+            dir_path: self.dir_path,
+            root_path: self.root_path,
+            doc_file_date: self.doc_file_date,
+            _marker: PhantomData,
+        }
     }
 }
 

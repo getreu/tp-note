@@ -7,11 +7,6 @@
 
 use crate::config::LocalLinkKind;
 use crate::config::LIB_CFG;
-#[cfg(feature = "viewer")]
-use crate::config::TMPL_HTML_VAR_DOC_ERROR;
-#[cfg(feature = "viewer")]
-use crate::config::TMPL_HTML_VAR_DOC_TEXT;
-use crate::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
 use crate::content::Content;
 use crate::context::Context;
 use crate::context::HasSettings;
@@ -226,7 +221,7 @@ impl HtmlRenderer {
     /// ```
     #[cfg(feature = "viewer")]
     pub fn error_page<T: Content>(
-        mut context: Context<HasSettings>,
+        context: Context<HasSettings>,
         note_erroneous_content: T,
         error_message: &str,
         // Java Script live updater inject code. Will be inserted into
@@ -234,11 +229,8 @@ impl HtmlRenderer {
         viewer_doc_js: &str,
     ) -> Result<String, NoteError> {
         //
-        context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, viewer_doc_js);
-
-        // Insert.
-        context.insert(TMPL_HTML_VAR_DOC_ERROR, error_message);
-        context.insert(TMPL_HTML_VAR_DOC_TEXT, &note_erroneous_content.as_str());
+        let context =
+            context.insert_error_content(&note_erroneous_content, error_message, viewer_doc_js);
 
         let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer_error;
 
