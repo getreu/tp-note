@@ -107,7 +107,7 @@ impl<T: Content> Note<T> {
                 let mut context = context;
                 // This template expects the key `TMPL_VAR_DOC` which is
                 // inserted with `content`.
-                context.insert_front_matter_and_raw_text_from_content(&vec![&content])?;
+                context.insert_front_matter_and_raw_text_from_existing_content(&vec![&content])?;
                 Note::from_content_template(
                     context.set_state_ready_for_template(),
                     TemplateKind::FromTextFile,
@@ -325,7 +325,8 @@ impl<T: Content> Note<T> {
             html_context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, val);
         }
 
-        html_context.insert_front_matter_and_raw_text_from_content(&vec![&self.content])?;
+        html_context
+            .insert_front_matter_and_raw_text_from_existing_content(&vec![&self.content])?;
 
         {
             let lib_cfg = &LIB_CFG.read_recursive();
@@ -727,7 +728,7 @@ Body text
         );
         let v = vec![&html_clipboard, &txt_clipboard, &stdin];
         context
-            .insert_front_matter_and_raw_text_from_content(&v)
+            .insert_front_matter_and_raw_text_from_existing_content(&v)
             .unwrap();
 
         // This is the condition to choose: `TemplateKind::FromClipboard`:
@@ -837,7 +838,7 @@ Body text
         let v = vec![&html_clipboard, &txt_clipboard, &stdin];
 
         context
-            .insert_front_matter_and_raw_text_from_content(&v)
+            .insert_front_matter_and_raw_text_from_existing_content(&v)
             .unwrap();
         // This is the condition to choose: `TemplateKind::FromClipboardYaml`:
         assert!(
@@ -945,7 +946,7 @@ Body text
         let v = vec![&html_clipboard, &txt_clipboard, &stdin];
 
         context
-            .insert_front_matter_and_raw_text_from_content(&v)
+            .insert_front_matter_and_raw_text_from_existing_content(&v)
             .unwrap();
 
         let context = context.set_state_ready_for_template();

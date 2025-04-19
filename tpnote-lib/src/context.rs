@@ -481,15 +481,15 @@ impl Context<HasSettings> {
         }
     }
 
-    /// Inserts clipboard or stdin data into the context. The data may contain
-    /// some copied text with or without a YAML header. The latter usually
-    /// carries front matter variables. The `input` data below is registered
-    /// with the key name given by `tmpl_var_body_name`. Typical names are
-    /// `"clipboard"` or `"stdin"`. If the below `input` contains a valid
-    /// YAML header, it will be registered in the context with the key name
-    /// given by `tmpl_var_header_name`. The templates expect the key names
-    /// `clipboard_header` or `std_header`. The raw header text will be
-    /// inserted with this key name.
+    /// Inserts clipboard data, stdin data and/or existing note file content
+    /// into the context. The data may contain some copied text with or without
+    /// a YAML header. The latter usually carries front matter variables.
+    /// The `input` data below is registered with the key name given by
+    /// `tmpl_var_body_name`. Typical names are `"clipboard"` or `"stdin"`. If
+    /// the below `input` contains a valid YAML header, it will be registered
+    /// in the context with the key name given by `tmpl_var_header_name`. The
+    /// templates expect the key names `clipboard_header` or `std_header`. The
+    /// raw header text will be inserted with this key name.
     ///
     /// ```rust
     /// use std::path::Path;
@@ -511,7 +511,7 @@ impl Context<HasSettings> {
     /// );
     /// let c = vec![&c1, &c2];
     ///
-    /// context.insert_front_matter_and_raw_text_from_content(&c).unwrap();
+    /// context.insert_front_matter_and_raw_text_from_existing_content(&c).unwrap();
     ///
     /// assert_eq!(&context.get("txt_clipboard").unwrap().to_string(),
     ///     "\"Data from clipboard.\"");
@@ -525,7 +525,7 @@ impl Context<HasSettings> {
     ///            .get("fm_title").unwrap().to_string(),
     ///      "\"My Stdin.\"");
     /// ```
-    pub fn insert_front_matter_and_raw_text_from_content(
+    pub fn insert_front_matter_and_raw_text_from_existing_content(
         &mut self,
         clipboards: &Vec<&impl Content>,
     ) -> Result<(), NoteError> {

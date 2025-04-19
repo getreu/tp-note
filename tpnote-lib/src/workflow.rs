@@ -452,7 +452,9 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
                 // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
                 // All these template do not refer to existing front matter,
                 // as there is none yet.
-                context.insert_front_matter_and_raw_text_from_content(&self.input.clipboards)?;
+                context.insert_front_matter_and_raw_text_from_existing_content(
+                    &self.input.clipboards,
+                )?;
 
                 let mut n = Note::from_content_template(
                     context.set_state_ready_for_template(),
@@ -466,7 +468,9 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             }
 
             TemplateKind::FromTextFile => {
-                context.insert_front_matter_and_raw_text_from_content(&self.input.clipboards)?;
+                context.insert_front_matter_and_raw_text_from_existing_content(
+                    &self.input.clipboards,
+                )?;
 
                 let mut n = Note::from_existing_content(context, content.unwrap(), template_kind)?;
                 // Render filename.
@@ -480,14 +484,19 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
             }
 
             TemplateKind::SyncFilename => {
-                let mut n =
-                    Note::from_existing_content(context, content.unwrap(), TemplateKind::SyncFilename)?;
+                let mut n = Note::from_existing_content(
+                    context,
+                    content.unwrap(),
+                    TemplateKind::SyncFilename,
+                )?;
 
                 synchronize_filename(&mut settings, &mut n)?;
                 n
             }
 
-            TemplateKind::None => Note::from_existing_content(context, content.unwrap(), template_kind)?,
+            TemplateKind::None => {
+                Note::from_existing_content(context, content.unwrap(), template_kind)?
+            }
         };
 
         // If no new filename was rendered, return the old one.
