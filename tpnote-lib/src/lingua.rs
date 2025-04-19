@@ -53,7 +53,7 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
     // Detect languages.
     let detected_languages: Vec<String> = match &settings.get_lang_filter.mode {
         Mode::Multilingual => {
-            // TODO
+            //
             let consecutive_words_min = settings.get_lang_filter.consecutive_words_min;
             let words_total_percentage_min = settings.get_lang_filter.words_total_percentage_min;
 

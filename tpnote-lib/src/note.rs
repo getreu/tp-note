@@ -17,6 +17,7 @@ use crate::config::TMPL_VAR_DOC;
 use crate::config::TMPL_VAR_DOC_HEADER;
 use crate::content::Content;
 use crate::context::Context;
+use crate::context::HasOwnFrontMatter;
 use crate::context::HasSettings;
 use crate::context::ReadyForContentTemplate;
 use crate::error::NoteError;
@@ -45,7 +46,7 @@ pub(crate) const ONE_OFF_TEMPLATE_NAME: &str = "__tera_one_off";
 pub struct Note<T: Content> {
     /// Captured environment of _Tp-Note_ that
     /// is used to fill in templates.
-    pub context: Context<ReadyForContentTemplate>,
+    pub context: Context<HasOwnFrontMatter>,
     /// The full text content of the note, including
     /// its front matter.
     pub content: T,
@@ -73,42 +74,27 @@ impl<T: Content> Note<T> {
         content: T,
         template_kind: TemplateKind,
     ) -> Result<Note<T>, NoteError> {
-        match template_kind {
-            // No rendering to markdown is required. `content` is read from disk and left untouched.
-            TemplateKind::SyncFilename => {
-                // Deserialize the note's header read from disk.
-                // Store the front matter in the context for later use in templates.
-                let fm = FrontMatter::try_from(content.header())?;
-                let context = context.insert_front_matter(&fm);
-                let context = context.set_state_ready_for_content_template();
-                context.assert_precoditions()?;
-                Ok(Note {
-                    context,
-                    content,
-                    rendered_filename: PathBuf::new(),
-                })
-            }
-            // No rendering to markdown is required. `content` is read from disk and left untouched.
-            // A rendition to HTML may follow.
-            TemplateKind::None => {
-                let context = context
-                    .insert_front_matter_and_raw_text_from_existing_content(&vec![&content])?
-                    .set_state_ready_for_content_template();
-                context.assert_precoditions()?;
-                Ok(Note {
-                    context,
-                    content,
-                    rendered_filename: PathBuf::new(),
-                })
-            }
-            // This should not happen. Use `Self::from_content_template()` instead.
-            _ => {
-                panic!(
-                    "Contract violation: `template_kind=={:?}` is not acceptable here.",
-                    template_kind
-                );
-            }
-        }
+        // Check contract.
+        debug_assert!(match template_kind {
+            TemplateKind::SyncFilename => true,
+
+            TemplateKind::None => true,
+            _ => panic!(
+                "Contract violation: `template_kind=={:?}` is not acceptable here.",
+                template_kind
+            ),
+        });
+
+        // Deserialize the note's header read from disk.
+        // Store the front matter in the context for later use in templates.
+        let fm = FrontMatter::try_from(content.header())?;
+        let context = context.insert_front_matter(&fm);
+
+        Ok(Note {
+            context,
+            content,
+            rendered_filename: PathBuf::new(),
+        })
     }
 
     /// Constructor that creates a new note by filling in the content
@@ -167,9 +153,7 @@ impl<T: Content> Note<T> {
         // Deserialize the rendered template
         let fm = FrontMatter::try_from(new_content.header())?;
 
-        let new_context = Context::from_context_path(&context)
-            .insert_front_matter(&fm)
-            .set_state_ready_for_content_template();
+        let new_context = Context::from_context_path(&context).insert_front_matter(&fm);
 
         // Return new note.
         Ok(Note {
@@ -307,6 +291,9 @@ impl<T: Content> Note<T> {
         self.context.debug_assert_paths_and_map_in_sync();
 
         let mut html_context = self.context.clone();
+
+        html_context.insert(TMPL_VAR_DOC_HEADER, self.content.header());
+        html_context.insert(TMPL_VAR_DOC, self.content.body());
 
         // Copy `TMPL_HTML_VAR_VIEWER_DOC_JS`
         if let Some(val) = self.context.get(TMPL_HTML_VAR_VIEWER_DOC_JS) {

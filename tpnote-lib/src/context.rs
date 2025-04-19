@@ -63,11 +63,12 @@ pub struct HasExistingContent;
 /// from some note's front matter. When a `Context` is associated with a
 /// `Content` (e.g. in a `Note`), the `fm.` variables in `Context` correspond
 /// to the header fields in `Content`.
+/// This is the state that all `<Note>.context` is guarantied to have.
 pub struct HasOwnFrontMatter;
 
 #[derive(Debug, PartialEq, Clone)]
 /// The context has assembled enough information to be passed to a
-/// content or filename template renderer.
+/// content template renderer.
 pub struct ReadyForContentTemplate;
 
 /// The state of this object is invalid. Do not use.
