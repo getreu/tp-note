@@ -90,6 +90,9 @@ impl<T: Content> Note<T> {
         let fm = FrontMatter::try_from(content.header())?;
         let context = context.insert_front_matter(&fm);
 
+        // This data comes from outside. We need additional checks here.
+        context.assert_precoditions()?;
+
         Ok(Note {
             context,
             content,
