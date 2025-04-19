@@ -47,71 +47,170 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::time::SystemTime;
 
-/// A type state describing the amount and type of data the `Context` type
-/// contains.
+/// At trait setting up a state machine as described below.
+/// Its implementors represent one specific state defining the amount and the
+/// type of data the `Context` type holds at that moment.
 pub trait ContextState {}
 
 #[derive(Debug, PartialEq, Clone)]
-/// The `Context` object is in an invalid state. Either it was not initialized
-/// or its data does not correspond any more to the `Content` it represents.
+/// See description in the `ContextState` implementor list.
 pub struct Invalid;
 
 #[derive(Debug, PartialEq, Clone)]
-/// The `Context` has the following initialized and valid fields: `path`,
-/// `dir_path`, `root_path` and `ct`. The context `ct` contains data from
-/// `insert_config_vars()` and `insert_settings()`.
+/// See description in the `ContextState` implementor list.
 pub struct HasSettings;
 
 #[derive(Debug, PartialEq, Clone)]
-/// In addition to `HasSettings`, this context contains front matter and
-/// raw text of exiting contents, e.g.: clipboards or an existing note file
-/// on disk.
-pub struct HasExistingContent;
-
-#[derive(Debug, PartialEq, Clone)]
-/// In addition to `HasSettings`, the `context.ct` contains fields deserialized
-/// from some note's front matter. When a `Context` is associated with a
-/// `Content` (e.g. in a `Note`), the `fm.` variables in `Context` correspond
-/// to the header fields in `Content`.
-/// This is the state that all `<Note>.context` is guarantied to have.
+/// See description in the `ContextState` implementor list.
 pub struct ReadyForFilenameTemplate;
 
 #[derive(Debug, PartialEq, Clone)]
-/// The context has assembled enough information to be passed to a
-/// content template renderer.
+/// See description in the `ContextState` implementor list.
+pub struct HasExistingContent;
+
+#[derive(Debug, PartialEq, Clone)]
+/// See description in the `ContextState` implementor list.
 pub struct ReadyForContentTemplate;
 
 #[derive(Debug, PartialEq, Clone)]
-/// The context has assembled enough information to be passed to a
-/// content template renderer.
+/// See description in the `ContextState` implementor list.
 pub struct ReadyForHtmlTemplate;
 
 #[derive(Debug, PartialEq, Clone)]
-/// The context has assembled enough information to be passed to a
-/// content template renderer.
+/// See description in the `ContextState` implementor list.
 pub struct ReadyForHtmlErrorTemplate;
 
-/// The state of this object is invalid. Do not use.
+/// The `Context` object is in an invalid state. Either it was not initialized
+/// or its data does not correspond any more to the `Content` it represents.
+///
+/// |  State order   |                                       |
+/// |----------------|---------------------------------------|
+/// | Previous state | none                                  |
+/// | Current state  | `Invalid`                             |
+/// | Next state     | `HasSettings`                         |
+///
 impl ContextState for Invalid {}
 
-/// The `from()` method was executed.
-/// The `insert_config_vars()` method was executed.
-/// The `insert_settings()` method was executed.
+/// The `Context` has the following initialized and valid fields: `path`,
+/// `dir_path`, `root_path` and `ct`. The context `ct` contains data from
+/// `insert_config_vars()` and `insert_settings()`.
+/// `Context<HasSettings>` has the following variables set:
+///
+/// * `TMPL_VAR_CURRENT_SCHEME`
+/// * `TMPL_VAR_DIR_PATH` in sync with `self.dir_path` and
+/// * `TMPL_VAR_DOC_FILE_DATE` in sync with `self.doc_file_date` (only if
+///   available).
+/// * `TMPL_VAR_EXTENSION_DEFAULT`
+/// * `TMPL_VAR_LANG`
+/// * `TMPL_VAR_PATH` in sync with `self.path`,
+/// * `TMPL_VAR_ROOT_PATH` in sync with `self.root_path`.
+/// * `TMPL_VAR_SCHEME_SYNC_DEFAULT`.
+/// * `TMPL_VAR_USERNAME`
+///
+/// The variables are inserted by the following methods: `self.from()`,
+/// `self.insert_config_vars()` and `self.insert_settings()`.
+/// Once this state is achieved, `Context` is constant and write protected until
+/// the next state transition.
+///
+/// |  State order   |                                       |
+/// |----------------|---------------------------------------|
+/// | Previous state | `Invalid`                             |
+/// | Current state  | `HasSettings`                         |
+/// | Next state     | `ReadyForFilenameTemplate` or `HasExistingContent` |
+///
 impl ContextState for HasSettings {}
 
-/// The `insert_front_matter_and_raw_text_from_existing_content()` method was executed.
-impl ContextState for HasExistingContent {}
-
-/// The `insert_front_matter()` method was executed.
+/// In addition to `HasSettings`, the `context.ct` contains template variables
+/// deserialized from some note's front matter. E.g. a field named `title:`
+/// appears in the context as `fm.fm_title` template variable.
+/// In `Note` objects the `Content` is always associated with a
+/// `Context<ReadyForFilenameTemplate>`.
+/// Once this state is achieved, `Context` is constant and write protected until
+/// the next state transition.
+///
+/// |  State order   |                                       |
+/// |----------------|---------------------------------------|
+/// | Previous state | `HasSettings`                         |
+/// | Current state  | `ReadyForFilenameTemplate `           |
+/// | Next state     | none or `ReadyForHtmlTemplate`        |
+///
 impl ContextState for ReadyForFilenameTemplate {}
 
-/// The `Context` has all data for the intended template.
+/// In addition to the `HasSettings` the YAML headers of all clipboard
+/// `Content` objects are registered as front matter variables `fm.fm*` in the
+/// `Context`.
+/// This stage is also used for the `TemplateKind::FromTextFile` template.
+/// In this case the last inserted `Content` comes from the text file
+/// the command line parameter `<path>` points to. This adds the following key:
+///
+/// * `TMPL_VAR_DOC`
+///
+/// This state can evolve as the
+/// `insert_front_matter_and_raw_text_from_existing_content()` function can be
+/// called several times.
+///
+/// |  State order   |                                       |
+/// |----------------|---------------------------------------|
+/// | Previous state | `HasSettings` or `HasExistingContent` |
+/// | Current state  | `HasExistingContent`                  |
+/// | Next state     | `ReadyForContentTemplate`             |
+///
+impl ContextState for HasExistingContent {}
+
+/// This marker state means that enough information have been collected
+/// in the `HasExistingContent` state to be passed to a
+/// content template renderer.
+/// Once this state is achieved, `Context` is constant and write protected until
+/// the next state transition.
+///
+/// |  State order   |                                       |
+/// |----------------|---------------------------------------|
+/// | Previous state | `HasExistingContent`                  |
+/// | Current state  | `ReadyForContentTemplate`             |
+/// | Next state     | none                                  |
+///
 impl ContextState for ReadyForContentTemplate {}
 
-/// The `Context` has all data for the intended template.
+/// In addition to the `ReadyForFilenameTemplate` state this state has the
+/// following variables set:
+///
+/// * `TMPL_HTML_VAR_EXPORTER_DOC_CSS`
+/// * `TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS`
+/// * `TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS`
+/// * `TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH`
+/// * `TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE`
+/// * `TMPL_HTML_VAR_VIEWER_DOC_JS` from `viewer_doc_js`
+/// * `TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH`
+/// * `TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE`
+/// * `TMPL_VAR_DOC`
+/// * `TMPL_VAR_DOC_HEADER`
+///
+/// Once this state is achieved, `Context` is constant and write protected until
+/// the next state transition.
+///
+/// |  State order   |                                       |
+/// |----------------|---------------------------------------|
+/// | Previous state | `ReadyForFilenameTemplate`            |
+/// | Current state  | `ReadyForHtmlTemplate`                |
+/// | Next state     | none                                  |
+///
 impl ContextState for ReadyForHtmlTemplate {}
 
 /// The `Context` has all data for the intended template.
+///
+/// * `TMPL_HTML_VAR_DOC_ERROR` from `error_message`
+/// * `TMPL_HTML_VAR_DOC_TEXT` from `note_erroneous_content`
+/// * `TMPL_HTML_VAR_VIEWER_DOC_JS` from `viewer_doc_js`
+///
+/// Once this state is achieved, `Context` is constant and write protected until
+/// the next state transition.
+///
+/// |  State order   |                                       |
+/// |----------------|---------------------------------------|
+/// | Previous state | `HasSettings`                         |
+/// | Current state  | `ReadyForHtmlErrorTemplate`           |
+/// | Next state     | none                                  |
+///
 impl ContextState for ReadyForHtmlErrorTemplate {}
 
 /// Tiny wrapper around "Tera context" with some additional information.
@@ -137,9 +236,9 @@ pub struct Context<S: ContextState + ?Sized> {
     _marker: PhantomData<S>,
 }
 
-/// These methods are available in all `ContentState` states.
+/// The methods below are available in all `ContentState` states.
 impl<S: ContextState> Context<S> {
-    // Transition to a fault state.
+    /// Transition to the fault state.
     pub fn mark_as_invalid(self) -> Context<Invalid> {
         Context {
             ct: self.ct,
@@ -174,10 +273,12 @@ impl<S: ContextState> Context<S> {
     }
 
     /// Helper function that keeps the values with the `self.ct` key
-    /// `TMPL_VAR_PATH` in sync with `self.path`,
-    /// `TMPL_VAR_DIR_PATH` in sync with `self.dir_path` and
-    /// `TMPL_VAR_ROOT_PATH` in sync with `self.root_path`.
-    /// `TMPL_VAR_DOC_FILE_DATE` in sync with `self.doc_file_date` (only if
+    ///
+    /// * `TMPL_VAR_PATH` in sync with `self.path`,
+    /// * `TMPL_VAR_DIR_PATH` in sync with `self.dir_path` and
+    /// * `TMPL_VAR_ROOT_PATH` in sync with `self.root_path`.
+    /// * `TMPL_VAR_DOC_FILE_DATE` in sync with `self.doc_file_date` (only if
+    ///
     /// available).
     /// Synchronization is performed by copying the latter to the former.
     fn sync_paths_to_map(&mut self) {
@@ -198,14 +299,16 @@ impl<S: ContextState> Context<S> {
     }
 
     /// Helper function that asserts;
-    /// `TMPL_VAR_PATH` in sync with `self.path`,
-    /// `TMPL_VAR_DIR_PATH` in sync with `self.dir_path` and
-    /// `TMPL_VAR_ROOT_PATH` in sync with `self.root_path`.
-    /// `TMPL_VAR_DOC_FILE_DATE` in sync with `self.doc_file_date` (only if
-    /// available).
+    ///
+    /// * `TMPL_VAR_PATH` in sync with `self.path`,
+    /// * `TMPL_VAR_DIR_PATH` in sync with `self.dir_path` and
+    /// * `TMPL_VAR_ROOT_PATH` in sync with `self.root_path`.
+    /// * `TMPL_VAR_DOC_FILE_DATE` in sync with `self.doc_file_date` (only if
+    ///   available).
+    ///
     /// This data is intentionally redundant, this is why we check if it is
     /// still in sync.
-    pub fn debug_assert_paths_and_map_in_sync(&self) {
+    pub(crate) fn debug_assert_paths_and_map_in_sync(&self) {
         debug_assert_eq!(
             self.ct.get(TMPL_VAR_PATH).unwrap().as_str(),
             self.path.to_str()
@@ -235,8 +338,9 @@ impl<S: ContextState> Context<S> {
     /// Insert some configuration variables into the context so that they
     /// can be used in the templates.
     ///
-    /// This function add the keys:
-    /// TMPL_VAR_SCHEME_SYNC_DEFAULT.
+    /// This function adds the key:
+    ///
+    /// * `TMPL_VAR_SCHEME_SYNC_DEFAULT`.
     ///
     /// ```
     /// use std::path::Path;
@@ -267,7 +371,7 @@ impl<S: ContextState> Context<S> {
     /// `context` collection. The variables are needed later to populate
     /// a context template and a filename template.
     ///
-    /// This function add the keys:
+    /// This function adds the keys:
     ///
     /// * `TMPL_VAR_EXTENSION_DEFAULT`
     /// * `TMPL_VAR_USERNAME`
@@ -396,8 +500,7 @@ impl<S: ContextState> Context<S> {
     }
 }
 
-/// A thin wrapper around `tera::Context` storing some additional
-/// information.
+/// The start state of all `Context` objects.
 ///
 impl Context<Invalid> {
     /// Constructor: `path` is the first positional command line parameter
@@ -427,7 +530,6 @@ impl Context<Invalid> {
     /// assert_eq!(&context.get(TMPL_VAR_DIR_PATH).unwrap().to_string(),
     ///             r#""/path/to""#);
     /// ```
-    ///
     pub fn from(path: &Path) -> Result<Context<HasSettings>, FileError> {
         let path = path.to_path_buf();
 
@@ -636,7 +738,7 @@ impl Context<HasExistingContent> {
         Ok(self)
     }
 
-    /// Mark this to be ready.
+    /// Mark this as ready for a content template.
     pub fn set_state_ready_for_content_template(self) -> Context<ReadyForContentTemplate> {
         self.debug_assert_paths_and_map_in_sync();
         Context {
@@ -652,7 +754,7 @@ impl Context<HasExistingContent> {
 
 impl Context<ReadyForFilenameTemplate> {
     /// Checks if the front matter variables satisfy preconditions.
-    /// The path is the path to the current document.
+    /// `self.path` is the path to the current document.
     #[inline]
     pub fn assert_precoditions(&self) -> Result<(), NoteError> {
         let path = &self.path;
@@ -828,8 +930,10 @@ impl Context<ReadyForFilenameTemplate> {
         Ok(())
     }
 
-    /// Show, that we are done.
-    pub fn set_state_ready_for_content_template(self) -> Context<ReadyForContentTemplate> {
+    /// Indicates that this context contains all we need for the content
+    /// template.
+    #[cfg(test)]
+    pub(crate) fn set_state_ready_for_content_template(self) -> Context<ReadyForContentTemplate> {
         self.debug_assert_paths_and_map_in_sync();
         Context {
             ct: self.ct,

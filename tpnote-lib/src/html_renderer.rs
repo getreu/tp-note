@@ -43,6 +43,9 @@ impl HtmlRenderer {
     /// of the variable `context.path`. The resulting HTML and other HTML
     /// template variables originating from `context` are inserted into the
     /// `TMPL_HTML_VIEWER` template before being returned.
+    /// The string `viewer_doc_js` contains JavaScript live update code that
+    /// will be injected into the HTML page via the
+    /// `TMPL_HTML_VAR_DOC_VIEWER_JS` template variable.
     /// This function is stateless.
     ///
     /// ```rust
@@ -177,9 +180,9 @@ impl HtmlRenderer {
     /// `parse_hyperlinks::renderer::text_rawlinks2html` and inserted in
     /// the `TMPL_HTML_VIEWER_ERROR` template (which can be configured at
     /// runtime).
-    /// `context` is expected to have at least all `HasSettings` keys
-    /// and the additional key `TMPL_HTML_VAR_VIEWER_DOC_JS` set and valid.
-    /// All other keys are ignored.
+    /// The string `viewer_doc_js` contains JavaScript live update code that
+    /// will be injected into the HTML page via the
+    /// `TMPL_HTML_VAR_DOC_VIEWER_JS` template variable.
     /// This function is stateless.
     ///
     /// ```rust
