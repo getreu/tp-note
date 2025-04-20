@@ -121,7 +121,7 @@ impl HttpResponse for ServerThread {
                 // Tera template errors.
                 // The contains JavaScript code to subscribe to `EVENT_PATH`, which
                 // reloads this document on request of `self.rx`.
-                let html = self.render_content_and_error(&self.context.path)?;
+                let html = self.render_content_and_error(self.context.get_path())?;
 
                 self.respond_content_ok(Path::new("/"), 0, "text/html", html.as_bytes())?;
                 // `self.rx` was not used and is dropped here.
@@ -158,7 +158,8 @@ impl HttpResponse for ServerThread {
                 // We prepend `root_path` to `abspath` before accessing the file system.
                 let abspath = self
                     .context
-                    .root_path
+                    .get_root_path()
+                    .to_owned()
                     .join(relpath.strip_prefix("/").unwrap_or(relpath));
                 let abspath = Cow::Borrowed(abspath.as_path());
                 // From here on, we only work with `abspath`.
@@ -166,8 +167,8 @@ impl HttpResponse for ServerThread {
                 drop(relpath);
 
                 // This is an alias for `/`, we send the main document and quit.
-                if abspath == self.context.dir_path {
-                    let html = self.render_content_and_error(&self.context.path)?;
+                if abspath == self.context.get_dir_path() {
+                    let html = self.render_content_and_error(self.context.get_path())?;
 
                     return self.respond_content_ok(
                         Path::new("/"),
@@ -417,7 +418,7 @@ impl HttpResponse for ServerThread {
         let content = ContentString::open(maybe_other_doc)?;
 
         // Do we render `self.path` or some other document?
-        let (html_context, viewer_doc_js) = if self.context.path == maybe_other_doc {
+        let (html_context, viewer_doc_js) = if self.context.get_path() == maybe_other_doc {
             let html_context = Context::from_context_path(&self.context);
             (html_context, self.live_update_js.as_str())
         } else {
@@ -443,8 +444,8 @@ impl HttpResponse for ServerThread {
         .map(|html| {
             rewrite_links(
                 html,
-                &html_context.root_path,
-                &html_context.dir_path,
+                html_context.get_root_path(),
+                html_context.get_dir_path(),
                 // Do convert relative to abs absolute links.
                 // Do not convert abs. links.
                 LocalLinkKind::Short,
@@ -475,7 +476,8 @@ impl HttpResponse for ServerThread {
             // special error page and return this instead.
             Err(e) => {
                 // Render error page providing all information we have.
-                let note_erroneous_content = <ContentString as Content>::open(&html_context.path)?;
+                let note_erroneous_content =
+                    <ContentString as Content>::open(html_context.get_path())?;
                 HtmlRenderer::error_page(
                     html_context,
                     note_erroneous_content,

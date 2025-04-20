@@ -481,7 +481,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
                 n.render_filename(template_kind)?;
 
                 // Save new note.
-                let context_path = n.context.path.clone();
+                let context_path = n.context.get_path().to_owned();
                 n.set_next_unused_rendered_filename_or(&context_path)?;
                 n.save_and_delete_from(&context_path)?;
                 n
@@ -506,7 +506,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
         // If no new filename was rendered, return the old one.
         let mut n = n;
         if n.rendered_filename == PathBuf::new() {
-            n.rendered_filename = n.context.path.clone();
+            n.rendered_filename = n.context.get_path().to_owned();
         }
 
         // Export HTML rendition, if wanted.
@@ -583,9 +583,10 @@ fn synchronize_filename<T: Content>(
 
     note.render_filename(TemplateKind::SyncFilename)?;
 
-    note.set_next_unused_rendered_filename_or(&note.context.path.clone())?;
+    let path = note.context.get_path().to_owned();
+    note.set_next_unused_rendered_filename_or(&path)?;
     // Silently fails is source and target are identical.
-    note.rename_file_from(&note.context.path)?;
+    note.rename_file_from(note.context.get_path())?;
 
     Ok(())
 }

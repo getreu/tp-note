@@ -219,19 +219,19 @@ pub struct Context<S: ContextState + ?Sized> {
     /// Collection of substitution variables.
     ct: tera::Context,
     /// First positional command line argument.
-    pub path: PathBuf,
+    path: PathBuf,
     /// The directory (only) path corresponding to the first positional
     /// command line argument. The is our working directory and
     /// the directory where the note file is (will be) located.
-    pub dir_path: PathBuf,
+    dir_path: PathBuf,
     /// `dir_path` is a subdirectory of `root_path`. `root_path` is the
     /// first directory, that upwards from `dir_path`, contains a file named
     /// `FILENAME_ROOT_PATH_MARKER` (or `/` if no marker file can be found).
     /// The root directory is interpreted by Tp-Note's viewer as its base
     /// directory: only files within this directory are served.
-    pub root_path: PathBuf,
+    root_path: PathBuf,
     /// If `path` points to a file, we store its creation date here.
-    pub doc_file_date: Option<SystemTime>,
+    doc_file_date: Option<SystemTime>,
     /// Rust requires usage of generic parameters, here `S`.
     _marker: PhantomData<S>,
 }
@@ -543,8 +543,8 @@ impl Context<Invalid> {
     ///
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md")).unwrap();
     ///
-    /// assert_eq!(context.path, Path::new("/path/to/mynote.md"));
-    /// assert_eq!(context.dir_path, Path::new("/path/to/"));
+    /// assert_eq!(context.get_path(), Path::new("/path/to/mynote.md"));
+    /// assert_eq!(context.get_dir_path(), Path::new("/path/to/"));
     /// assert_eq!(&context.get(TMPL_VAR_PATH).unwrap().to_string(),
     ///             r#""/path/to/mynote.md""#);
     /// assert_eq!(&context.get(TMPL_VAR_DIR_PATH).unwrap().to_string(),

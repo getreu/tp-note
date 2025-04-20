@@ -415,7 +415,7 @@ pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
     // `Context::new()` is executed, we report this error to the user.
     if let Some(root_path) = DOC_PATH.as_deref().ok().map(|doc_path| {
         let mut root_path = if let Ok(context) = Context::from(doc_path) {
-            context.root_path
+            context.get_root_path().to_owned()
         } else {
             PathBuf::new()
         };

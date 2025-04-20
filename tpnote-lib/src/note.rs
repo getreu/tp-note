@@ -167,7 +167,7 @@ impl<T: Content> Note<T> {
             *self.context
         );
         // Render template
-        let mut file_path = self.context.dir_path.to_owned();
+        let mut file_path = self.context.get_dir_path().to_owned();
         let mut tera = Tera::default();
         tera.extend(&TERA)?;
 
@@ -431,12 +431,13 @@ Body text
             TemplateKind::SyncFilename,
         )
         .unwrap();
+
+        let path = n.context.get_path().to_owned();
         n.render_filename(TemplateKind::SyncFilename).unwrap();
-        n.set_next_unused_rendered_filename_or(&n.context.path.clone())
-            .unwrap();
+        n.set_next_unused_rendered_filename_or(&path).unwrap();
         assert_eq!(n.rendered_filename, expected);
         // Rename file on the disk.
-        n.rename_file_from(&n.context.path).unwrap();
+        n.rename_file_from(&path).unwrap();
         assert!(n.rendered_filename.is_file());
     }
 
@@ -909,7 +910,7 @@ Body text
         assert_eq!(n.content.body().trim(), raw);
         n.render_filename(TemplateKind::FromTextFile).unwrap();
         n.set_next_unused_rendered_filename().unwrap();
-        n.save_and_delete_from(&context.path).unwrap();
+        n.save_and_delete_from(context.get_path()).unwrap();
 
         // Check the new file with header
         assert_eq!(&n.rendered_filename, &expected);

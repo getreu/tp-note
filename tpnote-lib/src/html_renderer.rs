@@ -100,7 +100,7 @@ impl HtmlRenderer {
     /// let mut context = Context::from(&notefile).unwrap();
     /// // We do not inject any JavaScript.
     /// // Render.
-    /// let content = ContentString::open(&context.path).unwrap();
+    /// let content = ContentString::open(context.get_path()).unwrap();
     /// // You can plug in your own type (must impl. `Content`).
     /// let html = HtmlRenderer::viewer_page(context, content, "").unwrap();
     /// // Check the HTML rendition.
@@ -215,7 +215,7 @@ impl HtmlRenderer {
     /// // Render.
     /// // Read from file.
     /// // You can plug in your own type (must impl. `Content`).
-    /// let content = ContentString::open(&context.path).unwrap();
+    /// let content = ContentString::open(context.get_path()).unwrap();
     /// let html = HtmlRenderer::error_page(
     ///               context, content, &e.to_string(), "").unwrap();
     /// // Check the HTML rendition.
@@ -293,13 +293,13 @@ impl HtmlRenderer {
     ) -> Result<(), NoteError> {
         let context = Context::from(doc_path)?;
 
-        let doc_path = context.path.clone();
-        let doc_dir = context.dir_path.clone();
+        let doc_path = context.get_path();
+        let doc_dir = context.get_dir_path().to_owned();
 
         // Determine filename of html-file.
         let html_path = match export_dir {
             p if p == Path::new("") => {
-                let mut s = doc_path.as_path().to_str().unwrap_or_default().to_string();
+                let mut s = doc_path.to_str().unwrap_or_default().to_string();
                 s.push_str(HTML_EXT);
                 PathBuf::from_str(&s).unwrap_or_default()
             }
@@ -340,7 +340,7 @@ impl HtmlRenderer {
         };
 
         // Render HTML.
-        let root_path = context.root_path.clone();
+        let root_path = context.get_root_path().to_owned();
         let html = Self::exporter_page(context, content)?;
         let html = rewrite_links(
             html,
