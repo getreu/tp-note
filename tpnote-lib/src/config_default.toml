@@ -284,44 +284,85 @@ filter.to_yaml_tab = 14
 ### Default content template used when the command line argument `<sanit>`
 ### is a directory. Can be changed through editing the configuration
 ### file. The following variables are defined:
-### * `{{ path }}`: points to the directory where the new note will be created.
-### * `{{ dir_path }}` is in this context identical to `{{ path }}`.
-###   In addition, all environment variables can be used, e.g.
-###   `{{ get_env(name=\"LOGNAME\") }}` When placed in YAML front matter, the
-###   filter `to_yaml` must be appended to each variable.
+### Clipboard data may be available.
+### This template needs `Context<ReadyForContentTemplate`.
 from_dir_content = """
-{%- set title_text = dir_path | trim_file_sort_tag -%}
-{%- set languages = title_text | get_lang | map_lang(default=lang) -%}
-{%- set lang = languages | first -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
+{%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
+
+{%- set title_text = fm.fm_title | default(value = '')
+     | replace_empty(with = stdin | html_heading )
+     | replace_empty(with = stdin | link_text_picky )
+     | replace_empty(with = stdin | link_text )
+     | replace_empty(with = stdin | heading )
+     | replace_empty(with = html_clipboard | html_heading )
+     | replace_empty(with = html_clipboard | link_text_picky )
+     | replace_empty(with = txt_clipboard | link_text_picky )
+     | replace_empty(with = html_clipboard | link_text )
+     | replace_empty(with = txt_clipboard | link_text )
+     | replace_empty(with = txt_clipboard | heading )
+     | replace_empty(with = path | trim_file_sort_tag )
+     | trim  -%}
+        
+{%- set input = stdin ~ clipboard | trim -%}
+{%- set languages = fm.fm_languages
+     | default(value = input | replace_empty(with = path | trim_file_sort_tag )
+                             | get_lang | map_lang(default=lang) ) -%}
+{%- set lang = fm.fm_lang | default(value = languages | first ) -%}
+
 ---
 {{ title_text | trunc | to_yaml(key='fm_title') }}
-{{ 'Note' | to_yaml(key='fm_subtitle') }}
-{{ username | capitalize | to_yaml(key='fm_author') }}
-{{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
+{{ fm.fm_subtitle | default(value = 'Note') | to_yaml(key='fm_subtitle') }}
+{{ fm.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
+{{ fm.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
 {% if languages | length > 1 -%}
-{{ languages | to_yaml(key='fm_languages') | append(newline=true) }}
+  {{ languages | to_yaml(key='fm_languages') | append(newline=true) }}
 {%- endif -%}
 {% if scheme_sync_default != current_scheme -%}
-{{ current_scheme | to_yaml(key='fm_scheme') | append(newline=true) }}
+  {{ current_scheme | to_yaml(key='fm_scheme') | append(newline=true) }}
+{%- endif -%}
+{%- if fm -%}
+  {{ fm \
+    | remove(key='fm_title')\
+    | remove(key='fm_subtitle')\
+    | remove(key='fm_author')\
+    | remove(key='fm_date')\
+    | remove(key='fm_lang')\
+    | remove(key='fm_languages')\
+    | to_yaml \
+    | prepend(newline=true) \
+    | append(newline=true) }}\
 {%- endif -%}
 ---
 
+{{ input }}
 
 """
 
 ### Default filename template for a new note file on disk. It implements the
 ### sync criteria for note metadata in front matter and filename.
-### Useful variables in this context are:
-### `{{ title | sanit }}`, `{{ subtitle | sanit }}`, `{{ extension_default }}.
-### In general, in filename template, all variables (except `now` and
-### `extension_default` must be filtered by a `sanit` filter.
+### This template needs `Context<ReadyForFilenameTemplate>`.
 from_dir_filename = """
-{%- set tag_default = now() | date(format='%Y%m%d') -%}
-{%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
+{%- set keywords = '' -%}
+{%- set fm_keywords = fm.fm_keywords | default(value='') -%}
+{%- if fm_keywords | as_str == fm_keywords -%}
+  {%- set_global keywords = fm_keywords -%}
+{%- else -%}
+  {%- for sub in fm.fm_keywords -%}
+    {%- set_global keywords = keywords~sub~'_' -%}
+  {%- endfor -%}
+{%- endif -%}
+
+{%- if fm.fm_sort_tag -%}
+  {%- set tag = fm.fm_sort_tag -%}
+{%- else -%}
+  {%- set tag = dir_path | find_last_created_file
+                 | incr_sort_tag(default=now() | date(format='%Y%m%d')) -%}
+{%- endif -%}
 {{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
-{{ fm.fm_subtitle | default(value='') | sanit | prepend(with='--') }}\
-{{ extension_default | prepend(with='.') }}"""
+{{ fm.fm_subtitle | sanit | prepend(with='--') }}\
+{{ fm.fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
 
 ### Default template used, when the clipboard or the input stream `stdin`
 ### contains a string and one the of these strings contains a valid YAML front
@@ -563,27 +604,64 @@ sort_tag.separator = "--"
 [scheme.tmpl]
 
 from_dir_content = """
-{%- set title_text = dir_path | trim_file_sort_tag -%}
-{%- set languages = title_text | get_lang | map_lang(default=lang) -%}
-{%- set lang = languages | first -%}
-{%- set tag_default = now() | date(format='%Y%m%d') -%}
-{%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
-{%- set keywords = ['note'] -%}
+{%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
+{%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
+
+{%- set title_text = fm.fm_title | default(value = '')
+         | replace_empty(with = stdin | html_heading )
+         | replace_empty(with = stdin | link_text_picky )
+         | replace_empty(with = stdin | link_text )
+         | replace_empty(with = stdin | heading )
+         | replace_empty(with = html_clipboard | html_heading )
+         | replace_empty(with = html_clipboard | link_text_picky )
+         | replace_empty(with = txt_clipboard | link_text_picky )
+         | replace_empty(with = html_clipboard | link_text )
+         | replace_empty(with = txt_clipboard | link_text )
+         | replace_empty(with = txt_clipboard | heading )
+         | replace_empty(with = path | trim_file_sort_tag )
+         | trim  -%}
+        
+{%- set input = stdin ~ clipboard | trim -%}
+{%- set languages = fm.fm_languages
+     | default(value = input | replace_empty(with = path | trim_file_sort_tag )
+                             | get_lang | map_lang(default=lang) ) -%}
+{%- set lang = fm.fm_lang | default(value = languages | first ) -%}
+
+{%- if fm.fm_sort_tag -%}
+  {%- set tag = fm.fm_sort_tag -%}
+{%- else -%}
+  {%- set tag_default = now() | date(format='%Y%m%d') -%}
+  {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
+{%- endif -%}
 ---
 {{ title_text | trunc | to_yaml(key='fm_title') }}
-{{ keywords | to_yaml(key='keywords') }}
-{{ username | capitalize | to_yaml(key='fm_author') }}
-{{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
+{{ fm.fm_keywords | default(value = ['note']) | to_yaml(key='fm_keywords') }}
+{{ fm.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
+{{ fm.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
 {% if languages | length > 1 -%}
-{{ languages | to_yaml(key='fm_languages') | append(newline=true) }}
+  {{ languages | to_yaml(key='fm_languages') | append(newline=true) }}
 {%- endif -%}
 {{ 'zettel' | to_yaml(key='fm_scheme') }}
-{{ tag | to_yaml(key='sort_tag') }}
+{{ tag | to_yaml(key='fm_sort_tag') }}
+{% if fm -%}
+  {{ fm \
+    | remove(key='fm_title')\
+    | remove(key='fm_subtitle')\
+    | remove(key='fm_author')\
+    | remove(key='fm_date')\
+    | remove(key='fm_lang')\
+    | remove(key='fm_languages')\
+    | to_yaml \
+    | prepend(newline=true) \
+    | append(newline=true) }}\
+{%- endif -%}
 ---
 
+{{ input }}
 
 """
+
 
 from_dir_filename = """
 {%- set keywords = '' -%}
@@ -599,8 +677,8 @@ from_dir_filename = """
 {%- endif -%}
 
 {{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
-{{ keywords | default(value='') | sanit | prepend(with='__') }}\
-{{ extension_default | prepend(with='.') }}"""
+{{ keywords | default(value=['']) | sanit | prepend(with='__') }}\
+{{ fm.fm_file_ext | default(value = extension_default ) | prepend(with='.') }}"""
 
 from_clipboard_yaml_content = """
 {%- set stdin = stdin | append(newline=true) -%}
