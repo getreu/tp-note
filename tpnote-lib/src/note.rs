@@ -284,8 +284,7 @@ impl<T: Content> Note<T> {
         // JavaScript for live update code injection.
         viewer_doc_js: &str,
     ) -> Result<String, NoteError> {
-        self.context.debug_assert_paths_and_map_in_sync();
-
+        //
         let html_context = self.context.clone();
 
         let html_context = html_context.insert_raw_content_and_css(&self.content, viewer_doc_js);

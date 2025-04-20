@@ -318,43 +318,6 @@ impl<S: ContextState> Context<S> {
         };
     }
 
-    /// Helper function that asserts;
-    ///
-    /// * `TMPL_VAR_PATH` in sync with `self.path`,
-    /// * `TMPL_VAR_DIR_PATH` in sync with `self.dir_path` and
-    /// * `TMPL_VAR_ROOT_PATH` in sync with `self.root_path`.
-    /// * `TMPL_VAR_DOC_FILE_DATE` in sync with `self.doc_file_date` (only if
-    ///   available).
-    ///
-    /// This data is intentionally redundant, this is why we check if it is
-    /// still in sync.
-    pub(crate) fn debug_assert_paths_and_map_in_sync(&self) {
-        debug_assert_eq!(
-            self.ct.get(TMPL_VAR_PATH).unwrap().as_str(),
-            self.path.to_str()
-        );
-        debug_assert_eq!(
-            self.ct.get(TMPL_VAR_DIR_PATH).unwrap().as_str(),
-            self.dir_path.to_str()
-        );
-        debug_assert_eq!(
-            self.ct.get(TMPL_VAR_ROOT_PATH).unwrap().as_str(),
-            self.root_path.to_str()
-        );
-        debug_assert_eq!(
-            if let Some(val) = self.ct.get(TMPL_VAR_DOC_FILE_DATE) {
-                val.as_number().unwrap().as_u64().unwrap()
-            } else {
-                0
-            },
-            if let Some(st) = self.doc_file_date {
-                st.duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs()
-            } else {
-                0
-            }
-        );
-    }
-
     /// Insert some configuration variables into the context so that they
     /// can be used in the templates.
     ///
@@ -760,7 +723,6 @@ impl Context<HasExistingContent> {
 
     /// Mark this as ready for a content template.
     pub fn set_state_ready_for_content_template(self) -> Context<ReadyForContentTemplate> {
-        self.debug_assert_paths_and_map_in_sync();
         Context {
             ct: self.ct,
             path: self.path,
@@ -954,7 +916,7 @@ impl Context<ReadyForFilenameTemplate> {
     /// template.
     #[cfg(test)]
     pub(crate) fn set_state_ready_for_content_template(self) -> Context<ReadyForContentTemplate> {
-        self.debug_assert_paths_and_map_in_sync();
+        //
         Context {
             ct: self.ct,
             path: self.path,
