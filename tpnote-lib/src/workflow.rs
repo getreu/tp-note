@@ -441,7 +441,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
         let context = Context::from(self.input.path)?;
 
         // `template_kind` will tell us what to do.
-        let (template_kind, content) = TemplateKind::from(self.input.path, &self.input.clipboards);
+        let (template_kind, content) = TemplateKind::from(self.input.path);
         let template_kind = (self.input.tk_filter)(template_kind);
 
         let n = match template_kind {
@@ -463,7 +463,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
 
             TemplateKind::FromTextFile => {
                 // This is part of the contract for this template:
-                let content = content.unwrap();
+                let content: T = content.unwrap();
                 debug_assert!(&content.header().is_empty());
                 debug_assert!(!&content.body().is_empty());
 
