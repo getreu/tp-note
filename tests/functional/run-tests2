@@ -116,7 +116,7 @@ TPNOTE_LANG_DETECTION="" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/03c--ab_cd ef__url.md"
+OUTPUT_FILENAME="$PWD/03c--ab_cd ef__note.md"
 
 if diff "$OUTPUT_FILENAME" "test104-clipboard-expected-output"
 then
@@ -151,7 +151,7 @@ then
     rm "$OUTPUT_FILENAME"
     rm "$PWD/03b--test.md"
 else
-    echo Commandline test 10o5 failed.
+    echo Commandline test 105 failed.
     exit 1
 fi
 

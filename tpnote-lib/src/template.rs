@@ -11,23 +11,19 @@ use std::path::Path;
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TemplateKind {
     /// Templates used when Tp-Note is invoked with a directory path.
+    /// Clipboard data may be available.
     FromDir,
-    /// Templates used when the clipboard contains a text with a YAML header.
-    FromClipboardYaml,
-    /// Templates used when the clipboard contains a text without header.
-    FromClipboard,
-    /// Templates used when Tp-Note is invoked with a path pointing to a text file
-    /// that does not contain a YAML header.
+    /// Templates used when Tp-Note is invoked with a path pointing to a text
+    /// file that does not contain a YAML header.
     FromTextFile,
-    /// Templates used when Tp-Note is invoked with a path pointing to a non text
-    /// file.
+    /// Templates used when Tp-Note is invoked with a path pointing to a non
+    /// text file.
     AnnotateFile,
     /// Templates used when Tp-Note is invoked with a path pointing to a Tp-Note
     /// text file with a valid YAML header (with a `title:` field).
     SyncFilename,
-    /// No templates are used, but the file is still parsed in order to render it
-    /// later to HTML (cf. `<Note>.render_content_to_html()` and
-    /// `<Note>.export_html()`).
+    /// No templates are used, but the file is still parsed in order to
+    /// render it later to HTML (cf. `<Note>.render_content_to_html()`.
     #[default]
     None,
 }
@@ -92,9 +88,7 @@ impl TemplateKind {
             path_is_tpnote_file,
             path_is_tpnote_file_and_has_header,
         ) {
-            (true, false, _, false, _, _) => TemplateKind::FromDir,
-            (true, true, false, false, _, _) => TemplateKind::FromClipboard,
-            (true, true, true, false, _, _) => TemplateKind::FromClipboardYaml,
+            (true, _, _, false, _, _) => TemplateKind::FromDir,
             (false, _, _, true, true, true) => TemplateKind::SyncFilename,
             (false, _, _, true, true, false) => TemplateKind::FromTextFile,
             (false, _, _, true, false, _) => TemplateKind::AnnotateFile,
@@ -137,8 +131,6 @@ impl TemplateKind {
 
         match self {
             Self::FromDir => tmpl.from_dir_content.clone(),
-            Self::FromClipboardYaml => tmpl.from_clipboard_yaml_content.clone(),
-            Self::FromClipboard => tmpl.from_clipboard_content.clone(),
             Self::FromTextFile => tmpl.from_text_file_content.clone(),
             Self::AnnotateFile => tmpl.annotate_file_content.clone(),
             Self::SyncFilename => {
@@ -152,8 +144,6 @@ impl TemplateKind {
     pub fn get_content_template_name(&self) -> &str {
         match self {
             Self::FromDir => "tmpl.from_dir_content",
-            Self::FromClipboardYaml => "tmpl.from_clipboard_yaml_content",
-            Self::FromClipboard => "tmpl.from_clipboard_content",
             Self::FromTextFile => "tmpl.from_text_file_content",
             Self::AnnotateFile => "tmpl.annotate_file_content",
             Self::SyncFilename => "`TemplateKind::SyncFilename` has no content template",
@@ -175,8 +165,6 @@ impl TemplateKind {
 
         match self {
             Self::FromDir => tmpl.from_dir_filename.clone(),
-            Self::FromClipboardYaml => tmpl.from_clipboard_yaml_filename.clone(),
-            Self::FromClipboard => tmpl.from_clipboard_filename.clone(),
             Self::FromTextFile => tmpl.from_text_file_filename.clone(),
             Self::AnnotateFile => tmpl.annotate_file_filename.clone(),
             Self::SyncFilename => tmpl.sync_filename.clone(),
@@ -188,8 +176,6 @@ impl TemplateKind {
     pub fn get_filename_template_name(&self) -> &str {
         match self {
             Self::FromDir => "tmpl.from_dir_filename",
-            Self::FromClipboardYaml => "tmpl.from_clipboard_yaml_filename",
-            Self::FromClipboard => "tmpl.from_clipboard_filename",
             Self::FromTextFile => "tmpl.from_text_file_filename",
             Self::AnnotateFile => "tmpl.annotate_file_filename",
             Self::SyncFilename => "tmpl.sync_filename",
@@ -221,7 +207,7 @@ mod tests {
         let v = vec![c1, c2, c3];
 
         let tk = TemplateKind::from(Path::new("."), &v);
-        assert_eq!(tk, (TemplateKind::FromClipboard, None));
+        assert_eq!(tk, (TemplateKind::FromDir, None));
 
         //
         // Some data in the clipboard.
@@ -235,7 +221,7 @@ mod tests {
         let v = vec![c1, c2, c3];
 
         let tk = TemplateKind::from(Path::new("."), &v);
-        assert_eq!(tk, (TemplateKind::FromClipboard, None));
+        assert_eq!(tk, (TemplateKind::FromDir, None));
 
         //
         // No data in the clipboard.

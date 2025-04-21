@@ -509,9 +509,25 @@ Body text
 
         // Store the path in `context`.
         let context = Context::from(&notedir).unwrap();
-        // Change `ContextState` to `ReadyForTemplate`.
+        let html_clipboard = ContentString::from_string(
+            "".to_string(),
+            "html_clipboard_header".to_string(),
+            "html_clipboard".to_string(),
+        );
+        let txt_clipboard = ContentString::from_string(
+            "".to_string(),
+            "txt_clipboard_header".to_string(),
+            "txt_clipboard".to_string(),
+        );
+        let stdin = ContentString::from_string(
+            "".to_string(),
+            "stdin_header".to_string(),
+            "stdin".to_string(),
+        );
+        let v = vec![&html_clipboard, &txt_clipboard, &stdin];
         let context = context
-            .insert_front_matter(&FrontMatter::try_from("").unwrap())
+            .insert_front_matter_and_raw_text_from_existing_content(&v)
+            .unwrap()
             .set_state_ready_for_content_template();
 
         // Create the `Note` object.
@@ -615,8 +631,7 @@ Body text
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
         let mut n =
-            Note::<ContentString>::from_content_template(context, TemplateKind::FromClipboard)
-                .unwrap();
+            Note::<ContentString>::from_content_template(context, TemplateKind::FromDir).unwrap();
         let expected_body = "\nstd\ntxt_clp\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
@@ -639,7 +654,7 @@ Body text
                 .as_str(),
             Some("Note")
         );
-        n.render_filename(TemplateKind::FromClipboard).unwrap();
+        n.render_filename(TemplateKind::FromDir).unwrap();
         n.set_next_unused_rendered_filename().unwrap();
         n.save().unwrap();
 
@@ -667,7 +682,6 @@ Body text
         use crate::content::Content;
         use crate::content::ContentString;
         use crate::context::Context;
-        use crate::filter::TRUNC_LEN_MAX;
         use crate::note::Note;
         use crate::settings::Settings;
         use crate::settings::SETTINGS;
@@ -719,8 +733,7 @@ Body text
         // Create the `Note` object.
         // You can plug in your own type (must impl. `Content`).
         let mut n =
-            Note::<ContentString>::from_content_template(context, TemplateKind::FromClipboardYaml)
-                .unwrap();
+            Note::<ContentString>::from_content_template(context, TemplateKind::FromDir).unwrap();
         let expected_body = "\nstdin body\nmy TXT clipboard\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
@@ -731,7 +744,9 @@ Body text
                 .get("fm_title")
                 .unwrap()
                 .as_str(),
-            Some("my dir")
+            // Remember: in debug titles are very short. The code only works,
+            // because the string is pure ASCII (not UTF-8).
+            Some("stdin bod")
         );
 
         assert_eq!(
@@ -743,25 +758,26 @@ Body text
                 .as_str(),
             // Remember: in debug titles are very short. The code only works,
             // because the string is pure ASCII (not UTF-8).
-            Some(&"this overwrites"[..TRUNC_LEN_MAX - 1])
+            Some("this over")
         );
-        n.render_filename(TemplateKind::FromClipboardYaml).unwrap();
+        n.render_filename(TemplateKind::FromDir).unwrap();
         n.set_next_unused_rendered_filename().unwrap();
         n.save().unwrap();
 
         // Check the new note file.
+        //println!("rendered_filename == {:?}", n.rendered_filename);
         assert!(n
             .rendered_filename
             .as_os_str()
             .to_str()
             .unwrap()
-            .contains(&"my dir--this overwrites"[..TRUNC_LEN_MAX - 1]));
+            .contains("stdin bod--this over"));
         assert!(n.rendered_filename.is_file());
         let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
         #[cfg(not(target_family = "windows"))]
-        assert!(raw_note.starts_with("\u{feff}---\ntitle:        my dir"));
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:        stdin bod"));
         #[cfg(target_family = "windows")]
-        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:        my dir"));
+        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:        stdin bod"));
     }
 
     #[test]
@@ -823,7 +839,7 @@ Body text
             Note::<ContentString>::from_content_template(context, TemplateKind::AnnotateFile)
                 .unwrap();
         let expected_body =
-            "\n[20221030-some.pdf](<20221030-some.pdf>)\n\n---\n\nmy stdin\nmy TXT clipboard\n";
+            "\n[20221030-some.pdf](<20221030-some.pdf>)\n____\n\nmy stdin\nmy TXT clipboard\n\n";
         assert_eq!(n.content.body(), expected_body);
         // Check the title and subtitle in the note's header.
         assert_eq!(

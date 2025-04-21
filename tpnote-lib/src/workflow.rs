@@ -445,10 +445,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
         let template_kind = (self.input.tk_filter)(template_kind);
 
         let n = match template_kind {
-            TemplateKind::FromDir
-            | TemplateKind::FromClipboardYaml
-            | TemplateKind::FromClipboard
-            | TemplateKind::AnnotateFile => {
+            TemplateKind::FromDir | TemplateKind::AnnotateFile => {
                 // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
                 // All these template do not refer to existing front matter,
                 // as there is none yet.

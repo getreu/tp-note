@@ -109,7 +109,7 @@ TPNOTE_LANG_DETECTION="" \
 	cargo run -- --batch \
     		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
 
-OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-ab_cd ef--url.md"
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-ab_cd ef--Note.md"
 
 if diff "$OUTPUT_FILENAME" "test004-clipboard-expected-output"
 then
