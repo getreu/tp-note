@@ -140,7 +140,7 @@ impl<T: Content> Note<T> {
         );
 
         log::debug!(
-            "Rendered content template:\n---\n{}\n---\n{}",
+            "Rendered content template:\n---\n{}\n---\n\n{}",
             new_content.header(),
             new_content.body().trim()
         );

@@ -442,13 +442,14 @@ impl<S: ContextState> Context<S> {
             .enumerate()
             .find_map(|(i, k)| fm.0.get(k).and_then(|s| s.as_str()).map(|s| (i, s)));
 
-        let scheme = if let Some((scheme, _)) = localized_scheme {
+        let scheme = if let Some((scheme_idx, scheme_name)) = localized_scheme {
             {
                 log::trace!(
-                    "Using scheme field in front matter as current scheme: {:?}",
-                    localized_scheme
+                    "Found `scheme: {}` with index=={} in front matter",
+                    scheme_name,
+                    scheme_idx,
                 );
-                scheme
+                scheme_idx
             }
         } else {
             SETTINGS.read_recursive().current_scheme
@@ -696,8 +697,8 @@ impl Context<HasExistingContent> {
                 match input_fm {
                     Ok(ref fm) => {
                         log::trace!(
-                            "Input stream from \"{}\" generates the front matter variables:\n{:#?}",
-                            clip.body(),
+                            "Input stream \"{}\" generates the front matter variables:\n{:#?}",
+                            clip.header_name(),
                             &fm
                         )
                     }
