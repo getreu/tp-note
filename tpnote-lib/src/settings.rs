@@ -197,7 +197,10 @@ impl Settings {
     ///    `TPNOTE_SCHEME`,
     ///    or, -if the above environment variable is not defined or empty-
     /// 4. take `s`.
-    fn update_current_scheme(&mut self, scheme_source: SchemeSource) -> Result<(), LibCfgError> {
+    pub(crate) fn update_current_scheme(
+        &mut self,
+        scheme_source: SchemeSource,
+    ) -> Result<(), LibCfgError> {
         let lib_cfg = LIB_CFG.read_recursive();
 
         let scheme = match scheme_source {

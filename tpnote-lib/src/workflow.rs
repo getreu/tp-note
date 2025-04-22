@@ -564,12 +564,15 @@ fn synchronize_filename<T: Content>(
     {
         Some(Value::String(s)) if !s.is_empty() => {
             // Initialize `SETTINGS`.
-            settings.with_upgraded(|settings| settings.update(SchemeSource::Force(s), None))?;
+            settings
+                .with_upgraded(|settings| settings.update_current_scheme(SchemeSource::Force(s)))?;
+            log::info!("Switch to scheme `{}` as indicated in front matter", s);
         }
         Some(Value::String(_)) | None => {
             // Initialize `SETTINGS`.
-            settings
-                .with_upgraded(|settings| settings.update(SchemeSource::SchemeSyncDefault, None))?;
+            settings.with_upgraded(|settings| {
+                settings.update_current_scheme(SchemeSource::SchemeSyncDefault)
+            })?;
         }
         Some(_) => {
             return Err(NoteError::FrontMatterFieldIsNotString {
