@@ -136,30 +136,33 @@ pub fn set_test_default_settings() -> Result<(), LibCfgError> {
 /// How should `update_settings` collect the right scheme?
 #[derive(Debug, Clone)]
 pub(crate) enum SchemeSource<'a> {
-    /// Ignore `TPNOTE_SCHEME_NEW_DEFAULT`, take this.
+    /// Ignore environment and configuration, take this.
     Force(&'a str),
     /// Take the value `lib_cfg.scheme_sync_default`.
     SchemeSyncDefault,
-    /// Take `TPNOTE_SCHEME_NEW_DEFAULT` or -if not defined- take this.
+    /// Take env. var. `TPNOTE_SCHEME` or -if not defined- take this.
     SchemeNewDefault(&'a str),
 }
 
 impl Settings {
     /// (Re)read environment variables and store them in the global `SETTINGS`
     /// object. Some data originates from `LIB_CFG`.
-    /// First it sets `SETTINGS.current_scheme`:
-    /// 1. If `force_theme` is `Some(scheme)`, gets the index and stores result,
+    /// First set `self.current_scheme`:
+    /// 1. If `SchemeSource::Force(Some(scheme))`, take `scheme`,
     ///    or,
-    /// 2. if `force_theme` is `Some("")`, stores `lib_cfg.scheme_sync_default`,
+    /// 2. if `SchemeSource::SchemeSyncDefault`, take `lib_cfg.scheme_sync_default`,
     ///    or,
-    /// 3. reads the environment variable `TPNOTE_SCHEME_NEW_DEFAULT`
-    ///    or, -if empty-
-    /// 4. copies `scheme_new_default` into `SETTINGS.current_scheme`.
+    /// 3. if `SchemeSource::SchemeNewDefault(s)` take the environment variable
+    ///    `TPNOTE_SCHEME`,
+    ///    or, -if the above environment variable is not defined or empty-
+    /// 4. take `s`.
     ///
-    /// Then, it sets all other fields.
-    /// `force_lang=Some(_)` disables the `get_lang` filter by setting
-    /// `get_lang_filter.mode` to `Mode::Disabled`.
+    /// Then, it set all other fields.
     /// When `force_lang(l)` is `Some`, it sets `SETTINGS.lang` to `l`.
+    /// If `force_lang=None` or `force_lang=Some("")` read the environment
+    /// variable `TPNOTE_LANG` -or if not defined- `LANG` into `SETTINGS.lang`.
+    /// In addition, `force_lang=Some(_)` disables the `get_lang` filter by
+    /// setting `get_lang_filter.mode` to `Mode::Disabled`.
     pub(crate) fn update(
         &mut self,
         scheme_source: SchemeSource,
@@ -185,7 +188,15 @@ impl Settings {
         }
     }
 
-    /// Sets `SETTINGS.current_scheme`:
+    /// Set `SETTINGS.current_scheme`:
+    /// 1. If `SchemeSource::Force(Some(scheme))`, take `scheme`,
+    ///    or,
+    /// 2. if `SchemeSource::SchemeSyncDefault`, take `lib_cfg.scheme_sync_default`,
+    ///    or,
+    /// 3. if `SchemeSource::SchemeNewDefault(s)` take the environment variable
+    ///    `TPNOTE_SCHEME`,
+    ///    or, -if the above environment variable is not defined or empty-
+    /// 4. take `s`.
     fn update_current_scheme(&mut self, scheme_source: SchemeSource) -> Result<(), LibCfgError> {
         let lib_cfg = LIB_CFG.read_recursive();
 
@@ -233,8 +244,8 @@ impl Settings {
         self.extension_default = ext;
     }
 
-    /// If `lang=None` read the environment variable `TPNOTE_LANG` or
-    /// -if not defined- `LANG` into `SETTINGS.lang`.
+    /// If `force_lang=None` or `force_lang=Some("")` read the environment
+    /// -variable `TPNOTE_LANG` or if not defined- `LANG` into `SETTINGS.lang`.
     /// If `force_lang=Some(l)`, copy `l` in `settings.lang`.
     fn update_lang(&mut self, force_lang: Option<&str>) {
         // Overwrite environment setting.
