@@ -287,9 +287,9 @@ filter.to_yaml_tab = 14
 ### Clipboard data may be available.
 ### This template needs `Context<ReadyForContentTemplate`.
 from_dir_content = """
-{%- set stdin = stdin |default(value = '') -%}
-{%- set html_clipboard = html_clipboard |default(value = '') -%}
-{%- set txt_clipboard = txt_clipboard |default(value = '') -%}
+{%- set stdin = stdin.body |default(value = '') -%}
+{%- set html_clipboard = html_clipboard.body |default(value = '') -%}
+{%- set txt_clipboard = txt_clipboard.body |default(value = '') -%}
 
 {%- set title_text = fm.fm_title | default(value = '')
      | replace_empty(with = stdin | html_heading )
@@ -305,8 +305,11 @@ from_dir_content = """
      | replace_empty(with = path | trim_file_sort_tag )
      | trim  -%}
         
-{%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
-{%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
+{%- set stdin = stdin
+     | html_to_markup(extension=extension_default, default=stdin)
+     | append(newline=true) -%}
+{%- set clipboard = html_clipboard
+     | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim -%}
 
 {%- set languages = fm.fm_languages
@@ -357,7 +360,7 @@ from_dir_filename = """
   {%- set tag = fm.fm_sort_tag | as_str -%}
 {%- else -%}
   {%- set tag = dir_path | find_last_created_file
-                 | incr_sort_tag(default=now() | date(format='%Y%m%d')) -%}
+        | incr_sort_tag(default=now() | date(format='%Y%m%d')) -%}
 {%- endif -%}
 {{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
 {{ fm.fm_subtitle | sanit | prepend(with='--') }}\
@@ -369,11 +372,12 @@ from_dir_filename = """
 ### filename and its creation date. `{{ path }}` points to the text file,
 ### `{{ dir_path }}` to the directory where it is located.
 from_text_file_content = """
-{%- set languages = doc | get_lang | map_lang(default=lang) -%}
+{%- set languages = doc.body | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 ---
 {{ path | file_stem | split(pat='--') | first | trunc | to_yaml(key='fm_title') }}
-{{ path | file_stem | split(pat='--') | nth(n=1) | trunc | to_yaml(key='fm_subtitle') }}
+{{ path | file_stem | split(pat='--') | nth(n=1) | trunc
+     | to_yaml(key='fm_subtitle') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ doc_file_date | default(value=now()) | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
@@ -386,7 +390,7 @@ from_text_file_content = """
 {%- endif -%}
 ---
 
-{{ doc }}
+{{ doc.body }}
 """
 
 ### Default filename template used when the input file (with a known
@@ -406,8 +410,13 @@ from_text_file_filename = """
 ### existing - to be annotated - non-`.md`-file. `{{ path}}` points to that
 ### file, `{{ dir_path }}` to the directory where it is located.
 annotate_file_content = """
+{%- set stdin = stdin.body |default(value = '') -%}
+{%- set html_clipboard = html_clipboard.body |default(value = '') -%}
+{%- set txt_clipboard = txt_clipboard.body |default(value = '') -%}
+
 {%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
-{%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
+{%- set clipboard = html_clipboard
+      | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set body_text = stdin ~ clipboard | trim_end -%}
 {%- if body_text != '' -%}
    {%- set lang_test_text = body_text | trunc -%}
@@ -425,12 +434,7 @@ annotate_file_content = """
   {%- endif -%}
 ---
 {{ path | trim_file_sort_tag | to_yaml(key='fm_title') }}
-{% if body_text | link_text !='' and
-      body_text | heading == body_text -%}
-{{ 'url' | to_yaml(key='fm_subtitle') -}}
-{%- else -%}
-{{ 'Note' | to_yaml(key='fm_subtitle') -}}
-{%- endif %}
+{{ 'Note' | to_yaml(key='fm_subtitle') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
@@ -492,38 +496,45 @@ sort_tag.separator = "--"
 [scheme.tmpl]
 
 from_dir_content = """
-{%- set stdin = stdin |default(value = '') -%}
-{%- set html_clipboard = html_clipboard |default(value = '') -%}
-{%- set txt_clipboard = txt_clipboard |default(value = '') -%}
+{%- set stdin = stdin.body |default(value = '') -%}
+{%- set html_clipboard = html_clipboard.body |default(value = '') -%}
+{%- set txt_clipboard = txt_clipboard.body |default(value = '') -%}
 
 {%- set title_text = fm.fm_title | default(value = '')
-         | replace_empty(with = stdin | html_heading )
-         | replace_empty(with = stdin | link_text_picky )
-         | replace_empty(with = stdin | link_text )
-         | replace_empty(with = stdin | heading )
-         | replace_empty(with = html_clipboard | html_heading )
-         | replace_empty(with = html_clipboard | link_text_picky )
-         | replace_empty(with = txt_clipboard | link_text_picky )
-         | replace_empty(with = html_clipboard | link_text )
-         | replace_empty(with = txt_clipboard | link_text )
-         | replace_empty(with = txt_clipboard | heading )
-         | replace_empty(with = path | trim_file_sort_tag )
-         | trim  -%}
+      | replace_empty(with = stdin | html_heading )
+      | replace_empty(with = stdin | link_text_picky )
+      | replace_empty(with = stdin | link_text )
+      | replace_empty(with = stdin | heading )
+      | replace_empty(with = html_clipboard | html_heading )
+      | replace_empty(with = html_clipboard | link_text_picky )
+      | replace_empty(with = txt_clipboard | link_text_picky )
+      | replace_empty(with = html_clipboard | link_text )
+      | replace_empty(with = txt_clipboard | link_text )
+      | replace_empty(with = txt_clipboard | heading )
+      | replace_empty(with = path | trim_file_sort_tag )
+      | trim  -%}
         
-{%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
-{%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
+{%- set stdin = stdin
+      | html_to_markup(extension=extension_default, default=stdin)
+      | append(newline=true) -%}
+{%- set clipboard = html_clipboard
+      | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim -%}
 
 {%- set languages = fm.fm_languages
-     | default(value = input | replace_empty(with = path | trim_file_sort_tag )
-                             | get_lang | map_lang(default=lang) ) -%}
-{%- set lang = fm.fm_lang | default(value = languages | first ) -%}
+      | default(value = input
+          | replace_empty(with = path | trim_file_sort_tag )
+          | get_lang
+          | map_lang(default=lang) ) -%}
+{%- set lang = fm.fm_lang | default(value=languages | first ) -%}
 
 {%- if fm.fm_sort_tag -%}
   {%- set tag = fm.fm_sort_tag -%}
 {%- else -%}
   {%- set tag_default = now() | date(format='%Y%m%d') -%}
-  {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
+  {%- set tag = dir_path
+        | find_last_created_file
+        | incr_sort_tag(default=tag_default) -%}
 {%- endif -%}
 ---
 {{ title_text | trunc | to_yaml(key='fm_title') }}
@@ -566,7 +577,9 @@ from_dir_filename = """
   {%- set tag = fm.fm_sort_tag | as_str -%}
 {%- else -%}
   {%- set tag_default = now() | date(format='%Y%m%d') -%}
-  {%- set tag = dir_path | find_last_created_file | incr_sort_tag(default=tag_default) -%}
+  {%- set tag = dir_path
+        | find_last_created_file
+        | incr_sort_tag(default=tag_default) -%}
 {%- endif -%}
 
 {{ fm.fm_title | sanit | prepend(with_sort_tag=tag) }}\
@@ -588,7 +601,7 @@ from_text_file_content = """
 {%- set file = file | file_stem -%}
 {%- set title = file | split(pat='__') | first -%}
 {%- set keywords = file | split(pat='__') | nth(n=1) -%}
-{%- set languages = doc | get_lang | map_lang(default=lang) -%}
+{%- set languages = doc.body | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 ---
 {{ title | trunc | to_yaml(key='fm_title') }}
@@ -604,7 +617,7 @@ from_text_file_content = """
 # {{ path | file_name | to_yaml(key='fm_orig_name', tab=12) }}
 ---
 
-{{ doc }}
+{{ doc.body }}
 """
 
 from_text_file_filename = """
@@ -632,8 +645,15 @@ from_text_file_filename = """
 {{ path | file_ext | prepend(with='.') }}"""
 
 annotate_file_content = """
-{%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
-{%- set clipboard = html_clipboard | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
+{%- set stdin = stdin.body |default(value = '') -%}
+{%- set html_clipboard = html_clipboard.body |default(value = '') -%}
+{%- set txt_clipboard = txt_clipboard.body |default(value = '') -%}
+
+{%- set stdin = stdin
+      | html_to_markup(extension=extension_default, default=stdin)
+      | append(newline=true) -%}
+{%- set clipboard = html_clipboard
+      | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set body_text = stdin ~ clipboard | trim_end -%}
 {%- if body_text != '' -%}
    {%- set lang_test_text = body_text | trunc -%}
@@ -643,13 +663,6 @@ annotate_file_content = """
 {%- set languages = lang_test_text | get_lang | map_lang(default=lang) -%}
 {%- set lang = languages | first -%}
 
-{%- if body_text | link_text !='' and
-      body_text | heading == body_text -%}
-{%- set keywords = ['url'] -%}
-{%- else -%}
-{%- set keywords = ['note'] -%}
-{%- endif -%}
-
 {%- set fname = path | file_name -%}
 {%- if extension_default != 'rst' -%}
    {%- set link = '[' ~ fname ~ '](<' ~ fname ~ '>)' -%}
@@ -658,7 +671,7 @@ annotate_file_content = """
   {%- endif -%}
 ---
 {{ path | trim_file_sort_tag | to_yaml(key='fm_title') }}
-{{ keywords | to_yaml(key='fm_keywords') }}
+{{ ['note'] | to_yaml(key='fm_keywords') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
@@ -800,7 +813,7 @@ viewer = '''
   </tr>
   {% endfor %}
   </table>
-  <div class="doc-body">{{ doc | markup_to_html(extension=ext) | safe }}
+  <div class="doc-body">{{ doc.body | markup_to_html(extension=ext) | safe }}
   </div>
   <script>{{ viewer_doc_js | safe }}</script>
 </body>
@@ -1026,7 +1039,7 @@ exporter = '''
   </tr>
   {% endfor %}
   </table>
-  <div class="doc-body">{{ doc | markup_to_html(extension=ext) | safe }}
+  <div class="doc-body">{{ doc.body | markup_to_html(extension=ext) | safe }}
   </div>
 </body>
 </html>

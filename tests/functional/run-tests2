@@ -89,7 +89,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 	    "$INPUT_FILENAME" >/dev/null 2>&1
 
 # the + is not considered to be a secure char, therefor ommitted
-OUTPUT_FILENAME="$PWD/test103-annotate+clipboard-input-dummy.pdf__url.md"
+OUTPUT_FILENAME="$PWD/test103-annotate+clipboard-input-dummy.pdf__note.md"
 
 if diff "$OUTPUT_FILENAME" "test103-annotate+clipboard-expected-output"
 then

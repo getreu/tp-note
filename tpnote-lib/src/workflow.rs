@@ -96,24 +96,19 @@
 //!         Ok(())
 //!    }
 //!    // The rest we delegate.
-//!    fn from_string(
-//!          input: String, header_name: String, body_name: String) -> Self {
+//!    fn from_string(input: String, name: String) -> Self {
 //!       MyContentString(
-//!           ContentString::from_string(input, header_name, body_name))
+//!           ContentString::from_string(input, name))
 //!    }
 //!    fn header(&self) -> &str {
 //!        self.0.header()
 //!    }
-//!    fn header_name(&self) -> &str {
-//!        self.0.header_name()
-//!    }
 //!    fn body(&self) -> &str {
 //!        self.0.header()
 //!    }
-//!    fn body_name(&self) -> &str {
-//!        self.0.body_name()
+//!    fn name(&self) -> &str {
+//!        self.0.name()
 //!    }
-//!
 //! }
 //!
 //! // Prepare test.
@@ -123,9 +118,6 @@
 //! let txt_clipboard = MyContentString::default();
 //! let stdin = MyContentString::default();
 //! let v = vec![&html_clipboard, &txt_clipboard, &stdin];
-//! // This is the condition to choose: `TemplateKind::New`:
-//! assert!(
-//!     html_clipboard.is_empty() || txt_clipboard.is_empty() || stdin.is_empty());
 //! // There are no inhibitor rules to change the `TemplateKind`.
 //! let template_kind_filter = |tk|tk;
 //!
@@ -381,17 +373,14 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
     ///
     /// let html_clipboard = ContentString::from_string(
     ///     "my HTML clipboard\n".to_string(),
-    ///     "html_clipboard_header".to_string(),
     ///     "html_clipboard".to_string()
     /// );
     /// let txt_clipboard = ContentString::from_string(
     ///     "my TXT clipboard\n".to_string(),
-    ///     "txt_clipboard_header".to_string(),
     ///     "txt_clipboard".to_string()
     /// );
     /// let stdin = ContentString::from_string(
     ///     "my stdin\n".to_string(),
-    ///     "stdin_header".to_string(),
     ///     "stdin".to_string()
     /// );
     /// let v = vec![&html_clipboard, &txt_clipboard, &stdin];

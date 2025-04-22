@@ -13,6 +13,7 @@ use crate::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
 use crate::config::TMPL_HTML_VAR_VIEWER_DOC_JS;
 use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH;
 use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
+use crate::config::TMPL_VAR_BODY;
 use crate::config::TMPL_VAR_CURRENT_SCHEME;
 use crate::config::TMPL_VAR_DIR_PATH;
 use crate::config::TMPL_VAR_DOC;
@@ -22,6 +23,7 @@ use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_ALL;
 use crate::config::TMPL_VAR_FM_SCHEME;
+use crate::config::TMPL_VAR_HEADER;
 use crate::config::TMPL_VAR_LANG;
 use crate::config::TMPL_VAR_PATH;
 use crate::config::TMPL_VAR_ROOT_PATH;
@@ -604,12 +606,10 @@ impl Context<HasSettings> {
     ///
     /// let mut context = Context::from(&Path::new("/path/to/mynote.md")).unwrap();
     /// let c1 =  ContentString::from_string(String::from("Data from clipboard."),
-    ///          "txt_clipboard_header".to_string(),
     ///          "txt_clipboard".to_string(),
     /// );
     /// let c2 = ContentString::from_string(
     ///          "---\ntitle: My Stdin.\n---\nbody".to_string(),
-    ///          "stdin_header".to_string(),
     ///          "stdin".to_string(),
     /// );
     /// let c = vec![&c1, &c2];
@@ -617,11 +617,14 @@ impl Context<HasSettings> {
     /// let context = context
     ///     .insert_front_matter_and_raw_text_from_existing_content(&c).unwrap();
     ///
-    /// assert_eq!(&context.get("txt_clipboard").unwrap().to_string(),
+    /// assert_eq!(
+    ///     &context.get("txt_clipboard").unwrap().get("body").unwrap().to_string(),
     ///     "\"Data from clipboard.\"");
-    /// assert_eq!(&context.get("stdin").unwrap().to_string(),
+    /// assert_eq!(
+    ///     &context.get("stdin").unwrap().get("body").unwrap().to_string(),
     ///     "\"body\"");
-    /// assert_eq!(&context.get("stdin_header").unwrap().to_string(),
+    /// assert_eq!(
+    ///     &context.get("stdin").unwrap().get("header").unwrap().to_string(),
     ///     "\"title: My Stdin.\"");
     /// // "fm_title" is dynamically generated from the header variable "title".
     /// assert_eq!(&context
@@ -687,8 +690,11 @@ impl Context<HasExistingContent> {
         //
         for clip in clipboards {
             // Register input.
-            self.ct.insert(clip.header_name(), clip.header());
-            self.ct.insert(clip.body_name(), clip.body());
+            let mut map = tera::Map::new();
+            map.insert(TMPL_VAR_HEADER.to_string(), clip.header().into());
+            map.insert(TMPL_VAR_BODY.to_string(), clip.body().into());
+
+            self.ct.insert(clip.name(), &tera::Value::from(map));
 
             // Can we find a front matter in the input stream? If yes, the
             // unmodified input stream is our new note content.
@@ -698,14 +704,14 @@ impl Context<HasExistingContent> {
                     Ok(ref fm) => {
                         log::trace!(
                             "Input stream \"{}\" generates the front matter variables:\n{:#?}",
-                            clip.header_name(),
+                            clip.name(),
                             &fm
                         )
                     }
                     Err(ref e) => {
                         if !clip.header().is_empty() {
                             return Err(NoteError::InvalidInputYaml {
-                                tmpl_var: clip.body_name().to_string(),
+                                tmpl_var: clip.name().to_string(),
                                 source_str: e.to_string(),
                             });
                         }

@@ -8,9 +8,7 @@ use clipboard_rs::ClipboardContext;
 #[cfg(unix)]
 use std::io::Read as _;
 use tpnote_lib::config::TMPL_VAR_HTML_CLIPBOARD;
-use tpnote_lib::config::TMPL_VAR_HTML_CLIPBOARD_HEADER;
 use tpnote_lib::config::TMPL_VAR_TXT_CLIPBOARD;
-use tpnote_lib::config::TMPL_VAR_TXT_CLIPBOARD_HEADER;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 #[cfg(feature = "read-clipboard")]
@@ -34,10 +32,7 @@ impl SystemClipboard {
     pub(crate) fn new() -> Self {
         // Bring new methods into scope.
         use tpnote_lib::{
-            config::{
-                TMPL_VAR_HTML_CLIPBOARD, TMPL_VAR_HTML_CLIPBOARD_HEADER, TMPL_VAR_TXT_CLIPBOARD,
-                TMPL_VAR_TXT_CLIPBOARD_HEADER,
-            },
+            config::{TMPL_VAR_HTML_CLIPBOARD, TMPL_VAR_TXT_CLIPBOARD},
             content::Content,
         };
 
@@ -86,21 +81,13 @@ impl SystemClipboard {
         }
 
         Self {
-            html: ContentString::from_html(
-                html_content,
-                TMPL_VAR_HTML_CLIPBOARD_HEADER.to_string(),
-                TMPL_VAR_HTML_CLIPBOARD.to_string(),
-            )
-            .map_err(|e| {
-                log::error!("Could not interpret HTML clipboard:\n{}", e);
-            })
-            // Ignore error and continue with empty string.
-            .unwrap_or_default(),
-            txt: ContentString::from_string(
-                txt_content,
-                TMPL_VAR_TXT_CLIPBOARD_HEADER.to_string(),
-                TMPL_VAR_TXT_CLIPBOARD.to_string(),
-            ),
+            html: ContentString::from_html(html_content, TMPL_VAR_HTML_CLIPBOARD.to_string())
+                .map_err(|e| {
+                    log::error!("Could not interpret HTML clipboard:\n{}", e);
+                })
+                // Ignore error and continue with empty string.
+                .unwrap_or_default(),
+            txt: ContentString::from_string(txt_content, TMPL_VAR_TXT_CLIPBOARD.to_string()),
         }
     }
 
@@ -129,23 +116,13 @@ impl SystemClipboard {
 }
 
 /// Register empty HTML and TXT clipboards with the `ContentString` names:
-/// * `TMPL_VAR_HTML_CLIPBOARD_HEADER`,
 /// * `TMPL_VAR_HTML_CLIPBOARD`,
-/// * `TMPL_VAR_TXT_CLIPBOARD_HEADER` and
 /// * `TMPL_VAR_TXT_CLIPBOARD`.
 impl Default for SystemClipboard {
     fn default() -> Self {
         SystemClipboard {
-            html: ContentString::from_string(
-                String::new(),
-                TMPL_VAR_HTML_CLIPBOARD_HEADER.to_string(),
-                TMPL_VAR_HTML_CLIPBOARD.to_string(),
-            ),
-            txt: ContentString::from_string(
-                String::new(),
-                TMPL_VAR_TXT_CLIPBOARD_HEADER.to_string(),
-                TMPL_VAR_TXT_CLIPBOARD.to_string(),
-            ),
+            html: ContentString::from_string(String::new(), TMPL_VAR_HTML_CLIPBOARD.to_string()),
+            txt: ContentString::from_string(String::new(), TMPL_VAR_TXT_CLIPBOARD.to_string()),
         }
     }
 }

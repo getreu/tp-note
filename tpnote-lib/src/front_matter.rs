@@ -180,11 +180,7 @@ mod tests {
 
         // Create existing note.
         let raw = "\u{feff}---\ntitle: \"My day\"\nsubtitle: \"Note\"\n---\nBody";
-        let content = ContentString::from_string(
-            raw.to_string(),
-            "doc_header".to_string(),
-            "doc".to_string(),
-        );
+        let content = ContentString::from_string(raw.to_string(), "doc".to_string());
         assert!(!content.is_empty());
         assert!(!content.borrow_dependent().header.is_empty());
 

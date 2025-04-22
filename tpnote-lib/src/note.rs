@@ -6,7 +6,6 @@
 //! NB: The high level API is in the module `tpnote_lib::workflow`.
 
 use crate::config::TMPL_VAR_DOC;
-use crate::config::TMPL_VAR_DOC_HEADER;
 use crate::content::Content;
 use crate::context::Context;
 use crate::context::HasSettings;
@@ -135,7 +134,6 @@ impl<T: Content> Note<T> {
                         )
                     })?
             },
-            TMPL_VAR_DOC_HEADER.to_string(),
             TMPL_VAR_DOC.to_string(),
         );
 
@@ -509,21 +507,10 @@ Body text
 
         // Store the path in `context`.
         let context = Context::from(&notedir).unwrap();
-        let html_clipboard = ContentString::from_string(
-            "".to_string(),
-            "html_clipboard_header".to_string(),
-            "html_clipboard".to_string(),
-        );
-        let txt_clipboard = ContentString::from_string(
-            "".to_string(),
-            "txt_clipboard_header".to_string(),
-            "txt_clipboard".to_string(),
-        );
-        let stdin = ContentString::from_string(
-            "".to_string(),
-            "stdin_header".to_string(),
-            "stdin".to_string(),
-        );
+        let html_clipboard =
+            ContentString::from_string("".to_string(), "html_clipboard".to_string());
+        let txt_clipboard = ContentString::from_string("".to_string(), "txt_clipboard".to_string());
+        let stdin = ContentString::from_string("".to_string(), "stdin".to_string());
         let v = vec![&html_clipboard, &txt_clipboard, &stdin];
         let context = context
             .insert_front_matter_and_raw_text_from_existing_content(&v)
@@ -594,21 +581,11 @@ Body text
 
         // Store the path in `context`.
         let context = Context::from(&notedir).unwrap();
-        let html_clipboard = ContentString::from_string(
-            "html_clp\n".to_string(),
-            "html_clipboard_header".to_string(),
-            "html_clipboard".to_string(),
-        );
-        let txt_clipboard = ContentString::from_string(
-            "txt_clp\n".to_string(),
-            "txt_clipboard_header".to_string(),
-            "txt_clipboard".to_string(),
-        );
-        let stdin = ContentString::from_string(
-            "std\n".to_string(),
-            "stdin_header".to_string(),
-            "stdin".to_string(),
-        );
+        let html_clipboard =
+            ContentString::from_string("html_clp\n".to_string(), "html_clipboard".to_string());
+        let txt_clipboard =
+            ContentString::from_string("txt_clp\n".to_string(), "txt_clipboard".to_string());
+        let stdin = ContentString::from_string("std\n".to_string(), "stdin".to_string());
         let v = vec![&html_clipboard, &txt_clipboard, &stdin];
         let context = context
             .insert_front_matter_and_raw_text_from_existing_content(&v)
@@ -703,17 +680,14 @@ Body text
         let context = Context::from(&notedir).unwrap();
         let html_clipboard = ContentString::from_string(
             "my HTML clipboard\n".to_string(),
-            "html_clipboard_header".to_string(),
             "html_clipboard".to_string(),
         );
         let txt_clipboard = ContentString::from_string(
             "my TXT clipboard\n".to_string(),
-            "txt_clipboard_header".to_string(),
             "txt_clipboard".to_string(),
         );
         let stdin = ContentString::from_string(
             "---\nsubtitle: \"this overwrites\"\n---\nstdin body".to_string(),
-            "stdin_header".to_string(),
             "stdin".to_string(),
         );
         let v = vec![&html_clipboard, &txt_clipboard, &stdin];
@@ -813,19 +787,14 @@ Body text
         let context = Context::from(&non_notefile).unwrap();
         let html_clipboard = ContentString::from_string(
             "my HTML clipboard\n".to_string(),
-            "html_clipboard_header".to_string(),
             "html_clipboard".to_string(),
         );
         let txt_clipboard = ContentString::from_string(
             "my TXT clipboard\n".to_string(),
-            "txt_clipboard_header".to_string(),
             "txt_clipboard".to_string(),
         );
-        let stdin = ContentString::from_string_with_cr(
-            "my stdin\n".to_string(),
-            "stdin_header".to_string(),
-            "stdin".to_string(),
-        );
+        let stdin =
+            ContentString::from_string_with_cr("my stdin\n".to_string(), "stdin".to_string());
         let v = vec![&html_clipboard, &txt_clipboard, &stdin];
 
         let context = context

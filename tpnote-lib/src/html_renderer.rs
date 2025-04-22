@@ -63,7 +63,7 @@ impl HtmlRenderer {
     /// subtitle: Note
     /// ---
     /// Body text
-    /// "#), "doc_header".to_string(), "doc".to_string());
+    /// "#), "doc".to_string());
     ///
     /// // Start test
     /// let mut context = Context::from(Path::new("/path/to/note.md")).unwrap();
@@ -143,7 +143,7 @@ impl HtmlRenderer {
     /// subtitle: "Note"
     /// ---
     /// Body text
-    /// "#), "doc_header".to_string(), "doc".to_string());
+    /// "#), "doc".to_string());
     ///
     /// // Start test
     /// let mut context = Context::from(Path::new("/path/to/note.md")).unwrap();
