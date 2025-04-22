@@ -128,10 +128,6 @@ pub const TMPL_VAR_USERNAME: &str = "username";
 /// (all operating systems).
 pub const TMPL_VAR_LANG: &str = "lang";
 
-/// All the front matter fields serialized as text, exactly as they appear in
-/// the front matter.
-pub const TMPL_VAR_DOC_HEADER: &str = "doc_header";
-
 /// Contains the body of the file the command line option `<path>`
 /// points to. Only available in the `tmpl.from_text_file_content`,
 /// `tmpl.sync_filename` and HTML templates.

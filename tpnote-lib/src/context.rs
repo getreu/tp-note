@@ -16,9 +16,7 @@ use crate::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
 use crate::config::TMPL_VAR_BODY;
 use crate::config::TMPL_VAR_CURRENT_SCHEME;
 use crate::config::TMPL_VAR_DIR_PATH;
-use crate::config::TMPL_VAR_DOC;
 use crate::config::TMPL_VAR_DOC_FILE_DATE;
-use crate::config::TMPL_VAR_DOC_HEADER;
 use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_ALL;
@@ -185,7 +183,6 @@ impl ContextState for ReadyForContentTemplate {}
 /// * `TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH`
 /// * `TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE`
 /// * `TMPL_VAR_DOC`
-/// * `TMPL_VAR_DOC_HEADER`
 ///
 /// Once this state is achieved, `Context` is constant and write protected until
 /// the next state transition.
@@ -484,6 +481,63 @@ impl<S: ContextState> Context<S> {
     pub(crate) fn insert(&mut self, key: &str, val: &tera::Value) {
         self.ct.insert(key, val);
     }
+
+    /// Inserts a `Content` in `Context`. The content appears as key in
+    /// `context.ct` with its name taken from `content.name()`.
+    /// Its value is a `tera::Map` with two keys `TMPL_VAR_HEADER` and
+    /// `TMPL_VAR_BODY`. The corresponding values are copied from
+    /// `conten.header()` and `content.body()`.
+    pub fn insert_raw_text_from_existing_content(&mut self, content: &impl Content) {
+        //
+        // Register input.
+        let mut map = tera::Map::new();
+        map.insert(TMPL_VAR_HEADER.to_string(), content.header().into());
+        map.insert(TMPL_VAR_BODY.to_string(), content.body().into());
+
+        self.ct.insert(content.name(), &tera::Value::from(map));
+    }
+
+    /// See function of the same name in `impl Context<HasSettings>`.
+    pub fn insert_front_matter_and_raw_text_from_existing_content2(
+        &mut self,
+        clipboards: &Vec<&impl Content>,
+    ) -> Result<(), NoteError> {
+        //
+        for &clip in clipboards {
+            // Register input.
+            self.insert_raw_text_from_existing_content(clip);
+
+            // Can we find a front matter in the input stream? If yes, the
+            // unmodified input stream is our new note content.
+            if !clip.header().is_empty() {
+                let input_fm = FrontMatter::try_from(clip.header());
+                match input_fm {
+                    Ok(ref fm) => {
+                        log::trace!(
+                            "Input stream \"{}\" generates the front matter variables:\n{:#?}",
+                            clip.name(),
+                            &fm
+                        )
+                    }
+                    Err(ref e) => {
+                        if !clip.header().is_empty() {
+                            return Err(NoteError::InvalidInputYaml {
+                                tmpl_var: clip.name().to_string(),
+                                source_str: e.to_string(),
+                            });
+                        }
+                    }
+                };
+
+                // Register front matter.
+                // The variables registered here can be overwrite the ones from the clipboard.
+                if let Ok(fm) = input_fm {
+                    self.insert_front_matter2(&fm);
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 /// The start state of all `Context` objects.
@@ -633,20 +687,20 @@ impl Context<HasSettings> {
     ///      "\"My Stdin.\"");
     /// ```
     pub fn insert_front_matter_and_raw_text_from_existing_content(
-        self,
+        mut self,
         clipboards: &Vec<&impl Content>,
     ) -> Result<Context<HasExistingContent>, NoteError> {
-        let context: Context<HasExistingContent> = Context {
+        //
+        self.insert_front_matter_and_raw_text_from_existing_content2(clipboards)?;
+
+        Ok(Context {
             ct: self.ct,
             path: self.path,
             dir_path: self.dir_path,
             root_path: self.root_path,
             doc_file_date: self.doc_file_date,
             _marker: PhantomData,
-        };
-
-        let context = context.insert_front_matter_and_raw_text_from_existing_content(clipboards)?;
-        Ok(context)
+        })
     }
 
     /// This adds the following variables to `self`:
@@ -682,50 +736,22 @@ impl Context<HasSettings> {
 }
 
 impl Context<HasExistingContent> {
-    /// See function of the same name in `impl Context<HasSettings>`.
+    /// See same method in `Context<HasSettings>`.
     pub fn insert_front_matter_and_raw_text_from_existing_content(
         mut self,
         clipboards: &Vec<&impl Content>,
     ) -> Result<Context<HasExistingContent>, NoteError> {
         //
-        for clip in clipboards {
-            // Register input.
-            let mut map = tera::Map::new();
-            map.insert(TMPL_VAR_HEADER.to_string(), clip.header().into());
-            map.insert(TMPL_VAR_BODY.to_string(), clip.body().into());
+        self.insert_front_matter_and_raw_text_from_existing_content2(clipboards)?;
 
-            self.ct.insert(clip.name(), &tera::Value::from(map));
-
-            // Can we find a front matter in the input stream? If yes, the
-            // unmodified input stream is our new note content.
-            if !clip.header().is_empty() {
-                let input_fm = FrontMatter::try_from(clip.header());
-                match input_fm {
-                    Ok(ref fm) => {
-                        log::trace!(
-                            "Input stream \"{}\" generates the front matter variables:\n{:#?}",
-                            clip.name(),
-                            &fm
-                        )
-                    }
-                    Err(ref e) => {
-                        if !clip.header().is_empty() {
-                            return Err(NoteError::InvalidInputYaml {
-                                tmpl_var: clip.name().to_string(),
-                                source_str: e.to_string(),
-                            });
-                        }
-                    }
-                };
-
-                // Register front matter.
-                // The variables registered here can be overwrite the ones from the clipboard.
-                if let Ok(fm) = input_fm {
-                    self.insert_front_matter2(&fm);
-                }
-            }
-        }
-        Ok(self)
+        Ok(Context {
+            ct: self.ct,
+            path: self.path,
+            dir_path: self.dir_path,
+            root_path: self.root_path,
+            doc_file_date: self.doc_file_date,
+            _marker: PhantomData,
+        })
     }
 
     /// Mark this as ready for a content template.
@@ -937,8 +963,7 @@ impl Context<ReadyForFilenameTemplate> {
     /// Inserts the following variables into `self`:
     ///
     /// * `TMPL_HTML_VAR_VIEWER_DOC_JS` from `viewer_doc_js`
-    /// * `TMPL_VAR_DOC_HEADER` from `content.header()`
-    /// * `TMPL_VAR_DOC` from `content.body()`
+    /// * `TMPL_VAR_DOC` from `content.header()` and `content.body()`
     /// * `TMPL_HTML_VAR_EXPORTER_DOC_CSS`
     /// * `TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS`
     /// * `TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS`
@@ -955,8 +980,7 @@ impl Context<ReadyForFilenameTemplate> {
         //
         self.ct.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, viewer_doc_js);
 
-        self.ct.insert(TMPL_VAR_DOC_HEADER, content.header());
-        self.ct.insert(TMPL_VAR_DOC, content.body());
+        self.insert_raw_text_from_existing_content(content);
 
         {
             let lib_cfg = &LIB_CFG.read_recursive();
