@@ -105,16 +105,16 @@ lang\f[B]:\f[R]       en\-GB
 .SS Create a new note based on clipboard data
 When `\f[CR]<path>\f[R]' is a directory and the clipboard is not empty,
 the clipboard\[cq]s content is stored in the variables
-`\f[CR]{{ txt_clipboard }}\f[R]' and `\f[CR]{{ html_clipboard }}\f[R]'.
+`\f[CR]{{ txt_clipboard.body }}\f[R]' and
+`\f[CR]{{ html_clipboard.body }}\f[R]'.
 The latter contains the HTML rich text version of the clipboard content.
 In addition, if the content contains a hyperlink, the first
 hyperlink\[cq]s name can be accessed with
-`\f[CR]{{ txt_clipboard | link_text }}\f[R]', its URL with
-`\f[CR]{{ txt_clipboard | link_dest }}\f[R]' and its title with
-`\f[CR]{{ txt_clipboard | link_title }}\f[R]'.
-The new note is then created with the
-`\f[CR]tmpl.from_clipboard_content\f[R]' and the
-`\f[CR]tmpl.from_clipboard_filename\f[R]' templates.
+`\f[CR]{{ txt_clipboard.body | link_text }}\f[R]', its URL with
+`\f[CR]{{ txt_clipboard.body | link_dest }}\f[R]' and its title with
+`\f[CR]{{ txt_clipboard.body | link_title }}\f[R]'.
+The new note is then created with the `\f[CR]tmpl.from_dir_content\f[R]'
+and the `\f[CR]tmpl.from_dir_filename\f[R]' templates.
 Finally, the newly created note file is opened again with some external
 text editor.
 When the user closes the text editor, Tp\-Note synchronizes the
@@ -129,15 +129,13 @@ feature).
 In case the clipboard stream contains HTML, the internal filter
 .IP
 .EX
-{{ html_clipboard | html_to_markup(
-                          extension=extension_default, 
-                          default=txt_clipboard) 
-}}
+{{ html_clipboard.body
+   | html_to_markup(extension=extension_default, default=txt_clipboard.body) }}
 .EE
 .PP
 converts the stream into Markdown before being processed.
 If the conversion fails or results in an empty string, the fallback
-value is `\f[CR]{{ txt_clipboard }}\f[R]'
+value is `\f[CR]{{ txt_clipboard.body }}\f[R]'
 .PP
 \f[B]Clipboard simulation\f[R]
 .PP
@@ -196,17 +194,17 @@ Chapter 2
 .EE
 .PP
 We see from the above example, how the
-`\f[CR]tmpl.from_clipboard_content\f[R]' content template extracts the
-first line of the clipboards content and inserts it into the
-header\[cq]s `\f[CR]title:\f[R]' field.
+`\f[CR]tmpl.from_dir_content\f[R]' content template extracts the first
+line of the clipboards content and inserts it into the header\[cq]s
+`\f[CR]title:\f[R]' field.
 Then, it copies the entire clipboard content into the body of the
 document.
 However, if desired or necessary, it is possible to modify all templates
 in Tp\-Note\[cq]s configuration file.
 Note, that not only the note\[cq]s content is created with a template,
-but also its filename: The `\f[CR]tmpl.from_clipboard_filename\f[R]'
-filename template concatenates the current date, the note\[cq]s title
-and subtitle.
+but also its filename: The `\f[CR]tmpl.from_dir_filename\f[R]' filename
+template concatenates the current date, the note\[cq]s title and
+subtitle.
 .SS The clipboard contains a heading
 Use case: open a web page in your web browser and select some text with
 it\[cq]s heading.
@@ -224,8 +222,8 @@ mkdir \[aq]Fary tales\[aq]
 tpnote \[aq]./Fary tales\[aq]
 .EE
 .PP
-Tp\-Note\[cq]s templates `\f[CR]tmpl.from_clipboard_content\f[R]' and
-`\f[CR]tmpl.from_clipboard_filename\f[R]' create the following document:
+Tp\-Note\[cq]s templates `\f[CR]tmpl.from_dir_content\f[R]' and
+`\f[CR]tmpl.from_dir_filename\f[R]' create the following document:
 .IP
 .EX
 \&./Fary tales/20250104\-Cinderella\-\-Notes.md
@@ -267,8 +265,8 @@ and contains the string:
 tpnote \[aq]./doc/Lecture 1\[aq]
 .EE
 .PP
-Tp\-Note\[cq]s templates `\f[CR]tmpl.from_clipboard_content\f[R]' and
-`\f[CR]tmpl.from_clipboard_filename\f[R]' create the following document:
+Tp\-Note\[cq]s templates `\f[CR]tmpl.from_dir_content\f[R]' and
+`\f[CR]tmpl.from_dir_filename\f[R]' create the following document:
 .IP
 .EX
 \&./doc/Lecture 1/20211031\-The Rust Book\-\-Notes.md
@@ -322,9 +320,8 @@ header variables: `\f[CR]{{ fm.fm_title }}\f[R]',
 `\f[CR]{{ fm.fm_subtitle }}\f[R]', `\f[CR]{{ fm.fm_author }}\f[R]',
 `\f[CR]{{ fm.fm_date }}\f[R]', `\f[CR]{{ fm.fm_lang }}\f[R]',
 `\f[CR]{{ fm.fm_sort_tag }}\f[R]' and `\f[CR]{{ fm.fm_file_ext }}\f[R]'
-which are evaluated with the
-`\f[CR]tmpl.from_clipboard_yaml_content\f[R]' and the
-`\f[CR]tmpl.from_clipboard_yaml_filename\f[R]' templates.
+which are evaluated with the `\f[CR]tmpl.from_dir_filename\f[R]'
+templates.
 .PP
 Note, that the same result can also be achieved without clipboard input
 by typing in a terminal:
@@ -2342,12 +2339,12 @@ For example the header variable `\f[CR]fm.fm_subtitle\f[R]' is displayed
 as `\f[CR]subtitle:\f[R]' in the note\[cq]s header.
 .PP
 This translation relation is defined in the configuration file variable
-`\f[CR]scheme.tmpl.fm_vars.localization\f[R]'.
+`\f[CR]scheme.tmpl.fm_var.localization\f[R]'.
 Consider the following simplified example:
 .IP
 .EX
 \f[B][base_scheme.tmpl]\f[R]
-fm_vars.localization = [
+fm_var.localization = [
     [\[dq]fm_title\[dq], \[dq]title\[dq]],
     [\[dq]fm_subtitle\[dq], \[dq]subtitle\[dq]],
     [\[dq]fm_author\[dq], \[dq]author\[dq]],
@@ -2368,7 +2365,7 @@ For example:
 .IP
 .EX
 \f[B][base_scheme.tmpl]\f[R]
-fm_vars.localization = [
+fm_var.localization = [
     [\[dq]fm_title\[dq], \[dq]Titel\[dq]],
     [\[dq]fm_subtitle\[dq], \[dq]Untertitel\[dq]],
     [\[dq]fm_author\[dq], \[dq]Autor\[dq]],
@@ -2384,46 +2381,73 @@ fm_vars.localization = [
 .EE
 .PP
 Keep in mind, that the templates do not change!
-Templates refer to a header variable with an identifier starting with
-`\f[CR]fm.fm_\f[R]', The identifier corresponds to the first column of
-the above table.
+Header variables in templates always start with the identifier
+`\f[CR]fm.fm_\f[R]' (cf.\ first column of the above table).
 .PP
-As an example, consider the following localization:
+The above configuration changes the localization default for all note
+files in the scope of the configuration file `\f[CR]tpnote.toml\f[R]'.
+It is also possilbe to use header variables in different languages side
+by side with schemes:
 .IP
 .EX
-\f[B][base_scheme.tmpl]\f[R]
-fm_vars.localization = [
-    [\[dq]fm_foo\[dq], \[dq]FOO\[dq]],
+\f[B][[scheme]]\f[R]
+name = \[aq]Deutsch\[aq]
+\f[B][scheme.tmpl]\f[R]
+fm_var.localization = [
+    [\[dq]fm_title\[dq], \[dq]Titel\[dq]],
+    [\[dq]fm_subtitle\[dq], \[dq]Untertitel\[dq]],
+    [\[dq]fm_author\[dq], \[dq]Autor\[dq]],
+    [\[dq]fm_date\[dq], \[dq]Datum\[dq]],
+    [\[dq]fm_lang\[dq], \[dq]Sprache\[dq]],
+    [\[dq]fm_languages\[dq], \[dq]Sprachen\[dq]],
+    [\[dq]fm_sort_tag\[dq], \[dq]Kennzeichen\[dq]],
+    [\[dq]fm_file_ext\[dq], \[dq]Dateierweiterung\[dq]],
+    [\[dq]fm_no_filename_sync\[dq], \[dq]Keine_Sync\[dq]],
+    [\[dq]fm_filename_sync\[dq], \[dq]Dateinamensync\[dq]],
+    [\[dq]fm_scheme\[dq], \[dq]Schema\[dq]],
 ]
 .EE
 .PP
-The front matter variable `\f[CR]FOO:\f[R]' is internally in templates
-represented as `\f[CR]fm.fm_foo\f[R]'.
-For example, the template `\f[CR]tmpl_html.viewer\f[R]' may contain the
-expression `\f[CR]{{ fm.fm_foo | name }}\f[R]' which is then printed as
-`\f[CR]FOO\f[R]'.
-.PP
-NB: In general, a variable with the key `\f[CR]fm.fm_bar\f[R]' may
-contain a nested map:
+This example defines an additional scheme called \[lq]Deutsch\[rq].
+To use the new scheme invoke Tp\-Note with
+`\f[CR]tpnote \-\-scheme Deutsch\f[R]'.
+It creates the following note file:
 .IP
 .EX
-\[dq]fm.fm_bar\[dq]: Object {
-            \[dq]baz\[dq]: String(\[dq]Hello\[dq]),
-        }
+\-\-\-
+Titel\f[B]:\f[R]        getreu
+Untertitel\f[B]:\f[R]   Note
+Autor\f[B]:\f[R]        Getreu
+Datum\f[B]:\f[R]        2025\-04\-23
+Sprache\f[B]:\f[R]      de\-DE
+Schema\f[B]:\f[R]       Deutsch
+\-\-\-
 .EE
 .PP
-The (de\-)localization occurs only at the root map level.
-All nested keys names, e.g.\ `\f[CR]baz\f[R]' remain untouched.
+When you later reopen the note file with
+`\f[CR]tpnote 20250423\-getreu\-\-Note.md\f[R]', Tp\-Note determines
+with the line `\f[CR]Schema: Deutsch\f[R]' its scheme
+`\f[CR]Deutsch\f[R]'.
+With the help of the associated localization table above, Tp\-Note
+translates the keys back to the English `\f[CR]fm.fm_*\f[R]' versions.
+.PP
+Note, that the (de\-)localization only applies to root level keys (e.g.
+`\f[CR]fm_foo\f[R]' in `\f[CR]fm.fm_foo\f[R]').
+All nested keys names (e.g.\ `\f[CR]baz\f[R]' in
+`\f[CR]fm.fm_foo.baz\f[R]') are never translated.
 .SS Change the default markup language
 Tp\-Note\[cq]s core functionality, the management of note file headers
 and filenames, is markup language agnostic.
-However, there is one content template
+However, among the shipped templates, there is one content template
 `\f[CR]tmpl.annotate_file_content\f[R]' that generates a hyperlink.
-The hyperlink syntax varies depending on the markup language.
-Hence, you should not forget to modify the
-`\f[CR]tmpl.annotate_file_content\f[R]' content template, when you
-change the default markup language defined in
-`\f[CR]filename.extension_default\f[R]'.
+As the hyperlink syntax varies depending on the markup language,
+Tp\-Note\[cq]s default internal `\f[CR]tmpl.annotate_file_content\f[R]'
+template, handle \[lq]Markdown\[rq] and \[lq]ReStructuredText\[rq]
+syntax.
+If you wish to switch the default markup language with
+`\f[CR]filename.extension_default\f[R]' to another language than
+`\f[CR]md\f[R]' or `\f[CR]rst\f[R]', you should not forget to modify the
+`\f[CR]tmpl.annotate_file_content\f[R]' content template as well.
 .PP
 Tp\-Note\[cq]s built\-in viewer is not markup language agnostic.
 It comprises three different markup renderers (cf.\ section
@@ -2441,7 +2465,7 @@ very little on the used markup language.
 The default templates are designed in a way that they contain almost no
 markup specific code.
 Though there is one little exception in the
-`\f[CR]annotate_file_content\f[R]' template.
+`\f[CR]annotate_file_content\f[R]' template (see previous section).
 .PP
 When you open an existing note file, Tp\-Note detects the note
 file\[cq]s markup language from its file extension.
@@ -2488,7 +2512,7 @@ name = \[aq]zettel\[aq]
 extension_default=\[dq]rst\[dq]
 .EE
 .PP
-This overwrites the `\f[CR]extension_default\f[R]' variable of the
+The latter overwrites the `\f[CR]extension_default\f[R]' variable of the
 `\f[CR]zettel\f[R]' scheme, but leaves the `\f[CR]default\f[R]' scheme
 untouched.
 .SS Change the sort tag character set
@@ -2598,9 +2622,11 @@ with:
 [{{ path | file_name }}](<../{{ path | file_name }}>)
 .EE
 .PP
-In case you use the `\f[CR]zettel\f[R]' scheme as well, repeat the above
-section and append the following to your configuration file and repeat
-the above.
+The scheme `\f[CR]zettel\f[R]' overwrites the base
+`\f[CR]annotate_file_filename\f[R]' template.
+Therefore, in case you use the `\f[CR]zettel\f[R]' scheme as well,
+repeat the above section and append the following to your configuration
+file and repeat the above.
 .IP
 .EX
 \f[B][[scheme]]\f[R]
@@ -2670,7 +2696,7 @@ Please note, that in general, the `\f[CR]safe\f[R]' filter is only
 recommended directly after the `\f[CR]to_html\f[R]' and the
 `\f[CR]markup_to_html\f[R]' filters, because these handle critical input
 by themselves.
-The following code example, inspired by the
+The following simplified code sample, inspired by the
 `\f[CR]tmpl_html.viewer\f[R]' template, illustrates the available
 variables:
 .IP
@@ -2690,7 +2716,7 @@ viewer = \[aq]\[aq]\[aq]
   <pre class=\[dq]doc\-header\[dq]>{{ doc_fm_text }}</pre>
   <hr>
   <div class=\[dq]doc\-body\[dq]>
-    {{ doc_body_text | markup_to_html(extension=ext) | safe }}
+    {{ doc.body | markup_to_html(extension=ext) | safe }}
   </div>
   <script>{{ viewer_doc_js | safe }}</script>
 </body>
@@ -2718,16 +2744,13 @@ path required to highlight embedded source code.
 This path is hard\-wired and it is understood by Tp\-Note\[cq]s internal
 web server.
 .IP \[bu] 2
-`\f[CR]{{ doc_fm_text }}\f[R]' is the raw UTF\-8 copy of the header.
+`\f[CR]{{ doc.header }}\f[R]' is the raw UTF\-8 copy of the header.
 Not to be confounded with the dictionary variable `\f[CR]{{ fm }}\f[R]'.
 .IP \[bu] 2
-`\f[CR]{{ doc_body_text | markup_to_html(extension=ext) | safe }}\f[R]'
-is the note\[cq]s body as HTML rendition.
+`\f[CR]{{ doc.body | markup_to_html(extension=ext) | safe }}\f[R]' is
+the note\[cq]s body as HTML rendition.
 The parameter `\f[CR]extension\f[R]' designates the markup language as
 specified in the `\f[CR]filename.extensions\-*\f[R]' variables.
-.IP \[bu] 2
-`\f[CR]{{ doc_text | markup_to_html | safe }}\f[R]' is the note\[cq]s
-raw text as HTML rendition with clickable hyperlinks.
 .IP \[bu] 2
 `\f[CR]{{ viewer_doc_js | safe }}\f[R]' is the JavaScript browser code
 for live updates.
@@ -2833,7 +2856,7 @@ exporter = \[aq]\[aq]\[aq]
   <pre class=\[dq]doc\-header\[dq]>{{ doc_fm_text }}</pre>
   <hr>
   <div class=\[dq]doc\-body\[dq]>
-    {{ doc_body_text| markup_to_html(extension=ext) | safe }}
+    {{ doc.body | markup_to_html(extension=ext) | safe }}
   </div>
 </body>
 </html>
@@ -2923,18 +2946,12 @@ The content of a new note is composed by one of Tp\-Note\[cq]s internal
 customizable templates, hence the name Tp\-Note, where \f[I]Tp\f[R]
 stands for \[lq]template\[rq].
 Which of the internal templates is applied depends on the context in
-which Tp\-Note is invoked: e.g.\ the template for clipboard text input
-is called `\f[CR]tmpl.from_clipboard_content\f[R]'.
-If the clipboard contains text with a YAML header, the template
-`\f[CR]tmpl.from_clipboard_yaml_content\f[R]' is used.
+which Tp\-Note is invoked: e.g.\ the template when creating a new note
+file in a given directory is called `\f[CR]tmpl.from_dir_content\f[R]'.
 .PP
-In total, there are 5 different `\f[CR]tmpl.*_content\f[R]' templates:
+In total, there are 3 different `\f[CR]tmpl.*_content\f[R]' templates:
 .IP \[bu] 2
 `\f[CR]tmpl.from_dir_content\f[R]'
-.IP \[bu] 2
-`\f[CR]tmpl.from_clipboard_content\f[R]'
-.IP \[bu] 2
-`\f[CR]tmpl.from_clipboard_yaml_content\f[R]'
 .IP \[bu] 2
 `\f[CR]tmpl.from_text_file_content\f[R]'
 .IP \[bu] 2
@@ -2945,16 +2962,12 @@ stream \- usually originating from the clipboard \- ends up in the body
 of the note file, whereas the environment \- such as the username \-
 ends up in the header of the note file.
 .PP
-Once the content of the new note is set by one of the content templates,
-another template type comes into play: the so\-called \f[I]filename
-template\f[R].
+Once the content of the new note is set by one of the above content
+templates, another template type comes into play: the so\-called
+\f[I]filename template\f[R].
 Each content template has a corresponding filename template, e.g.:
 .IP \[bu] 2
 `\f[CR]tmpl.from_dir_filename\f[R]'
-.IP \[bu] 2
-`\f[CR]tmpl.from_clipboard_filename\f[R]'
-.IP \[bu] 2
-`\f[CR]tmpl.from_clipboard_yaml_filename\f[R]'
 .IP \[bu] 2
 `\f[CR]tmpl.from_text_file_filename\f[R]'
 .IP \[bu] 2
@@ -2977,9 +2990,9 @@ files.
 However, two of them have a special role: \f[I]prepend header to text
 file\f[R] and \f[I]synchronize filename\f[R]:
 .IP \[bu] 2
-\f[I]Prepend header to text file\f[R] (new feature in Tp\-Note v1.16.0):
-When Tp\-Note opens a regular text file without a YAML header, a new
-header is prepended automatically.
+\f[I]Prepend header to text file\f[R]: When Tp\-Note opens a regular
+text file without a YAML header, a new header is prepended
+automatically.
 It\[cq]s data originates mainly form the filename of the text file.
 The templates applied in this use case are:
 `\f[CR]tmpl.from_text_file_content\f[R]' and
@@ -2990,7 +3003,7 @@ The templates applied in this use case are:
 evaluated.
 The extracted header information is then applied to the
 `\f[CR]tmpl.sync_filename\f[R]' template and the resulting filename is
-compared with the actual filename on disk.
+compared to the actual filename on disk.
 If they differ, [Tp\-Note] renames the note file.
 Note, the `\f[CR]tmpl.sync_filename\f[R]' template operates on its own
 without a corresponding content template.
@@ -3021,7 +3034,7 @@ files `\f[CR]config.rs\f[R]' and `\f[CR]note.rs\f[R]' in the directory
 `\f[CR]tpnote\-lib/src/\f[R]'.
 .SS Template variables
 All \c
-.UR https://tera.netlify.com/%20docs/#templates
+.UR https://tera.netlify.com/docs/#templates
 Tera template variables and functions
 .UE \c
 \ can be used within Tp\-Note\[cq]s templates.
@@ -3049,13 +3062,13 @@ Note, this variable is only available in the templates
 `\f[CR]from_text_file_*\f[R]', `\f[CR]sync_filename\f[R]' and the HTML
 templates below.
 .IP \[bu] 2
-`\f[CR]{{ doc_body_text }}\f[R]': is the content of the file
+`\f[CR]{{ doc.body }}\f[R]': is the content of the file
 `\f[CR]{{ path }}\f[R]' points to.
-If the file does not start with a front matter, this variable holds the
-whole content.
-Note, this variable is only available in the templates
-`\f[CR]from_text_file_*\f[R]', `\f[CR]sync_filename\f[R]' and the HTML
-templates below.
+If the file starts with a YAML header, its raw text is stored in
+`\f[CR]{{ doc.header }}\f[R]'.
+Note, these variables are only available in the templates:
+`\f[CR]from_text_file_content\f[R]', `\f[CR]sync_filename\f[R]' and in
+the HTML templates `\f[CR]tmpl_html.*\f[R]'.
 .IP \[bu] 2
 `\f[CR]{{ doc_file_date }}\f[R]': is the file system creation date of
 the file `\f[CR]{{ path }}\f[R]' points to.
@@ -3064,32 +3077,33 @@ This variable is only available in the templates
 templates.
 This condition implies, that `\f[CR]{{ path }}\f[R]' points to a file.
 Note: on some platforms and with some filesystems, the variable
-`\f[CR]{{ doc_file_date }}\f[R]' might not be defined.
+`\f[CR]{{ doc_file_date }}\f[R]' might not be available.
+Here the file modification date is used instead.
 .IP \[bu] 2
-`\f[CR]{{ txt_clipboard }}\f[R]' is the complete `\f[CR]plain/text\f[R]'
-clipboard text.
+`\f[CR]{{ txt_clipboard.body }}\f[R]' is the complete
+`\f[CR]plain/text\f[R]' clipboard text.
 In case the clipboard\[cq]s content starts with a YAML header, only the
 non YAML content is retained.
-.IP \[bu] 2
-`\f[CR]{{ txt_clipboard_header }}\f[R]' is the YAML header section of
+`\f[CR]{{ txt_clipboard.header }}\f[R]' is the YAML header section of
 the clipboard data, if it exists.
 If not, the variable is empty.
 .IP \[bu] 2
-`\f[CR]{{ html_clipboard }}\f[R]' and
-`\f[CR]{{ html_clipboard_header }}\f[R]' contain the same text as their
-`\f[CR]txt_clipboard_*\f[R]' counterparts, but as HTML.
-This way you can copy the destination of hyperlinks in addition to their
-link text.
+`\f[CR]{{ html_clipboard.body }}\f[R]' and
+`\f[CR]{{ html_clipboard.header }}\f[R]' contain the same text as their
+`\f[CR]txt_clipboard.*\f[R]' counterparts, but as HTML.
+The HTML clipboard provides more information, e.g.\ hyperlinks contain a
+link destination besides its link text.
+In the TXT clipboard you see only link texts.
 .IP \[bu] 2
-`\f[CR]{{ stdin }}\f[R]' is the complete text content originating from
-the input stream `\f[CR]stdin\f[R]'.
+`\f[CR]{{ stdin.body }}\f[R]' is the complete text content originating
+from the input stream `\f[CR]stdin\f[R]'.
 This stream can replace the clipboard when it is not available.
 In case the input stream\[cq]s content starts with a YAML header, the
 latter does not appear in this variable.
-.IP \[bu] 2
-`\f[CR]{{ stdin_header }}\f[R]' is the YAML section of the input stream,
+`\f[CR]{{ stdin.header }}\f[R]' is the YAML section of the input stream,
 if one exists.
-Otherwise: empty string.
+Otherwise, the variable is still defined, but its value is the empty
+string.
 .IP \[bu] 2
 `\f[CR]{{ extension_default }}\f[R]' is the default extension for new
 notes (can be changed in the configuration file),
@@ -3124,12 +3138,12 @@ On the other hand, a missing `\f[CR]foo:\f[R]' will cause
 `\f[CR]{{ fm.fm_foo }}\f[R]' to be undefined.
 Please note, that the header variables may be localized,
 e.g.\ `\f[CR]Untertitel:\f[R]'.
-Nevertheless, in templates always use the English version,
-e.g.\ `\f[CR]fm.fm_subtitle\f[R]'.
+Nevertheless, in templates always use the English version, e.g.
+`\f[CR]fm.fm_subtitle\f[R]'.
 .PP
-It is to be observed that `\f[CR]{{ fm.fm_* }}\f[R]' variables are only
-available in filename templates and in the
-`\f[CR]tmpl.from_clipboard_yaml_content\f[R]' content template.
+It is to be observed that `\f[CR]{{ fm.fm_* }}\f[R]' variables are not
+available in in the `\f[CR]tmpl.from_text_file_content\f[R]' content
+template.
 .IP \[bu] 2
 `\f[CR]{{ fm.fm_title }}\f[R]' is the `\f[CR]title:\f[R]' as indicated
 in the YAML front\-matter of the note.
@@ -3153,13 +3167,14 @@ the YAML front matter of this note
 .IP \[bu] 2
 `\f[CR]{{ fm }}\f[R]': is a collection (map) of all defined
 `\f[CR]{{ fm.fm_* }}\f[R]' variables.
-It is used in the `\f[CR]tmpl.from_clipboard_yaml_content\f[R]'
-template, typically in a loop like:
+It is used in the `\f[CR]tmpl.from_dir_content\f[R]' template, typically
+in a loop like:
 .RS 2
 .IP
 .EX
-\f[B]{\f[R]% for key\f[B],\f[R] value in fm %\f[B]}\f[R]{{ key }}\f[B]:\f[R] \f[B]{\f[R]{ value | json_encode \f[B]}\f[R]}
-\f[B]{\f[R]% endfor %\f[B]}\f[R]
+{{ fm.fm_title | to_yaml(key=\[aq]fm_title\[aq]) }}
+{{ fm.fm_subtitle | to_yaml(key=\[aq]fm_subtitle\[aq]) }}
+{{ fm  | remove(key=\[aq]fm_title\[aq]) | remove(key=\[aq]fm_keywords\[aq]) | to_yaml }}
 .EE
 .RE
 .PP
@@ -3168,7 +3183,7 @@ Important: there is no guarantee, that any of the above
 Depending on the last content template result, certain variables might
 be undefined.
 Please take into consideration, that a defined variable might contain
-the empty string `\f[CR]\[dq]\[dq]\f[R]'.
+the empty string `\f[CR]\[aq]\[aq]\f[R]'.
 Creating a new note file with a content template, the note\[cq]s header
 is parsed into `\f[CR]{{ fm.fm_* }}\f[R]' variables.
 The latter are then type checked according configurable rules.
@@ -3266,30 +3281,30 @@ Unlike the `\f[CR]file_name\f[R]' filter (which also returns the final
 component), `\f[CR]trim_file_sort_tag\f[R]' trims the sort tag if there
 is one.
 .IP \[bu] 2
-`\f[CR]{{ html_clipboard | html_to_markup(extension=e, default=d) }}\f[R]'
+`\f[CR]{{ html_clipboard.body | html_to_markup(extension=e, default=d) }}\f[R]'
 converts the clipboard\[cq]s HTML content into the target markup
 language specified by `\f[CR]{{ e }}\f[R]', e.g.\ `\f[CR]md\f[R]'.
 If the conversion fails or results in an empty string, stream the
 content of the variable `\f[CR]{{ d }}\f[R]' instead.
 .IP \[bu] 2
-`\f[CR]{{ txt_clipboard | trunc }}\f[R]' is the first 200 bytes from the
-clipboard.
+`\f[CR]{{ txt_clipboard.body | trunc }}\f[R]' is the first 200 bytes
+from the clipboard.
 .IP \[bu] 2
-`\f[CR]{{ txt_clipboard | heading }}\f[R]' is the clipboard\[cq]s
+`\f[CR]{{ txt_clipboard.body | heading }}\f[R]' is the clipboard\[cq]s
 content until the end of the first sentence, or the first newline.
 .IP \[bu] 2
-`\f[CR]{{ html_clipboard | html_heading }}\f[R]' searches in the HTML
-clipboard input, for e.g `\f[CR]<h2>HEADING</h2>\f[R]', and returns the
-first HTML heading, e.g.\  `\f[CR]HEADING\f[R]'.
+`\f[CR]{{ html_clipboard.body | html_heading }}\f[R]' searches in the
+HTML clipboard input, for e.g `\f[CR]<h2>HEADING</h2>\f[R]', and returns
+the first HTML heading, e.g.\  `\f[CR]HEADING\f[R]'.
 .IP \[bu] 2
-`\f[CR]{{ html_clipboard | link_text }}\f[R]' is the name of the first
-Markdown or ReStructuredText formatted link in the clipboard.
+`\f[CR]{{ html_clipboard.body | link_text }}\f[R]' is the name of the
+first Markdown or ReStructuredText formatted link in the clipboard.
 .IP \[bu] 2
-`\f[CR]{{ html_clipboard | link_dest }}\f[R]' is the URL of the first
-Markdown or ReStruncturedText formatted link in the clipboard.
+`\f[CR]{{ html_clipboard.body | link_dest }}\f[R]' is the URL of the
+first Markdown or ReStruncturedText formatted link in the clipboard.
 .IP \[bu] 2
-`\f[CR]{{ html_clipboard | link_title }}\f[R]' is the title of the first
-Markdown or ReStruncturedText formatted link in the clipboard.
+`\f[CR]{{ html_clipboard.body | link_title }}\f[R]' is the title of the
+first Markdown or ReStruncturedText formatted link in the clipboard.
 .IP \[bu] 2
 `\f[CR]{{ username | capitalize | to_yaml(key=\[aq]author\[aq],tab=12) }}\f[R]'
 is the capitalized YAML encoded username.
@@ -3349,10 +3364,9 @@ Otherwise, the YAML rendition is appended with a newline character.
 The `\f[CR]to_html\f[R]' must be followed by a `\f[CR]safe\f[R]' filter
 to pass through the HTML formatting of objects and arrays.
 .IP \[bu] 2
-`\f[CR]{{ doc_body_text | get_lang | unique }}\f[R]' determines the
-natural languages of the text in the variable
-`\f[CR]{{ doc_body_text }}\f[R] and returns the result as an array of
-ISO 639\-1 language codes.
+`\f[CR]{{ doc.body | get_lang }}\f[R]' determines the natural languages
+of the text in the variable `\f[CR]{{ doc.body }}\f[R] and returns the
+result as an array of ISO 639\-1 language codes.
 The template filter'\f[CR]{{ get_lang }}\f[R]\[cq] can be configured
 with the configuration file variable `\f[CR]tmpl.filter.get_lang\f[R]'.
 The latter defines those ISO 639\-1 codes, the detection algorithm
@@ -3361,14 +3375,12 @@ Keep this list as small as possible, because language detection is
 computationally expensive.
 A long candidate list may slow down the note file creation workflow.
 The detected languages are listed as \f[CR]\[aq]Value::Array\f[R]\[cq]
-in the order of their appearance.
-To list a language only once, we add the `\f[CR]unique\f[R]' filter at
-the end.
-If the detection algorithm can not determine the language of
-`\f[CR]{{   doc_body_text }}\f[R]', the filter
-`\f[CR]{{ get_lang }}\f[R]' returns en empty array.
+in the order of their statistic frequency.
+If the detection algorithm can not detect any of the configured language
+candidates, the filter `\f[CR]{{ get_lang }}\f[R]' returns en empty
+array.
 .IP \[bu] 2
-`\f[CR]{{ doc_body_text | get_lang | unique | map_lang }}\f[R]': The
+`\f[CR]{{ doc.body | get_lang | map_lang }}\f[R]': The
 `\f[CR]map_lang\f[R]' filter extends the detected ISO 638\-1 language
 codes to complete IETF BCP 47 language tags, usually containing a region
 subtag.
@@ -3381,18 +3393,17 @@ If a language is not listed in the `\f[CR]tmpl.filter.map_lang\f[R]'
 filter configuration, the input is passed through, e.g.\ `\f[CR]fr\f[R]'
 results in `\f[CR]fr\f[R]'.
 .IP \[bu] 2
-`\f[CR]{{ doc_body_text | get_lang | unique | map_lang(default=lang) }}\f[R]'
-adds an extra mapping to the `\f[CR]map_lang\f[R]' filter: when the
-input of the `\f[CR]map_lang\f[R]' filter is an empty
-\f[CR]Value::Array\f[R], then `\f[CR]{{ lang }}\f[R]' is added as single
-item.
+`\f[CR]{{ doc.body | get_lang | map_lang(default=lang) }}\f[R]' adds an
+extra mapping to the `\f[CR]map_lang\f[R]' filter: when the input of the
+`\f[CR]map_lang\f[R]' filter is an empty \f[CR]Value::Array\f[R], then
+`\f[CR]{{ lang }}\f[R]' is added as single item.
 `\f[CR]{{ lang }}\f[R]' is expected to be a ISO 638\-1 language code,
 e.g.\ `\f[CR]en\f[R]'.
 Depending on the `\f[CR]tmpl.filter.map_lang\f[R]' configuration, the
 exemplary `\f[CR]en\f[R]' input may be converted to `\f[CR]en\-US\f[R]'
 or `\f[CR]en\-GB\f[R]'.
 .IP \[bu] 2
-`\f[CR]{{ doc_body_text | get_lang | ... | flatten_array | to_yaml }}\f[R]':
+`\f[CR]{{ doc.body | get_lang | ... | flatten_array | to_yaml }}\f[R]':
 Arrays are usually printed with `\f[CR]to_yaml\f[R]' as item lists.
 When a list contains exactly one item, the filter
 `\f[CR]flatten_array\f[R]' flattens that list.
@@ -3401,8 +3412,9 @@ one item.
 Lists with two or more items are not flattened.
 They are passed through without modification.
 .IP \[bu] 2
-`\f[CR]{{ doc_body_text | get_lang | ... | first | to_yaml }}\f[R]'
-returns the first detected language as `\f[CR]Value::String\f[R]'.
+`\f[CR]{{ doc.body | get_lang | ... | first | to_yaml }}\f[R]' returns
+the language with the biggest word count frequency as
+`\f[CR]Value::String\f[R]'.
 .IP \[bu] 2
 `\f[CR]{{ doc_file_date | default(value=now()) | date(format=\[aq]%Y%m%d\[aq]) }}\f[R]'
 Returns the formatted date of the file `\f[CR]{{ path }}\f[R]' points

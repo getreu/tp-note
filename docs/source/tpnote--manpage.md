@@ -115,14 +115,14 @@ lang:       en-GB
 ## Create a new note based on clipboard data
 
 When '`<path>`' is a directory and the clipboard is not empty, the clipboard's
-content is stored in the variables '`{{ txt_clipboard }}`' and 
-'`{{ html_clipboard }}`'. The latter contains the HTML rich text version
+content is stored in the variables '`{{ txt_clipboard.body }}`' and 
+'`{{ html_clipboard.body }}`'. The latter contains the HTML rich text version
 of the clipboard content. In addition, if the
 content contains a hyperlink, the first hyperlink's name can be
-accessed with '`{{ txt_clipboard | link_text }}`', its URL with
-'`{{ txt_clipboard | link_dest }}`' and its title with
-'`{{ txt_clipboard | link_title }}`'. The new note is then created with the
-'`tmpl.from_clipboard_content`' and the '`tmpl.from_clipboard_filename`'
+accessed with '`{{ txt_clipboard.body | link_text }}`', its URL with
+'`{{ txt_clipboard.body | link_dest }}`' and its title with
+'`{{ txt_clipboard.body | link_title }}`'. The new note is then created with the
+'`tmpl.from_dir_content`' and the '`tmpl.from_dir_filename`'
 templates. Finally, the newly created note file is opened again with some
 external text editor. When the user closes the text editor, Tp-Note
 synchronizes the note's metadata and its filename with the template
@@ -136,15 +136,13 @@ Note: this operation mode also empties the clipboard (configurable feature).
 In case the clipboard stream contains HTML, the internal filter
 
 ```
-{{ html_clipboard | html_to_markup(
-                          extension=extension_default, 
-                          default=txt_clipboard) 
-}}
+{{ html_clipboard.body
+   | html_to_markup(extension=extension_default, default=txt_clipboard.body) }}
 ```
  
 converts the stream into Markdown before being processed. If the conversion
 fails or results in an empty string, the fallback value is
-'`{{ txt_clipboard }}`' 
+'`{{ txt_clipboard.body }}`' 
 
 
 **Clipboard simulation**
@@ -204,14 +202,14 @@ Who Moved My Cheese?
 Chapter 2
 ```
 
-We see from the above example, how the '`tmpl.from_clipboard_content`' content
+We see from the above example, how the '`tmpl.from_dir_content`' content
 template extracts the first line of the clipboards content and inserts it into
 the header's '`title:`' field. Then, it copies the entire clipboard content
 into the body of the document.  However, if desired or necessary, it is possible
 to modify all templates in Tp-Note's configuration file. Note, that not only
 the note's content is created with a template, but also its filename: The
-'`tmpl.from_clipboard_filename`' filename template concatenates the current
-date, the note's title and subtitle.
+'`tmpl.from_dir_filename`' filename template concatenates the current date, the
+note's title and subtitle.
 
 
 
@@ -232,8 +230,8 @@ mkdir 'Fary tales'
 tpnote './Fary tales'
 ```
 
-Tp-Note's templates '`tmpl.from_clipboard_content`' and
-'`tmpl.from_clipboard_filename`' create the following document:
+Tp-Note's templates '`tmpl.from_dir_content`' and '`tmpl.from_dir_filename`'
+create the following document:
 
     ./Fary tales/20250104-Cinderella--Notes.md
 
@@ -276,8 +274,8 @@ the string: '`I recommend:\n[The Rust Book](https://doc.rust-lang.org/book/)`'.
 tpnote './doc/Lecture 1'
 ```
 
-Tp-Note's templates '`tmpl.from_clipboard_content`' and
-'`tmpl.from_clipboard_filename`' create the following document:
+Tp-Note's templates '`tmpl.from_dir_content`' and '`tmpl.from_dir_filename`'
+create the following document:
 
     ./doc/Lecture 1/20211031-The Rust Book--Notes.md
 
@@ -326,13 +324,11 @@ file_ext:   mdtxt
 nothing
 ```
 
-Technically, the creation of the new note is performed
-using the YAML header variables: '`{{ fm.fm_title }}`',
-'`{{ fm.fm_subtitle }}`', '`{{ fm.fm_author }}`', '`{{ fm.fm_date }}`',
-'`{{ fm.fm_lang }}`', '`{{ fm.fm_sort_tag }}`' and
-'`{{ fm.fm_file_ext }}`' which are evaluated with the
-'`tmpl.from_clipboard_yaml_content`' and the
-'`tmpl.from_clipboard_yaml_filename`' templates.
+Technically, the creation of the new note is performed using the YAML header
+variables: '`{{ fm.fm_title }}`', '`{{ fm.fm_subtitle }}`',
+'`{{ fm.fm_author }}`', '`{{ fm.fm_date }}`', '`{{ fm.fm_lang }}`',
+'`{{ fm.fm_sort_tag }}`' and '`{{ fm.fm_file_ext }}`' which are evaluated with
+the '`tmpl.from_dir_filename`' templates.
 
 Note, that the same result can also be achieved without clipboard input by
 typing in a terminal:
@@ -1971,45 +1967,72 @@ fm_var.localization = [
 ]
 ```
 
-Keep in mind, that the templates do not change! Templates refer to a header
-variable with an identifier starting with '`fm.fm_`', The identifier 
-corresponds to the first column of the above table.
+Keep in mind, that the templates do not change! Header variables in templates
+always start with the identifier '`fm.fm_`' (cf. first column of the above
+table).
 
-As an example, consider the following localization:
+The above configuration changes the localization default for all note files
+in the scope of the configuration file '`tpnote.toml`'. It is also possilbe
+to use header variables in different languages side by side with
+schemes:
 
 ```toml
-[base_scheme.tmpl]
+[[scheme]]
+name = 'Deutsch'
+[scheme.tmpl]
 fm_var.localization = [
-    ["fm_foo", "FOO"],
+    ["fm_title", "Titel"],
+    ["fm_subtitle", "Untertitel"],
+    ["fm_author", "Autor"],
+    ["fm_date", "Datum"],
+    ["fm_lang", "Sprache"],
+    ["fm_languages", "Sprachen"],
+    ["fm_sort_tag", "Kennzeichen"],
+    ["fm_file_ext", "Dateierweiterung"],
+    ["fm_no_filename_sync", "Keine_Sync"],
+    ["fm_filename_sync", "Dateinamensync"],
+    ["fm_scheme", "Schema"],
 ]
+```
+
+This example defines an additional scheme called “Deutsch”. To use the new
+scheme invoke Tp-Note with '`tpnote --scheme Deutsch`'. It creates the
+following note file:
+
+```yaml
+---
+Titel:        getreu
+Untertitel:   Note
+Autor:        Getreu
+Datum:        2025-04-23
+Sprache:      de-DE
+Schema:       Deutsch
+---
 
 ```
 
-The front matter variable '`FOO:`' is internally in templates represented 
-as '`fm.fm_foo`'. For example, the template '`tmpl_html.viewer`' may contain the
-expression '`{{ fm.fm_foo | name }}`' which is then printed as '`FOO`'.
+When you later reopen the note file with '`tpnote 20250423-getreu--Note.md`',
+Tp-Note determines with the line '`Schema: Deutsch`' its scheme '`Deutsch`'.
+With the help of the associated localization table above, Tp-Note translates
+the keys back to the English '`fm.fm_*`' versions. 
 
-NB: In general, a variable with the key '`fm.fm_bar`' may contain a nested map:
-
-```
-"fm.fm_bar": Object {
-            "baz": String("Hello"),
-        }
-```
-
-The (de-)localization occurs only at the root map level. All nested keys 
-names, e.g. '`baz`' remain untouched.
+Note, that the (de-)localization only applies to root level keys (e.g.
+'`fm_foo`' in '`fm.fm_foo`'). All nested keys names (e.g. '`baz`' in
+'`fm.fm_foo.baz`') are never translated.
 
 
 
 ## Change the default markup language
 
-Tp-Note's core functionality, the management of note file headers and
-filenames, is markup language agnostic. However, there is one content template
-'`tmpl.annotate_file_content`' that generates a hyperlink. The hyperlink
-syntax varies depending on the markup language. Hence, you should not forget to
-modify the '`tmpl.annotate_file_content`' content template, when you
-change the default markup language defined in '`filename.extension_default`'.
+Tp-Note's core functionality, the management of note file headers and filenames,
+is markup language agnostic. However, among the shipped templates, there is
+one content template '`tmpl.annotate_file_content`' that generates a hyperlink.
+As the hyperlink syntax varies depending on the markup language, Tp-Note's
+default internal '`tmpl.annotate_file_content`' template, handle “Markdown” and
+“ReStructuredText” syntax. If you wish to switch the default markup language
+with '`filename.extension_default`' to another language than '`md`' or '`rst`',
+you should not forget to modify the '`tmpl.annotate_file_content`' content
+template as well.
 
 Tp-Note's built-in viewer is not markup language agnostic. It comprises three
 different markup renderers (cf. section _Customize the built-in note viewer_):
@@ -2024,7 +2047,8 @@ different markup renderers (cf. section _Customize the built-in note viewer_):
 Tp-Note's core function is a template system and as such it depends
 very little on the used markup language. The default templates are
 designed in a way that they contain almost no markup specific code. Though there
-is one little exception in the '`annotate_file_content`' template.
+is one little exception in the '`annotate_file_content`' template (see
+previous section).
 
 When you open an existing note file, Tp-Note detects the note file's markup
 language from its file extension. To open a note written in ReStructuredText
@@ -2070,8 +2094,8 @@ name = 'zettel'
 extension_default="rst"
 ```
 
-This overwrites the '`extension_default`' variable of the '`zettel`' scheme,
-but leaves the '`default`' scheme untouched.
+The latter overwrites the '`extension_default`' variable of the '`zettel`'
+scheme, but leaves the '`default`' scheme untouched.
 
 
 ## Change the sort tag character set
@@ -2164,8 +2188,10 @@ with:
 
     [{{ path | file_name }}](<../{{ path | file_name }}>)
 
-In case you use the '`zettel`' scheme as well, repeat the above section and append the following
-to your configuration file and repeat the above.
+The scheme '`zettel`' overwrites the base '`annotate_file_filename`' template.
+Therefore, in case you use the '`zettel`' scheme as well, repeat the above
+section and append the following to your configuration file and repeat the
+above.
 
 ```toml
 [[scheme]]
@@ -2233,8 +2259,9 @@ critical characters in variables by default. To disable escaping for a specific
 variable, add the '`safe`' filter in last position of the filter chain.
 Please note, that in general, the '`safe`' filter is only recommended directly
 after the '`to_html`' and the '`markup_to_html`' filters, because these
-handle critical input by themselves. The following code example, inspired by
-the '`tmpl_html.viewer`' template, illustrates the available variables:
+handle critical input by themselves. The following simplified code sample,
+inspired by the '`tmpl_html.viewer`' template, illustrates the available
+variables:
 
 ```toml
 [tmpl_html]
@@ -2252,7 +2279,7 @@ viewer = '''
   <pre class="doc-header">{{ doc_fm_text }}</pre>
   <hr>
   <div class="doc-body">
-    {{ doc | markup_to_html(extension=ext) | safe }}
+    {{ doc.body | markup_to_html(extension=ext) | safe }}
   </div>
   <script>{{ viewer_doc_js | safe }}</script>
 </body>
@@ -2276,10 +2303,10 @@ Specifically:
   highlight embedded source code. This path is hard-wired and it is understood
   by Tp-Note's internal web server.
 
-* '`{{ doc_fm_text }}`' is the raw UTF-8 copy of the header. Not to be
+* '`{{ doc.header }}`' is the raw UTF-8 copy of the header. Not to be
   confounded with the dictionary variable '`{{ fm }}`'.
 
-* '`{{ doc | markup_to_html(extension=ext) | safe }}`' is the note's
+* '`{{ doc.body | markup_to_html(extension=ext) | safe }}`' is the note's
   body as HTML rendition. The parameter '`extension`' designates the 
   markup language as specified in the '`filename.extensions-*`' variables.
 
@@ -2382,7 +2409,7 @@ exporter = '''
   <pre class="doc-header">{{ doc_fm_text }}</pre>
   <hr>
   <div class="doc-body">
-    {{ doc | markup_to_html(extension=ext) | safe }}
+    {{ doc.body | markup_to_html(extension=ext) | safe }}
   </div>
 </body>
 </html>
@@ -2466,15 +2493,12 @@ environment.
 The content of a new note is composed by one of Tp-Note's internal customizable
 templates, hence the name Tp-Note, where _Tp_ stands for “template”. Which of
 the internal templates is applied depends on the context in which Tp-Note is
-invoked: e.g. the template for clipboard text input is called
-'`tmpl.from_clipboard_content`'. If the clipboard contains text with a YAML
-header, the template '`tmpl.from_clipboard_yaml_content`' is used.
+invoked: e.g. the template when creating a new note file in a given directory is
+called '`tmpl.from_dir_content`'.
 
-In total, there are 5 different '`tmpl.*_content`' templates:
+In total, there are 3 different '`tmpl.*_content`' templates:
 
 * '`tmpl.from_dir_content`'
-* '`tmpl.from_clipboard_content`'
-* '`tmpl.from_clipboard_yaml_content`'
 * '`tmpl.from_text_file_content`'
 * '`tmpl.annotate_file_content`'
 
@@ -2483,13 +2507,11 @@ stream - usually originating from the clipboard - ends up in the body of the
 note file, whereas the environment - such as the username - ends up in
 the header of the note file.
 
-Once the content of the new note is set by one of the content templates,
+Once the content of the new note is set by one of the above content templates,
 another template type comes into play: the so-called _filename template_.
 Each content template has a corresponding filename template, e.g.:
 
 * '`tmpl.from_dir_filename`'
-* '`tmpl.from_clipboard_filename`'
-* '`tmpl.from_clipboard_yaml_filename`'
 * '`tmpl.from_text_file_filename`'
 * '`tmpl.annotate_file_filename`'
 * '`tmpl.sync_filename`' (no corresponding content template)
@@ -2506,16 +2528,16 @@ Most of the above templates are dedicated to the creation of new note files.
 However, two of them have a special role: _prepend header to text file_
 and _synchronize filename_:
 
-* _Prepend header to text file_ (new feature in Tp-Note v1.16.0): When Tp-Note
-  opens a regular text file without a YAML header, a new header is prepended
-  automatically. It's data originates mainly form the filename of the
-  text file. The templates applied in this use case are:
-  '`tmpl.from_text_file_content`' and '`tmpl.from_text_file_filename`'.
+* _Prepend header to text file_: When Tp-Note opens a regular text file
+  without a YAML header, a new header is prepended automatically. It's
+  data originates mainly form the filename of the text file. The templates
+  applied in this use case are: '`tmpl.from_text_file_content`' and
+  '`tmpl.from_text_file_filename`'.
 
 * _Synchronize filename_: This function mode is invoked when [Tp-Note] opens an
   existing note file, after it's YAML header is evaluated. The extracted header
   information is then applied to the '`tmpl.sync_filename`' template and the
-  resulting filename is compared with the actual filename on disk. If they
+  resulting filename is compared to the actual filename on disk. If they
   differ, [Tp-Note] renames the note file. Note, the '`tmpl.sync_filename`'
   template operates on its own without a corresponding content template.
 
@@ -2542,10 +2564,10 @@ consult the '`const`' definitions in Tp-Note's source code files
 
 ## Template variables
 
-All [Tera template variables and functions](https://tera.netlify.com/
-docs/#templates) can be used within Tp-Note's templates. For example
-'`{{ get_env(name='LANG') }}'` gives you access to the '`LANG`' environment
-variable.
+All [Tera template variables and functions
+](https://tera.netlify.com/docs/#templates) can be used within Tp-Note's
+templates. For example '`{{ get_env(name='LANG') }}'` gives you access to the
+'`LANG`' environment variable.
 
 In addition, Tp-Note defines the following variables:
 
@@ -2563,36 +2585,37 @@ In addition, Tp-Note defines the following variables:
   points to.  Note, this variable is only available in the templates
   '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
 
-* '`{{ doc }}`': is the content of the file '`{{ path }}`'
-  points to. If the file does not start with a front matter, this variable holds
-  the whole content. Note, this variable is only available in the templates
-  '`from_text_file_*`', '`sync_filename`' and the HTML templates below.
+* '`{{ doc.body }}`': is the content of the file '`{{ path }}`'
+  points to. If the file starts with a YAML header, its raw text is stored
+  in '`{{ doc.header }}`'. Note, these variables are only available in the
+  templates: '`from_text_file_content`', '`sync_filename`' and in the HTML
+  templates '`tmpl_html.*`'.
 
 * '`{{ doc_file_date }}`': is the file system creation date of the file
   '`{{ path }}`' points to. This variable is only available in the
   templates '`from_text_file_*`', '`sync_filename`' and in HTML templates.
   This condition implies, that '`{{ path }}`' points to a file.
   Note: on some platforms and with some filesystems, the variable 
-  '`{{ doc_file_date }}`' might not be defined.
+  '`{{ doc_file_date }}`' might not be available. Here the file modification
+  date is used instead.
 
-* '`{{ txt_clipboard }}`' is the complete '`plain/text`' clipboard text.  In
-  case the clipboard's content starts with a YAML header, only the non YAML
-  content is retained.
+* '`{{ txt_clipboard.body }}`' is the complete '`plain/text`' clipboard text.
+  In case the clipboard's content starts with a YAML header, only the non YAML
+  content is retained. '`{{ txt_clipboard.header }}`' is the YAML header section
+  of the clipboard data, if it exists. If not, the variable is empty.
 
-* '`{{ txt_clipboard_header }}`' is the YAML header section of the clipboard
-  data, if it exists. If not, the variable is empty.
+* '`{{ html_clipboard.body }}`' and '`{{ html_clipboard.header }}`' contain the
+  same text as their '`txt_clipboard.*`' counterparts, but as HTML. The
+  HTML clipboard provides more information, e.g. hyperlinks contain a link
+  destination besides its link text. In the TXT clipboard you see only link
+  texts.
 
-* '`{{ html_clipboard }}`' and '`{{ html_clipboard_header }}`' contain the
-  same text as their '`txt_clipboard_*`' counterparts, but as HTML. This way
-  you can copy the destination of hyperlinks in addition to their link text.
-
-* '`{{ stdin }}`' is the complete text content originating from the input
+* '`{{ stdin.body }}`' is the complete text content originating from the input
   stream '`stdin`'. This stream can replace the clipboard when it is not
   available.  In case the input stream's content starts with a YAML header,
-  the latter does not appear in this variable.
-
-* '`{{ stdin_header }}`' is the YAML section of the input stream, if
-  one exists. Otherwise: empty string.
+  the latter does not appear in this variable. '`{{ stdin.header }}`' is the
+  YAML section of the input stream, if one exists. Otherwise, the variable
+  is still defined, but its value is the empty string.
 
 * '`{{ extension_default }}`' is the default extension for new notes
   (can be changed in the configuration file),
@@ -2617,20 +2640,20 @@ generated dynamically. This means, a YAML front-matter variable '`foo:`' in a
 note will generate a '`{{ fm.fm_foo }}`' template variable. On the other hand, a
 missing '`foo:`' will cause '`{{ fm.fm_foo }}`' to be undefined.
 Please note, that the header variables may be localized, e.g. '`Untertitel:`'.
-Nevertheless, in templates always use the English version, e.g. '`fm.fm_subtitle`'.
+Nevertheless, in templates always use the English version, e.g.
+'`fm.fm_subtitle`'.
 
-It is to be observed that '`{{ fm.fm_* }}`' variables are only available in
-filename templates and in the '`tmpl.from_clipboard_yaml_content`' content
-template.
+It is to be observed that '`{{ fm.fm_* }}`' variables are not available in  in
+the '`tmpl.from_text_file_content`' content template.
 
-* '`{{ fm.fm_title }}`' is the '`title:`' as indicated in the YAML front-matter of
-  the note.
+* '`{{ fm.fm_title }}`' is the '`title:`' as indicated in the YAML front-matter
+  of the note.
 
 * '`{{ fm.fm_subtitle }}`' is the '`subtitle:`' as indicated in the YAML front
   matter of the note.
 
-* '`{{ fm.fm_author }}`' is the '`author:`' as indicated in the YAML front-matter
-  of the note.
+* '`{{ fm.fm_author }}`' is the '`author:`' as indicated in the YAML
+  front-matter of the note.
 
 * '`{{ fm.fm_lang }}`' is the '`lang:`' as indicated in the YAML front-matter of
   the note.
@@ -2642,18 +2665,19 @@ template.
   matter of this note (e.g. '`sort_tag: '20200312'`').
 
 * '`{{ fm }}`': is a collection (map) of all defined '`{{ fm.fm_* }}`'
-  variables.  It is used in the '`tmpl.from_clipboard_yaml_content`' template,
+  variables.  It is used in the '`tmpl.from_dir_content`' template,
   typically in a loop like:
 
-  ```yaml
-  {% for key, value in fm %}{{ key }}: {{ value | json_encode }}
-  {% endfor %}
+  ```tera
+  {{ fm.fm_title | to_yaml(key='fm_title') }}
+  {{ fm.fm_subtitle | to_yaml(key='fm_subtitle') }}
+  {{ fm  | remove(key='fm_title') | remove(key='fm_keywords') | to_yaml }}
   ```
 
 Important: there is no guarantee, that any of the above '`{{ fm.fm_* }}`'
 variables are defined! Depending on the last content template result, certain
 variables might be undefined. Please take into consideration, that a defined
-variable might contain the empty string '`""`'. Creating a new note file
+variable might contain the empty string '`''`'. Creating a new note file
 with a content template, the note's header is parsed into '`{{ fm.fm_* }}`'
 variables. The latter are then type checked according configurable rules.
 The rules are defined in '`tmpl.filter.assert_precondition`'
@@ -2729,28 +2753,29 @@ A filter is always used together with a variable. Here are some examples:
   Unlike the '`file_name`' filter (which also returns the final component),
   '`trim_file_sort_tag`' trims the sort tag if there is one.
 
-* '`{{ html_clipboard | html_to_markup(extension=e, default=d) }}`' converts
-  the clipboard's HTML content into the target markup language
+* '`{{ html_clipboard.body | html_to_markup(extension=e, default=d) }}`'
+  converts the clipboard's HTML content into the target markup language
   specified by '`{{ e }}`', e.g. '`md`'. If the conversion fails or results in
   an empty string, stream the content of the variable '`{{ d }}`' instead.
 
-* '`{{ txt_clipboard | trunc }}`' is the first 200 bytes from the clipboard.
+* '`{{ txt_clipboard.body | trunc }}`' is the first 200 bytes from the
+  clipboard.
 
-* '`{{ txt_clipboard | heading }}`' is the clipboard's content until the
+* '`{{ txt_clipboard.body | heading }}`' is the clipboard's content until the
   end of the first sentence, or the first newline.
 
-* '`{{ html_clipboard | html_heading }}`' searches in the HTML clipboard
+* '`{{ html_clipboard.body | html_heading }}`' searches in the HTML clipboard
   input, for e.g '`<h2>HEADING</h2>`', and returns the first HTML heading, e.g. 
   '`HEADING`'.
 
-* '`{{ html_clipboard | link_text }}`' is the name of the first Markdown or
+* '`{{ html_clipboard.body | link_text }}`' is the name of the first Markdown or
   ReStructuredText formatted link in the clipboard.
 
-* '`{{ html_clipboard | link_dest }}`' is the URL of the first Markdown or
+* '`{{ html_clipboard.body | link_dest }}`' is the URL of the first Markdown or
   ReStruncturedText formatted link in the clipboard.
 
-* '`{{ html_clipboard | link_title }}`' is the title of the first Markdown or
-  ReStruncturedText formatted link in the clipboard.
+* '`{{ html_clipboard.body | link_title }}`' is the title of the first Markdown
+  or ReStruncturedText formatted link in the clipboard.
 
 * '`{{ username | capitalize | to_yaml(key='author',tab=12) }}`' is the
   capitalized YAML encoded username. As all YAML front-matter is YAML encoded,
@@ -2764,14 +2789,14 @@ A filter is always used together with a variable. Here are some examples:
   omitted or replaced by '`-`' and '`_`'. See the section _Filename template
   convention_ for more details about this filter.
 
-* '`{{ fm.fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}`' is the
-  note's title as defined in its front-matter. Same as above, but
-  the title string is prepended with the note's _sort_tag_ and with a
+* '`{{ fm.fm_title | sanit | prepend(with_sort_tag=path|file_sort_tag) }}`'
+  is the note's title as defined in its front-matter. Same as above,
+  but the title string is prepended with the note's _sort_tag_ and with a
   '`filename.sort_tag.separator`' (by default '`-`'). Eventually, a second
   '`filename.sort_tag.extra_separator`' (by default '`''`') is inserted
   after the first to guarantee, that one of the separators unequivocally
-  marks the end of the _sort_tag_. This might be necessary to avoid
-  ambiguity in case the '`fm.fm_title`' starts with a character defined in the
+  marks the end of the _sort_tag_. This might be necessary to avoid ambiguity
+  in case the '`fm.fm_title`' starts with a character defined in the
   '`filename.sort_tag.extra_chars`' set.
 
 * '`{{ fm.title | replace_empty(with='no title')`' forwards the input unchanged. 
@@ -2797,8 +2822,8 @@ A filter is always used together with a variable. Here are some examples:
   into HTML. The '`to_html`' must be followed by a '`safe`' filter to pass
   through the HTML formatting of objects and arrays.
 
-* '`{{ doc | get_lang | unique }}`' determines the natural
-  languages of the text in the variable '`{{ doc }}` and returns
+* '`{{ doc.body | get_lang }}`' determines the natural
+  languages of the text in the variable '`{{ doc.body }}` and returns
   the result as an array of ISO 639-1 language codes. The template filter
   '`{{ get_lang }}`' can be configured with the configuration file variable
   '`tmpl.filter.get_lang`'. The latter defines those ISO 639-1 codes, the
@@ -2806,11 +2831,11 @@ A filter is always used together with a variable. Here are some examples:
   as small as possible, because language detection is computationally expensive.
   A long candidate list may slow down the note file creation workflow. The
   detected languages are listed as `'Value::Array`' in the order of their
-  appearance. To list a language only once, we add the '`unique`' filter at
-  the end. If the detection algorithm can not determine the language of '`{{
-  doc }}`', the filter '`{{ get_lang }}`' returns en empty array.
+  statistic frequency. If the detection algorithm can not detect any of the
+  configured language candidates, the filter '`{{ get_lang }}`' returns en empty
+  array.
 
-* '`{{ doc | get_lang | unique | map_lang }}`': The '`map_lang`'
+* '`{{ doc.body | get_lang | map_lang }}`': The '`map_lang`'
   filter extends the detected ISO 638-1 language codes to complete IETF
   BCP 47 language tags, usually containing a region subtag. For example
   the input '`en`' results in '`en-US`'. This additional mapping is useful
@@ -2820,22 +2845,22 @@ A filter is always used together with a variable. Here are some examples:
   '`tmpl.filter.map_lang`' filter configuration, the input is passed through,
   e.g. '`fr`' results in '`fr`'.
 
-* '`{{ doc | get_lang | unique | map_lang(default=lang) }}`' adds an
+* '`{{ doc.body | get_lang | map_lang(default=lang) }}`' adds an
   extra mapping to the '`map_lang`' filter: when the input of the '`map_lang`'
   filter is an empty `Value::Array`, then '`{{ lang }}`' is added as single
   item. '`{{ lang }}`' is expected to be a ISO 638-1 language code, e.g. '`en`'.
   Depending on the '`tmpl.filter.map_lang`' configuration, the exemplary
   '`en`' input may be converted to '`en-US`' or '`en-GB`'.
 
-* '`{{ doc | get_lang | ... | flatten_array | to_yaml }}`':
+* '`{{ doc.body | get_lang | ... | flatten_array | to_yaml }}`':
   Arrays are usually printed with '`to_yaml`' as item lists. When a list
   contains exactly one item, the filter '`flatten_array`' flattens that list.
   This way the single item is printed as such and not as a list with only one
   item. Lists with two or more items are not flattened. They are passed through
   without modification.
 
-* '`{{ doc | get_lang | ... | first | to_yaml }}`' returns the
-  first detected language as '`Value::String`'.
+* '`{{ doc.body | get_lang | ... | first | to_yaml }}`' returns the
+  language with the biggest word count frequency as '`Value::String`'.
 
 * '`{{ doc_file_date | default(value=now()) | date(format='%Y%m%d') }}`'
   Returns the formatted date of the file '`{{ path }}`' points to. Defaults
