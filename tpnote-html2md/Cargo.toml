@@ -19,9 +19,9 @@ name = "html2md"
 #target_env="musl"crate-type = ["rlib", "dylib", "staticlib"]
 
 [dependencies]
-html5ever = "0.30.0"
+html5ever = "0.31.0"
 regex = "1.11.1"
-markup5ever = "0.15.0"
+markup5ever = "0.16.1"
 percent-encoding = "2.3.1"
 tendril = "0.4"
 

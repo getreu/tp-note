@@ -10,7 +10,7 @@ name = "tpnote-lib"
 readme = "README.md"
 repository.workspace = true
 rust-version.workspace = true
-version = "0.41.2"
+version = "0.42.0"
 
 [features]
 default = ["renderer", "viewer", "lang-detection"]
@@ -38,7 +38,7 @@ rst_parser = { version = "0.4.1", optional = true }
 # ReStructuredText renderer.
 rst_renderer = { version = "0.4.1", optional = true }
 sanitize-filename-reader-friendly.workspace = true
-self_cell = "1.1.0"
+self_cell = "1.2.0"
 serde_json = "1.0.140"
 serde.workspace = true
 serde_yaml.workspace = true
@@ -50,6 +50,8 @@ toml.workspace = true
 # tpnote-html2md = { path = "../tpnote-html2md", optional = true }
 tpnote-html2md = { version = "0.2.17", optional = true }
 
+# Pin indirect dependencies (to be removed after `rustc` upgrade)
+document_tree = "=0.4.1"
 
 [target.'cfg(windows)'.dependencies]
 win32job = "2.0.2"

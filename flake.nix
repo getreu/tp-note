@@ -36,6 +36,7 @@
             rust-analyzer
             cargo-flamegraph
             cargo-edit
+            cargo-audit
             #cargo-llvm-cov
             valgrind
           ];
