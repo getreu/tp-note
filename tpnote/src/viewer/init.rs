@@ -112,7 +112,7 @@ impl Viewer {
         launch_web_browser(&url)?;
         // Did it?
         if browser_start.elapsed().as_millis() < BROWSER_INSTANCE_MIN_UPTIME {
-            // We are there because the browser process did not block.
+            // We are here because the browser process did not block.
             // We instruct the watcher to terminate when it detects browser disconnection.
             if !*LAUNCH_EDITOR {
                 // Release lock immediately.
