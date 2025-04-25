@@ -654,42 +654,6 @@ impl Context<HasSettings> {
     /// templates expect the key names `clipboard_header` or `std_header`. The
     /// raw header text will be inserted with this key name.
     ///
-    /// ```rust
-    /// use std::path::Path;
-    /// use tpnote_lib::settings::set_test_default_settings;
-    /// use tpnote_lib::context::Context;
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// set_test_default_settings().unwrap();
-    ///
-    /// let mut context = Context::from(&Path::new("/path/to/mynote.md")).unwrap();
-    /// let c1 =  ContentString::from_string(String::from("Data from clipboard."),
-    ///          "txt_clipboard".to_string(),
-    /// );
-    /// let c2 = ContentString::from_string(
-    ///          "---\ntitle: My Stdin.\n---\nbody".to_string(),
-    ///          "stdin".to_string(),
-    /// );
-    /// let c = vec![&c1, &c2];
-    ///
-    /// let context = context
-    ///     .insert_front_matter_and_raw_text_from_existing_content(&c).unwrap();
-    ///
-    /// assert_eq!(
-    ///     &context.get("txt_clipboard").unwrap().get("body").unwrap().to_string(),
-    ///     "\"Data from clipboard.\"");
-    /// assert_eq!(
-    ///     &context.get("stdin").unwrap().get("body").unwrap().to_string(),
-    ///     "\"body\"");
-    /// assert_eq!(
-    ///     &context.get("stdin").unwrap().get("header").unwrap().to_string(),
-    ///     "\"title: My Stdin.\"");
-    /// // "fm_title" is dynamically generated from the header variable "title".
-    /// assert_eq!(&context
-    ///            .get("fm").unwrap()
-    ///            .get("fm_title").unwrap().to_string(),
-    ///      "\"My Stdin.\"");
-    /// ```
     pub(crate) fn insert_front_matter_and_raw_text_from_existing_content(
         mut self,
         clipboards: &Vec<&impl Content>,
@@ -1136,6 +1100,66 @@ mod tests {
                 .unwrap()
                 .to_string(),
             r#""text""#
+        );
+    }
+
+    #[test]
+    fn test_insert_front_matter_and_raw_text_from_existing_content() {
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::settings::set_test_default_settings;
+        use std::path::Path;
+        set_test_default_settings().unwrap();
+        let context = Context::from(Path::new("/path/to/mynote.md")).unwrap();
+        let c1 = ContentString::from_string(
+            String::from("Data from clipboard."),
+            "txt_clipboard".to_string(),
+        );
+        let c2 = ContentString::from_string(
+            "---\ntitle: My Stdin.\n---\nbody".to_string(),
+            "stdin".to_string(),
+        );
+        let c = vec![&c1, &c2];
+        let context = context
+            .insert_front_matter_and_raw_text_from_existing_content(&c)
+            .unwrap();
+        assert_eq!(
+            &context
+                .get("txt_clipboard")
+                .unwrap()
+                .get("body")
+                .unwrap()
+                .to_string(),
+            "\"Data from clipboard.\""
+        );
+        assert_eq!(
+            &context
+                .get("stdin")
+                .unwrap()
+                .get("body")
+                .unwrap()
+                .to_string(),
+            "\"body\""
+        );
+        assert_eq!(
+            &context
+                .get("stdin")
+                .unwrap()
+                .get("header")
+                .unwrap()
+                .to_string(),
+            "\"title: My Stdin.\""
+        );
+        // "fm_title" is dynamically generated from the header variable "title".
+        assert_eq!(
+            &context
+                .get("fm")
+                .unwrap()
+                .get("fm_title")
+                .unwrap()
+                .to_string(),
+            "\"My Stdin.\""
         );
     }
 
