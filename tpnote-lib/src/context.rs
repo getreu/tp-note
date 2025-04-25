@@ -487,7 +487,7 @@ impl<S: ContextState> Context<S> {
     /// Its value is a `tera::Map` with two keys `TMPL_VAR_HEADER` and
     /// `TMPL_VAR_BODY`. The corresponding values are copied from
     /// `conten.header()` and `content.body()`.
-    pub fn insert_raw_text_from_existing_content(&mut self, content: &impl Content) {
+    fn insert_raw_text_from_existing_content(&mut self, content: &impl Content) {
         //
         // Register input.
         let mut map = tera::Map::new();
@@ -498,7 +498,7 @@ impl<S: ContextState> Context<S> {
     }
 
     /// See function of the same name in `impl Context<HasSettings>`.
-    pub fn insert_front_matter_and_raw_text_from_existing_content2(
+    fn insert_front_matter_and_raw_text_from_existing_content2(
         &mut self,
         clipboards: &Vec<&impl Content>,
     ) -> Result<(), NoteError> {
