@@ -238,36 +238,27 @@ pub struct Context<S: ContextState + ?Sized> {
 /// The methods below are available in all `ContentState` states.
 impl<S: ContextState> Context<S> {
     /// Getter for `self.path`.
+    /// See `from()` method for details.
     pub fn get_path(&self) -> &Path {
         self.path.as_path()
     }
 
     /// Getter for `self.dir_path`.
+    /// See `from()` method for details.
     pub fn get_dir_path(&self) -> &Path {
         self.dir_path.as_path()
     }
 
     /// Getter for `self.root_path`.
+    /// See `from()` method for details.
     pub fn get_root_path(&self) -> &Path {
         self.root_path.as_path()
     }
 
     /// Getter for `self.doc_file_date`.
+    /// See `from()` method for details.
     pub fn get_doc_file_date(&self) -> Option<SystemTime> {
         self.doc_file_date
-    }
-
-    /// Transition to the fault state.
-    #[allow(dead_code)]
-    pub(crate) fn mark_as_invalid(self) -> Context<Invalid> {
-        Context {
-            ct: self.ct,
-            path: self.path,
-            dir_path: self.dir_path,
-            root_path: self.root_path,
-            doc_file_date: self.doc_file_date,
-            _marker: PhantomData,
-        }
     }
 
     /// Constructor. Unlike `from()` this constructor does not access
@@ -544,7 +535,7 @@ impl<S: ContextState> Context<S> {
 /// The start state of all `Context` objects.
 ///
 impl Context<Invalid> {
-    /// Constructor: `path` is the first positional command line parameter
+    /// Constructor: `path` is Tp-Notes first positional command line parameter
     /// `<path>` (see man page). `path` must point to a directory or
     /// a file.
     ///
