@@ -62,23 +62,23 @@ pub struct HasSettings;
 
 #[derive(Debug, PartialEq, Clone)]
 /// See description in the `ContextState` implementor list.
-pub struct ReadyForFilenameTemplate;
+pub(crate) struct ReadyForFilenameTemplate;
 
 #[derive(Debug, PartialEq, Clone)]
 /// See description in the `ContextState` implementor list.
-pub struct HasExistingContent;
+pub(crate) struct HasExistingContent;
 
 #[derive(Debug, PartialEq, Clone)]
 /// See description in the `ContextState` implementor list.
-pub struct ReadyForContentTemplate;
+pub(crate) struct ReadyForContentTemplate;
 
 #[derive(Debug, PartialEq, Clone)]
 /// See description in the `ContextState` implementor list.
-pub struct ReadyForHtmlTemplate;
+pub(crate) struct ReadyForHtmlTemplate;
 
 #[derive(Debug, PartialEq, Clone)]
 /// See description in the `ContextState` implementor list.
-pub struct ReadyForHtmlErrorTemplate;
+pub(crate) struct ReadyForHtmlErrorTemplate;
 
 /// The `Context` object is in an invalid state. Either it was not initialized
 /// or its data does not correspond any more to the `Content` it represents.
@@ -258,7 +258,8 @@ impl<S: ContextState> Context<S> {
     }
 
     /// Transition to the fault state.
-    pub fn mark_as_invalid(self) -> Context<Invalid> {
+    #[allow(dead_code)]
+    pub(crate) fn mark_as_invalid(self) -> Context<Invalid> {
         Context {
             ct: self.ct,
             path: self.path,
@@ -628,7 +629,10 @@ impl Context<Invalid> {
 
 impl Context<HasSettings> {
     /// Merges `fm` into `self.ct`.
-    pub fn insert_front_matter(mut self, fm: &FrontMatter) -> Context<ReadyForFilenameTemplate> {
+    pub(crate) fn insert_front_matter(
+        mut self,
+        fm: &FrontMatter,
+    ) -> Context<ReadyForFilenameTemplate> {
         Context::insert_front_matter2(&mut self, fm);
         Context {
             ct: self.ct,
@@ -686,7 +690,7 @@ impl Context<HasSettings> {
     ///            .get("fm_title").unwrap().to_string(),
     ///      "\"My Stdin.\"");
     /// ```
-    pub fn insert_front_matter_and_raw_text_from_existing_content(
+    pub(crate) fn insert_front_matter_and_raw_text_from_existing_content(
         mut self,
         clipboards: &Vec<&impl Content>,
     ) -> Result<Context<HasExistingContent>, NoteError> {
@@ -709,7 +713,7 @@ impl Context<HasSettings> {
     /// * `TMPL_HTML_VAR_DOC_ERROR` from `error_message`
     /// * `TMPL_HTML_VAR_DOC_TEXT` from `note_erroneous_content`
     ///
-    pub fn insert_error_content(
+    pub(crate) fn insert_error_content(
         mut self,
         note_erroneous_content: &impl Content,
         error_message: &str,
@@ -737,7 +741,7 @@ impl Context<HasSettings> {
 
 impl Context<HasExistingContent> {
     /// See same method in `Context<HasSettings>`.
-    pub fn insert_front_matter_and_raw_text_from_existing_content(
+    pub(crate) fn insert_front_matter_and_raw_text_from_existing_content(
         mut self,
         clipboards: &Vec<&impl Content>,
     ) -> Result<Context<HasExistingContent>, NoteError> {
@@ -755,7 +759,7 @@ impl Context<HasExistingContent> {
     }
 
     /// Mark this as ready for a content template.
-    pub fn set_state_ready_for_content_template(self) -> Context<ReadyForContentTemplate> {
+    pub(crate) fn set_state_ready_for_content_template(self) -> Context<ReadyForContentTemplate> {
         Context {
             ct: self.ct,
             path: self.path,
@@ -771,7 +775,7 @@ impl Context<ReadyForFilenameTemplate> {
     /// Checks if the front matter variables satisfy preconditions.
     /// `self.path` is the path to the current document.
     #[inline]
-    pub fn assert_precoditions(&self) -> Result<(), NoteError> {
+    pub(crate) fn assert_precoditions(&self) -> Result<(), NoteError> {
         let path = &self.path;
         let lib_cfg = &LIB_CFG.read_recursive();
 
@@ -972,7 +976,7 @@ impl Context<ReadyForFilenameTemplate> {
     /// * `TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH`
     /// * `TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE`
     ///
-    pub fn insert_raw_content_and_css(
+    pub(crate) fn insert_raw_content_and_css(
         mut self,
         content: &impl Content,
         viewer_doc_js: &str,
