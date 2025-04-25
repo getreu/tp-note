@@ -224,12 +224,12 @@ pub const TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE: &str = "/viewer_high
 
 /// HTML template variable used in the error page containing the error message
 /// explaining why this page could not be rendered.
-#[allow(dead_code)]
+#[cfg(feature = "viewer")]
 pub const TMPL_HTML_VAR_DOC_ERROR: &str = "doc_error";
 
 /// HTML template variable used in the error page containing a verbatim
 /// HTML rendition with hyperlinks of the erroneous note file.
-#[allow(dead_code)]
+#[cfg(feature = "viewer")]
 pub const TMPL_HTML_VAR_DOC_TEXT: &str = "doc_text";
 
 /// Global variable containing the filename and template related configuration

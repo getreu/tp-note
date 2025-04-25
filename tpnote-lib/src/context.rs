@@ -4,7 +4,9 @@ use tera::Value;
 use crate::config::Assertion;
 use crate::config::FILENAME_ROOT_PATH_MARKER;
 use crate::config::LIB_CFG;
+#[cfg(feature = "viewer")]
 use crate::config::TMPL_HTML_VAR_DOC_ERROR;
+#[cfg(feature = "viewer")]
 use crate::config::TMPL_HTML_VAR_DOC_TEXT;
 use crate::config::TMPL_HTML_VAR_EXPORTER_DOC_CSS;
 use crate::config::TMPL_HTML_VAR_EXPORTER_HIGHLIGHTING_CSS;
@@ -76,6 +78,7 @@ pub(crate) struct ReadyForContentTemplate;
 /// See description in the `ContextState` implementor list.
 pub(crate) struct ReadyForHtmlTemplate;
 
+#[cfg(feature = "viewer")]
 #[derive(Debug, PartialEq, Clone)]
 /// See description in the `ContextState` implementor list.
 pub(crate) struct ReadyForHtmlErrorTemplate;
@@ -210,6 +213,7 @@ impl ContextState for ReadyForHtmlTemplate {}
 /// | Current state  | `ReadyForHtmlErrorTemplate`           |
 /// | Next state     | none                                  |
 ///
+#[cfg(feature = "viewer")]
 impl ContextState for ReadyForHtmlErrorTemplate {}
 
 /// Tiny wrapper around "Tera context" with some additional information.
@@ -668,6 +672,7 @@ impl Context<HasSettings> {
     /// * `TMPL_HTML_VAR_DOC_ERROR` from `error_message`
     /// * `TMPL_HTML_VAR_DOC_TEXT` from `note_erroneous_content`
     ///
+    #[cfg(feature = "viewer")]
     pub(crate) fn insert_error_content(
         mut self,
         note_erroneous_content: &impl Content,
