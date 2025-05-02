@@ -2462,7 +2462,7 @@ In case none of the listed browsers can be found, Tp-Note switches into a
 fallback mode with limited functionality, where it tries to open the system's
 default web browser. A disadvantage is, that in fall back mode Tp-Note is
 not able to detect when the user closes the web browser. This might lead to
-situations, where Tp-Note's internal HTTP server shuts down to early. In order
+situations, where Tp-Note's internal HTTP server shuts down too early. In order
 to check if Tp-Note finds the selected web browser as intended, invoke Tp-Note
 with '`tpnote --debug debug --popup --view`'.
 
