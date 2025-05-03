@@ -37,8 +37,8 @@ use crate::filename::Extension;
 use crate::filename::NotePath;
 use crate::filename::NotePathStr;
 use crate::filter::name;
-use crate::front_matter::all_leaves;
 use crate::front_matter::FrontMatter;
+use crate::front_matter::all_leaves;
 use crate::settings::SETTINGS;
 use std::borrow::Cow;
 use std::fs::File;
@@ -596,11 +596,7 @@ impl Context<Invalid> {
         // Get the file's creation date. Fail silently.
         let file_creation_date = if let Ok(file) = File::open(&path) {
             let metadata = file.metadata()?;
-            if let Ok(time) = metadata.created().or_else(|_| metadata.modified()) {
-                Some(time)
-            } else {
-                None
-            }
+            metadata.created().or_else(|_| metadata.modified()).ok()
         } else {
             None
         };
@@ -890,7 +886,7 @@ impl Context<ReadyForFilenameTemplate> {
                                         scheme_val: scheme_name,
                                         scheme_key: key.to_string(),
                                         schemes,
-                                    })
+                                    });
                                 }
                                 Err(e) => return Err(e.into()),
                             };
