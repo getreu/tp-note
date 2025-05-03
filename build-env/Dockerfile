@@ -1,9 +1,9 @@
-ARG BASE_IMAGE=rust:1.81-slim-bullseye
+ARG BASE_IMAGE=rust:1.86-slim-bullseye
 WORKDIR /home/project
 
 FROM $BASE_IMAGE as planner
 
-RUN  rustup override set 1.81.0
+RUN  rustup override set 1.86
 
 # We need theses components
 RUN rustup set profile default
@@ -37,11 +37,11 @@ RUN apt-get -y install zip python3
 
 # Helper to make deb packages. Use with:
 #     cargo deb --target=x86_64-unknown-linux-gnu
-RUN cargo install --locked --version 2.11.2 cargo-deb
+RUN cargo install  cargo-deb
 
 # Install `cargo upgrade`.
 RUN apt-get -y install libssl-dev
-RUN cargo install --locked --version 0.13.0 cargo-edit
+RUN cargo install cargo-edit
 
 
 
