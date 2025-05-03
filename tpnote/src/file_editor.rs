@@ -113,11 +113,11 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
         // Connect `stdin` of child process to `/dev/tty`.
         #[cfg(not(target_family = "windows"))]
         let (config_stdin, config_stdout) = if *RUNS_ON_CONSOLE {
-            if let Ok(file) = File::open("/dev/tty") {
+            match File::open("/dev/tty") { Ok(file) => {
                 (Stdio::from(file), Stdio::inherit())
-            } else {
+            } _ => {
                 (Stdio::null(), Stdio::null())
-            }
+            }}
         } else {
             (Stdio::null(), Stdio::null())
         };
