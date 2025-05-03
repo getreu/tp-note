@@ -96,6 +96,9 @@ tpnote-lib = { path = "../tpnote-lib", default-features = false }
 #tpnote-lib = { version = "0.42.1", default-features = false}
 webbrowser = { version = "1.0.4", optional = true }
 
+# Pin version temporarily (zbus v5.5.0 does not compile)
+zvariant_derive = "=5.4.0"
+
 
 [target.'cfg(windows)'.dependencies]
 win32job = "2.0.2"
