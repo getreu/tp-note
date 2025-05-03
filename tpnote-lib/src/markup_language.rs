@@ -9,7 +9,7 @@ use crate::settings::SETTINGS;
 use parse_hyperlinks::renderer::text_links2html;
 use parse_hyperlinks::renderer::text_rawlinks2html;
 #[cfg(feature = "renderer")]
-use pulldown_cmark::{html, Options, Parser};
+use pulldown_cmark::{Options, Parser, html};
 #[cfg(feature = "renderer")]
 use rst_parser;
 #[cfg(feature = "renderer")]
@@ -300,7 +300,7 @@ mod tests {
 
         // ReStructuredText
         let input = "`Link text <https://domain.invalid/>`_";
-        let expected: &str = "<p><a href=\"https://domain.invalid/\">Link text</a></p>\n";
+        let expected: &str = "<p><a href=\"https://domain.invalid/\">Link text</a></p>";
 
         let result = MarkupLanguage::ReStructuredText.render(input);
         assert_eq!(result, expected);
