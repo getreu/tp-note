@@ -133,8 +133,8 @@ fn to_yaml_filter<S: BuildHasher>(
                 if let Some(colpos) = l.find(": ") {
                     if let Some(key_pos) = l.find(char::is_alphabetic) {
                         if key_pos < colpos
-                            && !l.find('\'').is_some_and(|p| p < colpos)
-                            && !l.find("\"'").is_some_and(|p| p < colpos)
+                            && l.find('\'').is_none_or(|p| p >= colpos)
+                            && l.find("\"'").is_none_or(|p| p >= colpos)
                         {
                             insert_pos = colpos + ": ".len();
                             inserts_n = (tab as usize).saturating_sub(insert_pos);
@@ -1992,8 +1992,7 @@ Some more text."#;
         let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("md", output);
 
-        let input =
-            "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.pfd.md";
+        let input = "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.pfd.md";
         let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("md", output);
 
@@ -2004,8 +2003,7 @@ Some more text."#;
         //
         //
         // Test copy counter filter.
-        let input =
-            "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
+        let input = "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
         let output = file_copy_counter_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!(123, output);
 
@@ -2016,8 +2014,7 @@ Some more text."#;
         //
         //
         // Test filename .
-        let input =
-            "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
+        let input = "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
         let output = file_name_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("20200908-My file(123).md", output);
 
