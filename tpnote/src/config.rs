@@ -360,7 +360,7 @@ impl Cfg {
     /// Backs up the existing configuration file and writes a new one with
     /// default values.
     pub(crate) fn backup_and_remove_last() -> Result<PathBuf, ConfigFileError> {
-        if let Some(config_path) = CONFIG_PATHS.iter().filter(|p| p.exists()).last() {
+        if let Some(config_path) = CONFIG_PATHS.iter().filter(|p| p.exists()).next_back() {
             let mut config_path_bak = config_path.to_path_buf();
             config_path_bak.set_next_unused()?;
             fs::rename(config_path, &config_path_bak)?;
