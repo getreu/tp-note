@@ -46,9 +46,6 @@ toml.workspace = true
 # tpnote-html2md = { path = "../tpnote-html2md", optional = true }
 tpnote-html2md = { version = "0.2.17", optional = true }
 
-# Pin indirect dependencies (to be removed after `rustc` upgrade)
-document_tree = "=0.4.1"
-
 [target.'cfg(windows)'.dependencies]
 win32job = "2.0.2"
 windows-sys = { version = "0.59.0", features = [
