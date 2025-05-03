@@ -74,7 +74,7 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
                     let allow_through = l.word_count() >= *words_min;
                     log::trace!(
                         "Language(s) detected: {}, {}, {}: {:?}",
-                        l.language().iso_code_639_1().to_string(),
+                        l.language().iso_code_639_1(),
                         l.word_count(),
                         allow_through,
                         input[l.start_index()..l.end_index()]

@@ -34,12 +34,12 @@ mod workflow;
 #[cfg(feature = "message-box")]
 use crate::alert_service::AlertService;
 use crate::clipboard::SystemClipboard;
-use crate::config::Cfg;
 use crate::config::AUTHOR;
 use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
 use crate::config::CONFIG_PATHS;
 use crate::config::COPYRIGHT_FROM;
+use crate::config::Cfg;
 use crate::config::PKG_VERSION;
 use crate::error::WorkflowError;
 use crate::logger::AppLogger;
@@ -115,7 +115,6 @@ fn main() {
                     ConfigFileError::ConfigFileBackup {
                         error: e.to_string()
                     }
-                    .to_string()
                 );
                 AppLogger::flush();
                 process::exit(5);
@@ -136,7 +135,6 @@ fn main() {
                     config_file_version: config_file_version.to_string(),
                     min_version: MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0").to_string(),
                 }
-                .to_string()
             );
             if let Err(e) = Cfg::backup_and_remove_last() {
                 log::error!(
@@ -144,7 +142,6 @@ fn main() {
                     ConfigFileError::ConfigFileBackup {
                         error: e.to_string()
                     }
-                    .to_string()
                 );
                 AppLogger::flush();
                 process::exit(6);
@@ -162,7 +159,6 @@ fn main() {
                 ConfigFileError::ConfigFileWrite {
                     error: e.to_string()
                 }
-                .to_string()
             );
             AppLogger::flush();
             process::exit(5);

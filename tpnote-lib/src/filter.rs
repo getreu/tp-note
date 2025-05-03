@@ -1,9 +1,9 @@
 //! Extends the built-in Tera filters.
 //! All custom filters check the type of their input variables at runtime and
 //! throw an error if the type is other than specified.
-use crate::config::Scheme;
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
+use crate::config::Scheme;
 use crate::config::TMPL_VAR_FM_;
 use crate::filename::NotePath;
 use crate::filename::NotePathBuf;
@@ -23,7 +23,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 use tera::Map;
-use tera::{try_get_value, Result as TeraResult, Tera, Value};
+use tera::{Result as TeraResult, Tera, Value, try_get_value};
 
 /// Filter parameter of the `trunc_filter()` limiting the maximum length of
 /// template variables. The filter is usually used to in the note's front matter
@@ -119,11 +119,7 @@ fn to_yaml_filter<S: BuildHasher>(
     let val_yaml: String = if let Some(tab) =
         args.get("tab").and_then(|v| v.as_u64()).or_else(|| {
             let n = scheme.tmpl.filter.to_yaml_tab;
-            if n == 0 {
-                None
-            } else {
-                Some(n)
-            }
+            if n == 0 { None } else { Some(n) }
         }) {
         val_yaml
             .lines()
@@ -308,7 +304,7 @@ fn html_to_markup_filter<S: BuildHasher>(
             Ok(converted) if converted.is_empty() => default,
             Ok(converted) => converted,
             Err(e) => {
-                log::info!("{}", e.to_string());
+                log::info!("{}", e);
                 default
             }
         };
