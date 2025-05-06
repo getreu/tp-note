@@ -2,8 +2,8 @@
 title:    "Tp-Note: markup enhanced granular note-taking"
 subtitle: Save and edit your clipboard content as a note file
 author:   Jens Getreu
-date:     2025-04-24
-version:  1.25.8
+date:     2025-05-06
+version:  1.25.9
 filename_sync: false
 lang:     en-GB
 ---
