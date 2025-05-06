@@ -2721,27 +2721,27 @@ dependencies = [
 
 [[package]]
 name = "parse-hyperlinks"
-version = "0.27.2"
+version = "0.28.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92ac700657cc7a89620d1c28b310d594ff0491c11fd3dd1ae748ed5c5c8640e6"
+checksum = "7fa3363debbccf2942ad38c828f453b5e6c0dbcd377c642b861e5e0aad234ed4"
 dependencies = [
  "html-escape",
  "nom",
  "percent-encoding",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
 name = "parse-hyperlinks-extras"
-version = "0.27.2"
+version = "0.28.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e1b998dd90278a34cd29c247c4de27e31bcb8230d73d80ec3f314020ed23b22"
+checksum = "c4a81df48b86bde11679e826b7564a95f6e2e9cce278ad5a64bc2dcd15e74f6e"
 dependencies = [
  "html-escape",
  "nom",
  "parse-hyperlinks",
  "percent-encoding",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -3202,9 +3202,9 @@ dependencies = [
 
 [[package]]
 name = "sanitize-filename-reader-friendly"
-version = "2.2.1"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b750e71aac86f4b238844ac9416e7339a8de1225eb1ebe5fba89890f634c46bf"
+checksum = "5891758e27920d31e8a406b37a31b474290ef079839261ceadab459fa39c7389"
 dependencies = [
  "const_format",
 ]

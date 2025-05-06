@@ -899,9 +899,9 @@ mod tests {
 
     use crate::error::InputStreamError;
     use crate::error::NoteError;
+    use crate::html::Hyperlink;
     use crate::html::assemble_link;
     use crate::html::rewrite_links;
-    use crate::html::Hyperlink;
     use parking_lot::RwLock;
     use parse_hyperlinks::parser::Link;
     use parse_hyperlinks_extras::parser::parse_html::take_link;
@@ -1124,7 +1124,7 @@ mod tests {
         let mut input = take_link("<a href=\"ftp://getreu.net\">Blog</a>")
             .unwrap()
             .1
-             .1;
+            .1;
         input
             .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
@@ -1138,7 +1138,7 @@ mod tests {
         let mut input = take_link("<img src=\"down/./down/../../t m p.jpg\" alt=\"Image\" />")
             .unwrap()
             .1
-             .1;
+            .1;
         let expected = "<img src=\"/abs/note path/t m p.jpg\" \
             alt=\"Image\">";
         input
@@ -1153,7 +1153,7 @@ mod tests {
         let mut input = take_link("<img src=\"down/./../../t m p.jpg\" alt=\"Image\" />")
             .unwrap()
             .1
-             .1;
+            .1;
         let expected = "<img src=\"/abs/t m p.jpg\" alt=\"Image\">";
         input
             .rebase_local_link(root_path, docdir, true, false)
@@ -1167,7 +1167,7 @@ mod tests {
         let mut input = take_link("<a href=\"./down/./../my note 1.md\">my note 1</a>")
             .unwrap()
             .1
-             .1;
+            .1;
         let expected = "<a href=\"/abs/note path/my note 1.md\">my note 1</a>";
         input
             .rebase_local_link(root_path, docdir, true, false)
@@ -1181,7 +1181,7 @@ mod tests {
         let mut input = take_link("<a href=\"/dir/./down/../my note 1.md\">my note 1</a>")
             .unwrap()
             .1
-             .1;
+            .1;
         let expected = "<a href=\"/dir/my note 1.md\">my note 1</a>";
         input
             .rebase_local_link(root_path, docdir, true, false)
@@ -1195,7 +1195,7 @@ mod tests {
         let mut input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
-             .1;
+            .1;
         let expected = "<a href=\"dir/my note 1.md\">my note 1</a>";
         input
             .rebase_local_link(root_path, docdir, false, false)
@@ -1209,7 +1209,7 @@ mod tests {
         let mut input = take_link("<a href=\"./down/./../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
-             .1;
+            .1;
         let expected = "<a href=\"/path/dir/my note 1.md\">my note 1</a>";
         input
             .rebase_local_link(
@@ -1228,7 +1228,7 @@ mod tests {
         let mut input = take_link("<a href=\"/down/./../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
-             .1;
+            .1;
         let expected = "<a href=\"/dir/my note 1.md\">my note 1</a>";
         input
             .rebase_local_link(root_path, Path::new("/my/ignored/"), true, false)
@@ -1242,7 +1242,7 @@ mod tests {
         let mut input = take_link("<a href=\"/down/../../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
-             .1;
+            .1;
         let output = input
             .rebase_local_link(root_path, Path::new("/my/notepath/"), true, false)
             .unwrap_err();
@@ -1252,7 +1252,7 @@ mod tests {
         let mut input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
-             .1;
+            .1;
         let output = input
             .rebase_local_link(root_path, Path::new("/my/notepath/"), true, false)
             .unwrap_err();
@@ -1263,7 +1263,7 @@ mod tests {
         let mut input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
-             .1;
+            .1;
         let output = input
             .rebase_local_link(root_path, Path::new("/my/"), true, false)
             .unwrap_err();
@@ -1274,7 +1274,7 @@ mod tests {
         let mut input = take_link("<a href=\"../../dir/my note 1.md\">my note 1</a>")
             .unwrap()
             .1
-             .1;
+            .1;
         let output = input
             .rebase_local_link(root_path, Path::new("/my/notepath"), true, false)
             .unwrap_err();
@@ -1286,7 +1286,7 @@ mod tests {
             take_link("<a href=\"tpnote:dir/3.0-my note.md\">tpnote:dir/3.0-my note.md</a>")
                 .unwrap()
                 .1
-                 .1;
+                .1;
         input.strip_local_scheme();
         input
             .rebase_local_link(root_path, Path::new("/my/path"), true, false)
@@ -1304,7 +1304,7 @@ mod tests {
         let mut input = take_link("<a href=\"tpnote:dir/3.0\">tpnote:dir/3.0</a>")
             .unwrap()
             .1
-             .1;
+            .1;
         input.strip_local_scheme();
         input
             .rebase_local_link(root_path, Path::new("/my/path"), true, false)
@@ -1326,7 +1326,7 @@ mod tests {
         )
         .unwrap()
         .1
-         .1;
+        .1;
         input.strip_local_scheme();
         input
             .rebase_local_link(root_path, Path::new("/my/path"), true, false)
@@ -1771,21 +1771,25 @@ mod tests {
 
         // Test where input is '<!DOCTYPE html>'
         // See: [HTML doctype declaration](https://www.w3schools.com/tags/tag_doctype.ASP)
-        assert!(String::from(
-            " <!DOCTYPE HTML PUBLIC \
+        assert!(
+            String::from(
+                " <!DOCTYPE HTML PUBLIC \
             \"-//W3C//DTD HTML 4.01 Transitional//EN\" \
             \"http://www.w3.org/TR/html4/loose.dtd\">"
-        )
-        .is_empty_html());
+            )
+            .is_empty_html()
+        );
 
         // Test where input is '<!DOCTYPE html>'
         // See: [HTML doctype declaration](https://www.w3schools.com/tags/tag_doctype.ASP)
-        assert!(String::from(
-            " <!DOCTYPE html PUBLIC \
+        assert!(
+            String::from(
+                " <!DOCTYPE html PUBLIC \
             \"-//W3C//DTD XHTML 1.1//EN\" \
             \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">"
-        )
-        .is_empty_html());
+            )
+            .is_empty_html()
+        );
 
         // Test where input is '<!DOCTYPE html>Some content'
         assert!(!String::from("<!DOCTYPE html>Some content").is_empty_html());

@@ -23,7 +23,7 @@ strip = "symbols"
 [workspace.dependencies]
 log = { version = "0.4.27", features = ["serde"] }
 parking_lot = "0.12.3"
-sanitize-filename-reader-friendly = "2.2.1"
+sanitize-filename-reader-friendly = "2.3.0"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_yaml = "0.9.34"
 tera = { version = "1.20.0", default-features = true }
