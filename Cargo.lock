@@ -1026,25 +1026,13 @@ dependencies = [
 
 [[package]]
 name = "html5ever"
-version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5bf3413d61499f71fe4f627bbecfbec2977ce280525701df788f47370b0c507"
-dependencies = [
- "log",
- "mac",
- "markup5ever 0.15.0",
- "match_token",
-]
-
-[[package]]
-name = "html5ever"
 version = "0.31.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "953cbbe631aae7fc0a112702ad5d3aaf09da38beaf45ea84610d6e1c358f569c"
 dependencies = [
  "log",
  "mac",
- "markup5ever 0.16.1",
+ "markup5ever",
  "match_token",
 ]
 
@@ -2266,20 +2254,6 @@ name = "maplit"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
-
-[[package]]
-name = "markup5ever"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03a7b81dfb91586d0677086d40a6d755070e0799b71bb897485bac408dfd5c69"
-dependencies = [
- "log",
- "phf",
- "phf_codegen",
- "string_cache",
- "string_cache_codegen",
- "tendril",
-]
 
 [[package]]
 name = "markup5ever"
@@ -3771,26 +3745,12 @@ dependencies = [
 
 [[package]]
 name = "tpnote-html2md"
-version = "0.2.17"
+version = "0.3.0"
 dependencies = [
- "html5ever 0.31.0",
+ "html5ever",
  "indoc",
  "jni",
- "markup5ever 0.16.1",
- "percent-encoding",
- "regex",
- "tendril",
-]
-
-[[package]]
-name = "tpnote-html2md"
-version = "0.2.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1770ecc9b35165c60ff7309ba3350413aa039e13dcbcd17a75b71f4d14b25a2"
-dependencies = [
- "html5ever 0.30.0",
- "jni",
- "markup5ever 0.15.0",
+ "markup5ever",
  "percent-encoding",
  "regex",
  "tendril",
@@ -3798,7 +3758,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote-lib"
-version = "0.43.0"
+version = "0.43.1"
 dependencies = [
  "html-escape",
  "itertools",
@@ -3822,7 +3782,7 @@ dependencies = [
  "tera",
  "thiserror 2.0.12",
  "toml",
- "tpnote-html2md 0.2.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tpnote-html2md",
  "win32job",
  "windows-sys 0.59.0",
 ]
