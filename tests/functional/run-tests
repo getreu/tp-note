@@ -302,7 +302,7 @@ INPUT2_FILENAME="$PWD/111-xxx--yyy.md"
 
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
-     --export "" \
+     --export . \
     "$INPUT2_FILENAME"  >/dev/null 2>&1
 
 OUTPUT_FILENAME="$PWD/111-xxx--yyy.md.html"
@@ -430,7 +430,7 @@ EOF
 
 LANG="en_US.UTF-8" LOGNAME="myuser" \
 cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
-     --export "" --export-link-rewriting=short \
+     --export . --export-link-rewriting=short \
     "$INPUT_FILENAME"  >/dev/null 2>&1
 
 OUTPUT_FILENAME="$PWD/01ac-Tulips--red, yellow.md.html"

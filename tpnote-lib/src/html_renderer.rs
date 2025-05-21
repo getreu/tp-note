@@ -5,16 +5,16 @@
 //! stateless. All functions read the `LIB_CFG` global variable to read the
 //! configuration stored in `LibCfg.tmpl_html`.
 
-use crate::config::LocalLinkKind;
 use crate::config::LIB_CFG;
+use crate::config::LocalLinkKind;
 use crate::content::Content;
 use crate::context::Context;
 use crate::context::HasSettings;
 use crate::error::NoteError;
 #[cfg(feature = "viewer")]
 use crate::filter::TERA;
-use crate::html::rewrite_links;
 use crate::html::HTML_EXT;
+use crate::html::rewrite_links;
 use crate::note::Note;
 #[cfg(feature = "viewer")]
 use crate::note::ONE_OFF_TEMPLATE_NAME;
@@ -28,7 +28,6 @@ use std::io;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
-use std::str::FromStr;
 use std::sync::Arc;
 #[cfg(feature = "viewer")]
 use tera::Tera;
@@ -248,10 +247,11 @@ impl HtmlRenderer {
     }
 
     /// Renders `doc_path` with `content` into HTML and saves the result in
-    /// `export_dir`. If `export_dir` is the empty string, the directory of
-    /// `doc_path` is used. `-` dumps the rendition to STDOUT. The filename
-    /// of the HTML rendition is the same as in `doc_path` but with `.html`
-    /// appended.
+    /// `export_dir` in case `export_dir` is an absolute directory. Otherwise
+    /// the parent directory of `doc_path` is concatenated with `export_dir`
+    /// and the result is stored there.
+    /// `-` dumps the rendition to STDOUT. The filename of the HTML rendition is
+    /// the same as in `doc_path` but with `.html` appended.
     ///
     /// ```rust
     /// use tpnote_lib::config::LIB_CFG;
@@ -279,7 +279,7 @@ impl HtmlRenderer {
     /// let content = ContentString::open(&notefile).unwrap();
     /// // You can plug in your own type (must impl. `Content`).
     /// HtmlRenderer::save_exporter_page(
-    ///        &notefile, content, Path::new(""), LocalLinkKind::Long).unwrap();
+    ///        &notefile, content, Path::new("."), LocalLinkKind::Long).unwrap();
     /// // Check the HTML rendition.
     /// let expected_file = temp_dir().join("20221030-My day3--Note.md.html");
     /// let html = fs::read_to_string(expected_file).unwrap();
@@ -298,11 +298,6 @@ impl HtmlRenderer {
 
         // Determine filename of html-file.
         let html_path = match export_dir {
-            p if p == Path::new("") => {
-                let mut s = doc_path.to_str().unwrap_or_default().to_string();
-                s.push_str(HTML_EXT);
-                PathBuf::from_str(&s).unwrap_or_default()
-            }
             p if p == Path::new("-") => PathBuf::new(),
             p => {
                 let mut html_filename = doc_path
@@ -312,9 +307,10 @@ impl HtmlRenderer {
                     .unwrap_or_default()
                     .to_string();
                 html_filename.push_str(HTML_EXT);
-                let mut p = p.to_path_buf();
-                p.push(PathBuf::from(html_filename));
-                p
+                let mut q = doc_path.parent().unwrap_or(Path::new("")).to_path_buf();
+                q.push(p);
+                q.push(PathBuf::from(html_filename));
+                q
             }
         };
 

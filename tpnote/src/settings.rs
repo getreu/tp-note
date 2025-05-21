@@ -111,7 +111,7 @@ pub struct Args {
     #[arg(long, short = 'V')]
     pub version: bool,
     /// Saves the HTML rendition in the `<EXPORT>` directory,
-    /// the note's directory if '' or stdout if '-'.
+    /// the note's directory if '.' or stdout if '-'.
     #[arg(long, short = 'x')]
     pub export: Option<PathBuf>,
     /// Exporter local link rewriting: [possible values: off, short, long]
