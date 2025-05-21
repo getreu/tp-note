@@ -4,14 +4,16 @@
 //#[cfg(any(feature = "read-clipboard", feature = "viewer"))]
 use crate::clipboard::SystemClipboard;
 use crate::config::CFG;
-use log::LevelFilter;
+use clap::Parser;
+use clap::ValueEnum;
+use serde::Deserialize;
+use serde::Serialize;
 use std::env;
 use std::io;
 use std::io::IsTerminal;
 use std::io::Read;
 use std::path::PathBuf;
 use std::sync::LazyLock;
-use structopt::StructOpt;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::TMPL_VAR_STDIN;
 use tpnote_lib::content::Content;
@@ -36,10 +38,13 @@ const ENV_VAR_USER: &str = "USER";
 #[cfg(target_family = "unix")]
 const ENV_VAR_DISPLAY: &str = "DISPLAY";
 
-#[derive(Debug, Eq, PartialEq, StructOpt)]
-#[structopt(
+#[derive(Debug, Eq, PartialEq, Parser)]
+#[command(
+    version,
     name = "Tp-Note",
-    about = "Fast note taking with templates and filename synchronization."
+    about,
+    long_about = "Fast note taking with templates and filename synchronization.",
+    disable_version_flag = true
 )]
 /// _Tp-Note_ is a note-taking tool and a template system, that synchronizes the
 /// note's metadata with its filename. _Tp-Note_ collects various information
@@ -58,65 +63,64 @@ const ENV_VAR_DISPLAY: &str = "DISPLAY";
 /// WikiText. The note's rendition with its hyperlinks is live updated and
 /// displayed in the user's web browser.
 pub struct Args {
-    /// Prepends YAML header if missing
-    #[structopt(long, short = "a")]
+    /// Prepends a YAML header if missing
+    #[arg(long, short = 'a')]
     pub add_header: bool,
-    /// Batch mode: does not launch editor or viewer
-    #[structopt(long, short = "b")]
+    /// Batch mode: does not launch the editor or the viewer
+    #[arg(long, short = 'b')]
     pub batch: bool,
     /// Loads (and merges) an additional configuration file
-    #[structopt(long, short = "c")]
+    #[arg(long, short = 'c')]
     pub config: Option<String>,
     /// Dumps the internal default configuration into a file
     /// or stdout if `-`
-    #[structopt(long, short = "C")]
+    #[arg(long, short = 'C')]
     pub config_defaults: Option<String>,
-    /// Console debug level: "trace", "debug", "info", "warn", "error"
-    /// (default) or "off"
-    #[structopt(long, short = "d")]
-    pub debug: Option<LevelFilter>,
+    /// Console debug level:
+    #[arg(long, short = 'd', value_enum)]
+    pub debug: Option<ClapLevelFilter>,
     /// Shows console debug messages also as popup windows
-    #[structopt(long, short = "u")]
+    #[arg(long, short = 'u')]
     pub popup: bool,
     /// Launches only the editor, no browser
-    #[structopt(long, short = "e")]
+    #[arg(long, short = 'e')]
     pub edit: bool,
     /// Scheme for new notes: "default", "zettel", (cf. `--config-defaults`)
-    #[structopt(long, short = "s")]
+    #[arg(long, short = 's')]
     pub scheme: Option<String>,
-    /// Forces console mode: opens console editor, no browser
-    #[structopt(long, short = "t")]
+    /// Console mode: opens the console editor, no browser
+    #[arg(long, short = 't')]
     pub tty: bool,
-    /// Lets web server listen to a specific port
-    #[structopt(long, short = "p")]
+    /// Lets the web server listen to a specific port
+    #[arg(long, short = 'p')]
     pub port: Option<u16>,
     /// Disables filename synchronization
-    #[structopt(long, short = "n")]
+    #[arg(long, short = 'n')]
     pub no_filename_sync: bool,
-    /// Disables the automatic language detection and uses `<force-lang>`
-    /// instead; or, if '' use `TPNOTE_LANG` or `LANG`
-    #[structopt(long, short = "l")]
+    /// Disables automatic language detection and uses `<FORCE_LANG>`
+    /// instead; or, if '-' use `TPNOTE_LANG` or `LANG`
+    #[arg(long, short = 'l')]
     pub force_lang: Option<String>,
     /// Launches only the browser, no editor
-    #[structopt(long, short = "v")]
+    #[arg(long, short = 'v')]
     pub view: bool,
-    /// `<dir>` the new note's location or `<file>` to open or to annotate
-    #[structopt(name = "PATH", parse(from_os_str))]
+    /// `<DIR>` the new note's location or `<FILE>` to open or to annotate
+    #[arg(name = "PATH")]
     pub path: Option<PathBuf>,
-    /// Prints version and exits
-    #[structopt(long, short = "V")]
+    /// Prints the version and exits
+    #[arg(long, short = 'V')]
     pub version: bool,
-    /// Saves the HTML rendition in the `<export>` directory,
+    /// Saves the HTML rendition in the `<EXPORT>` directory,
     /// the note's directory if '' or stdout if '-'.
-    #[structopt(long, short = "x", parse(from_os_str))]
+    #[arg(long, short = 'x')]
     pub export: Option<PathBuf>,
-    /// Exporter local link rewriting: "off", "short", "long" (default)
-    #[structopt(long)]
+    /// Exporter local link rewriting: [possible values: off, short, long]
+    #[arg(long, value_enum)]
     pub export_link_rewriting: Option<LocalLinkKind>,
 }
 
 /// Structure to hold the parsed command line arguments.
-pub static ARGS: LazyLock<Args> = LazyLock::new(Args::from_args);
+pub static ARGS: LazyLock<Args> = LazyLock::new(Args::parse);
 
 /// Shall we launch the external text editor?
 pub static LAUNCH_EDITOR: LazyLock<bool> = LazyLock::new(|| {
@@ -215,3 +219,42 @@ pub static DOC_PATH: LazyLock<Result<PathBuf, std::io::Error>> = LazyLock::new(|
         env::current_dir()
     }
 });
+
+/// An enum representing the available verbosity level filters of the logger.
+///
+/// A `LevelFilter` may be compared directly to a [`Level`]. Use this type
+/// to get and set the maximum log level with [`max_level()`] and [`set_max_level`].
+///
+/// [`Level`]: enum.Level.html
+/// [`max_level()`]: fn.max_level.html
+/// [`set_max_level`]: fn.set_max_level.html
+#[repr(usize)]
+#[derive(
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Debug,
+    Hash,
+    Serialize,
+    Deserialize,
+    Default,
+    ValueEnum,
+)]
+pub enum ClapLevelFilter {
+    /// A level lower than all log levels.
+    Off,
+    /// Corresponds to the `Error` log level.
+    #[default]
+    Error,
+    /// Corresponds to the `Warn` log level.
+    Warn,
+    /// Corresponds to the `Info` log level.
+    Info,
+    /// Corresponds to the `Debug` log level.
+    Debug,
+    /// Corresponds to the `Trace` log level.
+    Trace,
+}

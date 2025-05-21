@@ -3,7 +3,7 @@
 ### Default value for the command line option `--debug`. Determines the maximum
 ### debug level events must have, to be logged. If the command line option
 ### `--debug` is present, its value will be used instead.
-debug = "ERROR"
+debug = "Error"
 
 ### Default value for the command line flag `--edit` to disable file watcher,
 ### (Markdown)-renderer, HTML server and a web browser launcher set to `true`.

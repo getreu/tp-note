@@ -87,7 +87,6 @@ sanitize-filename-reader-friendly.workspace = true
 semver = "1.0.26"
 serde.workspace = true
 serde_yaml.workspace = true
-structopt = "0.3.26"
 thiserror.workspace = true
 time = "0.3.41"
 tera.workspace = true
@@ -95,6 +94,7 @@ toml.workspace = true
 # tpnote-lib = { path = "../tpnote-lib", default-features = false }
 tpnote-lib = { version = "0.43.1", default-features = false}
 webbrowser = { version = "1.0.4", optional = true }
+clap = { version = "4.5.38", features = ["derive"] }
 
 
 [target.'cfg(windows)'.dependencies]

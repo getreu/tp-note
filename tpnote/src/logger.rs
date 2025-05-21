@@ -1,5 +1,8 @@
 //! Prints error messages and exceptional states.
 
+use crate::CONFIG_PATHS;
+#[cfg(feature = "message-box")]
+use crate::PKG_VERSION;
 #[cfg(feature = "message-box")]
 use crate::alert_service::AlertService;
 use crate::config::CARGO_BIN_NAME;
@@ -7,9 +10,6 @@ use crate::config::CARGO_BIN_NAME;
 use crate::settings::ARGS;
 #[cfg(feature = "message-box")]
 use crate::settings::RUNS_ON_CONSOLE;
-use crate::CONFIG_PATHS;
-#[cfg(feature = "message-box")]
-use crate::PKG_VERSION;
 use log::LevelFilter;
 use log::{Level, Metadata, Record};
 #[cfg(all(unix, not(target_os = "macos")))]
@@ -23,7 +23,7 @@ use std::env;
 use std::sync::LazyLock;
 #[cfg(target_os = "windows")]
 #[cfg(feature = "message-box")]
-use win_msgbox::{information, Okay};
+use win_msgbox::{Okay, information};
 
 #[cfg(feature = "message-box")]
 /// Window title of the message alert box.

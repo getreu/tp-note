@@ -83,6 +83,15 @@ fn main() {
     // Set the debug level. Only use config file value if
     // no command-line-option `--debug` is present.
     let level = ARGS.debug.unwrap_or(CFG.arg_default.debug);
+    let level = match level {
+        settings::ClapLevelFilter::Off => log::LevelFilter::Off,
+        settings::ClapLevelFilter::Error => log::LevelFilter::Error,
+        settings::ClapLevelFilter::Warn => log::LevelFilter::Warn,
+        settings::ClapLevelFilter::Info => log::LevelFilter::Info,
+        settings::ClapLevelFilter::Debug => log::LevelFilter::Debug,
+        settings::ClapLevelFilter::Trace => log::LevelFilter::Trace,
+    };
+
     AppLogger::set_max_level(level);
 
     // This eventually will extend the error reporting with more

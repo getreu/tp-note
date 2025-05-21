@@ -1,11 +1,11 @@
 //! Set configuration defaults, reads and writes _Tp-Note's_ configuration file
 //! and exposes the configuration as `static` variable.
 use crate::error::ConfigFileError;
+use crate::settings::ClapLevelFilter;
 use crate::settings::ARGS;
 use crate::settings::DOC_PATH;
 use crate::settings::ENV_VAR_TPNOTE_CONFIG;
 use directories::ProjectDirs;
-use log::LevelFilter;
 use parking_lot::RwLock;
 use serde::Deserialize;
 use serde::Serialize;
@@ -111,7 +111,7 @@ pub struct OsType<T> {
 /// Command line arguments, deserialized form configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ArgDefault {
-    pub debug: LevelFilter,
+    pub debug: ClapLevelFilter,
     pub edit: bool,
     pub no_filename_sync: bool,
     pub popup: bool,
@@ -125,7 +125,7 @@ pub struct ArgDefault {
 impl ::std::default::Default for ArgDefault {
     fn default() -> Self {
         ArgDefault {
-            debug: LevelFilter::Error,
+            debug: ClapLevelFilter::Error,
             edit: false,
             no_filename_sync: false,
             popup: false,
@@ -246,7 +246,7 @@ impl Cfg {
             .fold(base_config, CfgVal::merge);
 
         // We cannot he logger here, it is too early.
-        if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
+        if ARGS.debug == Some(ClapLevelFilter::Trace) && ARGS.batch && ARGS.version {
             println!(
                 "*** Merged configuration from all config files:\n\n{:#?}",
                 cfg_val
@@ -262,7 +262,7 @@ impl Cfg {
                           //_cfg;
 
             // We cannot use the logger here, it is too early.
-            if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
+            if ARGS.debug == Some(ClapLevelFilter::Trace) && ARGS.batch && ARGS.version {
                 println!(
                     "\n\n\n\n\n*** Configuration part 1 after merging \
                     `scheme`s into copies of `base_scheme`:\
@@ -308,7 +308,7 @@ impl Cfg {
         let cfg = cfg; // Freeze.
 
         // We cannot use the logger here, it is too early.
-        if ARGS.debug == Some(LevelFilter::Trace) && ARGS.batch && ARGS.version {
+        if ARGS.debug == Some(ClapLevelFilter::Trace) && ARGS.batch && ARGS.version {
             println!(
                 "\n\n\n\n\n*** Configuration part 2 after applied templates:\
                 \n\n{:#?}\
