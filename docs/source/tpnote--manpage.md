@@ -622,19 +622,17 @@ Tp-Note renders note files to HTML. The latter is either shown in the browser
 or can be exported with '`--export`'.  When exporting to HTML, hyperlinks
 are passed through an internal link rewriting engine that can be parametrized
 with '`--export-link-rewriting`'. The easiest way to print the resulting
-HTML, is to pipe it through an HTML to PDF converter, e.g. _weasyprint_ or
-_wkhtmktopdf_.
+HTML, is to pipe it through an HTML to PDF converter, e.g. _Weasyprint_ or
+_Wkhtmktopdf_.
 
 ```sh
 tpnote --export=- mynote.md | weasyprint - mynote.md.pdf
 ```
 
-I prefer _weasyprint_ over _wkhtmltopdf_ because the latter is not maintained
-any more. Furthermore, weasyprint supports the 
-[CSS Paged Media](https://www.w3.org/TR/css-page-3/) standard allowing to
-include page layout directives into HTML. You can change the default page
-layout by modifying the HTML template with the '`tmpl_html.exporter_doc_css`'
-configuration file variable.
+_Weasyprint_ supports the  [CSS Paged Media](https://www.w3.org/TR/css-page-3/)
+standard allowing to include page layout directives into HTML. You can
+change the default page layout by modifying the HTML template with the
+'`tmpl_html.exporter_doc_css`' configuration file variable.
 
 
 
@@ -805,7 +803,9 @@ configuration file variable.
     **\--popup** and **\--debug** (unless '`--debug off`'). Popup alert windows
     are queued and will never interrupt Tp-Note. To better associate a
     particular action with its log events, read through all upcoming popup alert
-    windows until they fail to appear.
+    windows until they fail to appear. As this option is activated by default,
+    it has no effect unless you set '`arg_default.popup = false`' in the
+    configuration file.
 
 **-v**, **\--view**
 
@@ -831,10 +831,11 @@ configuration file variable.
 **-x** *DIRECTORY*, **\--export**=*DIRECTORY*
 
 >   Prints the note as HTML rendition into _DIRECTORY_. '`-x -`' prints to
-    _stdout_. The empty string, e.g. '`--export= `' or '`-x ""`', defaults to
-    the directory where the note file resides. No external text editor or
-    viewer is launched. Can be combined with '`--batch`' to avoid popup
-    error alert windows.
+    _stdout_. If _DIRECTORY_ is a relative path, _DIRECTORY_ is appended to the
+    document directory. For example, e.g. '`--export=.`' or '`-x ./`', prints the
+    HTML rendition in the directory where the note file resides. This option
+    prevents the launch of the external text editor and viewer and can
+    be combined with '`--batch`' to avoid popup error alert windows.
 
 **\--export-link-rewriting**=*MODE*
 
