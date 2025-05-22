@@ -758,7 +758,7 @@ change the default page layout by modifying the HTML template with the
 
 >   Disables the automatic language detection while creating a new note file
     and use *LANGUAGE_TAG* instead. *LANGUAGE_TAG* is formatted as IETF BCP
-    47 language tag, e.g. '`en-US`'. If *LANGUAGE_TAG* equals '``', the
+    47 language tag, e.g. '`en-US`'. If *LANGUAGE_TAG* equals '`-`', the
     environment variable '`TPNOTE_LANG`' determines the language instead; or, if
     the latter is not defined, the user's default language, as reported from the
     operating system's locale setting, is decisive.

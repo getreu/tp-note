@@ -84,7 +84,7 @@ INPUT_FILENAME="$PWD/test103-annotate+clipboard-input-dummy.pdf"
 
 echo '[ab:cd"ef](https://getreu.net)' | \
 LANG="en_US.UTF-8" LOGNAME="myuser" \
-	cargo run -- --batch --force-lang='' \
+	cargo run -- --batch --force-lang='-' \
 	    --config "$TP_NOTE_TEST_TOML" \
 	    "$INPUT_FILENAME" >/dev/null 2>&1
 

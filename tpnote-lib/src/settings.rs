@@ -3,7 +3,7 @@
 //! Tp-Note is launched, the `SETTINGS` object may be sourced more often in
 //! order to follow changes in the related environment variables.
 
-use crate::config::{GetLang, Mode, LIB_CFG};
+use crate::config::{GetLang, LIB_CFG, Mode};
 use crate::error::LibCfgError;
 #[cfg(feature = "lang-detection")]
 use lingua;
@@ -166,6 +166,8 @@ impl Settings {
     pub(crate) fn update(
         &mut self,
         scheme_source: SchemeSource,
+        // TODO: `force_lang=Some("")` is a sentinal value in this API and
+        // should be replaced by a proper enum variant.
         force_lang: Option<&str>,
     ) -> Result<(), LibCfgError> {
         self.update_current_scheme(scheme_source)?;

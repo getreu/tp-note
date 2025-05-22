@@ -44,7 +44,11 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
     }
 
     if let Some(lang) = ARGS.force_lang.as_deref() {
-        workflow_builder.force_lang(lang);
+        if lang == "-" {
+            workflow_builder.force_lang("");
+        } else {
+            workflow_builder.force_lang(lang);
+        }
     }
 
     if let Some(path) = &ARGS.export {
