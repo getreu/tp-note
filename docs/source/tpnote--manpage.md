@@ -2632,6 +2632,11 @@ In addition, Tp-Note defines the following variables:
   If defined, the environment variable '`TPNOTE_LANG`' overwrites the value
   of '`{{ lang }}`' (all operating systems).
 
+* '`{{ force_lang }}`' is a copy of the command line option '`--force-lang`'.
+  If '`--force-lang=-`' then '`{{ lang }}`' is copied into '`{{ force_lang }}`'
+  instead and both are identical. This variable is always defined and is empty
+  when the command line option is not set.
+
 The following '`{{ fm.fm_* }}`' variables are typically generated, _after_ a
 content template was filled in with data: For example a field named '`title:`'
 in the content template '`tmpl.from_dir_content`' will generate the variable
