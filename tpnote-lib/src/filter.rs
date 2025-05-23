@@ -625,24 +625,40 @@ fn file_name_filter<S: BuildHasher>(
 }
 
 /// A Tera filter that replace the input string with the parameter `with`, but
-/// only if the input stream is empty.
-/// The input type and the type of the parameter `with`
-/// must be a `Value::String`.
+/// only if the input stream is empty, e.g.:
+///
+/// * `Value::Null` or
+/// * `Value::String("")`, or
+/// * `Value::Array([])`, or
+/// * the array contains only empty strings.
+///
+/// The parameter `with` can be any `Value` type.
 fn replace_empty_filter<S: BuildHasher>(
     value: &Value,
     args: &HashMap<String, Value, S>,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("replace_empty", "value", String, value);
-
-    let mut res = input;
+    // Detect the empty case. Exit early.
+    match value {
+        Value::Null => {}
+        Value::String(s) if s.is_empty() => {}
+        Value::Array(values) if values.is_empty() => {}
+        Value::Array(values) => {
+            if !values
+                .iter()
+                .map(|v| v.as_str())
+                .all(|s| s.is_some_and(|s| s.is_empty()))
+            {
+                return Ok(value.to_owned());
+            }
+        }
+        _ => return Ok(value.to_owned()),
+    }
 
     if let Some(with) = args.get("with") {
-        let with = try_get_value!("replace_empty", "with", String, with);
-        if res.is_empty() {
-            res = with;
-        };
+        Ok(with.to_owned())
+    } else {
+        Ok(value.to_owned())
     }
-    Ok(Value::String(res))
 }
 
 /// A Tera filter that prepends the string parameter `with`, but only if the
@@ -1632,6 +1648,41 @@ mod tests {
         let result = replace_empty_filter(&to_value("").unwrap(), &args);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), to_value("new string").unwrap());
+
+        // Array input, not empty.
+        let mut args = HashMap::new();
+        args.insert("with".to_string(), to_value([1, 2, 3]).unwrap());
+        let input = to_value([3, 4, 5]).unwrap();
+        let output = replace_empty_filter(&input, &args).unwrap();
+        assert_eq!(output, input);
+
+        // Array input, empty.
+        let mut args = HashMap::new();
+        args.insert("with".to_string(), to_value([1, 2, 3]).unwrap());
+        let input = Value::Array(vec![]);
+        let output = replace_empty_filter(&input, &args).unwrap();
+        assert_eq!(output, to_value([1, 2, 3]).unwrap());
+
+        // Array input, not empty.
+        let mut args = HashMap::new();
+        args.insert("with".to_string(), to_value([1, 2, 3]).unwrap());
+        let input = to_value(["", "not empty", ""]).unwrap();
+        let output = replace_empty_filter(&input, &args).unwrap();
+        assert_eq!(output, input);
+
+        // Array input, empty.
+        let mut args = HashMap::new();
+        args.insert("with".to_string(), to_value([1, 2, 3]).unwrap());
+        let input = to_value(["", "", ""]).unwrap();
+        let output = replace_empty_filter(&input, &args).unwrap();
+        assert_eq!(output, to_value([1, 2, 3]).unwrap());
+
+        // Null input, not empty.
+        let mut args = HashMap::new();
+        args.insert("with".to_string(), to_value([1, 2, 3]).unwrap());
+        let input = Value::Null;
+        let output = replace_empty_filter(&input, &args).unwrap();
+        assert_eq!(output, to_value([1, 2, 3]).unwrap());
     }
 
     #[test]
