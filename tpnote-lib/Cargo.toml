@@ -47,7 +47,7 @@ toml.workspace = true
 tpnote-html2md = { version = "0.3.0", optional = true }
 
 [target.'cfg(windows)'.dependencies]
-win32job = "2.0.2"
+win32job = "2.0.3"
 windows-sys = { version = "0.59.0", features = [
          #"Win32_Foundation",
          #"Win32_Security",
