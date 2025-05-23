@@ -313,7 +313,8 @@ from_dir_content = """
 {%- set input = stdin ~ clipboard | trim -%}
 
 {%- set languages = fm.fm_languages
-     | default(value = input | replace_empty(with = path | trim_file_sort_tag )
+     | default(value = [force_lang])
+     | replace_empty(with = input | replace_empty(with = path | trim_file_sort_tag )
                              | get_lang | map_lang(default=lang) ) -%}
 {%- set lang = fm.fm_lang | default(value = languages | first ) -%}
 
@@ -372,7 +373,8 @@ from_dir_filename = """
 ### filename and its creation date. `{{ path }}` points to the text file,
 ### `{{ dir_path }}` to the directory where it is located.
 from_text_file_content = """
-{%- set languages = doc.body | get_lang | map_lang(default=lang) -%}
+{%- set languages = [force_lang]
+   | replace_empty(with = doc.body | get_lang | map_lang(default=lang)) -%}
 {%- set lang = languages | first -%}
 ---
 {{ path | file_stem | split(pat='--') | first | trunc | to_yaml(key='fm_title') }}
@@ -423,7 +425,8 @@ annotate_file_content = """
 {%- else -%}
    {%- set lang_test_text = path | file_stem  -%}
 {%- endif -%}
-{%- set languages = lang_test_text | get_lang | map_lang(default=lang) -%}
+{%- set languages = [force_lang]
+      | replace_empty(with = lang_test_text | get_lang | map_lang(default=lang)) -%}
 {%- set lang = languages | first -%}
 
 {%- set fname = path | file_name -%}
@@ -522,7 +525,8 @@ from_dir_content = """
 {%- set input = stdin ~ clipboard | trim -%}
 
 {%- set languages = fm.fm_languages
-      | default(value = input
+      | default(value = [force_lang])
+      | replace_empty(with = input
           | replace_empty(with = path | trim_file_sort_tag )
           | get_lang
           | map_lang(default=lang) ) -%}
@@ -601,7 +605,8 @@ from_text_file_content = """
 {%- set file = file | file_stem -%}
 {%- set title = file | split(pat='__') | first -%}
 {%- set keywords = file | split(pat='__') | nth(n=1) -%}
-{%- set languages = doc.body | get_lang | map_lang(default=lang) -%}
+{%- set languages = [force_lang]
+   | replace_empty(with = doc.body | get_lang | map_lang(default=lang)) -%}
 {%- set lang = languages | first -%}
 ---
 {{ title | trunc | to_yaml(key='fm_title') }}
@@ -660,7 +665,8 @@ annotate_file_content = """
 {%- else -%}
    {%- set lang_test_text = path | file_stem -%}
 {%- endif -%}
-{%- set languages = lang_test_text | get_lang | map_lang(default=lang) -%}
+{%- set languages = [force_lang]
+      | replace_empty(with = lang_test_text | get_lang | map_lang(default=lang)) -%}
 {%- set lang = languages | first -%}
 
 {%- set fname = path | file_name -%}

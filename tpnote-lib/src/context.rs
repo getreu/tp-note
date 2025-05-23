@@ -23,6 +23,7 @@ use crate::config::TMPL_VAR_EXTENSION_DEFAULT;
 use crate::config::TMPL_VAR_FM_;
 use crate::config::TMPL_VAR_FM_ALL;
 use crate::config::TMPL_VAR_FM_SCHEME;
+use crate::config::TMPL_VAR_FORCE_LANG;
 use crate::config::TMPL_VAR_HEADER;
 use crate::config::TMPL_VAR_LANG;
 use crate::config::TMPL_VAR_PATH;
@@ -396,6 +397,9 @@ impl<S: ContextState> Context<S> {
 
         // Get the user's language tag.
         self.ct.insert(TMPL_VAR_LANG, &settings.lang);
+
+        // Store `force_lang`.
+        self.ct.insert(TMPL_VAR_FORCE_LANG, &settings.force_lang);
     }
 
     /// Inserts the YAML front header variables into the context for later use

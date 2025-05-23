@@ -128,6 +128,10 @@ pub const TMPL_VAR_USERNAME: &str = "username";
 /// (all operating systems).
 pub const TMPL_VAR_LANG: &str = "lang";
 
+/// A copy of the command line option `--force_lang`. The empty value
+/// means "disable language forcing".
+pub const TMPL_VAR_FORCE_LANG: &str = "force_lang";
+
 /// Contains the body of the file the command line option `<path>`
 /// points to. Only available in the `tmpl.from_text_file_content`,
 /// `tmpl.sync_filename` and HTML templates.
@@ -773,7 +777,7 @@ pub enum Mode {
     /// reported.
     #[default]
     Multilingual,
-    /// Variant to represent the error state for an invalid `GetLang` object.
+    /// Variant to represent the error state of an invalid `GetLang` object.
     #[serde(skip)]
     Error(LibCfgError),
 }
