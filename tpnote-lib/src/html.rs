@@ -187,7 +187,7 @@ trait Hyperlink {
     /// If `dest` in `Link::Text2Dest` contains only a sort
     /// tag as filename, expand the latter to a full filename.
     /// Otherwise, no action.
-    /// This method accesses the file system. Therefore sometimes `prepend_path`
+    /// This method accesses the filesystem. Therefore sometimes `prepend_path`
     /// is needed as parameter and prepended.
     fn expand_shorthand_link(&mut self, prepend_path: Option<&Path>) -> Result<(), NoteError>;
 
@@ -224,7 +224,7 @@ trait Hyperlink {
     /// Renders `Link::Text2Dest`, `Link::Image2Dest` and `Link::Image`
     /// to HTML. Some characters in `dest` or `src` might be HTML
     /// escape encoded. This does not percent encode at all, because
-    /// we know, that the result will be inserted later in an UTF-8 template.
+    /// we know, that the result will be inserted later in a UTF-8 template.
     fn to_html(&self) -> String;
 }
 
@@ -572,7 +572,7 @@ impl Hyperlink for Link<'_> {
             if s == val {
                 val
             } else {
-                // No cloning happens here, because we own s already.
+                // No cloning happens here, because we own `s` already.
                 Cow::Owned(s.into_owned())
             }
         }
@@ -587,7 +587,7 @@ impl Hyperlink for Link<'_> {
             if s == val {
                 val
             } else {
-                // No cloning happens here, because we own s already.
+                // No cloning happens here, because we own `s` already.
                 Cow::Owned(s.into_owned())
             }
         }
@@ -657,7 +657,7 @@ impl Hyperlink for Link<'_> {
 ///
 /// If `LocalLinkKind::Off`, relative local links are not converted.
 /// If `LocalLinkKind::Short`, relative local links are converted into an
-/// absolute local links with  `root_path` as base directory.
+/// absolute local links with `root_path` as base directory.
 /// If `LocalLinkKind::Long`, in addition to the above, the resulting absolute
 /// local link is prepended with `root_path`.
 ///
@@ -886,7 +886,7 @@ impl HtmlString for String {
             html.insert_str(0, <str as HtmlStr>::TAG_DOCTYPE_HTML);
             Ok(html)
         } else {
-            // There is a Doctype other then HTML.
+            // There is a Doctype other than HTML.
             Err(InputStreamError::NonHtmlDoctype {
                 html: self.chars().take(25).collect::<String>(),
             })

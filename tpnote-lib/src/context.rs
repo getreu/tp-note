@@ -267,7 +267,7 @@ impl<S: ContextState> Context<S> {
     }
 
     /// Constructor. Unlike `from()` this constructor does not access
-    /// the file system in order to detect `dir_path`, `root_path` and
+    /// the filesystem in order to detect `dir_path`, `root_path` and
     /// `doc_file_date`. It copies these values from the passed `context`.
     /// Use this constructor when you are sure that the above date has
     /// not changed since you instantiated `context`. In this case you
@@ -392,7 +392,7 @@ impl<S: ContextState> Context<S> {
             );
         } // Release `lib_cfg` here.
 
-        // Search for UNIX, Windows and MacOS user-names.
+        // Search for UNIX, Windows, and MacOS user-names.
         self.ct.insert(TMPL_VAR_USERNAME, &settings.author);
 
         // Get the user's language tag.
@@ -639,12 +639,12 @@ impl Context<HasSettings> {
         }
     }
 
-    /// Inserts clipboard data, stdin data and/or existing note file content
-    /// into the context. The data may contain some copied text with or without
-    /// a YAML header. The latter usually carries front matter variables.
-    /// The `input` data below is registered with the key name given by
-    /// `tmpl_var_body_name`. Typical names are `"clipboard"` or `"stdin"`. If
-    /// the below `input` contains a valid YAML header, it will be registered
+    /// Inserts clipboard data, standard input data and/or existing note file
+    /// content into the context. The data may contain some copied text with
+    /// or without a YAML header. The latter usually carries front matter
+    /// variables. The `input` data below is registered with the key name given
+    /// by `tmpl_var_body_name`. Typical names are `"clipboard"` or `"stdin"`.
+    /// If the below `input` contains a valid YAML header, it will be registered
     /// in the context with the key name given by `tmpl_var_header_name`. The
     /// templates expect the key names `clipboard_header` or `std_header`. The
     /// raw header text will be inserted with this key name.

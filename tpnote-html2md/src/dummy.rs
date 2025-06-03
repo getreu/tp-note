@@ -36,7 +36,7 @@ impl TagHandler for IdentityHandler {
 
         let conv = String::from_utf8(buffer);
         if conv.is_err() {
-            // is non-utf8 string possible in html5ever?
+            // Is non UTF-8 string possible in html5ever?
             return;
         }
 

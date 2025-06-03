@@ -21,7 +21,7 @@ pub enum InputStreamError {
     NonHtmlDoctype { html: String },
 }
 
-/// Configuration file related file system and syntax errors.
+/// Configuration file related filesystem and syntax errors.
 #[derive(Debug, Error)]
 pub enum FileError {
     /// Remedy: delete all files in configuration file directory.
@@ -144,7 +144,9 @@ pub enum LibCfgError {
     },
 
     /// Remedy: check the configuration file variable `tmpl.filter.assert_preconditions`.
-    #[error("choose one of: `IsDefined`, `IsString`, `IsNumber`, `IsStringOrNumber`, `IsBool`, `IsValidSortTag`")]
+    #[error(
+        "choose one of: `IsDefined`, `IsString`, `IsNumber`, `IsStringOrNumber`, `IsBool`, `IsValidSortTag`"
+    )]
     ParseAssertPrecondition,
 
     /// Remedy: check the configuration file variable `arg_default.export_link_rewriting`.

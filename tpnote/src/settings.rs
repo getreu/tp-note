@@ -52,7 +52,7 @@ const ENV_VAR_DISPLAY: &str = "DISPLAY";
 /// notes are created by filling these variables in predefined and customizable
 /// `Tera`-templates. In case `<path>` points to an existing _Tp-Note_ file, the
 /// note's metadata is analyzed and, if necessary, its filename is adjusted.
-/// For all other file types, _Tp-Note_ creates a new note annotating the
+/// For all other filetypes, _Tp-Note_ creates a new note annotating the
 /// file `<path>` points to. If `<path>` is a directory (or, when omitted the
 /// current working directory), a new note is created in that directory. After
 /// creation, _Tp-Note_ launches an external editor of your choice. Although the
@@ -111,7 +111,7 @@ pub struct Args {
     #[arg(long, short = 'V')]
     pub version: bool,
     /// Saves the HTML rendition in the `<EXPORT>` directory,
-    /// the note's directory if '.' or stdout if '-'.
+    /// the note's directory if '.' or standard output if '-'.
     #[arg(long, short = 'x')]
     pub export: Option<PathBuf>,
     /// Exporter local link rewriting: [possible values: off, short, long]
@@ -176,14 +176,14 @@ pub static RUNS_ON_CONSOLE: LazyLock<bool> = LazyLock::new(|| {
     display.is_none() || ARGS.tty || CFG.arg_default.tty
 });
 
-/// Reads the input stream stdin if there is any.
+/// Reads the input stream standard input if there is any.
 pub static STDIN: LazyLock<ContentString> = LazyLock::new(|| {
     // Bring new methods into scope.
     use tpnote_lib::html::HtmlStr;
 
     let mut buffer = String::new();
 
-    // Read stdin().
+    // Read the standard input.
     let stdin = io::stdin();
     if !stdin.is_terminal() {
         // There is an input pipe for us to read from.

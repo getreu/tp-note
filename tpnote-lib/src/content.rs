@@ -3,9 +3,9 @@
 use self_cell::self_cell;
 use std::fmt;
 use std::fmt::Debug;
+use std::fs::OpenOptions;
 use std::fs::create_dir_all;
 use std::fs::read_to_string;
-use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
 use substring::Substring;
@@ -492,7 +492,7 @@ self_cell!(
 /// `header` and `body`.
 /// This struct is self referential.
 /// It deals with operating system specific handling of newlines.
-/// The content of a note is stored as UTF-8 string with
+/// The note's content is stored as a UTF-8 string with
 /// one `\n` character as newline. If present, a Byte Order Mark
 /// BOM is removed while reading with `new()`.
     pub struct ContentString {

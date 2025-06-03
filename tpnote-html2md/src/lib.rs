@@ -60,12 +60,12 @@ static MARKDOWN_MIDDLE_KEYCHARS: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"[<>*\\_~]").unwrap()); // for Markdown escaping
 
 /// Custom variant of main function. Allows to pass custom tag<->tag factory pairs
-/// in order to register custom tag hadler for tags you want.
+/// in order to register custom tag handler for tags you want.
 ///
 /// You can also override standard tag handlers this way
 /// # Arguments
 /// `html` is source HTML as `String`
-/// `custom` is custom tag hadler producers for tags you want, can be empty
+/// `custom` is custom tag handler producers for tags you want, can be empty
 pub fn parse_html_custom(
     html: &str,
     custom: &HashMap<String, Box<dyn TagHandlerFactory>>,
@@ -124,7 +124,7 @@ fn walk(
             let mut text = contents.borrow().to_string();
             let inside_pre = result.parent_chain.iter().any(|tag| tag == "pre");
             if inside_pre {
-                // this is preformatted text, insert as-is
+                // this is preformatted text, insert as it is
                 result.append_str(&text);
             } else if !(text.trim().is_empty()
                 && (result.data.ends_with('\n') || result.data.ends_with(' ')))
@@ -262,7 +262,7 @@ fn clean_markdown(text: &str) -> String {
 /// Intermediate result of HTML -> Markdown conversion.
 ///
 /// Holds context in the form of parent tags and siblings chain
-/// and resulting string of markup content with current position.
+/// and resulting string of markup content with the current position.
 #[derive(Debug, Default)]
 pub struct StructuredPrinter {
     /// Chain of parents leading to upmost <html> tag
@@ -336,9 +336,9 @@ pub mod android {
     use super::parse_html;
     use super::parse_html_extended;
 
+    use self::jni::JNIEnv;
     use self::jni::objects::{JClass, JString};
     use self::jni::sys::jstring;
-    use self::jni::JNIEnv;
 
     #[no_mangle]
     pub unsafe extern "C" fn Java_com_kanedias_html2md_Html2Markdown_parse(

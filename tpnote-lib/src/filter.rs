@@ -605,8 +605,7 @@ fn file_copy_counter_filter<S: BuildHasher>(
 
 /// A Tera filter that takes a path and extracts its filename without
 /// file extension. The filename may contain a sort-tag, a copy-counter and
-/// also separators.
-/// The input type must be `Value::String` and the output type is
+/// separators. The input type must be `Value::String` and the output type is
 /// `Value::String()`
 fn file_name_filter<S: BuildHasher>(
     value: &Value,
@@ -1444,7 +1443,7 @@ mod tests {
     #[test]
     fn test_markup_to_html_filter() {
         //
-        // Render verbatim text with markup hyperlinks to HTML.
+        // Render verbatim text with the `parse-hyperlinks` crate to HTML.
         let input = json!("Hello World\n[link](<https://getreu.net>)");
         let expected = "<pre>Hello World\n\
             <a href=\"https://getreu.net\" title=\"\">\
@@ -1457,7 +1456,7 @@ mod tests {
             Value::String(expected)
         );
 
-        // Render verbatim text with markup hyperlinks to HTML.
+        // Render verbatim text with the `parse-hyperlinks` crate to HTML.
         let input = json!("Hello World\n[link](<https://getreu.net>)");
         let expected = "<pre>Hello World\n\
             <a href=\"https://getreu.net\" title=\"\">link</a></pre>"
@@ -2060,7 +2059,7 @@ Some more text."#;
         assert_eq!("", output);
         //
         //
-        // Test filename .
+        // Test filename.
         let input = "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
         let output = file_name_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
         assert_eq!("20200908-My file(123).md", output);
@@ -2181,7 +2180,7 @@ Some more text."#;
         assert_eq!(expected_output, output.unwrap());
 
         //
-        // RestructuredText link
+        // ReStructuredText link
         let input = "abc`Homepage <https://blog.getreu.net>`_\nabc";
         let expected_output = FirstHyperlink {
             text: "Homepage".into(),
@@ -2192,7 +2191,7 @@ Some more text."#;
         assert_eq!(expected_output, output.unwrap());
 
         //
-        // RestructuredText link ref
+        // ReStructuredText link ref
         let input = "abc `Homepage<home_>`_ abc\n.. _home: https://blog.getreu.net\nabc";
         let expected_output = FirstHyperlink {
             text: "Homepage".into(),

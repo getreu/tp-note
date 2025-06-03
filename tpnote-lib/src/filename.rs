@@ -381,7 +381,7 @@ impl NotePath for Path {
                     ctime_max = ctime;
                 }
             } // End of loop.
-              // Found, return result
+            // Found, return result
             if !filename_max.is_empty() {
                 Some(filename_max.to_string())
             } else {
@@ -463,7 +463,7 @@ pub(crate) trait NotePathStr {
     fn has_tpnote_ext(&self) -> bool;
 
     /// Helper function that expects a filename in `self`, matches the copy
-    /// counter at the end of string and  returns the result and the copy
+    /// counter at the end of string and returns the result and the copy
     /// counter.
     /// This function removes all brackets and a potential extra separator.
     /// The input must not contain a path, only a filename is allowed here.

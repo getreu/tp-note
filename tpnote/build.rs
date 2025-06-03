@@ -5,6 +5,7 @@ use std::error::Error;
 use winresource::WindowsResource;
 
 /// Cross compile with icons is a new feature in `winres 0.1.12`:
+/// 
 /// * [Adding an icon issues when building from Linux for Windows · Issue #33 · mxre/winres · GitHub](https://github.com/mxre/winres/issues/33)
 /// * [Enable cross compiling from unix/macos by moshensky · Pull Request #24 · mxre/winres · GitHub](https://github.com/mxre/winres/pull/24)
 /// * [Rust 1.61 in Linux does no add resources to the EXE · Issue #40 · mxre/winres · GitHub](https://github.com/mxre/winres/issues/40#issuecomment-1321141396)

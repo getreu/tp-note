@@ -10,7 +10,7 @@
 //! in variables. New notes are created by filling these variables in predefined
 //! and customizable `Tera`-templates. In case `<path>` points to an existing
 //! _Tp-Note_-file, the note's metadata is analyzed and, if necessary, its
-//! filename is modified. For all other file types, _Tp-Note_ creates a new note
+//! filename is modified. For all other filetypes, _Tp-Note_ creates a new note
 //! that annotates the file `<path>` points to. If `<path>` is a directory (or,
 //! when omitted the current working directory), a new note is created in that
 //! directory. After creation, _Tp-Note_ launches an external editor of your

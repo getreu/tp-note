@@ -42,7 +42,7 @@ pub const LIB_CONFIG_DEFAULT_TOML: &str = include_str!("config_default.toml");
 /// Maximum length of a note's filename in bytes. If a filename template produces
 /// a longer string, it will be truncated.
 pub const FILENAME_LEN_MAX: usize =
-    // Most file system's limit.
+    // Most filesystem's limit.
     255
     // Additional separator.
     - 2
@@ -74,7 +74,7 @@ pub const TMPL_VAR_PATH: &str = "path";
 
 /// Contains the fully qualified directory path of the `<path>` command line
 /// argument.
-/// If `<path>` points to a file, the last component (the file name) is omitted.
+/// If `<path>` points to a file, the last component (the filename) is omitted.
 /// If it points to a directory, the content of this variable is identical to
 /// `TMPL_VAR_PATH`,
 pub const TMPL_VAR_DIR_PATH: &str = "dir_path";
@@ -96,7 +96,7 @@ pub const TMPL_VAR_BODY: &str = "body";
 /// `html_clipboard.header` is always empty.
 pub const TMPL_VAR_HTML_CLIPBOARD: &str = "html_clipboard";
 
-/// The name of the plain text clipboard to refer to in templates.
+/// The name of the plaintext clipboard to refer to in templates.
 pub const TMPL_VAR_TXT_CLIPBOARD: &str = "txt_clipboard";
 
 /// The name of the standard input stream to refer to in templates.
@@ -121,7 +121,7 @@ pub const TMPL_VAR_USERNAME: &str = "username";
 
 /// Contains the user's language tag as defined in
 /// [RFC 5646](http://www.rfc-editor.org/rfc/rfc5646.txt).
-/// Not to be confused with the UNIX `LANG` environment variable from which
+/// Not to be confused with the Unix `LANG` environment variable from which
 /// this value is derived under Linux/MacOS.
 /// Under Windows, the user's language tag is queried through the Win-API.
 /// If defined, the environment variable `TPNOTE_LANG` overwrites this value
@@ -141,7 +141,7 @@ pub const TMPL_VAR_DOC: &str = "doc";
 /// The date is represented as an integer the way `std::time::SystemTime`
 /// resolves to on the platform. Only available in the
 /// `tmpl.from_text_file_content`, `tmpl.sync_filename` and HTML templates.
-/// Note: this variable might not be defined with some file systems or on some
+/// Note: this variable might not be defined with some filesystems or on some
 /// platforms.  
 pub const TMPL_VAR_DOC_FILE_DATE: &str = "doc_file_date";
 
@@ -543,7 +543,7 @@ impl TryFrom<LibCfgIntermediate> for LibCfg {
         {
             // Merge all `s` into a `base_scheme`, parse the result into a `Scheme`
             // and collect a `Vector`. `merge_depth=0` means we never append
-            // to left hand arrays, we always overwrite them.
+            // to left-hand arrays, we always overwrite them.
             schemes = lib_cfg_scheme
                 .into_iter()
                 .map(|v| CfgVal::merge_toml_values(raw.base_scheme.clone(), v, 0))
@@ -846,7 +846,7 @@ pub enum Assertion {
     IsNotCompound,
     /// `IsValidSortTag`: Assert, that if the variable is defined, the value's
     /// string representation contains solely characters of the
-    /// `filename.sort_tag.extra_chars` set, digits or lowercase letters.
+    /// `filename.sort_tag.extra_chars` set, digits, or lowercase letters.
     /// The number of lowercase letters in a row is limited by
     /// `tpnote_lib::config::FILENAME_SORT_TAG_LETTERS_IN_SUCCESSION_MAX`.
     IsValidSortTag,

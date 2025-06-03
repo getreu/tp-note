@@ -79,8 +79,8 @@ impl TagHandler for ListItemHandler {
             _ => 4,
         };
 
-        // need to cleanup leading newlines, <p> inside <li> should produce valid
-        // list element, not an empty line
+        // need to clean up leading newlines, <p> inside <li> should produce
+        // valid list element, not an empty line
         let index = self.start_pos;
         while index < printer.data.len() {
             if printer.data.as_bytes().get(index) == Some(&b'\n')
@@ -92,8 +92,9 @@ impl TagHandler for ListItemHandler {
             }
         }
 
-        // non-nested indentation (padding). Markdown requires that all paragraphs in the
-        // list item except first should be indented with at least 1 space
+        // non-nested indentation (padding). Markdown requires that all
+        // paragraphs in the list item except first should be indented with at
+        // least 1 space
         let mut index = printer.data.len();
         while index > self.start_pos {
             if printer.data.as_bytes().get(index) == Some(&b'\n') {

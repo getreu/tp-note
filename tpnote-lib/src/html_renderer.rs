@@ -250,8 +250,8 @@ impl HtmlRenderer {
     /// `export_dir` in case `export_dir` is an absolute directory. Otherwise
     /// the parent directory of `doc_path` is concatenated with `export_dir`
     /// and the result is stored there.
-    /// `-` dumps the rendition to STDOUT. The filename of the HTML rendition is
-    /// the same as in `doc_path` but with `.html` appended.
+    /// `-` dumps the rendition to the standard output. The filename of the HTML
+    /// rendition is the same as in `doc_path` but with `.html` appended.
     ///
     /// ```rust
     /// use tpnote_lib::config::LIB_CFG;

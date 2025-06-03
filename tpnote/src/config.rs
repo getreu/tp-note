@@ -1,5 +1,5 @@
-//! Set configuration defaults, reads and writes _Tp-Note's_ configuration file
-//! and exposes the configuration as `static` variable.
+//! Sets configuration defaults, reads, and writes Tp-Note's configuration
+//! file and exposes the configuration as `static` variable.
 use crate::error::ConfigFileError;
 use crate::settings::ClapLevelFilter;
 use crate::settings::ARGS;

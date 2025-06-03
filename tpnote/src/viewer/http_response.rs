@@ -11,8 +11,8 @@ use std::io::{Read, Write};
 use std::path::Path;
 use std::str;
 use std::time::SystemTime;
-use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::LIB_CFG;
+use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE;
 use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
 use tpnote_lib::content::Content;
@@ -52,8 +52,12 @@ pub(crate) trait HttpResponse {
         mime_type: &str,
         content: &[u8],
     ) -> Result<(), ViewerError>;
+    // Not implemented:
+    //
+    // ```
     // fn respond_forbidden(&mut self, reqpath: &Path) -> Result<(), ViewerError>;
     // fn respond_no_content_ok(&mut self) -> Result<(), ViewerError>;
+    // ```
 
     /// Write HTTP "not found" response.
     fn respond_not_found(&mut self, reqpath: &Path) -> Result<(), ViewerError>;
@@ -142,11 +146,11 @@ impl HttpResponse for ServerThread {
                 // Is the request in our `allowed_urls` list?
                 if !allowed_urls.contains(relpath) {
                     log::warn!(
-                            "TCP port local {} to peer {}: target not referenced in note file, rejecting: '{}'",
-                            self.stream.local_addr()?.port(),
-                            self.stream.peer_addr()?.port(),
-                            relpath.to_str().unwrap_or(""),
-                        );
+                        "TCP port local {} to peer {}: target not referenced in note file, rejecting: '{}'",
+                        self.stream.local_addr()?.port(),
+                        self.stream.peer_addr()?.port(),
+                        relpath.to_str().unwrap_or(""),
+                    );
                     // Release the `RwLockReadGuard`.
                     drop(allowed_urls);
                     self.respond_not_found(relpath)?;

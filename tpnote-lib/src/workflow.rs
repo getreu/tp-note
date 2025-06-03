@@ -149,9 +149,9 @@ use crate::context::Context;
 use crate::error::NoteError;
 use crate::html_renderer::HtmlRenderer;
 use crate::note::Note;
+use crate::settings::SETTINGS;
 use crate::settings::SchemeSource;
 use crate::settings::Settings;
-use crate::settings::SETTINGS;
 use crate::template::TemplateKind;
 use parking_lot::RwLockUpgradableReadGuard;
 use std::path::Path;
@@ -435,7 +435,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
 
         let n = match template_kind {
             TemplateKind::FromDir | TemplateKind::AnnotateFile => {
-                // CREATE A NEW NOTE WITH `TMPL_NEW_CONTENT` TEMPLATE
+                // CREATE A NEW NOTE WITH THE `TMPL_NEW_CONTENT` TEMPLATE
                 // All these template do not refer to existing front matter,
                 // as there is none yet.
                 let context = context
