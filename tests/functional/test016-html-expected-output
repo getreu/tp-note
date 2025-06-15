@@ -12,6 +12,31 @@
   size: A4 portrait;
 }
 
+.custom-options input[type=checkbox]{
+  margin-left: 5px;
+  margin-right: 10px;
+  margin-bottom: 5px;
+}
+input:before{content:attr(value)}
+select:before{content:attr(value)}
+label {
+  display: block;
+}
+input[type=checkbox] {
+  background-clip: content-box;
+  background-color: white;
+  border: 1px solid;
+  border-radius: 2px;
+  display: inline-block;
+  height: 0.5em;
+  margin: 0.5em 0.5em 0 0.5em;
+  padding: 2px;
+  width: 0.5em;
+}
+input[type=checkbox][checked] {
+  background-color: gray;
+}
+
 table.fm {
   font-weight: normal;
   margin-left: auto;
