@@ -419,14 +419,9 @@ annotate_file_content = """
 {%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
 {%- set clipboard = html_clipboard
       | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
-{%- set body_text = stdin ~ clipboard | trim_end -%}
-{%- if body_text != '' -%}
-   {%- set lang_test_text = body_text | trunc -%}
-{%- else -%}
-   {%- set lang_test_text = path | file_stem  -%}
-{%- endif -%}
+{%- set input = stdin ~ clipboard | trim_end -%}
 {%- set languages = [force_lang]
-      | replace_empty(with = lang_test_text | get_lang | map_lang(default=lang)) -%}
+      | replace_empty(with = input | replace_empty(with = path | file_stem) | get_lang | map_lang(default=lang)) -%}
 {%- set lang = languages | first -%}
 
 {%- set fname = path | file_name -%}
@@ -450,7 +445,7 @@ annotate_file_content = """
 ---
 
 {{ link }}
-{{- body_text | prepend(with='\n____\n\n')}}
+{{- input | prepend(with='\n____\n\n')}}
 
 """
 
@@ -504,24 +499,24 @@ from_dir_content = """
 {%- set txt_clipboard = txt_clipboard.body |default(value = '') -%}
 
 {%- set title_text = fm.fm_title | default(value = '')
-      | replace_empty(with = stdin | html_heading )
-      | replace_empty(with = stdin | link_text_picky )
-      | replace_empty(with = stdin | link_text )
-      | replace_empty(with = stdin | heading )
-      | replace_empty(with = html_clipboard | html_heading )
-      | replace_empty(with = html_clipboard | link_text_picky )
-      | replace_empty(with = txt_clipboard | link_text_picky )
-      | replace_empty(with = html_clipboard | link_text )
-      | replace_empty(with = txt_clipboard | link_text )
-      | replace_empty(with = txt_clipboard | heading )
-      | replace_empty(with = path | trim_file_sort_tag )
-      | trim  -%}
+     | replace_empty(with = stdin | html_heading )
+     | replace_empty(with = stdin | link_text_picky )
+     | replace_empty(with = stdin | link_text )
+     | replace_empty(with = stdin | heading )
+     | replace_empty(with = html_clipboard | html_heading )
+     | replace_empty(with = html_clipboard | link_text_picky )
+     | replace_empty(with = txt_clipboard | link_text_picky )
+     | replace_empty(with = html_clipboard | link_text )
+     | replace_empty(with = txt_clipboard | link_text )
+     | replace_empty(with = txt_clipboard | heading )
+     | replace_empty(with = path | trim_file_sort_tag )
+     | trim  -%}
         
 {%- set stdin = stdin
-      | html_to_markup(extension=extension_default, default=stdin)
-      | append(newline=true) -%}
+     | html_to_markup(extension=extension_default, default=stdin)
+     | append(newline=true) -%}
 {%- set clipboard = html_clipboard
-      | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
+     | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
 {%- set input = stdin ~ clipboard | trim -%}
 
 {%- set languages = fm.fm_languages
@@ -659,14 +654,9 @@ annotate_file_content = """
       | append(newline=true) -%}
 {%- set clipboard = html_clipboard
       | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
-{%- set body_text = stdin ~ clipboard | trim_end -%}
-{%- if body_text != '' -%}
-   {%- set lang_test_text = body_text | trunc -%}
-{%- else -%}
-   {%- set lang_test_text = path | file_stem -%}
-{%- endif -%}
+{%- set input = stdin ~ clipboard | trim_end -%}
 {%- set languages = [force_lang]
-      | replace_empty(with = lang_test_text | get_lang | map_lang(default=lang)) -%}
+      | replace_empty(with = input | replace_empty(with = path | file_stem) | get_lang | map_lang(default=lang)) -%}
 {%- set lang = languages | first -%}
 
 {%- set fname = path | file_name -%}
@@ -689,7 +679,7 @@ annotate_file_content = """
 ---
 
 {{ link }}
-{{- body_text | prepend(with='\n____\n\n')}}
+{{- input | prepend(with='\n____\n\n')}}
 
 """
 
