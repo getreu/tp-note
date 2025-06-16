@@ -166,7 +166,7 @@ echo '<!DOCTYPE html><h1>Hello World</h1>'| tpnote
 
 
 
-### The clipboard contains a string
+### The clipboard contains some text
 
 Use case: While launching Tp-Note the clipboard contains the string:
 "`Who Moved My Cheese?\n\nChapter 2`" and '`<path>`' is a directory.
@@ -298,7 +298,7 @@ content template uses the link text of the first hyperlink found as document
 title.
 
 
-### The clipboard contains a string with a YAML header
+### The clipboard contains a YAML header
 
 Use case: '`<path>`' is a directory, the clipboard is not empty and contains
 the string: '`---\ntitle: Todo\nfile_ext: mdtxt\n---\nnothing`'.
@@ -370,7 +370,7 @@ viewport:   width=device-width, initial-scale=1.0, maximum-scale=1
 
 
 
-## Create a new note annotating a non Tp-Note file
+## Create a new note annotating some non Tp-Note file
 
 When '`<path>`' points to an existing file, whose file extension is other than
 '`.md`', a new note is created with a similar filename and a reference to the
@@ -429,7 +429,7 @@ To convert the text file into a Tp-Note file type:
 tpnote --add-header --batch "Ascii-Hangman--A game for children.md"
 ```
 
-NB: the '`--add-header`' flag is actually not necessary, as it is enabled by
+NB: the '`--add-header`' flag might not be necessary, as it is enabled by
 default through the configuration file variable
 '`arg_default.add_header = true`'.
 
@@ -524,61 +524,61 @@ determines which internal renderer is activated.
 
 Tp-Note's note built-in viewer comprises three markup language renders:
 
-* '`Markdown`'_ (file extension `.md`)\
-  This renderer is CommonMark compatible and feature complete. It understands,
-  heading attributes, inline images, tables, task lists, footnotes, 
-  strike-through and LaTeX formula:
+1. '`Markdown`'_ (file extension `.md`)\
+   This renderer is CommonMark compatible and feature complete. It understands,
+   heading attributes, inline images, tables, task lists, footnotes, 
+   strike-through and LaTeX formula:
 
-  ````latex
-  ```math
-  x^n + y^n = z^n
-  ```
-  ````
+   ````latex
+   ```math
+   x^n + y^n = z^n
+   ```
+   ````
 
-  Or:
+   Or:
 
-  ````
-  $$
-  x^n + y^n = z^n
-  $$
-  ````
+   ````
+   $$
+   x^n + y^n = z^n
+   $$
+   ````
 
-  Inline formulas are enclosed between Dollar characters, 
-  e.g. '``` $\alpha$ ```' becomes '` `$\alpha$` `'.
+   Inline formulas are enclosed between Dollar characters, 
+   e.g. '``` $\alpha$ ```' becomes '` `$\alpha$` `'.
 
-  Source code is highlighted when you annotate the programming
-  language (see also '`tmpl_html.viewer_highlighting_theme`' and
-  '`tmpl_html.exporter_highlighting_theme`'):
+   Source code is highlighted when you annotate the programming
+   language (see also '`tmpl_html.viewer_highlighting_theme`' and
+   '`tmpl_html.exporter_highlighting_theme`'):
 
-  ````md
-  ```rust
-  pub fn main(){
-    let w = "world!";
-    println!("Hallo {:?}", w);
-  }
-  ```
-  ````
+   ````md
+   ```rust
+   pub fn main(){
+     let w = "world!";
+     println!("Hallo {:?}", w);
+   }
+   ```
+   ````
 
-  Heading attributes:
+   Heading attributes:
 
-  ```md
-  # text { #id .class1 .class2 myattr other_attr=myvalue }
-  ```
+   ```md
+   # text { #id .class1 .class2 myattr other_attr=myvalue }
+   ```
 
-  is interpreted as a level 1 heading with the content text, ID '`id`', classes
-  '`class1`' and '`class2`' and custom attributes '`myattr`' (without value)
-  and '`other_attr`' with value '`myvalue`'. Note that ID, classes, and custom
-  attributes should be space-separated.
+   is interpreted as a level 1 heading with the content text, ID '`id`', classes
+   '`class1`' and '`class2`' and custom attributes '`myattr`' (without value)
+   and '`other_attr`' with value '`myvalue`'. Note that ID, classes, and custom
+   attributes should be space-separated.
 
-* '`ReStructuredText`' (file extension `.rst`)\
-  This renderer is experimental and covers only basic markup.
+2. '`ReStructuredText`' (file extension `.rst`)\
+   This renderer is experimental and covers only basic markup.
 
-* '`PlainText`' (link only renderer, file extension `.txtnote`)\
-  The purpose of this renderer is to make hyperlinks written in 
-  Markdown, ReStructuredText, Asciidoc, HTML, Wikitext syntax clickable.
-  Only hyperlinks are rendered, all other text is shown verbatim.
+3. '`PlainText`' (link only renderer, file extension `.txtnote`)\
+   The purpose of this renderer is to make hyperlinks written in 
+   Markdown, ReStructuredText, Asciidoc, HTML, Wikitext syntax clickable.
+   Only hyperlinks are rendered, all other text is shown verbatim.
 
-Tp-Note's webserver streams large media files without loading them into
+Tp-Note's web server streams large media files without loading them into
 memory. Just refer to the media file as local link: 
 '`[my video](<dir/my video.mp4>)`'. Make sure, that the file extension of the
 video file is registered with '`viewer.served_mime_types`'.
@@ -797,15 +797,15 @@ change the default page layout by modifying the HTML template with the
 
 **-u**, **\--popup**
 
->   Redirects log file entries into popup alert windows. Must be used together
+>   Redirects log file entries into pop-up alert windows. Must be used together
     with the **\--debug** option to have an effect. Note, that debug level
-    '`error`' conditions will always trigger popup messages, regardless of
-    **\--popup** and **\--debug** (unless '`--debug off`'). Popup alert windows
+    '`error`' conditions will always trigger pop-up messages, regardless of
+    **\--popup** and **\--debug** (unless '`--debug off`'). Pop-up alert windows
     are queued and will never interrupt Tp-Note. To better associate a
-    particular action with its log events, read through all upcoming popup alert
-    windows until they fail to appear. As this option is activated by default,
-    it has no effect unless you set '`arg_default.popup = false`' in the
-    configuration file.
+    particular action with its log events, read through all upcoming pop-up
+    alert windows until they fail to appear. As this option is activated by
+    default, it has no effect unless you set '`arg_default.popup = false`' in
+    the configuration file.
 
 **-v**, **\--view**
 
@@ -835,7 +835,7 @@ change the default page layout by modifying the HTML template with the
     document directory. For example, e.g. '`--export=.`' or '`-x ./`', prints the
     HTML rendition in the directory where the note file resides. This option
     prevents the launch of the external text editor and viewer and can
-    be combined with '`--batch`' to avoid popup error alert windows.
+    be combined with '`--batch`' to avoid pop-up error alert windows.
 
 **\--export-link-rewriting**=*MODE*
 
@@ -1973,7 +1973,7 @@ always start with the identifier '`fm.fm_`' (cf. first column of the above
 table).
 
 The above configuration changes the localization default for all note files
-in the scope of the configuration file '`tpnote.toml`'. It is also possilbe
+in the scope of the configuration file '`tpnote.toml`'. It is also possible
 to use header variables in different languages side by side with
 schemes:
 
@@ -2297,12 +2297,12 @@ Specifically:
   variables_ above.
 
 * '`{{ viewer_doc_css_path }}`' is the CSS stylesheet path required to format
-  an HTML rendition of a Tp-Note document. This path is hard-wired and it is
-  understood by Tp-Note's internal web server.
+  an HTML rendition of a Tp-Note document. This path is an internal constant
+  and understood by Tp-Note's internal web server.
 
 * '`{{ viewer_highlighting_css_path }}`' is the CSS stylesheet path required to
-  highlight embedded source code. This path is hard-wired and it is understood
-  by Tp-Note's internal web server.
+  highlight embedded source code. This path is an internal constant and it is
+  understood by Tp-Note's internal web server.
 
 * '`{{ doc.header }}`' is the raw UTF-8 copy of the header. Not to be
   confounded with the dictionary variable '`{{ fm }}`'.
@@ -2633,8 +2633,8 @@ In addition, Tp-Note defines the following variables:
   of '`{{ lang }}`' (all operating systems).
 
 * '`{{ force_lang }}`' is a copy of the command line option '`--force-lang`'.
-  If '`--force-lang=-`' then '`{{ lang }}`' is copied into '`{{ force_lang }}`'
-  instead and both are identical. This variable is always defined and is empty
+  If '`--force-lang=-`' then the value of '`{{ lang }}`' is copied into
+  '`{{ force_lang }}`'. This variable is always defined and is empty
   when the command line option is not set.
 
 The following '`{{ fm.fm_* }}`' variables are typically generated, _after_ a
@@ -2704,9 +2704,9 @@ some additional filters, i.e.:
 '`html_to_markup(extension=..., default=...)`', '`insert(key=..., value=...)`',
 '`link_dest`', '`link_text`', '`link_title`', '`map_lang`', '`prepend`',
 '`prepend(newline=true)`', '`prepend(with=...)`',
-'`prepend(with_sort_tag=...)`', '`remove(key=)`', '`replace_empty(with=...)`',
-'`sanit`', '`to_html`', '`to_yaml`', '`to_yaml(key=...)`', '`to_yaml(tab=...)`'
-and '`trim_file_sort_tag`'.
+'`prepend(with_sort_tag=...)`', '`remove(key=...)`',
+'`replace_empty(with=...)`', '`sanit`', '`to_html`', '`to_yaml`',
+'`to_yaml(key=...)`', '`to_yaml(tab=...)`' and '`trim_file_sort_tag`'.
 
 A filter is always used together with a variable. Here are some examples:
 
