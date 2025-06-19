@@ -155,7 +155,7 @@ either `\f[CR]<!DOCTYPE html\f[R]' or `\f[CR]<html\f[R]', e.g.:
 .EX
 echo \[aq]<!DOCTYPE html><h1>Hello World</h1>\[aq]\f[B]|\f[R] tpnote
 .EE
-.SS The clipboard contains a string
+.SS The clipboard contains some text
 Use case: While launching Tp\-Note the clipboard contains the string:
 \[lq]\f[CR]Who Moved My Cheese?\[rs]n\[rs]nChapter 2\f[R]\[rq] and
 `\f[CR]<path>\f[R]' is a directory.
@@ -289,7 +289,7 @@ When analysing the clipboard\[cq]s content, Tp\-Note searches for
 hyperlinks in Markdown, ReStructuredText, Asciidoc and HTML format.
 When successful, the content template uses the link text of the first
 hyperlink found as document title.
-.SS The clipboard contains a string with a YAML header
+.SS The clipboard contains a YAML header
 Use case: `\f[CR]<path>\f[R]' is a directory, the clipboard is not empty
 and contains the string:
 `\f[CR]\-\-\-\[rs]ntitle: Todo\[rs]nfile_ext: mdtxt\[rs]n\-\-\-\[rs]nnothing\f[R]'.
@@ -361,7 +361,7 @@ viewport\f[B]:\f[R]   width=device\-width, initial\-scale=1.0, maximum\-scale=1
 \f[B]\-\f[R]   \f[B][\f[R]Home\f[B]]\f[R](https://blog.getreu.net)
 \f[B]\-\f[R]   \f[B][\f[R]Categories\f[B]]\f[R](https://blog.getreu.net/categories)
 .EE
-.SS Create a new note annotating a non Tp\-Note file
+.SS Create a new note annotating some non Tp\-Note file
 When `\f[CR]<path>\f[R]' points to an existing file, whose file
 extension is other than `\f[CR].md\f[R]', a new note is created with a
 similar filename and a reference to the original file is copied into the
@@ -424,8 +424,8 @@ To convert the text file into a Tp\-Note file type:
 tpnote \-\-add\-header \-\-batch \[dq]Ascii\-Hangman\-\-A game for children.md\[dq]
 .EE
 .PP
-NB: the `\f[CR]\-\-add\-header\f[R]' flag is actually not necessary, as
-it is enabled by default through the configuration file variable
+NB: the `\f[CR]\-\-add\-header\f[R]' flag might not be necessary, as it
+is enabled by default through the configuration file variable
 `\f[CR]arg_default.add_header = true\f[R]'.
 .PP
 As a result of the above command, Tp\-Note converts the filename into:
@@ -515,7 +515,7 @@ activated.
 .PP
 Tp\-Note\[cq]s note built\-in viewer comprises three markup language
 renders:
-.IP \[bu] 2
+.IP "1." 3
 `\f[CR]Markdown\f[R]'_ (file extension \f[CR].md\f[R])
 .PD 0
 .P
@@ -523,7 +523,7 @@ renders:
 This renderer is CommonMark compatible and feature complete.
 It understands, heading attributes, inline images, tables, task lists,
 footnotes, strike\-through and LaTeX formula:
-.RS 2
+.RS 4
 .IP
 .EX
 \[ga]\[ga]\[ga]math
@@ -568,13 +568,13 @@ custom attributes `\f[CR]myattr\f[R]' (without value) and
 `\f[CR]other_attr\f[R]' with value `\f[CR]myvalue\f[R]'.
 Note that ID, classes, and custom attributes should be space\-separated.
 .RE
-.IP \[bu] 2
+.IP "2." 3
 `\f[CR]ReStructuredText\f[R]' (file extension \f[CR].rst\f[R])
 .PD 0
 .P
 .PD
 This renderer is experimental and covers only basic markup.
-.IP \[bu] 2
+.IP "3." 3
 `\f[CR]PlainText\f[R]' (link only renderer, file extension
 \f[CR].txtnote\f[R])
 .PD 0
@@ -584,7 +584,7 @@ The purpose of this renderer is to make hyperlinks written in Markdown,
 ReStructuredText, Asciidoc, HTML, Wikitext syntax clickable.
 Only hyperlinks are rendered, all other text is shown verbatim.
 .PP
-Tp\-Note\[cq]s webserver streams large media files without loading them
+Tp\-Note\[cq]s web server streams large media files without loading them
 into memory.
 Just refer to the media file as local link:
 `\f[CR][my video](<dir/my video.mp4>)\f[R]'.
@@ -877,15 +877,15 @@ no viewer is launched.
 \f[B]\-u\f[R], \f[B]\-\-popup\f[R]
 .RS
 .PP
-Redirects log file entries into popup alert windows.
+Redirects log file entries into pop\-up alert windows.
 Must be used together with the \f[B]\-\-debug\f[R] option to have an
 effect.
 Note, that debug level `\f[CR]error\f[R]' conditions will always trigger
-popup messages, regardless of \f[B]\-\-popup\f[R] and
+pop\-up messages, regardless of \f[B]\-\-popup\f[R] and
 \f[B]\-\-debug\f[R] (unless `\f[CR]\-\-debug off\f[R]').
-Popup alert windows are queued and will never interrupt Tp\-Note.
+Pop\-up alert windows are queued and will never interrupt Tp\-Note.
 To better associate a particular action with its log events, read
-through all upcoming popup alert windows until they fail to appear.
+through all upcoming pop\-up alert windows until they fail to appear.
 As this option is activated by default, it has no effect unless you set
 `\f[CR]arg_default.popup = false\f[R]' in the configuration file.
 .RE
@@ -932,7 +932,7 @@ appended to the document directory.
 For example, e.g.\ `\f[CR]\-\-export=.\f[R]' or `\f[CR]\-x ./\f[R]',
 prints the HTML rendition in the directory where the note file resides.
 This option prevents the launch of the external text editor and viewer
-and can be combined with `\f[CR]\-\-batch\f[R]' to avoid popup error
+and can be combined with `\f[CR]\-\-batch\f[R]' to avoid pop\-up error
 alert windows.
 .RE
 .PP
@@ -2386,7 +2386,7 @@ Header variables in templates always start with the identifier
 .PP
 The above configuration changes the localization default for all note
 files in the scope of the configuration file `\f[CR]tpnote.toml\f[R]'.
-It is also possilbe to use header variables in different languages side
+It is also possible to use header variables in different languages side
 by side with schemes:
 .IP
 .EX
@@ -2736,13 +2736,13 @@ See section \f[I]Template variables\f[R] above.
 .IP \[bu] 2
 `\f[CR]{{ viewer_doc_css_path }}\f[R]' is the CSS stylesheet path
 required to format an HTML rendition of a Tp\-Note document.
-This path is hard\-wired and it is understood by Tp\-Note\[cq]s internal
-web server.
+This path is an internal constant and understood by Tp\-Note\[cq]s
+internal web server.
 .IP \[bu] 2
 `\f[CR]{{ viewer_highlighting_css_path }}\f[R]' is the CSS stylesheet
 path required to highlight embedded source code.
-This path is hard\-wired and it is understood by Tp\-Note\[cq]s internal
-web server.
+This path is an internal constant and it is understood by Tp\-Note\[cq]s
+internal web server.
 .IP \[bu] 2
 `\f[CR]{{ doc.header }}\f[R]' is the raw UTF\-8 copy of the header.
 Not to be confounded with the dictionary variable `\f[CR]{{ fm }}\f[R]'.
@@ -3127,9 +3127,8 @@ the value of `\f[CR]{{ lang }}\f[R]' (all operating systems).
 .IP \[bu] 2
 `\f[CR]{{ force_lang }}\f[R]' is a copy of the command line option
 `\f[CR]\-\-force\-lang\f[R]'.
-If `\f[CR]\-\-force\-lang=\-\f[R]' then `\f[CR]{{ lang }}\f[R]' is
-copied into `\f[CR]{{ force_lang }}\f[R]' instead and both are
-identical.
+If `\f[CR]\-\-force\-lang=\-\f[R]' then the value of
+`\f[CR]{{ lang }}\f[R]' is copied into `\f[CR]{{ force_lang }}\f[R]'.
 This variable is always defined and is empty when the command line
 option is not set.
 .PP
@@ -3217,7 +3216,7 @@ built\-in filters
 `\f[CR]link_text\f[R]', `\f[CR]link_title\f[R]', `\f[CR]map_lang\f[R]',
 `\f[CR]prepend\f[R]', `\f[CR]prepend(newline=true)\f[R]',
 `\f[CR]prepend(with=...)\f[R]', `\f[CR]prepend(with_sort_tag=...)\f[R]',
-`\f[CR]remove(key=)\f[R]', `\f[CR]replace_empty(with=...)\f[R]',
+`\f[CR]remove(key=...)\f[R]', `\f[CR]replace_empty(with=...)\f[R]',
 `\f[CR]sanit\f[R]', `\f[CR]to_html\f[R]', `\f[CR]to_yaml\f[R]',
 `\f[CR]to_yaml(key=...)\f[R]', `\f[CR]to_yaml(tab=...)\f[R]' and
 `\f[CR]trim_file_sort_tag\f[R]'.
