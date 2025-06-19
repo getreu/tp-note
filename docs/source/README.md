@@ -177,7 +177,7 @@ Repository:
 * An official package is available on NixOS:
 
   ```nix
-   environment.systemPackages = [ pkgs.tpnote ]; 
+  environment.systemPackages = [ pkgs.tpnote ]; 
   ```
 
 ### Get Tp-Note with the Nix package manager
@@ -280,8 +280,8 @@ compile _Tp-Note_ yourself.
    others).[^no-message-box]
 
    [^no-message-box]: In case an XDG desktop environment is not available, you
-       can opt out notifications and message boxes by omitting the `message-box`
-       feature by adding 
+      can opt out notifications and message boxes by omitting the `message-box`
+      feature by adding 
       `--no-default-features --features lang-detection,read-clipboard,renderer,viewer`
       to `cargo install tpnote`. 
       Now, all error messages are dumped on the console from
@@ -340,7 +340,7 @@ some examples:
   sudo apt install crossbuild-essential-armhf
   
   CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=/usr/bin/arm-linux-gnueabihf-gcc \
-    cargo build --target armv7-unknown-linux-gnueabihf --release
+  cargo build --target armv7-unknown-linux-gnueabihf --release
   ```
 
 * Target Raspberry Pi (arm64, 64 bit):
@@ -350,7 +350,7 @@ some examples:
   sudo apt install crossbuild-essential-arm64
   
   CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/aarch64-linux-gnu-gcc \
-   cargo build  --target aarch64-unknown-linux-gnu --release
+  cargo build  --target aarch64-unknown-linux-gnu --release
   ```
 
 * Target Windows:
@@ -387,7 +387,7 @@ Copyright:
 [Tp-Note manual page - pdf]: https://blog.getreu.net/_downloads/tpnote--manpage.pdf
 [Blogposts about Tp-Note]: https://blog.getreu.net/tags/tp-note/
 [Tp-Note's config module documentation]: https://docs.rs/tpnote-lib/latest/tpnote_lib/config/
-[tpnote]: https://crates.io/crates/tp-note
+[tpnote]: https://crates.io/crates/tpnote
 [tpnote-lib]: https://crates.io/crates/tpnote-lib
 [Constants in API documentation]: https://docs.rs/tpnote-lib/latest/tpnote_lib/config/index.html#constants
 [Tp-Note on Gitlab]: https://gitlab.com/getreu/tp-note
