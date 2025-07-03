@@ -1067,20 +1067,19 @@ checksum = "953cbbe631aae7fc0a112702ad5d3aaf09da38beaf45ea84610d6e1c358f569c"
 dependencies = [
  "log",
  "mac",
- "markup5ever",
+ "markup5ever 0.16.2",
  "match_token 0.1.0",
 ]
 
 [[package]]
 name = "html5ever"
-version = "0.33.0"
+version = "0.35.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d485f1d312f0938f1d8c175a115a1e9f357f8b63262a043b66ce11e1e48128b"
+checksum = "55d958c2f74b664487a2035fe1dadb032c48718a03b63f3ab0b8537db8549ed4"
 dependencies = [
  "log",
- "mac",
- "markup5ever",
- "match_token 0.2.0",
+ "markup5ever 0.35.0",
+ "match_token 0.35.0",
 ]
 
 [[package]]
@@ -2288,6 +2287,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "markup5ever"
+version = "0.35.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "311fe69c934650f8f19652b3946075f0fc41ad8757dbb68f1ca14e7900ecc1c3"
+dependencies = [
+ "log",
+ "tendril",
+ "web_atoms",
+]
+
+[[package]]
 name = "match_token"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2300,9 +2310,9 @@ dependencies = [
 
 [[package]]
 name = "match_token"
-version = "0.2.0"
+version = "0.35.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69c8968ae498413293a741c58ef9dc583a4d77a3d7eae7f80eedfe3acf667e7f"
+checksum = "ac84fd3f360fcc43dc5f5d186f02a94192761a080e8bc58621ad4d12296a58cf"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3775,11 +3785,12 @@ dependencies = [
 [[package]]
 name = "tpnote-html2md"
 version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "175876d776b265aa66685ad9d92fad10b75170c01a1be811cad5b5c88a54a717"
 dependencies = [
- "html5ever 0.33.0",
- "indoc",
+ "html5ever 0.31.0",
  "jni",
- "markup5ever",
+ "markup5ever 0.16.2",
  "percent-encoding",
  "regex",
  "tendril",
@@ -3787,13 +3798,12 @@ dependencies = [
 
 [[package]]
 name = "tpnote-html2md"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "175876d776b265aa66685ad9d92fad10b75170c01a1be811cad5b5c88a54a717"
+version = "0.3.1"
 dependencies = [
- "html5ever 0.31.0",
+ "html5ever 0.35.0",
+ "indoc",
  "jni",
- "markup5ever",
+ "markup5ever 0.35.0",
  "percent-encoding",
  "regex",
  "tendril",
@@ -3825,7 +3835,7 @@ dependencies = [
  "tera",
  "thiserror 2.0.12",
  "toml",
- "tpnote-html2md 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tpnote-html2md 0.3.0",
  "win32job",
  "windows-sys 0.60.2",
 ]
@@ -3858,7 +3868,7 @@ dependencies = [
  "tera",
  "thiserror 2.0.12",
  "toml",
- "tpnote-html2md 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tpnote-html2md 0.3.0",
  "win32job",
  "windows-sys 0.59.0",
 ]
