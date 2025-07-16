@@ -2,31 +2,31 @@
 title:    "Tp-Note: markup enhanced granular note-taking"
 subtitle: Save and edit your clipboard content as a note file
 author:   Jens Getreu
-date:     2025-06-01
-version:  1.25.11
+date:     2025-07-16
+version:  1.25.12
 filename_sync: false
 lang:     en-GB
 ---
 
-Markup languages like *Markdown* [^1] are perfectly suited for fast
-note-taking. Type your notes with your favourite text editor and observe
-the live rendered text in your web browser.
+Tp-Note is a note-taking-tool and a template system freely available for
+Windows, MacOS and Linux. Each note is stored in a file whose filename is
+synchronized with the note’s meta-data. Tp-Note’s main feature is to convert
+some input text - usually provided by the system’s clipboard - into a Markdown
+note file with a descriptive YAML header and a meaningful filename. To do so
+Tp-Note collects various information about its environment and the clipboard
+and stores them in variables. New notes are created by filling these variables
+in predefined and customizable templates. After creating a new note, TP-Note
+launches the system’s text editor and connects the default web browser to
+Tp-Note’s internal Markdown/RestructuredText renderer and web server. The viewer
+detects note file changes and updates the rendition accordingly.
 
-_Tp-Note_ helps you to quickly get started writing notes with its powerful
-template system. If you like to keep your notes next to your files, and you care
-about expressive filenames, then _Tp-Note_ might be the tool of your choice.
-As _Tp-Note_ synchronizes the note's filename with its document title, you
-will find your notes more easily.
-
-
-_On Tue, 2023-12-19 at 12:58 +1100, Dev Rain wrote:_
+On Tue, 2023-12-19 at 12:58 +1100, Dev Rain wrote:_
 
 > _Found Tp-Note awhile back and it has become part of my daily workflow, and
 > indeed part of my daily note-taking life. I wanted to extend my thanks; so 
 > thank you. dev.rain_
 
-_Tp-Note_ is available for Linux, Windows and MacOS. This manual illustrates
-its main use cases and how to get started:
+This manual illustrates Tp-Note's main use cases and how to get started:
 
 1. Fast start note-taking (when the lecture starts).
 2. Take a note about an existing or downloaded file.

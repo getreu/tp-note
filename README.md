@@ -10,21 +10,43 @@ https://docs.rs/tpnote-lib)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](
 https://gitlab.com/getreu/tp-note)
 
-_Tp-Note_ is a note-taking-tool and a template system - freely available for
-Windows, MacOS and Linux - that consistently synchronizes the note’s meta-data
-with its filename. _Tp-Note_'s main design goal is to convert some input text -
-usually provided by the system's clipboard - into a Markdown note file with
-a descriptive YAML header and a meaningful filename.
-_Tp-Note_ collects various information about its environment
-and the clipboard and stores them in variables. New notes are created by
-filling these variables in predefined and customizable _Tera_-templates.
-_TP-Note's_ default templates are written in Markdown and can be easily adapted
-to any other markup language if needed. After creating a new note, _TP-Note_
-launches the system's text editor and connects the default web browser to _Tp-
-Note_'s internal Markdown/RestructuredText renderer and web server. The viewer
-detects note file changes and updates the rendition accordingly.
+
+# Overview of Tp-Note
+
+Tp-Note is a versatile note-taking tool designed for both desktop and console
+environments. It allows users to create, edit, and manage notes efficiently.
+This tool is ideal for users looking for a simple yet powerful way to manage
+their notes across different platforms.
 
 ![Screenshot](./assets/tpnote-screenshot.png)
+
+## Key Features
+
+- **Clipboard Integration**: Tp-Note can save and edit clipboard content as note
+  files, making it easy to capture information quickly.
+
+- **Template System**: It uses customizable templates to synchronize note
+  metadata with filenames, enhancing organization.
+    
+- **Markdown Support**: Users can convert HTML content to Markdown. Notes
+  are rendered from Markdown to HTML when viewed with Tp-Note's internal web
+  server.
+    
+- **File Management**: Notes can be created from existing files or directories,
+  and users can easily navigate and edit their notes.
+    
+
+## Usage Examples
+
+|  Action                 |   Command Example    |
+|-------------------------|----------------------|
+| Create a note from clipboard | `tpnote` (when clipboard contains text) | 
+| Convert HTML to Markdown | `curl https://example.com | tpnote` | 
+| Edit an existing note | `tpnote ./path/to/note.md` | 
+| Generate PDF from a note | `tpnote -x - note.md | weasyprint - note.pdf` |
+
+
+## User review
 
 _On Tue, 2023-12-19 at 12:58 +1100, Dev Rain wrote:_
 
@@ -80,13 +102,12 @@ Developer documentation:
 * API documentation
 
   _Tp-Note_'s program code documentation targets mainly software developers.
-  The code is split into a library [tpnote-lib] and the command line
-  application [tpnote].
-  The advanced user may consult the [Tp-Note's config module documentation]
-  which explains the default templates and setting. Many of them can be
-  customized through _Tp-Note_'s configuration file.
+  The code is split into a library [tpnote-lib] and the command line application
+  [tpnote]. The advanced user may consult the [Tp-Note's config module
+  documentation] and the [constants in the API documentation] which explain
+  the various settings. Most of them can be customized through _Tp-Note_'s
+  configuration file.
 
-  [Constants in API documentation]
 
 
 
@@ -212,6 +233,10 @@ Repository:
 
 
 # Installation
+
+Tp-Note can be installed via a Windows installer package or by placing the
+binary directly on your desktop for easy access. It is recommended to integrate
+it into your file manager's context menu for convenience.
 
 Depending on the availability of installer packages for your operating
 system, the installation process is more or less automated. For Windows
@@ -389,7 +414,7 @@ Copyright:
 [Tp-Note's config module documentation]: https://docs.rs/tpnote-lib/latest/tpnote_lib/config/
 [tpnote]: https://crates.io/crates/tpnote
 [tpnote-lib]: https://crates.io/crates/tpnote-lib
-[Constants in API documentation]: https://docs.rs/tpnote-lib/latest/tpnote_lib/config/index.html#constants
+[constants in the API documentation]: https://docs.rs/tpnote-lib/latest/tpnote_lib/config/index.html#constants
 [Tp-Note on Gitlab]: https://gitlab.com/getreu/tp-note
 [Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
