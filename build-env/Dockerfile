@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=rust:1.86-slim-bullseye
+ARG BASE_IMAGE=rust:1.86-slim-bookworm
 WORKDIR /home/project
 
 FROM $BASE_IMAGE as planner
@@ -16,7 +16,9 @@ RUN rustup target add x86_64-unknown-linux-musl
 
 # Add RaspberryPi target
 RUN rustup target add armv7-unknown-linux-gnueabihf
+ENV CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER /usr/bin/arm-linux-gnueabihf-gcc 
 RUN rustup target add aarch64-unknown-linux-gnu
+ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER /usr/bin/aarch64-linux-gnu-gcc
 
 # Cross compile for Windows
 RUN rustup target add x86_64-pc-windows-gnu
@@ -43,6 +45,36 @@ RUN cargo install  cargo-deb
 RUN apt-get -y install libssl-dev
 RUN cargo install cargo-edit
 
+
+# [Cross compiling Windows binaries from Linux](https://jake-shadle.github.io/xwin/)
+ENV KEYRINGS /usr/local/share/keyrings
+
+RUN set -eux; \
+    mkdir -p $KEYRINGS; \
+    apt-get update && apt-get install -y gpg curl; \
+    # wine
+    curl --fail https://dl.winehq.org/wine-builds/winehq.key | gpg --dearmor > $KEYRINGS/winehq.gpg; \
+    echo "deb [signed-by=$KEYRINGS/winehq.gpg] https://dl.winehq.org/wine-builds/debian/ bookworm main" > /etc/apt/sources.list.d/winehq.list;
+
+RUN set -eux; \
+    dpkg --add-architecture i386; \
+    # Skipping all of the "recommended" cruft reduces total images size by ~300MiB
+    apt-get update && apt-get install --no-install-recommends -y \
+        # get a recent wine so we can run tests
+        winehq-staging \
+        # Unpack xwin
+        tar; \
+    apt-get remove -y --auto-remove; \
+    rm -rf /var/lib/apt/lists/*;
+    
+ENV \
+    # wine can be quite spammy with log messages and they're generally uninteresting
+    WINEDEBUG="-all" \
+    # Use wine to run test executables
+    #CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUNNER="wine"
+    CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER="wine"
+# Execute tests with
+# cargo test --target x86_64-pc-windows-gnu
 
 
 COPY . .

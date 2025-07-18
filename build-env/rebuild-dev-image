@@ -1,6 +1,6 @@
 #!/bin/sh
 # podman image ls
-podman pull rust:1.80.1-slim-bullseye
+podman pull rust:1.80.1-slim-bookworm
 podman build -t build-env-dev - < Dockerfile
 
 ### Stop all containers with:
