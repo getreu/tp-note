@@ -30,6 +30,7 @@ use tpnote_lib::config::LIB_CFG_RAW_FIELD_NAMES;
 use tpnote_lib::config::LIB_CONFIG_DEFAULT_TOML;
 use tpnote_lib::config_value::CfgVal;
 use tpnote_lib::context::Context;
+use tpnote_lib::text_reader::read_as_string_with_crlf_suppression;
 use tpnote_lib::filename::NotePathBuf;
 
 /// Set the minimum required configuration file version that is compatible with
@@ -185,17 +186,8 @@ impl Cfg {
     /// Emits the default configuration as TOML string with comments.
     #[inline]
     fn default_as_toml() -> String {
-        #[cfg(not(target_family = "windows"))]
         let config_default_toml = format!(
             "version = \"{}\"\n\n{}\n\n{}",
-            PKG_VERSION.unwrap_or_default(),
-            LIB_CONFIG_DEFAULT_TOML,
-            GUI_CONFIG_DEFAULT_TOML
-        );
-
-        #[cfg(target_family = "windows")]
-        let config_default_toml = format!(
-            "version = \"{}\"\r\n\r\n{}\r\n\r\n{}",
             PKG_VERSION.unwrap_or_default(),
             LIB_CONFIG_DEFAULT_TOML,
             GUI_CONFIG_DEFAULT_TOML
@@ -236,11 +228,10 @@ impl Cfg {
         // Merge all config files from various locations.
         let cfg_val = config_paths
             .iter()
-            .filter_map(|file| {
-                std::fs::read_to_string(file)
-                    .map(|config| toml::from_str(&config))
-                    .ok()
-            })
+            .filter_map(|path| File::open(path).ok())
+            .map(|reader| read_as_string_with_crlf_suppression(reader).map_err(ConfigFileError::from)
+                .and_then(|config| toml::from_str(&config).map_err(ConfigFileError::from))
+            )
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
             .fold(base_config, CfgVal::merge);
