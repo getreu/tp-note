@@ -6,7 +6,6 @@ use std::fmt::Debug;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::fs::create_dir_all;
-use std::fs::read_to_string;
 use std::io::Write;
 use std::path::Path;
 use substring::Substring;
@@ -169,42 +168,6 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     /// in header and body and associates names to both. These names are
     /// referenced in various templates.
     fn from_string(input: String, name: String) -> Self;
-
-    /// Constructor that reads a structured document with a YAML header
-    /// and body. All `\r\n` are converted to `\n` if there are any.
-    /// If not no memory allocation occurs and the buffer remains untouched.
-    ///
-    /// ```rust
-    /// use tpnote_lib::content::Content;
-    /// use tpnote_lib::content::ContentString;
-    /// let c = ContentString::from_string_with_cr(String::from(
-    ///     "---\r\ntitle: My note\r\n---\r\nMy\nbody\r\n"),
-    ///     "doc".to_string(),
-    /// );
-    ///
-    /// assert_eq!(c.header(), "title: My note");
-    /// assert_eq!(c.body(), "My\nbody\n");
-    /// assert_eq!(c.borrow_dependent().name, "doc");
-    ///
-    /// // A test without front matter leads to an empty header:
-    /// let c = ContentString::from_string(
-    ///   "No header".to_string(), "doc".to_string());
-    ///
-    /// assert_eq!(c.borrow_dependent().header, "");
-    /// assert_eq!(c.borrow_dependent().body, "No header");
-    /// assert_eq!(c.borrow_dependent().name, "doc");
-    /// ```
-    fn from_string_with_cr(input: String, name: String) -> Self {
-        // Avoid allocating when there is nothing to do.
-        let input = if input.find('\r').is_none() {
-            // Forward without allocating.
-            input
-        } else {
-            // We allocate here and do a lot of copying.
-            input.replace("\r\n", "\n")
-        };
-        Self::from_string(input, name)
-    }
 
     /// Returns a reference to the inner part in between `---`.
     fn header(&self) -> &str;
@@ -571,30 +534,6 @@ impl fmt::Display for ContentString {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_from_string_with_cr() {
-        // Test windows string.
-        let content = ContentString::from_string_with_cr(
-            "first\r\nsecond\r\nthird".to_string(),
-            "doc".to_string(),
-        );
-        assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
-
-        // Test Unix string.
-        let content = ContentString::from_string_with_cr(
-            "first\nsecond\nthird".to_string(),
-            "doc".to_string(),
-        );
-        assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
-
-        // Test BOM removal.
-        let content = ContentString::from_string_with_cr(
-            "\u{feff}first\nsecond\nthird".to_string(),
-            "doc".to_string(),
-        );
-        assert_eq!(content.borrow_dependent().body, "first\nsecond\nthird");
-    }
 
     #[test]
     fn test_from_string() {

@@ -489,8 +489,8 @@ Body text
         use crate::content::ContentString;
         use crate::context::Context;
         use crate::note::Note;
-        use crate::settings::Settings;
         use crate::settings::SETTINGS;
+        use crate::settings::Settings;
         use crate::template::TemplateKind;
         use parking_lot::RwLockWriteGuard;
         use std::env::temp_dir;
@@ -564,8 +564,8 @@ Body text
         use crate::content::ContentString;
         use crate::context::Context;
         use crate::note::Note;
-        use crate::settings::Settings;
         use crate::settings::SETTINGS;
+        use crate::settings::Settings;
         use crate::template::TemplateKind;
         use parking_lot::RwLockWriteGuard;
         use std::env::temp_dir;
@@ -637,12 +637,13 @@ Body text
 
         // Check the new note file.
         // println!("{:?}", n.rendered_filename);
-        assert!(n
-            .rendered_filename
-            .as_os_str()
-            .to_str()
-            .unwrap()
-            .contains("std--Note"));
+        assert!(
+            n.rendered_filename
+                .as_os_str()
+                .to_str()
+                .unwrap()
+                .contains("std--Note")
+        );
         assert!(n.rendered_filename.is_file());
         let raw_note = fs::read_to_string(&n.rendered_filename).unwrap();
         println!("{}", raw_note);
@@ -660,8 +661,8 @@ Body text
         use crate::content::ContentString;
         use crate::context::Context;
         use crate::note::Note;
-        use crate::settings::Settings;
         use crate::settings::SETTINGS;
+        use crate::settings::Settings;
         use crate::template::TemplateKind;
         use parking_lot::RwLockWriteGuard;
         use std::env::temp_dir;
@@ -740,12 +741,13 @@ Body text
 
         // Check the new note file.
         //println!("rendered_filename == {:?}", n.rendered_filename);
-        assert!(n
-            .rendered_filename
-            .as_os_str()
-            .to_str()
-            .unwrap()
-            .contains("stdin bod--this over"));
+        assert!(
+            n.rendered_filename
+                .as_os_str()
+                .to_str()
+                .unwrap()
+                .contains("stdin bod--this over")
+        );
         assert!(n.rendered_filename.is_file());
         let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
         #[cfg(not(target_family = "windows"))]
@@ -762,8 +764,8 @@ Body text
         use crate::content::ContentString;
         use crate::context::Context;
         use crate::note::Note;
-        use crate::settings::Settings;
         use crate::settings::SETTINGS;
+        use crate::settings::Settings;
         use crate::template::TemplateKind;
         use parking_lot::RwLockWriteGuard;
         use std::env::temp_dir;
@@ -793,8 +795,7 @@ Body text
             "my TXT clipboard\n".to_string(),
             "txt_clipboard".to_string(),
         );
-        let stdin =
-            ContentString::from_string_with_cr("my stdin\n".to_string(), "stdin".to_string());
+        let stdin = ContentString::from_string("my stdin\n".to_string(), "stdin".to_string());
         let v = vec![&html_clipboard, &txt_clipboard, &stdin];
 
         let context = context
