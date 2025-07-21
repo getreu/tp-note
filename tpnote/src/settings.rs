@@ -188,8 +188,11 @@ pub static STDIN: LazyLock<ContentString> = LazyLock::new(|| {
     let stdin = io::stdin();
     if !stdin.is_terminal() {
         // There is an input pipe for us to read from.
-        let mut handle = stdin.lock();
-        let _ = handle.read_to_string(&mut buffer);
+        let handle = stdin.lock();
+        let buf = handle.bytes().crlf_suppressor();
+        let buf: Result<Vec<u8>, std::io::Error> = buf.collect();
+        let buf = buf.unwrap_or_default();
+        buffer = String::from_utf8(buf).unwrap_or_default();
     }
 
     // Guess if this is an HTML stream.
