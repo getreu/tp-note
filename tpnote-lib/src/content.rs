@@ -3,6 +3,7 @@
 use self_cell::self_cell;
 use std::fmt;
 use std::fmt::Debug;
+use std::fs::File;
 use std::fs::OpenOptions;
 use std::fs::create_dir_all;
 use std::fs::read_to_string;
@@ -12,6 +13,7 @@ use substring::Substring;
 
 use crate::config::TMPL_VAR_DOC;
 use crate::error::InputStreamError;
+use crate::text_reader::read_as_string_with_crlf_suppression;
 
 /// As all text before the header marker `"---"` is ignored, this
 /// constant limits the maximum number of characters that are skipped
@@ -129,8 +131,8 @@ pub trait Content: AsRef<str> + Debug + Eq + PartialEq + Default {
     where
         Self: Sized,
     {
-        Ok(Self::from_string_with_cr(
-            read_to_string(path)?,
+        Ok(Self::from_string(
+            read_as_string_with_crlf_suppression(File::open(path)?)?,
             TMPL_VAR_DOC.to_string(),
         ))
     }

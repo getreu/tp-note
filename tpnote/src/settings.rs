@@ -18,6 +18,7 @@ use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::TMPL_VAR_STDIN;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
+use tpnote_lib::text_reader::CrlfSuppressorExt;
 
 /// The name of the environment variable, that - when set - replaces the default
 /// path where Tp-Note loads or stores its configuration file.

@@ -37,4 +37,5 @@ pub mod markup_language;
 mod note;
 pub mod settings;
 pub mod template;
+pub mod text_reader;
 pub mod workflow;

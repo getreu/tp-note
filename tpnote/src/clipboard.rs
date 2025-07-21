@@ -13,6 +13,9 @@ use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 #[cfg(feature = "read-clipboard")]
 #[cfg(unix)]
+use tpnote_lib::text_reader::CrlfSuppressorExt;
+#[cfg(feature = "read-clipboard")]
+#[cfg(unix)]
 use wl_clipboard_rs::copy;
 #[cfg(feature = "read-clipboard")]
 #[cfg(unix)]
