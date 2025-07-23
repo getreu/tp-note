@@ -16,15 +16,16 @@
 //! ## Basic example
 //!
 //! ```rust
-//! use std::io::Read;
-//! use std::io::Cursor;
+//! use std::io::{Cursor, Error, Read};
 //! use tpnote_lib::text_reader::CrlfSuppressorExt;
 //!
-//! let bytes = b"foo\r\nbar\r\nbaz";
-//! let filtered: Vec<u8> = Cursor::new(bytes).bytes().crlf_suppressor()
-//!     .map(|b| b.unwrap()).collect();
-//! let s = String::from_utf8(filtered).unwrap();
-//! assert_eq!(s, "foo\nbar\nbaz");
+//! let data = b"hello\r\nworld";
+//! let normalized: Result<Vec<u8>, Error> = Cursor::new(data)
+//!     .bytes()
+//!     .crlf_suppressor()
+//!     .collect();
+//! let s = String::from_utf8(normalized.unwrap()).unwrap();
+//! assert_eq!(s, "hello\nworld");
 //! ```
 //!
 //! ## Reading from a file
@@ -116,14 +117,15 @@ impl<I: Iterator<Item = io::Result<u8>>> Iterator for CrlfSuppressor<I> {
 ///
 /// # Example
 /// ```rust
-/// use std::io::Cursor;
-/// use std::io::Read;
+/// use std::io::{Cursor, Error, Read};
 /// use tpnote_lib::text_reader::CrlfSuppressorExt;
 ///
 /// let data = b"hello\r\nworld";
-/// let normalized: Vec<u8> = Cursor::new(data).bytes().crlf_suppressor()
-///     .map(|b| b.unwrap()).collect();
-/// let s = String::from_utf8(normalized).unwrap();
+/// let normalized: Result<Vec<u8>, Error> = Cursor::new(data)
+///     .bytes()
+///     .crlf_suppressor()
+///     .collect();
+/// let s = String::from_utf8(normalized.unwrap()).unwrap();
 /// assert_eq!(s, "hello\nworld");
 /// ```
 pub trait CrlfSuppressorExt: Iterator<Item = io::Result<u8>> + Sized {
