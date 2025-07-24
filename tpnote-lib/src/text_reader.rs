@@ -222,6 +222,41 @@ pub fn read_as_string_with_crlf_suppression<R: Read>(reader: R) -> io::Result<St
     String::from_utf8(bytes).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
 }
 
+/// Additional method for `String` suppressing `\r` in `\r\n` sequences:
+/// When no `\r\n` is found, no memory allocation occurs.
+///
+/// ```rust
+/// use tpnote_lib::text_reader::StringExt;
+///
+/// let s = "hello\r\nworld".to_string();
+/// let res = s.crlf_suppressor_string();
+/// assert_eq!("hello\nworld", res);
+///
+/// let s = "hello\nworld".to_string();
+/// let res = s.crlf_suppressor_string();
+/// assert_eq!("hello\nworld", res);
+/// ```
+pub trait StringExt {
+    fn crlf_suppressor_string(self) -> String;
+}
+
+impl StringExt for String {
+    fn crlf_suppressor_string(self) -> String {
+        // Replace `\r\n` with `\n`.
+        // Searching in bytes is faster than in chars.
+        // In UTF-8, continuation bytes for multi-byte code points are always in the
+        // range `0x80..0xBF`. Since `0x0D` and `0x0A` are not in this range, searching
+        // for CRLF as byte values is safe.
+        if !self.contains("\r\n") {
+            // Forward without allocating.
+            self
+        } else {
+            // We allocate here and do a lot of copying.
+            self.replace("\r\n", "\n")
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -302,5 +337,24 @@ mod tests {
         let input = b"foo\r\n";
         let expected = "foo\n";
         assert_eq!(run(input), expected);
+    }
+
+    #[test]
+    fn test_crlf_suppressor_string() {
+        use std::ptr::addr_of;
+        let s = "hello\r\nworld".to_string();
+        let s_addr = addr_of!(*s);
+        let res = s.crlf_suppressor_string();
+        assert_eq!("hello\nworld", res);
+        // Memory allocation occurred.
+        assert_ne!(s_addr, addr_of!(*res));
+
+        //
+        let s = "hello\nworld".to_string();
+        let s_addr = addr_of!(*s);
+        let res = s.crlf_suppressor_string();
+        assert_eq!("hello\nworld", res);
+        // No memory allocation here:
+        assert_eq!(s_addr, addr_of!(*res));
     }
 }
