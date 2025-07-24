@@ -41,21 +41,15 @@ RUN apt-get -y install zip python3
 #     cargo deb --target=x86_64-unknown-linux-gnu
 RUN cargo install  cargo-deb
 
-# Install `cargo upgrade`.
-RUN apt-get -y install libssl-dev
-RUN cargo install cargo-edit
-
 
 # [Cross compiling Windows binaries from Linux](https://jake-shadle.github.io/xwin/)
 ENV KEYRINGS /usr/local/share/keyrings
-
 RUN set -eux; \
     mkdir -p $KEYRINGS; \
     apt-get update && apt-get install -y gpg curl; \
     # wine
     curl --fail https://dl.winehq.org/wine-builds/winehq.key | gpg --dearmor > $KEYRINGS/winehq.gpg; \
     echo "deb [signed-by=$KEYRINGS/winehq.gpg] https://dl.winehq.org/wine-builds/debian/ bookworm main" > /etc/apt/sources.list.d/winehq.list;
-
 RUN set -eux; \
     dpkg --add-architecture i386; \
     # Skipping all of the "recommended" cruft reduces total images size by ~300MiB
@@ -66,7 +60,7 @@ RUN set -eux; \
         tar; \
     apt-get remove -y --auto-remove; \
     rm -rf /var/lib/apt/lists/*;
-    
+  
 ENV \
     # wine can be quite spammy with log messages and they're generally uninteresting
     WINEDEBUG="-all" \
