@@ -9,6 +9,8 @@ use tpnote_lib::config::TMPL_VAR_TXT_CLIPBOARD;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 #[cfg(feature = "read-clipboard")]
+use tpnote_lib::text_reader::StringExt;
+#[cfg(feature = "read-clipboard")]
 #[cfg(unix)]
 use tpnote_lib::text_reader::read_as_string_with_crlf_suppression;
 #[cfg(feature = "read-clipboard")]
@@ -78,16 +80,7 @@ impl SystemClipboard {
                     html_content = html;
                 };
                 if let Ok(txt) = ctx.get_text() {
-                    // Replace `\r\n` with `\n`.
-                    let txt = if txt.find('\r').is_none() {
-                        // Forward without allocating.
-                        txt
-                    } else {
-                        // We allocate here and do a lot of copying.
-                        txt.replace("\r\n", "\n")
-                    };
-
-                    txt_content = txt;
+                    txt_content = txt.crlf_suppressor_string();
                     log::trace!("Got text non-wayland clipboard:\n {}", txt_content);
                 };
             }
