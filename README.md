@@ -41,9 +41,9 @@ their notes across different platforms.
 |  Action                 |   Command Example    |
 |-------------------------|----------------------|
 | Create a note from clipboard | `tpnote` (when clipboard contains text) | 
-| Convert HTML to Markdown | `curl https://example.com | tpnote` | 
+| Convert HTML to Markdown | `curl https://example.com \| tpnote` | 
 | Edit an existing note | `tpnote ./path/to/note.md` | 
-| Generate PDF from a note | `tpnote -x - note.md | weasyprint - note.pdf` |
+| Generate PDF from a note | `tpnote -x - note.md \| weasyprint - note.pdf` |
 
 
 ## User review
