@@ -70,9 +70,7 @@ empty_enabled = true
 ### unknown, vita, vxworks, wasi, watchos.
 unix.browser = [
     [
-    "flatpak",
-    "run",
-    "org.mozilla.firefox",
+    "firefox-esr",
     "--new-window",
     "--private-window",
 ],
@@ -82,9 +80,16 @@ unix.browser = [
     "--private-window",
 ],
     [
-    "firefox-esr",
+    "flatpak",
+    "run",
+    "org.mozilla.firefox",
     "--new-window",
     "--private-window",
+],
+    [
+    "chromium",
+    "--new-window",
+    "--incognito",
 ],
     [
     "flatpak",
@@ -97,11 +102,6 @@ unix.browser = [
     "flatpak",
     "run",
     "org.chromium.Chromium",
-    "--new-window",
-    "--incognito",
-],
-    [
-    "chromium",
     "--new-window",
     "--incognito",
 ],
