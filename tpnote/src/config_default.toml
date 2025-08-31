@@ -154,6 +154,11 @@ unix.editor_console = [
 ### Defaults valid under Windows:
 windows.browser = [
     [
+        "C:\\Program Files\\LibreWolf\\librewolf.exe",
+        "--new-window",
+        "--private-window",
+    ],
+    [
         "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
         "--new-window",
         "--private-window",
