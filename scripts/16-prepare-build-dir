@@ -20,4 +20,5 @@ cp "./target/x86_64-pc-windows-gnu/release/$EXE_NAME" "$BUILD_DIR"
 cp "./wix/tpnote.wxs" "$BUILD_DIR"
 
 cd "$BUILD_DIR"
+
 chmod 666 *
