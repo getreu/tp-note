@@ -1,20 +1,33 @@
 #!/bin/sh
-#set -x
 set -euo pipefail
+# Change to this script directory
+cd $(dirname "$0")
 
-cd "$(dirname "$0")"
+### Prepare build directory
 cd ..
 PROJECT_DIR="$(pwd)"
 BUILD_DIR="$PROJECT_DIR/target/wix"
 
 PACKAGE_NAME="tpnote"
 BIN_NAME="tpnote"
+EXE_NAME="${BIN_NAME}.exe"
 BIN_VERSION="$(grep -e '^version' Cargo.toml | sed 's/.*\"\(.*\)\".*/\1/' | head -n 1)"
 
-# Ensure build dir exists
-mkdir -p "$BUILD_DIR"
+rm -R "$BUILD_DIR"
+mkdir "$BUILD_DIR"
+chmod 777 "$BUILD_DIR"
+
+cp "./tpnote/tpnote.ico" "$BUILD_DIR"
+cp "./target/x86_64-pc-windows-gnu/release/$EXE_NAME" "$BUILD_DIR"
+cp "./wix/tpnote.wxs" "$BUILD_DIR"
+
+
+
+### Build Windows installer package
 cd "$BUILD_DIR"
+chmod 666 *
 
 # Enter the dev shell from the flake before running WiX
 nix develop "$PROJECT_DIR/wix#default" --command \
   wine64 wix.exe build tpnote.wxs -b . -o "$PACKAGE_NAME-$BIN_VERSION-x86_64.msi"
+

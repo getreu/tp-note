@@ -10,7 +10,6 @@ cd $(dirname "$0")
 #../build-env/run-script          ./11-test
 ../build-env/run-script          ./12-make-targets
                                  ./15-make-docs
-../build-env/run-script          ./16-prepare-build-dir
 ../build-env/run-script          ./17-make-deb-package
 # The following starts its own Docker container:
                                  ./18-make-win-msi-package
