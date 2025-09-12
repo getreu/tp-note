@@ -2,8 +2,8 @@
 title:    "Tp-Note: markup enhanced granular note-taking"
 subtitle: Save and edit your clipboard content as a note file
 author:   Jens Getreu
-date:     2025-08-02
-version:  1.25.14
+date:     2025-09-12
+version:  1.25.15
 filename_sync: false
 lang:     en-GB
 ---
@@ -807,6 +807,11 @@ path to the selected icon.
 _Tp-Note_ is distributed with a Microsoft Windows Installer package
 `tpnote-x.x.x-x86_64.msi`, which automates the following key registration.
 Omit this section if you have installed _Tp-Note_ through this `.msi` package!
+Please note, that the following keys are outdated and tested only for Windows
+7-10. The latest `.msi` package ships updated keys for Windows 11. You can find
+the updated keys in its installer configuration file:
+[wix/tpnote.wxs](https://gitlab.com/getreu/tp-note/-/blob/master/wix/tpnote.wxs)
+
 
 1. Make the directory `C:\Program Files\tpnote\bin\` with Administrator rights 
    and move the binary `tpnote.exe` into it.
