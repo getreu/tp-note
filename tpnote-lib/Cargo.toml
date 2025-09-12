@@ -10,7 +10,7 @@ name = "tpnote-lib"
 readme = "README.md"
 repository.workspace = true
 rust-version.workspace = true
-version = "0.45.1"
+version = "0.45.2"
 
 [features]
 default = ["renderer", "viewer", "lang-detection"]
@@ -29,13 +29,13 @@ parse-hyperlinks = "0.29.0" # Plain text renderer.
 parse-hyperlinks-extras = "0.29.0" # Plain text renderer.
 #parse-hyperlinks-extras = { path = "../../parse-hyperlinks/parse-hyperlinks-extras" }
 #parse-hyperlinks = { path = "../../parse-hyperlinks/parse-hyperlinks" }
-percent-encoding = "2.3.1"
+percent-encoding = "2.3.2"
 pulldown-cmark = { version = "0.13", default-features = false, features = ["simd", "html"], optional = true } # Markdown renderer.
 rst_parser = { version = "0.4.2", optional = true } # ReStructuredText renderer.
 rst_renderer = { version = "0.4.2", optional = true } # ReStructuredText renderer.
 sanitize-filename-reader-friendly.workspace = true
 self_cell = "1.2.0"
-serde_json = "1.0.142"
+serde_json = "1.0.143"
 serde.workspace = true
 serde_yaml.workspace = true
 substring = "1.4.5"
@@ -44,11 +44,11 @@ tera.workspace = true
 thiserror.workspace = true
 toml.workspace = true
 #tpnote-html2md = { path = "../tpnote-html2md", optional = true }
-tpnote-html2md = { version = "0.3.1", optional = true }
+tpnote-html2md = { version = "0.3.2", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 win32job = "2.0.3"
-windows-sys = { version = "0.60.2", features = [
+windows-sys = { version = "0.61.0", features = [
          #"Win32_Foundation",
          #"Win32_Security",
          #"Win32_System_Threading",
