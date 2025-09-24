@@ -3,4 +3,4 @@
 cd $(dirname "$0")
 
 cd ../docs
-./make--all-docker
+./make--all

@@ -305,14 +305,14 @@ My favourite at the moment is [Helix]. Please refer to the blog post
 [Note talking with Helix, Tp-Note and LanguageTool](https://blog.getreu.net/20220828-tp-note-new8/) to set up [Helix] for prose writing.
 
 When copying extracts from a web-page, I often need to preserve its hyperlinks.
-When Tp-Note detects HTML in the clipboard, it automatically tries to convert
-the HTML content into Markdown. Nevertheless, you may prefer using an external
-converter instead. The Firefox browser add-on [Copy Selection as Markdown]
-for example, precedes the copied extract with a hyperlink to the origin of the
-webpage. When _TP-Note_ reads the extract from the clipboard, it uses the first
-Markdown hyperlink it can find for composing the note's title and its filename
-on disk. This way the web page's name ends up automatically in the note's
-title and filename. Here a sample work flow:
+When Tp-Note detects HTML in the clipboard, it automatically converts it into
+Markdown. Nevertheless, you may prefer using an external converter instead. The
+Firefox browser add-on [Copy Selection as Markdown] for example, precedes the
+copied extract with a hyperlink to the origin of the webpage. When _TP-Note_
+reads the extract from the clipboard, it uses the first Markdown hyperlink it
+can find for composing the note's title and its filename on disk. This way the
+web page's name ends up automatically in the note's title and filename. Here a
+sample work flow:
 
 ![A webpage to copy extracts from](assets/workflow5-1.png){width=12cm}
 
