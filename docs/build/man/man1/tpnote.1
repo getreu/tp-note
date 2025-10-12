@@ -850,7 +850,8 @@ The section METADATA FILENAME SYNCHRONIZATION shows alternative ways to
 disable synchronization.
 .RE
 .PP
-\f[B]\-s\f[R] \f[I]PORT\f[R], \f[B]\-\-scheme\f[R]=\f[I]SCHEME_NAME\f[R]
+\f[B]\-s\f[R] \f[I]SCHEME_NAME\f[R],
+\f[B]\-\-scheme\f[R]=\f[I]SCHEME_NAME\f[R]
 .RS
 .PP
 Sets the filename scheme for creating a new note file.
@@ -1015,10 +1016,10 @@ file and can be changed there).
 .PP
 Note that prepended text, placed before the YAML front\-matter, is
 ignored.
-There are however certain restrictions: If present, the skipped text
-should not be too long (cf.\ constant
-`\f[CR]BEFORE_HEADER_MAX_IGNORED_CHARS\f[R]' in the source code of
-Tp\-Note) and it must be followed by at least one blank line:
+If present, the skipped text must not be longer than 1024 Unicode
+characters (cf.\ constant `\f[CR]BEFORE_HEADER_MAX_IGNORED_CHARS\f[R]'
+in Tp\-Note\[cq]s source code file `\f[CR]content.rs\f[R]') and it must
+be followed by at least one blank line:
 .IP
 .EX
 Prepended text is ignored.
@@ -1032,8 +1033,8 @@ Prepended text is ignored.
 .PP
 There is no restriction about the markup language being used in the
 note\[cq]s text body.
-However, the default templates assume Markdown and the file extension
-`\f[CR].md\f[R]'.
+However, the default templates assume Markdown or ReStructuredText and
+the file extensions `\f[CR].md\f[R]' and `\f[CR].rst\f[R]'.
 Both can be changed easily by adapting Tp\-Note\[cq]s configuration
 file.
 Besides the requirements concerning its header, a valid Tp\-Note file

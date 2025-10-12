@@ -778,7 +778,7 @@ change the default page layout by modifying the HTML template with the
     section METADATA FILENAME SYNCHRONIZATION shows alternative ways to disable
     synchronization.
 
-**-s** *PORT*, **\--scheme**=*SCHEME_NAME*
+**-s** *SCHEME_NAME*, **\--scheme**=*SCHEME_NAME*
 
 >   Sets the filename scheme for creating a new note file. This overwrites the
     '`arg_default.scheme`' value in the configuration file. Under
@@ -905,10 +905,10 @@ Tp-Note file has at least one YAML field named '`title:`' (the name of this
 compulsory field is defined by the '`tmpl.compulsory_header_field`'
 variable in the configuration file and can be changed there).
 
-Note that prepended text, placed before the YAML front-matter, is ignored. There
-are however certain restrictions: If present, the skipped text should not be too
-long (cf. constant '`BEFORE_HEADER_MAX_IGNORED_CHARS`' in the source code of
-Tp-Note) and it must be followed by at least one blank line:
+Note that prepended text, placed before the YAML front-matter, is ignored.
+If present, the skipped text must not be longer than 1024 Unicode characters
+(cf. constant '`BEFORE_HEADER_MAX_IGNORED_CHARS`' in Tp-Note's source code file
+'`content.rs`') and it must be followed by at least one blank line:
 
 ```
 Prepended text is ignored.
@@ -921,12 +921,12 @@ Prepended text is ignored.
 ```
 
 There is no restriction about the markup language being used in the note's text
-body. However, the default templates assume Markdown and the file extension
-'`.md`'. Both can be changed easily by adapting Tp-Note's configuration file.
-Besides the requirements concerning its header, a valid Tp-Note file must have
-a filename extension that is listed in the configuration file variable:
-'`filename.extensions`'. The latter also determines which internal markup
-language render is called for Tp-Note's internal viewer.
+body. However, the default templates assume Markdown or ReStructuredText and
+the file extensions '`.md`' and '`.rst`'. Both can be changed easily by adapting
+Tp-Note's configuration file. Besides the requirements concerning its header,
+a valid Tp-Note file must have a filename extension that is listed in the
+configuration file variable: '`filename.extensions`'. The latter also determines
+which internal markup language render is called for Tp-Note's internal viewer.
 
 
 
