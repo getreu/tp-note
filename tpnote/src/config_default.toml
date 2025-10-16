@@ -131,6 +131,7 @@ unix.editor = [
     ["retext"],
     [ "nvim-qt", "--nofork", ],
     [ "gvim", "--nofork", ],
+    [ "gnome-text-editor", "-s"],
     [ "geany", "-s", "-i", "-m", ],
     [ "gedit", "-w", ],
     [ "mousepad", "--disable-server", ],
