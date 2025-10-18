@@ -10,7 +10,7 @@ name = "tpnote-lib"
 readme = "README.md"
 repository.workspace = true
 rust-version.workspace = true
-version = "0.45.3"
+version = "0.45.4"
 
 [features]
 default = ["renderer", "viewer", "lang-detection"]
@@ -25,8 +25,9 @@ latex2mathml = { version = "0.2.3", optional = true }
 lingua = { version = "1.7.2", optional = true }
 log.workspace = true
 parking_lot.workspace = true
-parse-hyperlinks = "0.29.0" # Plain text renderer.
-parse-hyperlinks-extras = "0.29.0" # Plain text renderer.
+# TODO: upgrade and remove pinning when rustc > 1.86
+parse-hyperlinks = "=0.29.0" # Plain text renderer.
+parse-hyperlinks-extras = "=0.29.0" # Plain text renderer.
 #parse-hyperlinks-extras = { path = "../../parse-hyperlinks/parse-hyperlinks-extras" }
 #parse-hyperlinks = { path = "../../parse-hyperlinks/parse-hyperlinks" }
 percent-encoding = "2.3.2"
