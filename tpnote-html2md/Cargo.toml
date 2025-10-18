@@ -1,6 +1,6 @@
 [package]
 name = "tpnote-html2md"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2024"
 authors = ["Oleg `Kanedias` Chernovskiy <kanedias@house-of-maker.online>",
            "Jens Getreu <getreu@web.de>"]
@@ -20,7 +20,7 @@ name = "html2md"
 
 [dependencies]
 html5ever = "0.35.0"
-regex = "1.11.2"
+regex = "1.12.2"
 markup5ever = "0.35.0"
 percent-encoding = "2.3.2"
 tendril = "0.4"
