@@ -15,17 +15,17 @@ license = "MIT/Apache-2.0"
 readme = "README.md"
 repository = "https://gitlab.com/getreu/tp-note"
 rust-version = "1.86"
-version = "1.25.15"
+version = "1.25.16"
 
 [profile.release]
 strip = "symbols"
 
 [workspace.dependencies]
 log = { version = "0.4.28", features = ["serde"] }
-parking_lot = "0.12.4"
+parking_lot = "0.12.5"
 sanitize-filename-reader-friendly = "2.3.0"
-serde = { version = "1.0.219", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 serde_yaml = "0.9.34"
 tera = { version = "1.20.0", default-features = true }
-thiserror = "2.0.16"
-toml = "0.9.5"
+thiserror = "2.0.17"
+toml = "0.9.8"
