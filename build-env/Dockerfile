@@ -1,9 +1,9 @@
-ARG BASE_IMAGE=rust:1.86-slim-bookworm
+ARG BASE_IMAGE=rust:1.91.1-slim-bookworm
 WORKDIR /home/project
 
 FROM $BASE_IMAGE as planner
 
-RUN  rustup override set 1.86
+RUN  rustup override set 1.91.1
 
 # We need theses components
 RUN rustup set profile default

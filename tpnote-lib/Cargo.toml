@@ -26,8 +26,8 @@ lingua = { version = "1.7.2", optional = true }
 log.workspace = true
 parking_lot.workspace = true
 # TODO: upgrade and remove pinning when rustc > 1.86
-parse-hyperlinks = "=0.29.0" # Plain text renderer.
-parse-hyperlinks-extras = "=0.29.0" # Plain text renderer.
+parse-hyperlinks = "=0.29.2" # Plain text renderer.
+parse-hyperlinks-extras = "=0.29.2" # Plain text renderer.
 #parse-hyperlinks-extras = { path = "../../parse-hyperlinks/parse-hyperlinks-extras" }
 #parse-hyperlinks = { path = "../../parse-hyperlinks/parse-hyperlinks" }
 percent-encoding = "2.3.2"
@@ -35,7 +35,7 @@ pulldown-cmark = { version = "0.13", default-features = false, features = ["simd
 rst_parser = { version = "0.4.2", optional = true } # ReStructuredText renderer.
 rst_renderer = { version = "0.4.2", optional = true } # ReStructuredText renderer.
 sanitize-filename-reader-friendly.workspace = true
-self_cell = "1.2.0"
+self_cell = "1.2.1"
 serde_json = "1.0.145"
 serde.workspace = true
 serde_yaml.workspace = true

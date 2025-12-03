@@ -1,5 +1,5 @@
 [toolchain]
-channel = "1.86"
+channel = "1.91.1"
 components = ["rustc", "cargo", "rustfmt", "rust-std", "clippy", "rust-docs", "rust-std"]
 targets = [ "x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl", "x86_64-pc-windows-gnu", "armv7-unknown-linux-gnueabihf", "aarch64-unknown-linux-gnu" ]
 profile = "default"
