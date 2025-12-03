@@ -3,7 +3,7 @@ set -x
 # Change to this script directory
 cd $(dirname "$0")
 
-rustup override set 1.86
+rustup override set 1.91.1
 
 cargo test --all || exit 1
 cargo test --all --target x86_64-pc-windows-gnu || exit 1
