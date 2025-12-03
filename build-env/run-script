@@ -6,6 +6,8 @@ HOST_PROJECT_DIR="$(dirname "$THIS_DIR")"
 DOCKER_PROJECT_DIR="/home/project"
 SCRIPT_DIR="scripts"
 
+export SUPPRESS_BOLTDB_WARNING=true
+
 podman run --privileged --group-add keep-groups \
    --workdir "$DOCKER_PROJECT_DIR" \
    -v "$HOST_PROJECT_DIR:$DOCKER_PROJECT_DIR" \

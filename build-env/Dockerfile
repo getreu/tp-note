@@ -1,7 +1,9 @@
+# Set the base image
 ARG BASE_IMAGE=rust:1.91.1-slim-bookworm
-WORKDIR /home/project
 
-FROM $BASE_IMAGE as planner
+# Specify the builder stage
+FROM ${BASE_IMAGE} as planner
+WORKDIR /home/project
 
 RUN  rustup override set 1.91.1
 

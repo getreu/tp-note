@@ -1,5 +1,7 @@
 #!/bin/sh
 # podman image ls
+export SUPPRESS_BOLTDB_WARNING=true
+
 podman build -t build-env-dev - < Dockerfile
 
 ### Stop all containers with:
