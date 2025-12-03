@@ -3,6 +3,8 @@ use crate::settings::SETTINGS;
 use crate::{config::Mode, error::LibCfgError};
 pub(crate) use lingua::IsoCode639_1;
 use lingua::{LanguageDetector, LanguageDetectorBuilder};
+use parse_hyperlinks::iterator::MarkupLink;
+use parse_hyperlinks::parser::Link;
 use std::collections::HashMap; // Reexport this type.
 
 /// A filter telling in which natural language(s) the input text is written.
@@ -11,6 +13,8 @@ use std::collections::HashMap; // Reexport this type.
 /// empty array.
 #[cfg(feature = "lang-detection")]
 pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
+    use std::borrow::Cow;
+
     use itertools::Itertools;
 
     let input = input.trim();
@@ -50,14 +54,77 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
             .build()
     };
 
+    // Remove URLs
+    let mut sniplets: Vec<Cow<str>> = Vec::new();
+    let mut remnant = "";
+    for ((skipped, _, r), link) in MarkupLink::new(input, false) {
+        sniplets.push(Cow::from(skipped));
+        remnant = r;
+        match link {
+            Link::Text2Dest(text, _, title) => {
+                if !text.is_empty() {
+                    sniplets.push(text)
+                };
+                if !title.is_empty() {
+                    sniplets.push(title)
+                };
+            }
+            Link::Text2Label(text, _) => {
+                if !text.is_empty() {
+                    sniplets.push(text)
+                };
+            }
+            Link::TextLabel2Dest(text, _, _) => {
+                if !text.is_empty() {
+                    sniplets.push(text)
+                };
+            }
+
+            Link::Image(alt_text, _) => {
+                if !alt_text.is_empty() {
+                    sniplets.push(alt_text)
+                };
+            }
+            Link::Image2Dest(text1, img_alt, _, text2, _, title) => {
+                if !text1.is_empty() {
+                    sniplets.push(text1)
+                };
+                if !img_alt.is_empty() {
+                    sniplets.push(img_alt)
+                };
+                if !text2.is_empty() {
+                    sniplets.push(text2)
+                };
+                if !title.is_empty() {
+                    sniplets.push(title)
+                };
+            }
+            _ => {}
+        }
+    }
+    if !remnant.is_empty() {
+        sniplets.push(Cow::from(remnant));
+    }
+    if sniplets.is_empty() {
+        sniplets.push(Cow::from(input));
+    }
+    // End of remove URLs.
+
+    let texts = sniplets.as_slice();
+
+
     // Detect languages.
+    use crate::FlattenWithIndexExt;
     let detected_languages: Vec<String> = match &settings.get_lang_filter.mode {
         Mode::Multilingual => {
             //
             let consecutive_words_min = settings.get_lang_filter.consecutive_words_min;
             let words_total_percentage_min = settings.get_lang_filter.words_total_percentage_min;
 
-            let words_total = input.split_whitespace().count();
+            let words_total: usize = texts
+                .iter()
+                .map(|slice| slice.split_whitespace().count())
+                .sum();
             // `words_total / 3` relaxes the criteria for very shot input texts.
             let words_min = [consecutive_words_min, words_total / 3];
             let words_min = words_min.iter().min().unwrap();
@@ -67,24 +134,26 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
             );
 
             let words_distribution: HashMap<String, usize> = detector
-                .detect_multiple_languages_of(input)
+                .detect_multiple_languages_in_parallel_of(texts)
                 .into_iter()
+                .flatten_with_index()
                 // Filter too short word sequences.
-                .filter(|l| {
+                .filter(|(i, l)| {
                     let allow_through = l.word_count() >= *words_min;
                     log::trace!(
-                        "Language(s) detected: {}, {}, {}: {:?}",
+                        "Language(s) detected in [{}]: {}, {}, {}: {:?}",
+                        i,
                         l.language().iso_code_639_1(),
                         l.word_count(),
                         allow_through,
-                        input[l.start_index()..l.end_index()]
+                        texts[*i][l.start_index()..l.end_index()]
                             .chars()
-                            .take(50)
+                            .take(60)
                             .collect::<String>()
                     );
                     allow_through
                 })
-                .map(|l| (l.language().iso_code_639_1().to_string(), l.word_count()))
+                .map(|(_, l)| (l.language().iso_code_639_1().to_string(), l.word_count()))
                 .into_grouping_map_by(|n| n.0.clone())
                 .aggregate(|acc, _key, val| Some(acc.unwrap_or(0) + val.1));
 
@@ -125,8 +194,9 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
         }
 
         Mode::Monolingual => detector
-            .detect_language_of(input)
+            .detect_languages_in_parallel_of(texts)
             .into_iter()
+            .flatten()
             .map(|l| l.iso_code_639_1().to_string())
             .inspect(|l| log::debug!("Language: '{}' in input detected.", l))
             .collect(),
