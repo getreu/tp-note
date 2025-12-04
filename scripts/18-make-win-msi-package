@@ -1,4 +1,5 @@
 #!/bin/sh
+#set -x
 set -euo pipefail
 # Change to this script directory
 cd $(dirname "$0")
@@ -13,7 +14,7 @@ BIN_NAME="tpnote"
 EXE_NAME="${BIN_NAME}.exe"
 BIN_VERSION="$(grep -e '^version' Cargo.toml | sed 's/.*\"\(.*\)\".*/\1/' | head -n 1)"
 
-rm -R "$BUILD_DIR"
+rm -fR "$BUILD_DIR"
 mkdir "$BUILD_DIR"
 chmod 777 "$BUILD_DIR"
 
