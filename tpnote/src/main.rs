@@ -77,7 +77,7 @@ fn main() {
     // Setup logger.
     AppLogger::init();
 
-    // Read configuration file, or write one if none exists.
+    // Read configuration file.
     LazyLock::force(&CFG);
 
     // Set the debug level. Only use config file value if
