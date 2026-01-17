@@ -3,21 +3,21 @@
 .\"
 .TH "TP\-NOTE" "1" "2025\-12\-04" "Version 1.25.17" "Tp\-Note documentation"
 .SH NAME
-Tp\-Note: Markup enhanced granular note\-taking
+Tp\-Note: Markup\-enhanced granular note\-taking
 .PP
 Save and edit your clipboard content as a note file.
 .SH SYNOPSIS
 .IP
 .EX
-tpnote [\-a ] [\-b] [\-c <FILE>] [\-C <FILE>] [\-d <LEVEL>] [\-e] 
-       [\-l <LANG>] [\-p <NUM>] [\-n] [\-t] [\-u] [\-v] [\-V] 
+tpnote [\-a ] [\-b] [\-c <FILE>] [\-C <FILE>] [\-d <LEVEL>] [\-e]
+       [\-l <LANG>] [\-p <NUM>] [\-n] [\-t] [\-u] [\-v] [\-V]
        [\-x <DIR>|\(aq\(aq|\(aq\-\(aq]
        [<DIR>|<FILE>]
 .EE
 .SH DESCRIPTION
-Tp\-Note is a note\-taking tool and a template system, that synchronizes
+Tp\-Note is a note\-taking tool and a template system that synchronizes
 the note\(cqs metadata with its filename.
-Tp\-Note analyses its environment and the clipboard content and stores
+Tp\-Note analyzes its environment and the clipboard content and stores
 the result in variables.
 New notes are created by filling these variables in predefined and
 customizable \f[I]Tera\f[R]\-templates.
@@ -29,17 +29,17 @@ directory annotating the file.
 If the positional parameter `\f[CR]<DIR>\f[R]' points to an existing
 directory (or, when omitted, the current working directory), a new note
 is created in that directory.
-After creation, Tp\-Note launches the systems file editor.
+After creation, Tp\-Note launches the system\(cqs file editor.
 Although the configurable default templates are written for Markdown,
 Tp\-Note is not tied to any specific markup language.
-However, Tp\-Note comes with an optional viewer feature, that currently
-renders only Markdown, ReStructuredText and HTML input.
+However, Tp\-Note comes with an optional viewer feature that currently
+renders only Markdown, ReStructuredText, and HTML input.
 In addition, there is some limited support for Asciidoc and WikiText.
 Finally, the note\(cqs rendition is live updated and displayed in the
 user\(cqs web browser.
 .PP
-After the user finished editing, Tp\-Note analyses potential changes in
-the notes metadata and renames, if necessary, the file, so that its
+After the user finishes editing, Tp\-Note analyzes potential changes in
+the note\(cqs metadata and renames, if necessary, the file so that its
 metadata and filename are in sync again.
 Finally, the resulting path is printed to `\f[CR]stdout\f[R]', log and
 error messages are dumped to `\f[CR]stderr\f[R]'.
@@ -193,21 +193,20 @@ Who Moved My Cheese?
 Chapter 2
 .EE
 .PP
-We see from the above example, how the
-`\f[CR]tmpl.from_dir_content\f[R]' content template extracts the first
-line of the clipboards content and inserts it into the header\(cqs
-`\f[CR]title:\f[R]' field.
+We see from the above example how the `\f[CR]tmpl.from_dir_content\f[R]'
+content template extracts the first line of the clipboard\(cqs content
+and inserts it into the header\(cqs `\f[CR]title:\f[R]' field.
 Then, it copies the entire clipboard content into the body of the
 document.
 However, if desired or necessary, it is possible to modify all templates
 in Tp\-Note\(cqs configuration file.
-Note, that not only the note\(cqs content is created with a template,
-but also its filename: The `\f[CR]tmpl.from_dir_filename\f[R]' filename
+Note that not only the note\(cqs content is created with a template, but
+also its filename: The `\f[CR]tmpl.from_dir_filename\f[R]' filename
 template concatenates the current date, the note\(cqs title and
 subtitle.
 .SS The clipboard contains a heading
-Use case: open a web page in your web browser and select some text with
-it\(cqs heading.
+Use case: Open a web page in your web browser and select some text with
+its heading.
 Then copy the content into your (HTML) clipboard:
 .IP
 .EX
@@ -218,15 +217,15 @@ by the Brothers Grimm
 Launch Tp\-Note:
 .IP
 .EX
-mkdir \(aqFary tales\(aq
-tpnote \(aq./Fary tales\(aq
+mkdir \(aqFairy tales\(aq
+tpnote \(aq./Fairy tales\(aq
 .EE
 .PP
 Tp\-Note\(cqs templates `\f[CR]tmpl.from_dir_content\f[R]' and
 `\f[CR]tmpl.from_dir_filename\f[R]' create the following document:
 .IP
 .EX
-\&./Fary tales/20250104\-Cinderella\-\-Notes.md
+\&./Fairy tales/20250104\-Cinderella\-\-Notes.md
 .EE
 .IP
 .EX
@@ -245,16 +244,16 @@ by the Brothers Grimm
 .PP
 Tp\-Note searches for the first heading tag `\f[CR]<h1>\f[R]',
 `\f[CR]<h2>\f[R]', `\f[CR]<h3>\f[R]' etc.
-in the HTML clipboard and uses the finding as title for the new Tp\-Note
-document.
+in the HTML clipboard and uses the finding as the title for the new
+Tp\-Note document.
 .PP
-NB: you can achieve the same result by piping the clipboard content into
+NB: You can achieve the same result by piping the clipboard content into
 Tp\-Note:
 .IP
 .EX
-mkdir \(aqFary tales\(aq
+mkdir \(aqFairy tales\(aq
 echo \(aq<!DOCTYPE html><h1>Cinderella</h1>by the Brothers Grimm\(aq\(rs
-   \f[B]|\f[R] tpnote \(aq./Fary tales\(aq
+   \f[B]|\f[R] tpnote \(aq./Fairy tales\(aq
 .EE
 .SS The clipboard contains a hyperlink
 Use case: `\f[CR]<path>\f[R]' is a directory, the clipboard is not empty
@@ -285,10 +284,10 @@ I recommend\f[B]:\f[R]
 \f[B][\f[R]The Rust Book\f[B]]\f[R](<https://doc.rust\-lang.org/book/>)
 .EE
 .PP
-When analysing the clipboard\(cqs content, Tp\-Note searches for
+When analyzing the clipboard\(cqs content, Tp\-Note searches for
 hyperlinks in Markdown, ReStructuredText, Asciidoc and HTML format.
 When successful, the content template uses the link text of the first
-hyperlink found as document title.
+hyperlink found as the document title.
 .SS The clipboard contains a YAML header
 Use case: `\f[CR]<path>\f[R]' is a directory, the clipboard is not empty
 and contains the string:
@@ -323,7 +322,7 @@ header variables: `\f[CR]{{ fm.fm_title }}\f[R]',
 which are evaluated with the `\f[CR]tmpl.from_dir_filename\f[R]'
 templates.
 .PP
-Note, that the same result can also be achieved without clipboard input
+Note that the same result can also be achieved without clipboard input
 by typing in a terminal:
 .IP
 .EX
@@ -331,8 +330,8 @@ echo \-e \(dq\-\-\-\(rsntitle: Todo\(rsnfile_ext: mdtxt\(rsn\-\-\-\(rsn\(rsnnoth
 .EE
 .PP
 Furthermore, this operation mode is very handy with pipes in general, as
-shows the following example: it downloads some webpage, converts it to
-Markdown and copies the result into a Tp\-Note file.
+shown by the following example: it downloads some webpage, converts it
+to Markdown and copies the result into a Tp\-Note file.
 The procedure preserves the webpage\(cqs title in the note\(cqs title:
 .IP
 .EX
@@ -362,10 +361,10 @@ viewport\f[B]:\f[R]   width=device\-width, initial\-scale=1.0, maximum\-scale=1
 \f[B]\-\f[R]   \f[B][\f[R]Categories\f[B]]\f[R](https://blog.getreu.net/categories)
 .EE
 .SS Create a new note annotating some non Tp\-Note file
-When `\f[CR]<path>\f[R]' points to an existing file, whose file
-extension is other than `\f[CR].md\f[R]', a new note is created with a
-similar filename and a reference to the original file is copied into the
-new note\(cqs body.
+When `\f[CR]<path>\f[R]' points to an existing file whose file extension
+is other than `\f[CR].md\f[R]', a new note is created with a similar
+filename and a reference to the original file is copied into the new
+note\(cqs body.
 If the clipboard contains some text, it is appended there also.
 The logic of this is implemented in the templates:
 `\f[CR]tmpl.annotate_file_content\f[R]' and
@@ -402,8 +401,8 @@ lang\f[B]:\f[R]       en\-US
 \f[B][\f[R]Classic Shell Scripting.pdf\f[B]]\f[R](<Classic Shell Scripting.pdf>)
 .EE
 .PP
-The configuration file variable `\f[CR]filename.extensions\f[R]' list
-all the file extensions that Tp\-Note recognizes as own file types.
+The configuration file variable `\f[CR]filename.extensions\f[R]' lists
+all the file extensions that Tp\-Note recognizes as its own file types.
 Only foreign file types can be annotated.
 .PP
 Note that the file annotation mode also reads the clipboard\(cqs
@@ -444,9 +443,8 @@ author\f[B]:\f[R]     Getreu
 date\f[B]:\f[R]       2022\-03\-13
 lang\f[B]:\f[R]       en\-US
 
-orig_name\f[B]:\f[R]  Ascii\-Hangman\-\-A game for children.md
+orig_name\f[B]:\f[R] Ascii\-Hangman\-\-A game for children.md
 \-\-\-
-
 A little game designed for primary kids to revise vocabulary in classroom.
 .EE
 .SS Use Tp\-Note in shell scripts
@@ -588,7 +586,7 @@ Tp\-Note\(cqs web server streams large media files without loading them
 into memory.
 Just refer to the media file as local link:
 `\f[CR][my video](<dir/my video.mp4>)\f[R]'.
-Make sure, that the file extension of the video file is registered with
+Make sure that the file extension of the video file is registered with
 `\f[CR]viewer.served_mime_types\f[R]'.
 .SS Automatic filename synchronization before and after editing
 Before launching the text editor and after closing it, Tp\-Note
@@ -728,8 +726,8 @@ The debug level \f[I]LEVEL\f[R] must be one out of `\f[CR]trace\f[R]',
 `\f[CR]error\f[R]' (default) or `\f[CR]off\f[R]'.
 The level `\f[CR]trace\f[R]' reports the most detailed information,
 while `\f[CR]error\f[R]' informs you only about failures.
-A `\f[CR]warn\f[R]' level message means, that not all functionality
-might be available or work as expected.
+A `\f[CR]warn\f[R]' level message means that not all functionality might
+be available or work as expected.
 .RE
 .RS
 .PP
@@ -740,13 +738,13 @@ If the HTTP server (viewer) does not work as expected:
 If your text editor does not open as expected:
 `\f[CR]\-n \-d info \-\-edit\f[R]'.
 Or, to observe the launch of the web browser:
-`\f[CR]\-n \-d info \-\-view\f[R]'.
+`\f[CR]\-n  \-d info \-\-view\f[R]'.
 The option `\f[CR]\-d trace\f[R]' shows all available template
 variables, the templates used and the rendered result of the
 substitution.
 This is particularly useful for debugging new templates.
-The option `\f[CR]\-d off\f[R]' silences all error message reporting and
-also suppresses the error pop\-up windows.
+The option `\f[CR]\-d  off\f[R]' silences all error message reporting
+and also suppresses the error pop\-up windows.
 .RE
 .RS
 .PP
@@ -904,8 +902,6 @@ viewer.
 However, with `\f[CR]\-\-view\f[R]' given at the command line, the
 viewer appears, regardless of the value of
 `\f[CR]arg_default.edit\f[R]'.
-.RE
-.RS
 .PP
 NB: By default, Tp\-Note tries to synchronize every file it opens.
 To prevent the viewed filename from changing, `\f[CR]\-\-view\f[R]' can
@@ -958,8 +954,6 @@ Absolute local links get the path to the marker file
 In case you do not place a `\f[CR]tpnote.toml\f[R]' file in a parent
 directory, the base for absolute local links in your note file is
 interpreted as `\f[CR]/\f[R]'.
-.RE
-.RS
 .PP
 The right \f[I]MODE\f[R] choice depends on how you view the resulting
 HTML: if you publish on a web server, then `\f[CR]short\f[R]' might be a
@@ -968,12 +962,13 @@ Do not forget to place a marker file `\f[CR]tpnote.toml\f[R]' somewhere
 in the document\(cqs path.
 If you view the HTML file directly in your web browser, better choose
 `\f[CR]long\f[R]'.
-In this case, the present of a marker file will not affect the output.
+In this case, the presence of a marker file will not affect the output.
+.PP
 NB: You can also set this option via Tp\-Note\(cqs configuration file
 with the key `\f[CR]arg_default.export_link_rewriting\f[R]'.
 .RE
 .SH THE NOTE\(cqS DOCUMENT STRUCTURE
-Tp\-Note considers a text file to be a valid note file, if its:
+Tp\-Note considers a text file to be a valid note file if its:
 .IP \(bu 2
 file extension is listed in one of the configuration file variable
 `\f[CR]filename.extensions\f[R]'; if its
@@ -993,7 +988,7 @@ Tp\-Note is designed to be compatible with `\f[CR]Pandoc\f[R]\(cqs
 and'\f[CR]RMarkdown\f[R]s document structure as shown in the figure
 below.
 In this documentation the terms \(lqYAML header\(rq, \(lqheader\(rq and
-\(lqfront matter\(rq are used as synonyms to designate to document\(cqs
+\(lqfront matter\(rq are used as synonyms to designate the document\(cqs
 metadata block at the beginning of the text file:
 .IP
 .EX
@@ -1055,7 +1050,7 @@ understands:
 .PP
 .TS
 tab(@);
-lw(26.5n) lw(43.5n).
+lw(27.6n) lw(42.4n).
 T{
 Link type
 T}@T{
@@ -1117,7 +1112,7 @@ If absent, absolute local links refer to the root directory
 `\f[CR]/\f[R]'.
 .IP \(bu 2
 \f[I]Shorthand link\f[R]: Instead of writing out the full link
-destination, e.g.\ 
+destination, e.g.
 `\f[CR][my doc](<./docs/20230508\-my note.md>)\f[R]', you can shorten
 the link to `\f[CR][my doc](<docs/20230508>)\f[R]' indicating only the
 destination\(cqs sort\-tag.
@@ -1159,7 +1154,7 @@ In order to achieve this, the user must respect the following convention
 concerning absolute paths in local links in Tp\-Note documents: When a
 document contains a local link with an absolute path, the base of this
 path is considered to be the directory where the marker file
-`\f[CR]tpnote.toml\f[R]' resides (or `\f[CR]/\f[R]' in non exists).
+`\f[CR]tpnote.toml\f[R]' resides (or `\f[CR]/\f[R]' in none exists).
 The option `\f[CR]\-\-export\-link\- rewriting\f[R]' decides how local
 links in the Tp\-Note document are converted when the HTML is generated.
 If its value is `\f[CR]short\f[R]', then local links with relative paths
@@ -1227,7 +1222,7 @@ browser.
 .PP
 .TS
 tab(@);
-lw(50.1n) lw(19.9n).
+l l.
 T{
 Local link
 T}@T{
@@ -1248,7 +1243,7 @@ T}
 .PP
 .TS
 tab(@);
-lw(50.4n) lw(19.6n).
+lw(45.5n) lw(24.5n).
 T{
 Formatted local link
 T}@T{
@@ -1317,7 +1312,7 @@ All format operators can be optionally followed by a search pattern.
 .PP
 .TS
 tab(@);
-lw(40.5n) lw(29.5n).
+lw(40.8n) lw(29.2n).
 T{
 Local autolink
 T}@T{
@@ -1334,14 +1329,11 @@ T{
 T}@T{
 dir/01ac
 T}
-T{
-T}@T{
-T}
 .TE
 .PP
 .TS
 tab(@);
-lw(44.0n) lw(26.0n).
+lw(44.5n) lw(25.5n).
 T{
 Formatted local autolink
 T}@T{
@@ -1404,15 +1396,16 @@ The `\f[CR]\-\f[R]' between `\f[CR]{{ fm.fm_sort_tag }}\f[R]' and
 \f[I]sort\-tag separator\f[R]
 (cf.\ `\f[CR]filename.sort_tag.separator\f[R]').
 .PP
-A so\-called \f[I]sort tag\f[R] is an alphanumerical prefix at the
+A so\-called \f[I]sort tag\f[R] is an alphanumeric prefix at the
 beginning of the filename.
 It is used to order files and notes in the file system.
 Besides numerical digits and lowercase letters, a \f[I]sort tag\f[R] may
 contain any combination of `\f[CR]_\f[R]', `\f[CR]\-\f[R]',
-`\f[CR]=\f[R]' and `\f[CR].\f[R]' (cf.\ 
+`\f[CR]=\f[R]' and `\f[CR].\f[R]' (cf.
 `\f[CR]filename.sort_tag.extra_chars\f[R]').
 If a sort\-tag contains lowercase letters, only 2 in a row are allowed
-(cf.\  `\f[CR]filename.sort_tag.letters_in_succession_max\f[R]').
+(cf.
+`\f[CR]filename.sort_tag.letters_in_succession_max\f[R]').
 For example:
 .IP \(bu 2
 \f[I]Chronological sort tag\f[R]
@@ -1441,14 +1434,14 @@ Tip: Always include the year with 4 digits in chronological sort\-tags.
   09.9.1\-Notes.md
 .EE
 .PP
-NB: None of the counters exceeds 3 digits (cf.\ 
+NB: None of the counters exceeds 3 digits (cf.
 `\f[CR]filename.sort_tag.sequential.digits_in_succession_max\f[R]')
-which is the criterium to recognize a sequence number sort\-tag.
+which is the criterion to recognize a sequence number sort\-tag.
 The largest counter in these examples is `\f[CR]144\f[R]', so all
 sort_tags are sequence numbers.
 .RE
 .IP \(bu 2
-\f[I]Alphanumerical sequence number sort tag\f[R]
+\f[I]Alphanumeric sequence number sort tag\f[R]
 .RS 2
 .IP
 .EX
@@ -1458,7 +1451,7 @@ sort_tags are sequence numbers.
   09i1\-Notes.md
 .EE
 .PP
-NB: the example is equivalent to the previous one.
+NB: The example is equivalent to the previous one.
 The only difference is, that the separators are expressed through the
 alternation of digits and letters.
 .RE
@@ -1469,15 +1462,15 @@ A \f[I]sort\-tag\f[R] is composed of a number of counters, which can be
 numerical, e.g.\ `\f[CR]123.28\f[R]' or combined numerical/letter based,
 e.g.\ `\f[CR]123ab\f[R]'.
 .IP "2." 3
-A counter is set of digits (base 10) `\f[CR]123\f[R]' or a set of
+A counter is a set of digits (base 10) `\f[CR]123\f[R]' or a set of
 lowercase letters (base 26) `\f[CR]ab\f[R]'.
 .IP "3." 3
-A letter based counter can be maximal 2 letters wide.
+A letter\-based counter can be maximal 2 letters wide.
 Its maximum is `\f[CR]zz\f[R]'
 (cf.\ `\f[CR]filename.sort_tag.letters_in_succession_max\f[R]').
 .IP "4." 3
-A \f[I]sequential sort\-tag\f[R] is a sort\-tag that whose counters are
-at most 3 digits wide
+A \f[I]sequential sort\-tag\f[R] is a sort\-tag whose counters are at
+most 3 digits wide
 (cf.\ `\f[CR]sort_tag.sequential.digits_in_succession_max\f[R]').
 .IP "5." 3
 The filter `\f[CR]incr_sort_tag\f[R]' increments only sequential
@@ -1559,7 +1552,7 @@ sort_tag\f[B]:\f[R]   \(aq20211101\(aq
 .EE
 .PP
 Note, the above sort\-tag value \- here a number \- must be enclosed
-with quotes in order label it as string type.
+with quotes in order to label it as a string type.
 When Tp\-Note synchronizes the note\(cqs metadata with its filename, it
 will also change the sort tag from `\f[CR]20211031\f[R]' to
 `\f[CR]20211101\f[R]'.
@@ -1653,8 +1646,6 @@ For example:
 title\f[B]:\f[R]      1. The Beginning
 subtitle\f[B]:\f[R]   Note
 \-\-\-
-
-Once upon a time...
 .EE
 .PP
 The filename synchronization template from the \f[I]default scheme\f[R]
@@ -1667,7 +1658,7 @@ set looks like (simplified):
 It generates from the above example the filename:
 .IP
 .EX
-20211031\-1. The Beginning\-\-Note.md 
+20211031\-1. The Beginning\-\-Note.md
 .EE
 .RE
 .IP "2." 3
@@ -1760,7 +1751,7 @@ To write a custom configuration file, generate a template with
 tpnote \-C \(ti/.config/tpnote/tpnote.toml
 .EE
 .PP
-The template shows all variables with their defaults values.
+The template shows all variables with their default values.
 When you change a value, do not forget to uncomment the modified line to
 activate your change.
 Also make sure to keep the `\f[CR]version\f[R]' variable at the
@@ -1773,7 +1764,7 @@ Some filename and template related variables are grouped into a
 `\f[CR]scheme\f[R]'.
 The shipped configuration file lists two schemes: `\f[CR]default\f[R]'
 and `\f[CR]zettel\f[R]'.
-The scheme used when creating a new note, is selected by the commend
+The scheme used when creating a new note, is selected by the command
 line option `\f[CR]\-\-scheme\f[R]', the environment variable
 `\f[CR]TPNOTE_SCHEME\f[R]' or the configuration variable
 `\f[CR]arg_default.scheme\f[R]'.
@@ -1785,7 +1776,7 @@ filename depends on the value of the header variable
 Note, that the merging algorithm merges all values, except arrays.
 These are usually replaced by the subsequent configuration file.
 There is one exception though: top level arrays are also merged.
-An example to this is the top level array `\f[CR][[scheme]]\f[R]'.
+An example of this is the top level array `\f[CR][[scheme]]\f[R]'.
 In the following example we overwrite the variable
 `\f[CR]extension_default\f[R]' in the scheme `\f[CR]default\f[R]'.
 All other variables remain untouched.
@@ -1847,7 +1838,7 @@ The configuration file variables `\f[CR]app_args.unix.editor\f[R]' and
 `\f[CR]app_args.unix.editor_console\f[R]' define lists of external text
 editors to be launched for editing.
 The lists contain by default well\-known text editor names and their
-command line arguments for Unix like operating systems.
+command line arguments for Unix\-like operating systems.
 For other systems consult: `\f[CR]app_args.windows.editor\f[R]',
 `\f[CR]app_args.windows.editor_console\f[R]',
 `\f[CR]app_args.macos.editor\f[R]' and
@@ -1938,7 +1929,7 @@ Observe the following example:
 .EX
 $ TPNOTE_EDITOR=\(dqkate\(dq tpnote
 /home/getreu/20230714\-getreu\-\-Note.md
-$ 
+$
 .EE
 .PP
 In the above example Tp\-Note launches the `\f[CR]kate\f[R]' editor in a
@@ -2005,7 +1996,7 @@ To test, run \f[I]Mark Text\f[R] from the command line:
 flatpak run com.github.marktext.marktext
 .EE
 .PP
-Then place a Tp\-Note configuration in its search path (e.g.\ 
+Then place a Tp\-Note configuration in its search path (e.g.
 `\f[CR]\(ti/.config/tpnote/tpnote.toml\f[R]') with the following
 content:
 .IP
@@ -2247,8 +2238,9 @@ more than one language.
 Valid values are between `\f[CR]0.0\f[R]' and `\f[CR]0.99\f[R]'.
 `\f[CR]consecutive_words_min\f[R]' sets the minimum of consecutive words
 in one language to be considered.
-`\f[CR]words_total_percentage_min\f[R]' set the minimum word count ratio
-in percent a language must appear in the input text to be reported.
+`\f[CR]words_total_percentage_min\f[R]' sets the minimum word count
+ratio in percent a language must appear in the input text to be
+reported.
 .PP
 Once the language is detected with the `\f[CR]get_lang\f[R]' filter, it
 passes another filter called `\f[CR]map_lang\f[R]'.
@@ -2256,8 +2248,8 @@ This filter maps the result of `\f[CR]get_lang\f[R]' \- encoded as ISO
 639\-1 codes \- to IETF language tags.
 For example, `\f[CR]en\f[R]' is replaced with `\f[CR]en\-US\f[R]' or
 `\f[CR]de\f[R]' with `\f[CR]de\-DE\f[R]'.
-This additional filtering is useful, because the detection algorithm can
-not figure out the region code (e.g.\ \f[CR]\-US\f[R] or
+This additional filtering is useful, because the detection algorithm
+cannot figure out the region code (e.g.\ \f[CR]\-US\f[R] or
 \f[CR]\-DE\f[R]) by itself.
 Instead, the region code is appended in a separate processing step.
 Spell checker or grammar checker like [LTeX] rely on this region
@@ -2330,7 +2322,7 @@ Like above, you can achieve the same with:
 TPNOTE_LANG_DETECTION=\(dq\(dq tpnote
 .EE
 .SS Localize the note\(cqs front matter
-Be default, the front matter variable names are printed in English when
+By default, the front matter variable names are printed in English when
 creating new note files from templates.
 For example the header variable `\f[CR]fm.fm_subtitle\f[R]' is displayed
 as `\f[CR]subtitle:\f[R]' in the note\(cqs header.
@@ -2439,7 +2431,7 @@ However, among the shipped templates, there is one content template
 `\f[CR]tmpl.annotate_file_content\f[R]' that generates a hyperlink.
 As the hyperlink syntax varies depending on the markup language,
 Tp\-Note\(cqs default internal `\f[CR]tmpl.annotate_file_content\f[R]'
-template, handle \(lqMarkdown\(rq and \(lqReStructuredText\(rq syntax.
+template handles \(lqMarkdown\(rq and \(lqReStructuredText\(rq syntax.
 If you wish to switch the default markup language with
 `\f[CR]filename.extension_default\f[R]' to another language than
 `\f[CR]md\f[R]' or `\f[CR]rst\f[R]', you should not forget to modify the
@@ -2459,7 +2451,7 @@ It comprises three different markup renderers (cf.\ section
 Tp\-Note\(cqs core function is a template system and as such it depends
 very little on the used markup language.
 The default templates are designed in a way that they contain almost no
-markup specific code.
+markup\-specific code.
 Though there is one little exception in the
 `\f[CR]annotate_file_content\f[R]' template (see previous section).
 .PP
@@ -2556,7 +2548,7 @@ The filter `\f[CR]prepend(with_sort_tag=<...>)\f[R]' decides whether to
 insert the `\f[CR]sort_tag.separator=\(dq\-\(dq\f[R]' and/or the
 `\f[CR]sort_tag.extra_separator=\(dq\(aq\(dq\f[R]' characters.
 These heuristics enable Tp\-Note to identify unequivocally sort\-tags in
-filenames, which avoids potential cyclic filename change.
+filenames, which avoids potential cyclic filename changes.
 Or, in other words: the `\f[CR]tmpl.sync_filname\f[R]' template must
 always give the same result, even after repeated application.
 .PP
@@ -2644,11 +2636,11 @@ tpnote test.pdf
 .EE
 .PP
 This should create a new note file
-`\f[CR]./Notes/test.pdf\-\-Note.md\f[R] and open your web browser with a
-link to'\f[CR]test.pdf\f[R]`.
+`\f[CR]./Notes/test.pdf\-\-Note.md\f[R]' and open your web browser with
+a link to `\f[CR]test.pdf\f[R]'.
 Clicking on that link, the PDF page should be shown.
 The default behaviour, without this customization, is to create the new
-note file'\f[CR]./test.pdf\-\-Note.md\f[R]\(cq in the current directory.
+note file `\f[CR]./test.pdf\-\-Note.md\f[R]' in the current directory.
 .PP
 To test the `\f[CR]zettel\f[R]' scheme configuration invoke Tp\-Note
 with:
@@ -2770,28 +2762,26 @@ Alternatively, the header enclosed by `\f[CR]<pre>...</pre>\f[R]' can
 also be rendered as a table:
 .IP
 .EX
-  <\f[B]table\f[R] class=\(dqfm\(dq>
-    <\f[B]tr\f[R]>
+<\f[B]table\f[R] class=\(dqfm\(dq>
+  <\f[B]tr\f[R]>
     <\f[B]th\f[R] class=\(dqfmkey\(dq>{{\(aqfm.fm_title\(aq | name}}:</\f[B]th\f[R]>
-    <\f[B]th\f[R] class=\(dqfmval\(dq><\f[B]b\f[R]>
-        {{ fm.fm_title| default(value=\(aq\(aq) | to_html | safe }}</\f[B]b\f[R]>
+    <\f[B]th\f[R] class=\(dqfmval\(dq>
+      <\f[B]b\f[R]> {{ fm.fm_title| default(value=\(aq\(aq) | to_html | safe }}</\f[B]b\f[R]>
     </\f[B]th\f[R]>
   </\f[B]tr\f[R]>
-    <\f[B]tr\f[R]>
+  <\f[B]tr\f[R]>
     <\f[B]th\f[R] class=\(dqfmkey\(dq>{{\(aqfm.fm_subtitle\(aq | name}}:</\f[B]th\f[R]>
     <\f[B]th\f[R] class=\(dqfmval\(dq>
-        {{ fm.fm_subtitle | default(value=\(aq\(aq) | to_html | safe }}
+      {{ fm.fm_subtitle | default(value=\(aq\(aq) | to_html | safe }}
     </\f[B]th\f[R]>
   </\f[B]tr\f[R]>
-  {% for k, v in fm | remove(key=\(aqfm_title\(aq)|
-                      remove(key=\(aqfm_subtitle\(aq)|
-  %}
-    <\f[B]tr\f[R]>
+  {% for k, v in fm | remove(key=\(aqfm_title\(aq)| remove(key=\(aqfm_subtitle\(aq)| %}
+  <\f[B]tr\f[R]>
     <\f[B]th\f[R] class=\(dqfmkeygrey\(dq>{{ k | name }}:</\f[B]th\f[R]>
     <\f[B]th\f[R] class=\(dqfmvalgrey\(dq>{{ v | to_html | safe }}</\f[B]th\f[R]>
   </\f[B]tr\f[R]>
   {% endfor %}
-  </\f[B]table\f[R]>
+</\f[B]table\f[R]>
 .EE
 .PP
 The error page template `\f[CR]tmpl_html.viewer_error\f[R]' (see below)
@@ -2869,15 +2859,15 @@ output with:
 .IP
 .EX
 <\f[B]style\f[R]>
-{{ exporter_doc_css | safe }}
-{{ exporter_highlighting_css | safe }}
+  {{ exporter_doc_css | safe }}
+  {{ exporter_highlighting_css | safe }}
 </\f[B]style\f[R]>
 .EE
 .PP
 Note, the `\f[CR]safe\f[R]' filter disables the escaping of critical
 characters in the CSS input.
 We have no security concerns in this context, because we have full
-control over the CCS input coming from the configuration file variables
+control over the CSS input coming from the configuration file variables
 `\f[CR]tmpl_html.exporter_doc_css\f[R]' and
 `\f[CR]tmpl_html.exporter_highlighting_theme\f[R]'.
 .SS Choose your favourite web browser as note viewer
@@ -2886,7 +2876,7 @@ connects to a random port at the `\f[CR]localhost\f[R]' interface where
 the rendition is served to be viewed with a web browser.
 Tp\-Note\(cqs configuration file contains a list
 `\f[CR]app_args.unix.browser\f[R]' with common web browsers and their
-usual location on Unix like operating systems.
+usual location on Unix\-like operating systems.
 For other systems consult `\f[CR]app_args.windows.browser\f[R]' and
 `\f[CR]app_args.macos.browser\f[R]'.
 This list is executed top down until a web browser is found and
@@ -2922,8 +2912,8 @@ file.
 This chapter deals with `\f[CR][scheme.tmpl]\f[R]' templates which are
 responsible for generating Tp\-Note files.
 `\f[CR][scheme.tmpl_html]\f[R]' templates concern only Tp\-Note\(cqs
-viewer feature and are discussed in the chapters: Customize the
-built\-in note viewer_ and \f[I]Choose your favourite web browser as
+viewer feature and are discussed in the chapters: \f[I]Customize the
+built\-in note viewer\f[R] and \f[I]Choose your favourite web browser as
 note viewer\f[R].
 .PP
 Tp\-Note captures and stores its environment in \f[I]Tera
@@ -3294,17 +3284,18 @@ from the clipboard.
 content until the end of the first sentence, or the first newline.
 .IP \(bu 2
 `\f[CR]{{ html_clipboard.body | html_heading }}\f[R]' searches in the
-HTML clipboard input, for e.g `\f[CR]<h2>HEADING</h2>\f[R]', and returns
-the first HTML heading, e.g.\  `\f[CR]HEADING\f[R]'.
+HTML clipboard input for e.g `\f[CR]<h2>HEADING</h2>\f[R]', and returns
+the first HTML heading, e.g.
+`\f[CR]HEADING\f[R]'.
 .IP \(bu 2
 `\f[CR]{{ html_clipboard.body | link_text }}\f[R]' is the name of the
 first Markdown or ReStructuredText formatted link in the clipboard.
 .IP \(bu 2
 `\f[CR]{{ html_clipboard.body | link_dest }}\f[R]' is the URL of the
-first Markdown or ReStruncturedText formatted link in the clipboard.
+first Markdown or ReStructuredText formatted link in the clipboard.
 .IP \(bu 2
 `\f[CR]{{ html_clipboard.body | link_title }}\f[R]' is the title of the
-first Markdown or ReStruncturedText formatted link in the clipboard.
+first Markdown or ReStructuredText formatted link in the clipboard.
 .IP \(bu 2
 `\f[CR]{{ username | capitalize | to_yaml(key=\(aqauthor\(aq,tab=12) }}\f[R]'
 is the capitalized YAML encoded username.
@@ -3377,7 +3368,7 @@ A long candidate list may slow down the note file creation workflow.
 The detected languages are listed as \f[CR]\(aqValue::Array\f[R]\(cq in
 the order of their statistic frequency.
 If the detection algorithm can not detect any of the configured language
-candidates, the filter `\f[CR]{{ get_lang }}\f[R]' returns en empty
+candidates, the filter `\f[CR]{{ get_lang }}\f[R]' returns an empty
 array.
 .IP \(bu 2
 `\f[CR]{{ doc.body | get_lang | map_lang }}\f[R]': The
@@ -3397,7 +3388,7 @@ results in `\f[CR]fr\f[R]'.
 extra mapping to the `\f[CR]map_lang\f[R]' filter: when the input of the
 `\f[CR]map_lang\f[R]' filter is an empty \f[CR]Value::Array\f[R], then
 `\f[CR]{{ lang }}\f[R]' is added as single item.
-`\f[CR]{{ lang }}\f[R]' is expected to be a ISO 638\-1 language code,
+`\f[CR]{{ lang }}\f[R]' is expected to be an ISO 638\-1 language code,
 e.g.\ `\f[CR]en\f[R]'.
 Depending on the `\f[CR]tmpl.filter.map_lang\f[R]' configuration, the
 exemplary `\f[CR]en\f[R]' input may be converted to `\f[CR]en\-US\f[R]'
@@ -3458,7 +3449,7 @@ For this purpose Tp\-Note provides the additional Tera filter
 `\f[CR]sanit\f[R]':
 .PP
 The `\f[CR]sanit()\f[R]' filter transforms a string in a file system
-friendly from.
+friendly form.
 This is done by replacing forbidden characters like `\f[CR]?\f[R]' and
 `\f[CR]\(rs\(rs\f[R]' with `\f[CR]_\f[R]' or space.
 This filter can be used with any variable, but is most useful with
@@ -3491,7 +3482,7 @@ with \f[CR]\-\(aq\f[R], e.g.
 `\f[CR]1\-The Show Begins\f[R]' becomes
 `\f[CR]\(aq1\-The Show Begins\f[R]'.
 The `\f[CR]prepend(with_sort_tag=<...>)\f[R]' filter must be applied to
-the first variable, e.g.\ 
+the first variable, e.g.
 `\f[CR]{{ fm.fm_title | sanit | prepend(with_separator=path|file_sort_tag )}\f[R]'.
 This way, it is always possible to univocally distinguish the sort\-tag
 from the rest of the filename.
@@ -3538,7 +3529,7 @@ when it\(cqs located under a directory containing a marker file named
 .PP
 The HTTP server runs as long as the launched web browser window is open.
 Note, that the server not only exposes the displayed note file, but also
-all referenced inline images and other linked TP\-Note files.
+all referenced inline images and other linked Tp\-Note files.
 Internally, the viewer maintains a list of \f[I]referenced local
 URLs\f[R].
 For security reasons, only listed files are served.
@@ -3576,7 +3567,7 @@ setting the configuration file variable
 `\f[CR]arg_default.edit = true\f[R]'.
 Alternatively, you can also compile Tp\-Note without the
 `\f[CR]viewer\f[R]' feature.
-Note, that even if the viewer feature disabled, the
+Note, that even if the viewer feature is disabled, the
 `\f[CR]\-\-export\f[R]' command line option still works: This allows the
 authorized user to render the note to HTML manually.
 .PP
@@ -3640,23 +3631,15 @@ subtag, e.g.\ `\f[CR]en\f[R]'.
 The region subtag will be added as indicated in your configuration.
 Subsequent entries that differ only in the region subtag,
 e.g.\ `\f[CR]en\-GB, en\-US\f[R]' are ignored.
-.RE
-.RS
 .PP
 The empty string disables the automatic language detection.
-.RE
-.RS
 .IP
 .EX
 TPNOTE_LANG_DETECTION=\(dq\(dq tpnote
 .EE
-.RE
-.RS
 .PP
 For debugging observe the value of `\f[CR]SETTINGS\f[R]' in the debug
 log:
-.RE
-.RS
 .IP
 .EX
 TPNOTE_LANG_DETECTION=\(dqde\-DE, en, fr\-FR\(dq tpnote \-d trace \-b
@@ -3666,7 +3649,7 @@ TPNOTE_LANG_DETECTION=\(dqde\-DE, en, fr\-FR\(dq tpnote \-d trace \-b
 TPNOTE_BROWSER
 .RS
 .PP
-If set, this variable take precedence over the configuration file
+If set, this variable takes precedence over the configuration file
 variable `\f[CR]app_args.browser\f[R]'.
 While the latter is a list describing how to invoke various web
 browsers, `\f[CR]TPNOTE_BROWSER\f[R]' contains a string invoking one
@@ -3674,14 +3657,10 @@ particular browser, exactly as one would do in a shell: the whitespace
 separated tokens list contains: the path name of the application, and
 all its flags and options.
 For example:
-.RE
-.RS
 .IP
 .EX
 TPNOTE_BROWSER=\(dqchromium \-\-new\-window \-\-incognito\(dq tpnote
 .EE
-.RE
-.RS
 .PP
 The above instructs Tp\-Note to start the web browser
 `\f[CR]chromium\f[R]' with the flags `\f[CR]\-\-new\-window\f[R]' and
@@ -3690,23 +3669,15 @@ Unlike in a shell, the backslash and quote characters have no special
 meaning.
 Instead, all tokens are \f[I]percent encoded\f[R],
 e.g.\ `\f[CR]my path\f[R]' becomes `\f[CR]my%20path\f[R]'.
-.RE
-.RS
 .PP
 The empty string disables the launch of the browser the same way as
 `\f[CR]\-\-edit\f[R]':
-.RE
-.RS
 .IP
 .EX
 TPNOTE_BROWSER=\(dq\(dq tpnote
 .EE
-.RE
-.RS
 .PP
 is equivalent to:
-.RE
-.RS
 .IP
 .EX
 tpnote \-\-edit
@@ -3725,14 +3696,10 @@ particular file editor, exactly as one would do on a shell: the
 whitespace separated tokens list contains: the path name of the
 application, and all its flags and options.
 For example:
-.RE
-.RS
 .IP
 .EX
 TPNOTE_EDITOR=\(dqgeany \-sim\(dq tpnote
 .EE
-.RE
-.RS
 .PP
 The above instructs Tp\-Note to start the editor `\f[CR]geany\f[R]' with
 the flags `\f[CR]\-sim\f[R]'.
@@ -3741,29 +3708,19 @@ special meaning.
 Instead, all tokens are \f[I]percent encoded\f[R].
 Consider the following example where the space character is expressed as
 `\f[CR]%20\f[R]':
-.RE
-.RS
 .IP
 .EX
 TPNOTE_EDITOR=\(dqgeany \-sim \-c \(ti/my%20config/\(dq tpnote
 .EE
-.RE
-.RS
 .PP
 The empty string disables the launch of the editor the same way as the
 command line option `\f[CR]\-\-view\f[R]' does:
-.RE
-.RS
 .IP
 .EX
 TPNOTE_EDITOR=\(dq\(dq tpnote
 .EE
-.RE
-.RS
 .PP
 is equivalent to:
-.RE
-.RS
 .IP
 .EX
 tpnote \-\-view
@@ -3779,10 +3736,8 @@ precedence over the configuration file variable
 parameters for invoking a terminal based text editor, such as Emacs, Vim
 or Helix.
 Otherwise, the syntax and the operation are the same as with
-`\f[CR]TPNOTE_EDITOR\f[R] hereinabove'.
+`\f[CR]TPNOTE_EDITOR\f[R]' hereinabove.
 For example:
-.RE
-.RS
 .IP
 .EX
 sudo TPNOTE_EDITOR_CONSOLE=\(dqnvim\(dq tpnote
@@ -3799,14 +3754,10 @@ In order to activate the appropriate markup renderer make sure, that the
 value given here is listed in `\f[CR]filename.extensions\f[R]'.
 .PP
 For example, to create a new reStructuredText note file type:
-.RE
-.RS
 .IP
 .EX
 TPNOTE_EXTENSION_DEFAULT=rst\(dq tpnote
 .EE
-.RE
-.RS
 .PP
 Common values are: `\f[CR]md\f[R]' (default, Markdown), `\f[CR]txt\f[R]'
 (Markdown), `\f[CR]rst\f[R]' (reStructuredText) and `\f[CR]txtnote\f[R]'
@@ -3839,7 +3790,7 @@ the note file has a valid YAML header with a `\f[CR]title:\f[R]' field.
 In addition, when `\f[CR]tpnote \-n \-b \-x \- <FILE>\f[R]' returns the
 code `\f[CR]0\f[R]', the note\(cqs body was rendered without error.
 .SH RESOURCES
-Tp\-Note it hosted on:
+Tp\-Note is hosted on:
 .IP \(bu 2
 Gitlab: \c
 .UR https://gitlab.com/getreu/tp-note

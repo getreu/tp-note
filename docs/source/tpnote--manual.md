@@ -8,19 +8,19 @@ filename_sync: false
 lang:     en-GB
 ---
 
-Tp-Note is a note-taking-tool and a template system freely available for
-Windows, MacOS and Linux. Each note is stored in a file whose filename is
-synchronized with the note’s meta-data. Tp-Note’s main feature is to convert
-some input text - usually provided by the system’s clipboard - into a Markdown
-note file with a descriptive YAML header and a meaningful filename. To do so
+Tp-Note is a note-taking tool and a template system freely available for
+Windows, macOS, and Linux. Each note is stored in a file whose filename is
+synchronized with the note's meta-data. Tp-Note's main feature is to convert
+some input text—usually provided by the system's clipboard—into a Markdown
+note file with a descriptive YAML header and a meaningful filename. To do so,
 Tp-Note collects various information about its environment and the clipboard
 and stores them in variables. New notes are created by filling these variables
 in predefined and customizable templates. After creating a new note, TP-Note
-launches the system’s text editor and connects the default web browser to
-Tp-Note’s internal Markdown/RestructuredText renderer and web server. The viewer
+launches the system's text editor and connects the default web browser to
+Tp-Note's internal Markdown/RestructuredText renderer and web server. The viewer
 detects note file changes and updates the rendition accordingly.
 
-On Tue, 2023-12-19 at 12:58 +1100, Dev Rain wrote:_
+On Tue, 2023-12-19 at 12:58 +1100, Dev Rain wrote:
 
 > _Found Tp-Note awhile back and it has become part of my daily workflow, and
 > indeed part of my daily note-taking life. I wanted to extend my thanks; so 
@@ -40,10 +40,10 @@ use another markup language than Markdown, please consult [Tp-Note's man-page] f
 more technical details. It also explains how to change _Tp-Note_'s default text
 editor.
 
-The project is hosted on Gitlab:
+The project is hosted on GitLab:
 [getreu/tp-note](https://gitlab.com/getreu/tp-note). The project's webpage is on
 [http://blog.getreu.net](http://blog.getreu.net/projects/tp-note/).
-The documentation of this project is dived into two parts:
+The documentation of this project is divided into two parts:
 
 * User manual
 
@@ -62,12 +62,12 @@ The documentation of this project is dived into two parts:
 
 # How students take notes
 
-A fellow student still uses paper and pen. I asked her why, and she replied with
+A fellow student still uses paper and pen. I asked her why, and she replied with,
 "It helps me concentrate better. My computer distracts me. I will do many other
-things and I wont remain concentrated on my task.".
+things and I won't remain concentrated on my task."
 
 This is certainly true. As far as I am concerned, I am not good at logistics.
-For me having all my documents and notes on one little machine is a blessing.
+For me, having all my documents and notes on one little machine is a blessing.
 
 The following sections illustrate how to work with _Tp-Note_ with my most
 common workflows.
@@ -78,7 +78,7 @@ common workflows.
 
 ![The folder in which the new note will be created.](assets/workflow1-1.png){width="10cm"}
 
-Alternatively you can open the folder where you want to create a new note and
+Alternatively, you can open the folder where you want to create a new note and
 right-click on some empty white space.
 
 ![The new unmodified note created by template on disk](assets/workflow1-2.png){width="10cm"}
@@ -93,9 +93,9 @@ right-click on some empty white space.
 
 > **Note**
 >
-> Before and after launching the editor _Tp-Note_ renames the file to be in
+> Before and after launching the editor, _Tp-Note_ renames the file to be in
 > sync with the note's metadata (i.e. title and subtitle).
-> For more details see [How it works: Organize your files and notes with sort-tags].
+> For more details, see [How it works: Organize your files and notes with sort-tags].
 
 
 
@@ -143,7 +143,7 @@ lang:         en-US
 
 ![Tp-Note created the above content](assets/workflow2-2.png){width="11cm"}
 
-The source code of the note shows the link with its target. The left-click, opens the `.odt` document.
+The source code of the note shows the link with its target. The left-click opens the `.odt` document.
 
 ```yaml
 ---
@@ -170,15 +170,15 @@ The approach is similar to what we have seen in the [previous chapter](#taking-n
 
 ![Copy the location of the download page as Markdown](assets/workflow6-1.png){width="9cm"}
 
-Note: for convenience I use in this example the Firefox browser addon [Copy
-Selection as Markdown] to copy the hyperlink. If this addon is not available,
+Note: for convenience, I use in this example the Firefox browser add-on [Copy
+Selection as Markdown] to copy the hyperlink. If this add-on is not available,
 you can also copy the URL directly from the search bar.
 
 ![Select the file to annotate and start Tp-Note](assets/workflow6-2.png){width="8cm"}
 
 ![The new unmodified note created automatically](assets/workflow6-3.png){width="11cm"}
 
-The source-code of the note shows the links with their targets.
+The source code of the note shows the links with their targets.
 
 ```yaml
 ---
@@ -203,8 +203,8 @@ lang:       en-GB
 
 ![Copy a link in Markdown format](assets/workflow3-2.png){width="11cm"}
 
-To copy a link in Markdown format a browser addon is needed. I recommend the
-addon [Copy Selection as Markdown] available
+To copy a link in Markdown format, a browser add-on is needed. I recommend the
+add-on [Copy Selection as Markdown] available
 for Firefox[^alternative]. 
 
 [^alternative]: If [Copy Selection as Markdown] does not suit you, try [Copy as Markdown].
@@ -230,9 +230,9 @@ lang:       en-GB
 [Rustacean Station](<https://rustacean-station.org/>)
 ```
 
-In this example we copied only one Markdown link "Rustacean Station".
+In this example, we copied only one Markdown link "Rustacean Station".
 Furthermore, *Tp-Note* allows you also to insert a list of Markdown links in a
-template. For example with [Copy as Markdown] you could copy a link list of all
+template. For example, with [Copy as Markdown], you could copy a link list of all
 open tabs. In this case, _Tp-Note_ would retain only the name of the first link
 as document title, whereas the whole link list would appear in the body of the
 note.
@@ -240,10 +240,6 @@ note.
 ![Annotate](assets/workflow3-5.png){width="11cm"}
 
 ![The new note file on disk after closing the editor](assets/workflow3-6.png){width="7cm"}
-
-```{=docbook}
-<?dbfo-need height="6cm" ?>
-```
 
 
 
@@ -254,10 +250,6 @@ note.
 ![Right-click on or in the new note's destination folder and start Tp-Note](assets/workflow4-2.png){width="7cm"}
 
 ![The new unmodified note created automatically](assets/workflow4-3.png){width="9cm"}
-
-```{=docbook}
-<?dbfo-need height="4cm" ?>
-```
 
 The source code of the note shows the completed template:
 
@@ -275,28 +267,24 @@ knew, even a back can be revealing. A kilometer away the Ministry of Truth, his
 place of work, towered vast and white above the grimy landscape...
 ```
 
-In this example we copied only text. *Tp-Note* suggests the first sentence as
-title. This can be changed before saving as illustrated above. Here we just save
+In this example, we copied only text. *Tp-Note* suggests the first sentence as
+title. This can be changed before saving, as illustrated above. Here, we just save
 and observe the file on the disk.
 
 ![The new note file on disk after closing the editor](assets/workflow4-4.png){width="7cm"}
-
-```{=docbook}
-<?dbfo-need height="6cm" ?>
-```
 
 
 
 ## Best practice
 
 _Tp-Note's_ greatest advantage is its flexibility. It easily integrates with
-your workflow.  As people work differently, there is no best usage either.
-Nevertheless, after having used _Tp-Note_ for some years now, here my personal
+your workflow. As people work differently, there is no best usage either.
+Nevertheless, after having used _Tp-Note_ for some years now, here are my personal
 preferences and configuration:
 
 * [Tp-Note](https://blog.getreu.net/projects/tp-note/)
-* Addon for Firefox: [Copy Selection as Markdown]
-* Helix file editor : [Helix]
+* Add-on for Firefox: [Copy Selection as Markdown]
+* Helix file editor: [Helix]
 * Integration with the file manager (start entry in context menu) as described below.
 
 Even though there are dedicated Markdown file editors for prose writing like
@@ -304,15 +292,15 @@ the excellent [Apostrophe] editor, I prefer the ergonomics of a modal editor.
 My favourite at the moment is [Helix]. Please refer to the blog post
 [Note talking with Helix, Tp-Note and LanguageTool](https://blog.getreu.net/20220828-tp-note-new8/) to set up [Helix] for prose writing.
 
-When copying extracts from a web-page, I often need to preserve its hyperlinks.
+When copying extracts from a web page, I often need to preserve its hyperlinks.
 When Tp-Note detects HTML in the clipboard, it automatically converts it into
 Markdown. Nevertheless, you may prefer using an external converter instead. The
-Firefox browser add-on [Copy Selection as Markdown] for example, precedes the
+Firefox browser add-on [Copy Selection as Markdown], for example, precedes the
 copied extract with a hyperlink to the origin of the webpage. When _TP-Note_
 reads the extract from the clipboard, it uses the first Markdown hyperlink it
 can find for composing the note's title and its filename on disk. This way the
-web page's name ends up automatically in the note's title and filename. Here a
-sample work flow:
+web page's name ends up automatically in the note's title and filename. Here is a
+sample workflow:
 
 ![A webpage to copy extracts from](assets/workflow5-1.png){width=12cm}
 
@@ -340,7 +328,7 @@ disk.
 ## Note-taking for system administrators (and console lovers)
 
 As _Tp-Note_ makes extensive use of the clipboard, it mainly targets desktop
-systems running a graphical environment. But also when working on the console
+systems running a graphical environment. But also when working on the console,
 _Tp-Note_ can be useful with its built-in clipboard simulation: Instead of
 copying the content into your clipboard, pipe it into _Tp-Note_:
 
@@ -352,7 +340,7 @@ echo  "Some clipboard content" | tpnote
 ### Typical workflows
 
 The following examples work with the full-featured version of _Tp-Note_ as
-well as with the `--no-default-features` console only version.
+well as with the `--no-default-features` console-only version.
 
 * Document a downloaded file:
 
@@ -517,22 +505,22 @@ well as with the `--no-default-features` console only version.
   Install the `weasyprint`-tool:
 
   ```bash
-  sudo apt install  | weasyprint
+  sudo apt install weasyprint
   ```
 
   Generate the PDF rendition of the existing note `20210122-my--Note.md`:
 
   ```bash
-  tpnote -x - '20210122-my--Note.md' | weasyprint - 20210209-debug--Note.md.pdf'
+  tpnote -x - '20210122-my--Note.md' | weasyprint - 20210209-debug--Note.md.pdf
   ```
 
 * View and follow hyperlinks in a note file:
 
   When no graphical environment is available, _Tp-Note_ disables the viewer
   feature with its internal HTTP server. As a workaround, use _Tp-Note_'s
-  HTML export flag and pipe the result into a text based web browser. 
+  HTML export flag and pipe the result into a text-based web browser. 
 
-  Install the text based web browser `lynx`:
+  Install the text-based web browser `lynx`:
 
   ```bash
   sudo apt install lynx
@@ -546,7 +534,7 @@ well as with the `--no-default-features` console only version.
   ```
 
   Note, the above also works in case _Tp-Note_ was compiled with
-  `--no-default-features` which is recommended for headless systems.
+  `--no-default-features`, which is recommended for headless systems.
 
 
 
@@ -561,7 +549,7 @@ The filename has 4 parts:
 
     {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
 
-A so called _sort-tag_ is a numerical prefix at the beginning of the
+A so-called _sort-tag_ is a numerical prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
 numerical digits and whitespace, a _sort-tag_ can be any combination of
 `-_.` [^2] and is usually used as:
@@ -579,7 +567,7 @@ numerical digits and whitespace, a _sort-tag_ can be any combination of
         09_02-Notes
         09.02-Notes
 
-The figures below illustrate organizing files with *sort-tags".
+The figures below illustrate organizing files with *sort-tags*.
 
 ![Folders with sequence number sort-tag](assets/filing-system1.png){width="10cm"}
 
@@ -587,7 +575,7 @@ The figures below illustrate organizing files with *sort-tags".
 
 When _Tp-Note_ creates a new note, it automatically prepends a *chronological
 sort-tag* of today. The `{{ fm_title }}` part is usually derived from the parent
-directory's name omitting its own *sort-tag*.
+directory's name, omitting its own *sort-tag*.
 
 
 
@@ -598,7 +586,7 @@ Depending on the operating system, the installation process is more
 or less automated and can be divided into two steps:
 
 1. [Minimum setup without file manager integration]\
-   This step consists of downloading _Tp-Note_'s binary and copying it to your hard-disk.
+   This step consists of downloading _Tp-Note_'s binary and copying it to your hard disk.
    See section [Distribution](https://blog.getreu.net/projects/tp-note/#distribution)
    on _Tp-Note_'s [project page](https://blog.getreu.net/projects/tp-note/#distribution)
    for a list of available packages and binaries.
@@ -607,15 +595,10 @@ or less automated and can be divided into two steps:
 
 At the moment of this writing, an installer automating steps 1. and 2. is available for
 Windows only. Packages for Debian Linux and Ubuntu help you with step 1. For other operating
-systems check section [Distribution](https://blog.getreu.net/projects/tp-note/#distribution)
+systems, check section [Distribution](https://blog.getreu.net/projects/tp-note/#distribution)
 for precompiled binaries or
 [build Tp-Note](https://blog.getreu.net/projects/tp-note/#building)
 yourself.
-
-
-```{=docbook}
-<?dbfo-need height="6cm" ?>
-```
 
 
 
@@ -636,11 +619,11 @@ software on your computer, you can place the [Tp-Note binary](../projects/tp-not
 
 ## Usage of the minimum setup
 
-Once you have placed the `tpnote` binary in your `PATH` you can invoke Tp-Note
-on the command line by typing `tpnote` optionally followed by a directory path
+Once you have placed the `tpnote` binary in your `PATH`, you can invoke Tp-Note
+on the command line by typing `tpnote`, optionally followed by a directory path
 or a file path.
 
-Having a copy (or symbolic link) of Tp-Note's binary `tpnote` on your desktop,
+Having a copy (or symbolic link) of Tp-Note's binary `tpnote` on your desktop
 enables you to execute the following workflow: To create a new note, either
 double-click on the _Tp-Note_-icon, or drag and drop a folder or file and drop
 it on the _Tp-Note_-icon. This opens an editor with your new note.
@@ -654,13 +637,8 @@ details).
 
 _Tp-Note_'s note files can be printed directly from the viewer (web browser)
 window or first converted into `.html` with `tpnote -x '' mynote.md`. For other
-formats e.g. `.docx`, `.odt` and `.pdf` use [Pandoc](https://pandoc.org/)
+formats, e.g., `.docx`, `.odt`, and `.pdf`, use [Pandoc](https://pandoc.org/)
 or `weasyprint`.
-
-
-```{=docbook}
-<?dbfo-need height="6cm" ?>
-```
 
 
 
@@ -669,8 +647,8 @@ or `weasyprint`.
 
 ### Incompatible configuration files
 
-While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
-configuration file structure and the program may fail to start displaying an
+While upgrading _Tp-Note_, new features may cause a change in _Tp-Note_'s
+configuration file structure and the program may fail to start, displaying an
 error message. Please consult the following section
 [Upgrading](https://blog.getreu.net/projects/tp-note/#upgrading) in the
 project's Readme document for more information about incompatible configuration
@@ -691,7 +669,7 @@ debugging options `--debug` and `--popup` and how to use them.
 ## Optional customization
 
 
-### Chose your favourite text editor and make it default
+### Choose your favourite text editor and make it default
 
 * Your preferred text editor is not *Notepad*? Change it![^1]
 
@@ -738,16 +716,16 @@ debugging options `--debug` and `--popup` and how to use them.
 
 ### Choose the web browser for note viewing and make it your default
 
-* Is your preferred web browser is not *Firefox*? Change it![^1]
+* Is your preferred web browser not *Firefox*? Change it![^1]
 
   After opening the text editor, _Tp-Note_ internally renders the note file
   and opens a web browser to display the note's content. Which web browser on
-  your system will be launched, depends on which of them _Tp-Note_ finds
-  first by searching through a configurable list of well known web browsers.
+  your system will be launched depends on which of them _Tp-Note_ finds
+  first by searching through a configurable list of well-known web browsers.
 
   ![Tp-Note with open text editor (left) and viewer (right)](assets/editor_and_viewer.png){width="12cm"}
 
-  Please refer to [Tp-Note's man-page] to learn how change which web browser
+  Please refer to [Tp-Note's man-page] to learn how to change which web browser
   _Tp-Note_ launches as note viewer.
 
 
@@ -758,7 +736,7 @@ The way the note will appear in your web browser depends on:
 * which of _Tp-Note_'s internal markup renderer is used and
 
 * the HTML template, that defines the visual appearance
-  (colours, fonts etc.) of the rendition.
+  (colours, fonts, etc.) of the rendition.
 
 Please refer to [Tp-Note's man-page] to learn how to register a file
 extension with a particular markup renderer or to learn
@@ -770,16 +748,16 @@ how to change the HTML-template that renders the note's content.
 * Your preferred markup language is not *Markdown*, but ReStructuredText*,
   *Asciidoc*, *T2t*, *Textile*, *Wiki* or *Mediawiki*? Change it!
 
-  _Tp-Note_'s core function is a template system and as such it is
+  _Tp-Note_'s core function is a template system and, as such, it is
   markup language agnostic. The default templates largely abstain from
-  markup specific code, which makes it easy to switch the default new note's
+  markup-specific code, which makes it easy to switch the default new note's
   markup language. Please refer to [Tp-Note's man-page] to learn how to
   change its templates in the configuration file.
 
-  In addition, _Tp-Note_ comes with a build in note viewer which is optional and
+  In addition, _Tp-Note_ comes with a built-in note viewer which is optional and
   independent from its core functionality. When _Tp-Note_ opens a note file, it
   detects the markup language through the note file extension and launches the
-  associated builtin markup renderer. The whole process can be customized in
+  associated built-in markup renderer. The whole process can be customized in
   _Tp-Note_'s configuration file. Please refer to [Tp-Note's man-page] for
   details.
 
@@ -790,16 +768,12 @@ how to change the HTML-template that renders the note's content.
 # Optional integration with your file manager
 
 This section shows how to integrate _Tp-Note_ in the context menu of your
-file manager. The context menu appears, when you click right on a file icon,
-on a directory icon or on the white space in between (cf. figure below). In
-the following we will configure the file manager to launch _Tp-Note_ with the
+file manager. The context menu appears when you click right on a file icon,
+on a directory icon, or on the white space in between (cf. figure below). In
+the following, we will configure the file manager to launch _Tp-Note_ with the
 path to the selected icon.
 
 ![Tp-note in the context-menu (right-click menu)](assets/workflow2-1.png){width="9cm"}
-
-```{=docbook}
-<?dbfo-need height="6cm" ?>
-```
 
 
 ## Windows file explorer configuration
@@ -807,7 +781,7 @@ path to the selected icon.
 _Tp-Note_ is distributed with a Microsoft Windows Installer package
 `tpnote-x.x.x-x86_64.msi`, which automates the following key registration.
 Omit this section if you have installed _Tp-Note_ through this `.msi` package!
-Please note, that the following keys are outdated and tested only for Windows
+Please note that the following keys are outdated and tested only for Windows
 7-10. The latest `.msi` package ships updated keys for Windows 11. You can find
 the updated keys in its installer configuration file:
 [wix/tpnote.wxs](https://gitlab.com/getreu/tp-note/-/blob/master/wix/tpnote.wxs)
@@ -886,7 +860,7 @@ the updated keys in its installer configuration file:
 
 ## Linux file manager configuration
 
-To simplify the configuration we first place the binary _Tp-Note_
+To simplify the configuration, we first place the binary _Tp-Note_
 in our `$PATH`:
 
 ```sh
@@ -895,7 +869,7 @@ sudo wget https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-lin
 sudo chmod 755 tpnote
 ```
 
-_Debian_ and _Ubuntu_ user can also download [Debian/Ubuntu package] and install it with:
+_Debian_ and _Ubuntu_ users can also download [Debian/Ubuntu package] and install it with:
 
 ``` sh
 sudo dpkg -i tpnote_latest_amd64.deb
@@ -904,8 +878,8 @@ sudo dpkg -i tpnote_latest_amd64.deb
 
 ### Configure Thunar's custom actions
 
-Most file manager allow extending the context menu. As an example, the
-following images show the configuration of the *Thunar* file manger.
+Most file managers allow extending the context menu. As an example, the
+following images show the configuration of the *Thunar* file manager.
 
 #### Add context menu entry: Edit Tp-Note
 
@@ -921,7 +895,7 @@ In *Thunar*'s menu go to:
 
 ![Thunar's custom action configuration with Tp-Note](assets/custom_actions2.png){width="8cm"}
 
-[Debian/Unbuntu package]: https://blog.getreu.net/projects/tp-note/#tp-note-debianubuntu-installer-package
+[Debian/Ubuntu package]: https://blog.getreu.net/projects/tp-note/#tp-note-debianubuntu-installer-package
 
 #### Add context menu entry: View Tp-Note
 
@@ -935,10 +909,6 @@ did before:
 ![Edit custom action](assets/viewer-edit_action.png){width="8cm"}
 
 ![Appearance Condition](assets/viewer-appearance-condition.png){width="8cm"}
-
-```{=docbook}
-<?dbfo-need height="4cm" ?>
-```
 
 
 ### Configure Thunar's custom actions system-wide
@@ -984,10 +954,6 @@ rm ~/.config/Thunar/uca.xml
 thunar
 ```
 
-```{=docbook}
-<?dbfo-need height="8cm" ?>
-```
-
 **Optional bonus: add a menu entry "Download webpage as Markdown"**
 
 In addition to the above, the following adds a context menu
@@ -1025,10 +991,6 @@ rm ~/.config/Thunar/uca.xml
 thunar
 ```
 
-```{=docbook}
-<?dbfo-need height="8cm" ?>
-```
-
 **Optional bonus 2: add a menu entry "Export note as Pdf"**
 
 First install the `weasyprint` filter program: 
@@ -1061,10 +1023,6 @@ file in `~/.config/Thunar/uca.xml`:
 killall thunar
 rm ~/.config/Thunar/uca.xml
 thunar
-```
-
-```{=docbook}
-<?dbfo-need height="8cm" ?>
 ```
 
 
@@ -1124,7 +1082,7 @@ The Ncurses library based file manager _MidnightCommander_ `mc` enjoys great
 popularity among people working on the console.
 As _Tp-Note_ stores the note's content in UTF-8 encoded plain text, `mc`
 can be used for full text searches in all note files of a directory.
-Start  the full text search with the keys `[Esc]` `[?]`.
+Start the full text search with the keys `[Esc]` `[?]`.
 
 The following instructions configure `mc`'s `[F3]`-key to open `.md` files for
 viewing. This is where _Tp-Note_ generates the HTML rendition of the note
@@ -1150,7 +1108,7 @@ runs _Tp-Note_ in editing mode.
    ```
     
 
-3. Find the following lines ():
+3. Find the following lines:
 
    ```
    [markdown]
@@ -1178,7 +1136,7 @@ runs _Tp-Note_ in editing mode.
    [Default]
    ```
 
-5. Restart all instances of `mc` :
+5. Restart all instances of `mc`:
 
    ```bash
    sudo killall mc
@@ -1190,7 +1148,7 @@ press `[F3]` or `[Enter]`.
 
 
 [^1]: _Tp-Note_ is preconfigured to work with many well-known external text
-      editors: e.g.: `code`, `atom`, `retext`, `geany`, `gedit`, `mousepad`,
+      editors: e.g., `code`, `atom`, `retext`, `geany`, `gedit`, `mousepad`,
       `leafpad`, `nvim-qt`, and `gvim` under Linux and `notpad++` and `notepad`
       under Windows.  To register your own text editor, please consult the
       man-page.  For best user experience, I recommend text editors with

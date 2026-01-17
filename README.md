@@ -241,9 +241,10 @@ it into your file manager's context menu for convenience.
 Depending on the availability of installer packages for your operating
 system, the installation process is more or less automated. For Windows
 users the fully automated installation package [tpnote-latest-x86_64.msi]
-is available. For more information, please consult the [Distribution
-section](#distribution) above and the [Installation section] in
-_Tp-Note_'s manual. 
+is available. After installation, click right on the desktop and select
+"Show more options", then "New Tp-Note" to get started. For more information,
+please consult the [Distribution section](#distribution) above and the
+[Installation section] in _Tp-Note_'s manual.
 
 
 
@@ -433,4 +434,3 @@ Copyright:
 [Customization section]: https://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization
 [Install Rust]: https://www.rust-lang.org/tools/install
 [Semantic Versioning]: https://semver.org/
-
