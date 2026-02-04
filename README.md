@@ -20,6 +20,10 @@ their notes across different platforms.
 
 ![Screenshot](./assets/tpnote-screenshot.png)
 
+A more sophisticated example using the “Zettelkasten” scheme:
+
+![Screenshot-Zettelkasten](./assets/tpnote-screenshot-zettelkasten.png)
+
 ## Key Features
 
 - **Clipboard Integration**: Tp-Note can save and edit clipboard content as note
