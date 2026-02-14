@@ -15,8 +15,11 @@ https://gitlab.com/getreu/tp-note)
 
 Tp-Note is a versatile note-taking tool designed for both desktop and console
 environments. It allows users to create, edit, and manage notes efficiently.
-This tool is ideal for users looking for a simple yet powerful way to manage
-their notes across different platforms.
+Tp-Note is designed to bridge the gap between unstructured clipboard data and
+organized, local file storage. It is primarily built in Rust and follows a
+"file-centric" philosophy where the filename itself acts as a synchronized piece
+of metadata. This tool is ideal for users looking for a simple yet powerful way
+to manage their notes across different platforms.
 
 ![Screenshot](./assets/tpnote-screenshot.png)
 
