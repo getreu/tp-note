@@ -57,7 +57,19 @@
           pkgs.mkShell {
             packages = with pkgs; [
               cargo
-              cargo-deb
+              rust-analyzer
+              cargo-audit
+              cargo-edit
+              clippy
+              rustfmt
+              # openssl.dev
+              git
+              # gcc # C compiler needed for some Rust crates
+              # stdenv.cc # C/C++ compiler infrastructure
+            ];
+            nativeBuildInputs = with pkgs; [
+              pkg-config
+              openssl.dev
             ];
             LD_LIBRARY_PATH =
               with pkgs;
