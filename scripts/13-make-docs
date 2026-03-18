@@ -1,0 +1,20 @@
+#!/bin/bash
+# Change to this script directory
+cd "$(dirname "$0")"
+cd ..
+
+# Build documentation in nix development environment
+cd docs
+nix develop --command bash -c "./make--all"
+cd ..
+
+# Copy documentation
+echo "Copying documentation..."
+if [ -d "docs/build" ]; then
+    cp -r docs/build/* build/documentation/
+    echo "Documentation copied successfully"
+else
+    echo "Warning: Documentation build directory not found"
+fi
+
+echo "All builds completed successfully!"

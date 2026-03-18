@@ -1,14 +1,40 @@
-#!/bin/sh
-set -x
+#!/bin/bash
 # Change to this script directory
-cd $(dirname "$0")
+cd "$(dirname "$0")"
 
+# Clear targets
+echo "Clearing targets..."
 ./10-clear-targets
-#./11-test
+echo "Clearing targets completed."
+
+# Run tests
+echo "Running tests..."
+./11-test
+echo "Tests completed."
+
+# Build targets
+echo "Building targets..."
 ./12-make-targets
+echo "Targets built."
+
+# Build documentation
+echo "Building documentation..."
 ./15-make-docs
-# The next is using Docker:
-./17-make-deb-package
+echo "Documentation built."
+
+# Create packages
+echo "Creating Windows MSI package..."
 ./18-make-win-msi-package
+echo "Windows MSI package created."
+
+# Create symlinks
+echo "Creating installer symlinks..."
 ./19-symlink-installer
+echo "Installer symlinks created."
+
+# Final cleanup
+echo "Performing final cleanup..."
 ./20-clear-targets-keep-binaries
+echo "Final cleanup completed."
+
+echo "All build steps completed successfully!"

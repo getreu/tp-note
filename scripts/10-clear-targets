@@ -1,12 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 # Change to this script directory
-cd $(dirname "$0")
+cd "$(dirname "$0")"
 
-### Better do these manually, to make sure that all dependencies work with 
-### the current `rustc` version.
-# cargo update
-# cargo upgrade
+# Ensure we're in the right directory
+cd ..
 
-rm -r ../target
-rm -r ../doc/build
-
+# Remove build directories safely
+rm -rf target
+rm -rf doc/build
+rm -rf "build/*"

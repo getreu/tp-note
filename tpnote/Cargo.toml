@@ -46,10 +46,6 @@ WikiText. The note's rendition with its hyperlinks is live updated and
 displayed in the user's webbrowser.
 '''
 assets = [
-    ["../docs/build/html/index.html", "usr/share/doc/tpnote/", "644"],
-    ["../docs/build/pdf/tpnote--manpage.pdf", "usr/share/doc/tpnote/", "644"],
-    ["../docs/build/pdf/tpnote--manual.pdf", "usr/share/doc/tpnote/", "644"],
-    ["../docs/build/man/man1/tpnote.1.gz", "usr/share/man/man1/", "644"],
     ["target/release/tpnote", "usr/bin/tpnote", "755"],
     ["../assets/tpnote.svg", "usr/share/icons/", "644"]
 ]

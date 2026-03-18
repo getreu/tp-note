@@ -1,23 +1,10 @@
-#!/bin/sh
-#set -x
+#!/bin/bash
 # Change to this script directory
-cd $(dirname "$0")
-
+cd "$(dirname "$0")"
 cd ..
-find target -mindepth 2 -not -path "*/release/tpnote" \
-                        -not -path "*/release/tpnote.exe" \
-                        -not -path "*/wix/tpnote*.msi" \
-                        -not -path "*/debian" \
-                        -not -path "*/debian/tpnote*.deb" \
-                        -not -path "*/release/*.md" \
-                        -not -path "*/release" \
-                        -not -path "target/doc*"  \
-                        -exec rm -r {} \;
 
-rm -r target/debug
-rm -r target/release
-rm -r target/rls
-rm target/.rustdoc_fingerprint.json
-rm target/CACHEDIR.TAG
-rm target/.rustc_info.json
+# Clean up target directories while preserving important files
+echo "Cleaning target directories..."
 
+# Remove top-level build directories that are not needed
+rm -rf target

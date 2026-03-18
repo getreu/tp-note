@@ -1,19 +1,43 @@
-#!/bin/sh
+#!/bin/bash
 # Change to this script directory
-cd $(dirname "$0")
+cd "$(dirname "$0")"
+cd ..
+
+# Function to run functional tests
+run_functional_tests() {
+    echo "Running functional tests..."
+    echo "This may take several minutes..."
+
+    # Run functional tests in the Nix development environment
+    nix develop --command bash -c "
+        cd tests/functional &&
+        ./run-tests
+    "
+
+    if [ $? -eq 0 ]; then
+        echo "Functional tests completed successfully!"
+        return 0
+    else
+        echo "Functional tests failed!"
+        return 1
+    fi
+}
 
 # Unit testing
-
-if cargo test --all
+echo "Running unit tests..."
+if nix develop --command cargo test --all
 then
-  echo Cargo test succeeded.
+  echo "Cargo test succeeded."
 else
-  ( echo Cargo test failed. && exit 1 )
+  echo "Cargo test failed."
+  exit 1
 fi
 
-
 # Functional tests
-
-cd ../tests/functional/
-./run-tests
-
+run_functional_tests
+if [ $? -eq 0 ]; then
+  echo "Functional tests succeeded."
+else
+  echo "Functional tests failed."
+  exit 1
+fi
