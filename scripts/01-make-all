@@ -12,15 +12,15 @@ echo "Running tests..."
 ./11-test
 echo "Tests completed."
 
-# Build targets
-echo "Building targets..."
-./12-make-targets
-echo "Targets built."
-
 # Build documentation
 echo "Building documentation..."
-./15-make-docs
+./13-make-docs
 echo "Documentation built."
+
+# Build targets
+echo "Building targets..."
+./14-make-targets
+echo "Targets built."
 
 # Create packages
 echo "Creating Windows MSI package..."
