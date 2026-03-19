@@ -23,7 +23,7 @@
 cd "$(dirname "$0")/.."
 
 # Create the build directory structure
-mkdir -p build/{bin,package,documentation}
+mkdir -p build/{bin,package}
 
 # Create subdirectories for binaries and packages with Rust-style target triples
 mkdir -p build/bin/{x86_64-unknown-linux-gnu,musl-unknown-linux-gnu,x86_64-pc-windows-gnu,aarch64-unknown-linux-gnu,armv7-unknown-linux-gnueabihf,x86_64-apple-darwin,aarch64-apple-darwin}
