@@ -69,7 +69,7 @@
             ];
             nativeBuildInputs = with pkgs; [
               pkg-config
-              openssl.dev
+              #openssl.dev
             ];
             LD_LIBRARY_PATH =
               with pkgs;

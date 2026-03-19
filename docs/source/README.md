@@ -167,23 +167,23 @@ Repository:
 
 * Executable for Windows:
 
-    * [x86_64-pc-windows-gnu/release/tpnote.exe]
+    * [x86_64-pc-windows-gnu/tpnote.exe]
 
 * Linux binary (compiled with Debian):
 
-    * [x86_64-unknown-linux-gnu/release/tpnote]
+    * [x86_64-unknown-linux-gnu/tpnote]
 
     * The following "musl" version also works on a headless system.
 
-      [x86_64-unknown-linux-musl/release/tpnote]
+      [x86_64-unknown-linux-musl/tpnote]
 
-* Binaries for Raspberry Pi (32 bit):
+<!-- * Binaries for Raspberry Pi (32 bit): -->
 
-    * [armv7-unknown-linux-gnueabihf/release/tpnote]
+    <!-- * [armv7-unknown-linux-gnueabihf/tpnote] -->
 
-* Binaries for Raspberry Pi (64 bit):
+<!-- * Binaries for Raspberry Pi (64 bit): -->
 
-    * [aarch64-unknown-linux-gnu/release/tpnote]
+    <!-- * [aarch64-unknown-linux-gnu/tpnote] -->
 
 
 
@@ -425,18 +425,18 @@ Copyright:
 [constants in the API documentation]: https://docs.rs/tpnote-lib/latest/tpnote_lib/config/index.html#constants
 [Tp-Note on Gitlab]: https://gitlab.com/getreu/tp-note
 [Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
-[tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
+[tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote-latest-x86_64.msi
 [VirusTotal]: https://www.virustotal.com/gui/home/upload
-[x86_64-unknown-linux-gnu/debian/tpnote_latest_amd64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/debian/tpnote_latest_amd64.deb
+[x86_64-unknown-linux-gnu/tpnote_latest_amd64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote_latest_amd64.deb
 [Releases - getreu/tp-note]: https://github.com/getreu/tp-note/releases
-[x86_64-pc-windows-gnu/release/tpnote.exe]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-pc-windows-gnu/release/tpnote.exe
-[x86_64-unknown-linux-gnu/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-gnu/release/tpnote
-[x86_64-unknown-linux-musl/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/x86_64-unknown-linux-musl/release/tpnote
-[armv7-unknown-linux-gnueabihf/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/armv7-unknown-linux-gnueabihf/release/tpnote
-[aarch64-unknown-linux-gnu/release/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/aarch64-unknown-linux-gnu/release/tpnote
+[x86_64-pc-windows-gnu/tpnote.exe]: https://blog.getreu.net/projects/tp-note/_downloads/bin/x86_64-pc-windows-gnu/tpnote.exe
+[x86_64-unknown-linux-gnu/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/bin/x86_64-unknown-linux-gnu/tpnote
+[x86_64-unknown-linux-musl/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/bin/x86_64-unknown-linux-musl/tpnote
+[armv7-unknown-linux-gnueabihf/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/bin/armv7-unknown-linux-gnueabihf/tpnote
+[aarch64-unknown-linux-gnu/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/bin/aarch64-unknown-linux-gnu/tpnote
 [tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
 [tpnote.svg]: https://blog.getreu.net/projects/tp-note/assets/tpnote.svg
-[tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/wix/tpnote-latest-x86_64.msi
+[tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote-latest-x86_64.msi
 [Installation section]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html#installation
 [Customization section]: https://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization
 [Install Rust]: https://www.rust-lang.org/tools/install
