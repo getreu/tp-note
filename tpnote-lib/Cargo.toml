@@ -22,11 +22,23 @@ viewer = []
 html-escape = "0.2.13"
 itertools = "0.14.0"
 latex2mathml = { version = "0.2.3", optional = true }
-lingua = { version = "1.8.0", optional = true }
+lingua = { version = "1.8.0", optional = true, default-features = false, features = [ "english", "chinese", "hindi", "spanish", "french", "bengali", "portuguese", "russian", "german", "japanese", "polish", "italian", "dutch",  "greek", "czech", "hungarian", "serbian", "bulgarian", "croatian", "slovak", "slovene", "bosnian", "irish", "icelandic", "finnish", "estonian", "latvian", "lithuanian", "bokmal", "nynorsk", "swedish"] }
+### Other supported languages in v1.8.0 ordered by number of speakers:
+# "english", "chinese", "hindi", "spanish", "french", "arabic", "bengali",
+# "portuguese", "russian", "urdu", "indonesian", "german", "japanese",
+# "punjabi", "marathi", "telugu", "tamil", "korean", "vietnamese", "turkish",
+# "gujarati", "persian", "polish", "italian", "ukrainian", "dutch", "malay",
+# "thai", "romanian", "swahili", "greek", "czech", "hungarian", "serbian",
+# "bulgarian", "croatian", "slovak", "slovene", "bosnian", "macedonian",
+# "albanian", "belarusian", "kazakh", "azerbaijani", "armenian", "georgian",
+# "hebrew", "irish", "icelandic", "finnish", "estonian", "latvian",
+# "lithuanian", "catalan", "basque", "afrikaans", "bokmal", "nynorsk",
+# "maori", "mongolian", "ganda", "tagalog", "shona", "somali", "sotho",
+# "tswana", "tsonga", "esperanto", "latin", "swedish", "xhosa", "yoruba",
+# "zulu"
 log.workspace = true
 parking_lot.workspace = true
-# TODO: upgrade and remove pinning when rustc > 1.86
-parse-hyperlinks = "=0.29.2" # Plain text renderer.
+parse-hyperlinks = "0.29.2" # Plain text renderer.
 parse-hyperlinks-extras = "=0.29.2" # Plain text renderer.
 #parse-hyperlinks-extras = { path = "../../parse-hyperlinks/parse-hyperlinks-extras" }
 #parse-hyperlinks = { path = "../../parse-hyperlinks/parse-hyperlinks" }
