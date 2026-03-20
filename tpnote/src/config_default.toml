@@ -41,7 +41,7 @@ tty = false
 ### means of the text file's filename and creation date.
 add_header = true
 
-### Rewrite relative local links. 
+### Rewrite relative local links.
 ### Base: `FILENAME_ROOT_PATH_MARKER=".tpnote.toml"`.
 export_link_rewriting = "Long"
 
@@ -120,8 +120,7 @@ unix.browser = [
 ### Default command line argument list when launching external editor.
 ### The editor list is executed item by item until an editor is found.
 unix.editor = [
-    [ "alacritty", "-e", "hx", ],
-    [ "alacritty", "-e", "nvim", ],
+    [ "zeditor", "-w", "-n"],
     [ "codium", "-w", "-n", ],
     [ "flatpak", "run", "com.vscodium.codium", "-w", "-n", ],
     [ "code", "-w", "-n", ],
