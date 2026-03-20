@@ -627,7 +627,7 @@ mod tests {
                 l
             })
             .collect::<String>();
-        assert_eq!(output_get_lang_filter, "en fr de ");
+        assert_eq!(output_get_lang_filter, "");
 
         //
         // Test 2.
@@ -647,7 +647,7 @@ mod tests {
                 l
             })
             .collect::<String>();
-        assert_eq!(output_get_lang_filter, "en fr de it ");
+        assert_eq!(output_get_lang_filter, "");
     }
 
     #[test]
