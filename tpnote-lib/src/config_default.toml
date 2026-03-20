@@ -16,7 +16,7 @@ name = "base_scheme"
 
 ### List of characters that can be part of a _sort tag_.
 ### Besides the characters listed here, the digits `0..9` and
-### the lowercase letters `a..z` are always valid sort-tag characters. 
+### the lowercase letters `a..z` are always valid sort-tag characters.
 sort_tag.extra_chars = ".-_="
 
 ### If empty, the first character which is not in `filename.sort_tag.extra_chars`
@@ -33,10 +33,10 @@ sort_tag.extra_separator = "'"
 
 ### A sort-tag can have several counters. A counter is a set of digits or
 ### a set of lower case letters. A valid sort-tag (sequential or chronological)
-### can have at most this number of letters in succession. 
+### can have at most this number of letters in succession.
 sort_tag.letters_in_succession_max = 2
 
-### The criterion to tell if a sort tag is sequential or not: 
+### The criterion to tell if a sort tag is sequential or not:
 ### a sequential sort-tag must have at most `digits_in_succession_max ` number
 ### of digits in succession. By default, this is set to `3` assuming, that a
 ### chronological sort-tag usually contains some year information, e.g.
@@ -44,7 +44,7 @@ sort_tag.letters_in_succession_max = 2
 ### we require sequential sort-tags to have shorter numbers to satisfy this
 ### criterion, e.g. `3.1.123` or `3a123`.
 sort_tag.sequential.digits_in_succession_max = 3
- 
+
 ### If the stem of a filename ends with a pattern, that is similar to a copy
 ### counter, add this extra separator. It must be one of `TRIM_LINE_CHARS` (see
 ### definition in crate: `sanitize_filename_reader_friendly`) because they are
@@ -68,9 +68,9 @@ copy_counter.closing_brackets = ")"
 extension_default = "md"
 
 ### The variable `filename.extensions` lists all file extensions that Tp-Note
-### considers as its own note files. The list entry is a tuple defined as 
+### considers as its own note files. The list entry is a tuple defined as
 ### follows:
-###     Vec[(extension, 
+###     Vec[(extension,
 ###          html_to_markup(extension),
 ###          markup_to_html(extension)
 ###     )]
@@ -81,22 +81,22 @@ extension_default = "md"
 ### parameterizes the `html_to_markup` filter. It determines which converter is
 ### used. Currently, the following converters are implemented:
 ### * `Disabled`,
-### * `ToMarkdown` and 
+### * `ToMarkdown` and
 ### * `PassThrough`.
-### 
+###
 ### When Tp-Note's viewer displays a note file, the HTML output is generated
-### with `tmpl_html` templates. The templates contain some 
+### with `tmpl_html` templates. The templates contain some
 ### `markup_to_html(extension)` filters which are parametrized by the third
 ### value of the tuple. It determines which renderer is used.
-### Currently, the following renderers are implemented: 
-### * `Markdown`, 
-### * `ReStructuredText`, 
-### * `PassThrough`, 
-### * `PlainText` and 
-### * `RendererDisabled`. 
+### Currently, the following renderers are implemented:
+### * `Markdown`,
+### * `ReStructuredText`,
+### * `PassThrough`,
+### * `PlainText` and
+### * `RendererDisabled`.
 ###
 ### Normally, the rendered HTML is displayed to the user via his web browser.
-### Only when the selected renderer for a certain file extension is 
+### Only when the selected renderer for a certain file extension is
 ### `RendererDisabled`, then no viewer is started.
 ###
 ### NB: The list is ordered to look for the most common extensions first.
@@ -128,7 +128,7 @@ extensions = [
 ### After generating a new note with a content template, Tp-Note parses the
 ### resulting front matter variables, which may be localized. The variables, are
 ### then converted into front matter variables starting with `fm.fm_`.
-### 
+###
 ### The first item per line is the checked `fm.fm_`-variable as it appears
 ### in the templates.
 ### The second item per line is the translated variable name as it appears in the
@@ -154,11 +154,11 @@ fm_var.localization = [
 ### Before the front matter `fm.fm_` variables are applied to a filename template,
 ### their validity is checked. The following table lists test, every value has to
 ### pass. If one test fails the user is informed.
-### 
+###
 ### * `IsDefined`: Assert that the variable is defined in the template.
 ### * `IsString`: Assert, that if the variable is defined, its type -or all
 ###    subtypes- are `Value::String`.
-### * `IsNotEmptyString`: In addition to `IsString`, the condition asserts, that 
+### * `IsNotEmptyString`: In addition to `IsString`, the condition asserts, that
 ###    the string -or all substrings-) are not empty.
 ### * `IsNumber`: Assert, that if the variable is defined, its type -or all
 ###    subtypes- are `Value::Number`.
@@ -206,7 +206,7 @@ fm_var.assertions = [
 filter.get_lang.mode = "Multilingual"
 
 ### A list of language tags, defining languages the `get_lang` filter tries
-### to identify in its input. The user's default language subtag, as reported 
+### to identify in its input. The user's default language subtag, as reported
 ### from the operating system, is automatically added to the present list.
 ### The language recognition feature is disabled, when the user's default
 ### language, as reported from the operating system, is not supported by the
@@ -215,7 +215,8 @@ filter.get_lang.mode = "Multilingual"
 ### If the list `language_candiates` is empty, the algorithm searches for all
 ### available languages (currently 75). The environment variable
 ### `TPNOTE_LANG_DETECTION, if set, overwrites this setting.
-filter.get_lang.language_candidates = [ "en", "fr", "de" ]
+### Example: filter.get_lang.language_candidates = [ "en", "fr", "de" ]
+filter.get_lang.language_candidates = []
 
 ### Sets the desired value for the minimum relative distance measure.
 ### This is one of the parameters with which false positives can be reduced
@@ -304,7 +305,7 @@ from_dir_content = """
      | replace_empty(with = txt_clipboard | heading )
      | replace_empty(with = path | trim_file_sort_tag )
      | trim  -%}
-        
+
 {%- set stdin = stdin
      | html_to_markup(extension=extension_default, default=stdin)
      | append(newline=true) -%}
@@ -335,7 +336,7 @@ from_dir_content = """
   {{ fm.fm_sort_tag | to_yaml(key='fm_sort_tag') | append(newline=true) }}
 {%- endif -%}
 {%- if fm -%}
-  {{- fm 
+  {{- fm
     | remove(key='fm_title')
     | remove(key='fm_subtitle')
     | remove(key='fm_author')
@@ -344,8 +345,8 @@ from_dir_content = """
     | remove(key='fm_languages')
     | remove(key='fm_scheme')
     | remove(key='fm_sort_tag')
-    | to_yaml 
-    | prepend(newline=true) 
+    | to_yaml
+    | prepend(newline=true)
     | append(newline=true) -}}
 {%- endif -%}
 ---
@@ -511,7 +512,7 @@ from_dir_content = """
      | replace_empty(with = txt_clipboard | heading )
      | replace_empty(with = path | trim_file_sort_tag )
      | trim  -%}
-        
+
 {%- set stdin = stdin
      | html_to_markup(extension=extension_default, default=stdin)
      | append(newline=true) -%}
@@ -548,7 +549,7 @@ from_dir_content = """
 {{ 'zettel' | to_yaml(key='fm_scheme') }}
 {{ tag | to_yaml(key='fm_sort_tag') }}
 {% if fm -%}
-  {{- fm 
+  {{- fm
     | remove(key='fm_title')
     | remove(key='fm_keywords')
     | remove(key='fm_author')
@@ -1059,14 +1060,14 @@ exporter_highlighting_theme = "Solarized (light)"
 exporter_highlighting_css = ""
 
 ### A constant holding common CSS code, inserted into exported HTML documents
-### with the template variable `{{ exporter_doc.css }}`. 
+### with the template variable `{{ exporter_doc.css }}`.
 ### [CSS Paged Media Module Level 3](https://www.w3.org/TR/css-page-3/)
 exporter_doc_css = """
 /* Tp-Note's exporter document CSS */
 @page {
   @bottom-center {
     content: counter(page) "/" counter(pages);
-  } 
+  }
   size: A4 portrait;
 }
 
