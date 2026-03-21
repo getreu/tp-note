@@ -8,4 +8,4 @@ cd ..
 # Remove build directories safely
 rm -rf target
 rm -rf doc/build
-rm -rf "build/*"
+rm -rf build/*

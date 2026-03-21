@@ -32,10 +32,6 @@
 #
 # **Package Building:**
 # - `nix build .#tpnote-deb` → Creates Debian package
-# - `nix build .#tpnote-msi` → Creates Windows MSI (fully implemented)
-#
-# **Documentation:**
-# - `nix build .#documentation` → Generates complete documentation set
 {
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
@@ -43,7 +39,7 @@
   outputs =
     { nixpkgs, ... }:
     let
-      pname = "tp-note";
+      pname = "tpnote";
       version = "1.25.19";
     in
     {
@@ -81,7 +77,6 @@
               ];
           };
       };
-
       packages.x86_64-linux = {
         default =
           let
@@ -99,7 +94,9 @@
             inherit pname version;
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
+            cargoBuildFlags = [ "--locked" ];
             buildInputs = rpathLibs;
+            dontStrip = false;
             postFixup = ''patchelf --add-rpath "${pkgs.lib.makeLibraryPath rpathLibs}" $out/bin/tpnote'';
           };
         tpnote-x86_64-unknown-linux-gnu =
@@ -118,7 +115,9 @@
             inherit pname version;
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
+            cargoBuildFlags = [ "--locked" ];
             buildInputs = rpathLibs;
+            dontStrip = false;
             postFixup = ''patchelf --add-rpath "${pkgs.lib.makeLibraryPath rpathLibs}" $out/bin/tpnote'';
           };
         tpnote-x86_64-unknown-linux-musl =
@@ -135,61 +134,82 @@
             inherit pname version;
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
+            cargoBuildFlags = [ "--locked" ];
+            dontStrip = false;
             # Optional but recommended for smaller size
             CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
           };
         tpnote-armv7-unknown-linux-gnueabihf =
           let
-            base = import nixpkgs {
+            pkgs = import nixpkgs {
               system = "x86_64-linux";
+              crossSystem = {
+                config = "armv7l-unknown-linux-gnueabihf";
+              };
             };
-            pkgs = base.pkgsCross.armv7l-linux;
           in
           pkgs.rustPlatform.buildRustPackage {
             inherit pname version;
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
+            dontStrip = false;
+            cargoBuildFlags = [ "--locked" ];
           };
         tpnote-aarch64-unknown-linux-gnu =
           let
-            base = import nixpkgs {
+            pkgs = import nixpkgs {
               system = "x86_64-linux";
+              crossSystem = {
+                config = "aarch64-unknown-linux-gnu";
+              };
             };
-            pkgs = base.pkgsCross.aarch64-linux;
           in
           pkgs.rustPlatform.buildRustPackage {
             inherit pname version;
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
+            dontStrip = false;
+            cargoBuildFlags = [ "--locked" ];
           };
         tpnote-x86_64-apple-darwin =
           let
-            base = import nixpkgs {
+            pkgs = import nixpkgs {
               system = "x86_64-linux";
+              crossSystem = {
+                config = "x86_64-apple-darwin";
+              };
             };
-            pkgs = base.pkgsCross.darwin;
           in
           pkgs.rustPlatform.buildRustPackage {
             inherit pname version;
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
+            dontStrip = false;
+            cargoBuildFlags = [ "--locked" ];
           };
         tpnote-aarch64-apple-darwin =
           let
-            base = import nixpkgs {
+            pkgs = import nixpkgs {
               system = "x86_64-linux";
+              crossSystem = {
+                config = "aarch64-apple-darwin";
+              };
             };
-            pkgs = base.pkgsCross.aarch64-darwin;
           in
           pkgs.rustPlatform.buildRustPackage {
             inherit pname version;
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
+            dontStrip = false;
+            cargoBuildFlags = [ "--locked" ];
           };
         tpnote-x86_64-pc-windows-gnu =
           let
             base = import nixpkgs {
               system = "x86_64-linux";
+              crossSystem = {
+                config = "x86_64-pc-windows-gnu";
+              };
             };
             pkgs = base.pkgsCross.mingwW64;
           in
@@ -197,6 +217,8 @@
             inherit pname version;
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
+            dontStrip = false;
+            cargoBuildFlags = [ "--locked" ];
           };
         tpnote-deb =
           let
@@ -206,10 +228,10 @@
             inherit pname version;
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
-
+            cargoBuildFlags = [ "--locked" ];
             # Add cargo-deb to the build environment
             nativeBuildInputs = [ pkgs.cargo-deb ];
-
+            dontStrip = false;
             # Use proper phases to ensure the binary is built first
             phases = [
               "unpackPhase"
@@ -218,49 +240,15 @@
               "buildPhase"
               "installPhase"
             ];
-
             # Build the Rust project
             buildPhase = ''
               cargo build --release --package tpnote
             '';
-
             # Create the .deb package
             installPhase = ''
               mkdir -p $out
               # Ensure the deb package is built
               cargo deb --no-build --output $out/tp-note.deb
-            '';
-          };
-        tpnote-msi =
-          let
-            base = import nixpkgs {
-              system = "x86_64-linux";
-            };
-            pkgs = base.pkgsCross.mingwW64;
-          in
-          pkgs.stdenv.mkDerivation {
-            inherit pname version;
-            src = ./.;
-            buildInputs = [
-              pkgs.cargo
-              pkgs.rustc
-            ];
-            nativeBuildInputs = [
-              pkgs.meson
-              pkgs.ninja
-              pkgs.wix
-            ];
-            phases = [
-              "unpackPhase"
-              "buildPhase"
-              "installPhase"
-            ];
-            buildPhase = ''
-              cargo build --release --package tpnote
-            '';
-            installPhase = ''
-              mkdir -p $out
-              cp target/release/tpnote.exe $out/tpnote.exe
             '';
           };
       };

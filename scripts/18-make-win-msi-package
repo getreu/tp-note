@@ -15,7 +15,7 @@ EXE_NAME="${BIN_NAME}.exe"
 BIN_VERSION="$(grep -e '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/' | head -n 1)"
 
 rm -fR "$BUILD_DIR"
-mkdir "$BUILD_DIR"
+mkdir -p "$BUILD_DIR"
 chmod 777 "$BUILD_DIR"
 
 cp "./tpnote/tpnote.ico" "$BUILD_DIR"
