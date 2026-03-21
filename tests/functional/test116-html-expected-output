@@ -8,7 +8,7 @@
 @page {
   @bottom-center {
     content: counter(page) "/" counter(pages);
-  } 
+  }
   size: A4 portrait;
 }
 
