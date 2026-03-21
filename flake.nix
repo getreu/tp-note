@@ -123,15 +123,20 @@
           };
         tpnote-x86_64-unknown-linux-musl =
           let
-            base = import nixpkgs {
+            pkgs = import nixpkgs {
               system = "x86_64-linux";
+              crossSystem = {
+                config = "x86_64-unknown-linux-musl";
+                isStatic = true;
+              };
             };
-            pkgs = base.pkgsCross.musl64;
           in
           pkgs.rustPlatform.buildRustPackage {
             inherit pname version;
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
+            # Optional but recommended for smaller size
+            CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
           };
         tpnote-armv7-unknown-linux-gnueabihf =
           let
