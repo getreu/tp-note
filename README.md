@@ -165,25 +165,9 @@ Repository:
 
     5. Installation: see below.
 
-* Executable for Windows:
-
-    * [x86_64-pc-windows-gnu/tpnote.exe]
-
-* Linux binary (compiled with Debian):
-
-    * [x86_64-unknown-linux-gnu/tpnote]
-
-    * The following "musl" version also works on a headless system.
-
-      [x86_64-unknown-linux-musl/tpnote]
-
-<!-- * Binaries for Raspberry Pi (32 bit): -->
-
-    <!-- * [armv7-unknown-linux-gnueabihf/tpnote] -->
-
-<!-- * Binaries for Raspberry Pi (64 bit): -->
-
-    <!-- * [aarch64-unknown-linux-gnu/tpnote] -->
+* Precompiled binaries and packages for various architectures:
+  * [binaries]
+  * [packages]
 
 
 
@@ -429,12 +413,9 @@ Copyright:
 [VirusTotal]: https://www.virustotal.com/gui/home/upload
 [x86_64-unknown-linux-gnu/tpnote_latest_amd64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote_latest_amd64.deb
 [Releases - getreu/tp-note]: https://github.com/getreu/tp-note/releases
-[x86_64-pc-windows-gnu/tpnote.exe]: https://blog.getreu.net/projects/tp-note/_downloads/bin/x86_64-pc-windows-gnu/tpnote.exe
-[x86_64-unknown-linux-gnu/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/bin/x86_64-unknown-linux-gnu/tpnote
-[x86_64-unknown-linux-musl/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/bin/x86_64-unknown-linux-musl/tpnote
-[armv7-unknown-linux-gnueabihf/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/bin/armv7-unknown-linux-gnueabihf/tpnote
-[aarch64-unknown-linux-gnu/tpnote]: https://blog.getreu.net/projects/tp-note/_downloads/bin/aarch64-unknown-linux-gnu/tpnote
 [tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
+[binaries]: https://blog.getreu.net/projects/tp-note/_downloads/bin/
+[packages]: https://blog.getreu.net/projects/tp-note/_downloads/package
 [tpnote.svg]: https://blog.getreu.net/projects/tp-note/assets/tpnote.svg
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote-latest-x86_64.msi
 [Installation section]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html#installation
