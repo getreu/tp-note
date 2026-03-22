@@ -18,7 +18,11 @@ rust-version = "1.91.1"
 version = "1.25.19"
 
 [profile.release]
-strip = "symbols"
+# Change from "symbols" to true
+strip = true
+# Optional: further reduce size
+opt-level = "z"
+lto = true
 
 [workspace.dependencies]
 log = { version = "0.4.29", features = ["serde"] }

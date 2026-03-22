@@ -56,6 +56,7 @@
               rust-analyzer
               cargo-audit
               cargo-edit
+              cargo-binutils
               clippy
               rustfmt
               # openssl.dev
@@ -97,7 +98,14 @@
             cargoBuildFlags = [ "--locked" ];
             buildInputs = rpathLibs;
             dontStrip = false;
-            postFixup = ''patchelf --add-rpath "${pkgs.lib.makeLibraryPath rpathLibs}" $out/bin/tpnote'';
+            doCheck = false;
+            nativeBuildInputs = [
+              pkgs.cargo-binutils
+              pkgs.stdenv.cc.bintools
+            ];
+            postInstall = ''
+              strip $out/bin/tpnote
+            '';
           };
         tpnote-x86_64-unknown-linux-gnu =
           let
@@ -118,7 +126,14 @@
             cargoBuildFlags = [ "--locked" ];
             buildInputs = rpathLibs;
             dontStrip = false;
-            postFixup = ''patchelf --add-rpath "${pkgs.lib.makeLibraryPath rpathLibs}" $out/bin/tpnote'';
+            doCheck = false;
+            nativeBuildInputs = [
+              pkgs.cargo-binutils
+              pkgs.stdenv.cc.bintools
+            ];
+            postInstall = ''
+              strip $out/bin/tpnote
+            '';
           };
         tpnote-x86_64-unknown-linux-musl =
           let
@@ -136,8 +151,11 @@
             cargoLock.lockFile = ./Cargo.lock;
             cargoBuildFlags = [ "--locked" ];
             dontStrip = false;
-            # Optional but recommended for smaller size
-            CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
+            doCheck = false;
+            nativeBuildInputs = [
+              pkgs.cargo-binutils
+              pkgs.stdenv.cc.bintools
+            ];
           };
         tpnote-armv7-unknown-linux-gnueabihf =
           let
@@ -153,7 +171,15 @@
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
             dontStrip = false;
+            doCheck = false;
             cargoBuildFlags = [ "--locked" ];
+            nativeBuildInputs = [
+              pkgs.cargo-binutils
+              pkgs.stdenv.cc.bintools
+            ];
+            postInstall = ''
+              strip $out/bin/tpnote
+            '';
           };
         tpnote-aarch64-unknown-linux-gnu =
           let
@@ -170,6 +196,13 @@
             cargoLock.lockFile = ./Cargo.lock;
             dontStrip = false;
             cargoBuildFlags = [ "--locked" ];
+            nativeBuildInputs = [
+              pkgs.cargo-binutils
+              pkgs.stdenv.cc.bintools
+            ];
+            postInstall = ''
+              strip $out/bin/tpnote
+            '';
           };
         tpnote-x86_64-apple-darwin =
           let
@@ -185,7 +218,15 @@
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
             dontStrip = false;
+            doCheck = false;
             cargoBuildFlags = [ "--locked" ];
+            nativeBuildInputs = [
+              pkgs.cargo-binutils
+              pkgs.stdenv.cc.bintools
+            ];
+            postInstall = ''
+              strip $out/bin/tpnote
+            '';
           };
         tpnote-aarch64-apple-darwin =
           let
@@ -201,7 +242,15 @@
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
             dontStrip = false;
+            doCheck = false;
             cargoBuildFlags = [ "--locked" ];
+            nativeBuildInputs = [
+              pkgs.cargo-binutils
+              pkgs.stdenv.cc.bintools
+            ];
+            postInstall = ''
+              strip $out/bin/tpnote
+            '';
           };
         tpnote-x86_64-pc-windows-gnu =
           let
@@ -218,7 +267,9 @@
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
             dontStrip = false;
+            doCheck = false;
             cargoBuildFlags = [ "--locked" ];
+            nativeBuildInputs = [ pkgs.cargo-binutils ];
           };
         tpnote-deb =
           let
@@ -230,7 +281,10 @@
             cargoLock.lockFile = ./Cargo.lock;
             cargoBuildFlags = [ "--locked" ];
             # Add cargo-deb to the build environment
-            nativeBuildInputs = [ pkgs.cargo-deb ];
+            nativeBuildInputs = [
+              pkgs.cargo-deb
+              pkgs.cargo-binutils
+            ];
             dontStrip = false;
             # Use proper phases to ensure the binary is built first
             phases = [
