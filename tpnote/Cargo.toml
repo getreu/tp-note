@@ -47,7 +47,9 @@ displayed in the user's webbrowser.
 '''
 assets = [
     ["target/release/tpnote", "usr/bin/tpnote", "755"],
-    ["../assets/tpnote.svg", "usr/share/icons/", "644"]
+    ["../assets/tpnote.svg", "usr/share/icons/", "644"],
+    ["../docs/build/man/man1/tpnote.1", "usr/share/man/man1/", "644"],
+    ["../README.md", "usr/share/doc/tpnote/", "644"]
 ]
 
 [features]
