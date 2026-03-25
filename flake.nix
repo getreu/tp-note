@@ -154,7 +154,6 @@
             doCheck = false;
             nativeBuildInputs = [
               pkgs.cargo-binutils
-              pkgs.stdenv.cc.bintools
             ];
           };
         tpnote-armv7-unknown-linux-gnueabihf =
@@ -175,11 +174,7 @@
             cargoBuildFlags = [ "--locked" ];
             nativeBuildInputs = [
               pkgs.cargo-binutils
-              pkgs.stdenv.cc.bintools
             ];
-            postInstall = ''
-              strip $out/bin/tpnote
-            '';
           };
         tpnote-aarch64-unknown-linux-gnu =
           let
@@ -198,11 +193,7 @@
             cargoBuildFlags = [ "--locked" ];
             nativeBuildInputs = [
               pkgs.cargo-binutils
-              pkgs.stdenv.cc.bintools
             ];
-            postInstall = ''
-              strip $out/bin/tpnote
-            '';
           };
         tpnote-x86_64-apple-darwin =
           let
@@ -222,11 +213,7 @@
             cargoBuildFlags = [ "--locked" ];
             nativeBuildInputs = [
               pkgs.cargo-binutils
-              pkgs.stdenv.cc.bintools
             ];
-            postInstall = ''
-              strip $out/bin/tpnote
-            '';
           };
         tpnote-aarch64-apple-darwin =
           let
@@ -246,11 +233,7 @@
             cargoBuildFlags = [ "--locked" ];
             nativeBuildInputs = [
               pkgs.cargo-binutils
-              pkgs.stdenv.cc.bintools
             ];
-            postInstall = ''
-              strip $out/bin/tpnote
-            '';
           };
         tpnote-x86_64-pc-windows-gnu =
           let
