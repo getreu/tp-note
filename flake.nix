@@ -285,7 +285,7 @@
             installPhase = ''
               mkdir -p $out
               # Ensure the deb package is built
-              cargo deb --no-build --output $out/tp-note.deb
+              cargo deb --no-build --output $out/${pname}-${version}-x86_64.deb
             '';
           };
       };
