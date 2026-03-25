@@ -149,7 +149,7 @@ Repository:
 
 * Package compiled for Debian/Ubuntu:
 
-  [x86_64-unknown-linux-gnu/debian/tpnote_latest_amd64.deb]
+  [tpnote_latest_amd64.deb]
 
 ### Various binaries for Windows, MacOS and Linux
 
@@ -411,13 +411,13 @@ Copyright:
 [Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote-latest-x86_64.msi
 [VirusTotal]: https://www.virustotal.com/gui/home/upload
-[x86_64-unknown-linux-gnu/tpnote_latest_amd64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote_latest_amd64.deb
+[tpnote_latest_amd64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote_latest_amd64.deb
 [Releases - getreu/tp-note]: https://github.com/getreu/tp-note/releases
 [tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
 [binaries]: https://blog.getreu.net/projects/tp-note/_downloads/bin/
 [packages]: https://blog.getreu.net/projects/tp-note/_downloads/package
 [tpnote.svg]: https://blog.getreu.net/projects/tp-note/assets/tpnote.svg
-[tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote-latest-x86_64.msi
+[tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-pc-windows-gnu/tpnote-latest-x86_64.msi
 [Installation section]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html#installation
 [Customization section]: https://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization
 [Install Rust]: https://www.rust-lang.org/tools/install
