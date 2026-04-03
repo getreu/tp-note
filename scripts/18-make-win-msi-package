@@ -22,7 +22,7 @@ chmod 777 "$BUILD_DIR"
 
 cp "./tpnote/tpnote.ico" "$BUILD_DIR"
 cp "./build/bin/x86_64-pc-windows-gnu/$EXE_NAME" "$BUILD_DIR"
-cp "./wix/tpnote.wxs" "$BUILD_DIR"
+cp "./wix/tpnote.wxs" "$BUILD_DIR/tpnote.wxs"
 
 ### Build Windows installer package
 cd "$BUILD_DIR"
@@ -30,7 +30,7 @@ chmod 666 *
 
 # Create a version-specific Wix file with proper versioning
 # This ensures the UpgradeCode stays constant while version updates
-sed "s/Version=\"1.0.0\"/Version=\"$BIN_VERSION\"/" "./wix/tpnote.wxs" > "tpnote-tmp.wxs"
+sed "s/Version=\"1.0.0\"/Version=\"$BIN_VERSION\"/" "./tpnote.wxs" > "tpnote-tmp.wxs"
 
 # Enter the dev shell from the flake before running WiX
 nix develop "$PROJECT_DIR/wix" --command \
