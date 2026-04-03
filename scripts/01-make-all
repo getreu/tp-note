@@ -27,6 +27,11 @@ echo "Creating Windows MSI package..."
 ./18-make-win-msi-package
 echo "Windows MSI package created."
 
+# Generate winget manifests
+echo "Generating winget manifests..."
+./25-generate-winget-package
+echo "Winget manifests generated."
+
 # Create symlinks
 echo "Creating installer symlinks..."
 ./19-symlink-installer
@@ -34,7 +39,7 @@ echo "Installer symlinks created."
 
 # Final cleanup
 echo "Performing final cleanup..."
-./20-clear-targets-keep-binaries
+./30-clear-targets-keep-binaries
 echo "Final cleanup completed."
 
 echo "All build steps completed successfully!"
