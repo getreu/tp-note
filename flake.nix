@@ -59,6 +59,7 @@
               cargo-binutils
               clippy
               rustfmt
+              komac
               # openssl.dev
               git
               # gcc # C compiler needed for some Rust crates
