@@ -40,7 +40,7 @@ cd $project_dir
 print "Initializing directory structure..."
 let archs = $target_map.bin_dir
 mkdir ...($archs | each { |it| [$"build/bin/($it)", $"build/package/($it)"] } | flatten)
-chmod -R u+w build/
+#chmod -R u+w build/
 
 # --- Helper Functions ---
 
