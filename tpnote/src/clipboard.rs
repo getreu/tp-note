@@ -11,15 +11,6 @@ use tpnote_lib::content::ContentString;
 #[cfg(feature = "read-clipboard")]
 use tpnote_lib::text_reader::StringExt;
 #[cfg(feature = "read-clipboard")]
-#[cfg(unix)]
-use tpnote_lib::text_reader::read_as_string_with_crlf_suppression;
-#[cfg(feature = "read-clipboard")]
-#[cfg(unix)]
-use wl_clipboard_rs::copy;
-#[cfg(feature = "read-clipboard")]
-#[cfg(unix)]
-use wl_clipboard_rs::paste;
-
 #[derive(Debug, PartialEq, Eq)]
 pub struct SystemClipboard {
     pub html: ContentString,
@@ -41,49 +32,18 @@ impl SystemClipboard {
         let mut txt_content = String::new();
         let mut html_content = String::new();
 
-        #[cfg(unix)]
-        {
-            // Query Wayland clipboard
-            // Html clipboard content
-            if let Ok((pipe_reader, _)) = paste::get_contents(
-                paste::ClipboardType::Regular,
-                paste::Seat::Unspecified,
-                paste::MimeType::Specific("text/html"),
-            ) {
-                let html_content =
-                    read_as_string_with_crlf_suppression(pipe_reader).unwrap_or_default();
-
-                if !html_content.is_empty() {
-                    log::trace!("Got HTML Wayland clipboard:\n {}", html_content);
-                }
+        // Query clipboard.
+        if let Ok(ctx) = ClipboardContext::new() {
+            if let Ok(html) = ctx.get_html() {
+                // As this is HTML what the newline kind does not matter
+                // here.
+                log::trace!("Got HTML clipboard:\n {}", html_content);
+                html_content = html;
             };
-            // Plain text clipboard content
-            if let Ok((pipe_reader, _)) = paste::get_contents(
-                paste::ClipboardType::Regular,
-                paste::Seat::Unspecified,
-                paste::MimeType::Specific("plain/text"),
-            ) {
-                let txt_content =
-                    read_as_string_with_crlf_suppression(pipe_reader).unwrap_or_default();
-
-                log::trace!("Got text Wayland clipboard:\n {}", txt_content);
+            if let Ok(txt) = ctx.get_text() {
+                txt_content = txt.crlf_suppressor_string();
+                log::trace!("Got text clipboard:\n {}", txt_content);
             };
-        }
-
-        if html_content.is_empty() && txt_content.is_empty() {
-            // Query X11 clipboard.
-            if let Ok(ctx) = ClipboardContext::new() {
-                if let Ok(html) = ctx.get_html() {
-                    // As this is HTML what the newline kind does not matter
-                    // here.
-                    log::trace!("Got HTML non-wayland clipboard:\n {}", html_content);
-                    html_content = html;
-                };
-                if let Ok(txt) = ctx.get_text() {
-                    txt_content = txt.crlf_suppressor_string();
-                    log::trace!("Got text non-wayland clipboard:\n {}", txt_content);
-                };
-            }
         }
 
         Self {
@@ -107,11 +67,6 @@ impl SystemClipboard {
     /// Empty the clipboard.
     #[inline]
     pub(crate) fn empty() {
-        // Clear Wayland clipboard.
-        #[cfg(feature = "read-clipboard")]
-        #[cfg(unix)]
-        let _ = copy::clear(copy::ClipboardType::Regular, copy::Seat::All);
-
         // Clear X11 and other clipboards.
         #[cfg(feature = "read-clipboard")]
         if let Ok(ctx) = clipboard_rs::ClipboardContext::new() {
