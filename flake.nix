@@ -40,7 +40,7 @@
     { nixpkgs, ... }:
     let
       pname = "tpnote";
-      version = "1.25.19";
+      version = "1.25.20";
     in
     {
       devShells.x86_64-linux = {
