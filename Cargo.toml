@@ -15,7 +15,7 @@ license = "MIT/Apache-2.0"
 readme = "README.md"
 repository = "https://gitlab.com/getreu/tp-note"
 rust-version = "1.91.1"
-version = "1.25.19"
+version = "1.25.20"
 
 [profile.release]
 # Change from "symbols" to true
@@ -27,9 +27,9 @@ lto = true
 [workspace.dependencies]
 log = { version = "0.4.29", features = ["serde"] }
 parking_lot = "0.12.5"
-sanitize-filename-reader-friendly = "2.3.0"
+sanitize-filename-reader-friendly = "2.3.1"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_yaml = "0.9.34"
 tera = { version = "1.20.1", default-features = true }
 thiserror = "2.0.18"
-toml = "1.0.6"
+toml = "1.1.2"
