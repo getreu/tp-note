@@ -9,6 +9,17 @@ debug = "Error"
 ### (Markdown)-renderer, HTML server and a web browser launcher set to `true`.
 edit = false
 
+### When `force_lang` is set to a non-empty _LANGUAGE_TAG_ string, the
+### nutural language detection while creating a new note file is disabled
+### _LANGUAGE_TAG_ is used instead. _LANGUAGE_TAG_ is formatted as IETF BCP
+### 47 language tag, e.g. '`en-US`'. If _LANGUAGE_TAG_ equals '`-`', the
+### environment variable '`TPNOTE_LANG`' determines the language instead; or, if
+### the latter is not defined, the user's default language, as reported from the
+### operating system's locale setting, is decisive.
+### If the _LANGUAGE_TAG_ string is empty, `force_lang` is considered
+### unset (`None`).
+force_lang = ""
+
 ### Default value for the command line flag `--no-filename-sync` to disable
 ### the title to filename synchronization mechanism permanently.
 ### If set to `true`, the corresponding command line flag is ignored.

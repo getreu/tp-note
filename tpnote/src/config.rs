@@ -7,8 +7,8 @@ use crate::settings::DOC_PATH;
 use crate::settings::ENV_VAR_TPNOTE_CONFIG;
 use directories::ProjectDirs;
 use parking_lot::RwLock;
-use serde::Deserialize;
 use serde::Serialize;
+use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
 use std::env;
 use std::fs;
@@ -114,6 +114,8 @@ pub struct OsType<T> {
 pub struct ArgDefault {
     pub debug: ClapLevelFilter,
     pub edit: bool,
+    #[serde(deserialize_with = "deserialize_empty_string_as_none")]
+    pub force_lang: Option<String>,
     pub no_filename_sync: bool,
     pub popup: bool,
     pub scheme: String,
@@ -128,6 +130,7 @@ impl ::std::default::Default for ArgDefault {
         ArgDefault {
             debug: ClapLevelFilter::Error,
             edit: false,
+            force_lang: None,
             no_filename_sync: false,
             popup: false,
             scheme: "default".to_string(),
@@ -252,8 +255,6 @@ impl Cfg {
             // Copy the `lib_cfg` into `LIB_CFG`.
             let mut c = LIB_CFG.write();
             *c = lib_cfg; // Release lock.
-            
-            //_cfg;
 
             // We cannot use the logger here, it is too early.
             if ARGS.debug == Some(ClapLevelFilter::Trace) && ARGS.batch && ARGS.version {
@@ -523,4 +524,12 @@ mod tests {
             assert_eq!(lib_cfg.scheme[didx].name, "default");
         } // Free `LIB_CFG` lock.
     }
+}
+
+fn deserialize_empty_string_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    if s.is_empty() { Ok(None) } else { Ok(Some(s)) }
 }

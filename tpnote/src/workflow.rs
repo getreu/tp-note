@@ -43,7 +43,11 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
         workflow_builder.force_scheme(scheme);
     }
 
-    if let Some(lang) = ARGS.force_lang.as_deref() {
+    if let Some(lang) = ARGS
+        .force_lang
+        .as_deref()
+        .or(CFG.arg_default.force_lang.as_deref())
+    {
         if lang == "-" {
             workflow_builder.force_lang("");
         } else {

@@ -731,11 +731,13 @@ change the default page layout by modifying the HTML template with the
 **-l** _LANGUAGE_TAG_, **\--force-lang**=_LANGUAGE_TAG_
 
 > Disables the automatic language detection while creating a new note file
-> and use _LANGUAGE_TAG_ instead. _LANGUAGE_TAG_ is formatted as IETF BCP
+> and uses _LANGUAGE_TAG_ instead. _LANGUAGE_TAG_ is formatted as IETF BCP
 > 47 language tag, e.g. '`en-US`'. If _LANGUAGE_TAG_ equals '`-`', the
 > environment variable '`TPNOTE_LANG`' determines the language instead; or, if
 > the latter is not defined, the user's default language, as reported from the
 > operating system's locale setting, is decisive.
+> The configuration file variable '`arg_default.force_lang`' has the same
+> effect as the above when set to a non-empty _LANGUAGE_TAG_ string.
 
 **-p** _PORT_, **\--port**=_PORT_
 
