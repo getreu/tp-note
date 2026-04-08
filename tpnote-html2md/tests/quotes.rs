@@ -19,7 +19,9 @@ And some text after it"
 
 #[test]
 fn test_quotes2() {
-    let md = parse_html("<p><blockquote>here's<blockquote>nested quote!</blockquote> a quote\n next line of it</blockquote></p>");
+    let md = parse_html(
+        "<p><blockquote>here's<blockquote>nested quote!</blockquote> a quote\n next line of it</blockquote></p>",
+    );
     assert_eq!(
         md,
         "\
@@ -53,7 +55,10 @@ fn test_details() {
     </details>
     "};
     let md = parse_html(html);
-    assert_eq!(md, "<details> <summary>There are more things in heaven and Earth, **Horatio**</summary>\n\nThan are dreamt of in your philosophy\n\n</details>")
+    assert_eq!(
+        md,
+        "<details> <summary>There are more things in heaven and Earth, **Horatio**</summary>\n\nThan are dreamt of in your philosophy\n\n</details>"
+    )
 }
 
 #[test]

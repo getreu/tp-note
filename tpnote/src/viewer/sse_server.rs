@@ -15,7 +15,7 @@ use std::net::SocketAddrV4;
 use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
 use std::str;
-use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
+use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::SystemTime;

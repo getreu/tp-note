@@ -41,10 +41,11 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
             if s.is_empty() {
                 &app_args.editor
             } else {
-                vv = vec![s
-                    .split_ascii_whitespace()
-                    .map(|s| percent_decode_str(s).decode_utf8_lossy().to_string())
-                    .collect::<Vec<String>>()];
+                vv = vec![
+                    s.split_ascii_whitespace()
+                        .map(|s| percent_decode_str(s).decode_utf8_lossy().to_string())
+                        .collect::<Vec<String>>(),
+                ];
                 &vv
             }
         }
@@ -113,11 +114,10 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
         // Connect `stdin` of child process to `/dev/tty`.
         #[cfg(not(target_family = "windows"))]
         let (config_stdin, config_stdout) = if *RUNS_ON_CONSOLE {
-            match File::open("/dev/tty") { Ok(file) => {
-                (Stdio::from(file), Stdio::inherit())
-            } _ => {
-                (Stdio::null(), Stdio::null())
-            }}
+            match File::open("/dev/tty") {
+                Ok(file) => (Stdio::from(file), Stdio::inherit()),
+                _ => (Stdio::null(), Stdio::null()),
+            }
         } else {
             (Stdio::null(), Stdio::null())
         };

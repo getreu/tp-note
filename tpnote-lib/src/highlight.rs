@@ -124,7 +124,7 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
 #[cfg(test)]
 mod test {
     use crate::highlight::SyntaxPreprocessor;
-    use pulldown_cmark::{html, Options, Parser};
+    use pulldown_cmark::{Options, Parser, html};
 
     #[test]
     fn test_latex_math() {

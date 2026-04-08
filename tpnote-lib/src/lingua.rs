@@ -112,7 +112,6 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
 
     let texts = sniplets.as_slice();
 
-
     // Detect languages.
     use crate::FlattenWithIndexExt;
     let detected_languages: Vec<String> = match &settings.get_lang_filter.mode {

@@ -2,8 +2,8 @@
 //! In this documentation, the terms “YAML header”, ”header” and ”front matter"
 //! are used as synonyms for the note's meta data block at the beginning
 //! of the text file. Technically this is a wrapper around a `tera::Map`.
-use crate::error::NoteError;
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
+use crate::error::NoteError;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::str;

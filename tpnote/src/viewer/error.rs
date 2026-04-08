@@ -46,9 +46,7 @@ pub enum ViewerError {
     StreamParse { source_str: String },
 
     /// Remedy: Check the template syntax.
-    #[error(
-        "Failed to render the HTML error page (cf. `{tmpl}` in configuration file).\n{source}"
-    )]
+    #[error("Failed to render the HTML error page (cf. `{tmpl}` in configuration file).\n{source}")]
     RenderErrorPage { tmpl: String, source: NoteError },
 
     /// File access error.

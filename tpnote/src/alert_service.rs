@@ -1,13 +1,13 @@
 //! Receives strings by a message channel, queues them and displays them
 //! one by one in popup alert windows.
 
-use std::sync::mpsc::sync_channel;
+use std::sync::LazyLock;
+use std::sync::Mutex;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::RecvTimeoutError;
 use std::sync::mpsc::SendError;
 use std::sync::mpsc::SyncSender;
-use std::sync::LazyLock;
-use std::sync::Mutex;
+use std::sync::mpsc::sync_channel;
 use std::thread;
 use std::thread::sleep;
 use std::time::Duration;

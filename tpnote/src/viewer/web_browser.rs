@@ -8,7 +8,7 @@ use percent_encoding::percent_decode_str;
 use std::env;
 use std::process::Command;
 use std::process::Stdio;
-use webbrowser::{open_browser, Browser};
+use webbrowser::{Browser, open_browser};
 
 #[inline]
 /// Launches a web browser and displays the note's HTML rendition.
@@ -53,10 +53,11 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
             &app_args.browser
         } else {
             var_name = ENV_VAR_TPNOTE_BROWSER.to_string();
-            vv = vec![s
-                .split_ascii_whitespace()
-                .map(|s| percent_decode_str(s).decode_utf8_lossy().to_string())
-                .collect::<Vec<String>>()];
+            vv = vec![
+                s.split_ascii_whitespace()
+                    .map(|s| percent_decode_str(s).decode_utf8_lossy().to_string())
+                    .collect::<Vec<String>>(),
+            ];
             &vv
         }
     } else {

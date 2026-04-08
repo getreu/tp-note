@@ -1,8 +1,8 @@
 //! Sets configuration defaults, reads, and writes Tp-Note's configuration
 //! file and exposes the configuration as `static` variable.
 use crate::error::ConfigFileError;
-use crate::settings::ClapLevelFilter;
 use crate::settings::ARGS;
+use crate::settings::ClapLevelFilter;
 use crate::settings::DOC_PATH;
 use crate::settings::ENV_VAR_TPNOTE_CONFIG;
 use directories::ProjectDirs;
@@ -21,17 +21,17 @@ use std::str::FromStr;
 use std::sync::LazyLock;
 use tera::Tera;
 use toml::Value;
-use tpnote_lib::config::LibCfg;
-use tpnote_lib::config::LocalLinkKind;
-use tpnote_lib::config::TmplHtml;
 use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::config::LIB_CFG_RAW_FIELD_NAMES;
 use tpnote_lib::config::LIB_CONFIG_DEFAULT_TOML;
+use tpnote_lib::config::LibCfg;
+use tpnote_lib::config::LocalLinkKind;
+use tpnote_lib::config::TmplHtml;
 use tpnote_lib::config_value::CfgVal;
 use tpnote_lib::context::Context;
-use tpnote_lib::text_reader::read_as_string_with_crlf_suppression;
 use tpnote_lib::filename::NotePathBuf;
+use tpnote_lib::text_reader::read_as_string_with_crlf_suppression;
 
 /// Set the minimum required configuration file version that is compatible with
 /// this Tp-Note version.
@@ -229,9 +229,11 @@ impl Cfg {
         let cfg_val = config_paths
             .iter()
             .filter_map(|path| File::open(path).ok())
-            .map(|reader| read_as_string_with_crlf_suppression(reader).map_err(ConfigFileError::from)
-                .and_then(|config| toml::from_str(&config).map_err(ConfigFileError::from))
-            )
+            .map(|reader| {
+                read_as_string_with_crlf_suppression(reader)
+                    .map_err(ConfigFileError::from)
+                    .and_then(|config| toml::from_str(&config).map_err(ConfigFileError::from))
+            })
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
             .fold(base_config, CfgVal::merge);
@@ -250,7 +252,8 @@ impl Cfg {
             // Copy the `lib_cfg` into `LIB_CFG`.
             let mut c = LIB_CFG.write();
             *c = lib_cfg; // Release lock.
-                          //_cfg;
+            
+            //_cfg;
 
             // We cannot use the logger here, it is too early.
             if ARGS.debug == Some(ClapLevelFilter::Trace) && ARGS.batch && ARGS.version {

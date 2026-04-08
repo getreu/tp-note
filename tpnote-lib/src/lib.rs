@@ -204,9 +204,9 @@ mod tests {
 
         // Test with just one element in the inner iterator (outer iterator has multiple elements)
         let data = vec![
-            vec!['a'], // Inner iterator has one element
+            vec!['a'],      // Inner iterator has one element
             vec!['b', 'c'], // Inner iterator has one element
-            vec!['d'], // Inner iterator has one element
+            vec!['d'],      // Inner iterator has one element
         ];
 
         let result: Vec<(usize, char)> = data.into_iter().flatten_with_index().collect();

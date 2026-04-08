@@ -7,7 +7,7 @@ use crate::markup5ever_rcdom;
 
 use markup5ever_rcdom::Handle;
 
-use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
+use percent_encoding::{AsciiSet, CONTROLS, utf8_percent_encode};
 
 const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'<').add(b'>').add(b'`');
 
