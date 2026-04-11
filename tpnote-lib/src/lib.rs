@@ -79,11 +79,10 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             // If we have a current inner iterator, try to get the next element from it
-            if let Some(inner) = &mut self.current_inner {
-                if let Some(item) = inner.next() {
+            if let Some(inner) = &mut self.current_inner
+                && let Some(item) = inner.next() {
                     return Some((self.outer_index - 1, item)); // -1 because we already incremented
                 }
-            }
 
             // Current inner is exhausted (or None), get the next outer element
             let next_outer = self.iter.next()?;

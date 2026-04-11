@@ -127,15 +127,14 @@ fn to_yaml_filter<S: BuildHasher>(
                 let mut insert_pos = 0;
                 let mut inserts_n = 0;
                 if let Some(colpos) = l.find(": ") {
-                    if let Some(key_pos) = l.find(char::is_alphabetic) {
-                        if key_pos < colpos
+                    if let Some(key_pos) = l.find(char::is_alphabetic)
+                        && key_pos < colpos
                             && l.find('\'').is_none_or(|p| p >= colpos)
                             && l.find("\"'").is_none_or(|p| p >= colpos)
                         {
                             insert_pos = colpos + ": ".len();
                             inserts_n = (tab as usize).saturating_sub(insert_pos);
                         }
-                    }
                 } else if l.starts_with("- ") {
                     inserts_n = tab as usize;
                 };
@@ -499,41 +498,34 @@ fn heading_filter<S: BuildHasher>(
     // Find the first heading, can finish with `. `, `.\n` or `.\r\n` on Windows.
     let mut index = p.len();
 
-    if let Some(i) = p.find(". ") {
-        if i < index {
+    if let Some(i) = p.find(". ")
+        && i < index {
             index = i;
         }
-    }
-    if let Some(i) = p.find(".\n") {
-        if i < index {
+    if let Some(i) = p.find(".\n")
+        && i < index {
             index = i;
         }
-    }
-    if let Some(i) = p.find(".\r\n") {
-        if i < index {
+    if let Some(i) = p.find(".\r\n")
+        && i < index {
             index = i;
         }
-    }
-    if let Some(i) = p.find('!') {
-        if i < index {
+    if let Some(i) = p.find('!')
+        && i < index {
             index = i;
         }
-    }
-    if let Some(i) = p.find('?') {
-        if i < index {
+    if let Some(i) = p.find('?')
+        && i < index {
             index = i;
         }
-    }
-    if let Some(i) = p.find("\n\n") {
-        if i < index {
+    if let Some(i) = p.find("\n\n")
+        && i < index {
             index = i;
         }
-    }
-    if let Some(i) = p.find("\r\n\r\n") {
-        if i < index {
+    if let Some(i) = p.find("\r\n\r\n")
+        && i < index {
             index = i;
         }
-    }
     let content_heading = p[0..index].to_string();
 
     Ok(Value::String(content_heading))
@@ -694,14 +686,13 @@ fn prepend_filter<S: BuildHasher>(
             .to_string();
     };
 
-    if let Some(Value::Bool(newline)) = args.get("newline") {
-        if *newline && !res.is_empty() {
+    if let Some(Value::Bool(newline)) = args.get("newline")
+        && *newline && !res.is_empty() {
             let mut s = String::new();
             s.push('\n');
             s.push_str(&res);
             res = s;
-        }
-    };
+        };
 
     Ok(Value::String(res))
 }

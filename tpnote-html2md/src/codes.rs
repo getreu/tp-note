@@ -10,11 +10,10 @@ pub struct CodeHandler {
 impl CodeHandler {
     fn find_code_child(handle: &Handle) -> Option<Handle> {
         for child in handle.children.borrow().iter() {
-            if let NodeData::Element { ref name, .. } = child.data {
-                if name.local.as_ref() == "code" {
+            if let NodeData::Element { ref name, .. } = child.data
+                && name.local.as_ref() == "code" {
                     return Some(child.clone());
                 }
-            }
         }
         None
     }
@@ -35,8 +34,8 @@ impl CodeHandler {
                 }
                 printer.append_str("\n```");
 
-                if let Some(handle) = start.and_then(Self::find_code_child) {
-                    if let NodeData::Element { ref attrs, .. } = handle.data {
+                if let Some(handle) = start.and_then(Self::find_code_child)
+                    && let NodeData::Element { ref attrs, .. } = handle.data {
                         let attrs = attrs.borrow();
                         let class = attrs
                             .iter()
@@ -52,7 +51,6 @@ impl CodeHandler {
                             }
                         }
                     }
-                }
 
                 printer.insert_newline();
 

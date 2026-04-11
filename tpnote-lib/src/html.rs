@@ -487,24 +487,21 @@ impl Hyperlink for Link<'_> {
         match format.split_once(FORMAT_FROM_TO_SEPARATOR) {
             // No `:`
             None => {
-                if !format.is_empty() {
-                    if let Some(idx) = short_text.find(format) {
+                if !format.is_empty()
+                    && let Some(idx) = short_text.find(format) {
                         short_text = &short_text[..idx];
                     };
-                }
             }
             // Some `:`
             Some((from, to)) => {
-                if !from.is_empty() {
-                    if let Some(idx) = short_text.find(from) {
+                if !from.is_empty()
+                    && let Some(idx) = short_text.find(from) {
                         short_text = &short_text[(idx + from.len())..];
                     };
-                }
-                if !to.is_empty() {
-                    if let Some(idx) = short_text.find(to) {
+                if !to.is_empty()
+                    && let Some(idx) = short_text.find(to) {
                         short_text = &short_text[..idx];
                     };
-                }
             }
         }
         // Store the result.

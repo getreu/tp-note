@@ -22,11 +22,10 @@ impl TagHandler for ImgHandler {
     fn handle(&mut self, tag: &Handle, printer: &mut StructuredPrinter) {
         // hack: detect if the image has associated style and has display in block mode
         let style_tag = get_tag_attr(tag, "src");
-        if let Some(style) = style_tag {
-            if style.contains("display: block") {
+        if let Some(style) = style_tag
+            && style.contains("display: block") {
                 self.block_mode = true
             }
-        }
 
         if self.block_mode {
             // make image on new paragraph

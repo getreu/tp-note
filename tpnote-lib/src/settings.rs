@@ -275,8 +275,8 @@ impl Settings {
         } else {
             // [Linux: Define Locale and Language Settings -
             // ShellHacks](https://www.shellhacks.com/linux-define-locale-language-settings/)
-            if let Ok(lang_env) = env::var(ENV_VAR_LANG) {
-                if !lang_env.is_empty() {
+            if let Ok(lang_env) = env::var(ENV_VAR_LANG)
+                && !lang_env.is_empty() {
                     // [ISO 639](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language code.
                     let mut language = "";
                     // [ISO 3166](https://en.wikipedia.org/wiki/ISO_3166-1#Current_codes) country code.
@@ -291,7 +291,6 @@ impl Settings {
                     lang.push('-');
                     lang.push_str(territory);
                 }
-            }
         }
 
         // Get the user's language tag.
@@ -351,15 +350,12 @@ impl Settings {
 
         // Add the user's language subtag as reported from the OS.
         // Silently ignore if anything goes wrong here.
-        if !self.lang.is_empty() {
-            if let Some((lang_subtag, _)) = self.lang.split_once('-') {
-                if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
-                    if !iso_codes.contains(&iso_code) {
+        if !self.lang.is_empty()
+            && let Some((lang_subtag, _)) = self.lang.split_once('-')
+                && let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag)
+                    && !iso_codes.contains(&iso_code) {
                         iso_codes.push(iso_code);
                     }
-                }
-            }
-        }
 
         // Check if there are at least 2 languages in the list.
         if iso_codes.len() <= 1 {
@@ -387,14 +383,13 @@ impl Settings {
             };
         }
         // Insert the user's default language and region in the Map.
-        if !self.lang.is_empty() {
-            if let Some((lang_subtag, _)) = self.lang.split_once('-') {
+        if !self.lang.is_empty()
+            && let Some((lang_subtag, _)) = self.lang.split_once('-') {
                 // Do not overwrite existing languages.
                 if !lang_subtag.is_empty() && !btm.contains_key(lang_subtag) {
                     btm.insert(lang_subtag.to_string(), self.lang.to_string());
                 }
             };
-        }
 
         // Store result.
         self.map_lang_filter_btmap = Some(btm);
@@ -478,9 +473,9 @@ impl Settings {
                 Ok(mut iso_codes) => {
                     // Add the user's language subtag as reported from the OS.
                     // Continue the happy path.
-                    if !self.lang.is_empty() {
-                        if let Some(lang_subtag) = self.lang.split('-').next() {
-                            if let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
+                    if !self.lang.is_empty()
+                        && let Some(lang_subtag) = self.lang.split('-').next()
+                            && let Ok(iso_code) = IsoCode639_1::from_str(lang_subtag) {
                                 if !iso_codes.contains(&iso_code) {
                                     iso_codes.push(iso_code);
                                 }
@@ -489,8 +484,6 @@ impl Settings {
                                     hm.insert(lang_subtag.to_string(), self.lang.to_string());
                                 }
                             }
-                        }
-                    }
 
                     // Store result.
                     if all_languages_selected {
