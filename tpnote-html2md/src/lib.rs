@@ -342,7 +342,7 @@ pub mod android {
 
     #[no_mangle]
     pub unsafe extern "C" fn Java_com_kanedias_html2md_Html2Markdown_parse(
-        env: JNIEnv,
+        mut env: JNIEnv,
         _clazz: JClass,
         html: JString,
     ) -> jstring {
@@ -354,12 +354,12 @@ pub mod android {
         let output = env
             .new_string(markdown)
             .expect("Couldn't create java string!");
-        output.into_inner()
+        output.into_raw()
     }
 
     #[no_mangle]
     pub unsafe extern "C" fn Java_com_kanedias_html2md_Html2Markdown_parseExtended(
-        env: JNIEnv,
+        mut env: JNIEnv,
         _clazz: JClass,
         html: JString,
     ) -> jstring {
@@ -371,6 +371,6 @@ pub mod android {
         let output = env
             .new_string(markdown)
             .expect("Couldn't create java string!");
-        output.into_inner()
+        output.into_raw()
     }
 }
