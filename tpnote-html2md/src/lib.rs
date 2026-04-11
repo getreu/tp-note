@@ -1,9 +1,9 @@
 use std::boxed::Box;
 use std::collections::HashMap;
-use std::sync::LazyLock;
-
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
+use std::ffi::CString;
 use std::os::raw::c_char;
+use std::sync::LazyLock;
 
 use regex::Regex;
 
@@ -92,15 +92,12 @@ pub fn parse_html(html: &str) -> String {
 /// Markdown parsers usually strip them down when rendering but they
 /// may be useful for later processing
 pub fn parse_html_extended(html: &str) -> String {
-    struct SpanAsIsTagFactory;
-    impl TagHandlerFactory for SpanAsIsTagFactory {
-        fn instantiate(&self) -> Box<dyn TagHandler> {
-            Box::new(HtmlCherryPickHandler::default())
-        }
-    }
-
     let mut tag_factory: HashMap<String, Box<dyn TagHandlerFactory>> = HashMap::new();
-    tag_factory.insert(String::from("span"), Box::new(SpanAsIsTagFactory {}));
+
+    tag_factory.insert(
+        String::from("span"),
+        Box::new(HtmlCherryPickHandler::default),
+    );
     parse_html_custom(html, &tag_factory)
 }
 
@@ -292,15 +289,39 @@ impl StructuredPrinter {
     }
 }
 
-/// Tag handler factory. This class is required in providing proper
+/// [`TagHandler`] factory. This trait is required in providing proper
 /// custom tag parsing capabilities to users of this library.
 ///
 /// The problem with directly providing tag handlers is that they're not stateless.
 /// Once tag handler is parsing some tag, it holds data, such as start position, indent etc.
-/// The only way to create fresh tag handler for each tag is to provide a factory like this one.
+///
+/// Since there is a blanket impl on `Fn() -> TagHandler`, any function or closure returning `TagHandler` can
+/// be used in place of a dedicated `TagHandlerFactory` instance, including trait functions like
+/// [`Default::default`].
+///
+/// # Examples
+///
+/// ```
+/// use std::collections::HashMap;
+/// use html2md::{parse_html_custom, TagHandlerFactory, dummy::DummyHandler};
+///
+/// # let html = "";
+/// let mut tag_factory: HashMap<String, Box<dyn TagHandlerFactory>> = HashMap::new();
+/// tag_factory.insert(
+///     String::from("span"),
+///     Box::new(DummyHandler::default),
+/// );
+/// let markdown = parse_html_custom(html, &tag_factory);
+/// ```
 ///
 pub trait TagHandlerFactory {
     fn instantiate(&self) -> Box<dyn TagHandler>;
+}
+
+impl<F: Fn() -> T, T: TagHandler + 'static> TagHandlerFactory for F {
+    fn instantiate(&self) -> Box<dyn TagHandler> {
+        Box::new(self())
+    }
 }
 
 /// Trait interface describing abstract handler of arbitrary HTML tag.
