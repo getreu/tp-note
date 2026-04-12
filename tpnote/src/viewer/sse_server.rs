@@ -276,7 +276,7 @@ impl ServerThread {
                 }
 
                 // Try to parse the request.
-                let mut headers = [httparse::EMPTY_HEADER; 16];
+                let mut headers = [httparse::EMPTY_HEADER; 32];
                 let mut req = httparse::Request::new(&mut headers);
                 let res = req.parse(&buffer)?;
                 if res.is_partial() {
