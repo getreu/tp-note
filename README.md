@@ -117,16 +117,19 @@ Repository:
 
 ### Tp-Note Microsoft Windows installer package
 
-- Installer package for Windows:
+Installer package for Windows:
 
-  [tpnote-latest-x86_64.msi]
+* [tpnote-latest-x86_64.msi]
 
-  As this early version of the Windows installer is not signed yet, Windows
-  will show the error message “Windows protected your PC”. As a work-around,
-  when you click on the link “More info”, a ”Run anyway” button will appear
-  allowing you to continue the installation process. In general, regardless
-  of where a program comes from, I recommend checking every installable
-  file with [VirusTotal].
+As this early version of the Windows installer is not signed yet, Windows
+will show the error message “Windows protected your PC”. As a work-around,
+when you click on the link “More info”, a ”Run anyway” button will appear
+allowing you to continue the installation process. In general, regardless
+of where a program comes from, I recommend checking every installable
+file with [VirusTotal].
+
+Once installation is complete, right-click on the Desktop and select "Show
+more options" to find the "New Tp-Note" entry in the menu.
 
 ### Windows Package Manager (winget) Distribution
 
@@ -136,13 +139,17 @@ Tp-Note is also available through the Windows Package Manager. To install:
 winget install getreu.tpnote
 ```
 
-For more information about winget distribution, see the [winget distribution guide](docs/winget-distribution.md).
+For more information about winget distribution, see the
+[winget distribution guide](docs/winget-distribution.md).
+
+Following installation, right-click the Desktop and click "Show more options" to
+reveal the "New Tp-Note" context menu entry.
 
 ### Tp-Note Debian/Ubuntu installer package
 
-- Package compiled for Debian/Ubuntu:
+Package compiled for Debian/Ubuntu:
 
-  [tpnote_latest_amd64.deb]
+* [tpnote_latest_amd64.deb]
 
 ### Various binaries for Windows, MacOS and Linux
 
@@ -393,7 +400,6 @@ Copyright:
 [binaries]: https://blog.getreu.net/projects/tp-note/_downloads/bin/
 [packages]: https://blog.getreu.net/projects/tp-note/_downloads/package
 [tpnote.svg]: https://blog.getreu.net/projects/tp-note/assets/tpnote.svg
-[tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-pc-windows-gnu/tpnote-latest-x86_64.msi
 [Installation section]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html#installation
 [Customization section]: https://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization
 [Install Rust]: https://www.rust-lang.org/tools/install
