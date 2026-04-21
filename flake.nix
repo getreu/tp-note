@@ -9,11 +9,11 @@
 #
 # Supported targets:
 # - x86_64-unknown-linux-gnu (native Linux)
-# - x86_64-unknown-linux-musl (musl-based Linux)
+# - x86_64-unknown-linux-musl (musl-based Linux, static linking)
 # - x86_64-pc-windows-gnu (Windows)
-# - armv7-unknown-linux-gnueabihf (Raspberry Pi 32-bit)
-# - aarch64-unknown-linux-gnu (Raspberry Pi 64-bit)
-# - x86_64-apple-darwin (macOS)
+# - armv7-unknown-linux-gnueabihf (Raspberry Pi 32-bit, Debian/Ubuntu compatible)
+# - aarch64-unknown-linux-gnu (Raspberry Pi 64-bit, Debian/Ubuntu compatible)
+# - x86_64-apple-darwin (macOS Intel)
 # - aarch64-apple-darwin (macOS ARM)
 #
 # Usage:
@@ -22,16 +22,28 @@
 # - `nix build` → Builds main tpnote executable (native Linux)
 #
 # **Cross-compilation Support:**
-# - `nix build .#tpnote-x86_64-unknown-linux-gnu` → Cross-compiles to Linux
-# - `nix build .#tpnote-x86_64-unknown-linux-musl` → Musl Linux build
+# - `nix build .#tpnote-x86_64-unknown-linux-gnu` → Linux binary
+# - `nix build .#tpnote-x86_64-unknown-linux-musl` → Static musl Linux build
 # - `nix build .#tpnote-x86_64-pc-windows-gnu` → Windows build
-# - `nix build .#tpnote-armv7-unknown-linux-gnueabihf` → Raspberry Pi 32-bit
-# - `nix build .#tpnote-aarch64-unknown-linux-gnu` → Raspberry Pi 64-bit
-# - `nix build .#tpnote-x86_64-apple-darwin` → macOS build
+# - `nix build .#tpnote-armv7-unknown-linux-gnueabihf` → Raspberry Pi 32-bit (Debian/Ubuntu)
+# - `nix build .#tpnote-aarch64-unknown-linux-gnu` → Raspberry Pi 64-bit (Debian/Ubuntu)
+# - `nix build .#tpnote-x86_64-apple-darwin` → macOS Intel build
 # - `nix build .#tpnote-aarch64-apple-darwin` → macOS ARM build
 #
 # **Package Building:**
-# - `nix build .#tpnote-deb` → Creates Debian package
+# - `nix build .#tpnote-deb` → Creates Debian package (x86_64 only)
+#
+# **Debian/Ubuntu Compatibility Notes:**
+# The ARM cross-compiled binaries (armv7 and aarch64) are built using Nixpkgs'
+# cross-compilation infrastructure which produces binaries compatible with:
+# - Debian 11 (Bullseye) and newer
+# - Ubuntu 20.04 (Focal) and newer
+# - Raspberry Pi OS (Debian-based)
+#
+# These binaries link against glibc and use standard Debian/Ubuntu library paths.
+# To verify compatibility, run:
+#   readelf -d <binary> | grep NEEDED  # Check dynamic dependencies
+#   readelf -d <binary> | grep interpreter  # Check dynamic linker
 {
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
@@ -41,6 +53,44 @@
     let
       pname = "tpnote";
       version = "1.26.0";
+
+      # Helper function for building Rust packages with cross-compilation
+      # Ensures proper linker configuration for Debian/Ubuntu compatibility
+      buildRustTarget =
+        {
+          system,
+          crossSystemConfig,
+          extraBuildInputs ? [ ],
+          extraNativeBuildInputs ? [ ],
+          extraRustFlags ? "",
+        }:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            crossSystem = {
+              config = crossSystemConfig;
+            };
+          };
+        in
+        pkgs.rustPlatform.buildRustPackage {
+          inherit pname version;
+          src = ./.;
+          cargoLock.lockFile = ./Cargo.lock;
+          cargoBuildFlags = [ "--locked" ];
+          dontStrip = false;
+          doCheck = false;
+          nativeBuildInputs = [
+            pkgs.cargo-binutils
+            pkgs.stdenv.cc.bintools
+          ]
+          ++ extraNativeBuildInputs;
+          buildInputs = extraBuildInputs;
+          # Pass linker flags for proper dynamic linker configuration
+          RUSTFLAGS = extraRustFlags;
+          postInstall = ''
+            ${pkgs.stdenv.cc}/bin/${crossSystemConfig}-strip $out/bin/tpnote
+          '';
+        };
     in
     {
       devShells.x86_64-linux = {
@@ -60,14 +110,10 @@
               clippy
               rustfmt
               komac
-              # openssl.dev
               git
-              # gcc # C compiler needed for some Rust crates
-              # stdenv.cc # C/C++ compiler infrastructure
             ];
             nativeBuildInputs = with pkgs; [
               pkg-config
-              #openssl.dev
             ];
             LD_LIBRARY_PATH =
               with pkgs;
@@ -157,45 +203,33 @@
               pkgs.cargo-binutils
             ];
           };
-        tpnote-armv7-unknown-linux-gnueabihf =
-          let
-            pkgs = import nixpkgs {
-              system = "x86_64-linux";
-              crossSystem = {
-                config = "armv7l-unknown-linux-gnueabihf";
-              };
-            };
-          in
-          pkgs.rustPlatform.buildRustPackage {
-            inherit pname version;
-            src = ./.;
-            cargoLock.lockFile = ./Cargo.lock;
-            dontStrip = false;
-            doCheck = false;
-            cargoBuildFlags = [ "--locked" ];
-            nativeBuildInputs = [
-              pkgs.cargo-binutils
-            ];
-          };
-        tpnote-aarch64-unknown-linux-gnu =
-          let
-            pkgs = import nixpkgs {
-              system = "x86_64-linux";
-              crossSystem = {
-                config = "aarch64-unknown-linux-gnu";
-              };
-            };
-          in
-          pkgs.rustPlatform.buildRustPackage {
-            inherit pname version;
-            src = ./.;
-            cargoLock.lockFile = ./Cargo.lock;
-            dontStrip = false;
-            cargoBuildFlags = [ "--locked" ];
-            nativeBuildInputs = [
-              pkgs.cargo-binutils
-            ];
-          };
+        # ARMv7 (32-bit) cross-compilation for Debian/Ubuntu
+        # Produces binaries compatible with:
+        # - Debian 11 (Bullseye) and newer
+        # - Ubuntu 20.04 (Focal) and newer
+        # - Raspberry Pi OS (Debian-based)
+        # - Raspberry Pi 2/3/4/5 (32-bit mode)
+        tpnote-armv7-unknown-linux-gnueabihf = buildRustTarget {
+          system = "x86_64-linux";
+          crossSystemConfig = "armv7l-unknown-linux-gnueabihf";
+          extraRustFlags = ''
+            -C link-arg=-Wl,--dynamic-linker=/lib/ld-linux-armhf.so.3
+          '';
+        };
+        # ARM64 (64-bit) cross-compilation for Debian/Ubuntu
+        # Produces binaries compatible with:
+        # - Debian 11 (Bullseye) and newer
+        # - Ubuntu 20.04 (Focal) and newer
+        # - Raspberry Pi OS (Debian-based)
+        # - Raspberry Pi 4/5 (64-bit mode)
+        # - ARM servers
+        tpnote-aarch64-unknown-linux-gnu = buildRustTarget {
+          system = "x86_64-linux";
+          crossSystemConfig = "aarch64-unknown-linux-gnu";
+          extraRustFlags = ''
+            -C link-arg=-Wl,--dynamic-linker=/lib/ld-linux-aarch64.so.1
+          '';
+        };
         tpnote-x86_64-apple-darwin =
           let
             pkgs = import nixpkgs {

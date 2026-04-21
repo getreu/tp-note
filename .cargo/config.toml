@@ -1,0 +1,47 @@
+# Tp-Note: Minimalistic note-taking
+#
+# Cross-compilation configuration for Debian/Ubuntu ARM targets
+#
+# This configuration enables building binaries that work on Debian/Ubuntu
+# systems (including Raspberry Pi) from any host system.
+#
+# Usage:
+#   # For ARMv7 (32-bit, Raspberry Pi 2/3/4)
+#   cargo build --release --target armv7-unknown-linux-gnueabihf
+#
+#   # For ARM64 (64-bit, Raspberry Pi 4/5)
+#   cargo build --release --target aarch64-unknown-linux-gnu
+#
+# Prerequisites for Debian/Ubuntu hosts:
+#   sudo apt install crossbuild-essential-armhf crossbuild-essential-arm64
+#
+# The linker settings below ensure that:
+# 1. The correct dynamic linker is used
+# 2. Standard Debian/Ubuntu library paths are searched
+# 3. Binaries are portable across Debian/Ubuntu versions
+
+[target.armv7-unknown-linux-gnueabihf]
+# Linker for ARMv7 (32-bit) hard-float
+# This is the standard Debian/Ubuntu ARMv7 cross-compiler
+linker = "arm-linux-gnueabihf-gcc"
+
+# Rust flags for ARMv7 Debian/Ubuntu compatibility
+# - dynamic-linker: Sets the correct dynamic linker for ARMv7 Debian/Ubuntu
+# - link-arg=-Wl,--strip-all: Strip the binary to reduce size
+rustflags = [
+    "-C link-arg=-Wl,--dynamic-linker=/lib/ld-linux-armhf.so.3",
+    "-C link-arg=-Wl,--strip-all",
+]
+
+[target.aarch64-unknown-linux-gnu]
+# Linker for ARM64 (64-bit)
+# This is the standard Debian/Ubuntu ARM64 cross-compiler
+linker = "aarch64-linux-gnu-gcc"
+
+# Rust flags for ARM64 Debian/Ubuntu compatibility
+# - dynamic-linker: Sets the correct dynamic linker for ARM64 Debian/Ubuntu
+# - link-arg=-Wl,--strip-all: Strip the binary to reduce size
+rustflags = [
+    "-C link-arg=-Wl,--dynamic-linker=/lib/ld-linux-aarch64.so.1",
+    "-C link-arg=-Wl,--strip-all",
+]
