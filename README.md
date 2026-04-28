@@ -441,7 +441,7 @@ Copyright:
 [constants in the API documentation]: https://docs.rs/tpnote-lib/latest/tpnote_lib/config/index.html#constants
 [Tp-Note on Gitlab]: https://gitlab.com/getreu/tp-note
 [Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
-[tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote-latest-x86_64.msi
+[tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-pc-windows-gnu/tpnote-latest-x86_64.msi
 [VirusTotal]: https://www.virustotal.com/gui/home/upload
 [tpnote-latest-x86_64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote-latest-x86_64.deb
 [Releases - getreu/tp-note]: https://github.com/getreu/tp-note/releases
