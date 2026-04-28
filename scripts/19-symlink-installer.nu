@@ -33,10 +33,10 @@ if ($deb_dest_root | path exists) {
         # Sort by modification time (newest first)
         let sorted_deb = ($deb_files | sort-by modified -r)
         let latest_deb = ($sorted_deb | first).name
-        let link_name = ($deb_dest_root | path join "tpnote_latest_amd64.deb")
+        let link_name = ($deb_dest_root | path join "tpnote-latest-x86_64.deb")
 
         # Create symlink
         ln -sf ($latest_deb | path basename) $link_name
-        print $"[LINK] tpnote_latest_amd64.deb -> ($latest_deb | path basename)"
+        print $"[LINK] tpnote_latest-x86_64.deb -> ($latest_deb | path basename)"
     }
 }
