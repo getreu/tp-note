@@ -149,7 +149,7 @@ reveal the "New Tp-Note" context menu entry.
 
 Package compiled for Debian/Ubuntu:
 
-* [tpnote_latest_amd64.deb]
+* [tpnote-latest-x86_64.deb]
 
 ### Various binaries for Windows, MacOS and Linux
 
@@ -324,45 +324,94 @@ compile _Tp-Note_ yourself.
 
 ## Cross compilation
 
-Debian makes it easy to cross-compile for foreign architectures. Here are
-some examples:
+Tp-Note supports cross-compilation for multiple architectures. This section
+explains how to build binaries that work on Debian/Ubuntu systems, including
+Raspberry Pi devices.
 
-- Target Musl:
+### Building for Debian/Ubuntu (Recommended)
 
-  ```sh
-  rustup target add x86_64-unknown-linux-musl
-  sudo apt install musl-tools
+The project includes pre-configured cross-compilation settings in
+`.cargo/config.toml`. To build Debian/Ubuntu-compatible binaries, you only
+need to install the cross-compiler toolchains:
 
-  cargo build --target x86_64-unknown-linux-musl --release
-  ```
+**Prerequisites:**
 
-- Target Raspberry Pi (32 bit):
+```sh
+sudo apt update
+sudo apt install crossbuild-essential-armhf crossbuild-essential-arm64
+```
 
-  ```sh
-  rustup target add armv7-unknown-linux-gnueabihf
-  sudo apt install crossbuild-essential-armhf
+**Build for Raspberry Pi 32-bit (ARMv7):**
 
-  CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=/usr/bin/arm-linux-gnueabihf-gcc \
-  cargo build --target armv7-unknown-linux-gnueabihf --release
-  ```
+```sh
+rustup target add armv7-unknown-linux-gnueabihf
+cargo build --release --target armv7-unknown-linux-gnueabihf
+```
 
-- Target Raspberry Pi (arm64, 64 bit):
+The binary will be at:
+`target/armv7-unknown-linux-gnueabihf/release/tpnote`
 
-  ```sh
-  rustup target add aarch64-unknown-linux-gnu
-  sudo apt install crossbuild-essential-arm64
+**Build for Raspberry Pi 64-bit (ARM64):**
 
-  CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/aarch64-linux-gnu-gcc \
-  cargo build  --target aarch64-unknown-linux-gnu --release
-  ```
+```sh
+rustup target add aarch64-unknown-linux-gnu
+cargo build --release --target aarch64-unknown-linux-gnu
+```
 
-- Target Windows:
+The binary will be at:
+`target/aarch64-unknown-linux-gnu/release/tpnote`
 
-  ```sh
-  rustup target add x86_64-pc-windows-gnu
-  sudo apt install binutils-mingw-w64 mingw-w64
-  cargo build --target x86_64-pc-windows-gnu --release
-  ```
+### Building from NixOS
+
+Tp-Note can also be cross-compiled from NixOS using the Nix flake. The ARM
+builds produce binaries compatible with Debian 11+ and Ubuntu 20.04+:
+
+```sh
+# Build ARMv7 (32-bit) for Raspberry Pi
+nix build .#tpnote-armv7-unknown-linux-gnueabihf
+
+# Build ARM64 (64-bit) for Raspberry Pi and ARM servers
+nix build .#tpnote-aarch64-unknown-linux-gnu
+```
+
+The binaries will be in the Nix store. Copy them to your desired location:
+
+```sh
+cp result/bin/tpnote /path/to/destination
+```
+
+### Building for Musl Linux (Static)
+
+For a fully static binary that works on any Linux distribution:
+
+```sh
+rustup target add x86_64-unknown-linux-musl
+sudo apt install musl-tools
+cargo build --release --target x86_64-unknown-linux-musl
+```
+
+### Building for Windows
+
+```sh
+rustup target add x86_64-pc-windows-gnu
+sudo apt install binutils-mingw-w64 mingw-w64
+cargo build --release --target x86_64-pc-windows-gnu
+```
+
+### Verifying Binary Compatibility
+
+After building, verify that your binary links against the correct libraries:
+
+```sh
+# Check dynamic dependencies (should show glibc, not Nix store paths)
+readelf -d target/armv7-unknown-linux-gnueabihf/release/tpnote | grep NEEDED
+
+# Check the dynamic linker (should point to Debian/Ubuntu paths)
+readelf -d target/armv7-unknown-linux-gnueabihf/release/tpnote | grep interpreter
+```
+
+The binary should NOT contain any `/nix/store` paths. If it does, the build
+environment may have introduced Nix-specific dependencies.
 
 This project follows [Semantic Versioning].
 
@@ -394,7 +443,7 @@ Copyright:
 [Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote-latest-x86_64.msi
 [VirusTotal]: https://www.virustotal.com/gui/home/upload
-[tpnote_latest_amd64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote_latest_amd64.deb
+[tpnote-latest-x86_64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote-latest-x86_64.deb
 [Releases - getreu/tp-note]: https://github.com/getreu/tp-note/releases
 [tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
 [binaries]: https://blog.getreu.net/projects/tp-note/_downloads/bin/

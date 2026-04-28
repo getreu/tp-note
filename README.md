@@ -149,7 +149,7 @@ reveal the "New Tp-Note" context menu entry.
 
 Package compiled for Debian/Ubuntu:
 
-* [tpnote_latest_amd64.deb]
+* [tpnote-latest-x86_64.deb]
 
 ### Various binaries for Windows, MacOS and Linux
 
@@ -443,7 +443,7 @@ Copyright:
 [Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
 [tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote-latest-x86_64.msi
 [VirusTotal]: https://www.virustotal.com/gui/home/upload
-[tpnote_latest_amd64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote_latest_amd64.deb
+[tpnote-latest-x86_64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote-latest-x86_64.deb
 [Releases - getreu/tp-note]: https://github.com/getreu/tp-note/releases
 [tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
 [binaries]: https://blog.getreu.net/projects/tp-note/_downloads/bin/
