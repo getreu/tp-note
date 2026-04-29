@@ -10,7 +10,7 @@ use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 #[cfg(feature = "read-clipboard")]
 use tpnote_lib::text_reader::StringExt;
-#[cfg(feature = "read-clipboard")]
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct SystemClipboard {
     pub html: ContentString,
