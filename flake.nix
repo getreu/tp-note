@@ -52,7 +52,7 @@
     { nixpkgs, ... }:
     let
       pname = "tpnote";
-      version = "1.26.0";
+      version = "1.26.1";
 
       # Helper function for building Rust packages with cross-compilation
       # Ensures proper linker configuration for Debian/Ubuntu compatibility
