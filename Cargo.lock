@@ -419,6 +419,7 @@ dependencies = [
  "objc2-foundation",
  "objc2-ui-kit",
  "windows 0.59.0",
+ "wl-clipboard-rs",
  "x11rb",
 ]
 
