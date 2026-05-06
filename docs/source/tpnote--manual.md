@@ -491,13 +491,13 @@ well as with the `--no-default-features` console-only version.
   or, equivalent but shorter:
 
   ```bash
-  tpnote --export='' './my_notes/20210209-debug--Note.md'
+  tpnote --export=. './my_notes/20210209-debug--Note.md'
   ```
 
   or, even shorter:
 
   ```bash
-  tpnote -x '' './my_notes/20210209-debug--Note.md'
+  tpnote -x . './my_notes/20210209-debug--Note.md'
   ```
 
 * Generate a PDF rendition of an existing note file :
