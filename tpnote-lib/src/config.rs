@@ -773,8 +773,8 @@ pub enum Mode {
     /// monolingual. Only one language is searched and reported.
     Monolingual,
     /// The algorithm of the `get_lang` filter assumes, that the input is
-    /// monolingual. If present in the input, more than one language can be
-    /// reported.
+    /// multilingual. If present in the input, more than one language can be
+    /// detected and reported.
     #[default]
     Multilingual,
     /// Variant to represent the error state of an invalid `GetLang` object.
