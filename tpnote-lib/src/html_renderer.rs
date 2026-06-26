@@ -320,22 +320,8 @@ impl HtmlRenderer {
             log::debug!("Rendering HTML into: {:?}", html_path);
         };
 
-        // These must live longer than `writeable`, and thus are declared first:
-        let (mut stdout_write, mut file_write);
-        // We need to ascribe the type to get dynamic dispatch.
-        let writeable: &mut dyn Write = if html_path == Path::new("") {
-            stdout_write = io::stdout();
-            &mut stdout_write
-        } else {
-            file_write = OpenOptions::new()
-                .write(true)
-                .create(true)
-                .truncate(true)
-                .open(&html_path)?;
-            &mut file_write
-        };
-
-        // Render HTML.
+        // Render HTML before touching the filesystem so a failed render
+        // does not leave an empty output file behind.
         let root_path = context.get_root_path().to_owned();
         let html = Self::exporter_page(context, content)?;
         let html = rewrite_links(
@@ -349,7 +335,16 @@ impl HtmlRenderer {
         );
 
         // Write HTML rendition.
-        writeable.write_all(html.as_bytes())?;
+        if html_path == Path::new("") {
+            io::stdout().write_all(html.as_bytes())?;
+        } else {
+            OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open(&html_path)?
+                .write_all(html.as_bytes())?;
+        }
         Ok(())
     }
 }

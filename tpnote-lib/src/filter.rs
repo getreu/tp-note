@@ -342,8 +342,18 @@ fn markup_to_html_filter<S: BuildHasher>(
         MarkupLanguage::Unkown
     };
 
-    // Render the markup language.
-    let html_output = markup_language.render(&input);
+    // Render the markup language. If the renderer panics (e.g. unsupported
+    // markup element), propagate the failure as a Tera error.
+    let html_output =
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            markup_language.render(&input)
+        }))
+        .map_err(|_| {
+            tera::Error::msg(format!(
+                "Renderer {:?} failed on an unsupported element.",
+                markup_language
+            ))
+        })?;
 
     Ok(Value::String(html_output))
 }
