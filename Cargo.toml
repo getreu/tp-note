@@ -25,7 +25,7 @@ opt-level = "z"
 lto = true
 
 [workspace.dependencies]
-log = { version = "0.4.29", features = ["serde"] }
+log = { version = "0.4.33", features = ["serde"] }
 parking_lot = "0.12.5"
 sanitize-filename-reader-friendly = "2.3.1"
 serde = { version = "1.0.228", features = ["derive"] }

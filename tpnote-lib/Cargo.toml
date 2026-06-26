@@ -20,7 +20,7 @@ viewer = []
 
 [dependencies]
 html-escape = "0.2.13"
-itertools = "0.14.0"
+itertools = "0.15.0"
 latex2mathml = { version = "0.2.3", optional = true }
 lingua = { version = "1.8.0", optional = true, default-features = false, features = [ "english", "chinese", "hindi", "spanish", "french", "bengali", "portuguese", "russian", "german", "japanese", "polish", "italian", "dutch",  "greek", "czech", "hungarian", "serbian", "bulgarian", "croatian", "slovak", "slovene", "bosnian", "irish", "icelandic", "finnish", "estonian", "latvian", "lithuanian", "bokmal", "nynorsk", "swedish"] }
 ### Other supported languages in v1.8.0 ordered by number of speakers:
@@ -48,7 +48,7 @@ rst_parser = { version = "0.4.2", optional = true } # ReStructuredText renderer.
 rst_renderer = { version = "0.4.2", optional = true } # ReStructuredText renderer.
 sanitize-filename-reader-friendly.workspace = true
 self_cell = "1.2.2"
-serde_json = "1.0.149"
+serde_json = "1.0.150"
 serde.workspace = true
 serde_yaml.workspace = true
 substring = "1.4.5"
