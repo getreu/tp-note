@@ -647,9 +647,6 @@ change the default page layout by modifying the HTML template with the
 > header field from the filename. It's sort-tag and file extension
 > remain untouched. In case the filename is lacking a _sort-tag_,
 > the file creation date in numerical format is prepended.
-> As this option is activated by default, it has no effect unless
-> you set '`arg_default.add_header = false`' in the configuration
-> file.
 
 **-b**, **\--batch**
 

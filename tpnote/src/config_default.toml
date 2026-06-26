@@ -50,7 +50,7 @@ tty = false
 ### _Tp-Note_ exits of when it tries to open a text file without a YAML
 ### header. When this flag is set, the missing header is constructed by
 ### means of the text file's filename and creation date.
-add_header = true
+add_header = false
 
 ### Rewrite relative local links.
 ### Base: `FILENAME_ROOT_PATH_MARKER=".tpnote.toml"`.
