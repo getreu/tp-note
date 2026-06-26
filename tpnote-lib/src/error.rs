@@ -438,9 +438,9 @@ pub enum NoteError {
     RstParse { msg: String },
 
     /// Remedy: check markup syntax for unsupported elements.
-    #[error("Renderer '{renderer}' failed on an unsupported element.")]
+    #[error("Renderer '{renderer}' failed on an unsupported element: {msg}")]
     #[cfg(feature = "renderer")]
-    RenderPanic { renderer: String },
+    RenderPanic { renderer: String, msg: String },
 
     /// Remedy: check markup syntax.
     #[error("Renderer '{renderer}' failed:\n{msg}")]

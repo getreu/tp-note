@@ -356,9 +356,14 @@ fn markup_to_html_filter<S: BuildHasher>(
                 NoteError::RenderError { renderer, msg: e.to_string() }.to_string(),
             ))
         }
-        Err(_) => {
+        Err(payload) => {
+            let msg = payload
+                .downcast_ref::<&str>()
+                .map(|s| s.to_string())
+                .or_else(|| payload.downcast_ref::<String>().cloned())
+                .unwrap_or_else(|| "unknown".to_string());
             return Err(tera::Error::msg(
-                NoteError::RenderPanic { renderer }.to_string(),
+                NoteError::RenderPanic { renderer, msg }.to_string(),
             ))
         }
     };
