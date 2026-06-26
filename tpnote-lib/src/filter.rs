@@ -1,6 +1,7 @@
 //! Extends the built-in Tera filters.
 //! All custom filters check the type of their input variables at runtime and
 //! throw an error if the type is other than specified.
+#[cfg(feature = "renderer")]
 use crate::error::NoteError;
 use crate::config::FILENAME_DOTFILE_MARKER;
 use crate::config::LIB_CFG;
@@ -343,30 +344,39 @@ fn markup_to_html_filter<S: BuildHasher>(
         MarkupLanguage::Unkown
     };
 
-    // Render the markup language. Catch panics (e.g. unsupported markup
-    // elements) and renderer errors, each mapping to its own NoteError
-    // variant before being propagated as a Tera error.
-    let renderer = format!("{:?}", markup_language);
-    let html_output = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        markup_language.render(&input)
-    })) {
-        Ok(Ok(html)) => html,
-        Ok(Err(e)) => {
-            return Err(tera::Error::msg(
-                NoteError::RenderError { renderer, msg: e.to_string() }.to_string(),
-            ))
-        }
-        Err(payload) => {
-            let msg = payload
-                .downcast_ref::<&str>()
-                .map(|s| s.to_string())
-                .or_else(|| payload.downcast_ref::<String>().cloned())
-                .unwrap_or_else(|| "unknown".to_string());
-            return Err(tera::Error::msg(
-                NoteError::RenderPanic { renderer, msg }.to_string(),
-            ))
+    // Render the markup language. When the renderer feature is enabled,
+    // catch panics (e.g. unsupported markup elements) and Err() returns,
+    // mapping each to its own NoteError variant before propagating as a
+    // Tera error.  Without the renderer feature neither panics nor Err()
+    // returns can occur, so a plain call suffices.
+    #[cfg(feature = "renderer")]
+    let html_output = {
+        let renderer = format!("{:?}", markup_language);
+        match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            markup_language.render(&input)
+        })) {
+            Ok(Ok(html)) => html,
+            Ok(Err(e)) => {
+                return Err(tera::Error::msg(
+                    NoteError::RenderError { renderer, msg: e.to_string() }.to_string(),
+                ))
+            }
+            Err(payload) => {
+                let msg = payload
+                    .downcast_ref::<&str>()
+                    .map(|s| s.to_string())
+                    .or_else(|| payload.downcast_ref::<String>().cloned())
+                    .unwrap_or_else(|| "unknown".to_string());
+                return Err(tera::Error::msg(
+                    NoteError::RenderPanic { renderer, msg }.to_string(),
+                ))
+            }
         }
     };
+    #[cfg(not(feature = "renderer"))]
+    let html_output = markup_language
+        .render(&input)
+        .map_err(|e| tera::Error::msg(e.to_string()))?;
 
     Ok(Value::String(html_output))
 }
