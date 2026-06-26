@@ -494,7 +494,7 @@ pub enum NoteError {
 macro_rules! note_error_tera_template {
     ($e:ident, $t:expr) => {{
         match std::error::Error::source(&$e) {
-            Some(s) if s.to_string().starts_with("Filter call '") => {
+            Some(s) if s.to_string().starts_with("Filter call 'markup_to_html'") => {
                 let msg = match s.source() {
                     Some(deeper) => format!("Markup error in note body:\n{}", deeper),
                     None => s.to_string(),
