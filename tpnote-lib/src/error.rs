@@ -486,15 +486,32 @@ pub enum NoteError {
 /// Macro to construct a `NoteError::TeraTemplate from a `Tera::Error` .
 #[macro_export]
 macro_rules! note_error_tera_template {
-    ($e:ident, $t:expr) => {
+    ($e:ident, $t:expr) => {{
+        let source_str = match std::error::Error::source(&$e) {
+            None => String::new(),
+            Some(s) => {
+                let msg = s
+                    .to_string()
+                    // Remove useless information.
+                    .trim_end_matches("in context while rendering '__tera_one_off'")
+                    .to_string();
+                // When Tera wraps a filter error, go one level deeper to
+                // surface the actual error instead of the generic wrapper.
+                if msg.starts_with("Filter call '") {
+                    match s.source() {
+                        Some(deeper) => {
+                            format!("Markup error in note body:\n{}", deeper)
+                        }
+                        None => msg,
+                    }
+                } else {
+                    msg
+                }
+            }
+        };
         NoteError::TeraTemplate {
-            source_str: std::error::Error::source(&$e)
-                .unwrap_or(&tera::Error::msg(""))
-                .to_string()
-                // Remove useless information.
-                .trim_end_matches("in context while rendering '__tera_one_off'")
-                .to_string(),
+            source_str,
             template_str: $t,
         }
-    };
+    }};
 }
