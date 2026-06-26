@@ -734,7 +734,7 @@ viewer = '''
 <html lang="{{ fm.fm_lang | default(value='en') }}">
 <head>
 <meta charset="UTF-8">
-<title>{{ fm.fm_title }}</title>
+<title>{{ fm.fm_title | default(value='') }}</title>
 <link rel="stylesheet" href="{{ viewer_doc_css_path | safe}}">
 <link rel="stylesheet" href="{{ viewer_highlighting_css_path |safe }}">
 <style type="text/css">
@@ -742,6 +742,7 @@ viewer = '''
 </style>
 </head>
 <body>
+  {% if fm | length > 0 %}
   <table class="fm">
     <tr>
     <th class="fmkey">{{'fm_title' | name}}:</th>
@@ -810,6 +811,7 @@ viewer = '''
   </tr>
   {% endfor %}
   </table>
+  {% endif %}
   <div class="doc-body">{{ doc.body | markup_to_html(extension=ext) | safe }}
   </div>
   <script>{{ viewer_doc_js | safe }}</script>
@@ -971,7 +973,7 @@ exporter = '''
 <html lang="{{ fm.fm_lang | default(value='en') }}">
 <head>
 <meta charset="utf-8">
-<title>{{ fm.fm_title }}</title>
+<title>{{ fm.fm_title | default(value='') }}</title>
 <style type="text/css">
 {{ exporter_doc_css | safe }}
 {{ exporter_highlighting_css | safe }}
@@ -979,6 +981,7 @@ exporter = '''
 </style>
 </head>
 <body>
+  {% if fm | length > 0 %}
   <table class="fm">
     <tr>
     <th class="fmkey">{{'fm_title' | name}}:</th>
@@ -1047,6 +1050,7 @@ exporter = '''
   </tr>
   {% endfor %}
   </table>
+  {% endif %}
   <div class="doc-body">{{ doc.body | markup_to_html(extension=ext) | safe }}
   </div>
 </body>

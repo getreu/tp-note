@@ -82,7 +82,14 @@ impl<T: Content> Note<T> {
         let context = context.insert_front_matter(&fm);
 
         // This data comes from outside. We need additional checks here.
-        context.assert_precoditions()?;
+        // For headerless files with `TemplateKind::None`, a missing required
+        // field is not an error: the body is rendered as-is.
+        match context.assert_precoditions() {
+            Err(NoteError::FrontMatterFieldMissing { .. })
+            | Err(NoteError::FrontMatterMissing { .. })
+                if template_kind == TemplateKind::None && content.header().is_empty() => {}
+            other => other?,
+        }
 
         Ok(Note {
             context,
