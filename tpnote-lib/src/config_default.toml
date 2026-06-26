@@ -855,7 +855,13 @@ h1, h2, h3, h4, h5, h6 { font-family:sans-serif; }
 <pre>{{ doc_error }}</pre>
 <hr>
 </div>
-{{ doc_text | markup_to_html | safe }}
+{%- set ext = path | file_ext -%}
+{%- set doc_body_html = doc_text | markup_to_html(extension=ext) -%}
+{%- if doc_body_html -%}
+{{ doc_body_html | safe }}
+{%- else -%}
+{{ doc_text | markup_to_html(extension='txtnote') | safe }}
+{%- endif -%}
 <script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>

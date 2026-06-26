@@ -2296,9 +2296,11 @@ as a table:
 The error page template '`tmpl_html.viewer_error`' (see below)
 does not provide '`fm.fm_*`' variables, because of possible header syntax
 errors. Instead, the variable '`{{ doc_error }}`' contains the error
-message as raw UTF-8 and the variable
-'`{{ doc_text | markup_to_html | safe }}`' the HTML rendition of the text source
-with clickable hyperlinks:
+message as raw UTF-8. The body of the erroneous document is rendered using
+the file's own markup language renderer (determined by '`{{ path | file_ext }}`').
+If that renderer produces no output — e.g. because the '`renderer`' feature is
+not compiled in — the fallback '`PlainText`' renderer (same as '`txtnote`') is
+used, which renders the text verbatim with clickable hyperlinks:
 
 ```toml
 [tmpl_html]
@@ -2317,7 +2319,13 @@ viewer_error = '''
 <pre>{{ doc_error }}</pre>
 <hr>
 </div>
-{{ doc_text | markup_to_html | safe }}
+{%- set ext = path | file_ext -%}
+{%- set doc_body_html = doc_text | markup_to_html(extension=ext) -%}
+{%- if doc_body_html -%}
+{{ doc_body_html | safe }}
+{%- else -%}
+{{ doc_text | markup_to_html(extension='txtnote') | safe }}
+{%- endif -%}
 <script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
