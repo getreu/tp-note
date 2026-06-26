@@ -1502,6 +1502,38 @@ mod tests {
         );
     }
 
+    /// RST renderer panics on unsupported elements (e.g. unresolved substitution
+    /// references); verify that `markup_to_html_filter` catches the panic and
+    /// returns a `RenderPanic` error instead of unwinding the caller.
+    #[test]
+    #[cfg(feature = "renderer")]
+    fn test_markup_to_html_filter_render_panic() {
+        // An unresolved substitution reference (|undefined|) leaves a
+        // `SubstitutionReference` node in the AST that rst_renderer does not
+        // implement, causing `unimplemented!()` to fire.
+        let input = json!("The |undefined| substitution reference.");
+        let mut args = HashMap::new();
+        args.insert("extension".to_string(), to_value("rst").unwrap());
+
+        let result = markup_to_html_filter(&input, &args);
+        assert!(result.is_err(), "expected Err from panicking RST renderer");
+
+        // Build the expected prefix from the actual NoteError::RenderPanic
+        // format string so this test stays in sync with the variant definition.
+        // msg is left empty to produce the invariant prefix; the panic payload
+        // ("not implemented") follows it.
+        let expected_prefix = NoteError::RenderPanic {
+            renderer: format!("{:?}", MarkupLanguage::ReStructuredText),
+            msg: String::new(),
+        }
+        .to_string();
+        let err_msg = result.unwrap_err().to_string();
+        assert!(
+            err_msg.starts_with(&expected_prefix),
+            "expected NoteError::RenderPanic prefix {expected_prefix:?}, got: {err_msg}"
+        );
+    }
+
     #[test]
     fn test_incr_sort_tag_filter() {
         let result = incr_sort_tag_filter(&to_value("dir/19-Note.md").unwrap(), &HashMap::new());
