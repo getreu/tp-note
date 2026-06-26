@@ -913,4 +913,133 @@ Body text
         #[cfg(target_family = "windows")]
         assert!(raw_note.starts_with("\u{feff}---\r\ntitle:        'hello '"));
     }
+
+    /// A file without YAML front matter rendered with `TemplateKind::None`
+    /// must succeed: the missing-header errors are suppressed so the body
+    /// is rendered as-is.
+    #[test]
+    fn test_from_existing_content_no_header() {
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::note::Note;
+        use crate::template::TemplateKind;
+        use std::env::temp_dir;
+        use std::fs;
+
+        let raw = "Body text without any YAML front matter.";
+        let notefile = temp_dir().join("20221030-headerless-test.rst");
+        fs::write(&notefile, raw.as_bytes()).unwrap();
+
+        let context = Context::from(&notefile).unwrap();
+        let content = <ContentString as Content>::open(&notefile).unwrap();
+        assert!(content.header().is_empty());
+
+        let result =
+            Note::<ContentString>::from_existing_content(context, content, TemplateKind::None);
+        assert!(
+            result.is_ok(),
+            "Expected Ok for headerless file with TemplateKind::None, got: {:?}",
+            result.err()
+        );
+    }
+
+    /// Valid Markdown in the note body renders successfully through a custom
+    /// `markup_to_html` template call.
+    #[test]
+    #[cfg(feature = "renderer")]
+    fn test_render_content_to_html_md_ok() {
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::note::Note;
+        use crate::template::TemplateKind;
+        use std::env::temp_dir;
+        use std::fs;
+
+        let raw = "---\ntitle: Markdown ok test\n---\n# Hello\nWorld";
+        let notefile = temp_dir().join("20221030-md-ok-test.md");
+        fs::write(&notefile, raw.as_bytes()).unwrap();
+
+        let context = Context::from(&notefile).unwrap();
+        let content = <ContentString as Content>::open(&notefile).unwrap();
+        let n = Note::<ContentString>::from_existing_content(context, content, TemplateKind::None)
+            .unwrap();
+
+        let tmpl = "{{ doc.body | markup_to_html(extension='md') | safe }}";
+        let html = n.render_content_to_html(tmpl, "").unwrap();
+        assert!(
+            html.contains("<h1>Hello</h1>"),
+            "unexpected Markdown output: {html}"
+        );
+    }
+
+    /// Valid RST in the note body renders successfully through a custom
+    /// `markup_to_html` template call.
+    #[test]
+    #[cfg(feature = "renderer")]
+    fn test_render_content_to_html_rst_ok() {
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::note::Note;
+        use crate::template::TemplateKind;
+        use std::env::temp_dir;
+        use std::fs;
+
+        let raw = "---\ntitle: RST ok test\n---\n`Link text <https://domain.invalid/>`_";
+        let notefile = temp_dir().join("20221030-rst-ok-test.rst");
+        fs::write(&notefile, raw.as_bytes()).unwrap();
+
+        let context = Context::from(&notefile).unwrap();
+        let content = <ContentString as Content>::open(&notefile).unwrap();
+        let n = Note::<ContentString>::from_existing_content(context, content, TemplateKind::None)
+            .unwrap();
+
+        let tmpl = "{{ doc.body | markup_to_html(extension='rst') | safe }}";
+        let html = n.render_content_to_html(tmpl, "").unwrap();
+        assert!(
+            html.contains("<a href=\"https://domain.invalid/\">Link text</a>"),
+            "unexpected RST output: {html}"
+        );
+    }
+
+    /// A broken markup_to_html call inside a viewer/exporter template must
+    /// produce `NoteError::MarkupError`, not the generic `NoteError::TeraTemplate`.
+    /// This exercises the `starts_with("Filter call 'markup_to_html'")` branch
+    /// inside `note_error_tera_template!`.
+    #[test]
+    #[cfg(feature = "renderer")]
+    fn test_render_content_to_html_markup_error() {
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::error::NoteError;
+        use crate::note::Note;
+        use crate::template::TemplateKind;
+        use std::env::temp_dir;
+        use std::fs;
+
+        // Note with a well-formed header so assert_preconditions() passes,
+        // and a body whose RST contains an unresolved substitution reference
+        // that panics inside rst_renderer.
+        let raw = "---\ntitle: Markup error test\n---\nThe |undefined| substitution reference.";
+        let notefile = temp_dir().join("20221030-markup-error-test.rst");
+        fs::write(&notefile, raw.as_bytes()).unwrap();
+
+        let context = Context::from(&notefile).unwrap();
+        let content = <ContentString as Content>::open(&notefile).unwrap();
+        let n = Note::<ContentString>::from_existing_content(context, content, TemplateKind::None)
+            .unwrap();
+
+        // Minimal template that routes the body through the RST renderer.
+        let tmpl = "{{ doc.body | markup_to_html(extension='rst') | safe }}";
+        let result = n.render_content_to_html(tmpl, "");
+
+        assert!(result.is_err());
+        assert!(
+            matches!(result.unwrap_err(), NoteError::MarkupError { .. }),
+            "Expected NoteError::MarkupError from a failing markup_to_html filter"
+        );
+    }
 }

@@ -1500,6 +1500,21 @@ mod tests {
             markup_to_html_filter(&input, &args).unwrap(),
             Value::String(expected)
         );
+
+        //
+        // Render valid ReStructuredText to HTML (happy path).
+        #[cfg(feature = "renderer")]
+        {
+            let input = json!("`Link text <https://domain.invalid/>`_");
+            let expected = "<p><a href=\"https://domain.invalid/\">Link text</a></p>";
+            let mut args = HashMap::new();
+            args.insert("extension".to_string(), to_value("rst").unwrap());
+
+            assert_eq!(
+                markup_to_html_filter(&input, &args).unwrap(),
+                Value::String(expected.to_string())
+            );
+        }
     }
 
     /// RST renderer panics on unsupported elements (e.g. unresolved substitution
