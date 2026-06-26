@@ -467,6 +467,10 @@ pub enum NoteError {
         template_str: String,
     },
 
+    /// Remedy: check markup syntax in the note body.
+    #[error("{msg}")]
+    MarkupError { msg: String },
+
     #[error(transparent)]
     File(#[from] FileError),
 
@@ -483,35 +487,36 @@ pub enum NoteError {
     },
 }
 
-/// Macro to construct a `NoteError::TeraTemplate from a `Tera::Error` .
+/// Macro to construct a `NoteError` from a `Tera::Error`.
+/// Filter errors (markup rendering failures) produce `NoteError::MarkupError`
+/// directly; all other Tera errors produce `NoteError::TeraTemplate`.
 #[macro_export]
 macro_rules! note_error_tera_template {
     ($e:ident, $t:expr) => {{
-        let source_str = match std::error::Error::source(&$e) {
-            None => String::new(),
-            Some(s) => {
-                let msg = s
-                    .to_string()
-                    // Remove useless information.
-                    .trim_end_matches("in context while rendering '__tera_one_off'")
-                    .to_string();
-                // When Tera wraps a filter error, go one level deeper to
-                // surface the actual error instead of the generic wrapper.
-                if msg.starts_with("Filter call '") {
-                    match s.source() {
-                        Some(deeper) => {
-                            format!("Markup error in note body:\n{}", deeper)
-                        }
-                        None => msg,
-                    }
-                } else {
-                    msg
+        match std::error::Error::source(&$e) {
+            Some(s) if s.to_string().starts_with("Filter call '") => {
+                let msg = match s.source() {
+                    Some(deeper) => format!("Markup error in note body:\n{}", deeper),
+                    None => s.to_string(),
+                };
+                NoteError::MarkupError { msg }
+            }
+            other => {
+                let source_str = other
+                    .map(|s| {
+                        s.to_string()
+                            // Remove useless information.
+                            .trim_end_matches(
+                                "in context while rendering '__tera_one_off'",
+                            )
+                            .to_string()
+                    })
+                    .unwrap_or_default();
+                NoteError::TeraTemplate {
+                    source_str,
+                    template_str: $t,
                 }
             }
-        };
-        NoteError::TeraTemplate {
-            source_str,
-            template_str: $t,
         }
     }};
 }
