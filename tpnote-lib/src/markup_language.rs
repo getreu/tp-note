@@ -183,7 +183,7 @@ impl MarkupLanguage {
     ///   clickable, but they are displayed as they appear in the input.
     /// * For the variant `None` the result is always the empty string whatever
     ///   the input may be.
-    pub fn render(&self, input: &str) -> String {
+    pub fn render(&self, input: &str) -> Result<String, NoteError> {
         match self {
             #[cfg(feature = "renderer")]
             Self::Markdown => {
@@ -197,7 +197,7 @@ impl MarkupLanguage {
                 // Write to String buffer.
                 let mut html_output: String = String::with_capacity(input.len() * 3 / 2);
                 html::push_html(&mut html_output, parser);
-                html_output
+                Ok(html_output)
             }
 
             #[cfg(feature = "renderer")]
@@ -208,21 +208,20 @@ impl MarkupLanguage {
                 // Write to String buffer.
                 let mut html_output: Vec<u8> = Vec::with_capacity(rest_input.len() * 3 / 2);
                 const STANDALONE: bool = false; // Don't wrap in `<!doctype html><html></html>`.
-                rst_parser::parse(rest_input.trim_start())
-                    .map(|doc| rst_renderer::render_html(&doc, &mut html_output, STANDALONE))
-                    .map_or_else(
-                        |e| NoteError::RstParse { msg: e.to_string() }.to_string(),
-                        |_| from_utf8(&html_output).unwrap_or_default().to_string(),
-                    )
+                let doc = rst_parser::parse(rest_input.trim_start())
+                    .map_err(|e| NoteError::RstParse { msg: e.to_string() })?;
+                rst_renderer::render_html(&doc, &mut html_output, STANDALONE)
+                    .map_err(|e| NoteError::RstParse { msg: e.to_string() })?;
+                Ok(from_utf8(&html_output).unwrap_or_default().to_string())
             }
 
-            Self::Html => input.to_string(),
+            Self::Html => Ok(input.to_string()),
 
-            Self::PlainText | Self::RendererDisabled => text_links2html(input),
+            Self::PlainText | Self::RendererDisabled => Ok(text_links2html(input)),
 
-            Self::Unkown => text_rawlinks2html(input),
+            Self::Unkown => Ok(text_rawlinks2html(input)),
 
-            _ => String::new(),
+            _ => Ok(String::new()),
         }
     }
 }
@@ -295,14 +294,14 @@ mod tests {
         let input = "[Link text](https://domain.invalid/)";
         let expected: &str = "<p><a href=\"https://domain.invalid/\">Link text</a></p>\n";
 
-        let result = MarkupLanguage::Markdown.render(input);
+        let result = MarkupLanguage::Markdown.render(input).unwrap();
         assert_eq!(result, expected);
 
         // ReStructuredText
         let input = "`Link text <https://domain.invalid/>`_";
         let expected: &str = "<p><a href=\"https://domain.invalid/\">Link text</a></p>";
 
-        let result = MarkupLanguage::ReStructuredText.render(input);
+        let result = MarkupLanguage::ReStructuredText.render(input).unwrap();
         assert_eq!(result, expected);
     }
 

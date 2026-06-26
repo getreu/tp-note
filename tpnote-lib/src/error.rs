@@ -437,6 +437,11 @@ pub enum NoteError {
     #[cfg(feature = "renderer")]
     RstParse { msg: String },
 
+    /// Remedy: check markup syntax for unsupported elements.
+    #[error("Renderer '{renderer}' failed on an unsupported element.")]
+    #[cfg(feature = "renderer")]
+    RenderPanic { renderer: String },
+
     /// Remedy: restart with `--debug trace`.
     #[error(
         "Tera error:\n\
