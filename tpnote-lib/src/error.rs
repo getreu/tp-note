@@ -442,6 +442,11 @@ pub enum NoteError {
     #[cfg(feature = "renderer")]
     RenderPanic { renderer: String },
 
+    /// Remedy: check markup syntax.
+    #[error("Renderer '{renderer}' failed:\n{msg}")]
+    #[cfg(feature = "renderer")]
+    RenderError { renderer: String, msg: String },
+
     /// Remedy: restart with `--debug trace`.
     #[error(
         "Tera error:\n\

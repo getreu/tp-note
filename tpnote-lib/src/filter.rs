@@ -344,17 +344,24 @@ fn markup_to_html_filter<S: BuildHasher>(
     };
 
     // Render the markup language. Catch panics (e.g. unsupported markup
-    // elements) and convert them to NoteError, then propagate both as
-    // Tera errors.
-    let html_output = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    // elements) and renderer errors, each mapping to its own NoteError
+    // variant before being propagated as a Tera error.
+    let renderer = format!("{:?}", markup_language);
+    let html_output = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         markup_language.render(&input)
-    }))
-    .unwrap_or_else(|_| {
-        Err(NoteError::RenderPanic {
-            renderer: format!("{:?}", markup_language),
-        })
-    })
-    .map_err(|e| tera::Error::msg(e.to_string()))?;
+    })) {
+        Ok(Ok(html)) => html,
+        Ok(Err(e)) => {
+            return Err(tera::Error::msg(
+                NoteError::RenderError { renderer, msg: e.to_string() }.to_string(),
+            ))
+        }
+        Err(_) => {
+            return Err(tera::Error::msg(
+                NoteError::RenderPanic { renderer }.to_string(),
+            ))
+        }
+    };
 
     Ok(Value::String(html_output))
 }
