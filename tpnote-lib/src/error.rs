@@ -381,8 +381,8 @@ pub enum NoteError {
          \tsome text\n\
          \t~~~~~~~~~~~~~~\n\
          \n\
-         Please correct the front matter if this is\n\
-         supposed to be a Tp-Note file. Ignore otherwise."
+         Please add metadata as front matter or restart\n\
+         Tp-Note with `tpnote --add-header <file.md>`."
     )]
     FrontMatterMissing { compulsory_field: String },
 
