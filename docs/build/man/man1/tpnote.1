@@ -3225,20 +3225,21 @@ In addition to \f[I]Tera\f[R]\(cqs \c
 .UR https://tera.netlify.app/docs/#built-in-filters
 built\-in filters
 .UE \c
-, Tp\-Note comes with some additional filters, i.e.:
+, Tp\-Note comes with some additional filters and functions, i.e.:
 `\f[CR]append(newline=true)\f[R]', `\f[CR]append(with=...)\f[R]',
-`\f[CR]trunc\f[R]', `\f[CR]file_copy_counter\f[R]',
-`\f[CR]file_ext\f[R]', `\f[CR]file_name\f[R]',
-`\f[CR]file_sort_tag\f[R]', `\f[CR]file_stem\f[R]',
-`\f[CR]flatten_array\f[R]', `\f[CR]get_lang\f[R]', `\f[CR]heading\f[R]',
-`\f[CR]html_heading\f[R]',
+`\f[CR]date(format=...)\f[R]', `\f[CR]date\f[R]',
+`\f[CR]file_copy_counter\f[R]', `\f[CR]file_ext\f[R]',
+`\f[CR]file_name\f[R]', `\f[CR]file_sort_tag\f[R]',
+`\f[CR]file_stem\f[R]', `\f[CR]flatten_array\f[R]',
+`\f[CR]get_lang\f[R]', `\f[CR]heading\f[R]', `\f[CR]html_heading\f[R]',
 `\f[CR]html_to_markup(extension=..., default=...)\f[R]',
 `\f[CR]insert(key=..., value=...)\f[R]', `\f[CR]link_dest\f[R]',
 `\f[CR]link_text\f[R]', `\f[CR]link_title\f[R]', `\f[CR]map_lang\f[R]',
-`\f[CR]prepend\f[R]', `\f[CR]prepend(newline=true)\f[R]',
-`\f[CR]prepend(with=...)\f[R]', `\f[CR]prepend(with_sort_tag=...)\f[R]',
-`\f[CR]remove(key=...)\f[R]', `\f[CR]replace_empty(with=...)\f[R]',
-`\f[CR]sanit\f[R]', `\f[CR]to_html\f[R]', `\f[CR]to_yaml\f[R]',
+`\f[CR]now()\f[R]', `\f[CR]prepend\f[R]',
+`\f[CR]prepend(newline=true)\f[R]', `\f[CR]prepend(with=...)\f[R]',
+`\f[CR]prepend(with_sort_tag=...)\f[R]', `\f[CR]remove(key=...)\f[R]',
+`\f[CR]replace_empty(with=...)\f[R]', `\f[CR]sanit\f[R]',
+`\f[CR]to_html\f[R]', `\f[CR]to_yaml\f[R]',
 `\f[CR]to_yaml(key=...)\f[R]', `\f[CR]to_yaml(tab=...)\f[R]' and
 `\f[CR]trim_file_sort_tag\f[R]'.
 .PP
@@ -3431,6 +3432,19 @@ e.g.\ `\f[CR]en\f[R]'.
 Depending on the `\f[CR]tmpl.filter.map_lang\f[R]' configuration, the
 exemplary `\f[CR]en\f[R]' input may be converted to `\f[CR]en\-US\f[R]'
 or `\f[CR]en\-GB\f[R]'.
+.IP \(bu 2
+`\f[CR]{{ now() | date }}\f[R]' returns the current date in the format
+`\f[CR]%Y\-%m\-%d\f[R]' (YYYY\-MM\-DD).
+The `\f[CR]now()\f[R]' function returns the current time as a Unix epoch
+timestamp (u64 seconds since 1970\-01\-01 00:00:00 UTC).
+The `\f[CR]date\f[R]' filter converts a Unix epoch timestamp to a
+formatted date string.
+It accepts an optional `\f[CR]format\f[R]' parameter supporting
+strftime\-style format codes (`\f[CR]%Y\f[R]' for year, `\f[CR]%m\f[R]'
+for month, `\f[CR]%d\f[R]' for day).
+.IP \(bu 2
+`\f[CR]{{ now() | date(format=\(dq%d.%m.%Y\(dq) }}\f[R]' returns the
+current date in the format DD.MM.YYYY (e.g.\ `\f[CR]31.12.2024\f[R]')
 .IP \(bu 2
 `\f[CR]{{ doc.body | get_lang | ... | flatten_array | to_yaml }}\f[R]':
 Arrays are usually printed with `\f[CR]to_yaml\f[R]' as item lists.

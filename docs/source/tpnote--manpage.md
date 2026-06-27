@@ -2657,12 +2657,12 @@ consult the '`const`' definitions in Tp-Note's source code file '`note.rs`'.
 
 In addition to _Tera_'s [built-in
 filters](https://tera.netlify.app/docs/#built-in-filters), Tp-Note comes with
-some additional filters, i.e.:
-'`append(newline=true)`', '`append(with=...)`', '`trunc`',
-'`file_copy_counter`', '`file_ext`', '`file_name`', '`file_sort_tag`',
+some additional filters and functions, i.e.:
+'`append(newline=true)`', '`append(with=...)`', '`date(format=...)`',
+'`date`', '`file_copy_counter`', '`file_ext`', '`file_name`', '`file_sort_tag`',
 '`file_stem`', '`flatten_array`', '`get_lang`', '`heading`', '`html_heading`',
 '`html_to_markup(extension=..., default=...)`', '`insert(key=..., value=...)`',
-'`link_dest`', '`link_text`', '`link_title`', '`map_lang`', '`prepend`',
+'`link_dest`', '`link_text`', '`link_title`', '`map_lang`', '`now()`', '`prepend`',
 '`prepend(newline=true)`', '`prepend(with=...)`',
 '`prepend(with_sort_tag=...)`', '`remove(key=...)`',
 '`replace_empty(with=...)`', '`sanit`', '`to_html`', '`to_yaml`',
@@ -2817,6 +2817,16 @@ A filter is always used together with a variable. Here are some examples:
   item. '`{{ lang }}`' is expected to be an ISO 638-1 language code, e.g. '`en`'.
   Depending on the '`tmpl.filter.map_lang`' configuration, the exemplary
   '`en`' input may be converted to '`en-US`' or '`en-GB`'.
+
+- '`{{ now() | date }}`' returns the current date in the format '`%Y-%m-%d`'
+  (YYYY-MM-DD). The '`now()`' function returns the current time as a Unix
+  epoch timestamp (u64 seconds since 1970-01-01 00:00:00 UTC). The '`date`'
+  filter converts a Unix epoch timestamp to a formatted date string. It accepts
+  an optional '`format`' parameter supporting strftime-style format codes
+  ('`%Y`' for year, '`%m`' for month, '`%d`' for day).
+
+- '`{{ now() | date(format="%d.%m.%Y") }}`' returns the current date in the
+  format DD.MM.YYYY (e.g. '`31.12.2024`')
 
 - '`{{ doc.body | get_lang | ... | flatten_array | to_yaml }}`':
   Arrays are usually printed with '`to_yaml`' as item lists. When a list
