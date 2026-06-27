@@ -1031,7 +1031,7 @@ fn remove_filter(
         .ok_or_else(|| tera::Error::message("Filter 'remove': value must be a map"))?;
 
     if let Some(outkey) = kwargs.get::<String>("key")? {
-        let _ = map.remove(&Key::from(outkey));
+        let _ = map.shift_remove(&Key::from(outkey));
     };
 
     Ok(Value::from(map))
