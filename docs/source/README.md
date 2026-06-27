@@ -32,6 +32,10 @@ A more sophisticated example using the “Zettelkasten” scheme:
 - **Markdown Support**: Users can convert HTML content to Markdown. Notes
   are rendered from Markdown to HTML when viewed with Tp-Note's internal web
   server.
+- **Plain Markdown Viewer/Editor**: Tp-Note can open, view, and edit any plain
+  Markdown file — even without a YAML front matter header — without modifying it.
+  Use `--add-header` to additionally prepend a YAML header and convert the file
+  into a full Tp-Note note.
 - **File Management**: Notes can be created from existing files or directories,
   and users can easily navigate and edit their notes.
 
@@ -39,10 +43,13 @@ A more sophisticated example using the “Zettelkasten” scheme:
 
 | Action                       | Command Example                                  |
 | ---------------------------- | ------------------------------------------------ |
-| Create a note from clipboard | `tpnote` (when clipboard contains text)          |
-| Convert HTML to Markdown     | `curl https://example.com` \| `tpnote`           |
-| Edit an existing note        | `tpnote ./path/to/note.md`                       |
-| Generate PDF from a note     | `tpnote -x - note.md` \| `weasyprint - note.pdf` |
+| Create a note from clipboard    | `tpnote` (when clipboard contains text)          |
+| Convert HTML to Markdown        | `curl https://example.com` \| `tpnote`           |
+| View a plain Markdown file      | `tpnote --view myfile.md`                        |
+| Edit a plain Markdown file      | `tpnote myfile.md`                               |
+| Convert plain Markdown to Tp-Note | `tpnote --add-header myfile.md`                |
+| Edit an existing Tp-Note file   | `tpnote ./path/to/note.md`                       |
+| Generate PDF from a note        | `tpnote -x - note.md` \| `weasyprint - note.pdf` |
 
 ## User review
 

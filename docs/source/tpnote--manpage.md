@@ -35,12 +35,16 @@ note's metadata with its filename. Tp-Note analyzes its environment and the
 clipboard content and stores the result in variables. New notes are
 created by filling these variables in predefined and customizable
 _Tera_-templates. In case the first positional parameter '`<FILE>`'
-points to an existing Tp-Note file, the note's metadata is parsed
-and, if necessary, its filename is adjusted. For all other file types,
-Tp-Note creates a new note in the same directory annotating the file. If
-the positional parameter '`<DIR>`' points to an existing directory (or,
-when omitted, the current working directory), a new note is created in
-that directory. After creation, Tp-Note launches the system's file editor.
+points to an existing Tp-Note file (i.e. a Markdown file with a YAML front
+matter header), the note's metadata is parsed and, if necessary, its filename
+is adjusted. When '`<FILE>`' points to a plain Markdown file without a YAML
+header, Tp-Note opens it directly for editing and viewing without modifying
+the file. Passing the '`--add-header`' flag additionally prepends a YAML
+header, converting the plain Markdown file into a full Tp-Note note. For all
+other file types, Tp-Note creates a new note in the same directory annotating
+the file. If the positional parameter '`<DIR>`' points to an existing
+directory (or, when omitted, the current working directory), a new note is
+created in that directory. After creation, Tp-Note launches the system's file editor.
 Although the configurable default templates are written for Markdown, Tp-Note
 is not tied to any specific markup language. However, Tp-Note comes
 with an optional viewer feature that currently renders only Markdown,
@@ -407,15 +411,15 @@ Consider the content of the following text file
 
     A little game designed for primary kids to revise vocabulary in classroom.
 
-To convert the text file into a Tp-Note file type:
+To convert the plain Markdown file into a Tp-Note file, the '`--add-header`'
+flag is required (it defaults to '`false`' via '`arg_default.add_header`'):
 
 ```sh
 tpnote --add-header --batch "Ascii-Hangman--A game for children.md"
 ```
 
-NB: the '`--add-header`' flag might not be necessary, as it is enabled by
-default through the configuration file variable
-'`arg_default.add_header = true`'.
+Without '`--add-header`', Tp-Note opens the file directly for editing and
+viewing without prepending a header.
 
 As a result of the above command, Tp-Note converts the filename into:
 
@@ -485,7 +489,12 @@ A little game designed for primary kids to revise vocabulary in classroom.
 
 Unless invoked with '`--batch`' or '`--view`', Tp-Note launches an external
 text editor after creating a new note. This also happens when '`<path>`' points
-to an existing '`.md`'-file.
+to an existing '`.md`'-file, regardless of whether the file has a YAML header
+or not.
+
+When '`<path>`' points to a plain Markdown file without a YAML header, Tp-Note
+opens it for editing and viewing without modifying the file. To also prepend a
+YAML header and convert the file into a Tp-Note note, add '`--add-header`'.
 
 For example: open and edit an existing note file:
 
@@ -643,10 +652,14 @@ change the default page layout by modifying the HTML template with the
 **-a**, **\--add-header**
 
 > Prepends a YAML header in case the text file does not have one.
-> The default template, deduces the '`title:`' and '`subtitle:`'
-> header field from the filename. It's sort-tag and file extension
+> The default template deduces the '`title:`' and '`subtitle:`'
+> header fields from the filename. The sort-tag and file extension
 > remain untouched. In case the filename is lacking a _sort-tag_,
 > the file creation date in numerical format is prepended.
+> Without this flag, Tp-Note opens a plain Markdown file directly for
+> editing and viewing without modifying it. This flag corresponds to the
+> configuration file variable '`arg_default.add_header`', which defaults
+> to '`false`'.
 
 **-b**, **\--batch**
 
@@ -2474,10 +2487,13 @@ However, two of them have a special role: _prepend header to text file_
 and _synchronize filename_:
 
 - _Prepend header to text file_: When Tp-Note opens a regular text file
-  without a YAML header, a new header is prepended automatically. It's
-  data originates mainly form the filename of the text file. The templates
-  applied in this use case are: '`tmpl.from_text_file_content`' and
-  '`tmpl.from_text_file_filename`'.
+  without a YAML header and the '`--add-header`' flag is given (or
+  '`arg_default.add_header = true`' is set in the configuration file), a new
+  header is prepended. Its data originates mainly from the filename of the text
+  file. The templates applied in this use case are:
+  '`tmpl.from_text_file_content`' and '`tmpl.from_text_file_filename`'.
+  Without '`--add-header`', Tp-Note opens the plain Markdown file directly for
+  editing and viewing without any modification.
 
 - _Synchronize filename_: This function mode is invoked when [Tp-Note] opens an
   existing note file, after it's YAML header is evaluated. The extracted header
@@ -2495,11 +2511,13 @@ the '`tmpl.from_text_file_filename`' template is applied, which might cause a
 slight filename modification due to its sanitization filters (cf. '`sanit()`'
 in the section _Template filters_).
 
-You can disable the _prepend header_ feature by setting the configuration file
-variable '`arg_default.add_header = false`'. To disable all filename
-synchronization, set '`arg_default.no_filename_sync = true`'. This guarantees,
-that Tp-Note will never change neither the filename nor the YAML header of an
-existing file.
+The _prepend header_ feature is disabled by default
+('`arg_default.add_header = false`'). It can be enabled either with the
+'`--add-header`' command line flag or by setting
+'`arg_default.add_header = true`' in the configuration file. To disable all
+filename synchronization, set '`arg_default.no_filename_sync = true`'. This
+guarantees that Tp-Note will never change either the filename or the YAML
+header of an existing file.
 
 For a more detailed description of templates and their defaults, please
 consult the '`const`' definitions in Tp-Note's source code files

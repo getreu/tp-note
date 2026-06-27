@@ -34,6 +34,7 @@ This manual illustrates Tp-Note's main use cases and how to get started:
 4. Copy and annotate a page from a book.
 5. Best practice.
 6. Note-taking for system administrators.
+7. View or edit any plain Markdown file.
 
 If you want to customize _Tp-Note_ with your own templates or if you want to
 use another markup language than Markdown, please consult [Tp-Note's man-page] for
@@ -535,6 +536,56 @@ well as with the `--no-default-features` console-only version.
 
   Note, the above also works in case _Tp-Note_ was compiled with
   `--no-default-features`, which is recommended for headless systems.
+
+
+
+
+# View or edit a plain Markdown file
+
+Tp-Note can be used as a viewer and editor for any regular Markdown file —
+even one without a YAML front matter header. In this case Tp-Note opens the
+file as-is, without modifying it.
+
+## View only
+
+To render and browse a plain Markdown file in the web browser without opening
+an editor:
+
+```bash
+tpnote --view myfile.md
+```
+
+Tp-Note starts its internal web server, renders the Markdown content and
+connects the default web browser. The file watcher keeps the view up to date
+whenever the file changes on disk.
+
+To prevent filename synchronization from triggering (there is no YAML header to
+sync, but the flag makes the intent explicit):
+
+```bash
+tpnote --view --no-filename-sync myfile.md
+```
+
+## Edit and view
+
+To open the file in the text editor and simultaneously render it in the browser:
+
+```bash
+tpnote myfile.md
+```
+
+## Convert to a Tp-Note file
+
+When you later want to turn a plain Markdown file into a full Tp-Note note by
+prepending a YAML front matter header, pass `--add-header`:
+
+```bash
+tpnote --add-header myfile.md
+```
+
+Tp-Note deduces the `title:` and `subtitle:` header fields from the filename,
+prepends the generated header, and renames the file to keep its metadata and
+filename in sync.
 
 
 

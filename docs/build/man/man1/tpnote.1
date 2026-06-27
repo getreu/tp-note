@@ -22,8 +22,15 @@ the result in variables.
 New notes are created by filling these variables in predefined and
 customizable \f[I]Tera\f[R]\-templates.
 In case the first positional parameter `\f[CR]<FILE>\f[R]' points to an
-existing Tp\-Note file, the note\(cqs metadata is parsed and, if
-necessary, its filename is adjusted.
+existing Tp\-Note file (i.e.\ a Markdown file with a YAML front matter
+header), the note\(cqs metadata is parsed and, if necessary, its
+filename is adjusted.
+When `\f[CR]<FILE>\f[R]' points to a plain Markdown file without a YAML
+header, Tp\-Note opens it directly for editing and viewing without
+modifying the file.
+Passing the `\f[CR]\-\-add\-header\f[R]' flag additionally prepends a
+YAML header, converting the plain Markdown file into a full Tp\-Note
+note.
 For all other file types, Tp\-Note creates a new note in the same
 directory annotating the file.
 If the positional parameter `\f[CR]<DIR>\f[R]' points to an existing
@@ -417,15 +424,16 @@ date is 13 March 2022:
 A little game designed for primary kids to revise vocabulary in classroom.
 .EE
 .PP
-To convert the text file into a Tp\-Note file type:
+To convert the plain Markdown file into a Tp\-Note file, the
+`\f[CR]\-\-add\-header\f[R]' flag is required (it defaults to
+`\f[CR]false\f[R]' via `\f[CR]arg_default.add_header\f[R]'):
 .IP
 .EX
 tpnote \-\-add\-header \-\-batch \(dqAscii\-Hangman\-\-A game for children.md\(dq
 .EE
 .PP
-NB: the `\f[CR]\-\-add\-header\f[R]' flag might not be necessary, as it
-is enabled by default through the configuration file variable
-`\f[CR]arg_default.add_header = true\f[R]'.
+Without `\f[CR]\-\-add\-header\f[R]', Tp\-Note opens the file directly
+for editing and viewing without prepending a header.
 .PP
 As a result of the above command, Tp\-Note converts the filename into:
 .IP
@@ -494,7 +502,14 @@ download \(aqhttps://blog.getreu.net\(aq
 Unless invoked with `\f[CR]\-\-batch\f[R]' or `\f[CR]\-\-view\f[R]',
 Tp\-Note launches an external text editor after creating a new note.
 This also happens when `\f[CR]<path>\f[R]' points to an existing
-`\f[CR].md\f[R]'\-file.
+`\f[CR].md\f[R]'\-file, regardless of whether the file has a YAML header
+or not.
+.PP
+When `\f[CR]<path>\f[R]' points to a plain Markdown file without a YAML
+header, Tp\-Note opens it for editing and viewing without modifying the
+file.
+To also prepend a YAML header and convert the file into a Tp\-Note note,
+add `\f[CR]\-\-add\-header\f[R]'.
 .PP
 For example: open and edit an existing note file:
 .IP
@@ -676,13 +691,16 @@ date is prepended.
 .RS
 .PP
 Prepends a YAML header in case the text file does not have one.
-The default template, deduces the `\f[CR]title:\f[R]' and
-`\f[CR]subtitle:\f[R]' header field from the filename.
-It\(cqs sort\-tag and file extension remain untouched.
+The default template deduces the `\f[CR]title:\f[R]' and
+`\f[CR]subtitle:\f[R]' header fields from the filename.
+The sort\-tag and file extension remain untouched.
 In case the filename is lacking a \f[I]sort\-tag\f[R], the file creation
 date in numerical format is prepended.
-As this option is activated by default, it has no effect unless you set
-`\f[CR]arg_default.add_header = false\f[R]' in the configuration file.
+Without this flag, Tp\-Note opens a plain Markdown file directly for
+editing and viewing without modifying it.
+This flag corresponds to the configuration file variable
+`\f[CR]arg_default.add_header\f[R]', which defaults to
+`\f[CR]false\f[R]'.
 .RE
 .PP
 \f[B]\-b\f[R], \f[B]\-\-batch\f[R]
@@ -2791,9 +2809,14 @@ The error page template `\f[CR]tmpl_html.viewer_error\f[R]' (see below)
 does not provide `\f[CR]fm.fm_*\f[R]' variables, because of possible
 header syntax errors.
 Instead, the variable `\f[CR]{{ doc_error }}\f[R]' contains the error
-message as raw UTF\-8 and the variable
-`\f[CR]{{ doc_text | markup_to_html | safe }}\f[R]' the HTML rendition
-of the text source with clickable hyperlinks:
+message as raw UTF\-8.
+The body of the erroneous document is rendered using the file\(cqs own
+markup language renderer (determined by
+`\f[CR]{{ path | file_ext }}\f[R]').
+If that renderer produces no output \(em e.g.\ because the
+`\f[CR]renderer\f[R]' feature is not compiled in \(em the fallback
+`\f[CR]PlainText\f[R]' renderer (same as `\f[CR]txtnote\f[R]') is used,
+which renders the text verbatim with clickable hyperlinks:
 .IP
 .EX
 \f[B][tmpl_html]\f[R]
@@ -2812,7 +2835,13 @@ viewer_error = \(aq\(aq\(aq
 <pre>{{ doc_error }}</pre>
 <hr>
 </div>
-{{ doc_text | markup_to_html | safe }}
+{%\- set ext = path | file_ext \-%}
+{%\- set doc_body_html = doc_text | markup_to_html(extension=ext) \-%}
+{%\- if doc_body_html \-%}
+{{ doc_body_html | safe }}
+{%\- else \-%}
+{{ doc_text | markup_to_html(extension=\(aqtxtnote\(aq) | safe }}
+{%\- endif \-%}
 <script>{{ viewer_doc_js | safe }}</script>
 </body>
 </html>
@@ -2978,12 +3007,15 @@ However, two of them have a special role: \f[I]prepend header to text
 file\f[R] and \f[I]synchronize filename\f[R]:
 .IP \(bu 2
 \f[I]Prepend header to text file\f[R]: When Tp\-Note opens a regular
-text file without a YAML header, a new header is prepended
-automatically.
-It\(cqs data originates mainly form the filename of the text file.
+text file without a YAML header and the `\f[CR]\-\-add\-header\f[R]'
+flag is given (or `\f[CR]arg_default.add_header = true\f[R]' is set in
+the configuration file), a new header is prepended.
+Its data originates mainly from the filename of the text file.
 The templates applied in this use case are:
 `\f[CR]tmpl.from_text_file_content\f[R]' and
 `\f[CR]tmpl.from_text_file_filename\f[R]'.
+Without `\f[CR]\-\-add\-header\f[R]', Tp\-Note opens the plain Markdown
+file directly for editing and viewing without any modification.
 .IP \(bu 2
 \f[I]Synchronize filename\f[R]: This function mode is invoked when
 [Tp\-Note] opens an existing note file, after it\(cqs YAML header is
@@ -3008,12 +3040,15 @@ might cause a slight filename modification due to its sanitization
 filters (cf.\ `\f[CR]sanit()\f[R]' in the section \f[I]Template
 filters\f[R]).
 .PP
-You can disable the \f[I]prepend header\f[R] feature by setting the
-configuration file variable `\f[CR]arg_default.add_header = false\f[R]'.
+The \f[I]prepend header\f[R] feature is disabled by default
+(`\f[CR]arg_default.add_header = false\f[R]').
+It can be enabled either with the `\f[CR]\-\-add\-header\f[R]' command
+line flag or by setting `\f[CR]arg_default.add_header = true\f[R]' in
+the configuration file.
 To disable all filename synchronization, set
 `\f[CR]arg_default.no_filename_sync = true\f[R]'.
-This guarantees, that Tp\-Note will never change neither the filename
-nor the YAML header of an existing file.
+This guarantees that Tp\-Note will never change either the filename or
+the YAML header of an existing file.
 .PP
 For a more detailed description of templates and their defaults, please
 consult the `\f[CR]const\f[R]' definitions in Tp\-Note\(cqs source code
