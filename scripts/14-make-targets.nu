@@ -40,19 +40,8 @@ cd $project_dir
 print "Initializing directory structure..."
 let archs = $target_map.bin_dir
 mkdir ...($archs | each { |it| [$"build/bin/($it)", $"build/package/($it)"] } | flatten)
-#chmod -R u+w build/
 
 # --- Helper Functions ---
-
-def get_store_path [target: string] {
-    # Interpolate the target string to prevent Nix from seeing literal '$target'
-    let info = (do { nix path-info $"#($target)" } | complete)
-    if $info.exit_code == 0 {
-        $info.stdout | lines | first | str trim
-    } else {
-        ""
-    }
-}
 
 def copy_artifact [target_info: record, store_path: path] {
     let dest_dir = $"build/bin/($target_info.bin_dir)"
@@ -88,14 +77,20 @@ let results = ($target_map | each { |cfg|
 
     print $"[BUILD] Building ($cfg.target)..."
 
-    # Use string interpolation to pass the correct attribute name to Nix
-    let build_result = (do { nix build $"#($cfg.target)" --no-link } | complete)
+    # Build and obtain the store output path in one atomic nix invocation.
+    # --print-out-paths avoids a separate `nix path-info` call whose flake
+    # re-evaluation could hash to a different derivation (dirty-tree race).
+    let build_result = (do { nix build $"#($cfg.target)" --no-link --print-out-paths } | complete)
 
     if $build_result.exit_code == 0 {
-        let store_path = (get_store_path $cfg.target)
-        if ($store_path != "") and (copy_artifact $cfg $store_path) {
+        let store_path = ($build_result.stdout | lines | first | str trim)
+        if ($store_path != "") and (copy_artifact $cfg ($store_path | into string)) {
             return { name: $cfg.target, status: "success" }
         }
+        print $"[ERROR] Build succeeded but output path was empty for ($cfg.target)"
+    } else {
+        print $"(ansi red_bold)[FAIL] ($cfg.target) build error:(ansi reset)"
+        print $build_result.stderr
     }
 
     print $"(ansi red_bold)[FAIL] ($cfg.target) failed to build.(ansi reset)"
@@ -112,10 +107,10 @@ let deb_glob = ($deb_dest_root | path join "*.deb")
 
 if (glob $deb_glob | is-empty) {
     print "[BUILD] Creating Debian package..."
-    let deb_build = (do { nix build $"#($deb_target)" --no-link } | complete)
+    let deb_build = (do { nix build $"#($deb_target)" --no-link --print-out-paths } | complete)
 
     if $deb_build.exit_code == 0 {
-        let store = (get_store_path $deb_target)
+        let store = ($deb_build.stdout | lines | first | str trim)
         # Use path join for the store glob as well
         let store_glob = ($store | path join "**" "*.deb")
         let deb_files = (glob $store_glob)
@@ -124,6 +119,9 @@ if (glob $deb_glob | is-empty) {
             cp ($deb_files | first) $deb_dest_root
             print "[OK] Debian package staged."
         }
+    } else {
+        print $"[ERROR] Debian package build failed:"
+        print $deb_build.stderr
     }
 }
 
