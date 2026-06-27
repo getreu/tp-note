@@ -13,41 +13,13 @@ use std::str;
 /// for `serde_json::Map<String, serde_json::Value>`.
 pub struct FrontMatter(pub serde_json::Map<String, serde_json::Value>);
 
-/// Helper function asserting that all the leaves of `val` have a certain type.
-/// The first parameter is the type to check recursively.
-/// The second is a closure that evaluates to true or false.
-#[allow(dead_code)]
-pub(crate) fn all_leaves(val: &serde_json::Value, f: &dyn Fn(&serde_json::Value) -> bool) -> bool {
-    match &val {
-        serde_json::Value::Array(a) => {
-            for i in a.iter() {
-                if !all_leaves(i, &f) {
-                    return false;
-                }
-            }
-        }
-        serde_json::Value::Object(map) => {
-            for (_, v) in map {
-                if !all_leaves(v, &f) {
-                    return false;
-                }
-            }
-        }
-
-        _ => {
-            return f(val);
-        }
-    }
-    true
-}
-
 impl TryFrom<&str> for FrontMatter {
     type Error = NoteError;
     /// Helper function deserializing the front-matter of the note file.
     /// An empty header leads to an empty map; no error.
     fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
-        let map: serde_json::Map<String, serde_json::Value> =
-            serde_yaml::from_str(header).map_err(|e| NoteError::InvalidFrontMatterYaml {
+        let map: serde_json::Map<String, serde_json::Value> = serde_yaml::from_str(header)
+            .map_err(|e| NoteError::InvalidFrontMatterYaml {
                 front_matter: header
                     .lines()
                     .enumerate()
@@ -82,8 +54,17 @@ impl DerefMut for FrontMatter {
 mod tests {
     use crate::config::TMPL_VAR_FM_ALL;
     use crate::front_matter::FrontMatter;
-    use serde_json::json;
     use serde_json::Value;
+    use serde_json::json;
+
+    /// Helper: asserts that all leaves of `val` satisfy `f`.
+    fn all_leaves(val: &serde_json::Value, f: &dyn Fn(&serde_json::Value) -> bool) -> bool {
+        match val {
+            serde_json::Value::Array(a) => a.iter().all(|i| all_leaves(i, f)),
+            serde_json::Value::Object(map) => map.values().all(|v| all_leaves(v, f)),
+            _ => f(val),
+        }
+    }
 
     #[test]
     fn test_deserialize() {
@@ -183,8 +164,6 @@ mod tests {
 
     #[test]
     fn test_all_leaves() {
-        use super::all_leaves;
-
         let input = json!({
              "first": "tmp: test",
              "second": [
