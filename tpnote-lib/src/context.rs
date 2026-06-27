@@ -498,10 +498,17 @@ impl<S: ContextState> Context<S> {
         //
         // Register input.
         let mut map = serde_json::Map::new();
-        map.insert(TMPL_VAR_HEADER.to_string(), serde_json::Value::String(content.header().to_string()));
-        map.insert(TMPL_VAR_BODY.to_string(), serde_json::Value::String(content.body().to_string()));
+        map.insert(
+            TMPL_VAR_HEADER.to_string(),
+            serde_json::Value::String(content.header().to_string()),
+        );
+        map.insert(
+            TMPL_VAR_BODY.to_string(),
+            serde_json::Value::String(content.body().to_string()),
+        );
 
-        self.ct.insert(content.name().to_owned(), &serde_json::Value::Object(map));
+        self.ct
+            .insert(content.name().to_owned(), &serde_json::Value::Object(map));
     }
 
     /// See function of the same name in `impl Context<HasSettings>`.
@@ -761,7 +768,9 @@ impl Context<ReadyForFilenameTemplate> {
             return Ok(());
         }
         let fm_all = fm_all.unwrap();
-        let fm_scheme = fm_all.get_from_path(TMPL_VAR_FM_SCHEME).and_then(|v| v.as_str());
+        let fm_scheme = fm_all
+            .get_from_path(TMPL_VAR_FM_SCHEME)
+            .and_then(|v| v.as_str());
         let scheme_idx = fm_scheme.and_then(|scheme_name| {
             lib_cfg
                 .scheme
@@ -788,9 +797,8 @@ impl Context<ReadyForFilenameTemplate> {
                         }
 
                         Assertion::IsNotEmptyString => {
-                            if !tera_all_leaves(value, &|v| {
-                                v.is_string() && v.as_str() != Some("")
-                            }) {
+                            if !tera_all_leaves(value, &|v| v.is_string() && v.as_str() != Some(""))
+                            {
                                 return Err(NoteError::FrontMatterFieldIsEmptyString {
                                     field_name: name(scheme, key).to_string(),
                                 });
@@ -1016,7 +1024,7 @@ impl<S: ContextState> Deref for Context<S> {
 mod tests {
 
     use crate::{config::TMPL_VAR_FM_ALL, error::NoteError};
-    use serde_json::json;
+
     use std::path::Path;
 
     #[test]
@@ -1271,7 +1279,7 @@ mod tests {
         //
         let input = "# document start
         title: My doc
-        author: 
+        author:
         - First author
         - Second author
         ";
