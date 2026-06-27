@@ -17,8 +17,6 @@ use crate::html::HTML_EXT;
 use crate::html::rewrite_links;
 use crate::note::Note;
 #[cfg(feature = "viewer")]
-use crate::note::ONE_OFF_TEMPLATE_NAME;
-#[cfg(feature = "viewer")]
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
 use parking_lot::RwLock;

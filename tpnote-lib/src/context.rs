@@ -41,7 +41,6 @@ use crate::settings::SETTINGS;
 use std::borrow::Cow;
 use std::fs::File;
 use std::marker::PhantomData;
-use std::matches;
 use std::ops::Deref;
 use std::path::Path;
 use std::path::PathBuf;

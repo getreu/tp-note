@@ -24,10 +24,6 @@ use std::path::{Path, PathBuf};
 use std::str;
 use tera::Tera;
 
-/// This constant is used by Tera as template name for `tera::render_str()`.
-/// Unfortunately it is private there, this is why we must redefine it here.
-pub(crate) const ONE_OFF_TEMPLATE_NAME: &str = "__tera_one_off";
-
 //#[derive(Debug, PartialEq)]
 /// Represents a note.
 /// 1. The `ContentString`'s header is deserialized into `FrontMatter`.

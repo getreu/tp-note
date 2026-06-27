@@ -16,6 +16,7 @@ pub struct FrontMatter(pub serde_json::Map<String, serde_json::Value>);
 /// Helper function asserting that all the leaves of `val` have a certain type.
 /// The first parameter is the type to check recursively.
 /// The second is a closure that evaluates to true or false.
+#[allow(dead_code)]
 pub(crate) fn all_leaves(val: &serde_json::Value, f: &dyn Fn(&serde_json::Value) -> bool) -> bool {
     match &val {
         serde_json::Value::Array(a) => {
