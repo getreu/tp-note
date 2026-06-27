@@ -367,6 +367,20 @@ viewport\f[B]:\f[R]   width=device\-width, initial\-scale=1.0, maximum\-scale=1
 \f[B]\-\f[R]   \f[B][\f[R]Home\f[B]]\f[R](https://blog.getreu.net)
 \f[B]\-\f[R]   \f[B][\f[R]Categories\f[B]]\f[R](https://blog.getreu.net/categories)
 .EE
+.SS The clipboard or stdin contains an invalid YAML header
+Use case: `\f[CR]<path>\f[R]' is a directory and the clipboard (or
+stdin) contains text that starts with `\f[CR]\-\-\-\f[R]' delimiters but
+whose enclosed YAML is not valid,
+e.g.\ `\f[CR]\-\-\-\(rsn<invalid\(rsn\-\-\-\(rsnhallo\f[R]'.
+.PP
+In this case Tp\-Note logs a warning and treats the \f[B]entire\f[R]
+input \(em including the `\f[CR]\-\-\-\f[R]' delimiters and the
+malformed YAML \(em as plain body text.
+Note creation then proceeds as if no header had been present at all.
+.IP
+.EX
+echo \-e \(dq\-\-\-\(rsninvalid\(rsn\-\-\-\(rsnhello\(dq \f[B]|\f[R] tpnote
+.EE
 .SS Create a new note annotating some non Tp\-Note file
 When `\f[CR]<path>\f[R]' points to an existing file whose file extension
 is other than `\f[CR].md\f[R]', a new note is created with a similar

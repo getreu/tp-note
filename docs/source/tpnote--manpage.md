@@ -358,6 +358,21 @@ viewport:   width=device-width, initial-scale=1.0, maximum-scale=1
 -   [Categories](https://blog.getreu.net/categories)
 ```
 
+### The clipboard or stdin contains an invalid YAML header
+
+Use case: '`<path>`' is a directory and the clipboard (or stdin) contains
+text that starts with '`---`' delimiters but whose enclosed YAML is not
+valid, e.g. '`---\n<invalid\n---\nhallo`'.
+
+In this case Tp-Note logs a warning and treats the **entire** input —
+including the '`---`' delimiters and the malformed YAML — as plain body
+text.  Note creation then proceeds as if no header had been present at
+all.
+
+```sh
+echo -e "---\ninvalid\n---\nhello" | tpnote
+```
+
 
 ## Create a new note annotating some non Tp-Note file
 
