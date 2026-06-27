@@ -534,12 +534,24 @@ impl<S: ContextState> Context<S> {
                         )
                     }
                     Err(ref e) => {
-                        if !clip.header().is_empty() {
-                            return Err(NoteError::InvalidInputYaml {
-                                tmpl_var: clip.name().to_string(),
-                                source_str: e.to_string(),
-                            });
-                        }
+                        log::warn!(
+                            "Invalid YAML header in \"{}\" input stream, \
+                            treating entire content as body:\n{}",
+                            clip.name(),
+                            e
+                        );
+                        // Re-register with empty header and full raw content as body.
+                        let mut map = serde_json::Map::new();
+                        map.insert(
+                            TMPL_VAR_HEADER.to_string(),
+                            serde_json::Value::String(String::new()),
+                        );
+                        map.insert(
+                            TMPL_VAR_BODY.to_string(),
+                            serde_json::Value::String(clip.as_str().to_string()),
+                        );
+                        self.ct
+                            .insert(clip.name().to_owned(), &serde_json::Value::Object(map));
                     }
                 };
 
