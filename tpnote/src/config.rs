@@ -211,7 +211,7 @@ impl Cfg {
             var.iter_mut().for_each(|i| {
                 i.iter_mut().for_each(|arg| {
                     let new_arg = Tera::default()
-                        .render_str(arg, &tera::Context::new())
+                        .render_str(arg, &tera::Context::new(), false)
                         .unwrap_or_default()
                         .to_string();
                     let _ = mem::replace(arg, new_arg);

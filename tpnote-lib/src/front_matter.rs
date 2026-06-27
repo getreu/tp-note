@@ -1,32 +1,31 @@
 //! Creates a memory representation of the note's YAML header.
-//! In this documentation, the terms “YAML header”, ”header” and ”front matter"
+//! In this documentation, the terms "YAML header", "header" and "front matter"
 //! are used as synonyms for the note's meta data block at the beginning
-//! of the text file. Technically this is a wrapper around a `tera::Map`.
+//! of the text file. Technically this is a wrapper around a `serde_json::Map`.
 use crate::error::FRONT_MATTER_ERROR_MAX_LINES;
 use crate::error::NoteError;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::str;
-use tera::Value;
 
 #[derive(Debug, Eq, PartialEq)]
 /// Represents the front matter of the note. This is a newtype
-/// for `tera::Map<String, tera::Value>`.
-pub struct FrontMatter(pub tera::Map<String, tera::Value>);
+/// for `serde_json::Map<String, serde_json::Value>`.
+pub struct FrontMatter(pub serde_json::Map<String, serde_json::Value>);
 
 /// Helper function asserting that all the leaves of `val` have a certain type.
 /// The first parameter is the type to check recursively.
 /// The second is a closure that evaluates to true or false.
-pub(crate) fn all_leaves(val: &Value, f: &dyn Fn(&Value) -> bool) -> bool {
+pub(crate) fn all_leaves(val: &serde_json::Value, f: &dyn Fn(&serde_json::Value) -> bool) -> bool {
     match &val {
-        Value::Array(a) => {
+        serde_json::Value::Array(a) => {
             for i in a.iter() {
                 if !all_leaves(i, &f) {
                     return false;
                 }
             }
         }
-        Value::Object(map) => {
+        serde_json::Value::Object(map) => {
             for (_, v) in map {
                 if !all_leaves(v, &f) {
                     return false;
@@ -44,9 +43,9 @@ pub(crate) fn all_leaves(val: &Value, f: &dyn Fn(&Value) -> bool) -> bool {
 impl TryFrom<&str> for FrontMatter {
     type Error = NoteError;
     /// Helper function deserializing the front-matter of the note file.
-    /// An empty header leads to an empty `tera::Map`; no error.
+    /// An empty header leads to an empty map; no error.
     fn try_from(header: &str) -> Result<FrontMatter, NoteError> {
-        let map: tera::Map<String, tera::Value> =
+        let map: serde_json::Map<String, serde_json::Value> =
             serde_yaml::from_str(header).map_err(|e| NoteError::InvalidFrontMatterYaml {
                 front_matter: header
                     .lines()
@@ -62,16 +61,16 @@ impl TryFrom<&str> for FrontMatter {
     }
 }
 
-/// Auto dereferences for convenient access to `tera::Map`.
+/// Auto dereferences for convenient access to `serde_json::Map`.
 impl Deref for FrontMatter {
-    type Target = tera::Map<String, tera::Value>;
+    type Target = serde_json::Map<String, serde_json::Value>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-/// Auto dereferences for convenient access to `tera::Map`.
+/// Auto dereferences for convenient access to `serde_json::Map`.
 impl DerefMut for FrontMatter {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
@@ -83,7 +82,7 @@ mod tests {
     use crate::config::TMPL_VAR_FM_ALL;
     use crate::front_matter::FrontMatter;
     use serde_json::json;
-    use tera::Value;
+    use serde_json::Value;
 
     #[test]
     fn test_deserialize() {
@@ -108,26 +107,20 @@ mod tests {
           - 5
         ";
 
-        let mut expected = tera::Map::new();
-        expected.insert("title".to_string(), Value::String("The book".to_string()));
-        expected.insert(
-            "subtitle".to_string(),
-            Value::String("you always wanted".to_string()),
-        );
-        expected.insert("author".to_string(), Value::String("It\'s me".to_string()));
-        expected.insert("date".to_string(), Value::String("2020-04-21".to_string()));
-        expected.insert("lang".to_string(), Value::String("en".to_string()));
-        expected.insert("revision".to_string(), Value::String("1.0".to_string()));
-        expected.insert(
-            "sort_tag".to_string(),
-            Value::String("20200420-21_22".to_string()),
-        );
-        expected.insert("file_ext".to_string(), Value::String("md".to_string()));
-        expected.insert("height".to_string(), json!(1.23)); // Number()
-        expected.insert("count".to_string(), json!(2)); // Number()
-        expected.insert("neg".to_string(), json!(-1)); // Number()
-        expected.insert("flag".to_string(), json!(true)); // Bool()
-        expected.insert("numbers".to_string(), json!([1, 3, 5])); // Array()
+        let mut expected = serde_json::Map::new();
+        expected.insert("title".to_string(), json!("The book"));
+        expected.insert("subtitle".to_string(), json!("you always wanted"));
+        expected.insert("author".to_string(), json!("It\'s me"));
+        expected.insert("date".to_string(), json!("2020-04-21"));
+        expected.insert("lang".to_string(), json!("en"));
+        expected.insert("revision".to_string(), json!("1.0"));
+        expected.insert("sort_tag".to_string(), json!("20200420-21_22"));
+        expected.insert("file_ext".to_string(), json!("md"));
+        expected.insert("height".to_string(), json!(1.23));
+        expected.insert("count".to_string(), json!(2));
+        expected.insert("neg".to_string(), json!(-1));
+        expected.insert("flag".to_string(), json!(true));
+        expected.insert("numbers".to_string(), json!([1, 3, 5]));
 
         let expected_front_matter = FrontMatter(expected);
 
@@ -142,29 +135,27 @@ mod tests {
         use std::path::Path;
         use tera::Value;
 
-        let mut tmp = tera::Map::new();
-        tmp.insert("file_ext".to_string(), Value::String("md".to_string())); // String
-        tmp.insert("height".to_string(), json!(1.23)); // Number()
-        tmp.insert("count".to_string(), json!(2)); // Number()
-        tmp.insert("neg".to_string(), json!(-1)); // Number()
-        tmp.insert("flag".to_string(), json!(true)); // Bool()
-        tmp.insert("numbers".to_string(), json!([1, 3, 5])); // Array([Numbers()..])!
-        let mut tmp2 = tera::Map::new();
-        tmp2.insert("fm_file_ext".to_string(), Value::String("md".to_string())); // String
-        tmp2.insert("fm_height".to_string(), json!(1.23)); // Number()
-        tmp2.insert("fm_count".to_string(), json!(2)); // Number()
-        tmp2.insert("fm_neg".to_string(), json!(-1)); // Number()
-        tmp2.insert("fm_flag".to_string(), json!(true)); // Bool()
-        tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // Array([Numbers()..])!
+        let mut tmp = serde_json::Map::new();
+        tmp.insert("file_ext".to_string(), json!("md"));
+        tmp.insert("height".to_string(), json!(1.23));
+        tmp.insert("count".to_string(), json!(2));
+        tmp.insert("neg".to_string(), json!(-1));
+        tmp.insert("flag".to_string(), json!(true));
+        tmp.insert("numbers".to_string(), json!([1, 3, 5]));
 
         let input1 = Context::from(Path::new("a/b/test.md")).unwrap();
         let input2 = FrontMatter(tmp);
 
         let mut expected = Context::from(Path::new("a/b/test.md")).unwrap();
-        tmp2.remove("fm_numbers");
-        tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
-        let tmp2 = tera::Value::from(tmp2);
-        expected.insert(TMPL_VAR_FM_ALL, &tmp2); // Map()
+        let tmp2 = Value::from_serializable(&json!({
+            "fm_file_ext": "md",
+            "fm_height": 1.23,
+            "fm_count": 2,
+            "fm_neg": -1,
+            "fm_flag": true,
+            "fm_numbers": [1, 3, 5]
+        }));
+        expected.insert(TMPL_VAR_FM_ALL, &tmp2);
         let expected = expected.insert_front_matter(&FrontMatter::try_from("").unwrap());
 
         let result = input1.insert_front_matter(&input2);
@@ -218,11 +209,11 @@ mod tests {
         assert!(!all_leaves(&input, &|v| matches!(v, Value::String(..))));
 
         let input = json!({
-            "first": "tmp: test",
-            "second": [
-                "string(a)",
-                "string(b)"
-            ],});
+             "first": "tmp: test",
+             "second": [
+                 "string(a)",
+                 "string(b)"
+             ],});
         assert!(all_leaves(&input, &|v| matches!(v, Value::String(..))
             && v.as_str() != Some("")));
 

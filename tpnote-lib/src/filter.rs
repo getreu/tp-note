@@ -19,13 +19,12 @@ use parse_hyperlinks::iterator::MarkupLink;
 use parse_hyperlinks::parser::Link;
 use sanitize_filename_reader_friendly::sanitize;
 use std::borrow::Cow;
-use std::collections::HashMap;
-use std::hash::BuildHasher;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::LazyLock;
-use tera::Map;
-use tera::{Result as TeraResult, Tera, Value, try_get_value};
+use std::time::SystemTime;
+use tera::value::Key;
+use tera::{Kwargs, Map, State, TeraResult, Tera, Value};
 
 /// Filter parameter of the `trunc_filter()` limiting the maximum length of
 /// template variables. The filter is usually used to in the note's front matter
@@ -38,6 +37,56 @@ const TRUNC_LEN_MAX: usize = 200;
 pub const TRUNC_LEN_MAX: usize = 10;
 
 /// Tera object with custom functions registered.
+/// Converts Unix epoch seconds to (year, month, day) using the Gregorian
+/// calendar. Based on https://howardhinnant.github.io/date_algorithms.html
+fn unix_timestamp_to_ymd(secs: u64) -> (i32, u32, u32) {
+    let z = (secs / 86400) as i64 + 719468;
+    let era = if z >= 0 { z } else { z - 146096 } / 146097;
+    let doe = z - era * 146097;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = if m <= 2 { y + 1 } else { y };
+    (y as i32, m as u32, d as u32)
+}
+
+/// Tera function returning the current time as Unix epoch seconds (u64).
+/// Replaces tera v1's built-in `now()`.
+fn now_function(_kwargs: Kwargs, _state: &State) -> TeraResult<Value> {
+    let secs = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    Ok(Value::from(secs))
+}
+
+/// Tera filter formatting a Unix epoch seconds value using a strftime-style
+/// format string. Supports `%Y`, `%m`, `%d`. Replaces tera v1's built-in
+/// `date` filter.
+fn date_filter(value: &Value, kwargs: Kwargs, _state: &State) -> TeraResult<Value> {
+    let secs = value
+        .as_u64()
+        .ok_or_else(|| tera::Error::message("Filter 'date': value must be a unix timestamp"))?;
+    let fmt_str = kwargs
+        .get::<String>("format")?
+        .unwrap_or_else(|| "%Y-%m-%d".to_string());
+    let (year, month, day) = unix_timestamp_to_ymd(secs);
+    let result = fmt_str
+        .replace("%Y", &format!("{:04}", year))
+        .replace("%m", &format!("{:02}", month))
+        .replace("%d", &format!("{:02}", day));
+    Ok(Value::from(result))
+}
+
+/// Converts any value to its string representation.
+/// For strings, returns the raw string (no quotes).
+fn as_str_filter(value: &Value, _kwargs: Kwargs, _state: &State) -> TeraResult<Value> {
+    Ok(Value::from(value.to_string()))
+}
+
 pub static TERA: LazyLock<Tera> = LazyLock::new(|| {
     let mut tera = Tera::default();
     tera.register_filter("append", append_filter);
@@ -53,7 +102,7 @@ pub static TERA: LazyLock<Tera> = LazyLock::new(|| {
     tera.register_filter("html_heading", html_heading_filter);
     tera.register_filter("html_to_markup", html_to_markup_filter);
     tera.register_filter("incr_sort_tag", incr_sort_tag_filter);
-    tera.register_filter("insert", insert_filter);
+    tera.register_filter("as_str", as_str_filter);
     tera.register_filter("insert", insert_filter);
     tera.register_filter("link_dest", link_dest_filter);
     tera.register_filter("link_text", link_text_filter);
@@ -70,6 +119,8 @@ pub static TERA: LazyLock<Tera> = LazyLock::new(|| {
     tera.register_filter("to_yaml", to_yaml_filter);
     tera.register_filter("trim_file_sort_tag", trim_file_sort_tag_filter);
     tera.register_filter("trunc", trunc_filter);
+    tera.register_filter("date", date_filter);
+    tera.register_function("now", now_function);
     tera
 });
 
@@ -85,41 +136,37 @@ pub static TERA: LazyLock<Tera> = LazyLock::new(|| {
 /// between the key and the value. When `tab=n` is given, it has precedence
 /// over the default value, read from the configuration file variable
 /// `tmpl.filter.to_yaml_tab`.
-fn to_yaml_filter<S: BuildHasher>(
+fn to_yaml_filter(
     val: &Value,
-    args: &HashMap<String, Value, S>,
+    kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
     let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
 
-    let val_yaml = if let Some(Value::String(k)) = args.get("key") {
-        let mut m = tera::Map::new();
-        let k = name(scheme, k);
-        m.insert(k.to_owned(), val.to_owned());
-        serde_yaml::to_string(&m).unwrap()
-    } else {
-        match &val {
-            Value::Object(map) => {
-                let mut m = Map::new();
-                for (k, v) in map.into_iter() {
-                    //
-                    let new_k = name(scheme, k);
-                    m.insert(new_k.to_owned(), v.to_owned());
-                }
-                let o = serde_json::Value::Object(m);
-                serde_yaml::to_string(&o).unwrap()
-            }
-            &oo => serde_yaml::to_string(oo).unwrap(),
+    let val_yaml = if let Some(k) = kwargs.get::<String>("key")? {
+        let mut m = Map::new();
+        let k = name(scheme, &k);
+        m.insert(Key::from(k.to_owned()), val.clone());
+        serde_yaml::to_string(&Value::from(m)).unwrap()
+    } else if let Some(map) = val.as_map() {
+        let mut m = Map::new();
+        for (k, v) in map.iter() {
+            let new_k = name(scheme, k.as_str().unwrap_or_default());
+            m.insert(Key::from(new_k.to_owned()), v.clone());
         }
+        serde_yaml::to_string(&Value::from(m)).unwrap()
+    } else {
+        serde_yaml::to_string(val).unwrap()
     };
 
     // Translate the empty set, into an empty string and return it.
     if val_yaml.trim_end() == "{}" {
-        return Ok(tera::Value::String("".to_string()));
+        return Ok(Value::from(""));
     }
 
     // Formatting: adjust indent.
     let val_yaml: String = if let Some(tab) =
-        args.get("tab").and_then(|v| v.as_u64()).or_else(|| {
+        kwargs.get::<u64>("tab")?.or_else(|| {
             let n = scheme.tmpl.filter.to_yaml_tab;
             if n == 0 { None } else { Some(n) }
         }) {
@@ -157,7 +204,7 @@ fn to_yaml_filter<S: BuildHasher>(
 
     let val_yaml = val_yaml.trim_end().to_owned();
 
-    Ok(Value::String(val_yaml))
+    Ok(Value::from(val_yaml))
 }
 
 /// A filter that coverts a `tera::Value` tree into an HTML representation,
@@ -174,60 +221,57 @@ fn to_yaml_filter<S: BuildHasher>(
 /// To use the `to_hmtl` filter in HTML templates, add a `safe` filter in last
 /// position. This is no risk, as the `to_html` filter always escapes string
 /// values automatically, regardless of the template type.
-fn to_html_filter<S: BuildHasher>(
+fn to_html_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
     fn tag_to_html(val: Value, is_root: bool, output: &mut String) {
-        match val {
-            Value::Array(a) => {
-                output.push_str("<ul class=\"fm\">");
-                for i in a {
-                    output.push_str("<li class=\"fm\">");
-                    tag_to_html(i, false, output);
-                    output.push_str("</li>");
+        if let Some(a) = val.as_array() {
+            output.push_str("<ul class=\"fm\">");
+            for i in a.to_vec() {
+                output.push_str("<li class=\"fm\">");
+                tag_to_html(i, false, output);
+                output.push_str("</li>");
+            }
+            output.push_str("</ul>");
+        } else if let Some(s) = val.as_str() {
+            output.push_str(&html_escape::encode_text(s));
+        } else if let Some(map) = val.as_map() {
+            output.push_str("<blockquote class=\"fm\">");
+            let mut entries: Vec<_> = map.iter().collect();
+            entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+            if is_root {
+                let scheme =
+                    &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+                for &(k, v) in &entries {
+                    output.push_str("<div class=\"fm\">");
+                    output.push_str(name(scheme, k.as_str().unwrap_or_default()));
+                    output.push_str(": ");
+                    tag_to_html(v.clone(), false, output);
+                    output.push_str("</div>");
                 }
-                output.push_str("</ul>");
-            }
-
-            Value::String(s) => output.push_str(&html_escape::encode_text(&s)),
-
-            Value::Object(map) => {
-                output.push_str("<blockquote class=\"fm\">");
-                if is_root {
-                    let scheme =
-                        &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
-                    for (k, v) in map {
-                        output.push_str("<div class=\"fm\">");
-                        output.push_str(name(scheme, &k));
-                        output.push_str(": ");
-                        tag_to_html(v, false, output);
-                        output.push_str("</div>");
-                    }
-                } else {
-                    for (k, v) in map {
-                        output.push_str("<div class=\"fm\">");
-                        output.push_str(&k);
-                        output.push_str(": ");
-                        tag_to_html(v, false, output);
-                        output.push_str("</div>");
-                    }
+            } else {
+                for &(k, v) in &entries {
+                    output.push_str("<div class=\"fm\">");
+                    output.push_str(k.as_str().unwrap_or_default());
+                    output.push_str(": ");
+                    tag_to_html(v.clone(), false, output);
+                    output.push_str("</div>");
                 }
-                output.push_str("</blockquote>");
             }
-
-            _ => {
-                output.push_str("<code class=\"fm\">");
-                output.push_str(&val.to_string());
-                output.push_str("</code>");
-            }
-        };
+            output.push_str("</blockquote>");
+        } else {
+            output.push_str("<code class=\"fm\">");
+            output.push_str(&val.to_string());
+            output.push_str("</code>");
+        }
     }
 
     let mut html = String::new();
-    tag_to_html(value.to_owned(), true, &mut html);
+    tag_to_html(value.clone(), true, &mut html);
 
-    Ok(Value::String(html))
+    Ok(Value::from(html))
 }
 
 /// This filter translates `fm_*` header variable names into some human
@@ -242,16 +286,19 @@ fn to_html_filter<S: BuildHasher>(
 /// no translation occurs, e.g. `'fm_unknown'|name` becomes `unknown`.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String`.
-fn name_filter<S: BuildHasher>(
+fn name_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("translate", "value", String, value);
+    let input = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'name': value must be a string"))?;
 
     // This replaces the `fm`-name in the key by the localized name.
     let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
-    let output = name(scheme, &input);
-    Ok(Value::String(output.to_string()))
+    let output = name(scheme, input);
+    Ok(Value::from(output.to_string()))
 }
 
 /// Returns the localized header field name. For example: `fm_subtitle`
@@ -273,32 +320,28 @@ pub(crate) fn name<'a>(scheme: &'a Scheme, input: &'a str) -> &'a str {
 /// the pattern `<html` or `<!DOCTYPE html`.
 /// In any case, the output of the converter is trimmed at the end
 /// (`trim_end()`).
-fn html_to_markup_filter<S: BuildHasher>(
+fn html_to_markup_filter(
     value: &Value,
-    #[allow(unused_variables)] args: &HashMap<String, Value, S>,
+    kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
     // Bring new methods into scope.
     use crate::html::HtmlStr;
 
     #[allow(unused_mut)]
-    let mut buffer = try_get_value!("html_to_markup", "value", String, value);
+    let mut buffer = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'html_to_markup': value must be a string"))?
+        .to_owned();
 
-    let default = if let Some(default_val) = args.get("default") {
-        try_get_value!("markup_to_html", "default", String, default_val)
-    } else {
-        String::new()
-    };
+    let default = kwargs.get::<String>("default")?.unwrap_or_default();
 
     let firstline = buffer
         .lines()
         .next()
         .map(|l| l.trim_start().to_ascii_lowercase());
     if firstline.is_some_and(|l| l.as_str().has_html_start_tag()) {
-        let extension = if let Some(ext) = args.get("extension") {
-            try_get_value!("markup_to_html", "extension", String, ext)
-        } else {
-            String::new()
-        };
+        let extension = kwargs.get::<String>("extension")?.unwrap_or_default();
 
         let converter = InputConverter::build(&extension);
         buffer = match converter(buffer) {
@@ -316,7 +359,7 @@ fn html_to_markup_filter<S: BuildHasher>(
     // Trim end without reallocation.
     buffer.truncate(buffer.trim_end().len());
 
-    Ok(Value::String(buffer))
+    Ok(Value::from(buffer))
 }
 
 /// Takes the markup formatted input and renders it to HTML.
@@ -326,20 +369,18 @@ fn html_to_markup_filter<S: BuildHasher>(
 /// `MarkupLanguage::Unknown`.
 /// The input types must be `Value::String` and the output type is
 /// `Value::String()`
-fn markup_to_html_filter<S: BuildHasher>(
+fn markup_to_html_filter(
     value: &Value,
-    args: &HashMap<String, Value, S>,
+    kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("markup_to_html", "value", String, value);
+    let input = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'markup_to_html': value must be a string"))?;
 
-    let markup_language = if let Some(ext) = args.get("extension") {
-        let ext = try_get_value!("markup_to_html", "extension", String, ext);
+    let markup_language = if let Some(ext) = kwargs.get::<String>("extension")? {
         let ml = MarkupLanguage::from(ext.as_str());
-        if ml.is_some() {
-            ml
-        } else {
-            MarkupLanguage::Unkown
-        }
+        if ml.is_some() { ml } else { MarkupLanguage::Unkown }
     } else {
         MarkupLanguage::Unkown
     };
@@ -353,13 +394,14 @@ fn markup_to_html_filter<S: BuildHasher>(
     let html_output = {
         let renderer = format!("{:?}", markup_language);
         match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            markup_language.render(&input)
+            markup_language.render(input)
         })) {
             Ok(Ok(html)) => html,
             Ok(Err(e)) => {
-                return Err(tera::Error::msg(
-                    NoteError::RenderError { renderer, msg: e.to_string() }.to_string(),
-                ))
+                return Err(tera::Error::message(format!(
+                    "markup_to_html: {}",
+                    NoteError::RenderError { renderer, msg: e.to_string() }
+                )))
             }
             Err(payload) => {
                 let msg = payload
@@ -367,18 +409,19 @@ fn markup_to_html_filter<S: BuildHasher>(
                     .map(|s| s.to_string())
                     .or_else(|| payload.downcast_ref::<String>().cloned())
                     .unwrap_or_else(|| "unknown".to_string());
-                return Err(tera::Error::msg(
-                    NoteError::RenderPanic { renderer, msg }.to_string(),
-                ))
+                return Err(tera::Error::message(format!(
+                    "markup_to_html: {}",
+                    NoteError::RenderPanic { renderer, msg }
+                )))
             }
         }
     };
     #[cfg(not(feature = "renderer"))]
     let html_output = markup_language
-        .render(&input)
-        .map_err(|e| tera::Error::msg(e.to_string()))?;
+        .render(input)
+        .map_err(|e| tera::Error::message(e.to_string()))?;
 
-    Ok(Value::String(html_output))
+    Ok(Value::from(html_output))
 }
 
 /// Adds a new filter to Tera templates:
@@ -393,11 +436,14 @@ fn markup_to_html_filter<S: BuildHasher>(
 /// `sort_tag.extra_separator`.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn sanit_filter<S: BuildHasher>(
+fn sanit_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("sanit", "value", String, value);
+    let input = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'sanit': value must be a string"))?;
 
     // Check if this is a usual dotfile filename.
     let is_dotfile = input.starts_with(FILENAME_DOTFILE_MARKER)
@@ -411,7 +457,7 @@ fn sanit_filter<S: BuildHasher>(
         res.insert(0, FILENAME_DOTFILE_MARKER);
     }
 
-    Ok(Value::String(res))
+    Ok(Value::from(res))
 }
 
 /// A Tera filter that searches for the first Markdown or ReStructuredText link
@@ -419,15 +465,18 @@ fn sanit_filter<S: BuildHasher>(
 /// If not found, it returns the empty string.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn link_text_filter<S: BuildHasher>(
+fn link_text_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("link_text", "value", String, value);
+    let input = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'link_text': value must be a string"))?;
 
-    let hyperlink = FirstHyperlink::from(&input).unwrap_or_default();
+    let hyperlink = FirstHyperlink::from(input).unwrap_or_default();
 
-    Ok(Value::String(hyperlink.text.to_string()))
+    Ok(Value::from(hyperlink.text.to_string()))
 }
 
 /// A Tera filter that searches for the first Markdown or ReStructuredText link
@@ -435,15 +484,18 @@ fn link_text_filter<S: BuildHasher>(
 /// If not found, it returns the empty string.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn link_dest_filter<S: BuildHasher>(
+fn link_dest_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("link_dest", "value", String, value);
+    let p = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'link_dest': value must be a string"))?;
 
-    let hyperlink = FirstHyperlink::from(&p).unwrap_or_default();
+    let hyperlink = FirstHyperlink::from(p).unwrap_or_default();
 
-    Ok(Value::String(hyperlink.dest.to_string()))
+    Ok(Value::from(hyperlink.dest.to_string()))
 }
 
 /// A Tera filter that searches for the first Markdown or ReStructuredText link
@@ -454,15 +506,18 @@ fn link_dest_filter<S: BuildHasher>(
 /// If not found, it returns the empty string.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn link_text_picky_filter<S: BuildHasher>(
+fn link_text_picky_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("link_text_picky", "value", String, value);
+    let p = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'link_text_picky': value must be a string"))?;
 
-    let hyperlink = FirstHyperlink::from_picky(&p).unwrap_or_default();
+    let hyperlink = FirstHyperlink::from_picky(p).unwrap_or_default();
 
-    Ok(Value::String(hyperlink.text.to_string()))
+    Ok(Value::from(hyperlink.text.to_string()))
 }
 
 /// A Tera filter that searches for the first Markdown or ReStructuredText link
@@ -470,15 +525,18 @@ fn link_text_picky_filter<S: BuildHasher>(
 /// If not found, it returns the empty string.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn link_title_filter<S: BuildHasher>(
+fn link_title_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("link_title", "value", String, value);
+    let p = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'link_title': value must be a string"))?;
 
-    let hyperlink = FirstHyperlink::from(&p).unwrap_or_default();
+    let hyperlink = FirstHyperlink::from(p).unwrap_or_default();
 
-    Ok(Value::String(hyperlink.title.to_string()))
+    Ok(Value::from(hyperlink.title.to_string()))
 }
 
 /// A Tera filter that searches for the first HTML heading
@@ -486,26 +544,32 @@ fn link_title_filter<S: BuildHasher>(
 /// If not found, it returns the empty string.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn html_heading_filter<S: BuildHasher>(
+fn html_heading_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("html_heading", "value", String, value);
+    let p = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'html_heading': value must be a string"))?;
 
-    let html_heading = FirstHtmlHeading::from(&p).unwrap_or_default();
+    let html_heading = FirstHtmlHeading::from(p).unwrap_or_default();
 
-    Ok(Value::String(html_heading.0.to_string()))
+    Ok(Value::from(html_heading.0.to_string()))
 }
 
 /// A Tera filter that truncates the input stream and returns the
 /// max `TRUNC_LEN_MAX` bytes of valid UTF-8.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn trunc_filter<S: BuildHasher>(
+fn trunc_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("trunc", "value", String, value);
+    let input = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'trunc': value must be a string"))?;
 
     let mut short = "";
     for i in (0..TRUNC_LEN_MAX).rev() {
@@ -514,18 +578,21 @@ fn trunc_filter<S: BuildHasher>(
             break;
         }
     }
-    Ok(Value::String(short.to_owned()))
+    Ok(Value::from(short.to_owned()))
 }
 
 /// A Tera filter that returns the first line or the first sentence of the input
 /// stream.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn heading_filter<S: BuildHasher>(
+fn heading_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("heading", "value", String, value);
+    let p = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'heading': value must be a string"))?;
     let p = p.trim_start();
 
     // Find the first heading, can finish with `. `, `.\n` or `.\r\n` on Windows.
@@ -561,36 +628,42 @@ fn heading_filter<S: BuildHasher>(
         }
     let content_heading = p[0..index].to_string();
 
-    Ok(Value::String(content_heading))
+    Ok(Value::from(content_heading))
 }
 
 /// A Tera filter that takes a path and extracts the tag of the filename.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn file_sort_tag_filter<S: BuildHasher>(
+fn file_sort_tag_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("file_sort_tag", "value", String, value);
+    let p = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'file_sort_tag': value must be a string"))?;
     let p = PathBuf::from(p);
     let (tag, _, _, _, _) = p.disassemble();
 
-    Ok(Value::String(tag.to_owned()))
+    Ok(Value::from(tag.to_owned()))
 }
 
 /// A Tera filter that takes a path and extracts its last element.
 /// This function trims the `sort_tag` if present.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn trim_file_sort_tag_filter<S: BuildHasher>(
+fn trim_file_sort_tag_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("trim_file_sort_tag", "value", String, value);
+    let input = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'trim_file_sort_tag': value must be a string"))?;
     let input = PathBuf::from(input);
     let (_, fname, _, _, _) = input.disassemble();
 
-    Ok(Value::String(fname.to_owned()))
+    Ok(Value::from(fname.to_owned()))
 }
 
 /// A Tera filter that takes a path and extracts its file stem,
@@ -598,15 +671,18 @@ fn trim_file_sort_tag_filter<S: BuildHasher>(
 /// and `extension`.
 /// The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn file_stem_filter<S: BuildHasher>(
+fn file_stem_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("file_stem", "value", String, value);
+    let input = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'file_stem': value must be a string"))?;
     let input = PathBuf::from(input);
     let (_, _, stem, _, _) = input.disassemble();
 
-    Ok(Value::String(stem.to_owned()))
+    Ok(Value::from(stem.to_owned()))
 }
 
 /// A Tera filter that takes a path and extracts its copy counter,
@@ -616,11 +692,14 @@ fn file_stem_filter<S: BuildHasher>(
 /// If there is no copy counter in the input, the output is `Value::Number(0)`.
 /// The input type must be `Value::String` and the output type is
 /// `Value::Number()`
-fn file_copy_counter_filter<S: BuildHasher>(
+fn file_copy_counter_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("file_copy_counter", "value", String, value);
+    let input = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'file_copy_counter': value must be a string"))?;
     let input = PathBuf::from(input);
     let (_, _, _, copy_counter, _) = input.disassemble();
     let copy_counter = copy_counter.unwrap_or(0);
@@ -632,20 +711,23 @@ fn file_copy_counter_filter<S: BuildHasher>(
 /// file extension. The filename may contain a sort-tag, a copy-counter and
 /// separators. The input type must be `Value::String` and the output type is
 /// `Value::String()`
-fn file_name_filter<S: BuildHasher>(
+fn file_name_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("file_name", "value", String, value);
+    let p = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'file_name': value must be a string"))?;
 
-    let filename = Path::new(&p)
+    let filename = Path::new(p)
         .file_name()
         .unwrap_or_default()
         .to_str()
         .unwrap_or_default()
         .to_owned();
 
-    Ok(Value::String(filename))
+    Ok(Value::from(filename))
 }
 
 /// A Tera filter that replace the input string with the parameter `with`, but
@@ -657,31 +739,29 @@ fn file_name_filter<S: BuildHasher>(
 /// * the array contains only empty strings.
 ///
 /// The parameter `with` can be any `Value` type.
-fn replace_empty_filter<S: BuildHasher>(
+fn replace_empty_filter(
     value: &Value,
-    args: &HashMap<String, Value, S>,
+    kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    // Detect the empty case. Exit early.
-    match value {
-        Value::Null => {}
-        Value::String(s) if s.is_empty() => {}
-        Value::Array(values) if values.is_empty() => {}
-        Value::Array(values) => {
-            if !values
+    let is_empty = if value.is_none() {
+        true
+    } else if let Some(s) = value.as_str() {
+        s.is_empty()
+    } else if let Some(values) = value.as_array() {
+        values.is_empty()
+            || values
                 .iter()
                 .map(|v| v.as_str())
                 .all(|s| s.is_some_and(|s| s.is_empty()))
-            {
-                return Ok(value.to_owned());
-            }
-        }
-        _ => return Ok(value.to_owned()),
-    }
-
-    if let Some(with) = args.get("with") {
-        Ok(with.to_owned())
     } else {
-        Ok(value.to_owned())
+        false
+    };
+
+    if is_empty {
+        Ok(kwargs.get::<Value>("with")?.unwrap_or_else(|| value.clone()))
+    } else {
+        Ok(value.clone())
     }
 }
 
@@ -695,39 +775,40 @@ fn replace_empty_filter<S: BuildHasher>(
 /// The input type, and the type of the parameter `with` and `with_sort_tag`
 /// must be `Value::String`. The parameter `newline` must be a `Value::Bool` and
 /// the output type is `Value::String()`.
-fn prepend_filter<S: BuildHasher>(
+fn prepend_filter(
     value: &Value,
-    args: &HashMap<String, Value, S>,
+    kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("prepend", "value", String, value);
+    let input = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'prepend': value must be a string"))?;
 
-    let mut res = input;
+    let mut res = input.to_owned();
 
-    if let Some(with) = args.get("with") {
-        let with = try_get_value!("prepend", "with", String, with);
+    if let Some(with) = kwargs.get::<String>("with")? {
         let mut s = String::new();
         if !res.is_empty() {
             s.push_str(&with);
             s.push_str(&res);
             res = s;
         };
-    } else if let Some(sort_tag) = args.get("with_sort_tag") {
-        let sort_tag = try_get_value!("prepend", "with_sort_tag", String, sort_tag);
+    } else if let Some(sort_tag) = kwargs.get::<String>("with_sort_tag")? {
         res = PathBuf::from_disassembled(&sort_tag, &res, None, "")
             .to_str()
             .unwrap_or_default()
             .to_string();
     };
 
-    if let Some(Value::Bool(newline)) = args.get("newline")
-        && *newline && !res.is_empty() {
+    if let Some(newline) = kwargs.get::<bool>("newline")?
+        && newline && !res.is_empty() {
             let mut s = String::new();
             s.push('\n');
             s.push_str(&res);
             res = s;
         };
 
-    Ok(Value::String(res))
+    Ok(Value::from(res))
 }
 
 /// A Tera filter that appends the string parameter `with`. In addition, the
@@ -736,49 +817,53 @@ fn prepend_filter<S: BuildHasher>(
 /// The input type, and the type of the parameter `with` must be
 /// `Value::String`. The parameter `newline` must be a `Value::Bool` and the
 /// output type is `Value::String()`.
-fn append_filter<S: BuildHasher>(
+fn append_filter(
     value: &Value,
-    args: &HashMap<String, Value, S>,
+    kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("append", "value", String, value);
+    let input = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'append': value must be a string"))?;
 
     if input.is_empty() {
-        return Ok(Value::String("".to_string()));
+        return Ok(Value::from(""));
     }
 
-    let mut res = input.clone();
-    if let Some(with) = args.get("with") {
-        let with = try_get_value!("append", "with", String, with);
+    let mut res = input.to_owned();
+    if let Some(with) = kwargs.get::<String>("with")? {
         res.push_str(&with);
     };
 
-    if let Some(newline) = args.get("newline") {
-        let newline = try_get_value!("newline", "newline", bool, newline);
+    if let Some(newline) = kwargs.get::<bool>("newline")? {
         if newline && !res.is_empty() {
             res.push('\n');
         }
     };
 
-    Ok(Value::String(res))
+    Ok(Value::from(res))
 }
 
 /// A Tera filter that takes a path and extracts its file extension.
 /// The input type must be `Value::String()`, the output type is
 /// `Value::String()`.
-fn file_ext_filter<S: BuildHasher>(
+fn file_ext_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let p = try_get_value!("file_ext", "value", String, value);
+    let p = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'file_ext': value must be a string"))?;
 
-    let ext = Path::new(&p)
+    let ext = Path::new(p)
         .extension()
         .unwrap_or_default()
         .to_str()
         .unwrap_or_default()
         .to_owned();
 
-    Ok(Value::String(ext))
+    Ok(Value::from(ext))
 }
 
 /// A Tera filter that takes a directory path and returns the alphabetically
@@ -786,13 +871,16 @@ fn file_ext_filter<S: BuildHasher>(
 /// The filter returns the empty string if none was found.
 /// The input type must be `Value::String()`, the output type is
 /// `Value::String()`.
-fn find_last_created_file<S: BuildHasher>(
+fn find_last_created_file(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let p_str = try_get_value!("dir_last_created", "value", String, value);
+    let p_str = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'find_last_created_file': value must be a string"))?;
 
-    let p = Path::new(&p_str);
+    let p = Path::new(p_str);
     let last = match p.find_last_created_file() {
         Some(filename) => Path::join(p, Path::new(&filename))
             .to_str()
@@ -801,7 +889,7 @@ fn find_last_created_file<S: BuildHasher>(
         None => String::new(),
     };
 
-    Ok(Value::String(last.to_string()))
+    Ok(Value::from(last.to_string()))
 }
 
 /// Expects a path a filename in its input and returns an incremented sequential
@@ -817,22 +905,22 @@ fn find_last_created_file<S: BuildHasher>(
 /// on disk already. If this is the case, a subcounter is appended to the
 /// resulting sort-tag.
 /// All input types are `Value::String`. The output type is `Value::String()`.
-fn incr_sort_tag_filter<S: BuildHasher>(
+fn incr_sort_tag_filter(
     value: &Value,
-    args: &HashMap<String, Value, S>,
+    kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("incr_sort_tag", "value", String, value);
+    let input = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'incr_sort_tag': value must be a string"))?;
 
-    let mut default = String::new();
-    if let Some(d) = args.get("default") {
-        default = try_get_value!("incr_sort_tag", "default", String, d);
-    };
+    let default = kwargs.get::<String>("default")?.unwrap_or_default();
 
-    let (input_dir, filename) = input.rsplit_once(['/', '\\']).unwrap_or(("", &input));
+    let (input_dir, filename) = input.rsplit_once(['/', '\\']).unwrap_or(("", input));
     let (input_sort_tag, _, is_sequential) = filename.split_sort_tag(false);
 
     if input_sort_tag.is_empty() || !is_sequential {
-        return Ok(Value::String(default));
+        return Ok(Value::from(default));
     }
 
     // Start analyzing the input.
@@ -846,13 +934,13 @@ fn incr_sort_tag_filter<S: BuildHasher>(
         // Return early if this number is too big.
         const DIGITS_MAX: usize = u32::MAX.ilog10() as usize; // 9
         if digits.len() > DIGITS_MAX {
-            return Ok(Value::String(default));
+            return Ok(Value::from(default));
         }
 
         // Convert string to n base 10.
         let mut n = match digits.parse::<u32>() {
             Ok(n) => n,
-            _ => return Ok(Value::String(default)),
+            _ => return Ok(Value::from(default)),
         };
 
         n += 1;
@@ -879,7 +967,7 @@ fn incr_sort_tag_filter<S: BuildHasher>(
 
             // Return early if this number is too big.
             if letters.len() > LETTERS_MAX {
-                return Ok(Value::String(default));
+                return Ok(Value::from(default));
             }
 
             // Interpret letters as base LETTERS_BASE and convert to int.
@@ -925,25 +1013,28 @@ fn incr_sort_tag_filter<S: BuildHasher>(
         }
     }
 
-    Ok(Value::String(output_sort_tag))
+    Ok(Value::from(output_sort_tag))
 }
 
 /// A Tera filter that takes a map of variables/values and removes a key/value
 /// pair with the parameter `remove(key="<var-name>").
 /// The input type must be `Value::Object()`, the parameter must be
 /// `Value::String()` and the output type is `Value::Object()`.
-fn remove_filter<S: BuildHasher>(
+fn remove_filter(
     value: &Value,
-    args: &HashMap<String, Value, S>,
+    kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let mut map = try_get_value!("remove", "value", tera::Map<String, tera::Value>, value);
+    let mut map = value
+        .clone()
+        .into_map()
+        .ok_or_else(|| tera::Error::message("Filter 'remove': value must be a map"))?;
 
-    if let Some(outkey) = args.get("key") {
-        let outkey = try_get_value!("remove", "key", String, outkey);
-        let _ = map.remove(&outkey);
+    if let Some(outkey) = kwargs.get::<String>("key")? {
+        let _ = map.remove(&Key::from(outkey));
     };
 
-    Ok(Value::Object(map))
+    Ok(Value::from(map))
 }
 
 /// A Tera filter that takes a map of key/values and inserts a key/value pair
@@ -951,24 +1042,24 @@ fn remove_filter<S: BuildHasher>(
 /// variable exists in the map already, its value is replaced.
 /// The input type must be `Value::Object()`, the `key` parameter must be a
 /// `Value::String()` and the output type is `Value::Object()`.
-fn insert_filter<S: BuildHasher>(
+fn insert_filter(
     value: &Value,
-    args: &HashMap<String, Value, S>,
+    kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let mut map = try_get_value!("insert", "value", tera::Map<String, tera::Value>, value);
+    let mut map = value
+        .clone()
+        .into_map()
+        .ok_or_else(|| tera::Error::message("Filter 'insert': value must be a map"))?;
 
-    if let Some(inkey) = args.get("key") {
-        let inkey = try_get_value!("insert", "key", String, inkey);
+    if let Some(inkey) = kwargs.get::<String>("key")? {
         let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
-        let inkey = name(scheme, &inkey);
-        let inval = args
-            .get("value")
-            .map(|v| v.to_owned())
-            .unwrap_or(tera::Value::Null);
-        map.insert(inkey.to_string(), inval);
+        let inkey = name(scheme, &inkey).to_owned();
+        let inval = kwargs.get::<Value>("value")?.unwrap_or(Value::none());
+        map.insert(Key::from(inkey), inval);
     };
 
-    Ok(Value::Object(map))
+    Ok(Value::from(map))
 }
 
 /// A Tera filter telling in which natural language(s) the input text is
@@ -977,22 +1068,26 @@ fn insert_filter<S: BuildHasher>(
 /// type is `Value::Array(<Vec<Value::String>>)`. If no language can be
 /// reliably identified, the output is the empty array `Value::Array(vec![])`.
 #[cfg(feature = "lang-detection")]
-fn get_lang_filter<S: BuildHasher>(
+fn get_lang_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("get_lang", "value", String, value);
+    let input = value
+        .as_str()
+        .ok_or_else(|| tera::Error::message("Filter 'get_lang': value must be a string"))?;
 
-    let l = get_lang(&input).map_err(|e| tera::Error::from(e.to_string()))?;
-    Ok(l.into())
+    let l = get_lang(input).map_err(|e| tera::Error::message(e.to_string()))?;
+    Ok(Value::from(l))
 }
 
 #[cfg(not(feature = "lang-detection"))]
-fn get_lang_filter<S: BuildHasher>(
+fn get_lang_filter(
     _value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    Ok(Value::String("".to_owned()))
+    Ok(Value::from(""))
 }
 
 /// A mapper that is usually used to convert ISO 639 codes to IETF language tags
@@ -1009,46 +1104,46 @@ fn get_lang_filter<S: BuildHasher>(
 /// In case the optional parameter `default` (type `Value::String`) is given,
 /// e.g. `map_lang(default="abc")`, then an empty input array is mapped to
 /// `Value::Array(Vec::from("abc"))`.
-fn map_lang_filter<S: BuildHasher>(
+fn map_lang_filter(
     value: &Value,
-    args: &HashMap<String, Value, S>,
+    kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let input = try_get_value!("map_lang", "value", Value, value);
-
     // Type check.
-    if !input
+    if !value
         .as_array()
         .is_some_and(|a| a.iter().all(|s| s.is_string()))
     {
-        return Err("input must be an array of strings".into());
+        return Err(tera::Error::message("input must be an array of strings"));
     }
 
     // In `input` is empty return default.
-    if input
+    if value
         .as_array()
         .is_some_and(|a| a.is_empty() || a.iter().all(|v| v.as_str().is_some_and(|s| s.is_empty())))
     {
-        return Ok(args
-            .get("default")
-            .map(|v| Value::Array(Vec::from([v.to_owned()])))
-            .unwrap_or(input));
+        return Ok(kwargs
+            .get::<Value>("default")?
+            .map(|v| Value::from(vec![v]))
+            .unwrap_or_else(|| value.clone()));
     }
 
     // Set up converter.
     let settings = SETTINGS.read_recursive();
     let convert = |v: Value| {
-        if let (Value::String(s), Some(btm)) = (&v, &settings.map_lang_filter_btmap) {
+        if let (Some(s), Some(btm)) = (v.as_str(), &settings.map_lang_filter_btmap) {
             btm.get(s)
-                .map(|new_v| Value::String(new_v.to_owned()))
+                .map(|new_v| Value::from(new_v.as_str()))
                 .unwrap_or(v)
         } else {
             v
         }
     };
     // Do conversion.
-    let res = match input {
-        Value::Array(a) => a.into_iter().map(convert).collect(),
-        _ => input,
+    let res = if let Some(a) = value.as_array() {
+        Value::from(a.iter().cloned().map(convert).collect::<Vec<_>>())
+    } else {
+        value.clone()
     };
 
     Ok(res)
@@ -1057,21 +1152,20 @@ fn map_lang_filter<S: BuildHasher>(
 /// The input must be of type `Value::Array(<Vec<a>>)`. If the array has
 /// exactly one element, then the array is flattened to `<a>` otherwise the
 /// input is passed through.
-fn flatten_array_filter<S: BuildHasher>(
+fn flatten_array_filter(
     value: &Value,
-    _args: &HashMap<String, Value, S>,
+    _kwargs: Kwargs,
+    _state: &State,
 ) -> TeraResult<Value> {
-    let val = try_get_value!("flatten_array", "value", Value, value);
-
     // Type check.
     if !value.is_array() {
-        return Err("input must be of type array".into());
+        return Err(tera::Error::message("input must be of type array"));
     }
 
-    // In `input` is empty return default.
-    match val {
-        Value::Array(v) if v.len() == 1 => Ok(v[0].clone()),
-        _ => Ok(val),
+    // If the array has exactly one element, flatten it.
+    match value.as_array() {
+        Some(v) if v.len() == 1 => Ok(v[0].clone()),
+        _ => Ok(value.clone()),
     }
 }
 
@@ -1241,171 +1335,142 @@ mod tests {
     use super::*;
     use parking_lot::RwLockWriteGuard;
     use serde_json::json;
-    use std::collections::{BTreeMap, HashMap};
-    use tera::to_value;
+    use std::collections::BTreeMap;
+    use tera::{Kwargs, State};
 
     #[test]
     fn test_to_yaml_filter() {
-        // No key, the input is of type `Value::Object()`.
-        let mut input = tera::Map::new();
-        input.insert("number_type".to_string(), json!(123));
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
 
+        // No key, the input is of type map.
+        let input = Value::from_serializable(&json!({"number_type": 123}));
         let expected = "number_type:  123".to_string();
-
-        let args = HashMap::new();
         assert_eq!(
-            to_yaml_filter(&Value::Object(input), &args).unwrap(),
-            Value::String(expected)
+            to_yaml_filter(&input, Kwargs::default(), &st).unwrap(),
+            Value::from(expected)
         );
 
         //
-        // The key is `author`, the value is of type `Value::String()`.
-        let input = "Getreu".to_string();
-
+        // The key is `author`, the value is a string.
+        let input = Value::from("Getreu");
         let expected = "author:       Getreu".to_string();
-
-        let mut args = HashMap::new();
-        args.insert("key".to_string(), to_value("author").unwrap());
         assert_eq!(
-            to_yaml_filter(&Value::String(input), &args).unwrap(),
-            Value::String(expected)
+            to_yaml_filter(&input, Kwargs::from([("key", Value::from("author"))]), &st).unwrap(),
+            Value::from(expected)
         );
 
         //
-        // The key is `my`, the value is of type `Value::Object()`.
-        let mut input = tera::Map::new();
-        input.insert(
-            "author".to_string(),
-            json!(["Getreu: Noname", "Jens: Noname"]),
-        );
-
+        // The key is `my`, the value is a map.
+        let input =
+            Value::from_serializable(&json!({"author": ["Getreu: Noname", "Jens: Noname"]}));
         let expected = "my:\n  author:\n  - 'Getreu: Noname'\n  - 'Jens: Noname'".to_string();
-
-        let mut args = HashMap::new();
-        args.insert("key".to_string(), to_value("my").unwrap());
         assert_eq!(
-            to_yaml_filter(&Value::Object(input), &args).unwrap(),
-            Value::String(expected)
+            to_yaml_filter(&input, Kwargs::from([("key", Value::from("my"))]), &st).unwrap(),
+            Value::from(expected)
         );
 
         //
-        // The key is `my`, the value is of type `Value::Object()`.
-        let mut input = tera::Map::new();
-        input.insert("number_type".to_string(), json!(123));
-
+        // The key is `my`, the value is a map.
+        let input = Value::from_serializable(&json!({"number_type": 123}));
         let expected = "my:\n  number_type: 123".to_string();
-
-        let mut args = HashMap::new();
-        args.insert("key".to_string(), to_value("my").unwrap());
         assert_eq!(
-            to_yaml_filter(&Value::Object(input), &args).unwrap(),
-            Value::String(expected)
+            to_yaml_filter(&input, Kwargs::from([("key", Value::from("my"))]), &st).unwrap(),
+            Value::from(expected)
         );
 
         //
-        // The key is `my`, `tab` is 10, the value is of type `Value::Object()`.
-        let mut input = tera::Map::new();
-        input.insert("num".to_string(), json!(123));
-
+        // The key is `my`, `tab` is 10, the value is a map.
+        let input = Value::from_serializable(&json!({"num": 123}));
         let expected = "my:\n  num:    123".to_string();
-
-        let mut args = HashMap::new();
-        args.insert("key".to_string(), to_value("my").unwrap());
-        args.insert("tab".to_string(), to_value(10).unwrap());
         assert_eq!(
-            to_yaml_filter(&Value::Object(input), &args).unwrap(),
-            Value::String(expected)
+            to_yaml_filter(
+                &input,
+                Kwargs::from([("key", Value::from("my")), ("tab", Value::from(10u64))]),
+                &st,
+            )
+            .unwrap(),
+            Value::from(expected)
         );
 
         //
         // Empty input.
-        let input = tera::Map::new();
-
+        let input = Value::from_serializable(&json!({}));
         let expected = "".to_string();
-
-        let mut args = HashMap::new();
-        args.insert("tab".to_string(), to_value(10).unwrap());
         assert_eq!(
-            to_yaml_filter(&Value::Object(input), &args).unwrap(),
-            Value::String(expected)
+            to_yaml_filter(&input, Kwargs::from([("tab", Value::from(10u64))]), &st).unwrap(),
+            Value::from(expected)
         );
 
         //
         // Empty input with key.
-        let input = tera::Map::new();
-
+        let input = Value::from_serializable(&json!({}));
         let expected = "my:       {}".to_string();
-
-        let mut args = HashMap::new();
-        args.insert("key".to_string(), to_value("my").unwrap());
-        args.insert("tab".to_string(), to_value(10).unwrap());
         assert_eq!(
-            to_yaml_filter(&Value::Object(input), &args).unwrap(),
-            Value::String(expected)
+            to_yaml_filter(
+                &input,
+                Kwargs::from([("key", Value::from("my")), ("tab", Value::from(10u64))]),
+                &st,
+            )
+            .unwrap(),
+            Value::from(expected)
         );
 
         //
         // Simple input string, no map.
-        let input = json!("my str");
+        let input = Value::from("my str");
         let expected = "my str".to_string();
-        let mut args = HashMap::new();
-        args.insert("tab".to_string(), to_value(10).unwrap());
         assert_eq!(
-            to_yaml_filter(&input, &args).unwrap(),
-            Value::String(expected)
+            to_yaml_filter(&input, Kwargs::from([("tab", Value::from(10u64))]), &st).unwrap(),
+            Value::from(expected)
         );
 
         //
         // Simple input string, no map.
-        let input = json!("my: str");
+        let input = Value::from("my: str");
         let expected = "'my: str'".to_string();
-        let mut args = HashMap::new();
-        args.insert("tab".to_string(), to_value(10).unwrap());
         assert_eq!(
-            to_yaml_filter(&input, &args).unwrap(),
-            Value::String(expected)
+            to_yaml_filter(&input, Kwargs::from([("tab", Value::from(10u64))]), &st).unwrap(),
+            Value::from(expected)
         );
 
         //
         // Array.
-        let input = json!(["Ford", "BMW", "Fiat"]);
+        let input = Value::from_serializable(&json!(["Ford", "BMW", "Fiat"]));
         let expected = "    - Ford\n    - BMW\n    - Fiat".to_string();
-        let mut args = HashMap::new();
-        args.insert("tab".to_string(), to_value(4).unwrap());
         assert_eq!(
-            to_yaml_filter(&input, &args).unwrap(),
-            Value::String(expected)
+            to_yaml_filter(&input, Kwargs::from([("tab", Value::from(4u64))]), &st).unwrap(),
+            Value::from(expected)
         );
 
         //
         // Simple input number, no map.
-        let input = json!(9876);
+        let input = Value::from_serializable(&json!(9876));
         let expected = "9876".to_string();
-        let mut args = HashMap::new();
-        args.insert("tab".to_string(), to_value(10).unwrap());
         assert_eq!(
-            to_yaml_filter(&input, &args).unwrap(),
-            Value::String(expected)
+            to_yaml_filter(&input, Kwargs::from([("tab", Value::from(10u64))]), &st).unwrap(),
+            Value::from(expected)
         );
     }
 
     #[test]
     fn test_to_html_filter() {
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         //
-        let input = json!(["Hello", "World", 123]);
+        let input = Value::from_serializable(&json!(["Hello", "World", 123]));
         let expected = "<ul class=\"fm\"><li class=\"fm\">Hello</li>\
             <li class=\"fm\">World</li><li class=\"fm\">\
             <code class=\"fm\">123</code></li></ul>"
             .to_string();
-
-        let args = HashMap::new();
         assert_eq!(
-            to_html_filter(&input, &args).unwrap(),
-            Value::String(expected)
+            to_html_filter(&input, Kwargs::default(), &st).unwrap(),
+            Value::from(expected)
         );
 
         //
-        let input = json!({
+        let input = Value::from_serializable(&json!({
             "title": "tmp: test",
             "subtitle": "Note",
             "author": [
@@ -1424,7 +1489,7 @@ mod tests {
             "other": "my \"new\" text",
             "filename_sync": false,
             "lang": "et-ET"
-        });
+        }));
         let expected = "<blockquote class=\"fm\">\
             <div class=\"fm\">author: <ul class=\"fm\">\
             <li class=\"fm\">Getreu: Noname</li>\
@@ -1445,61 +1510,62 @@ mod tests {
             <div class=\"fm\">title: tmp: test</div>\
             </blockquote>"
             .to_string();
-
-        let args = HashMap::new();
         assert_eq!(
-            to_html_filter(&input, &args).unwrap(),
-            Value::String(expected)
+            to_html_filter(&input, Kwargs::default(), &st).unwrap(),
+            Value::from(expected)
         );
     }
 
     #[test]
     fn test_name_filter() {
-        //
-        let result = name_filter(&to_value("fm_title").unwrap(), &HashMap::new());
-        assert_eq!(result.unwrap(), to_value("title").unwrap());
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
 
         //
-        let result = name_filter(&to_value("fm_unknown").unwrap(), &HashMap::new());
-        assert_eq!(result.unwrap(), to_value("unknown").unwrap());
+        let result = name_filter(&Value::from("fm_title"), Kwargs::default(), &st);
+        assert_eq!(result.unwrap(), Value::from("title"));
+
+        //
+        let result = name_filter(&Value::from("fm_unknown"), Kwargs::default(), &st);
+        assert_eq!(result.unwrap(), Value::from("unknown"));
     }
 
     #[test]
     fn test_markup_to_html_filter() {
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         //
         // Render verbatim text with the `parse-hyperlinks` crate to HTML.
-        let input = json!("Hello World\n[link](<https://getreu.net>)");
+        let input = Value::from("Hello World\n[link](<https://getreu.net>)");
         let expected = "<pre>Hello World\n\
             <a href=\"https://getreu.net\" title=\"\">\
             [link](&lt;https://getreu.net&gt;)</a></pre>"
             .to_string();
-
-        let args = HashMap::new();
         assert_eq!(
-            markup_to_html_filter(&input, &args).unwrap(),
-            Value::String(expected)
+            markup_to_html_filter(&input, Kwargs::default(), &st).unwrap(),
+            Value::from(expected)
         );
 
         // Render verbatim text with the `parse-hyperlinks` crate to HTML.
-        let input = json!("Hello World\n[link](<https://getreu.net>)");
+        let input = Value::from("Hello World\n[link](<https://getreu.net>)");
         let expected = "<pre>Hello World\n\
             <a href=\"https://getreu.net\" title=\"\">link</a></pre>"
             .to_string();
-        let mut args = HashMap::new();
-        // Select the "md" renderer.
-        args.insert("extension".to_string(), to_value("txtnote").unwrap());
-
+        // Select the "txtnote" renderer.
         assert_eq!(
-            markup_to_html_filter(&input, &args).unwrap(),
-            Value::String(expected)
+            markup_to_html_filter(
+                &input,
+                Kwargs::from([("extension", Value::from("txtnote"))]),
+                &st,
+            )
+            .unwrap(),
+            Value::from(expected)
         );
 
         //
         // Render Markdown to HTML.
-        let input = json!("# Title\nHello World");
-        let mut args = HashMap::new();
-        // Select the "md" renderer.
-        args.insert("extension".to_string(), to_value("md").unwrap());
+        let input = Value::from("# Title\nHello World");
 
         #[cfg(feature = "renderer")]
         let expected = "<h1>Title</h1>\n<p>Hello World</p>\n".to_string();
@@ -1507,22 +1573,29 @@ mod tests {
         let expected = "".to_string();
 
         assert_eq!(
-            markup_to_html_filter(&input, &args).unwrap(),
-            Value::String(expected)
+            markup_to_html_filter(
+                &input,
+                Kwargs::from([("extension", Value::from("md"))]),
+                &st,
+            )
+            .unwrap(),
+            Value::from(expected)
         );
 
         //
         // Render valid ReStructuredText to HTML (happy path).
         #[cfg(feature = "renderer")]
         {
-            let input = json!("`Link text <https://domain.invalid/>`_");
+            let input = Value::from("`Link text <https://domain.invalid/>`_");
             let expected = "<p><a href=\"https://domain.invalid/\">Link text</a></p>";
-            let mut args = HashMap::new();
-            args.insert("extension".to_string(), to_value("rst").unwrap());
-
             assert_eq!(
-                markup_to_html_filter(&input, &args).unwrap(),
-                Value::String(expected.to_string())
+                markup_to_html_filter(
+                    &input,
+                    Kwargs::from([("extension", Value::from("rst"))]),
+                    &st,
+                )
+                .unwrap(),
+                Value::from(expected.to_string())
             );
         }
     }
@@ -1533,25 +1606,30 @@ mod tests {
     #[test]
     #[cfg(feature = "renderer")]
     fn test_markup_to_html_filter_render_panic() {
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         // An unresolved substitution reference (|undefined|) leaves a
         // `SubstitutionReference` node in the AST that rst_renderer does not
         // implement, causing `unimplemented!()` to fire.
-        let input = json!("The |undefined| substitution reference.");
-        let mut args = HashMap::new();
-        args.insert("extension".to_string(), to_value("rst").unwrap());
-
-        let result = markup_to_html_filter(&input, &args);
+        let input = Value::from("The |undefined| substitution reference.");
+        let result = markup_to_html_filter(
+            &input,
+            Kwargs::from([("extension", Value::from("rst"))]),
+            &st,
+        );
         assert!(result.is_err(), "expected Err from panicking RST renderer");
 
-        // Build the expected prefix from the actual NoteError::RenderPanic
-        // format string so this test stays in sync with the variant definition.
-        // msg is left empty to produce the invariant prefix; the panic payload
-        // ("not implemented") follows it.
-        let expected_prefix = NoteError::RenderPanic {
-            renderer: format!("{:?}", MarkupLanguage::ReStructuredText),
-            msg: String::new(),
-        }
-        .to_string();
+        // Build the expected prefix: "markup_to_html: " sentinel followed by the
+        // NoteError::RenderPanic format string. msg is left empty to produce the
+        // invariant prefix; the panic payload ("not implemented") follows it.
+        let expected_prefix = format!(
+            "markup_to_html: {}",
+            NoteError::RenderPanic {
+                renderer: format!("{:?}", MarkupLanguage::ReStructuredText),
+                msg: String::new(),
+            }
+        );
         let err_msg = result.unwrap_err().to_string();
         assert!(
             err_msg.starts_with(&expected_prefix),
@@ -1561,317 +1639,409 @@ mod tests {
 
     #[test]
     fn test_incr_sort_tag_filter() {
-        let result = incr_sort_tag_filter(&to_value("dir/19-Note.md").unwrap(), &HashMap::new());
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("20").unwrap());
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
 
-        let result = incr_sort_tag_filter(&to_value("Note.md").unwrap(), &HashMap::new());
+        let result =
+            incr_sort_tag_filter(&Value::from("dir/19-Note.md"), Kwargs::default(), &st);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("").unwrap());
+        assert_eq!(result.unwrap(), Value::from("20"));
 
-        let result = incr_sort_tag_filter(&to_value("29-Note.md").unwrap(), &HashMap::new());
+        let result = incr_sort_tag_filter(&Value::from("Note.md"), Kwargs::default(), &st);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("30").unwrap());
+        assert_eq!(result.unwrap(), Value::from(""));
 
-        let result = incr_sort_tag_filter(&to_value("02-Note.md").unwrap(), &HashMap::new());
+        let result = incr_sort_tag_filter(&Value::from("29-Note.md"), Kwargs::default(), &st);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("03").unwrap());
+        assert_eq!(result.unwrap(), Value::from("30"));
 
-        let result = incr_sort_tag_filter(&to_value("cz-Note.md").unwrap(), &HashMap::new());
+        let result = incr_sort_tag_filter(&Value::from("02-Note.md"), Kwargs::default(), &st);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("da").unwrap());
+        assert_eq!(result.unwrap(), Value::from("03"));
 
-        let result = incr_sort_tag_filter(&to_value("2cz-Note.md").unwrap(), &HashMap::new());
+        let result = incr_sort_tag_filter(&Value::from("cz-Note.md"), Kwargs::default(), &st);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("2da").unwrap());
+        assert_eq!(result.unwrap(), Value::from("da"));
+
+        let result =
+            incr_sort_tag_filter(&Value::from("2cz-Note.md"), Kwargs::default(), &st);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Value::from("2da"));
 
         // Too many letters, default string is ``.
-        let result = incr_sort_tag_filter(&to_value("2acz-Note.md").unwrap(), &HashMap::new());
+        let result =
+            incr_sort_tag_filter(&Value::from("2acz-Note.md"), Kwargs::default(), &st);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("").unwrap());
+        assert_eq!(result.unwrap(), Value::from(""));
 
         // No input.
-        let mut args = HashMap::new();
-        args.insert("default".to_string(), to_value("my default.md").unwrap());
-        let result = incr_sort_tag_filter(&to_value("-Note.md").unwrap(), &args);
+        let result = incr_sort_tag_filter(
+            &Value::from("-Note.md"),
+            Kwargs::from([("default", Value::from("my default.md"))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
+        assert_eq!(result.unwrap(), Value::from("my default.md"));
 
         // Too big.
-        let mut args = HashMap::new();
-        args.insert("default".to_string(), to_value("my default.md").unwrap());
-        let result = incr_sort_tag_filter(&to_value("10000000000-Note.md").unwrap(), &args);
+        let result = incr_sort_tag_filter(
+            &Value::from("10000000000-Note.md"),
+            Kwargs::from([("default", Value::from("my default.md"))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
+        assert_eq!(result.unwrap(), Value::from("my default.md"));
 
         // Too many digits.
-        let mut args = HashMap::new();
-        args.insert("default".to_string(), to_value("my default.md").unwrap());
-        let result = incr_sort_tag_filter(&to_value("013-Note.md").unwrap(), &args);
+        let result = incr_sort_tag_filter(
+            &Value::from("013-Note.md"),
+            Kwargs::from([("default", Value::from("my default.md"))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("014").unwrap());
+        assert_eq!(result.unwrap(), Value::from("014"));
 
         // Too big.
-        let mut args = HashMap::new();
-        args.insert("default".to_string(), to_value("my default.md").unwrap());
-        let result = incr_sort_tag_filter(&to_value("aaafbaz-Note.md").unwrap(), &args);
+        let result = incr_sort_tag_filter(
+            &Value::from("aaafbaz-Note.md"),
+            Kwargs::from([("default", Value::from("my default.md"))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
+        assert_eq!(result.unwrap(), Value::from("my default.md"));
 
         // Too many digits.
-        let mut args = HashMap::new();
-        args.insert("default".to_string(), to_value("my default.md").unwrap());
-        let result = incr_sort_tag_filter(&to_value("aaf-Note.md").unwrap(), &args);
+        let result = incr_sort_tag_filter(
+            &Value::from("aaf-Note.md"),
+            Kwargs::from([("default", Value::from("my default.md"))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("my default.md").unwrap());
+        assert_eq!(result.unwrap(), Value::from("my default.md"));
 
-        let mut args = HashMap::new();
-        args.insert("default".to_string(), to_value("my default.md").unwrap());
-        let result = incr_sort_tag_filter(&to_value("23-01-23-Note.md").unwrap(), &args);
+        let result = incr_sort_tag_filter(
+            &Value::from("23-01-23-Note.md"),
+            Kwargs::from([("default", Value::from("my default.md"))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("23-01-24").unwrap());
+        assert_eq!(result.unwrap(), Value::from("23-01-24"));
     }
 
     #[test]
     fn test_sanit_filter() {
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         let result = sanit_filter(
-            &to_value(".# Strange filename? Yes.").unwrap(),
-            &HashMap::new(),
+            &Value::from(".# Strange filename? Yes."),
+            Kwargs::default(),
+            &st,
         );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("Strange filename_ Yes").unwrap());
+        assert_eq!(result.unwrap(), Value::from("Strange filename_ Yes"));
 
-        let result = sanit_filter(&to_value("Correct filename.pdf").unwrap(), &HashMap::new());
+        let result =
+            sanit_filter(&Value::from("Correct filename.pdf"), Kwargs::default(), &st);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("Correct filename.pdf").unwrap());
+        assert_eq!(result.unwrap(), Value::from("Correct filename.pdf"));
 
-        let result = sanit_filter(&to_value(".dotfilename").unwrap(), &HashMap::new());
+        let result = sanit_filter(&Value::from(".dotfilename"), Kwargs::default(), &st);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value(".dotfilename").unwrap());
+        assert_eq!(result.unwrap(), Value::from(".dotfilename"));
     }
 
     #[test]
     fn test_remove_filter() {
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         //
-        let input = json!({"title": "my title", "subtitle": "my subtitle"});
-        let mut args = HashMap::new();
-        args.insert("key".to_string(), to_value("title").unwrap());
-        let expected = json!({"subtitle": "my subtitle"});
-        let result = remove_filter(&input, &args);
-        //eprintln!("{:?}", result);
+        let input =
+            Value::from_serializable(&json!({"title": "my title", "subtitle": "my subtitle"}));
+        let expected = Value::from_serializable(&json!({"subtitle": "my subtitle"}));
+        let result =
+            remove_filter(&input, Kwargs::from([("key", Value::from("title"))]), &st);
         assert_eq!(result.unwrap(), expected);
 
         //
-        let input = json!({"title": "my title", "subtitle": "my subtitle"});
-        let mut args = HashMap::new();
-        args.insert("key".to_string(), to_value("nono").unwrap());
-        let expected = json!({"title": "my title", "subtitle": "my subtitle"});
-        let result = remove_filter(&input, &args);
-        //eprintln!("{:?}", result);
+        let input =
+            Value::from_serializable(&json!({"title": "my title", "subtitle": "my subtitle"}));
+        let expected =
+            Value::from_serializable(&json!({"title": "my title", "subtitle": "my subtitle"}));
+        let result = remove_filter(&input, Kwargs::from([("key", Value::from("nono"))]), &st);
         assert_eq!(result.unwrap(), expected);
     }
 
     #[test]
     fn test_insert_filter() {
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         //
-        let input = json!({"subtitle": "my subtitle"});
-        let mut args = HashMap::new();
-        args.insert("key".to_string(), to_value("fm_new").unwrap());
-        args.insert("value".to_string(), to_value("my new").unwrap());
-        let expected = json!({"new": "my new", "subtitle": "my subtitle"});
-        let result = insert_filter(&input, &args);
-        //eprintln!("{:?}", result);
+        let input = Value::from_serializable(&json!({"subtitle": "my subtitle"}));
+        let expected =
+            Value::from_serializable(&json!({"new": "my new", "subtitle": "my subtitle"}));
+        let result = insert_filter(
+            &input,
+            Kwargs::from([
+                ("key", Value::from("fm_new")),
+                ("value", Value::from("my new")),
+            ]),
+            &st,
+        );
         assert_eq!(result.unwrap(), expected);
 
         //
-        let input = json!({"title": "my title", "subtitle": "my subtitle"});
-        let mut args = HashMap::new();
-        args.insert("key".to_string(), to_value("fm_title").unwrap());
-        args.insert("value".to_string(), to_value("my replaced title").unwrap());
-        let expected = json!({"title": "my replaced title", "subtitle": "my subtitle"});
-        let result = insert_filter(&input, &args);
-        //eprintln!("{:?}", result);
+        let input =
+            Value::from_serializable(&json!({"title": "my title", "subtitle": "my subtitle"}));
+        let expected = Value::from_serializable(
+            &json!({"title": "my replaced title", "subtitle": "my subtitle"}),
+        );
+        let result = insert_filter(
+            &input,
+            Kwargs::from([
+                ("key", Value::from("fm_title")),
+                ("value", Value::from("my replaced title")),
+            ]),
+            &st,
+        );
         assert_eq!(result.unwrap(), expected);
 
         //
-        let input = json!({"title": "my title"});
-        let mut args = HashMap::new();
-        args.insert("key".to_string(), to_value("fm_new").unwrap());
-        let expected = json!({"new": null, "title": "my title"});
-        let result = insert_filter(&input, &args);
-        //eprintln!("{:?}", result);
+        let input = Value::from_serializable(&json!({"title": "my title"}));
+        let expected = Value::from_serializable(&json!({"new": null, "title": "my title"}));
+        let result =
+            insert_filter(&input, Kwargs::from([("key", Value::from("fm_new"))]), &st);
         assert_eq!(result.unwrap(), expected);
     }
 
     #[test]
     fn test_replace_emtpy_filter() {
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         // Do not replace.
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value("new string").unwrap());
-        let result = replace_empty_filter(&to_value("non empty string").unwrap(), &args);
+        let result = replace_empty_filter(
+            &Value::from("non empty string"),
+            Kwargs::from([("with", Value::from("new string"))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("non empty string").unwrap());
+        assert_eq!(result.unwrap(), Value::from("non empty string"));
 
         // Replace.
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value("new string").unwrap());
-        let result = replace_empty_filter(&to_value("").unwrap(), &args);
+        let result = replace_empty_filter(
+            &Value::from(""),
+            Kwargs::from([("with", Value::from("new string"))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("new string").unwrap());
+        assert_eq!(result.unwrap(), Value::from("new string"));
 
         // Array input, not empty.
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value([1, 2, 3]).unwrap());
-        let input = to_value([3, 4, 5]).unwrap();
-        let output = replace_empty_filter(&input, &args).unwrap();
+        let input = Value::from_serializable(&json!([3, 4, 5]));
+        let output = replace_empty_filter(
+            &input,
+            Kwargs::from([("with", Value::from_serializable(&json!([1, 2, 3])))]),
+            &st,
+        )
+        .unwrap();
         assert_eq!(output, input);
 
         // Array input, empty.
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value([1, 2, 3]).unwrap());
-        let input = Value::Array(vec![]);
-        let output = replace_empty_filter(&input, &args).unwrap();
-        assert_eq!(output, to_value([1, 2, 3]).unwrap());
+        let input = Value::from_serializable(&json!([]));
+        let output = replace_empty_filter(
+            &input,
+            Kwargs::from([("with", Value::from_serializable(&json!([1, 2, 3])))]),
+            &st,
+        )
+        .unwrap();
+        assert_eq!(output, Value::from_serializable(&json!([1, 2, 3])));
 
         // Array input, not empty.
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value([1, 2, 3]).unwrap());
-        let input = to_value(["", "not empty", ""]).unwrap();
-        let output = replace_empty_filter(&input, &args).unwrap();
+        let input = Value::from_serializable(&json!(["", "not empty", ""]));
+        let output = replace_empty_filter(
+            &input,
+            Kwargs::from([("with", Value::from_serializable(&json!([1, 2, 3])))]),
+            &st,
+        )
+        .unwrap();
         assert_eq!(output, input);
 
         // Array input, empty.
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value([1, 2, 3]).unwrap());
-        let input = to_value(["", "", ""]).unwrap();
-        let output = replace_empty_filter(&input, &args).unwrap();
-        assert_eq!(output, to_value([1, 2, 3]).unwrap());
+        let input = Value::from_serializable(&json!(["", "", ""]));
+        let output = replace_empty_filter(
+            &input,
+            Kwargs::from([("with", Value::from_serializable(&json!([1, 2, 3])))]),
+            &st,
+        )
+        .unwrap();
+        assert_eq!(output, Value::from_serializable(&json!([1, 2, 3])));
 
-        // Null input, not empty.
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value([1, 2, 3]).unwrap());
-        let input = Value::Null;
-        let output = replace_empty_filter(&input, &args).unwrap();
-        assert_eq!(output, to_value([1, 2, 3]).unwrap());
+        // None input is treated as empty and replaced.
+        let input = Value::none();
+        let output = replace_empty_filter(
+            &input,
+            Kwargs::from([("with", Value::from_serializable(&json!([1, 2, 3])))]),
+            &st,
+        )
+        .unwrap();
+        assert_eq!(output, Value::from_serializable(&json!([1, 2, 3])));
     }
 
     #[test]
     fn test_prepend_filter() {
-        // `with`
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value("-").unwrap());
-        let result = prepend_filter(&to_value("1. My first chapter").unwrap(), &args);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("-1. My first chapter").unwrap());
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
 
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value("_").unwrap());
-        let result = prepend_filter(&to_value("").unwrap(), &args);
+        // `with`
+        let result = prepend_filter(
+            &Value::from("1. My first chapter"),
+            Kwargs::from([("with", Value::from("-"))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("").unwrap());
+        assert_eq!(result.unwrap(), Value::from("-1. My first chapter"));
+
+        let result = prepend_filter(
+            &Value::from(""),
+            Kwargs::from([("with", Value::from("_"))]),
+            &st,
+        );
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Value::from(""));
 
         // `with_sort_tag`
-        let mut args = HashMap::new();
-        args.insert("with_sort_tag".to_string(), to_value("20230809").unwrap());
-        let result = prepend_filter(&to_value("1. My first chapter").unwrap(), &args);
+        let result = prepend_filter(
+            &Value::from("1. My first chapter"),
+            Kwargs::from([("with_sort_tag", Value::from("20230809"))]),
+            &st,
+        );
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Value::from("20230809-1. My first chapter"));
+
+        let result = prepend_filter(
+            &Value::from("1-My first chapter"),
+            Kwargs::from([("with_sort_tag", Value::from("20230809"))]),
+            &st,
+        );
         assert!(result.is_ok());
         assert_eq!(
             result.unwrap(),
-            to_value("20230809-1. My first chapter").unwrap()
+            Value::from("20230809-'1-My first chapter")
         );
 
-        let mut args = HashMap::new();
-        args.insert("with_sort_tag".to_string(), to_value("20230809").unwrap());
-        let result = prepend_filter(&to_value("1-My first chapter").unwrap(), &args);
-        assert!(result.is_ok());
-        assert_eq!(
-            result.unwrap(),
-            to_value("20230809-'1-My first chapter").unwrap()
+        let result = prepend_filter(
+            &Value::from("1. My first chapter"),
+            Kwargs::from([("with_sort_tag", Value::from(""))]),
+            &st,
         );
-
-        let mut args = HashMap::new();
-        args.insert("with_sort_tag".to_string(), to_value("").unwrap());
-        let result = prepend_filter(&to_value("1. My first chapter").unwrap(), &args);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("1. My first chapter").unwrap());
+        assert_eq!(result.unwrap(), Value::from("1. My first chapter"));
 
-        let mut args = HashMap::new();
-        args.insert("with_sort_tag".to_string(), to_value("").unwrap());
-        let result = prepend_filter(&to_value("1-My first chapter").unwrap(), &args);
+        let result = prepend_filter(
+            &Value::from("1-My first chapter"),
+            Kwargs::from([("with_sort_tag", Value::from(""))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("'1-My first chapter").unwrap());
+        assert_eq!(result.unwrap(), Value::from("'1-My first chapter"));
 
-        let mut args = HashMap::new();
-        args.insert("with_sort_tag".to_string(), to_value("20230809").unwrap());
-        let result = prepend_filter(&to_value("").unwrap(), &args);
+        let result = prepend_filter(
+            &Value::from(""),
+            Kwargs::from([("with_sort_tag", Value::from("20230809"))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("20230809-'").unwrap());
+        assert_eq!(result.unwrap(), Value::from("20230809-'"));
 
-        let mut args = HashMap::new();
-        args.insert("with_sort_tag".to_string(), to_value("").unwrap());
-        let result = prepend_filter(&to_value("").unwrap(), &args);
+        let result = prepend_filter(
+            &Value::from(""),
+            Kwargs::from([("with_sort_tag", Value::from(""))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("'").unwrap());
+        assert_eq!(result.unwrap(), Value::from("'"));
 
-        // `with`
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value("-").unwrap());
-        args.insert("newline".to_string(), to_value(true).unwrap());
-        let result = prepend_filter(&to_value("1. My first chapter").unwrap(), &args);
+        // `with` + `newline`
+        let result = prepend_filter(
+            &Value::from("1. My first chapter"),
+            Kwargs::from([("with", Value::from("-")), ("newline", Value::from(true))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("\n-1. My first chapter").unwrap());
+        assert_eq!(result.unwrap(), Value::from("\n-1. My first chapter"));
     }
 
     #[test]
     fn test_append_filter() {
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         // `with`
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value("-").unwrap());
-        let result = append_filter(&to_value("1. My first chapter").unwrap(), &args);
+        let result = append_filter(
+            &Value::from("1. My first chapter"),
+            Kwargs::from([("with", Value::from("-"))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("1. My first chapter-").unwrap());
+        assert_eq!(result.unwrap(), Value::from("1. My first chapter-"));
 
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value("_").unwrap());
-        let result = append_filter(&to_value("").unwrap(), &args);
+        let result = append_filter(
+            &Value::from(""),
+            Kwargs::from([("with", Value::from("_"))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("").unwrap());
+        assert_eq!(result.unwrap(), Value::from(""));
 
-        // `with_sort_tag`
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value("-").unwrap());
-        args.insert("newline".to_string(), to_value(true).unwrap());
-        let result = append_filter(&to_value("1. My first chapter").unwrap(), &args);
+        // `with` + `newline`
+        let result = append_filter(
+            &Value::from("1. My first chapter"),
+            Kwargs::from([("with", Value::from("-")), ("newline", Value::from(true))]),
+            &st,
+        );
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), to_value("1. My first chapter-\n").unwrap());
+        assert_eq!(result.unwrap(), Value::from("1. My first chapter-\n"));
     }
 
     #[test]
     fn test_link_text_link_dest_link_title_filter() {
-        let args = HashMap::new();
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         // Test Markdown link in clipboard.
         let input = r#"xxx[Jens Getreu's blog](https://blog.getreu.net "My blog")"#;
-        let output_ln = link_text_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("Jens Getreu's blog", output_ln);
-        let output_lta = link_dest_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("https://blog.getreu.net", output_lta);
-        let output_lti = link_title_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("My blog", output_lti);
+        let output_ln =
+            link_text_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("Jens Getreu's blog", output_ln.as_str().unwrap());
+        let output_lta =
+            link_dest_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("https://blog.getreu.net", output_lta.as_str().unwrap());
+        let output_lti =
+            link_title_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("My blog", output_lti.as_str().unwrap());
 
         // Test non-link string in clipboard.
         let input = "Tp-Note helps you to quickly get\
             started writing notes.";
-        let output_ln = link_text_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("", output_ln);
-        let output_lta = link_dest_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("", output_lta);
-        let output_lti = link_title_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("", output_lti);
+        let output_ln =
+            link_text_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("", output_ln.as_str().unwrap());
+        let output_lta =
+            link_dest_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("", output_lta.as_str().unwrap());
+        let output_lti =
+            link_title_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("", output_lti.as_str().unwrap());
     }
 
     #[test]
     fn test_link_text_filter() {
-        let args = HashMap::new();
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         // Test Markdown link in clipboard.
         let input = r#"Some autolink: <tpnote:locallink.md>,
 more autolinks: <tpnote:20>, <getreu@web.de>,
@@ -1879,33 +2049,34 @@ boring link text: [http://domain.com](http://getreu.net)
 [Jens Getreu's blog](https://blog.getreu.net "My blog")
 Some more text."#;
 
-        let output = link_text_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(output, "tpnote:locallink.md");
+        let output = link_text_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!(output.as_str().unwrap(), "tpnote:locallink.md");
 
         // Test picky version also.
-
-        let output = link_text_picky_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(output, "Jens Getreu's blog");
+        let output =
+            link_text_picky_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!(output.as_str().unwrap(), "Jens Getreu's blog");
 
         //
         let input = "[into\\_bytes](https://doc.rust-lang.org)";
 
-        let output = link_text_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(output, "into_bytes");
+        let output = link_text_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!(output.as_str().unwrap(), "into_bytes");
 
         // Test picky version also.
-
-        let output = link_text_picky_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(output, "into_bytes");
+        let output =
+            link_text_picky_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!(output.as_str().unwrap(), "into_bytes");
     }
 
     #[test]
     fn test_trunc_filter() {
-        let args = HashMap::new();
-        // Test Markdown link in clipboard.
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         let input = "Jens Getreu's blog";
-        let output = trunc_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("Jens Getr", output);
+        let output = trunc_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("Jens Getr", output.as_str().unwrap());
     }
 
     #[test]
@@ -1962,195 +2133,193 @@ Some more text."#;
 
     #[test]
     fn test_heading_filter() {
-        let args = HashMap::new();
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
 
         //
         // Test find first sentence.
         let input = "N.ote.\nIt helps. Get quickly\
             started writing notes.";
-        let output = heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("N.ote", output);
+        let output = heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("N.ote", output.as_str().unwrap());
 
         //
         // Test find first sentence (Windows)
         let input = "N.ote.\r\nIt helps. Get quickly\
             started writing notes.";
-        let output = heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("N.ote", output);
+        let output = heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("N.ote", output.as_str().unwrap());
 
         //
         // Test find heading
         let input = "N.ote\n\nIt helps. Get quickly\
             started writing notes.";
-        let output = heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("N.ote", output);
+        let output = heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("N.ote", output.as_str().unwrap());
 
         //
         // Test find heading (Windows)
         let input = "N.ote\r\n\r\nIt helps. Get quickly\
             started writing notes.";
-        let output = heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("N.ote", output);
+        let output = heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("N.ote", output.as_str().unwrap());
 
         //
         // Test trim whitespace
         let input = "\r\n\r\n  \tIt helps. Get quickly\
             started writing notes.";
-        let output = heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("It helps", output);
+        let output = heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("It helps", output.as_str().unwrap());
     }
 
     #[test]
     fn test_html_heading_filter() {
-        let args = HashMap::new();
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
 
         //
         // Test find first heading.
         let input = "Some text.<h1>Heading 1</h1>Get quickly\
             started writing notes.";
-        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("Heading 1", output);
+        let output = html_heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("Heading 1", output.as_str().unwrap());
 
         //
         let input = "Some text.<h1 style=\"font-size:60px;\">\
             Heading 1</h1>Get quickly\
             started writing notes.";
-        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("Heading 1", output);
+        let output = html_heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("Heading 1", output.as_str().unwrap());
 
         //
         let input = "Some text.<h2>Heading &amp;1</h2>Get quickly\
             started writing notes.";
-        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("Heading &1", output);
+        let output = html_heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("Heading &1", output.as_str().unwrap());
 
         //
         let input = "Some text.<p>No Heading 1</p>Get quickly\
             started writing notes.";
-        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("", output);
+        let output = html_heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("", output.as_str().unwrap());
 
         //
         let input = "Some text.<h1>No Heading 1</p>Get quickly\
             started writing notes.";
-        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("", output);
+        let output = html_heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("", output.as_str().unwrap());
 
         //
         let input = "Some text.<p>No Heading 1</h1>Get quickly\
             started writing notes.";
-        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("", output);
+        let output = html_heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("", output.as_str().unwrap());
 
         //
         let input = "Some text.<p>No <h1>Heading 1</h1>Get quickly\
             started writing notes.";
-        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("Heading 1", output);
+        let output = html_heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("Heading 1", output.as_str().unwrap());
 
         //
         let input = "Some text.<p>No <h1>Heading<br> 1</h1>Get quickly\
             started writing notes.";
-        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("Heading 1", output);
+        let output = html_heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("Heading 1", output.as_str().unwrap());
 
         //
         let input = "<p>No <h1>Heading 1</h1> <h1>Heading 2</h1> text";
-        let output = html_heading_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        // This string is shortened.
-        assert_eq!("Heading 1", output);
+        let output = html_heading_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("Heading 1", output.as_str().unwrap());
     }
 
     #[test]
     fn test_file_filter() {
-        let args = HashMap::new();
-        //
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         //
         // Test file stem.
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.md";
-        let output = file_stem_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("My file", output);
+        let output = file_stem_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("My file", output.as_str().unwrap());
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = file_stem_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("My dir", output);
-        //
+        let output = file_stem_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("My dir", output.as_str().unwrap());
+
         //
         // Test file tag.
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.md";
-        let output = file_sort_tag_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("20200908", output);
+        let output =
+            file_sort_tag_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("20200908", output.as_str().unwrap());
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = file_sort_tag_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("20200908", output);
-        //
+        let output =
+            file_sort_tag_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("20200908", output.as_str().unwrap());
+
         //
         // Test file extension.
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.md";
-        let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("md", output);
+        let output = file_ext_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("md", output.as_str().unwrap());
 
         let input = "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file.pfd.md";
-        let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("md", output);
+        let output = file_ext_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("md", output.as_str().unwrap());
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("", output);
-        //
+        let output = file_ext_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("", output.as_str().unwrap());
+
         //
         // Test copy counter filter.
         let input = "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
-        let output = file_copy_counter_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(123, output);
+        let output =
+            file_copy_counter_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!(123, output.as_i64().unwrap());
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("", output);
-        //
+        let output = file_ext_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("", output.as_str().unwrap());
+
         //
         // Test filename.
         let input = "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My file(123).md";
-        let output = file_name_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("20200908-My file(123).md", output);
+        let output = file_name_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("20200908-My file(123).md", output.as_str().unwrap());
 
         let input =
             "/usr/local/WEB-SERVER-CONTENT/blog.getreu.net/projects/tp-note/20200908-My dir/";
-        let output = file_ext_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("", output);
-        //
+        let output = file_ext_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
+        assert_eq!("", output.as_str().unwrap());
+
         //
         // Test `prepend_dot`.
-        let mut args = HashMap::new();
-        args.insert("with".to_string(), to_value(".").unwrap());
-        let input = "md";
-        let output = prepend_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(".md", output);
+        let output = prepend_filter(
+            &Value::from("md"),
+            Kwargs::from([("with", Value::from("."))]),
+            &st,
+        )
+        .unwrap();
+        assert_eq!(".md", output.as_str().unwrap());
 
-        let input = "";
-        let output = prepend_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("", output);
+        let output = prepend_filter(
+            &Value::from(""),
+            Kwargs::from([("with", Value::from("."))]),
+            &st,
+        )
+        .unwrap();
+        assert_eq!("", output.as_str().unwrap());
     }
 
     #[test]
@@ -2158,6 +2327,9 @@ Some more text."#;
         //
         // `Test `map_lang_filter()`
         use crate::settings::Settings;
+
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
 
         let mut map_lang_filter_btmap = BTreeMap::new();
         map_lang_filter_btmap.insert("de".to_string(), "de-DE".to_string());
@@ -2168,36 +2340,35 @@ Some more text."#;
         // This locks `SETTINGS` for further write access in this scope.
         let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
 
-        let args = HashMap::new();
-        let input = ["de"];
-        let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(tera::to_value(["de-DE"]).unwrap(), output);
+        let input = Value::from_serializable(&json!(["de"]));
+        let output = map_lang_filter(&input, Kwargs::default(), &st).unwrap();
+        assert_eq!(Value::from_serializable(&json!(["de-DE"])), output);
 
-        let args = HashMap::new();
-        let input = ["de", "fr"];
-        let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(tera::to_value(["de-DE", "fr"]).unwrap(), output);
+        let input = Value::from_serializable(&json!(["de", "fr"]));
+        let output = map_lang_filter(&input, Kwargs::default(), &st).unwrap();
+        assert_eq!(Value::from_serializable(&json!(["de-DE", "fr"])), output);
 
-        let mut args = HashMap::new();
-        args.insert("default".to_string(), to_value("test").unwrap());
-        let input = Value::Null;
-        let output = map_lang_filter(&input, &args).unwrap_or_default();
-        assert_eq!(Value::Null, output);
+        // None input is rejected by the type check.
+        let input = Value::none();
+        let result =
+            map_lang_filter(&input, Kwargs::from([("default", Value::from("test"))]), &st);
+        assert!(result.is_err());
 
-        let mut args = HashMap::new();
-        args.insert("default".to_string(), to_value("test").unwrap());
-        let input = [""];
-        let output = map_lang_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!(tera::to_value(["test"]).unwrap(), output);
+        let input = Value::from_serializable(&json!([""]));
+        let output = map_lang_filter(
+            &input,
+            Kwargs::from([("default", Value::from("test"))]),
+            &st,
+        )
+        .unwrap();
+        assert_eq!(Value::from_serializable(&json!(["test"])), output);
 
-        let args = HashMap::new();
-        let input = "this is not an arry";
-        let output = map_lang_filter(&to_value(input).unwrap(), &args);
+        let input = Value::from("this is not an array");
+        let output = map_lang_filter(&input, Kwargs::default(), &st);
         assert!(output.is_err());
 
-        let args = HashMap::new();
-        let input = [3, 5, 8];
-        let output = map_lang_filter(&to_value(input).unwrap(), &args);
+        let input = Value::from_serializable(&json!([3, 5, 8]));
+        let output = map_lang_filter(&input, Kwargs::default(), &st);
         assert!(output.is_err());
 
         drop(_settings);
@@ -2205,25 +2376,26 @@ Some more text."#;
 
     #[test]
     fn test_flatten_array_filter() {
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
         // This is passed through.
-        let args = HashMap::new();
-        let input = ["de-DE", "fr", "et-ET"];
-        let output = flatten_array_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("de-DE", output[0]);
-        assert_eq!("fr", output[1]);
-        assert_eq!("et-ET", output[2]);
+        let input = Value::from_serializable(&json!(["de-DE", "fr", "et-ET"]));
+        let output = flatten_array_filter(&input, Kwargs::default(), &st).unwrap();
+        let arr = output.as_array().unwrap();
+        assert_eq!("de-DE", arr[0].as_str().unwrap());
+        assert_eq!("fr", arr[1].as_str().unwrap());
+        assert_eq!("et-ET", arr[2].as_str().unwrap());
 
         // This input is rejected.
-        let args = HashMap::new();
-        let input = "de-DE";
-        let output = flatten_array_filter(&to_value(input).unwrap(), &args);
+        let input = Value::from("de-DE");
+        let output = flatten_array_filter(&input, Kwargs::default(), &st);
         assert!(output.is_err());
 
         // This is flattened.
-        let args = HashMap::new();
-        let input = ["de-DE"];
-        let output = flatten_array_filter(&to_value(input).unwrap(), &args).unwrap_or_default();
-        assert_eq!("de-DE", output);
+        let input = Value::from_serializable(&json!(["de-DE"]));
+        let output = flatten_array_filter(&input, Kwargs::default(), &st).unwrap();
+        assert_eq!("de-DE", output.as_str().unwrap());
     }
 
     #[test]

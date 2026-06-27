@@ -28,9 +28,9 @@
 //! // Prepare test.
 //! let notedir = temp_dir();
 //!
-//! let html_clipboard = ContentString::default();
-//! let txt_clipboard = ContentString::default();
-//! let stdin = ContentString::default();
+//! let html_clipboard = ContentString::from_string("".to_string(), "html_clipboard".to_string());
+//! let txt_clipboard = ContentString::from_string("".to_string(), "txt_clipboard".to_string());
+//! let stdin = ContentString::from_string("".to_string(), "stdin".to_string());
 //! let v = vec![&html_clipboard, &txt_clipboard, &stdin];
 //! // This is the condition to choose: `TemplateKind::New`:
 //! assert!(html_clipboard.is_empty() && txt_clipboard.is_empty() &&stdin.is_empty());
@@ -114,9 +114,9 @@
 //! // Prepare test.
 //! let notedir = temp_dir();
 //!
-//! let html_clipboard = MyContentString::default();
-//! let txt_clipboard = MyContentString::default();
-//! let stdin = MyContentString::default();
+//! let html_clipboard = MyContentString::from_string("".to_string(), "html_clipboard".to_string());
+//! let txt_clipboard = MyContentString::from_string("".to_string(), "txt_clipboard".to_string());
+//! let stdin = MyContentString::from_string("".to_string(), "stdin".to_string());
 //! let v = vec![&html_clipboard, &txt_clipboard, &stdin];
 //! // There are no inhibitor rules to change the `TemplateKind`.
 //! let template_kind_filter = |tk|tk;
@@ -156,7 +156,6 @@ use crate::template::TemplateKind;
 use parking_lot::RwLockUpgradableReadGuard;
 use std::path::Path;
 use std::path::PathBuf;
-use tera::Value;
 
 /// Typestate of the `WorkflowBuilder`.
 #[derive(Debug, Clone)]
@@ -522,16 +521,15 @@ fn synchronize_filename<T: Content>(
     let no_filename_sync = match (
         note.context
             .get(TMPL_VAR_FM_ALL)
-            .and_then(|v| v.get(TMPL_VAR_FM_FILENAME_SYNC)),
+            .and_then(|v| v.get_from_path(TMPL_VAR_FM_FILENAME_SYNC)),
         note.context
             .get(TMPL_VAR_FM_ALL)
-            .and_then(|v| v.get(TMPL_VAR_FM_NO_FILENAME_SYNC)),
+            .and_then(|v| v.get_from_path(TMPL_VAR_FM_NO_FILENAME_SYNC)),
     ) {
         // By default we sync.
         (None, None) => false,
-        (None, Some(Value::Bool(nsync))) => *nsync,
-        (None, Some(_)) => true,
-        (Some(Value::Bool(sync)), None) => !*sync,
+        (None, Some(v)) => v.as_bool().unwrap_or(true),
+        (Some(v), None) => !v.as_bool().unwrap_or(false),
         _ => false,
     };
 
@@ -546,28 +544,33 @@ fn synchronize_filename<T: Content>(
 
     // Shall we switch the `settings.current_theme`?
     // If `fm_scheme` is defined, prefer this value.
-    match note
+    let fm_scheme_val = note
         .context
         .get(TMPL_VAR_FM_ALL)
-        .and_then(|v| v.get(TMPL_VAR_FM_SCHEME))
-    {
-        Some(Value::String(s)) if !s.is_empty() => {
-            // Initialize `SETTINGS`.
-            settings
-                .with_upgraded(|settings| settings.update_current_scheme(SchemeSource::Force(s)))?;
-            log::info!("Switch to scheme `{}` as indicated in front matter", s);
-        }
-        Some(Value::String(_)) | None => {
-            // Initialize `SETTINGS`.
+        .and_then(|v| v.get_from_path(TMPL_VAR_FM_SCHEME));
+    match fm_scheme_val {
+        None => {
             settings.with_upgraded(|settings| {
                 settings.update_current_scheme(SchemeSource::SchemeSyncDefault)
             })?;
         }
-        Some(_) => {
-            return Err(NoteError::FrontMatterFieldIsNotString {
-                field_name: TMPL_VAR_FM_SCHEME.to_string(),
-            });
-        }
+        Some(v) => match v.as_str() {
+            Some(s) if !s.is_empty() => {
+                settings
+                    .with_upgraded(|settings| settings.update_current_scheme(SchemeSource::Force(s)))?;
+                log::info!("Switch to scheme `{}` as indicated in front matter", s);
+            }
+            Some(_) => {
+                settings.with_upgraded(|settings| {
+                    settings.update_current_scheme(SchemeSource::SchemeSyncDefault)
+                })?;
+            }
+            None => {
+                return Err(NoteError::FrontMatterFieldIsNotString {
+                    field_name: TMPL_VAR_FM_SCHEME.to_string(),
+                });
+            }
+        },
     };
 
     note.render_filename(TemplateKind::SyncFilename)?;

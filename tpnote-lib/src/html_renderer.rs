@@ -237,11 +237,9 @@ impl HtmlRenderer {
 
         // Apply template.
         let mut tera = Tera::default();
-        // Switch `autoescape_on()` only for HTML templates.
-        tera.autoescape_on(vec![ONE_OFF_TEMPLATE_NAME]);
-        tera.extend(&TERA)?;
+        tera.register_from(&TERA);
         let html = tera
-            .render_str(tmpl_html, &context)
+            .render_str(tmpl_html, &context, true)
             .map_err(|e| note_error_tera_template!(e, "[html_tmpl] viewer_error".to_string()))?;
         Ok(html)
     }

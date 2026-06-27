@@ -493,29 +493,27 @@ pub enum NoteError {
 #[macro_export]
 macro_rules! note_error_tera_template {
     ($e:ident, $t:expr) => {{
-        match std::error::Error::source(&$e) {
-            Some(s) if s.to_string().starts_with("Filter call 'markup_to_html'") => {
-                let msg = match s.source() {
-                    Some(deeper) => format!("Markup error in note body:\n{}", deeper),
-                    None => s.to_string(),
-                };
-                NoteError::MarkupError { msg }
-            }
-            other => {
-                let source_str = other
-                    .map(|s| {
-                        s.to_string()
-                            // Remove useless information.
-                            .trim_end_matches(
-                                "in context while rendering '__tera_one_off'",
-                            )
-                            .to_string()
-                    })
-                    .unwrap_or_default();
-                NoteError::TeraTemplate {
-                    source_str,
-                    template_str: $t,
-                }
+        // In tera v2 filter errors are embedded directly in the ErrorKind message
+        // rather than as a source chain. Extract the raw message and check for
+        // the sentinel prefix added by markup_to_html_filter.
+        let raw_msg = match $e.kind() {
+            tera::ErrorKind::RenderingError(r) => r.message().to_owned(),
+            tera::ErrorKind::Msg(m) => m.clone(),
+            _ => String::new(),
+        };
+        if raw_msg.starts_with("markup_to_html: ") {
+            NoteError::MarkupError { msg: raw_msg["markup_to_html: ".len()..].to_string() }
+        } else {
+            let source_str = match std::error::Error::source(&$e) {
+                Some(s) => s
+                    .to_string()
+                    .trim_end_matches("in context while rendering '__tera_one_off'")
+                    .to_string(),
+                None => $e.to_string(),
+            };
+            NoteError::TeraTemplate {
+                source_str,
+                template_str: $t,
             }
         }
     }};

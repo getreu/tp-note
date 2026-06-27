@@ -129,11 +129,11 @@ impl<T: Content> Note<T> {
         let new_content: T = T::from_string(
             {
                 let mut tera = Tera::default();
-                tera.extend(&TERA)?;
+                tera.register_from(&TERA);
 
                 // Panics, if the content template does not exist (see contract).
                 // Returns an error, when the rendition goes wrong.
-                tera.render_str(&template_kind.get_content_template(), &context)
+                tera.render_str(&template_kind.get_content_template(), &context, false)
                     .map_err(|e| {
                         note_error_tera_template!(
                             e,
@@ -174,9 +174,9 @@ impl<T: Content> Note<T> {
         // Render template
         let mut file_path = self.context.get_dir_path().to_owned();
         let mut tera = Tera::default();
-        tera.extend(&TERA)?;
+        tera.register_from(&TERA);
 
-        match tera.render_str(&template_kind.get_filename_template(), &self.context) {
+        match tera.render_str(&template_kind.get_filename_template(), &self.context, false) {
             Ok(filename) => {
                 file_path.push(filename.trim());
             }
@@ -301,10 +301,8 @@ impl<T: Content> Note<T> {
         );
 
         let mut tera = Tera::default();
-        tera.extend(&TERA)?;
-        // Switch `autoescape_on()` only for HTML templates.
-        tera.autoescape_on(vec![ONE_OFF_TEMPLATE_NAME]);
-        let html = tera.render_str(tmpl, &html_context).map_err(|e| {
+        tera.register_from(&TERA);
+        let html = tera.render_str(tmpl, &html_context, true).map_err(|e| {
             note_error_tera_template!(e, "[html_tmpl] viewer/exporter_tmpl ".to_string())
         })?;
 
@@ -342,26 +340,20 @@ mod tests {
           - 5
         ";
 
-        let mut expected = tera::Map::new();
-        expected.insert("title".to_string(), Value::String("The book".to_string()));
-        expected.insert(
-            "subtitle".to_string(),
-            Value::String("you always wanted".to_string()),
-        );
-        expected.insert("author".to_string(), Value::String("It\'s me".to_string()));
-        expected.insert("date".to_string(), Value::String("2020-04-21".to_string()));
-        expected.insert("lang".to_string(), Value::String("en".to_string()));
-        expected.insert("revision".to_string(), Value::String("1.0".to_string()));
-        expected.insert(
-            "sort_tag".to_string(),
-            Value::String("20200420-21_22".to_string()),
-        );
-        expected.insert("file_ext".to_string(), Value::String("md".to_string()));
-        expected.insert("height".to_string(), json!(1.23)); // Number()
-        expected.insert("count".to_string(), json!(2)); // Number()
-        expected.insert("neg".to_string(), json!(-1)); // Number()
-        expected.insert("flag".to_string(), json!(true)); // Bool()
-        expected.insert("numbers".to_string(), json!([1, 3, 5])); // Array()
+        let mut expected = serde_json::Map::new();
+        expected.insert("title".to_string(), json!("The book"));
+        expected.insert("subtitle".to_string(), json!("you always wanted"));
+        expected.insert("author".to_string(), json!("It\'s me"));
+        expected.insert("date".to_string(), json!("2020-04-21"));
+        expected.insert("lang".to_string(), json!("en"));
+        expected.insert("revision".to_string(), json!("1.0"));
+        expected.insert("sort_tag".to_string(), json!("20200420-21_22"));
+        expected.insert("file_ext".to_string(), json!("md"));
+        expected.insert("height".to_string(), json!(1.23));
+        expected.insert("count".to_string(), json!(2));
+        expected.insert("neg".to_string(), json!(-1));
+        expected.insert("flag".to_string(), json!(true));
+        expected.insert("numbers".to_string(), json!([1, 3, 5]));
 
         let expected_front_matter = FrontMatter(expected);
 
@@ -371,29 +363,27 @@ mod tests {
 
     #[test]
     fn test_register_front_matter() {
-        let mut tmp = tera::Map::new();
-        tmp.insert("file_ext".to_string(), Value::String("md".to_string())); // String
-        tmp.insert("height".to_string(), json!(1.23)); // Number()
-        tmp.insert("count".to_string(), json!(2)); // Number()
-        tmp.insert("neg".to_string(), json!(-1)); // Number()
-        tmp.insert("flag".to_string(), json!(true)); // Bool()
-        tmp.insert("numbers".to_string(), json!([1, 3, 5])); // Array([Numbers()..])!
-        let mut tmp2 = tera::Map::new();
-        tmp2.insert("fm_file_ext".to_string(), Value::String("md".to_string())); // String
-        tmp2.insert("fm_height".to_string(), json!(1.23)); // Number()
-        tmp2.insert("fm_count".to_string(), json!(2)); // Number()
-        tmp2.insert("fm_neg".to_string(), json!(-1)); // Number()
-        tmp2.insert("fm_flag".to_string(), json!(true)); // Bool()
-        tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // Array([Numbers()..])!
+        let mut tmp = serde_json::Map::new();
+        tmp.insert("file_ext".to_string(), json!("md"));
+        tmp.insert("height".to_string(), json!(1.23));
+        tmp.insert("count".to_string(), json!(2));
+        tmp.insert("neg".to_string(), json!(-1));
+        tmp.insert("flag".to_string(), json!(true));
+        tmp.insert("numbers".to_string(), json!([1, 3, 5]));
 
         let input1 = Context::from(Path::new("a/b/test.md")).unwrap();
         let input2 = FrontMatter(tmp);
 
         let mut expected = Context::from(Path::new("a/b/test.md")).unwrap();
-        tmp2.remove("fm_numbers");
-        tmp2.insert("fm_numbers".to_string(), json!([1, 3, 5])); // String()!
-        let tmp2 = tera::Value::from(tmp2);
-        expected.insert(TMPL_VAR_FM_ALL, &tmp2); // Map()
+        let tmp2 = Value::from_serializable(&serde_json::json!({
+            "fm_file_ext": "md",
+            "fm_height": 1.23,
+            "fm_count": 2,
+            "fm_neg": -1,
+            "fm_flag": true,
+            "fm_numbers": [1, 3, 5]
+        }));
+        expected.insert(TMPL_VAR_FM_ALL, &tmp2);
         let expected = expected.insert_front_matter(&FrontMatter::try_from("").unwrap());
 
         let result = input1.insert_front_matter(&input2);
@@ -474,7 +464,7 @@ Body text
         // Only minimal context is needed, because no templates are applied later.
         let mut context = Context::from(&notefile).unwrap();
         // We do not inject any JavaScript.
-        context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"".into());
+        context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"");
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
@@ -536,7 +526,7 @@ Body text
             n.context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_title")
+                .get_from_path("fm_title")
                 .unwrap()
                 .as_str(),
             Some("my dir")
@@ -545,7 +535,7 @@ Body text
             n.context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_subtitle")
+                .get_from_path("fm_subtitle")
                 .unwrap()
                 .as_str(),
             Some("Note")
@@ -623,7 +613,7 @@ Body text
             n.context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_title")
+                .get_from_path("fm_title")
                 .unwrap()
                 .as_str(),
             Some("std")
@@ -633,7 +623,7 @@ Body text
             n.context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_subtitle")
+                .get_from_path("fm_subtitle")
                 .unwrap()
                 .as_str(),
             Some("Note")
@@ -723,7 +713,7 @@ Body text
             n.context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_title")
+                .get_from_path("fm_title")
                 .unwrap()
                 .as_str(),
             // Remember: in debug titles are very short. The code only works,
@@ -735,7 +725,7 @@ Body text
             n.context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_subtitle")
+                .get_from_path("fm_subtitle")
                 .unwrap()
                 .as_str(),
             // Remember: in debug titles are very short. The code only works,
@@ -823,7 +813,7 @@ Body text
             n.context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_title")
+                .get_from_path("fm_title")
                 .unwrap()
                 .as_str(),
             Some("some.pdf")
@@ -832,7 +822,7 @@ Body text
             n.context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_subtitle")
+                .get_from_path("fm_subtitle")
                 .unwrap()
                 .as_str(),
             Some("Note")
@@ -885,7 +875,7 @@ Body text
             n.context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_title")
+                .get_from_path("fm_title")
                 .unwrap()
                 .as_str(),
             Some("hello ")
@@ -894,7 +884,7 @@ Body text
             n.context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_subtitle")
+                .get_from_path("fm_subtitle")
                 .unwrap()
                 .as_str(),
             Some(" world")

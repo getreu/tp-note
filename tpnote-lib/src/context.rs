@@ -1,6 +1,4 @@
 //! Extends the built-in Tera filters.
-use tera::Value;
-
 use crate::config::Assertion;
 use crate::config::FILENAME_ROOT_PATH_MARKER;
 use crate::config::LIB_CFG;
@@ -39,7 +37,6 @@ use crate::filename::NotePath;
 use crate::filename::NotePathStr;
 use crate::filter::name;
 use crate::front_matter::FrontMatter;
-use crate::front_matter::all_leaves;
 use crate::settings::SETTINGS;
 use std::borrow::Cow;
 use std::fs::File;
@@ -217,6 +214,18 @@ impl ContextState for ReadyForHtmlTemplate {}
 #[cfg(feature = "viewer")]
 impl ContextState for ReadyForHtmlErrorTemplate {}
 
+/// Recursively checks that all leaf values of a `tera::Value` tree satisfy `f`.
+/// Arrays and maps are traversed; other values are passed to `f`.
+fn tera_all_leaves(val: &tera::Value, f: &dyn Fn(&tera::Value) -> bool) -> bool {
+    if let Some(a) = val.as_array() {
+        a.iter().all(|i| tera_all_leaves(i, f))
+    } else if let Some(map) = val.as_map() {
+        map.values().all(|v| tera_all_leaves(v, f))
+    } else {
+        f(val)
+    }
+}
+
 /// Tiny wrapper around "Tera context" with some additional information.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Context<S: ContextState + ?Sized> {
@@ -334,7 +343,7 @@ impl<S: ContextState> Context<S> {
     /// // When the note's YAML header does not contain a `scheme:` field,
     /// // the `default` scheme is used.
     /// assert_eq!(&context.get(TMPL_VAR_SCHEME_SYNC_DEFAULT).unwrap().to_string(),
-    ///     &format!("\"default\""));
+    ///     "default");
     /// ```
     fn insert_config_vars(&mut self) {
         let lib_cfg = LIB_CFG.read_recursive();
@@ -370,10 +379,10 @@ impl<S: ContextState> Context<S> {
     ///
     /// // For most platforms `context.get("extension_default")` is `md`
     /// assert_eq!(&context.get(TMPL_VAR_EXTENSION_DEFAULT).unwrap().to_string(),
-    ///     &format!("\"md\""));
+    ///     "md");
     /// // `Settings.current_scheme` is by default the `default` scheme.
     /// assert_eq!(&context.get(TMPL_VAR_CURRENT_SCHEME).unwrap().to_string(),
-    ///     &format!("\"default\""));
+    ///     "default");
     /// ```
     fn insert_settings(&mut self) {
         let settings = SETTINGS.read_recursive();
@@ -406,15 +415,14 @@ impl<S: ContextState> Context<S> {
     /// with templates.
     ///
     fn insert_front_matter2(&mut self, fm: &FrontMatter) {
-        let mut fm_all_map = self
+        let mut fm_all_map: serde_json::Map<String, serde_json::Value> = self
             .ct
             .remove(TMPL_VAR_FM_ALL)
             .and_then(|v| {
-                if let tera::Value::Object(map) = v {
-                    Some(map)
-                } else {
-                    None
-                }
+                serde_json::to_value(&v).ok().and_then(|sj| match sj {
+                    serde_json::Value::Object(m) => Some(m),
+                    _ => None,
+                })
             })
             .unwrap_or_default();
 
@@ -478,8 +486,8 @@ impl<S: ContextState> Context<S> {
 
     /// Insert a key/val pair directly. Only available in tests.
     #[cfg(test)]
-    pub(crate) fn insert(&mut self, key: &str, val: &tera::Value) {
-        self.ct.insert(key, val);
+    pub(crate) fn insert(&mut self, key: &str, val: &impl serde::Serialize) {
+        self.ct.insert(key.to_owned(), val);
     }
 
     /// Inserts a `Content` in `Context`. The content appears as key in
@@ -490,11 +498,11 @@ impl<S: ContextState> Context<S> {
     fn insert_raw_text_from_existing_content(&mut self, content: &impl Content) {
         //
         // Register input.
-        let mut map = tera::Map::new();
-        map.insert(TMPL_VAR_HEADER.to_string(), content.header().into());
-        map.insert(TMPL_VAR_BODY.to_string(), content.body().into());
+        let mut map = serde_json::Map::new();
+        map.insert(TMPL_VAR_HEADER.to_string(), serde_json::Value::String(content.header().to_string()));
+        map.insert(TMPL_VAR_BODY.to_string(), serde_json::Value::String(content.body().to_string()));
 
-        self.ct.insert(content.name(), &tera::Value::from(map));
+        self.ct.insert(content.name().to_owned(), &serde_json::Value::Object(map));
     }
 
     /// See function of the same name in `impl Context<HasSettings>`.
@@ -536,6 +544,15 @@ impl<S: ContextState> Context<S> {
                 }
             }
         }
+
+        // Tera v2 raises an error when a template accesses an undefined variable
+        // (e.g. `fm.fm_title`). Ensure `fm` is always present so templates using
+        // `fm.x | default(value='')` work even when no front matter was found.
+        if self.ct.get(TMPL_VAR_FM_ALL).is_none() {
+            let empty: serde_json::Map<String, serde_json::Value> = serde_json::Map::new();
+            self.ct.insert(TMPL_VAR_FM_ALL.to_owned(), &empty);
+        }
+
         Ok(())
     }
 }
@@ -566,9 +583,9 @@ impl Context<Invalid> {
     /// assert_eq!(context.get_path(), Path::new("/path/to/mynote.md"));
     /// assert_eq!(context.get_dir_path(), Path::new("/path/to/"));
     /// assert_eq!(&context.get(TMPL_VAR_PATH).unwrap().to_string(),
-    ///             r#""/path/to/mynote.md""#);
+    ///             "/path/to/mynote.md");
     /// assert_eq!(&context.get(TMPL_VAR_DIR_PATH).unwrap().to_string(),
-    ///             r#""/path/to""#);
+    ///             "/path/to");
     /// ```
     pub fn from(path: &Path) -> Result<Context<HasSettings>, FileError> {
         let path = path.to_path_buf();
@@ -745,7 +762,7 @@ impl Context<ReadyForFilenameTemplate> {
             return Ok(());
         }
         let fm_all = fm_all.unwrap();
-        let fm_scheme = fm_all.get(TMPL_VAR_FM_SCHEME).and_then(|v| v.as_str());
+        let fm_scheme = fm_all.get_from_path(TMPL_VAR_FM_SCHEME).and_then(|v| v.as_str());
         let scheme_idx = fm_scheme.and_then(|scheme_name| {
             lib_cfg
                 .scheme
@@ -758,13 +775,13 @@ impl Context<ReadyForFilenameTemplate> {
         let scheme = &lib_cfg.scheme[scheme_idx];
 
         for (key, conditions) in scheme.tmpl.fm_var.assertions.iter() {
-            if let Some(value) = fm_all.get(key) {
+            if let Some(value) = fm_all.get_from_path(key) {
                 for cond in conditions {
                     match cond {
                         Assertion::IsDefined => {}
 
                         Assertion::IsString => {
-                            if !all_leaves(value, &|v| matches!(v, Value::String(..))) {
+                            if !tera_all_leaves(value, &|v| v.is_string()) {
                                 return Err(NoteError::FrontMatterFieldIsNotString {
                                     field_name: name(scheme, key).to_string(),
                                 });
@@ -772,8 +789,8 @@ impl Context<ReadyForFilenameTemplate> {
                         }
 
                         Assertion::IsNotEmptyString => {
-                            if !all_leaves(value, &|v| {
-                                matches!(v, Value::String(..)) && v.as_str() != Some("")
+                            if !tera_all_leaves(value, &|v| {
+                                v.is_string() && v.as_str() != Some("")
                             }) {
                                 return Err(NoteError::FrontMatterFieldIsEmptyString {
                                     field_name: name(scheme, key).to_string(),
@@ -782,7 +799,7 @@ impl Context<ReadyForFilenameTemplate> {
                         }
 
                         Assertion::IsNumber => {
-                            if !all_leaves(value, &|v| matches!(v, Value::Number(..))) {
+                            if !tera_all_leaves(value, &|v| v.is_number()) {
                                 return Err(NoteError::FrontMatterFieldIsNotNumber {
                                     field_name: name(scheme, key).to_string(),
                                 });
@@ -790,7 +807,7 @@ impl Context<ReadyForFilenameTemplate> {
                         }
 
                         Assertion::IsBool => {
-                            if !all_leaves(value, &|v| matches!(v, Value::Bool(..))) {
+                            if !tera_all_leaves(value, &|v| v.is_bool()) {
                                 return Err(NoteError::FrontMatterFieldIsNotBool {
                                     field_name: name(scheme, key).to_string(),
                                 });
@@ -798,9 +815,7 @@ impl Context<ReadyForFilenameTemplate> {
                         }
 
                         Assertion::IsNotCompound => {
-                            if matches!(value, Value::Array(..))
-                                || matches!(value, Value::Object(..))
-                            {
+                            if value.is_array() || value.is_map() {
                                 return Err(NoteError::FrontMatterFieldIsCompound {
                                     field_name: name(scheme, key).to_string(),
                                 });
@@ -1002,6 +1017,7 @@ impl<S: ContextState> Deref for Context<S> {
 mod tests {
 
     use crate::{config::TMPL_VAR_FM_ALL, error::NoteError};
+    use serde_json::json;
     use std::path::Path;
 
     #[test]
@@ -1017,37 +1033,19 @@ mod tests {
             &context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_title")
+                .get_from_path("fm_title")
                 .unwrap()
                 .to_string(),
-            r#""My Stdin.""#
+            "My Stdin."
         );
         assert_eq!(
             &context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_some")
+                .get_from_path("fm_some")
                 .unwrap()
                 .to_string(),
-            r#""text""#
-        );
-        assert_eq!(
-            &context
-                .get(TMPL_VAR_FM_ALL)
-                .unwrap()
-                .get("fm_title")
-                .unwrap()
-                .to_string(),
-            r#""My Stdin.""#
-        );
-        assert_eq!(
-            &context
-                .get(TMPL_VAR_FM_ALL)
-                .unwrap()
-                .get("fm_some")
-                .unwrap()
-                .to_string(),
-            r#""text""#
+            "text"
         );
     }
 
@@ -1065,37 +1063,19 @@ mod tests {
             &context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_title")
+                .get_from_path("fm_title")
                 .unwrap()
                 .to_string(),
-            r#""My Stdin.""#
+            "My Stdin."
         );
         assert_eq!(
             &context
                 .get(TMPL_VAR_FM_ALL)
                 .unwrap()
-                .get("fm_some")
+                .get_from_path("fm_some")
                 .unwrap()
                 .to_string(),
-            r#""text""#
-        );
-        assert_eq!(
-            &context
-                .get(TMPL_VAR_FM_ALL)
-                .unwrap()
-                .get("fm_title")
-                .unwrap()
-                .to_string(),
-            r#""My Stdin.""#
-        );
-        assert_eq!(
-            &context
-                .get(TMPL_VAR_FM_ALL)
-                .unwrap()
-                .get("fm_some")
-                .unwrap()
-                .to_string(),
-            r#""text""#
+            "text"
         );
     }
 
@@ -1124,38 +1104,38 @@ mod tests {
             &context
                 .get("txt_clipboard")
                 .unwrap()
-                .get("body")
+                .get_from_path("body")
                 .unwrap()
                 .to_string(),
-            "\"Data from clipboard.\""
+            "Data from clipboard."
         );
         assert_eq!(
             &context
                 .get("stdin")
                 .unwrap()
-                .get("body")
+                .get_from_path("body")
                 .unwrap()
                 .to_string(),
-            "\"body\""
+            "body"
         );
         assert_eq!(
             &context
                 .get("stdin")
                 .unwrap()
-                .get("header")
+                .get_from_path("header")
                 .unwrap()
                 .to_string(),
-            "\"title: My Stdin.\""
+            "title: My Stdin."
         );
         // "fm_title" is dynamically generated from the header variable "title".
         assert_eq!(
             &context
                 .get("fm")
                 .unwrap()
-                .get("fm_title")
+                .get_from_path("fm_title")
                 .unwrap()
                 .to_string(),
-            "\"My Stdin.\""
+            "My Stdin."
         );
     }
 
@@ -1259,7 +1239,8 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        assert_eq!(cx.get(TMPL_VAR_FM_ALL).unwrap(), &expected);
+        let fm_all_sj = serde_json::to_value(cx.get(TMPL_VAR_FM_ALL).unwrap()).unwrap();
+        assert_eq!(fm_all_sj, expected);
 
         //
         let input = "# document start
@@ -1271,7 +1252,8 @@ mod tests {
         let fm = FrontMatter::try_from(input).unwrap();
         let cx = Context::from(Path::new("does not matter")).unwrap();
         let cx = cx.insert_front_matter(&fm);
-        assert_eq!(cx.get(TMPL_VAR_FM_ALL).unwrap(), &expected);
+        let fm_all_sj = serde_json::to_value(cx.get(TMPL_VAR_FM_ALL).unwrap()).unwrap();
+        assert_eq!(fm_all_sj, expected);
 
         //
         let input = "# document start
