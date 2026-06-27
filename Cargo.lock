@@ -3049,20 +3049,6 @@ dependencies = [
 
 [[package]]
 name = "tpnote-html2md"
-version = "0.3.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfafbd33b8851fe448b30a3a686395a789b0d5b50f328b6772a07ba7a7f512f1"
-dependencies = [
- "html5ever",
- "jni",
- "markup5ever",
- "percent-encoding",
- "regex",
- "tendril",
-]
-
-[[package]]
-name = "tpnote-html2md"
 version = "0.3.8"
 dependencies = [
  "html5ever",
@@ -3075,8 +3061,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpnote-html2md"
+version = "0.3.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e161d2dc093e6639e6ab694e79ca64c67196ad3e497ba4797cf64c27b4f3f152"
+dependencies = [
+ "html5ever",
+ "jni",
+ "markup5ever",
+ "percent-encoding",
+ "regex",
+ "tendril",
+]
+
+[[package]]
 name = "tpnote-lib"
-version = "0.45.11"
+version = "0.46.0"
 dependencies = [
  "html-escape",
  "itertools 0.15.0",
@@ -3100,7 +3100,7 @@ dependencies = [
  "tera",
  "thiserror 2.0.18",
  "toml",
- "tpnote-html2md 0.3.7",
+ "tpnote-html2md 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "win32job",
  "windows-sys 0.61.2",
 ]
