@@ -588,7 +588,7 @@ from_dir_filename = """
 
 from_text_file_content = """
 {%- set file = path | file_name -%}
-{%- if file is containing('==')-%}
+{%- if file is containing(pat='==')-%}
   {%- set file = file | split(pat='==') | nth(n=1) -%}
 {%- endif -%}
 
