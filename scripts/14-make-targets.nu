@@ -75,6 +75,14 @@ let results = ($target_map | each { |cfg|
         return { name: $cfg.target, status: "skipped" }
     }
 
+    # macOS targets require a macOS build host (cctools/Apple SDK unavailable on Linux)
+    let is_darwin_target = ($cfg.target | str contains "apple-darwin")
+    let is_macos_host = (sys host | get name | str downcase | str contains "darwin")
+    if $is_darwin_target and (not $is_macos_host) {
+        print $"[SKIP] ($cfg.target) - requires a macOS build host."
+        return { name: $cfg.target, status: "skipped" }
+    }
+
     print $"[BUILD] Building ($cfg.target)..."
 
     # Build and obtain the store output path in one atomic nix invocation.
@@ -130,7 +138,7 @@ if (glob $deb_glob | is-empty) {
 let success_count = ($results | where status == "success" | length)
 let failed_list = ($results | where status == "failed")
 
-print "\n(ansi green_underline)Build Summary:(ansi reset)"
+print $"\n(ansi green_underline)Build Summary:(ansi reset)"
 print $"* Success: ($success_count)"
 print $"* Skipped: ($results | where status == "skipped" | length)"
 

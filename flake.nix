@@ -52,7 +52,7 @@
     { nixpkgs, ... }:
     let
       pname = "tpnote";
-      version = "1.26.1";
+      version = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).workspace.package.version;
 
       # Helper function for building Rust packages with cross-compilation
       # Ensures proper linker configuration for Debian/Ubuntu compatibility
@@ -230,46 +230,10 @@
             -C link-arg=-Wl,--dynamic-linker=/lib/ld-linux-aarch64.so.1
           '';
         };
-        tpnote-x86_64-apple-darwin =
-          let
-            pkgs = import nixpkgs {
-              system = "x86_64-linux";
-              crossSystem = {
-                config = "x86_64-apple-darwin";
-              };
-            };
-          in
-          pkgs.rustPlatform.buildRustPackage {
-            inherit pname version;
-            src = ./.;
-            cargoLock.lockFile = ./Cargo.lock;
-            dontStrip = false;
-            doCheck = false;
-            cargoBuildFlags = [ "--locked" ];
-            nativeBuildInputs = [
-              pkgs.cargo-binutils
-            ];
-          };
-        tpnote-aarch64-apple-darwin =
-          let
-            pkgs = import nixpkgs {
-              system = "x86_64-linux";
-              crossSystem = {
-                config = "aarch64-apple-darwin";
-              };
-            };
-          in
-          pkgs.rustPlatform.buildRustPackage {
-            inherit pname version;
-            src = ./.;
-            cargoLock.lockFile = ./Cargo.lock;
-            dontStrip = false;
-            doCheck = false;
-            cargoBuildFlags = [ "--locked" ];
-            nativeBuildInputs = [
-              pkgs.cargo-binutils
-            ];
-          };
+        # macOS targets (x86_64-apple-darwin, aarch64-apple-darwin) are intentionally
+        # absent from packages.x86_64-linux: cross-compiling to macOS requires Apple's
+        # cctools and SDK, which are only available on macOS hosts and cannot be
+        # evaluated by nixpkgs on Linux.
         tpnote-x86_64-pc-windows-gnu =
           let
             base = import nixpkgs {
