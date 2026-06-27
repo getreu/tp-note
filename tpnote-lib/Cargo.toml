@@ -57,7 +57,7 @@ tera.workspace = true
 thiserror.workspace = true
 toml.workspace = true
 #tpnote-html2md = { path = "../tpnote-html2md", optional = true }
-tpnote-html2md = { version = "0.3.7", optional = true }
+tpnote-html2md = { version = "0.3.8", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 win32job = "2.0.3"
