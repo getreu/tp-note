@@ -48,7 +48,7 @@ def main [] {
         PackageVersion: $version
         DefaultLocale: "en-US"
         ManifestType: "version"
-        ManifestVersion: "1.5.0"
+        ManifestVersion: "1.12.0"
     } | to yaml | save -f ($final_dir | path join $"($package_id).yaml")
 
     # --- installer.yaml ---
@@ -66,7 +66,7 @@ def main [] {
             }
         ]
         ManifestType: "installer"
-        ManifestVersion: "1.5.0"
+        ManifestVersion: "1.12.0"
     } | to yaml | save -f ($final_dir | path join $"($package_id).installer.yaml")
 
     # --- defaultLocale.yaml ---
@@ -82,7 +82,7 @@ def main [] {
         License: "MIT"
         PackageUrl: "https://blog.getreu.net/projects/tp-note/"
         ManifestType: "defaultLocale"
-        ManifestVersion: "1.5.0"
+        ManifestVersion: "1.12.0"
     } | to yaml | save -f ($final_dir | path join $"($package_id).locale.en-US.yaml")
 
     print $"(ansi green)Success! Manifests created in: ($final_dir)(ansi reset)"
