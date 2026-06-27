@@ -1318,4 +1318,53 @@ mod tests {
             NoteError::FrontMatterFieldIsNotString { .. }
         ));
     }
+
+    /// When an input stream has syntactically invalid YAML between `---`
+    /// delimiters, `insert_front_matter_and_raw_text_from_existing_content`
+    /// must succeed and expose the entire raw content as body with an empty
+    /// header, instead of returning `InvalidInputYaml`.
+    #[test]
+    fn test_invalid_yaml_header_treated_as_body() {
+        use crate::content::Content;
+        use crate::content::ContentString;
+        use crate::context::Context;
+        use crate::settings::set_test_default_settings;
+        use std::path::Path;
+        set_test_default_settings().unwrap();
+
+        let raw = "---\n<invalid\n---\nhallo";
+        let c = ContentString::from_string(raw.to_string(), "stdin".to_string());
+        // Sanity check: the split logic does recognise a header here.
+        assert!(!c.header().is_empty());
+
+        let context = Context::from(Path::new("/path/to/mynote.md")).unwrap();
+        let result = context
+            .insert_front_matter_and_raw_text_from_existing_content(&vec![&c]);
+
+        assert!(result.is_ok(), "expected Ok, got: {:?}", result.err());
+
+        let context = result.unwrap();
+        // Header must be empty — the invalid YAML was discarded.
+        assert_eq!(
+            context
+                .get("stdin")
+                .unwrap()
+                .get_from_path("header")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            ""
+        );
+        // Body must be the full raw input.
+        assert_eq!(
+            context
+                .get("stdin")
+                .unwrap()
+                .get_from_path("body")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            raw
+        );
+    }
 }
