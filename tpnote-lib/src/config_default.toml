@@ -311,7 +311,7 @@ from_dir_content = """
      | append(newline=true) -%}
 {%- set clipboard = html_clipboard
      | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
-{%- set input = stdin ~ clipboard | trim -%}
+{%- set input = (stdin ~ clipboard) | trim -%}
 
 {%- set languages = fm.fm_languages
      | default(value = [force_lang])
@@ -420,7 +420,7 @@ annotate_file_content = """
 {%- set stdin = stdin | html_to_markup(extension=extension_default, default=stdin) | append(newline=true) -%}
 {%- set clipboard = html_clipboard
       | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
-{%- set input = stdin ~ clipboard | trim_end -%}
+{%- set input = (stdin ~ clipboard) | trim_end -%}
 {%- set languages = [force_lang]
       | replace_empty(with = input | replace_empty(with = path | file_stem) | get_lang | map_lang(default=lang)) -%}
 {%- set lang = languages | first -%}
@@ -518,7 +518,7 @@ from_dir_content = """
      | append(newline=true) -%}
 {%- set clipboard = html_clipboard
      | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
-{%- set input = stdin ~ clipboard | trim -%}
+{%- set input = (stdin ~ clipboard) | trim -%}
 
 {%- set languages = fm.fm_languages
       | default(value = [force_lang])
@@ -655,7 +655,7 @@ annotate_file_content = """
       | append(newline=true) -%}
 {%- set clipboard = html_clipboard
       | html_to_markup(extension=extension_default, default=txt_clipboard) -%}
-{%- set input = stdin ~ clipboard | trim_end -%}
+{%- set input = (stdin ~ clipboard) | trim_end -%}
 {%- set languages = [force_lang]
       | replace_empty(with = input | replace_empty(with = path | file_stem) | get_lang | map_lang(default=lang)) -%}
 {%- set lang = languages | first -%}
