@@ -379,7 +379,7 @@ from_text_file_content = """
 {%- set lang = languages | first -%}
 ---
 {{ path | file_stem | split(pat='--') | first | trunc | to_yaml(key='fm_title') }}
-{{ path | file_stem | split(pat='--') | nth(n=1) | trunc
+{{ path | file_stem | split(pat='--') | nth(n=1) | default(value='') | trunc
      | to_yaml(key='fm_subtitle') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ doc_file_date | default(value=now()) | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
@@ -600,7 +600,7 @@ from_text_file_content = """
 
 {%- set file = file | file_stem -%}
 {%- set title = file | split(pat='__') | first -%}
-{%- set keywords = file | split(pat='__') | nth(n=1) -%}
+{%- set keywords = file | split(pat='__') | nth(n=1) | default(value='') -%}
 {%- set languages = [force_lang]
    | replace_empty(with = doc.body | get_lang | map_lang(default=lang)) -%}
 {%- set lang = languages | first -%}
