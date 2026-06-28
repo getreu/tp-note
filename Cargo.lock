@@ -1793,6 +1793,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "num_threads"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c7398b9c8b70908f6371f47ed36737907c87c52af34c268fed0bf0ceb92ead9"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "objc2"
 version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2911,7 +2920,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85c17d80feb7334b40c484e45ed1a5273dfd8bfda537c3be2e74a06a6686f327"
 dependencies = [
  "deranged",
+ "libc",
  "num-conv",
+ "num_threads",
  "powerfmt",
  "serde_core",
  "time-core",
@@ -2997,7 +3008,7 @@ checksum = "756daf9b1013ebe47a8776667b466417e2d4c5679d441c26230efd9ef78692db"
 
 [[package]]
 name = "tpnote"
-version = "1.26.2"
+version = "1.26.3"
 dependencies = [
  "clap",
  "clipboard-rs",
@@ -3018,7 +3029,7 @@ dependencies = [
  "thiserror 2.0.18",
  "time",
  "toml",
- "tpnote-lib",
+ "tpnote-lib 0.46.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "webbrowser",
  "win-msgbox",
  "win32job",
@@ -3056,7 +3067,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote-lib"
-version = "0.46.1"
+version = "0.46.2"
 dependencies = [
  "html-escape",
  "itertools 0.15.0",
@@ -3079,6 +3090,41 @@ dependencies = [
  "syntect",
  "tera",
  "thiserror 2.0.18",
+ "time",
+ "toml",
+ "tpnote-html2md 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "win32job",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "tpnote-lib"
+version = "0.46.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "01186d4a381d16bc171b86957d966db1d7333b6a4bdbe6ac144474588d4ee1fa"
+dependencies = [
+ "html-escape",
+ "itertools 0.15.0",
+ "latex2mathml",
+ "lingua",
+ "log",
+ "parking_lot",
+ "parse-hyperlinks",
+ "parse-hyperlinks-extras",
+ "percent-encoding",
+ "pulldown-cmark",
+ "rst_parser",
+ "rst_renderer",
+ "sanitize-filename-reader-friendly",
+ "self_cell",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "substring",
+ "syntect",
+ "tera",
+ "thiserror 2.0.18",
+ "time",
  "toml",
  "tpnote-html2md 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "win32job",
