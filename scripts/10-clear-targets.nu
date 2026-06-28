@@ -1,6 +1,6 @@
 #!/usr/bin/env nu
 
-let project_dir = ($env.CURRENT_FILE | path dirname | path dirname)
+let project_dir = ($env.FILE_PWD | path dirname)
 cd $project_dir
 
 # Remove build directories safely
