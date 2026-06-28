@@ -3452,7 +3452,7 @@ or `\f[CR]en\-GB\f[R]'.
 The `\f[CR]now()\f[R]' function returns the current time as a Unix epoch
 timestamp (u64 seconds since 1970\-01\-01 00:00:00 UTC).
 The `\f[CR]date\f[R]' filter converts a Unix epoch timestamp to a
-formatted date string.
+formatted date string using the \f[B]local timezone\f[R].
 It accepts an optional `\f[CR]format\f[R]' parameter supporting
 strftime\-style format codes (`\f[CR]%Y\f[R]' for year, `\f[CR]%m\f[R]'
 for month, `\f[CR]%d\f[R]' for day).

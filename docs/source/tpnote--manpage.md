@@ -2836,9 +2836,10 @@ A filter is always used together with a variable. Here are some examples:
 - '`{{ now() | date }}`' returns the current date in the format '`%Y-%m-%d`'
   (YYYY-MM-DD). The '`now()`' function returns the current time as a Unix
   epoch timestamp (u64 seconds since 1970-01-01 00:00:00 UTC). The '`date`'
-  filter converts a Unix epoch timestamp to a formatted date string. It accepts
-  an optional '`format`' parameter supporting strftime-style format codes
-  ('`%Y`' for year, '`%m`' for month, '`%d`' for day).
+  filter converts a Unix epoch timestamp to a formatted date string using the
+  **local timezone**. It accepts an optional '`format`' parameter supporting
+  strftime-style format codes ('`%Y`' for year, '`%m`' for month, '`%d`' for
+  day).
 
 - '`{{ now() | date(format="%d.%m.%Y") }}`' returns the current date in the
   format DD.MM.YYYY (e.g. '`31.12.2024`')
