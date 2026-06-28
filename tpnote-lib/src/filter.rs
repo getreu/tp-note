@@ -36,23 +36,6 @@ const TRUNC_LEN_MAX: usize = 200;
 #[cfg(test)]
 pub const TRUNC_LEN_MAX: usize = 10;
 
-/// Tera object with custom functions registered.
-/// Converts Unix epoch seconds to (year, month, day) using the Gregorian
-/// calendar. Based on https://howardhinnant.github.io/date_algorithms.html
-fn unix_timestamp_to_ymd(secs: u64) -> (i32, u32, u32) {
-    let z = (secs / 86400) as i64 + 719468;
-    let era = if z >= 0 { z } else { z - 146096 } / 146097;
-    let doe = z - era * 146097;
-    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
-    let y = yoe + era * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = doy - (153 * mp + 2) / 5 + 1;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 };
-    let y = if m <= 2 { y + 1 } else { y };
-    (y as i32, m as u32, d as u32)
-}
-
 /// Tera function returning the current time as Unix epoch seconds (u64).
 /// Replaces tera v1's built-in `now()`.
 fn now_function(_kwargs: Kwargs, _state: &State) -> TeraResult<Value> {
@@ -73,11 +56,15 @@ fn date_filter(value: &Value, kwargs: Kwargs, _state: &State) -> TeraResult<Valu
     let fmt_str = kwargs
         .get::<String>("format")?
         .unwrap_or_else(|| "%Y-%m-%d".to_string());
-    let (year, month, day) = unix_timestamp_to_ymd(secs);
+    let offset = time::UtcOffset::current_local_offset()
+        .unwrap_or(time::UtcOffset::UTC);
+    let odt = time::OffsetDateTime::from_unix_timestamp(secs as i64)
+        .unwrap_or_else(|_| time::OffsetDateTime::now_utc())
+        .to_offset(offset);
     let result = fmt_str
-        .replace("%Y", &format!("{:04}", year))
-        .replace("%m", &format!("{:02}", month))
-        .replace("%d", &format!("{:02}", day));
+        .replace("%Y", &format!("{:04}", odt.year()))
+        .replace("%m", &format!("{:02}", odt.month() as usize))
+        .replace("%d", &format!("{:02}", odt.day()));
     Ok(Value::from(result))
 }
 
@@ -1337,6 +1324,37 @@ mod tests {
     use serde_json::json;
     use std::collections::BTreeMap;
     use tera::{Kwargs, State};
+
+    #[test]
+    fn test_date_filter() {
+        let ctx = tera::Context::new();
+        let st = State::new(&ctx);
+
+        // 2023-09-15 12:00:00 UTC — noon avoids most timezone edge cases.
+        let secs: u64 = 1694779200;
+        let input = Value::from(secs);
+
+        // Compute expected local date with the same logic as the filter.
+        let offset = time::UtcOffset::current_local_offset()
+            .unwrap_or(time::UtcOffset::UTC);
+        let odt = time::OffsetDateTime::from_unix_timestamp(secs as i64)
+            .unwrap()
+            .to_offset(offset);
+
+        // Default format: %Y-%m-%d
+        let expected = format!("{:04}-{:02}-{:02}", odt.year(), odt.month() as usize, odt.day());
+        assert_eq!(
+            date_filter(&input, Kwargs::default(), &st).unwrap(),
+            Value::from(expected)
+        );
+
+        // Custom format: %Y%m%d
+        let expected = format!("{:04}{:02}{:02}", odt.year(), odt.month() as usize, odt.day());
+        assert_eq!(
+            date_filter(&input, Kwargs::from([("format", Value::from("%Y%m%d"))]), &st).unwrap(),
+            Value::from(expected)
+        );
+    }
 
     #[test]
     fn test_to_yaml_filter() {

@@ -37,6 +37,7 @@ lingua = { version = "1.8.0", optional = true, default-features = false, feature
 # "tswana", "tsonga", "esperanto", "latin", "swedish", "xhosa", "yoruba",
 # "zulu"
 log.workspace = true
+time = { version = "0.3", features = ["local-offset"] }
 parking_lot.workspace = true
 parse-hyperlinks = "0.29.3" # Plain text renderer.
 parse-hyperlinks-extras = "=0.29.3" # Plain text renderer.
