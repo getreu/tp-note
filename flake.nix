@@ -111,6 +111,7 @@
               rustfmt
               komac
               git
+              gh
             ];
             nativeBuildInputs = with pkgs; [
               pkg-config
