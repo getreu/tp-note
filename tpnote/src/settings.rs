@@ -157,11 +157,9 @@ pub static RUNS_ON_CONSOLE: LazyLock<bool> = LazyLock::new(|| {
         .ok()
         // A pattern mapping `Some("")` to `None`.
         .and_then(|s: String| if s.is_empty() { None } else { Some(s) })
-    {
-        if user == "root" {
+        && user == "root" {
             return true;
         }
-    }
 
     // On Linux popup window only if DISPLAY is set.
     #[cfg(target_family = "unix")]

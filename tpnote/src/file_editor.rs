@@ -100,15 +100,13 @@ pub fn launch_editor(path: &Path) -> Result<(), ConfigFileError> {
                 .stderr(Stdio::null())
                 .stdout(Stdio::null())
                 .status()
-            {
-                if !ecode.success() {
+                && !ecode.success() {
                     // This is a Flatpak command, but the application is not
                     // installed on this system. Silently ignore this Flatpak
                     // command.
                     log::info!("Flatpak executable \"{}\" not found.", args_list[i][1]);
                     continue;
                 };
-            };
         };
 
         // Connect `stdin` of child process to `/dev/tty`.

@@ -284,12 +284,11 @@ impl ServerThread {
                 }
 
                 // Check if the HTTP header is complete and valid.
-                if res.is_complete() {
-                    if let (Some(method), Some(path)) = (req.method, req.path) {
+                if res.is_complete()
+                    && let (Some(method), Some(path)) = (req.method, req.path) {
                         // This is the only regular exit.
                         break 'assemble_tcp_chunks (method, path);
-                    }
-                };
+                    };
                 // We quit with error. There is nothing more we can do here.
                 return Err(ViewerError::StreamParse {
                     source_str: std::str::from_utf8(&buffer)

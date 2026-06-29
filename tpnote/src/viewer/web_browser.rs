@@ -109,14 +109,12 @@ pub fn launch_listed_browser(url: &str) -> Result<(), ViewerError> {
                 .stderr(Stdio::null())
                 .stdout(Stdio::null())
                 .status()
-            {
-                if !ecode.success() {
+                && !ecode.success() {
                     // This is a Flatpak command, but the application is not installed on this system.
                     // Silently ignore this Flatpak command.
                     log::info!("Flatpak executable \"{}\" not found.", args_list[i][1]);
                     continue;
                 };
-            };
         };
 
         let (config_stdin, config_stdout) = (Stdio::null(), Stdio::null());

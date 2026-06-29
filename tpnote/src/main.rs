@@ -135,8 +135,8 @@ fn main() {
     };
 
     // Is version number in the configuration file high enough?
-    if let Some(config_file_version) = config_file_version {
-        if config_file_version < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0")).unwrap()
+    if let Some(config_file_version) = config_file_version
+        && config_file_version < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0")).unwrap()
         {
             log::error!(
                 "{}",
@@ -156,7 +156,6 @@ fn main() {
                 process::exit(6);
             };
         };
-    };
 
     // Process `arg = `--default-config`.
     if let Some(path) = &ARGS.config_defaults {
