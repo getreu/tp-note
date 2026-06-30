@@ -112,6 +112,7 @@
               komac
               git
               gh
+              glab
             ];
             nativeBuildInputs = with pkgs; [
               pkg-config
