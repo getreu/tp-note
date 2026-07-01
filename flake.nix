@@ -47,9 +47,13 @@
 {
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs =
-    { nixpkgs, ... }:
+    { nixpkgs, rust-overlay, ... }:
     let
       pname = "tpnote";
       version = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).workspace.package.version;
@@ -96,19 +100,22 @@
       devShells.x86_64-linux = {
         default =
           let
+            toolchain = (builtins.fromTOML (builtins.readFile ./rust-toolchain.toml)).toolchain;
             pkgs = import nixpkgs {
               system = "x86_64-linux";
+              overlays = [ rust-overlay.overlays.default ];
+            };
+            rustPkg = pkgs.rust-bin.stable.${toolchain.channel}.default.override {
+              extensions = toolchain.components;
+              targets = toolchain.targets;
             };
           in
           pkgs.mkShell {
             packages = with pkgs; [
-              cargo
-              rust-analyzer
+              rustPkg
               cargo-audit
               cargo-edit
               cargo-binutils
-              clippy
-              rustfmt
               komac
               git
               gh
