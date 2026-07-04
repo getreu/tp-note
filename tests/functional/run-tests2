@@ -582,4 +582,36 @@ fi
 
 
 
+## Test 120: Annotate a file; input YAML header overrides the new note's header
+
+INPUT_FILENAME="$PWD/test120-annotate-header-override-dummy.pdf"
+
+# Input file can be empty
+:>"$INPUT_FILENAME"
+
+# The piped YAML header must override `title:`, `keywords:` and `author:` of
+# the new note (and, hence, its filename) under the `zettel` scheme.
+printf '%s\n' '---' 'title: Clipboard Title' 'author: Clip Author' \
+    'keywords: [alpha, beta]' 'date: 2026-01-15' '---' 'Pasted body text.' | \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch --force-lang='-' \
+	    --config "$TP_NOTE_TEST_TOML" \
+	    "$INPUT_FILENAME" >/dev/null 2>&1
+
+# Title and keywords come from the header, therefore the filename does too.
+OUTPUT_FILENAME="$PWD/Clipboard Title__alpha_beta.md"
+
+if diff "$OUTPUT_FILENAME" "test120-annotate-header-override-expected-output"
+then
+    echo Commandline test 120 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 120 failed.
+    exit 1
+fi
+
+
+
+
 exit 0

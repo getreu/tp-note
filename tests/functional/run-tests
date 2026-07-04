@@ -529,6 +529,38 @@ fi
 
 
 
+## Test 020: Annotate a file; input YAML header overrides the new note's header
+
+INPUT_FILENAME="$PWD/test020-annotate-header-override-dummy.pdf"
+
+# Input file can be empty
+:>"$INPUT_FILENAME"
+
+# The piped YAML header must override `title:` and `author:` of the new note
+# (and, hence, its filename); `keywords:` has no effect in the `default` scheme.
+printf '%s\n' '---' 'title: Clipboard Title' 'author: Clip Author' \
+    'keywords: [alpha, beta]' 'date: 2026-01-15' '---' 'Pasted body text.' | \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch --force-lang='-' \
+	    --config "$TP_NOTE_TEST_TOML" \
+	    "$INPUT_FILENAME" >/dev/null 2>&1
+
+# The title comes from the header, therefore the filename does too.
+OUTPUT_FILENAME="$PWD/Clipboard Title--Note.md"
+
+if diff "$OUTPUT_FILENAME" "test020-annotate-header-override-expected-output"
+then
+    echo Commandline test 020 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 020 failed.
+    exit 1
+fi
+
+
+
+
 
 ./run-tests2 || exit 1
 
