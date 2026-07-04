@@ -415,8 +415,13 @@ The configuration file variable '`filename.extensions`' lists all the file
 extensions that Tp-Note recognizes as its own file types. Only foreign file types
 can be annotated.
 
-Note that the file annotation mode also reads the clipboard's content: when it
-is not empty, its data is appended to the new note's body.
+Note that the file annotation mode also reads the clipboard's (or stdin's)
+content: when it is not empty, its data is appended to the new note's body.
+Furthermore, if that input carries its own YAML header, its fields override
+the corresponding header fields of the new note - '`title:`', '`author:`'
+and '`date:`' (and '`keywords:`' under the '`zettel`' scheme). When a field
+is absent, the default derived from the filename, the username and the
+current date is used instead.
 
 
 ## Convert a text file into a Tp-Note file
