@@ -432,10 +432,10 @@ annotate_file_content = """
    {%- set link = '`<' ~ fname ~ '>`_' -%}
   {%- endif -%}
 ---
-{{ path | trim_file_sort_tag | to_yaml(key='fm_title') }}
+{{ fm.fm_title | default(value = path | trim_file_sort_tag) | to_yaml(key='fm_title') }}
 {{ 'Note' | to_yaml(key='fm_subtitle') }}
-{{ username | capitalize | to_yaml(key='fm_author') }}
-{{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
+{{ fm.fm_author | default(value = username | capitalize) | to_yaml(key='fm_author') }}
+{{ fm.fm_date | default(value = now() | date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
 {% if languages | length > 1 -%}
 {{ languages | to_yaml(key='fm_languages') | append(newline=true) }}
@@ -667,10 +667,10 @@ annotate_file_content = """
    {%- set link = '`<' ~ fname ~ '>`_' -%}
   {%- endif -%}
 ---
-{{ path | trim_file_sort_tag | to_yaml(key='fm_title') }}
-{{ ['note'] | to_yaml(key='fm_keywords') }}
-{{ username | capitalize | to_yaml(key='fm_author') }}
-{{ now() | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
+{{ fm.fm_title | default(value = path | trim_file_sort_tag) | to_yaml(key='fm_title') }}
+{{ fm.fm_keywords | default(value = ['note']) | to_yaml(key='fm_keywords') }}
+{{ fm.fm_author | default(value = username | capitalize) | to_yaml(key='fm_author') }}
+{{ fm.fm_date | default(value = now() | date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
 {% if languages | length > 1 -%}
 {{ languages | to_yaml(key='fm_languages') | append(newline=true) }}
