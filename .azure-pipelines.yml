@@ -4,6 +4,15 @@ trigger:
   tags:
     include: ['*']
 
+# NOTE: This pipeline no longer publishes GitHub releases. The GitHub Actions
+# workflow (.github/workflows/complete-build.yml) is the single source of
+# releases: on a tag it builds and publishes the full flat, standard-named
+# asset set (Linux gnu/musl/aarch64/armv7, windows-gnu, macOS, .deb, .msi, docs
+# and winget archives). A second publisher here only re-polluted the release
+# with differently-named duplicates (tpnote-v<ver>-..., pc-windows-msvc, loose
+# PDFs). This pipeline is kept purely for test coverage -- notably
+# x86_64-pc-windows-msvc, which the GitHub native matrix (macOS-only) no longer
+# runs.
 stages:
   - stage: Tests
     jobs:
@@ -44,150 +53,3 @@ stages:
             displayName: Cargo build
           - script: cargo test --all
             displayName: Cargo test
-
-
-  - stage: Release
-    dependsOn: Tests
-    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
-    jobs:
-      - job:
-        strategy:
-          matrix:
-            windows-stable:
-              imageName: 'windows-latest'
-              rustup_toolchain: stable
-              target: 'x86_64-pc-windows-msvc'
-            mac-stable:
-              imageName: 'macOS-latest'
-              rustup_toolchain: stable
-              target: 'x86_64-apple-darwin'
-            linux-stable:
-              imageName: 'ubuntu-latest'
-              rustup_toolchain: stable
-              target: 'x86_64-unknown-linux-gnu'
-        pool:
-          vmImage: $(imageName)
-        steps:
-          - script: |
-              curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUSTUP_TOOLCHAIN
-              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
-            displayName: Install rust
-            condition: ne( variables['Agent.OS'], 'Windows_NT' )
-          - script: |
-              cargo install cargo-deb
-              sudo apt-get update
-            condition: eq( variables['Agent.OS'], 'Linux' )
-            displayName: Install build dependencies
-          - script: |
-              set CARGO_HOME=%USERPROFILE%\.cargo
-              curl -sSf -o rustup-init.exe https://win.rustup.rs
-              rustup-init.exe -y --default-toolchain %RUSTUP_TOOLCHAIN% --default-host x86_64-pc-windows-msvc
-              set PATH=%PATH%;%USERPROFILE%\.cargo\bin
-              echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
-            displayName: Windows install rust
-            condition: eq( variables['Agent.OS'], 'Windows_NT' )
-          - script: |
-              rustup target add $TARGET
-              cargo build --release --target $TARGET
-              strip '$(Build.SourcesDirectory)/target/$(TARGET)/release/tpnote'
-            condition: ne( variables['Agent.OS'], 'Windows_NT' )
-            displayName: Build
-          - script: |
-              sudo apt-get install pandoc weasyprint
-              cd '$(Build.SourcesDirectory)/docs/'
-              './make--all'
-            condition: eq( variables['Agent.OS'], 'Linux' )
-            displayName: Build documentation
-          - script: |
-              cargo deb --package tpnote --target $TARGET
-            condition: eq( variables['Agent.OS'], 'Linux' )
-            displayName: Build deb package
-          - script: |
-              rustup target add %TARGET%
-              cargo build --release --target %TARGET%
-            condition: eq( variables['Agent.OS'], 'Windows_NT' )
-            displayName: Build on Windows
-          - task: CopyFiles@2
-            displayName: Copy documentation assets
-            condition: eq( variables['Agent.OS'], 'Linux' )
-            inputs:
-              sourceFolder: '$(Build.SourcesDirectory)/docs/build/pdf'
-              contents: '*.pdf'
-              targetFolder: '$(Build.ArtifactStagingDirectory)/'
-          - task: CopyFiles@2
-            displayName: Copy assets
-            condition: ne( variables['Agent.OS'], 'Windows_NT' )
-            inputs:
-              sourceFolder: '$(Build.SourcesDirectory)/target/$(TARGET)/release'
-              contents: tpnote
-              targetFolder: '$(Build.BinariesDirectory)/'
-          - task: CopyFiles@2
-            displayName: Copy deb package
-            condition: eq( variables['Agent.OS'], 'Linux' )
-            inputs:
-              sourceFolder: '$(Build.SourcesDirectory)/target/$(TARGET)/debian'
-              contents: '*.deb'
-              targetFolder: '$(Build.ArtifactStagingDirectory)/'
-          - task: CopyFiles@2
-            displayName: Copy assets on Windows
-            condition: eq( variables['Agent.OS'], 'Windows_NT' )
-            inputs:
-              sourceFolder: '$(Build.SourcesDirectory)/target/$(TARGET)/release'
-              contents: tpnote.exe
-              targetFolder: '$(Build.BinariesDirectory)/'
-
-          - task: ArchiveFiles@2
-            displayName: Gather assets
-            condition: ne( variables['Agent.OS'], 'Windows_NT' )
-            inputs:
-              rootFolderOrFile: '$(Build.BinariesDirectory)/tpnote'
-              archiveType: 'tar'
-              tarCompression: 'gz'
-              archiveFile: '$(Build.ArtifactStagingDirectory)/tpnote-$(Build.SourceBranchName)-$(TARGET).tar.gz'
-          - task: ArchiveFiles@2
-            displayName: Gather assets
-            condition: eq( variables['Agent.OS'], 'Windows_NT' )
-            inputs:
-              rootFolderOrFile: '$(Build.BinariesDirectory)/tpnote.exe'
-              archiveType: 'zip'
-              archiveFile: '$(Build.ArtifactStagingDirectory)/tpnote-$(Build.SourceBranchName)-$(TARGET).zip'
-
-          - task: GithubRelease@0
-            condition: eq( variables['Agent.OS'], 'Linux' )
-            inputs:
-              gitHubConnection: 'github.com_getreu'
-              repositoryName: 'getreu/tp-note'
-              action: 'edit'
-              target: '$(build.sourceVersion)'
-              tagSource: 'manual'
-              tag: '$(Build.SourceBranchName)'
-              assets: '$(Build.ArtifactStagingDirectory)/*'
-              title: '$(Build.SourceBranchName)'
-              assetUploadMode: 'replace'
-              addChangeLog: false
-          - task: GithubRelease@0
-            condition: eq( variables['Agent.OS'], 'Darwin' )
-            inputs:
-              gitHubConnection: 'github.com_getreu'
-              repositoryName: 'getreu/tp-note'
-              action: 'edit'
-              target: '$(build.sourceVersion)'
-              tagSource: 'manual'
-              tag: '$(Build.SourceBranchName)'
-              assets: '$(Build.ArtifactStagingDirectory)/tpnote-$(Build.SourceBranchName)-$(TARGET).tar.gz'
-              title: '$(Build.SourceBranchName)'
-              assetUploadMode: 'replace'
-              addChangeLog: false
-          - task: GithubRelease@0
-            condition: eq( variables['Agent.OS'], 'Windows_NT' )
-            inputs:
-              gitHubConnection: 'github.com_getreu'
-              repositoryName: 'getreu/tp-note'
-              action: 'edit'
-              target: '$(build.sourceVersion)'
-              tagSource: 'manual'
-              tag: '$(Build.SourceBranchName)'
-              assets: '$(Build.ArtifactStagingDirectory)/tpnote-$(Build.SourceBranchName)-$(TARGET).zip'
-              title: '$(Build.SourceBranchName)'
-              assetUploadMode: 'replace'
-              addChangeLog: false
