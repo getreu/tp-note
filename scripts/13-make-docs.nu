@@ -6,11 +6,13 @@ let project_dir = ($env.FILE_PWD | path dirname)
 # 2. Navigate to the documentation directory
 cd ($project_dir | path join "docs")
 
-print $"(ansi cyan)Attempting to build documentation using nix flake...(ansi reset)"
+print $"(ansi cyan)Building documentation in the docs/flake.nix devShell...(ansi reset)"
 
-# 3. Execute the build command
-# Using ^ ensures we call the external script/binary explicitly
-^./make--all
+# 3. Execute the build inside docs/flake.nix's devShell, which provides the
+# documentation toolchain (pandoc + weasyprint + runtime libs). This is the
+# single source of truth for docs deps -- the root devShell does not carry
+# them. cwd is docs/, so `nix develop .` selects docs/flake.nix.
+^nix develop . --command ./make--all
 
 # 4. Handle exit status
 let exit_code = $env.LAST_EXIT_CODE

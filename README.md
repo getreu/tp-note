@@ -120,13 +120,37 @@ Repository:
 
 ## Distribution
 
-### Download installer packages and binaries
+### Download from the GitHub releases page
+
+All precompiled binaries, installer packages and the documentation are published
+on the GitHub releases page — the single official download location:
+
+* [Tp-Note releases on GitHub][Releases - getreu/tp-note]
+
+Open the [latest release] and download the asset for your platform from its
+_Assets_ list. Every release provides the following files (`<version>` is the
+release number, e.g. `1.26.4`):
+
+| Asset | Platform / use |
+| ----- | -------------- |
+| `tpnote-<version>-x64.msi` | **Windows installer** (recommended on Windows) |
+| `tpnote_<version>_amd64.deb` | **Debian / Ubuntu installer** (x86-64) |
+| `tpnote-<version>-x86_64-unknown-linux-gnu.tar.gz` | Linux x86-64 (glibc), standalone binary |
+| `tpnote-<version>-x86_64-unknown-linux-musl.tar.gz` | Linux x86-64, static (musl) — headless/console/servers |
+| `tpnote-<version>-aarch64-unknown-linux-gnu.tar.gz` | Linux ARM64 / Raspberry Pi 64-bit |
+| `tpnote-<version>-armv7-unknown-linux-gnueabihf.tar.gz` | Linux ARMv7 / Raspberry Pi 32-bit |
+| `tpnote-<version>-x86_64-pc-windows-gnu.zip` | Windows x86-64, standalone binary |
+| `tpnote-<version>-x86_64-apple-darwin.tar.gz` | macOS (Intel) |
+| `tpnote-<version>-aarch64-apple-darwin.tar.gz` | macOS (Apple Silicon) |
+| `tpnote-<version>-docs.tar.gz` | User manual and man page (HTML, PDF, man) |
+| `tpnote-<version>-winget-manifests.tar.gz` | winget manifests (Windows Package Manager) |
+
+Each `.tar.gz` / `.zip` archive contains a single, stripped `tpnote` executable;
+the `.deb` and `.msi` are installer packages.
 
 ### Tp-Note Microsoft Windows installer package
 
-Installer package for Windows:
-
-* [tpnote-latest-x86_64.msi]
+Download and run `tpnote-<version>-x64.msi` from the [latest release].
 
 As this early version of the Windows installer is not signed yet, Windows
 will show the error message “Windows protected your PC”. As a work-around,
@@ -138,6 +162,23 @@ file with [VirusTotal].
 Once installation is complete, right-click on the Desktop and select "Show
 more options" to find the "New Tp-Note" entry in the menu.
 
+### Tp-Note Debian/Ubuntu installer package
+
+Download `tpnote_<version>_amd64.deb` from the [latest release] and install it:
+
+```sh
+sudo dpkg -i tpnote_<version>_amd64.deb
+```
+
+### Standalone binaries for Windows, macOS and Linux
+
+Prefer a bare executable? From the [latest release], download the `.tar.gz`
+(Linux/macOS) or `.zip` (Windows) archive for your target (see the table above),
+unpack the single `tpnote` binary and place it on your `PATH` (see the
+[Installation](#installation) section below).
+
+## Tp-Note in official package repositories
+
 ### Windows Package Manager (winget) Distribution
 
 Tp-Note is also available through the Windows Package Manager. To install:
@@ -148,31 +189,6 @@ winget install getreu.tpnote
 
 Following installation, right-click the Desktop and click "Show more options" to
 reveal the "New Tp-Note" context menu entry.
-
-### Tp-Note Debian/Ubuntu installer package
-
-Package compiled for Debian/Ubuntu:
-
-* [tpnote-latest-x86_64.deb]
-
-### Various binaries for Windows, MacOS and Linux
-
-- Binaries for Ubuntu-Linux 18.04, Windows, MacOS:
-  1. Open: [Releases - getreu/tp-note]
-
-  2. Open the latest release.
-
-  3. Open _assets_.
-
-  4. Download the packed executable for your operating system.
-
-  5. Installation: see below.
-
-- Precompiled binaries and packages for various architectures:
-  - [binaries]
-  - [packages]
-
-## Tp-Note in official package repositories
 
 ### Tp-Note on NetBSD
 
@@ -213,8 +229,8 @@ Package compiled for Debian/Ubuntu:
 
 ## Other resources
 
-- Copy the Unix man-page to `/usr/local/share/man/man1`:
-  - [tpnote.1.gz]
+- The Unix man page ships inside `tpnote-<version>-docs.tar.gz` (see the
+  [latest release]); unpack it and copy to `/usr/local/share/man/man1`.
 
 - Copy Tp-Note's icon to `/usr/local/share/icons/`:
   - [tpnote.svg]
@@ -227,8 +243,8 @@ it into your file manager's context menu for convenience.
 
 Depending on the availability of installer packages for your operating
 system, the installation process is more or less automated. For Windows
-users the fully automated installation package [tpnote-latest-x86_64.msi]
-is available. After installation, click right on the desktop and select
+users the fully automated installer `tpnote-<version>-x64.msi` is available on
+the [latest release]. After installation, click right on the desktop and select
 "Show more options", then "New Tp-Note" to get started. For more information,
 please consult the [Distribution section](#distribution) above and the
 [Installation section] in _Tp-Note_'s manual.
@@ -300,8 +316,8 @@ compile _Tp-Note_ yourself.
 
     The full-featured version of _Tp-Note_ depends on GUI libraries like Xlib
     which might not be available on a headless system. Either download the Musl
-    version [x86_64-unknown-linux-musl/release/tpnote] or compile _Tp-Note_
-    yourself without default features:
+    archive `tpnote-<version>-x86_64-unknown-linux-musl.tar.gz` from the
+    [latest release] or compile _Tp-Note_ yourself without default features:
 
     ```sh
     cargo install --no-default-features \
@@ -445,13 +461,9 @@ Copyright:
 [constants in the API documentation]: https://docs.rs/tpnote-lib/latest/tpnote_lib/config/index.html#constants
 [Tp-Note on Gitlab]: https://gitlab.com/getreu/tp-note
 [Tp-Note on Github (mirror)]: https://github.com/getreu/tp-note
-[tpnote-latest-x86_64.msi]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-pc-windows-gnu/tpnote-latest-x86_64.msi
 [VirusTotal]: https://www.virustotal.com/gui/home/upload
-[tpnote-latest-x86_64.deb]: https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-unknown-linux-gnu/tpnote-latest-x86_64.deb
 [Releases - getreu/tp-note]: https://github.com/getreu/tp-note/releases
-[tpnote.1.gz]: https://blog.getreu.net/projects/tp-note/_downloads/tpnote.1.gz
-[binaries]: https://blog.getreu.net/projects/tp-note/_downloads/bin/
-[packages]: https://blog.getreu.net/projects/tp-note/_downloads/package
+[latest release]: https://github.com/getreu/tp-note/releases/latest
 [tpnote.svg]: https://blog.getreu.net/projects/tp-note/assets/tpnote.svg
 [Installation section]: https://blog.getreu.net/projects/tp-note/tpnote--manual.html#installation
 [Customization section]: https://blog.getreu.net/projects/tp-note/tpnote--manpage.html#customization

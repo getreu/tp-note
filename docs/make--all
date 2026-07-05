@@ -5,7 +5,8 @@ cd $(dirname "$0")
 rm -r ./build
 
 # Gather input
-cp ../README.md ./source
+# NB: source/README.md is a symlink to ../../README.md, so it always tracks the
+# root README -- no copy needed (and `cp` would fail: same file).
 cp ../assets/tpnote-screenshot.png ./source/assets
 cp ../assets/tpnote.svg ./source/assets
 
