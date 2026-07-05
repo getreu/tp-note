@@ -146,9 +146,6 @@ Tp-Note is also available through the Windows Package Manager. To install:
 winget install getreu.tpnote
 ```
 
-For more information about winget distribution, see the
-[winget distribution guide](docs/winget-distribution.md).
-
 Following installation, right-click the Desktop and click "Show more options" to
 reveal the "New Tp-Note" context menu entry.
 
