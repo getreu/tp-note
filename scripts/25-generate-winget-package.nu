@@ -67,7 +67,7 @@
 # - Nushell (https://www.nushell.sh/) (the script is written in Nu; no other
 #   external dependencies are required — SHA256 hashing is done natively)
 # - A freshly built Windows MSI at
-#   `build/package/x86_64-pc-windows-gnu/tpnote-<version>-x86_64.msi`
+#   `build/package/x86_64-pc-windows-gnu/tpnote-<version>-x64.msi`
 #
 # ### Generating Manifests
 #
@@ -179,11 +179,12 @@ def main [] {
 
     # 2. Define paths and metadata
     let package_id = "getreu.tpnote"
-    let base_dir = ["build" "package" "winget-manifests" "getreu" "tpnote"] | path join
+    let base_dir = ["build" "winget-manifests" "getreu" "tpnote"] | path join
     let final_dir = $base_dir | path join $version
-    let msi_name = $"tpnote-($version)-x86_64.msi"
-    let msi_path = ["build" "package" "x86_64-pc-windows-gnu" $msi_name] | path join
-    let download_url = $"https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-pc-windows-gnu/($msi_name)"
+    let msi_name = $"tpnote-($version)-x64.msi"
+    let msi_path = ["build" $msi_name] | path join
+    # Published to the GitHub release for this tag (flat asset list).
+    let download_url = $"https://github.com/getreu/tp-note/releases/download/v($version)/($msi_name)"
 
     # 3. MSI Check & Hash calculation
     if not ($msi_path | path exists) {
@@ -247,4 +248,13 @@ def main [] {
     } | to yaml | save -f ($final_dir | path join $"($package_id).locale.en-US.yaml")
 
     print $"(ansi green)Success! Manifests created in: ($final_dir)(ansi reset)"
+
+    # Package the manifest tree into the flat build/ as a single release asset
+    # (build/tpnote-<version>-winget-manifests.tar.gz) and drop the loose tree so
+    # build/ stays flat. The archive preserves the winget-manifests/getreu/...
+    # layout expected by winget-pkgs.
+    let winget_archive = $"build/tpnote-($version)-winget-manifests.tar.gz"
+    ^tar -czf $winget_archive -C build winget-manifests
+    rm -rf build/winget-manifests
+    print $"(ansi green)Winget manifests archived to ($winget_archive)(ansi reset)"
 }

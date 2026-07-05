@@ -30,7 +30,12 @@
     {
       devShells.${system}.default = pkgs.mkShell {
         nativeBuildInputs = [
-          pkgs.wineWowPackages.stable
+          # The *Full* variant bundles the wine-mono and wine-gecko MSIs in the
+          # store, so Wine installs the .NET Framework runtime (WiX 6 CLI targets
+          # .NETFramework v4.7.2) SILENTLY from its local copy at prefix creation
+          # instead of popping an interactive "download Mono?" dialog. This is
+          # what makes a cold prefix reproducible in CI (fully cached, no network).
+          pkgs.wineWowPackages.stableFull
           pkgs.cabextract
           pkgs.unzip
           pkgs.msitools
@@ -43,14 +48,26 @@
           export WINEPREFIX="$HOME/.wine-tpnote"
           export WINEARCH=win64
           export WINEDEBUG=-all
+          # Non-interactive: never let Wine pop a GUI installer dialog. Mono is
+          # provided locally by the *Full* wine build (installed silently below);
+          # gecko/mshtml is not needed by WiX, so disable it outright.
+          export WINEDLLOVERRIDES="mshtml=d"
+          # Headless CI has no X display; keep Wine from trying to use one.
+          unset DISPLAY
 
           # First-time installation of WiX
           if [ ! -f "$WINEPREFIX/.wix-installed" ]; then
-            echo ">>> Initializing Wine prefix..."
-            wineboot -i
+            echo ">>> Initializing Wine prefix (silently installs bundled Mono)..."
+            mkdir -p "$WINEPREFIX"
+            # The very first wineboot on a cold prefix can transiently fail while
+            # core DLLs are staged (STATUS_DLL_NOT_FOUND); retry once, then block
+            # until the wineserver has finished creating the prefix.
+            wineboot -u || wineboot -u
+            wineserver -w
 
             echo ">>> Installing WiX ${wixVersion} (MSI)..."
             wine64 msiexec /i ${wixMsi} /qn
+            wineserver -w
 
             touch "$WINEPREFIX/.wix-installed"
             echo ">>> WiX installed."

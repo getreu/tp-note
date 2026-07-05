@@ -23,4 +23,13 @@ if $exit_code == 0 {
     exit 1
 }
 
+# Package the documentation into the flat build/ as a single release asset:
+#   build/tpnote-<version>-docs.tar.gz
+cd $project_dir
+let version = (open Cargo.toml | get workspace.package.version)
+mkdir build
+let docs_archive = $"build/tpnote-($version)-docs.tar.gz"
+^tar -czf $docs_archive -C docs/build .
+print $"Documentation archived to ($docs_archive)"
+
 print "Documentation build completed!"

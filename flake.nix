@@ -32,6 +32,15 @@
 #
 # **Package Building:**
 # - `nix build .#tpnote-deb` → Creates Debian package (x86_64 only)
+#   Named per Debian policy: `tpnote_<version>_amd64.deb`.
+#
+# **Release Archives (flat, standard-named; one file per target):**
+# - `nix build .#release` → stages all build-ready release assets in a single
+#   flat directory: one `.tar.gz`/`.zip` per target (Rust target-triple names)
+#   plus the `.deb`. macOS archives and the Windows `.msi` come from other
+#   build hosts/tools and are merged in downstream.
+# - `nix build .#release-<target>` → a single archive for one target, e.g.
+#   `tpnote-<version>-x86_64-unknown-linux-gnu.tar.gz`.
 #
 # **Debian/Ubuntu Compatibility Notes:**
 # The ARM cross-compiled binaries (armv7 and aarch64) are built using Nixpkgs'
@@ -95,6 +104,40 @@
             ${pkgs.stdenv.cc}/bin/${crossSystemConfig}-strip $out/bin/tpnote
           '';
         };
+
+      lib = nixpkgs.lib;
+      pkgsNative = import nixpkgs { system = "x86_64-linux"; };
+
+      # Wrap a built target derivation (holding $out/bin/tpnote[.exe]) into a
+      # single release archive named with the standard Rust convention:
+      #   <pname>-<version>-<target-triple>.tar.gz   (Linux / macOS)
+      #   <pname>-<version>-<target-triple>.zip       (Windows)
+      # The archive holds the bare binary at its root, matching the CI
+      # native-matrix job so the whole release uses one consistent scheme.
+      # Archives are built reproducibly (fixed mtime/owner, no gzip timestamp).
+      mkArchive =
+        {
+          target,
+          drv,
+          exe ? false,
+        }:
+        pkgsNative.runCommand "${pname}-${version}-${target}"
+          { nativeBuildInputs = lib.optional exe pkgsNative.zip; }
+          (
+            if exe then
+              ''
+                mkdir -p $out
+                cd ${drv}/bin
+                zip -X -q "$out/${pname}-${version}-${target}.zip" tpnote.exe
+              ''
+            else
+              ''
+                mkdir -p $out
+                tar --sort=name --owner=0 --group=0 --numeric-owner --mtime=@0 \
+                  -C ${drv}/bin -cf - tpnote \
+                  | gzip -n > "$out/${pname}-${version}-${target}.tar.gz"
+              ''
+          );
     in
     {
       devShells.x86_64-linux = {
@@ -120,6 +163,12 @@
               git
               gh
               glab
+              # Pipeline orchestration (scripts/*.nu) expects nushell on PATH so
+              # `nix develop --command nu scripts/01-make-all.nu` runs (CI and
+              # local). The documentation toolchain (pandoc + weasyprint) is NOT
+              # here: scripts/13-make-docs.nu enters docs/flake.nix's devShell
+              # for that, which is the single source of truth for docs deps.
+              nushell
             ];
             nativeBuildInputs = with pkgs; [
               pkg-config
@@ -134,7 +183,7 @@
               ];
           };
       };
-      packages.x86_64-linux = {
+      packages.x86_64-linux = rec {
         default =
           let
             pkgs = import nixpkgs {
@@ -292,10 +341,47 @@
             # Create the .deb package
             installPhase = ''
               mkdir -p $out
-              # Ensure the deb package is built
-              cargo deb --no-build --output $out/${pname}-${version}-x86_64.deb
+              # Let cargo-deb name the file per Debian policy:
+              #   <package>_<version>_<debian-arch>.deb  (e.g. tpnote_1.26.4_amd64.deb)
+              cargo deb --no-build
+              cp target/debian/*.deb $out/
             '';
           };
+
+        # --- Release archives (flat, standard-named; one file per target) ---
+        # `nix build .#release` collects build-ready assets into one flat
+        # directory. macOS archives (native-matrix CI) and the Windows .msi
+        # (scripts/18 + wix) are produced elsewhere and merged in downstream.
+        "release-x86_64-unknown-linux-gnu" = mkArchive {
+          target = "x86_64-unknown-linux-gnu";
+          drv = tpnote-x86_64-unknown-linux-gnu;
+        };
+        "release-x86_64-unknown-linux-musl" = mkArchive {
+          target = "x86_64-unknown-linux-musl";
+          drv = tpnote-x86_64-unknown-linux-musl;
+        };
+        "release-armv7-unknown-linux-gnueabihf" = mkArchive {
+          target = "armv7-unknown-linux-gnueabihf";
+          drv = tpnote-armv7-unknown-linux-gnueabihf;
+        };
+        "release-aarch64-unknown-linux-gnu" = mkArchive {
+          target = "aarch64-unknown-linux-gnu";
+          drv = tpnote-aarch64-unknown-linux-gnu;
+        };
+        "release-x86_64-pc-windows-gnu" = mkArchive {
+          target = "x86_64-pc-windows-gnu";
+          drv = tpnote-x86_64-pc-windows-gnu;
+          exe = true;
+        };
+        release = pkgsNative.runCommand "${pname}-release-${version}" { } ''
+          mkdir -p $out
+          cp ${release-x86_64-unknown-linux-gnu}/* $out/
+          cp ${release-x86_64-unknown-linux-musl}/* $out/
+          cp ${release-armv7-unknown-linux-gnueabihf}/* $out/
+          cp ${release-aarch64-unknown-linux-gnu}/* $out/
+          cp ${release-x86_64-pc-windows-gnu}/* $out/
+          cp ${tpnote-deb}/*.deb $out/
+        '';
       };
     };
 }

@@ -1,4 +1,7 @@
-#!/bin/sh
+#!/usr/bin/env bash
+# Must run under bash, not a POSIX /bin/sh: several tests feed input with
+# `echo -e`, which dash (Ubuntu's /bin/sh) prints literally instead of
+# interpreting the escapes, corrupting the piped text (e.g. a leading "-e ").
 cd $(dirname $(realpath "$0"))
 
 TESTOUTPUT="test_output"

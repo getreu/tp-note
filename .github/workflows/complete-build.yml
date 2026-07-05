@@ -1,0 +1,199 @@
+name: complete-build
+
+# The full "complete build" for Tp-Note, split into three jobs:
+#
+#   * nix-complete  – runs the local Nix orchestrator (scripts/01-make-all.nu):
+#                     the cross-compiled Linux targets (gnu, musl, armv7,
+#                     aarch64), the windows-gnu build, the Debian package, the
+#                     Windows MSI (Wine), the documentation and the winget
+#                     manifests -- staged flat into build/. Each is uploaded as
+#                     its own tpnote-* artifact. Nix-on-Linux cannot build macOS.
+#   * native-matrix – native builds on GitHub's macOS runners for the only
+#                     targets nix-complete cannot produce: x86_64-apple-darwin
+#                     and aarch64-apple-darwin.
+#   * release       – on a tag, merges every tpnote-* artifact into one flat
+#                     directory and publishes it as the GitHub release. Release
+#                     assets are a flat, one-file-per-target set with the
+#                     standard names tpnote-<version>-<target>.{tar.gz,zip}
+#                     (the .deb / .msi follow their own ecosystem conventions).
+#
+# On a public repo GitHub-hosted standard runners are free and unlimited, so this
+# can run automatically on tags. The main constraint is the ~14 GB runner disk,
+# which the nix-complete job mitigates with jlumbroso/free-disk-space.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write # release job needs to create/update GitHub releases
+
+jobs:
+  nix-complete:
+    name: Nix complete build (Linux cross, deb, msi, docs, winget)
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      # Reclaim ~30 GB from the ~14 GB-usable runner so the Nix store + all
+      # cross target build trees fit.
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      # Runs the exact local pipeline. flake.nix's default devShell now provides
+      # nushell + pandoc + weasyprint, so this single command is self-contained.
+      - name: Run complete build pipeline
+        run: nix develop --command nu scripts/01-make-all.nu
+
+      # One artifact per architecture/package: each is a single file, named
+      # after its target triple, so it appears once in the Actions artifacts
+      # list and — flattened — once in the GitHub release. build/ is flat.
+      - name: Upload x86_64-unknown-linux-gnu
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpnote-x86_64-unknown-linux-gnu
+          if-no-files-found: error
+          path: build/tpnote-*-x86_64-unknown-linux-gnu.tar.gz
+      - name: Upload x86_64-unknown-linux-musl
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpnote-x86_64-unknown-linux-musl
+          if-no-files-found: error
+          path: build/tpnote-*-x86_64-unknown-linux-musl.tar.gz
+      - name: Upload aarch64-unknown-linux-gnu
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpnote-aarch64-unknown-linux-gnu
+          if-no-files-found: error
+          path: build/tpnote-*-aarch64-unknown-linux-gnu.tar.gz
+      - name: Upload armv7-unknown-linux-gnueabihf
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpnote-armv7-unknown-linux-gnueabihf
+          if-no-files-found: error
+          path: build/tpnote-*-armv7-unknown-linux-gnueabihf.tar.gz
+      - name: Upload x86_64-pc-windows-gnu
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpnote-x86_64-pc-windows-gnu
+          if-no-files-found: error
+          path: build/tpnote-*-x86_64-pc-windows-gnu.zip
+      - name: Upload Debian package
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpnote-deb
+          if-no-files-found: error
+          path: build/tpnote_*_amd64.deb
+      - name: Upload Windows MSI
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpnote-msi
+          if-no-files-found: error
+          path: build/tpnote-*-x64.msi
+      # Auxiliary outputs, also published — each as a single archive:
+      - name: Upload documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpnote-docs
+          if-no-files-found: error
+          path: build/tpnote-*-docs.tar.gz
+      - name: Upload winget manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpnote-winget-manifests
+          if-no-files-found: error
+          path: build/tpnote-*-winget-manifests.tar.gz
+
+  native-matrix:
+    # Only the targets the Nix-on-Linux job cannot produce: macOS (Intel +
+    # Apple Silicon). Everything else (Linux targets, windows-gnu, deb, msi,
+    # winget) is owned by nix-complete, so there are no duplicates.
+    name: Native macOS build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15-intel # Intel (macos-13 retired Dec 2025; last x86_64 image, until Aug 2027)
+            target: x86_64-apple-darwin
+          - os: macos-latest # Apple Silicon
+            target: aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Test
+        run: cargo test --all --target ${{ matrix.target }}
+
+      # release profile already sets strip = true (Cargo.toml), so binaries are
+      # stripped at build time.
+      - name: Build release binary
+        run: cargo build --release --package tpnote --target ${{ matrix.target }}
+
+      # Version comes from Cargo.toml (not the git tag) so the archive name
+      # matches the Nix-built artifacts exactly: tpnote-<version>-<target>.tar.gz
+      # (the tag is v-prefixed, the artifact names are not).
+      - name: Package
+        shell: bash
+        run: |
+          version=$(grep -m1 '^version = ' Cargo.toml | sed -E 's/version = "(.*)"/\1/')
+          tar czf "tpnote-${version}-${{ matrix.target }}.tar.gz" \
+            -C "target/${{ matrix.target }}/release" tpnote
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpnote-${{ matrix.target }}
+          if-no-files-found: error
+          path: tpnote-*-${{ matrix.target }}.tar.gz
+
+  release:
+    name: Publish GitHub release
+    needs: [nix-complete, native-matrix]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      # Every release asset is uploaded under a `tpnote-*` artifact name, one
+      # file each. merge-multiple flattens them all into a single directory, so
+      # dist/ is the flat, one-file-per-target release asset set.
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: tpnote-*
+          merge-multiple: true
+          path: dist
+
+      - name: List release assets
+        run: ls -l dist
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          fail_on_unmatched_files: false

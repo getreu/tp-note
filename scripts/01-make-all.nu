@@ -13,10 +13,9 @@ def main [] {
         { file: "10-clear-targets.nu",            msg: "Clearing targets" }
         { file: "11-test.nu",                     msg: "Running tests" }
         { file: "13-make-docs.nu",                msg: "Building documentation" }
-        { file: "14-make-targets.nu",             msg: "Building targets" }
+        { file: "14-make-targets.nu",             msg: "Building release archives + deb" }
         { file: "18-make-win-msi-package.nu",     msg: "Creating Windows MSI package" }
         { file: "25-generate-winget-package.nu",  msg: "Generating winget manifests" }
-        { file: "19-symlink-installer.nu",        msg: "Creating installer symlinks" }
         { file: "30-clear-targets-keep-binaries.nu", msg: "Performing final cleanup" }
     ]
 
