@@ -41,8 +41,12 @@ if ($store | is-empty) {
 # Copy the flat artifacts into build/. The copies stay read-only (they come
 # from the read-only Nix store) -- that is fine: later steps only add new files
 # alongside them, and 10-clear-targets' `rm -rf build/*` removes read-only
-# files without trouble (build/ itself is group-writable).
+# files without trouble (build/ itself is group-writable). Remove any existing
+# same-named copy first: nushell's `cp` opens the destination O_TRUNC, which
+# would fail on a pre-existing read-only file (e.g. a re-run without a clean).
 for $f in (ls $store | where type == file | get name) {
+    let dest = ("build" | path join ($f | path basename))
+    rm -f $dest
     cp -f $f build/
 }
 

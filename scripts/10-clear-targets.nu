@@ -7,8 +7,8 @@ cd $project_dir
 if ("target" | path exists ) {
     rm -rf target
 }
-if ("doc/build" | path exists ) {
-    rm -rf doc/build
+if ("docs/build" | path exists ) {
+    rm -rf docs/build
 }
 if ("build" | path exists ) {
     # Preserve existing MSI packages across cleans (the Wine-based MSI build is
