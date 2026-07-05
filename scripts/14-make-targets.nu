@@ -24,15 +24,24 @@ cd $project_dir
 mkdir build
 
 print $"(ansi cyan_bold)Building release archives + Debian package via nix ...(ansi reset)"
-let build_result = (do { ^nix build ".#release" --no-link --print-out-paths } | complete)
+print $"(ansi cyan)Cross-compiles every target; this can take many minutes. Streaming live build logs:(ansi reset)"
 
-if $build_result.exit_code != 0 {
-    print $"(ansi red_bold)[FAIL] nix build .#release failed:(ansi reset)"
-    print $build_result.stderr
+# Build with -L (--print-build-logs) so nix streams full per-derivation logs to
+# the terminal as it works, instead of a silent progress bar. We deliberately do
+# NOT wrap this in `do { ... } | complete`, which buffers all output until the
+# build finishes (that is what made the step appear frozen for 15+ minutes).
+try {
+    ^nix build ".#release" --no-link --print-build-logs
+    if $env.LAST_EXIT_CODE != 0 {
+        error make { msg: "nix build .#release exited non-zero" }
+    }
+} catch {
+    print $"(ansi red_bold)[FAIL] nix build .#release failed.(ansi reset)"
     exit 1
 }
 
-let store = ($build_result.stdout | lines | first | str trim)
+# Resolve the (now cached, so instant) output path in a second invocation.
+let store = (^nix build ".#release" --no-link --print-out-paths | lines | last | str trim)
 if ($store | is-empty) {
     print $"(ansi red_bold)[FAIL] nix build .#release produced no output path.(ansi reset)"
     exit 1
