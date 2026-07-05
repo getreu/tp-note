@@ -142,8 +142,8 @@
 #
 # If automatic installation fails, you can:
 #
-# 1. Download the MSI directly from:
-#        https://blog.getreu.net/projects/tp-note/_downloads/package/x86_64-pc-windows-gnu/tpnote-latest-x86_64.msi
+# 1. Download the MSI directly from the GitHub release:
+#        https://github.com/getreu/tp-note/releases/download/v<version>/tpnote-<version>-x64.msi
 # 2. Install manually by double-clicking the MSI file
 #
 # ## Future Enhancements
