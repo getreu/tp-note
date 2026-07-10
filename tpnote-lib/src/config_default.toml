@@ -320,7 +320,7 @@ from_dir_content = """
 {%- set lang = fm.fm_lang | default(value = languages | first ) -%}
 
 ---
-{{ title_text | trunc | to_yaml(key='fm_title') }}
+{{ title_text | to_yaml(key='fm_title') }}
 {{ fm.fm_subtitle | default(value = 'Note') | to_yaml(key='fm_subtitle') }}
 {{ fm.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
 {{ fm.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
@@ -379,7 +379,7 @@ from_text_file_content = """
 {%- set lang = languages | first -%}
 ---
 {{ path | file_stem | split(pat='--') | first | trunc | to_yaml(key='fm_title') }}
-{{ path | file_stem | split(pat='--') | nth(n=1) | default(value='') | trunc
+{{ path | file_stem | split(pat='--') | nth(n=1) | default(value='')
      | to_yaml(key='fm_subtitle') }}
 {{ username | capitalize | to_yaml(key='fm_author') }}
 {{ doc_file_date | default(value=now()) | date(format='%Y-%m-%d') | to_yaml(key='fm_date') }}
@@ -554,7 +554,7 @@ from_dir_content = """
         | incr_sort_tag(default=tag_default) -%}
 {%- endif -%}
 ---
-{{ title_text | trunc | to_yaml(key='fm_title') }}
+{{ title_text | to_yaml(key='fm_title') }}
 {{ fm.fm_keywords | default(value = ['note']) | to_yaml(key='fm_keywords') }}
 {{ fm.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
 {{ fm.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}

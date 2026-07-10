@@ -712,9 +712,7 @@ Body text
                 .get_from_path("fm_title")
                 .unwrap()
                 .as_str(),
-            // Remember: in debug titles are very short. The code only works,
-            // because the string is pure ASCII (not UTF-8).
-            Some("stdin bod")
+            Some("stdin body")
         );
 
         assert_eq!(
@@ -724,9 +722,7 @@ Body text
                 .get_from_path("fm_subtitle")
                 .unwrap()
                 .as_str(),
-            // Remember: in debug titles are very short. The code only works,
-            // because the string is pure ASCII (not UTF-8).
-            Some("this over")
+            Some("this overwrites")
         );
         n.render_filename(TemplateKind::FromDir).unwrap();
         n.set_next_unused_rendered_filename().unwrap();
@@ -739,14 +735,14 @@ Body text
                 .as_os_str()
                 .to_str()
                 .unwrap()
-                .contains("stdin bod--this over")
+                .contains("stdin body--this overwrites")
         );
         assert!(n.rendered_filename.is_file());
         let raw_note = fs::read_to_string(n.rendered_filename).unwrap();
         #[cfg(not(target_family = "windows"))]
-        assert!(raw_note.starts_with("\u{feff}---\ntitle:        stdin bod"));
+        assert!(raw_note.starts_with("\u{feff}---\ntitle:        stdin body"));
         #[cfg(target_family = "windows")]
-        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:        stdin bod"));
+        assert!(raw_note.starts_with("\u{feff}---\r\ntitle:        stdin body"));
     }
 
     #[test]
