@@ -694,7 +694,7 @@ annotate_file_content = """
 {%- endif -%}
 {{ 'zettel' | to_yaml(key='fm_scheme') }}
 {{ fm.fm_sort_tag | default(value = path | file_sort_tag) | to_yaml(key='fm_sort_tag') }}
-{%- if fm -%}
+{% if fm -%}
   {{- fm
     | remove(key='fm_title')
     | remove(key='fm_keywords')

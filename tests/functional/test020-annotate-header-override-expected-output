@@ -3,6 +3,11 @@ title:        Clipboard Title
 subtitle:     Note
 author:       Clip Author
 lang:         en-US
+
+date:         2026-01-15
+keywords:
+              - alpha
+              - beta
 ---
 
 [test020-annotate-header-override-dummy.pdf](<test020-annotate-header-override-dummy.pdf>)
