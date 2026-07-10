@@ -321,7 +321,7 @@ from_dir_content = """
 
 ---
 {{ title_text | trunc | to_yaml(key='fm_title') }}
-{{ fm.fm_subtitle | default(value = 'Note') | trunc | to_yaml(key='fm_subtitle') }}
+{{ fm.fm_subtitle | default(value = 'Note') | to_yaml(key='fm_subtitle') }}
 {{ fm.fm_author | default(value=username | capitalize) | to_yaml(key='fm_author') }}
 {{ fm.fm_date | default(value = now()|date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
@@ -433,7 +433,7 @@ annotate_file_content = """
   {%- endif -%}
 ---
 {{ fm.fm_title | default(value = path | trim_file_sort_tag) | to_yaml(key='fm_title') }}
-{{ 'Note' | to_yaml(key='fm_subtitle') }}
+{{ fm.fm_subtitle | default(value = 'Note') | to_yaml(key='fm_subtitle') }}
 {{ fm.fm_author | default(value = username | capitalize) | to_yaml(key='fm_author') }}
 {{ fm.fm_date | default(value = now() | date(format='%Y-%m-%d')) | to_yaml(key='fm_date') }}
 {{ lang | to_yaml(key='fm_lang') }}
@@ -442,6 +442,23 @@ annotate_file_content = """
 {%- endif -%}
 {% if scheme_sync_default != current_scheme -%}
 {{ current_scheme | to_yaml(key='fm_scheme') | append(newline=true) }}
+{%- endif -%}
+{% if fm.fm_sort_tag -%}
+  {{ fm.fm_sort_tag | to_yaml(key='fm_sort_tag') | append(newline=true) }}
+{%- endif -%}
+{%- if fm -%}
+  {{- fm
+    | remove(key='fm_title')
+    | remove(key='fm_subtitle')
+    | remove(key='fm_author')
+    | remove(key='fm_date')
+    | remove(key='fm_lang')
+    | remove(key='fm_languages')
+    | remove(key='fm_scheme')
+    | remove(key='fm_sort_tag')
+    | to_yaml
+    | prepend(newline=true)
+    | append(newline=true) -}}
 {%- endif -%}
 ---
 
@@ -676,7 +693,21 @@ annotate_file_content = """
 {{ languages | to_yaml(key='fm_languages') | append(newline=true) }}
 {%- endif -%}
 {{ 'zettel' | to_yaml(key='fm_scheme') }}
-{{ path | file_sort_tag | to_yaml(key='fm_sort_tag') }}
+{{ fm.fm_sort_tag | default(value = path | file_sort_tag) | to_yaml(key='fm_sort_tag') }}
+{%- if fm -%}
+  {{- fm
+    | remove(key='fm_title')
+    | remove(key='fm_keywords')
+    | remove(key='fm_author')
+    | remove(key='fm_date')
+    | remove(key='fm_lang')
+    | remove(key='fm_languages')
+    | remove(key='fm_scheme')
+    | remove(key='fm_sort_tag')
+    | to_yaml
+    | prepend(newline=true)
+    | append(newline=true) -}}
+{%- endif -%}
 ---
 
 {{ link }}
