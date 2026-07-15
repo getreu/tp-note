@@ -1,11 +1,32 @@
 //! Syntax highlighting for (inline) source code blocks in Markdown input.
 
+use crate::config::EmbeddedContentErrorPolicy;
+#[cfg(feature = "mermaid")]
+use crate::error::NoteError;
 use pulldown_cmark::{CodeBlockKind, Event, Tag, TagEnd};
+#[cfg(feature = "mermaid")]
+use std::cell::RefCell;
+#[cfg(feature = "mermaid")]
+use std::rc::Rc;
 use syntect::highlighting::ThemeSet;
 use syntect::html::css_for_theme_with_class_style;
 use syntect::html::{ClassStyle, ClassedHTMLGenerator};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
+
+/// Builds the inline HTML fallback shown in place of a Mermaid diagram that
+/// failed to render under the `Inline` error policy. The result is emitted via
+/// `Event::Html`, which pulldown-cmark does **not** escape, so both the error
+/// message and the offending source are HTML-escaped here.
+#[cfg(feature = "mermaid")]
+fn mermaid_error_html(msg: &str, code: &str) -> String {
+    format!(
+        "<div class=\"mermaid-error\"><p><em>Mermaid render error: {}</em></p>\
+         <pre><code class=\"language-mermaid\">{}</code></pre></div>",
+        html_escape::encode_text(msg),
+        html_escape::encode_text(code),
+    )
+}
 
 /// Get the viewer syntax highlighting CSS configuration.
 pub(crate) fn get_highlighting_css(theme_name: &str) -> String {
@@ -23,12 +44,35 @@ pub(crate) fn get_highlighting_css(theme_name: &str) -> String {
 #[derive(Debug, Default)]
 pub struct SyntaxPreprocessor<'a, I: Iterator<Item = Event<'a>>> {
     parent: I,
+    /// How a failed embedded renderer (e.g. Mermaid) is surfaced.
+    #[cfg(feature = "mermaid")]
+    error_policy: EmbeddedContentErrorPolicy,
+    /// Side channel for `HardError` mode: `next()` returns `Option<Event>` and
+    /// cannot fail, so the first `NoteError` is parked here for
+    /// `MarkupLanguage::render()` to pick up. Single-threaded, hence
+    /// `Rc<RefCell<…>>`.
+    #[cfg(feature = "mermaid")]
+    error_sink: Rc<RefCell<Option<NoteError>>>,
 }
 
 /// Constructor.
 impl<'a, I: Iterator<Item = Event<'a>>> SyntaxPreprocessor<'a, I> {
-    pub fn new(parent: I) -> Self {
-        Self { parent }
+    #[cfg_attr(not(feature = "mermaid"), allow(unused_variables))]
+    pub fn new(parent: I, error_policy: EmbeddedContentErrorPolicy) -> Self {
+        Self {
+            parent,
+            #[cfg(feature = "mermaid")]
+            error_policy,
+            #[cfg(feature = "mermaid")]
+            error_sink: Rc::new(RefCell::new(None)),
+        }
+    }
+
+    /// Returns a clone of the shared error sink so `MarkupLanguage::render()` can
+    /// retrieve a `HardError` captured while the iterator was consumed.
+    #[cfg(feature = "mermaid")]
+    pub(crate) fn error_sink(&self) -> Rc<RefCell<Option<NoteError>>> {
+        self.error_sink.clone()
     }
 }
 
@@ -86,6 +130,41 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
             ));
         }
 
+        #[cfg(feature = "mermaid")]
+        if lang.as_ref() == "mermaid" {
+            // The crate is young (v0.3.x): isolate a possible parser panic so a
+            // bad diagram can never abort the viewer thread or the export.
+            let result = match std::panic::catch_unwind(|| mermaid_rs_renderer::render(&code)) {
+                Ok(r) => r.map_err(|e| e.to_string()),
+                Err(_) => Err("internal renderer panic".to_string()),
+            };
+            return Some(match result {
+                // The SVG is inserted un-escaped via `Event::Html` (pulldown-cmark
+                // does not escape it). Low practical risk for local, user-authored
+                // notes; consistent with the existing raw-HTML passthrough.
+                // Sanitization deferred.
+                Ok(svg) => Event::Html(format!("<div class=\"mermaid\">{svg}</div>").into()),
+                Err(msg) => match self.error_policy {
+                    EmbeddedContentErrorPolicy::HardError => {
+                        // Park the first error; `render()` turns it into `Err`.
+                        let mut sink = self.error_sink.borrow_mut();
+                        if sink.is_none() {
+                            *sink = Some(NoteError::RenderError {
+                                renderer: "Mermaid".to_string(),
+                                msg,
+                            });
+                        }
+                        // Discarded — `render()` returns the sink's `Err`.
+                        Event::Html(String::new().into())
+                    }
+                    EmbeddedContentErrorPolicy::Inline => {
+                        log::warn!("Mermaid diagram failed to render: {msg}");
+                        Event::Html(mermaid_error_html(&msg, &code).into())
+                    }
+                },
+            });
+        }
+
         let mut html = String::with_capacity(code.len() + code.len() * 3 / 2 + 20);
 
         // Use default syntax styling.
@@ -123,6 +202,8 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
 
 #[cfg(test)]
 mod test {
+    #[cfg(feature = "mermaid")]
+    use crate::config::EmbeddedContentErrorPolicy;
     use crate::highlight::SyntaxPreprocessor;
     use pulldown_cmark::{Options, Parser, html};
 
@@ -135,7 +216,7 @@ mod test {
 
         let options = Options::all();
         let parser = Parser::new_ext(input, options);
-        let processed = SyntaxPreprocessor::new(parser);
+        let processed = SyntaxPreprocessor::new(parser, Default::default());
 
         let mut rendered = String::new();
         html::push_html(&mut rendered, processed);
@@ -151,7 +232,7 @@ mod test {
 
         let options = Options::all();
         let parser = Parser::new_ext(input, options);
-        let processed = SyntaxPreprocessor::new(parser);
+        let processed = SyntaxPreprocessor::new(parser, Default::default());
 
         let mut rendered = String::new();
         html::push_html(&mut rendered, processed);
@@ -173,7 +254,7 @@ mod test {
 
         let options = Options::all();
         let parser = Parser::new_ext(input, options);
-        let processed = SyntaxPreprocessor::new(parser);
+        let processed = SyntaxPreprocessor::new(parser, Default::default());
 
         let mut rendered = String::new();
         html::push_html(&mut rendered, processed);
@@ -194,7 +275,7 @@ mod test {
 
         let options = Options::all();
         let parser = Parser::new_ext(input, options);
-        let processed = SyntaxPreprocessor::new(parser);
+        let processed = SyntaxPreprocessor::new(parser, Default::default());
 
         let mut rendered = String::new();
         html::push_html(&mut rendered, processed);
@@ -213,7 +294,7 @@ mod test {
             <span class=\"source rust\">";
 
         let parser = Parser::new(input);
-        let processed = SyntaxPreprocessor::new(parser);
+        let processed = SyntaxPreprocessor::new(parser, Default::default());
 
         let mut rendered = String::new();
         html::push_html(&mut rendered, processed);
@@ -228,7 +309,7 @@ mod test {
             Some\nText\n</code></pre>\n";
 
         let parser = Parser::new(input);
-        let processed = SyntaxPreprocessor::new(parser);
+        let processed = SyntaxPreprocessor::new(parser, Default::default());
 
         let mut rendered = String::new();
         html::push_html(&mut rendered, processed);
@@ -247,7 +328,7 @@ mod test {
             <span class=\"text plain\">fn main()";
 
         let parser = Parser::new(input);
-        let processed = SyntaxPreprocessor::new(parser);
+        let processed = SyntaxPreprocessor::new(parser, Default::default());
 
         let mut rendered = String::new();
         html::push_html(&mut rendered, processed);
@@ -261,7 +342,7 @@ mod test {
 
         let options = Options::all();
         let parser = Parser::new_ext(markdown_input, options);
-        let parser = SyntaxPreprocessor::new(parser);
+        let parser = SyntaxPreprocessor::new(parser, Default::default());
 
         // Write to String buffer.
         let mut html_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
@@ -287,11 +368,40 @@ mod test {
             <span class=\"variable function shell\">wget</span></span>";
         let options = Options::all();
         let parser = Parser::new_ext(markdown_input, options);
-        let parser = SyntaxPreprocessor::new(parser);
+        let parser = SyntaxPreprocessor::new(parser, Default::default());
 
         // Write to String buffer.
         let mut html_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
         html::push_html(&mut html_output, parser);
         assert!(html_output.starts_with(expected));
+    }
+
+    #[cfg(feature = "mermaid")]
+    #[test]
+    fn test_mermaid_diagram() {
+        let input = "```mermaid\ngraph TD\n    A --> B\n```";
+
+        let parser = Parser::new_ext(input, Options::all());
+        let parser = SyntaxPreprocessor::new(parser, Default::default());
+
+        let mut rendered = String::new();
+        html::push_html(&mut rendered, parser);
+        assert!(rendered.contains("<div class=\"mermaid\">"));
+        assert!(rendered.contains("<svg"));
+    }
+
+    #[cfg(feature = "mermaid")]
+    #[test]
+    fn test_mermaid_invalid_inline() {
+        // Default policy is `Inline`: a malformed diagram must not panic; the
+        // output carries the inline error box instead of a diagram.
+        let input = "```mermaid\nthis is not a valid mermaid diagram !!!\n```";
+
+        let parser = Parser::new_ext(input, Options::all());
+        let parser = SyntaxPreprocessor::new(parser, EmbeddedContentErrorPolicy::Inline);
+
+        let mut rendered = String::new();
+        html::push_html(&mut rendered, parser);
+        assert!(rendered.contains("mermaid-error"));
     }
 }

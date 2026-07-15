@@ -843,7 +843,7 @@ viewer = '''
   {% endfor %}
   </table>
   {% endif %}
-  <div class="doc-body">{{ doc.body | markup_to_html(extension=ext) | safe }}
+  <div class="doc-body">{{ doc.body | markup_to_html(extension=ext, target='viewer') | safe }}
   </div>
   <script>{{ viewer_doc_js | safe }}</script>
 </body>
@@ -912,6 +912,9 @@ viewer_doc_css = """
   th.fmval{ color: #99be70; }
   th.fmkeygrey{ color: #999999; }
   th.fmvalgrey{ color: #999999; }
+  /* Mermaid SVGs often use dark strokes/text; give them a light backdrop so
+     they stay legible on the dark theme. */
+  .mermaid svg { background: #fff; border-radius: 4px; }
 }
 @media (prefers-color-scheme: light) {
   h1, h2, h3, h4, h5, h6 { color: #263292; }
@@ -972,6 +975,9 @@ table:not(.fm) td, table:not(.fm) th {
   padding-left: 16px;
   padding-right: 16px;
 }
+.mermaid { text-align: center; margin: 1em 0; }
+.mermaid svg { max-width: 100%; height: auto; }
+.mermaid-error pre { border-left: 3px solid #cc3333; padding-left: 8px; }
 """
 
 ### Loads the viewer's code syntax highlighting theme. The theme is converted
@@ -989,6 +995,12 @@ viewer_highlighting_theme = "Solarized (light)"
 ### `viewer_highlighting_theme`. This is what you usually want. Anyway, if none
 ### of the above themes fits, you can provide a custom CSS here.
 viewer_highlighting_css = ""
+
+### Error policy for embedded rendered content (e.g. Mermaid diagrams) in the
+### live viewer: "Inline" (render an error box in place of the content and log a
+### warning) or "HardError" (abort — the viewer shows the full error page).
+### Configured independently from `exporter_embedded_content_error_policy`.
+viewer_embedded_content_error_policy = "Inline"
 
 ### HTML template used to render a note into HTML when the rendition is saved to
 ### disk. Similar to `tmpl_html.viewer` but does not inject JavaScript code.
@@ -1076,7 +1088,7 @@ exporter = '''
   {% endfor %}
   </table>
   {% endif %}
-  <div class="doc-body">{{ doc.body | markup_to_html(extension=ext) | safe }}
+  <div class="doc-body">{{ doc.body | markup_to_html(extension=ext, target='exporter') | safe }}
   </div>
 </body>
 </html>
@@ -1097,6 +1109,12 @@ exporter_highlighting_theme = "Solarized (light)"
 ### `exporter_highlighting_theme`. This is what you usually want. Anyway, if
 ### none of the above themes fits, you can provide a custom CSS here.
 exporter_highlighting_css = ""
+
+### Same as `viewer_embedded_content_error_policy`, but for `--export`.
+### Defaults to "HardError" (abort the export with no output file), so a broken
+### diagram never slips silently into a published document. Set to "Inline" to
+### export an error box in place of the diagram instead.
+exporter_embedded_content_error_policy = "HardError"
 
 ### A constant holding common CSS code, inserted into exported HTML documents
 ### with the template variable `{{ exporter_doc.css }}`.
@@ -1184,4 +1202,7 @@ table:not(.fm) td, table:not(.fm) th {
   padding-left: 16px;
   padding-right: 16px;
 }
+.mermaid { text-align: center; margin: 1em 0; }
+.mermaid svg { max-width: 100%; height: auto; }
+.mermaid-error pre { border-left: 3px solid #cc3333; padding-left: 8px; }
 """

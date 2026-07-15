@@ -332,7 +332,7 @@ subtitle: yyy
 EOF
 
 LANG="en_US.UTF-8" LOGNAME="myuser" \
-	cargo run -- --batch --no-sync --config "$TP_NOTE_TEST_TOML" \
+	cargo run -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
     "$INPUT_FILENAME"  >/dev/null 2>&1
 
 OUTPUT_FILENAME="$PWD/123-abc--edf.md"
@@ -562,6 +562,115 @@ else
 fi
 
 
+
+
+
+## Test 021: Mermaid diagram renders to inline SVG (exporter)
+INPUT_FILENAME="$PWD/021-mermaid--Note.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: mermaid
+subtitle: Note
+---
+
+```mermaid
+graph TD
+    A --> B
+```
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/021-mermaid--Note.md.html"
+
+if grep -q '<div class="mermaid">' "$OUTPUT_FILENAME" 2>/dev/null \
+   && grep -q "<svg" "$OUTPUT_FILENAME" 2>/dev/null
+then
+    echo Commandline test 021 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 021 failed.
+    exit 1
+fi
+
+
+
+## Test 022: Invalid Mermaid, "Inline" policy -> inline error box, export succeeds
+INLINE_TOML="$PWD/tpnote-mermaid-inline.toml"
+sed 's/^exporter_embedded_content_error_policy = "HardError"/exporter_embedded_content_error_policy = "Inline"/' \
+    "$TP_NOTE_TEST_TOML" > "$INLINE_TOML"
+
+INPUT_FILENAME="$PWD/022-mermaid-bad--Note.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: mermaid bad
+subtitle: Note
+---
+
+```mermaid
+this is not a valid mermaid diagram
+```
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --no-filename-sync --config "$INLINE_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/022-mermaid-bad--Note.md.html"
+
+if grep -q "mermaid-error" "$OUTPUT_FILENAME" 2>/dev/null
+then
+    echo Commandline test 022 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+    rm "$INLINE_TOML"
+else
+    echo Commandline test 022 failed.
+    exit 1
+fi
+
+
+
+## Test 023: Invalid Mermaid, "HardError" policy -> export aborts with an error
+##           message on stderr and writes no output file.
+INPUT_FILENAME="$PWD/023-mermaid-bad--Note.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: mermaid bad
+subtitle: Note
+---
+
+```mermaid
+this is not a valid mermaid diagram
+```
+EOF
+
+# `-q` keeps cargo's own build chatter off stderr, leaving only Tp-Note's output.
+STDERR_FILE="$PWD/023-mermaid-bad-stderr.txt"
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -q -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  2>"$STDERR_FILE" >/dev/null
+
+OUTPUT_FILENAME="$PWD/023-mermaid-bad--Note.md.html"
+# Keep only the stable error message; the "Additional technical details:"
+# section below it lists machine-specific absolute paths.
+sed '/^Additional technical details:/,$d' "$STDERR_FILE" > "${STDERR_FILE}.trimmed"
+
+if diff "${STDERR_FILE}.trimmed" "test023-mermaid-hard-expected-output" \
+   && [ ! -f "$OUTPUT_FILENAME" ]
+then
+    echo Commandline test 023 succeeded.
+    rm "$INPUT_FILENAME" "$STDERR_FILE" "${STDERR_FILE}.trimmed"
+else
+    echo Commandline test 023 failed.
+    exit 1
+fi
 
 
 

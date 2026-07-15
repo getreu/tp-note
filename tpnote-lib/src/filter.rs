@@ -372,6 +372,18 @@ fn markup_to_html_filter(
         MarkupLanguage::Unkown
     };
 
+    // Resolve the per-target error policy for embedded rendered content (e.g.
+    // Mermaid diagrams). The viewer and exporter body templates pass
+    // `target='viewer'` / `target='exporter'`; a custom template that omits the
+    // kwarg harmlessly falls back to the viewer policy.
+    let error_policy = {
+        let lib_cfg = LIB_CFG.read_recursive();
+        match kwargs.get::<String>("target")?.as_deref() {
+            Some("exporter") => lib_cfg.tmpl_html.exporter_embedded_content_error_policy,
+            _ => lib_cfg.tmpl_html.viewer_embedded_content_error_policy,
+        }
+    };
+
     // Render the markup language. When the renderer feature is enabled,
     // catch panics (e.g. unsupported markup elements) and Err() returns,
     // mapping each to its own NoteError variant before propagating as a
@@ -381,7 +393,7 @@ fn markup_to_html_filter(
     let html_output = {
         let renderer = format!("{:?}", markup_language);
         match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            markup_language.render(input)
+            markup_language.render(input, error_policy)
         })) {
             Ok(Ok(html)) => html,
             Ok(Err(e)) => {
@@ -405,7 +417,7 @@ fn markup_to_html_filter(
     };
     #[cfg(not(feature = "renderer"))]
     let html_output = markup_language
-        .render(input)
+        .render(input, error_policy)
         .map_err(|e| tera::Error::message(e.to_string()))?;
 
     Ok(Value::from(html_output))

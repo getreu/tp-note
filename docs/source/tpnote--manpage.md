@@ -569,6 +569,27 @@ Tp-Note's note built-in viewer comprises three markup language renders:
    ```
    ````
 
+   Fenced '`mermaid`' blocks are rendered to inline SVG diagrams -in both the
+   viewer and the exported HTML- by a pure-Rust renderer, so the export stays
+   fully self-contained (no JavaScript or extra assets):
+
+   ````md
+   ```mermaid
+   graph TD
+       A --> B
+   ```
+   ````
+
+   When a diagram fails to render, the behaviour is
+   controlled -independently for the viewer and the exporter- by
+   '`tmpl_html.viewer_embedded_content_error_policy`' and
+   '`tmpl_html.exporter_embedded_content_error_policy`'. The viewer defaults to
+   '`Inline`' (show an error box in place of the diagram and log a warning; the
+   rest of the note still renders), so a broken diagram does not interrupt live
+   editing. The exporter defaults to '`HardError`' (abort): '`--export`' fails
+   without writing an output file, so a broken diagram never slips silently into
+   a published document. Set either policy to the other value to override.
+
    Heading attributes:
 
    ```md

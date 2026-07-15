@@ -13,8 +13,10 @@ rust-version.workspace = true
 version = "0.46.5"
 
 [features]
-default = ["renderer", "viewer", "lang-detection"]
+default = ["renderer", "viewer", "lang-detection", "mermaid"]
 lang-detection = ["dep:lingua"]
+# Renders ```mermaid fenced blocks to inline SVG. Depends on `renderer`.
+mermaid = ["renderer", "dep:mermaid-rs-renderer"]
 renderer = ["dep:pulldown-cmark", "dep:rst_parser", "dep:rst_renderer", "dep:latex2mathml", "dep:syntect", "dep:tpnote-html2md"]
 viewer = []
 
@@ -22,6 +24,7 @@ viewer = []
 html-escape = "0.2.14"
 itertools = "0.15.0"
 latex2mathml = { version = "0.2.3", optional = true }
+mermaid-rs-renderer = { version = "0.3.1", default-features = false, optional = true } # Mermaid diagram renderer (SVG).
 lingua = { version = "1.8.0", optional = true, default-features = false, features = [ "english", "chinese", "hindi", "spanish", "french", "bengali", "portuguese", "russian", "german", "japanese", "polish", "italian", "dutch",  "greek", "czech", "hungarian", "serbian", "bulgarian", "croatian", "slovak", "slovene", "bosnian", "irish", "icelandic", "finnish", "estonian", "latvian", "lithuanian", "bokmal", "nynorsk", "swedish"] }
 ### Other supported languages in v1.8.0 ordered by number of speakers:
 # "english", "chinese", "hindi", "spanish", "french", "arabic", "bengali",

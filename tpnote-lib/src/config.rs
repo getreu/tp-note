@@ -791,10 +791,33 @@ pub struct TmplHtml {
     pub viewer_doc_css: String,
     pub viewer_highlighting_theme: String,
     pub viewer_highlighting_css: String,
+    /// Error policy for embedded rendered content (e.g. Mermaid diagrams) in the
+    /// live viewer. Defaults to `Inline` (see `config_default.toml`).
+    pub viewer_embedded_content_error_policy: EmbeddedContentErrorPolicy,
     pub exporter: String,
     pub exporter_doc_css: String,
     pub exporter_highlighting_theme: String,
     pub exporter_highlighting_css: String,
+    /// Same as `viewer_embedded_content_error_policy`, but for the `--export`
+    /// path. Configured independently from the viewer. Defaults to `HardError`
+    /// (see `config_default.toml`), so a broken diagram never slips silently
+    /// into a published document.
+    pub exporter_embedded_content_error_policy: EmbeddedContentErrorPolicy,
+}
+
+/// Determines how the Markdown renderer reacts when embedded content -such as a
+/// Mermaid diagram- fails to render. Configured independently for the viewer and
+/// the exporter (see `TmplHtml`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, Default)]
+pub enum EmbeddedContentErrorPolicy {
+    /// Render an inline error box in place of the content and emit a
+    /// `log::warn!`. The rest of the note still renders; `--export` still
+    /// produces a file.
+    #[default]
+    Inline,
+    /// Abort the whole rendition: the viewer shows its full-page error template,
+    /// `--export` fails with a CLI error and writes no file.
+    HardError,
 }
 
 /// Defines the way the HTML exporter rewrites local links.

@@ -53,7 +53,7 @@ assets = [
 ]
 
 [features]
-default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detection"]
+default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detection", "mermaid"]
 
 # To disable features: `cargo build --no-default-features`
 # If you can do away with error message popup boxes (for example on a headless
@@ -69,6 +69,8 @@ lang-detection = ["tpnote-lib/lang-detection"]
 # This feature declaration is used in this crate and also forwarded to
 # `tpnote_lib`.
 renderer = ["tpnote-lib/renderer"]
+# Forwarded to `tpnote_lib`. Renders ```mermaid fenced blocks to inline SVG.
+mermaid = ["tpnote-lib/mermaid"]
 
 [dependencies]
 clipboard-rs = { version = "0.3.5", features = ["wayland"], optional = true }
@@ -89,8 +91,8 @@ thiserror.workspace = true
 time = "0.3.53"
 tera.workspace = true
 toml.workspace = true
-#tpnote-lib = { path = "../tpnote-lib", default-features = false }
-tpnote-lib = { version = "0.46.5", default-features = false}
+tpnote-lib = { path = "../tpnote-lib", default-features = false }
+#tpnote-lib = { version = "0.46.5", default-features = false}
 webbrowser = { version = "1.2.1", optional = true }
 clap = { version = "4.6.1", features = ["derive"] }
 

@@ -1,0 +1,5 @@
+*** ERROR:
+Renderer 'Markdown' failed:
+Renderer 'Mermaid' failed:
+unexpected token 'this is not a valid mermaid diagram' at 1:1; expected unknown or missing Mermaid diagram header
+

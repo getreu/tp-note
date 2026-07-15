@@ -254,8 +254,7 @@ please consult the [Distribution section](#distribution) above and the
 While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
 configuration file structure, e.g.:
 
-```
-*** ERROR:
+```*** ERROR:
 Can not load or parse the (merged) configuration file(s):
 ---
 invalid length 3, expected fewer elements in array in `viewer.served_mime_types`
@@ -307,7 +306,7 @@ compile _Tp-Note_ yourself.
         In case an XDG desktop environment is not available, you
         can opt out notifications and message boxes by omitting the `message-box`
         feature by adding
-        `--no-default-features --features lang-detection,read-clipboard,renderer,viewer`
+        `--no-default-features --features lang-detection,read-clipboard,renderer,viewer,mermaid`
         to `cargo install tpnote`.
         Now, all error messages are dumped on the console from
         where you started _Tp-Note_ into `stderr`.
@@ -321,7 +320,7 @@ compile _Tp-Note_ yourself.
 
     ```sh
     cargo install --no-default-features \
-      --features lang-detection,renderer tpnote
+      --features lang-detection,renderer,mermaid tpnote
     sudo cp ~/.cargo/bin/tpnote /usr/local/bin
     ```
 

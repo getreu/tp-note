@@ -1,4 +1,5 @@
 //! Helper functions dealing with markup languages.
+use crate::config::EmbeddedContentErrorPolicy;
 use crate::config::LIB_CFG;
 use crate::error::NoteError;
 #[cfg(feature = "renderer")]
@@ -183,7 +184,16 @@ impl MarkupLanguage {
     ///   clickable, but they are displayed as they appear in the input.
     /// * For the variant `None` the result is always the empty string whatever
     ///   the input may be.
-    pub fn render(&self, input: &str) -> Result<String, NoteError> {
+    ///
+    /// `error_policy` governs how embedded rendered content (e.g. Mermaid
+    /// diagrams) that fails to render is surfaced. It is only consulted by the
+    /// `Markdown` renderer; all other variants ignore it.
+    #[cfg_attr(not(feature = "renderer"), allow(unused_variables))]
+    pub fn render(
+        &self,
+        input: &str,
+        error_policy: EmbeddedContentErrorPolicy,
+    ) -> Result<String, NoteError> {
         match self {
             #[cfg(feature = "renderer")]
             Self::Markdown => {
@@ -192,11 +202,24 @@ impl MarkupLanguage {
 
                 let options = Options::all();
                 let parser = Parser::new_ext(input, options);
-                let parser = SyntaxPreprocessor::new(parser);
+                let parser = SyntaxPreprocessor::new(parser, error_policy);
+
+                // A failed embedded renderer under the `HardError` policy stores
+                // its `NoteError` in this sink (the iterator cannot return an
+                // error). Grab a handle before consuming the parser.
+                #[cfg(feature = "mermaid")]
+                let err_sink = parser.error_sink();
 
                 // Write to String buffer.
                 let mut html_output: String = String::with_capacity(input.len() * 3 / 2);
                 html::push_html(&mut html_output, parser);
+
+                // Bubble up a `HardError` captured during rendering.
+                #[cfg(feature = "mermaid")]
+                if let Some(e) = err_sink.borrow_mut().take() {
+                    return Err(e);
+                }
+
                 Ok(html_output)
             }
 
@@ -264,6 +287,8 @@ mod tests {
 
     use super::InputConverter;
     use super::MarkupLanguage;
+    #[cfg(feature = "mermaid")]
+    use crate::config::EmbeddedContentErrorPolicy;
     use std::path::Path;
 
     #[test]
@@ -294,15 +319,35 @@ mod tests {
         let input = "[Link text](https://domain.invalid/)";
         let expected: &str = "<p><a href=\"https://domain.invalid/\">Link text</a></p>\n";
 
-        let result = MarkupLanguage::Markdown.render(input).unwrap();
+        let result = MarkupLanguage::Markdown
+            .render(input, Default::default())
+            .unwrap();
         assert_eq!(result, expected);
 
         // ReStructuredText
         let input = "`Link text <https://domain.invalid/>`_";
         let expected: &str = "<p><a href=\"https://domain.invalid/\">Link text</a></p>";
 
-        let result = MarkupLanguage::ReStructuredText.render(input).unwrap();
+        let result = MarkupLanguage::ReStructuredText
+            .render(input, Default::default())
+            .unwrap();
         assert_eq!(result, expected);
+    }
+
+    #[cfg(feature = "mermaid")]
+    #[test]
+    fn test_mermaid_error_policy() {
+        let input = "```mermaid\nthis is not a valid mermaid diagram !!!\n```";
+
+        // `HardError`: a malformed diagram aborts the whole rendition.
+        let result = MarkupLanguage::Markdown.render(input, EmbeddedContentErrorPolicy::HardError);
+        assert!(result.is_err());
+
+        // `Inline`: the note still renders, carrying an inline error box.
+        let result = MarkupLanguage::Markdown
+            .render(input, EmbeddedContentErrorPolicy::Inline)
+            .unwrap();
+        assert!(result.contains("mermaid-error"));
     }
 
     #[test]
