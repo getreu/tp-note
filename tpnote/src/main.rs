@@ -183,6 +183,8 @@ fn main() {
         let mut features = Vec::new();
         #[cfg(feature = "lang-detection")]
         features.push("lang-detection".to_string());
+        #[cfg(feature = "mermaid")]
+        features.push("mermaid".to_string());
         #[cfg(feature = "message-box")]
         features.push("message-box".to_string());
         #[cfg(feature = "read-clipboard")]
