@@ -791,17 +791,17 @@ pub struct TmplHtml {
     pub viewer_doc_css: String,
     pub viewer_highlighting_theme: String,
     pub viewer_highlighting_css: String,
-    /// Error policy for embedded rendered content (e.g. Mermaid diagrams) in the
-    /// live viewer. Defaults to `Inline` (see `config_default.toml`).
+    /// Error policy for embedded rendered content (e.g. Mermaid diagrams or LaTeX
+    /// formulas) in the live viewer. Defaults to `Inline` (see
+    /// `config_default.toml`).
     pub viewer_embedded_content_error_policy: EmbeddedContentErrorPolicy,
     pub exporter: String,
     pub exporter_doc_css: String,
     pub exporter_highlighting_theme: String,
     pub exporter_highlighting_css: String,
     /// Same as `viewer_embedded_content_error_policy`, but for the `--export`
-    /// path. Configured independently from the viewer. Defaults to `HardError`
-    /// (see `config_default.toml`), so a broken diagram never slips silently
-    /// into a published document.
+    /// path. Configured independently from the viewer. Defaults to `Inline`
+    /// (see `config_default.toml`).
     pub exporter_embedded_content_error_policy: EmbeddedContentErrorPolicy,
 }
 

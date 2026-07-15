@@ -1,18 +1,25 @@
 //! Syntax highlighting for (inline) source code blocks in Markdown input.
 
 use crate::config::EmbeddedContentErrorPolicy;
-#[cfg(feature = "mermaid")]
+#[cfg(any(feature = "mermaid", feature = "latex"))]
 use crate::error::NoteError;
 use pulldown_cmark::{CodeBlockKind, Event, Tag, TagEnd};
-#[cfg(feature = "mermaid")]
+#[cfg(any(feature = "mermaid", feature = "latex"))]
 use std::cell::RefCell;
-#[cfg(feature = "mermaid")]
+#[cfg(any(feature = "mermaid", feature = "latex"))]
 use std::rc::Rc;
 use syntect::highlighting::ThemeSet;
 use syntect::html::css_for_theme_with_class_style;
 use syntect::html::{ClassStyle, ClassedHTMLGenerator};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
+
+/// Marker that `latex2mathml` embeds in otherwise-`Ok` output when a formula
+/// fails to parse leniently (e.g. missing arguments, unknown commands) instead
+/// of returning `Err`. Its presence is treated as a render failure so such
+/// formulas honor the `EmbeddedContentErrorPolicy` too.
+#[cfg(feature = "latex")]
+const LATEX_PARSE_ERROR_MARKER: &str = "[PARSE ERROR:";
 
 /// Builds the inline HTML fallback shown in place of a Mermaid diagram that
 /// failed to render under the `Inline` error policy. The result is emitted via
@@ -26,6 +33,49 @@ fn mermaid_error_html(msg: &str, code: &str) -> String {
         html_escape::encode_text(msg),
         html_escape::encode_text(code),
     )
+}
+
+/// Builds the inline HTML fallback shown in place of a LaTeX formula that failed
+/// to render under the `Inline` error policy. Like `mermaid_error_html`, the
+/// output is emitted un-escaped via `Event::Html`, so both parts are escaped.
+#[cfg(feature = "latex")]
+fn math_error_html(msg: &str, code: &str) -> String {
+    format!(
+        "<div class=\"math-error\"><p><em>LaTeX render error: {}</em></p>\
+         <pre><code class=\"language-math\">{}</code></pre></div>",
+        html_escape::encode_text(msg),
+        html_escape::encode_text(code),
+    )
+}
+
+/// Inline counterpart of `math_error_html` for a failed `$…$` formula. A
+/// block-level `<div>`/`<pre>` box mid-paragraph is invalid and breaks the text
+/// flow, so an inline `<span>` (styled with the same red left border as the
+/// block boxes) is used instead.
+#[cfg(feature = "latex")]
+fn math_error_html_inline(msg: &str, code: &str) -> String {
+    format!(
+        "<span class=\"math-error-inline\"><em>LaTeX error: {}</em> \
+         <code class=\"language-math\">{}</code></span>",
+        html_escape::encode_text(msg),
+        html_escape::encode_text(code),
+    )
+}
+
+/// Extracts the first `[PARSE ERROR: …]` marker that `latex2mathml` embeds in
+/// otherwise-`Ok` output and pairs it with the source formula, for a useful
+/// diagnostic message (shown on the viewer error page / `--export` abort).
+#[cfg(feature = "latex")]
+fn parse_error_message(mathml: &str, code: &str) -> String {
+    let marker = mathml
+        .find(LATEX_PARSE_ERROR_MARKER)
+        .map(|start| {
+            let rest = &mathml[start..];
+            let end = rest.find(']').map_or(rest.len(), |i| i + 1);
+            &rest[..end]
+        })
+        .unwrap_or("[PARSE ERROR]");
+    format!("{marker} in formula: {code}")
 }
 
 /// Get the viewer syntax highlighting CSS configuration.
@@ -44,35 +94,110 @@ pub(crate) fn get_highlighting_css(theme_name: &str) -> String {
 #[derive(Debug, Default)]
 pub struct SyntaxPreprocessor<'a, I: Iterator<Item = Event<'a>>> {
     parent: I,
-    /// How a failed embedded renderer (e.g. Mermaid) is surfaced.
-    #[cfg(feature = "mermaid")]
+    /// How a failed embedded renderer (e.g. Mermaid or LaTeX) is surfaced.
+    #[cfg(any(feature = "mermaid", feature = "latex"))]
     error_policy: EmbeddedContentErrorPolicy,
     /// Side channel for `HardError` mode: `next()` returns `Option<Event>` and
     /// cannot fail, so the first `NoteError` is parked here for
     /// `MarkupLanguage::render()` to pick up. Single-threaded, hence
     /// `Rc<RefCell<…>>`.
-    #[cfg(feature = "mermaid")]
+    #[cfg(any(feature = "mermaid", feature = "latex"))]
     error_sink: Rc<RefCell<Option<NoteError>>>,
 }
 
 /// Constructor.
 impl<'a, I: Iterator<Item = Event<'a>>> SyntaxPreprocessor<'a, I> {
-    #[cfg_attr(not(feature = "mermaid"), allow(unused_variables))]
+    #[cfg_attr(
+        not(any(feature = "mermaid", feature = "latex")),
+        allow(unused_variables)
+    )]
     pub fn new(parent: I, error_policy: EmbeddedContentErrorPolicy) -> Self {
         Self {
             parent,
-            #[cfg(feature = "mermaid")]
+            #[cfg(any(feature = "mermaid", feature = "latex"))]
             error_policy,
-            #[cfg(feature = "mermaid")]
+            #[cfg(any(feature = "mermaid", feature = "latex"))]
             error_sink: Rc::new(RefCell::new(None)),
         }
     }
 
     /// Returns a clone of the shared error sink so `MarkupLanguage::render()` can
     /// retrieve a `HardError` captured while the iterator was consumed.
-    #[cfg(feature = "mermaid")]
+    #[cfg(any(feature = "mermaid", feature = "latex"))]
     pub(crate) fn error_sink(&self) -> Rc<RefCell<Option<NoteError>>> {
         self.error_sink.clone()
+    }
+
+    /// Applies the configured `EmbeddedContentErrorPolicy` to a failed embedded
+    /// renderer (Mermaid or LaTeX). Under `HardError` the first `NoteError` is
+    /// parked in the sink (`render()` turns it into `Err`) and an empty event is
+    /// returned; under `Inline` a `log::warn!` is emitted and the caller's
+    /// pre-built error box (`inline_html`) is returned. Shared by all embedded
+    /// renderers so their error handling stays identical.
+    #[cfg(any(feature = "mermaid", feature = "latex"))]
+    fn embedded_error_event(
+        &self,
+        renderer: &str,
+        inline_html: String,
+        msg: String,
+    ) -> Event<'static> {
+        match self.error_policy {
+            EmbeddedContentErrorPolicy::HardError => {
+                // Park the first error; `render()` returns the sink's `Err`.
+                let mut sink = self.error_sink.borrow_mut();
+                if sink.is_none() {
+                    *sink = Some(NoteError::RenderError {
+                        renderer: renderer.to_string(),
+                        msg,
+                    });
+                }
+                // Discarded — `render()` returns the sink's `Err`.
+                Event::Html(String::new().into())
+            }
+            EmbeddedContentErrorPolicy::Inline => {
+                log::warn!("{renderer} failed to render: {msg}");
+                Event::Html(inline_html.into())
+            }
+        }
+    }
+
+    /// Renders a LaTeX formula to MathML. On a parse error the configured
+    /// `EmbeddedContentErrorPolicy` applies (via `embedded_error_event`), so a
+    /// broken formula behaves like a broken Mermaid diagram.
+    #[cfg(feature = "latex")]
+    fn render_math(&self, latex: &str, style: latex2mathml::DisplayStyle) -> Event<'static> {
+        let inline = matches!(style, latex2mathml::DisplayStyle::Inline);
+        match latex2mathml::latex_to_mathml(latex, style) {
+            // `latex2mathml` is lenient: rather than `Err`, many malformed inputs
+            // (missing arguments, unknown commands) return `Ok` carrying an
+            // embedded `<mtext>[PARSE ERROR: …]</mtext>` marker. Detect it so such
+            // formulas honor the error policy too — otherwise a broken formula
+            // would ship silently even under `HardError`. Under `Inline` the
+            // marker-annotated MathML is kept (it pinpoints the fault in the
+            // formula); under `HardError` the marker text becomes the abort
+            // message.
+            Ok(mathml) if mathml.contains(LATEX_PARSE_ERROR_MARKER) => {
+                let msg = parse_error_message(&mathml, latex);
+                // Tag the embedded `<mtext>[PARSE ERROR: …]` marker(s) with a
+                // class so the CSS can colour them red where they appear in the
+                // formula (only shown under the `Inline` policy).
+                let tagged = mathml.replace(
+                    &format!("<mtext>{LATEX_PARSE_ERROR_MARKER}"),
+                    &format!("<mtext class=\"math-parse-error\">{LATEX_PARSE_ERROR_MARKER}"),
+                );
+                self.embedded_error_event("LaTeX", tagged, msg)
+            }
+            Ok(mathml) => Event::Html(mathml.into()),
+            Err(e) => {
+                let msg = e.to_string();
+                let html = if inline {
+                    math_error_html_inline(&msg, latex)
+                } else {
+                    math_error_html(&msg, latex)
+                };
+                self.embedded_error_event("LaTeX", html, msg)
+            }
+        }
     }
 }
 
@@ -86,29 +211,17 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
             Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) if !lang.is_empty() => lang,
             // This is the depreciated inline math syntax.
             // It is kept here for backwards compatibility.
+            #[cfg(feature = "latex")]
             Event::Code(c) if c.len() > 1 && c.starts_with('$') && c.ends_with('$') => {
-                return Some(Event::Html(
-                    latex2mathml::latex_to_mathml(
-                        &c[1..c.len() - 1],
-                        latex2mathml::DisplayStyle::Inline,
-                    )
-                    .unwrap_or_else(|e| e.to_string())
-                    .into(),
-                ));
+                return Some(self.render_math(&c[1..c.len() - 1], latex2mathml::DisplayStyle::Inline));
             }
+            #[cfg(feature = "latex")]
             Event::InlineMath(c) => {
-                return Some(Event::Html(
-                    latex2mathml::latex_to_mathml(c.as_ref(), latex2mathml::DisplayStyle::Inline)
-                        .unwrap_or_else(|e| e.to_string())
-                        .into(),
-                ));
+                return Some(self.render_math(c.as_ref(), latex2mathml::DisplayStyle::Inline));
             }
+            #[cfg(feature = "latex")]
             Event::DisplayMath(c) => {
-                return Some(Event::Html(
-                    latex2mathml::latex_to_mathml(c.as_ref(), latex2mathml::DisplayStyle::Block)
-                        .unwrap_or_else(|e| e.to_string())
-                        .into(),
-                ));
+                return Some(self.render_math(c.as_ref(), latex2mathml::DisplayStyle::Block));
             }
             other => return Some(other),
         };
@@ -122,12 +235,9 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
 
         debug_assert!(matches!(event, Some(Event::End(TagEnd::CodeBlock))));
 
+        #[cfg(feature = "latex")]
         if lang.as_ref() == "math" {
-            return Some(Event::Html(
-                latex2mathml::latex_to_mathml(&code, latex2mathml::DisplayStyle::Block)
-                    .unwrap_or_else(|e| e.to_string())
-                    .into(),
-            ));
+            return Some(self.render_math(&code, latex2mathml::DisplayStyle::Block));
         }
 
         #[cfg(feature = "mermaid")]
@@ -144,24 +254,7 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
                 // notes; consistent with the existing raw-HTML passthrough.
                 // Sanitization deferred.
                 Ok(svg) => Event::Html(format!("<div class=\"mermaid\">{svg}</div>").into()),
-                Err(msg) => match self.error_policy {
-                    EmbeddedContentErrorPolicy::HardError => {
-                        // Park the first error; `render()` turns it into `Err`.
-                        let mut sink = self.error_sink.borrow_mut();
-                        if sink.is_none() {
-                            *sink = Some(NoteError::RenderError {
-                                renderer: "Mermaid".to_string(),
-                                msg,
-                            });
-                        }
-                        // Discarded — `render()` returns the sink's `Err`.
-                        Event::Html(String::new().into())
-                    }
-                    EmbeddedContentErrorPolicy::Inline => {
-                        log::warn!("Mermaid diagram failed to render: {msg}");
-                        Event::Html(mermaid_error_html(&msg, &code).into())
-                    }
-                },
+                Err(msg) => self.embedded_error_event("Mermaid", mermaid_error_html(&msg, &code), msg),
             });
         }
 
@@ -207,6 +300,7 @@ mod test {
     use crate::highlight::SyntaxPreprocessor;
     use pulldown_cmark::{Options, Parser, html};
 
+    #[cfg(feature = "latex")]
     #[test]
     fn test_latex_math() {
         // Inline math.

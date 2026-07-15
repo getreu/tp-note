@@ -186,8 +186,8 @@ impl MarkupLanguage {
     ///   the input may be.
     ///
     /// `error_policy` governs how embedded rendered content (e.g. Mermaid
-    /// diagrams) that fails to render is surfaced. It is only consulted by the
-    /// `Markdown` renderer; all other variants ignore it.
+    /// diagrams or LaTeX formulas) that fails to render is surfaced. It is only
+    /// consulted by the `Markdown` renderer; all other variants ignore it.
     #[cfg_attr(not(feature = "renderer"), allow(unused_variables))]
     pub fn render(
         &self,
@@ -207,7 +207,7 @@ impl MarkupLanguage {
                 // A failed embedded renderer under the `HardError` policy stores
                 // its `NoteError` in this sink (the iterator cannot return an
                 // error). Grab a handle before consuming the parser.
-                #[cfg(feature = "mermaid")]
+                #[cfg(any(feature = "mermaid", feature = "latex"))]
                 let err_sink = parser.error_sink();
 
                 // Write to String buffer.
@@ -215,7 +215,7 @@ impl MarkupLanguage {
                 html::push_html(&mut html_output, parser);
 
                 // Bubble up a `HardError` captured during rendering.
-                #[cfg(feature = "mermaid")]
+                #[cfg(any(feature = "mermaid", feature = "latex"))]
                 if let Some(e) = err_sink.borrow_mut().take() {
                     return Err(e);
                 }
@@ -287,7 +287,7 @@ mod tests {
 
     use super::InputConverter;
     use super::MarkupLanguage;
-    #[cfg(feature = "mermaid")]
+    #[cfg(any(feature = "mermaid", feature = "latex"))]
     use crate::config::EmbeddedContentErrorPolicy;
     use std::path::Path;
 
@@ -348,6 +348,51 @@ mod tests {
             .render(input, EmbeddedContentErrorPolicy::Inline)
             .unwrap();
         assert!(result.contains("mermaid-error"));
+    }
+
+    #[cfg(feature = "latex")]
+    #[test]
+    fn test_latex_error_policy() {
+        // `\left( x` is unbalanced and makes `latex2mathml` return `Err`.
+        let input = "```math\n\\left( x\n```";
+
+        // `HardError`: a malformed formula aborts the whole rendition.
+        let result = MarkupLanguage::Markdown.render(input, EmbeddedContentErrorPolicy::HardError);
+        assert!(result.is_err());
+
+        // `Inline`: the note still renders, carrying an inline error box.
+        let result = MarkupLanguage::Markdown
+            .render(input, EmbeddedContentErrorPolicy::Inline)
+            .unwrap();
+        assert!(result.contains("math-error"));
+
+        // An inline `$…$` formula that fails renders an inline `<span>` (not a
+        // block box) so it does not break the surrounding paragraph.
+        let inline = MarkupLanguage::Markdown
+            .render("text $\\left( x$ more", EmbeddedContentErrorPolicy::Inline)
+            .unwrap();
+        assert!(inline.contains("math-error-inline"));
+    }
+
+    #[cfg(feature = "latex")]
+    #[test]
+    fn test_latex_embedded_marker() {
+        // `\frac{1}` is missing its second argument; latex2mathml does not
+        // return `Err` but `Ok` with an embedded `[PARSE ERROR: …]` marker.
+        let input = "```math\n\\frac{1}\n```";
+
+        // `HardError`: the embedded marker is detected and aborts rendering.
+        let result = MarkupLanguage::Markdown.render(input, EmbeddedContentErrorPolicy::HardError);
+        assert!(result.is_err());
+
+        // `Inline`: the marker-annotated MathML is kept so the fault stays
+        // visible in place, and the marker is tagged for red CSS highlighting.
+        let result = MarkupLanguage::Markdown
+            .render(input, EmbeddedContentErrorPolicy::Inline)
+            .unwrap();
+        assert!(result.contains("[PARSE ERROR"));
+        assert!(result.contains("<math"));
+        assert!(result.contains("<mtext class=\"math-parse-error\">"));
     }
 
     #[test]

@@ -556,6 +556,14 @@ Tp-Note's note built-in viewer comprises three markup language renders:
    Inline formulas are enclosed between Dollar characters, 
    e.g. '``` $\alpha$ ```' becomes '` `$\alpha$` `'.
 
+   LaTeX rendering (to MathML) is provided by the '`latex`' build feature, which
+   is enabled by default (disable it with '`cargo build --no-default-features`',
+   re-adding the features you want to keep). Like Mermaid diagrams, a formula
+   that fails to parse is governed by the
+   '`tmpl_html.viewer_embedded_content_error_policy`' and
+   '`tmpl_html.exporter_embedded_content_error_policy`' options (both default to
+   '`Inline`').
+
    Source code is highlighted when you annotate the programming
    language (see also '`tmpl_html.viewer_highlighting_theme`' and
    '`tmpl_html.exporter_highlighting_theme`'):
@@ -583,12 +591,16 @@ Tp-Note's note built-in viewer comprises three markup language renders:
    When a diagram fails to render, the behaviour is
    controlled -independently for the viewer and the exporter- by
    '`tmpl_html.viewer_embedded_content_error_policy`' and
-   '`tmpl_html.exporter_embedded_content_error_policy`'. The viewer defaults to
+   '`tmpl_html.exporter_embedded_content_error_policy`'. Both default to
    '`Inline`' (show an error box in place of the diagram and log a warning; the
    rest of the note still renders), so a broken diagram does not interrupt live
-   editing. The exporter defaults to '`HardError`' (abort): '`--export`' fails
-   without writing an output file, so a broken diagram never slips silently into
-   a published document. Set either policy to the other value to override.
+   editing or abort an export. Set either policy to '`HardError`' to abort
+   instead: the viewer then shows its full-page error template and '`--export`'
+   fails without writing an output file, so a broken diagram or formula can
+   never slip silently into a published document. Batch export ('`--export`'
+   together with '`--batch`') always uses '`HardError`', overriding the
+   configured exporter value, so a broken diagram or formula fails an automated
+   or scripted export.
 
    Heading attributes:
 
@@ -656,6 +668,13 @@ _Wkhtmktopdf_.
 ```sh
 tpnote --export=- mynote.md | weasyprint - mynote.md.pdf
 ```
+
+Note that this example runs without '`--batch`', so a failed embedded renderer
+(a Mermaid diagram or LaTeX formula) follows the configured
+'`tmpl_html.exporter_embedded_content_error_policy`' (default '`Inline`'): the
+error is rendered inline and the PDF is still produced. Add '`--batch`' to make
+such a failure abort the export instead, so a broken diagram or formula can
+never slip silently into the PDF (batch export always uses '`HardError`').
 
 _Weasyprint_ supports the [CSS Paged Media](https://www.w3.org/TR/css-page-3/)
 standard allowing to include page layout directives into HTML. You can

@@ -21,6 +21,7 @@ use std::str::FromStr;
 use std::sync::LazyLock;
 use tera::Tera;
 use toml::Value;
+use tpnote_lib::config::EmbeddedContentErrorPolicy;
 use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::config::LIB_CFG_RAW_FIELD_NAMES;
@@ -255,6 +256,15 @@ impl Cfg {
             // Copy the `lib_cfg` into `LIB_CFG`.
             let mut c = LIB_CFG.write();
             *c = lib_cfg; // Release lock.
+
+            // In batch export (`-x` together with `-b`) a broken embedded
+            // renderer (Mermaid diagram or LaTeX formula) must fail the pipeline
+            // rather than emit an error box into a published file. Force the
+            // exporter policy to `HardError`, overriding the configured value.
+            if ARGS.export.is_some() && ARGS.batch {
+                c.tmpl_html.exporter_embedded_content_error_policy =
+                    EmbeddedContentErrorPolicy::HardError;
+            }
 
             // We cannot use the logger here, it is too early.
             if ARGS.debug == Some(ClapLevelFilter::Trace) && ARGS.batch && ARGS.version {

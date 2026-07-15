@@ -53,7 +53,7 @@ assets = [
 ]
 
 [features]
-default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detection", "mermaid"]
+default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detection", "mermaid", "latex"]
 
 # To disable features: `cargo build --no-default-features`
 # If you can do away with error message popup boxes (for example on a headless
@@ -71,6 +71,8 @@ lang-detection = ["tpnote-lib/lang-detection"]
 renderer = ["tpnote-lib/renderer"]
 # Forwarded to `tpnote_lib`. Renders ```mermaid fenced blocks to inline SVG.
 mermaid = ["tpnote-lib/mermaid"]
+# Forwarded to `tpnote_lib`. Renders ```math / `$…$` LaTeX formulas to MathML.
+latex = ["tpnote-lib/latex"]
 
 [dependencies]
 clipboard-rs = { version = "0.3.5", features = ["wayland"], optional = true }

@@ -977,7 +977,9 @@ table:not(.fm) td, table:not(.fm) th {
 }
 .mermaid { text-align: center; margin: 1em 0; }
 .mermaid svg { max-width: 100%; height: auto; }
-.mermaid-error pre { border-left: 3px solid #cc3333; padding-left: 8px; }
+.mermaid-error pre, .math-error pre, .math-error-inline { border-left: 3px solid #cc3333; padding-left: 8px; }
+.mermaid-error em, .math-error em, .math-error-inline em { color: #cc3333; }
+.math-parse-error { color: #cc3333; }
 """
 
 ### Loads the viewer's code syntax highlighting theme. The theme is converted
@@ -996,9 +998,10 @@ viewer_highlighting_theme = "Solarized (light)"
 ### of the above themes fits, you can provide a custom CSS here.
 viewer_highlighting_css = ""
 
-### Error policy for embedded rendered content (e.g. Mermaid diagrams) in the
-### live viewer: "Inline" (render an error box in place of the content and log a
-### warning) or "HardError" (abort — the viewer shows the full error page).
+### Error policy for embedded rendered content (e.g. Mermaid diagrams or LaTeX
+### formulas) in the live viewer: "Inline" (render an error box in place of the
+### content and log a warning) or "HardError" (abort — the viewer shows the full
+### error page).
 ### Configured independently from `exporter_embedded_content_error_policy`.
 viewer_embedded_content_error_policy = "Inline"
 
@@ -1110,11 +1113,13 @@ exporter_highlighting_theme = "Solarized (light)"
 ### none of the above themes fits, you can provide a custom CSS here.
 exporter_highlighting_css = ""
 
-### Same as `viewer_embedded_content_error_policy`, but for `--export`.
-### Defaults to "HardError" (abort the export with no output file), so a broken
-### diagram never slips silently into a published document. Set to "Inline" to
-### export an error box in place of the diagram instead.
-exporter_embedded_content_error_policy = "HardError"
+### Same as `viewer_embedded_content_error_policy`, but for `--export`. Defaults
+### to "Inline" (export an error box in place of the failed content). Set to
+### "HardError" to abort the export with no output file instead, so a broken
+### diagram or formula can never slip silently into a published document.
+### Note: batch export (`--export` together with `--batch`) always uses
+### "HardError", overriding this value.
+exporter_embedded_content_error_policy = "Inline"
 
 ### A constant holding common CSS code, inserted into exported HTML documents
 ### with the template variable `{{ exporter_doc.css }}`.
@@ -1204,5 +1209,7 @@ table:not(.fm) td, table:not(.fm) th {
 }
 .mermaid { text-align: center; margin: 1em 0; }
 .mermaid svg { max-width: 100%; height: auto; }
-.mermaid-error pre { border-left: 3px solid #cc3333; padding-left: 8px; }
+.mermaid-error pre, .math-error pre, .math-error-inline { border-left: 3px solid #cc3333; padding-left: 8px; }
+.mermaid-error em, .math-error em, .math-error-inline em { color: #cc3333; }
+.math-parse-error { color: #cc3333; }
 """

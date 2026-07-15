@@ -654,7 +654,7 @@ fi
 
 ## Test 122: Invalid Mermaid, "Inline" policy -> inline error box, export succeeds
 INLINE_TOML="$PWD/tpnote-mermaid-inline.toml"
-sed 's/^exporter_embedded_content_error_policy = "HardError"/exporter_embedded_content_error_policy = "Inline"/' \
+sed 's/^exporter_embedded_content_error_policy = .*/exporter_embedded_content_error_policy = "Inline"/' \
     "$TP_NOTE_TEST_TOML" > "$INLINE_TOML"
 
 INPUT_FILENAME="$PWD/122--mermaid-bad__diagram.md"
@@ -672,7 +672,7 @@ this is not a valid mermaid diagram
 EOF
 
 LANG="en_US.UTF-8" LOGNAME="myuser" \
-cargo run -- --batch --no-filename-sync --config "$INLINE_TOML" \
+cargo run -- --no-filename-sync --config "$INLINE_TOML" \
      --export . \
     "$INPUT_FILENAME"  >/dev/null 2>&1
 
@@ -707,6 +707,8 @@ this is not a valid mermaid diagram
 ```
 EOF
 
+# Batch export (`-x` together with `-b`) forces the exporter policy to
+# "HardError" regardless of the config, so a broken diagram fails the export.
 # `-q` keeps cargo's own build chatter off stderr, leaving only Tp-Note's output.
 STDERR_FILE="$PWD/123-mermaid-bad-stderr.txt"
 LANG="en_US.UTF-8" LOGNAME="myuser" \
@@ -726,6 +728,122 @@ then
     rm "$INPUT_FILENAME" "$STDERR_FILE" "${STDERR_FILE}.trimmed"
 else
     echo Commandline test 123 failed.
+    exit 1
+fi
+
+
+
+## Test 124: A LaTeX/math block renders to inline MathML (exporter)
+INPUT_FILENAME="$PWD/124--latex__formula.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: latex
+keywords:
+- formula
+scheme: zettel
+---
+
+```math
+x^n + y^n = z^n
+```
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/124--latex__formula.md.html"
+
+if grep -q '<math [^>]*MathML' "$OUTPUT_FILENAME" 2>/dev/null
+then
+    echo Commandline test 124 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 124 failed.
+    exit 1
+fi
+
+
+
+## Test 125: Invalid LaTeX formula, "Inline" policy -> inline error box, export
+##           succeeds (`\left( x` is unbalanced and makes latex2mathml error).
+INLINE_TOML="$PWD/tpnote-latex-inline.toml"
+sed 's/^exporter_embedded_content_error_policy = .*/exporter_embedded_content_error_policy = "Inline"/' \
+    "$TP_NOTE_TEST_TOML" > "$INLINE_TOML"
+
+INPUT_FILENAME="$PWD/125--latex-bad__formula.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: latex bad
+keywords:
+- formula
+scheme: zettel
+---
+
+```math
+\left( x
+```
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --no-filename-sync --config "$INLINE_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/125--latex-bad__formula.md.html"
+
+if grep -q "math-error" "$OUTPUT_FILENAME" 2>/dev/null
+then
+    echo Commandline test 125 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+    rm "$INLINE_TOML"
+else
+    echo Commandline test 125 failed.
+    exit 1
+fi
+
+
+
+## Test 126: Invalid LaTeX formula, "HardError" policy -> export aborts with an
+##           error message on stderr and writes no output file.
+INPUT_FILENAME="$PWD/126--latex-bad__formula.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: latex bad
+keywords:
+- formula
+scheme: zettel
+---
+
+```math
+\left( x
+```
+EOF
+
+# Batch export (`-x` together with `-b`) forces the exporter policy to
+# "HardError" regardless of the config, so a broken formula fails the export.
+# `-q` keeps cargo's own build chatter off stderr, leaving only Tp-Note's output.
+STDERR_FILE="$PWD/126-latex-bad-stderr.txt"
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -q -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  2>"$STDERR_FILE" >/dev/null
+
+OUTPUT_FILENAME="$PWD/126--latex-bad__formula.md.html"
+# Keep only the stable error message; the "Additional technical details:"
+# section below it lists machine-specific absolute paths.
+sed '/^Additional technical details:/,$d' "$STDERR_FILE" > "${STDERR_FILE}.trimmed"
+
+if diff "${STDERR_FILE}.trimmed" "test126-latex-hard-expected-output" \
+   && [ ! -f "$OUTPUT_FILENAME" ]
+then
+    echo Commandline test 126 succeeded.
+    rm "$INPUT_FILENAME" "$STDERR_FILE" "${STDERR_FILE}.trimmed"
+else
+    echo Commandline test 126 failed.
     exit 1
 fi
 
