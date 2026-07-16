@@ -532,14 +532,30 @@ Tp-Note's internal web server. Then, Tp-Note watches the note file and
 re-renders the viewed HTML when the content changes. The note's file extension
 determines which internal renderer is activated.
 
-Tp-Note's note built-in viewer comprises three markup language renders:
+Tp-Note's built-in note viewer comprises three markup language renderers:
 
 1. '`Markdown`'\_ (file extension `.md`)\
-   This renderer is CommonMark compatible and feature complete. It understands,
-   heading attributes, inline images, tables, task lists, footnotes,
-   strike-through and LaTeX formula:
+   This renderer is CommonMark compatible and feature complete.
 
-   ````latex
+   Source code is highlighted when you annotate the programming
+   language (see also '`tmpl_html.viewer_highlighting_theme`' and
+   '`tmpl_html.exporter_highlighting_theme`'):
+
+   ````md
+   ```rust
+   pub fn main(){
+     let w = "world!";
+     println!("Hallo {:?}", w);
+   }
+   ```
+   ````
+
+
+   The renderer understands heading attributes, inline images, tables, task
+   lists, footnotes, strike-through, LaTeX formulas and Mermaid diagrams. The
+   following is an example of a LaTeX formula:
+
+   ````md
    ```math
    x^n + y^n = z^n
    ```
@@ -556,26 +572,16 @@ Tp-Note's note built-in viewer comprises three markup language renders:
    Inline formulas are enclosed between Dollar characters, 
    e.g. '``` $\alpha$ ```' becomes '` `$\alpha$` `'.
 
-   LaTeX rendering (to MathML) is provided by the '`latex`' build feature, which
-   is enabled by default (disable it with '`cargo build --no-default-features`',
-   re-adding the features you want to keep). Like Mermaid diagrams, a formula
-   that fails to parse is governed by the
+   Like Mermaid diagrams, a formula that fails to parse is governed by the
    '`tmpl_html.viewer_embedded_content_error_policy`' and
    '`tmpl_html.exporter_embedded_content_error_policy`' options (both default to
-   '`Inline`').
+   '`Inline`'). Each option accepts one of two values: '`Inline`' replaces the
+   faulty formula with an inline error box and logs a warning, so the rest of
+   the note still renders and '`--export`' still produces a file; '`HardError`'
+   aborts the whole rendition instead, so the viewer shows its full-page error
+   template and '`--export`' fails without writing an output file. See the
+   Mermaid section below for the details of both policies.
 
-   Source code is highlighted when you annotate the programming
-   language (see also '`tmpl_html.viewer_highlighting_theme`' and
-   '`tmpl_html.exporter_highlighting_theme`'):
-
-   ````md
-   ```rust
-   pub fn main(){
-     let w = "world!";
-     println!("Hallo {:?}", w);
-   }
-   ```
-   ````
 
    Fenced '`mermaid`' blocks are rendered to inline SVG diagrams -in both the
    viewer and the exported HTML- by a pure-Rust renderer, so the export stays
