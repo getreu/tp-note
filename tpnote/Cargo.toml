@@ -90,13 +90,13 @@ semver = "1.0.28"
 serde.workspace = true
 serde_yaml.workspace = true
 thiserror.workspace = true
-time = "0.3.53"
+time = "0.3.54"
 tera.workspace = true
 toml.workspace = true
 tpnote-lib = { path = "../tpnote-lib", default-features = false }
 #tpnote-lib = { version = "0.46.5", default-features = false}
 webbrowser = { version = "1.2.1", optional = true }
-clap = { version = "4.6.1", features = ["derive"] }
+clap = { version = "4.6.3", features = ["derive"] }
 
 
 [target.'cfg(windows)'.dependencies]
