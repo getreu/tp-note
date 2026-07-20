@@ -85,6 +85,9 @@ h1, h2, h3, h4, h5, h6 { color: #263292; font-family:sans-serif; }
 table:not(.fm) td, table:not(.fm) th {
   padding-left: 16px;
   padding-right: 16px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  line-height: 1.3;
 }
 .mermaid { text-align: center; margin: 1em 0; }
 .mermaid svg { max-width: 100%; height: auto; }
