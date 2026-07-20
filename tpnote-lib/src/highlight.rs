@@ -244,7 +244,25 @@ impl<'a, I: Iterator<Item = Event<'a>>> Iterator for SyntaxPreprocessor<'a, I> {
         if lang.as_ref() == "mermaid" {
             // The crate is young (v0.3.x): isolate a possible parser panic so a
             // bad diagram can never abort the viewer thread or the export.
-            let result = match std::panic::catch_unwind(|| mermaid_rs_renderer::render(&code)) {
+            //
+            // Work around a renderer defect (mermaid-rs-renderer 0.3.1): node
+            // label text is auto-wrapped at every space, not only at explicit
+            // `\n`. This mis-sizes nodes and — because Dagre then routes edges
+            // against wrong widths — also corrupts inter-node edge paths. The
+            // crate exposes no wrap on/off switch (`measure_label` hard-codes
+            // `wrap = true`), but its `wrap_line()` only breaks a line once it
+            // exceeds `max_label_width_chars * avg_char`; a very large width
+            // therefore suppresses auto-wrapping and yields one rendered line
+            // per `\n`-delimited segment. Trade-off: genuinely long single-line
+            // labels no longer wrap either. Remove once the crate wraps only on
+            // explicit `\n` (upstream bug filed).
+            const NO_AUTO_WRAP_LABEL_CHARS: usize = 100_000;
+            let render = || {
+                let mut options = mermaid_rs_renderer::RenderOptions::default();
+                options.layout.max_label_width_chars = NO_AUTO_WRAP_LABEL_CHARS;
+                mermaid_rs_renderer::render_with_options(&code, options)
+            };
+            let result = match std::panic::catch_unwind(render) {
                 Ok(r) => r.map_err(|e| e.to_string()),
                 Err(_) => Err("internal renderer panic".to_string()),
             };
