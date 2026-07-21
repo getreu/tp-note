@@ -572,15 +572,18 @@ Tp-Note's built-in note viewer comprises three markup language renderers:
    Inline formulas are enclosed between Dollar characters, 
    e.g. '``` $\alpha$ ```' becomes '` `$\alpha$` `'.
 
-   Like Mermaid diagrams, a formula that fails to parse is governed by the
+   A formula that fails to parse is governed by the
    '`tmpl_html.viewer_embedded_content_error_policy`' and
    '`tmpl_html.exporter_embedded_content_error_policy`' options (both default to
    '`Inline`'). Each option accepts one of two values: '`Inline`' replaces the
    faulty formula with an inline error box and logs a warning, so the rest of
    the note still renders and '`--export`' still produces a file; '`HardError`'
    aborts the whole rendition instead, so the viewer shows its full-page error
-   template and '`--export`' fails without writing an output file. See the
-   Mermaid section below for the details of both policies.
+   template and '`--export`' fails without writing an output file. Batch export
+   ('`--export`' together with '`--batch`') always uses '`HardError`',
+   overriding the configured exporter value, so a broken formula or diagram
+   fails an automated or scripted export. The same policies apply to broken
+   Mermaid diagrams (see below).
 
 
    Fenced '`mermaid`' blocks are rendered to inline SVG diagrams -in both the
@@ -594,19 +597,10 @@ Tp-Note's built-in note viewer comprises three markup language renderers:
    ```
    ````
 
-   When a diagram fails to render, the behaviour is
-   controlled -independently for the viewer and the exporter- by
+   When a diagram fails to render, the behaviour is controlled by the same
    '`tmpl_html.viewer_embedded_content_error_policy`' and
-   '`tmpl_html.exporter_embedded_content_error_policy`'. Both default to
-   '`Inline`' (show an error box in place of the diagram and log a warning; the
-   rest of the note still renders), so a broken diagram does not interrupt live
-   editing or abort an export. Set either policy to '`HardError`' to abort
-   instead: the viewer then shows its full-page error template and '`--export`'
-   fails without writing an output file, so a broken diagram or formula can
-   never slip silently into a published document. Batch export ('`--export`'
-   together with '`--batch`') always uses '`HardError`', overriding the
-   configured exporter value, so a broken diagram or formula fails an automated
-   or scripted export.
+   '`tmpl_html.exporter_embedded_content_error_policy`' options described above
+   for formulas.
 
    Heading attributes:
 

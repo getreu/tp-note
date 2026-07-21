@@ -591,7 +591,7 @@ Inline formulas are enclosed between Dollar characters,
 e.g.\ `\f[CR]$\(rsalpha$\f[R]' becomes
 `\f[CR]\f[R]\f[I]α\f[R]\f[CR]\f[R]'.
 .PP
-Like Mermaid diagrams, a formula that fails to parse is governed by the
+A formula that fails to parse is governed by the
 `\f[CR]tmpl_html.viewer_embedded_content_error_policy\f[R]' and
 `\f[CR]tmpl_html.exporter_embedded_content_error_policy\f[R]' options
 (both default to `\f[CR]Inline\f[R]').
@@ -601,7 +601,11 @@ of the note still renders and `\f[CR]\-\-export\f[R]' still produces a
 file; `\f[CR]HardError\f[R]' aborts the whole rendition instead, so the
 viewer shows its full\-page error template and `\f[CR]\-\-export\f[R]'
 fails without writing an output file.
-See the Mermaid section below for the details of both policies.
+Batch export (`\f[CR]\-\-export\f[R]' together with
+`\f[CR]\-\-batch\f[R]') always uses `\f[CR]HardError\f[R]', overriding
+the configured exporter value, so a broken formula or diagram fails an
+automated or scripted export.
+The same policies apply to broken Mermaid diagrams (see below).
 .PP
 Fenced `\f[CR]mermaid\f[R]' blocks are rendered to inline SVG diagrams
 \-in both the viewer and the exported HTML\- by a pure\-Rust renderer,
@@ -615,21 +619,10 @@ assets):
 \f[BI]\(ga\(ga\(ga\f[R]
 .EE
 .PP
-When a diagram fails to render, the behaviour is controlled
-\-independently for the viewer and the exporter\- by
+When a diagram fails to render, the behaviour is controlled by the same
 `\f[CR]tmpl_html.viewer_embedded_content_error_policy\f[R]' and
-`\f[CR]tmpl_html.exporter_embedded_content_error_policy\f[R]'.
-Both default to `\f[CR]Inline\f[R]' (show an error box in place of the
-diagram and log a warning; the rest of the note still renders), so a
-broken diagram does not interrupt live editing or abort an export.
-Set either policy to `\f[CR]HardError\f[R]' to abort instead: the viewer
-then shows its full\-page error template and `\f[CR]\-\-export\f[R]'
-fails without writing an output file, so a broken diagram or formula can
-never slip silently into a published document.
-Batch export (`\f[CR]\-\-export\f[R]' together with
-`\f[CR]\-\-batch\f[R]') always uses `\f[CR]HardError\f[R]', overriding
-the configured exporter value, so a broken diagram or formula fails an
-automated or scripted export.
+`\f[CR]tmpl_html.exporter_embedded_content_error_policy\f[R]' options
+described above for formulas.
 .PP
 Heading attributes:
 .IP
