@@ -4,9 +4,4 @@ mkdir --parents ./build/html
 mkdir --parents ./build/html/_downloads
 mkdir --parents ./build/man/man1
 
-cd  ./build/html/_downloads
-ln -sf ../../../../build/bin
-ln -sf ../../../../build/package
-ln -sf ../../../build/man/man1/tpnote.1.gz .
-
 
