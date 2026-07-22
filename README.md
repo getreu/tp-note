@@ -254,7 +254,8 @@ please consult the [Distribution section](#distribution) above and the
 While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
 configuration file structure, e.g.:
 
-```*** ERROR:
+```
+*** ERROR:
 Can not load or parse the (merged) configuration file(s):
 ---
 invalid length 3, expected fewer elements in array in `viewer.served_mime_types`
