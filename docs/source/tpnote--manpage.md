@@ -605,13 +605,24 @@ Tp-Note's built-in note viewer comprises three markup language renderers:
    Heading attributes:
 
    ```md
-   # text { #id .class1 .class2 myattr other_attr=myvalue }
+   # text {#id .class1 .class2 myattr other_attr=myvalue}
    ```
 
-   is interpreted as a level 1 heading with the content text, ID '`id`', classes
-   '`class1`' and '`class2`' and custom attributes '`myattr`' (without value)
-   and '`other_attr`' with value '`myvalue`'. Note that ID, classes, and custom
-   attributes should be space-separated.
+   is interpreted as a level 1 heading with the content "text", ID '`id`',
+   classes '`class1`' and '`class2`' and custom attributes '`myattr`' (without
+   value) and '`other_attr`' with value '`myvalue`'. Note that ID, classes,
+   and custom attributes should be space-separated. The space after the leading
+   '`#`' is required, as it marks the '`#`' as a heading marker. This is
+   unrelated to the '`#`' inside the braces, which attaches directly to the ID.
+
+   For example:
+
+   ```md
+   ## Installation {#install .collapsible data-level=2}
+   ```
+
+   is a level 2 heading with the content "Installation", ID '`install`', class
+   '`collapsible`' and custom attribute '`data-level`' with value '`2`'.
 
 2. '`ReStructuredText`' (file extension `.rst`)\
    This renderer is experimental and covers only basic markup.
