@@ -3045,6 +3045,7 @@ dependencies = [
  "clap",
  "clipboard-rs",
  "directories",
+ "getrandom 0.4.3",
  "httparse",
  "httpdate",
  "log",
