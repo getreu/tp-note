@@ -33,6 +33,38 @@ pub const FAVICON: &[u8] = include_bytes!("favicon.ico");
 /// The path where the favicon is requested.
 pub const FAVICON_PATH: &str = "/favicon.ico";
 
+/// HTML body of the `403 Forbidden` response sent when
+/// `viewer.session_binding` refuses a request. The viewer keeps running;
+/// only the offending request is refused.
+fn forbidden_page() -> &'static str {
+    "\
+<!DOCTYPE html><html><head><meta charset=\"UTF-8\">
+<title>Tp-Note viewer: access refused</title></head><body>
+<h2>Access to this note was refused</h2>
+<p>The viewer bound this session to another client and refused this request.
+Two possible reasons:</p>
+
+<h3>1. Your browser does not accept cookies from localhost</h3>
+<p>The viewer recognises your browser by a session cookie. If your browser
+blocks cookies for <code>localhost</code> (or <code>127.0.0.1</code> /
+<code>[::1]</code>) it cannot send that cookie back, so every request is
+refused. Allow cookies for <code>localhost</code> &mdash; e.g. Firefox:
+<em>Settings &rarr; Privacy &amp; Security &rarr; Cookies and Site Data &rarr;
+Manage Exceptions</em>, add <code>http://localhost</code>; Chrome/Chromium:
+<em>Settings &rarr; Privacy and security &rarr; Site data &rarr; Add</em>,
+<code>http://localhost</code> &mdash; then reload. Or disable the check by
+setting <code>viewer.session_binding = false</code> and restart Tp-Note.</p>
+
+<h3>2. Another local client reached the viewer first</h3>
+<p>The viewer binds to whichever browser loads the page first. On a shared
+computer, another logged-in user (or a background localhost scanner) may have
+connected before your browser did, claiming the session. The viewer is still
+running and still serving that first client. If you did not expect this on a
+multi-user machine, treat it as a warning that someone else may be reading your
+note.</p>
+</body></html>"
+}
+
 pub(crate) trait HttpResponse {
     /// Renders the HTTP response and sends it into `self.stream`.
     fn respond(&mut self, request: &str) -> Result<(), ViewerError>;
@@ -55,10 +87,12 @@ pub(crate) trait HttpResponse {
     // Not implemented:
     //
     // ```
-    // fn respond_forbidden(&mut self, reqpath: &Path) -> Result<(), ViewerError>;
     // fn respond_no_content_ok(&mut self) -> Result<(), ViewerError>;
     // ```
 
+    /// Write HTTP "forbidden" response with an informative HTML page
+    /// explaining the `viewer.session_binding` protection.
+    fn respond_forbidden(&mut self) -> Result<(), ViewerError>;
     /// Write HTTP "not found" response.
     fn respond_not_found(&mut self, reqpath: &Path) -> Result<(), ViewerError>;
     /// Write HTTP method "not allowed" response.
@@ -333,14 +367,17 @@ impl HttpResponse for ServerThread {
         Ok(())
     }
 
-    // /// Write HTTP not found response.
-    // fn respond_forbidden(&mut self, reqpath: &Path) -> Result<(), ViewerError> {
-    //     self.respond_http_error(403, "Forbidden", &reqpath.display().to_string())
-    // }
-
     // fn respond_no_content_ok(&mut self) -> Result<(), ViewerError> {
     //     self.respond_http_error(204, "", "Ok, served header")
     // }
+
+    fn respond_forbidden(&mut self) -> Result<(), ViewerError> {
+        self.respond_http_error(
+            403,
+            forbidden_page(),
+            "missing or invalid viewer session cookie (viewer.session_binding)",
+        )
+    }
 
     fn respond_not_found(&mut self, reqpath: &Path) -> Result<(), ViewerError> {
         self.respond_http_error(404, "Not found", &reqpath.display().to_string())
@@ -494,5 +531,22 @@ impl HttpResponse for ServerThread {
                 })
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::forbidden_page;
+
+    #[test]
+    fn test_forbidden_page() {
+        let page = forbidden_page();
+        assert!(page.starts_with("<!DOCTYPE html>"));
+        assert!(page.contains("</html>"));
+        assert!(page.contains("does not accept cookies from localhost"));
+        assert!(page.contains("viewer.session_binding = false"));
+        assert!(page.contains("Another local client reached the viewer first"));
+        // v2 refuses single requests only; it never shuts the viewer down.
+        assert!(!page.contains("shut down"));
     }
 }
