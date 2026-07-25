@@ -16,7 +16,7 @@ use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
 use std::str;
 use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 use std::time::SystemTime;
 use tpnote_lib::context::{Context, HasSettings};
@@ -116,6 +116,7 @@ pub enum SseToken {
 pub fn manage_connections(
     event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>>,
     listener: TcpListener,
+    start_accepting: Arc<(Mutex<bool>, Condvar)>,
     doc_path: PathBuf,
 ) {
     // A list of referenced local links to images or other documents as
@@ -153,6 +154,19 @@ pub fn manage_connections(
             list
         }
     );
+
+    // Do not accept connections before the caller has launched the web
+    // browser: this shrinks the window in which a foreign local client
+    // could claim the session binding (`viewer.session_binding`) to the
+    // browser's cold-start latency. The listener is already bound, so
+    // clients connecting early queue in the TCP backlog instead of being
+    // refused.
+    let (lock, cvar) = &*start_accepting;
+    let mut go = lock.lock().unwrap();
+    while !*go {
+        go = cvar.wait(go).unwrap();
+    }
+    drop(go);
 
     for stream in listener.incoming() {
         match stream {
@@ -663,5 +677,301 @@ mod tests {
         assert!(!host_is_local(Some("[::1"), 4444));
         assert!(!host_is_local(Some("[::1]4444"), 4444));
         assert!(!host_is_local(Some(""), 4444));
+    }
+
+    /// End-to-end HTTP tests for the viewer's per-request enforcement: the session
+    /// cookie binding (`viewer.session_binding_cookie`, TOFU) and the `Host`-header
+    /// (DNS-rebinding) check. Each test boots the real [`manage_connections`]
+    /// server on an ephemeral loopback port and drives it with a raw TCP client, so
+    /// the full `serve_connection2`/`respond` pipeline runs — the part the unit
+    /// tests above cannot reach. Because same-process loopback connections resolve
+    /// to the same OS user, the default `same_user_policy = Reject` peer check
+    /// passes and does not interfere. tpnote is a binary crate (no `lib` target),
+    /// so these integration tests live in-module rather than under `tests/`.
+    ///
+    /// Requires the `renderer` feature (a `GET /` renders the note); it is in the
+    /// default feature set.
+    #[cfg(feature = "renderer")]
+    mod http_integration_tests {
+        use super::super::{SseToken, manage_connections};
+        use std::fs;
+        use std::io::{ErrorKind, Read, Write};
+        use std::net::{TcpListener, TcpStream};
+        use std::path::PathBuf;
+        use std::sync::atomic::{AtomicU32, Ordering};
+        use std::sync::mpsc::SyncSender;
+        use std::sync::{Arc, Condvar, Mutex};
+        use std::thread;
+        use std::time::Duration;
+
+        /// A minimal but valid Tp-Note markdown document.
+        const NOTE: &str = "---\ntitle: itest\n---\n\nHello integration test.\n";
+        /// A 32-hex token that is never the (random) bound token.
+        const WRONG_COOKIE: &str = "tpnote=00000000000000000000000000000000";
+
+        static SEQ: AtomicU32 = AtomicU32::new(0);
+
+        /// Boots a viewer server serving a fresh temp note on `127.0.0.1:0` and
+        /// returns the bound port. The accept gate is opened immediately. The temp
+        /// note and server thread outlive the test (the process reaps them).
+        fn boot(note: &str) -> u16 {
+            boot_with_doc(note).0
+        }
+
+        /// Like [`boot`], but also returns the path of the served note file, so a
+        /// test can mutate it (e.g. delete it to force a render failure).
+        fn boot_with_doc(note: &str) -> (u16, PathBuf) {
+            let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+            let port = listener.local_addr().unwrap().port();
+
+            let uniq = SEQ.fetch_add(1, Ordering::Relaxed);
+            let dir = std::env::temp_dir().join(format!(
+                "tpnote-itest-{}-{}",
+                std::process::id(),
+                uniq
+            ));
+            fs::create_dir_all(&dir).unwrap();
+            let doc: PathBuf = dir.join("note.md");
+            fs::write(&doc, note).unwrap();
+
+            // Accept gate already open (`true`) so the server serves at once.
+            let start_accepting = Arc::new((Mutex::new(true), Condvar::new()));
+            let event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>> = Arc::new(Mutex::new(Vec::new()));
+            let doc_for_server = doc.clone();
+            thread::spawn(move || {
+                manage_connections(event_tx_list, listener, start_accepting, doc_for_server)
+            });
+            (port, doc)
+        }
+
+        /// Issues one `GET path` request (always with a valid local `Host`) plus any
+        /// extra headers, and returns the full raw response. The server keeps the
+        /// connection open awaiting a next request, so the reader drains until the
+        /// `Content-Length` body is complete or a short timeout elapses.
+        fn get(port: u16, path: &str, extra: &[(&str, &str)]) -> String {
+            let mut stream = TcpStream::connect(("127.0.0.1", port)).unwrap();
+            let mut req = format!("GET {path} HTTP/1.1\r\nHost: localhost:{port}\r\n");
+            for (k, v) in extra {
+                req.push_str(k);
+                req.push_str(": ");
+                req.push_str(v);
+                req.push_str("\r\n");
+            }
+            req.push_str("\r\n");
+            stream.write_all(req.as_bytes()).unwrap();
+            read_response(&stream)
+        }
+
+        /// Drains an HTTP response: stops once headers + `Content-Length` bytes are
+        /// in, otherwise after the read timeout (covers responses whose connection
+        /// the server closes and any without a body).
+        fn read_response(stream: &TcpStream) -> String {
+            stream
+                .set_read_timeout(Some(Duration::from_millis(800)))
+                .unwrap();
+            let mut stream = stream;
+            let mut out: Vec<u8> = Vec::new();
+            let mut chunk = [0u8; 4096];
+            loop {
+                match stream.read(&mut chunk) {
+                    Ok(0) => break,
+                    Ok(n) => {
+                        out.extend_from_slice(&chunk[..n]);
+                        if let Some(total) = expected_len(&out)
+                            && out.len() >= total
+                        {
+                            break;
+                        }
+                    }
+                    Err(e)
+                        if e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::TimedOut =>
+                    {
+                        break
+                    }
+                    Err(_) => break,
+                }
+            }
+            String::from_utf8_lossy(&out).into_owned()
+        }
+
+        /// Total expected length (headers + body) once the header block and a
+        /// `Content-Length` are present, else `None`.
+        fn expected_len(buf: &[u8]) -> Option<usize> {
+            let s = std::str::from_utf8(buf).ok()?;
+            let head_end = s.find("\r\n\r\n")? + 4;
+            let cl = s[..head_end]
+                .lines()
+                .find(|l| l.to_ascii_lowercase().starts_with("content-length:"))?;
+            let n: usize = cl.split(':').nth(1)?.trim().parse().ok()?;
+            Some(head_end + n)
+        }
+
+        /// Parses the numeric HTTP status code from a raw response.
+        fn status(resp: &str) -> u16 {
+            resp.split_whitespace()
+                .nth(1)
+                .and_then(|c| c.parse().ok())
+                .unwrap_or(0)
+        }
+
+        /// Extracts the `tpnote=` value from a `Set-Cookie` header, if present.
+        fn cookie_token(resp: &str) -> Option<String> {
+            resp.lines()
+                .filter(|l| l.to_ascii_lowercase().starts_with("set-cookie:"))
+                .find_map(|l| {
+                    let v = l.split_once(':')?.1.trim();
+                    v.strip_prefix("tpnote=")
+                        .map(|rest| rest.split(';').next().unwrap_or("").to_string())
+                })
+        }
+
+        #[test]
+        fn first_navigation_binds_and_sets_cookie() {
+            let port = boot(NOTE);
+            let resp = get(port, "/", &[]);
+            assert_eq!(status(&resp), 200, "first GET / should render:\n{resp}");
+            let tok = cookie_token(&resp).expect("binding response must Set-Cookie tpnote=");
+            assert_eq!(tok.len(), 32, "session token is 32 hex chars");
+            assert!(resp.contains("HttpOnly"), "cookie must be HttpOnly:\n{resp}");
+            assert!(resp.contains("SameSite=Lax"), "cookie must be SameSite=Lax");
+        }
+
+        #[test]
+        fn bound_request_with_correct_cookie_is_served() {
+            let port = boot(NOTE);
+            let tok = cookie_token(&get(port, "/", &[])).expect("bind");
+            let cookie = format!("tpnote={tok}");
+            let resp = get(port, "/", &[("Cookie", cookie.as_str())]);
+            assert_eq!(status(&resp), 200, "correct cookie must be served:\n{resp}");
+        }
+
+        #[test]
+        fn bound_request_without_cookie_is_refused() {
+            let port = boot(NOTE);
+            let _ = cookie_token(&get(port, "/", &[])).expect("bind");
+            // Now bound; a request lacking the cookie is refused.
+            let resp = get(port, "/", &[]);
+            assert_eq!(status(&resp), 403, "missing cookie once bound => 403:\n{resp}");
+        }
+
+        #[test]
+        fn bound_request_with_wrong_cookie_is_refused() {
+            let port = boot(NOTE);
+            let _ = cookie_token(&get(port, "/", &[])).expect("bind");
+            let resp = get(port, "/", &[("Cookie", WRONG_COOKIE)]);
+            assert_eq!(status(&resp), 403, "wrong cookie => 403:\n{resp}");
+        }
+
+        #[test]
+        fn foreign_host_header_is_refused() {
+            let port = boot(NOTE);
+            // A foreign `Host` (DNS-rebinding) is refused before any binding.
+            let mut stream = TcpStream::connect(("127.0.0.1", port)).unwrap();
+            stream
+                .write_all(b"GET / HTTP/1.1\r\nHost: evil.example\r\n\r\n")
+                .unwrap();
+            let resp = read_response(&stream);
+            assert_eq!(status(&resp), 403, "foreign Host => 403:\n{resp}");
+        }
+
+        #[test]
+        fn missing_host_header_is_allowed() {
+            // HTTP/1.0-style client with no `Host` is treated as a local tool.
+            let port = boot(NOTE);
+            let mut stream = TcpStream::connect(("127.0.0.1", port)).unwrap();
+            stream.write_all(b"GET / HTTP/1.1\r\n\r\n").unwrap();
+            let resp = read_response(&stream);
+            assert_eq!(status(&resp), 200, "missing Host is allowed:\n{resp}");
+        }
+
+        #[test]
+        fn failed_render_after_binding_rolls_back_binding() {
+            // A `GET /` binds the session *before* the note is rendered. If the
+            // render then fails (here: the note file vanished mid-request, as an
+            // editor save renaming it would cause), the binding must be rolled
+            // back — otherwise the viewer would stay bound to a client that never
+            // received the cookie and would refuse everyone, including the real
+            // browser's retry, forever.
+            let (port, doc) = boot_with_doc(NOTE);
+
+            // Delete the note so `ContentString::open` errors after binding.
+            std::fs::remove_file(&doc).unwrap();
+            // This request binds, then fails to render; the server writes no
+            // response and closes the connection once the rollback has run
+            // (reaching us as EOF, which synchronises the next step).
+            let first = get(port, "/", &[]);
+            assert!(
+                cookie_token(&first).is_none(),
+                "a failed render must not deliver a session cookie:\n{first:?}"
+            );
+
+            // Restore the note; the rolled-back binding lets the next client bind.
+            std::fs::write(&doc, NOTE).unwrap();
+            let second = get(port, "/", &[]);
+            assert_eq!(
+                status(&second),
+                200,
+                "after rollback a fresh client must bind and render:\n{second}"
+            );
+            assert!(
+                cookie_token(&second).is_some(),
+                "after rollback the next navigation must receive a new cookie:\n{second}"
+            );
+        }
+
+        #[test]
+        fn events_endpoint_refused_before_binding() {
+            // An unbound client must not open the SSE stream: doing so would let
+            // a foreign client park on an event slot and observe save-timing
+            // metadata. Unbound `GET /events` is refused with `403`.
+            let port = boot(NOTE);
+            let resp = get(port, "/events", &[]);
+            assert_eq!(status(&resp), 403, "unbound /events must be refused:\n{resp}");
+        }
+
+        #[test]
+        fn non_get_method_is_rejected() {
+            // Only GET is served; other methods get `405 Method Not Allowed`.
+            let port = boot(NOTE);
+            let mut stream = TcpStream::connect(("127.0.0.1", port)).unwrap();
+            stream
+                .write_all(b"POST / HTTP/1.1\r\nHost: localhost\r\n\r\n")
+                .unwrap();
+            let resp = read_response(&stream);
+            assert_eq!(status(&resp), 405, "non-GET must be 405:\n{resp}");
+        }
+
+        #[test]
+        fn favicon_is_served_without_binding() {
+            // The favicon is static and served to an unbound client, but it must
+            // NOT bind the session — otherwise a lone favicon probe before the
+            // browser's navigation would poison the binding.
+            let port = boot(NOTE);
+            let fav = get(port, "/favicon.ico", &[]);
+            assert_eq!(
+                status(&fav),
+                200,
+                "favicon should be served; status line was {:?}",
+                fav.lines().next()
+            );
+            assert!(cookie_token(&fav).is_none(), "favicon must not bind the session");
+            // The session is still unbound, so a fresh navigation still binds.
+            let nav = get(port, "/", &[]);
+            assert_eq!(status(&nav), 200);
+            assert!(
+                cookie_token(&nav).is_some(),
+                "navigation after a favicon probe must still bind:\n{nav}"
+            );
+        }
+
+        #[test]
+        fn unlisted_path_is_not_served() {
+            // Only files referenced by the note (`allowed_urls`) are served; an
+            // arbitrary path is refused with `404`, so the viewer cannot be used
+            // to read unrelated files.
+            let port = boot(NOTE);
+            let resp = get(port, "/etc/passwd", &[]);
+            assert_eq!(status(&resp), 404, "unlisted path must be 404:\n{resp}");
+        }
     }
 }

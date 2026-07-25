@@ -11,7 +11,7 @@ use crate::viewer::web_browser::launch_web_browser;
 use std::net::TcpListener;
 use std::path::PathBuf;
 use std::sync::mpsc::SyncSender;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 use std::time::Duration;
@@ -33,6 +33,27 @@ pub const LOCALHOST: &str = "localhost";
 
 #[derive(Clone, Default, Debug)]
 pub struct Viewer {}
+
+/// Opens the `manage_connections` accept gate when dropped, so that every
+/// exit path of `run2()` — including `?` on lines before the explicit
+/// `open()` — releases the accept loop. Otherwise an early error would
+/// strand a bound listener that never accepts: clients would hang in the
+/// TCP backlog forever instead of being served or refused.
+struct AcceptGate(Arc<(Mutex<bool>, Condvar)>);
+
+impl AcceptGate {
+    fn open(&self) {
+        let (lock, cvar) = &*self.0;
+        *lock.lock().unwrap() = true;
+        cvar.notify_all();
+    }
+}
+
+impl Drop for AcceptGate {
+    fn drop(&mut self) {
+        self.open();
+    }
+}
 
 impl Viewer {
     /// Set up the file watcher, start the `event/html` server and launch web
@@ -73,6 +94,17 @@ impl Viewer {
         };
         let localport = listener.local_addr()?.port();
 
+        // Gate for the accept loop: `manage_connections` accepts no
+        // connection before this gate opens. It is opened immediately
+        // before `launch_web_browser` below, which shrinks the
+        // accepting-but-unbound window of `viewer.session_binding` to the
+        // browser's cold-start latency — independently of the sign of
+        // `viewer.startup_delay`. The port is already bound, so clients
+        // connecting early queue in the TCP backlog (no "connection
+        // refused").
+        let start_accepting = Arc::new((Mutex::new(false), Condvar::new()));
+        let accept_gate = AcceptGate(start_accepting.clone());
+
         // Launch a background HTTP server thread to manage Server-Sent-Event
         // subscribers and to serve the rendered HTML.
         let event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>> = Arc::new(Mutex::new(Vec::new()));
@@ -80,8 +112,9 @@ impl Viewer {
             // Use a separate scope to `clone()`.
             let doc = doc.clone();
             let event_tx_list = event_tx_list.clone();
+            let start_accepting = start_accepting.clone();
 
-            move || manage_connections(event_tx_list, listener, doc)
+            move || manage_connections(event_tx_list, listener, start_accepting, doc)
         });
 
         // Launch the file watcher thread.
@@ -108,6 +141,11 @@ impl Viewer {
         };
         // Start timer.
         let browser_start = Instant::now();
+        // Open the accept gate BEFORE launching the browser:
+        // `launch_web_browser` blocks until the browser process exits — on
+        // a cold start that is the whole session — and an `Err` from it
+        // must not strand a closed gate on a bound listener.
+        accept_gate.open();
         // This may block.
         launch_web_browser(&url)?;
         // Did it?
