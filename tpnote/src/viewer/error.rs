@@ -37,6 +37,14 @@ pub enum ViewerError {
     )]
     TcpConnectionsExceeded { max_conn: usize },
 
+    /// The request did not present the session cookie the viewer is bound
+    /// to (or presented a foreign `Host` header). The request was refused
+    /// with `403 Forbidden` and its connection is closed; the viewer itself
+    /// keeps running and keeps serving the bound client.
+    /// Remedy: see `viewer.session_binding` in the configuration file.
+    #[error("Connection rejected: missing or invalid viewer session cookie.")]
+    SessionCookieMismatch,
+
     /// Network error.
     #[error("Can not read TCP stream: {error}")]
     StreamRead { error: std::io::Error },
