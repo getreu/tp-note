@@ -347,15 +347,21 @@ impl HttpResponse for ServerThread {
         let response = format!(
             "HTTP/1.1 200 OK\r\n\
              Date: {}\r\n\
+             {}\
              Cache-Control: {}\r\n\
              Content-Type: {}\r\n\
              Content-Length: {}\r\n\r\n",
             httpdate::fmt_http_date(SystemTime::now()),
+            self.set_cookie_header(),
             cache_control,
             mime_type,
             content.len(),
         );
         self.stream.write_all(response.as_bytes())?;
+        // Only now counts the session cookie as delivered. Clearing before
+        // the write would mark a failed write as delivered and skip the
+        // binding rollback in `serve_connection2()`.
+        self.set_cookie = None;
         self.stream.write_all(content)?;
         log::debug!(
             "TCP port local {} to peer {}: 200 OK, served file: '{}'",

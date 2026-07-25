@@ -184,6 +184,12 @@ pub(crate) struct ServerThread {
     /// Root pages insert this in their context with the key
     /// `TMPL_HTML_VAR_VIEWR_DOC_JS`.
     pub(crate) live_update_js: String,
+    /// Set only on the request that binds the session
+    /// (`viewer.session_binding`); cleared by `respond_content_ok()` after
+    /// the `Set-Cookie` header was successfully written. `Some` therefore
+    /// means: bound, but the cookie was not yet delivered to the client —
+    /// the condition the binding rollback in `serve_connection2()` tests.
+    pub(crate) set_cookie: Option<String>,
 }
 
 impl ServerThread {
@@ -220,6 +226,24 @@ impl ServerThread {
             conn_counter,
             context,
             live_update_js,
+            set_cookie: None,
+        }
+    }
+
+    /// Formats the `Set-Cookie` header line for the response that binds the
+    /// session; the empty string on every other response.
+    /// `HttpOnly`: JS never needs the cookie. `SameSite=Lax`: blocks the
+    /// cookie on cross-site non-navigation requests (a hostile page's
+    /// `fetch`/`<img>`/`<iframe>`) while keeping legitimate top-level
+    /// navigation to `localhost` working. `Path=/`: covers `/events`,
+    /// images and linked notes. Host-only session cookie: no `Domain`, no
+    /// `Expires`, no `Secure` (plain http on localhost).
+    pub(crate) fn set_cookie_header(&self) -> String {
+        match self.set_cookie.as_deref() {
+            Some(tok) => {
+                format!("Set-Cookie: tpnote={tok}; HttpOnly; SameSite=Lax; Path=/\r\n")
+            }
+            None => String::new(),
         }
     }
 
