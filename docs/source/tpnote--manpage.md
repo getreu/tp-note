@@ -3010,7 +3010,9 @@ able to publish. To summarize, a file is only served:
 3. if the number of so far viewed Tp-Note files,
    '`viewer.displayed_tpnote_count_max`' is not exceeded,
 4. when it's located under a directory containing a marker file named
-   '`tpnote.toml`' (without marker file this condition is void).
+   '`tpnote.toml`' (without marker file this condition is void),
+5. when the request presents the viewer's session cookie, once the viewer
+   is bound to a web browser (cf. '`viewer.session_binding`' below).
 
 The HTTP server runs as long as the launched web browser window is open.
 Note, that the server not only exposes the displayed note file, but also all
@@ -3033,6 +3035,36 @@ located outside the root directory and its children. When no '`tpnote.toml`'
 file is found, the root directory is set to '`/`', which disables this
 security feature.
 
+Furthermore, Tp-Note's viewer binds itself to the first web browser that
+loads the note page. When the configuration file variable
+'`viewer.session_binding`' is enabled (default), the first client navigating
+to the note page receives a random session cookie ('`Set-Cookie: tpnote=…;
+HttpOnly; SameSite=Lax`'). From that moment on, every request that does not
+present this cookie is refused with '`403 Forbidden`'. Only the offending
+request is refused and its connection closed: the viewer itself keeps
+running and keeps serving the bound web browser; it never shuts down because
+of a cookie mismatch.
+
+This session binding defends against a hostile web page open in the same
+browser: because of the '`SameSite=Lax`' cookie attribute, the browser
+withholds the cookie from cross-site background requests such as
+'`fetch()`', '`<img>`' or '`<iframe>`', so such requests cannot read the
+note. Independently of '`viewer.session_binding`', the viewer also refuses
+requests whose HTTP '`Host`' header does not address '`localhost`', which
+defeats DNS rebinding attacks. Against other local users, the session
+binding acts as a tripwire: as the viewer only accepts connections once the
+web browser is launched, a foreign client can claim the session only during
+the short browser start-up window — in which case your own web browser
+displays a '`403 Forbidden`' page explaining what happened, instead of the
+note. Note that this first-connection race is narrowed, but not eliminated:
+a client claiming the binding before your browser connects can read the
+note.
+
+If your web browser is configured to refuse cookies for '`localhost`', it
+cannot return the session cookie and every request is refused. In this case
+allow cookies for '`http://localhost`' or disable the protection with
+'`viewer.session_binding = false`'.
+
 As Tp-Note's built-in viewer binds to the '`localhost`' interface, the exposed
 files are in principle accessible to all processes running on the computer. As
 long as only one user is logged into the computer at a given time, no privacy
@@ -3048,8 +3080,11 @@ This allows the authorized user to render the note to HTML manually.
 
 **Summary**: As long as Tp-Note's built-in note viewer is running, the note
 file and all its referenced (image) files are exposed to all users logged into
-the computer at that given time. This concerns only local users, Tp-Note
-never exposes any information to the network or on the Internet.
+the computer at that given time. With '`viewer.session_binding`' enabled
+(default), this exposure is limited to the short start-up window before your
+web browser connects; afterwards only the bound browser is served. This
+concerns only local users, Tp-Note never exposes any information to the
+network or on the Internet.
 
 
 
