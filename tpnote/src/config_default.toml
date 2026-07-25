@@ -310,3 +310,12 @@ served_mime_types = [
 ### number of Tp-Note files when browsing between files. This variable limits
 ### this number.
 displayed_tpnote_count_max = 20
+
+### When true (default), the viewer binds to the first browser that loads the
+### note page and issues it a random session cookie. Later requests that do not
+### present that cookie are refused with `403 Forbidden` (the refused request
+### only — the viewer keeps serving the bound browser). This blocks a hostile
+### web page open in the same browser from reading the note (SameSite=Lax) and
+### is a tripwire against another local user grabbing the port first. Disable it
+### (`false`) if your browser refuses cookies for `localhost`.
+session_binding = true

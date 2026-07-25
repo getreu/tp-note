@@ -161,6 +161,12 @@ pub struct AppArgs {
 
 /// Configuration data for the viewer feature, deserialized from the
 /// configuration file.
+///
+/// CAUTION: the derived `Default` yields `session_binding = false`, which
+/// silently switches the session-binding protection off. `CFG` is never
+/// built from `Viewer::default()` (it comes from `config_default.toml`,
+/// where the default is `true`), but keep this in mind before calling
+/// `Viewer::default()` elsewhere.
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Viewer {
     pub startup_delay: isize,
@@ -169,6 +175,7 @@ pub struct Viewer {
     pub tcp_connections_max: usize,
     pub served_mime_types: Vec<(String, String)>,
     pub displayed_tpnote_count_max: usize,
+    pub session_binding: bool,
 }
 
 /// When no configuration file is found, defaults are set here from built-in
@@ -460,6 +467,8 @@ mod tests {
 
         let cfg = Cfg::from_files(&[userconfig]).unwrap();
         assert_eq!(cfg.arg_default.scheme, "zettel");
+        // A user config lacking the key inherits the built-in default `true`.
+        assert!(cfg.viewer.session_binding);
 
         //
         // Prepare test: create existing note.
@@ -473,6 +482,18 @@ mod tests {
         let cfg = Cfg::from_files(&[userconfig]).unwrap();
         assert_eq!(cfg.viewer.served_mime_types.len(), 1);
         assert_eq!(cfg.viewer.served_mime_types[0].0, "abc");
+
+        //
+        // Prepare test: the session binding can be disabled.
+        let raw = "\
+        [viewer]
+        session_binding = false
+        ";
+        let userconfig = temp_dir().join("tpnote.toml");
+        fs::write(&userconfig, raw.as_bytes()).unwrap();
+
+        let cfg = Cfg::from_files(&[userconfig]).unwrap();
+        assert!(!cfg.viewer.session_binding);
 
         //
         // Prepare test: some mini config file.
