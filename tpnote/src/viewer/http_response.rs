@@ -205,6 +205,13 @@ impl HttpResponse for ServerThread {
                 drop(relpath);
 
                 // This is an alias for `/`, we send the main document and quit.
+                // Session-binding invariant (do not reorder): this branch
+                // must stay BEHIND Condition 1 above. `allowed_urls` is
+                // empty until a render, and while the session is unbound the
+                // only path that can trigger a render is `/` — which binds.
+                // Hence an unbound client can never read the note through
+                // this alias (it 404s at Condition 1); once bound, the alias
+                // requires the session cookie like every other request.
                 if abspath == self.context.get_dir_path() {
                     let html = self.render_content_and_error(self.context.get_path())?;
 

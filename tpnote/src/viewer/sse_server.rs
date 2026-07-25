@@ -45,6 +45,28 @@ pub const SSE_CLIENT_CODE2: &str = r#"/events");
 /// URL path for Server-Sent-Events.
 const SSE_EVENT_PATH: &str = "/events";
 
+/// Returns a fresh random session token: 16 bytes from the OS CSPRNG,
+/// hex-encoded to exactly 32 characters.
+fn new_session_token() -> String {
+    let mut buf = [0u8; 16];
+    getrandom::fill(&mut buf).expect("OS CSPRNG (getrandom) failed");
+    let mut s = String::with_capacity(32);
+    for b in buf {
+        use std::fmt::Write;
+        let _ = write!(s, "{:02x}", b);
+    }
+    s
+}
+
+/// Extracts the value of the `tpnote` cookie from an HTTP `Cookie` header
+/// value like `a=1; tpnote=deadbeef; b=2`. Returns `None` if absent.
+fn parse_tpnote_cookie(header: &str) -> Option<String> {
+    header
+        .split(';')
+        .find_map(|pair| pair.trim().strip_prefix("tpnote="))
+        .map(str::to_string)
+}
+
 /// Checks whether an HTTP `Host` header value addresses this server on the
 /// loopback interface. `local_port` is the port the listener is bound to; a
 /// port in the header value, if present, must match it. A missing `Host`
@@ -102,6 +124,9 @@ pub fn manage_connections(
     let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
     // Subset of the above list containing only displayed Tp-Note documents.
     let delivered_tpnote_docs = Arc::new(RwLock::new(HashSet::new()));
+    // The session token the viewer is bound to, `None` while unbound
+    // (`viewer.session_binding`). Process-wide: one binding per viewer.
+    let session_cookie: Arc<RwLock<Option<String>>> = Arc::new(RwLock::new(None));
     // We use an ARC to count the number of running threads.
     let conn_counter = Arc::new(());
     // Store `doc_path` in the `context.path` and
@@ -137,6 +162,7 @@ pub fn manage_connections(
                 thread::spawn({
                     let allowed_urls = allowed_urls.clone();
                     let delivered_tpnote_docs = delivered_tpnote_docs.clone();
+                    let session_cookie = session_cookie.clone();
                     let conn_counter = conn_counter.clone();
                     let context = context.clone();
                     move || {
@@ -145,6 +171,7 @@ pub fn manage_connections(
                             stream,
                             allowed_urls,
                             delivered_tpnote_docs,
+                            session_cookie,
                             conn_counter,
                             context,
                         );
@@ -173,6 +200,9 @@ pub(crate) struct ServerThread {
     /// documents.
     /// The local links in this list are absolute.
     pub(crate) delivered_tpnote_docs: Arc<RwLock<HashSet<PathBuf>>>,
+    /// The session token the viewer is bound to, `None` while unbound.
+    /// Shared by all server threads (`viewer.session_binding`).
+    pub(crate) session_cookie: Arc<RwLock<Option<String>>>,
     /// We do not store anything here, instead we use the ARC pointing to
     /// `conn_counter` to count the number of instances of `ServerThread`.
     pub(crate) conn_counter: Arc<()>,
@@ -199,6 +229,7 @@ impl ServerThread {
         stream: TcpStream,
         allowed_urls: Arc<RwLock<HashSet<PathBuf>>>,
         delivered_tpnote_docs: Arc<RwLock<HashSet<PathBuf>>>,
+        session_cookie: Arc<RwLock<Option<String>>>,
         conn_counter: Arc<()>,
         context: Context<HasSettings>,
     ) -> Self {
@@ -223,6 +254,7 @@ impl ServerThread {
             stream,
             allowed_urls,
             delivered_tpnote_docs,
+            session_cookie,
             conn_counter,
             context,
             live_update_js,
@@ -303,7 +335,7 @@ impl ServerThread {
             // Read the request.
             let mut read_buffer = [0u8; TCP_READ_BUFFER_SIZE];
             let mut buffer = Vec::new();
-            let (method, path, host) = 'assemble_tcp_chunks: loop {
+            let (method, path, cookie, host) = 'assemble_tcp_chunks: loop {
                 // Read the request, or part thereof.
                 match self.stream.read(&mut read_buffer) {
                     Ok(0) => {
@@ -348,6 +380,12 @@ impl ServerThread {
                     && let (Some(method), Some(path)) = (req.method, req.path) {
                         // Extract headers as owned values before `req` (and
                         // its borrow of `headers`) goes out of scope.
+                        let cookie: Option<String> = req
+                            .headers
+                            .iter()
+                            .find(|h| h.name.eq_ignore_ascii_case("Cookie"))
+                            .and_then(|h| str::from_utf8(h.value).ok())
+                            .and_then(parse_tpnote_cookie);
                         let host: Option<String> = req
                             .headers
                             .iter()
@@ -355,7 +393,7 @@ impl ServerThread {
                             .and_then(|h| str::from_utf8(h.value).ok())
                             .map(|s| s.trim().to_string());
                         // This is the only regular exit.
-                        break 'assemble_tcp_chunks (method, path, host);
+                        break 'assemble_tcp_chunks (method, path, cookie, host);
                     };
                 // We quit with error. There is nothing more we can do here.
                 return Err(ViewerError::StreamParse {
@@ -387,6 +425,70 @@ impl ServerThread {
 
             // Decode the percent encoding in the URL path.
             let path = percent_decode_str(path).decode_utf8()?;
+
+            // Session binding (`viewer.session_binding`), trust-on-first-use:
+            // the first navigation (`GET /`) binds the viewer to its client
+            // by issuing a random session cookie; once bound, every request
+            // must present it. A mismatch refuses that one request and closes
+            // its connection — the viewer itself keeps serving the bound
+            // client.
+            if CFG.viewer.session_binding {
+                let is_navigation = &*path == "/";
+                let bound = self.session_cookie.read().clone();
+                match bound {
+                    // Already bound: every request must present the cookie.
+                    Some(tok) => {
+                        if cookie.as_deref() != Some(tok.as_str()) {
+                            // Refuse the request AND close this connection
+                            // (frees its `tcp_connections_max` slot). Never
+                            // touch the viewer itself.
+                            self.respond_forbidden()?;
+                            return Err(ViewerError::SessionCookieMismatch);
+                        }
+                    }
+                    // Unbound.
+                    None => {
+                        if is_navigation {
+                            // This navigation claims the session
+                            // (first-writer-wins).
+                            let mut w = self.session_cookie.write();
+                            if w.is_none() {
+                                let tok = new_session_token();
+                                *w = Some(tok.clone());
+                                // Emit `Set-Cookie` on this response.
+                                self.set_cookie = Some(tok);
+                            } else if cookie.as_deref() != w.as_deref() {
+                                // Lost the race between `read()` and
+                                // `write()`: someone bound first and this
+                                // navigation lacks the cookie.
+                                // Never hold the lock across I/O.
+                                drop(w);
+                                self.respond_forbidden()?;
+                                return Err(ViewerError::SessionCookieMismatch);
+                            }
+                            // else: raced, but this client already holds the
+                            // matching cookie -> fall through.
+                        } else if &*path == SSE_EVENT_PATH {
+                            // Unbound + `/events`: never legitimate — the
+                            // real browser only opens the EventSource AFTER
+                            // executing the JS delivered in the bound `/`
+                            // page. Serving it would let a foreign client
+                            // park on an `event_tx` slot and observe
+                            // save-timing metadata. Refuse and close.
+                            self.respond_forbidden()?;
+                            return Err(ViewerError::SessionCookieMismatch);
+                        }
+                        // else: unbound + other non-navigation (favicon,
+                        // CSS): do NOT bind on it and do NOT 403 it —
+                        // otherwise a lone favicon probe pre-binding would
+                        // poison the session. Serving it is fail-safe:
+                        // `allowed_urls` is empty until the first render and
+                        // only `/` (which binds) can trigger a render, so
+                        // the most an unbound client gets is the favicon or
+                        // CSS.
+                    }
+                }
+            }
 
             // Check the path.
             // Serve note rendition.
@@ -447,8 +549,28 @@ impl ServerThread {
                     }
                 }
 
-                // Serve all other documents.
-                _ => self.respond(&path)?,
+                // Serve all other documents, including the (binding) `/`
+                // navigation.
+                _ => {
+                    let result = self.respond(&path);
+                    // Binding rollback: if this request bound the session
+                    // but its response was never delivered (e.g. the note
+                    // file was mid-rename during an editor save and the
+                    // render failed), the token would stay bound to a client
+                    // that never received it — every later request,
+                    // including the browser's retry, would be refused
+                    // forever. Re-open the binding instead. `set_cookie` is
+                    // still `Some` exactly when `respond_content_ok()` never
+                    // got to deliver the `Set-Cookie` header.
+                    if result.is_err() && self.set_cookie.is_some() {
+                        let mut w = self.session_cookie.write();
+                        // Compare-before-clear: only if it is still our token.
+                        if w.as_deref() == self.set_cookie.as_deref() {
+                            *w = None;
+                        }
+                    }
+                    result?
+                }
             }; // End of match path
         } // Go to 'tcp_connection loop start
 
@@ -492,6 +614,31 @@ impl ServerThread {
 #[cfg(test)]
 mod tests {
     use super::host_is_local;
+    use super::new_session_token;
+    use super::parse_tpnote_cookie;
+
+    #[test]
+    fn test_new_session_token() {
+        let t1 = new_session_token();
+        let t2 = new_session_token();
+        // `{:02x}` per byte guarantees exactly 32 chars, leading zeros kept.
+        assert_eq!(t1.len(), 32);
+        assert!(t1.chars().all(|c| c.is_ascii_hexdigit()));
+        assert_ne!(t1, t2);
+    }
+
+    #[test]
+    fn test_parse_tpnote_cookie() {
+        assert_eq!(
+            parse_tpnote_cookie("a=1; tpnote=deadbeef; b=2").as_deref(),
+            Some("deadbeef")
+        );
+        assert_eq!(parse_tpnote_cookie("tpnote=deadbeef").as_deref(), Some("deadbeef"));
+        assert_eq!(parse_tpnote_cookie(" tpnote=x ").as_deref(), Some("x"));
+        assert_eq!(parse_tpnote_cookie("nope=1"), None);
+        assert_eq!(parse_tpnote_cookie("xtpnote=1"), None);
+        assert_eq!(parse_tpnote_cookie(""), None);
+    }
 
     #[test]
     fn test_host_is_local() {
