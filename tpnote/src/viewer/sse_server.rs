@@ -45,6 +45,42 @@ pub const SSE_CLIENT_CODE2: &str = r#"/events");
 /// URL path for Server-Sent-Events.
 const SSE_EVENT_PATH: &str = "/events";
 
+/// Checks whether an HTTP `Host` header value addresses this server on the
+/// loopback interface. `local_port` is the port the listener is bound to; a
+/// port in the header value, if present, must match it. A missing `Host`
+/// header (`None`, legal in HTTP/1.0) is allowed: such clients (e.g. plain
+/// `curl -0`) are local tools, not browsers, and the DNS rebinding attack
+/// this check defends against always sends the hostile origin as `Host`.
+fn host_is_local(host: Option<&str>, local_port: u16) -> bool {
+    let Some(host) = host else {
+        return true;
+    };
+    let host = host.trim();
+    // Split off the optional `:<port>`. A bracketed IPv6 literal contains
+    // colons itself, so it needs its own splitting rule.
+    let (name, port) = if host.starts_with('[') {
+        match host.find(']') {
+            Some(i) => match host[i + 1..].strip_prefix(':') {
+                Some(p) => (&host[..=i], Some(p)),
+                None if host[i + 1..].is_empty() => (host, None),
+                None => return false,
+            },
+            None => return false,
+        }
+    } else if let Some((name, port)) = host.rsplit_once(':') {
+        (name, Some(port))
+    } else {
+        (host, None)
+    };
+    if !(name.eq_ignore_ascii_case("localhost") || name == "127.0.0.1" || name == "[::1]") {
+        return false;
+    }
+    match port {
+        None => true,
+        Some(p) => p.parse::<u16>().is_ok_and(|p| p == local_port),
+    }
+}
+
 /// Server-Sent-Event tokens our HTTP client has registered to receive.
 #[derive(Debug, Clone, Copy)]
 pub enum SseToken {
@@ -243,7 +279,7 @@ impl ServerThread {
             // Read the request.
             let mut read_buffer = [0u8; TCP_READ_BUFFER_SIZE];
             let mut buffer = Vec::new();
-            let (method, path) = 'assemble_tcp_chunks: loop {
+            let (method, path, host) = 'assemble_tcp_chunks: loop {
                 // Read the request, or part thereof.
                 match self.stream.read(&mut read_buffer) {
                     Ok(0) => {
@@ -286,8 +322,16 @@ impl ServerThread {
                 // Check if the HTTP header is complete and valid.
                 if res.is_complete()
                     && let (Some(method), Some(path)) = (req.method, req.path) {
+                        // Extract headers as owned values before `req` (and
+                        // its borrow of `headers`) goes out of scope.
+                        let host: Option<String> = req
+                            .headers
+                            .iter()
+                            .find(|h| h.name.eq_ignore_ascii_case("Host"))
+                            .and_then(|h| str::from_utf8(h.value).ok())
+                            .map(|s| s.trim().to_string());
                         // This is the only regular exit.
-                        break 'assemble_tcp_chunks (method, path);
+                        break 'assemble_tcp_chunks (method, path, host);
                     };
                 // We quit with error. There is nothing more we can do here.
                 return Err(ViewerError::StreamParse {
@@ -299,6 +343,17 @@ impl ServerThread {
                 });
             };
             // End of input chunk loop.
+
+            // Refuse requests with a foreign `Host` header. Kills DNS
+            // rebinding (a hostile origin re-resolving to 127.0.0.1 issues
+            // same-origin, i.e. readable, requests — but with its own
+            // `Host`). No legitimate client ever sends a foreign `Host` to
+            // this server, so this check applies unconditionally.
+            if !host_is_local(host.as_deref(), self.stream.local_addr()?.port()) {
+                self.respond_forbidden()?;
+                // Refuse the request AND close this connection.
+                return Err(ViewerError::SessionCookieMismatch);
+            }
 
             // The only supported request method for SSE is GET.
             if method != "GET" {
@@ -407,5 +462,35 @@ impl ServerThread {
             self.stream.peer_addr()?.port(),
         );
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::host_is_local;
+
+    #[test]
+    fn test_host_is_local() {
+        // Bare local names, with and without the matching port.
+        assert!(host_is_local(Some("localhost"), 4444));
+        assert!(host_is_local(Some("localhost:4444"), 4444));
+        assert!(host_is_local(Some("Localhost:4444"), 4444));
+        assert!(host_is_local(Some("127.0.0.1"), 4444));
+        assert!(host_is_local(Some("127.0.0.1:4444"), 4444));
+        assert!(host_is_local(Some("[::1]"), 4444));
+        assert!(host_is_local(Some("[::1]:4444"), 4444));
+        // HTTP/1.0 clients may omit the header: allowed (documented choice).
+        assert!(host_is_local(None, 4444));
+
+        // Foreign hosts and wrong ports are refused.
+        assert!(!host_is_local(Some("evil.example"), 4444));
+        assert!(!host_is_local(Some("evil.example:4444"), 4444));
+        assert!(!host_is_local(Some("localhost:3333"), 4444));
+        assert!(!host_is_local(Some("localhost:x"), 4444));
+        assert!(!host_is_local(Some("[::1]:3333"), 4444));
+        assert!(!host_is_local(Some("[::2]:4444"), 4444));
+        assert!(!host_is_local(Some("[::1"), 4444));
+        assert!(!host_is_local(Some("[::1]4444"), 4444));
+        assert!(!host_is_local(Some(""), 4444));
     }
 }
