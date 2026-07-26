@@ -872,6 +872,23 @@ fi
 
 
 
+## Test 906:  Compilation --no-default-features --features same-user-policy
+## (`same-user-policy` pulls in `viewer`; this checks the peer-user code and its
+## `#[cfg(feature = "same-user-policy")]` gating compile when enabled on their
+## own. Test 902 conversely checks `viewer` compiles WITHOUT this feature.)
+cargo check --no-default-features \
+            --features same-user-policy >/dev/null
+
+if [ $? -eq 0 ]
+then
+    echo Commandline test 906 succeeded.
+else
+    echo Commandline test 906 failed.
+    exit 1
+fi
+
+
+
 
 
 

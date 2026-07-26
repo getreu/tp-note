@@ -14,7 +14,7 @@ homepage = "https://blog.getreu.net/projects/tp-note/"
 license = "MIT/Apache-2.0"
 readme = "README.md"
 repository = "https://gitlab.com/getreu/tp-note"
-rust-version = "1.91.1"
+rust-version = "1.95"
 version = "1.26.7"
 
 [profile.release]

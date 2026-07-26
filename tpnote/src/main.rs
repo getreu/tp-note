@@ -193,6 +193,8 @@ fn main() {
         features.push("read-clipboard".to_string());
         #[cfg(feature = "renderer")]
         features.push("renderer".to_string());
+        #[cfg(feature = "same-user-policy")]
+        features.push("same-user-policy".to_string());
         #[cfg(feature = "viewer")]
         features.push("viewer".to_string());
 

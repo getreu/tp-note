@@ -53,7 +53,7 @@ assets = [
 ]
 
 [features]
-default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detection", "mermaid", "latex"]
+default = ["read-clipboard", "message-box", "viewer", "same-user-policy", "renderer", "lang-detection", "mermaid", "latex"]
 
 # To disable features: `cargo build --no-default-features`
 # If you can do away with error message popup boxes (for example on a headless
@@ -63,6 +63,13 @@ default = ["read-clipboard", "message-box", "viewer", "renderer", "lang-detectio
 message-box = ["dep:win-msgbox", "dep:notify-rust"]
 read-clipboard = ["dep:clipboard-rs", "wl-clipboard-rs"]
 viewer = ["dep:notify", "dep:notify-debouncer-mini", "dep:httparse", "dep:webbrowser", "dep:httpdate", "dep:getrandom", "tpnote-lib/viewer"]
+# Restrict the viewer to the OS user running Tp-Note by identifying the OS user
+# owning the peer end of each loopback connection (`viewer.same_user_policy`).
+# Requires the `viewer` feature. Pulls in `netstat2` (connection -> PID) and
+# `sysinfo` (PID -> user). Disable it (`--no-default-features` or dropping it
+# from the feature list) to build the viewer without the peer-user check and
+# without these two dependencies.
+same-user-policy = ["viewer", "dep:netstat2", "dep:sysinfo"]
 # This feature declaration is forwarded to `tpnote_lib` and not used in this
 # crate.
 lang-detection = ["tpnote-lib/lang-detection"]
@@ -81,6 +88,7 @@ getrandom = { version = "0.4", optional = true }
 httparse = { version = "1.10.1", optional = true }
 httpdate = { version = "1.0.3", optional = true }
 log.workspace = true
+netstat2 = { version = "0.11", optional = true }
 notify-debouncer-mini = { version = "0.7.0", optional = true }
 notify = { version = "8.2.0", optional = true }
 parking_lot.workspace = true
@@ -90,6 +98,7 @@ sanitize-filename-reader-friendly.workspace = true
 semver = "1.0.28"
 serde.workspace = true
 serde_yaml.workspace = true
+sysinfo = { version = "0.39", default-features = false, features = ["system", "user"], optional = true }
 thiserror.workspace = true
 time = "0.3.54"
 tera.workspace = true
