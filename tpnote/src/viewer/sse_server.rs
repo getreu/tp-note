@@ -2,9 +2,13 @@
 //! This module contains also the web browser JavaScript client code.
 
 use crate::config::CFG;
+#[cfg(feature = "same-user-policy")]
+use crate::config::SameUserPolicy;
 use crate::viewer::error::ViewerError;
 use crate::viewer::http_response::HttpResponse;
 use crate::viewer::init::LOCALHOST;
+#[cfg(feature = "same-user-policy")]
+use crate::viewer::peer_user::{PeerUser, identify_peer_user};
 use parking_lot::RwLock;
 use percent_encoding::percent_decode_str;
 use std::collections::HashSet;
@@ -342,6 +346,55 @@ impl ServerThread {
             return Err(ViewerError::TcpConnectionsExceeded {
                 max_conn: CFG.viewer.tcp_connections_max,
             });
+        }
+
+        // Restrict the viewer to the same OS user (`viewer.same_user_policy`),
+        // but only while the session is not yet bound: this check guards the
+        // bootstrap window (the first-connection race in which a foreign OS
+        // user grabs the session during the browser's cold start). Once a
+        // session cookie is bound, the cookie gates every request, so skip the
+        // O(sockets) peer lookup on later connections; with cookie binding
+        // disabled, `session_cookie` stays `None`, so the check runs on every
+        // connection, as before (it is then the only OS-user defense).
+        #[cfg(feature = "same-user-policy")]
+        let session_bound = self.session_cookie.read().is_some();
+        #[cfg(feature = "same-user-policy")]
+        match CFG.viewer.same_user_policy {
+            SameUserPolicy::Off => {}
+            _ if session_bound => {}
+            policy => {
+                let local = self.stream.local_addr()?;
+                let peer = self.stream.peer_addr()?;
+                match identify_peer_user(local, peer) {
+                    PeerUser::Same => {}
+                    PeerUser::Other => {
+                        // Refuse this connection; the viewer keeps running.
+                        self.respond_http_error(
+                            403,
+                            "Forbidden",
+                            "peer belongs to a different OS user",
+                        )?;
+                        return Err(ViewerError::PeerUserMismatch);
+                    }
+                    PeerUser::Unknown => {
+                        log::warn!(
+                            "TCP port local {} to peer {}: cannot determine the \
+                             connecting client's OS user; same-user check inconclusive.",
+                            local.port(),
+                            peer.port(),
+                        );
+                        // `Warn` serves (fail-open); `Reject` refuses (fail-closed).
+                        if policy == SameUserPolicy::Reject {
+                            self.respond_http_error(
+                                403,
+                                "Forbidden",
+                                "peer OS user indeterminate (same_user_policy = Reject)",
+                            )?;
+                            return Err(ViewerError::PeerUserUnknown);
+                        }
+                    }
+                }
+            }
         }
 
         'tcp_connection: loop {
