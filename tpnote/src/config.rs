@@ -159,14 +159,38 @@ pub struct AppArgs {
     pub editor_console: Vec<Vec<String>>,
 }
 
+/// How the viewer restricts access to the OS user running Tp-Note
+/// (`viewer.same_user_policy`). On a multi-user machine the loopback port is
+/// reachable by every logged-in user; this check rejects connections whose
+/// owning process belongs to a different OS user. It is best-effort
+/// defense-in-depth (the connection→user lookup can be inconclusive), so the
+/// policy decides what to do when the peer's user cannot be determined.
+/// Deserialized from a PascalCase TOML string (`"Off"`/`"Warn"`/`"Reject"`),
+/// mirroring `LocalLinkKind`.
+#[cfg(feature = "same-user-policy")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum SameUserPolicy {
+    /// No user check — serve any local process (previous behaviour).
+    Off,
+    /// Reject a peer *proven* to belong to a different OS user. If the peer's
+    /// user cannot be determined (sandbox / network namespace, lookup race,
+    /// platform privilege limits), log a warning and serve anyway (fail-open).
+    #[default]
+    Warn,
+    /// Like `Warn`, but also reject the connection when the peer's user cannot
+    /// be determined (fail-closed).
+    Reject,
+}
+
 /// Configuration data for the viewer feature, deserialized from the
 /// configuration file.
 ///
-/// CAUTION: the derived `Default` yields `session_binding = false`, which
-/// silently switches the session-binding protection off. `CFG` is never
-/// built from `Viewer::default()` (it comes from `config_default.toml`,
-/// where the default is `true`), but keep this in mind before calling
-/// `Viewer::default()` elsewhere.
+/// CAUTION: the derived `Default` does not match the shipped defaults for two
+/// fields: `session_binding` derives `false` (protection off) whereas
+/// `config_default.toml` ships `true`; `same_user_policy` derives its
+/// `#[default]` variant `Warn` (protection on), matching the shipped default.
+/// `CFG` is always built from `config_default.toml`, not `Viewer::default()`,
+/// but keep this in mind before calling `Viewer::default()` elsewhere.
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Viewer {
     pub startup_delay: isize,
@@ -176,6 +200,8 @@ pub struct Viewer {
     pub served_mime_types: Vec<(String, String)>,
     pub displayed_tpnote_count_max: usize,
     pub session_binding: bool,
+    #[cfg(feature = "same-user-policy")]
+    pub same_user_policy: SameUserPolicy,
 }
 
 /// When no configuration file is found, defaults are set here from built-in
@@ -451,6 +477,8 @@ mod tests {
     use tpnote_lib::config::LIB_CFG;
 
     use super::Cfg;
+    #[cfg(feature = "same-user-policy")]
+    use super::SameUserPolicy;
     use std::env::temp_dir;
     use std::fs;
 
@@ -494,6 +522,34 @@ mod tests {
 
         let cfg = Cfg::from_files(&[userconfig]).unwrap();
         assert!(!cfg.viewer.session_binding);
+
+        //
+        // Prepare test: `same_user_policy` defaults to `Warn` and parses.
+        #[cfg(feature = "same-user-policy")]
+        {
+            let userconfig = temp_dir().join("tpnote.toml");
+            fs::write(&userconfig, b"").unwrap();
+            let cfg = Cfg::from_files(&[userconfig]).unwrap();
+            assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Warn);
+
+            let raw = "\
+            [viewer]
+            same_user_policy = \"Reject\"
+            ";
+            let userconfig = temp_dir().join("tpnote.toml");
+            fs::write(&userconfig, raw.as_bytes()).unwrap();
+            let cfg = Cfg::from_files(&[userconfig]).unwrap();
+            assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Reject);
+
+            // An invalid enum string is a hard error.
+            let raw = "\
+            [viewer]
+            same_user_policy = \"bogus\"
+            ";
+            let userconfig = temp_dir().join("tpnote.toml");
+            fs::write(&userconfig, raw.as_bytes()).unwrap();
+            assert!(Cfg::from_files(&[userconfig]).is_err());
+        }
 
         //
         // Prepare test: some mini config file.

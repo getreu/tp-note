@@ -319,3 +319,20 @@ displayed_tpnote_count_max = 20
 ### is a tripwire against another local user grabbing the port first. Disable it
 ### (`false`) if your browser refuses cookies for `localhost`.
 session_binding = true
+
+### Restrict the viewer to the OS user running Tp-Note. On a multi-user
+### machine the loopback port is reachable by every logged-in user; this check
+### rejects a connection whose owning process belongs to a different OS user
+### with `403 Forbidden` (that connection only — the viewer keeps serving the
+### legitimate user). It is best-effort defense-in-depth: the
+### connection-to-user lookup can be inconclusive (sandboxed browser in a
+### separate network namespace, platform privilege limits). Three values:
+###   "Off"    - no check.
+###   "Warn"   - reject a proven-foreign user; if the user cannot be determined,
+###              log a warning and serve anyway (fail-open, never breaks a
+###              legitimate client).
+###   "Reject" - like "Warn" but also refuse when the user is indeterminate
+###              (fail-closed; may block some sandboxed local clients, but is
+###              the only setting that enforces on platforms where a foreign
+###              user often resolves as indeterminate, e.g. macOS).
+same_user_policy = "Warn"
