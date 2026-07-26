@@ -45,6 +45,23 @@ pub enum ViewerError {
     #[error("Connection rejected: missing or invalid viewer session cookie.")]
     SessionCookieMismatch,
 
+    /// The connecting peer was proven to belong to a different OS user and was
+    /// refused with `403 Forbidden` (`viewer.same_user_policy`). The viewer
+    /// keeps running and keeps serving the legitimate user.
+    #[cfg(feature = "same-user-policy")]
+    #[error("Connection rejected: the client belongs to a different OS user.")]
+    PeerUserMismatch,
+
+    /// The connecting peer's OS user could not be determined and the policy is
+    /// `Reject` (fail-closed), so the request was refused with `403 Forbidden`.
+    /// Remedy: see `viewer.same_user_policy` in the configuration file.
+    #[cfg(feature = "same-user-policy")]
+    #[error(
+        "Connection rejected: the client's OS user could not be determined \
+         (`viewer.same_user_policy = Reject`)."
+    )]
+    PeerUserUnknown,
+
     /// Network error.
     #[error("Can not read TCP stream: {error}")]
     StreamRead { error: std::io::Error },
