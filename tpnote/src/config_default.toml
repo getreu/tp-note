@@ -329,10 +329,13 @@ session_binding_cookie = true
 ### separate network namespace, platform privilege limits). Three values:
 ###   "Off"    - no check.
 ###   "Warn"   - reject a proven-foreign user; if the user cannot be determined,
-###              log a warning and serve anyway (fail-open, never breaks a
-###              legitimate client).
-###   "Reject" - like "Warn" but also refuse when the user is indeterminate
-###              (fail-closed; may block some sandboxed local clients, but is
-###              the only setting that enforces on platforms where a foreign
-###              user often resolves as indeterminate, e.g. macOS).
-same_user_policy = "Warn"
+###              log a warning and serve anyway (FAIL-OPEN). Never breaks a
+###              legitimate client, but a process the viewer cannot attribute
+###              — possibly another user's — is served your note.
+###   "Reject" - (default) like "Warn" but also refuse when the user is
+###              indeterminate (fail-closed). Safest, and the only setting that
+###              enforces where a foreign user often resolves as indeterminate
+###              (e.g. macOS). Cost: a legitimate but unattributable client
+###              (a sandboxed browser) is refused and shown a page explaining
+###              how to relax to "Warn".
+same_user_policy = "Reject"

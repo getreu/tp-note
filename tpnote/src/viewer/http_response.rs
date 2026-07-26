@@ -65,6 +65,47 @@ note.</p>
 </body></html>"
 }
 
+/// HTML body of the `403 Forbidden` response sent when the peer-user check
+/// (`viewer.same_user_policy = "Reject"`, the default) refuses a request
+/// because it could **not determine** the connecting client's OS user. The
+/// legitimate user's own browser can hit this if it is sandboxed
+/// (Flatpak/Snap) or on platforms where the lookup is limited, so the page
+/// explains how to relax the policy to `"Warn"` and what that costs.
+#[cfg(feature = "same-user-policy")]
+pub(crate) fn peer_user_unknown_page() -> &'static str {
+    "\
+<!DOCTYPE html><html><head><meta charset=\"UTF-8\">
+<title>Tp-Note viewer: access refused</title></head><body>
+<h2>Access to this note was refused</h2>
+<p>The viewer could not confirm that the program connecting to it belongs to
+your operating-system user, so it refused the request. By default
+(<code>viewer.same_user_policy = &quot;Reject&quot;</code>) the viewer serves
+only connections it can positively attribute to your own user, and refuses any
+it cannot (fail-closed).</p>
+
+<p>This most often happens with a <strong>sandboxed browser</strong> (Flatpak,
+Snap, firejail) running in its own network namespace, or on platforms where the
+viewer cannot resolve the connecting process's owner. It does <em>not</em>
+necessarily mean another user connected.</p>
+
+<h3>Relax the check</h3>
+<p>To make the viewer serve connections whose user it cannot determine, add the
+following to your Tp-Note configuration file and restart Tp-Note:</p>
+<pre>[viewer]
+same_user_policy = &quot;Warn&quot;</pre>
+
+<h3>Understand the risk first</h3>
+<p>In <code>&quot;Warn&quot;</code> mode the viewer <strong>serves</strong> any
+connection whose owning user it cannot determine (fail-open). On a shared
+computer, a program the viewer cannot attribute &mdash; possibly
+<strong>another logged-in user's</strong> &mdash; would then be allowed to read
+this note and its referenced files. Only relax the check if you are the sole
+user of this machine, or you accept that a local program the viewer cannot
+identify may read your note. Setting <code>same_user_policy = &quot;Off&quot;</code>
+disables the check entirely.</p>
+</body></html>"
+}
+
 pub(crate) trait HttpResponse {
     /// Renders the HTTP response and sends it into `self.stream`.
     fn respond(&mut self, request: &str) -> Result<(), ViewerError>;
@@ -550,6 +591,8 @@ impl HttpResponse for ServerThread {
 #[cfg(test)]
 mod tests {
     use super::forbidden_page;
+    #[cfg(feature = "same-user-policy")]
+    use super::peer_user_unknown_page;
 
     #[test]
     fn test_forbidden_page() {
@@ -561,5 +604,19 @@ mod tests {
         assert!(page.contains("Another local client reached the viewer first"));
         // v2 refuses single requests only; it never shuts the viewer down.
         assert!(!page.contains("shut down"));
+    }
+
+    #[cfg(feature = "same-user-policy")]
+    #[test]
+    fn test_peer_user_unknown_page() {
+        let page = peer_user_unknown_page();
+        assert!(page.starts_with("<!DOCTYPE html>"));
+        assert!(page.contains("</html>"));
+        // The minimal TOML example to relax to Warn.
+        assert!(page.contains("[viewer]"));
+        assert!(page.contains("same_user_policy = &quot;Warn&quot;"));
+        // The risk is explained.
+        assert!(page.contains("fail-open"));
+        assert!(page.contains("another logged-in user's"));
     }
 }

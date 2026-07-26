@@ -175,22 +175,27 @@ pub enum SameUserPolicy {
     /// Reject a peer *proven* to belong to a different OS user. If the peer's
     /// user cannot be determined (sandbox / network namespace, lookup race,
     /// platform privilege limits), log a warning and serve anyway (fail-open).
-    #[default]
     Warn,
     /// Like `Warn`, but also reject the connection when the peer's user cannot
-    /// be determined (fail-closed).
+    /// be determined (fail-closed). This is the default: it is the safest
+    /// posture and the only one that enforces on platforms where a foreign
+    /// user often resolves as indeterminate (e.g. macOS). The cost is that a
+    /// legitimate client whose user cannot be resolved (a sandboxed browser)
+    /// is refused; such a user is shown a page explaining how to relax to
+    /// `Warn`.
+    #[default]
     Reject,
 }
 
 /// Configuration data for the viewer feature, deserialized from the
 /// configuration file.
 ///
-/// CAUTION: the derived `Default` does not match the shipped defaults for two
-/// fields: `session_binding_cookie` derives `false` (protection off) whereas
-/// `config_default.toml` ships `true`; `same_user_policy` derives its
-/// `#[default]` variant `Warn` (protection on), matching the shipped default.
-/// `CFG` is always built from `config_default.toml`, not `Viewer::default()`,
-/// but keep this in mind before calling `Viewer::default()` elsewhere.
+/// CAUTION: for `session_binding_cookie` the derived `Default` (`false`,
+/// protection off) does not match the shipped `config_default.toml` (`true`);
+/// `same_user_policy` derives its `#[default]` variant `Reject`, matching the
+/// shipped default. `CFG` is always built from `config_default.toml`, not
+/// `Viewer::default()`, but keep this in mind before calling
+/// `Viewer::default()` elsewhere.
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Viewer {
     pub startup_delay: isize,
@@ -524,22 +529,22 @@ mod tests {
         assert!(!cfg.viewer.session_binding_cookie);
 
         //
-        // Prepare test: `same_user_policy` defaults to `Warn` and parses.
+        // Prepare test: `same_user_policy` defaults to `Reject` and parses.
         #[cfg(feature = "same-user-policy")]
         {
             let userconfig = temp_dir().join("tpnote.toml");
             fs::write(&userconfig, b"").unwrap();
             let cfg = Cfg::from_files(&[userconfig]).unwrap();
-            assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Warn);
+            assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Reject);
 
             let raw = "\
             [viewer]
-            same_user_policy = \"Reject\"
+            same_user_policy = \"Warn\"
             ";
             let userconfig = temp_dir().join("tpnote.toml");
             fs::write(&userconfig, raw.as_bytes()).unwrap();
             let cfg = Cfg::from_files(&[userconfig]).unwrap();
-            assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Reject);
+            assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Warn);
 
             // An invalid enum string is a hard error.
             let raw = "\

@@ -6,6 +6,8 @@ use crate::config::CFG;
 use crate::config::SameUserPolicy;
 use crate::viewer::error::ViewerError;
 use crate::viewer::http_response::HttpResponse;
+#[cfg(feature = "same-user-policy")]
+use crate::viewer::http_response::peer_user_unknown_page;
 use crate::viewer::init::LOCALHOST;
 #[cfg(feature = "same-user-policy")]
 use crate::viewer::peer_user::{PeerUser, identify_peer_user};
@@ -383,11 +385,16 @@ impl ServerThread {
                             local.port(),
                             peer.port(),
                         );
-                        // `Warn` serves (fail-open); `Reject` refuses (fail-closed).
+                        // `Warn` serves (fail-open); `Reject` refuses
+                        // (fail-closed). Because `Reject` is the default, the
+                        // client refused here may well be the legitimate
+                        // user's own (sandboxed) browser, so serve the
+                        // informative page that explains how to relax to
+                        // `Warn` and the risk of doing so.
                         if policy == SameUserPolicy::Reject {
                             self.respond_http_error(
                                 403,
-                                "Forbidden",
+                                peer_user_unknown_page(),
                                 "peer OS user indeterminate (same_user_policy = Reject)",
                             )?;
                             return Err(ViewerError::PeerUserUnknown);

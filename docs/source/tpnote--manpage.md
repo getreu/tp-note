@@ -3073,26 +3073,31 @@ the `localhost` HTTP server.
 
 On systems where multiple users are logged in at the same time, the
 configuration file variable '`viewer.same_user_policy`' offers a middle ground
-that keeps the viewer usable. When enabled (the default is '`"Warn"`'), the
-viewer identifies the OS user owning the process at the other end of each
-incoming connection and refuses, with '`403 Forbidden`', any connection whose
-owner is proven to be a different OS user (only that connection is refused; the
-viewer keeps serving you). It accepts three values:
+that keeps the viewer usable. The viewer identifies the OS user owning the
+process at the other end of each incoming connection and refuses, with
+'`403 Forbidden`', any connection that does not belong to your OS user (only
+that connection is refused; the viewer keeps serving you). It accepts three
+values:
 
 '`"Off"`'
 > No user check.
 
-'`"Warn"`' (default)
+'`"Warn"`'
 > Reject a connection from a proven-foreign OS user. When the peer's user
 > cannot be determined - for example a sandboxed browser (Flatpak, Snap) running
-q> in a separate network namespace, or platform privilege limits - log a warning
-> and serve anyway (fail-open, so a legitimate client is never broken).
+> in a separate network namespace, or platform privilege limits - log a warning
+> and serve anyway (fail-open, so a legitimate client is never broken, but a
+> process the viewer cannot attribute is served your note).
 
-'`"Reject"`'
+'`"Reject"`' (default)
 > Like '`"Warn"`', but also refuse connections whose OS user is indeterminate
-> (fail-closed). This may block some sandboxed local clients, but it is the only
-> setting that enforces on platforms where a foreign user frequently resolves as
-> indeterminate (notably macOS).
+> (fail-closed). This is the safest setting and the only one that enforces on
+> platforms where a foreign user frequently resolves as indeterminate (notably
+> macOS). The cost is that a legitimate but unattributable client - typically a
+> sandboxed browser - is refused; such a client is served a page explaining how
+> to relax the policy to '`"Warn"`' (add '`same_user_policy = "Warn"`' under the
+> '`[viewer]`' section of your configuration file and restart) and the risk of
+> doing so.
 
 This check is best-effort defense-in-depth: mapping a loopback connection to its
 owning OS user is an enumerate-and-match operation with an inherent race, so it
@@ -3113,8 +3118,9 @@ file and all its referenced (image) files are exposed to all users logged into
 the computer at that given time. With '`viewer.session_binding_cookie`' enabled
 (default), this exposure is limited to the short start-up window before your
 web browser connects; afterwards only the bound browser is served. With
-'`viewer.same_user_policy`' enabled (default '`"Warn"`'), connections from a
-different OS user are refused outright. This concerns only local users, Tp-Note
+'`viewer.same_user_policy`' enabled (default '`"Reject"`'), connections from a
+different OS user - or one the viewer cannot attribute to your own user - are
+refused outright. This concerns only local users, Tp-Note
 never exposes any information to the network or on the Internet.
 
 
