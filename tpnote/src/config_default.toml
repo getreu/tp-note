@@ -318,7 +318,7 @@ displayed_tpnote_count_max = 20
 ### web page open in the same browser from reading the note (SameSite=Lax) and
 ### is a tripwire against another local user grabbing the port first. Disable it
 ### (`false`) if your browser refuses cookies for `localhost`.
-session_binding = true
+session_binding_cookie = true
 
 ### Restrict the viewer to the OS user running Tp-Note. On a multi-user
 ### machine the loopback port is reachable by every logged-in user; this check

@@ -130,7 +130,7 @@ pub fn manage_connections(
     // Subset of the above list containing only displayed Tp-Note documents.
     let delivered_tpnote_docs = Arc::new(RwLock::new(HashSet::new()));
     // The session token the viewer is bound to, `None` while unbound
-    // (`viewer.session_binding`). Process-wide: one binding per viewer.
+    // (`viewer.session_binding_cookie`). Process-wide: one binding per viewer.
     let session_cookie: Arc<RwLock<Option<String>>> = Arc::new(RwLock::new(None));
     // We use an ARC to count the number of running threads.
     let conn_counter = Arc::new(());
@@ -161,7 +161,7 @@ pub fn manage_connections(
 
     // Do not accept connections before the caller has launched the web
     // browser: this shrinks the window in which a foreign local client
-    // could claim the session binding (`viewer.session_binding`) to the
+    // could claim the session binding (`viewer.session_binding_cookie`) to the
     // browser's cold-start latency. The listener is already bound, so
     // clients connecting early queue in the TCP backlog instead of being
     // refused.
@@ -219,7 +219,7 @@ pub(crate) struct ServerThread {
     /// The local links in this list are absolute.
     pub(crate) delivered_tpnote_docs: Arc<RwLock<HashSet<PathBuf>>>,
     /// The session token the viewer is bound to, `None` while unbound.
-    /// Shared by all server threads (`viewer.session_binding`).
+    /// Shared by all server threads (`viewer.session_binding_cookie`).
     pub(crate) session_cookie: Arc<RwLock<Option<String>>>,
     /// We do not store anything here, instead we use the ARC pointing to
     /// `conn_counter` to count the number of instances of `ServerThread`.
@@ -233,7 +233,7 @@ pub(crate) struct ServerThread {
     /// `TMPL_HTML_VAR_VIEWR_DOC_JS`.
     pub(crate) live_update_js: String,
     /// Set only on the request that binds the session
-    /// (`viewer.session_binding`); cleared by `respond_content_ok()` after
+    /// (`viewer.session_binding_cookie`); cleared by `respond_content_ok()` after
     /// the `Set-Cookie` header was successfully written. `Some` therefore
     /// means: bound, but the cookie was not yet delivered to the client —
     /// the condition the binding rollback in `serve_connection2()` tests.
@@ -493,13 +493,13 @@ impl ServerThread {
             // Decode the percent encoding in the URL path.
             let path = percent_decode_str(path).decode_utf8()?;
 
-            // Session binding (`viewer.session_binding`), trust-on-first-use:
+            // Session binding (`viewer.session_binding_cookie`), trust-on-first-use:
             // the first navigation (`GET /`) binds the viewer to its client
             // by issuing a random session cookie; once bound, every request
             // must present it. A mismatch refuses that one request and closes
             // its connection — the viewer itself keeps serving the bound
             // client.
-            if CFG.viewer.session_binding {
+            if CFG.viewer.session_binding_cookie {
                 let is_navigation = &*path == "/";
                 let bound = self.session_cookie.read().clone();
                 match bound {

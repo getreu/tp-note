@@ -627,14 +627,28 @@ described above for formulas.
 Heading attributes:
 .IP
 .EX
-# text { #id .class1 .class2 myattr other_attr=myvalue }
+# text {#id .class1 .class2 myattr other_attr=myvalue}
 .EE
 .PP
-is interpreted as a level 1 heading with the content text, ID
+is interpreted as a level 1 heading with the content \(lqtext\(rq, ID
 `\f[CR]id\f[R]', classes `\f[CR]class1\f[R]' and `\f[CR]class2\f[R]' and
 custom attributes `\f[CR]myattr\f[R]' (without value) and
 `\f[CR]other_attr\f[R]' with value `\f[CR]myvalue\f[R]'.
 Note that ID, classes, and custom attributes should be space\-separated.
+The space after the leading `\f[CR]#\f[R]' is required, as it marks the
+`\f[CR]#\f[R]' as a heading marker.
+This is unrelated to the `\f[CR]#\f[R]' inside the braces, which
+attaches directly to the ID.
+.PP
+For example:
+.IP
+.EX
+## Installation {#install .collapsible data\-level=2}
+.EE
+.PP
+is a level 2 heading with the content \(lqInstallation\(rq, ID
+`\f[CR]install\f[R]', class `\f[CR]collapsible\f[R]' and custom
+attribute `\f[CR]data\-level\f[R]' with value `\f[CR]2\f[R]'.
 .RE
 .IP "2." 3
 `\f[CR]ReStructuredText\f[R]' (file extension \f[CR].rst\f[R])
@@ -3641,7 +3655,11 @@ if the number of so far viewed Tp\-Note files,
 `\f[CR]viewer.displayed_tpnote_count_max\f[R]' is not exceeded,
 .IP "4." 3
 when it\(cqs located under a directory containing a marker file named
-`\f[CR]tpnote.toml\f[R]' (without marker file this condition is void).
+`\f[CR]tpnote.toml\f[R]' (without marker file this condition is void),
+.IP "5." 3
+when the request presents the viewer\(cqs session cookie, once the
+viewer is bound to a web browser
+(cf.\ `\f[CR]viewer.session_binding\f[R]' below).
 .PP
 The HTTP server runs as long as the launched web browser window is open.
 Note, that the server not only exposes the displayed note file, but also
@@ -3670,6 +3688,42 @@ directory and its children.
 When no `\f[CR]tpnote.toml\f[R]' file is found, the root directory is
 set to `\f[CR]/\f[R]', which disables this security feature.
 .PP
+Furthermore, Tp\-Note\(cqs viewer binds itself to the first web browser
+that loads the note page.
+When the configuration file variable `\f[CR]viewer.session_binding\f[R]'
+is enabled (default), the first client navigating to the note page
+receives a random session cookie
+(`\f[CR]Set\-Cookie: tpnote=\&...; HttpOnly; SameSite=Lax\f[R]').
+From that moment on, every request that does not present this cookie is
+refused with `\f[CR]403 Forbidden\f[R]'.
+Only the offending request is refused and its connection closed: the
+viewer itself keeps running and keeps serving the bound web browser; it
+never shuts down because of a cookie mismatch.
+.PP
+This session binding defends against a hostile web page open in the same
+browser: because of the `\f[CR]SameSite=Lax\f[R]' cookie attribute, the
+browser withholds the cookie from cross\-site background requests such
+as `\f[CR]fetch()\f[R]', `\f[CR]<img>\f[R]' or `\f[CR]<iframe>\f[R]', so
+such requests cannot read the note.
+Independently of `\f[CR]viewer.session_binding\f[R]', the viewer also
+refuses requests whose HTTP `\f[CR]Host\f[R]' header does not address
+`\f[CR]localhost\f[R]', which defeats DNS rebinding attacks.
+Against other local users, the session binding acts as a tripwire: as
+the viewer only accepts connections once the web browser is launched, a
+foreign client can claim the session only during the short browser
+start\-up window \(em in which case your own web browser displays a
+`\f[CR]403 Forbidden\f[R]' page explaining what happened, instead of the
+note.
+Note that this first\-connection race is narrowed, but not eliminated: a
+client claiming the binding before your browser connects can read the
+note.
+.PP
+If your web browser is configured to refuse cookies for
+`\f[CR]localhost\f[R]', it cannot return the session cookie and every
+request is refused.
+In this case allow cookies for `\f[CR]http://localhost\f[R]' or disable
+the protection with `\f[CR]viewer.session_binding = false\f[R]'.
+.PP
 As Tp\-Note\(cqs built\-in viewer binds to the `\f[CR]localhost\f[R]'
 interface, the exposed files are in principle accessible to all
 processes running on the computer.
@@ -3677,9 +3731,43 @@ As long as only one user is logged into the computer at a given time, no
 privacy concern is raised: any potential attacker must be logged in, in
 order to access the \f[CR]localhost\f[R] HTTP server.
 .PP
-This is why on systems where multiple users are logged in at the same
-time, it is recommended to disable Tp\-Note\(cqs internal HTTP server by
-setting the configuration file variable
+On systems where multiple users are logged in at the same time, the
+configuration file variable `\f[CR]viewer.same_user_policy\f[R]' offers
+a middle ground that keeps the viewer usable.
+When enabled (the default is `\f[CR]\(dqWarn\(dq\f[R]'), the viewer
+identifies the OS user owning the process at the other end of each
+incoming connection and refuses, with `\f[CR]403 Forbidden\f[R]', any
+connection whose owner is proven to be a different OS user (only that
+connection is refused; the viewer keeps serving you).
+It accepts three values:
+.PP
+`\f[CR]\(dqOff\(dq\f[R]' > No user check.
+.PP
+`\f[CR]\(dqWarn\(dq\f[R]' (default) > Reject a connection from a
+proven\-foreign OS user.
+When the peer\(cqs user > cannot be determined \- for example a
+sandboxed browser (Flatpak, Snap) running q> in a separate network
+namespace, or platform privilege limits \- log a warning > and serve
+anyway (fail\-open, so a legitimate client is never broken).
+.PP
+`\f[CR]\(dqReject\(dq\f[R]' > Like `\f[CR]\(dqWarn\(dq\f[R]', but also
+refuse connections whose OS user is indeterminate > (fail\-closed).
+This may block some sandboxed local clients, but it is the only >
+setting that enforces on platforms where a foreign user frequently
+resolves as > indeterminate (notably macOS).
+.PP
+This check is best\-effort defense\-in\-depth: mapping a loopback
+connection to its owning OS user is an enumerate\-and\-match operation
+with an inherent race, so it raises the bar rather than providing a hard
+guarantee.
+It is independent of, and complements,
+`\f[CR]viewer.session_binding\f[R]': the session cookie defends against
+a hostile web page inside your own browser, while
+`\f[CR]same_user_policy\f[R]' refuses a different OS user regardless of
+any cookie.
+.PP
+For stronger guarantees, it is still possible to disable Tp\-Note\(cqs
+internal HTTP server by setting the configuration file variable
 `\f[CR]arg_default.edit = true\f[R]'.
 Alternatively, you can also compile Tp\-Note without the
 `\f[CR]viewer\f[R]' feature.
@@ -3690,6 +3778,12 @@ authorized user to render the note to HTML manually.
 \f[B]Summary\f[R]: As long as Tp\-Note\(cqs built\-in note viewer is
 running, the note file and all its referenced (image) files are exposed
 to all users logged into the computer at that given time.
+With `\f[CR]viewer.session_binding\f[R]' enabled (default), this
+exposure is limited to the short start\-up window before your web
+browser connects; afterwards only the bound browser is served.
+With `\f[CR]viewer.same_user_policy\f[R]' enabled (default
+`\f[CR]\(dqWarn\(dq\f[R]'), connections from a different OS user are
+refused outright.
 This concerns only local users, Tp\-Note never exposes any information
 to the network or on the Internet.
 .SH ENVIRONMENT VARIABLES

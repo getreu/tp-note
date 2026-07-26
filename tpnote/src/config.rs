@@ -186,7 +186,7 @@ pub enum SameUserPolicy {
 /// configuration file.
 ///
 /// CAUTION: the derived `Default` does not match the shipped defaults for two
-/// fields: `session_binding` derives `false` (protection off) whereas
+/// fields: `session_binding_cookie` derives `false` (protection off) whereas
 /// `config_default.toml` ships `true`; `same_user_policy` derives its
 /// `#[default]` variant `Warn` (protection on), matching the shipped default.
 /// `CFG` is always built from `config_default.toml`, not `Viewer::default()`,
@@ -199,7 +199,7 @@ pub struct Viewer {
     pub tcp_connections_max: usize,
     pub served_mime_types: Vec<(String, String)>,
     pub displayed_tpnote_count_max: usize,
-    pub session_binding: bool,
+    pub session_binding_cookie: bool,
     #[cfg(feature = "same-user-policy")]
     pub same_user_policy: SameUserPolicy,
 }
@@ -496,7 +496,7 @@ mod tests {
         let cfg = Cfg::from_files(&[userconfig]).unwrap();
         assert_eq!(cfg.arg_default.scheme, "zettel");
         // A user config lacking the key inherits the built-in default `true`.
-        assert!(cfg.viewer.session_binding);
+        assert!(cfg.viewer.session_binding_cookie);
 
         //
         // Prepare test: create existing note.
@@ -515,13 +515,13 @@ mod tests {
         // Prepare test: the session binding can be disabled.
         let raw = "\
         [viewer]
-        session_binding = false
+        session_binding_cookie = false
         ";
         let userconfig = temp_dir().join("tpnote.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
         let cfg = Cfg::from_files(&[userconfig]).unwrap();
-        assert!(!cfg.viewer.session_binding);
+        assert!(!cfg.viewer.session_binding_cookie);
 
         //
         // Prepare test: `same_user_policy` defaults to `Warn` and parses.

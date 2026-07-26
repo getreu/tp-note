@@ -97,7 +97,7 @@ impl Viewer {
         // Gate for the accept loop: `manage_connections` accepts no
         // connection before this gate opens. It is opened immediately
         // before `launch_web_browser` below, which shrinks the
-        // accepting-but-unbound window of `viewer.session_binding` to the
+        // accepting-but-unbound window of `viewer.session_binding_cookie` to the
         // browser's cold-start latency — independently of the sign of
         // `viewer.startup_delay`. The port is already bound, so clients
         // connecting early queue in the TCP backlog (no "connection

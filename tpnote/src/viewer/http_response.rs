@@ -34,7 +34,7 @@ pub const FAVICON: &[u8] = include_bytes!("favicon.ico");
 pub const FAVICON_PATH: &str = "/favicon.ico";
 
 /// HTML body of the `403 Forbidden` response sent when
-/// `viewer.session_binding` refuses a request. The viewer keeps running;
+/// `viewer.session_binding_cookie` refuses a request. The viewer keeps running;
 /// only the offending request is refused.
 fn forbidden_page() -> &'static str {
     "\
@@ -53,7 +53,7 @@ refused. Allow cookies for <code>localhost</code> &mdash; e.g. Firefox:
 Manage Exceptions</em>, add <code>http://localhost</code>; Chrome/Chromium:
 <em>Settings &rarr; Privacy and security &rarr; Site data &rarr; Add</em>,
 <code>http://localhost</code> &mdash; then reload. Or disable the check by
-setting <code>viewer.session_binding = false</code> and restart Tp-Note.</p>
+setting <code>viewer.session_binding_cookie = false</code> and restart Tp-Note.</p>
 
 <h3>2. Another local client reached the viewer first</h3>
 <p>The viewer binds to whichever browser loads the page first. On a shared
@@ -91,7 +91,7 @@ pub(crate) trait HttpResponse {
     // ```
 
     /// Write HTTP "forbidden" response with an informative HTML page
-    /// explaining the `viewer.session_binding` protection.
+    /// explaining the `viewer.session_binding_cookie` protection.
     fn respond_forbidden(&mut self) -> Result<(), ViewerError>;
     /// Write HTTP "not found" response.
     fn respond_not_found(&mut self, reqpath: &Path) -> Result<(), ViewerError>;
@@ -388,7 +388,7 @@ impl HttpResponse for ServerThread {
         self.respond_http_error(
             403,
             forbidden_page(),
-            "missing or invalid viewer session cookie (viewer.session_binding)",
+            "missing or invalid viewer session cookie (viewer.session_binding_cookie)",
         )
     }
 
@@ -557,7 +557,7 @@ mod tests {
         assert!(page.starts_with("<!DOCTYPE html>"));
         assert!(page.contains("</html>"));
         assert!(page.contains("does not accept cookies from localhost"));
-        assert!(page.contains("viewer.session_binding = false"));
+        assert!(page.contains("viewer.session_binding_cookie = false"));
         assert!(page.contains("Another local client reached the viewer first"));
         // v2 refuses single requests only; it never shuts the viewer down.
         assert!(!page.contains("shut down"));
