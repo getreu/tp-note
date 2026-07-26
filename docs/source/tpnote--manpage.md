@@ -3095,9 +3095,23 @@ values:
 > platforms where a foreign user frequently resolves as indeterminate (notably
 > macOS). The cost is that a legitimate but unattributable client - typically a
 > sandboxed browser - is refused; such a client is served a page explaining how
-> to relax the policy to '`"Warn"`' (add '`same_user_policy = "Warn"`' under the
-> '`[viewer]`' section of your configuration file and restart) and the risk of
-> doing so.
+> to relax the policy to '`"Warn"`' and the risk of doing so.
+
+If a legitimate browser is refused under the default '`"Reject"`' policy (for
+example a sandboxed Flatpak or Snap browser whose user the viewer cannot
+determine), relax the check by adding the following to your configuration file
+and restarting Tp-Note:
+
+```toml
+[viewer]
+same_user_policy = "Warn"
+```
+
+Understand the trade-off first: in '`"Warn"`' mode the viewer serves connections
+whose owning user it cannot determine, so on a shared machine a local program it
+cannot attribute - possibly another logged-in user's - could read your note.
+Only relax the check if you are the sole user of the machine, or you accept that
+risk. Setting '`same_user_policy = "Off"`' disables the check entirely.
 
 This check is best-effort defense-in-depth: mapping a loopback connection to its
 owning OS user is an enumerate-and-match operation with an inherent race, so it

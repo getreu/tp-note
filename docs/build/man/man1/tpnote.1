@@ -3659,7 +3659,7 @@ when it\(cqs located under a directory containing a marker file named
 .IP "5." 3
 when the request presents the viewer\(cqs session cookie, once the
 viewer is bound to a web browser
-(cf.\ `\f[CR]viewer.session_binding\f[R]' below).
+(cf.\ `\f[CR]viewer.session_binding_cookie\f[R]' below).
 .PP
 The HTTP server runs as long as the launched web browser window is open.
 Note, that the server not only exposes the displayed note file, but also
@@ -3690,10 +3690,10 @@ set to `\f[CR]/\f[R]', which disables this security feature.
 .PP
 Furthermore, Tp\-Note\(cqs viewer binds itself to the first web browser
 that loads the note page.
-When the configuration file variable `\f[CR]viewer.session_binding\f[R]'
-is enabled (default), the first client navigating to the note page
-receives a random session cookie
-(`\f[CR]Set\-Cookie: tpnote=\&...; HttpOnly; SameSite=Lax\f[R]').
+When the configuration file variable
+`\f[CR]viewer.session_binding_cookie\f[R]' is enabled (default), the
+first client navigating to the note page receives a random session
+cookie (`\f[CR]Set\-Cookie: tpnote=\&...; HttpOnly; SameSite=Lax\f[R]').
 From that moment on, every request that does not present this cookie is
 refused with `\f[CR]403 Forbidden\f[R]'.
 Only the offending request is refused and its connection closed: the
@@ -3705,9 +3705,9 @@ browser: because of the `\f[CR]SameSite=Lax\f[R]' cookie attribute, the
 browser withholds the cookie from cross\-site background requests such
 as `\f[CR]fetch()\f[R]', `\f[CR]<img>\f[R]' or `\f[CR]<iframe>\f[R]', so
 such requests cannot read the note.
-Independently of `\f[CR]viewer.session_binding\f[R]', the viewer also
-refuses requests whose HTTP `\f[CR]Host\f[R]' header does not address
-`\f[CR]localhost\f[R]', which defeats DNS rebinding attacks.
+Independently of `\f[CR]viewer.session_binding_cookie\f[R]', the viewer
+also refuses requests whose HTTP `\f[CR]Host\f[R]' header does not
+address `\f[CR]localhost\f[R]', which defeats DNS rebinding attacks.
 Against other local users, the session binding acts as a tripwire: as
 the viewer only accepts connections once the web browser is launched, a
 foreign client can claim the session only during the short browser
@@ -3722,7 +3722,7 @@ If your web browser is configured to refuse cookies for
 `\f[CR]localhost\f[R]', it cannot return the session cookie and every
 request is refused.
 In this case allow cookies for `\f[CR]http://localhost\f[R]' or disable
-the protection with `\f[CR]viewer.session_binding = false\f[R]'.
+the protection with `\f[CR]viewer.session_binding_cookie = false\f[R]'.
 .PP
 As Tp\-Note\(cqs built\-in viewer binds to the `\f[CR]localhost\f[R]'
 interface, the exposed files are in principle accessible to all
@@ -3761,8 +3761,8 @@ connection to its owning OS user is an enumerate\-and\-match operation
 with an inherent race, so it raises the bar rather than providing a hard
 guarantee.
 It is independent of, and complements,
-`\f[CR]viewer.session_binding\f[R]': the session cookie defends against
-a hostile web page inside your own browser, while
+`\f[CR]viewer.session_binding_cookie\f[R]': the session cookie defends
+against a hostile web page inside your own browser, while
 `\f[CR]same_user_policy\f[R]' refuses a different OS user regardless of
 any cookie.
 .PP
@@ -3778,7 +3778,7 @@ authorized user to render the note to HTML manually.
 \f[B]Summary\f[R]: As long as Tp\-Note\(cqs built\-in note viewer is
 running, the note file and all its referenced (image) files are exposed
 to all users logged into the computer at that given time.
-With `\f[CR]viewer.session_binding\f[R]' enabled (default), this
+With `\f[CR]viewer.session_binding_cookie\f[R]' enabled (default), this
 exposure is limited to the short start\-up window before your web
 browser connects; afterwards only the bound browser is served.
 With `\f[CR]viewer.same_user_policy\f[R]' enabled (default
