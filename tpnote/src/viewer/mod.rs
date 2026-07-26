@@ -2,6 +2,8 @@
 mod error;
 mod http_response;
 pub mod init;
+#[cfg(feature = "same-user-policy")]
+mod peer_user;
 mod sse_server;
 mod watcher;
 mod web_browser;
