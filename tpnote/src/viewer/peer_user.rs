@@ -15,7 +15,10 @@
 
 use netstat2::{AddressFamilyFlags, ProtocolFlags, ProtocolSocketInfo, get_sockets_info};
 use std::net::SocketAddr;
-use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System, get_current_pid};
+use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System, Uid, Users, get_current_pid};
+
+/// Placeholder user name when an OS user cannot be resolved.
+pub(crate) const UNKNOWN_USER: &str = "unknown";
 
 /// Outcome of comparing the connecting peer's OS user to our own.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -29,46 +32,77 @@ pub(crate) enum PeerUser {
     Unknown,
 }
 
-/// Identify the OS user owning the peer end of a loopback TCP connection.
-/// `local` is our accepted socket's `local_addr()`, `peer` its `peer_addr()`.
-pub(crate) fn identify_peer_user(local: SocketAddr, peer: SocketAddr) -> PeerUser {
-    // 1. connection -> owning PID of the peer (client) process.
-    let Some(peer_pid) = peer_pid(local, peer) else {
-        return PeerUser::Unknown;
-    };
-    // 2. Our own PID.
-    let Ok(our_pid) = get_current_pid() else {
-        return PeerUser::Unknown;
-    };
-    let peer_pid = Pid::from_u32(peer_pid);
+/// Result of the same-user check: the `relation` drives the policy decision;
+/// `local_user`/`peer_user` are the resolved OS user *names* (or
+/// [`UNKNOWN_USER`]) for logging.
+pub(crate) struct PeerCheck {
+    pub relation: PeerUser,
+    pub local_user: String,
+    pub peer_user: String,
+}
 
-    // 3. Resolve both PIDs to user ids. Refresh only the process(es) we care
-    //    about. Two sysinfo 0.33 quirks to respect:
+/// Identify the OS user owning the peer end of a loopback TCP connection and
+/// our own. `local` is our accepted socket's `local_addr()`, `peer` its
+/// `peer_addr()`. Resolves both user ids (for the `relation`) and their names
+/// (for logging) in a single `netstat2` + `sysinfo` pass.
+pub(crate) fn identify_peer_user(local: SocketAddr, peer: SocketAddr) -> PeerCheck {
+    // 1. connection -> owning PID of the peer (client) process, and our own.
+    let peer_pid = peer_pid(local, peer).map(Pid::from_u32);
+    let our_pid = get_current_pid().ok();
+
+    // 2. Resolve the PIDs we have to user ids. Two sysinfo 0.33 quirks:
     //    - `everything()` is required: a narrower `ProcessRefreshKind`
     //      (e.g. `nothing().with_user(...)`) does not insert the process into
     //      the `System` map, so `process()` then returns `None`.
     //    - the PID list must be deduplicated: passing the same PID twice (which
     //      happens for a same-process/loopback self-connection) refreshes
-    //      nothing. So collapse to one entry when peer and self coincide.
+    //      nothing.
     let mut sys = System::new();
-    let pids: Vec<Pid> = if peer_pid == our_pid {
-        vec![peer_pid]
-    } else {
-        vec![peer_pid, our_pid]
-    };
-    sys.refresh_processes_specifics(
-        ProcessesToUpdate::Some(&pids),
-        true,
-        ProcessRefreshKind::everything(),
-    );
-    let peer_uid = sys.process(peer_pid).and_then(|p| p.user_id());
-    let our_uid = sys.process(our_pid).and_then(|p| p.user_id());
+    let mut pids: Vec<Pid> = Vec::new();
+    if let Some(p) = peer_pid {
+        pids.push(p);
+    }
+    if let Some(p) = our_pid
+        && Some(p) != peer_pid
+    {
+        pids.push(p);
+    }
+    if !pids.is_empty() {
+        sys.refresh_processes_specifics(
+            ProcessesToUpdate::Some(&pids),
+            true,
+            ProcessRefreshKind::everything(),
+        );
+    }
+    let peer_uid = peer_pid
+        .and_then(|p| sys.process(p))
+        .and_then(|p| p.user_id())
+        .cloned();
+    let our_uid = our_pid
+        .and_then(|p| sys.process(p))
+        .and_then(|p| p.user_id())
+        .cloned();
 
-    match (peer_uid, our_uid) {
+    let relation = match (&peer_uid, &our_uid) {
         (Some(a), Some(b)) if a == b => PeerUser::Same,
         (Some(_), Some(_)) => PeerUser::Other,
         // Either user id was unresolvable.
         _ => PeerUser::Unknown,
+    };
+
+    // 3. Map the user ids to names for logging.
+    let users = Users::new_with_refreshed_list();
+    let name_of = |uid: &Option<Uid>| -> String {
+        uid.as_ref()
+            .and_then(|u| users.get_user_by_id(u))
+            .map(|u| u.name().to_string())
+            .unwrap_or_else(|| UNKNOWN_USER.to_string())
+    };
+
+    PeerCheck {
+        relation,
+        local_user: name_of(&our_uid),
+        peer_user: name_of(&peer_uid),
     }
 }
 
@@ -111,9 +145,11 @@ mod tests {
         // Keep the client socket alive for the duration of the lookup.
         let _client = TcpStream::connect(addr).unwrap();
         let (server, _) = listener.accept().unwrap();
-        assert_eq!(
-            identify_peer_user(server.local_addr().unwrap(), server.peer_addr().unwrap()),
-            PeerUser::Same
-        );
+        let check =
+            identify_peer_user(server.local_addr().unwrap(), server.peer_addr().unwrap());
+        assert_eq!(check.relation, PeerUser::Same);
+        // Both ends are this process, so both names resolve and are equal.
+        assert_eq!(check.local_user, check.peer_user);
+        assert_ne!(check.peer_user, UNKNOWN_USER);
     }
 }

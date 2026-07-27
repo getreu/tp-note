@@ -379,13 +379,20 @@ impl ServerThread {
             // the peer lookup (see the comment above the match).
             _ if session_bound => {}
             policy => {
-                match identify_peer_user(local, peer) {
+                // The check just happened: `check` carries the OS user names
+                // detected for the local (Tp-Note) process and the peer
+                // (viewer) process — the latter is `unknown` when it could not
+                // be resolved.
+                let check = identify_peer_user(local, peer);
+                match check.relation {
                     PeerUser::Same => {
                         // Assertion holds: the peer is our own OS user.
                         log::debug!(
-                            "TCP port local {} to peer {}: Ok, peer is the same OS user.",
+                            "TCP port local {} ({}) to peer {} ({}): Ok, peer is the same OS user.",
                             local.port(),
+                            check.local_user,
                             peer.port(),
+                            check.peer_user,
                         );
                     }
                     PeerUser::Other => {
@@ -399,10 +406,12 @@ impl ServerThread {
                     }
                     PeerUser::Unknown => {
                         log::warn!(
-                            "TCP port local {} to peer {}: cannot determine the \
+                            "TCP port local {} ({}) to peer {} ({}): cannot determine the \
                              connecting client's OS user; same-user check inconclusive.",
                             local.port(),
+                            check.local_user,
                             peer.port(),
+                            check.peer_user,
                         );
                         // `Warn` serves (fail-open); `Reject` refuses
                         // (fail-closed). Because `Reject` is the default, the
