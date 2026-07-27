@@ -401,7 +401,11 @@ impl ServerThread {
                         self.respond_http_error(
                             403,
                             &peer_user_mismatch_page(&check.local_user, &check.peer_user),
-                            "peer belongs to a different OS user",
+                            &format!(
+                                "peer belongs to a different OS user \
+                                 (local user: {}, viewer user: {})",
+                                check.local_user, check.peer_user,
+                            ),
                         )?;
                         return Err(ViewerError::PeerUserMismatch {
                             local_user: check.local_user,
@@ -427,7 +431,12 @@ impl ServerThread {
                             self.respond_http_error(
                                 403,
                                 &peer_user_unknown_page(&check.local_user, &check.peer_user),
-                                "peer OS user indeterminate (same_user_policy = Reject)",
+                                &format!(
+                                    "peer OS user indeterminate \
+                                     (local user: {}, viewer user: {}; \
+                                     same_user_policy = Reject)",
+                                    check.local_user, check.peer_user,
+                                ),
                             )?;
                             return Err(ViewerError::PeerUserUnknown {
                                 local_user: check.local_user,
