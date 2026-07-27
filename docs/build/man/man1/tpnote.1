@@ -3732,29 +3732,51 @@ privacy concern is raised: any potential attacker must be logged in, in
 order to access the \f[CR]localhost\f[R] HTTP server.
 .PP
 On systems where multiple users are logged in at the same time, the
-configuration file variable `\f[CR]viewer.same_user_policy\f[R]' offers
-a middle ground that keeps the viewer usable.
-When enabled (the default is `\f[CR]\(dqWarn\(dq\f[R]'), the viewer
-identifies the OS user owning the process at the other end of each
-incoming connection and refuses, with `\f[CR]403 Forbidden\f[R]', any
-connection whose owner is proven to be a different OS user (only that
+configuration file variable `\f[CR]viewer.same_user_policy\f[R]' keeps
+the viewer usable while limiting exposure.
+The viewer identifies the OS user owning the process at the other end of
+each incoming connection and refuses, with `\f[CR]403 Forbidden\f[R]',
+any connection it cannot confirm belongs to your own OS user (only that
 connection is refused; the viewer keeps serving you).
-It accepts three values:
+It accepts two values:
 .PP
-`\f[CR]\(dqOff\(dq\f[R]' > No user check.
+`\f[CR]\(dqOff\(dq\f[R]' > No user check; any local process is served.
 .PP
-`\f[CR]\(dqWarn\(dq\f[R]' (default) > Reject a connection from a
-proven\-foreign OS user.
-When the peer\(cqs user > cannot be determined \- for example a
-sandboxed browser (Flatpak, Snap) running q> in a separate network
-namespace, or platform privilege limits \- log a warning > and serve
-anyway (fail\-open, so a legitimate client is never broken).
+`\f[CR]\(dqReject\(dq\f[R]' (default) > Serve only a connection proven
+to belong to your OS user.
+A connection from a > proven\-foreign user, and a connection whose user
+cannot be determined \- for > example a sandboxed browser (Flatpak,
+Snap) in a separate network namespace, > or where platform privilege
+limits block the lookup \- are both refused > (fail\-closed).
+On Linux a foreign user is normally the second case, because a >
+non\-root viewer cannot resolve another user\(cqs process, so
+fail\-closed is what > actually enforces.
+The cost is that a legitimate but unattributable client \- > typically a
+sandboxed browser \- is refused; such a client is served a page >
+explaining how to turn the check off.
 .PP
-`\f[CR]\(dqReject\(dq\f[R]' > Like `\f[CR]\(dqWarn\(dq\f[R]', but also
-refuse connections whose OS user is indeterminate > (fail\-closed).
-This may block some sandboxed local clients, but it is the only >
-setting that enforces on platforms where a foreign user frequently
-resolves as > indeterminate (notably macOS).
+If a legitimate browser is refused under the default
+`\f[CR]\(dqReject\(dq\f[R]' policy (for example a sandboxed Flatpak or
+Snap browser whose user the viewer cannot determine), disable the check
+by adding the following to your configuration file and restarting
+Tp\-Note:
+.IP
+.EX
+\f[B][viewer]\f[R]
+same_user_policy = \(dqOff\(dq
+.EE
+.PP
+Understand the trade\-off first: with `\f[CR]\(dqOff\(dq\f[R]' the
+viewer performs no OS\-user check and serves any local process, so on a
+shared machine a program belonging to another logged\-in user could read
+your note.
+Only disable the check if you are the sole user of the machine, or you
+accept that risk.
+.PP
+(An intermediate \(lqwarn but serve\(rq mode was considered and dropped:
+it serves any connection whose user it cannot determine, and a foreign
+client can arrange to be unattributable, so it would protect nothing on
+any platform.)
 .PP
 This check is best\-effort defense\-in\-depth: mapping a loopback
 connection to its owning OS user is an enumerate\-and\-match operation
@@ -3782,8 +3804,9 @@ With `\f[CR]viewer.session_binding_cookie\f[R]' enabled (default), this
 exposure is limited to the short start\-up window before your web
 browser connects; afterwards only the bound browser is served.
 With `\f[CR]viewer.same_user_policy\f[R]' enabled (default
-`\f[CR]\(dqWarn\(dq\f[R]'), connections from a different OS user are
-refused outright.
+`\f[CR]\(dqReject\(dq\f[R]'), connections from a different OS user \- or
+one the viewer cannot attribute to your own user \- are refused
+outright.
 This concerns only local users, Tp\-Note never exposes any information
 to the network or on the Internet.
 .SH ENVIRONMENT VARIABLES

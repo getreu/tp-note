@@ -326,16 +326,16 @@ session_binding_cookie = true
 ### with `403 Forbidden` (that connection only — the viewer keeps serving the
 ### legitimate user). It is best-effort defense-in-depth: the
 ### connection-to-user lookup can be inconclusive (sandboxed browser in a
-### separate network namespace, platform privilege limits). Three values:
-###   "Off"    - no check.
-###   "Warn"   - reject a proven-foreign user; if the user cannot be determined,
-###              log a warning and serve anyway (FAIL-OPEN). Never breaks a
-###              legitimate client, but a process the viewer cannot attribute
-###              — possibly another user's — is served your note.
-###   "Reject" - (default) like "Warn" but also refuse when the user is
-###              indeterminate (fail-closed). Safest, and the only setting that
-###              enforces where a foreign user often resolves as indeterminate
-###              (e.g. macOS). Cost: a legitimate but unattributable client
-###              (a sandboxed browser) is refused and shown a page explaining
-###              how to relax to "Warn".
+### separate network namespace, platform privilege limits). Two values:
+###   "Off"    - no check; serve any local process.
+###   "Reject" - (default) serve only a peer proven to be the same OS user;
+###              refuse a proven-foreign user AND a peer whose user cannot be
+###              determined (fail-closed). On Linux a foreign user is the latter
+###              case — a non-root viewer cannot resolve another user's process
+###              — so fail-closed is what actually protects. Cost: a legitimate
+###              but unattributable client (a sandboxed browser) is refused and
+###              shown a page explaining how to turn the check "Off".
+### (A fail-open "warn but serve" middle ground was dropped: it serves any peer
+### it cannot attribute, and a foreign client can arrange to be unattributable,
+### so it protects nothing on any platform.)
 same_user_policy = "Reject"

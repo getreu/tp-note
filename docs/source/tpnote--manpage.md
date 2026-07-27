@@ -3072,53 +3072,62 @@ concern is raised: any potential attacker must be logged in, in order to access
 the `localhost` HTTP server.
 
 On systems where multiple users are logged in at the same time, the
-configuration file variable '`viewer.same_user_policy`' offers a middle ground
-that keeps the viewer usable. The viewer identifies the OS user owning the
-process at the other end of each incoming connection and refuses, with
-'`403 Forbidden`', any connection that does not belong to your OS user (only
-that connection is refused; the viewer keeps serving you). It accepts three
-values:
+configuration file variable '`viewer.same_user_policy`' keeps the viewer usable
+while limiting exposure. While the viewer is still establishing the session, it
+identifies the OS user owning the process at the other end of a new connection
+and refuses, with '`403 Forbidden`', any connection it cannot confirm belongs to
+your own OS user (only that connection is refused; the viewer keeps serving you).
+It accepts two values:
 
 '`"Off"`'
-> No user check.
-
-'`"Warn"`'
-> Reject a connection from a proven-foreign OS user. When the peer's user
-> cannot be determined - for example a sandboxed browser (Flatpak, Snap) running
-> in a separate network namespace, or platform privilege limits - log a warning
-> and serve anyway (fail-open, so a legitimate client is never broken, but a
-> process the viewer cannot attribute is served your note).
+> No user check; any local process is served.
 
 '`"Reject"`' (default)
-> Like '`"Warn"`', but also refuse connections whose OS user is indeterminate
-> (fail-closed). This is the safest setting and the only one that enforces on
-> platforms where a foreign user frequently resolves as indeterminate (notably
-> macOS). The cost is that a legitimate but unattributable client - typically a
-> sandboxed browser - is refused; such a client is served a page explaining how
-> to relax the policy to '`"Warn"`' and the risk of doing so.
+> Serve only a connection proven to belong to your OS user. A connection from a
+> proven-foreign user, and a connection whose user cannot be determined - for
+> example a sandboxed browser (Flatpak, Snap) whose process the viewer cannot
+> match to the connection, or where platform privilege limits block the lookup
+> - are both refused
+> (fail-closed). On Linux a foreign user is normally the second case, because a
+> non-root viewer cannot resolve another user's process, so fail-closed is what
+> actually enforces. The cost is that a legitimate but unattributable client -
+> typically a sandboxed browser - is refused; such a client is served a page
+> explaining how to turn the check off.
 
 If a legitimate browser is refused under the default '`"Reject"`' policy (for
 example a sandboxed Flatpak or Snap browser whose user the viewer cannot
-determine), relax the check by adding the following to your configuration file
+determine), disable the check by adding the following to your configuration file
 and restarting Tp-Note:
 
 ```toml
 [viewer]
-same_user_policy = "Warn"
+same_user_policy = "Off"
 ```
 
-Understand the trade-off first: in '`"Warn"`' mode the viewer serves connections
-whose owning user it cannot determine, so on a shared machine a local program it
-cannot attribute - possibly another logged-in user's - could read your note.
-Only relax the check if you are the sole user of the machine, or you accept that
-risk. Setting '`same_user_policy = "Off"`' disables the check entirely.
+Understand the trade-off first: with '`"Off"`' the viewer no longer verifies the
+connecting OS user. Session-cookie binding ('`viewer.session_binding_cookie`')
+stays on, though, so another local user could read your note only by winning the
+race to claim the session before your browser does, in the brief start-up window
+- and even then you would notice, because your own browser would be locked out
+and shown an error page instead of the note. Once your browser has bound the
+session and the note is displayed, the cookie keeps other users out. This
+trade-off is a concern only if you set '`same_user_policy = "Off"`'; with the
+default '`"Reject"`' you are protected anyway.
+
+(An intermediate "warn but serve" mode was considered and dropped: it serves any
+connection whose user it cannot determine, and a foreign client can arrange to
+be unattributable, so it would protect nothing on any platform.)
 
 This check is best-effort defense-in-depth: mapping a loopback connection to its
 owning OS user is an enumerate-and-match operation with an inherent race, so it
-raises the bar rather than providing a hard guarantee. It is independent of, and
-complements, '`viewer.session_binding_cookie`': the session cookie defends against a
-hostile web page inside your own browser, while '`same_user_policy`' refuses a
-different OS user regardless of any cookie.
+raises the bar rather than providing a hard guarantee. It complements
+'`viewer.session_binding_cookie`', working in sequence with it: the session cookie
+defends against a hostile web page inside your own browser, while
+'`same_user_policy`' guards the bootstrap window - refusing a foreign OS user
+before your browser binds the session - after which the session cookie gates
+every request. A foreign user is thus refused while the session is being
+established; once your browser holds the cookie, the cookie is what keeps other
+users out.
 
 For stronger guarantees, it is still possible to disable Tp-Note's internal
 HTTP server by setting the configuration file variable

@@ -84,7 +84,7 @@ fn detected_users_html(local_user: &str, peer_user: &str) -> String {
 /// because it could **not determine** the connecting client's OS user. The
 /// legitimate user's own browser can hit this if it is sandboxed
 /// (Flatpak/Snap) or on platforms where the lookup is limited, so the page
-/// explains how to relax the policy to `"Warn"` and what that costs. It also
+/// explains how to disable the check (`"Off"`) and what that costs. It also
 /// names the detected local and viewer users.
 #[cfg(feature = "same-user-policy")]
 pub(crate) fn peer_user_unknown_page(local_user: &str, peer_user: &str) -> String {
@@ -99,26 +99,24 @@ only connections it can positively attribute to your own user, and refuses any
 it cannot (fail-closed).</p>
 
 <p>This most often happens with a <strong>sandboxed browser</strong> (Flatpak,
-Snap, firejail) running in its own network namespace, or on platforms where the
-viewer cannot resolve the connecting process's owner. It does <em>not</em>
-necessarily mean another user connected.</p>
+Snap, firejail) whose process the viewer cannot match to the connection, or on
+platforms where the viewer cannot resolve the connecting process's owner. It
+does <em>not</em> necessarily mean another user connected.</p>
 
 {users}
-<h3>Relax the check</h3>
-<p>To make the viewer serve connections whose user it cannot determine, add the
-following to your Tp-Note configuration file and restart Tp-Note:</p>
+<h3>Disable the check</h3>
+<p>To turn the OS-user check off so the viewer serves any local connection, add
+the following to your Tp-Note configuration file and restart Tp-Note:</p>
 <pre>[viewer]
-same_user_policy = &quot;Warn&quot;</pre>
+same_user_policy = &quot;Off&quot;</pre>
 
 <h3>Understand the risk first</h3>
-<p>In <code>&quot;Warn&quot;</code> mode the viewer <strong>serves</strong> any
-connection whose owning user it cannot determine (fail-open). On a shared
-computer, a program the viewer cannot attribute &mdash; possibly
-<strong>another logged-in user's</strong> &mdash; would then be allowed to read
-this note and its referenced files. Only relax the check if you are the sole
-user of this machine, or you accept that a local program the viewer cannot
-identify may read your note. Setting <code>same_user_policy = &quot;Off&quot;</code>
-disables the check entirely.</p>
+<p>With <code>&quot;Off&quot;</code> the viewer performs <strong>no</strong>
+OS-user check and serves any local process (fail-open). On a shared computer, a
+program belonging to <strong>another logged-in user</strong> would then be
+allowed to read this note and its referenced files. Only disable the check if
+you are the sole user of this machine, or you accept that any local program may
+read your note.</p>
 </body></html>",
         users = detected_users_html(local_user, peer_user),
     )
@@ -126,8 +124,9 @@ disables the check entirely.</p>
 
 /// HTML body of the `403 Forbidden` response sent when the peer-user check
 /// proved the connecting client belongs to a **different** OS user than the
-/// one running Tp-Note. Names both detected users. No relax-to-`Warn` advice:
-/// `Warn` also rejects a proven-foreign user, so relaxing would not admit it.
+/// one running Tp-Note. Names both detected users. No disable advice: a proven
+/// foreign user is refused deliberately, so only `"Off"` (which disables the
+/// check for everyone) would admit it — not something to suggest here.
 #[cfg(feature = "same-user-policy")]
 pub(crate) fn peer_user_mismatch_page(local_user: &str, peer_user: &str) -> String {
     format!(
@@ -654,12 +653,14 @@ mod tests {
         let page = peer_user_unknown_page("getreu", "unknown");
         assert!(page.starts_with("<!DOCTYPE html>"));
         assert!(page.contains("</html>"));
-        // The minimal TOML example to relax to Warn.
+        // The minimal TOML example to disable the check.
         assert!(page.contains("[viewer]"));
-        assert!(page.contains("same_user_policy = &quot;Warn&quot;"));
+        assert!(page.contains("same_user_policy = &quot;Off&quot;"));
+        // The dropped `Warn` value must not appear anywhere.
+        assert!(!page.contains("Warn"));
         // The risk is explained.
         assert!(page.contains("fail-open"));
-        assert!(page.contains("another logged-in user's"));
+        assert!(page.contains("another logged-in user"));
         // The detected users are named.
         assert!(page.contains("<code>getreu</code>"));
         assert!(page.contains("<code>unknown</code>"));
@@ -675,7 +676,7 @@ mod tests {
         // Both detected users are named.
         assert!(page.contains("<code>getreu</code>"));
         assert!(page.contains("<code>alice</code>"));
-        // No relax-to-Warn advice here (Warn would not admit a foreign user).
-        assert!(!page.contains("same_user_policy = &quot;Warn&quot;"));
+        // No disable advice on the proven-foreign page.
+        assert!(!page.contains("same_user_policy = &quot;Off&quot;"));
     }
 }

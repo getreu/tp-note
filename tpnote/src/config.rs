@@ -164,25 +164,23 @@ pub struct AppArgs {
 /// reachable by every logged-in user; this check rejects connections whose
 /// owning process belongs to a different OS user. It is best-effort
 /// defense-in-depth (the connection→user lookup can be inconclusive), so the
-/// policy decides what to do when the peer's user cannot be determined.
-/// Deserialized from a PascalCase TOML string (`"Off"`/`"Warn"`/`"Reject"`),
+/// policy decides whether to enforce at all.
+/// Deserialized from a PascalCase TOML string (`"Off"`/`"Reject"`),
 /// mirroring `LocalLinkKind`.
 #[cfg(feature = "same-user-policy")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum SameUserPolicy {
     /// No user check — serve any local process (previous behaviour).
     Off,
-    /// Reject a peer *proven* to belong to a different OS user. If the peer's
-    /// user cannot be determined (sandbox / network namespace, lookup race,
-    /// platform privilege limits), log a warning and serve anyway (fail-open).
-    Warn,
-    /// Like `Warn`, but also reject the connection when the peer's user cannot
-    /// be determined (fail-closed). This is the default: it is the safest
-    /// posture and the only one that enforces on platforms where a foreign
-    /// user often resolves as indeterminate (e.g. macOS). The cost is that a
-    /// legitimate client whose user cannot be resolved (a sandboxed browser)
-    /// is refused; such a user is shown a page explaining how to relax to
-    /// `Warn`.
+    /// Serve only a peer proven to be the same OS user; refuse everything else
+    /// (fail-closed). A peer proven to belong to a *different* user **and** a
+    /// peer whose user cannot be determined (sandbox / network namespace,
+    /// lookup race, platform privilege limits — the common case for a foreign
+    /// user on Linux, where a non-root viewer cannot resolve another user's
+    /// process) are both refused. This is the default and the safest posture.
+    /// The cost is that a legitimate client whose user cannot be resolved (a
+    /// sandboxed browser) is refused; such a user is shown a page explaining
+    /// how to disable the check (`Off`).
     #[default]
     Reject,
 }
@@ -547,12 +545,21 @@ mod tests {
 
             let raw = "\
             [viewer]
-            same_user_policy = \"Warn\"
+            same_user_policy = \"Off\"
             ";
             let userconfig = temp_dir().join("tpnote.toml");
             fs::write(&userconfig, raw.as_bytes()).unwrap();
             let cfg = Cfg::from_files(&[userconfig]).unwrap();
-            assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Warn);
+            assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Off);
+
+            // The dropped `Warn` value is now a hard error.
+            let raw = "\
+            [viewer]
+            same_user_policy = \"Warn\"
+            ";
+            let userconfig = temp_dir().join("tpnote.toml");
+            fs::write(&userconfig, raw.as_bytes()).unwrap();
+            assert!(Cfg::from_files(&[userconfig]).is_err());
 
             // An invalid enum string is a hard error.
             let raw = "\

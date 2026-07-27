@@ -395,7 +395,7 @@ impl ServerThread {
             // Session already bound: the cookie now gates every request, so skip
             // the peer lookup (see the comment above the match).
             _ if session_bound => {}
-            policy => {
+            SameUserPolicy::Reject => {
                 // The check just happened: `check` carries the OS user names
                 // detected for the local (Tp-Note) process and the peer
                 // (viewer) process — the latter is `unknown` when it could not
@@ -432,34 +432,32 @@ impl ServerThread {
                     PeerUser::Unknown => {
                         log::warn!(
                             "TCP port local {} ({}) to peer {} ({}): cannot determine the \
-                             connecting client's OS user; same-user check inconclusive.",
+                             connecting client's OS user; refusing (fail-closed).",
                             local.port(),
                             check.local_user,
                             peer.port(),
                             check.peer_user,
                         );
-                        // `Warn` serves (fail-open); `Reject` refuses
-                        // (fail-closed). Because `Reject` is the default, the
-                        // client refused here may well be the legitimate
-                        // user's own (sandboxed) browser, so serve the
-                        // informative page that explains how to relax to
-                        // `Warn` and the risk of doing so.
-                        if policy == SameUserPolicy::Reject {
-                            self.respond_http_error(
-                                403,
-                                &peer_user_unknown_page(&check.local_user, &check.peer_user),
-                                &format!(
-                                    "peer OS user indeterminate \
-                                     (local user: {}, viewer user: {}; \
-                                     same_user_policy = Reject)",
-                                    check.local_user, check.peer_user,
-                                ),
-                            )?;
-                            return Err(ViewerError::PeerUserUnknown {
-                                local_user: check.local_user,
-                                peer_user: check.peer_user,
-                            });
-                        }
+                        // Fail closed: refuse a peer we cannot attribute. This
+                        // is the common case for a foreign OS user (a non-root
+                        // viewer cannot resolve another user's process), but it
+                        // may also be the legitimate user's own (sandboxed)
+                        // browser, so serve the informative page that explains
+                        // how to disable the check (`Off`) and its risk.
+                        self.respond_http_error(
+                            403,
+                            &peer_user_unknown_page(&check.local_user, &check.peer_user),
+                            &format!(
+                                "peer OS user indeterminate \
+                                 (local user: {}, viewer user: {}; \
+                                 same_user_policy = Reject)",
+                                check.local_user, check.peer_user,
+                            ),
+                        )?;
+                        return Err(ViewerError::PeerUserUnknown {
+                            local_user: check.local_user,
+                            peer_user: check.peer_user,
+                        });
                     }
                 }
             }
