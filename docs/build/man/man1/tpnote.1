@@ -3734,10 +3734,11 @@ order to access the \f[CR]localhost\f[R] HTTP server.
 On systems where multiple users are logged in at the same time, the
 configuration file variable `\f[CR]viewer.same_user_policy\f[R]' keeps
 the viewer usable while limiting exposure.
-The viewer identifies the OS user owning the process at the other end of
-each incoming connection and refuses, with `\f[CR]403 Forbidden\f[R]',
-any connection it cannot confirm belongs to your own OS user (only that
-connection is refused; the viewer keeps serving you).
+While the viewer is still establishing the session, it identifies the OS
+user owning the process at the other end of a new connection and
+refuses, with `\f[CR]403 Forbidden\f[R]', any connection it cannot
+confirm belongs to your own OS user (only that connection is refused;
+the viewer keeps serving you).
 It accepts two values:
 .PP
 `\f[CR]\(dqOff\(dq\f[R]' > No user check; any local process is served.
@@ -3746,8 +3747,9 @@ It accepts two values:
 to belong to your OS user.
 A connection from a > proven\-foreign user, and a connection whose user
 cannot be determined \- for > example a sandboxed browser (Flatpak,
-Snap) in a separate network namespace, > or where platform privilege
-limits block the lookup \- are both refused > (fail\-closed).
+Snap) whose process the viewer cannot > match to the connection, or
+where platform privilege limits block the lookup > \- are both refused >
+(fail\-closed).
 On Linux a foreign user is normally the second case, because a >
 non\-root viewer cannot resolve another user\(cqs process, so
 fail\-closed is what > actually enforces.
@@ -3767,11 +3769,18 @@ same_user_policy = \(dqOff\(dq
 .EE
 .PP
 Understand the trade\-off first: with `\f[CR]\(dqOff\(dq\f[R]' the
-viewer performs no OS\-user check and serves any local process, so on a
-shared machine a program belonging to another logged\-in user could read
-your note.
-Only disable the check if you are the sole user of the machine, or you
-accept that risk.
+viewer no longer verifies the connecting OS user.
+Session\-cookie binding (`\f[CR]viewer.session_binding_cookie\f[R]')
+stays on, though, so another local user could read your note only by
+winning the race to claim the session before your browser does, in the
+brief start\-up window \- and even then you would notice, because your
+own browser would be locked out and shown an error page instead of the
+note.
+Once your browser has bound the session and the note is displayed, the
+cookie keeps other users out.
+This trade\-off is a concern only if you set
+`\f[CR]same_user_policy = \(dqOff\(dq\f[R]'; with the default
+`\f[CR]\(dqReject\(dq\f[R]' you are protected anyway.
 .PP
 (An intermediate \(lqwarn but serve\(rq mode was considered and dropped:
 it serves any connection whose user it cannot determine, and a foreign
@@ -3782,11 +3791,14 @@ This check is best\-effort defense\-in\-depth: mapping a loopback
 connection to its owning OS user is an enumerate\-and\-match operation
 with an inherent race, so it raises the bar rather than providing a hard
 guarantee.
-It is independent of, and complements,
-`\f[CR]viewer.session_binding_cookie\f[R]': the session cookie defends
-against a hostile web page inside your own browser, while
-`\f[CR]same_user_policy\f[R]' refuses a different OS user regardless of
-any cookie.
+It complements `\f[CR]viewer.session_binding_cookie\f[R]', working in
+sequence with it: the session cookie defends against a hostile web page
+inside your own browser, while `\f[CR]same_user_policy\f[R]' guards the
+bootstrap window \- refusing a foreign OS user before your browser binds
+the session \- after which the session cookie gates every request.
+A foreign user is thus refused while the session is being established;
+once your browser holds the cookie, the cookie is what keeps other users
+out.
 .PP
 For stronger guarantees, it is still possible to disable Tp\-Note\(cqs
 internal HTTP server by setting the configuration file variable
