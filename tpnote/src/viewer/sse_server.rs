@@ -203,7 +203,7 @@ pub fn manage_connections(
                     let conn_counter = conn_counter.clone();
                     let context = context.clone();
                     move || {
-                        let mut st = ServerThread::new(
+                        match ServerThread::new(
                             event_rx,
                             stream,
                             allowed_urls,
@@ -211,8 +211,13 @@ pub fn manage_connections(
                             session_cookie,
                             conn_counter,
                             context,
-                        );
-                        st.serve_connection()
+                        ) {
+                            Ok(mut st) => st.serve_connection(),
+                            Err(e) => log::warn!(
+                                "Dropping TCP connection (no local socket address): {}",
+                                e
+                            ),
+                        }
                     }
                 });
             }
@@ -269,24 +274,21 @@ impl ServerThread {
         session_cookie: Arc<RwLock<Option<String>>>,
         conn_counter: Arc<()>,
         context: Context<HasSettings>,
-    ) -> Self {
-        let local_addr = stream.local_addr();
+    ) -> Result<Self, ViewerError> {
+        // Compose the JavaScript client code, which needs the bound port for its
+        // `EventSource` URL. A missing local address on an already-accepted
+        // socket is effectively impossible, but return an error (closing this
+        // one connection) instead of panicking the thread, for consistency with
+        // the rest of the pipeline.
+        let live_update_js = format!(
+            "{}{}:{}{}",
+            SSE_CLIENT_CODE1,
+            LOCALHOST,
+            stream.local_addr()?.port(),
+            SSE_CLIENT_CODE2
+        );
 
-        // Compose JavaScript code.
-        let live_update_js = match local_addr {
-            Ok(addr) => format!(
-                "{}{}:{}{}",
-                SSE_CLIENT_CODE1,
-                LOCALHOST,
-                addr.port(),
-                SSE_CLIENT_CODE2
-            ),
-            Err(_) => {
-                panic!("No TCP connection: socket address of local half is missing.")
-            }
-        };
-
-        Self {
+        Ok(Self {
             rx,
             stream,
             allowed_urls,
@@ -296,7 +298,7 @@ impl ServerThread {
             context,
             live_update_js,
             set_cookie: None,
-        }
+        })
     }
 
     /// Formats the `Set-Cookie` header line for the response that binds the
