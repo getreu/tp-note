@@ -65,16 +65,31 @@ note.</p>
 </body></html>"
 }
 
+/// HTML block naming the OS users the same-user check detected, shared by the
+/// peer-user rejection pages. `local_user` is the user running Tp-Note;
+/// `peer_user` is the connecting (viewer) client, or `unknown` if unresolved.
+#[cfg(feature = "same-user-policy")]
+fn detected_users_html(local_user: &str, peer_user: &str) -> String {
+    format!(
+        "<h3>Detected OS users</h3>\n\
+         <p>This Tp-Note viewer (local process) is running as OS user: \
+         <code>{local_user}</code><br>\n\
+         The refused client (your browser / viewer) was detected as OS user: \
+         <code>{peer_user}</code></p>\n"
+    )
+}
+
 /// HTML body of the `403 Forbidden` response sent when the peer-user check
 /// (`viewer.same_user_policy = "Reject"`, the default) refuses a request
 /// because it could **not determine** the connecting client's OS user. The
 /// legitimate user's own browser can hit this if it is sandboxed
 /// (Flatpak/Snap) or on platforms where the lookup is limited, so the page
-/// explains how to relax the policy to `"Warn"` and what that costs.
+/// explains how to relax the policy to `"Warn"` and what that costs. It also
+/// names the detected local and viewer users.
 #[cfg(feature = "same-user-policy")]
-pub(crate) fn peer_user_unknown_page() -> &'static str {
-    "\
-<!DOCTYPE html><html><head><meta charset=\"UTF-8\">
+pub(crate) fn peer_user_unknown_page(local_user: &str, peer_user: &str) -> String {
+    format!(
+        "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">
 <title>Tp-Note viewer: access refused</title></head><body>
 <h2>Access to this note was refused</h2>
 <p>The viewer could not confirm that the program connecting to it belongs to
@@ -88,6 +103,7 @@ Snap, firejail) running in its own network namespace, or on platforms where the
 viewer cannot resolve the connecting process's owner. It does <em>not</em>
 necessarily mean another user connected.</p>
 
+{users}
 <h3>Relax the check</h3>
 <p>To make the viewer serve connections whose user it cannot determine, add the
 following to your Tp-Note configuration file and restart Tp-Note:</p>
@@ -103,7 +119,30 @@ this note and its referenced files. Only relax the check if you are the sole
 user of this machine, or you accept that a local program the viewer cannot
 identify may read your note. Setting <code>same_user_policy = &quot;Off&quot;</code>
 disables the check entirely.</p>
-</body></html>"
+</body></html>",
+        users = detected_users_html(local_user, peer_user),
+    )
+}
+
+/// HTML body of the `403 Forbidden` response sent when the peer-user check
+/// proved the connecting client belongs to a **different** OS user than the
+/// one running Tp-Note. Names both detected users. No relax-to-`Warn` advice:
+/// `Warn` also rejects a proven-foreign user, so relaxing would not admit it.
+#[cfg(feature = "same-user-policy")]
+pub(crate) fn peer_user_mismatch_page(local_user: &str, peer_user: &str) -> String {
+    format!(
+        "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">
+<title>Tp-Note viewer: access refused</title></head><body>
+<h2>Access to this note was refused</h2>
+<p>The program that connected to this viewer belongs to a <strong>different
+operating-system user</strong> than the one running Tp-Note. On a multi-user
+computer this can mean another logged-in user tried to read your note. The
+viewer refused this connection and keeps serving its own user.</p>
+
+{users}
+</body></html>",
+        users = detected_users_html(local_user, peer_user),
+    )
 }
 
 pub(crate) trait HttpResponse {
@@ -592,6 +631,8 @@ impl HttpResponse for ServerThread {
 mod tests {
     use super::forbidden_page;
     #[cfg(feature = "same-user-policy")]
+    use super::peer_user_mismatch_page;
+    #[cfg(feature = "same-user-policy")]
     use super::peer_user_unknown_page;
 
     #[test]
@@ -609,7 +650,7 @@ mod tests {
     #[cfg(feature = "same-user-policy")]
     #[test]
     fn test_peer_user_unknown_page() {
-        let page = peer_user_unknown_page();
+        let page = peer_user_unknown_page("getreu", "unknown");
         assert!(page.starts_with("<!DOCTYPE html>"));
         assert!(page.contains("</html>"));
         // The minimal TOML example to relax to Warn.
@@ -618,5 +659,22 @@ mod tests {
         // The risk is explained.
         assert!(page.contains("fail-open"));
         assert!(page.contains("another logged-in user's"));
+        // The detected users are named.
+        assert!(page.contains("<code>getreu</code>"));
+        assert!(page.contains("<code>unknown</code>"));
+    }
+
+    #[cfg(feature = "same-user-policy")]
+    #[test]
+    fn test_peer_user_mismatch_page() {
+        let page = peer_user_mismatch_page("getreu", "alice");
+        assert!(page.starts_with("<!DOCTYPE html>"));
+        assert!(page.contains("</html>"));
+        assert!(page.contains("different\noperating-system user"));
+        // Both detected users are named.
+        assert!(page.contains("<code>getreu</code>"));
+        assert!(page.contains("<code>alice</code>"));
+        // No relax-to-Warn advice here (Warn would not admit a foreign user).
+        assert!(!page.contains("same_user_policy = &quot;Warn&quot;"));
     }
 }

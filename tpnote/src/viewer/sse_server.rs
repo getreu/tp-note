@@ -7,7 +7,7 @@ use crate::config::SameUserPolicy;
 use crate::viewer::error::ViewerError;
 use crate::viewer::http_response::HttpResponse;
 #[cfg(feature = "same-user-policy")]
-use crate::viewer::http_response::peer_user_unknown_page;
+use crate::viewer::http_response::{peer_user_mismatch_page, peer_user_unknown_page};
 use crate::viewer::init::LOCALHOST;
 #[cfg(feature = "same-user-policy")]
 use crate::viewer::peer_user::{PeerUser, identify_peer_user};
@@ -397,9 +397,10 @@ impl ServerThread {
                     }
                     PeerUser::Other => {
                         // Refuse this connection; the viewer keeps running.
+                        // The page names the local and viewer users.
                         self.respond_http_error(
                             403,
-                            "Forbidden",
+                            &peer_user_mismatch_page(&check.local_user, &check.peer_user),
                             "peer belongs to a different OS user",
                         )?;
                         return Err(ViewerError::PeerUserMismatch);
@@ -422,7 +423,7 @@ impl ServerThread {
                         if policy == SameUserPolicy::Reject {
                             self.respond_http_error(
                                 403,
-                                peer_user_unknown_page(),
+                                &peer_user_unknown_page(&check.local_user, &check.peer_user),
                                 "peer OS user indeterminate (same_user_policy = Reject)",
                             )?;
                             return Err(ViewerError::PeerUserUnknown);
