@@ -476,6 +476,14 @@ pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
     config_path
 });
 
+fn deserialize_empty_string_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    if s.is_empty() { Ok(None) } else { Ok(Some(s)) }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::error::ConfigFileError;
@@ -616,12 +624,4 @@ mod tests {
             assert_eq!(lib_cfg.scheme[didx].name, "default");
         } // Free `LIB_CFG` lock.
     }
-}
-
-fn deserialize_empty_string_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    if s.is_empty() { Ok(None) } else { Ok(Some(s)) }
 }
