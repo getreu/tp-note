@@ -535,12 +535,13 @@ impl HttpResponse for ServerThread {
         );
         self.stream.write_all(response.as_bytes())?;
         self.stream.write_all(html_msg.as_bytes())?;
+        // Do not log `html_msg`: it is the full HTML error page and only adds
+        // noise. The `log_msg` already states the reason.
         log::debug!(
-            "TCP port local {} to peer {}: {} {}: {}",
+            "TCP port local {} to peer {}: {}: {}",
             self.stream.local_addr()?.port(),
             self.stream.peer_addr()?.port(),
             http_error_code,
-            html_msg,
             log_msg
         );
 
