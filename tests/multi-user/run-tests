@@ -1,0 +1,296 @@
+#!/usr/bin/env nu
+# tests/multi-user/run-tests
+#
+# End-to-end test of the viewer's OS-user access control
+# (`viewer.same_user_policy`) against a REAL second OS user. Unlike the in-crate
+# integration tests (which drive a same-process loopback client, always the same
+# user), this needs a second account reachable over passwordless SSH, so it
+# lives outside `tests/functional` and SKIPS cleanly when that account is absent.
+#
+# It starts Tp-Note's viewer as the current user and connects with Nushell's
+# native `http get` (no curl):
+#   - as the current user (control)
+#   - as the foreign user, by running `http get` on the far side of
+#     `ssh -l USER localhost` (the same Nushell binary, via `$nu.current-exe`)
+#
+# See ./README.md for prerequisites (ssh-copy-id) and the gotchas this encodes.
+
+# ---------------------------------------------------------------- configuration
+let foreign_user = ($env.TPNOTE_TEST_FOREIGN_USER? | default "tpnote-peer-test")
+let base_port    = ($env.TPNOTE_TEST_PORT? | default "28390" | into int)
+let script_dir   = $env.FILE_PWD
+let repo_root    = ($script_dir | path join ".." ".." | path expand)
+let stub         = ($script_dir | path join "browser-stub.nu")
+# The running Nushell binary — reused to run `http get` on the remote (foreign)
+# side over ssh. Works because the second user is on the same machine.
+let nu_exe       = $nu.current-exe
+
+# --------------------------------------------------------------------- helpers
+def info [msg: string] { print $"(ansi cyan)::(ansi reset) ($msg)" }
+
+def find-binary [repo_root: string] {
+    let dbg = ($repo_root | path join target debug tpnote)
+    let rel = ($repo_root | path join target release tpnote)
+    if ($dbg | path exists) { return $dbg }
+    if ($rel | path exists) { return $rel }
+    info "tpnote binary not found — building (cargo build -p tpnote) ..."
+    cd $repo_root
+    ^cargo build -p tpnote | complete | ignore
+    if ($dbg | path exists) { $dbg } else { "" }
+}
+
+# A fresh temp note per viewer (Tp-Note renames the file to its title, so it
+# cannot be reused across runs).
+def make-note [root: string] {
+    let dir = (^mktemp -d -p $root | str trim)
+    let note = ($dir | path join "note.md")
+    "---\ntitle: peer-test\n---\n\nMulti-user peer test.\n" | save --force $note
+    $note
+}
+
+# A minimal user config: the policy under test plus the session-cookie toggle.
+# The happy-path case uses the shipped defaults (cookie on). The peer-focused
+# cases turn the cookie OFF to isolate the peer-UID check — otherwise a
+# cookie-less request would be refused for the wrong reason. (Cookie binding on
+# its own is covered by the in-crate integration tests.)
+def make-config [root: string, policy: string, cookie: bool] {
+    let dir = (^mktemp -d -p $root | str trim)
+    let cfg = ($dir | path join "tpnote.toml")
+    $"[viewer]\nsession_binding_cookie = ($cookie)\nsame_user_policy = \"($policy)\"\n" | save --force $cfg
+    $cfg
+}
+
+# Start the viewer in a background job; returns the job id. The stub keeps it
+# alive; output is discarded.
+def start-viewer [bin: string, note: string, stub: string, port: int, cfg: string] {
+    let e = { TPNOTE_BROWSER: $stub, TPNOTE_CONFIG: $cfg }
+    job spawn {
+        with-env $e { ^$bin --view --port $port $note out+err> /dev/null }
+    }
+}
+
+# True if `http get` can reach the URL (any HTTP status counts; a connection
+# error is caught and returns false).
+def reachable [url: string] {
+    try { http get --full --allow-errors --max-time 2sec $url | ignore; true } catch { false }
+}
+
+# Wait for the viewer and report which loopback family it bound to. `LOCALHOST`
+# binds whatever "localhost" resolves to first — IPv6 `[::1]` on some hosts,
+# IPv4 `127.0.0.1` on others. Nushell's `http get` cannot use the IPv6 *literal*
+# `[::1]`, so we connect via `localhost` in that case; the IPv4 case connects by
+# literal. Probing the IPv4 literal tells the families apart. Returns
+# `{family, host}` where `family` is for reporting and `host` is the URL host to
+# use; `family` is "" if the viewer never came up. `/favicon.ico` is served
+# WITHOUT binding the session, so detection has no side effect on the cookie test.
+def wait-and-detect [port: int] {
+    for _ in 0..50 {
+        if (reachable $"http://127.0.0.1:($port)/favicon.ico") {
+            return { family: "127.0.0.1", host: "127.0.0.1" }
+        }
+        if (reachable $"http://localhost:($port)/favicon.ico") {
+            return { family: "[::1]", host: "localhost" }
+        }
+        sleep 200ms
+    }
+    { family: "", host: "" }
+}
+
+# HTTP status (string) as the current user.
+def status-self [host: string, port: int] {
+    (http get --full --allow-errors --max-time 8sec $"http://($host):($port)/").status | into string
+}
+
+# HTTP status (string) / body as the foreign user, running `http get` on the far
+# side of ssh with the same Nushell binary.
+def status-user [user: string, host: string, port: int, nubin: string] {
+    let inner = $"http get --full --allow-errors --max-time 8sec 'http://($host):($port)/' | get status"
+    (^ssh -o BatchMode=yes -l $user localhost $'($nubin) -c "($inner)"' | complete | get stdout | str trim)
+}
+def body-user [user: string, host: string, port: int, nubin: string] {
+    let inner = $"http get --allow-errors --raw --max-time 8sec 'http://($host):($port)/'"
+    (^ssh -o BatchMode=yes -l $user localhost $'($nubin) -c "($inner)"' | complete | get stdout)
+}
+# HTTP status as the foreign user, presenting a session `cookie` (e.g. one
+# captured from the owner). Used to prove the peer check is not bypassable by a
+# valid cookie. Single-quotes the cookie value so it survives the ssh/nu quoting.
+def status-user-cookie [user: string, host: string, port: int, nubin: string, cookie: string] {
+    let inner = $"http get --full --allow-errors --max-time 8sec --headers {Cookie: '($cookie)'} 'http://($host):($port)/' | get status"
+    (^ssh -o BatchMode=yes -l $user localhost $'($nubin) -c "($inner)"' | complete | get stdout | str trim)
+}
+
+# Happy path (current user, cookie binding ON). First navigation binds; returns
+# `{status, cookie}` where `cookie` is the "tpnote=..." pair from Set-Cookie.
+def owner-bind [host: string, port: int] {
+    let r = (http get --full --allow-errors --max-time 8sec $"http://($host):($port)/")
+    let sc = ($r.headers.response | where name == "set-cookie" | get value.0? | default "")
+    let cookie = (if ($sc | is-empty) { "" } else { $sc | split row ";" | first | str trim })
+    { status: ($r.status | into string), cookie: $cookie }
+}
+# A follow-up request presenting the session cookie; returns the status (string).
+def owner-bound-status [host: string, port: int, cookie: string] {
+    (http get --full --allow-errors --max-time 8sec --headers {Cookie: $cookie} $"http://($host):($port)/").status | into string
+}
+
+# Kill the browser stub -> Tp-Note exits cleanly -> the job ends. Belt and
+# suspenders: also `job kill`. Matched by the stub's absolute path so no
+# unrelated process is hit.
+def stop-viewer [job: int, stub: string] {
+    let pids = (^pgrep -f $stub | complete | get stdout | lines
+        | each {|l| $l | str trim } | where {|l| $l != "" })
+    for p in $pids { try { ^kill $p } }
+    try { job kill $job }
+    sleep 300ms
+}
+
+def check [desc: string, got: string, want: string] {
+    if $got == $want {
+        print $"  (ansi green)PASS(ansi reset)  ($desc)  [= ($got)]"
+        true
+    } else {
+        print $"  (ansi red)FAIL(ansi reset)  ($desc)  [got ($got), want ($want)]"
+        false
+    }
+}
+def check-has [desc: string, haystack: string, needle: string] {
+    if ($haystack | str contains $needle) {
+        print $"  (ansi green)PASS(ansi reset)  ($desc)"
+        true
+    } else {
+        print $"  (ansi red)FAIL(ansi reset)  ($desc)  [missing: ($needle)]"
+        false
+    }
+}
+
+# ------------------------------------------------------------------- preflight
+info $"repo root:      ($repo_root)"
+info $"foreign user:   ($foreign_user)"
+
+let bin = (find-binary $repo_root)
+if ($bin | is-empty) {
+    print $"(ansi red)ERROR(ansi reset) could not find or build the tpnote binary."
+    exit 1
+}
+info $"tpnote binary:  ($bin)"
+
+# Skip cleanly (exit 0) when the foreign account is not reachable.
+let probe = (^ssh -o BatchMode=yes -o ConnectTimeout=5 -l $foreign_user localhost "id -u" | complete)
+if $probe.exit_code != 0 {
+    print $"(ansi yellow)SKIP(ansi reset) foreign user '($foreign_user)' is not reachable via passwordless ssh."
+    print "     Set it up (see README.md) or set $env.TPNOTE_TEST_FOREIGN_USER, then re-run."
+    exit 0
+}
+info $"foreign user reachable \(uid ($probe.stdout | str trim)\)."
+^chmod +x $stub
+
+# One temp root for all notes/configs, removed at the end.
+let tmproot = (^mktemp -d | str trim)
+
+mut fails = 0
+
+# ------------------------------------------ case 1: happy path (shipped defaults)
+print ""
+print $"(ansi attr_bold)Case 1 — happy path: shipped defaults, owner is served \(cookie on + Reject\)(ansi reset)"
+let port0 = $base_port
+let job0 = (start-viewer $bin (make-note $tmproot) $stub $port0 (make-config $tmproot "Reject" true))
+let d0 = (wait-and-detect $port0)
+if ($d0.family | is-not-empty) {
+    info $"viewer is listening on ($d0.family):($port0)"
+    let b = (owner-bind $d0.host $port0)
+    if (check "owner first navigation is served" $b.status "200") == false { $fails = $fails + 1 }
+    if (check-has "owner first navigation binds a session cookie" $b.cookie "tpnote=") == false { $fails = $fails + 1 }
+    if (check "owner bound request (with cookie) is served" (owner-bound-status $d0.host $port0 $b.cookie) "200") == false { $fails = $fails + 1 }
+} else {
+    print $"  (ansi red)FAIL(ansi reset)  viewer did not start on port ($port0)"
+    $fails = $fails + 1
+}
+stop-viewer $job0 $stub
+
+# ------------------------------------------- case 2: Reject refuses a foreign user
+print ""
+print $"(ansi attr_bold)Case 2 — same_user_policy = \"Reject\" refuses a foreign user(ansi reset)"
+let port1 = $base_port + 1
+let job1 = (start-viewer $bin (make-note $tmproot) $stub $port1 (make-config $tmproot "Reject" false))
+let d1 = (wait-and-detect $port1)
+if ($d1.family | is-not-empty) {
+    info $"viewer is listening on ($d1.family):($port1)"
+    if (check "current user is served" (status-self $d1.host $port1) "200") == false { $fails = $fails + 1 }
+    if (check $"foreign user ($foreign_user) is refused" (status-user $foreign_user $d1.host $port1 $nu_exe) "403") == false { $fails = $fails + 1 }
+    let fbody = (body-user $foreign_user $d1.host $port1 $nu_exe)
+    if (check-has "403 body is the peer-user-unknown page" $fbody "could not confirm that the program") == false { $fails = $fails + 1 }
+    if (check-has "403 body offers the Off remedy" $fbody "same_user_policy = &quot;Off&quot;") == false { $fails = $fails + 1 }
+} else {
+    print $"  (ansi red)FAIL(ansi reset)  viewer did not start on port ($port1)"
+    $fails = $fails + 1
+}
+stop-viewer $job1 $stub
+
+# ------------------------------------------------- case 3: Off serves any local
+print ""
+print $"(ansi attr_bold)Case 3 — same_user_policy = \"Off\" serves any local user(ansi reset)"
+let port2 = $base_port + 2
+let job2 = (start-viewer $bin (make-note $tmproot) $stub $port2 (make-config $tmproot "Off" false))
+let d2 = (wait-and-detect $port2)
+if ($d2.family | is-not-empty) {
+    info $"viewer is listening on ($d2.family):($port2)"
+    if (check "current user is served" (status-self $d2.host $port2) "200") == false { $fails = $fails + 1 }
+    if (check $"foreign user ($foreign_user) is served \(check disabled\)" (status-user $foreign_user $d2.host $port2 $nu_exe) "200") == false { $fails = $fails + 1 }
+} else {
+    print $"  (ansi red)FAIL(ansi reset)  viewer did not start on port ($port2)"
+    $fails = $fails + 1
+}
+stop-viewer $job2 $stub
+
+# ------------------------------------ case 4: session_binding_cookie disable path
+print ""
+print $"(ansi attr_bold)Case 4 — session_binding_cookie = false disables cookie binding(ansi reset)"
+let port3 = $base_port + 3
+let job3 = (start-viewer $bin (make-note $tmproot) $stub $port3 (make-config $tmproot "Off" false))
+let d3 = (wait-and-detect $port3)
+if ($d3.family | is-not-empty) {
+    info $"viewer is listening on ($d3.family):($port3)"
+    let b = (owner-bind $d3.host $port3)
+    if (check "current user is served" $b.status "200") == false { $fails = $fails + 1 }
+    if (check "no session cookie issued when binding disabled" (if ($b.cookie | is-empty) { "none" } else { $b.cookie }) "none") == false { $fails = $fails + 1 }
+    if (check "a second cookie-less request is still served" (status-self $d3.host $port3) "200") == false { $fails = $fails + 1 }
+} else {
+    print $"  (ansi red)FAIL(ansi reset)  viewer did not start on port ($port3)"
+    $fails = $fails + 1
+}
+stop-viewer $job3 $stub
+
+# --------------------- case 5: post-binding, the session cookie is the gate
+print ""
+print $"(ansi attr_bold)Case 5 — post-binding, the session cookie is the gate \(the peer check is bootstrap-only\)(ansi reset)"
+let port4 = $base_port + 4
+let job4 = (start-viewer $bin (make-note $tmproot) $stub $port4 (make-config $tmproot "Reject" true))
+let d4 = (wait-and-detect $port4)
+if ($d4.family | is-not-empty) {
+    info $"viewer is listening on ($d4.family):($port4)"
+    let b = (owner-bind $d4.host $port4)
+    if (check "owner binds the session (obtains a cookie)" (if ($b.cookie | str starts-with "tpnote=") { "bound" } else { "unbound" }) "bound") == false { $fails = $fails + 1 }
+    # Once the owner has bound the session, the peer check is skipped (it guards
+    # only the bootstrap window); the session cookie now gates every request. A
+    # foreign user WITHOUT the cookie is still refused by the cookie check ...
+    if (check $"foreign user ($foreign_user) without the cookie is refused" (status-user $foreign_user $d4.host $port4 $nu_exe) "403") == false { $fails = $fails + 1 }
+    # ... but a foreign user presenting the owner's VALID cookie is now served:
+    # the peer check no longer backstops a stolen cookie post-binding. Acceptable
+    # because a foreign non-root user cannot obtain the owner's HttpOnly,
+    # loopback-only cookie (no loopback sniff, no cross-uid memory read).
+    if (check $"foreign user ($foreign_user) with the owner's cookie is served \(peer check is bootstrap-only\)" (status-user-cookie $foreign_user $d4.host $port4 $nu_exe $b.cookie) "200") == false { $fails = $fails + 1 }
+} else {
+    print $"  (ansi red)FAIL(ansi reset)  viewer did not start on port ($port4)"
+    $fails = $fails + 1
+}
+stop-viewer $job4 $stub
+
+# ---------------------------------------------------------------------- verdict
+try { rm -rf $tmproot }
+print ""
+if $fails == 0 {
+    print $"(ansi green_bold)All multi-user checks passed.(ansi reset)"
+    exit 0
+} else {
+    print $"(ansi red_bold)($fails) check\(s\) failed.(ansi reset)"
+    exit 1
+}
