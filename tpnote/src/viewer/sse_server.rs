@@ -361,14 +361,41 @@ impl ServerThread {
         #[cfg(feature = "same-user-policy")]
         let session_bound = self.session_cookie.read().is_some();
         #[cfg(feature = "same-user-policy")]
+        let local = self.stream.local_addr()?;
+        #[cfg(feature = "same-user-policy")]
+        let peer = self.stream.peer_addr()?;
+        #[cfg(feature = "same-user-policy")]
         match CFG.viewer.same_user_policy {
-            SameUserPolicy::Off => {}
+            SameUserPolicy::Off => {
+                // Not checking: say why.
+                log::debug!(
+                    "TCP port local {} to peer {}: same-user check skipped \
+                     (viewer.same_user_policy = Off).",
+                    local.port(),
+                    peer.port(),
+                );
+            }
+            // Session already bound: the cookie now gates every request, so skip
+            // the peer lookup (see the comment above the match).
             _ if session_bound => {}
             policy => {
-                let local = self.stream.local_addr()?;
-                let peer = self.stream.peer_addr()?;
+                // This is the moment we really check.
+                log::debug!(
+                    "TCP port local {} to peer {}: checking the peer's OS user \
+                     (viewer.same_user_policy = {:?}) ...",
+                    local.port(),
+                    peer.port(),
+                    policy,
+                );
                 match identify_peer_user(local, peer) {
-                    PeerUser::Same => {}
+                    PeerUser::Same => {
+                        // Assertion holds: the peer is our own OS user.
+                        log::debug!(
+                            "TCP port local {} to peer {}: Ok, peer is the same OS user.",
+                            local.port(),
+                            peer.port(),
+                        );
+                    }
                     PeerUser::Other => {
                         // Refuse this connection; the viewer keeps running.
                         self.respond_http_error(
