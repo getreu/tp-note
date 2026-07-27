@@ -403,7 +403,10 @@ impl ServerThread {
                             &peer_user_mismatch_page(&check.local_user, &check.peer_user),
                             "peer belongs to a different OS user",
                         )?;
-                        return Err(ViewerError::PeerUserMismatch);
+                        return Err(ViewerError::PeerUserMismatch {
+                            local_user: check.local_user,
+                            peer_user: check.peer_user,
+                        });
                     }
                     PeerUser::Unknown => {
                         log::warn!(
@@ -426,7 +429,10 @@ impl ServerThread {
                                 &peer_user_unknown_page(&check.local_user, &check.peer_user),
                                 "peer OS user indeterminate (same_user_policy = Reject)",
                             )?;
-                            return Err(ViewerError::PeerUserUnknown);
+                            return Err(ViewerError::PeerUserUnknown {
+                                local_user: check.local_user,
+                                peer_user: check.peer_user,
+                            });
                         }
                     }
                 }

@@ -47,20 +47,33 @@ pub enum ViewerError {
 
     /// The connecting peer was proven to belong to a different OS user and was
     /// refused with `403 Forbidden` (`viewer.same_user_policy`). The viewer
-    /// keeps running and keeps serving the legitimate user.
+    /// keeps running and keeps serving the legitimate user. `local_user` is the
+    /// OS user running Tp-Note, `peer_user` the connecting (viewer) client.
     #[cfg(feature = "same-user-policy")]
-    #[error("Connection rejected: the client belongs to a different OS user.")]
-    PeerUserMismatch,
+    #[error(
+        "Connection rejected: the client belongs to a different OS user \
+         (local user: {local_user}, viewer user: {peer_user})."
+    )]
+    PeerUserMismatch {
+        local_user: String,
+        peer_user: String,
+    },
 
     /// The connecting peer's OS user could not be determined and the policy is
     /// `Reject` (fail-closed), so the request was refused with `403 Forbidden`.
+    /// `local_user` is the OS user running Tp-Note, `peer_user` the connecting
+    /// (viewer) client (`unknown` here).
     /// Remedy: see `viewer.same_user_policy` in the configuration file.
     #[cfg(feature = "same-user-policy")]
     #[error(
         "Connection rejected: the client's OS user could not be determined \
-         (`viewer.same_user_policy = Reject`)."
+         (local user: {local_user}, viewer user: {peer_user}; \
+         `viewer.same_user_policy = Reject`)."
     )]
-    PeerUserUnknown,
+    PeerUserUnknown {
+        local_user: String,
+        peer_user: String,
+    },
 
     /// Network error.
     #[error("Can not read TCP stream: {error}")]
@@ -107,4 +120,29 @@ pub enum ViewerError {
     /// Errors mostly related to the HTTP stream.
     #[error(transparent)]
     Io(#[from] std::io::Error),
+}
+
+#[cfg(all(test, feature = "same-user-policy"))]
+mod tests {
+    use super::ViewerError;
+
+    /// The peer-user rejection errors name both detected OS users.
+    #[test]
+    fn peer_user_errors_name_the_users() {
+        let s = ViewerError::PeerUserMismatch {
+            local_user: "getreu".to_string(),
+            peer_user: "alice".to_string(),
+        }
+        .to_string();
+        assert!(s.contains("local user: getreu"), "{s}");
+        assert!(s.contains("viewer user: alice"), "{s}");
+
+        let s = ViewerError::PeerUserUnknown {
+            local_user: "getreu".to_string(),
+            peer_user: "unknown".to_string(),
+        }
+        .to_string();
+        assert!(s.contains("local user: getreu"), "{s}");
+        assert!(s.contains("viewer user: unknown"), "{s}");
+    }
 }
