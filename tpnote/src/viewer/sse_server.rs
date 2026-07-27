@@ -6,6 +6,7 @@ use crate::config::CFG;
 use crate::config::SameUserPolicy;
 use crate::viewer::error::ViewerError;
 use crate::viewer::http_response::HttpResponse;
+use crate::viewer::http_response::forbidden_page;
 #[cfg(feature = "same-user-policy")]
 use crate::viewer::http_response::{peer_user_mismatch_page, peer_user_unknown_page};
 use crate::viewer::init::LOCALHOST;
@@ -559,9 +560,22 @@ impl ServerThread {
                         if cookie.as_deref() != Some(tok.as_str()) {
                             // Refuse the request AND close this connection
                             // (frees its `tcp_connections_max` slot). Never
-                            // touch the viewer itself.
-                            self.respond_forbidden()?;
-                            return Err(ViewerError::SessionCookieMismatch);
+                            // touch the viewer itself. The expected/got cookies
+                            // go to the debug log and the error, but NOT to the
+                            // page (which may reach a hostile client).
+                            let got = cookie.as_deref().unwrap_or("(missing)").to_string();
+                            self.respond_http_error(
+                                403,
+                                forbidden_page(),
+                                &format!(
+                                    "viewer session cookie mismatch \
+                                     (expected: {tok}, got: {got})"
+                                ),
+                            )?;
+                            return Err(ViewerError::SessionCookieRejected {
+                                expected: tok,
+                                got,
+                            });
                         }
                     }
                     // Unbound.
@@ -579,10 +593,22 @@ impl ServerThread {
                                 // Lost the race between `read()` and
                                 // `write()`: someone bound first and this
                                 // navigation lacks the cookie.
+                                let expected = w.as_deref().unwrap_or("").to_string();
                                 // Never hold the lock across I/O.
                                 drop(w);
-                                self.respond_forbidden()?;
-                                return Err(ViewerError::SessionCookieMismatch);
+                                let got = cookie.as_deref().unwrap_or("(missing)").to_string();
+                                self.respond_http_error(
+                                    403,
+                                    forbidden_page(),
+                                    &format!(
+                                        "viewer session cookie mismatch \
+                                         (expected: {expected}, got: {got})"
+                                    ),
+                                )?;
+                                return Err(ViewerError::SessionCookieRejected {
+                                    expected,
+                                    got,
+                                });
                             }
                             // else: raced, but this client already holds the
                             // matching cookie -> fall through.

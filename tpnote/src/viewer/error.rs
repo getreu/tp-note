@@ -45,6 +45,17 @@ pub enum ViewerError {
     #[error("Connection rejected: missing or invalid viewer session cookie.")]
     SessionCookieMismatch,
 
+    /// A bound viewer refused a request whose session cookie did not match
+    /// (`viewer.session_binding_cookie`). `expected` is the token the viewer is
+    /// bound to, `got` the cookie the client presented (`(missing)` if none).
+    /// The values are logged for debugging only; the 403 page never shows the
+    /// expected token (it may reach a hostile client).
+    #[error(
+        "Connection rejected: viewer session cookie mismatch \
+         (expected: {expected}, got: {got})."
+    )]
+    SessionCookieRejected { expected: String, got: String },
+
     /// The connecting peer was proven to belong to a different OS user and was
     /// refused with `403 Forbidden` (`viewer.same_user_policy`). The viewer
     /// keeps running and keeps serving the legitimate user. `local_user` is the
@@ -122,11 +133,12 @@ pub enum ViewerError {
     Io(#[from] std::io::Error),
 }
 
-#[cfg(all(test, feature = "same-user-policy"))]
+#[cfg(test)]
 mod tests {
     use super::ViewerError;
 
     /// The peer-user rejection errors name both detected OS users.
+    #[cfg(feature = "same-user-policy")]
     #[test]
     fn peer_user_errors_name_the_users() {
         let s = ViewerError::PeerUserMismatch {
@@ -144,5 +156,17 @@ mod tests {
         .to_string();
         assert!(s.contains("local user: getreu"), "{s}");
         assert!(s.contains("viewer user: unknown"), "{s}");
+    }
+
+    /// The cookie-mismatch error names the expected and presented cookies.
+    #[test]
+    fn session_cookie_error_names_expected_and_got() {
+        let s = ViewerError::SessionCookieRejected {
+            expected: "deadbeef".to_string(),
+            got: "(missing)".to_string(),
+        }
+        .to_string();
+        assert!(s.contains("expected: deadbeef"), "{s}");
+        assert!(s.contains("got: (missing)"), "{s}");
     }
 }

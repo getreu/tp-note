@@ -36,7 +36,7 @@ pub const FAVICON_PATH: &str = "/favicon.ico";
 /// HTML body of the `403 Forbidden` response sent when
 /// `viewer.session_binding_cookie` refuses a request. The viewer keeps running;
 /// only the offending request is refused.
-fn forbidden_page() -> &'static str {
+pub(crate) fn forbidden_page() -> &'static str {
     "\
 <!DOCTYPE html><html><head><meta charset=\"UTF-8\">
 <title>Tp-Note viewer: access refused</title></head><body>
