@@ -379,14 +379,6 @@ impl ServerThread {
             // the peer lookup (see the comment above the match).
             _ if session_bound => {}
             policy => {
-                // This is the moment we really check.
-                log::debug!(
-                    "TCP port local {} to peer {}: checking the peer's OS user \
-                     (viewer.same_user_policy = {:?}) ...",
-                    local.port(),
-                    peer.port(),
-                    policy,
-                );
                 match identify_peer_user(local, peer) {
                     PeerUser::Same => {
                         // Assertion holds: the peer is our own OS user.
