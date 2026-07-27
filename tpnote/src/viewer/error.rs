@@ -46,10 +46,11 @@ pub enum ViewerError {
     SessionCookieMismatch,
 
     /// A bound viewer refused a request whose session cookie did not match
-    /// (`viewer.session_binding_cookie`). `expected` is the token the viewer is
-    /// bound to, `got` the cookie the client presented (`(missing)` if none).
-    /// The values are logged for debugging only; the 403 page never shows the
-    /// expected token (it may reach a hostile client).
+    /// (`viewer.session_binding_cookie`). `expected` is a short prefix of the
+    /// token the viewer is bound to, `got` a short prefix of the cookie the
+    /// client presented (`(missing)` if none) — truncated so the full session
+    /// secret is never written to the log. The values are for debugging only;
+    /// the 403 page never shows them (it may reach a hostile client).
     #[error(
         "Connection rejected: viewer session cookie mismatch \
          (expected: {expected}, got: {got})."

@@ -65,6 +65,22 @@ fn new_session_token() -> String {
     s
 }
 
+/// Truncate a session token to a short prefix for logging, so the full
+/// session secret never reaches the debug log. Returns the first 8 characters
+/// followed by an ellipsis; strings of 8 characters or fewer are returned
+/// unchanged. Only applied to real token values — the `(missing)` marker is
+/// substituted by the caller, not passed here.
+fn token_prefix(tok: &str) -> String {
+    // Count and slice by `char`, not byte: a client-supplied cookie value may
+    // not have a char boundary at byte 8, and `str::get(..8)` would then be
+    // `None`, logging the whole value. `chars().take(8)` always truncates.
+    if tok.chars().count() > 8 {
+        format!("{}…", tok.chars().take(8).collect::<String>())
+    } else {
+        tok.to_string()
+    }
+}
+
 /// Extracts the value of the `tpnote` cookie from an HTTP `Cookie` header
 /// value like `a=1; tpnote=deadbeef; b=2`. Returns `None` if absent.
 fn parse_tpnote_cookie(header: &str) -> Option<String> {
@@ -563,17 +579,21 @@ impl ServerThread {
                             // touch the viewer itself. The expected/got cookies
                             // go to the debug log and the error, but NOT to the
                             // page (which may reach a hostile client).
-                            let got = cookie.as_deref().unwrap_or("(missing)").to_string();
+                            let got = cookie
+                                .as_deref()
+                                .map(token_prefix)
+                                .unwrap_or_else(|| "(missing)".to_string());
+                            let expected = token_prefix(&tok);
                             self.respond_http_error(
                                 403,
                                 forbidden_page(),
                                 &format!(
                                     "viewer session cookie mismatch \
-                                     (expected: {tok}, got: {got})"
+                                     (expected: {expected}, got: {got})"
                                 ),
                             )?;
                             return Err(ViewerError::SessionCookieRejected {
-                                expected: tok,
+                                expected,
                                 got,
                             });
                         }
@@ -593,10 +613,13 @@ impl ServerThread {
                                 // Lost the race between `read()` and
                                 // `write()`: someone bound first and this
                                 // navigation lacks the cookie.
-                                let expected = w.as_deref().unwrap_or("").to_string();
+                                let expected = token_prefix(w.as_deref().unwrap_or(""));
                                 // Never hold the lock across I/O.
                                 drop(w);
-                                let got = cookie.as_deref().unwrap_or("(missing)").to_string();
+                                let got = cookie
+                                    .as_deref()
+                                    .map(token_prefix)
+                                    .unwrap_or_else(|| "(missing)".to_string());
                                 self.respond_http_error(
                                     403,
                                     forbidden_page(),
@@ -769,6 +792,16 @@ mod tests {
         assert_eq!(t1.len(), 32);
         assert!(t1.chars().all(|c| c.is_ascii_hexdigit()));
         assert_ne!(t1, t2);
+    }
+
+    #[test]
+    fn test_token_prefix() {
+        // A 32-hex-char token is truncated to 8 chars + ellipsis.
+        let tok = "a5bc1a3cd579626a44e721f989d12c0a";
+        assert_eq!(super::token_prefix(tok), "a5bc1a3c…");
+        // Strings of <= 8 chars are returned unchanged.
+        assert_eq!(super::token_prefix(""), "");
+        assert_eq!(super::token_prefix("deadbeef"), "deadbeef");
     }
 
     #[test]
