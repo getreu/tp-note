@@ -403,8 +403,9 @@ impl ServerThread {
                 let check = identify_peer_user(local, peer);
                 match check.relation {
                     PeerUser::Same => {
-                        // Assertion holds: the peer is our own OS user.
-                        log::debug!(
+                        // Assertion holds: the peer is our own OS user. This is
+                        // the common, uninteresting case, so log it at `trace`.
+                        log::trace!(
                             "TCP port local {} ({}) to peer {} ({}): Ok, peer is the same OS user.",
                             local.port(),
                             check.local_user,
