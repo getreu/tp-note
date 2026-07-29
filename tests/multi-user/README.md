@@ -56,6 +56,12 @@ Environment overrides:
 
 - `TPNOTE_TEST_FOREIGN_USER` — the foreign account (default `tpnote-peer-test`).
 - `TPNOTE_TEST_PORT` — base TCP port (default `28390`; case 2 uses `+1`).
+- `TPNOTE_TEST_BIN` — path to the `tpnote` binary under test. When set (and the
+  path exists) it is used verbatim, bypassing the `target/debug` →
+  `target/release` → `cargo build` lookup. Use it to test an installed binary,
+  e.g. `TPNOTE_TEST_BIN=/nix/profile/bin/tpnote ./run-tests`. The viewer always
+  runs as the current user; the foreign account only needs SSH reachability, not
+  access to this binary.
 
 Exit status: `0` all-passed or skipped, `1` a check failed.
 

@@ -29,6 +29,8 @@ let nu_exe       = $nu.current-exe
 def info [msg: string] { print $"(ansi cyan)::(ansi reset) ($msg)" }
 
 def find-binary [repo_root: string] {
+    let override = ($env.TPNOTE_TEST_BIN? | default "")
+    if ($override != "" and ($override | path exists)) { return $override }
     let dbg = ($repo_root | path join target debug tpnote)
     let rel = ($repo_root | path join target release tpnote)
     if ($dbg | path exists) { return $dbg }
