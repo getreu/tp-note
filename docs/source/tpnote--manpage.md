@@ -3012,139 +3012,74 @@ able to publish. To summarize, a file is only served:
 4. when it's located under a directory containing a marker file named
    '`tpnote.toml`' (without marker file this condition is void),
 5. when the request presents the viewer's session cookie, once the viewer
-   is bound to a web browser (cf. '`viewer.session_binding_cookie`' below).
+   is bound to a web browser (cf. '`viewer.session_binding_cookie`' below),
+6. when the connecting web browser process belongs to your own OS user
+   (cf. '`viewer.same_user_policy`' below).
 
-The HTTP server runs as long as the launched web browser window is open.
-Note, that the server not only exposes the displayed note file, but also all
-referenced inline images and other linked Tp-Note files. Internally, the
-viewer maintains a list of _referenced local URLs_. For security reasons,
-only listed files are served. To limit data exfiltration in case an attacker
-gains access to an account on your machine, the number of served Tp-Note files
-is limited by the configurable value '`viewer.displayed_tpnote_count_max`'.
+The HTTP server runs as long as the launched web browser window is open. It
+exposes not only the displayed note file, but also all referenced inline images
+and other linked Tp-Note files; internally the viewer keeps a list of
+_referenced local URLs_ and serves only those. Each incoming connection passes,
+in order, through the following checks:
 
-In addition to the above quantitative restriction, Tp-Note's built-in viewer
-serves only files whose file extensions are registered with the
-'`viewer.served_mime_type`' configuration file variable. The latter allows
-disabling the _follow links to other Tp-Note files_ feature by removing all
-'`text/*`' mime types from that list.
+1. **Host header.** A request whose HTTP '`Host`' header does not address
+   '`localhost`' is refused with '`403 Forbidden`', which defeats DNS rebinding
+   attacks.
 
-Another security feature is the '`tpnote.toml`' marker file. When Tp-Note
-opens a note file, it checks all directories above, one by one, until it
-finds the marker file '`tpnote.toml`'. Tp-Note's viewer will never serve a file
-located outside the root directory and its children. When no '`tpnote.toml`'
-file is found, the root directory is set to '`/`', which disables this
-security feature.
+2. **OS user** ('`viewer.same_user_policy`'). While the session is still being
+   established, the viewer identifies the OS user owning the process at the
+   other end of the connection. By default ('`"Reject"`') it serves only a
+   connection proven to belong to your own OS user; a proven-foreign user, or
+   one whose user the viewer cannot determine - for example a sandboxed Flatpak
+   or Snap browser - is refused (fail-closed). This guards the bootstrap window
+   before your web browser binds the session.
 
-Furthermore, Tp-Note's viewer binds itself to the first web browser that
-loads the note page. When the configuration file variable
-'`viewer.session_binding_cookie`' is enabled (default), the first client navigating
-to the note page receives a random session cookie ('`Set-Cookie: tpnote=…;
-HttpOnly; SameSite=Lax`'). From that moment on, every request that does not
-present this cookie is refused with '`403 Forbidden`'. Only the offending
-request is refused and its connection closed: the viewer itself keeps
-running and keeps serving the bound web browser; it never shuts down because
-of a cookie mismatch.
+3. **Session cookie** ('`viewer.session_binding_cookie`'). The viewer binds
+   itself to the first web browser that loads the note page. By default that
+   browser receives a random session cookie ('`Set-Cookie: tpnote=…; HttpOnly;
+   SameSite=Lax`'); from then on every request that does not present the cookie
+   is refused with '`403 Forbidden`'. The '`SameSite=Lax`' attribute makes the
+   browser withhold the cookie from cross-site background requests such as
+   '`fetch()`', '`<img>`' or '`<iframe>`', so a hostile web page open in the
+   same browser cannot read the note.
 
-This session binding defends against a hostile web page open in the same
-browser: because of the '`SameSite=Lax`' cookie attribute, the browser
-withholds the cookie from cross-site background requests such as
-'`fetch()`', '`<img>`' or '`<iframe>`', so such requests cannot read the
-note. Independently of '`viewer.session_binding_cookie`', the viewer also refuses
-requests whose HTTP '`Host`' header does not address '`localhost`', which
-defeats DNS rebinding attacks. Against other local users, the session
-binding acts as a tripwire: as the viewer only accepts connections once the
-web browser is launched, a foreign client can claim the session only during
-the short browser start-up window — in which case your own web browser
-displays a '`403 Forbidden`' page explaining what happened, instead of the
-note. Note that this first-connection race is narrowed, but not eliminated:
-a client claiming the binding before your browser connects can read the
-note.
+4. **File restrictions.** A referenced file is served only when its extension
+   is registered with '`viewer.served_mime_type`', the number of viewed Tp-Note
+   files does not exceed '`viewer.displayed_tpnote_count_max`', and it lies under
+   the root directory marked by a '`tpnote.toml`' file. Removing all '`text/*`'
+   mime types from '`viewer.served_mime_type`' disables the _follow links to
+   other Tp-Note files_ feature. When no '`tpnote.toml`' marker is found, the
+   root directory defaults to '`/`', disabling the root restriction.
 
-If your web browser is configured to refuse cookies for '`localhost`', it
-cannot return the session cookie and every request is refused. In this case
-allow cookies for '`http://localhost`' or disable the protection with
-'`viewer.session_binding_cookie = false`'.
+In every case only the offending request is refused and its connection closed;
+the viewer keeps running and keeps serving the bound web browser.
 
-As Tp-Note's built-in viewer binds to the '`localhost`' interface, the exposed
-files are in principle accessible to all processes running on the computer. As
-long as only one user is logged into the computer at a given time, no privacy
-concern is raised: any potential attacker must be logged in, in order to access
-the `localhost` HTTP server.
-
-On systems where multiple users are logged in at the same time, the
-configuration file variable '`viewer.same_user_policy`' keeps the viewer usable
-while limiting exposure. While the viewer is still establishing the session, it
-identifies the OS user owning the process at the other end of a new connection
-and refuses, with '`403 Forbidden`', any connection it cannot confirm belongs to
-your own OS user (only that connection is refused; the viewer keeps serving you).
-It accepts two values:
-
-'`"Off"`'
-> No user check; any local process is served.
-
-'`"Reject"`' (default)
-> Serve only a connection proven to belong to your OS user. A connection from a
-> proven-foreign user, and a connection whose user cannot be determined - for
-> example a sandboxed browser (Flatpak, Snap) whose process the viewer cannot
-> match to the connection, or where platform privilege limits block the lookup
-> - are both refused
-> (fail-closed). On Linux a foreign user is normally the second case, because a
-> non-root viewer cannot resolve another user's process, so fail-closed is what
-> actually enforces. The cost is that a legitimate but unattributable client -
-> typically a sandboxed browser - is refused; such a client is served a page
-> explaining how to turn the check off.
-
-If a legitimate browser is refused under the default '`"Reject"`' policy (for
-example a sandboxed Flatpak or Snap browser whose user the viewer cannot
-determine), disable the check by adding the following to your configuration file
-and restarting Tp-Note:
+**When '`"Off"`' helps.** If a legitimate browser is refused under the default
+'`same_user_policy = "Reject"`' - typically a sandboxed Flatpak or Snap browser
+whose OS user the viewer cannot determine - set '`same_user_policy = "Off"`' in
+the configuration file and restart Tp-Note:
 
 ```toml
 [viewer]
 same_user_policy = "Off"
 ```
 
-Understand the trade-off first: with '`"Off"`' the viewer no longer verifies the
-connecting OS user. Session-cookie binding ('`viewer.session_binding_cookie`')
-stays on, though, so another local user could read your note only by winning the
-race to claim the session before your browser does, in the brief start-up window
-- and even then you would notice, because your own browser would be locked out
-and shown an error page instead of the note. Once your browser has bound the
-session and the note is displayed, the cookie keeps other users out. This
-trade-off is a concern only if you set '`same_user_policy = "Off"`'; with the
-default '`"Reject"`' you are protected anyway.
+With '`"Off"`' the OS-user check is skipped, but the session-cookie binding
+stays on, so another local user could read your note only by winning the race
+to claim the session in the brief start-up window before your browser binds it -
+and even then you would notice, because your own browser would be locked out and
+shown a '`403 Forbidden`' page instead of the note. Likewise, if your browser
+refuses cookies for '`localhost`', allow them for '`http://localhost`' or
+disable the binding with '`viewer.session_binding_cookie = false`'.
 
-(An intermediate "warn but serve" mode was considered and dropped: it serves any
-connection whose user it cannot determine, and a foreign client can arrange to
-be unattributable, so it would protect nothing on any platform.)
-
-This check is best-effort defense-in-depth: mapping a loopback connection to its
-owning OS user is an enumerate-and-match operation with an inherent race, so it
-raises the bar rather than providing a hard guarantee. It complements
-'`viewer.session_binding_cookie`', working in sequence with it: the session cookie
-defends against a hostile web page inside your own browser, while
-'`same_user_policy`' guards the bootstrap window - refusing a foreign OS user
-before your browser binds the session - after which the session cookie gates
-every request. A foreign user is thus refused while the session is being
-established; once your browser holds the cookie, the cookie is what keeps other
-users out.
-
-For stronger guarantees, it is still possible to disable Tp-Note's internal
-HTTP server by setting the configuration file variable
-'`arg_default.edit = true`'. Alternatively, you can also compile Tp-Note without
-the '`viewer`' feature. Note, that even if the viewer feature is disabled, the
-'`--export`' command line option still works: This allows the authorized user to
-render the note to HTML manually.
-
-**Summary**: As long as Tp-Note's built-in note viewer is running, the note
-file and all its referenced (image) files are exposed to all users logged into
-the computer at that given time. With '`viewer.session_binding_cookie`' enabled
-(default), this exposure is limited to the short start-up window before your
-web browser connects; afterwards only the bound browser is served. With
-'`viewer.same_user_policy`' enabled (default '`"Reject"`'), connections from a
-different OS user - or one the viewer cannot attribute to your own user - are
-refused outright. This concerns only local users, Tp-Note
-never exposes any information to the network or on the Internet.
+**Summary**: Tp-Note is safe to use in a multi-user environment. Its viewer
+binds to the '`localhost`' interface only, so it is never reachable from the
+network or the Internet - at most other users logged into the same computer
+could connect at all. With the default settings, however, no other local user
+can access the viewer: every connection must both come from your own OS user
+('`viewer.same_user_policy = "Reject"`') and present the session cookie of the
+browser bound at start-up ('`viewer.session_binding_cookie`'), so only your own
+browser is served.
 
 
 
@@ -3161,10 +3096,12 @@ LANG
 
 TPNOTE_CONFIG
 
-> When set, the environment variable replaces the default path where Tp-Note
-> loads or stores its configuration file. It has the same effect as the
-> command line option '`--config`'. If both are present, that latter takes
-> precedence.
+> When set, the environment variable adds the configuration file at the given
+> path to Tp-Note's list of configuration sources (cf. the CUSTOMIZATION
+> section). Like the command line option '`--config`', its values are merged
+> into the default configuration. Both can be used together; where the same key
+> is set in several files, the file sourced later wins - and '`--config`' is
+> sourced after '`TPNOTE_CONFIG`'.
 
 TPNOTE_LANG
 
