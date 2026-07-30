@@ -14,8 +14,8 @@
       devShells.${system}.default = pkgs.mkShell {
         packages = with pkgs; [
           pandoc
-          python311
-          python311Packages.weasyprint
+          python312
+          python312Packages.weasyprint
 
           # WeasyPrint runtime dependencies
           cairo
