@@ -1,6 +1,7 @@
 ---
 title:    "Tp-Note: markup enhanced granular note-taking"
-subtitle: Save and edit your clipboard content as a note file
+subtitle: A filename-synchronizing, template-driven note-taker that keeps your
+          notes as plain Markdown files with no database and no lock-in
 author:   Jens Getreu
 date:     2026-07-29
 version:  1.27.0

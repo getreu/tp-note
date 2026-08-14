@@ -1,6 +1,7 @@
 ﻿# Tp-Note: Markup enhanced granular note-taking
 
-**Save and edit your clipboard content as a note file**
+**A filename-synchronizing, template-driven note-taker that keeps your notes as
+plain Markdown files with no database and no lock-in**
 
 [![Cargo](https://img.shields.io/crates/v/tpnote.svg)](https://crates.io/crates/tp-note)
 [![Documentation](https://docs.rs/tpnote-lib/badge.svg)](https://docs.rs/tpnote-lib)

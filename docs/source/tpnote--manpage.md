@@ -13,8 +13,8 @@ lang:       en-GB
 
 Tp-Note: Markup-enhanced granular note-taking
 
-Save and edit your clipboard content as a note file.
-
+A filename-synchronizing, template-driven note-taker that keeps your notes as
+plain Markdown files with no database and no lock-in
 
 
 
