@@ -95,6 +95,7 @@
           nativeBuildInputs = [
             pkgs.cargo-binutils
             pkgs.stdenv.cc.bintools
+            pkgsNative.patchelf
           ]
           ++ extraNativeBuildInputs;
           buildInputs = extraBuildInputs;
@@ -102,6 +103,7 @@
           RUSTFLAGS = extraRustFlags;
           postInstall = ''
             ${pkgs.stdenv.cc}/bin/${crossSystemConfig}-strip $out/bin/tpnote
+            patchelf --remove-rpath $out/bin/tpnote
           '';
         };
 
