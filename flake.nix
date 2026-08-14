@@ -235,9 +235,11 @@
             nativeBuildInputs = [
               pkgs.cargo-binutils
               pkgs.stdenv.cc.bintools
+              pkgs.patchelf
             ];
             postInstall = ''
               strip $out/bin/tpnote
+              patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 $out/bin/tpnote
             '';
           };
         tpnote-x86_64-unknown-linux-musl =
@@ -324,6 +326,7 @@
             nativeBuildInputs = [
               pkgs.cargo-deb
               pkgs.cargo-binutils
+              pkgs.patchelf
             ];
             dontStrip = false;
             # Use proper phases to ensure the binary is built first
@@ -341,6 +344,7 @@
             # Create the .deb package
             installPhase = ''
               mkdir -p $out
+              patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 target/release/tpnote
               # Let cargo-deb name the file per Debian policy:
               #   <package>_<version>_<debian-arch>.deb  (e.g. tpnote_1.26.4_amd64.deb)
               cargo deb --no-build
