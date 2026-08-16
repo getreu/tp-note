@@ -185,7 +185,7 @@ unpack the single `tpnote` binary and place it on your `PATH` (see the
 Tp-Note is also available through the Windows Package Manager. To install:
 
 ```powershell
-winget install getreu.tpnote
+winget install -e --id getreu.tpnote
 ```
 
 Following installation, right-click the Desktop and click "Show more options" to
