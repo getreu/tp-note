@@ -252,6 +252,11 @@ please consult the [Distribution section](#distribution) above and the
 
 ## Upgrading
 
+This section only applies to you if you have overwritten some of Tp-Note's
+internal default configuration values with a custom configuration file. Learn
+more about how the configuration is merged from different file locations in the
+[Customization section] of Tp-Note's manual page.
+
 While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
 configuration file structure, e.g.:
 
@@ -274,7 +279,7 @@ tpnote -b
 /home/joe/.config/tpnote/tpnote.toml
 ```
 
-Mote, the configuration file backup is stored in the same directory as the last
+Note, the configuration file backup is stored in the same directory as the last
 sourced configuration file, e.g. `/home/joe/.config/tpnote/`.
 If Tp-Note sources more than one configuration file, consider the possibility
 of syntax errors in any of these files (cf. [Customization section] of
