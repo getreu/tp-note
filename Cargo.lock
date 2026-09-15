@@ -3351,7 +3351,7 @@ dependencies = [
 
 [[package]]
 name = "tpnote-lib"
-version = "0.46.6"
+version = "0.46.7"
 dependencies = [
  "html-escape",
  "itertools 0.15.0",
