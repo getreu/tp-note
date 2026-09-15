@@ -25,11 +25,11 @@ opt-level = "z"
 lto = true
 
 [workspace.dependencies]
-log = { version = "0.4.33", features = ["serde"] }
+log = { version = "0.4.34", features = ["serde"] }
 parking_lot = "0.12.5"
 sanitize-filename-reader-friendly = "2.3.1"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_yaml = "0.9.34"
-tera = { version = "2.1.0", default-features = true, features = ["preserve_order"] }
-thiserror = "2.0.19"
-toml = "1.1.3"
+tera = { version = "2.4.0", default-features = true, features = ["preserve_order"] }
+thiserror = "2.0.20"
+toml = "1.1.6"

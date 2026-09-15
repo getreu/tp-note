@@ -11,7 +11,7 @@ impl CodeHandler {
     fn find_code_child(handle: &Handle) -> Option<Handle> {
         for child in handle.children.borrow().iter() {
             if let NodeData::Element { ref name, .. } = child.data
-                && name.local.as_ref() == "code" {
+                && &*name.local == "code" {
                     return Some(child.clone());
                 }
         }
