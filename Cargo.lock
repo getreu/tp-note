@@ -2245,28 +2245,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
-name = "onig"
-version = "6.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cc3cbf698f9438986c11a880c90a6d04b9de27575afd28bbf45b154b6c709e2"
-dependencies = [
- "bitflags 2.13.1",
- "libc",
- "once_cell",
- "onig_sys",
-]
-
-[[package]]
-name = "onig_sys"
-version = "69.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e68317604e77e53b85896388e1a803c1d21b74c899ec9e5e1112db90735edd7"
-dependencies = [
- "cc",
- "pkg-config",
-]
-
-[[package]]
 name = "option-ext"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3079,7 +3057,6 @@ dependencies = [
  "flate2",
  "fnv",
  "once_cell",
- "onig",
  "plist",
  "regex-syntax",
  "serde",
@@ -3336,7 +3313,7 @@ dependencies = [
  "thiserror 2.0.19",
  "time",
  "toml",
- "tpnote-lib 0.46.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tpnote-lib",
  "webbrowser",
  "win-msgbox",
  "win32job",
@@ -3375,41 +3352,6 @@ dependencies = [
 [[package]]
 name = "tpnote-lib"
 version = "0.46.6"
-dependencies = [
- "html-escape",
- "itertools 0.15.0",
- "latex2mathml",
- "lingua",
- "log",
- "mermaid-rs-renderer",
- "parking_lot",
- "parse-hyperlinks",
- "parse-hyperlinks-extras",
- "percent-encoding",
- "pulldown-cmark",
- "rst_parser",
- "rst_renderer",
- "sanitize-filename-reader-friendly",
- "self_cell",
- "serde",
- "serde_json",
- "serde_yaml",
- "substring",
- "syntect",
- "tera",
- "thiserror 2.0.19",
- "time",
- "toml",
- "tpnote-html2md 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "win32job",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "tpnote-lib"
-version = "0.46.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbe3ddcf982f986bbadf3a90175b87d30123640e3ed0aae18f8bbdbf6a8dcc73"
 dependencies = [
  "html-escape",
  "itertools 0.15.0",

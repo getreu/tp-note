@@ -7,7 +7,7 @@ use html_escape;
 use parking_lot::RwLock;
 use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HtmlLinkInlineImage;
-use percent_encoding::percent_decode_str;
+use percent_encoding::{AsciiSet, CONTROLS, percent_decode_str, utf8_percent_encode};
 use std::path::MAIN_SEPARATOR_STR;
 use std::{
     borrow::Cow,
@@ -34,6 +34,47 @@ const FORMAT_COMPLETE_FILENAME: &str = "?";
 /// optional separator is placed after `FORMAT_SEPARATOR` and separates
 /// the _from_ and _to_ pattern.
 const FORMAT_FROM_TO_SEPARATOR: char = ':';
+
+/// Bytes that must be percent-encoded when a filesystem path segment is
+/// embedded in an `href`/`src` attribute. `#` and `?` are URL syntax
+/// (fragment and query introducers): left as-is, a literal one in a
+/// directory or file name is read by the browser as the end of the path
+/// and everything after it never reaches the server. `%` must be in this
+/// set too, so `percent_encode_path()` escapes an existing `%` in a file
+/// name before anything can be mistaken for one of its own escapes. The
+/// space is encoded for consistency, even though browsers already encode
+/// a literal space themselves before sending it.
+static PATH_SEGMENT: &AsciiSet = &CONTROLS.add(b'#').add(b'?').add(b'%').add(b' ');
+
+/// Splits `dest` into a filesystem path and a trailing URL fragment the
+/// author wrote (`note.md#anchor`), mirroring the heuristic used
+/// throughout this module: the last `#` starts a fragment only if it
+/// falls in the final path segment, i.e. after the last `/` or `\`, or
+/// there is no separator at all. A `#` that is part of a directory name
+/// (`Meeting #12/notes.md`) precedes a later separator and is therefore
+/// left in the path half. The returned fragment, if any, keeps its
+/// leading `#`.
+fn split_path_and_fragment(dest: &str) -> (&str, &str) {
+    match (dest.rfind('#'), dest.rfind(['/', '\\'])) {
+        (Some(n), sep) if sep.is_some_and(|sep| n > sep) || sep.is_none() => {
+            (&dest[..n], &dest[n..])
+        }
+        _ => (dest, ""),
+    }
+}
+
+/// Percent-encodes `path` for safe embedding in an `href`/`src` attribute,
+/// segment by segment. Encoding is applied per segment, not to the joined
+/// string, so the `/` separators — including a leading one — never need to
+/// be exempted afterwards, which would risk exempting a `/` that was
+/// actually part of a name. Bytes outside ASCII are always percent-encoded
+/// by `utf8_percent_encode` as their UTF-8 octets.
+fn percent_encode_path(path: &str) -> String {
+    path.split('/')
+        .map(|segment| utf8_percent_encode(segment, PATH_SEGMENT).to_string())
+        .collect::<Vec<_>>()
+        .join("/")
+}
 
 /// If `rewrite_rel_path` and `dest` is relative, concatenate `docdir` and
 /// `dest`, then strip `root_path` from the left before returning.
@@ -517,13 +558,7 @@ impl Hyperlink for Link<'_> {
             _ => return None,
         };
         if <Link as Hyperlink>::is_local_fn(dest) {
-            // Strip URL fragment.
-            match (dest.rfind('#'), dest.rfind(['/', '\\'])) {
-                (Some(n), sep) if sep.is_some_and(|sep| n > sep) || sep.is_none() => {
-                    Some(Path::new(&dest.as_ref()[..n]))
-                }
-                _ => Some(Path::new(dest.as_ref())),
-            }
+            Some(Path::new(split_path_and_fragment(dest.as_ref()).0))
         } else {
             None
         }
@@ -573,20 +608,21 @@ impl Hyperlink for Link<'_> {
                 Cow::Owned(s.into_owned())
             }
         }
-        // Replace Windows backslash, then HTML escape encode.
+        // Replace Windows backslash, percent-encode the path (keeping a
+        // written fragment untouched), then HTML escape encode.
         fn repl_backspace_enc_amp(val: Cow<str>) -> Cow<str> {
+            // Under Windows `\` is a path separator, not data: normalize it
+            // to `/` before `split_path_and_fragment`/`percent_encode_path`
+            // treat it as one.
             let val = if val.as_ref().contains('\\') {
                 Cow::Owned(val.to_string().replace('\\', "/"))
             } else {
                 val
             };
-            let s = html_escape::encode_double_quoted_attribute(val.as_ref());
-            if s == val {
-                val
-            } else {
-                // No cloning happens here, because we own `s` already.
-                Cow::Owned(s.into_owned())
-            }
+            let (path, fragment) = split_path_and_fragment(val.as_ref());
+            let encoded = format!("{}{}", percent_encode_path(path), fragment);
+            let s = html_escape::encode_double_quoted_attribute(&encoded);
+            Cow::Owned(s.into_owned())
         }
 
         match self {
@@ -1136,7 +1172,7 @@ mod tests {
             .unwrap()
             .1
             .1;
-        let expected = "<img src=\"/abs/note path/t m p.jpg\" \
+        let expected = "<img src=\"/abs/note%20path/t%20m%20p.jpg\" \
             alt=\"Image\">";
         input
             .rebase_local_link(root_path, docdir, true, false)
@@ -1151,7 +1187,7 @@ mod tests {
             .unwrap()
             .1
             .1;
-        let expected = "<img src=\"/abs/t m p.jpg\" alt=\"Image\">";
+        let expected = "<img src=\"/abs/t%20m%20p.jpg\" alt=\"Image\">";
         input
             .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
@@ -1165,7 +1201,7 @@ mod tests {
             .unwrap()
             .1
             .1;
-        let expected = "<a href=\"/abs/note path/my note 1.md\">my note 1</a>";
+        let expected = "<a href=\"/abs/note%20path/my%20note%201.md\">my note 1</a>";
         input
             .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
@@ -1179,7 +1215,7 @@ mod tests {
             .unwrap()
             .1
             .1;
-        let expected = "<a href=\"/dir/my note 1.md\">my note 1</a>";
+        let expected = "<a href=\"/dir/my%20note%201.md\">my note 1</a>";
         input
             .rebase_local_link(root_path, docdir, true, false)
             .unwrap();
@@ -1193,7 +1229,7 @@ mod tests {
             .unwrap()
             .1
             .1;
-        let expected = "<a href=\"dir/my note 1.md\">my note 1</a>";
+        let expected = "<a href=\"dir/my%20note%201.md\">my note 1</a>";
         input
             .rebase_local_link(root_path, docdir, false, false)
             .unwrap();
@@ -1207,7 +1243,7 @@ mod tests {
             .unwrap()
             .1
             .1;
-        let expected = "<a href=\"/path/dir/my note 1.md\">my note 1</a>";
+        let expected = "<a href=\"/path/dir/my%20note%201.md\">my note 1</a>";
         input
             .rebase_local_link(
                 Path::new("/my/note/"),
@@ -1226,7 +1262,7 @@ mod tests {
             .unwrap()
             .1
             .1;
-        let expected = "<a href=\"/dir/my note 1.md\">my note 1</a>";
+        let expected = "<a href=\"/dir/my%20note%201.md\">my note 1</a>";
         input
             .rebase_local_link(root_path, Path::new("/my/ignored/"), true, false)
             .unwrap();
@@ -1292,7 +1328,7 @@ mod tests {
         input.apply_format_attribute();
         let outpath = input.get_local_link_dest_path().unwrap();
         let output = input.to_html();
-        let expected = "<a href=\"/path/dir/3.0-my note.md\">dir/3.0-my note.md</a>";
+        let expected = "<a href=\"/path/dir/3.0-my%20note.md\">dir/3.0-my note.md</a>";
         assert_eq!(output, expected);
         assert_eq!(outpath, PathBuf::from("/path/dir/3.0-my note.md"));
 
@@ -1608,6 +1644,82 @@ mod tests {
     }
 
     #[test]
+    fn test_split_path_and_fragment() {
+        use crate::html::split_path_and_fragment;
+
+        // A `#` in a directory name is data, not a fragment: it precedes a
+        // later separator, so it stays in the path half.
+        assert_eq!(
+            split_path_and_fragment("Task #7/note.md"),
+            ("Task #7/note.md", "")
+        );
+
+        // A `#` in the final segment, with no separator after it, is the
+        // author's fragment.
+        assert_eq!(
+            split_path_and_fragment("note.md#anchor"),
+            ("note.md", "#anchor")
+        );
+
+        // Both at once: exactly one `#` survives as a fragment, the one
+        // the author wrote.
+        assert_eq!(
+            split_path_and_fragment("Task #7/note.md#anchor"),
+            ("Task #7/note.md", "#anchor")
+        );
+
+        // No `#` at all.
+        assert_eq!(split_path_and_fragment("dir/note.md"), ("dir/note.md", ""));
+
+        // A bare fragment, no path.
+        assert_eq!(split_path_and_fragment("#1"), ("", "#1"));
+    }
+
+    #[test]
+    fn test_percent_encode_path() {
+        use crate::html::percent_encode_path;
+        use percent_encoding::percent_decode_str;
+
+        // Round-trip: decoding what we encode returns the original bytes.
+        for segment in [
+            "Meeting #12-x",
+            "a?b",
+            "100%",
+            "report %23.md",
+            "with space",
+            "a+b",
+            "a&b",
+            "em—dash",
+            "a↔b",
+            "already%20encoded",
+        ] {
+            let path = format!("/dir/{segment}/note.md");
+            let encoded = percent_encode_path(&path);
+            let decoded = percent_decode_str(&encoded).decode_utf8().unwrap();
+            assert_eq!(decoded, path, "round-trip failed for segment {segment:?}");
+        }
+
+        // `#` and `?` are encoded so a browser cannot mistake them for URL
+        // syntax.
+        assert_eq!(
+            percent_encode_path("/Meeting #12/note.md"),
+            "/Meeting%20%2312/note.md"
+        );
+        assert_eq!(percent_encode_path("/a?b"), "/a%3Fb");
+
+        // `%` is encoded first (and only once): a literal `%23` in a file
+        // name must not be reinterpreted as an encoded `#`.
+        assert_eq!(percent_encode_path("/report %23.md"), "/report%20%2523.md");
+        let encoded = percent_encode_path("/report %23.md");
+        let decoded = percent_decode_str(&encoded).decode_utf8().unwrap();
+        assert_eq!(decoded, "/report %23.md");
+
+        // The leading `/` and the `/` separators are never encoded.
+        assert!(percent_encode_path("/a/b/c").starts_with('/'));
+        assert_eq!(percent_encode_path("/a/b/c"), "/a/b/c");
+    }
+
+    #[test]
     fn test_append_html_ext() {
         //
         let mut input = Link::Text2Dest(
@@ -1643,7 +1755,7 @@ mod tests {
             Cow::from("de&> st"),
             Cow::from("ti&> tle"),
         );
-        let expected = "<a href=\"de&amp;&gt; st\" title=\"ti&amp;&gt; tle\">te&> xt</a>";
+        let expected = "<a href=\"de&amp;&gt;%20st\" title=\"ti&amp;&gt; tle\">te&> xt</a>";
         let output = input.to_html();
         assert_eq!(output, expected);
 
@@ -1655,7 +1767,7 @@ mod tests {
 
         //
         let input = Link::Text2Dest(Cow::from("te&> xt"), Cow::from("de&> st"), Cow::from(""));
-        let expected = "<a href=\"de&amp;&gt; st\">te&> xt</a>";
+        let expected = "<a href=\"de&amp;&gt;%20st\">te&> xt</a>";
         let output = input.to_html();
         assert_eq!(output, expected);
     }
@@ -1679,10 +1791,10 @@ mod tests {
             .to_string();
         let expected = "abc<a href=\"ftp://getreu.net\">Blog</a>\
             def<a href=\"https://getreu.net\">getreu.net</a>\
-            ghi<img src=\"/abs/note path/t m p.jpg\" alt=\"test 1\">\
-            jkl<a href=\"/abs/note path/down/my note 1.md\">my note 1</a>\
-            mno<a href=\"/abs/note path/dir/my note.md\">./down/../dir/my note.md</a>\
-            pqr<a href=\"/dir/my note.md\">/down/../dir/my note.md</a>\
+            ghi<img src=\"/abs/note%20path/t%20m%20p.jpg\" alt=\"test 1\">\
+            jkl<a href=\"/abs/note%20path/down/my%20note%201.md\">my note 1</a>\
+            mno<a href=\"/abs/note%20path/dir/my%20note.md\">./down/../dir/my note.md</a>\
+            pqr<a href=\"/dir/my%20note.md\">/down/../dir/my note.md</a>\
             stu<i>&lt;INVALID: /../dir/underflow/my note.md&gt;</i>\
             vwx<i>&lt;INVALID: ../../../not allowed dir/my note.md&gt;</i>"
             .to_string();
@@ -1713,7 +1825,7 @@ mod tests {
         let input = "abd<a href=\"tpnote:dir/my note.md\">\
             <img src=\"/imagedir/favicon-32x32.png\" alt=\"logo\"></a>abd"
             .to_string();
-        let expected = "abd<a href=\"/abs/note path/dir/my note.md\">\
+        let expected = "abd<a href=\"/abs/note%20path/dir/my%20note.md\">\
             <img src=\"/imagedir/favicon-32x32.png\" alt=\"logo\"></a>abd";
         let root_path = Path::new("/my/");
         let docdir = Path::new("/my/abs/note path/");
@@ -1737,7 +1849,7 @@ mod tests {
 
         let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
         let input = "abd<a href=\"#1\"></a>abd".to_string();
-        let expected = "abd<a href=\"/abs/note path/#1\"></a>abd";
+        let expected = "abd<a href=\"/abs/note%20path/#1\"></a>abd";
         let root_path = Path::new("/my/");
         let docdir = Path::new("/my/abs/note path/");
         let output = rewrite_links(
@@ -1752,6 +1864,47 @@ mod tests {
         println!("{:?}", allowed_urls.read_recursive());
         assert!(url.contains(&PathBuf::from("/abs/note path/")));
         assert_eq!(output, expected);
+    }
+
+    /// A `#` in a directory name must not end up as a bare byte in the
+    /// `href`: browsers read an unencoded `#` as the start of a fragment
+    /// and never send anything after it, so the server only ever sees a
+    /// truncated path. `rewrite_links` is the function shared by the
+    /// viewer and `--export`, so this covers both call sites at once.
+    #[test]
+    fn test_rewrite_links_hash_in_dir_name() {
+        use crate::config::LocalLinkKind;
+
+        let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
+        let input = "<a href=\"01-Agenda.md\">link</a>".to_string();
+        let root_path = Path::new("/notes/");
+        let docdir = Path::new("/notes/Meeting #12-Project kickoff/");
+        let output = rewrite_links(
+            input,
+            root_path,
+            docdir,
+            LocalLinkKind::Short,
+            false,
+            allowed_urls.clone(),
+        );
+
+        // The `#` that is part of the directory name is percent-encoded,
+        // so the browser cannot mistake it for the start of a fragment.
+        assert!(
+            output.contains("href=\"/Meeting%20%2312-Project%20kickoff/01-Agenda.md\""),
+            "unexpected output: {output}"
+        );
+        // No bare `#` remains in the href.
+        assert!(!output.contains("Meeting #12"));
+
+        // Bookkeeping still holds the raw, decoded filesystem path — this
+        // is what the viewer compares an incoming (percent-decoded)
+        // request path against, so encoding the `href` must not encode
+        // this side too.
+        let url = allowed_urls.read_recursive();
+        assert!(url.contains(&PathBuf::from(
+            "/Meeting #12-Project kickoff/01-Agenda.md"
+        )));
     }
 
     #[test]

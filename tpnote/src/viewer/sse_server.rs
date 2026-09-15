@@ -1137,5 +1137,57 @@ mod tests {
             let resp = get(port, "/etc/passwd", &[]);
             assert_eq!(status(&resp), 404, "unlisted path must be 404:\n{resp}");
         }
+
+        /// Boots a viewer serving a note inside a directory whose name contains a
+        /// `#`, linking a sibling note by a relative destination. Returns the
+        /// bound port.
+        fn boot_hash_dir_fixture() -> u16 {
+            let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+            let port = listener.local_addr().unwrap().port();
+
+            let uniq = SEQ.fetch_add(1, Ordering::Relaxed);
+            let dir = std::env::temp_dir()
+                .join(format!("tpnote-itest-{}-{}", std::process::id(), uniq))
+                .join("Meeting #12-Project kickoff");
+            fs::create_dir_all(&dir).unwrap();
+
+            let doc = dir.join("00-index.md");
+            fs::write(&doc, "---\ntitle: itest\n---\n\n[sibling](<01-sibling.md>)\n").unwrap();
+            fs::write(dir.join("01-sibling.md"), "---\ntitle: sibling\n---\n\nHi.\n").unwrap();
+
+            let start_accepting = Arc::new((Mutex::new(true), Condvar::new()));
+            let event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>> = Arc::new(Mutex::new(Vec::new()));
+            thread::spawn(move || manage_connections(event_tx_list, listener, start_accepting, doc));
+            port
+        }
+
+        #[test]
+        fn hash_in_directory_name_link_is_reachable() {
+            // A `#` in a directory name must not leave a bare `#` in the
+            // rendered `href`: a browser reads an unencoded `#` as the start
+            // of a fragment and never sends anything after it, so the click
+            // would 404 on a truncated path. This exercises the whole path —
+            // render, extract the `href` exactly as a browser would receive
+            // it, follow it — not just the encoder in isolation.
+            let port = boot_hash_dir_fixture();
+            let home = get(port, "/", &[]);
+            assert_eq!(status(&home), 200, "first GET / should render:\n{home}");
+            let tok = cookie_token(&home).expect("first GET / must bind and Set-Cookie");
+            let cookie = format!("tpnote={tok}");
+
+            let href = home
+                .split("href=\"")
+                .filter_map(|s| s.split('"').next())
+                .find(|s| s.contains("01-sibling"))
+                .expect("rendered page must link the sibling note");
+            assert!(
+                href.contains("%23"),
+                "href must encode the '#' in the directory name: {href}"
+            );
+            assert!(!href.contains('#'), "href must not contain a bare '#': {href}");
+
+            let resp = get(port, href, &[("Cookie", cookie.as_str())]);
+            assert_eq!(status(&resp), 200, "sibling note must be reachable:\n{resp}");
+        }
     }
 }

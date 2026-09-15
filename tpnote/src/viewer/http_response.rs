@@ -258,12 +258,36 @@ impl HttpResponse for ServerThread {
                 let allowed_urls = self.allowed_urls.read_recursive();
                 // Is the request in our `allowed_urls` list?
                 if !allowed_urls.contains(relpath) {
-                    log::warn!(
-                        "TCP port local {} to peer {}: target not referenced in note file, rejecting: '{}'",
-                        self.stream.local_addr()?.port(),
-                        self.stream.peer_addr()?.port(),
-                        relpath.to_str().unwrap_or(""),
-                    );
+                    // A rejected path that is a proper prefix of an allowed
+                    // one is the signature of a request truncated by the
+                    // browser at an unencoded '#' or '?' in the `href` we
+                    // sent it. This has to be a string prefix, not
+                    // `Path::starts_with()`: the cut lands mid-segment, so
+                    // the truncated and the full path share no leading
+                    // path *component*, only a leading substring.
+                    let relpath_str = relpath.to_str().unwrap_or("");
+                    let truncation_of = allowed_urls.iter().find(|allowed| {
+                        allowed
+                            .to_str()
+                            .is_some_and(|s| s.len() > relpath_str.len() && s.starts_with(relpath_str))
+                    });
+                    match truncation_of {
+                        Some(full) => log::warn!(
+                            "TCP port local {} to peer {}: rejecting '{}': no such target; \
+                             it is a prefix of '{}' — the URL was probably truncated at an \
+                             unencoded '#' or '?'",
+                            self.stream.local_addr()?.port(),
+                            self.stream.peer_addr()?.port(),
+                            relpath_str,
+                            full.to_str().unwrap_or(""),
+                        ),
+                        None => log::warn!(
+                            "TCP port local {} to peer {}: target not referenced in note file, rejecting: '{}'",
+                            self.stream.local_addr()?.port(),
+                            self.stream.peer_addr()?.port(),
+                            relpath_str,
+                        ),
+                    }
                     // Release the `RwLockReadGuard`.
                     drop(allowed_urls);
                     self.respond_not_found(relpath)?;
