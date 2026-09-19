@@ -3073,11 +3073,15 @@ the viewer keeps running and keeps serving the bound web browser.
 **When '`"Off"`' helps.** If a legitimate browser is refused under the default
 '`same_user_policy = "Enforce"`' - typically a sandboxed Flatpak or Snap browser
 whose OS user the viewer cannot determine - set '`same_user_policy = "Off"`' in
-the configuration file and restart Tp-Note:
+the configuration file and restart Tp-Note. Also lowering
+'`displayed_tpnote_count_max`' is recommended: with the OS-user check off it
+becomes your main defense, limiting how many note files a connection can
+browse through:
 
 ```toml
 [viewer]
 same_user_policy = "Off"
+displayed_tpnote_count_max = 20
 ```
 
 With '`"Off"`' the OS-user check is skipped, but the session-cookie binding

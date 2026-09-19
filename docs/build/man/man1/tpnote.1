@@ -3734,11 +3734,15 @@ is refused under the default
 `\f[CR]same_user_policy = \(dqEnforce\(dq\f[R]' \- typically a sandboxed
 Flatpak or Snap browser whose OS user the viewer cannot determine \- set
 `\f[CR]same_user_policy = \(dqOff\(dq\f[R]' in the configuration file
-and restart Tp\-Note:
+and restart Tp\-Note.
+Also lowering `\f[CR]displayed_tpnote_count_max\f[R]' is recommended:
+with the OS\-user check off it becomes your main defense, limiting how
+many note files a connection can browse through:
 .IP
 .EX
 \f[B][viewer]\f[R]
 same_user_policy = \(dqOff\(dq
+displayed_tpnote_count_max = 20
 .EE
 .PP
 With `\f[CR]\(dqOff\(dq\f[R]' the OS\-user check is skipped, but the
