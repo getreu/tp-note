@@ -287,8 +287,14 @@ served_mime_types = [
 
 ### For security reasons, Tp-Note's internal viewer only displays a limited
 ### number of Tp-Note files when browsing between files. This variable limits
-### this number.
-displayed_tpnote_count_max = 20
+### this number. Before v1.27.0 this count was the viewer's main defense
+### against a hostile connection browsing through many files, so it was kept
+### tight (20). Since v1.27.0 the viewer also binds the session to the first
+### browser that loads the page (`session_binding_cookie`), refuses foreign
+### `Host` headers (DNS rebinding), and checks the connecting process's OS
+### user (`same_user_policy`); those now do the access-control work, so this
+### limit can be relaxed to a value that just accommodates normal browsing.
+displayed_tpnote_count_max = 1000
 
 ### When true (default), the viewer binds to the first browser that loads the
 ### note page and issues it a random session cookie. Later requests that do not
