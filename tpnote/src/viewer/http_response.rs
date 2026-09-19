@@ -65,50 +65,52 @@ note.</p>
 </body></html>"
 }
 
-/// HTML block naming the OS users the same-user check detected, shared by the
-/// peer-user rejection pages. `local_user` is the user running Tp-Note;
-/// `peer_user` is the connecting (viewer) client, or `unknown` if unresolved.
-#[cfg(feature = "same-user-policy")]
-fn detected_users_html(local_user: &str, peer_user: &str) -> String {
-    format!(
-        "<h3>Detected OS users</h3>\n\
-         <p>This Tp-Note viewer (local process) is running as OS user: \
-         <code>{local_user}</code><br>\n\
-         The refused client (your browser / viewer) was detected as OS user: \
-         <code>{peer_user}</code></p>\n"
-    )
-}
-
 /// HTML body of the `403 Forbidden` response sent when the peer-user check
-/// (`viewer.same_user_policy = "Enforce"`, the default) refuses a request
-/// because it could **not determine** the connecting client's OS user. The
-/// legitimate user's own browser can hit this if it is sandboxed
-/// (Flatpak/Snap) or on platforms where the lookup is limited, so the page
-/// explains how to disable the check (`"Off"`) and what that costs. It also
-/// names the detected local and viewer users.
+/// (`viewer.same_user_policy = "Enforce"`, the default) refuses a request —
+/// whether the peer was proven to belong to a **different** OS user, or its
+/// OS user could **not be determined** at all. Both cases get this same page:
+/// the underlying detection (`PeerUser::Other` vs `PeerUser::Unknown`) is not
+/// reliable enough to treat them differently, and a hostile client gains
+/// nothing from a response that varies by case, so the page always assumes it
+/// is being read by the legitimate user and offers the full remedies —
+/// switch to a non-sandboxed browser, or disable the check (`"Off"`) and
+/// accept the cost — naming the detected local and peer users.
 #[cfg(feature = "same-user-policy")]
-pub(crate) fn peer_user_unknown_page(local_user: &str, peer_user: &str) -> String {
+pub(crate) fn peer_user_refused_page(local_user: &str, peer_user: &str) -> String {
     format!(
         "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">
 <title>Tp-Note viewer: access refused</title></head><body>
 <h2>Access to this note was refused</h2>
-<p>The viewer could not confirm that the program connecting to it belongs to
-your operating-system user, so it refused the request. By default
+<p>You are seeing this page instead of the note because Tp-Note cannot confirm
+that the browser process connecting to it (currently: <code>{peer_user}</code>)
+is run by the same operating-system user as Tp-Note itself
+(currently: <code>{local_user}</code>). By default
 (<code>viewer.same_user_policy = &quot;Enforce&quot;</code>) the viewer serves
 only connections it can positively attribute to your own user, and refuses any
 it cannot (fail-closed).</p>
 
-<p>This most often happens with a <strong>sandboxed browser</strong> (Flatpak,
-Snap, firejail) whose process the viewer cannot match to the connection, or on
-platforms where the viewer cannot resolve the connecting process's owner. It
-does <em>not</em> necessarily mean another user connected.</p>
+<p>This typically happens with a <strong>sandboxed browser</strong> — for
+example Firefox installed as a <strong>Flatpak</strong>, or as Ubuntu's default
+<strong>Snap</strong> package — whose process the viewer cannot match to the
+connection. It does <em>not</em> necessarily mean another user connected.</p>
 
-{users}
-<h3>Disable the check</h3>
+<h3>Option 1: use a non-sandboxed browser</h3>
+<p>Install a native (non-sandboxed) build of your browser and list it in your
+Tp-Note configuration file, then restart Tp-Note:</p>
+<pre>[app_args]
+unix.browser = [
+  [ &quot;firefox&quot;, &quot;--new-window&quot;, &quot;--private-window&quot; ],
+]</pre>
+
+<h3>Option 2: disable the check</h3>
 <p>To turn the OS-user check off so the viewer serves any local connection, add
-the following to your Tp-Note configuration file and restart Tp-Note:</p>
+the following to your Tp-Note configuration file and restart Tp-Note. Also
+lowering <code>displayed_tpnote_count_max</code> is recommended: with the
+OS-user check off it becomes your main defense, limiting how many note files a
+connection can browse through:</p>
 <pre>[viewer]
-same_user_policy = &quot;Off&quot;</pre>
+same_user_policy = &quot;Off&quot;
+displayed_tpnote_count_max = 20</pre>
 
 <h3>Understand the risk first</h3>
 <p>With <code>&quot;Off&quot;</code> the viewer performs <strong>no</strong>
@@ -118,29 +120,6 @@ allowed to read this note and its referenced files. Only disable the check if
 you are the sole user of this machine, or you accept that any local program may
 read your note.</p>
 </body></html>",
-        users = detected_users_html(local_user, peer_user),
-    )
-}
-
-/// HTML body of the `403 Forbidden` response sent when the peer-user check
-/// proved the connecting client belongs to a **different** OS user than the
-/// one running Tp-Note. Names both detected users. No disable advice: a proven
-/// foreign user is refused deliberately, so only `"Off"` (which disables the
-/// check for everyone) would admit it — not something to suggest here.
-#[cfg(feature = "same-user-policy")]
-pub(crate) fn peer_user_mismatch_page(local_user: &str, peer_user: &str) -> String {
-    format!(
-        "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">
-<title>Tp-Note viewer: access refused</title></head><body>
-<h2>Access to this note was refused</h2>
-<p>The program that connected to this viewer belongs to a <strong>different
-operating-system user</strong> than the one running Tp-Note. On a multi-user
-computer this can mean another logged-in user tried to read your note. The
-viewer refused this connection and keeps serving its own user.</p>
-
-{users}
-</body></html>",
-        users = detected_users_html(local_user, peer_user),
     )
 }
 
@@ -655,9 +634,7 @@ impl HttpResponse for ServerThread {
 mod tests {
     use super::forbidden_page;
     #[cfg(feature = "same-user-policy")]
-    use super::peer_user_mismatch_page;
-    #[cfg(feature = "same-user-policy")]
-    use super::peer_user_unknown_page;
+    use super::peer_user_refused_page;
 
     #[test]
     fn test_forbidden_page() {
@@ -671,15 +648,27 @@ mod tests {
         assert!(!page.contains("shut down"));
     }
 
+    // Same page for both PeerUser::Unknown (detection undetermined, e.g. a
+    // sandboxed browser) and PeerUser::Other (a proven-different OS user):
+    // the detection is not reliable enough to treat them differently, and a
+    // hostile client gains nothing from a response that varies by case.
     #[cfg(feature = "same-user-policy")]
     #[test]
-    fn test_peer_user_unknown_page() {
-        let page = peer_user_unknown_page("getreu", "unknown");
+    fn test_peer_user_refused_page_undetermined() {
+        let page = peer_user_refused_page("getreu", "unknown");
         assert!(page.starts_with("<!DOCTYPE html>"));
         assert!(page.contains("</html>"));
-        // The minimal TOML example to disable the check.
+        // The minimal TOML example to disable the check, tightened with a
+        // lower displayed_tpnote_count_max as the fallback defense.
         assert!(page.contains("[viewer]"));
         assert!(page.contains("same_user_policy = &quot;Off&quot;"));
+        assert!(page.contains("displayed_tpnote_count_max = 20"));
+        // The example config for switching to a non-sandboxed browser.
+        assert!(page.contains("[app_args]"));
+        assert!(page.contains("unix.browser"));
+        // Both sandboxing technologies are named.
+        assert!(page.contains("Flatpak"));
+        assert!(page.contains("Snap"));
         // The dropped `Warn` value must not appear anywhere.
         assert!(!page.contains("Warn"));
         // The risk is explained.
@@ -692,15 +681,15 @@ mod tests {
 
     #[cfg(feature = "same-user-policy")]
     #[test]
-    fn test_peer_user_mismatch_page() {
-        let page = peer_user_mismatch_page("getreu", "alice");
+    fn test_peer_user_refused_page_proven_different() {
+        // Same page as the undetermined case, just with a resolved peer user
+        // instead of `unknown` — the two are not distinguished.
+        let page = peer_user_refused_page("getreu", "alice");
         assert!(page.starts_with("<!DOCTYPE html>"));
         assert!(page.contains("</html>"));
-        assert!(page.contains("different\noperating-system user"));
-        // Both detected users are named.
+        assert!(page.contains("[viewer]"));
+        assert!(page.contains("same_user_policy = &quot;Off&quot;"));
         assert!(page.contains("<code>getreu</code>"));
         assert!(page.contains("<code>alice</code>"));
-        // No disable advice on the proven-foreign page.
-        assert!(!page.contains("same_user_policy = &quot;Off&quot;"));
     }
 }

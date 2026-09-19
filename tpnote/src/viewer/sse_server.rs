@@ -8,7 +8,7 @@ use crate::viewer::error::ViewerError;
 use crate::viewer::http_response::HttpResponse;
 use crate::viewer::http_response::forbidden_page;
 #[cfg(feature = "same-user-policy")]
-use crate::viewer::http_response::{peer_user_mismatch_page, peer_user_unknown_page};
+use crate::viewer::http_response::peer_user_refused_page;
 use crate::viewer::init::LOCALHOST;
 #[cfg(feature = "same-user-policy")]
 use crate::viewer::peer_user::{PeerUser, identify_peer_user};
@@ -417,10 +417,11 @@ impl ServerThread {
                     }
                     PeerUser::Other => {
                         // Refuse this connection; the viewer keeps running.
-                        // The page names the local and viewer users.
+                        // Same page as `PeerUser::Unknown` below — see
+                        // `peer_user_refused_page`'s doc comment for why.
                         self.respond_http_error(
                             403,
-                            &peer_user_mismatch_page(&check.local_user, &check.peer_user),
+                            &peer_user_refused_page(&check.local_user, &check.peer_user),
                             &format!(
                                 "peer belongs to a different OS user \
                                  (local user: {}, viewer user: {})",
@@ -449,7 +450,7 @@ impl ServerThread {
                         // how to disable the check (`Off`) and its risk.
                         self.respond_http_error(
                             403,
-                            &peer_user_unknown_page(&check.local_user, &check.peer_user),
+                            &peer_user_refused_page(&check.local_user, &check.peer_user),
                             &format!(
                                 "peer OS user indeterminate \
                                  (local user: {}, viewer user: {}; \
