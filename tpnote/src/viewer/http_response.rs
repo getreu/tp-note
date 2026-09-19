@@ -246,9 +246,9 @@ impl HttpResponse for ServerThread {
                     // path *component*, only a leading substring.
                     let relpath_str = relpath.to_str().unwrap_or("");
                     let truncation_of = allowed_urls.iter().find(|allowed| {
-                        allowed
-                            .to_str()
-                            .is_some_and(|s| s.len() > relpath_str.len() && s.starts_with(relpath_str))
+                        allowed.to_str().is_some_and(|s| {
+                            s.len() > relpath_str.len() && s.starts_with(relpath_str)
+                        })
                     });
                     match truncation_of {
                         Some(full) => log::warn!(
@@ -535,10 +535,9 @@ impl HttpResponse for ServerThread {
             httpdate::fmt_http_date(SystemTime::now()),
             html_msg.len(),
         );
-        self.stream.write_all(response.as_bytes())?;
-        self.stream.write_all(html_msg.as_bytes())?;
-        // Do not log `html_msg`: it is the full HTML error page and only adds
-        // noise. The `log_msg` already states the reason.
+        // Log first: if the peer already dropped the connection, the writes
+        // below fail and `?` returns before logging, losing the reason this
+        // error response was being sent.
         log::debug!(
             "TCP port local {} to peer {}: {}: {}",
             self.stream.local_addr()?.port(),
@@ -546,6 +545,8 @@ impl HttpResponse for ServerThread {
             http_error_code,
             log_msg
         );
+        self.stream.write_all(response.as_bytes())?;
+        self.stream.write_all(html_msg.as_bytes())?;
 
         Ok(())
     }
