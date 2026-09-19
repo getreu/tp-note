@@ -306,8 +306,8 @@ session_binding_cookie = true
 ### legitimate user). It is best-effort defense-in-depth: the
 ### connection-to-user lookup can be inconclusive (sandboxed browser in a
 ### separate network namespace, platform privilege limits). Two values:
-###   "Off"    - no check; serve any local process.
-###   "Reject" - (default) serve only a peer proven to be the same OS user;
+###   "Off"     - no check; serve any local process.
+###   "Enforce" - (default) serve only a peer proven to be the same OS user;
 ###              refuse a proven-foreign user AND a peer whose user cannot be
 ###              determined (fail-closed). On Linux a foreign user is the latter
 ###              case — a non-root viewer cannot resolve another user's process
@@ -317,4 +317,4 @@ session_binding_cookie = true
 ### (A fail-open "warn but serve" middle ground was dropped: it serves any peer
 ### it cannot attribute, and a foreign client can arrange to be unattributable,
 ### so it protects nothing on any platform.)
-same_user_policy = "Reject"
+same_user_policy = "Enforce"

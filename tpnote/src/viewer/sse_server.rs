@@ -397,7 +397,7 @@ impl ServerThread {
             // Session already bound: the cookie now gates every request, so skip
             // the peer lookup (see the comment above the match).
             _ if session_bound => {}
-            SameUserPolicy::Reject => {
+            SameUserPolicy::Enforce => {
                 // The check just happened: `check` carries the OS user names
                 // detected for the local (Tp-Note) process and the peer
                 // (viewer) process — the latter is `unknown` when it could not
@@ -453,7 +453,7 @@ impl ServerThread {
                             &format!(
                                 "peer OS user indeterminate \
                                  (local user: {}, viewer user: {}; \
-                                 same_user_policy = Reject)",
+                                 same_user_policy = Enforce)",
                                 check.local_user, check.peer_user,
                             ),
                         )?;
@@ -849,7 +849,7 @@ mod tests {
     /// server on an ephemeral loopback port and drives it with a raw TCP client, so
     /// the full `serve_connection2`/`respond` pipeline runs — the part the unit
     /// tests above cannot reach. Because same-process loopback connections resolve
-    /// to the same OS user, the default `same_user_policy = Reject` peer check
+    /// to the same OS user, the default `same_user_policy = Enforce` peer check
     /// passes and does not interfere. tpnote is a binary crate (no `lib` target),
     /// so these integration tests live in-module rather than under `tests/`.
     ///

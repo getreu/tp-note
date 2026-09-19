@@ -17,11 +17,11 @@ Viewer started as the current user; a client connects as the current user
 
 | `same_user_policy` | current user | foreign user |
 | --- | --- | --- |
-| `"Reject"` (default) | `200` | **`403`** + peer-user-unknown page (offering the `Off` remedy) |
+| `"Enforce"` (default) | `200` | **`403`** + peer-user-unknown page (offering the `Off` remedy) |
 | `"Off"` | `200` | `200` (check disabled) |
 
 On Linux a foreign peer resolves to **`Unknown`** (a non-root viewer cannot read
-another user's `/proc/<pid>/fd`), so `Reject` refuses it via the fail-closed
+another user's `/proc/<pid>/fd`), so `Enforce` refuses it via the fail-closed
 path. This is the live counterpart of that finding. (There is no `"Warn"`: it was
 removed because it fail-opens on `Unknown` and therefore serves foreign users.)
 

@@ -192,9 +192,9 @@ mut fails = 0
 
 # ------------------------------------------ case 1: happy path (shipped defaults)
 print ""
-print $"(ansi attr_bold)Case 1 — happy path: shipped defaults, owner is served \(cookie on + Reject\)(ansi reset)"
+print $"(ansi attr_bold)Case 1 — happy path: shipped defaults, owner is served \(cookie on + Enforce\)(ansi reset)"
 let port0 = $base_port
-let job0 = (start-viewer $bin (make-note $tmproot) $stub $port0 (make-config $tmproot "Reject" true))
+let job0 = (start-viewer $bin (make-note $tmproot) $stub $port0 (make-config $tmproot "Enforce" true))
 let d0 = (wait-and-detect $port0)
 if ($d0.family | is-not-empty) {
     info $"viewer is listening on ($d0.family):($port0)"
@@ -208,11 +208,11 @@ if ($d0.family | is-not-empty) {
 }
 stop-viewer $job0 $stub
 
-# ------------------------------------------- case 2: Reject refuses a foreign user
+# ------------------------------------------- case 2: Enforce refuses a foreign user
 print ""
-print $"(ansi attr_bold)Case 2 — same_user_policy = \"Reject\" refuses a foreign user(ansi reset)"
+print $"(ansi attr_bold)Case 2 — same_user_policy = \"Enforce\" refuses a foreign user(ansi reset)"
 let port1 = $base_port + 1
-let job1 = (start-viewer $bin (make-note $tmproot) $stub $port1 (make-config $tmproot "Reject" false))
+let job1 = (start-viewer $bin (make-note $tmproot) $stub $port1 (make-config $tmproot "Enforce" false))
 let d1 = (wait-and-detect $port1)
 if ($d1.family | is-not-empty) {
     info $"viewer is listening on ($d1.family):($port1)"
@@ -265,7 +265,7 @@ stop-viewer $job3 $stub
 print ""
 print $"(ansi attr_bold)Case 5 — post-binding, the session cookie is the gate \(the peer check is bootstrap-only\)(ansi reset)"
 let port4 = $base_port + 4
-let job4 = (start-viewer $bin (make-note $tmproot) $stub $port4 (make-config $tmproot "Reject" true))
+let job4 = (start-viewer $bin (make-note $tmproot) $stub $port4 (make-config $tmproot "Enforce" true))
 let d4 = (wait-and-detect $port4)
 if ($d4.family | is-not-empty) {
     info $"viewer is listening on ($d4.family):($port4)"

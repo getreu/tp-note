@@ -3001,6 +3001,23 @@ your favourite web browser on top.
 unix.browser = [[ \(dqchromium\(dq, \(dq\-\-new\-window\(dq, \(dq\-\-incognito\(dq]]
 .EE
 .PP
+A sandboxed Flatpak browser works too, for example \f[I]Chrome\f[R].
+Note, that a Flatpak browser\(cqs OS user cannot be determined by the
+viewer, so by default
+(`\f[CR]viewer.same_user_policy = \(dqEnforce\(dq\f[R]') its connection
+is refused; set `\f[CR]viewer.same_user_policy = \(dqOff\(dq\f[R]' as
+well (cf.\ \f[I]SECURITY AND PRIVACY CONSIDERATIONS\f[R] below):
+.IP
+.EX
+\f[B][app_args]\f[R]
+unix.browser = [
+  [ \(dqflatpak\(dq, \(dqrun\(dq, \(dqcom.google.Chrome\(dq, \(dq\-\-new\-window\(dq, \(dq\-\-incognito\(dq ],
+]
+
+\f[B][viewer]\f[R]
+same_user_policy = \(dqOff\(dq
+.EE
+.PP
 Alternatively, you can set the `\f[CR]TPNOTE_BROWSER\f[R]' environment
 variable (cf.
 examples in the chapter \f[I]ENVIRONMENT_VARIABLES\f[R] below).
@@ -3678,7 +3695,7 @@ does not address `\f[CR]localhost\f[R]' is refused with
 \f[B]OS user\f[R] (`\f[CR]viewer.same_user_policy\f[R]').
 While the session is still being established, the viewer identifies the
 OS user owning the process at the other end of the connection.
-By default (`\f[CR]\(dqReject\(dq\f[R]') it serves only a connection
+By default (`\f[CR]\(dqEnforce\(dq\f[R]') it serves only a connection
 proven to belong to your own OS user; a proven\-foreign user, or one
 whose user the viewer cannot determine \- for example a sandboxed
 Flatpak or Snap browser \- is refused (fail\-closed).
@@ -3714,7 +3731,7 @@ browser.
 .PP
 \f[B]When `\f[CB]\(dqOff\(dq\f[B]' helps.\f[R] If a legitimate browser
 is refused under the default
-`\f[CR]same_user_policy = \(dqReject\(dq\f[R]' \- typically a sandboxed
+`\f[CR]same_user_policy = \(dqEnforce\(dq\f[R]' \- typically a sandboxed
 Flatpak or Snap browser whose OS user the viewer cannot determine \- set
 `\f[CR]same_user_policy = \(dqOff\(dq\f[R]' in the configuration file
 and restart Tp\-Note:
@@ -3740,7 +3757,7 @@ never reachable from the network or the Internet \- at most other users
 logged into the same computer could connect at all.
 With the default settings, however, no other local user can access the
 viewer: every connection must both come from your own OS user
-(`\f[CR]viewer.same_user_policy = \(dqReject\(dq\f[R]') and present the
+(`\f[CR]viewer.same_user_policy = \(dqEnforce\(dq\f[R]') and present the
 session cookie of the browser bound at start\-up
 (`\f[CR]viewer.session_binding_cookie\f[R]'), so only your own browser
 is served.

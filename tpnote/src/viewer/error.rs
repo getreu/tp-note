@@ -72,7 +72,7 @@ pub enum ViewerError {
     },
 
     /// The connecting peer's OS user could not be determined and the policy is
-    /// `Reject` (fail-closed), so the request was refused with `403 Forbidden`.
+    /// `Enforce` (fail-closed), so the request was refused with `403 Forbidden`.
     /// `local_user` is the OS user running Tp-Note, `peer_user` the connecting
     /// (viewer) client (`unknown` here).
     /// Remedy: see `viewer.same_user_policy` in the configuration file.
@@ -80,7 +80,7 @@ pub enum ViewerError {
     #[error(
         "Connection rejected: the client's OS user could not be determined \
          (local user: {local_user}, viewer user: {peer_user}; \
-         `viewer.same_user_policy = Reject`)."
+         `viewer.same_user_policy = Enforce`)."
     )]
     PeerUserUnknown {
         local_user: String,

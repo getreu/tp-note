@@ -2488,7 +2488,7 @@ unix.browser = [[ "chromium", "--new-window", "--incognito"]]
 
 A sandboxed Flatpak browser works too, for example _Chrome_. Note, that a
 Flatpak browser's OS user cannot be determined by the viewer, so by default
-('`viewer.same_user_policy = "Reject"`') its connection is refused; set
+('`viewer.same_user_policy = "Enforce"`') its connection is refused; set
 '`viewer.same_user_policy = "Off"`' as well (cf. _SECURITY AND PRIVACY
 CONSIDERATIONS_ below):
 
@@ -3044,7 +3044,7 @@ in order, through the following checks:
 
 2. **OS user** ('`viewer.same_user_policy`'). While the session is still being
    established, the viewer identifies the OS user owning the process at the
-   other end of the connection. By default ('`"Reject"`') it serves only a
+   other end of the connection. By default ('`"Enforce"`') it serves only a
    connection proven to belong to your own OS user; a proven-foreign user, or
    one whose user the viewer cannot determine - for example a sandboxed Flatpak
    or Snap browser - is refused (fail-closed). This guards the bootstrap window
@@ -3071,7 +3071,7 @@ In every case only the offending request is refused and its connection closed;
 the viewer keeps running and keeps serving the bound web browser.
 
 **When '`"Off"`' helps.** If a legitimate browser is refused under the default
-'`same_user_policy = "Reject"`' - typically a sandboxed Flatpak or Snap browser
+'`same_user_policy = "Enforce"`' - typically a sandboxed Flatpak or Snap browser
 whose OS user the viewer cannot determine - set '`same_user_policy = "Off"`' in
 the configuration file and restart Tp-Note:
 
@@ -3093,7 +3093,7 @@ binds to the '`localhost`' interface only, so it is never reachable from the
 network or the Internet - at most other users logged into the same computer
 could connect at all. With the default settings, however, no other local user
 can access the viewer: every connection must both come from your own OS user
-('`viewer.same_user_policy = "Reject"`') and present the session cookie of the
+('`viewer.same_user_policy = "Enforce"`') and present the session cookie of the
 browser bound at start-up ('`viewer.session_binding_cookie`'), so only your own
 browser is served.
 

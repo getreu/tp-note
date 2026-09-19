@@ -80,7 +80,7 @@ fn detected_users_html(local_user: &str, peer_user: &str) -> String {
 }
 
 /// HTML body of the `403 Forbidden` response sent when the peer-user check
-/// (`viewer.same_user_policy = "Reject"`, the default) refuses a request
+/// (`viewer.same_user_policy = "Enforce"`, the default) refuses a request
 /// because it could **not determine** the connecting client's OS user. The
 /// legitimate user's own browser can hit this if it is sandboxed
 /// (Flatpak/Snap) or on platforms where the lookup is limited, so the page
@@ -94,7 +94,7 @@ pub(crate) fn peer_user_unknown_page(local_user: &str, peer_user: &str) -> Strin
 <h2>Access to this note was refused</h2>
 <p>The viewer could not confirm that the program connecting to it belongs to
 your operating-system user, so it refused the request. By default
-(<code>viewer.same_user_policy = &quot;Reject&quot;</code>) the viewer serves
+(<code>viewer.same_user_policy = &quot;Enforce&quot;</code>) the viewer serves
 only connections it can positively attribute to your own user, and refuses any
 it cannot (fail-closed).</p>
 

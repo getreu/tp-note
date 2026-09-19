@@ -165,7 +165,7 @@ pub struct AppArgs {
 /// owning process belongs to a different OS user. It is best-effort
 /// defense-in-depth (the connection→user lookup can be inconclusive), so the
 /// policy decides whether to enforce at all.
-/// Deserialized from a PascalCase TOML string (`"Off"`/`"Reject"`),
+/// Deserialized from a PascalCase TOML string (`"Off"`/`"Enforce"`),
 /// mirroring `LocalLinkKind`.
 #[cfg(feature = "same-user-policy")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -182,7 +182,7 @@ pub enum SameUserPolicy {
     /// sandboxed browser) is refused; such a user is shown a page explaining
     /// how to disable the check (`Off`).
     #[default]
-    Reject,
+    Enforce,
 }
 
 /// Configuration data for the viewer feature, deserialized from the
@@ -190,7 +190,7 @@ pub enum SameUserPolicy {
 ///
 /// CAUTION: for `session_binding_cookie` the derived `Default` (`false`,
 /// protection off) does not match the shipped `config_default.toml` (`true`);
-/// `same_user_policy` derives its `#[default]` variant `Reject`, matching the
+/// `same_user_policy` derives its `#[default]` variant `Enforce`, matching the
 /// shipped default. `CFG` is always built from `config_default.toml`, not
 /// `Viewer::default()`, but keep this in mind before calling
 /// `Viewer::default()` elsewhere.
@@ -535,13 +535,13 @@ mod tests {
         assert!(!cfg.viewer.session_binding_cookie);
 
         //
-        // Prepare test: `same_user_policy` defaults to `Reject` and parses.
+        // Prepare test: `same_user_policy` defaults to `Enforce` and parses.
         #[cfg(feature = "same-user-policy")]
         {
             let userconfig = temp_dir().join("tpnote.toml");
             fs::write(&userconfig, b"").unwrap();
             let cfg = Cfg::from_files(&[userconfig]).unwrap();
-            assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Reject);
+            assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
 
             let raw = "\
             [viewer]
