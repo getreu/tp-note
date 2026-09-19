@@ -2486,6 +2486,22 @@ top.
 unix.browser = [[ "chromium", "--new-window", "--incognito"]]
 ```
 
+A sandboxed Flatpak browser works too, for example _Chrome_. Note, that a
+Flatpak browser's OS user cannot be determined by the viewer, so by default
+('`viewer.same_user_policy = "Reject"`') its connection is refused; set
+'`viewer.same_user_policy = "Off"`' as well (cf. _SECURITY AND PRIVACY
+CONSIDERATIONS_ below):
+
+```toml
+[app_args]
+unix.browser = [
+  [ "flatpak", "run", "com.google.Chrome", "--new-window", "--incognito" ],
+]
+
+[viewer]
+same_user_policy = "Off"
+```
+
 Alternatively, you can set the '`TPNOTE_BROWSER`' environment variable (cf.
 examples in the chapter _ENVIRONMENT_VARIABLES_ below).
 
