@@ -26,7 +26,8 @@
 //! use std::path::Path;
 //!
 //! // Prepare test.
-//! let notedir = temp_dir();
+//! let notedir = temp_dir().join("tpnote-lib-doctest-workflow-1");
+//! fs::create_dir_all(&notedir).unwrap();
 //!
 //! let html_clipboard = ContentString::from_string("".to_string(), "html_clipboard".to_string());
 //! let txt_clipboard = ContentString::from_string("".to_string(), "txt_clipboard".to_string());
@@ -112,7 +113,8 @@
 //! }
 //!
 //! // Prepare test.
-//! let notedir = temp_dir();
+//! let notedir = temp_dir().join("tpnote-lib-doctest-workflow-2");
+//! fs::create_dir_all(&notedir).unwrap();
 //!
 //! let html_clipboard = MyContentString::from_string("".to_string(), "html_clipboard".to_string());
 //! let txt_clipboard = MyContentString::from_string("".to_string(), "txt_clipboard".to_string());
@@ -368,7 +370,8 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
     /// use std::fs;
     ///
     /// // Prepare test.
-    /// let notedir = temp_dir();
+    /// let notedir = temp_dir().join("tpnote-lib-doctest-workflow-3");
+    /// fs::create_dir_all(&notedir).unwrap();
     ///
     /// let html_clipboard = ContentString::from_string(
     ///     "my HTML clipboard\n".to_string(),
