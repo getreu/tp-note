@@ -191,17 +191,6 @@ winget install -e --id getreu.tpnote
 Following installation, right-click the Desktop and click "Show more options" to
 reveal the "New Tp-Note" context menu entry.
 
-### Tp-Note on NetBSD
-
-- An official package is available on NetBSD and other "pkgsrc" supported
-  platforms.
-
-  To install Tp-Note on NetBSD, simply use the native package manager:
-
-  ```sh
-  pkgin install tpnote
-  ```
-
 ### Tp-Note on NixOS
 
 - An official package is available on NixOS:
