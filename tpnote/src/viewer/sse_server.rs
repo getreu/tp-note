@@ -1190,5 +1190,75 @@ mod tests {
             let resp = get(port, href, &[("Cookie", cookie.as_str())]);
             assert_eq!(status(&resp), 200, "sibling note must be reachable:\n{resp}");
         }
+
+        /// Boots a viewer serving a base note that links to a sibling note in
+        /// a *different* directory. The sibling carries its own heading and a
+        /// same-document (bare-fragment) link to it. Returns the bound port.
+        fn boot_cross_doc_fragment_fixture() -> u16 {
+            let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+            let port = listener.local_addr().unwrap().port();
+
+            let uniq = SEQ.fetch_add(1, Ordering::Relaxed);
+            let base = std::env::temp_dir()
+                .join(format!("tpnote-itest-frag-{}-{}", std::process::id(), uniq));
+            let sub = base.join("sub");
+            fs::create_dir_all(&sub).unwrap();
+
+            let doc = base.join("00-index.md");
+            fs::write(&doc, "---\ntitle: itest\n---\n\n[sibling](<sub/01-other.md>)\n").unwrap();
+            fs::write(
+                sub.join("01-other.md"),
+                "---\ntitle: sibling\n---\n\n## T2 {#t2}\n\n[jump](#t2)\n",
+            )
+            .unwrap();
+
+            let start_accepting = Arc::new((Mutex::new(true), Condvar::new()));
+            let event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>> = Arc::new(Mutex::new(Vec::new()));
+            thread::spawn(move || manage_connections(event_tx_list, listener, start_accepting, doc));
+            port
+        }
+
+        #[test]
+        fn bare_fragment_in_navigated_document_resolves_locally() {
+            // A bare-fragment link (`#t2`) inside a document reached by
+            // navigation — not the viewer's base/session document — must stay
+            // a same-document anchor. The viewer's `ServerThread.context` is
+            // fixed to the *base* document for the whole connection, so a
+            // rewritten `href` pointing at the sibling's own directory would
+            // either 404 (the alias-to-base-document check only matches the
+            // base document's directory) or, if the sibling lived exactly at
+            // `root_path`, collapse to `/` and silently re-serve the base
+            // document instead. A browser never re-requests a bare fragment,
+            // so the correct behaviour is: the link stays `href="#t2"`
+            // verbatim in the sibling's own rendered page, resolving locally
+            // without any further HTTP request.
+            let port = boot_cross_doc_fragment_fixture();
+            let home = get(port, "/", &[]);
+            assert_eq!(status(&home), 200, "first GET / should render:\n{home}");
+            let tok = cookie_token(&home).expect("first GET / must bind and Set-Cookie");
+            let cookie = format!("tpnote={tok}");
+
+            let href = home
+                .split("href=\"")
+                .filter_map(|s| s.split('"').next())
+                .find(|s| s.contains("01-other"))
+                .expect("rendered page must link the sibling note");
+
+            let sibling = get(port, href, &[("Cookie", cookie.as_str())]);
+            assert_eq!(
+                status(&sibling),
+                200,
+                "sibling note must be reachable:\n{sibling}"
+            );
+            assert!(
+                sibling.contains("id=\"t2\""),
+                "sibling note must carry the heading id:\n{sibling}"
+            );
+            assert!(
+                sibling.contains("href=\"#t2\""),
+                "a same-document fragment link must stay a bare fragment, not \
+                 get rebased onto the sibling's own directory:\n{sibling}"
+            );
+        }
     }
 }

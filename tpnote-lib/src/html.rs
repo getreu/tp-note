@@ -379,10 +379,17 @@ impl Hyperlink for Link<'_> {
     ) -> Result<(), NoteError> {
         let do_rebase = |path: &mut Cow<str>| -> Result<(), NoteError> {
             if <Link as Hyperlink>::is_local_fn(path) {
+                let (path_part, fragment) = split_path_and_fragment(path.as_ref());
+                if path_part.is_empty() {
+                    // A bare fragment (`#ch1`) denotes the current document.
+                    // There is no path to rebase.
+                    return Ok(());
+                }
+
                 let dest_out = assemble_link(
                     root_path,
                     docdir,
-                    Path::new(path.as_ref()),
+                    Path::new(path_part),
                     rewrite_rel_paths,
                     rewrite_abs_paths,
                 )
@@ -391,8 +398,9 @@ impl Hyperlink for Link<'_> {
                 })?;
 
                 // Store result.
-                let new_dest = Cow::Owned(dest_out.to_str().unwrap_or_default().to_string());
-                let _ = std::mem::replace(path, new_dest);
+                let mut new_dest = dest_out.to_str().unwrap_or_default().to_string();
+                new_dest.push_str(fragment);
+                let _ = std::mem::replace(path, Cow::Owned(new_dest));
             }
             Ok(())
         };
@@ -558,7 +566,8 @@ impl Hyperlink for Link<'_> {
             _ => return None,
         };
         if <Link as Hyperlink>::is_local_fn(dest) {
-            Some(Path::new(split_path_and_fragment(dest.as_ref()).0))
+            let path = split_path_and_fragment(dest.as_ref()).0;
+            (!path.is_empty()).then(|| Path::new(path))
         } else {
             None
         }
@@ -586,10 +595,11 @@ impl Hyperlink for Link<'_> {
             _ => return,
         };
         if <Link as Hyperlink>::is_local_fn(dest) {
-            let path = dest.as_ref();
+            let (path, fragment) = split_path_and_fragment(dest.as_ref());
             if path.has_tpnote_ext() {
                 let mut newpath = path.to_string();
                 newpath.push_str(HTML_EXT);
+                newpath.push_str(fragment);
 
                 let _ = std::mem::replace(dest, Cow::Owned(newpath));
             }
@@ -1738,6 +1748,24 @@ mod tests {
     }
 
     #[test]
+    fn test_append_html_ext_with_fragment() {
+        // The fragment must survive, reattached after the appended `.html`.
+        let mut input = Link::Text2Dest(
+            Cow::from("abc"),
+            Cow::from("/dir/3.0-My note.md#ch1"),
+            Cow::from("title"),
+        );
+        let expected = Link::Text2Dest(
+            Cow::from("abc"),
+            Cow::from("/dir/3.0-My note.md.html#ch1"),
+            Cow::from("title"),
+        );
+        input.append_html_ext();
+        let output = input;
+        assert_eq!(output, expected);
+    }
+
+    #[test]
     fn test_to_html() {
         //
         let input = Link::Text2Dest(
@@ -1847,9 +1875,13 @@ mod tests {
     fn test_rewrite_links3() {
         use crate::config::LocalLinkKind;
 
+        // A bare fragment (`#1`) denotes the current document: there is no
+        // path to rebase, so it must survive every rewriting mode verbatim,
+        // and it must not register the docdir as an "allowed" local link,
+        // since no separate resource is referenced.
         let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
         let input = "abd<a href=\"#1\"></a>abd".to_string();
-        let expected = "abd<a href=\"/abs/note%20path/#1\"></a>abd";
+        let expected = "abd<a href=\"#1\"></a>abd";
         let root_path = Path::new("/my/");
         let docdir = Path::new("/my/abs/note path/");
         let output = rewrite_links(
@@ -1862,8 +1894,33 @@ mod tests {
         );
         let url = allowed_urls.read_recursive();
         println!("{:?}", allowed_urls.read_recursive());
-        assert!(url.contains(&PathBuf::from("/abs/note path/")));
+        assert!(!url.contains(&PathBuf::from("/abs/note path/")));
         assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_rewrite_links_bare_fragment_all_modes() {
+        use crate::config::LocalLinkKind;
+
+        // The bug-report fixture: `[Chapter one](#ch1)` must resolve to
+        // `#ch1` verbatim, regardless of `LocalLinkKind`.
+        let root_path = Path::new("/my/");
+        let docdir = Path::new("/my/abs/note path/");
+        let input = "<a href=\"#ch1\">Chapter one</a>".to_string();
+        let expected = "<a href=\"#ch1\">Chapter one</a>";
+
+        for kind in [LocalLinkKind::Off, LocalLinkKind::Short, LocalLinkKind::Long] {
+            let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
+            let output = rewrite_links(
+                input.clone(),
+                root_path,
+                docdir,
+                kind,
+                false,
+                allowed_urls,
+            );
+            assert_eq!(output, expected, "mode {kind:?} must leave a bare fragment untouched");
+        }
     }
 
     /// A `#` in a directory name must not end up as a bare byte in the
