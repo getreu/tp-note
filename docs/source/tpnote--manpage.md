@@ -624,6 +624,21 @@ Tp-Note's built-in note viewer comprises three markup language renderers:
    is a level 2 heading with the content "Installation", ID '`install`', class
    '`collapsible`' and custom attribute '`data-level`' with value '`2`'.
 
+   Every heading that does *not* carry an explicit ID this way gets one
+   generated automatically from its text, so a table of contents or a
+   cross-reference to another section works without hand-written heading
+   attributes, and the same note keeps navigating correctly when rendered by
+   a forge like GitHub or GitLab. This is controlled by
+   '`tmpl_html.auto_heading_ids`' (default '`Gfm`'): '`Gfm`' reproduces the
+   GitHub/GitLab slug (lowercase, spaces become hyphens, punctuation
+   dropped); '`Pandoc`' reproduces Pandoc's '`auto_identifiers`' algorithm
+   instead, which additionally drops a leading run of non-letter characters
+   (a heading starting with '`2. `' loses the '`2. `' entirely, unlike
+   '`Gfm`', which keeps the digit); '`Off`' disables this and restores the
+   previous behaviour, where a heading without an explicit ID has none. An
+   explicit '`{#id}`' always wins over the generated one, regardless of this
+   setting.
+
 2. '`ReStructuredText`' (file extension `.rst`)\
    This renderer is experimental and covers only basic markup.
 

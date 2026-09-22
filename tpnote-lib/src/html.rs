@@ -2,7 +2,10 @@
 use crate::clone_ext::CloneExt;
 use crate::error::InputStreamError;
 use crate::filename::{NotePath, NotePathStr};
-use crate::{config::LocalLinkKind, error::NoteError};
+use crate::{
+    config::{HeadingIdPolicy, LocalLinkKind},
+    error::NoteError,
+};
 use html_escape;
 use parking_lot::RwLock;
 use parse_hyperlinks::parser::Link;
@@ -809,6 +812,218 @@ pub fn rewrite_links(
     // The `RwLockWriteGuard` is released here.
 }
 
+/// One `<h1>`-`<h6>` heading found while scanning rendered HTML, in
+/// document order.
+struct HeadingMatch {
+    /// Byte offset of the opening tag's terminating `>`.
+    tag_close: usize,
+    /// The opening tag's `id="..."` attribute value, if it already has one.
+    existing_id: Option<String>,
+    /// Tag-stripped, entity-decoded text content of the heading.
+    text: String,
+}
+
+/// Scans `html` for every heading, in document order. Mirrors the
+/// tag-finding approach of `filter::FirstHtmlHeading` (which stops at the
+/// first heading; this collects all of them) and additionally extracts a
+/// pre-existing `id="..."` attribute value, if present. Headings never
+/// nest — CommonMark's grammar and RST's section model both forbid it — so
+/// a simple "next matching closing tag" scan is safe.
+fn scan_headings(html: &str) -> Vec<HeadingMatch> {
+    const OPENING: &[&str; 6] = &["<h1", "<h2", "<h3", "<h4", "<h5", "<h6"];
+    const CLOSING: &[&str; 6] = &["</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>"];
+
+    let mut headings = Vec::new();
+    let mut i = 0;
+    while let Some(mut tag_start) = html[i..].find('<') {
+        let Some(mut tag_end) = html[i + tag_start..].find('>') else {
+            break;
+        };
+        tag_end += 1;
+        // Move on if there is another opening bracket.
+        if let Some(new_start) = html[i + tag_start + 1..i + tag_start + tag_end].rfind('<') {
+            tag_start += new_start + 1;
+            tag_end -= new_start + 1;
+        }
+
+        let tag_str = &html[i + tag_start..i + tag_start + tag_end];
+        if !OPENING.iter().any(|&pat| tag_str.starts_with(pat)) {
+            i += tag_start + tag_end;
+            continue;
+        }
+
+        // Index right after the opening tag's `>`, and of the `>` itself.
+        let heading_start = i + tag_start + tag_end;
+        let tag_close = heading_start - 1;
+
+        let existing_id = tag_str.find("id=\"").map(|p| {
+            let rest = &tag_str[p + 4..];
+            let end = rest.find('"').unwrap_or(rest.len());
+            rest[..end].to_string()
+        });
+
+        // Find the matching closing tag.
+        let mut k = heading_start;
+        let mut heading_end = None;
+        while let Some(mut cs) = html[k..].find('<') {
+            let Some(mut ce) = html[k + cs..].find('>') else {
+                break;
+            };
+            ce += 1;
+            if let Some(new_start) = html[k + cs + 1..k + cs + ce].rfind('<') {
+                cs += new_start + 1;
+                ce -= new_start + 1;
+            }
+            if CLOSING.iter().any(|&pat| html[k + cs..k + cs + ce].starts_with(pat)) {
+                heading_end = Some(k + cs);
+                break;
+            }
+            k += cs + ce;
+        }
+
+        let Some(heading_end) = heading_end else {
+            i = heading_start;
+            continue;
+        };
+
+        // Remove HTML tags inside the heading, then decode entities.
+        let mut cleaned = String::new();
+        let mut inside_tag = false;
+        for c in html[heading_start..heading_end].chars() {
+            if c == '<' {
+                inside_tag = true;
+            } else if c == '>' {
+                inside_tag = false;
+            } else if !inside_tag {
+                cleaned.push(c);
+            }
+        }
+        let text = html_escape::decode_html_entities(&cleaned).into_owned();
+
+        headings.push(HeadingMatch { tag_close, existing_id, text });
+
+        i = heading_end;
+    }
+    headings
+}
+
+/// GitHub/GitLab-style slug (see `HeadingIdPolicy::Gfm`): lowercase, keep
+/// only Unicode letters/digits/`-`/`_`/space, convert each remaining space
+/// to a hyphen individually (two adjacent spaces become two adjacent
+/// hyphens, not one collapsed hyphen — this is what turns an em dash
+/// surrounded by spaces into a double hyphen once the dash itself is
+/// dropped), then trim stray leading/trailing hyphens.
+fn slugify_gfm(text: &str) -> String {
+    let lower = text.to_lowercase();
+    let filtered: String = lower
+        .chars()
+        .filter(|c| c.is_alphanumeric() || *c == '-' || *c == '_' || *c == ' ')
+        .map(|c| if c == ' ' { '-' } else { c })
+        .collect();
+    filtered.trim_matches('-').to_string()
+}
+
+/// Pandoc's `auto_identifiers` algorithm (see `HeadingIdPolicy::Pandoc`):
+/// like `slugify_gfm`, but periods are also kept, and any leading run of
+/// non-letter characters is stripped (`2. Section` becomes `section`, not
+/// `2-section`).
+fn slugify_pandoc(text: &str) -> String {
+    let lower = text.to_lowercase();
+    let filtered: String = lower
+        .chars()
+        .filter(|c| c.is_alphanumeric() || *c == '-' || *c == '_' || *c == '.' || *c == ' ')
+        .map(|c| if c == ' ' { '-' } else { c })
+        .collect();
+    filtered
+        .trim_start_matches(|c: char| !c.is_alphabetic())
+        .trim_matches('-')
+        .to_string()
+}
+
+/// Appends `-1`, `-2`, ... to `base` until the result isn't already in
+/// `seen`, records the result in `seen`, and returns it.
+fn disambiguate(base: String, seen: &mut HashSet<String>) -> String {
+    if seen.insert(base.clone()) {
+        return base;
+    }
+    let mut n = 1;
+    loop {
+        let candidate = format!("{base}-{n}");
+        if seen.insert(candidate.clone()) {
+            return candidate;
+        }
+        n += 1;
+    }
+}
+
+/// Assigns an `id` attribute to every heading in `html` that doesn't
+/// already have one, according to `policy`. A heading's existing `id` —
+/// whether an explicit Markdown `{#id}` heading attribute or one another
+/// renderer already assigned (e.g. RST's own auto-ids) — always wins and is
+/// never touched. Markup-language agnostic: this runs on the final
+/// rendered HTML, after `markup_to_html` has already produced `<h1>`-`<h6>`
+/// tags, regardless of which renderer produced them.
+pub fn assign_heading_ids(html: String, policy: HeadingIdPolicy) -> String {
+    if policy == HeadingIdPolicy::Off {
+        return html;
+    }
+
+    let headings = scan_headings(&html);
+    if headings.is_empty() {
+        return html;
+    }
+
+    let mut seen: HashSet<String> = HashSet::new();
+    for h in &headings {
+        if let Some(id) = &h.existing_id {
+            seen.insert(id.clone());
+        }
+    }
+
+    // `(tag_close offset, new id)` for every heading that needs one, in
+    // document order.
+    let mut assignments: Vec<(usize, String)> = Vec::new();
+    for h in &headings {
+        if h.existing_id.is_some() {
+            continue;
+        }
+        let slug = match policy {
+            HeadingIdPolicy::Gfm => slugify_gfm(&h.text),
+            HeadingIdPolicy::Pandoc => slugify_pandoc(&h.text),
+            HeadingIdPolicy::Off => unreachable!(),
+        };
+        let slug = if slug.is_empty() {
+            match policy {
+                // Pandoc documents this fallback explicitly.
+                HeadingIdPolicy::Pandoc => "section".to_string(),
+                // No spec for this case in GFM/GitLab: leave the heading
+                // id-less rather than fabricate one.
+                _ => continue,
+            }
+        } else {
+            slug
+        };
+        assignments.push((h.tag_close, disambiguate(slug, &mut seen)));
+    }
+
+    if assignments.is_empty() {
+        return html;
+    }
+
+    // Splice `id="..."` into each opening tag right before its `>`. Offsets
+    // are into the original `html`, in ascending order, so a running
+    // cursor over spans of the original string is enough to rebuild it.
+    let mut out = String::with_capacity(html.len() + assignments.len() * 16);
+    let mut cursor = 0;
+    for (tag_close, id) in assignments {
+        out.push_str(&html[cursor..tag_close]);
+        out.push_str(&format!(" id=\"{id}\""));
+        cursor = tag_close;
+    }
+    out.push_str(&html[cursor..]);
+    out
+}
+
 /// This trait deals with tagged HTML `&str` data.
 pub trait HtmlStr {
     /// Lowercase pattern to check if this is a Doctype tag.
@@ -944,6 +1159,7 @@ mod tests {
     use crate::error::NoteError;
     use crate::html::Hyperlink;
     use crate::html::assemble_link;
+    use crate::html::assign_heading_ids;
     use crate::html::rewrite_links;
     use parking_lot::RwLock;
     use parse_hyperlinks::parser::Link;
@@ -1921,6 +2137,85 @@ mod tests {
             );
             assert_eq!(output, expected, "mode {kind:?} must leave a bare fragment untouched");
         }
+    }
+
+    /// The feature-request's own acceptance-test fixture, rendered as the
+    /// HTML `pulldown-cmark` would already have produced (this tests
+    /// `assign_heading_ids` in isolation, not the Markdown renderer).
+    const HEADING_FIXTURE: &str = concat!(
+        "<h2>Chapter one</h2>",
+        "<h2 id=\"ch1\">Chapter one</h2>",
+        "<h3>S9 — Check the PIN</h3>",
+        "<h3>2. Second section</h3>",
+        "<h3>Duplicate</h3>",
+        "<h3>Duplicate</h3>",
+        "<h3><em>Emphasis</em> and <code>code</code></h3>",
+        "<h3>Ümlaut und Größe</h3>",
+        "<h3>Trailing punctuation!</h3>",
+    );
+
+    #[test]
+    fn test_assign_heading_ids_gfm() {
+        use crate::config::HeadingIdPolicy;
+
+        let expected = concat!(
+            "<h2 id=\"chapter-one\">Chapter one</h2>",
+            "<h2 id=\"ch1\">Chapter one</h2>",
+            "<h3 id=\"s9--check-the-pin\">S9 — Check the PIN</h3>",
+            "<h3 id=\"2-second-section\">2. Second section</h3>",
+            "<h3 id=\"duplicate\">Duplicate</h3>",
+            "<h3 id=\"duplicate-1\">Duplicate</h3>",
+            "<h3 id=\"emphasis-and-code\"><em>Emphasis</em> and <code>code</code></h3>",
+            "<h3 id=\"ümlaut-und-größe\">Ümlaut und Größe</h3>",
+            "<h3 id=\"trailing-punctuation\">Trailing punctuation!</h3>",
+        );
+
+        let output = assign_heading_ids(HEADING_FIXTURE.to_string(), HeadingIdPolicy::Gfm);
+        assert_eq!(output, expected);
+        assert!(!output.contains("{#ch1}"), "raw heading-attribute syntax must never leak");
+    }
+
+    #[test]
+    fn test_assign_heading_ids_pandoc() {
+        use crate::config::HeadingIdPolicy;
+
+        // Differs from Gfm on exactly one row: the leading `2. ` is
+        // dropped entirely, rather than keeping the digit.
+        let expected = concat!(
+            "<h2 id=\"chapter-one\">Chapter one</h2>",
+            "<h2 id=\"ch1\">Chapter one</h2>",
+            "<h3 id=\"s9--check-the-pin\">S9 — Check the PIN</h3>",
+            "<h3 id=\"second-section\">2. Second section</h3>",
+            "<h3 id=\"duplicate\">Duplicate</h3>",
+            "<h3 id=\"duplicate-1\">Duplicate</h3>",
+            "<h3 id=\"emphasis-and-code\"><em>Emphasis</em> and <code>code</code></h3>",
+            "<h3 id=\"ümlaut-und-größe\">Ümlaut und Größe</h3>",
+            "<h3 id=\"trailing-punctuation\">Trailing punctuation!</h3>",
+        );
+
+        let output = assign_heading_ids(HEADING_FIXTURE.to_string(), HeadingIdPolicy::Pandoc);
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_assign_heading_ids_off() {
+        use crate::config::HeadingIdPolicy;
+
+        let output = assign_heading_ids(HEADING_FIXTURE.to_string(), HeadingIdPolicy::Off);
+        assert_eq!(output, HEADING_FIXTURE, "Off must leave the HTML byte-for-byte unchanged");
+    }
+
+    #[test]
+    fn test_assign_heading_ids_avoids_colliding_with_explicit_id() {
+        use crate::config::HeadingIdPolicy;
+
+        // A later auto-generated slug that would collide with an EARLIER
+        // explicit `{#id}` must be disambiguated, not silently duplicated.
+        let input = "<h2 id=\"duplicate\">Explicit</h2><h2>Duplicate</h2>".to_string();
+        let expected = "<h2 id=\"duplicate\">Explicit</h2><h2 id=\"duplicate-1\">Duplicate</h2>";
+
+        let output = assign_heading_ids(input, HeadingIdPolicy::Gfm);
+        assert_eq!(output, expected);
     }
 
     /// A `#` in a directory name must not end up as a bare byte in the

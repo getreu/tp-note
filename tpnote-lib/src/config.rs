@@ -786,6 +786,12 @@ pub enum Mode {
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TmplHtml {
+    /// Assigns an `id` to every heading that doesn't already carry one (an
+    /// explicit `{#id}` heading attribute, or an id an RST document's own
+    /// renderer already assigned, always wins and is left untouched).
+    /// Applies uniformly to the viewer and the exporter. Defaults to `Gfm`
+    /// (see `config_default.toml`).
+    pub auto_heading_ids: HeadingIdPolicy,
     pub viewer: String,
     pub viewer_error: String,
     pub viewer_doc_css: String,
@@ -818,6 +824,23 @@ pub enum EmbeddedContentErrorPolicy {
     /// Abort the whole rendition: the viewer shows its full-page error template,
     /// `--export` fails with a CLI error and writes no file.
     HardError,
+}
+
+/// Determines the algorithm used to auto-generate heading `id` attributes
+/// (see `TmplHtml::auto_heading_ids`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, Default)]
+pub enum HeadingIdPolicy {
+    /// GitHub/GitLab-style slug: lowercase, strip everything but Unicode
+    /// letters/digits/hyphens/underscores/spaces, spaces become hyphens.
+    /// Matches how the same note renders on those forges.
+    #[default]
+    Gfm,
+    /// Pandoc's `auto_identifiers` algorithm: like `Gfm`, but periods are
+    /// also kept, and any leading run of non-letter characters is stripped
+    /// (`2. Section` becomes `section`, not `2-section`).
+    Pandoc,
+    /// No behaviour change: headings without an explicit id stay that way.
+    Off,
 }
 
 /// Defines the way the HTML exporter rewrites local links.

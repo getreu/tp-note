@@ -18,6 +18,7 @@ use tpnote_lib::config::TMPL_HTML_VAR_VIEWER_HIGHLIGHTING_CSS_PATH_VALUE;
 use tpnote_lib::content::Content;
 use tpnote_lib::content::ContentString;
 use tpnote_lib::context::Context;
+use tpnote_lib::html::assign_heading_ids;
 use tpnote_lib::html::rewrite_links;
 use tpnote_lib::html_renderer::HtmlRenderer;
 use tpnote_lib::markup_language::MarkupLanguage;
@@ -580,6 +581,8 @@ impl HttpResponse for ServerThread {
         // accessible to all threads.
         // Secondly, convert all relative links to absolute links.
         .map(|html| {
+            let heading_id_policy = LIB_CFG.read_recursive().tmpl_html.auto_heading_ids;
+            let html = assign_heading_ids(html, heading_id_policy);
             rewrite_links(
                 html,
                 html_context.get_root_path(),

@@ -14,6 +14,7 @@ use crate::error::NoteError;
 #[cfg(feature = "viewer")]
 use crate::filter::TERA;
 use crate::html::HTML_EXT;
+use crate::html::assign_heading_ids;
 use crate::html::rewrite_links;
 use crate::note::Note;
 #[cfg(feature = "viewer")]
@@ -320,6 +321,8 @@ impl HtmlRenderer {
         // does not leave an empty output file behind.
         let root_path = context.get_root_path().to_owned();
         let html = Self::exporter_page(context, content)?;
+        let heading_id_policy = LIB_CFG.read_recursive().tmpl_html.auto_heading_ids;
+        let html = assign_heading_ids(html, heading_id_policy);
         let html = rewrite_links(
             html,
             &root_path,

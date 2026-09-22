@@ -457,7 +457,7 @@ font-weight: bold;
   
   </table>
   
-  <div class="doc-body"><h1>Body</h1>
+  <div class="doc-body"><h1 id="body">Body</h1>
 
   </div>
 </body>

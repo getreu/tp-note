@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>xxx</title>
+<title>heading ids</title>
 <style type="text/css">
 /* Tp-Note's exporter document CSS */
 @page {
@@ -423,18 +423,18 @@ font-weight: bold;
   <table class="fm">
     <tr>
     <th class="fmkey">title:</th>
-    <th class="fmval"><b>xxx</b></th>
+    <th class="fmval"><b>heading ids</b></th>
   </tr>
   
     <tr>
     <th class="fmkey">subtitle:</th>
-    <th class="fmval">yyy</th>
+    <th class="fmval">Note</th>
   </tr>
   
   
     <tr>
     <th class="fmkeygrey">author:</th>
-    <th class="fmvalgrey"><ul class="fm"><li class="fm">Jens</li><li class="fm">Hans</li></ul></th>
+    <th class="fmvalgrey"></th>
   </tr>
     <tr>
     <th class="fmkeygrey">date:</th>
@@ -447,17 +447,20 @@ font-weight: bold;
   
   
   
-    <tr>
-    <th class="fmkeygrey">sort_tag:</th>
-    <th class="fmvalgrey">111</th>
-  </tr>
-  
   
   
   
   </table>
   
-  <div class="doc-body"><h1 id="body">Body</h1>
+  <div class="doc-body"><h2 id="chapter-one">Chapter one</h2>
+<h2 id="ch1">Chapter one</h2>
+<h2 id="s9--check-the-pin">S9 — Check the PIN</h2>
+<h2 id="2-second-section">2. Second section</h2>
+<h2 id="duplicate">Duplicate</h2>
+<h2 id="duplicate-1">Duplicate</h2>
+<h2 id="emphasis-and-code"><em>Emphasis</em> and <code>code</code></h2>
+<h2 id="ümlaut-und-größe">Ümlaut und Größe</h2>
+<h2 id="trailing-punctuation">Trailing punctuation!</h2>
 
   </div>
 </body>

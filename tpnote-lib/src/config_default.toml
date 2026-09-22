@@ -756,6 +756,15 @@ sync_filename = """
 ### This part is common for all schemes.
 [tmpl_html]
 
+### Assigns an `id` to every heading that doesn't already carry one (an
+### explicit `{#id}` heading attribute always wins and is left untouched):
+### "Gfm" (GitHub/GitLab-style slug, matches how the same note renders on
+### those forges — recommended for portability), "Pandoc" (Pandoc's
+### `auto_identifiers` algorithm — differs on a leading digit/punctuation:
+### "2. Section" becomes "section", not "2-section"), or "Off" (no
+### behaviour change; existing notes without heading ids stay that way).
+auto_heading_ids = "Gfm"
+
 ### HTML template to render regular viewer pages. Note: HTML templates escape HTML
 ### critical symbols by default. To disable this feature for a specific variable,
 ### add a `safe` filter in last position.

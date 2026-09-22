@@ -786,6 +786,52 @@ fi
 
 
 
+## Test 027: Heading ids are auto-generated (Gfm, the default policy)
+INPUT_FILENAME="$PWD/027-heading-ids--Note.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: heading ids
+subtitle: Note
+---
+
+## Chapter one
+
+## Chapter one {#ch1}
+
+## S9 — Check the PIN
+
+## 2. Second section
+
+## Duplicate
+
+## Duplicate
+
+## *Emphasis* and `code`
+
+## Ümlaut und Größe
+
+## Trailing punctuation!
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/027-heading-ids--Note.md.html"
+
+if diff "$OUTPUT_FILENAME"  "test027-html-expected-output"
+then
+    echo Commandline test 027 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 027 failed.
+    exit 1
+fi
+
+
+
 ./run-tests2 || exit 1
 
 
