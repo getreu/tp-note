@@ -650,6 +650,23 @@ For example:
 is a level 2 heading with the content \(lqInstallation\(rq, ID
 `\f[CR]install\f[R]', class `\f[CR]collapsible\f[R]' and custom
 attribute `\f[CR]data\-level\f[R]' with value `\f[CR]2\f[R]'.
+.PP
+Every heading that does \f[I]not\f[R] carry an explicit ID this way gets
+one generated automatically from its text, so a table of contents or a
+cross\-reference to another section works without hand\-written heading
+attributes, and the same note keeps navigating correctly when rendered
+by a forge like GitHub or GitLab.
+This is controlled by `\f[CR]tmpl_html.auto_heading_ids\f[R]' (default
+`\f[CR]Gfm\f[R]'): `\f[CR]Gfm\f[R]' reproduces the GitHub/GitLab slug
+(lowercase, spaces become hyphens, punctuation dropped);
+`\f[CR]Pandoc\f[R]' reproduces Pandoc\(cqs `\f[CR]auto_identifiers\f[R]'
+algorithm instead, which additionally drops a leading run of non\-letter
+characters (a heading starting with `\f[CR]2.\f[R]' loses the
+`\f[CR]2.\f[R]' entirely, unlike `\f[CR]Gfm\f[R]', which keeps the
+digit); `\f[CR]Off\f[R]' disables this and restores the previous
+behaviour, where a heading without an explicit ID has none.
+An explicit `\f[CR]{#id}\f[R]' always wins over the generated one,
+regardless of this setting.
 .RE
 .IP "2." 3
 `\f[CR]ReStructuredText\f[R]' (file extension \f[CR].rst\f[R])
