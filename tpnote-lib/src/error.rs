@@ -501,8 +501,8 @@ macro_rules! note_error_tera_template {
             tera::ErrorKind::Msg(m) => m.clone(),
             _ => String::new(),
         };
-        if raw_msg.starts_with("markup_to_html: ") {
-            NoteError::MarkupError { msg: raw_msg["markup_to_html: ".len()..].to_string() }
+        if let Some(stripped) = raw_msg.strip_prefix("markup_to_html: ") {
+            NoteError::MarkupError { msg: stripped.to_string() }
         } else {
             let source_str = match std::error::Error::source(&$e) {
                 Some(s) => s

@@ -216,7 +216,7 @@ fn to_html_filter(
     fn tag_to_html(val: Value, is_root: bool, output: &mut String) {
         if let Some(a) = val.as_array() {
             output.push_str("<ul class=\"fm\">");
-            for i in a.to_vec() {
+            for i in a.iter().cloned() {
                 output.push_str("<li class=\"fm\">");
                 tag_to_html(i, false, output);
                 output.push_str("</li>");
@@ -227,7 +227,7 @@ fn to_html_filter(
         } else if let Some(map) = val.as_map() {
             output.push_str("<blockquote class=\"fm\">");
             let mut entries: Vec<_> = map.iter().collect();
-            entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+            entries.sort_unstable_by_key(|(a, _)| *a);
             if is_root {
                 let scheme =
                     &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
@@ -446,10 +446,10 @@ fn sanit_filter(
 
     // Check if this is a usual dotfile filename.
     let is_dotfile = input.starts_with(FILENAME_DOTFILE_MARKER)
-        && PathBuf::from(&*input).has_wellformed_filename();
+        && PathBuf::from(input).has_wellformed_filename();
 
     // Sanitize string.
-    let mut res = sanitize(&input);
+    let mut res = sanitize(input);
 
     // If `FILNAME_DOTFILE_MARKER` was stripped, prepend one.
     if is_dotfile && !res.starts_with(FILENAME_DOTFILE_MARKER) {
@@ -834,10 +834,11 @@ fn append_filter(
         res.push_str(&with);
     };
 
-    if let Some(newline) = kwargs.get::<bool>("newline")? {
-        if newline && !res.is_empty() {
-            res.push('\n');
-        }
+    if let Some(newline) = kwargs.get::<bool>("newline")?
+        && newline
+        && !res.is_empty()
+    {
+        res.push('\n');
     };
 
     Ok(Value::from(res))
