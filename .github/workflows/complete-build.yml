@@ -179,17 +179,6 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
-      # Checkout so we can read the annotated tag's message as the release
-      # body (fetch-depth: 0 + fetch-tags ensures the tag object itself,
-      # not just the commit it points at, is present locally).
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Extract release notes from the annotated tag message
-        run: git tag -l --format='%(contents)' "${GITHUB_REF_NAME}" > /tmp/release-notes.txt
-
       # Every release asset is uploaded under a `tpnote-*` artifact name, one
       # file each. merge-multiple flattens them all into a single directory, so
       # dist/ is the flat, one-file-per-target release asset set.
@@ -208,4 +197,3 @@ jobs:
         with:
           files: dist/*
           fail_on_unmatched_files: false
-          body_path: /tmp/release-notes.txt
