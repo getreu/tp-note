@@ -339,24 +339,26 @@ compile _Tp-Note_ yourself.
 
 ## Cross compilation
 
-Tp-Note supports cross-compilation for multiple architectures. This section
-explains how to build binaries that work on Debian/Ubuntu systems, including
-Raspberry Pi devices.
+Tp-Note supports cross-compilation for multiple architectures. There are two
+independent ways to do this: with the standard Rust toolchain (`rustup` +
+`cargo`), or with Nix, if you already work in a Nix/NixOS environment. Pick
+one — they are not meant to be mixed.
 
-### Building for Debian/Ubuntu (Recommended)
+### Standard cross compilation (rustup + cargo)
 
 The project includes pre-configured cross-compilation settings in
-`.cargo/config.toml`. To build Debian/Ubuntu-compatible binaries, you only
-need to install the cross-compiler toolchains:
+`.cargo/config.toml`. This is the recommended path if you are not using Nix.
 
-**Prerequisites:**
+**Building for Debian/Ubuntu, including Raspberry Pi (Recommended)**
+
+Install the cross-compiler toolchains:
 
 ```sh
 sudo apt update
 sudo apt install crossbuild-essential-armhf crossbuild-essential-arm64
 ```
 
-**Build for Raspberry Pi 32-bit (ARMv7):**
+Build for Raspberry Pi 32-bit (ARMv7):
 
 ```sh
 rustup target add armv7-unknown-linux-gnueabihf
@@ -366,7 +368,7 @@ cargo build --release --target armv7-unknown-linux-gnueabihf
 The binary will be at:
 `target/armv7-unknown-linux-gnueabihf/release/tpnote`
 
-**Build for Raspberry Pi 64-bit (ARM64):**
+Build for Raspberry Pi 64-bit (ARM64):
 
 ```sh
 rustup target add aarch64-unknown-linux-gnu
@@ -376,26 +378,7 @@ cargo build --release --target aarch64-unknown-linux-gnu
 The binary will be at:
 `target/aarch64-unknown-linux-gnu/release/tpnote`
 
-### Building from NixOS
-
-Tp-Note can also be cross-compiled from NixOS using the Nix flake. The ARM
-builds produce binaries compatible with Debian 11+ and Ubuntu 20.04+:
-
-```sh
-# Build ARMv7 (32-bit) for Raspberry Pi
-nix build .#tpnote-armv7-unknown-linux-gnueabihf
-
-# Build ARM64 (64-bit) for Raspberry Pi and ARM servers
-nix build .#tpnote-aarch64-unknown-linux-gnu
-```
-
-The binaries will be in the Nix store. Copy them to your desired location:
-
-```sh
-cp result/bin/tpnote /path/to/destination
-```
-
-### Building for Musl Linux (Static)
+**Building for Musl Linux (static)**
 
 For a fully static binary that works on any Linux distribution:
 
@@ -405,7 +388,7 @@ sudo apt install musl-tools
 cargo build --release --target x86_64-unknown-linux-musl
 ```
 
-### Building for Windows
+**Building for Windows**
 
 ```sh
 rustup target add x86_64-pc-windows-gnu
@@ -413,20 +396,58 @@ sudo apt install binutils-mingw-w64 mingw-w64
 cargo build --release --target x86_64-pc-windows-gnu
 ```
 
-### Verifying Binary Compatibility
+### Cross compilation with Nix
 
-After building, verify that your binary links against the correct libraries:
+The recommended way on NixOS, instead of `rustup`/`cargo` above, is to use
+the Nix flake. The flake offers separate targets for standard Linux and for
+NixOS itself — see the comments at the top of `flake.nix` for the full
+compatibility matrix and rationale.
+
+**Build for standard Linux (glibc, portable binary)** — architectures: `x86_64`,
+`armv7` (Raspberry Pi 32-bit), `aarch64` (Raspberry Pi 64-bit / ARM servers).
+Compatible with Debian 11+, Ubuntu 20.04+, Raspberry Pi OS:
 
 ```sh
-# Check dynamic dependencies (should show glibc, not Nix store paths)
-readelf -d target/armv7-unknown-linux-gnueabihf/release/tpnote | grep NEEDED
+# Build for x86_64
+nix build .#tpnote-x86_64-unknown-linux-gnu
 
-# Check the dynamic linker (should point to Debian/Ubuntu paths)
-readelf -d target/armv7-unknown-linux-gnueabihf/release/tpnote | grep interpreter
+# Build for ARMv7 (32-bit) for Raspberry Pi
+nix build .#tpnote-armv7-unknown-linux-gnueabihf
+
+# Build for ARM64 (64-bit) for Raspberry Pi and ARM servers
+nix build .#tpnote-aarch64-unknown-linux-gnu
+
+# Build the Debian package (for x86_64 only)
+nix build .#tpnote-deb
 ```
 
-The binary should NOT contain any `/nix/store` paths. If it does, the build
-environment may have introduced Nix-specific dependencies.
+**Build for NixOS (native Nix-store binary)** — architecture: `x86_64`. Runs via
+`nix run`/`nix build` on NixOS (or any host with access to the same Nix
+store), but will not run if copied to a system without that store:
+
+```sh
+nix build
+```
+
+**Build a static and portable (musl) binary** — architecture: `x86_64`.
+Fully static, no dynamic interpreter at all: runs unmodified on both NixOS and
+any standard Linux distribution:
+
+```sh
+nix build .#tpnote-x86_64-unknown-linux-musl
+```
+
+**Build for Windows** — architecture: `x86_64`:
+
+```sh
+nix build .#tpnote-x86_64-pc-windows-gnu
+```
+
+The binaries will be in the Nix store. Copy them to your desired location:
+
+```sh
+cp result/bin/tpnote* /path/to/destination
+```
 
 This project follows [Semantic Versioning].
 

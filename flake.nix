@@ -7,14 +7,18 @@
 # - Documentation generation
 # - Reproducible builds
 #
-# Supported targets:
+# Supported targets (buildable by this flake):
 # - x86_64-unknown-linux-gnu (native Linux)
 # - x86_64-unknown-linux-musl (musl-based Linux, static linking)
 # - x86_64-pc-windows-gnu (Windows)
 # - armv7-unknown-linux-gnueabihf (Raspberry Pi 32-bit, Debian/Ubuntu compatible)
 # - aarch64-unknown-linux-gnu (Raspberry Pi 64-bit, Debian/Ubuntu compatible)
-# - x86_64-apple-darwin (macOS Intel)
-# - aarch64-apple-darwin (macOS ARM)
+#
+# macOS targets (x86_64-apple-darwin, aarch64-apple-darwin) are part of the
+# release, but NOT buildable from this flake: cross-compiling to macOS needs
+# Apple's cctools/SDK, which nixpkgs cannot evaluate on Linux. Those binaries
+# come from a native macOS build host (CI's native-matrix job) and are merged
+# into `.#release` downstream instead.
 #
 # Usage:
 #
@@ -27,8 +31,9 @@
 # - `nix build .#tpnote-x86_64-pc-windows-gnu` → Windows build
 # - `nix build .#tpnote-armv7-unknown-linux-gnueabihf` → Raspberry Pi 32-bit (Debian/Ubuntu)
 # - `nix build .#tpnote-aarch64-unknown-linux-gnu` → Raspberry Pi 64-bit (Debian/Ubuntu)
-# - `nix build .#tpnote-x86_64-apple-darwin` → macOS Intel build
-# - `nix build .#tpnote-aarch64-apple-darwin` → macOS ARM build
+#
+# There are no `.#tpnote-x86_64-apple-darwin` / `.#tpnote-aarch64-apple-darwin`
+# attributes — macOS builds must run on a macOS host, see note above.
 #
 # **Package Building:**
 # - `nix build .#tpnote-deb` → Creates Debian package (x86_64 only)
@@ -42,17 +47,41 @@
 # - `nix build .#release-<target>` → a single archive for one target, e.g.
 #   `tpnote-<version>-x86_64-unknown-linux-gnu.tar.gz`.
 #
-# **Debian/Ubuntu Compatibility Notes:**
-# The ARM cross-compiled binaries (armv7 and aarch64) are built using Nixpkgs'
-# cross-compilation infrastructure which produces binaries compatible with:
-# - Debian 11 (Bullseye) and newer
-# - Ubuntu 20.04 (Focal) and newer
-# - Raspberry Pi OS (Debian-based)
+# **Which build targets run on NixOS vs. standard Linux:**
 #
-# These binaries link against glibc and use standard Debian/Ubuntu library paths.
-# To verify compatibility, run:
-#   readelf -d <binary> | grep NEEDED  # Check dynamic dependencies
-#   readelf -d <binary> | grep interpreter  # Check dynamic linker
+# - `default` (plain `nix build`, i.e. the unwrapped x86_64-linux package):
+#   keeps its normal Nix rpath/interpreter into /nix/store. Runs on NixOS (or
+#   any host with access to the same Nix store) via `nix run`/`nix build`, but
+#   will NOT run if copied to a system without that store.
+#
+# - `tpnote-x86_64-unknown-linux-gnu`, `tpnote-armv7-unknown-linux-gnueabihf`,
+#   `tpnote-aarch64-unknown-linux-gnu`, `tpnote-deb`:
+#   patchelf rewrites the interpreter to the target's standard FHS path
+#   (e.g. /lib64/ld-linux-x86-64.so.2, /lib/ld-linux-armhf.so.3,
+#   /lib/ld-linux-aarch64.so.1) and strips the rpath. These are built FOR
+#   standard glibc Linux and use standard Debian/Ubuntu library paths,
+#   compatible with:
+#   - Debian 11 (Bullseye) and newer
+#   - Ubuntu 20.04 (Focal) and newer
+#   - Raspberry Pi OS (Debian-based)
+#   They are what gets copied into the release archives / .deb. On NixOS
+#   itself they will NOT run out of the box, since NixOS has no /lib or
+#   /lib64 FHS compatibility layer by default (would need `nix-ld` or
+#   similar).
+#   Nix-built binaries must not leak paths from the Nix store. Verify this
+#   before deploying them to a non-Nix system:
+#     readelf -d result/bin/tpnote | grep NEEDED       # should show glibc, not Nix store paths
+#     readelf -d result/bin/tpnote | grep interpreter  # should point to Debian/Ubuntu paths, not /nix/store
+#   The binary should NOT contain any /nix/store paths. If it does, the build
+#   environment introduced Nix-specific dependencies and the binary will not
+#   run on the target system.
+#
+# - `tpnote-x86_64-unknown-linux-musl`: fully static, no dynamic interpreter
+#   at all. Runs unmodified on both NixOS and any standard Linux distro.
+#
+# - `tpnote-x86_64-pc-windows-gnu`: Windows only; the NixOS/glibc distinction
+#   does not apply.
+#
 {
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
