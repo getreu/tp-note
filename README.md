@@ -403,7 +403,7 @@ the Nix flake. The flake offers separate targets for standard Linux and for
 NixOS itself — see the comments at the top of `flake.nix` for the full
 compatibility matrix and rationale.
 
-**Build for standard Linux (glibc, portable binary)** — architectures: `x86_64`,
+**Building for standard Linux (glibc, portable binary)** — architectures: `x86_64`,
 `armv7` (Raspberry Pi 32-bit), `aarch64` (Raspberry Pi 64-bit / ARM servers).
 Compatible with Debian 11+, Ubuntu 20.04+, Raspberry Pi OS:
 
@@ -421,7 +421,7 @@ nix build .#tpnote-aarch64-unknown-linux-gnu
 nix build .#tpnote-deb
 ```
 
-**Build for NixOS (native Nix-store binary)** — architecture: `x86_64`. Runs via
+**Building for NixOS (native Nix-store binary)** — architecture: `x86_64`. Runs via
 `nix run`/`nix build` on NixOS (or any host with access to the same Nix
 store), but will not run if copied to a system without that store:
 
@@ -429,7 +429,7 @@ store), but will not run if copied to a system without that store:
 nix build
 ```
 
-**Build a static and portable (musl) binary** — architecture: `x86_64`.
+**Building a static and portable (musl) binary** — architecture: `x86_64`.
 Fully static, no dynamic interpreter at all: runs unmodified on both NixOS and
 any standard Linux distribution:
 
@@ -437,13 +437,24 @@ any standard Linux distribution:
 nix build .#tpnote-x86_64-unknown-linux-musl
 ```
 
-**Build for Windows** — architecture: `x86_64`:
+**Building for Windows** — architecture: `x86_64`:
 
 ```sh
 nix build .#tpnote-x86_64-pc-windows-gnu
 ```
 
-The binaries will be in the Nix store. Copy them to your desired location:
+To also package the binary as a Windows installer (`.msi`), use
+`scripts/18-make-win-msi-package.nu`, which builds the binary above and then
+packages it via the `wix/` flake's dev shell (WiX Toolset running under Wine).
+Unlike the `nix build` commands above, this does not produce `./result`; it
+writes the finished installer to `build/tpnote-<version>-x64.msi`:
+
+```sh
+nu scripts/18-make-win-msi-package.nu
+```
+
+The `nix build` commands above put their binaries in the Nix store, symlinked
+as `./result`. Copy them to your desired location:
 
 ```sh
 cp result/bin/tpnote* /path/to/destination
