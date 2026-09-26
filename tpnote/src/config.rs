@@ -538,6 +538,34 @@ pub static CFG_FILE_WARNINGS: LazyLock<RwLock<ConfigFileWarnings>> =
     LazyLock::new(|| RwLock::new(Vec::new()));
 
 /// This is where the Tp-Note searches for its configuration files.
+/// The single upward directory-marker search for `DOC_PATH`'s directory,
+/// shared by `ROOT_PATH` and the project-marker portion of `CONFIG_PATHS`
+/// so the climb (and the reading and parsing of every candidate's
+/// `[project_config]` table) only ever runs once per process. If `DOC_PATH`
+/// is unavailable, this resolves to an empty chain; `workflow::run()` fails
+/// on that same condition before either static is ever consulted.
+static ROOT_PATH_AND_CONFIG_CHAIN: LazyLock<(PathBuf, Vec<PathBuf>)> = LazyLock::new(|| {
+    let Ok(doc_path) = DOC_PATH.as_deref() else {
+        return (PathBuf::new(), Vec::new());
+    };
+    let dir_path = if doc_path.is_dir() {
+        doc_path.to_path_buf()
+    } else {
+        doc_path
+            .parent()
+            .unwrap_or_else(|| Path::new("./"))
+            .to_path_buf()
+    };
+    root_path_and_config_chain(&dir_path)
+});
+
+/// The document root: the directory where the upward search for a
+/// `tpnote.toml` marker file stopped (cf. the CUSTOMIZATION section of the
+/// man page). Handed to `WorkflowBuilder::with_root_path()` so the workflow
+/// does not need to repeat the search `CONFIG_PATHS` already performed for
+/// the same directory.
+pub static ROOT_PATH: LazyLock<PathBuf> = LazyLock::new(|| ROOT_PATH_AND_CONFIG_CHAIN.0.clone());
+
 pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
     let mut config_path: Vec<PathBuf> = vec![];
 
@@ -559,18 +587,7 @@ pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
     // note's directory that is in scope (see `is_root_path_marker` and
     // `merge_parent_config`), ordered farthest first, closest last, so the
     // closest one takes precedence when merged.
-    if let Ok(doc_path) = DOC_PATH.as_deref() {
-        let dir_path = if doc_path.is_dir() {
-            doc_path.to_path_buf()
-        } else {
-            doc_path
-                .parent()
-                .unwrap_or_else(|| Path::new("./"))
-                .to_path_buf()
-        };
-        let (_root_path, config_chain) = root_path_and_config_chain(&dir_path);
-        config_path.extend(config_chain);
-    };
+    config_path.extend(ROOT_PATH_AND_CONFIG_CHAIN.1.clone());
 
     if let Some(commandline_path) = &ARGS.config {
         // Config path comes from command line.

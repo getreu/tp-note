@@ -169,6 +169,7 @@ pub struct WorkflowBuilder<W> {
 #[derive(Debug, Clone)]
 pub struct SyncFilename<'a> {
     path: &'a Path,
+    root_path: Option<PathBuf>,
 }
 
 /// In this state the workflow will either synchronize the filename of an
@@ -177,6 +178,7 @@ pub struct SyncFilename<'a> {
 pub struct SyncFilenameOrCreateNew<'a, T, F> {
     scheme_source: SchemeSource<'a>,
     path: &'a Path,
+    root_path: Option<PathBuf>,
     clipboards: Vec<&'a T>,
     tk_filter: F,
     html_export: Option<(&'a Path, LocalLinkKind)>,
@@ -193,8 +195,24 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
     /// `upgrade()` to add additional input data.
     pub fn new(path: &'a Path) -> Self {
         Self {
-            input: SyncFilename { path },
+            input: SyncFilename {
+                path,
+                root_path: None,
+            },
         }
+    }
+
+    /// Skips the workflow's own upward search for the document root,
+    /// using `root_path` instead. Meant for a caller that already computed
+    /// `root_path` for `path`'s directory -- e.g. to build its own
+    /// configuration search path -- and would otherwise pay for that climb
+    /// a second time for no reason (cf.
+    /// `tpnote_lib::context::Context::from_with_root_path()`). Leave unset
+    /// to let the workflow compute it itself, which is always correct, just
+    /// potentially redundant if the caller already has it.
+    pub fn with_root_path(mut self, root_path: PathBuf) -> Self {
+        self.input.root_path = Some(root_path);
+        self
     }
 
     /// Upgrade the `WorkflowBuilder` to enable also the creation of new note
@@ -228,6 +246,7 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
             input: SyncFilenameOrCreateNew {
                 scheme_source: SchemeSource::SchemeNewDefault(scheme_new_default),
                 path: self.input.path,
+                root_path: self.input.root_path,
                 clipboards,
                 tk_filter,
                 html_export: None,
@@ -334,7 +353,10 @@ impl Workflow<SyncFilename<'_>> {
         let mut settings = SETTINGS.upgradable_read();
 
         // Collect input data for templates.
-        let context = Context::from(self.input.path)?;
+        let context = match self.input.root_path {
+            Some(root_path) => Context::from_with_root_path(self.input.path, root_path)?,
+            None => Context::from(self.input.path)?,
+        };
 
         let content = <T>::open(self.input.path).unwrap_or_default();
 
@@ -429,7 +451,10 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
         // and finally rename the file, if it is not in sync with its front matter.
 
         // Collect input data for templates.
-        let context = Context::from(self.input.path)?;
+        let context = match self.input.root_path {
+            Some(root_path) => Context::from_with_root_path(self.input.path, root_path)?,
+            None => Context::from(self.input.path)?,
+        };
 
         // `template_kind` will tell us what to do.
         let (template_kind, content) = TemplateKind::from(self.input.path);

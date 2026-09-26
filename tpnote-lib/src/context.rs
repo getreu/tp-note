@@ -606,20 +606,56 @@ impl Context<Invalid> {
     ///             "/path/to");
     /// ```
     pub fn from(path: &Path) -> Result<Context<HasSettings>, FileError> {
-        let path = path.to_path_buf();
+        let dir_path = Self::dir_path_of(path);
+        let (root_path, _config_chain) = root_path_and_config_chain(&dir_path);
+        Self::from_dir_path_and_root_path(path, dir_path, root_path)
+    }
 
-        // `dir_path` is a directory as fully qualified path, ending
-        // by a separator.
-        let dir_path = if path.is_dir() {
-            path.clone()
+    /// Like `from()`, but skips its own upward search for the document
+    /// root, using `root_path` instead. Meant for a caller that already
+    /// computed `root_path` for this exact directory -- e.g. `tpnote`'s
+    /// binary, which needs the same climb result to build its
+    /// configuration search path (cf. `root_path_and_config_chain()`) --
+    /// and would otherwise redo that climb (upward directory search plus
+    /// reading and parsing every candidate's `[project_config]` table) a
+    /// second time for no reason. Every other caller, in particular one
+    /// rendering a *different* document than the one it started from,
+    /// must keep using `from()`: `root_path` is specific to one directory
+    /// and does not transfer to another.
+    ///
+    /// # Panics
+    ///
+    /// Debug builds assert that `path`'s directory is a subdirectory of
+    /// `root_path`, catching a caller that passes a `root_path` computed
+    /// for a different directory.
+    pub fn from_with_root_path(
+        path: &Path,
+        root_path: PathBuf,
+    ) -> Result<Context<HasSettings>, FileError> {
+        let dir_path = Self::dir_path_of(path);
+        Self::from_dir_path_and_root_path(path, dir_path, root_path)
+    }
+
+    /// `dir_path` is a directory as fully qualified path, ending
+    /// by a separator.
+    fn dir_path_of(path: &Path) -> PathBuf {
+        if path.is_dir() {
+            path.to_path_buf()
         } else {
             path.parent()
                 .unwrap_or_else(|| Path::new("./"))
                 .to_path_buf()
-        };
+        }
+    }
 
-        // Get the root directory.
-        let (root_path, _config_chain) = root_path_and_config_chain(&dir_path);
+    /// Shared tail of `from()` and `from_with_root_path()`.
+    fn from_dir_path_and_root_path(
+        path: &Path,
+        dir_path: PathBuf,
+        root_path: PathBuf,
+    ) -> Result<Context<HasSettings>, FileError> {
+        let path = path.to_path_buf();
+
         debug_assert!(dir_path.starts_with(&root_path));
 
         // Get the file's creation date. Fail silently.
