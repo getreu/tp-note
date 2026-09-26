@@ -1438,16 +1438,18 @@ by merging a series of configuration files from various locations into the
 default values. This happens in the following order:
 
 1. Unix and macOS only: '`/etc/tpnote/tpnote.toml`'
-2. The file the environment variable '`TPNOTE_CONFIG`' points to.
-3. The user's configuration file:
+2. The user's configuration file:
    - Unix: '`~/.config/tpnote/tpnote.toml`'
    - Windows: '`C:\Users\<LOGIN>\AppData\Roaming\tpnote\config\tpnote.toml>`'
    - macOS: '`/Users/<LOGIN>/Library/Application Support/tpnote`'
-4. At startup all parent directories of the note file path '`<PATH>`' are
+
+   If the environment variable '`TPNOTE_CONFIG`' is set, its value is used as
+   the path to this file instead of the standard location above.
+3. At startup all parent directories of the note file path '`<PATH>`' are
    searched for a marker file named '`tpnote.toml`'. If found, the document root
    moves from '`/`' to the found location. If present and its content is not
    empty, Tp-Note interprets the file's content as configuration file.
-5. The file indicated by the command line parameter '`--config <FIlE>`'.
+4. The file indicated by the command line parameter '`--config <FIlE>`'.
 
 When Tp-Note starts, it first merges all available configuration files into
 the default configuration. Then the resulting syntax is checked. If not
@@ -3131,12 +3133,12 @@ LANG
 
 TPNOTE_CONFIG
 
-> When set, the environment variable adds the configuration file at the given
-> path to Tp-Note's list of configuration sources (cf. the CUSTOMIZATION
-> section). Like the command line option '`--config`', its values are merged
-> into the default configuration. Both can be used together; where the same key
-> is set in several files, the file sourced later wins - and '`--config`' is
-> sourced after '`TPNOTE_CONFIG`'.
+> When set, the environment variable overrides the location of the user's
+> configuration file (cf. the CUSTOMIZATION section): Tp-Note reads the file
+> at the given path instead of the standard per-platform location. It does not
+> add an extra configuration source - only one of the two is ever read. The
+> command line option '`--config`' is independent of '`TPNOTE_CONFIG`' and is
+> always sourced last, so its values win over both.
 
 TPNOTE_LANG
 

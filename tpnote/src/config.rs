@@ -440,12 +440,12 @@ pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
     #[cfg(unix)]
     config_path.push(PathBuf::from("/etc/tpnote/tpnote.toml"));
 
-    // Config path comes from the environment variable.
+    // The user's configuration file. Its location can be overridden with
+    // the environment variable, in which case the standard per-platform
+    // location below is not consulted.
     if let Ok(env_config) = env::var(ENV_VAR_TPNOTE_CONFIG) {
         config_path.push(PathBuf::from(env_config));
-    };
-    // Config comes from the standard configuration file location.
-    if let Some(usr_config) = ProjectDirs::from("rs", "", CARGO_BIN_NAME) {
+    } else if let Some(usr_config) = ProjectDirs::from("rs", "", CARGO_BIN_NAME) {
         let mut config = PathBuf::from(usr_config.config_dir());
         config.push(Path::new(CONFIG_FILENAME));
         config_path.push(config);
