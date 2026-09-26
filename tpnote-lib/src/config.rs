@@ -30,6 +30,9 @@ use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Write;
+use std::fs;
+use std::path::Path;
+use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::LazyLock;
 #[cfg(feature = "renderer")]
@@ -54,6 +57,111 @@ pub const FILENAME_LEN_MAX: usize =
 /// The appearance of a file with this filename marks the position of
 /// `TMPL_VAR_ROOT_PATH`.
 pub const FILENAME_ROOT_PATH_MARKER: &str = "tpnote.toml";
+
+/// The directives a `tpnote.toml` marker file can set, grouped under
+/// `[project_config]`, to control the upward search for the document root
+/// and for additional configuration files. Every other key in the file is
+/// ignored here; the full configuration is parsed and merged elsewhere.
+#[derive(Debug, Deserialize)]
+struct ProjectConfig {
+    #[serde(default = "ProjectConfig::default_is_root_path_marker")]
+    is_root_path_marker: bool,
+    #[serde(default)]
+    merge_parent_config: bool,
+}
+
+impl ProjectConfig {
+    fn default_is_root_path_marker() -> bool {
+        true
+    }
+}
+
+impl Default for ProjectConfig {
+    fn default() -> Self {
+        Self {
+            is_root_path_marker: true,
+            merge_parent_config: false,
+        }
+    }
+}
+
+/// The deserialization view of a `tpnote.toml` marker file limited to its
+/// `[project_config]` table; every other key in the file is irrelevant here.
+#[derive(Debug, Deserialize, Default)]
+struct ProjectConfigFile {
+    #[serde(default)]
+    project_config: ProjectConfig,
+}
+
+/// Walks upward from `dir_path` collecting every ancestor directory that
+/// contains a `FILENAME_ROOT_PATH_MARKER` file, then decides, marker by
+/// marker starting from the closest, where the document root lies and how
+/// far the search for additional configuration extends.
+///
+/// Returns `(root_path, config_chain)`, where `config_chain` is ordered
+/// farthest first, closest last, ready to be merged with lower-precedence
+/// layers applied first.
+///
+/// * `root_path` is fixed at the first marker (closest to farthest) whose
+///   `project_config.is_root_path_marker` is `true` or absent -- the
+///   default, chosen for every marker file written before this option
+///   existed. If no marker declares itself the root, `root_path` falls
+///   back to the filesystem root, matching the behavior when no marker
+///   file exists at all.
+/// * The search for additional configuration files continues past a given
+///   marker only if that marker's own `project_config.merge_parent_config`
+///   is `true`. The first marker (again, closest to farthest) that leaves
+///   it at the default `false` ends the search; `root_path` is unaffected
+///   by how far this search extends.
+pub fn root_path_and_config_chain(dir_path: &Path) -> (PathBuf, Vec<PathBuf>) {
+    let mut candidates: Vec<PathBuf> = Vec::new();
+    let mut fallback_root = dir_path;
+    for anc in dir_path.ancestors() {
+        fallback_root = anc;
+        let marker = anc.join(FILENAME_ROOT_PATH_MARKER);
+        if marker.is_file() {
+            candidates.push(marker);
+        }
+    }
+
+    let mut root_path: Option<PathBuf> = None;
+    let mut config_chain: Vec<PathBuf> = Vec::new();
+
+    for marker_path in &candidates {
+        // A conscious choice: if this file can't be read or parsed, fall
+        // back to the defaults (root marker, do not extend the search)
+        // instead of treating it as absent. Excluding it here would let the
+        // search continue past it, silently widening the document root --
+        // and thus the viewer's security boundary -- past a directory the
+        // user never asked to expose, just because of a typo. The file is
+        // still handed on to the full configuration merge below, which
+        // parses it independently and reports it via `ConfigFileWarnings`
+        // if it is indeed broken -- so the failure is surfaced, not hidden,
+        // without ever widening the boundary to compensate for it.
+        let flags = fs::read_to_string(marker_path)
+            .ok()
+            .and_then(|s| toml::from_str::<ProjectConfigFile>(&s).ok())
+            .unwrap_or_default()
+            .project_config;
+
+        config_chain.push(marker_path.clone());
+
+        if root_path.is_none() && flags.is_root_path_marker {
+            root_path = marker_path.parent().map(Path::to_path_buf);
+        }
+
+        if !flags.merge_parent_config {
+            break;
+        }
+    }
+
+    let root_path = root_path.unwrap_or_else(|| fallback_root.to_owned());
+
+    // Farthest first, closest last: closest overrides on merge.
+    config_chain.reverse();
+
+    (root_path, config_chain)
+}
 
 /// When a filename is taken already, Tp-Note adds a copy
 /// counter number in the range of `0..COPY_COUNTER_MAX`
@@ -907,4 +1015,67 @@ pub enum Assertion {
     ///  use only.
     #[default]
     NoOperation,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::root_path_and_config_chain;
+    use std::fs;
+
+    #[test]
+    fn test_root_path_and_config_chain() {
+        let base = std::env::temp_dir().join("tpnote_test_root_path_and_config_chain");
+        let _ = fs::remove_dir_all(&base);
+        let vault = base.join("vault");
+        let project = vault.join("project");
+        let sub = project.join("sub");
+        fs::create_dir_all(&sub).unwrap();
+
+        // Closest marker only, default flags: root = `project`, chain
+        // holds just that one marker.
+        fs::write(project.join("tpnote.toml"), "").unwrap();
+        let (root, chain) = root_path_and_config_chain(&sub);
+        assert_eq!(root, project);
+        assert_eq!(chain, vec![project.join("tpnote.toml")]);
+
+        // `merge_parent_config = true` on the closest marker pulls in the
+        // vault-wide marker too, without moving `root_path`.
+        fs::write(
+            project.join("tpnote.toml"),
+            "[project_config]\nmerge_parent_config = true\n",
+        )
+        .unwrap();
+        fs::write(vault.join("tpnote.toml"), "").unwrap();
+        let (root, chain) = root_path_and_config_chain(&sub);
+        assert_eq!(root, project);
+        assert_eq!(
+            chain,
+            vec![vault.join("tpnote.toml"), project.join("tpnote.toml")]
+        );
+
+        // `is_root_path_marker = false` lets the search for the document
+        // root itself continue past the closest marker; combined with
+        // `merge_parent_config = true` it moves to the next one found.
+        fs::write(
+            project.join("tpnote.toml"),
+            "[project_config]\nis_root_path_marker = false\nmerge_parent_config = true\n",
+        )
+        .unwrap();
+        let (root, chain) = root_path_and_config_chain(&sub);
+        assert_eq!(root, vault);
+        assert_eq!(
+            chain,
+            vec![vault.join("tpnote.toml"), project.join("tpnote.toml")]
+        );
+
+        // Leaving `merge_parent_config` at its default `false` stops the
+        // search right after the closest marker; the vault-wide one is
+        // never reached.
+        fs::write(project.join("tpnote.toml"), "").unwrap();
+        let (root, chain) = root_path_and_config_chain(&sub);
+        assert_eq!(root, project);
+        assert_eq!(chain, vec![project.join("tpnote.toml")]);
+
+        fs::remove_dir_all(&base).unwrap();
+    }
 }

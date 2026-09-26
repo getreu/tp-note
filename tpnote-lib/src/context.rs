@@ -1,6 +1,6 @@
 //! Extends the built-in Tera filters.
 use crate::config::Assertion;
-use crate::config::FILENAME_ROOT_PATH_MARKER;
+use crate::config::root_path_and_config_chain;
 use crate::config::LIB_CFG;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_HTML_VAR_DOC_ERROR;
@@ -619,17 +619,7 @@ impl Context<Invalid> {
         };
 
         // Get the root directory.
-        let mut root_path = Path::new("");
-
-        for anc in dir_path.ancestors() {
-            root_path = anc;
-            let mut p = anc.to_owned();
-            p.push(Path::new(FILENAME_ROOT_PATH_MARKER));
-            if p.is_file() {
-                break;
-            }
-        }
-        let root_path = root_path.to_owned();
+        let (root_path, _config_chain) = root_path_and_config_chain(&dir_path);
         debug_assert!(dir_path.starts_with(&root_path));
 
         // Get the file's creation date. Fail silently.

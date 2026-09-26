@@ -82,6 +82,19 @@ pub enum ConfigFileError {
     )]
     ConfigFileLoadParse { error: String },
 
+    /// Remedy: fix or remove the offending file. Unlike
+    /// `ConfigFileLoadParse`, this is not fatal: the file is skipped and
+    /// Tp-Note continues with the rest of the merged configuration (cf.
+    /// the CUSTOMIZATION section of the man page).
+    #[error(
+        "Ignoring configuration file:\n\
+        ---\n\
+        {}\n\n\
+        {error}",
+        path.display()
+    )]
+    ConfigFileSkipped { path: PathBuf, error: String },
+
     /// Remedy: restart.
     #[error(
         "Configuration file version mismatch:\n---\n\
@@ -152,3 +165,8 @@ pub enum ConfigFileError {
     #[error(transparent)]
     Deserialize(#[from] toml::de::Error),
 }
+
+/// One entry per configuration file that was skipped while merging multiple
+/// sources (always the `ConfigFileSkipped` variant, never fatal), as
+/// opposed to a bare `ConfigFileError` returned from a `Result`, which is.
+pub type ConfigFileWarnings = Vec<ConfigFileError>;

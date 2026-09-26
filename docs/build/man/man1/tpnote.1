@@ -1834,6 +1834,7 @@ Windows:
 `\f[CR]C:\(rsUsers\(rs<LOGIN>\(rsAppData\(rsRoaming\(rstpnote\(rsconfig\(rstpnote.toml>\f[R]'
 .IP \(bu 2
 macOS: `\f[CR]/Users/<LOGIN>/Library/Application Support/tpnote\f[R]'
+.PP
 If the environment variable `\f[CR]TPNOTE_CONFIG\f[R]' is set, its value
 is used as the path to this file instead of the standard location above.
 .RE
@@ -1841,19 +1842,55 @@ is used as the path to this file instead of the standard location above.
 At startup all parent directories of the note file path
 `\f[CR]<PATH>\f[R]' are searched for a marker file named
 `\f[CR]tpnote.toml\f[R]'.
-If found, the document root moves from `\f[CR]/\f[R]' to the found
-location.
 If present and its content is not empty, Tp\-Note interprets the
 file\(cqs content as configuration file.
+A `\f[CR][project_config]\f[R]' table in such a marker file can hold two
+variables controlling how far this search goes:
+.RS 4
+.IP \(bu 2
+`\f[CR]project_config.is_root_path_marker\f[R]' (default:
+\f[CR]true\f[R]): the first marker found \(en starting with the one
+closest to `\f[CR]<PATH>\f[R]' \(en whose value is \f[CR]true\f[R] (or
+that leaves the variable unset, the default for every marker file
+written before this option existed) fixes the document root at its
+directory, and the search for the document root stops there.
+.IP \(bu 2
+`\f[CR]project_config.merge_parent_config\f[R]' (default:
+\f[CR]false\f[R]): if \f[CR]true\f[R], Tp\-Note keeps searching further
+up after finding this marker file, merging any additional
+`\f[CR]tpnote.toml\f[R]' files it finds underneath the current
+configuration (settings closer to the note file take precedence).
+This does not move the document root, which stays fixed wherever
+`\f[CR]is_root_path_marker\f[R]' stopped it.
+The search keeps climbing only as long as each successive marker file it
+finds also sets `\f[CR]project_config.merge_parent_config = true\f[R]';
+the first ancestor that leaves it at the default \f[CR]false\f[R] ends
+the search.
+.RS 2
+.PP
+\f[B]Security note:\f[R] enabling `\f[CR]merge_parent_config\f[R]' means
+Tp\-Note will read and merge configuration from every ancestor directory
+up to wherever the search stops, including its editor and browser launch
+commands.
+Only enable this pointing through directories you trust \(en for
+example, a directory shared with other users.
+If a subproject should inherit settings from one specific ancestor only,
+place a plain `\f[CR]tpnote.toml\f[R]' at that ancestor without
+`\f[CR]merge_parent_config\f[R]' set: its default \f[CR]false\f[R] value
+stops the search there, rather than leaving it open\-ended all the way
+to the filesystem root.
+.RE
+.RE
 .IP "4." 3
 The file indicated by the command line parameter
 `\f[CR]\-\-config <FIlE>\f[R]'.
 .PP
-When Tp\-Note starts, it first merges all available configuration files
-into the default configuration.
-Then the resulting syntax is checked.
-If not correct, the last sourced configuration file is renamed (thus
-disabled) and Tp\-Note starts with its internal default configuration.
+When Tp\-Note starts, it merges all available configuration files, in
+the order above, into the default configuration.
+Each file is applied one at a time and kept only if the result still
+parses into a valid configuration; an invalid file (bad syntax, wrong
+value, unknown key) is skipped with a logged warning instead of
+discarding every other, correctly loaded file.
 For debugging, you can print out the merged result with
 `\f[CR]\-V \-b \-d trace\f[R]'.
 .IP

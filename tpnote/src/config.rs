@@ -1,6 +1,7 @@
 //! Sets configuration defaults, reads, and writes Tp-Note's configuration
 //! file and exposes the configuration as `static` variable.
 use crate::error::ConfigFileError;
+use crate::error::ConfigFileWarnings;
 use crate::settings::ARGS;
 use crate::settings::ClapLevelFilter;
 use crate::settings::DOC_PATH;
@@ -22,7 +23,6 @@ use std::sync::LazyLock;
 use tera::Tera;
 use toml::Value;
 use tpnote_lib::config::EmbeddedContentErrorPolicy;
-use tpnote_lib::config::FILENAME_ROOT_PATH_MARKER;
 use tpnote_lib::config::LIB_CFG;
 use tpnote_lib::config::LIB_CFG_RAW_FIELD_NAMES;
 use tpnote_lib::config::LIB_CONFIG_DEFAULT_TOML;
@@ -30,7 +30,7 @@ use tpnote_lib::config::LibCfg;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::TmplHtml;
 use tpnote_lib::config_value::CfgVal;
-use tpnote_lib::context::Context;
+use tpnote_lib::config::root_path_and_config_chain;
 use tpnote_lib::filename::NotePathBuf;
 use tpnote_lib::text_reader::read_as_string_with_crlf_suppression;
 
@@ -83,6 +83,11 @@ pub(crate) const DO_NOT_COMMENT_IF_LINE_STARTS_WITH: [&str; 3] = ["###", "[", "n
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cfg {
+    /// Only meaningful in a directory marker file found while searching
+    /// upward for the document root (cf. the CUSTOMIZATION section of the
+    /// man page). Ignored everywhere else.
+    #[serde(default)]
+    pub project_config: ProjectConfig,
     /// Version number of the configuration file as String -or- a text message
     /// explaining why we could not load the configuration file.
     pub version: String,
@@ -93,6 +98,30 @@ pub struct Cfg {
     pub app_args: OsType<AppArgs>,
     pub viewer: Viewer,
     pub tmpl_html: TmplHtml,
+}
+
+/// Directives a directory marker file (`tpnote.toml` found while searching
+/// upward for the document root) can set under `[project_config]`. Ignored
+/// everywhere else (cf. the CUSTOMIZATION section of the man page).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProjectConfig {
+    #[serde(default = "default_true")]
+    pub is_root_path_marker: bool,
+    #[serde(default)]
+    pub merge_parent_config: bool,
+}
+
+impl Default for ProjectConfig {
+    fn default() -> Self {
+        Self {
+            is_root_path_marker: true,
+            merge_parent_config: false,
+        }
+    }
+}
+
+fn default_true() -> bool {
+    true
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -224,10 +253,29 @@ impl ::std::default::Default for Cfg {
 
 impl Cfg {
     /// Emits the default configuration as TOML string with comments.
+    ///
+    /// `[project_config]` is appended last, after `LIB_CONFIG_DEFAULT_TOML`
+    /// and `GUI_CONFIG_DEFAULT_TOML`: TOML has no syntax to "close" a table
+    /// and return to the root, so any table header placed before those
+    /// constants would swallow their leading root-level scalars (e.g.
+    /// `LIB_CONFIG_DEFAULT_TOML` starts with the root-level
+    /// `scheme_sync_default`) into that table instead. Putting
+    /// `[project_config]` last avoids that trap regardless of what either
+    /// constant starts with.
     #[inline]
     fn default_as_toml() -> String {
         let config_default_toml = format!(
-            "version = \"{}\"\n\n{}\n\n{}",
+            "version = \"{}\"\n\n\
+             {}\n\n{}\n\n\
+             ### Only meaningful in a directory marker file found while searching\n\
+             ### upward for the document root (cf. the CUSTOMIZATION section of\n\
+             ### the man page). Ignored everywhere else.\n\
+             [project_config]\n\n\
+             ### Whether this marker file fixes the document root here.\n\
+             is_root_path_marker = true\n\n\
+             ### Whether to keep searching further up for additional parent\n\
+             ### configuration to merge underneath this file.\n\
+             merge_parent_config = false\n",
             PKG_VERSION.unwrap_or_default(),
             LIB_CONFIG_DEFAULT_TOML,
             GUI_CONFIG_DEFAULT_TOML
@@ -236,10 +284,31 @@ impl Cfg {
         config_default_toml
     }
 
+    /// Checks whether `cfg_val` deserializes into a valid, fully specified
+    /// configuration, without mutating any global state (in particular,
+    /// without touching `LIB_CFG`). Used to decide, one file at a time,
+    /// whether merging a candidate configuration layer keeps the
+    /// accumulated result usable.
+    fn validate(cfg_val: &CfgVal) -> Result<(), ConfigFileError> {
+        LibCfg::try_from(cfg_val.clone())?;
+        let cfg: Cfg = cfg_val.clone().to_value().try_into()?;
+        let unused: Vec<String> = cfg
+            .extra_fields
+            .into_keys()
+            .filter(|k| !LIB_CFG_RAW_FIELD_NAMES.contains(&k.as_str()))
+            .collect();
+        if !unused.is_empty() {
+            return Err(ConfigFileError::ConfigFileUnkownFieldName { error: unused });
+        }
+        Ok(())
+    }
+
     /// Parse the configuration file if it exists. Otherwise write one with
-    /// default values.
+    /// default values. The second element of the returned tuple holds one
+    /// message per configuration file that had to be skipped (cf. the
+    /// comment on `CFG_FILE_WARNINGS`).
     #[inline]
-    fn from_files(config_paths: &[PathBuf]) -> Result<Cfg, ConfigFileError> {
+    fn from_files(config_paths: &[PathBuf]) -> Result<(Cfg, ConfigFileWarnings), ConfigFileError> {
         // Runs through all strings and renders config values as templates.
         // No variables are set in this context. But you can use environment
         // variables in templates: e.g.:
@@ -265,19 +334,44 @@ impl Cfg {
             Value::String(PKG_VERSION.unwrap_or_default().to_string()),
         );
 
-        // Merge all config files from various locations.
-        let cfg_val = config_paths
-            .iter()
-            .filter_map(|path| File::open(path).ok())
-            .map(|reader| {
-                read_as_string_with_crlf_suppression(reader)
-                    .map_err(ConfigFileError::from)
-                    .and_then(|config| toml::from_str(&config).map_err(ConfigFileError::from))
-            })
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .fold(base_config, CfgVal::merge);
+        // Merge all config files from various locations. Each file is
+        // applied one at a time and only kept if the result still parses
+        // into a valid configuration; a broken file (invalid TOML, wrong
+        // types, unknown keys) is skipped with a warning instead of
+        // discarding every other successfully loaded layer. This matters
+        // most for the directory marker chain (`merge_parent_config`),
+        // where the number of files merged can grow with the depth of the
+        // search.
+        let mut cfg_val = base_config;
+        let mut warnings: ConfigFileWarnings = Vec::new();
+        for path in config_paths {
+            let Ok(reader) = File::open(path) else {
+                continue;
+            };
+            let parsed = read_as_string_with_crlf_suppression(reader)
+                .map_err(ConfigFileError::from)
+                .and_then(|config| toml::from_str::<CfgVal>(&config).map_err(ConfigFileError::from));
 
+            let file_val = match parsed {
+                Ok(v) => v,
+                Err(e) => {
+                    warnings.push(ConfigFileError::ConfigFileSkipped {
+                        path: path.clone(),
+                        error: e.to_string(),
+                    });
+                    continue;
+                }
+            };
+
+            let candidate = cfg_val.clone().merge(file_val);
+            match Self::validate(&candidate) {
+                Ok(()) => cfg_val = candidate,
+                Err(e) => warnings.push(ConfigFileError::ConfigFileSkipped {
+                    path: path.clone(),
+                    error: format!("The merged configuration would be invalid:\n{e}"),
+                }),
+            }
+        }
         // We cannot he logger here, it is too early.
         if ARGS.debug == Some(ClapLevelFilter::Trace) && ARGS.batch && ARGS.version {
             println!(
@@ -358,7 +452,7 @@ impl Cfg {
             );
         }
         // First check passed.
-        Ok(cfg)
+        Ok((cfg, warnings))
     }
 
     /// Writes the default configuration to `Path` or to `stdout` if
@@ -417,21 +511,31 @@ impl Cfg {
 /// filename (optionally with absolute path) can be given on the command
 /// line with "--config".
 pub static CFG: LazyLock<Cfg> = LazyLock::new(|| {
-    Cfg::from_files(&CONFIG_PATHS).unwrap_or_else(|e| {
+    let (cfg, warnings) = Cfg::from_files(&CONFIG_PATHS).unwrap_or_else(|e| {
         // Remember that something went wrong.
         let mut cfg_file_loading = CFG_FILE_LOADING.write();
         *cfg_file_loading = Err(e);
 
         // As we could not load the configuration file, we will use
         // the default configuration.
-        Cfg::default()
-    })
+        (Cfg::default(), Vec::new())
+    });
+    *CFG_FILE_WARNINGS.write() = warnings;
+    cfg
 });
 
 /// Variable indicating with `Err` if the loading of the configuration file
 /// went wrong.
 pub static CFG_FILE_LOADING: LazyLock<RwLock<Result<(), ConfigFileError>>> =
     LazyLock::new(|| RwLock::new(Ok(())));
+
+/// One message per configuration file that `Cfg::from_files()` skipped
+/// because it was invalid on its own, or made the merged result invalid.
+/// Populated too early to be logged directly (cf. the comment in
+/// `Cfg::from_files()`); `main()` logs these with `log::warn!()` once the
+/// logger's level filter is in its final state.
+pub static CFG_FILE_WARNINGS: LazyLock<RwLock<ConfigFileWarnings>> =
+    LazyLock::new(|| RwLock::new(Vec::new()));
 
 /// This is where the Tp-Note searches for its configuration files.
 pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
@@ -451,19 +555,21 @@ pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
         config_path.push(config);
     };
 
-    // Is there a `FILENAME_ROOT_PATH_MARKER` file?
-    // At this point, we ignore a file error silently. Next time,
-    // `Context::new()` is executed, we report this error to the user.
-    if let Some(root_path) = DOC_PATH.as_deref().ok().map(|doc_path| {
-        let mut root_path = if let Ok(context) = Context::from(doc_path) {
-            context.get_root_path().to_owned()
+    // Directory marker chain: every `tpnote.toml` found walking up from the
+    // note's directory that is in scope (see `is_root_path_marker` and
+    // `merge_parent_config`), ordered farthest first, closest last, so the
+    // closest one takes precedence when merged.
+    if let Ok(doc_path) = DOC_PATH.as_deref() {
+        let dir_path = if doc_path.is_dir() {
+            doc_path.to_path_buf()
         } else {
-            PathBuf::new()
+            doc_path
+                .parent()
+                .unwrap_or_else(|| Path::new("./"))
+                .to_path_buf()
         };
-        root_path.push(FILENAME_ROOT_PATH_MARKER);
-        root_path
-    }) {
-        config_path.push(root_path);
+        let (_root_path, config_chain) = root_path_and_config_chain(&dir_path);
+        config_path.extend(config_chain);
     };
 
     if let Some(commandline_path) = &ARGS.config {
@@ -484,7 +590,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::error::ConfigFileError;
     use tpnote_lib::config::LIB_CFG;
 
     use super::Cfg;
@@ -504,7 +609,7 @@ mod tests {
         let userconfig = temp_dir().join("tpnote.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
-        let cfg = Cfg::from_files(&[userconfig]).unwrap();
+        let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
         assert_eq!(cfg.arg_default.scheme, "zettel");
         // A user config lacking the key inherits the built-in default `true`.
         assert!(cfg.viewer.session_binding_cookie);
@@ -518,7 +623,7 @@ mod tests {
         let userconfig = temp_dir().join("tpnote.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
-        let cfg = Cfg::from_files(&[userconfig]).unwrap();
+        let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
         assert_eq!(cfg.viewer.served_mime_types.len(), 1);
         assert_eq!(cfg.viewer.served_mime_types[0].0, "abc");
 
@@ -531,7 +636,7 @@ mod tests {
         let userconfig = temp_dir().join("tpnote.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
-        let cfg = Cfg::from_files(&[userconfig]).unwrap();
+        let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
         assert!(!cfg.viewer.session_binding_cookie);
 
         //
@@ -540,7 +645,7 @@ mod tests {
         {
             let userconfig = temp_dir().join("tpnote.toml");
             fs::write(&userconfig, b"").unwrap();
-            let cfg = Cfg::from_files(&[userconfig]).unwrap();
+            let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
 
             let raw = "\
@@ -549,41 +654,60 @@ mod tests {
             ";
             let userconfig = temp_dir().join("tpnote.toml");
             fs::write(&userconfig, raw.as_bytes()).unwrap();
-            let cfg = Cfg::from_files(&[userconfig]).unwrap();
+            let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Off);
 
-            // The dropped `Warn` value is now a hard error.
+            // The dropped `Warn` value no longer aborts the whole load: the
+            // offending file is skipped with a warning and the built-in
+            // default is used instead.
             let raw = "\
             [viewer]
             same_user_policy = \"Warn\"
             ";
             let userconfig = temp_dir().join("tpnote.toml");
             fs::write(&userconfig, raw.as_bytes()).unwrap();
-            assert!(Cfg::from_files(&[userconfig]).is_err());
+            let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
+            assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
 
-            // An invalid enum string is a hard error.
+            // Likewise for an invalid enum string.
             let raw = "\
             [viewer]
             same_user_policy = \"bogus\"
             ";
             let userconfig = temp_dir().join("tpnote.toml");
             fs::write(&userconfig, raw.as_bytes()).unwrap();
-            assert!(Cfg::from_files(&[userconfig]).is_err());
+            let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
+            assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
         }
 
         //
-        // Prepare test: some mini config file.
+        // Prepare test: an unknown top level key no longer aborts the whole
+        // load either; the file is skipped with a warning.
         let raw = "\
         unknown_field_name = 'aha'
         ";
         let userconfig = temp_dir().join("tpnote.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
-        let cfg = Cfg::from_files(&[userconfig]).unwrap_err();
-        assert!(matches!(
-            cfg,
-            ConfigFileError::ConfigFileUnkownFieldName { .. }
-        ));
+        // No longer an error: the file is skipped, defaults apply.
+        let (_cfg, warnings) = Cfg::from_files(&[userconfig]).unwrap();
+        assert_eq!(warnings.len(), 1);
+
+        //
+        // Prepare test: one bad file among several does not discard the
+        // others -- the good ones still take effect. The skip is not
+        // silent: it is reported back in the returned warning list, which
+        // `main()` logs once the logger's filter allows it through (cf.
+        // `CFG_FILE_WARNINGS`).
+        let good_config = temp_dir().join("tpnote-good.toml");
+        fs::write(&good_config, "[arg_default]\nscheme = 'zettel'\n").unwrap();
+        let bad_config = temp_dir().join("tpnote-bad.toml");
+        fs::write(&bad_config, "unknown_field_name = 'aha'\n").unwrap();
+
+        let (cfg, warnings) = Cfg::from_files(&[good_config, bad_config.clone()]).unwrap();
+        assert_eq!(cfg.arg_default.scheme, "zettel");
+        assert_eq!(warnings.len(), 1);
+        assert!(warnings[0].to_string().contains(&bad_config.display().to_string()));
 
         //
         // Prepare test: create existing note.
@@ -598,7 +722,7 @@ mod tests {
         let userconfig = temp_dir().join("tpnote.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
-        let _cfg = Cfg::from_files(&[userconfig]).unwrap();
+        let (_cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
         {
             let lib_cfg = LIB_CFG.read();
             // The variables come from the `./config_default.toml` `zettel`

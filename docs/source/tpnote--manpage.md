@@ -1446,16 +1446,44 @@ default values. This happens in the following order:
    If the environment variable '`TPNOTE_CONFIG`' is set, its value is used as
    the path to this file instead of the standard location above.
 3. At startup all parent directories of the note file path '`<PATH>`' are
-   searched for a marker file named '`tpnote.toml`'. If found, the document root
-   moves from '`/`' to the found location. If present and its content is not
-   empty, Tp-Note interprets the file's content as configuration file.
+   searched for a marker file named '`tpnote.toml`'. If present and its
+   content is not empty, Tp-Note interprets the file's content as
+   configuration file. A '`[project_config]`' table in such a marker file
+   can hold two variables controlling how far this search goes:
+
+   - '`project_config.is_root_path_marker`' (default: `true`): the first
+     marker found -- starting with the one closest to '`<PATH>`' -- whose
+     value is `true` (or that leaves the variable unset, the default for
+     every marker file written before this option existed) fixes the
+     document root at its directory, and the search for the document root
+     stops there.
+   - '`project_config.merge_parent_config`' (default: `false`): if `true`,
+     Tp-Note keeps searching further up after finding this marker file,
+     merging any additional '`tpnote.toml`' files it finds underneath the
+     current configuration (settings closer to the note file take
+     precedence). This does not move the document root, which stays fixed
+     wherever '`is_root_path_marker`' stopped it. The search keeps climbing
+     only as long as each successive marker file it finds also sets
+     '`project_config.merge_parent_config = true`'; the first ancestor that
+     leaves it at the default `false` ends the search.
+
+     **Security note:** enabling '`merge_parent_config`' means Tp-Note will
+     read and merge configuration from every ancestor directory up to
+     wherever the search stops, including its editor and browser launch
+     commands. Only enable this pointing through directories you trust --
+     for example, a directory shared with other users. If a subproject
+     should inherit settings from one specific ancestor only, place a
+     plain '`tpnote.toml`' at that ancestor without '`merge_parent_config`'
+     set: its default `false` value stops the search there, rather than
+     leaving it open-ended all the way to the filesystem root.
 4. The file indicated by the command line parameter '`--config <FIlE>`'.
 
-When Tp-Note starts, it first merges all available configuration files into
-the default configuration. Then the resulting syntax is checked. If not
-correct, the last sourced configuration file is renamed (thus disabled) and
-Tp-Note starts with its internal default configuration. For debugging, you can
-print out the merged result with '`-V -b -d trace`'.
+When Tp-Note starts, it merges all available configuration files, in the
+order above, into the default configuration. Each file is applied one at a
+time and kept only if the result still parses into a valid configuration; an
+invalid file (bad syntax, wrong value, unknown key) is skipped with a logged
+warning instead of discarding every other, correctly loaded file. For
+debugging, you can print out the merged result with '`-V -b -d trace`'.
 
 ```sh
 tpnote -V -b -d trace  |less

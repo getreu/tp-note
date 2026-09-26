@@ -37,6 +37,7 @@ use crate::clipboard::SystemClipboard;
 use crate::config::AUTHOR;
 use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
+use crate::config::CFG_FILE_WARNINGS;
 use crate::config::CONFIG_PATHS;
 use crate::config::COPYRIGHT_FROM;
 use crate::config::Cfg;
@@ -93,6 +94,14 @@ fn main() {
     };
 
     AppLogger::set_max_level(level);
+
+    // Report configuration files that `Cfg::from_files()` had to skip
+    // (invalid on their own, or making the merged result invalid). This
+    // could not be logged from there: the filter above was still at
+    // `LevelFilter::Error` at that point.
+    for msg in CFG_FILE_WARNINGS.read().iter() {
+        log::warn!("{}", msg);
+    }
 
     // This eventually will extend the error reporting with more
     // popup alert windows.
