@@ -1449,33 +1449,9 @@ default values. This happens in the following order:
    searched for a marker file named '`tpnote.toml`'. If present and its
    content is not empty, Tp-Note interprets the file's content as
    configuration file. A '`[project_config]`' table in such a marker file
-   can hold two variables controlling how far this search goes:
-
-   - '`project_config.is_root_path_marker`' (default: `true`): the first
-     marker found -- starting with the one closest to '`<PATH>`' -- whose
-     value is `true` (or that leaves the variable unset, the default for
-     every marker file written before this option existed) fixes the
-     document root at its directory, and the search for the document root
-     stops there.
-   - '`project_config.merge_parent_config`' (default: `false`): if `true`,
-     Tp-Note keeps searching further up after finding this marker file,
-     merging any additional '`tpnote.toml`' files it finds underneath the
-     current configuration (settings closer to the note file take
-     precedence). This does not move the document root, which stays fixed
-     wherever '`is_root_path_marker`' stopped it. The search keeps climbing
-     only as long as each successive marker file it finds also sets
-     '`project_config.merge_parent_config = true`'; the first ancestor that
-     leaves it at the default `false` ends the search.
-
-     **Security note:** enabling '`merge_parent_config`' means Tp-Note will
-     read and merge configuration from every ancestor directory up to
-     wherever the search stops, including its editor and browser launch
-     commands. Only enable this pointing through directories you trust --
-     for example, a directory shared with other users. If a subproject
-     should inherit settings from one specific ancestor only, place a
-     plain '`tpnote.toml`' at that ancestor without '`merge_parent_config`'
-     set: its default `false` value stops the search there, rather than
-     leaving it open-ended all the way to the filesystem root.
+   can set '`project_config.is_root_path_marker`' and
+   '`project_config.merge_parent_config`' (cf. "Searching for
+   '`tpnote.toml`' marker files" below).
 4. The file indicated by the command line parameter '`--config <FIlE>`'.
 
 When Tp-Note starts, it merges all available configuration files, in the
@@ -1500,6 +1476,107 @@ a value, do not forget to uncomment the modified line to activate your change.
 Also make sure to keep the '`version`' variable at the beginning of the file
 commented out. As any Tp-Note upgrade might include a breaking change in the
 configuration file structure, try to keep your custom configuration small.
+
+## Searching for '`tpnote.toml`' marker files
+
+This single search decides two things at once: where the document root
+lies, and which marker files' settings get merged into the configuration.
+A '`[project_config]`' table in a marker file controls both, through two
+variables:
+
+- '`project_config.is_root_path_marker`' (default: `true`): the first
+  marker found -- starting with the one closest to '`<PATH>`' -- whose
+  value is `true` (or that leaves the variable unset, the default for
+  every marker file written before this option existed) fixes the
+  document root at its directory, and the search for the document root
+  stops there.
+- '`project_config.merge_parent_config`' (default: `false`): if `true`,
+  Tp-Note keeps searching further up after finding this marker file,
+  merging any additional '`tpnote.toml`' files it finds underneath the
+  current configuration (settings closer to the note file take
+  precedence). This does not move the document root, which stays fixed
+  wherever '`is_root_path_marker`' stopped it. The search keeps climbing
+  only as long as each successive marker file it finds also sets
+  '`project_config.merge_parent_config = true`'; the first ancestor that
+  leaves it at the default `false` ends the search.
+
+**Security note:** enabling '`merge_parent_config`' means Tp-Note will
+read and merge configuration from every ancestor directory up to wherever
+the search stops, including its editor and browser launch commands. Only
+enable this pointing through directories you trust -- for example, a
+directory shared with other users. If a subproject should inherit
+settings from one specific ancestor only, place a plain '`tpnote.toml`' at
+that ancestor without '`merge_parent_config`' set: its default `false`
+value stops the search there, rather than leaving it open-ended all the
+way to the filesystem root.
+
+**Example with one marker.** Say '`~/notes/project/`' holds both the
+note being edited and the following '`tpnote.toml`':
+
+```toml
+[arg_default]
+scheme = "zettel"
+```
+
+There is no '`[project_config]`' table here, so both its variables stay
+at their defaults. Climbing upward from '`~/notes/project/`', Tp-Note
+finds this one marker file and stops there: with '`is_root_path_marker`'
+at its default `true`, that directory becomes the document root, and with
+'`merge_parent_config`' at its default `false`, nothing above it is ever
+consulted. Only this file's own settings apply.
+
+**Example with two markers.** Now add a second, vault-wide '`tpnote.toml`'
+one level up, in '`~/notes/`':
+
+```toml
+[viewer]
+startup_delay = 500
+```
+
+and change '`~/notes/project/tpnote.toml`' to:
+
+```toml
+[project_config]
+merge_parent_config = true
+
+[arg_default]
+scheme = "zettel"
+```
+
+Climbing from '`~/notes/project/`' still finds the project's own marker
+file first, and it still fixes the document root there: setting
+'`merge_parent_config`' does not change '`is_root_path_marker`', which is
+still left at its default `true`. But because '`merge_parent_config`' is
+now `true`, the search keeps going, finds '`~/notes/tpnote.toml`', and
+merges its '`[viewer]`' setting in underneath the project's own -- so a
+note in '`~/notes/project/`' ends up with both
+'`arg_default.scheme = "zettel"`' and '`viewer.startup_delay = 500`',
+while the project's marker file only had to state the one setting it
+actually overrides. The document root stays '`~/notes/project/`'
+throughout.
+
+**Example moving the document root.** Change
+'`~/notes/project/tpnote.toml`' once more, adding
+'`is_root_path_marker = false`':
+
+```toml
+[project_config]
+is_root_path_marker = false
+merge_parent_config = true
+
+[arg_default]
+scheme = "zettel"
+```
+
+Now the project's own marker no longer fixes the document root there, so
+the search for the document root keeps going, reaches
+'`~/notes/tpnote.toml`' (which leaves '`is_root_path_marker`' at its
+default `true`), and the document root becomes '`~/notes/`' instead of
+'`~/notes/project/`'. '`merge_parent_config`' is still `true`, so
+'`~/notes/tpnote.toml`''s settings are still merged in exactly as in the
+previous example. Moving the document root and cascading the
+configuration are independent effects of the same climb, each controlled
+by its own variable.
 
 Some filename and template related variables are grouped into a '`scheme`'.
 The shipped configuration file lists two schemes: '`default`' and '`zettel`'.

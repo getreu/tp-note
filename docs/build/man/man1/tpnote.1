@@ -1834,7 +1834,6 @@ Windows:
 `\f[CR]C:\(rsUsers\(rs<LOGIN>\(rsAppData\(rsRoaming\(rstpnote\(rsconfig\(rstpnote.toml>\f[R]'
 .IP \(bu 2
 macOS: `\f[CR]/Users/<LOGIN>/Library/Application Support/tpnote\f[R]'
-.PP
 If the environment variable `\f[CR]TPNOTE_CONFIG\f[R]' is set, its value
 is used as the path to this file instead of the standard location above.
 .RE
@@ -1844,43 +1843,10 @@ At startup all parent directories of the note file path
 `\f[CR]tpnote.toml\f[R]'.
 If present and its content is not empty, Tp\-Note interprets the
 file\(cqs content as configuration file.
-A `\f[CR][project_config]\f[R]' table in such a marker file can hold two
-variables controlling how far this search goes:
-.RS 4
-.IP \(bu 2
-`\f[CR]project_config.is_root_path_marker\f[R]' (default:
-\f[CR]true\f[R]): the first marker found \(en starting with the one
-closest to `\f[CR]<PATH>\f[R]' \(en whose value is \f[CR]true\f[R] (or
-that leaves the variable unset, the default for every marker file
-written before this option existed) fixes the document root at its
-directory, and the search for the document root stops there.
-.IP \(bu 2
-`\f[CR]project_config.merge_parent_config\f[R]' (default:
-\f[CR]false\f[R]): if \f[CR]true\f[R], Tp\-Note keeps searching further
-up after finding this marker file, merging any additional
-`\f[CR]tpnote.toml\f[R]' files it finds underneath the current
-configuration (settings closer to the note file take precedence).
-This does not move the document root, which stays fixed wherever
-`\f[CR]is_root_path_marker\f[R]' stopped it.
-The search keeps climbing only as long as each successive marker file it
-finds also sets `\f[CR]project_config.merge_parent_config = true\f[R]';
-the first ancestor that leaves it at the default \f[CR]false\f[R] ends
-the search.
-.RS 2
-.PP
-\f[B]Security note:\f[R] enabling `\f[CR]merge_parent_config\f[R]' means
-Tp\-Note will read and merge configuration from every ancestor directory
-up to wherever the search stops, including its editor and browser launch
-commands.
-Only enable this pointing through directories you trust \(en for
-example, a directory shared with other users.
-If a subproject should inherit settings from one specific ancestor only,
-place a plain `\f[CR]tpnote.toml\f[R]' at that ancestor without
-`\f[CR]merge_parent_config\f[R]' set: its default \f[CR]false\f[R] value
-stops the search there, rather than leaving it open\-ended all the way
-to the filesystem root.
-.RE
-.RE
+A `\f[CR][project_config]\f[R]' table in such a marker file can set
+`\f[CR]project_config.is_root_path_marker\f[R]' and
+`\f[CR]project_config.merge_parent_config\f[R]' (cf.\ \(lqSearching for
+`\f[CR]tpnote.toml\f[R]' marker files\(rq below).
 .IP "4." 3
 The file indicated by the command line parameter
 `\f[CR]\-\-config <FIlE>\f[R]'.
@@ -1913,6 +1879,119 @@ beginning of the file commented out.
 As any Tp\-Note upgrade might include a breaking change in the
 configuration file structure, try to keep your custom configuration
 small.
+.SS Searching for `\f[CR]tpnote.toml\f[R]' marker files
+This single search decides two things at once: where the document root
+lies, and which marker files\(cq settings get merged into the
+configuration.
+A `\f[CR][project_config]\f[R]' table in a marker file controls both,
+through two variables:
+.IP \(bu 2
+`\f[CR]project_config.is_root_path_marker\f[R]' (default:
+\f[CR]true\f[R]): the first marker found \(en starting with the one
+closest to `\f[CR]<PATH>\f[R]' \(en whose value is \f[CR]true\f[R] (or
+that leaves the variable unset, the default for every marker file
+written before this option existed) fixes the document root at its
+directory, and the search for the document root stops there.
+.IP \(bu 2
+`\f[CR]project_config.merge_parent_config\f[R]' (default:
+\f[CR]false\f[R]): if \f[CR]true\f[R], Tp\-Note keeps searching further
+up after finding this marker file, merging any additional
+`\f[CR]tpnote.toml\f[R]' files it finds underneath the current
+configuration (settings closer to the note file take precedence).
+This does not move the document root, which stays fixed wherever
+`\f[CR]is_root_path_marker\f[R]' stopped it.
+The search keeps climbing only as long as each successive marker file it
+finds also sets `\f[CR]project_config.merge_parent_config = true\f[R]';
+the first ancestor that leaves it at the default \f[CR]false\f[R] ends
+the search.
+.PP
+\f[B]Security note:\f[R] enabling `\f[CR]merge_parent_config\f[R]' means
+Tp\-Note will read and merge configuration from every ancestor directory
+up to wherever the search stops, including its editor and browser launch
+commands.
+Only enable this pointing through directories you trust \(en for
+example, a directory shared with other users.
+If a subproject should inherit settings from one specific ancestor only,
+place a plain `\f[CR]tpnote.toml\f[R]' at that ancestor without
+`\f[CR]merge_parent_config\f[R]' set: its default \f[CR]false\f[R] value
+stops the search there, rather than leaving it open\-ended all the way
+to the filesystem root.
+.PP
+\f[B]Example with one marker.\f[R] Say `\f[CR]\(ti/notes/project/\f[R]'
+holds both the note being edited and the following
+`\f[CR]tpnote.toml\f[R]':
+.IP
+.EX
+\f[B][arg_default]\f[R]
+scheme = \(dqzettel\(dq
+.EE
+.PP
+There is no `\f[CR][project_config]\f[R]' table here, so both its
+variables stay at their defaults.
+Climbing upward from `\f[CR]\(ti/notes/project/\f[R]', Tp\-Note finds
+this one marker file and stops there: with
+`\f[CR]is_root_path_marker\f[R]' at its default \f[CR]true\f[R], that
+directory becomes the document root, and with
+`\f[CR]merge_parent_config\f[R]' at its default \f[CR]false\f[R],
+nothing above it is ever consulted.
+Only this file\(cqs own settings apply.
+.PP
+\f[B]Example with two markers.\f[R] Now add a second, vault\-wide
+`\f[CR]tpnote.toml\f[R]' one level up, in `\f[CR]\(ti/notes/\f[R]':
+.IP
+.EX
+\f[B][viewer]\f[R]
+startup_delay = 500
+.EE
+.PP
+and change `\f[CR]\(ti/notes/project/tpnote.toml\f[R]' to:
+.IP
+.EX
+\f[B][project_config]\f[R]
+merge_parent_config = true
+
+\f[B][arg_default]\f[R]
+scheme = \(dqzettel\(dq
+.EE
+.PP
+Climbing from `\f[CR]\(ti/notes/project/\f[R]' still finds the
+project\(cqs own marker file first, and it still fixes the document root
+there: setting `\f[CR]merge_parent_config\f[R]' does not change
+`\f[CR]is_root_path_marker\f[R]', which is still left at its default
+\f[CR]true\f[R].
+But because `\f[CR]merge_parent_config\f[R]' is now \f[CR]true\f[R], the
+search keeps going, finds `\f[CR]\(ti/notes/tpnote.toml\f[R]', and
+merges its `\f[CR][viewer]\f[R]' setting in underneath the project\(cqs
+own \(en so a note in `\f[CR]\(ti/notes/project/\f[R]' ends up with both
+`\f[CR]arg_default.scheme = \(dqzettel\(dq\f[R]' and
+`\f[CR]viewer.startup_delay = 500\f[R]', while the project\(cqs marker
+file only had to state the one setting it actually overrides.
+The document root stays `\f[CR]\(ti/notes/project/\f[R]' throughout.
+.PP
+\f[B]Example moving the document root.\f[R] Change
+`\f[CR]\(ti/notes/project/tpnote.toml\f[R]' once more, adding
+`\f[CR]is_root_path_marker = false\f[R]':
+.IP
+.EX
+\f[B][project_config]\f[R]
+is_root_path_marker = false
+merge_parent_config = true
+
+\f[B][arg_default]\f[R]
+scheme = \(dqzettel\(dq
+.EE
+.PP
+Now the project\(cqs own marker no longer fixes the document root there,
+so the search for the document root keeps going, reaches
+`\f[CR]\(ti/notes/tpnote.toml\f[R]' (which leaves
+`\f[CR]is_root_path_marker\f[R]' at its default \f[CR]true\f[R]), and
+the document root becomes `\f[CR]\(ti/notes/\f[R]' instead of
+`\f[CR]\(ti/notes/project/\f[R]'.
+`\f[CR]merge_parent_config\f[R]' is still \f[CR]true\f[R], so
+`\f[CR]\(ti/notes/tpnote.toml\f[R]'\(cqs settings are still merged in
+exactly as in the previous example.
+Moving the document root and cascading the configuration are independent
+effects of the same climb, each controlled by its own variable.
 .PP
 Some filename and template related variables are grouped into a
 `\f[CR]scheme\f[R]'.
