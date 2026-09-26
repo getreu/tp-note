@@ -141,6 +141,7 @@ pub fn manage_connections(
     listener: TcpListener,
     start_accepting: Arc<(Mutex<bool>, Condvar)>,
     doc_path: PathBuf,
+    root_path: PathBuf,
 ) {
     // A list of referenced local links to images or other documents as
     // they appeared in the displayed documents.
@@ -155,7 +156,7 @@ pub fn manage_connections(
     let conn_counter = Arc::new(());
     // Store `doc_path` in the `context.path` and
     // in the Tera variable `TMPL_VAR_PATH`.
-    let context = Context::from(&doc_path).expect("can not access document path");
+    let context = Context::from(&doc_path, root_path).expect("can not access document path");
     //
 
     log::info!(
@@ -890,13 +891,13 @@ mod tests {
             let port = listener.local_addr().unwrap().port();
 
             let uniq = SEQ.fetch_add(1, Ordering::Relaxed);
-            let dir = std::env::temp_dir().join(format!(
+            let root_path = std::env::temp_dir().join(format!(
                 "tpnote-itest-{}-{}",
                 std::process::id(),
                 uniq
             ));
-            fs::create_dir_all(&dir).unwrap();
-            let doc: PathBuf = dir.join("note.md");
+            fs::create_dir_all(&root_path).unwrap();
+            let doc: PathBuf = root_path.join("note.md");
             fs::write(&doc, note).unwrap();
 
             // Accept gate already open (`true`) so the server serves at once.
@@ -904,7 +905,13 @@ mod tests {
             let event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>> = Arc::new(Mutex::new(Vec::new()));
             let doc_for_server = doc.clone();
             thread::spawn(move || {
-                manage_connections(event_tx_list, listener, start_accepting, doc_for_server)
+                manage_connections(
+                    event_tx_list,
+                    listener,
+                    start_accepting,
+                    doc_for_server,
+                    root_path,
+                )
             });
             (port, doc)
         }
@@ -1147,18 +1154,25 @@ mod tests {
             let port = listener.local_addr().unwrap().port();
 
             let uniq = SEQ.fetch_add(1, Ordering::Relaxed);
-            let dir = std::env::temp_dir()
-                .join(format!("tpnote-itest-{}-{}", std::process::id(), uniq))
-                .join("Meeting #12-Project kickoff");
-            fs::create_dir_all(&dir).unwrap();
+            // `root_path` must be an ancestor of the `#`-directory below, not
+            // the `#`-directory itself: the test asserts that the `#` in the
+            // directory name shows up percent-encoded in the generated
+            // href, which only happens when that directory name is actually
+            // part of the URL (i.e. `root_path` stops above it).
+            let root_path =
+                std::env::temp_dir().join(format!("tpnote-itest-{}-{}", std::process::id(), uniq));
+            let doc_dir = root_path.join("Meeting #12-Project kickoff");
+            fs::create_dir_all(&doc_dir).unwrap();
 
-            let doc = dir.join("00-index.md");
+            let doc = doc_dir.join("00-index.md");
             fs::write(&doc, "---\ntitle: itest\n---\n\n[sibling](<01-sibling.md>)\n").unwrap();
-            fs::write(dir.join("01-sibling.md"), "---\ntitle: sibling\n---\n\nHi.\n").unwrap();
+            fs::write(doc_dir.join("01-sibling.md"), "---\ntitle: sibling\n---\n\nHi.\n").unwrap();
 
             let start_accepting = Arc::new((Mutex::new(true), Condvar::new()));
             let event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>> = Arc::new(Mutex::new(Vec::new()));
-            thread::spawn(move || manage_connections(event_tx_list, listener, start_accepting, doc));
+            thread::spawn(move || {
+                manage_connections(event_tx_list, listener, start_accepting, doc, root_path)
+            });
             port
         }
 
@@ -1214,7 +1228,9 @@ mod tests {
 
             let start_accepting = Arc::new((Mutex::new(true), Condvar::new()));
             let event_tx_list: Arc<Mutex<Vec<SyncSender<SseToken>>>> = Arc::new(Mutex::new(Vec::new()));
-            thread::spawn(move || manage_connections(event_tx_list, listener, start_accepting, doc));
+            thread::spawn(move || {
+                manage_connections(event_tx_list, listener, start_accepting, doc, base)
+            });
             port
         }
 

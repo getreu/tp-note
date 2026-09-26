@@ -39,7 +39,7 @@
 //! let template_kind_filter = |tk|tk;
 //!
 //! // Build and run workflow.
-//! let n = WorkflowBuilder::new(&notedir)
+//! let n = WorkflowBuilder::new(&notedir, notedir.clone())
 //!       // You can plug in your own type (must impl. `Content`).
 //!      .upgrade::<ContentString, _>(
 //!          "default", v, template_kind_filter)
@@ -124,7 +124,7 @@
 //! let template_kind_filter = |tk|tk;
 //!
 //! // Build and run workflow.
-//! let n = WorkflowBuilder::new(&notedir)
+//! let n = WorkflowBuilder::new(&notedir, notedir.clone())
 //!       // You can plug in your own type (must impl. `Content`).
 //!      .upgrade::<MyContentString, _>(
 //!          "default", v, template_kind_filter)
@@ -169,7 +169,7 @@ pub struct WorkflowBuilder<W> {
 #[derive(Debug, Clone)]
 pub struct SyncFilename<'a> {
     path: &'a Path,
-    root_path: Option<PathBuf>,
+    root_path: PathBuf,
 }
 
 /// In this state the workflow will either synchronize the filename of an
@@ -178,7 +178,7 @@ pub struct SyncFilename<'a> {
 pub struct SyncFilenameOrCreateNew<'a, T, F> {
     scheme_source: SchemeSource<'a>,
     path: &'a Path,
-    root_path: Option<PathBuf>,
+    root_path: PathBuf,
     clipboards: Vec<&'a T>,
     tk_filter: F,
     html_export: Option<(&'a Path, LocalLinkKind)>,
@@ -191,28 +191,19 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
     /// 2. to a directory where the new note should be created, or
     /// 3. to a non-Tp-Note file that will be annotated.
     ///
+    /// `root_path` is the document root: the directory Tp-Note's viewer
+    /// treats as its security boundary, e.g. found by searching upward for
+    /// a `tpnote.toml` marker file (a convention the `tpnote` binary
+    /// implements; cf. its CUSTOMIZATION man page section) or by any other
+    /// means appropriate to the embedding application. This is passed
+    /// through unchanged to `tpnote_lib::context::Context::from()`.
+    ///
     /// For cases 2. and 3. upgrade the `WorkflowBuilder` with
     /// `upgrade()` to add additional input data.
-    pub fn new(path: &'a Path) -> Self {
+    pub fn new(path: &'a Path, root_path: PathBuf) -> Self {
         Self {
-            input: SyncFilename {
-                path,
-                root_path: None,
-            },
+            input: SyncFilename { path, root_path },
         }
-    }
-
-    /// Skips the workflow's own upward search for the document root,
-    /// using `root_path` instead. Meant for a caller that already computed
-    /// `root_path` for `path`'s directory -- e.g. to build its own
-    /// configuration search path -- and would otherwise pay for that climb
-    /// a second time for no reason (cf.
-    /// `tpnote_lib::context::Context::from_with_root_path()`). Leave unset
-    /// to let the workflow compute it itself, which is always correct, just
-    /// potentially redundant if the caller already has it.
-    pub fn with_root_path(mut self, root_path: PathBuf) -> Self {
-        self.input.root_path = Some(root_path);
-        self
     }
 
     /// Upgrade the `WorkflowBuilder` to enable also the creation of new note
@@ -337,7 +328,7 @@ impl Workflow<SyncFilename<'_>> {
     /// let _ = fs::remove_file(&expected);
     ///
     /// // Build and run workflow.
-    /// let n = WorkflowBuilder::new(&notefile)
+    /// let n = WorkflowBuilder::new(&notefile, temp_dir())
     ///      .build()
     ///      // You can plug in your own type (must impl. `Content`).
     ///      .run::<ContentString>()
@@ -353,10 +344,7 @@ impl Workflow<SyncFilename<'_>> {
         let mut settings = SETTINGS.upgradable_read();
 
         // Collect input data for templates.
-        let context = match self.input.root_path {
-            Some(root_path) => Context::from_with_root_path(self.input.path, root_path)?,
-            None => Context::from(self.input.path)?,
-        };
+        let context = Context::from(self.input.path, self.input.root_path.clone())?;
 
         let content = <T>::open(self.input.path).unwrap_or_default();
 
@@ -416,7 +404,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
     /// let template_kind_filter = |tk|tk;
     ///
     /// // Build and run workflow.
-    /// let n = WorkflowBuilder::new(&notedir)
+    /// let n = WorkflowBuilder::new(&notedir, notedir.clone())
     ///       // You can plug in your own type (must impl. `Content`).
     ///      .upgrade::<ContentString, _>(
     ///            "default", v, template_kind_filter)
@@ -451,10 +439,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
         // and finally rename the file, if it is not in sync with its front matter.
 
         // Collect input data for templates.
-        let context = match self.input.root_path {
-            Some(root_path) => Context::from_with_root_path(self.input.path, root_path)?,
-            None => Context::from(self.input.path)?,
-        };
+        let context = Context::from(self.input.path, self.input.root_path.clone())?;
 
         // `template_kind` will tell us what to do.
         let (template_kind, content) = TemplateKind::from(self.input.path);
@@ -526,6 +511,7 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
         if let Some((export_dir, local_link_kind)) = self.input.html_export {
             HtmlRenderer::save_exporter_page(
                 &n.rendered_filename,
+                self.input.root_path.clone(),
                 n.content,
                 export_dir,
                 local_link_kind,

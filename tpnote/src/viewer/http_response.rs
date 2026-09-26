@@ -566,7 +566,18 @@ impl HttpResponse for ServerThread {
             // `front_matter::assert_precondition()` needs this later.
             // Also, the HTML template expects this to be set to the rendered
             // document.
-            let html_context = Context::from(maybe_other_doc)?;
+            //
+            // `maybe_other_doc` is not an arbitrary path: it is built above
+            // as `self.context.get_root_path().join(relpath)` after checking
+            // `relpath` against `allowed_urls`, so it is always inside the
+            // current session's root_path already. Reuse it rather than
+            // climbing again -- a fresh climb could stop at a nested marker
+            // and return a *narrower* root_path than the one `allowed_urls`
+            // and `abspath` construction actually enforce, which would
+            // rewrite this document's links against a boundary the server
+            // doesn't agree with.
+            let html_context =
+                Context::from(maybe_other_doc, self.context.get_root_path().to_owned())?;
             // Only the first base document is live updated.
             // Overwrite the dynamic JavaScript.
             (html_context, "")

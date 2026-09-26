@@ -30,7 +30,6 @@ use tpnote_lib::config::LibCfg;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::TmplHtml;
 use tpnote_lib::config_value::CfgVal;
-use tpnote_lib::config::root_path_and_config_chain;
 use tpnote_lib::filename::NotePathBuf;
 use tpnote_lib::text_reader::read_as_string_with_crlf_suppression;
 
@@ -350,7 +349,9 @@ impl Cfg {
             };
             let parsed = read_as_string_with_crlf_suppression(reader)
                 .map_err(ConfigFileError::from)
-                .and_then(|config| toml::from_str::<CfgVal>(&config).map_err(ConfigFileError::from));
+                .and_then(|config| {
+                    toml::from_str::<CfgVal>(&config).map_err(ConfigFileError::from)
+                });
 
             let file_val = match parsed {
                 Ok(v) => v,
@@ -537,7 +538,86 @@ pub static CFG_FILE_LOADING: LazyLock<RwLock<Result<(), ConfigFileError>>> =
 pub static CFG_FILE_WARNINGS: LazyLock<RwLock<ConfigFileWarnings>> =
     LazyLock::new(|| RwLock::new(Vec::new()));
 
-/// This is where the Tp-Note searches for its configuration files.
+/// The appearance of a file with this filename marks the position of the
+/// document root (cf. `root_path_and_config_chain()`).
+const FILENAME_ROOT_PATH_MARKER: &str = "tpnote.toml";
+
+/// The deserialization view of a `tpnote.toml` marker file limited to its
+/// `[project_config]` table (cf. the `ProjectConfig` struct above); every
+/// other key in the file is irrelevant here.
+#[derive(Debug, Deserialize, Default)]
+struct ProjectConfigFile {
+    #[serde(default)]
+    project_config: ProjectConfig,
+}
+
+/// Walks upward from `dir_path` collecting every ancestor directory that
+/// contains a `FILENAME_ROOT_PATH_MARKER` file, then decides, marker by
+/// marker starting from the closest, where the document root lies and how
+/// far the search for additional configuration extends.
+///
+/// Returns `(root_path, config_chain)`, where `config_chain` is ordered
+/// farthest first, closest last, ready to be merged with lower-precedence
+/// layers applied first.
+///
+/// * `root_path` is fixed at the first marker (closest to farthest) whose
+///   `project_config.is_root_path_marker` is `true` or absent -- the
+///   default, chosen for every marker file written before this option
+///   existed. If no marker declares itself the root, `root_path` falls
+///   back to the filesystem root, matching the behavior when no marker
+///   file exists at all.
+/// * The search for additional configuration files continues past a given
+///   marker only if that marker's own `project_config.merge_parent_config`
+///   is `true`. The first marker (again, closest to farthest) that leaves
+///   it at the default `false` ends the search; `root_path` is unaffected
+///   by how far this search extends.
+fn root_path_and_config_chain(dir_path: &Path) -> (PathBuf, Vec<PathBuf>) {
+    let mut fallback_root = dir_path;
+    let mut root_path: Option<PathBuf> = None;
+    let mut config_chain: Vec<PathBuf> = Vec::new();
+
+    for anc in dir_path.ancestors() {
+        fallback_root = anc;
+        let marker = anc.join(FILENAME_ROOT_PATH_MARKER);
+        if !marker.is_file() {
+            continue;
+        }
+
+        // A conscious choice: if this file can't be read or parsed, fall
+        // back to the defaults (root marker, do not extend the search)
+        // instead of treating it as absent. Excluding it here would let the
+        // search continue past it, silently widening the document root --
+        // and thus the viewer's security boundary -- past a directory the
+        // user never asked to expose, just because of a typo. The file is
+        // still handed on to the full configuration merge below, which
+        // parses it independently and reports it via `ConfigFileWarnings`
+        // if it is indeed broken -- so the failure is surfaced, not hidden,
+        // without ever widening the boundary to compensate for it.
+        let flags = fs::read_to_string(&marker)
+            .ok()
+            .and_then(|s| toml::from_str::<ProjectConfigFile>(&s).ok())
+            .unwrap_or_default()
+            .project_config;
+
+        config_chain.push(marker.clone());
+
+        if root_path.is_none() && flags.is_root_path_marker {
+            root_path = marker.parent().map(Path::to_path_buf);
+        }
+
+        if !flags.merge_parent_config {
+            break;
+        }
+    }
+
+    let root_path = root_path.unwrap_or_else(|| fallback_root.to_owned());
+
+    // Farthest first, closest last: closest overrides on merge.
+    config_chain.reverse();
+
+    (root_path, config_chain)
+}
+
 /// The single upward directory-marker search for `DOC_PATH`'s directory,
 /// shared by `ROOT_PATH` and the project-marker portion of `CONFIG_PATHS`
 /// so the climb (and the reading and parsing of every candidate's
@@ -561,9 +641,9 @@ static ROOT_PATH_AND_CONFIG_CHAIN: LazyLock<(PathBuf, Vec<PathBuf>)> = LazyLock:
 
 /// The document root: the directory where the upward search for a
 /// `tpnote.toml` marker file stopped (cf. the CUSTOMIZATION section of the
-/// man page). Handed to `WorkflowBuilder::with_root_path()` so the workflow
-/// does not need to repeat the search `CONFIG_PATHS` already performed for
-/// the same directory.
+/// man page). Passed into `WorkflowBuilder::new()` and `Context::from()` so
+/// they do not need to repeat the search `CONFIG_PATHS` already performed
+/// for the same directory.
 pub static ROOT_PATH: LazyLock<PathBuf> = LazyLock::new(|| ROOT_PATH_AND_CONFIG_CHAIN.0.clone());
 
 pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
@@ -724,7 +804,11 @@ mod tests {
         let (cfg, warnings) = Cfg::from_files(&[good_config, bad_config.clone()]).unwrap();
         assert_eq!(cfg.arg_default.scheme, "zettel");
         assert_eq!(warnings.len(), 1);
-        assert!(warnings[0].to_string().contains(&bad_config.display().to_string()));
+        assert!(
+            warnings[0]
+                .to_string()
+                .contains(&bad_config.display().to_string())
+        );
 
         //
         // Prepare test: create existing note.

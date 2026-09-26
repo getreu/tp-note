@@ -125,10 +125,10 @@ mod tests {
         tmp.insert("flag".to_string(), json!(true));
         tmp.insert("numbers".to_string(), json!([1, 3, 5]));
 
-        let input1 = Context::from(Path::new("a/b/test.md")).unwrap();
+        let input1 = Context::from(Path::new("a/b/test.md"), std::path::PathBuf::new()).unwrap();
         let input2 = FrontMatter(tmp);
 
-        let mut expected = Context::from(Path::new("a/b/test.md")).unwrap();
+        let mut expected = Context::from(Path::new("a/b/test.md"), std::path::PathBuf::new()).unwrap();
         let tmp2 = Value::from_serializable(&json!({
             "fm_file_ext": "md",
             "fm_height": 1.23,

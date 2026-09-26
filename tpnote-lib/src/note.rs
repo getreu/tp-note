@@ -313,6 +313,7 @@ mod tests {
     use crate::config::TMPL_VAR_FM_ALL;
     use serde_json::json;
     use std::path::Path;
+    use std::path::PathBuf;
     use tera::Value;
 
     #[test]
@@ -367,10 +368,10 @@ mod tests {
         tmp.insert("flag".to_string(), json!(true));
         tmp.insert("numbers".to_string(), json!([1, 3, 5]));
 
-        let input1 = Context::from(Path::new("a/b/test.md")).unwrap();
+        let input1 = Context::from(Path::new("a/b/test.md"), PathBuf::new()).unwrap();
         let input2 = FrontMatter(tmp);
 
-        let mut expected = Context::from(Path::new("a/b/test.md")).unwrap();
+        let mut expected = Context::from(Path::new("a/b/test.md"), PathBuf::new()).unwrap();
         let tmp2 = Value::from_serializable(&serde_json::json!({
             "fm_file_ext": "md",
             "fm_height": 1.23,
@@ -411,7 +412,7 @@ Body text
         let expected = temp_dir().join("20221031-My day--Note.md");
         let _ = fs::remove_file(&expected);
         // Start test.
-        let context = Context::from(&notefile).unwrap();
+        let context = Context::from(&notefile, PathBuf::new()).unwrap();
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         // You can plug in your own type (must impl. `Content`).
@@ -458,7 +459,7 @@ Body text
         fs::write(&notefile, raw.as_bytes()).unwrap();
         // Start test
         // Only minimal context is needed, because no templates are applied later.
-        let mut context = Context::from(&notefile).unwrap();
+        let mut context = Context::from(&notefile, PathBuf::new()).unwrap();
         // We do not inject any JavaScript.
         context.insert(TMPL_HTML_VAR_VIEWER_DOC_JS, &"");
         // Create note object.
@@ -499,7 +500,7 @@ Body text
         fs::create_dir_all(&notedir).unwrap();
 
         // Store the path in `context`.
-        let context = Context::from(&notedir).unwrap();
+        let context = Context::from(&notedir, PathBuf::new()).unwrap();
         let html_clipboard =
             ContentString::from_string("".to_string(), "html_clipboard".to_string());
         let txt_clipboard = ContentString::from_string("".to_string(), "txt_clipboard".to_string());
@@ -573,7 +574,7 @@ Body text
         let notedir = temp_dir();
 
         // Store the path in `context`.
-        let context = Context::from(&notedir).unwrap();
+        let context = Context::from(&notedir, PathBuf::new()).unwrap();
         let html_clipboard =
             ContentString::from_string("html_clp\n".to_string(), "html_clipboard".to_string());
         let txt_clipboard =
@@ -671,7 +672,7 @@ Body text
 
         // Run test.
         // Store the path in `context`.
-        let context = Context::from(&notedir).unwrap();
+        let context = Context::from(&notedir, PathBuf::new()).unwrap();
         let html_clipboard = ContentString::from_string(
             "my HTML clipboard\n".to_string(),
             "html_clipboard".to_string(),
@@ -775,7 +776,7 @@ Body text
 
         // Run the test.
         // Store the path in `context`.
-        let context = Context::from(&non_notefile).unwrap();
+        let context = Context::from(&non_notefile, PathBuf::new()).unwrap();
         let html_clipboard = ContentString::from_string(
             "my HTML clipboard\n".to_string(),
             "html_clipboard".to_string(),
@@ -849,7 +850,7 @@ Body text
         let expected = temp_dir().join("20221030-hello--world.md");
         let _ = fs::remove_file(&expected);
         // Start test.
-        let context = Context::from(&notefile).unwrap();
+        let context = Context::from(&notefile, PathBuf::new()).unwrap();
         // Create note object.
         let content = <ContentString as Content>::open(&notefile).unwrap();
         let context = context
@@ -913,7 +914,7 @@ Body text
         let notefile = temp_dir().join("20221030-headerless-test.rst");
         fs::write(&notefile, raw.as_bytes()).unwrap();
 
-        let context = Context::from(&notefile).unwrap();
+        let context = Context::from(&notefile, PathBuf::new()).unwrap();
         let content = <ContentString as Content>::open(&notefile).unwrap();
         assert!(content.header().is_empty());
 
@@ -943,7 +944,7 @@ Body text
         let notefile = temp_dir().join("20221030-md-ok-test.md");
         fs::write(&notefile, raw.as_bytes()).unwrap();
 
-        let context = Context::from(&notefile).unwrap();
+        let context = Context::from(&notefile, PathBuf::new()).unwrap();
         let content = <ContentString as Content>::open(&notefile).unwrap();
         let n = Note::<ContentString>::from_existing_content(context, content, TemplateKind::None)
             .unwrap();
@@ -973,7 +974,7 @@ Body text
         let notefile = temp_dir().join("20221030-rst-ok-test.rst");
         fs::write(&notefile, raw.as_bytes()).unwrap();
 
-        let context = Context::from(&notefile).unwrap();
+        let context = Context::from(&notefile, PathBuf::new()).unwrap();
         let content = <ContentString as Content>::open(&notefile).unwrap();
         let n = Note::<ContentString>::from_existing_content(context, content, TemplateKind::None)
             .unwrap();
@@ -1009,7 +1010,7 @@ Body text
         let notefile = temp_dir().join("20221030-markup-error-test.rst");
         fs::write(&notefile, raw.as_bytes()).unwrap();
 
-        let context = Context::from(&notefile).unwrap();
+        let context = Context::from(&notefile, PathBuf::new()).unwrap();
         let content = <ContentString as Content>::open(&notefile).unwrap();
         let n = Note::<ContentString>::from_existing_content(context, content, TemplateKind::None)
             .unwrap();

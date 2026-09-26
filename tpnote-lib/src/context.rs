@@ -1,6 +1,5 @@
 //! Extends the built-in Tera filters.
 use crate::config::Assertion;
-use crate::config::root_path_and_config_chain;
 use crate::config::LIB_CFG;
 #[cfg(feature = "viewer")]
 use crate::config::TMPL_HTML_VAR_DOC_ERROR;
@@ -337,7 +336,7 @@ impl<S: ContextState> Context<S> {
     /// set_test_default_settings().unwrap();
     ///
     /// // The constructor calls `context.insert_settings()` before returning.
-    /// let mut context = Context::from(&Path::new("/path/to/mynote.md")).unwrap();
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"), Path::new("/path/to").to_path_buf()).unwrap();
     ///
     /// // When the note's YAML header does not contain a `scheme:` field,
     /// // the `default` scheme is used.
@@ -374,7 +373,7 @@ impl<S: ContextState> Context<S> {
     /// set_test_default_settings().unwrap();
     ///
     /// // The constructor calls `context.insert_settings()` before returning.
-    /// let mut context = Context::from(&Path::new("/path/to/mynote.md")).unwrap();
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"), Path::new("/path/to").to_path_buf()).unwrap();
     ///
     /// // For most platforms `context.get("extension_default")` is `md`
     /// assert_eq!(&context.get(TMPL_VAR_EXTENSION_DEFAULT).unwrap().to_string(),
@@ -582,11 +581,18 @@ impl Context<Invalid> {
     /// `<path>` (see man page). `path` must point to a directory or
     /// a file.
     ///
-    /// A copy of `path` is stored in `self.ct` as key `TMPL_VAR_PATH`. It
-    /// directory path as key `TMPL_VAR_DIR_PATH`. The root directory, where
-    /// the marker file `tpnote.toml` was found, is stored with the key
-    /// `TMPL_VAR_ROOT_PATH`. If `path` points to a file, its file creation
-    /// date is stored with the key `TMPL_VAR_DOC_FILE_DATE`.
+    /// `root_path` is the document root: the directory Tp-Note's viewer
+    /// treats as its security boundary for rewriting local links, and the
+    /// value stored under the `TMPL_VAR_ROOT_PATH` template key. This
+    /// constructor does not discover it: the caller must supply it, e.g. by
+    /// searching upward for a `tpnote.toml` marker file (a convention the
+    /// `tpnote` binary implements; cf. its CUSTOMIZATION man page section)
+    /// or by any other means appropriate to the embedding application.
+    ///
+    /// A copy of `path` is stored in `self.ct` as key `TMPL_VAR_PATH`. Its
+    /// directory path as key `TMPL_VAR_DIR_PATH`. If `path` points to a
+    /// file, its file creation date is stored with the key
+    /// `TMPL_VAR_DOC_FILE_DATE`.
     ///
     /// ```rust
     /// use std::path::Path;
@@ -596,7 +602,7 @@ impl Context<Invalid> {
     /// use tpnote_lib::context::Context;
     /// set_test_default_settings().unwrap();
     ///
-    /// let mut context = Context::from(&Path::new("/path/to/mynote.md")).unwrap();
+    /// let mut context = Context::from(&Path::new("/path/to/mynote.md"), Path::new("/path/to").to_path_buf()).unwrap();
     ///
     /// assert_eq!(context.get_path(), Path::new("/path/to/mynote.md"));
     /// assert_eq!(context.get_dir_path(), Path::new("/path/to/"));
@@ -605,55 +611,22 @@ impl Context<Invalid> {
     /// assert_eq!(&context.get(TMPL_VAR_DIR_PATH).unwrap().to_string(),
     ///             "/path/to");
     /// ```
-    pub fn from(path: &Path) -> Result<Context<HasSettings>, FileError> {
-        let dir_path = Self::dir_path_of(path);
-        let (root_path, _config_chain) = root_path_and_config_chain(&dir_path);
-        Self::from_dir_path_and_root_path(path, dir_path, root_path)
-    }
-
-    /// Like `from()`, but skips its own upward search for the document
-    /// root, using `root_path` instead. Meant for a caller that already
-    /// computed `root_path` for this exact directory -- e.g. `tpnote`'s
-    /// binary, which needs the same climb result to build its
-    /// configuration search path (cf. `root_path_and_config_chain()`) --
-    /// and would otherwise redo that climb (upward directory search plus
-    /// reading and parsing every candidate's `[project_config]` table) a
-    /// second time for no reason. Every other caller, in particular one
-    /// rendering a *different* document than the one it started from,
-    /// must keep using `from()`: `root_path` is specific to one directory
-    /// and does not transfer to another.
     ///
     /// # Panics
     ///
     /// Debug builds assert that `path`'s directory is a subdirectory of
     /// `root_path`, catching a caller that passes a `root_path` computed
     /// for a different directory.
-    pub fn from_with_root_path(
-        path: &Path,
-        root_path: PathBuf,
-    ) -> Result<Context<HasSettings>, FileError> {
-        let dir_path = Self::dir_path_of(path);
-        Self::from_dir_path_and_root_path(path, dir_path, root_path)
-    }
-
-    /// `dir_path` is a directory as fully qualified path, ending
-    /// by a separator.
-    fn dir_path_of(path: &Path) -> PathBuf {
-        if path.is_dir() {
+    pub fn from(path: &Path, root_path: PathBuf) -> Result<Context<HasSettings>, FileError> {
+        // `dir_path` is a directory as fully qualified path, ending
+        // by a separator.
+        let dir_path = if path.is_dir() {
             path.to_path_buf()
         } else {
             path.parent()
                 .unwrap_or_else(|| Path::new("./"))
                 .to_path_buf()
-        }
-    }
-
-    /// Shared tail of `from()` and `from_with_root_path()`.
-    fn from_dir_path_and_root_path(
-        path: &Path,
-        dir_path: PathBuf,
-        root_path: PathBuf,
-    ) -> Result<Context<HasSettings>, FileError> {
+        };
         let path = path.to_path_buf();
 
         debug_assert!(dir_path.starts_with(&root_path));
@@ -1064,13 +1037,14 @@ mod tests {
     use crate::{config::TMPL_VAR_FM_ALL, error::NoteError};
 
     use std::path::Path;
+    use std::path::PathBuf;
 
     #[test]
     fn test_insert_front_matter() {
         use crate::context::Context;
         use crate::front_matter::FrontMatter;
         use std::path::Path;
-        let context = Context::from(Path::new("/path/to/mynote.md")).unwrap();
+        let context = Context::from(Path::new("/path/to/mynote.md"), Path::new("/path/to").to_path_buf()).unwrap();
         let context = context
             .insert_front_matter(&FrontMatter::try_from("title: My Stdin.\nsome: text").unwrap());
 
@@ -1099,7 +1073,7 @@ mod tests {
         use crate::context::Context;
         use crate::front_matter::FrontMatter;
         use std::path::Path;
-        let context = Context::from(Path::new("/path/to/mynote.md")).unwrap();
+        let context = Context::from(Path::new("/path/to/mynote.md"), Path::new("/path/to").to_path_buf()).unwrap();
         let context = context
             .insert_front_matter(&FrontMatter::try_from("title: My Stdin.\nsome: text").unwrap());
         let context = context.set_state_ready_for_content_template();
@@ -1132,7 +1106,7 @@ mod tests {
         use crate::settings::set_test_default_settings;
         use std::path::Path;
         set_test_default_settings().unwrap();
-        let context = Context::from(Path::new("/path/to/mynote.md")).unwrap();
+        let context = Context::from(Path::new("/path/to/mynote.md"), Path::new("/path/to").to_path_buf()).unwrap();
         let c1 = ContentString::from_string(
             String::from("Data from clipboard."),
             "txt_clipboard".to_string(),
@@ -1195,7 +1169,7 @@ mod tests {
         // Is empty.
         let input = "";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter")).unwrap();
+        let cx = Context::from(Path::new("does not matter"), PathBuf::new()).unwrap();
         let cx = cx.insert_front_matter(&fm);
 
         assert!(matches!(
@@ -1209,7 +1183,7 @@ mod tests {
         title: The book
         sort_tag:    123b";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("./03b-test.md")).unwrap();
+        let cx = Context::from(Path::new("./03b-test.md"), PathBuf::new()).unwrap();
         let cx = cx.insert_front_matter(&fm);
 
         assert!(matches!(cx.assert_precoditions(), Ok(())));
@@ -1222,7 +1196,7 @@ mod tests {
         -    1234
         -    456";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter")).unwrap();
+        let cx = Context::from(Path::new("does not matter"), PathBuf::new()).unwrap();
         let cx = cx.insert_front_matter(&fm);
 
         assert!(matches!(
@@ -1238,7 +1212,7 @@ mod tests {
           first:  1234
           second: 456";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter")).unwrap();
+        let cx = Context::from(Path::new("does not matter"), PathBuf::new()).unwrap();
         let cx = cx.insert_front_matter(&fm);
 
         assert!(matches!(
@@ -1252,7 +1226,7 @@ mod tests {
         title: The book
         file_ext:    xyz";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter")).unwrap();
+        let cx = Context::from(Path::new("does not matter"), PathBuf::new()).unwrap();
         let cx = cx.insert_front_matter(&fm);
 
         assert!(matches!(
@@ -1266,7 +1240,7 @@ mod tests {
         title: The book
         filename_sync: error, here should be a bool";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter")).unwrap();
+        let cx = Context::from(Path::new("does not matter"), PathBuf::new()).unwrap();
         let cx = cx.insert_front_matter(&fm);
 
         assert!(matches!(
@@ -1282,7 +1256,7 @@ mod tests {
         let expected = json!({"fm_title": "my title", "fm_subtitle": "my subtitle"});
 
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter")).unwrap();
+        let cx = Context::from(Path::new("does not matter"), PathBuf::new()).unwrap();
         let cx = cx.insert_front_matter(&fm);
         let fm_all_sj = serde_json::to_value(cx.get(TMPL_VAR_FM_ALL).unwrap()).unwrap();
         assert_eq!(fm_all_sj, expected);
@@ -1295,7 +1269,7 @@ mod tests {
         let expected = json!({"fm_title": "my title", "fm_file_ext": ""});
 
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter")).unwrap();
+        let cx = Context::from(Path::new("does not matter"), PathBuf::new()).unwrap();
         let cx = cx.insert_front_matter(&fm);
         let fm_all_sj = serde_json::to_value(cx.get(TMPL_VAR_FM_ALL).unwrap()).unwrap();
         assert_eq!(fm_all_sj, expected);
@@ -1306,7 +1280,7 @@ mod tests {
         subtitle: my subtitle
         ";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter")).unwrap();
+        let cx = Context::from(Path::new("does not matter"), PathBuf::new()).unwrap();
         let cx = cx.insert_front_matter(&fm);
 
         assert!(matches!(
@@ -1322,7 +1296,7 @@ mod tests {
         - Second author
         ";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter")).unwrap();
+        let cx = Context::from(Path::new("does not matter"), PathBuf::new()).unwrap();
         let cx = cx.insert_front_matter(&fm);
 
         assert!(cx.assert_precoditions().is_ok());
@@ -1336,7 +1310,7 @@ mod tests {
         - 1234
         ";
         let fm = FrontMatter::try_from(input).unwrap();
-        let cx = Context::from(Path::new("does not matter")).unwrap();
+        let cx = Context::from(Path::new("does not matter"), PathBuf::new()).unwrap();
         let cx = cx.insert_front_matter(&fm);
 
         assert!(matches!(
@@ -1363,7 +1337,7 @@ mod tests {
         // Sanity check: the split logic does recognise a header here.
         assert!(!c.header().is_empty());
 
-        let context = Context::from(Path::new("/path/to/mynote.md")).unwrap();
+        let context = Context::from(Path::new("/path/to/mynote.md"), Path::new("/path/to").to_path_buf()).unwrap();
         let result = context
             .insert_front_matter_and_raw_text_from_existing_content(&vec![&c]);
 

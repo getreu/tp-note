@@ -38,13 +38,11 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
     // `path`'s directory never changes within this function (filename sync
     // only renames in place), so the document root computed once for
     // `DOC_PATH` still applies after any reassignment of `path` below.
-    let mut workflow_builder = WorkflowBuilder::new(&path)
-        .with_root_path(ROOT_PATH.clone())
-        .upgrade::<ContentString, _>(
-            &CFG.arg_default.scheme,
-            vec![&SYSTEM_CLIPBOARD.html, &SYSTEM_CLIPBOARD.txt, &*STDIN],
-            template_kind_filter,
-        );
+    let mut workflow_builder = WorkflowBuilder::new(&path, ROOT_PATH.clone()).upgrade::<ContentString, _>(
+        &CFG.arg_default.scheme,
+        vec![&SYSTEM_CLIPBOARD.html, &SYSTEM_CLIPBOARD.txt, &*STDIN],
+        template_kind_filter,
+    );
     if let Some(scheme) = ARGS.scheme.as_deref() {
         workflow_builder.force_scheme(scheme);
     }
@@ -141,9 +139,7 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
     };
 
     if *LAUNCH_EDITOR {
-        let workflow = WorkflowBuilder::new(&path)
-            .with_root_path(ROOT_PATH.clone())
-            .build();
+        let workflow = WorkflowBuilder::new(&path, ROOT_PATH.clone()).build();
         match workflow.run::<ContentString>() {
             // `path` has changed!
             Ok(p) => path = p,

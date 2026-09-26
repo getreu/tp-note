@@ -64,7 +64,7 @@ impl HtmlRenderer {
     /// "#), "doc".to_string());
     ///
     /// // Start test
-    /// let mut context = Context::from(Path::new("/path/to/note.md")).unwrap();
+    /// let mut context = Context::from(Path::new("/path/to/note.md"), Path::new("/path/to").to_path_buf()).unwrap();
     /// // We do not inject any JavaScript.
     /// // Render.
     /// let html = HtmlRenderer::viewer_page::<ContentString>(context, content, "")
@@ -95,7 +95,7 @@ impl HtmlRenderer {
     /// fs::write(&notefile, raw.as_bytes()).unwrap();
     ///
     /// // Start test
-    /// let mut context = Context::from(&notefile).unwrap();
+    /// let mut context = Context::from(&notefile, temp_dir()).unwrap();
     /// // We do not inject any JavaScript.
     /// // Render.
     /// let content = ContentString::open(context.get_path()).unwrap();
@@ -144,7 +144,7 @@ impl HtmlRenderer {
     /// "#), "doc".to_string());
     ///
     /// // Start test
-    /// let mut context = Context::from(Path::new("/path/to/note.md")).unwrap();
+    /// let mut context = Context::from(Path::new("/path/to/note.md"), Path::new("/path/to").to_path_buf()).unwrap();
     /// // Render.
     /// let html = HtmlRenderer::exporter_page::<ContentString>(context, content)
     ///            .unwrap();
@@ -204,11 +204,11 @@ impl HtmlRenderer {
     /// "#;
     /// let notefile = temp_dir().join("20221030-My day3--Note.md");
     /// fs::write(&notefile, raw_error.as_bytes()).unwrap();
-    /// let mut context = Context::from(&notefile);
+    /// let mut context = Context::from(&notefile, temp_dir());
     /// let e = NoteError::FrontMatterFieldMissing { field_name: "title".to_string() };
     ///
     /// // Start test
-    /// let mut context = Context::from(&notefile).unwrap();
+    /// let mut context = Context::from(&notefile, temp_dir()).unwrap();
     /// // We do not inject any JavaScript.
     /// // Render.
     /// // Read from file.
@@ -276,7 +276,7 @@ impl HtmlRenderer {
     /// let content = ContentString::open(&notefile).unwrap();
     /// // You can plug in your own type (must impl. `Content`).
     /// HtmlRenderer::save_exporter_page(
-    ///        &notefile, content, Path::new("."), LocalLinkKind::Long).unwrap();
+    ///        &notefile, temp_dir(), content, Path::new("."), LocalLinkKind::Long).unwrap();
     /// // Check the HTML rendition.
     /// let expected_file = temp_dir().join("20221030-My day3--Note.md.html");
     /// let html = fs::read_to_string(expected_file).unwrap();
@@ -284,11 +284,12 @@ impl HtmlRenderer {
     /// ```
     pub fn save_exporter_page<T: Content>(
         doc_path: &Path,
+        root_path: PathBuf,
         content: T,
         export_dir: &Path,
         local_link_kind: LocalLinkKind,
     ) -> Result<(), NoteError> {
-        let context = Context::from(doc_path)?;
+        let context = Context::from(doc_path, root_path)?;
 
         let doc_path = context.get_path();
         let doc_dir = context.get_dir_path().to_owned();

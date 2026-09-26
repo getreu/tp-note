@@ -1,6 +1,7 @@
 //! Main module for the markup renderer and note viewer feature.
 
 use crate::config::CFG;
+use crate::config::ROOT_PATH;
 use crate::settings::ARGS;
 use crate::settings::LAUNCH_EDITOR;
 use crate::viewer::error::ViewerError;
@@ -114,7 +115,15 @@ impl Viewer {
             let event_tx_list = event_tx_list.clone();
             let start_accepting = start_accepting.clone();
 
-            move || manage_connections(event_tx_list, listener, start_accepting, doc)
+            move || {
+                manage_connections(
+                    event_tx_list,
+                    listener,
+                    start_accepting,
+                    doc,
+                    ROOT_PATH.clone(),
+                )
+            }
         });
 
         // Launch the file watcher thread.
