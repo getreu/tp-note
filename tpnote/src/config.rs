@@ -542,9 +542,9 @@ struct ProjectConfigFile {
 /// marker starting from the closest, where the document root lies and how
 /// far the search for additional configuration extends.
 ///
-/// Returns `(root_path, config_chain)`, where `config_chain` is ordered
-/// farthest first, closest last, ready to be merged with lower-precedence
-/// layers applied first.
+/// Returns `(root_path, config_chain, searched_chain)`, both `config_chain`
+/// and `searched_chain` ordered farthest first, closest last, ready to be
+/// merged with lower-precedence layers applied first.
 ///
 /// * `root_path` is fixed at the first marker (closest to farthest) whose
 ///   `project_config.is_root_path_marker` is `true` or absent -- the
@@ -557,14 +557,23 @@ struct ProjectConfigFile {
 ///   is `true`. The first marker (again, closest to farthest) that leaves
 ///   it at the default `false` ends the search; `root_path` is unaffected
 ///   by how far this search extends.
-fn root_path_and_config_chain(dir_path: &Path) -> (PathBuf, Vec<PathBuf>) {
+/// * `config_chain` only lists the markers that were actually found (and
+///   are thus merged into the configuration); `searched_chain` lists every
+///   candidate path this search considered, including ancestor directories
+///   that turned out to have no marker file. `searched_chain` exists purely
+///   for reporting (cf. `--version`'s `searched_config_file_paths`) -- it
+///   must never be used for merging, since most of its entries do not
+///   exist.
+fn root_path_and_config_chain(dir_path: &Path) -> (PathBuf, Vec<PathBuf>, Vec<PathBuf>) {
     let mut fallback_root = dir_path;
     let mut root_path: Option<PathBuf> = None;
     let mut config_chain: Vec<PathBuf> = Vec::new();
+    let mut searched_chain: Vec<PathBuf> = Vec::new();
 
     for anc in dir_path.ancestors() {
         fallback_root = anc;
         let marker = anc.join(FILENAME_ROOT_PATH_MARKER);
+        searched_chain.push(marker.clone());
         if !marker.is_file() {
             continue;
         }
@@ -600,8 +609,9 @@ fn root_path_and_config_chain(dir_path: &Path) -> (PathBuf, Vec<PathBuf>) {
 
     // Farthest first, closest last: closest overrides on merge.
     config_chain.reverse();
+    searched_chain.reverse();
 
-    (root_path, config_chain)
+    (root_path, config_chain, searched_chain)
 }
 
 /// The single upward directory-marker search for `DOC_PATH`'s directory,
@@ -610,9 +620,9 @@ fn root_path_and_config_chain(dir_path: &Path) -> (PathBuf, Vec<PathBuf>) {
 /// `[project_config]` table) only ever runs once per process. If `DOC_PATH`
 /// is unavailable, this resolves to an empty chain; `workflow::run()` fails
 /// on that same condition before either static is ever consulted.
-static ROOT_PATH_AND_CONFIG_CHAIN: LazyLock<(PathBuf, Vec<PathBuf>)> = LazyLock::new(|| {
+static ROOT_PATH_AND_CONFIG_CHAIN: LazyLock<(PathBuf, Vec<PathBuf>, Vec<PathBuf>)> = LazyLock::new(|| {
     let Ok(doc_path) = DOC_PATH.as_deref() else {
-        return (PathBuf::new(), Vec::new());
+        return (PathBuf::new(), Vec::new(), Vec::new());
     };
     let dir_path = if doc_path.is_dir() {
         doc_path.to_path_buf()
@@ -632,7 +642,12 @@ static ROOT_PATH_AND_CONFIG_CHAIN: LazyLock<(PathBuf, Vec<PathBuf>)> = LazyLock:
 /// for the same directory.
 pub static ROOT_PATH: LazyLock<PathBuf> = LazyLock::new(|| ROOT_PATH_AND_CONFIG_CHAIN.0.clone());
 
-pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
+/// Assembles the fixed per-platform candidate locations and the command
+/// line override around `marker_chain`, the directory-marker portion of the
+/// path list. Shared by `CONFIG_PATHS` (markers that were actually found,
+/// used for merging) and `SEARCHED_CONFIG_PATHS` (every candidate the
+/// upward search considered, used only for reporting).
+fn assemble_config_paths(marker_chain: &[PathBuf]) -> Vec<PathBuf> {
     let mut config_path: Vec<PathBuf> = vec![];
 
     #[cfg(unix)]
@@ -649,11 +664,7 @@ pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
         config_path.push(config);
     };
 
-    // Directory marker chain: every `tpnote.toml` found walking up from the
-    // note's directory that is in scope (see `is_root_path_marker` and
-    // `merge_parent_config`), ordered farthest first, closest last, so the
-    // closest one takes precedence when merged.
-    config_path.extend(ROOT_PATH_AND_CONFIG_CHAIN.1.clone());
+    config_path.extend_from_slice(marker_chain);
 
     if let Some(commandline_path) = &ARGS.config {
         // Config path comes from command line.
@@ -661,7 +672,23 @@ pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> = LazyLock::new(|| {
     };
 
     config_path
-});
+}
+
+/// Directory marker chain: every `tpnote.toml` found walking up from the
+/// note's directory that is in scope (see `is_root_path_marker` and
+/// `merge_parent_config`), ordered farthest first, closest last, so the
+/// closest one takes precedence when merged. This is what actually gets
+/// merged into the configuration -- every entry exists.
+pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> =
+    LazyLock::new(|| assemble_config_paths(&ROOT_PATH_AND_CONFIG_CHAIN.1));
+
+/// Like `CONFIG_PATHS`, but the directory-marker portion additionally lists
+/// every ancestor directory the upward search considered, whether or not it
+/// held a `tpnote.toml` file. Used only for `--version`'s
+/// `searched_config_file_paths`; never for merging, since most of these
+/// entries do not exist on disk.
+pub static SEARCHED_CONFIG_PATHS: LazyLock<Vec<PathBuf>> =
+    LazyLock::new(|| assemble_config_paths(&ROOT_PATH_AND_CONFIG_CHAIN.2));
 
 fn deserialize_empty_string_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
 where

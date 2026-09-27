@@ -39,6 +39,7 @@ use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
 use crate::config::CFG_FILE_WARNINGS;
 use crate::config::CONFIG_PATHS;
+use crate::config::SEARCHED_CONFIG_PATHS;
 use crate::config::COPYRIGHT_FROM;
 use crate::config::Cfg;
 use crate::config::PKG_VERSION;
@@ -210,7 +211,7 @@ fn main() {
         let about = About {
             version: PKG_VERSION.unwrap_or("unknown").to_string(),
             features,
-            searched_config_file_paths: CONFIG_PATHS
+            searched_config_file_paths: SEARCHED_CONFIG_PATHS
                 .iter()
                 .map(|p| p.to_str().unwrap_or_default().to_owned())
                 .collect(),
