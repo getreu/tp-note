@@ -38,11 +38,10 @@ use crate::config::AUTHOR;
 use crate::config::CFG;
 use crate::config::CFG_FILE_LOADING;
 use crate::config::CFG_FILE_WARNINGS;
-use crate::config::CONFIG_PATHS;
-use crate::config::SEARCHED_CONFIG_PATHS;
 use crate::config::COPYRIGHT_FROM;
 use crate::config::Cfg;
 use crate::config::PKG_VERSION;
+use crate::config::PROJECT_PATHS;
 use crate::error::WorkflowError;
 use crate::logger::AppLogger;
 use crate::settings::ARGS;
@@ -211,11 +210,13 @@ fn main() {
         let about = About {
             version: PKG_VERSION.unwrap_or("unknown").to_string(),
             features,
-            searched_config_file_paths: SEARCHED_CONFIG_PATHS
+            searched_config_file_paths: PROJECT_PATHS
+                .searched_paths
                 .iter()
                 .map(|p| p.to_str().unwrap_or_default().to_owned())
                 .collect(),
-            sourced_config_files: CONFIG_PATHS
+            sourced_config_files: PROJECT_PATHS
+                .config_paths
                 .iter()
                 .filter(|p| p.exists())
                 .map(|p| p.to_str().unwrap_or_default().to_owned())

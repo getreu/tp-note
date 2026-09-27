@@ -1,11 +1,11 @@
 //! Prints error messages and exceptional states.
 
-use crate::CONFIG_PATHS;
 #[cfg(feature = "message-box")]
 use crate::PKG_VERSION;
 #[cfg(feature = "message-box")]
 use crate::alert_service::AlertService;
 use crate::config::CARGO_BIN_NAME;
+use crate::config::PROJECT_PATHS;
 #[cfg(feature = "message-box")]
 use crate::settings::ARGS;
 #[cfg(feature = "message-box")]
@@ -105,7 +105,8 @@ pub static ERR_MSG_TAIL: LazyLock<String> = LazyLock::new(|| {
             *    Sourced configuration files:\n\
             {}",
         args_str,
-        CONFIG_PATHS
+        PROJECT_PATHS
+            .config_paths
             .iter()
             .filter(|p| p.exists())
             .map(|p| p.to_str().unwrap_or_default())

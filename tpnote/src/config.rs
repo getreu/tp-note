@@ -491,14 +491,13 @@ impl Cfg {
         writeable.write_all(commented.as_bytes())?;
         Ok(())
     }
-
 }
 
 /// Reads and parses the configuration file "tpnote.toml". An alternative
 /// filename (optionally with absolute path) can be given on the command
 /// line with "--config".
 pub static CFG: LazyLock<Cfg> = LazyLock::new(|| {
-    let (cfg, warnings) = Cfg::from_files(&CONFIG_PATHS).unwrap_or_else(|e| {
+    let (cfg, warnings) = Cfg::from_files(&PROJECT_PATHS.config_paths).unwrap_or_else(|e| {
         // Remember that something went wrong.
         let mut cfg_file_loading = CFG_FILE_LOADING.write();
         *cfg_file_loading = Err(e);
@@ -525,7 +524,7 @@ pub static CFG_FILE_WARNINGS: LazyLock<RwLock<ConfigFileWarnings>> =
     LazyLock::new(|| RwLock::new(Vec::new()));
 
 /// The appearance of a file with this filename marks the position of the
-/// document root (cf. `root_path_and_config_chain()`).
+/// document root (cf. `walk_project_paths()`).
 const FILENAME_ROOT_PATH_MARKER: &str = "tpnote.toml";
 
 /// The deserialization view of a `tpnote.toml` marker file limited to its
@@ -560,11 +559,11 @@ struct ProjectConfigFile {
 /// * `config_chain` only lists the markers that were actually found (and
 ///   are thus merged into the configuration); `searched_chain` lists every
 ///   candidate path this search considered, including ancestor directories
-///   that turned out to have no marker file. `searched_chain` exists purely
-///   for reporting (cf. `--version`'s `searched_config_file_paths`) -- it
-///   must never be used for merging, since most of its entries do not
-///   exist.
-fn root_path_and_config_chain(dir_path: &Path) -> (PathBuf, Vec<PathBuf>, Vec<PathBuf>) {
+///   that turned out to have no marker file. `searched_chain` is only ever
+///   assembled into `ProjectPaths::searched_paths` for reporting (cf.
+///   `--version`'s `searched_config_file_paths`) -- it must never be used
+///   for merging, since most of its entries do not exist.
+fn walk_project_paths(dir_path: &Path) -> (PathBuf, Vec<PathBuf>, Vec<PathBuf>) {
     let mut fallback_root = dir_path;
     let mut root_path: Option<PathBuf> = None;
     let mut config_chain: Vec<PathBuf> = Vec::new();
@@ -614,39 +613,12 @@ fn root_path_and_config_chain(dir_path: &Path) -> (PathBuf, Vec<PathBuf>, Vec<Pa
     (root_path, config_chain, searched_chain)
 }
 
-/// The single upward directory-marker search for `DOC_PATH`'s directory,
-/// shared by `ROOT_PATH` and the project-marker portion of `CONFIG_PATHS`
-/// so the climb (and the reading and parsing of every candidate's
-/// `[project_config]` table) only ever runs once per process. If `DOC_PATH`
-/// is unavailable, this resolves to an empty chain; `workflow::run()` fails
-/// on that same condition before either static is ever consulted.
-static ROOT_PATH_AND_CONFIG_CHAIN: LazyLock<(PathBuf, Vec<PathBuf>, Vec<PathBuf>)> = LazyLock::new(|| {
-    let Ok(doc_path) = DOC_PATH.as_deref() else {
-        return (PathBuf::new(), Vec::new(), Vec::new());
-    };
-    let dir_path = if doc_path.is_dir() {
-        doc_path.to_path_buf()
-    } else {
-        doc_path
-            .parent()
-            .unwrap_or_else(|| Path::new("./"))
-            .to_path_buf()
-    };
-    root_path_and_config_chain(&dir_path)
-});
-
-/// The document root: the directory where the upward search for a
-/// `tpnote.toml` marker file stopped (cf. the CUSTOMIZATION section of the
-/// man page). Passed into `WorkflowBuilder::new()` and `Context::from()` so
-/// they do not need to repeat the search `CONFIG_PATHS` already performed
-/// for the same directory.
-pub static ROOT_PATH: LazyLock<PathBuf> = LazyLock::new(|| ROOT_PATH_AND_CONFIG_CHAIN.0.clone());
-
 /// Assembles the fixed per-platform candidate locations and the command
 /// line override around `marker_chain`, the directory-marker portion of the
-/// path list. Shared by `CONFIG_PATHS` (markers that were actually found,
-/// used for merging) and `SEARCHED_CONFIG_PATHS` (every candidate the
-/// upward search considered, used only for reporting).
+/// path list. Called twice while building `ProjectPaths`: once for the
+/// markers that were actually found (`ProjectPaths::config_paths`, used for
+/// merging), once for every candidate the upward search considered
+/// (`ProjectPaths::searched_paths`, used only for reporting).
 fn assemble_config_paths(marker_chain: &[PathBuf]) -> Vec<PathBuf> {
     let mut config_path: Vec<PathBuf> = vec![];
 
@@ -674,21 +646,64 @@ fn assemble_config_paths(marker_chain: &[PathBuf]) -> Vec<PathBuf> {
     config_path
 }
 
-/// Directory marker chain: every `tpnote.toml` found walking up from the
-/// note's directory that is in scope (see `is_root_path_marker` and
-/// `merge_parent_config`), ordered farthest first, closest last, so the
-/// closest one takes precedence when merged. This is what actually gets
-/// merged into the configuration -- every entry exists.
-pub static CONFIG_PATHS: LazyLock<Vec<PathBuf>> =
-    LazyLock::new(|| assemble_config_paths(&ROOT_PATH_AND_CONFIG_CHAIN.1));
+/// The document root together with the two path lists derived from the
+/// single upward directory-marker search for `DOC_PATH`'s directory. The
+/// climb (and the reading and parsing of every candidate's
+/// `[project_config]` table) only ever runs once per process; `ROOT_PATH`
+/// and every other consumer of the config/searched path lists reads from
+/// this one static. If `DOC_PATH` is unavailable, `root_path` is empty and
+/// both path lists collapse to just the fixed candidates and the command
+/// line override; `workflow::run()` fails on that same condition before any
+/// of them is ever consulted.
+pub(crate) struct ProjectPaths {
+    /// The document root: the directory where the upward search for a
+    /// `tpnote.toml` marker file stopped (cf. the CUSTOMIZATION section of
+    /// the man page).
+    pub(crate) root_path: PathBuf,
+    /// Every configuration file that actually gets merged: the fixed
+    /// per-platform candidates, then every marker that was actually found
+    /// walking up from the note's directory (farthest first, closest last,
+    /// so the closest one takes precedence when merged), then the command
+    /// line override.
+    pub(crate) config_paths: Vec<PathBuf>,
+    /// Like `config_paths`, but the directory-marker portion additionally
+    /// lists every ancestor directory the upward search considered,
+    /// whether or not it held a `tpnote.toml` file. Used only for
+    /// `--version`'s `searched_config_file_paths`; never for merging,
+    /// since most of these entries do not exist on disk.
+    pub(crate) searched_paths: Vec<PathBuf>,
+}
 
-/// Like `CONFIG_PATHS`, but the directory-marker portion additionally lists
-/// every ancestor directory the upward search considered, whether or not it
-/// held a `tpnote.toml` file. Used only for `--version`'s
-/// `searched_config_file_paths`; never for merging, since most of these
-/// entries do not exist on disk.
-pub static SEARCHED_CONFIG_PATHS: LazyLock<Vec<PathBuf>> =
-    LazyLock::new(|| assemble_config_paths(&ROOT_PATH_AND_CONFIG_CHAIN.2));
+pub(crate) static PROJECT_PATHS: LazyLock<ProjectPaths> = LazyLock::new(|| {
+    let Ok(doc_path) = DOC_PATH.as_deref() else {
+        return ProjectPaths {
+            root_path: PathBuf::new(),
+            config_paths: assemble_config_paths(&[]),
+            searched_paths: assemble_config_paths(&[]),
+        };
+    };
+    let dir_path = if doc_path.is_dir() {
+        doc_path.to_path_buf()
+    } else {
+        doc_path
+            .parent()
+            .unwrap_or_else(|| Path::new("./"))
+            .to_path_buf()
+    };
+    let (root_path, config_chain, searched_chain) = walk_project_paths(&dir_path);
+    ProjectPaths {
+        root_path,
+        config_paths: assemble_config_paths(&config_chain),
+        searched_paths: assemble_config_paths(&searched_chain),
+    }
+});
+
+/// The document root: the directory where the upward search for a
+/// `tpnote.toml` marker file stopped (cf. the CUSTOMIZATION section of the
+/// man page). Passed into `WorkflowBuilder::new()` and `Context::from()` so
+/// they do not need to repeat the search `PROJECT_PATHS` already performed
+/// for the same directory.
+pub static ROOT_PATH: LazyLock<PathBuf> = LazyLock::new(|| PROJECT_PATHS.root_path.clone());
 
 fn deserialize_empty_string_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
 where
