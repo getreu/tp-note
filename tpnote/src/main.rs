@@ -99,13 +99,33 @@ fn main() {
     // (invalid on their own, or making the merged result invalid). This
     // could not be logged from there: the filter above was still at
     // `LevelFilter::Error` at that point.
+    //
+    // Logged at `error!`, not `warn!`: the default debug level is `Error`
+    // (both `ArgDefault::default()` and the shipped `config_default.toml`
+    // set `debug = "Error"`), so a `warn!` here would be silently filtered
+    // out for anyone who has not explicitly raised the debug level --
+    // exactly the "silently ignored" outcome a skipped configuration file
+    // must not have. This only logs (and, outside `--batch`, shows a
+    // popup); nothing here aborts the process -- that removal was the
+    // point of the previous commit.
     for msg in CFG_FILE_WARNINGS.read().iter() {
-        log::warn!("{}", msg);
+        log::error!("{}", msg);
     }
 
     // This eventually will extend the error reporting with more
     // popup alert windows.
     AppLogger::set_popup_always_enabled(ARGS.popup || CFG.arg_default.popup);
+
+    // Set at the end of `main()` to exit with status `5` instead of `0`.
+    // Unlike the old `backup_and_remove_last()`-based behavior, this never
+    // aborts early: `run()` below still executes in full (editor, viewer,
+    // the works) -- only the process's final exit code reflects that a
+    // configuration file was wrong.
+    //
+    // A skipped configuration file (reported above via `CFG_FILE_WARNINGS`)
+    // counts as "wrong" too, not just the hard load/parse-failure or
+    // version-mismatch cases checked below.
+    let mut config_is_wrong = !CFG_FILE_WARNINGS.read().is_empty();
 
     // Check if the config file loading was successful.
     let cfg_file_loading = &*CFG_FILE_LOADING.read();
@@ -125,6 +145,7 @@ fn main() {
         // One of them is `Err`, we do not care who.
         Some(e) => {
             log::error!("{}", ConfigFileError::ConfigFileLoadParse { error: e });
+            config_is_wrong = true;
 
             // As we have an error, we indicate that there is no version.
             None
@@ -142,6 +163,7 @@ fn main() {
                 min_version: MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0").to_string(),
             }
         );
+        config_is_wrong = true;
     };
 
     // Process `arg = `--default-config`.
@@ -255,5 +277,7 @@ fn main() {
 
     if res.is_err() {
         process::exit(1);
+    } else if config_is_wrong {
+        process::exit(5);
     }
 }

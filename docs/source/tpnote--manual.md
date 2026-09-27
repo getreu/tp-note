@@ -701,9 +701,11 @@ or `weasyprint`.
 
 While upgrading _Tp-Note_, new features may cause a change in _Tp-Note_'s
 configuration file structure. If one of your configuration files becomes
-incompatible, Tp-Note does not fail to start: it skips that one file, logs a
-warning, and continues with the rest of the merged configuration. Please
-consult the following section
+incompatible, Tp-Note does not fail to start: it skips that one file, logs an
+error, and continues with the rest of the merged configuration. The note file
+is still processed normally, but the process exits with status `5` instead of
+`0`, so that scripts calling Tp-Note can detect the condition. Please consult
+the following section
 [Upgrading](https://blog.getreu.net/projects/tp-note/#upgrading) in the
 project's Readme document for more information about incompatible configuration
 files.

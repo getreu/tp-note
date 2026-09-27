@@ -4107,13 +4107,18 @@ first non\-empty environment variable: `\f[CR]TPNOTE_USER\f[R]',
 .RE
 .SH EXIT STATUS
 The exit status is `\f[CR]0\f[R]' when the note file was processed
-without error or `\f[CR]1\f[R]' otherwise.
-If Tp\-Note can not write its configuration file (with the command line
-parameter `\f[CR]\-\-config\-defaults\f[R]'), the exit status is
-`\f[CR]5\f[R]'.
-An invalid or unreadable configuration file does not abort Tp\-Note: it
-is skipped or ignored, and processing continues with the built\-in or
-previously merged defaults.
+without error, or `\f[CR]1\f[R]' otherwise.
+An invalid, unreadable or outdated configuration file never aborts
+Tp\-Note: the offending file is skipped or ignored, and processing
+continues with the built\-in or previously merged defaults.
+However, in that case, the exit status is `\f[CR]5\f[R]', so that
+scripts calling Tp\-Note can detect the condition, even though the note
+file itself was processed successfully.
+The same exit status `\f[CR]5\f[R]' is returned when Tp\-Note can not
+write its configuration file (with the command line parameter
+`\f[CR]\-\-config\-defaults\f[R]').
+Should both a configuration problem and a note processing error occur,
+`\f[CR]1\f[R]' takes precedence over `\f[CR]5\f[R]'.
 .PP
 When `\f[CR]tpnote \-n \-b <FILE>\f[R]' returns the code `\f[CR]0\f[R]',
 the note file has a valid YAML header with a `\f[CR]title:\f[R]' field.

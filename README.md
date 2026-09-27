@@ -248,12 +248,12 @@ more about how the configuration is merged from different file locations in the
 
 While upgrading _Tp-Note_, new features may cause a change in _Tp-Note_'s
 configuration file structure. If one of your configuration files becomes
-incompatible, Tp-Note does not abort: it skips that one file, logs a warning,
+incompatible, Tp-Note does not abort: it skips that one file, logs an error,
 and continues with the rest of the merged configuration (falling back to the
 built-in default for whatever the skipped file used to override), e.g.:
 
 ```
-*** WARNING:
+*** ERROR:
 Ignoring configuration file:
 ---
 "/home/joe/.config/tpnote/tpnote.toml"
@@ -261,7 +261,9 @@ Ignoring configuration file:
 invalid length 3, expected fewer elements in array in `viewer.served_mime_types`
 ```
 
-If Tp-Note sources more than one configuration file, consider the possibility
+The note file is still processed normally, but Tp-Note exits with status `5`
+instead of `0`, so that scripts calling Tp-Note can detect the condition. If
+Tp-Note sources more than one configuration file, consider the possibility
 of syntax errors in any of these files (cf. [Customization section] of
 Tp-Note's man-page). Fix the reported file, or delete it to fall back to the
 built-in defaults.
