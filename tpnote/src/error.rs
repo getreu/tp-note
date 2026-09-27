@@ -40,16 +40,6 @@ pub enum WorkflowError {
 /// Error related to the filesystem and to invoking external applications.
 #[derive(Debug, Error)]
 pub enum ConfigFileError {
-    /// Remedy: delete or rename the configuration file.
-    #[error(
-        "Can not backup and delete the erroneous\n\
-        configuration file:\n\
-        ---\n\
-        {error}\n\n\
-        Please do it manually."
-    )]
-    ConfigFileBackup { error: String },
-
     /// Remedy: Compare your config file structure with the default one
     /// (`--config-defaults`).
     #[error(
@@ -77,8 +67,8 @@ pub enum ConfigFileError {
         Tp-Note due to some incompatible configuration\n\
         file changes.\n\
         \n\
-        Tp-Note renames and thus disables the last sourced\n\
-        configuration file."
+        Tp-Note continues with its internal default\n\
+        configuration."
     )]
     ConfigFileLoadParse { error: String },
 
@@ -101,8 +91,7 @@ pub enum ConfigFileError {
         Configuration file version: \'{config_file_version}\'\n\
         Minimum required version: \'{min_version}\'\n\
         \n\
-        Tp-Note renames and thus disables the last sourced\n\
-        configuration file."
+        Tp-Note continues, using this configuration file as is."
     )]
     ConfigFileVersionMismatch {
         config_file_version: String,
@@ -142,10 +131,6 @@ pub enum ConfigFileError {
         or in the corresponding environment variable."
     )]
     NoApplicationFound { app_list: String, var_name: String },
-
-    /// Should not happen. Please report this bug.
-    #[error("No path to configuration file found.")]
-    PathToConfigFileNotFound,
 
     #[error(transparent)]
     File(#[from] FileError),

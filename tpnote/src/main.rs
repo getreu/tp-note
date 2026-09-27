@@ -126,18 +126,6 @@ fn main() {
         Some(e) => {
             log::error!("{}", ConfigFileError::ConfigFileLoadParse { error: e });
 
-            // Move erroneous config file away.
-            if let Err(e) = Cfg::backup_and_remove_last() {
-                log::error!(
-                    "{}",
-                    ConfigFileError::ConfigFileBackup {
-                        error: e.to_string()
-                    }
-                );
-                AppLogger::flush();
-                process::exit(5);
-            };
-
             // As we have an error, we indicate that there is no version.
             None
         }
@@ -146,25 +134,15 @@ fn main() {
     // Is version number in the configuration file high enough?
     if let Some(config_file_version) = config_file_version
         && config_file_version < Version::parse(MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0")).unwrap()
-        {
-            log::error!(
-                "{}",
-                ConfigFileError::ConfigFileVersionMismatch {
-                    config_file_version: config_file_version.to_string(),
-                    min_version: MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0").to_string(),
-                }
-            );
-            if let Err(e) = Cfg::backup_and_remove_last() {
-                log::error!(
-                    "{}",
-                    ConfigFileError::ConfigFileBackup {
-                        error: e.to_string()
-                    }
-                );
-                AppLogger::flush();
-                process::exit(6);
-            };
-        };
+    {
+        log::error!(
+            "{}",
+            ConfigFileError::ConfigFileVersionMismatch {
+                config_file_version: config_file_version.to_string(),
+                min_version: MIN_CONFIG_FILE_VERSION.unwrap_or("0.0.0").to_string(),
+            }
+        );
+    };
 
     // Process `arg = `--default-config`.
     if let Some(path) = &ARGS.config_defaults {

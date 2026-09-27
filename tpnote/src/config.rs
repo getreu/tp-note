@@ -30,7 +30,6 @@ use tpnote_lib::config::LibCfg;
 use tpnote_lib::config::LocalLinkKind;
 use tpnote_lib::config::TmplHtml;
 use tpnote_lib::config_value::CfgVal;
-use tpnote_lib::filename::NotePathBuf;
 use tpnote_lib::text_reader::read_as_string_with_crlf_suppression;
 
 /// Set the minimum required configuration file version that is compatible with
@@ -493,19 +492,6 @@ impl Cfg {
         Ok(())
     }
 
-    /// Backs up the existing configuration file and writes a new one with
-    /// default values.
-    pub(crate) fn backup_and_remove_last() -> Result<PathBuf, ConfigFileError> {
-        if let Some(config_path) = CONFIG_PATHS.iter().rfind(|p| p.exists()) {
-            let mut config_path_bak = config_path.to_path_buf();
-            config_path_bak.set_next_unused()?;
-            fs::rename(config_path, &config_path_bak)?;
-
-            Ok(config_path.clone())
-        } else {
-            Err(ConfigFileError::PathToConfigFileNotFound)
-        }
-    }
 }
 
 /// Reads and parses the configuration file "tpnote.toml". An alternative

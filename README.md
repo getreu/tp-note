@@ -246,33 +246,25 @@ internal default configuration values with a custom configuration file. Learn
 more about how the configuration is merged from different file locations in the
 [Customization section] of Tp-Note's manual page.
 
-While upgrading _Tp-Note_, new features may cause a change in _Tp-Notes_'s
-configuration file structure, e.g.:
+While upgrading _Tp-Note_, new features may cause a change in _Tp-Note_'s
+configuration file structure. If one of your configuration files becomes
+incompatible, Tp-Note does not abort: it skips that one file, logs a warning,
+and continues with the rest of the merged configuration (falling back to the
+built-in default for whatever the skipped file used to override), e.g.:
 
 ```
-*** ERROR:
-Can not load or parse the (merged) configuration file(s):
+*** WARNING:
+Ignoring configuration file:
 ---
+"/home/joe/.config/tpnote/tpnote.toml"
+
 invalid length 3, expected fewer elements in array in `viewer.served_mime_types`
-
-
-Note: this error may occur after upgrading Tp-Note due to some incompatible
-configuration file changes.
-
-Tp-Note renames and thus disables the last sourced configuration file.
-
-Additional technical details:
-*    Command line parameters:
-tpnote -b
-*    Sourced configuration files:
-/home/joe/.config/tpnote/tpnote.toml
 ```
 
-Note, the configuration file backup is stored in the same directory as the last
-sourced configuration file, e.g. `/home/joe/.config/tpnote/`.
 If Tp-Note sources more than one configuration file, consider the possibility
 of syntax errors in any of these files (cf. [Customization section] of
-Tp-Note's man-page).
+Tp-Note's man-page). Fix the reported file, or delete it to fall back to the
+built-in defaults.
 
 # Building
 

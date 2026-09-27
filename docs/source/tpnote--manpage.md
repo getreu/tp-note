@@ -3393,8 +3393,11 @@ TPNOTE_USER, LOGNAME, USER, USERNAME
 # EXIT STATUS
 
 The exit status is '`0`' when the note file was processed without
-error or '`1`' otherwise. If Tp-Note can not read or write its
-configuration file, the exit status is '`5`'.
+error or '`1`' otherwise. If Tp-Note can not write its configuration
+file (with the command line parameter '`--config-defaults`'), the exit
+status is '`5`'. An invalid or unreadable configuration file does not
+abort Tp-Note: it is skipped or ignored, and processing continues with
+the built-in or previously merged defaults.
 
 When '`tpnote -n -b <FILE>`' returns the code '`0`', the note file has a
 valid YAML header with a '`title:`' field. In addition, when
