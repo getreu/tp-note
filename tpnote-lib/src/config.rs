@@ -611,6 +611,7 @@ impl TryFrom<CfgVal> for LibCfg {
 
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct Scheme {
     pub name: String,
     /// Configuration of filename parsing.
@@ -622,6 +623,7 @@ pub struct Scheme {
 /// Configuration of filename parsing, deserialized from the
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct Filename {
     pub sort_tag: SortTag,
     pub copy_counter: CopyCounter,
@@ -631,6 +633,7 @@ pub struct Filename {
 
 /// Configuration for sort-tag.
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct SortTag {
     pub extra_chars: String,
     pub separator: String,
@@ -641,12 +644,14 @@ pub struct SortTag {
 
 /// Requirements for chronological sort tags.
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct Sequential {
     pub digits_in_succession_max: u8,
 }
 
 /// Configuration for copy-counter.
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct CopyCounter {
     pub extra_separator: String,
     pub opening_brackets: String,
@@ -656,6 +661,7 @@ pub struct CopyCounter {
 /// Filename templates and content templates, deserialized from the
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct Tmpl {
     pub fm_var: FmVar,
     pub filter: Filter,
@@ -670,6 +676,7 @@ pub struct Tmpl {
 
 /// Configuration describing how to localize and check front matter variables.
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct FmVar {
     pub localization: Vec<(String, String)>,
     pub assertions: Vec<(String, Vec<Assertion>)>,
@@ -677,6 +684,7 @@ pub struct FmVar {
 
 /// Configuration related to various Tera template filters.
 #[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct Filter {
     pub get_lang: GetLang,
     pub map_lang: Vec<Vec<String>>,
@@ -699,6 +707,7 @@ pub struct GetLang {
 
 /// Configuration related to various Tera template filters.
 #[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 struct GetLangIntermediate {
     pub mode: Mode,
     pub language_candidates: Vec<String>,
@@ -780,6 +789,7 @@ pub enum Mode {
 /// Configuration for the HTML exporter feature, deserialized from the
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct TmplHtml {
     /// Assigns an `id` to every heading that doesn't already carry one (an
     /// explicit `{#id}` heading attribute, or an id an RST document's own

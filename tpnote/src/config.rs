@@ -102,6 +102,7 @@ pub struct Cfg {
 /// upward for the document root) can set under `[project_config]`. Ignored
 /// everywhere else (cf. the CUSTOMIZATION section of the man page).
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ProjectConfig {
     #[serde(default = "default_true")]
     pub is_root_path_marker: bool,
@@ -123,6 +124,7 @@ fn default_true() -> bool {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 /// The `OsType` selects operating system specific defaults at runtime.
 pub struct OsType<T> {
     /// `#[cfg(all(target_family = "unix", not(target_os = "macos")))]`
@@ -139,6 +141,7 @@ pub struct OsType<T> {
 
 /// Command line arguments, deserialized form configuration file.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ArgDefault {
     pub debug: ClapLevelFilter,
     pub edit: bool,
@@ -172,6 +175,7 @@ impl ::std::default::Default for ArgDefault {
 /// Configuration of clipboard behavior, deserialized from the configuration
 /// file.
 #[derive(Debug, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct Clipboard {
     pub read_enabled: bool,
     pub empty_enabled: bool,
@@ -180,6 +184,7 @@ pub struct Clipboard {
 /// Arguments lists for invoking external applications, deserialized from the
 /// configuration file.
 #[derive(Debug, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct AppArgs {
     pub browser: Vec<Vec<String>>,
     pub editor: Vec<Vec<String>>,
@@ -222,6 +227,7 @@ pub enum SameUserPolicy {
 /// `Viewer::default()`, but keep this in mind before calling
 /// `Viewer::default()` elsewhere.
 #[derive(Debug, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct Viewer {
     pub startup_delay: isize,
     pub missing_header_disables: bool,
