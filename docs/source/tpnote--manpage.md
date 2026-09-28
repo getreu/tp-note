@@ -707,6 +707,43 @@ standard allowing to include page layout directives into HTML. You can
 change the default page layout by modifying the HTML template with the
 '`tmpl_html.exporter_doc_css`' configuration file variable.
 
+While '`tmpl_html.exporter_doc_css`' sets the page layout for _all_ your
+notes, a single note can carry its own layout: as Markdown passes inline
+HTML through to the rendered document, a '`<style>`' block placed in the
+note's body reaches _Weasyprint_ unchanged. The following example switches
+the page to A4 landscape with narrow margins and starts every chapter on a
+new page:
+
+````md
+---
+title:        Documentation
+subtitle:     Overview
+---
+
+<style>
+@page { size: A4 landscape; margin: 10mm; }
+h1:not(:first-of-type) { break-before: page; }
+</style>
+
+# Documentation
+````
+
+Such a '`<style>`' block also affects the note's live preview in the
+viewer, where the '`@page`' rules are simply ignored.
+
+Independently of any style sheet, a page break can also be forced at one
+single spot by placing an empty HTML element carrying the break directive
+directly into the note's body. Surround it with blank lines, so that
+Markdown treats it as a block of its own:
+
+````md
+The last paragraph before the break.
+
+<div style="break-after:page"></div>
+
+This paragraph starts on a new page.
+````
+
 
 ## Use Tp-Note in shell scripts
 

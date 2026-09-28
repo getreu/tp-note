@@ -754,6 +754,46 @@ CSS Paged Media
 You can change the default page layout by modifying the HTML template
 with the `\f[CR]tmpl_html.exporter_doc_css\f[R]' configuration file
 variable.
+.PP
+While `\f[CR]tmpl_html.exporter_doc_css\f[R]' sets the page layout for
+\f[I]all\f[R] your notes, a single note can carry its own layout: as
+Markdown passes inline HTML through to the rendered document, a
+`\f[CR]<style>\f[R]' block placed in the note\(cqs body reaches
+\f[I]Weasyprint\f[R] unchanged.
+The following example switches the page to A4 landscape with narrow
+margins and starts every chapter on a new page:
+.IP
+.EX
+\f[I]\-\-\-\f[R]
+\f[BI]title:\f[R]\f[I]        Documentation\f[R]
+\f[BI]subtitle:\f[R]\f[I]     Overview\f[R]
+\f[I]\-\-\-\f[R]
+
+<\f[B]style\f[R]>
+\f[B]\(atpage\f[R] { \f[B]size\f[R]: A4 landscape; \f[B]margin\f[R]: 10mm; }
+h1\f[BI]:not(:first\-of\-type)\f[R] { \f[B]break\-before\f[R]: page; }
+</\f[B]style\f[R]>
+
+# Documentation
+.EE
+.PP
+Such a `\f[CR]<style>\f[R]' block also affects the note\(cqs live
+preview in the viewer, where the `\f[CR]\(atpage\f[R]' rules are simply
+ignored.
+.PP
+Independently of any style sheet, a page break can also be forced at one
+single spot by placing an empty HTML element carrying the break
+directive directly into the note\(cqs body.
+Surround it with blank lines, so that Markdown treats it as a block of
+its own:
+.IP
+.EX
+The last paragraph before the break.
+
+<\f[B]div\f[R] style=\(dqbreak\-after:page\(dq></\f[B]div\f[R]>
+
+This paragraph starts on a new page.
+.EE
 .SS Use Tp\-Note in shell scripts
 .IP \(bu 2
 \f[B]Use case: synchronize recursively filenames and metadata\f[R]
