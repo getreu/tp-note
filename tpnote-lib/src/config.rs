@@ -892,3 +892,34 @@ pub enum Assertion {
     #[default]
     NoOperation,
 }
+
+#[cfg(all(test, feature = "lang-detection"))]
+mod tests {
+    use super::GetLang;
+
+    #[test]
+    fn test_get_lang_rejects_unknown_language_code() {
+        let toml = r#"
+mode = "Multilingual"
+language_candidates = ["en", "xx"]
+relative_distance_min = 0.1
+consecutive_words_min = 1
+words_total_percentage_min = 1
+"#;
+        let err = toml::from_str::<GetLang>(toml).unwrap_err();
+        assert!(err.to_string().contains("xx"));
+    }
+
+    #[test]
+    fn test_get_lang_parses_known_language_codes() {
+        let toml = r#"
+mode = "Multilingual"
+language_candidates = ["en", "de"]
+relative_distance_min = 0.1
+consecutive_words_min = 1
+words_total_percentage_min = 1
+"#;
+        let cfg = toml::from_str::<GetLang>(toml).unwrap();
+        assert_eq!(cfg.language_candidates.len(), 2);
+    }
+}
