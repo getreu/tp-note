@@ -183,7 +183,11 @@ if $probe.exit_code != 0 {
     exit 0
 }
 info $"foreign user reachable \(uid ($probe.stdout | str trim)\)."
-^chmod +x $stub
+# Skip chmod when already executable: as a non-owner (e.g. shared/CI checkout)
+# chmod fails with EPERM even on a no-op change.
+if (^test -x $stub | complete).exit_code != 0 {
+    ^chmod +x $stub
+}
 
 # One temp root for all notes/configs, removed at the end.
 let tmproot = (^mktemp -d | str trim)
@@ -219,7 +223,7 @@ if ($d1.family | is-not-empty) {
     if (check "current user is served" (status-self $d1.host $port1) "200") == false { $fails = $fails + 1 }
     if (check $"foreign user ($foreign_user) is refused" (status-user $foreign_user $d1.host $port1 $nu_exe) "403") == false { $fails = $fails + 1 }
     let fbody = (body-user $foreign_user $d1.host $port1 $nu_exe)
-    if (check-has "403 body is the peer-user-unknown page" $fbody "could not confirm that the program") == false { $fails = $fails + 1 }
+    if (check-has "403 body is the merged peer-rejection page" $fbody "Tp-Note cannot confirm") == false { $fails = $fails + 1 }
     if (check-has "403 body offers the Off remedy" $fbody "same_user_policy = &quot;Off&quot;") == false { $fails = $fails + 1 }
 } else {
     print $"  (ansi red)FAIL(ansi reset)  viewer did not start on port ($port1)"
