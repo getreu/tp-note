@@ -258,34 +258,81 @@ impl ::std::default::Default for Cfg {
 impl Cfg {
     /// Emits the default configuration as TOML string with comments.
     ///
-    /// `[project_config]` is appended last, after `LIB_CONFIG_DEFAULT_TOML`
-    /// and `GUI_CONFIG_DEFAULT_TOML`: TOML has no syntax to "close" a table
-    /// and return to the root, so any table header placed before those
-    /// constants would swallow their leading root-level scalars (e.g.
-    /// `LIB_CONFIG_DEFAULT_TOML` starts with the root-level
-    /// `scheme_sync_default`) into that table instead. Putting
-    /// `[project_config]` last avoids that trap regardless of what either
-    /// constant starts with.
+    /// TOML has no syntax to "close" a table and return to the root, so every
+    /// root-level scalar must come before the first table header. Therefore
+    /// both default TOML constants are split at their first table and their
+    /// leading root-level scalars (e.g. `LIB_CONFIG_DEFAULT_TOML`'s
+    /// `scheme_sync_default`) are grouped up front; `[project_config]` follows
+    /// them, ahead of all tables. `GUI_CONFIG_DEFAULT_TOML` has no root-level
+    /// scalar today, but splitting it too makes sure that one added later
+    /// does not silently end up inside whatever table precedes it.
     #[inline]
     fn default_as_toml() -> String {
+        let (lib_scalars, lib_tables) = Self::split_before_first_table(LIB_CONFIG_DEFAULT_TOML);
+        let (gui_scalars, gui_tables) = Self::split_before_first_table(GUI_CONFIG_DEFAULT_TOML);
+
         let config_default_toml = format!(
             "version = \"{}\"\n\n\
-             {}\n\n{}\n\n\
+             {}{}\
+             [project_config]\n\n\
+             ### Whether this marker file fixes the document root here.\n\
              ### Only meaningful in a directory marker file found while searching\n\
              ### upward for the document root (cf. the CUSTOMIZATION section of\n\
              ### the man page). Ignored everywhere else.\n\
-             [project_config]\n\n\
-             ### Whether this marker file fixes the document root here.\n\
+             ### The default `true` is the secure choice: the document root\n\
+             ### confines local links and what the viewer serves, and the\n\
+             ### nearest marker keeps that boundary closest to the note.\n\
+             ### `false` lets the search climb on and moves the root up,\n\
+             ### widening the directory tree whose files local links reach.\n\
              is_root_path_marker = true\n\n\
              ### Whether to keep searching further up for additional parent\n\
              ### configuration to merge underneath this file.\n\
-             merge_parent_config = false\n",
+             ### Only meaningful in a directory marker file found while searching\n\
+             ### upward for the document root (cf. the CUSTOMIZATION section of\n\
+             ### the man page). Ignored everywhere else.\n\
+             ### The default `false` is the secure choice: it stops the\n\
+             ### search here, so no ancestor directory can inject\n\
+             ### configuration — including the editor and browser launch\n\
+             ### commands — into this project. Enable it only where every\n\
+             ### directory above is trusted. Even then, place a\n\
+             ### configuration file leaving `merge_parent_config` at\n\
+             ### `false` in the topmost ancestor to inherit from: its\n\
+             ### default value ends the search there, instead of leaving\n\
+             ### it open-ended all the way up to the filesystem root.\n\
+             merge_parent_config = false\n\n\
+             {}\n\n{}",
             PKG_VERSION.unwrap_or_default(),
-            LIB_CONFIG_DEFAULT_TOML,
-            GUI_CONFIG_DEFAULT_TOML
+            lib_scalars,
+            gui_scalars,
+            lib_tables,
+            gui_tables
         );
 
         config_default_toml
+    }
+
+    /// Splits `toml` in two right before its first table header, i.e. its
+    /// first line starting with `[`. Comment lines immediately preceding that
+    /// header document it and therefore stay with the second part. The first
+    /// part holds only root-level scalars (and their comments), so another
+    /// table can be inserted in between.
+    #[inline]
+    fn split_before_first_table(toml: &str) -> (&str, &str) {
+        // Where the comment block the current line belongs to starts, if any.
+        let mut comment_block = None;
+        let mut offset = 0;
+        for line in toml.split_inclusive('\n') {
+            if line.starts_with('[') {
+                return toml.split_at(comment_block.unwrap_or(offset));
+            } else if line.starts_with('#') {
+                comment_block.get_or_insert(offset);
+            } else {
+                // A blank line or a scalar ends the comment block, if any.
+                comment_block = None;
+            }
+            offset += line.len();
+        }
+        (toml, "")
     }
 
     /// Checks whether `cfg_val` deserializes into a valid, fully specified
