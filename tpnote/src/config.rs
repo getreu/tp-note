@@ -100,6 +100,11 @@ pub struct Cfg {
     pub extra_fields: HashMap<String, Value>,
     pub arg_default: ArgDefault,
     pub clipboard: Clipboard,
+    /// External application launch commands. A project configuration file
+    /// found by the upward search (cf. `ProjectPaths::walk_project_paths`)
+    /// is never allowed to set this: `Cfg::from_files` strips `[app_args]`
+    /// from any file tagged in `ProjectPaths::project_config_paths` before
+    /// merging it.
     pub app_args: OsType<AppArgs>,
     pub viewer: Viewer,
     pub tmpl_html: TmplHtml,
@@ -132,8 +137,8 @@ fn default_true() -> bool {
     true
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
-#[serde(deny_unknown_fields)]
+#[derive(Debug, Serialize, Deserialize, Default, PartialEq)]
+#[serde(deny_unknown_fields, default)]
 /// The `OsType` selects operating system specific defaults at runtime.
 pub struct OsType<T> {
     /// `#[cfg(all(target_family = "unix", not(target_os = "macos")))]`
@@ -192,7 +197,7 @@ pub struct Clipboard {
 
 /// Arguments lists for invoking external applications, deserialized from the
 /// configuration file.
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct AppArgs {
     pub browser: Vec<Vec<String>>,
@@ -343,7 +348,10 @@ impl Cfg {
     /// message per configuration file that had to be skipped (cf. the
     /// comment on `CFG_FILE_WARNINGS`).
     #[inline]
-    fn from_files(config_paths: &[PathBuf]) -> Result<(Cfg, ConfigFileWarnings), ConfigFileError> {
+    fn from_files(
+        config_paths: &[PathBuf],
+        project_marker_paths: &[PathBuf],
+    ) -> Result<(Cfg, ConfigFileWarnings), ConfigFileError> {
         // Runs through all strings and renders config values as templates.
         // No variables are set in this context. But you can use environment
         // variables in templates: e.g.:
@@ -398,6 +406,40 @@ impl Cfg {
                     });
                     continue;
                 }
+            };
+
+            // Project configuration files (found by walking upward from the
+            // note's directory) must not be able to set `[app_args]`: such a
+            // file can live in a directory the user does not control, and
+            // `app_args.*.{editor,editor_console,browser}` become the argv of
+            // a `Command::new()` call with zero sanitization (cf.
+            // `file_editor::launch_editor()`,
+            // `web_browser::launch_listed_browser()`).
+            let file_val = if project_marker_paths.contains(path) {
+                let mut v = file_val.to_value();
+                // A `-C`-generated config file always has an `app_args` key
+                // (its table headers are never commented out, only the
+                // key/value lines under them are), so mere key presence
+                // would false-positive on an entirely default, harmless
+                // file. Only warn when it actually overrides something.
+                let removed_app_args = match v {
+                    Value::Table(ref mut map) => map.remove("app_args"),
+                    _ => None,
+                };
+                let had_app_args = removed_app_args.is_some_and(|val| {
+                    val.try_into::<OsType<AppArgs>>()
+                        .map(|a| a != OsType::<AppArgs>::default())
+                        .unwrap_or(true)
+                });
+                if had_app_args {
+                    warnings.push(ConfigFileError::ConfigFileAppArgsIgnored {
+                        path: path.clone(),
+                    });
+                }
+                v.try_into::<CfgVal>()
+                    .expect("removing a key cannot invalidate already-valid TOML")
+            } else {
+                file_val
             };
 
             let candidate = cfg_val.clone().merge(file_val);
@@ -534,7 +576,11 @@ impl Cfg {
 /// filename (optionally with absolute path) can be given on the command
 /// line with "--config".
 pub static CFG: LazyLock<Cfg> = LazyLock::new(|| {
-    let (cfg, warnings) = Cfg::from_files(&PROJECT_PATHS.config_paths).unwrap_or_else(|e| {
+    let (cfg, warnings) = Cfg::from_files(
+        &PROJECT_PATHS.config_paths,
+        &PROJECT_PATHS.project_config_paths,
+    )
+    .unwrap_or_else(|e| {
         // Remember that something went wrong.
         let mut cfg_file_loading = CFG_FILE_LOADING.write();
         *cfg_file_loading = Err(e);
@@ -591,6 +637,14 @@ pub(crate) struct ProjectPaths {
     /// `searched_config_file_paths`; never for merging, since most of
     /// these entries do not exist on disk.
     pub(crate) searched_paths: Vec<PathBuf>,
+    /// The subset of `config_paths` that came from `config_chain` in
+    /// `walk_project_paths()`: project configuration files actually found
+    /// walking upward from the note's directory, as opposed to the fixed
+    /// system/user locations or the `--config` override. `Cfg::from_files`
+    /// uses this to know which files must not be allowed to set
+    /// `[app_args]` (security: cf. the CUSTOMIZATION section of the man
+    /// page).
+    pub(crate) project_config_paths: Vec<PathBuf>,
 }
 
 impl ProjectPaths {
@@ -715,6 +769,7 @@ impl ProjectPaths {
                 root_path: PathBuf::new(),
                 config_paths: ProjectPaths::assemble_config_paths(&[]),
                 searched_paths: ProjectPaths::assemble_config_paths(&[]),
+                project_config_paths: Vec::new(),
             };
         };
         let dir_path = if doc_path.is_dir() {
@@ -731,6 +786,7 @@ impl ProjectPaths {
             root_path,
             config_paths: ProjectPaths::assemble_config_paths(&config_chain),
             searched_paths: ProjectPaths::assemble_config_paths(&searched_chain),
+            project_config_paths: config_chain,
         }
     }
 }
@@ -773,7 +829,7 @@ mod tests {
         let userconfig = temp_dir().join("tpnote.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
-        let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
+        let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
         assert_eq!(cfg.arg_default.scheme, "zettel");
         // A user config lacking the key inherits the built-in default `true`.
         assert!(cfg.viewer.session_binding_cookie);
@@ -787,7 +843,7 @@ mod tests {
         let userconfig = temp_dir().join("tpnote.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
-        let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
+        let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
         assert_eq!(cfg.viewer.served_mime_types.len(), 1);
         assert_eq!(cfg.viewer.served_mime_types[0].0, "abc");
 
@@ -800,7 +856,7 @@ mod tests {
         let userconfig = temp_dir().join("tpnote.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
-        let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
+        let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
         assert!(!cfg.viewer.session_binding_cookie);
 
         //
@@ -809,7 +865,7 @@ mod tests {
         {
             let userconfig = temp_dir().join("tpnote.toml");
             fs::write(&userconfig, b"").unwrap();
-            let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
+            let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
 
             let raw = "\
@@ -818,7 +874,7 @@ mod tests {
             ";
             let userconfig = temp_dir().join("tpnote.toml");
             fs::write(&userconfig, raw.as_bytes()).unwrap();
-            let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
+            let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Off);
 
             // The dropped `Warn` value no longer aborts the whole load: the
@@ -830,7 +886,7 @@ mod tests {
             ";
             let userconfig = temp_dir().join("tpnote.toml");
             fs::write(&userconfig, raw.as_bytes()).unwrap();
-            let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
+            let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
 
             // Likewise for an invalid enum string.
@@ -840,7 +896,7 @@ mod tests {
             ";
             let userconfig = temp_dir().join("tpnote.toml");
             fs::write(&userconfig, raw.as_bytes()).unwrap();
-            let (cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
+            let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
         }
 
@@ -854,7 +910,7 @@ mod tests {
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
         // No longer an error: the file is skipped, defaults apply.
-        let (_cfg, warnings) = Cfg::from_files(&[userconfig]).unwrap();
+        let (_cfg, warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
         assert_eq!(warnings.len(), 1);
 
         //
@@ -868,7 +924,7 @@ mod tests {
         let bad_config = temp_dir().join("tpnote-bad.toml");
         fs::write(&bad_config, "unknown_field_name = 'aha'\n").unwrap();
 
-        let (cfg, warnings) = Cfg::from_files(&[good_config, bad_config.clone()]).unwrap();
+        let (cfg, warnings) = Cfg::from_files(&[good_config, bad_config.clone()], &[]).unwrap();
         assert_eq!(cfg.arg_default.scheme, "zettel");
         assert_eq!(warnings.len(), 1);
         assert!(
@@ -890,7 +946,7 @@ mod tests {
         let userconfig = temp_dir().join("tpnote.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
-        let (_cfg, _warnings) = Cfg::from_files(&[userconfig]).unwrap();
+        let (_cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
         {
             let lib_cfg = LIB_CFG.read();
             // The variables come from the `./config_default.toml` `zettel`
@@ -922,5 +978,89 @@ mod tests {
             // `./config_default.toml`:
             assert_eq!(lib_cfg.scheme[didx].name, "default");
         } // Free `LIB_CFG` lock.
+    }
+
+    /// A project configuration file (found by the upward search) must not
+    /// be able to set `[app_args]`: it can live in a directory the user
+    /// does not control, and `app_args.*.editor`/`.browser` become the
+    /// argv of a `Command::new()` call with zero sanitization.
+    #[test]
+    fn test_cfg_from_file_project_marker_app_args() {
+        // The built-in default `editor` list, for comparison below.
+        let (default_cfg, _warnings) = Cfg::from_files(&[], &[]).unwrap();
+        let default_editor = default_cfg.app_args.unix.editor;
+
+        // (a) A project-marker file's `[app_args]` must not be applied.
+        let raw = "\
+        [app_args.unix]
+        editor = [[\"evil\"]]
+        ";
+        let marker = temp_dir().join("tpnote-marker-app-args.toml");
+        fs::write(&marker, raw.as_bytes()).unwrap();
+
+        let (cfg, warnings) = Cfg::from_files(std::slice::from_ref(&marker), std::slice::from_ref(&marker)).unwrap();
+        assert_eq!(cfg.app_args.unix.editor, default_editor);
+        assert_ne!(cfg.app_args.unix.editor, vec![vec!["evil".to_string()]]);
+        assert_eq!(warnings.len(), 1);
+        assert!(warnings[0].to_string().contains("app_args"));
+        assert!(
+            warnings[0]
+                .to_string()
+                .contains(&marker.display().to_string())
+        );
+
+        // (b) Negative control: identical content, NOT tagged as a project
+        // marker (e.g. treated as a user config) -- it DOES apply. Proves
+        // the filtering is tied to marker-ness, not a blanket `app_args`
+        // bug.
+        let raw = "\
+        [app_args.unix]
+        editor = [[\"harmless-test-editor\"]]
+        ";
+        let userconfig = temp_dir().join("tpnote-nonmarker-app-args.toml");
+        fs::write(&userconfig, raw.as_bytes()).unwrap();
+
+        let (cfg, warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
+        assert_eq!(
+            cfg.app_args.unix.editor,
+            vec![vec!["harmless-test-editor".to_string()]]
+        );
+        assert!(warnings.is_empty());
+
+        // (c) A project-marker file setting an ordinary field alongside
+        // `[app_args]` still applies that ordinary field -- only
+        // `app_args` is stripped.
+        let raw = "\
+        [arg_default]
+        scheme = 'zettel'
+        [app_args.unix]
+        editor = [[\"evil\"]]
+        ";
+        let marker = temp_dir().join("tpnote-marker-mixed.toml");
+        fs::write(&marker, raw.as_bytes()).unwrap();
+
+        let (cfg, warnings) = Cfg::from_files(std::slice::from_ref(&marker), std::slice::from_ref(&marker)).unwrap();
+        assert_eq!(cfg.arg_default.scheme, "zettel");
+        assert_eq!(cfg.app_args.unix.editor, default_editor);
+        assert_eq!(warnings.len(), 1);
+
+        // (d) A project-marker file with a bare `[app_args]` header and
+        // nothing else under it (exactly what `-C` generates: the table
+        // header itself is never commented out, only the key/value lines
+        // under it are) must NOT warn -- there is nothing to strip that
+        // could actually matter, and the warning must not pollute output
+        // for the common, harmless case of a `-C`-generated config file
+        // sitting in a project directory.
+        let raw = "\
+        [app_args]
+        # unix.editor = [[\"harmless-test-editor\"]]
+        ";
+        let marker = temp_dir().join("tpnote-marker-empty-app-args.toml");
+        fs::write(&marker, raw.as_bytes()).unwrap();
+
+        let (cfg, warnings) =
+            Cfg::from_files(std::slice::from_ref(&marker), std::slice::from_ref(&marker)).unwrap();
+        assert_eq!(cfg.app_args.unix.editor, default_editor);
+        assert!(warnings.is_empty());
     }
 }

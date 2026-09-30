@@ -85,6 +85,26 @@ pub enum ConfigFileError {
     )]
     ConfigFileSkipped { path: PathBuf, error: String },
 
+    /// Remedy: move the editor/browser launch commands you want into your
+    /// user configuration file instead (cf. the CUSTOMIZATION section of
+    /// the man page). Unlike `ConfigFileSkipped`, the rest of this file's
+    /// settings were still applied; only `[app_args]` was dropped.
+    #[error(
+        "Ignoring `[app_args]` in project configuration file:\n\
+        ---\n\
+        {}\n\n\
+        A project configuration file (found by searching upward from the\n\
+        note's directory) is not allowed to set `app_args.*.editor`,\n\
+        `app_args.*.editor_console` or `app_args.*.browser`: such a file can\n\
+        live in a directory you do not control (a cloned repository, an\n\
+        extracted archive, a synced folder), and these settings launch an\n\
+        arbitrary external program. Set them in your user or system\n\
+        configuration file instead. The rest of this file's settings were\n\
+        applied normally.",
+        path.display()
+    )]
+    ConfigFileAppArgsIgnored { path: PathBuf },
+
     /// Remedy: restart.
     #[error(
         "Configuration file version mismatch:\n---\n\

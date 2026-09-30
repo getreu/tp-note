@@ -1554,15 +1554,21 @@ its first '`[table]`' header. Placed after one, they silently become that
 table's variables instead, where they are unknown: the file is then
 skipped with a warning (cf. "EXIT STATUS", status 5).
 
-**Security note:** enabling '`merge_parent_config`' means Tp-Note will
-read and merge configuration from every ancestor directory up to wherever
-the search stops, including its editor and browser launch commands. Only
-enable this pointing through directories you trust -- for example, a
-directory shared with other users. If a subproject should inherit
-settings from one specific ancestor only, place a plain '`tpnote.toml`' at
-that ancestor without '`merge_parent_config`' set: its default `false`
-value stops the search there, rather than leaving it open-ended all the
-way to the filesystem root.
+**Security note:** a project configuration file cannot set '`[app_args]`'
+(the editor, editor console, and browser launch commands) -- Tp-Note
+always ignores that table there and logs a warning (cf. "EXIT STATUS",
+status 5), because a project configuration file can live in a directory
+you do not control (a cloned repository, an extracted archive, a synced
+folder). Every other setting is still merged normally, so enabling
+'`merge_parent_config`' still means Tp-Note reads and applies
+configuration from every ancestor directory up to wherever the search
+stops -- only enable this pointing through directories you trust, for
+example a directory shared with other users. If a subproject should
+inherit settings from one specific ancestor only, place a plain
+'`tpnote.toml`' at that ancestor without '`merge_parent_config`' set: its
+default `false` value stops the search there, rather than leaving it
+open-ended all the way to the filesystem root. To change the editor or
+browser, use your user or system configuration file instead.
 
 **Example with one project configuration file.** Say
 '`~/notes/project/`' holds both the note being edited and the following
