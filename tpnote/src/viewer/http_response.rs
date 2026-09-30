@@ -571,8 +571,9 @@ impl HttpResponse for ServerThread {
             // as `self.context.get_root_path().join(relpath)` after checking
             // `relpath` against `allowed_urls`, so it is always inside the
             // current session's root_path already. Reuse it rather than
-            // climbing again -- a fresh climb could stop at a nested marker
-            // and return a *narrower* root_path than the one `allowed_urls`
+            // climbing again -- a fresh climb could stop at a nested project
+            // configuration file and return a *narrower* root_path than the
+            // one `allowed_urls`
             // and `abspath` construction actually enforce, which would
             // rewrite this document's links against a boundary the server
             // doesn't agree with.

@@ -950,22 +950,22 @@ This paragraph starts on a new page.
 > Chooses how local links in the exported HTML file are written out: '`off`',
 > '`short`' or '`long`' (default). No link rewriting occurs, for the _MODE_
 > '`off`'. The _MODE_ '`short`' rewrites all local relative links to absolute
-> links, whose base is the first parent directory containing the marker
-> file '`tpnote.toml`'. NB, the directory of the marker file defines the
-> base for all absolute local links in your Tp-Note file! The mode '`long`'
-> rewrites _all_ local links to absolute links whose base is the system's root
-> directory '`/`'. For relative local links this is performed by prepending
-> the path to the note file. Absolute local links get the path to the marker
-> file '`tpnote.toml`' prepended. In case you do not place a '`tpnote.toml`'
-> file in a parent directory, the base for absolute local links in your note
-> file is interpreted as '`/`'.
+> links, whose base is the first parent directory containing a project
+> configuration file '`tpnote.toml`'. NB, the directory of that file defines
+> the base for all absolute local links in your Tp-Note file! The mode
+> '`long`' rewrites _all_ local links to absolute links whose base is the
+> system's root directory '`/`'. For relative local links this is performed
+> by prepending the path to the note file. Absolute local links get the path
+> to the project configuration file '`tpnote.toml`' prepended. In case you do
+> not place a '`tpnote.toml`' file in a parent directory, the base for
+> absolute local links in your note file is interpreted as '`/`'.
 >
 > The right _MODE_ choice depends on how you view the resulting HTML:
 > if you publish on a web server, then '`short`' might be a good choice. Do
-> not forget to place a marker file '`tpnote.toml`' somewhere in the
-> document's path. If you view the HTML file directly in your web browser,
-> better choose '`long`'. In this case, the presence of a marker file will not
-> affect the output.
+> not forget to place a project configuration file '`tpnote.toml`' somewhere
+> in the document's path. If you view the HTML file directly in your web
+> browser, better choose '`long`'. In this case, the presence of a project
+> configuration file will not affect the output.
 >
 > NB: You can also set this option via Tp-Note's configuration file
 > with the key '`arg_default.export_link_rewriting`'.
@@ -1063,8 +1063,8 @@ understands:
 Remarks:
 
 - The base for absolute local links is the first parent directory containing
-  the marker file '`tpnote.toml`'. If absent, absolute local links refer
-  to the root directory '`/`'.
+  a project configuration file '`tpnote.toml`'. If absent, absolute local
+  links refer to the root directory '`/`'.
 - _Shorthand link_: Instead of writing out the full link destination, e.g.
   '`[my doc](<./docs/20230508-my note.md>)`', you can shorten the link to
   '`[my doc](<docs/20230508>)`' indicating only the destination's sort-tag.
@@ -1100,9 +1100,10 @@ allows you to fine-tune how local links are written out. Valid values are:
 In order to achieve this, the user must respect the following convention
 concerning absolute paths in local links in Tp-Note documents: When a document
 contains a local link with an absolute path, the base of this path is
-considered to be the directory where the marker file '`tpnote.toml`' resides
-(or '`/`' in none exists). The option '`--export-link- rewriting`' decides how
-local links in the Tp-Note document are converted when the HTML is generated.
+considered to be the directory where the project configuration file
+'`tpnote.toml`' resides (or '`/`' in none exists). The option
+'`--export-link- rewriting`' decides how local links in the Tp-Note
+document are converted when the HTML is generated.
 If its value is '`short`', then local links with relative paths are converted to
 absolute paths. The base of the resulting path is where the '`tpnote.toml`' file
 resides (or `/` if none exists). Consider the following example
@@ -1111,7 +1112,7 @@ resides (or `/` if none exists). Consider the following example
 - The Tp-Note file '`/my/docs/car/bill.md`' contains
 - an absolute local link: '`/car/scan.jpg`',
 - and another relative local link: '`./photo.jpg`'.
-- The document root marker is: '`/my/docs/tpnote.toml`'.
+- The project configuration file is: '`/my/docs/tpnote.toml`'.
 
 The images in the resulting HTML will appear as
 
@@ -1119,13 +1120,13 @@ The images in the resulting HTML will appear as
 - '`/car/photo.jpg`'.
 
 For '`--export-link-rewriting=long`', in addition to the above, all absolute
-paths in local links are prepended with the marker file's directory. Consider
-the following example:
+paths in local links are prepended with the project configuration file's
+directory. Consider the following example:
 
 - The Tp-Note file '`/my/docs/car/bill.md`' contains
 - an absolute local link: '`/car/scan.jpg`',
 - and another relative local link: '`./photo.jpg`'.
-- The document root marker is: '`/my/docs/tpnote.toml`'.
+- The project configuration file is: '`/my/docs/tpnote.toml`'.
 
 The images in the resulting HTML will appear as
 
@@ -1134,9 +1135,9 @@ The images in the resulting HTML will appear as
 
 Summary: The right '`--export-link-rewriting`' choice depends on how you view
 the resulting HTML: if you publish on a web server, then '`short`' might be
-a good choice (do not forget to place a marker file '`tpnote.toml`' somewhere
-in the document's path). If you view the HTML file directly in your web
-browser, better choose '`long`'.
+a good choice (do not forget to place a project configuration file
+'`tpnote.toml`' somewhere in the document's path). If you view the HTML
+file directly in your web browser, better choose '`long`'.
 
 
 ### Local links with format strings
@@ -1483,13 +1484,23 @@ default values. This happens in the following order:
    If the environment variable '`TPNOTE_CONFIG`' is set, its value is used as
    the path to this file instead of the standard location above.
 3. At startup all parent directories of the note file path '`<PATH>`' are
-   searched for a marker file named '`tpnote.toml`'. If present and its
-   content is not empty, Tp-Note interprets the file's content as
-   configuration file. A '`[project_config]`' table in such a marker file
-   can set '`project_config.is_root_path_marker`' and
-   '`project_config.merge_parent_config`' (cf. "Searching for
-   '`tpnote.toml`' marker files" below).
+   searched for a file named '`tpnote.toml`'. If present and its content
+   is not empty, Tp-Note interprets the file's content as configuration
+   file. Such a file can additionally set the two root-level variables
+   '`is_root_path_marker`' and '`merge_parent_config`' (cf. "Searching
+   for project configuration files" below).
 4. The file indicated by the command line parameter '`--config <FIlE>`'.
+
+This manual names these locations after their scope: the file from 1. is
+the _system configuration file_, the one from 2. the _user configuration
+file_, and every '`tpnote.toml`' the upward search of 3. turns up is a
+_project configuration file_. All of them are '`tpnote.toml`' files with
+the same syntax and the same variables; only their location differs, and
+with it their precedence and their reach -- a project configuration file
+applies to the notes below its own directory alone. Two variables are
+meaningful in a project configuration file only, because they steer the
+very search that finds it: '`is_root_path_marker`' and
+'`merge_parent_config`'.
 
 When Tp-Note starts, it merges all available configuration files, in the
 order above, into the default configuration. Each file is applied one at a
@@ -1514,28 +1525,34 @@ Also make sure to keep the '`version`' variable at the beginning of the file
 commented out. As any Tp-Note upgrade might include a breaking change in the
 configuration file structure, try to keep your custom configuration small.
 
-## Searching for '`tpnote.toml`' marker files
+## Searching for project configuration files
 
 This single search decides two things at once: where the document root
-lies, and which marker files' settings get merged into the configuration.
-A '`[project_config]`' table in a marker file controls both, through two
-variables:
+lies, and which project configuration files' settings get merged into
+the configuration. Two variables in a project configuration file control
+both:
 
-- '`project_config.is_root_path_marker`' (default: `true`): the first
-  marker found -- starting with the one closest to '`<PATH>`' -- whose
-  value is `true` (or that leaves the variable unset, the default for
-  every marker file written before this option existed) fixes the
-  document root at its directory, and the search for the document root
-  stops there.
-- '`project_config.merge_parent_config`' (default: `false`): if `true`,
-  Tp-Note keeps searching further up after finding this marker file,
+- '`is_root_path_marker`' (default: `true`): the first project
+  configuration file found -- starting with the one closest to
+  '`<PATH>`' -- whose value is `true` (or that leaves the variable unset,
+  the default for every project configuration file written before this
+  option existed) fixes the document root at its directory, and the
+  search for the document root stops there.
+- '`merge_parent_config`' (default: `false`): if `true`, Tp-Note keeps
+  searching further up after finding this project configuration file,
   merging any additional '`tpnote.toml`' files it finds underneath the
   current configuration (settings closer to the note file take
   precedence). This does not move the document root, which stays fixed
   wherever '`is_root_path_marker`' stopped it. The search keeps climbing
-  only as long as each successive marker file it finds also sets
-  '`project_config.merge_parent_config = true`'; the first ancestor that
+  only as long as each successive project configuration file it finds
+  also sets '`merge_parent_config = true`'; the first ancestor that
   leaves it at the default `false` ends the search.
+
+Both are root-level variables, so -- as TOML has no syntax to leave a
+table once it is open -- they must appear at the top of the file, before
+its first '`[table]`' header. Placed after one, they silently become that
+table's variables instead, where they are unknown: the file is then
+skipped with a warning (cf. "EXIT STATUS", status 5).
 
 **Security note:** enabling '`merge_parent_config`' means Tp-Note will
 read and merge configuration from every ancestor directory up to wherever
@@ -1547,23 +1564,25 @@ that ancestor without '`merge_parent_config`' set: its default `false`
 value stops the search there, rather than leaving it open-ended all the
 way to the filesystem root.
 
-**Example with one marker.** Say '`~/notes/project/`' holds both the
-note being edited and the following '`tpnote.toml`':
+**Example with one project configuration file.** Say
+'`~/notes/project/`' holds both the note being edited and the following
+'`tpnote.toml`':
 
 ```toml
 [arg_default]
 scheme = "zettel"
 ```
 
-There is no '`[project_config]`' table here, so both its variables stay
-at their defaults. Climbing upward from '`~/notes/project/`', Tp-Note
-finds this one marker file and stops there: with '`is_root_path_marker`'
-at its default `true`, that directory becomes the document root, and with
-'`merge_parent_config`' at its default `false`, nothing above it is ever
-consulted. Only this file's own settings apply.
+Neither of the two variables is set here, so both stay at their
+defaults. Climbing upward from '`~/notes/project/`', Tp-Note finds this
+one project configuration file and stops there: with
+'`is_root_path_marker`' at its default `true`, that directory becomes
+the document root, and with '`merge_parent_config`' at its default
+`false`, nothing above it is ever consulted. Only this file's own
+settings apply.
 
-**Example with two markers.** Now add a second, vault-wide '`tpnote.toml`'
-one level up, in '`~/notes/`':
+**Example with two project configuration files.** Now add a second,
+vault-wide '`tpnote.toml`' one level up, in '`~/notes/`':
 
 ```toml
 [viewer]
@@ -1573,31 +1592,29 @@ startup_delay = 500
 and change '`~/notes/project/tpnote.toml`' to:
 
 ```toml
-[project_config]
 merge_parent_config = true
 
 [arg_default]
 scheme = "zettel"
 ```
 
-Climbing from '`~/notes/project/`' still finds the project's own marker
-file first, and it still fixes the document root there: setting
-'`merge_parent_config`' does not change '`is_root_path_marker`', which is
-still left at its default `true`. But because '`merge_parent_config`' is
-now `true`, the search keeps going, finds '`~/notes/tpnote.toml`', and
-merges its '`[viewer]`' setting in underneath the project's own -- so a
-note in '`~/notes/project/`' ends up with both
-'`arg_default.scheme = "zettel"`' and '`viewer.startup_delay = 500`',
-while the project's marker file only had to state the one setting it
-actually overrides. The document root stays '`~/notes/project/`'
-throughout.
+Climbing from '`~/notes/project/`' still finds the project's own
+configuration file first, and it still fixes the document root there:
+setting '`merge_parent_config`' does not change
+'`is_root_path_marker`', which is still left at its default `true`. But
+because '`merge_parent_config`' is now `true`, the search keeps going,
+finds '`~/notes/tpnote.toml`', and merges its '`[viewer]`' setting in
+underneath the project's own -- so a note in '`~/notes/project/`' ends
+up with both '`arg_default.scheme = "zettel"`' and
+'`viewer.startup_delay = 500`', while the project's own configuration
+file only had to state the one setting it actually overrides. The
+document root stays '`~/notes/project/`' throughout.
 
 **Example moving the document root.** Change
 '`~/notes/project/tpnote.toml`' once more, adding
 '`is_root_path_marker = false`':
 
 ```toml
-[project_config]
 is_root_path_marker = false
 merge_parent_config = true
 
@@ -1605,8 +1622,8 @@ merge_parent_config = true
 scheme = "zettel"
 ```
 
-Now the project's own marker no longer fixes the document root there, so
-the search for the document root keeps going, reaches
+Now the project's own configuration file no longer fixes the document
+root there, so the search for the document root keeps going, reaches
 '`~/notes/tpnote.toml`' (which leaves '`is_root_path_marker`' at its
 default `true`), and the document root becomes '`~/notes/`' instead of
 '`~/notes/project/`'. '`merge_parent_config`' is still `true`, so
@@ -3184,8 +3201,8 @@ able to publish. To summarize, a file is only served:
    list,
 3. if the number of so far viewed Tp-Note files,
    '`viewer.displayed_tpnote_count_max`' is not exceeded,
-4. when it's located under a directory containing a marker file named
-   '`tpnote.toml`' (without marker file this condition is void),
+4. when it's located under a directory containing a project configuration
+   file named '`tpnote.toml`' (without such a file this condition is void),
 5. when the request presents the viewer's session cookie, once the viewer
    is bound to a web browser (cf. '`viewer.session_binding_cookie`' below),
 6. when the connecting web browser process belongs to your own OS user
@@ -3221,10 +3238,11 @@ in order, through the following checks:
 4. **File restrictions.** A referenced file is served only when its extension
    is registered with '`viewer.served_mime_type`', the number of viewed Tp-Note
    files does not exceed '`viewer.displayed_tpnote_count_max`', and it lies under
-   the root directory marked by a '`tpnote.toml`' file. Removing all '`text/*`'
-   mime types from '`viewer.served_mime_type`' disables the _follow links to
-   other Tp-Note files_ feature. When no '`tpnote.toml`' marker is found, the
-   root directory defaults to '`/`', disabling the root restriction.
+   the root directory fixed by a project configuration file. Removing all
+   '`text/*`' mime types from '`viewer.served_mime_type`' disables the _follow
+   links to other Tp-Note files_ feature. When no project configuration file
+   is found, the root directory defaults to '`/`', disabling the root
+   restriction.
 
 In every case only the offending request is refused and its connection closed;
 the viewer keeps running and keeps serving the bound web browser.

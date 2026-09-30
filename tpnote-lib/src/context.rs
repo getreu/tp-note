@@ -237,7 +237,8 @@ pub struct Context<S: ContextState + ?Sized> {
     dir_path: PathBuf,
     /// `dir_path` is a subdirectory of `root_path`. `root_path` is the
     /// first directory, that upwards from `dir_path`, contains a file named
-    /// `FILENAME_ROOT_PATH_MARKER` (or `/` if no marker file can be found).
+    /// `FILENAME_ROOT_PATH_MARKER` (or `/` if no project configuration
+    /// file can be found).
     /// The root directory is interpreted by Tp-Note's viewer as its base
     /// directory: only files within this directory are served.
     root_path: PathBuf,
@@ -585,9 +586,10 @@ impl Context<Invalid> {
     /// treats as its security boundary for rewriting local links, and the
     /// value stored under the `TMPL_VAR_ROOT_PATH` template key. This
     /// constructor does not discover it: the caller must supply it, e.g. by
-    /// searching upward for a `tpnote.toml` marker file (a convention the
-    /// `tpnote` binary implements; cf. its CUSTOMIZATION man page section)
-    /// or by any other means appropriate to the embedding application.
+    /// searching upward for a `tpnote.toml` project configuration file (a
+    /// convention the `tpnote` binary implements; cf. its CUSTOMIZATION man
+    /// page section) or by any other means appropriate to the embedding
+    /// application.
     ///
     /// A copy of `path` is stored in `self.ct` as key `TMPL_VAR_PATH`. Its
     /// directory path as key `TMPL_VAR_DIR_PATH`. If `path` points to a

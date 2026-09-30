@@ -81,11 +81,18 @@ pub(crate) const DO_NOT_COMMENT_IF_LINE_STARTS_WITH: [&str; 3] = ["###", "[", "n
 /// Configuration data, deserialized from the configuration file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cfg {
-    /// Only meaningful in a directory marker file found while searching
-    /// upward for the document root (cf. the CUSTOMIZATION section of the
-    /// man page). Ignored everywhere else.
+    /// Whether this project configuration file fixes the document root
+    /// here. Only meaningful in a project configuration file, i.e. one
+    /// found while searching upward for the document root (cf. the
+    /// CUSTOMIZATION section of the man page). Ignored everywhere else,
+    /// hence read through `ProjectConfig` and not from here.
+    #[serde(default = "default_true")]
+    pub is_root_path_marker: bool,
+    /// Whether to keep searching further up for additional parent
+    /// configuration to merge underneath this file. Same restriction as
+    /// `is_root_path_marker` above.
     #[serde(default)]
-    pub project_config: ProjectConfig,
+    pub merge_parent_config: bool,
     /// Version number of the configuration file as String -or- a text message
     /// explaining why we could not load the configuration file.
     pub version: String,
@@ -98,11 +105,13 @@ pub struct Cfg {
     pub tmpl_html: TmplHtml,
 }
 
-/// Directives a directory marker file (`tpnote.toml` found while searching
-/// upward for the document root) can set under `[project_config]`. Ignored
-/// everywhere else (cf. the CUSTOMIZATION section of the man page).
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+/// The deserialization view of a project configuration file limited to the
+/// two root-level directives it can set for the upward search (cf. the
+/// CUSTOMIZATION section of the man page); every other key in the file is
+/// irrelevant here and therefore ignored. Read on its own, before and
+/// independently of the full configuration merge, as the search's outcome
+/// decides which files that merge even gets to see.
+#[derive(Debug, Deserialize)]
 pub struct ProjectConfig {
     #[serde(default = "default_true")]
     pub is_root_path_marker: bool,
@@ -259,13 +268,14 @@ impl Cfg {
     /// Emits the default configuration as TOML string with comments.
     ///
     /// TOML has no syntax to "close" a table and return to the root, so every
-    /// root-level scalar must come before the first table header. Therefore
-    /// both default TOML constants are split at their first table and their
-    /// leading root-level scalars (e.g. `LIB_CONFIG_DEFAULT_TOML`'s
-    /// `scheme_sync_default`) are grouped up front; `[project_config]` follows
-    /// them, ahead of all tables. `GUI_CONFIG_DEFAULT_TOML` has no root-level
-    /// scalar today, but splitting it too makes sure that one added later
-    /// does not silently end up inside whatever table precedes it.
+    /// root-level scalar must come before the first table header. As both
+    /// default TOML constants start with root-level scalars of their own
+    /// (`LIB_CONFIG_DEFAULT_TOML` with `scheme_sync_default`,
+    /// `GUI_CONFIG_DEFAULT_TOML` with `is_root_path_marker` and
+    /// `merge_parent_config`), simply concatenating the two would bury the
+    /// second one's scalars inside the first one's last table. Therefore both
+    /// are split at their first table header and their leading scalars are
+    /// grouped up front, ahead of all tables.
     #[inline]
     fn default_as_toml() -> String {
         let (lib_scalars, lib_tables) = Self::split_before_first_table(LIB_CONFIG_DEFAULT_TOML);
@@ -274,32 +284,6 @@ impl Cfg {
         let config_default_toml = format!(
             "version = \"{}\"\n\n\
              {}{}\
-             [project_config]\n\n\
-             ### Whether this marker file fixes the document root here.\n\
-             ### Only meaningful in a directory marker file found while searching\n\
-             ### upward for the document root (cf. the CUSTOMIZATION section of\n\
-             ### the man page). Ignored everywhere else.\n\
-             ### The default `true` is the secure choice: the document root\n\
-             ### confines local links and what the viewer serves, and the\n\
-             ### nearest marker keeps that boundary closest to the note.\n\
-             ### `false` lets the search climb on and moves the root up,\n\
-             ### widening the directory tree whose files local links reach.\n\
-             is_root_path_marker = true\n\n\
-             ### Whether to keep searching further up for additional parent\n\
-             ### configuration to merge underneath this file.\n\
-             ### Only meaningful in a directory marker file found while searching\n\
-             ### upward for the document root (cf. the CUSTOMIZATION section of\n\
-             ### the man page). Ignored everywhere else.\n\
-             ### The default `false` is the secure choice: it stops the\n\
-             ### search here, so no ancestor directory can inject\n\
-             ### configuration — including the editor and browser launch\n\
-             ### commands — into this project. Enable it only where every\n\
-             ### directory above is trusted. Even then, place a\n\
-             ### configuration file leaving `merge_parent_config` at\n\
-             ### `false` in the topmost ancestor to inherit from: its\n\
-             ### default value ends the search there, instead of leaving\n\
-             ### it open-ended all the way up to the filesystem root.\n\
-             merge_parent_config = false\n\n\
              {}\n\n{}",
             PKG_VERSION.unwrap_or_default(),
             lib_scalars,
@@ -390,9 +374,9 @@ impl Cfg {
         // into a valid configuration; a broken file (invalid TOML, wrong
         // types, unknown keys) is skipped with a warning instead of
         // discarding every other successfully loaded layer. This matters
-        // most for the directory marker chain (`merge_parent_config`),
-        // where the number of files merged can grow with the depth of the
-        // search.
+        // most for the project configuration file chain
+        // (`merge_parent_config`), where the number of files merged can
+        // grow with the depth of the search.
         let mut cfg_val = base_config;
         let mut warnings: ConfigFileWarnings = Vec::new();
         for path in config_paths {
@@ -580,19 +564,11 @@ pub static CFG_FILE_WARNINGS: LazyLock<RwLock<ConfigFileWarnings>> =
 /// document root (cf. `ProjectPaths::walk_project_paths()`).
 const FILENAME_ROOT_PATH_MARKER: &str = "tpnote.toml";
 
-/// The deserialization view of a `tpnote.toml` marker file limited to its
-/// `[project_config]` table (cf. the `ProjectConfig` struct above); every
-/// other key in the file is irrelevant here.
-#[derive(Debug, Deserialize, Default)]
-struct ProjectConfigFile {
-    #[serde(default)]
-    project_config: ProjectConfig,
-}
-
 /// The document root together with the two path lists derived from the
-/// single upward directory-marker search for `DOC_PATH`'s directory. The
+/// single upward project configuration file search for `DOC_PATH`'s
+/// directory. The
 /// climb (and the reading and parsing of every candidate's
-/// `[project_config]` table) only ever runs once per process; `ROOT_PATH`
+/// `ProjectConfig` directives) only ever runs once per process; `ROOT_PATH`
 /// and every other consumer of the config/searched path lists reads from
 /// this one static. If `DOC_PATH` is unavailable, `root_path` is empty and
 /// both path lists collapse to just the fixed candidates and the command
@@ -600,51 +576,52 @@ struct ProjectConfigFile {
 /// of them is ever consulted.
 pub(crate) struct ProjectPaths {
     /// The document root: the directory where the upward search for a
-    /// `tpnote.toml` marker file stopped (cf. the CUSTOMIZATION section of
-    /// the man page).
+    /// project configuration file stopped (cf. the CUSTOMIZATION section
+    /// of the man page).
     pub(crate) root_path: PathBuf,
     /// Every configuration file that actually gets merged: the fixed
-    /// per-platform candidates, then every marker that was actually found
-    /// walking up from the note's directory (farthest first, closest last,
-    /// so the closest one takes precedence when merged), then the command
-    /// line override.
+    /// per-platform candidates, then every project configuration file that
+    /// was actually found walking up from the note's directory (farthest
+    /// first, closest last, so the closest one takes precedence when
+    /// merged), then the command line override.
     pub(crate) config_paths: Vec<PathBuf>,
-    /// Like `config_paths`, but the directory-marker portion additionally
-    /// lists every ancestor directory the upward search considered,
-    /// whether or not it held a `tpnote.toml` file. Used only for
-    /// `--version`'s `searched_config_file_paths`; never for merging,
-    /// since most of these entries do not exist on disk.
+    /// Like `config_paths`, but the project portion additionally lists
+    /// every ancestor directory the upward search considered, whether or
+    /// not it held a `tpnote.toml` file. Used only for `--version`'s
+    /// `searched_config_file_paths`; never for merging, since most of
+    /// these entries do not exist on disk.
     pub(crate) searched_paths: Vec<PathBuf>,
 }
 
 impl ProjectPaths {
     /// Walks upward from `dir_path` collecting every ancestor directory that
-    /// contains a `FILENAME_ROOT_PATH_MARKER` file, then decides, marker by
-    /// marker starting from the closest, where the document root lies and how
+    /// contains a `FILENAME_ROOT_PATH_MARKER` file, then decides, file by
+    /// file starting from the closest, where the document root lies and how
     /// far the search for additional configuration extends.
     ///
     /// Returns `(root_path, config_chain, searched_chain)`, both `config_chain`
     /// and `searched_chain` ordered farthest first, closest last, ready to be
     /// merged with lower-precedence layers applied first.
     ///
-    /// * `root_path` is fixed at the first marker (closest to farthest) whose
-    ///   `project_config.is_root_path_marker` is `true` or absent -- the
-    ///   default, chosen for every marker file written before this option
-    ///   existed. If no marker declares itself the root, `root_path` falls
-    ///   back to the filesystem root, matching the behavior when no marker
-    ///   file exists at all.
-    /// * The search for additional configuration files continues past a given
-    ///   marker only if that marker's own `project_config.merge_parent_config`
-    ///   is `true`. The first marker (again, closest to farthest) that leaves
-    ///   it at the default `false` ends the search; `root_path` is unaffected
-    ///   by how far this search extends.
-    /// * `config_chain` only lists the markers that were actually found (and
-    ///   are thus merged into the configuration); `searched_chain` lists every
-    ///   candidate path this search considered, including ancestor directories
-    ///   that turned out to have no marker file. `searched_chain` is only ever
-    ///   assembled into `ProjectPaths::searched_paths` for reporting (cf.
-    ///   `--version`'s `searched_config_file_paths`) -- it must never be used
-    ///   for merging, since most of its entries do not exist.
+    /// * `root_path` is fixed at the first project configuration file
+    ///   (closest to farthest) whose `is_root_path_marker` is `true` or
+    ///   absent -- the default, chosen for every such file written before
+    ///   this option existed. If none of them declares itself the root,
+    ///   `root_path` falls back to the filesystem root, matching the
+    ///   behavior when no project configuration file exists at all.
+    /// * The search for additional configuration files continues past a
+    ///   given project configuration file only if that file's own
+    ///   `merge_parent_config` is `true`. The first one (again, closest to
+    ///   farthest) that leaves it at the default `false` ends the search;
+    ///   `root_path` is unaffected by how far this search extends.
+    /// * `config_chain` only lists the project configuration files that were
+    ///   actually found (and are thus merged into the configuration);
+    ///   `searched_chain` lists every candidate path this search considered,
+    ///   including ancestor directories that turned out to hold none.
+    ///   `searched_chain` is only ever assembled into
+    ///   `ProjectPaths::searched_paths` for reporting (cf. `--version`'s
+    ///   `searched_config_file_paths`) -- it must never be used for merging,
+    ///   since most of its entries do not exist.
     fn walk_project_paths(dir_path: &Path) -> (PathBuf, Vec<PathBuf>, Vec<PathBuf>) {
         let mut fallback_root = dir_path;
         let mut root_path: Option<PathBuf> = None;
@@ -660,7 +637,7 @@ impl ProjectPaths {
             }
 
             // A conscious choice: if this file can't be read or parsed, fall
-            // back to the defaults (root marker, do not extend the search)
+            // back to the defaults (fix the root here, do not extend the search)
             // instead of treating it as absent. Excluding it here would let the
             // search continue past it, silently widening the document root --
             // and thus the viewer's security boundary -- past a directory the
@@ -671,9 +648,8 @@ impl ProjectPaths {
             // without ever widening the boundary to compensate for it.
             let flags = fs::read_to_string(&marker)
                 .ok()
-                .and_then(|s| toml::from_str::<ProjectConfigFile>(&s).ok())
-                .unwrap_or_default()
-                .project_config;
+                .and_then(|s| toml::from_str::<ProjectConfig>(&s).ok())
+                .unwrap_or_default();
 
             config_chain.push(marker.clone());
 
@@ -696,10 +672,11 @@ impl ProjectPaths {
     }
 
     /// Assembles the fixed per-platform candidate locations and the command
-    /// line override around `marker_chain`, the directory-marker portion of the
-    /// path list. Called twice while building `ProjectPaths`: once for the
-    /// markers that were actually found (`ProjectPaths::config_paths`, used for
-    /// merging), once for every candidate the upward search considered
+    /// line override around `marker_chain`, the project configuration file
+    /// portion of the path list. Called twice while building `ProjectPaths`:
+    /// once for the files that were actually found
+    /// (`ProjectPaths::config_paths`, used for merging), once for every
+    /// candidate the upward search considered
     /// (`ProjectPaths::searched_paths`, used only for reporting).
     fn assemble_config_paths(marker_chain: &[PathBuf]) -> Vec<PathBuf> {
         let mut config_path: Vec<PathBuf> = vec![];
@@ -728,7 +705,8 @@ impl ProjectPaths {
         config_path
     }
 
-    /// Builds `PROJECT_PATHS`: runs the upward directory-marker search for
+    /// Builds `PROJECT_PATHS`: runs the upward project configuration file
+    /// search for
     /// `DOC_PATH`'s directory (if `DOC_PATH` is available) and assembles the
     /// resulting root path and the two config-path lists around it.
     fn new() -> Self {
@@ -760,8 +738,8 @@ impl ProjectPaths {
 pub(crate) static PROJECT_PATHS: LazyLock<ProjectPaths> = LazyLock::new(ProjectPaths::new);
 
 /// The document root: the directory where the upward search for a
-/// `tpnote.toml` marker file stopped (cf. the CUSTOMIZATION section of the
-/// man page). Passed into `WorkflowBuilder::new()` and `Context::from()` so
+/// project configuration file stopped (cf. the CUSTOMIZATION section of
+/// the man page). Passed into `WorkflowBuilder::new()` and `Context::from()` so
 /// they do not need to repeat the search `PROJECT_PATHS` already performed
 /// for the same directory.
 pub static ROOT_PATH: LazyLock<PathBuf> = LazyLock::new(|| PROJECT_PATHS.root_path.clone());

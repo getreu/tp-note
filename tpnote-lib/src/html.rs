@@ -694,8 +694,8 @@ impl Hyperlink for Link<'_> {
 /// concerning absolute local links in Tp-Note documents:
 /// 1. When a document contains a local link with an absolute path (absolute
 ///    local link), the base of this path is considered to be the directory
-///    where the marker file ‘.tpnote.toml’ resides (or ‘/’ in non exists). The
-///    marker file directory is `root_path`.
+///    where the project configuration file ‘tpnote.toml’ resides (or ‘/’ in
+///    non exists). The project configuration file directory is `root_path`.
 /// 2. Furthermore, the parameter `docdir` contains the absolute path of the
 ///    directory of the currently processed HTML document. The user guarantees
 ///    that `docdir` is the base for all relative local links in the document.

@@ -1,3 +1,31 @@
+### Whether this project configuration file fixes the document root here.
+### Only meaningful in a project configuration file, i.e. one found while
+### searching upward for the document root (cf. the CUSTOMIZATION section
+### of the man page). Ignored everywhere else.
+### The default `true` is the secure choice: the document root
+### confines local links and what the viewer serves, and the
+### nearest project configuration file keeps that boundary
+### closest to the note. `false` lets the search climb on and
+### moves the root up, widening the directory tree whose files
+### local links reach.
+is_root_path_marker = true
+
+### Whether to keep searching further up for additional parent
+### configuration to merge underneath this file.
+### Only meaningful in a project configuration file, i.e. one found while
+### searching upward for the document root (cf. the CUSTOMIZATION section
+### of the man page). Ignored everywhere else.
+### The default `false` is the secure choice: it stops the
+### search here, so no ancestor directory can inject
+### configuration — including the editor and browser launch
+### commands — into this project. Enable it only where every
+### directory above is trusted. Even then, place a project
+### configuration file leaving `merge_parent_config` at
+### `false` in the topmost ancestor to inherit from: its
+### default value ends the search there, instead of leaving
+### it open-ended all the way up to the filesystem root.
+merge_parent_config = false
+
 [arg_default]
 
 ### Default value for the command line option `--debug`. Determines the maximum

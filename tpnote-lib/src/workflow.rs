@@ -193,8 +193,8 @@ impl<'a> WorkflowBuilder<SyncFilename<'a>> {
     ///
     /// `root_path` is the document root: the directory Tp-Note's viewer
     /// treats as its security boundary, e.g. found by searching upward for
-    /// a `tpnote.toml` marker file (a convention the `tpnote` binary
-    /// implements; cf. its CUSTOMIZATION man page section) or by any other
+    /// a `tpnote.toml` project configuration file (a convention the `tpnote`
+    /// binary implements; cf. its CUSTOMIZATION man page section) or by any other
     /// means appropriate to the embedding application. This is passed
     /// through unchanged to `tpnote_lib::context::Context::from()`.
     ///
