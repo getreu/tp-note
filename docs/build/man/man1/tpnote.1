@@ -1965,17 +1965,24 @@ Placed after one, they silently become that table\(cqs variables
 instead, where they are unknown: the file is then skipped with a warning
 (cf.\ \(lqEXIT STATUS\(rq, status 5).
 .PP
-\f[B]Security note:\f[R] enabling `\f[CR]merge_parent_config\f[R]' means
-Tp\-Note will read and merge configuration from every ancestor directory
-up to wherever the search stops, including its editor and browser launch
-commands.
-Only enable this pointing through directories you trust \(en for
-example, a directory shared with other users.
+\f[B]Security note:\f[R] a project configuration file cannot set
+`\f[CR][app_args]\f[R]' (the editor, editor console, and browser launch
+commands) \(en Tp\-Note always ignores that table there and logs a
+warning (cf.\ \(lqEXIT STATUS\(rq, status 5), because a project
+configuration file can live in a directory you do not control (a cloned
+repository, an extracted archive, a synced folder).
+Every other setting is still merged normally, so enabling
+`\f[CR]merge_parent_config\f[R]' still means Tp\-Note reads and applies
+configuration from every ancestor directory up to wherever the search
+stops \(en only enable this pointing through directories you trust, for
+example a directory shared with other users.
 If a subproject should inherit settings from one specific ancestor only,
 place a plain `\f[CR]tpnote.toml\f[R]' at that ancestor without
 `\f[CR]merge_parent_config\f[R]' set: its default \f[CR]false\f[R] value
 stops the search there, rather than leaving it open\-ended all the way
 to the filesystem root.
+To change the editor or browser, use your user or system configuration
+file instead.
 .PP
 \f[B]Example with one project configuration file.\f[R] Say
 `\f[CR]\(ti/notes/project/\f[R]' holds both the note being edited and

@@ -350,7 +350,7 @@ impl Cfg {
     #[inline]
     fn from_files(
         config_paths: &[PathBuf],
-        project_marker_paths: &[PathBuf],
+        project_config_paths: &[PathBuf],
     ) -> Result<(Cfg, ConfigFileWarnings), ConfigFileError> {
         // Runs through all strings and renders config values as templates.
         // No variables are set in this context. But you can use environment
@@ -415,7 +415,7 @@ impl Cfg {
             // a `Command::new()` call with zero sanitization (cf.
             // `file_editor::launch_editor()`,
             // `web_browser::launch_listed_browser()`).
-            let file_val = if project_marker_paths.contains(path) {
+            let file_val = if project_config_paths.contains(path) {
                 let mut v = file_val.to_value();
                 // A `-C`-generated config file always has an `app_args` key
                 // (its table headers are never commented out, only the
@@ -684,9 +684,9 @@ impl ProjectPaths {
 
         for anc in dir_path.ancestors() {
             fallback_root = anc;
-            let marker = anc.join(FILENAME_ROOT_PATH_MARKER);
-            searched_chain.push(marker.clone());
-            if !marker.is_file() {
+            let project_config = anc.join(FILENAME_ROOT_PATH_MARKER);
+            searched_chain.push(project_config.clone());
+            if !project_config.is_file() {
                 continue;
             }
 
@@ -700,15 +700,15 @@ impl ProjectPaths {
             // parses it independently and reports it via `ConfigFileWarnings`
             // if it is indeed broken -- so the failure is surfaced, not hidden,
             // without ever widening the boundary to compensate for it.
-            let flags = fs::read_to_string(&marker)
+            let flags = fs::read_to_string(&project_config)
                 .ok()
                 .and_then(|s| toml::from_str::<ProjectConfig>(&s).ok())
                 .unwrap_or_default();
 
-            config_chain.push(marker.clone());
+            config_chain.push(project_config.clone());
 
             if root_path.is_none() && flags.is_root_path_marker {
-                root_path = marker.parent().map(Path::to_path_buf);
+                root_path = project_config.parent().map(Path::to_path_buf);
             }
 
             if !flags.merge_parent_config {
@@ -726,13 +726,14 @@ impl ProjectPaths {
     }
 
     /// Assembles the fixed per-platform candidate locations and the command
-    /// line override around `marker_chain`, the project configuration file
-    /// portion of the path list. Called twice while building `ProjectPaths`:
+    /// line override around `project_config_chain`, the project
+    /// configuration file portion of the path list. Called twice while
+    /// building `ProjectPaths`:
     /// once for the files that were actually found
     /// (`ProjectPaths::config_paths`, used for merging), once for every
     /// candidate the upward search considered
     /// (`ProjectPaths::searched_paths`, used only for reporting).
-    fn assemble_config_paths(marker_chain: &[PathBuf]) -> Vec<PathBuf> {
+    fn assemble_config_paths(project_config_chain: &[PathBuf]) -> Vec<PathBuf> {
         let mut config_path: Vec<PathBuf> = vec![];
 
         #[cfg(unix)]
@@ -749,7 +750,7 @@ impl ProjectPaths {
             config_path.push(config);
         };
 
-        config_path.extend_from_slice(marker_chain);
+        config_path.extend_from_slice(project_config_chain);
 
         if let Some(commandline_path) = &ARGS.config {
             // Config path comes from command line.
@@ -985,20 +986,25 @@ mod tests {
     /// does not control, and `app_args.*.editor`/`.browser` become the
     /// argv of a `Command::new()` call with zero sanitization.
     #[test]
-    fn test_cfg_from_file_project_marker_app_args() {
+    fn test_cfg_from_file_project_config_app_args() {
         // The built-in default `editor` list, for comparison below.
         let (default_cfg, _warnings) = Cfg::from_files(&[], &[]).unwrap();
         let default_editor = default_cfg.app_args.unix.editor;
 
-        // (a) A project-marker file's `[app_args]` must not be applied.
+        // (a) A project configuration file's `[app_args]` must not be
+        // applied.
         let raw = "\
         [app_args.unix]
         editor = [[\"evil\"]]
         ";
-        let marker = temp_dir().join("tpnote-marker-app-args.toml");
-        fs::write(&marker, raw.as_bytes()).unwrap();
+        let project_config = temp_dir().join("tpnote-project-config-app-args.toml");
+        fs::write(&project_config, raw.as_bytes()).unwrap();
 
-        let (cfg, warnings) = Cfg::from_files(std::slice::from_ref(&marker), std::slice::from_ref(&marker)).unwrap();
+        let (cfg, warnings) = Cfg::from_files(
+            std::slice::from_ref(&project_config),
+            std::slice::from_ref(&project_config),
+        )
+        .unwrap();
         assert_eq!(cfg.app_args.unix.editor, default_editor);
         assert_ne!(cfg.app_args.unix.editor, vec![vec!["evil".to_string()]]);
         assert_eq!(warnings.len(), 1);
@@ -1006,18 +1012,18 @@ mod tests {
         assert!(
             warnings[0]
                 .to_string()
-                .contains(&marker.display().to_string())
+                .contains(&project_config.display().to_string())
         );
 
         // (b) Negative control: identical content, NOT tagged as a project
-        // marker (e.g. treated as a user config) -- it DOES apply. Proves
-        // the filtering is tied to marker-ness, not a blanket `app_args`
-        // bug.
+        // configuration file (e.g. treated as a user config) -- it DOES
+        // apply. Proves the filtering is tied to being a project
+        // configuration file, not a blanket `app_args` bug.
         let raw = "\
         [app_args.unix]
         editor = [[\"harmless-test-editor\"]]
         ";
-        let userconfig = temp_dir().join("tpnote-nonmarker-app-args.toml");
+        let userconfig = temp_dir().join("tpnote-non-project-config-app-args.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
         let (cfg, warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
@@ -1027,8 +1033,8 @@ mod tests {
         );
         assert!(warnings.is_empty());
 
-        // (c) A project-marker file setting an ordinary field alongside
-        // `[app_args]` still applies that ordinary field -- only
+        // (c) A project configuration file setting an ordinary field
+        // alongside `[app_args]` still applies that ordinary field -- only
         // `app_args` is stripped.
         let raw = "\
         [arg_default]
@@ -1036,16 +1042,20 @@ mod tests {
         [app_args.unix]
         editor = [[\"evil\"]]
         ";
-        let marker = temp_dir().join("tpnote-marker-mixed.toml");
-        fs::write(&marker, raw.as_bytes()).unwrap();
+        let project_config = temp_dir().join("tpnote-project-config-mixed.toml");
+        fs::write(&project_config, raw.as_bytes()).unwrap();
 
-        let (cfg, warnings) = Cfg::from_files(std::slice::from_ref(&marker), std::slice::from_ref(&marker)).unwrap();
+        let (cfg, warnings) = Cfg::from_files(
+            std::slice::from_ref(&project_config),
+            std::slice::from_ref(&project_config),
+        )
+        .unwrap();
         assert_eq!(cfg.arg_default.scheme, "zettel");
         assert_eq!(cfg.app_args.unix.editor, default_editor);
         assert_eq!(warnings.len(), 1);
 
-        // (d) A project-marker file with a bare `[app_args]` header and
-        // nothing else under it (exactly what `-C` generates: the table
+        // (d) A project configuration file with a bare `[app_args]` header
+        // and nothing else under it (exactly what `-C` generates: the table
         // header itself is never commented out, only the key/value lines
         // under it are) must NOT warn -- there is nothing to strip that
         // could actually matter, and the warning must not pollute output
