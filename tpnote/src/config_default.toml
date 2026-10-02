@@ -80,8 +80,10 @@ tty = false
 ### means of the text file's filename and creation date.
 add_header = false
 
-### Rewrite relative local links.
-### Base: `FILENAME_ROOT_PATH_MARKER=".tpnote.toml"`.
+### Rewrite relative local links: "Off", "Short" or "Long".
+### Base: the document root, i.e. the directory of the project
+### configuration file `tpnote.toml` found by searching upward from the
+### note's directory.
 export_link_rewriting = "Long"
 
 
