@@ -1,9 +1,9 @@
 ---
-title:      TP-NOTE(1) Version 1.27.0 | Tp-Note documentation
+title:      TP-NOTE(1) Version 1.27.3 | Tp-Note documentation
 subtitle:   Unix manpage
 author:     Jens Getreu
 filename_sync: false
-date:       2026-07-29
+date:       2026-09-30
 lang:       en-GB
 ---
 
@@ -1638,9 +1638,9 @@ previous example. Moving the document root and cascading the
 configuration are independent effects of the same climb, each controlled
 by its own variable.
 
-Some filename and template related variables are grouped into a '`scheme`'.
-The shipped configuration file lists two schemes: '`default`' and '`zettel`'.
-The scheme used when creating a new note, is selected by the
+**Schemes:** Some filename and template related variables are grouped into
+a '`scheme`'. The shipped configuration file lists two schemes: '`default`'
+and '`zettel`'. The scheme used when creating a new note, is selected by the
 command line option '`--scheme`', the environment variable '`TPNOTE_SCHEME`'
 or the configuration variable '`arg_default.scheme`'. The scheme selected
 when synchronizing a Tp-Note header with its filename depends on the value
