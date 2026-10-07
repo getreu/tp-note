@@ -1656,12 +1656,49 @@ when synchronizing a Tp-Note header with its filename depends on the value
 of the header variable '`scheme:`' which defaults to '`default`' (cf.
 '`scheme_sync_default`').
 
-Note, that the merging algorithm merges all values, except arrays. These are
-usually replaced by the subsequent configuration file. There is one exception
-though: top level arrays are also merged. An example of this is the top
-level array '`[[scheme]]`'. In the following example we overwrite the variable
-'`extension_default`' in the scheme '`default`'. All other variables remain
-untouched.
+A scheme is not an arbitrary subset of the configuration. It is exactly the
+scheme's own '`name`' plus the two tables '`filename`' and '`tmpl`':
+
+* '`name`': the scheme's identifier, the string that '`--scheme`',
+  '`TPNOTE_SCHEME`', '`arg_default.scheme`', '`scheme_sync_default`' and the
+  header variable '`scheme:`' refer to.
+
+* '`[filename]`': how filenames are parsed and composed.
+
+* '`[tmpl]`': the content and filename templates and the filters they use.
+
+Only these variables can differ from one scheme to the next. In a
+configuration file they always appear below a '`[[scheme]]`' or a
+'`[base_scheme]`' header.
+
+Everything else exists only once and is shared by all schemes: the
+root-level variables '`version`', '`scheme_sync_default`',
+'`is_root_path_marker`' and '`merge_parent_config`', and the tables
+'`[arg_default]`', '`[clipboard]`', '`[app_args]`', '`[viewer]`' and
+'`[tmpl_html]`'.
+
+Schemes are assembled in two steps, and the order of these steps matters.
+First, all configuration files listed at the beginning of this chapter are
+merged into one single configuration document, in the order given there.
+Only then, when no file is left to read, each '`[[scheme]]`' entry of that
+merged document is merged into its own copy of '`[base_scheme]`', and the
+results are the schemes Tp-Note finally works with. Both steps can be
+observed with '`-V -b -d trace`', which prints the merged document first and
+the assembled schemes afterwards.
+
+The two steps treat arrays differently. When configuration files are merged,
+all values are merged, except arrays: an array is replaced by the array of
+the subsequent configuration file. One array escapes this rule:
+'`[[scheme]]`', the only top level array in '`tpnote.toml`'. It is not
+replaced but merged, and it is merged scheme by scheme, using '`name`' to
+tell which scheme is meant. A '`name`' that is already present overwrites,
+in that scheme, only the variables it actually lists. A '`name`' that is new
+adds one more scheme beside the existing ones.
+
+To change a single variable of a single scheme you therefore list its
+'`name`' and that variable, nothing else. The following example sets
+'`extension_default`' in the scheme '`default`'; all other variables of
+'`default`', and the whole scheme '`zettel`', stay as they were.
 
 ```toml
 [[scheme]]
