@@ -725,6 +725,9 @@ subtitle:     Overview
 h1:not(:first-of-type) { break-before: page; }
 </style>
 
+
+
+
 # Documentation
 ````
 
@@ -1525,6 +1528,8 @@ Also make sure to keep the '`version`' variable at the beginning of the file
 commented out. As any Tp-Note upgrade might include a breaking change in the
 configuration file structure, try to keep your custom configuration small.
 
+
+
 ## Searching for project configuration files
 
 This single search decides two things at once: where the document root
@@ -1638,7 +1643,11 @@ previous example. Moving the document root and cascading the
 configuration are independent effects of the same climb, each controlled
 by its own variable.
 
-**Schemes:** Some filename and template related variables are grouped into
+
+
+## Custom configuration with schemes
+
+Some filename and template related variables are grouped into
 a '`scheme`'. The shipped configuration file lists two schemes: '`default`'
 and '`zettel`'. The scheme used when creating a new note, is selected by the
 command line option '`--scheme`', the environment variable '`TPNOTE_SCHEME`'
