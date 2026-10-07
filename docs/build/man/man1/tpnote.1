@@ -2059,9 +2059,9 @@ the document root becomes `\f[CR]\(ti/notes/\f[R]' instead of
 exactly as in the previous example.
 Moving the document root and cascading the configuration are independent
 effects of the same climb, each controlled by its own variable.
-.PP
-\f[B]Schemes:\f[R] Some filename and template related variables are
-grouped into a `\f[CR]scheme\f[R]'.
+.SS Custom configuration with schemes
+Some filename and template related variables are grouped into a
+`\f[CR]scheme\f[R]'.
 The shipped configuration file lists two schemes: `\f[CR]default\f[R]'
 and `\f[CR]zettel\f[R]'.
 The scheme used when creating a new note, is selected by the command
@@ -2073,13 +2073,62 @@ filename depends on the value of the header variable
 `\f[CR]scheme:\f[R]' which defaults to `\f[CR]default\f[R]' (cf.
 `\f[CR]scheme_sync_default\f[R]').
 .PP
-Note, that the merging algorithm merges all values, except arrays.
-These are usually replaced by the subsequent configuration file.
-There is one exception though: top level arrays are also merged.
-An example of this is the top level array `\f[CR][[scheme]]\f[R]'.
-In the following example we overwrite the variable
-`\f[CR]extension_default\f[R]' in the scheme `\f[CR]default\f[R]'.
-All other variables remain untouched.
+A scheme is not an arbitrary subset of the configuration.
+It is exactly the scheme\(cqs own `\f[CR]name\f[R]' plus the two tables
+`\f[CR]filename\f[R]' and `\f[CR]tmpl\f[R]':
+.IP \(bu 2
+`\f[CR]name\f[R]': the scheme\(cqs identifier, the string that
+`\f[CR]\-\-scheme\f[R]', `\f[CR]TPNOTE_SCHEME\f[R]',
+`\f[CR]arg_default.scheme\f[R]', `\f[CR]scheme_sync_default\f[R]' and
+the header variable `\f[CR]scheme:\f[R]' refer to.
+.IP \(bu 2
+`\f[CR][filename]\f[R]': how filenames are parsed and composed.
+.IP \(bu 2
+`\f[CR][tmpl]\f[R]': the content and filename templates and the filters
+they use.
+.PP
+Only these variables can differ from one scheme to the next.
+In a configuration file they always appear below a
+`\f[CR][[scheme]]\f[R]' or a `\f[CR][base_scheme]\f[R]' header.
+.PP
+Everything else exists only once and is shared by all schemes: the
+root\-level variables `\f[CR]version\f[R]',
+`\f[CR]scheme_sync_default\f[R]', `\f[CR]is_root_path_marker\f[R]' and
+`\f[CR]merge_parent_config\f[R]', and the tables
+`\f[CR][arg_default]\f[R]', `\f[CR][clipboard]\f[R]',
+`\f[CR][app_args]\f[R]', `\f[CR][viewer]\f[R]' and
+`\f[CR][tmpl_html]\f[R]'.
+.PP
+Schemes are assembled in two steps, and the order of these steps
+matters.
+First, all configuration files listed at the beginning of this chapter
+are merged into one single configuration document, in the order given
+there.
+Only then, when no file is left to read, each `\f[CR][[scheme]]\f[R]'
+entry of that merged document is merged into its own copy of
+`\f[CR][base_scheme]\f[R]', and the results are the schemes Tp\-Note
+finally works with.
+Both steps can be observed with `\f[CR]\-V \-b \-d trace\f[R]', which
+prints the merged document first and the assembled schemes afterwards.
+.PP
+The two steps treat arrays differently.
+When configuration files are merged, all values are merged, except
+arrays: an array is replaced by the array of the subsequent
+configuration file.
+One array escapes this rule: `\f[CR][[scheme]]\f[R]', the only top level
+array in `\f[CR]tpnote.toml\f[R]'.
+It is not replaced but merged, and it is merged scheme by scheme, using
+`\f[CR]name\f[R]' to tell which scheme is meant.
+A `\f[CR]name\f[R]' that is already present overwrites, in that scheme,
+only the variables it actually lists.
+A `\f[CR]name\f[R]' that is new adds one more scheme beside the existing
+ones.
+.PP
+To change a single variable of a single scheme you therefore list its
+`\f[CR]name\f[R]' and that variable, nothing else.
+The following example sets `\f[CR]extension_default\f[R]' in the scheme
+`\f[CR]default\f[R]'; all other variables of `\f[CR]default\f[R]', and
+the whole scheme `\f[CR]zettel\f[R]', stay as they were.
 .IP
 .EX
 \f[B][[scheme]]\f[R]
