@@ -47,8 +47,8 @@ impl InputConverter {
     /// a `NoteError`.
     #[inline]
     pub(crate) fn build(extension: &str) -> fn(String) -> Result<String, NoteError> {
-        let settings = SETTINGS.read_recursive();
-        let scheme = &LIB_CFG.read_recursive().scheme[settings.current_scheme];
+        let settings = SETTINGS.read();
+        let scheme = &LIB_CFG.read().scheme[settings.current_scheme];
 
         let mut input_converter = InputConverter::default();
         for e in &scheme.filename.extensions {
@@ -269,7 +269,7 @@ impl From<&str> for MarkupLanguage {
     /// Is `file_extension` listed in `file.extensions`?
     #[inline]
     fn from(file_extension: &str) -> Self {
-        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+        let scheme = &LIB_CFG.read().scheme[SETTINGS.read().current_scheme];
 
         for e in &scheme.filename.extensions {
             if e.0 == file_extension {

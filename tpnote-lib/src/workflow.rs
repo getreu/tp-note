@@ -155,7 +155,7 @@ use crate::settings::SETTINGS;
 use crate::settings::SchemeSource;
 use crate::settings::Settings;
 use crate::template::TemplateKind;
-use parking_lot::RwLockUpgradableReadGuard;
+use parking_lot::RecursiveRwLockUpgradableReadGuard;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -523,13 +523,13 @@ impl<T: Content, F: Fn(TemplateKind) -> TemplateKind> Workflow<SyncFilenameOrCre
 }
 
 ///
-/// Helper function. We take `RwLockUpgradableReadGuard<Settings>` as parameter
+/// Helper function. We take `RecursiveRwLockUpgradableReadGuard<Settings>` as parameter
 /// with a unique `mut` pointer because:
 /// 1. It serves as a lock to prevent several instances of
 ///    `synchronize_filename` from running in parallel.
 /// 2. We need write access to `SETTINGS` in this function.
 fn synchronize_filename<T: Content>(
-    settings: &mut RwLockUpgradableReadGuard<Settings>,
+    settings: &mut RecursiveRwLockUpgradableReadGuard<Settings>,
     note: &mut Note<T>,
 ) -> Result<(), NoteError> {
     let no_filename_sync = match (

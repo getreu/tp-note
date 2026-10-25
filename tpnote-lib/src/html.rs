@@ -7,7 +7,7 @@ use crate::{
     error::NoteError,
 };
 use html_escape;
-use parking_lot::RwLock;
+use parking_lot::RecursiveRwLock;
 use parse_hyperlinks::parser::Link;
 use parse_hyperlinks_extras::iterator_html::HtmlLinkInlineImage;
 use percent_encoding::{AsciiSet, CONTROLS, percent_decode_str, utf8_percent_encode};
@@ -730,7 +730,7 @@ pub fn rewrite_links(
     docdir: &Path,
     local_link_kind: LocalLinkKind,
     rewrite_ext: bool,
-    allowed_local_links: Arc<RwLock<HashSet<PathBuf>>>,
+    allowed_local_links: Arc<RecursiveRwLock<HashSet<PathBuf>>>,
 ) -> String {
     let (rewrite_rel_paths, rewrite_abs_paths) = match local_link_kind {
         LocalLinkKind::Off => (false, false),
@@ -798,7 +798,7 @@ pub fn rewrite_links(
     log::trace!(
         "Viewer: referenced allowed local files: {}",
         allowed_local_links
-            .read_recursive()
+            .read()
             .iter()
             .map(|p| {
                 let mut s = "\n    '".to_string();
@@ -1161,7 +1161,7 @@ mod tests {
     use crate::html::assemble_link;
     use crate::html::assign_heading_ids;
     use crate::html::rewrite_links;
-    use parking_lot::RwLock;
+    use parking_lot::RecursiveRwLock;
     use parse_hyperlinks::parser::Link;
     use parse_hyperlinks_extras::parser::parse_html::take_link;
     use std::borrow::Cow;
@@ -2020,7 +2020,7 @@ mod tests {
     fn test_rewrite_links() {
         use crate::config::LocalLinkKind;
 
-        let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
+        let allowed_urls = Arc::new(RecursiveRwLock::new(HashSet::new()));
         let input = "abc<a href=\"ftp://getreu.net\">Blog</a>\
             def<a href=\"https://getreu.net\">https://getreu.net</a>\
             ghi<img src=\"t m p.jpg\" alt=\"test 1\" />\
@@ -2053,7 +2053,7 @@ mod tests {
             false,
             allowed_urls.clone(),
         );
-        let url = allowed_urls.read_recursive();
+        let url = allowed_urls.read();
 
         assert!(url.contains(&PathBuf::from("/abs/note path/t m p.jpg")));
         assert!(url.contains(&PathBuf::from("/abs/note path/dir/my note.md")));
@@ -2065,7 +2065,7 @@ mod tests {
     fn test_rewrite_links2() {
         use crate::config::LocalLinkKind;
 
-        let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
+        let allowed_urls = Arc::new(RecursiveRwLock::new(HashSet::new()));
         let input = "abd<a href=\"tpnote:dir/my note.md\">\
             <img src=\"/imagedir/favicon-32x32.png\" alt=\"logo\"></a>abd"
             .to_string();
@@ -2081,8 +2081,8 @@ mod tests {
             false,
             allowed_urls.clone(),
         );
-        let url = allowed_urls.read_recursive();
-        println!("{:?}", allowed_urls.read_recursive());
+        let url = allowed_urls.read();
+        println!("{:?}", allowed_urls.read());
         assert!(url.contains(&PathBuf::from("/abs/note path/dir/my note.md")));
         assert_eq!(output, expected);
     }
@@ -2095,7 +2095,7 @@ mod tests {
         // path to rebase, so it must survive every rewriting mode verbatim,
         // and it must not register the docdir as an "allowed" local link,
         // since no separate resource is referenced.
-        let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
+        let allowed_urls = Arc::new(RecursiveRwLock::new(HashSet::new()));
         let input = "abd<a href=\"#1\"></a>abd".to_string();
         let expected = "abd<a href=\"#1\"></a>abd";
         let root_path = Path::new("/my/");
@@ -2108,8 +2108,8 @@ mod tests {
             false,
             allowed_urls.clone(),
         );
-        let url = allowed_urls.read_recursive();
-        println!("{:?}", allowed_urls.read_recursive());
+        let url = allowed_urls.read();
+        println!("{:?}", allowed_urls.read());
         assert!(!url.contains(&PathBuf::from("/abs/note path/")));
         assert_eq!(output, expected);
     }
@@ -2126,7 +2126,7 @@ mod tests {
         let expected = "<a href=\"#ch1\">Chapter one</a>";
 
         for kind in [LocalLinkKind::Off, LocalLinkKind::Short, LocalLinkKind::Long] {
-            let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
+            let allowed_urls = Arc::new(RecursiveRwLock::new(HashSet::new()));
             let output = rewrite_links(
                 input.clone(),
                 root_path,
@@ -2227,7 +2227,7 @@ mod tests {
     fn test_rewrite_links_hash_in_dir_name() {
         use crate::config::LocalLinkKind;
 
-        let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
+        let allowed_urls = Arc::new(RecursiveRwLock::new(HashSet::new()));
         let input = "<a href=\"01-Agenda.md\">link</a>".to_string();
         let root_path = Path::new("/notes/");
         let docdir = Path::new("/notes/Meeting #12-Project kickoff/");
@@ -2253,7 +2253,7 @@ mod tests {
         // is what the viewer compares an incoming (percent-decoded)
         // request path against, so encoding the `href` must not encode
         // this side too.
-        let url = allowed_urls.read_recursive();
+        let url = allowed_urls.read();
         assert!(url.contains(&PathBuf::from(
             "/Meeting #12-Project kickoff/01-Agenda.md"
         )));

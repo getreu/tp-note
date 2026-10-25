@@ -345,7 +345,7 @@ impl<S: ContextState> Context<S> {
     ///     "default");
     /// ```
     fn insert_config_vars(&mut self) {
-        let lib_cfg = LIB_CFG.read_recursive();
+        let lib_cfg = LIB_CFG.read();
 
         // Default extension for new notes as defined in the configuration file.
         self.ct.insert(
@@ -384,7 +384,7 @@ impl<S: ContextState> Context<S> {
     ///     "default");
     /// ```
     fn insert_settings(&mut self) {
-        let settings = SETTINGS.read_recursive();
+        let settings = SETTINGS.read();
 
         // Default extension for new notes as defined in the configuration file.
         self.ct.insert(
@@ -393,7 +393,7 @@ impl<S: ContextState> Context<S> {
         );
 
         {
-            let lib_cfg = LIB_CFG.read_recursive();
+            let lib_cfg = LIB_CFG.read();
             self.ct.insert(
                 TMPL_VAR_CURRENT_SCHEME,
                 &lib_cfg.scheme[settings.current_scheme].name,
@@ -428,7 +428,7 @@ impl<S: ContextState> Context<S> {
         // Collect all localized scheme field names.
         // Example: `["scheme", "scheme", "Schema"]`
         let localized_scheme_names: Vec<String> = LIB_CFG
-            .read_recursive()
+            .read()
             .scheme
             .iter()
             .map(|s| {
@@ -458,9 +458,9 @@ impl<S: ContextState> Context<S> {
                 scheme_idx
             }
         } else {
-            SETTINGS.read_recursive().current_scheme
+            SETTINGS.read().current_scheme
         };
-        let scheme = &LIB_CFG.read_recursive().scheme[scheme];
+        let scheme = &LIB_CFG.read().scheme[scheme];
 
         let vars = &scheme.tmpl.fm_var.localization;
         for (key, value) in fm.iter() {
@@ -773,7 +773,7 @@ impl Context<ReadyForFilenameTemplate> {
     #[inline]
     pub(crate) fn assert_precoditions(&self) -> Result<(), NoteError> {
         let path = &self.path;
-        let lib_cfg = &LIB_CFG.read_recursive();
+        let lib_cfg = &LIB_CFG.read();
 
         // Get front matter scheme if there is any.
         let fm_all = self.get(TMPL_VAR_FM_ALL);
@@ -792,7 +792,7 @@ impl Context<ReadyForFilenameTemplate> {
                 .find_map(|(i, s)| (s.name == scheme_name).then_some(i))
         });
         // If not use `current_scheme` from `SETTINGS`
-        let scheme_idx = scheme_idx.unwrap_or_else(|| SETTINGS.read_recursive().current_scheme);
+        let scheme_idx = scheme_idx.unwrap_or_else(|| SETTINGS.read().current_scheme);
         let scheme = &lib_cfg.scheme[scheme_idx];
 
         for (key, conditions) in scheme.tmpl.fm_var.assertions.iter() {
@@ -982,7 +982,7 @@ impl Context<ReadyForFilenameTemplate> {
         self.insert_raw_text_from_existing_content(content);
 
         {
-            let lib_cfg = &LIB_CFG.read_recursive();
+            let lib_cfg = &LIB_CFG.read();
 
             // Insert the raw CSS
             self.ct.insert(

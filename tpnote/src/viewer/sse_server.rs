@@ -12,7 +12,7 @@ use crate::viewer::http_response::peer_user_refused_page;
 use crate::viewer::init::LOCALHOST;
 #[cfg(feature = "same-user-policy")]
 use crate::viewer::peer_user::{PeerUser, identify_peer_user};
-use parking_lot::RwLock;
+use parking_lot::{RecursiveRwLock, RwLock};
 use percent_encoding::percent_decode_str;
 use std::collections::HashSet;
 use std::io::{ErrorKind, Read, Write};
@@ -146,9 +146,9 @@ pub fn manage_connections(
     // A list of referenced local links to images or other documents as
     // they appeared in the displayed documents.
     // Every thread gets an (ARC) reference to it.
-    let allowed_urls = Arc::new(RwLock::new(HashSet::new()));
+    let allowed_urls = Arc::new(RecursiveRwLock::new(HashSet::new()));
     // Subset of the above list containing only displayed Tp-Note documents.
-    let delivered_tpnote_docs = Arc::new(RwLock::new(HashSet::new()));
+    let delivered_tpnote_docs = Arc::new(RecursiveRwLock::new(HashSet::new()));
     // The session token the viewer is bound to, `None` while unbound
     // (`viewer.session_binding_cookie`). Process-wide: one binding per viewer.
     let session_cookie: Arc<RwLock<Option<String>>> = Arc::new(RwLock::new(None));
@@ -237,12 +237,12 @@ pub(crate) struct ServerThread {
     /// documents as they appear in the delivered Tp-Note documents.
     /// This list contains local links that may or may not have been displayed.
     /// The local links in this list are relative to `self.context.root_path`
-    pub(crate) allowed_urls: Arc<RwLock<HashSet<PathBuf>>>,
+    pub(crate) allowed_urls: Arc<RecursiveRwLock<HashSet<PathBuf>>>,
     /// Subset of `allowed_urls` containing only URLs that
     /// have been actually delivered. The list only contains URLs to Tp-Note
     /// documents.
     /// The local links in this list are absolute.
-    pub(crate) delivered_tpnote_docs: Arc<RwLock<HashSet<PathBuf>>>,
+    pub(crate) delivered_tpnote_docs: Arc<RecursiveRwLock<HashSet<PathBuf>>>,
     /// The session token the viewer is bound to, `None` while unbound.
     /// Shared by all server threads (`viewer.session_binding_cookie`).
     pub(crate) session_cookie: Arc<RwLock<Option<String>>>,
@@ -270,8 +270,8 @@ impl ServerThread {
     fn new(
         rx: Receiver<SseToken>,
         stream: TcpStream,
-        allowed_urls: Arc<RwLock<HashSet<PathBuf>>>,
-        delivered_tpnote_docs: Arc<RwLock<HashSet<PathBuf>>>,
+        allowed_urls: Arc<RecursiveRwLock<HashSet<PathBuf>>>,
+        delivered_tpnote_docs: Arc<RecursiveRwLock<HashSet<PathBuf>>>,
         session_cookie: Arc<RwLock<Option<String>>>,
         conn_counter: Arc<()>,
         context: Context<HasSettings>,

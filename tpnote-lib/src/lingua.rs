@@ -23,7 +23,7 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
         return Ok(vec![]);
     }
 
-    let settings = SETTINGS.read_recursive();
+    let settings = SETTINGS.read();
 
     // Check if we can return early.
     match &settings.get_lang_filter.mode {
@@ -211,7 +211,7 @@ pub(crate) fn get_lang(input: &str) -> Result<Vec<String>, LibCfgError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use parking_lot::RwLockWriteGuard;
+    use parking_lot::RecursiveRwLockWriteGuard;
 
     #[test]
     fn test_get_lang() {
@@ -235,7 +235,7 @@ mod tests {
         *settings = Settings::default();
         settings.get_lang_filter = get_lang_filter;
         // This locks `SETTINGS` for further write access in this scope.
-        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
+        let _settings = RecursiveRwLockWriteGuard::<'_, _>::downgrade(settings);
 
         let input = "Das große Haus";
         let output = get_lang(input).unwrap();
@@ -312,7 +312,7 @@ mod tests {
         *settings = Settings::default();
         settings.get_lang_filter = get_lang_filter;
         // This locks `SETTINGS` for further write access in this scope.
-        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
+        let _settings = RecursiveRwLockWriteGuard::<'_, _>::downgrade(settings);
 
         let input = "Das große Haus";
         let output = get_lang(input).unwrap();

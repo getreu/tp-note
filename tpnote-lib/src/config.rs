@@ -25,7 +25,7 @@ use crate::highlight::get_highlighting_css;
 use crate::lingua::IsoCode639_1;
 use crate::markup_language::InputConverter;
 use crate::markup_language::MarkupLanguage;
-use parking_lot::RwLock;
+use parking_lot::RecursiveRwLock;
 use sanitize_filename_reader_friendly::TRIM_LINE_CHARS;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "lang-detection")]
@@ -237,7 +237,8 @@ pub const TMPL_HTML_VAR_DOC_TEXT: &str = "doc_text";
 /// data. This can be changed by the consumer of this library. Once the
 /// initialization done, this should remain static.
 /// For session configuration see: `settings::SETTINGS`.
-pub static LIB_CFG: LazyLock<RwLock<LibCfg>> = LazyLock::new(|| RwLock::new(LibCfg::default()));
+pub static LIB_CFG: LazyLock<RecursiveRwLock<LibCfg>> =
+    LazyLock::new(|| RecursiveRwLock::new(LibCfg::default()));
 
 /// An array of field names after deserialization.
 pub const LIB_CFG_RAW_FIELD_NAMES: [&str; 4] =

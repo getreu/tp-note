@@ -9,7 +9,7 @@ use crate::error::LibCfgError;
 use lingua;
 #[cfg(feature = "lang-detection")]
 use lingua::IsoCode639_1;
-use parking_lot::RwLock;
+use parking_lot::RecursiveRwLock;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::env;
@@ -126,11 +126,11 @@ impl Default for Settings {
 
 /// Global mutable variable of type `Settings`.
 #[cfg(not(test))]
-pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(DEFAULT_SETTINGS);
+pub(crate) static SETTINGS: RecursiveRwLock<Settings> = RecursiveRwLock::new(DEFAULT_SETTINGS);
 
 #[cfg(test)]
 /// Global default for `SETTINGS` in test environments.
-pub(crate) static SETTINGS: RwLock<Settings> = RwLock::new(DEFAULT_SETTINGS);
+pub(crate) static SETTINGS: RecursiveRwLock<Settings> = RecursiveRwLock::new(DEFAULT_SETTINGS);
 
 /// Like `Settings::update`, with `scheme_source = SchemeSource::Force("default")`
 /// and `force_lang = None`.
@@ -210,7 +210,7 @@ impl Settings {
         &mut self,
         scheme_source: SchemeSource,
     ) -> Result<(), LibCfgError> {
-        let lib_cfg = LIB_CFG.read_recursive();
+        let lib_cfg = LIB_CFG.read();
 
         let scheme = match scheme_source {
             SchemeSource::Force(s) => Cow::Borrowed(s),
@@ -246,7 +246,7 @@ impl Settings {
         let ext = match env::var(ENV_VAR_TPNOTE_EXTENSION_DEFAULT) {
             Ok(ed_env) if !ed_env.is_empty() => ed_env,
             Err(_) | Ok(_) => {
-                let lib_cfg = LIB_CFG.read_recursive();
+                let lib_cfg = LIB_CFG.read();
                 lib_cfg.scheme[self.current_scheme]
                     .filename
                     .extension_default
@@ -328,7 +328,7 @@ impl Settings {
         use crate::config::Mode;
 
         {
-            let lib_cfg = LIB_CFG.read_recursive();
+            let lib_cfg = LIB_CFG.read();
             let current_scheme = &lib_cfg.scheme[self.current_scheme];
 
             // Start form config.
@@ -376,7 +376,7 @@ impl Settings {
     /// `BTreeMap`. Add the user's default language and region.
     fn update_map_lang_filter_btmap(&mut self) {
         let mut btm = BTreeMap::new();
-        let lib_cfg = LIB_CFG.read_recursive();
+        let lib_cfg = LIB_CFG.read();
         for l in &lib_cfg.scheme[self.current_scheme].tmpl.filter.map_lang {
             if l.len() >= 2 {
                 btm.insert(l[0].to_string(), l[1].to_string());

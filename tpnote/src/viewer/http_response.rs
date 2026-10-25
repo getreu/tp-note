@@ -194,7 +194,7 @@ impl HttpResponse for ServerThread {
                     Path::new(&TMPL_HTML_VAR_VIEWER_DOC_CSS_PATH_VALUE),
                     MAX_AGE,
                     "text/css",
-                    LIB_CFG.read_recursive().tmpl_html.viewer_doc_css.as_bytes(),
+                    LIB_CFG.read().tmpl_html.viewer_doc_css.as_bytes(),
                 )?;
             }
 
@@ -205,7 +205,7 @@ impl HttpResponse for ServerThread {
                     MAX_AGE,
                     "text/css",
                     LIB_CFG
-                        .read_recursive()
+                        .read()
                         .tmpl_html
                         .viewer_highlighting_css
                         .as_bytes(),
@@ -235,7 +235,7 @@ impl HttpResponse for ServerThread {
                 //
                 // Condition 1: Only serve files that explicitly appear in
                 // `self.allowed_urls`.
-                let allowed_urls = self.allowed_urls.read_recursive();
+                let allowed_urls = self.allowed_urls.read();
                 // Is the request in our `allowed_urls` list?
                 if !allowed_urls.contains(relpath) {
                     // A rejected path that is a proper prefix of an allowed
@@ -349,7 +349,7 @@ impl HttpResponse for ServerThread {
                 if MarkupLanguage::from(extension).is_some() {
                     if abspath.is_file() {
                         let delivered_docs_count =
-                            self.delivered_tpnote_docs.read_recursive().len();
+                            self.delivered_tpnote_docs.read().len();
                         if delivered_docs_count < CFG.viewer.displayed_tpnote_count_max {
                             let html = self.render_content_and_error(&abspath)?;
                             self.respond_content_ok(&abspath, 0, "text/html", html.as_bytes())?;
@@ -486,7 +486,7 @@ impl HttpResponse for ServerThread {
     fn respond_too_many_requests(&mut self) -> Result<(), ViewerError> {
         let mut log_msg;
         {
-            let delivered_tpnote_docs = self.delivered_tpnote_docs.read_recursive();
+            let delivered_tpnote_docs = self.delivered_tpnote_docs.read();
 
             // Prepare the log entry.
             log_msg = format!(
@@ -593,7 +593,7 @@ impl HttpResponse for ServerThread {
         // accessible to all threads.
         // Secondly, convert all relative links to absolute links.
         .map(|html| {
-            let heading_id_policy = LIB_CFG.read_recursive().tmpl_html.auto_heading_ids;
+            let heading_id_policy = LIB_CFG.read().tmpl_html.auto_heading_ids;
             let html = assign_heading_ids(html, heading_id_policy);
             rewrite_links(
                 html,

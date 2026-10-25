@@ -470,7 +470,7 @@ Body text
                 .unwrap();
         // Check the HTML rendition.
         let html = n
-            .render_content_to_html(&LIB_CFG.read_recursive().tmpl_html.viewer, "")
+            .render_content_to_html(&LIB_CFG.read().tmpl_html.viewer, "")
             .unwrap();
         assert!(html.starts_with("<!DOCTYPE html>\n<html"))
     }
@@ -486,7 +486,7 @@ Body text
         use crate::settings::SETTINGS;
         use crate::settings::Settings;
         use crate::template::TemplateKind;
-        use parking_lot::RwLockWriteGuard;
+        use parking_lot::RecursiveRwLockWriteGuard;
         use std::env::temp_dir;
         use std::fs;
 
@@ -494,7 +494,7 @@ Body text
         let mut settings = SETTINGS.write();
         *settings = Settings::default();
         // This locks `SETTINGS` for further write access in this scope.
-        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
+        let _settings = RecursiveRwLockWriteGuard::<'_, _>::downgrade(settings);
         // Create a directory for the new note.
         let notedir = temp_dir().join("123-my dir/");
         fs::create_dir_all(&notedir).unwrap();
@@ -561,7 +561,7 @@ Body text
         use crate::settings::SETTINGS;
         use crate::settings::Settings;
         use crate::template::TemplateKind;
-        use parking_lot::RwLockWriteGuard;
+        use parking_lot::RecursiveRwLockWriteGuard;
         use std::env::temp_dir;
         use std::fs;
 
@@ -569,7 +569,7 @@ Body text
         let mut settings = SETTINGS.write();
         *settings = Settings::default();
         // This locks `SETTINGS` for further write access in this scope.
-        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
+        let _settings = RecursiveRwLockWriteGuard::<'_, _>::downgrade(settings);
         // Directory for the new note.
         let notedir = temp_dir();
 
@@ -658,7 +658,7 @@ Body text
         use crate::settings::SETTINGS;
         use crate::settings::Settings;
         use crate::template::TemplateKind;
-        use parking_lot::RwLockWriteGuard;
+        use parking_lot::RecursiveRwLockWriteGuard;
         use std::env::temp_dir;
         use std::fs;
 
@@ -666,7 +666,7 @@ Body text
         let mut settings = SETTINGS.write();
         *settings = Settings::default();
         // This locks `SETTINGS` for further write access in this scope.
-        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
+        let _settings = RecursiveRwLockWriteGuard::<'_, _>::downgrade(settings);
         // Directory for the new note.
         let notedir = temp_dir().join("123-my dir/");
 
@@ -757,7 +757,7 @@ Body text
         use crate::settings::SETTINGS;
         use crate::settings::Settings;
         use crate::template::TemplateKind;
-        use parking_lot::RwLockWriteGuard;
+        use parking_lot::RecursiveRwLockWriteGuard;
         use std::env::temp_dir;
         use std::fs;
 
@@ -765,7 +765,7 @@ Body text
         let mut settings = SETTINGS.write();
         *settings = Settings::default();
         // This locks `SETTINGS` for further write access in this scope.
-        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
+        let _settings = RecursiveRwLockWriteGuard::<'_, _>::downgrade(settings);
 
         // Create some non-Tp-Note-file.
         let raw = "This simulates a non tp-note file";

@@ -84,8 +84,8 @@ impl TemplateKind {
     /// Returns the content template string as it is defined in the configuration file.
     /// Panics for `TemplateKind::SyncFilename` and `TemplateKind::None`.
     pub fn get_content_template(&self) -> String {
-        let lib_cfg = LIB_CFG.read_recursive();
-        let scheme_idx = SETTINGS.read_recursive().current_scheme;
+        let lib_cfg = LIB_CFG.read();
+        let scheme_idx = SETTINGS.read().current_scheme;
         log::trace!(
             "Scheme index: {}, applying the content template: `{}`",
             scheme_idx,
@@ -118,8 +118,8 @@ impl TemplateKind {
     /// Returns the file template string as it is defined in the configuration file.
     /// Panics for `TemplateKind::None`.
     pub fn get_filename_template(&self) -> String {
-        let lib_cfg = LIB_CFG.read_recursive();
-        let scheme_idx = SETTINGS.read_recursive().current_scheme;
+        let lib_cfg = LIB_CFG.read();
+        let scheme_idx = SETTINGS.read().current_scheme;
         log::trace!(
             "Scheme index: {}, applying the filename template: `{}`",
             scheme_idx,

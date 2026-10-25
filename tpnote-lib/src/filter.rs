@@ -128,7 +128,7 @@ fn to_yaml_filter(
     kwargs: Kwargs,
     _state: &State,
 ) -> TeraResult<Value> {
-    let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+    let scheme = &LIB_CFG.read().scheme[SETTINGS.read().current_scheme];
 
     let val_yaml = if let Some(k) = kwargs.get::<String>("key")? {
         let mut m = Map::new();
@@ -230,7 +230,7 @@ fn to_html_filter(
             entries.sort_unstable_by_key(|(a, _)| *a);
             if is_root {
                 let scheme =
-                    &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+                    &LIB_CFG.read().scheme[SETTINGS.read().current_scheme];
                 for &(k, v) in &entries {
                     output.push_str("<div class=\"fm\">");
                     output.push_str(name(scheme, k.as_str().unwrap_or_default()));
@@ -283,7 +283,7 @@ fn name_filter(
         .ok_or_else(|| tera::Error::message("Filter 'name': value must be a string"))?;
 
     // This replaces the `fm`-name in the key by the localized name.
-    let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+    let scheme = &LIB_CFG.read().scheme[SETTINGS.read().current_scheme];
     let output = name(scheme, input);
     Ok(Value::from(output.to_string()))
 }
@@ -377,7 +377,7 @@ fn markup_to_html_filter(
     // `target='viewer'` / `target='exporter'`; a custom template that omits the
     // kwarg harmlessly falls back to the viewer policy.
     let error_policy = {
-        let lib_cfg = LIB_CFG.read_recursive();
+        let lib_cfg = LIB_CFG.read();
         match kwargs.get::<String>("target")?.as_deref() {
             Some("exporter") => lib_cfg.tmpl_html.exporter_embedded_content_error_policy,
             _ => lib_cfg.tmpl_html.viewer_embedded_content_error_policy,
@@ -1053,7 +1053,7 @@ fn insert_filter(
         .ok_or_else(|| tera::Error::message("Filter 'insert': value must be a map"))?;
 
     if let Some(inkey) = kwargs.get::<String>("key")? {
-        let scheme = &LIB_CFG.read_recursive().scheme[SETTINGS.read_recursive().current_scheme];
+        let scheme = &LIB_CFG.read().scheme[SETTINGS.read().current_scheme];
         let inkey = name(scheme, &inkey).to_owned();
         let inval = kwargs.get::<Value>("value")?.unwrap_or(Value::none());
         map.insert(Key::from(inkey), inval);
@@ -1129,7 +1129,7 @@ fn map_lang_filter(
     }
 
     // Set up converter.
-    let settings = SETTINGS.read_recursive();
+    let settings = SETTINGS.read();
     let convert = |v: Value| {
         if let (Some(s), Some(btm)) = (v.as_str(), &settings.map_lang_filter_btmap) {
             btm.get(s)
@@ -1333,7 +1333,7 @@ impl<'a> FirstHyperlink<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use parking_lot::RwLockWriteGuard;
+    use parking_lot::RecursiveRwLockWriteGuard;
     use serde_json::json;
     use std::collections::BTreeMap;
     use tera::{Kwargs, State};
@@ -2369,7 +2369,7 @@ Some more text."#;
         settings.map_lang_filter_btmap = Some(map_lang_filter_btmap);
 
         // This locks `SETTINGS` for further write access in this scope.
-        let _settings = RwLockWriteGuard::<'_, _>::downgrade(settings);
+        let _settings = RecursiveRwLockWriteGuard::<'_, _>::downgrade(settings);
 
         let input = Value::from_serializable(&json!(["de"]));
         let output = map_lang_filter(&input, Kwargs::default(), &st).unwrap();

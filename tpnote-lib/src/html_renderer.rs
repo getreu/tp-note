@@ -20,7 +20,7 @@ use crate::note::Note;
 #[cfg(feature = "viewer")]
 use crate::note_error_tera_template;
 use crate::template::TemplateKind;
-use parking_lot::RwLock;
+use parking_lot::RecursiveRwLock;
 use std::collections::HashSet;
 use std::fs::OpenOptions;
 use std::io;
@@ -111,7 +111,7 @@ impl HtmlRenderer {
         // `tmpl_html.viewer`.
         viewer_doc_js: &str,
     ) -> Result<String, NoteError> {
-        let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer;
+        let tmpl_html = &LIB_CFG.read().tmpl_html.viewer;
         HtmlRenderer::render(context, content, viewer_doc_js, tmpl_html)
     }
 
@@ -155,7 +155,7 @@ impl HtmlRenderer {
         context: Context<HasSettings>,
         content: T,
     ) -> Result<String, NoteError> {
-        let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.exporter;
+        let tmpl_html = &LIB_CFG.read().tmpl_html.exporter;
         HtmlRenderer::render(context, content, "", tmpl_html)
     }
 
@@ -232,7 +232,7 @@ impl HtmlRenderer {
         let context =
             context.insert_error_content(&note_erroneous_content, error_message, viewer_doc_js);
 
-        let tmpl_html = &LIB_CFG.read_recursive().tmpl_html.viewer_error;
+        let tmpl_html = &LIB_CFG.read().tmpl_html.viewer_error;
 
         // Apply template.
         let mut tera = Tera::default();
@@ -322,7 +322,7 @@ impl HtmlRenderer {
         // does not leave an empty output file behind.
         let root_path = context.get_root_path().to_owned();
         let html = Self::exporter_page(context, content)?;
-        let heading_id_policy = LIB_CFG.read_recursive().tmpl_html.auto_heading_ids;
+        let heading_id_policy = LIB_CFG.read().tmpl_html.auto_heading_ids;
         let html = assign_heading_ids(html, heading_id_policy);
         let html = rewrite_links(
             html,
@@ -331,7 +331,7 @@ impl HtmlRenderer {
             local_link_kind,
             // Do append `.html` to `.md` in links.
             true,
-            Arc::new(RwLock::new(HashSet::new())),
+            Arc::new(RecursiveRwLock::new(HashSet::new())),
         );
 
         // Write HTML rendition.
