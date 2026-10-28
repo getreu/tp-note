@@ -17,8 +17,7 @@ is_root_path_marker = true
 ### of the man page). Ignored everywhere else.
 ### The default `false` is the secure choice: it stops the
 ### search here, so no ancestor directory can inject
-### configuration — including the editor and browser launch
-### commands — into this project. Enable it only where every
+### configuration into this project. Enable it only where every
 ### directory above is trusted. Even then, place a project
 ### configuration file leaving `merge_parent_config` at
 ### `false` in the topmost ancestor to inherit from: its
