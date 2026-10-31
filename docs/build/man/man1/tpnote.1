@@ -1558,6 +1558,24 @@ The `\f[CR]\-\f[R]' between `\f[CR]{{ fm.fm_sort_tag }}\f[R]' and
 A so\-called \f[I]sort tag\f[R] is an alphanumeric prefix at the
 beginning of the filename.
 It is used to order files and notes in the file system.
+Not only note files, but also directories can carry a sort tag,
+e.g.\ `\f[CR]02\-Invoices/\f[R]'.
+.PP
+Besides ordering, a sort tag doubles as a short handle to address a
+document in a link, e.g.\ `\f[CR][my doc](<docs/20230508>)\f[R]'
+(cf.\ section \(lqLink types\(rq).
+Nevertheless, a sort tag is not a unique document identifier: Tp\-Note
+neither requires nor enforces uniqueness, and a document may well have
+no sort tag at all.
+Where you want to address a document unequivocally, it is up to you to
+extend its sort tag until it becomes unique within its directory.
+.PP
+Do not confuse a \f[I]sort tag\f[R] with the keyword tags known from
+other note taking applications.
+The latter correspond to Tp\-Note\(cqs `\f[CR]{{ fm.fm_keywords }}\f[R]'
+variable, which appears in a different part of the filename
+(cf.\ section \(lqFilename synchronization schemes\(rq).
+.PP
 Besides numerical digits and lowercase letters, a \f[I]sort tag\f[R] may
 contain any combination of `\f[CR]_\f[R]', `\f[CR]\-\f[R]',
 `\f[CR]=\f[R]' and `\f[CR].\f[R]' (cf.

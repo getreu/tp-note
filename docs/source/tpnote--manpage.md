@@ -1220,8 +1220,22 @@ The '`-`' between '`{{ fm.fm_sort_tag }}`' and '`{{ fm.fm_title }}`' is hereafte
 referred to as _sort-tag separator_ (cf. '`filename.sort_tag.separator`').
 
 A so-called _sort tag_ is an alphanumeric prefix at the beginning of the
-filename. It is used to order files and notes in the file system. Besides
-numerical digits and lowercase letters, a _sort tag_ may contain any
+filename. It is used to order files and notes in the file system. Not only
+note files, but also directories can carry a sort tag, e.g. '`02-Invoices/`'.
+
+Besides ordering, a sort tag doubles as a short handle to address a document
+in a link, e.g. '`[my doc](<docs/20230508>)`' (cf. section "Link types").
+Nevertheless, a sort tag is not a unique document identifier: Tp-Note neither
+requires nor enforces uniqueness, and a document may well have no sort tag at
+all. Where you want to address a document unequivocally, it is up to you to
+extend its sort tag until it becomes unique within its directory.
+
+Do not confuse a _sort tag_ with the keyword tags known from other note taking
+applications. The latter correspond to Tp-Note's '`{{ fm.fm_keywords }}`'
+variable, which appears in a different part of the filename (cf. section
+"Filename synchronization schemes").
+
+Besides numerical digits and lowercase letters, a _sort tag_ may contain any
 combination of '`_`', '`-`', '`=`' and '`.`' (cf.
 '`filename.sort_tag.extra_chars`'). If a sort-tag contains lowercase letters,
 only 2 in a row are allowed (cf.
