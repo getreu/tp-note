@@ -599,12 +599,12 @@ Consider the following _Tp-Note_-file:
 
 The filename has 4 parts:
 
-    {{ fm_sort_tag }}-{{ fm_title }}--{{ fm_subtitle }}.{{ fm_file_ext }}
+    {{ fm.fm_sort_tag }}-{{ fm.fm_title }}--{{ fm.fm_subtitle }}.{{ fm.fm_file_ext }}
 
-A so-called _sort-tag_ is a numerical prefix at the beginning of the
+A so-called _sort-tag_ is an alphanumeric prefix at the beginning of the
 filename. It is used to order files and notes in the file system. Besides
-numerical digits and whitespace, a _sort-tag_ can be any combination of
-`-_.` [^2] and is usually used as:
+numerical digits and lowercase letters, a _sort-tag_ can be any combination of
+`-_.=` [^2] and is usually used as:
 
 * *chronological sort-tag*
 
@@ -625,9 +625,27 @@ The figures below illustrate organizing files with *sort-tags*.
 
 ![File with chronological sort-tag](assets/filing-system2.png){width="7cm"}
 
-When _Tp-Note_ creates a new note, it automatically prepends a *chronological
-sort-tag* of today. The `{{ fm_title }}` part is usually derived from the parent
+Before _Tp-Note_ creates a new note, it searches the current directory for the
+latest existing _Tp-Note_ file. If that file starts with a *sequence number
+sort-tag*, _Tp-Note_ increments that number and uses the result as *sort-tag*
+for the new note. Otherwise, the new note gets a *chronological sort-tag* of
+today. The `{{ fm.fm_title }}` part is usually derived from the parent
 directory's name, omitting its own *sort-tag*.
+
+As the examples above show, not only note files, but also directories can
+carry a _sort-tag_.
+
+Note that a _sort-tag_ is not a unique document identifier: _Tp-Note_ neither
+requires nor enforces uniqueness, and a file may well have no _sort-tag_ at
+all. This becomes relevant when you refer to another document by its
+_sort-tag_ only, which is a shorthand notation _Tp-Note_'s viewer understands
+in links. If several documents in one directory share the same _sort-tag_, you
+can extend it until it becomes unique. Please consult _Tp-Note_'s manual page
+for more information about linking documents.
+
+Finally, do not confuse a _sort-tag_ with the keyword tags known from other
+note taking applications: a _sort-tag_ tells where a document belongs in an
+order, it does not tell what the document is about.
 
 
 
