@@ -909,7 +909,7 @@ mod tests {
         [arg_default]
         scheme = 'zettel'
         ";
-        let userconfig = temp_dir().join("tpnote.toml");
+        let userconfig = temp_dir().join("tpnote-scheme.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
         let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
@@ -923,7 +923,7 @@ mod tests {
         [viewer]
         served_mime_types = [ ['abc', 'abc/text'], ]
         ";
-        let userconfig = temp_dir().join("tpnote.toml");
+        let userconfig = temp_dir().join("tpnote-mime-types.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
         let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
@@ -936,7 +936,7 @@ mod tests {
         [viewer]
         session_binding_cookie = false
         ";
-        let userconfig = temp_dir().join("tpnote.toml");
+        let userconfig = temp_dir().join("tpnote-session-binding.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
         let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
@@ -946,7 +946,7 @@ mod tests {
         // Prepare test: `same_user_policy` defaults to `Enforce` and parses.
         #[cfg(feature = "same-user-policy")]
         {
-            let userconfig = temp_dir().join("tpnote.toml");
+            let userconfig = temp_dir().join("tpnote-same-user-default.toml");
             fs::write(&userconfig, b"").unwrap();
             let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
@@ -955,7 +955,7 @@ mod tests {
             [viewer]
             same_user_policy = \"Off\"
             ";
-            let userconfig = temp_dir().join("tpnote.toml");
+            let userconfig = temp_dir().join("tpnote-same-user-off.toml");
             fs::write(&userconfig, raw.as_bytes()).unwrap();
             let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Off);
@@ -967,7 +967,7 @@ mod tests {
             [viewer]
             same_user_policy = \"Warn\"
             ";
-            let userconfig = temp_dir().join("tpnote.toml");
+            let userconfig = temp_dir().join("tpnote-same-user-warn.toml");
             fs::write(&userconfig, raw.as_bytes()).unwrap();
             let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
@@ -977,7 +977,7 @@ mod tests {
             [viewer]
             same_user_policy = \"bogus\"
             ";
-            let userconfig = temp_dir().join("tpnote.toml");
+            let userconfig = temp_dir().join("tpnote-same-user-bogus.toml");
             fs::write(&userconfig, raw.as_bytes()).unwrap();
             let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
@@ -989,7 +989,7 @@ mod tests {
         let raw = "\
         unknown_field_name = 'aha'
         ";
-        let userconfig = temp_dir().join("tpnote.toml");
+        let userconfig = temp_dir().join("tpnote-unknown-field.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
         // No longer an error: the file is skipped, defaults apply.
@@ -1026,7 +1026,7 @@ mod tests {
         [scheme.tmpl]
         fm_var.localization = [ ['fm_foo', 'foofoo'], ]
         ";
-        let userconfig = temp_dir().join("tpnote.toml");
+        let userconfig = temp_dir().join("tpnote-scheme-localization.toml");
         fs::write(&userconfig, raw.as_bytes()).unwrap();
 
         let (_cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
