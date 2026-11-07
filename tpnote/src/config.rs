@@ -900,17 +900,84 @@ mod tests {
     use std::env::temp_dir;
     use std::fs;
     use std::path::PathBuf;
+    use std::sync::Mutex;
 
+    /// Serializes every test that calls `Cfg::from_files()`.
+    ///
+    /// `from_files()` publishes its result into the global `LIB_CFG`, and
+    /// `test_cfg_from_file` asserts on `LIB_CFG` right after calling it.
+    /// The harness runs these tests on parallel threads, so without this
+    /// lock another test's `from_files()` can land between that call and
+    /// the assertion and swap the configuration out from underneath it.
+    /// That the shorter tests currently finish before the longest one
+    /// reaches its `LIB_CFG` block is luck, not design -- it would stop
+    /// holding the moment a fourth test or a slower machine shifted the
+    /// timing.
+    ///
+    /// Poisoning is ignored on purpose: a failed assertion in one test must
+    /// surface as that test's own failure, not as a poison error in every
+    /// other test that would mask it.
+    static CFG_TEST_LOCK: Mutex<()> = Mutex::new(());
+
+    /// A directory below `temp_dir()` holding one test's configuration file
+    /// fixtures. Call `remove()` at the end of the test: nothing must be
+    /// left behind for a later Tp-Note run to stumble over, since a stray
+    /// `tpnote.toml` in the temporary directory is a project configuration
+    /// file as far as the upward search is concerned, and would be merged
+    /// into the configuration of any note file below it.
+    ///
+    /// Deliberately not a `Drop` guard: when an assertion fails the
+    /// fixtures should survive, so that the file that produced the failure
+    /// can still be looked at. `new()` clears the directory on the way in,
+    /// so the next run starts clean regardless.
+    ///
+    /// Each test passes its own name, so that tests running in parallel in
+    /// this binary neither share nor delete each other's fixtures.
+    struct TmpDir(PathBuf);
+
+    impl TmpDir {
+        fn new(test_name: &str) -> Self {
+            let path = temp_dir().join(test_name);
+            // Left over from an earlier run that failed (cf. above).
+            let _ = fs::remove_dir_all(&path);
+            fs::create_dir_all(&path).unwrap();
+            Self(path)
+        }
+
+        /// Writes `content` to `name` below this directory and returns the
+        /// path, ready to be handed to `Cfg::from_files()`.
+        fn write(&self, name: &str, content: &str) -> PathBuf {
+            let path = self.0.join(name);
+            fs::write(&path, content.as_bytes()).unwrap();
+            path
+        }
+
+        /// Creates a subdirectory, for fixtures that must sit in a
+        /// directory of their own.
+        fn subdir(&self, name: &str) -> PathBuf {
+            let path = self.0.join(name);
+            fs::create_dir_all(&path).unwrap();
+            path
+        }
+
+        /// Discards every fixture. Consumes the directory, so nothing can
+        /// reach for a fixture afterwards.
+        fn remove(self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
     #[test]
     fn test_cfg_from_file() {
+        let _serialized = CFG_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let tmp = TmpDir::new("tpnote-test-cfg-from-file");
+
         //
         // Prepare test: some mini config file.
         let raw = "\
         [arg_default]
         scheme = 'zettel'
         ";
-        let userconfig = temp_dir().join("tpnote-scheme.toml");
-        fs::write(&userconfig, raw.as_bytes()).unwrap();
+        let userconfig = tmp.write("scheme.toml", raw);
 
         let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
         assert_eq!(cfg.arg_default.scheme, "zettel");
@@ -923,8 +990,7 @@ mod tests {
         [viewer]
         served_mime_types = [ ['abc', 'abc/text'], ]
         ";
-        let userconfig = temp_dir().join("tpnote-mime-types.toml");
-        fs::write(&userconfig, raw.as_bytes()).unwrap();
+        let userconfig = tmp.write("mime-types.toml", raw);
 
         let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
         assert_eq!(cfg.viewer.served_mime_types.len(), 1);
@@ -936,8 +1002,7 @@ mod tests {
         [viewer]
         session_binding_cookie = false
         ";
-        let userconfig = temp_dir().join("tpnote-session-binding.toml");
-        fs::write(&userconfig, raw.as_bytes()).unwrap();
+        let userconfig = tmp.write("session-binding.toml", raw);
 
         let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
         assert!(!cfg.viewer.session_binding_cookie);
@@ -946,8 +1011,7 @@ mod tests {
         // Prepare test: `same_user_policy` defaults to `Enforce` and parses.
         #[cfg(feature = "same-user-policy")]
         {
-            let userconfig = temp_dir().join("tpnote-same-user-default.toml");
-            fs::write(&userconfig, b"").unwrap();
+            let userconfig = tmp.write("same-user-default.toml", "");
             let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
 
@@ -955,8 +1019,7 @@ mod tests {
             [viewer]
             same_user_policy = \"Off\"
             ";
-            let userconfig = temp_dir().join("tpnote-same-user-off.toml");
-            fs::write(&userconfig, raw.as_bytes()).unwrap();
+            let userconfig = tmp.write("same-user-off.toml", raw);
             let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Off);
 
@@ -967,8 +1030,7 @@ mod tests {
             [viewer]
             same_user_policy = \"Warn\"
             ";
-            let userconfig = temp_dir().join("tpnote-same-user-warn.toml");
-            fs::write(&userconfig, raw.as_bytes()).unwrap();
+            let userconfig = tmp.write("same-user-warn.toml", raw);
             let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
 
@@ -977,8 +1039,7 @@ mod tests {
             [viewer]
             same_user_policy = \"bogus\"
             ";
-            let userconfig = temp_dir().join("tpnote-same-user-bogus.toml");
-            fs::write(&userconfig, raw.as_bytes()).unwrap();
+            let userconfig = tmp.write("same-user-bogus.toml", raw);
             let (cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
             assert_eq!(cfg.viewer.same_user_policy, SameUserPolicy::Enforce);
         }
@@ -989,8 +1050,7 @@ mod tests {
         let raw = "\
         unknown_field_name = 'aha'
         ";
-        let userconfig = temp_dir().join("tpnote-unknown-field.toml");
-        fs::write(&userconfig, raw.as_bytes()).unwrap();
+        let userconfig = tmp.write("unknown-field.toml", raw);
 
         // No longer an error: the file is skipped, defaults apply.
         let (_cfg, warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
@@ -1002,10 +1062,8 @@ mod tests {
         // silent: it is reported back in the returned warning list, which
         // `main()` logs once the logger's filter allows it through (cf.
         // `CFG_FILE_WARNINGS`).
-        let good_config = temp_dir().join("tpnote-good.toml");
-        fs::write(&good_config, "[arg_default]\nscheme = 'zettel'\n").unwrap();
-        let bad_config = temp_dir().join("tpnote-bad.toml");
-        fs::write(&bad_config, "unknown_field_name = 'aha'\n").unwrap();
+        let good_config = tmp.write("good.toml", "[arg_default]\nscheme = 'zettel'\n");
+        let bad_config = tmp.write("bad.toml", "unknown_field_name = 'aha'\n");
 
         let (cfg, warnings) = Cfg::from_files(&[good_config, bad_config.clone()], &[]).unwrap();
         assert_eq!(cfg.arg_default.scheme, "zettel");
@@ -1026,8 +1084,7 @@ mod tests {
         [scheme.tmpl]
         fm_var.localization = [ ['fm_foo', 'foofoo'], ]
         ";
-        let userconfig = temp_dir().join("tpnote-scheme-localization.toml");
-        fs::write(&userconfig, raw.as_bytes()).unwrap();
+        let userconfig = tmp.write("scheme-localization.toml", raw);
 
         let (_cfg, _warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
         {
@@ -1061,6 +1118,8 @@ mod tests {
             // `./config_default.toml`:
             assert_eq!(lib_cfg.scheme[didx].name, "default");
         } // Free `LIB_CFG` lock.
+
+        tmp.remove();
     }
 
     /// A project configuration file (found by the upward search) must not
@@ -1069,6 +1128,9 @@ mod tests {
     /// argv of a `Command::new()` call with zero sanitization.
     #[test]
     fn test_cfg_from_file_project_config_app_args() {
+        let _serialized = CFG_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let tmp = TmpDir::new("tpnote-test-project-config-app-args");
+
         // The built-in default `editor` list, for comparison below.
         let (default_cfg, _warnings) = Cfg::from_files(&[], &[]).unwrap();
         let default_editor = default_cfg.app_args.unix.editor;
@@ -1079,8 +1141,7 @@ mod tests {
         [app_args.unix]
         editor = [[\"evil\"]]
         ";
-        let project_config = temp_dir().join("tpnote-project-config-app-args.toml");
-        fs::write(&project_config, raw.as_bytes()).unwrap();
+        let project_config = tmp.write("project-config-app-args.toml", raw);
 
         let (cfg, warnings) = Cfg::from_files(
             std::slice::from_ref(&project_config),
@@ -1105,8 +1166,7 @@ mod tests {
         [app_args.unix]
         editor = [[\"harmless-test-editor\"]]
         ";
-        let userconfig = temp_dir().join("tpnote-non-project-config-app-args.toml");
-        fs::write(&userconfig, raw.as_bytes()).unwrap();
+        let userconfig = tmp.write("non-project-config-app-args.toml", raw);
 
         let (cfg, warnings) = Cfg::from_files(&[userconfig], &[]).unwrap();
         assert_eq!(
@@ -1124,8 +1184,7 @@ mod tests {
         [app_args.unix]
         editor = [[\"evil\"]]
         ";
-        let project_config = temp_dir().join("tpnote-project-config-mixed.toml");
-        fs::write(&project_config, raw.as_bytes()).unwrap();
+        let project_config = tmp.write("project-config-mixed.toml", raw);
 
         let (cfg, warnings) = Cfg::from_files(
             std::slice::from_ref(&project_config),
@@ -1147,13 +1206,14 @@ mod tests {
         [app_args]
         # unix.editor = [[\"harmless-test-editor\"]]
         ";
-        let marker = temp_dir().join("tpnote-marker-empty-app-args.toml");
-        fs::write(&marker, raw.as_bytes()).unwrap();
+        let marker = tmp.write("marker-empty-app-args.toml", raw);
 
         let (cfg, warnings) =
             Cfg::from_files(std::slice::from_ref(&marker), std::slice::from_ref(&marker)).unwrap();
         assert_eq!(cfg.app_args.unix.editor, default_editor);
         assert!(warnings.is_empty());
+
+        tmp.remove();
     }
 
     /// `ProjectPaths` decides *which* files count as project configuration
@@ -1164,14 +1224,15 @@ mod tests {
     /// file.
     #[test]
     fn test_project_config_paths_classification() {
+        let _serialized = CFG_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let tmp = TmpDir::new("tpnote-test-project-config-paths");
         let fixed = ProjectPaths::fixed_config_paths();
 
         // (a) A project configuration file in a directory that has nothing
         // to do with the user's own configuration -- a cloned repository,
         // an extracted archive, a synced folder -- stays classified as a
         // project configuration file, and is therefore still stripped.
-        let untrusted_dir = temp_dir().join("tpnote-untrusted-repo");
-        fs::create_dir_all(&untrusted_dir).unwrap();
+        let untrusted_dir = tmp.subdir("untrusted-repo");
         let untrusted_config = untrusted_dir.join("tpnote.toml");
         // The premise of this case: it is none of the user's own
         // configuration file locations.
@@ -1262,5 +1323,7 @@ mod tests {
         let with_env = ProjectPaths::fixed_config_paths_from(env_named.to_str(), None);
         let without_env = ProjectPaths::fixed_config_paths_from(None, None);
         assert_eq!(with_env.len(), without_env.len());
+
+        tmp.remove();
     }
 }
