@@ -934,10 +934,14 @@ This paragraph starts on a new page.
 
 **-V**, **\--version**
 
-> Print Tp-Note's version, its built-in features and the path to the
-> sourced configuration file. The output is YAML formatted for further
-> automatic processing. In addition, use '`-V -b -d trace`' for
-> configuration file debugging.
+> Print Tp-Note's version, its built-in features and the configuration
+> files it works with. Two lists describe the latter:
+> '`searched_config_file_paths`' names every location Tp-Note considers, in
+> the order they are merged, including those where no file exists;
+> '`sourced_config_files`' names the subset actually found and merged. The
+> output is YAML formatted for further automatic processing. In addition,
+> use '`-V -b -d trace`' to dump the resulting merged configuration itself,
+> value by value (cf. "CUSTOMIZATION").
 
 **-x** _DIRECTORY_, **\--export**=_DIRECTORY_
 
@@ -1506,7 +1510,7 @@ default values. This happens in the following order:
    file. Such a file can additionally set the two root-level variables
    '`is_root_path_marker`' and '`merge_parent_config`' (cf. "Searching
    for project configuration files" below).
-4. The file indicated by the command line parameter '`--config <FIlE>`'.
+4. The file indicated by the command line parameter '`--config <FILE>`'.
 
 This manual names these locations after their scope: the file from 1. is
 the _system configuration file_, the one from 2. the _user configuration
@@ -1523,8 +1527,13 @@ When Tp-Note starts, it merges all available configuration files, in the
 order above, into the default configuration. Each file is applied one at a
 time and kept only if the result still parses into a valid configuration; an
 invalid file (bad syntax, wrong value, unknown key) is skipped with a logged
-warning instead of discarding every other, correctly loaded file. For
-debugging, you can print out the merged result with '`-V -b -d trace`'.
+warning instead of discarding every other, correctly loaded file. No file is
+sourced twice, even when two of the locations above happen to resolve to the
+same path. To see which files took part, run '`-V`': it prints
+'`searched_config_file_paths`', every location considered in merge order
+(including those holding no file), and '`sourced_config_files`', the subset
+actually read. Adding '`-b -d trace`' dumps the merged configuration itself,
+so you can check what a value ended up as, not merely where it came from.
 
 ```sh
 tpnote -V -b -d trace  |less
@@ -1586,8 +1595,16 @@ example a directory shared with other users. If a subproject should
 inherit settings from one specific ancestor only, place a plain
 '`tpnote.toml`' at that ancestor without '`merge_parent_config`' set: its
 default `false` value stops the search there, rather than leaving it
-open-ended all the way to the filesystem root. To change the editor or
-browser, use your user or system configuration file instead.
+open-ended all the way to the filesystem root.
+
+To set the editor or browser commands, use the system configuration file,
+your user configuration file, or the file you name with
+'`--config <FILE>`'. '`[app_args]`' always applies in these three.
+Setting '`TPNOTE_CONFIG`' changes nothing here: it only moves your user
+configuration file to another path, it does not make that file any less
+trusted. '`[app_args]`' is ignored in a project configuration file only,
+that is, in a '`tpnote.toml`' that the upward search described above
+turned up.
 
 **Example with one project configuration file.** Say
 '`~/notes/project/`' holds both the note being edited and the following
