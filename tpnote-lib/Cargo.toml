@@ -63,8 +63,8 @@ syntect = { version = "5.3.0", optional = true, default-features = false, featur
 tera.workspace = true
 thiserror.workspace = true
 toml.workspace = true
-tpnote-html2md = { path = "../tpnote-html2md", optional = true }
-#tpnote-html2md = { version = "0.3.11", optional = true }
+#tpnote-html2md = { path = "../tpnote-html2md", optional = true }
+tpnote-html2md = { version = "0.3.11", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 win32job = "2.0.3"
