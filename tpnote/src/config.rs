@@ -725,15 +725,32 @@ impl ProjectPaths {
         (root_path, config_chain, searched_chain)
     }
 
-    /// Assembles the fixed per-platform candidate locations and the command
-    /// line override around `project_config_chain`, the project
-    /// configuration file portion of the path list. Called twice while
-    /// building `ProjectPaths`:
-    /// once for the files that were actually found
-    /// (`ProjectPaths::config_paths`, used for merging), once for every
-    /// candidate the upward search considered
-    /// (`ProjectPaths::searched_paths`, used only for reporting).
-    fn assemble_config_paths(project_config_chain: &[PathBuf]) -> Vec<PathBuf> {
+    /// Every configuration file that is *not* a project configuration file:
+    /// the system wide location, the user's own, and the command line
+    /// override. Unlike a project configuration file, none of these can be
+    /// dropped into a directory the user does not control, so none of them
+    /// is subject to the `[app_args]` restriction `Cfg::from_files()`
+    /// applies (cf. `ProjectPaths::project_config_paths`).
+    fn fixed_config_paths() -> Vec<PathBuf> {
+        Self::fixed_config_paths_from(
+            env::var(ENV_VAR_TPNOTE_CONFIG).ok().as_deref(),
+            ARGS.config.as_deref(),
+        )
+    }
+
+    /// The pure core of `fixed_config_paths()`. The two values that come
+    /// from the process environment are passed in, so that a test can
+    /// exercise the `TPNOTE_CONFIG` and `--config` cases, which are
+    /// otherwise unreachable: `ARGS` is parsed once from the real argv.
+    ///
+    /// Ordered by ascending precedence, except that the command line
+    /// override -- the last element, if any -- outranks even a project
+    /// configuration file and is therefore appended after the project chain
+    /// by `assemble_config_paths()`.
+    fn fixed_config_paths_from(
+        env_config: Option<&str>,
+        commandline_path: Option<&str>,
+    ) -> Vec<PathBuf> {
         let mut config_path: Vec<PathBuf> = vec![];
 
         #[cfg(unix)]
@@ -742,7 +759,7 @@ impl ProjectPaths {
         // The user's configuration file. Its location can be overridden with
         // the environment variable, in which case the standard per-platform
         // location below is not consulted.
-        if let Ok(env_config) = env::var(ENV_VAR_TPNOTE_CONFIG) {
+        if let Some(env_config) = env_config {
             config_path.push(PathBuf::from(env_config));
         } else if let Some(usr_config) = ProjectDirs::from("rs", "", CARGO_BIN_NAME) {
             let mut config = PathBuf::from(usr_config.config_dir());
@@ -750,14 +767,76 @@ impl ProjectPaths {
             config_path.push(config);
         };
 
-        config_path.extend_from_slice(project_config_chain);
-
-        if let Some(commandline_path) = &ARGS.config {
+        if let Some(commandline_path) = commandline_path {
             // Config path comes from command line.
             config_path.push(PathBuf::from(commandline_path));
         };
 
         config_path
+    }
+
+    /// Assembles the fixed per-platform candidate locations and the command
+    /// line override around `project_config_chain`, the project
+    /// configuration file portion of the path list. Called twice while
+    /// building `ProjectPaths`:
+    /// once for the files that were actually found
+    /// (`ProjectPaths::config_paths`, used for merging), once for every
+    /// candidate the upward search considered
+    /// (`ProjectPaths::searched_paths`, used only for reporting).
+    ///
+    /// No path appears twice in the result. The upward search can perfectly
+    /// well climb through the very directory a fixed candidate lives in --
+    /// running Tp-Note inside `~/.config/tpnote` is enough -- and merging,
+    /// parsing, and reporting the errors of one and the same file twice
+    /// gains nothing while duplicating every warning that file produces.
+    fn assemble_config_paths(project_config_chain: &[PathBuf]) -> Vec<PathBuf> {
+        // Appended only after the project chain, as it outranks it.
+        let commandline_path = ARGS.config.as_ref().map(PathBuf::from);
+
+        let mut config_path: Vec<PathBuf> = Self::fixed_config_paths()
+            .into_iter()
+            .filter(|p| Some(p) != commandline_path.as_ref())
+            .collect();
+
+        for path in project_config_chain {
+            if !config_path.contains(path) && Some(path) != commandline_path.as_ref() {
+                config_path.push(path.clone());
+            }
+        }
+
+        if let Some(commandline_path) = commandline_path {
+            config_path.push(commandline_path);
+        }
+
+        config_path
+    }
+
+    /// The project configuration file portion of `config_paths`: the subset
+    /// of `config_chain` that `Cfg::from_files()` must not allow to set
+    /// `[app_args]`.
+    ///
+    /// A path that is also one of `fixed_config_paths()` is excluded: the
+    /// user did name that file as their configuration file, so the fact
+    /// that the upward search happened to climb through its directory as
+    /// well must not downgrade the trust it is given -- otherwise merely
+    /// running Tp-Note inside `~/.config/tpnote` would silently drop the
+    /// user's own `[app_args]`.
+    ///
+    /// This cannot be turned into a way around the restriction: a chain
+    /// entry is always `<ancestor of the note's directory>/tpnote.toml`, so
+    /// matching one of the fixed paths means writing into `/etc/tpnote`
+    /// (root), writing into the user's own configuration directory, or
+    /// naming the file with `--config` -- in each case the writer already
+    /// holds the power the restriction exists to withhold. The comparison
+    /// is textual, not canonicalized, which fails closed: an unrecognized
+    /// spelling of the same file stays restricted.
+    fn project_config_paths(config_chain: &[PathBuf]) -> Vec<PathBuf> {
+        let fixed = Self::fixed_config_paths();
+        config_chain
+            .iter()
+            .filter(|p| !fixed.contains(p))
+            .cloned()
+            .collect()
     }
 
     /// Builds `PROJECT_PATHS`: runs the upward project configuration file
@@ -787,7 +866,7 @@ impl ProjectPaths {
             root_path,
             config_paths: ProjectPaths::assemble_config_paths(&config_chain),
             searched_paths: ProjectPaths::assemble_config_paths(&searched_chain),
-            project_config_paths: config_chain,
+            project_config_paths: ProjectPaths::project_config_paths(&config_chain),
         }
     }
 }
@@ -814,10 +893,13 @@ mod tests {
     use tpnote_lib::config::LIB_CFG;
 
     use super::Cfg;
+    use super::ProjectPaths;
     #[cfg(feature = "same-user-policy")]
     use super::SameUserPolicy;
+    use std::collections::HashSet;
     use std::env::temp_dir;
     use std::fs;
+    use std::path::PathBuf;
 
     #[test]
     fn test_cfg_from_file() {
@@ -1072,5 +1154,113 @@ mod tests {
             Cfg::from_files(std::slice::from_ref(&marker), std::slice::from_ref(&marker)).unwrap();
         assert_eq!(cfg.app_args.unix.editor, default_editor);
         assert!(warnings.is_empty());
+    }
+
+    /// `ProjectPaths` decides *which* files count as project configuration
+    /// files, and thus which ones `Cfg::from_files()` strips `[app_args]`
+    /// from (cf. `test_cfg_from_file_project_config_app_args`). Exempting a
+    /// file that is also one of the fixed candidate locations must not open
+    /// a way around that restriction for an ordinary project configuration
+    /// file.
+    #[test]
+    fn test_project_config_paths_classification() {
+        let fixed = ProjectPaths::fixed_config_paths();
+
+        // (a) A project configuration file in a directory that has nothing
+        // to do with the user's own configuration -- a cloned repository,
+        // an extracted archive, a synced folder -- stays classified as a
+        // project configuration file, and is therefore still stripped.
+        let untrusted_dir = temp_dir().join("tpnote-untrusted-repo");
+        fs::create_dir_all(&untrusted_dir).unwrap();
+        let untrusted_config = untrusted_dir.join("tpnote.toml");
+        // The premise of this case: it is none of the user's own
+        // configuration file locations.
+        assert!(!fixed.contains(&untrusted_config));
+
+        let chain = vec![untrusted_config.clone()];
+        assert_eq!(
+            ProjectPaths::project_config_paths(&chain),
+            vec![untrusted_config.clone()]
+        );
+
+        // End to end: classified as above, the merged configuration never
+        // picks up the editor that file tries to install.
+        let raw = "\
+        [app_args.unix]
+        editor = [[\"evil\"]]
+        ";
+        fs::write(&untrusted_config, raw.as_bytes()).unwrap();
+
+        let (default_cfg, _warnings) = Cfg::from_files(&[], &[]).unwrap();
+        let default_editor = default_cfg.app_args.unix.editor;
+
+        let (cfg, warnings) =
+            Cfg::from_files(&chain, &ProjectPaths::project_config_paths(&chain)).unwrap();
+        assert_eq!(cfg.app_args.unix.editor, default_editor);
+        assert_ne!(cfg.app_args.unix.editor, vec![vec!["evil".to_string()]]);
+        assert_eq!(warnings.len(), 1);
+        assert!(warnings[0].to_string().contains("app_args"));
+        assert!(
+            warnings[0]
+                .to_string()
+                .contains(&untrusted_config.display().to_string())
+        );
+
+        // (b) A file that *is* one of the fixed candidate locations is
+        // exempted even when the upward search climbed through its own
+        // directory (running Tp-Note inside `~/.config/tpnote` is enough).
+        // Without this, the user's own `[app_args]` would be dropped
+        // depending only on the current working directory.
+        for fixed_path in &fixed {
+            assert!(
+                ProjectPaths::project_config_paths(std::slice::from_ref(fixed_path)).is_empty()
+            );
+        }
+
+        // (c) And such a file is merged exactly once, instead of being
+        // parsed -- and reported as broken -- twice.
+        for fixed_path in &fixed {
+            let assembled = ProjectPaths::assemble_config_paths(std::slice::from_ref(fixed_path));
+            assert_eq!(assembled.iter().filter(|p| *p == fixed_path).count(), 1);
+        }
+
+        // (d) `assemble_config_paths()` never returns the same path twice,
+        // whatever the chain holds.
+        let chain = vec![untrusted_config.clone(), untrusted_config.clone()];
+        let assembled = ProjectPaths::assemble_config_paths(&chain);
+        let unique: HashSet<_> = assembled.iter().collect();
+        assert_eq!(assembled.len(), unique.len());
+        assert_eq!(
+            assembled.iter().filter(|p| **p == untrusted_config).count(),
+            1
+        );
+
+        // (e) The two locations the user names explicitly -- the
+        // `TPNOTE_CONFIG` environment variable and `--config` -- belong to
+        // the trusted set, so they keep their `[app_args]` even when the
+        // upward search climbs through their own directory. Exercised
+        // through `fixed_config_paths_from()` because the real
+        // `fixed_config_paths()` can see neither: `ARGS` is parsed once
+        // from the test harness's argv, and mutating the environment would
+        // race the other tests in this binary.
+        //
+        // Composition with (a)/(b) above gives the whole property: those
+        // cases pin down that `project_config_paths()` exempts exactly the
+        // members of the fixed set and nothing else.
+        let env_named = PathBuf::from("/explicitly/named/by-env/tpnote.toml");
+        let cli_named = PathBuf::from("/explicitly/named/by-cli/tpnote.toml");
+        let named = ProjectPaths::fixed_config_paths_from(env_named.to_str(), cli_named.to_str());
+        assert!(named.contains(&env_named));
+        assert!(named.contains(&cli_named));
+
+        // And `--config` stays last, outranking everything before it.
+        assert_eq!(named.last(), Some(&cli_named));
+
+        // (f) `TPNOTE_CONFIG` *replaces* the per-platform user location
+        // rather than adding to it, so setting it cannot smuggle an extra
+        // trusted path in beside the standard one.
+        let with_env = ProjectPaths::fixed_config_paths_from(env_named.to_str(), None);
+        let without_env = ProjectPaths::fixed_config_paths_from(None, None);
+        assert_eq!(with_env.len(), without_env.len());
     }
 }
