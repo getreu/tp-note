@@ -2,7 +2,7 @@
   description = "Run WiX Toolset 6 under Wine on Linux (via MSI installer)";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
   outputs =
