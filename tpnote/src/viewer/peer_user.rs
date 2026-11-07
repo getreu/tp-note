@@ -50,14 +50,32 @@ pub(crate) fn identify_peer_user(local: SocketAddr, peer: SocketAddr) -> PeerChe
     let peer_pid = peer_pid(local, peer).map(Pid::from_u32);
     let our_pid = get_current_pid().ok();
 
-    // 2. Resolve the PIDs we have to user ids. Two sysinfo 0.33 quirks:
+    // 2. Resolve the PIDs we have to user ids. Two sysinfo quirks (still
+    //    present in 0.40):
     //    - `everything()` is required: a narrower `ProcessRefreshKind`
     //      (e.g. `nothing().with_user(...)`) does not insert the process into
     //      the `System` map, so `process()` then returns `None`.
     //    - the PID list must be deduplicated: passing the same PID twice (which
     //      happens for a same-process/loopback self-connection) refreshes
     //      nothing.
-    let mut sys = System::new();
+    // `sysinfo` 0.40 made the constructors fallible. Being unable to read
+    // the process table means no user id can be resolved, which must read as
+    // `Unknown` -- the fail-closed outcome the caller's policy already handles
+    // (cf. the module comment) -- and never as `Same`.
+    let mut sys = match System::new() {
+        Ok(sys) => sys,
+        Err(e) => {
+            log::warn!(
+                "Cannot read the process table ({e}); treating the peer's \
+                 OS user as unknown."
+            );
+            return PeerCheck {
+                relation: PeerUser::Unknown,
+                local_user: UNKNOWN_USER.to_string(),
+                peer_user: UNKNOWN_USER.to_string(),
+            };
+        }
+    };
     let mut pids: Vec<Pid> = Vec::new();
     if let Some(p) = peer_pid {
         pids.push(p);
@@ -91,10 +109,12 @@ pub(crate) fn identify_peer_user(local: SocketAddr, peer: SocketAddr) -> PeerChe
     };
 
     // 3. Map the user ids to names for logging.
-    let users = Users::new_with_refreshed_list();
+    // Fallible as well, but the names only feed the log line, so a failure
+    // degrades to `UNKNOWN_USER` instead of changing the decision above.
+    let users = Users::new_with_refreshed_list().ok();
     let name_of = |uid: &Option<Uid>| -> String {
         uid.as_ref()
-            .and_then(|u| users.get_user_by_id(u))
+            .and_then(|u| users.as_ref()?.get_user_by_id(u))
             .map(|u| u.name().to_string())
             .unwrap_or_else(|| UNKNOWN_USER.to_string())
     };
