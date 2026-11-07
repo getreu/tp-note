@@ -30,12 +30,22 @@
     {
       devShells.${system}.default = pkgs.mkShell {
         nativeBuildInputs = [
-          # The *Full* variant bundles the wine-mono and wine-gecko MSIs in the
-          # store, so Wine installs the .NET Framework runtime (WiX 6 CLI targets
-          # .NETFramework v4.7.2) SILENTLY from its local copy at prefix creation
-          # instead of popping an interactive "download Mono?" dialog. This is
-          # what makes a cold prefix reproducible in CI (fully cached, no network).
-          pkgs.wineWowPackages.stableFull
+          # wine64Packages (64-bit only, no 32-bit multilib) rather than
+          # wineWowPackages: the Wow (32+64-bit) combination has no cached
+          # binary for this revision on either this machine or GitHub's
+          # runners, forcing a from-source Wine build that -- compounded by
+          # the crash-dialog loop below -- made CI run for 2.5+ hours before
+          # being cancelled. WiX 6's CLI is .NET-only and never needs 32-bit
+          # support, and wine64Packages.stableFull substitutes instantly from
+          # cache.nixos.org (confirmed on this exact revision).
+          #
+          # The *Full* variant bundles the wine-mono and wine-gecko MSIs in
+          # the store, so Wine installs the .NET Framework runtime (WiX 6 CLI
+          # targets .NETFramework v4.7.2) SILENTLY from its local copy at
+          # prefix creation instead of popping an interactive "download
+          # Mono?" dialog. This is what makes a cold prefix reproducible in
+          # CI (fully cached, no network).
+          pkgs.wine64Packages.stableFull
           pkgs.cabextract
           pkgs.unzip
           pkgs.msitools
@@ -65,13 +75,14 @@
             wineboot -u || wineboot -u
             wineserver -w
 
-            # Headless CI has no window driver, so any crash (e.g. explorer.exe
-            # failing to create a window) must terminate the faulting process
-            # instead of popping winedbg's "Unhandled exception" dialog -- that
-            # dialog has no display to render on either, and without a display
-            # each attempt re-faults, spawning a new winedbg --auto instance
-            # per failure with nothing to stop the next one: an unbounded
-            # process fork loop.
+            # Headless CI has no window driver, so any crash (e.g. a Windows
+            # process failing to create a window) must terminate the
+            # faulting process instead of popping winedbg's "Unhandled
+            # exception" dialog -- that dialog has no display to render on
+            # either, and without a display each attempt re-faults, spawning
+            # a new winedbg --auto per failure with nothing to stop the next
+            # one: an unbounded process fork loop (confirmed: 70+ processes
+            # spawned in under a minute before being killed by hand).
             wine reg add "HKCU\\Software\\Wine\\WineDbg" /v ShowCrashDialog /t REG_DWORD /d 0 /f
             wineserver -w
 
