@@ -18,5 +18,6 @@ Currently, supported:
 + Images and links
 + Tables
 + Formatting (bold, italic, strike-through, underline)
-+ Code (doesn't yet detect the language)
++ Code (the language is detected from a `class="language-..."` attribute
+  on the inner `<code>` element)
 
