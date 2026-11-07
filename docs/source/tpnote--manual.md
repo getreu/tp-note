@@ -1,9 +1,10 @@
 ---
-title:    "Tp-Note: markup enhanced granular note-taking"
-subtitle: A filename-synchronizing, template-driven note-taker that keeps your
-          notes as plain Markdown files with no database and no lock-in
+title:    "Tp-Note: File-Centric Rust Markdown Note-Taking"
+subtitle: |-
+  Rust note-taking tool that captures clipboard content into template-driven
+  Markdown files with synchronized filenames and no database.
 author:   Jens Getreu
-date:     2026-09-30
+date:     2026-11-07
 version:  1.27.4
 filename_sync: false
 lang:     en-GB
