@@ -65,8 +65,18 @@
             wineboot -u || wineboot -u
             wineserver -w
 
+            # Headless CI has no window driver, so any crash (e.g. explorer.exe
+            # failing to create a window) must terminate the faulting process
+            # instead of popping winedbg's "Unhandled exception" dialog -- that
+            # dialog has no display to render on either, and without a display
+            # each attempt re-faults, spawning a new winedbg --auto instance
+            # per failure with nothing to stop the next one: an unbounded
+            # process fork loop.
+            wine reg add "HKCU\\Software\\Wine\\WineDbg" /v ShowCrashDialog /t REG_DWORD /d 0 /f
+            wineserver -w
+
             echo ">>> Installing WiX ${wixVersion} (MSI)..."
-            wine64 msiexec /i ${wixMsi} /qn
+            wine msiexec /i ${wixMsi} /qn
             wineserver -w
 
             touch "$WINEPREFIX/.wix-installed"
@@ -86,8 +96,8 @@
 
           echo
           echo ">>> WiX development shell ready."
-          echo ">>> Run: wine64 wix.exe --version"
-          echo ">>> Build with: wine64 wix.exe build tpnote.wxs -o tpnote.msi"
+          echo ">>> Run: wine wix.exe --version"
+          echo ">>> Build with: wine wix.exe build tpnote.wxs -o tpnote.msi"
           echo
         '';
       };

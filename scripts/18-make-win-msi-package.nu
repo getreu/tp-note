@@ -33,7 +33,7 @@ $wxs_content | save -f "tpnote-tmp.wxs"
 # 5. Execute the build via Nix
 # We use ^ to ensure we are calling external commands
 let output_msi = $"($package_name)-($bin_version)-x64.msi"
-^nix develop $"($project_dir)/wix" --command wine64 wix.exe build tpnote-tmp.wxs -b . -o $output_msi
+^nix develop $"($project_dir)/wix" --command wine wix.exe build tpnote-tmp.wxs -b . -o $output_msi
 
 # 6. Move artifact to target structure.
 # Use `mv` (atomic rename on the same filesystem), not `cp`: nushell's `cp`
