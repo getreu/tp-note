@@ -1,6 +1,7 @@
 /tpnote-app/
 *.sw?
 *.html
+!/tpnote-html2md/tests/input/*.html
 *.msi
 .direnv/
 .wine/
