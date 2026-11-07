@@ -130,7 +130,7 @@ on the GitHub releases page — the single official download location:
 
 Open the [latest release] and download the asset for your platform from its
 _Assets_ list. Every release provides the following files (`<version>` is the
-release number, e.g. `1.27.3`):
+release number, e.g. `1.27.4`):
 
 | Asset | Platform / use |
 | ----- | -------------- |

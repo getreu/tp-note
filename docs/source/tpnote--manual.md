@@ -4,7 +4,7 @@ subtitle: A filename-synchronizing, template-driven note-taker that keeps your
           notes as plain Markdown files with no database and no lock-in
 author:   Jens Getreu
 date:     2026-09-30
-version:  1.27.3
+version:  1.27.4
 filename_sync: false
 lang:     en-GB
 ---
