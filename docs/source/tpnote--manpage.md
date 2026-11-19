@@ -11,10 +11,10 @@ lang:       en-GB
 
 # NAME
 
-Tp-Note: File-Centric Rust Markdown Note-Taking
+Tp-Note: File-Centric Markdown Note-Taking
 
-Rust note-taking tool that captures clipboard content into template-driven
-Markdown files with synchronized filenames and no database.
+Rust note-taking tool that captures clipboard content or AI output into
+template-driven Markdown files with synchronized filenames and no database.
 
 
 # SYNOPSIS
@@ -3560,7 +3560,7 @@ Tp-Note is hosted on:
 
 # COPYING
 
-Copyright © 2016-2025 Jens Getreu
+Copyright © 2016-2026 Jens Getreu
 
 Licensed under either of
 

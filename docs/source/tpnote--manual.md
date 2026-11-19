@@ -1,8 +1,6 @@
 ---
-title:    "Tp-Note: File-Centric Rust Markdown Note-Taking"
-subtitle: |-
-  Rust note-taking tool that captures clipboard content into template-driven
-  Markdown files with synchronized filenames and no database.
+title:    "Tp-Note: File-Centric Markdown Note-Taking"
+subtitle: Rust note-taking tool that captures clipboard content or AI output
 author:   Jens Getreu
 date:     2026-11-07
 version:  1.27.4

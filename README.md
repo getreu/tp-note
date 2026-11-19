@@ -1,7 +1,7 @@
-﻿# Tp-Note: File-Centric Rust Markdown Note-Taking
+﻿# Tp-Note: File-Centric Markdown Note-Taking
 
-**Rust note-taking tool that captures clipboard content into template-driven
-Markdown files with synchronized filenames and no database.**
+**Rust note-taking tool that captures clipboard content or AI output into
+template-driven Markdown files with synchronized filenames and no database.**
 
 [![Cargo](https://img.shields.io/crates/v/tpnote.svg)](https://crates.io/crates/tp-note)
 [![Documentation](https://docs.rs/tpnote-lib/badge.svg)](https://docs.rs/tpnote-lib)
@@ -27,18 +27,20 @@ A more sophisticated example using the “Zettelkasten” scheme:
 
 - **Clipboard Integration**: Tp-Note can save and edit clipboard content as note
   files, making it easy to capture information quickly.
-
-- **Template System**: It uses customizable templates to synchronize note
-  metadata with filenames, enhancing organization.
+- **Template System**: Customizable templates control how note content and
+  filenames are composed.
 - **Markdown Support**: Users can convert HTML content to Markdown. Notes
   are rendered from Markdown to HTML when viewed with Tp-Note's internal web
   server.
 - **Plain Markdown Viewer/Editor**: Tp-Note can open, view, and edit any plain
   Markdown file — even without a YAML front matter header — without modifying it.
-  Use `--add-header` to additionally prepend a YAML header and convert the file
-  into a full Tp-Note note.
-- **File Management**: Notes can be created from existing files or directories,
-  and users can easily navigate and edit their notes.
+  Notes are navigated in your web browser and edited in your text editor.
+- **File Management**: Notes are created from existing files or directories.
+  Every note is one Markdown file and links to others by their filename or by
+  their sort tag.
+- **Metadata Automation**: Filename and YAML header are two representations of
+  the same metadata, which Tp-Note keeps in sync. The metadata itself is
+  generated automatically.
 
 ## Usage Examples
 
