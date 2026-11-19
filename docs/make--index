@@ -1,23 +1,81 @@
-#!/bin/sh
+#!/usr/bin/env nu
 
-mkdir --parents ./build/html
-mkdir --parents ./build/html/_downloads
-mkdir --parents ./build/man/man1
+# Render `README.md` into `build/html/index.html` and `build/pdf/README.pdf`.
+#
+# `README.md` is the single source for the project's landing page. Pandoc takes
+# the page title from a YAML metadata block, so the README's level-1 title and
+# its bold tagline paragraph are lifted into `title:`/`subtitle:` and dropped
+# from the body -- left in place they would be rendered twice. Both are read
+# out of the README, so rewording it is enough; neither is hardcoded here.
+
+# Quote a string as a YAML double-quoted scalar.
+def yaml-quote [s: string]: nothing -> string {
+    let escaped = ($s | str replace --all "\\" "\\\\" | str replace --all '"' '\"')
+    $'"($escaped)"'
+}
+
+# Index of the first line at or after `from` satisfying `pred`; null if none.
+def find-line [lines: list<string>, from: int, pred: closure]: nothing -> any {
+    let hits = ($lines | enumerate | skip $from | where {|r| do $pred $r.item })
+    if ($hits | is-empty) { null } else { $hits | first | get index }
+}
+
+# Copy `src` to `dst`, replacing its leading title and tagline with a YAML
+# metadata block carrying the same text.
+def readme-to-index [src: path, dst: path] {
+    let lines = (
+        open --raw $src | decode utf-8
+        | str replace "\u{feff}" ""    # a leading BOM would hide the `#`
+        | lines
+    )
+
+    let title_at = (find-line $lines 0 {|l| $l | str starts-with "# " })
+    if $title_at == null {
+        error make { msg: $"($src): found no level-1 title to use as page title" }
+    }
+    let title = ($lines | get $title_at | str trim --left --char "#" | str trim)
+
+    # The tagline is a bold paragraph, which may wrap over several lines.
+    let tag_from = (find-line $lines ($title_at + 1) {|l| $l | str starts-with "**" })
+    let tag_to = if $tag_from == null { null } else {
+        find-line $lines $tag_from {|l| $l | str ends-with "**" }
+    }
+    let subtitle = if $tag_to == null { "" } else {
+        $lines | slice $tag_from..$tag_to | str join " " | str trim --char "*" | str trim
+    }
+
+    # Everything after the tagline is the body, minus the blank lines that
+    # separated it from the tagline.
+    let body = (
+        $lines
+        | skip (if $tag_to == null { $title_at + 1 } else { $tag_to + 1 })
+        | skip while {|l| ($l | str trim) | is-empty }
+    )
+
+    let front = [
+        "---"
+        $"title: (yaml-quote $title)"
+        $"subtitle: (yaml-quote $subtitle)"
+        "author: Jens Getreu"
+        "---"
+        ""
+    ]
+    ($front ++ $body | str join "\n") + "\n" | save --force $dst
+
+    print $"Page title from README.md: (ansi u)($title)(ansi rst_u)"
+}
 
 
-cat << EOT >./source/index.md
----
-title: "Tp-Note - Markup enhanced granular note-taking"
-subtitle: "Save and edit your clipboard content as a note file"
-author: Jens Getreu
----
+### Main
 
-EOT
+cd $env.FILE_PWD
 
-tail -n +4 ./source/README.md >> ./source/index.md
+mkdir build/html build/html/_downloads build/man/man1
 
-#sed -i 's/http.*\.getreu\.net//g' ./source/index.md
-./markdown2html ./source/index.md ./build/html/index.html
-./markdown2pdf ./source/index.md ./build/pdf/README.pdf
+let index = "source/index.md"
+readme-to-index "source/README.md" $index
 
-rm ./source/index.md
+^./markdown2html $index build/html/index.html
+^./markdown2pdf $index build/pdf/README.pdf
+
+rm $index
