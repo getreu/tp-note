@@ -756,13 +756,20 @@ sync_filename = """
 ### This part is common for all schemes.
 [tmpl_html]
 
-### Assigns an `id` to every heading that doesn't already carry one (an
-### explicit `{#id}` heading attribute always wins and is left untouched):
+### Assigns an `id` to every heading that is not anchored already, in the
+### rendition of any markup language and not only Markdown:
 ### "Gfm" (GitHub/GitLab-style slug, matches how the same note renders on
 ### those forges — recommended for portability), "Pandoc" (Pandoc's
 ### `auto_identifiers` algorithm — differs on a leading digit/punctuation:
 ### "2. Section" becomes "section", not "2-section"), or "Off" (no
 ### behaviour change; existing notes without heading ids stay that way).
+### In Markdown, an explicit `{#id}` heading attribute wins over the
+### setting here: that heading keeps its `{#id}` and gets no identifier
+### generated, whatever is configured. The identifier the
+### ReStructuredText renderer puts on the `<section id="...">` wrapping a
+### heading does not win that way: it stays, and the setting here still
+### applies to the heading inside, where the two spellings differ - that
+### renderer keeps the punctuation a slug drops.
 auto_heading_ids = "Gfm"
 
 ### HTML template to render regular viewer pages. Note: HTML templates escape HTML

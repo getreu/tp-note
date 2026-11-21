@@ -1011,18 +1011,23 @@ fn disambiguate(base: String, seen: &mut HashSet<String>) -> String {
 }
 
 /// Assigns an `id` attribute to every heading in `html` that doesn't
-/// already have one, according to `policy`. A heading's existing `id` —
-/// whether an explicit Markdown `{#id}` heading attribute or one another
-/// renderer already assigned (e.g. RST's own auto-ids) — always wins and is
-/// never touched. Markup-language agnostic: this runs on the final
-/// rendered HTML, after `markup_to_html` has already produced `<h1>`-`<h6>`
-/// tags, regardless of which renderer produced them.
+/// already have one, according to `policy`. Markup-language agnostic:
+/// this runs on the final rendered HTML, after `markup_to_html` has
+/// already produced `<h1>`-`<h6>` tags, regardless of which renderer
+/// produced them.
 ///
-/// The result never introduces a duplicate `id`: a heading already
-/// anchored by the `id` of its wrapping element (what the
-/// ReStructuredText renderer emits, `<section id="slug">` around a bare
-/// `<hN>`) keeps that single anchor, and a generated slug that would
-/// repeat an `id` found anywhere else in the document is disambiguated.
+/// An `id` on the heading itself wins over `policy`: it is never touched
+/// and that heading gets nothing generated. An explicit Markdown `{#id}`
+/// heading attribute is such an `id`.
+///
+/// An `id` on the element *wrapping* a heading does not win that way —
+/// `<section id="slug">` around a bare `<hN>`, what the ReStructuredText
+/// renderer emits. It suppresses the generated `id` only where it is
+/// spelled exactly like it, the slug being already reachable at this
+/// position then; where the two differ, the heading receives the
+/// generated `id` beside the wrapper's one. Either way the result never
+/// carries a duplicate: a generated slug that would repeat an `id` found
+/// anywhere in the document is disambiguated.
 pub fn assign_heading_ids(html: String, policy: HeadingIdPolicy) -> String {
     if policy == HeadingIdPolicy::Off {
         return html;

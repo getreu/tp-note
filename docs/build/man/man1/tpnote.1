@@ -652,22 +652,9 @@ is a level 2 heading with the content \(lqInstallation\(rq, ID
 `\f[CR]install\f[R]', class `\f[CR]collapsible\f[R]' and custom
 attribute `\f[CR]data\-level\f[R]' with value `\f[CR]2\f[R]'.
 .PP
-Every heading that does \f[I]not\f[R] carry an explicit ID this way gets
-one generated automatically from its text, so a table of contents or a
-cross\-reference to another section works without hand\-written heading
-attributes, and the same note keeps navigating correctly when rendered
-by a forge like GitHub or GitLab.
-This is controlled by `\f[CR]tmpl_html.auto_heading_ids\f[R]' (default
-`\f[CR]Gfm\f[R]'): `\f[CR]Gfm\f[R]' reproduces the GitHub/GitLab slug
-(lowercase, spaces become hyphens, punctuation dropped);
-`\f[CR]Pandoc\f[R]' reproduces Pandoc\(cqs `\f[CR]auto_identifiers\f[R]'
-algorithm instead, which additionally drops a leading run of non\-letter
-characters (a heading starting with `\f[CR]2.\f[R]' loses the
-`\f[CR]2.\f[R]' entirely, unlike `\f[CR]Gfm\f[R]', which keeps the
-digit); `\f[CR]Off\f[R]' disables this and restores the previous
-behaviour, where a heading without an explicit ID has none.
-An explicit `\f[CR]{#id}\f[R]' always wins over the generated one,
-regardless of this setting.
+A heading that does \f[I]not\f[R] carry an explicit ID this way gets one
+generated from its text, see \f[I]Automatic heading identifiers\f[R]
+below.
 .RE
 .IP "2." 3
 `\f[CR]ReStructuredText\f[R]' (file extension \f[CR].rst\f[R])
@@ -684,6 +671,37 @@ This renderer is experimental and covers only basic markup.
 The purpose of this renderer is to make hyperlinks written in Markdown,
 ReStructuredText, Asciidoc, HTML, Wikitext syntax clickable.
 Only hyperlinks are rendered, all other text is shown verbatim.
+.PP
+Automatic heading identifiers:
+.PP
+A heading that reaches the rendered HTML without an ID gets one
+generated from its text, so a table of contents or a cross\-reference to
+another section works without hand\-written heading attributes.
+This happens after the markup renderer has run, hence it concerns every
+renderer listed above and not only Markdown.
+With `\f[CR]Markdown\f[R]', the identifier is additionally the one a
+forge like GitHub or GitLab derives from the same heading, which keeps
+the note navigating correctly there as well.
+.PP
+`\f[CR]tmpl_html.auto_heading_ids\f[R]' (default `\f[CR]Gfm\f[R]')
+selects the algorithm: `\f[CR]Gfm\f[R]' reproduces the GitHub/GitLab
+slug (lowercase, spaces become hyphens, punctuation dropped);
+`\f[CR]Pandoc\f[R]' reproduces Pandoc\(cqs `\f[CR]auto_identifiers\f[R]'
+algorithm instead, which additionally drops a leading run of non\-letter
+characters (a heading starting with `\f[CR]2.\f[R]' loses the
+`\f[CR]2.\f[R]' entirely, unlike `\f[CR]Gfm\f[R]', which keeps the
+digit); `\f[CR]Off\f[R]' disables the feature, which leaves a heading
+without an explicit ID without one.
+.PP
+A `\f[CR]ReStructuredText\f[R]' section is reachable under an identifier
+that its renderer derives from the heading text, whatever this setting
+says.
+Here the setting only adds the portable identifier beside that one, and
+only where the two spellings differ, which is the case as soon as the
+heading contains punctuation: a section
+`\f[CR]Installation (Linux)\f[R]' is reachable as
+`\f[CR]installation\-(linux)\f[R]' and, under `\f[CR]Gfm\f[R]', also as
+`\f[CR]installation\-linux\f[R]'.
 .PP
 Tp\-Note\(cqs web server streams large media files without loading them
 into memory.

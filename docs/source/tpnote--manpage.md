@@ -623,20 +623,8 @@ Tp-Note's built-in note viewer comprises three markup language renderers:
    is a level 2 heading with the content "Installation", ID '`install`', class
    '`collapsible`' and custom attribute '`data-level`' with value '`2`'.
 
-   Every heading that does *not* carry an explicit ID this way gets one
-   generated automatically from its text, so a table of contents or a
-   cross-reference to another section works without hand-written heading
-   attributes, and the same note keeps navigating correctly when rendered by
-   a forge like GitHub or GitLab. This is controlled by
-   '`tmpl_html.auto_heading_ids`' (default '`Gfm`'): '`Gfm`' reproduces the
-   GitHub/GitLab slug (lowercase, spaces become hyphens, punctuation
-   dropped); '`Pandoc`' reproduces Pandoc's '`auto_identifiers`' algorithm
-   instead, which additionally drops a leading run of non-letter characters
-   (a heading starting with '`2. `' loses the '`2. `' entirely, unlike
-   '`Gfm`', which keeps the digit); '`Off`' disables this and restores the
-   previous behaviour, where a heading without an explicit ID has none. An
-   explicit '`{#id}`' always wins over the generated one, regardless of this
-   setting.
+   A heading that does *not* carry an explicit ID this way gets one
+   generated from its text, see _Automatic heading identifiers_ below.
 
 2. '`ReStructuredText`' (file extension `.rst`)\
    This renderer is experimental and covers only basic markup.
@@ -645,6 +633,32 @@ Tp-Note's built-in note viewer comprises three markup language renderers:
    The purpose of this renderer is to make hyperlinks written in
    Markdown, ReStructuredText, Asciidoc, HTML, Wikitext syntax clickable.
    Only hyperlinks are rendered, all other text is shown verbatim.
+
+Automatic heading identifiers:
+
+A heading that reaches the rendered HTML without an ID gets one generated
+from its text, so a table of contents or a cross-reference to another
+section works without hand-written heading attributes. This happens after
+the markup renderer has run, hence it concerns every renderer listed above
+and not only Markdown. With '`Markdown`', the identifier is additionally
+the one a forge like GitHub or GitLab derives from the same heading, which
+keeps the note navigating correctly there as well.
+
+'`tmpl_html.auto_heading_ids`' (default '`Gfm`') selects the algorithm:
+'`Gfm`' reproduces the GitHub/GitLab slug (lowercase, spaces become
+hyphens, punctuation dropped); '`Pandoc`' reproduces Pandoc's
+'`auto_identifiers`' algorithm instead, which additionally drops a leading
+run of non-letter characters (a heading starting with '`2. `' loses the
+'`2. `' entirely, unlike '`Gfm`', which keeps the digit); '`Off`' disables
+the feature, which leaves a heading without an explicit ID without one.
+
+A '`ReStructuredText`' section is reachable under an identifier that its
+renderer derives from the heading text, whatever this setting says. Here
+the setting only adds the portable identifier beside that one, and only
+where the two spellings differ, which is the case as soon as the heading
+contains punctuation: a section '`Installation (Linux)`' is reachable as
+'`installation-(linux)`' and, under '`Gfm`', also as
+'`installation-linux`'.
 
 Tp-Note's web server streams large media files without loading them into
 memory. Just refer to the media file as local link:
