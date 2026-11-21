@@ -831,6 +831,49 @@ else
 fi
 
 
+## Test 028: What a comment or a `<script>` holds is no markup: a heading
+## in there gets no id and reserves no slug, and a link in there is left
+## alone and never reaches the viewer's allow list.
+INPUT_FILENAME="$PWD/028-inert--Note.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: inert
+subtitle: Note
+---
+
+<!-- <h2>Summary</h2> -->
+
+## Summary
+
+<!-- <a href="other.md">commented link</a> -->
+
+[real link](other.md)
+
+<script>var a = '<h3>Scripted</h3>'; var b = '<a href="hidden.md">x</a>';</script>
+
+<style>/* <h3>Styled</h3> */</style>
+
+## Sum<!-- </h2> -->mary two
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+     --export . --export-link-rewriting=short \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/028-inert--Note.md.html"
+
+if diff "$OUTPUT_FILENAME"  "test028-html-expected-output"
+then
+    echo Commandline test 028 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 028 failed.
+    exit 1
+fi
+
+
 
 ./run-tests2 || exit 1
 

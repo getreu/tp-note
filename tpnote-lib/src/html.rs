@@ -10,6 +10,7 @@ use html_escape;
 use parking_lot::RecursiveRwLock;
 use parse_hyperlinks::parser::Link;
 use parse_hyperlinks::parser::html::attribute_list;
+use parse_hyperlinks::parser::html::inert_regions;
 use parse_hyperlinks_extras::iterator_html::HtmlLinkInlineImage;
 use percent_encoding::{AsciiSet, CONTROLS, percent_decode_str, utf8_percent_encode};
 use std::path::MAIN_SEPARATOR_STR;
@@ -877,6 +878,9 @@ fn scan_headings(html: &str) -> HtmlScan {
     // Byte offset right after the last tag's `>` and that tag's `id`, to
     // recognize the element a heading is wrapped in.
     let mut prev_tag: Option<(usize, Option<String>)> = None;
+    // Comments and the raw text of `<script>` and `<style>`, whose
+    // content HTML does not parse as markup.
+    let inert = inert_regions(html);
     let mut i = 0;
     while let Some(mut tag_start) = html[i..].find('<') {
         let Some(mut tag_end) = html[i + tag_start..].find('>') else {
@@ -887,6 +891,16 @@ fn scan_headings(html: &str) -> HtmlScan {
         if let Some(new_start) = html[i + tag_start + 1..i + tag_start + tag_end].rfind('<') {
             tag_start += new_start + 1;
             tag_end -= new_start + 1;
+        }
+
+        // What looks like a heading inside an inert construct is none, so
+        // jump the whole construct. Its `id` must not reserve a slug
+        // either, or a commented out heading would push the real one to
+        // `<slug>-1`.
+        if let Some(region) = inert.iter().find(|r| r.contains(&(i + tag_start))) {
+            prev_tag = None;
+            i = region.end;
+            continue;
         }
 
         let tag_str = &html[i + tag_start..i + tag_start + tag_end];
@@ -927,6 +941,12 @@ fn scan_headings(html: &str) -> HtmlScan {
                 cs += new_start + 1;
                 ce -= new_start + 1;
             }
+            // Jump a whole inert construct: a commented out `</h1>` does
+            // not end this heading.
+            if let Some(region) = inert.iter().find(|r| r.contains(&(k + cs))) {
+                k = region.end;
+                continue;
+            }
             if CLOSING.iter().any(|&pat| html[k + cs..k + cs + ce].starts_with(pat)) {
                 heading_end = Some(k + cs);
                 break;
@@ -942,7 +962,13 @@ fn scan_headings(html: &str) -> HtmlScan {
         // Remove HTML tags inside the heading, then decode entities.
         let mut cleaned = String::new();
         let mut inside_tag = false;
-        for c in html[heading_start..heading_end].chars() {
+        for (rel, c) in html[heading_start..heading_end].char_indices() {
+            // A comment inside a heading is no heading text either: a
+            // browser renders nothing for it. Relying on the tag toggle
+            // below is not enough, as a `>` inside the comment ends it.
+            if inert.iter().any(|r| r.contains(&(heading_start + rel))) {
+                continue;
+            }
             if c == '<' {
                 inside_tag = true;
             } else if c == '>' {
@@ -2367,6 +2393,50 @@ mod tests {
         let input = "<h2 id='real'>Title</h2>".to_string();
         let output = assign_heading_ids(input.clone(), HeadingIdPolicy::Gfm);
         assert_eq!(output, input);
+    }
+
+    /// What looks like a heading inside a comment or inside the raw text
+    /// of `<script>` or `<style>` is none. Raw HTML passes through the
+    /// Markdown renderer untouched, so a note can hold all three.
+    #[test]
+    fn test_assign_heading_ids_skips_inert() {
+        use crate::config::HeadingIdPolicy;
+
+        for input in [
+            "<!-- <h1>Hidden</h1> -->".to_string(),
+            "<script>var a = '<h1>Hidden</h1>';</script>".to_string(),
+            "<style>/* <h1>Hidden</h1> */</style>".to_string(),
+        ] {
+            let output = assign_heading_ids(input.clone(), HeadingIdPolicy::Gfm);
+            assert_eq!(output, input, "an inert construct must stay untouched");
+        }
+    }
+
+    /// A heading inside a comment must not reserve its slug either, or it
+    /// would push the real section to `<slug>-1`.
+    #[test]
+    fn test_assign_heading_ids_inert_reserves_no_slug() {
+        use crate::config::HeadingIdPolicy;
+
+        let input = "<!-- <h2>Summary</h2> --><h2>Summary</h2>".to_string();
+        let expected = "<!-- <h2>Summary</h2> --><h2 id=\"summary\">Summary</h2>";
+
+        let output = assign_heading_ids(input, HeadingIdPolicy::Gfm);
+        assert_eq!(output, expected);
+    }
+
+    /// A comment inside a heading contributes no text, so it does not
+    /// show up in the slug either - not even one holding a `>`, which
+    /// the tag stripper alone would mistake for the end of a tag.
+    #[test]
+    fn test_assign_heading_ids_inert_inside_heading() {
+        use crate::config::HeadingIdPolicy;
+
+        let input = "<h2>Sum<!-- </h2> -->mary</h2>".to_string();
+        let expected = "<h2 id=\"summary\">Sum<!-- </h2> -->mary</h2>";
+
+        let output = assign_heading_ids(input, HeadingIdPolicy::Gfm);
+        assert_eq!(output, expected);
     }
 
     /// An `id` elsewhere in the page - a template's wrapper element, say -

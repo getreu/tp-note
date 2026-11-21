@@ -17,6 +17,7 @@ use crate::markup_language::MarkupLanguage;
 use crate::settings::SETTINGS;
 use parse_hyperlinks::iterator::MarkupLink;
 use parse_hyperlinks::parser::Link;
+use parse_hyperlinks::parser::html::inert_regions;
 use sanitize_filename_reader_friendly::sanitize;
 use std::borrow::Cow;
 use std::path::Path;
@@ -1187,6 +1188,11 @@ impl<'a> FirstHtmlHeading<'a> {
         let mut heading_start = None;
         let mut heading_end = None;
 
+        // Comments and the raw text of `<script>` and `<style>`, whose
+        // content HTML does not parse as markup. A heading written in
+        // there is none, and must not become a note's title.
+        let inert = inert_regions(html);
+
         // Find opening tag.
         while let Some(mut tag_start) = html[i..].find('<') {
             if let Some(mut tag_end) = html[i + tag_start..].find('>') {
@@ -1196,6 +1202,12 @@ impl<'a> FirstHtmlHeading<'a> {
                 {
                     tag_start += new_start + 1;
                     tag_end -= new_start + 1;
+                }
+
+                // Jump a whole inert construct.
+                if let Some(region) = inert.iter().find(|r| r.contains(&(i + tag_start))) {
+                    i = region.end;
+                    continue;
                 }
 
                 // Is this a tag listed in `HTML_HEADING_OPENING_TAGS`?
@@ -1230,6 +1242,13 @@ impl<'a> FirstHtmlHeading<'a> {
                         tag_end -= new_start + 1;
                     }
 
+                    // Jump a whole inert construct: a commented out
+                    // `</h1>` does not end this heading.
+                    if let Some(region) = inert.iter().find(|r| r.contains(&(i + tag_start))) {
+                        i = region.end;
+                        continue;
+                    }
+
                     // Is this a tag listed in `HTML_HEADING_OPENING_TAGS`?
                     heading_end = HTML_HEADING_CLOSING_TAG
                         .iter()
@@ -1260,7 +1279,14 @@ impl<'a> FirstHtmlHeading<'a> {
         // Remove HTML tags inside heading.
         let mut cleaned_heading = String::new();
         let mut inside_tag = false;
-        for c in heading.chars() {
+        let heading_offset = heading_start.unwrap_or_default();
+        for (rel, c) in heading.char_indices() {
+            // A comment inside a heading is no heading text either: a
+            // browser renders nothing for it. Relying on the tag toggle
+            // below is not enough, as a `>` inside the comment ends it.
+            if inert.iter().any(|r| r.contains(&(heading_offset + rel))) {
+                continue;
+            }
             if c == '<' {
                 inside_tag = true;
             } else if c == '>' {
@@ -2108,6 +2134,35 @@ Some more text."#;
         let input = "Jens Getreu's blog";
         let output = trunc_filter(&Value::from(input), Kwargs::default(), &st).unwrap();
         assert_eq!("Jens Getr", output.as_str().unwrap());
+    }
+
+    /// A heading inside a comment or inside the raw text of `<script>`
+    /// must not be picked: the default templates derive a new note's
+    /// title and filename from this filter.
+    #[test]
+    fn test_first_html_heading_skips_inert() {
+        let input = "<!-- <h1>Hidden</h1> --><h1>Visible</h1>";
+        assert_eq!(
+            FirstHtmlHeading::from(input).map(|h| h.0.to_string()),
+            Some("Visible".to_string())
+        );
+
+        let input = "<script>var a = '<h1>Hidden</h1>';</script><h2>Visible</h2>";
+        assert_eq!(
+            FirstHtmlHeading::from(input).map(|h| h.0.to_string()),
+            Some("Visible".to_string())
+        );
+
+        // A commented out end tag does not end a heading, and the
+        // comment contributes no text: this is what a browser shows.
+        let input = "<h1>Visible<!-- </h1> --></h1>";
+        assert_eq!(
+            FirstHtmlHeading::from(input).map(|h| h.0.to_string()),
+            Some("Visible".to_string())
+        );
+
+        // Nothing but an inert construct: no heading at all.
+        assert!(FirstHtmlHeading::from("<!-- <h1>Hidden</h1> -->").is_none());
     }
 
     #[test]
