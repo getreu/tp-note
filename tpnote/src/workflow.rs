@@ -38,9 +38,22 @@ pub fn run_workflow(mut path: PathBuf) -> Result<PathBuf, WorkflowError> {
     // `path`'s directory never changes within this function (filename sync
     // only renames in place), so the document root computed once for
     // `DOC_PATH` still applies after any reassignment of `path` below.
+    //
+    // These closures defer forcing `SYSTEM_CLIPBOARD`'s and `STDIN`'s
+    // `LazyLock`s until `tpnote_lib::workflow::run()` has determined which
+    // `TemplateKind` applies and actually needs the content; a
+    // `TemplateKind` that doesn't (e.g. opening an existing note) never
+    // touches stdin, so a caller whose stdin is an open pipe or socket that
+    // nothing writes to or closes no longer hangs. They must be named
+    // bindings: a `&|| ...` built inline inside the `vec!` below would be a
+    // temporary dropped at the end of the statement, while `workflow_builder`
+    // keeps borrowing it afterwards.
+    let html_clipboard = || &SYSTEM_CLIPBOARD.html;
+    let txt_clipboard = || &SYSTEM_CLIPBOARD.txt;
+    let stdin = || &*STDIN;
     let mut workflow_builder = WorkflowBuilder::new(&path, ROOT_PATH.clone()).upgrade::<ContentString, _>(
         &CFG.arg_default.scheme,
-        vec![&SYSTEM_CLIPBOARD.html, &SYSTEM_CLIPBOARD.txt, &*STDIN],
+        vec![&html_clipboard, &txt_clipboard, &stdin],
         template_kind_filter,
     );
     if let Some(scheme) = ARGS.scheme.as_deref() {
