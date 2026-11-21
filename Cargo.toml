@@ -1,6 +1,5 @@
 # [PROJECT_DIR]/Cargo.toml
 [workspace]
-resolver = "2"
 members = ["tpnote", "tpnote-lib", "tpnote-html2md"]
 default-members = ["tpnote"]
 

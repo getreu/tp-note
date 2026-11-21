@@ -9,6 +9,7 @@ use crate::{
 use html_escape;
 use parking_lot::RecursiveRwLock;
 use parse_hyperlinks::parser::Link;
+use parse_hyperlinks::parser::html::attribute_list;
 use parse_hyperlinks_extras::iterator_html::HtmlLinkInlineImage;
 use percent_encoding::{AsciiSet, CONTROLS, percent_decode_str, utf8_percent_encode};
 use std::path::MAIN_SEPARATOR_STR;
@@ -819,8 +820,26 @@ struct HeadingMatch {
     tag_close: usize,
     /// The opening tag's `id="..."` attribute value, if it already has one.
     existing_id: Option<String>,
+    /// The `id="..."` of the element opening immediately before the
+    /// heading, with nothing but whitespace in between. The
+    /// ReStructuredText renderer wraps every section in
+    /// `<section id="slug">` and leaves the `<hN>` itself bare, so this
+    /// `id` is already the heading's anchor.
+    enclosing_id: Option<String>,
     /// Tag-stripped, entity-decoded text content of the heading.
     text: String,
+}
+
+/// What one pass over the rendered HTML collected.
+struct HtmlScan {
+    /// Every heading, in document order.
+    headings: Vec<HeadingMatch>,
+    /// Every `id` already present anywhere in the document, on a heading
+    /// or not. A generated `id` must avoid all of them: `id` is unique
+    /// per document, and repeating one leaves `getElementById()`, a CSS
+    /// `#id`/`:target` rule and an HTML-to-PDF converter's link targets
+    /// pointing at two different elements.
+    ids: HashSet<String>,
 }
 
 /// Scans `html` for every heading, in document order. Mirrors the
@@ -829,11 +848,35 @@ struct HeadingMatch {
 /// pre-existing `id="..."` attribute value, if present. Headings never
 /// nest — CommonMark's grammar and RST's section model both forbid it — so
 /// a simple "next matching closing tag" scan is safe.
-fn scan_headings(html: &str) -> Vec<HeadingMatch> {
+fn scan_headings(html: &str) -> HtmlScan {
     const OPENING: &[&str; 6] = &["<h1", "<h2", "<h3", "<h4", "<h5", "<h6"];
     const CLOSING: &[&str; 6] = &["</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>"];
 
+    /// Reads one opening tag's `id` attribute value. `tag` is a whole
+    /// opening tag, `<h2 class="c" id="x">` and its terminating `>`
+    /// included.
+    fn tag_id(tag: &str) -> Option<String> {
+        // Most tags carry no `id`; skip the parser for those. Any `id`
+        // attribute contains these two bytes.
+        if !tag.contains("id") {
+            return None;
+        }
+        // `attribute_list()` parses the attribute text alone: everything
+        // between the tag name and the terminating `>`.
+        let name_end = tag.find(char::is_whitespace)?;
+        let attributes = tag.get(name_end..tag.len() - 1)?;
+        let (_, list) = attribute_list(attributes).ok()?;
+        list.into_iter()
+            // HTML attribute names are case insensitive.
+            .find(|(name, _)| name.eq_ignore_ascii_case("id"))
+            .map(|(_, value)| value.into_owned())
+    }
+
     let mut headings = Vec::new();
+    let mut ids = HashSet::new();
+    // Byte offset right after the last tag's `>` and that tag's `id`, to
+    // recognize the element a heading is wrapped in.
+    let mut prev_tag: Option<(usize, Option<String>)> = None;
     let mut i = 0;
     while let Some(mut tag_start) = html[i..].find('<') {
         let Some(mut tag_end) = html[i + tag_start..].find('>') else {
@@ -847,7 +890,12 @@ fn scan_headings(html: &str) -> Vec<HeadingMatch> {
         }
 
         let tag_str = &html[i + tag_start..i + tag_start + tag_end];
+        let this_id = tag_id(tag_str);
+        if let Some(id) = &this_id {
+            ids.insert(id.clone());
+        }
         if !OPENING.iter().any(|&pat| tag_str.starts_with(pat)) {
+            prev_tag = Some((i + tag_start + tag_end, this_id));
             i += tag_start + tag_end;
             continue;
         }
@@ -856,11 +904,16 @@ fn scan_headings(html: &str) -> Vec<HeadingMatch> {
         let heading_start = i + tag_start + tag_end;
         let tag_close = heading_start - 1;
 
-        let existing_id = tag_str.find("id=\"").map(|p| {
-            let rest = &tag_str[p + 4..];
-            let end = rest.find('"').unwrap_or(rest.len());
-            rest[..end].to_string()
-        });
+        let existing_id = this_id;
+        // Only whitespace may separate the two tags: in
+        // `<section id="x">\n<h1>`, the section is the heading's wrapper,
+        // whereas in `<section id="x">text<h1>` it is not.
+        let enclosing_id = match &prev_tag {
+            Some((prev_end, Some(id))) if html[*prev_end..i + tag_start].trim().is_empty() => {
+                Some(id.clone())
+            }
+            _ => None,
+        };
 
         // Find the matching closing tag.
         let mut k = heading_start;
@@ -900,11 +953,12 @@ fn scan_headings(html: &str) -> Vec<HeadingMatch> {
         }
         let text = html_escape::decode_html_entities(&cleaned).into_owned();
 
-        headings.push(HeadingMatch { tag_close, existing_id, text });
+        headings.push(HeadingMatch { tag_close, existing_id, enclosing_id, text });
 
+        prev_tag = None;
         i = heading_end;
     }
-    headings
+    HtmlScan { headings, ids }
 }
 
 /// GitHub/GitLab-style slug (see `HeadingIdPolicy::Gfm`): lowercase, keep
@@ -963,27 +1017,31 @@ fn disambiguate(base: String, seen: &mut HashSet<String>) -> String {
 /// never touched. Markup-language agnostic: this runs on the final
 /// rendered HTML, after `markup_to_html` has already produced `<h1>`-`<h6>`
 /// tags, regardless of which renderer produced them.
+///
+/// The result never introduces a duplicate `id`: a heading already
+/// anchored by the `id` of its wrapping element (what the
+/// ReStructuredText renderer emits, `<section id="slug">` around a bare
+/// `<hN>`) keeps that single anchor, and a generated slug that would
+/// repeat an `id` found anywhere else in the document is disambiguated.
 pub fn assign_heading_ids(html: String, policy: HeadingIdPolicy) -> String {
     if policy == HeadingIdPolicy::Off {
         return html;
     }
 
-    let headings = scan_headings(&html);
-    if headings.is_empty() {
+    let scan = scan_headings(&html);
+    if scan.headings.is_empty() {
         return html;
     }
 
-    let mut seen: HashSet<String> = HashSet::new();
-    for h in &headings {
-        if let Some(id) = &h.existing_id {
-            seen.insert(id.clone());
-        }
-    }
+    // Every `id` the document already carries is taken, not just those on
+    // headings: a generated one that repeats any of them would make the
+    // rendition invalid HTML.
+    let mut seen: HashSet<String> = scan.ids;
 
     // `(tag_close offset, new id)` for every heading that needs one, in
     // document order.
     let mut assignments: Vec<(usize, String)> = Vec::new();
-    for h in &headings {
+    for h in &scan.headings {
         if h.existing_id.is_some() {
             continue;
         }
@@ -1003,6 +1061,13 @@ pub fn assign_heading_ids(html: String, policy: HeadingIdPolicy) -> String {
         } else {
             slug
         };
+        // The ReStructuredText renderer anchors a section on its
+        // `<section>` wrapper rather than on the `<hN>` inside it, so this
+        // slug already reaches this very position. Repeating it on the
+        // heading would only duplicate the `id`.
+        if h.enclosing_id.as_deref() == Some(slug.as_str()) {
+            continue;
+        }
         assignments.push((h.tag_close, disambiguate(slug, &mut seen)));
     }
 
@@ -2213,6 +2278,100 @@ mod tests {
         // explicit `{#id}` must be disambiguated, not silently duplicated.
         let input = "<h2 id=\"duplicate\">Explicit</h2><h2>Duplicate</h2>".to_string();
         let expected = "<h2 id=\"duplicate\">Explicit</h2><h2 id=\"duplicate-1\">Duplicate</h2>";
+
+        let output = assign_heading_ids(input, HeadingIdPolicy::Gfm);
+        assert_eq!(output, expected);
+    }
+
+    /// What the ReStructuredText renderer emits: the anchor sits on the
+    /// `<section>` wrapper, the `<hN>` inside is bare. The slug is
+    /// therefore already reachable at this position and must not be
+    /// repeated on the heading - `id` is unique per document.
+    #[test]
+    fn test_assign_heading_ids_rst_section_wrapper() {
+        use crate::config::HeadingIdPolicy;
+
+        let input = concat!(
+            "<section id=\"heading-1\">\n",
+            "<h1>heading 1</h1>\n",
+            "<p>text</p>\n",
+            "<section id=\"heading-2\">\n",
+            "<h2>heading 2</h2>\n",
+            "</section>\n",
+            "</section>",
+        )
+        .to_string();
+
+        let output = assign_heading_ids(input.clone(), HeadingIdPolicy::Gfm);
+        assert_eq!(output, input, "an anchor on the wrapper is already the heading's anchor");
+        assert_eq!(output.matches("id=\"heading-1\"").count(), 1);
+        assert_eq!(output.matches("id=\"heading-2\"").count(), 1);
+    }
+
+    /// When the wrapper's own slug differs from the configured one - the
+    /// RST renderer's docutils slug drops a run of punctuation that `Gfm`
+    /// keeps - the heading does get the portable anchor, and the two ids
+    /// stay distinct.
+    #[test]
+    fn test_assign_heading_ids_rst_wrapper_with_differing_slug() {
+        use crate::config::HeadingIdPolicy;
+
+        let input = "<section id=\"c-you\">\n<h1>C++ &amp; You</h1>\n</section>".to_string();
+        let expected = "<section id=\"c-you\">\n<h1 id=\"c--you\">C++ &amp; You</h1>\n</section>";
+
+        let output = assign_heading_ids(input, HeadingIdPolicy::Gfm);
+        assert_eq!(output, expected);
+    }
+
+    /// A wrapper only counts as one when nothing but whitespace separates
+    /// it from the heading.
+    #[test]
+    fn test_assign_heading_ids_wrapper_must_be_adjacent() {
+        use crate::config::HeadingIdPolicy;
+
+        let input = "<div id=\"intro\">text<h2>Other</h2></div>".to_string();
+        let expected = "<div id=\"intro\">text<h2 id=\"other\">Other</h2></div>";
+
+        let output = assign_heading_ids(input, HeadingIdPolicy::Gfm);
+        assert_eq!(output, expected);
+    }
+
+    /// The `id` is read with an HTML attribute parser, not by searching
+    /// for the bytes `id="`: an attribute whose name merely ends in `id`
+    /// is not an `id`, a real `id` behind such an attribute is still
+    /// found, and single-quoted values count. tp-note's own heading
+    /// attributes produce exactly these tags (`{#id .class data-level=2}`).
+    #[test]
+    fn test_assign_heading_ids_reads_attributes_not_substrings() {
+        use crate::config::HeadingIdPolicy;
+
+        // `data-id` is not `id`, so the heading still needs an anchor.
+        let output = assign_heading_ids(
+            "<h2 data-id=\"x\">Title</h2>".to_string(),
+            HeadingIdPolicy::Gfm,
+        );
+        assert_eq!(output, "<h2 data-id=\"x\" id=\"title\">Title</h2>");
+
+        // A hyphenated attribute must not hide the `id` that follows it,
+        // or the heading would end up with two `id` attributes.
+        let input = "<h2 data-level=2 id=\"real\">Title</h2>".to_string();
+        let output = assign_heading_ids(input.clone(), HeadingIdPolicy::Gfm);
+        assert_eq!(output, input, "the explicit id wins and is not touched");
+
+        // Single quotes are just as valid as double ones.
+        let input = "<h2 id='real'>Title</h2>".to_string();
+        let output = assign_heading_ids(input.clone(), HeadingIdPolicy::Gfm);
+        assert_eq!(output, input);
+    }
+
+    /// An `id` elsewhere in the page - a template's wrapper element, say -
+    /// is taken too: reusing it for a heading would duplicate it.
+    #[test]
+    fn test_assign_heading_ids_avoids_colliding_with_non_heading_id() {
+        use crate::config::HeadingIdPolicy;
+
+        let input = "<div id=\"summary\">x</div><p>y</p><h2>Summary</h2>".to_string();
+        let expected = "<div id=\"summary\">x</div><p>y</p><h2 id=\"summary-1\">Summary</h2>";
 
         let output = assign_heading_ids(input, HeadingIdPolicy::Gfm);
         assert_eq!(output, expected);
