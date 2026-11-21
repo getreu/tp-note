@@ -5,7 +5,7 @@ use crate::viewer::error::ViewerError;
 use crate::viewer::sse_server::SseToken;
 use notify::RecursiveMode;
 use notify_debouncer_mini::Config;
-use notify_debouncer_mini::{DebouncedEvent, Debouncer, new_debouncer_opt};
+use notify_debouncer_mini::{DebounceEventResult, Debouncer, new_debouncer_opt};
 use std::panic::panic_any;
 use std::path::Path;
 use std::sync::mpsc::TrySendError;
@@ -27,7 +27,7 @@ const WATCHER_MIN_UPTIME: u64 = 5;
 /// The `watcher` notifies about changes through `rx`.
 pub struct FileWatcher {
     /// Receiver for file changed messages.
-    rx: Receiver<Result<Vec<DebouncedEvent>, notify::Error>>,
+    rx: Receiver<DebounceEventResult>,
     /// We must store the `Debouncer` because it hold
     /// the sender of the channel.
     #[allow(dead_code)]
@@ -130,10 +130,12 @@ impl FileWatcher {
             log::trace!("File watcher event: {:?}", evnt);
 
             match evnt {
-                Ok(_events) => {
-                    // There can be more than one event in `event`, we
-                    // don't care about the details as we watch only one
-                    // file.
+                Ok(_batch) => {
+                    // A batch carries either several debounced events or,
+                    // when the backend missed some, a `Rescan` telling us
+                    // to refresh what we cached. We watch one single file
+                    // and re-render it in both cases, so the details do
+                    // not matter here.
                     self.update(SseToken::Update)?;
                 }
                 Err(e) => return Err(e.into()),
