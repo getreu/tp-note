@@ -878,104 +878,10 @@ fi
 ./run-tests2 || exit 1
 
 
-
-
-
-## Test 900:  Compilation --no-default-features
-
-cargo check --workspace --no-default-features >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 900 succeeded.
-else
-    echo Commandline test 900 failed.
-    exit 1
-fi
-
-
-
-## Test 901:  Compilation --no-default-features --features renderer
-cargo check --workspace --no-default-features --features renderer >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 901 succeeded.
-else
-    echo Commandline test 901 failed.
-    exit 1
-fi
-
-
-
-## Test 902:  Compilation --no-default-features --features viewer
-cargo check --no-default-features --features viewer >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 902 succeeded.
-else
-    echo Commandline test 902 failed.
-    exit 1
-fi
-
-
-
-## Test 903:  Compilation --no-default-features --features message-box
-cargo check --no-default-features --features message-box >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 903 succeeded.
-else
-    echo Commandline test 903 failed.
-    exit 1
-fi
-
-
-
-## Test 904:  Compilation --no-default-features --features read-clipboard
-cargo check --no-default-features --features read-clipboard >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 904 succeeded.
-else
-    echo Commandline test 904 failed.
-    exit 1
-fi
-
-
-
-## Test 905:  Compilation --no-default-features --features lang-detection
-cargo check --no-default-features \
-            --features lang-detection >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 905 succeeded.
-else
-    echo Commandline test 905 failed.
-    exit 1
-fi
-
-
-
-## Test 906:  Compilation --no-default-features --features same-user-policy
-## (`same-user-policy` pulls in `viewer`; this checks the peer-user code and its
-## `#[cfg(feature = "same-user-policy")]` gating compile when enabled on their
-## own. Test 902 conversely checks `viewer` compiles WITHOUT this feature.)
-cargo check --no-default-features \
-            --features same-user-policy >/dev/null
-
-if [ $? -eq 0 ]
-then
-    echo Commandline test 906 succeeded.
-else
-    echo Commandline test 906 failed.
-    exit 1
-fi
-
+## The compile matrix that used to live here as tests 900 to 906 now runs as
+## `cargo hack check --each-feature --workspace`, cf. scripts/11-test.nu. That
+## one invocation covers all seven combinations these tests checked by hand,
+## and `mermaid`, `latex` and `default` on top.
 
 
 
