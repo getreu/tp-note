@@ -1,0 +1,945 @@
+#!/usr/bin/env bash
+# Must run under bash, not a POSIX /bin/sh: several tests feed input with
+# `echo -e`, which dash (Ubuntu's /bin/sh) prints literally instead of
+# interpreting the escapes, corrupting the piped text (e.g. a leading "-e ").
+
+export TPNOTE_SCHEME=zettel
+
+cd `realpath .`
+TESTOUTPUT="test_output"
+# The reference files live beside the Rust port that also reads them; both
+# suites compare against the same bytes.
+FIXTURES="../../tpnote/tests/cli/fixtures"
+PWD="$(pwd)/$TESTOUTPUT"
+unset TPNOTE_CONFIG
+unset TPNOTE_EXTENSION_DEFAULT
+unset TPNOTE_LANG
+unset TPNOTE_LANG_DETECTION
+unset TPNOTE_USER
+
+
+# Tidy up
+rm -r "$PWD"
+mkdir -p "$PWD"
+
+# Prepare toml
+# Generate new config file.
+cargo run -- -C "$PWD/tpnote.toml"
+# Remove all `date` lines of all templates.
+TP_NOTE_TEST_TOML="$PWD/tpnote-tmp.toml"
+grep -v -e "key='fm_date'" "$PWD/tpnote.toml" > "$TP_NOTE_TEST_TOML"
+# Uncomment variables.
+sed -i -e 's/^# //g' "$TP_NOTE_TEST_TOML"
+
+
+## Test 101: Synchronize meta data and filename
+INPUT_FILENAME="$PWD/123--abc__edf_ghi.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: xxx
+keywords:
+- yyy
+- zzz
+scheme: zettel
+...
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/123--xxx__yyy_zzz.md"
+
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test101-synchronize-expected-output"
+then
+    echo Commandline test 101 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 101 failed.
+    exit 1
+fi
+
+
+
+## Test 102: Create a new note
+:> "$PWD/03--test.md"
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch \
+    --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/04--${TESTOUTPUT}__note.md"
+
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test102-new-expected-output"
+then
+    echo Commandline test 102 succeeded.
+    rm "$OUTPUT_FILENAME"
+    rm "$PWD/03--test.md"
+else
+    echo Commandline test 102 failed.
+    exit 1
+fi
+
+
+
+## Test 103: Create a new note annotating some existing file
+
+INPUT_FILENAME="$PWD/test103-annotate+clipboard-input-dummy.pdf"
+
+# Input file can be empty
+:>"$INPUT_FILENAME"
+
+echo '[ab:cd"ef](https://getreu.net)' | \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch --force-lang='-' \
+	    --config "$TP_NOTE_TEST_TOML" \
+	    "$INPUT_FILENAME" >/dev/null 2>&1
+
+# the + is not considered to be a secure char, therefor ommitted
+OUTPUT_FILENAME="$PWD/test103-annotate+clipboard-input-dummy.pdf__note.md"
+
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test103-annotate+clipboard-expected-output"
+then
+echo Commandline test 103 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 103 failed.
+    exit 1
+fi
+
+
+
+
+## Test 104: Create a new note, based on a markdown link supplied by clipboard
+
+# Tp-Note ignores the clipboard in batch mode, we pass it as
+# environment variable instead.
+
+:> "$PWD/03b--test.md"
+echo '[ab:cd"ef](https://getreu.net)' | \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+TPNOTE_LANG_DETECTION="" \
+	cargo run -- --batch \
+    		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/03c--ab_cd ef__note.md"
+
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test104-clipboard-expected-output"
+then
+    echo Commandline test 104 succeeded.
+    rm "$OUTPUT_FILENAME"
+    rm "$PWD/03b--test.md"
+else
+    echo Commandline test 104 failed.
+    exit 1
+fi
+
+
+
+## Test 105: Create a new note, based on a string supplied by clipboard
+
+#echo -n 'Good morning' | xclip -selection clipboard
+
+# Tp-Note can choose between `fi-Fi` and `en-US`. The latter should be 
+# found.
+:> "$PWD/03b--test.md"
+echo 'Good morning' | \
+LANG="fi_FI.UTF-8" LOGNAME="myuser" \
+TPNOTE_LANG_DETECTION="en-US" \
+	cargo run -- --batch \
+    		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/03c--Good morning__note.md"
+
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test105-clipboard-expected-output"
+then
+    echo Commandline test 105 succeeded.
+    rm "$OUTPUT_FILENAME"
+    rm "$PWD/03b--test.md"
+else
+    echo Commandline test 105 failed.
+    exit 1
+fi
+
+
+
+
+## Test 106: Create a new note, based on a string supplied by clipboard
+:> "$PWD/03b--test.md"
+echo '123456' | \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+TPNOTE_LANG_DETECTION="" \
+	cargo run -- --batch \
+    		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/03c--'123456__note.md"
+
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test106-clipboard-expected-output"
+then
+    echo Commandline test 106 succeeded.
+    rm "$OUTPUT_FILENAME"
+    rm "$PWD/03b--test.md"
+else
+    echo Commandline test 106 failed.
+    exit 1
+fi
+
+
+
+
+## Test 107: Create a new note annotating some existing file
+INPUT_FILENAME="$PWD/test107-some english file to annotate.pdf"
+
+# Input file can be empty
+:>"$INPUT_FILENAME"
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+    cargo run -- --batch \
+    --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME" >/dev/null 2>&1
+
+OUTPUT_FILENAME="${INPUT_FILENAME}__note.md"
+
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test107-annotate-expected-output"
+then
+echo Commandline test 107 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 107 failed.
+    exit 1
+fi
+
+
+
+## Test 108: Pin sort tag
+INPUT_FILENAME="$PWD/123--abc__edf.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: xxx
+keywords: 
+- yyy
+sort_tag: '111'
+scheme: zettel
+file_ext: md
+...
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/111--xxx__yyy.md"
+
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test108-tag-expected-output"
+then
+    echo Commandline test 108 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 108 failed.
+    exit 1
+fi
+
+
+
+## Test 109: stream note content with front matter
+
+INPUT_DATA="---
+title: aaa
+keywords: 
+- bbb
+date: 2020-01-02
+lang: en
+revision: '2.0'
+sort_tag: '222'
+file_ext: mdtxt
+scheme: zettel
+my_own_long_var: foo
+...
+EOF
+"
+
+echo "$INPUT_DATA" | \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+    "$PWD"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/222--aaa__bbb.mdtxt"
+
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test109-stream-content-expected-output"
+then
+    echo Commandline test 109 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 109 failed.
+    exit 1
+fi
+
+
+
+## Test 110: Create 2 notes with same header
+:> "$PWD/03b--test.md"
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch \
+    --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch \
+    --config "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/03c--${TESTOUTPUT}__note.md"
+OUTPUT_FILENAME2="$PWD/03d--${TESTOUTPUT}__note.md"
+if diff "$OUTPUT_FILENAME2" "$FIXTURES/test110-new-new-expected-output"
+then
+    echo Commandline test 110 succeeded.
+    rm "$OUTPUT_FILENAME"
+    rm "$OUTPUT_FILENAME2"
+    rm "$PWD/03b--test.md"
+else
+    echo Commandline test 110 failed.
+    exit 1
+fi
+
+
+
+
+## Test 111: Export note
+INPUT_FILENAME="$PWD/123-abc--edf.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: xxx
+subtitle: yyy
+author:
+- Jens
+- Hans
+sort_tag: '111'
+...
+# Body
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+INPUT2_FILENAME="$PWD/111-xxx--yyy.md"
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+     --export . \
+    "$INPUT2_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/111-xxx--yyy.md.html"
+
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test111-html-expected-output"
+then
+    echo Commandline test 111 succeeded.
+    rm "$INPUT2_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 111 failed.
+    exit 1
+fi
+
+
+
+## Test 112: Do not synchronize meta data and filename
+INPUT_FILENAME="$PWD/123-abc--edf.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: xxx
+keywords:
+- yyy
+scheme: zettel
+...
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/123-abc--edf.md"
+
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test112-synchronize-expected-output"
+then
+    echo Commandline test 112 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 112 failed.
+    exit 1
+fi
+
+
+
+## Test 113: Add header
+INPUT_FILENAME="$PWD/20220312--abc__edf_hij.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+Only body
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch --add-header --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/20220312--abc__edf_hij.md"
+
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test113-add-header-expected-output"
+then
+    echo Commandline test 113 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 113 failed.
+    exit 1
+fi
+
+
+## Test 114: Copy counter and sync
+INPUT_FILENAME="$PWD/20220312--abc__edf(4).md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: abc
+keywords:
+- edf
+scheme: zettel
+---
+Body
+EOF
+
+OUTPUT_FILENAME=$(LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch --add-header --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME"| tail -n 1)  >/dev/null 2>&1
+
+if [ "$INPUT_FILENAME" = "$OUTPUT_FILENAME" ]
+then
+    echo Commandline test 114 succeeded.
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 114 failed.
+    exit 1
+fi
+
+## Test 115: Synchronize meta data and filename
+:> "$PWD/03b--test.md"
+INPUT_FILENAME="$PWD/123-abc__edf_ghi.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: xxx
+keywords:
+- yyy
+- zzz
+...
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/123-xxx.md"
+
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test115-synchronize-expected-output"
+then
+    echo Commandline test 115 succeeded.
+    rm "$OUTPUT_FILENAME"
+    rm "$PWD/03b--test.md"
+else
+    echo Commandline test 115 failed.
+    exit 1
+fi
+
+
+
+## Test 116: Export note with format attributes
+INPUT_FILENAME="$PWD/01ac--Tulips__red_yellow.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: Tulips
+keywords:
+- red
+- yellow
+sort_tag: 01ac
+scheme: zettel
+---
+[matters](<01ac--Tulips__red_yellow.md>)     
+[matters](<01ac>)                            
+[whatever](<01ac--Tulips__red_yellow.md?>)   
+[whatever](<01ac?>)                          
+[whatever](<01ac--Tulips__red_yellow.md?#>)  
+[whatever](<01ac?#>)                         
+[whatever](<01ac--Tulips__red_yellow.md?,>)  
+[whatever](<01ac?,>)                         
+[whatever](<01ac--Tulips__red_yellow.md?-->) 
+[whatever](<01ac?-->)                        
+<tpnote:01ac--Tulips__red_yellow.md>       
+<tpnote:01ac>                                
+<tpnote:01ac--Tulips__red_yellow.md??>      
+<tpnote:01ac??>                               
+<tpnote:01ac--Tulips__red_yellow.md??:>     
+<tpnote:01ac??:>                              
+<tpnote:01ac--Tulips__red_yellow.md??:.>    
+<tpnote:01ac??:.>                             
+<tpnote:01ac--Tulips__red_yellow.md??-:,>   
+<tpnote:01ac??-:,>                            
+<tpnote:01ac--Tulips__red_yellow.md??--:,>  
+<tpnote:01ac??--:,>                           
+EOF
+
+# This is the base dir for the exporter.
+:> "$PWD/.tpnote.toml"
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
+     --export . --export-link-rewriting=short \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/01ac--Tulips__red_yellow.md.html"
+
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test116-html-expected-output"
+then
+    echo Commandline test 116 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+    rm "$PWD/.tpnote.toml"
+else
+    echo Commandline test 116 failed.
+    exit 1
+fi
+
+
+
+
+
+## Test 017: Create a new note, based on a string supplied by clipboard
+
+#echo -n '<html><h1>Good news</h1></html>' | xclip -selection clipboard
+
+# Tp-Note can choose between `fi-Fi` and `en-US`. The latter should be 
+# found.
+:> "$PWD/03b--test.md"
+echo '<html><h1>Good news</h1></html>' | \
+LANG="fi_FI.UTF-8" LOGNAME="myuser" \
+TPNOTE_LANG_DETECTION="en-US" \
+	cargo run -- --batch \
+    		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/03c--Good news__note.md"
+
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test117-clipboard-expected-output"
+then
+    echo Commandline test 117 succeeded.
+    rm "$OUTPUT_FILENAME"
+    rm "$PWD/03b--test.md"
+else
+    echo Commandline test 117 failed.
+    exit 1
+fi
+
+
+
+
+
+## Test 118: Create a new note annotating some existing file
+INPUT_FILENAME="$PWD/test118-some english file to annotate.pdf"
+
+# Input file can be empty
+:>"$INPUT_FILENAME"
+
+TPNOTE_EXTENSION_DEFAULT="rst" LANG="en_US.UTF-8" LOGNAME="myuser" \
+    cargo run -- --batch \
+    --config "$TP_NOTE_TEST_TOML" \
+    "$INPUT_FILENAME" >/dev/null 2>&1
+
+OUTPUT_FILENAME="${INPUT_FILENAME}__note.rst"
+
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test118-annotate-expected-output"
+then
+echo Commandline test 118 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 118 failed.
+    exit 1
+fi
+
+
+
+
+## Test 119: Create a new note, based on a string supplied by clipboard
+
+#echo -n 'Good morning' | xclip -selection clipboard
+
+# Tp-Note can choose between `fi-Fi`, `en-US`, `de-DE` and `fr`.
+echo -e "Parlez-vous français?\nIch spreche Französisch nur ein bisschen.\nA little bit is better than nothing." | \
+LANG="fi_FI.UTF-8" LOGNAME="myuser" \
+TPNOTE_LANG_DETECTION="en-US,de-DE,fr" \
+	cargo run -- --batch \
+    		--config  "$TP_NOTE_TEST_TOML" "$PWD" >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)--Parlez-vous français__note.md"
+grep -v -e "sort_tag:" "$OUTPUT_FILENAME" > "${OUTPUT_FILENAME}2"
+
+if diff "${OUTPUT_FILENAME}2" "$FIXTURES/test119-clipboard-expected-output"
+then
+    echo Commandline test 119 succeeded.
+    rm "${OUTPUT_FILENAME}2"
+else
+    echo Commandline test 119 failed.
+    exit 1
+fi
+
+
+
+
+## Test 120: Annotate a file; input YAML header overrides the new note's header
+
+INPUT_FILENAME="$PWD/test120-annotate-header-override-dummy.pdf"
+
+# Input file can be empty
+:>"$INPUT_FILENAME"
+
+# The piped YAML header must override `title:`, `keywords:` and `author:` of
+# the new note (and, hence, its filename) under the `zettel` scheme.
+printf '%s\n' '---' 'title: Clipboard Title' 'author: Clip Author' \
+    'keywords: [alpha, beta]' 'date: 2026-01-15' '---' 'Pasted body text.' | \
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+	cargo run -- --batch --force-lang='-' \
+	    --config "$TP_NOTE_TEST_TOML" \
+	    "$INPUT_FILENAME" >/dev/null 2>&1
+
+# Title and keywords come from the header, therefore the filename does too.
+OUTPUT_FILENAME="$PWD/Clipboard Title__alpha_beta.md"
+
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test120-annotate-header-override-expected-output"
+then
+    echo Commandline test 120 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 120 failed.
+    exit 1
+fi
+
+
+
+## Test 121: Mermaid diagram renders to inline SVG (exporter)
+INPUT_FILENAME="$PWD/121--mermaid__diagram.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: mermaid
+keywords:
+- diagram
+scheme: zettel
+---
+
+```mermaid
+graph TD
+    A --> B
+```
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/121--mermaid__diagram.md.html"
+
+if grep -q '<div class="mermaid">' "$OUTPUT_FILENAME" 2>/dev/null \
+   && grep -q "<svg" "$OUTPUT_FILENAME" 2>/dev/null
+then
+    echo Commandline test 121 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 121 failed.
+    exit 1
+fi
+
+
+
+## Test 122: Invalid Mermaid, "Inline" policy -> inline error box, export succeeds
+INLINE_TOML="$PWD/tpnote-mermaid-inline.toml"
+sed 's/^exporter_embedded_content_error_policy = .*/exporter_embedded_content_error_policy = "Inline"/' \
+    "$TP_NOTE_TEST_TOML" > "$INLINE_TOML"
+
+INPUT_FILENAME="$PWD/122--mermaid-bad__diagram.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: mermaid bad
+keywords:
+- diagram
+scheme: zettel
+---
+
+```mermaid
+this is not a valid mermaid diagram
+```
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --no-filename-sync --config "$INLINE_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/122--mermaid-bad__diagram.md.html"
+
+if grep -q "mermaid-error" "$OUTPUT_FILENAME" 2>/dev/null
+then
+    echo Commandline test 122 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+    rm "$INLINE_TOML"
+else
+    echo Commandline test 122 failed.
+    exit 1
+fi
+
+
+
+## Test 123: Invalid Mermaid, "HardError" policy -> export aborts with an error
+##           message on stderr and writes no output file.
+INPUT_FILENAME="$PWD/123--mermaid-bad__diagram.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: mermaid bad
+keywords:
+- diagram
+scheme: zettel
+---
+
+```mermaid
+this is not a valid mermaid diagram
+```
+EOF
+
+# Batch export (`-x` together with `-b`) forces the exporter policy to
+# "HardError" regardless of the config, so a broken diagram fails the export.
+# `-q` keeps cargo's own build chatter off stderr, leaving only Tp-Note's output.
+STDERR_FILE="$PWD/123-mermaid-bad-stderr.txt"
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -q -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  2>"$STDERR_FILE" >/dev/null
+
+OUTPUT_FILENAME="$PWD/123--mermaid-bad__diagram.md.html"
+# Keep only the stable error message; the "Additional technical details:"
+# section below it lists machine-specific absolute paths.
+sed '/^Additional technical details:/,$d' "$STDERR_FILE" > "${STDERR_FILE}.trimmed"
+
+if diff "${STDERR_FILE}.trimmed" "$FIXTURES/test123-mermaid-hard-expected-output" \
+   && [ ! -f "$OUTPUT_FILENAME" ]
+then
+    echo Commandline test 123 succeeded.
+    rm "$INPUT_FILENAME" "$STDERR_FILE" "${STDERR_FILE}.trimmed"
+else
+    echo Commandline test 123 failed.
+    exit 1
+fi
+
+
+
+## Test 124: A LaTeX/math block renders to inline MathML (exporter)
+INPUT_FILENAME="$PWD/124--latex__formula.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: latex
+keywords:
+- formula
+scheme: zettel
+---
+
+```math
+x^n + y^n = z^n
+```
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/124--latex__formula.md.html"
+
+if grep -q '<math [^>]*MathML' "$OUTPUT_FILENAME" 2>/dev/null
+then
+    echo Commandline test 124 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 124 failed.
+    exit 1
+fi
+
+
+
+## Test 125: Invalid LaTeX formula, "Inline" policy -> inline error box, export
+##           succeeds (`\left( x` is unbalanced and makes latex2mathml error).
+INLINE_TOML="$PWD/tpnote-latex-inline.toml"
+sed 's/^exporter_embedded_content_error_policy = .*/exporter_embedded_content_error_policy = "Inline"/' \
+    "$TP_NOTE_TEST_TOML" > "$INLINE_TOML"
+
+INPUT_FILENAME="$PWD/125--latex-bad__formula.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: latex bad
+keywords:
+- formula
+scheme: zettel
+---
+
+```math
+\left( x
+```
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --no-filename-sync --config "$INLINE_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/125--latex-bad__formula.md.html"
+
+if grep -q "math-error" "$OUTPUT_FILENAME" 2>/dev/null
+then
+    echo Commandline test 125 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+    rm "$INLINE_TOML"
+else
+    echo Commandline test 125 failed.
+    exit 1
+fi
+
+
+
+## Test 126: Invalid LaTeX formula, "HardError" policy -> export aborts with an
+##           error message on stderr and writes no output file.
+INPUT_FILENAME="$PWD/126--latex-bad__formula.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: latex bad
+keywords:
+- formula
+scheme: zettel
+---
+
+```math
+\left( x
+```
+EOF
+
+# Batch export (`-x` together with `-b`) forces the exporter policy to
+# "HardError" regardless of the config, so a broken formula fails the export.
+# `-q` keeps cargo's own build chatter off stderr, leaving only Tp-Note's output.
+STDERR_FILE="$PWD/126-latex-bad-stderr.txt"
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -q -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  2>"$STDERR_FILE" >/dev/null
+
+OUTPUT_FILENAME="$PWD/126--latex-bad__formula.md.html"
+# Keep only the stable error message; the "Additional technical details:"
+# section below it lists machine-specific absolute paths.
+sed '/^Additional technical details:/,$d' "$STDERR_FILE" > "${STDERR_FILE}.trimmed"
+
+if diff "${STDERR_FILE}.trimmed" "$FIXTURES/test126-latex-hard-expected-output" \
+   && [ ! -f "$OUTPUT_FILENAME" ]
+then
+    echo Commandline test 126 succeeded.
+    rm "$INPUT_FILENAME" "$STDERR_FILE" "${STDERR_FILE}.trimmed"
+else
+    echo Commandline test 126 failed.
+    exit 1
+fi
+
+
+
+## Test 127: Heading ids are auto-generated (Gfm, the default policy)
+INPUT_FILENAME="$PWD/127-heading-ids--Note.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: heading ids
+subtitle: Note
+---
+
+## Chapter one
+
+## Chapter one {#ch1}
+
+## S9 — Check the PIN
+
+## 2. Second section
+
+## Duplicate
+
+## Duplicate
+
+## *Emphasis* and `code`
+
+## Ümlaut und Größe
+
+## Trailing punctuation!
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+     --export . \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/127-heading-ids--Note.md.html"
+
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test127-html-expected-output"
+then
+    echo Commandline test 127 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 127 failed.
+    exit 1
+fi
+
+
+## Test 128: What a comment or a `<script>` holds is no markup: a heading
+## in there gets no id and reserves no slug, and a link in there is left
+## alone and never reaches the viewer's allow list.
+INPUT_FILENAME="$PWD/128-inert--Note.md"
+cat - > "$INPUT_FILENAME" <<'EOF'
+---
+title: inert
+subtitle: Note
+---
+
+<!-- <h2>Summary</h2> -->
+
+## Summary
+
+<!-- <a href="other.md">commented link</a> -->
+
+[real link](other.md)
+
+<script>var a = '<h3>Scripted</h3>'; var b = '<a href="hidden.md">x</a>';</script>
+
+<style>/* <h3>Styled</h3> */</style>
+
+## Sum<!-- </h2> -->mary two
+EOF
+
+LANG="en_US.UTF-8" LOGNAME="myuser" \
+cargo run -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
+     --export . --export-link-rewriting=short \
+    "$INPUT_FILENAME"  >/dev/null 2>&1
+
+OUTPUT_FILENAME="$PWD/128-inert--Note.md.html"
+
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test128-html-expected-output"
+then
+    echo Commandline test 128 succeeded.
+    rm "$INPUT_FILENAME"
+    rm "$OUTPUT_FILENAME"
+else
+    echo Commandline test 128 failed.
+    exit 1
+fi
+
+
+
+
+exit 0
