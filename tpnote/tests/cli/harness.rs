@@ -73,12 +73,7 @@ macro_rules! fixture {
 /// module documentation.
 pub fn today() -> String {
     let now = time::OffsetDateTime::now_utc();
-    format!(
-        "{:04}{:02}{:02}",
-        now.year(),
-        now.month() as u8,
-        now.day()
-    )
+    format!("{:04}{:02}{:02}", now.year(), now.month() as u8, now.day())
 }
 
 /// Process-wide configuration file, derived from the binary's own
@@ -106,7 +101,7 @@ fn test_config() -> &'static Path {
 
         let generated = fs::read_to_string(&defaults).expect("read generated configuration");
         let path = dir.path().join("tpnote-test.toml");
-        fs::write(&path, &transform_config(&generated)).expect("write test configuration");
+        fs::write(&path, transform_config(&generated)).expect("write test configuration");
         (dir, path)
     });
     path
@@ -161,21 +156,21 @@ fn base_command() -> Command {
 
 /// One scenario: a sandbox directory, the files seeded into it, and the command
 /// line and environment to run against it.
+/// One sandbox: a throw-away note directory, the files seeded into it, the
+/// configuration to use and the environment to run under. A `Tp` can be run
+/// more than once -- several of the shell tests invoke the binary twice in the
+/// same directory, e.g. synchronizing a note and then exporting it, or creating
+/// two notes to watch the second one take the next sort tag.
 pub struct Tp {
     dir: TempDir,
     root: PathBuf,
     home: PathBuf,
     scheme: Scheme,
     config: Option<PathBuf>,
-    args: Vec<OsString>,
     env: Vec<(OsString, OsString)>,
-    stdin: Option<Vec<u8>>,
 }
 
 impl Tp {
-    /// Creates the sandbox. `LANG` defaults to `en_US.UTF-8` and `LOGNAME` to
-    /// `myuser`, the values the shell scripts pass almost everywhere; override
-    /// either with `env()`.
     pub fn new(scheme: Scheme) -> Self {
         let dir = tempfile::Builder::new()
             .prefix("tpnote-cli-")
@@ -221,9 +216,7 @@ impl Tp {
             home,
             scheme,
             config: None,
-            args: Vec::new(),
             env: Vec::new(),
-            stdin: None,
         };
         tp = tp.env("LANG", "en_US.UTF-8").env("LOGNAME", "myuser");
         if scheme == Scheme::Zettel {
@@ -233,18 +226,18 @@ impl Tp {
         tp
     }
 
-    /// The sandbox directory, canonicalized. This is what a test passes to the
-    /// binary as `<path>` when creating a new note.
+    /// The sandbox's note directory, canonicalized. This is what a test passes
+    /// to the binary as `<path>` when creating a new note.
     pub fn dir(&self) -> &Path {
         &self.root
     }
 
-    /// Absolute path of a file inside the sandbox.
+    /// Absolute path of a file inside the note directory.
     pub fn at(&self, name: &str) -> PathBuf {
         self.root.join(name)
     }
 
-    /// Seeds a file into the sandbox.
+    /// Seeds a file into the note directory.
     pub fn file(self, name: &str, content: &str) -> Self {
         let path = self.at(name);
         if let Some(parent) = path.parent() {
@@ -254,8 +247,9 @@ impl Tp {
         self
     }
 
-    /// Seeds an empty file, the shell scripts' `:>"$INPUT_FILENAME"`. Used where
-    /// a test only needs something for the binary to annotate.
+    /// Seeds an empty file, the shell scripts' `:>"$INPUT_FILENAME"`. Used
+    /// where a test only needs something for the binary to annotate, or a
+    /// predecessor for the `zettel` scheme to count on from.
     pub fn empty_file(self, name: &str) -> Self {
         self.file(name, "")
     }
@@ -270,6 +264,10 @@ impl Tp {
     /// Writes a variant of the test configuration into the sandbox, applying
     /// `edit` to each line, and selects it. This is the typed form of the shell
     /// scripts' `sed 's/^exporter_... = .*/.../' "$TOML" > "$INLINE_TOML"`.
+    ///
+    /// The file is written beside the note directory, not inside it: a stray
+    /// `.toml` in there would show up in failure listings and, under the
+    /// `zettel` scheme, in the directory the next sort tag is derived from.
     pub fn config_edited(self, name: &str, edit: impl Fn(&str) -> Option<String>) -> Self {
         let source = fs::read_to_string(test_config()).expect("read test configuration");
         let mut out = String::with_capacity(source.len());
@@ -280,30 +278,12 @@ impl Tp {
             }
             out.push('\n');
         }
-        let path = self.at(name);
+        let path = self.dir.path().join(name);
         fs::write(&path, out).expect("write edited configuration");
         self.config(path)
     }
 
-    /// Appends a command line argument.
-    pub fn arg(mut self, arg: impl AsRef<OsStr>) -> Self {
-        self.args.push(arg.as_ref().to_os_string());
-        self
-    }
-
-    /// Appends several command line arguments.
-    pub fn args<I, S>(mut self, args: I) -> Self
-    where
-        I: IntoIterator<Item = S>,
-        S: AsRef<OsStr>,
-    {
-        for arg in args {
-            self.args.push(arg.as_ref().to_os_string());
-        }
-        self
-    }
-
-    /// Sets an environment variable for the child, overriding any default.
+    /// Sets an environment variable for every run, overriding any default.
     pub fn env(mut self, key: impl AsRef<OsStr>, value: impl AsRef<OsStr>) -> Self {
         let key = key.as_ref().to_os_string();
         self.env.retain(|(k, _)| *k != key);
@@ -311,17 +291,36 @@ impl Tp {
         self
     }
 
-    /// Feeds the child standard input. Hazard 1: without this call standard
-    /// input is `/dev/null`, never the test runner's.
-    pub fn stdin(mut self, input: impl Into<Vec<u8>>) -> Self {
-        self.stdin = Some(input.into());
-        self
+    /// Runs the binary with `args`, standard input at `/dev/null`.
+    ///
+    /// `--config` is supplied automatically; nothing else is. A test spells out
+    /// its own command line, because which flags are present is often exactly
+    /// what is under test -- `--batch` above all, which decides whether the
+    /// exporter's error policy is forced to `HardError`.
+    pub fn run<I, S>(&self, args: I) -> Outcome<'_>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        self.exec(args, None)
     }
 
-    /// Runs the binary. `--config` and `--batch` are not implied: a test spells
-    /// out its own command line, because which flags are present is often
-    /// exactly what is under test.
-    pub fn run(self) -> Outcome {
+    /// Runs the binary with `args`, feeding `input` to its standard input.
+    /// Hazard 1: without this, standard input is `/dev/null`, never the test
+    /// runner's.
+    pub fn run_stdin<I, S>(&self, args: I, input: impl AsRef<[u8]>) -> Outcome<'_>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        self.exec(args, Some(input.as_ref()))
+    }
+
+    fn exec<I, S>(&self, args: I, stdin: Option<&[u8]>) -> Outcome<'_>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
         let mut cmd = base_command();
         cmd.current_dir(&self.root);
         cmd.env("HOME", &self.home);
@@ -330,9 +329,9 @@ impl Tp {
         }
         cmd.arg("--config")
             .arg(self.config.as_deref().unwrap_or(test_config()));
-        cmd.args(&self.args);
+        cmd.args(args);
 
-        let output = if let Some(input) = &self.stdin {
+        let output = if let Some(input) = stdin {
             // `output()` pipes all three streams for us; `spawn()` does not, and
             // an inherited stdout would both escape into the test runner's own
             // output and leave `Outcome::stdout` empty.
@@ -351,9 +350,7 @@ impl Tp {
         };
 
         Outcome {
-            dir: self.dir,
-            root: self.root,
-            scheme: self.scheme,
+            tp: self,
             status: output.status.code(),
             stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
             stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
@@ -361,31 +358,32 @@ impl Tp {
     }
 }
 
-/// What one run produced. The sandbox is kept alive so assertions can inspect
-/// it, and removed when the `Outcome` is dropped.
-pub struct Outcome {
-    #[allow(dead_code)]
-    dir: TempDir,
-    root: PathBuf,
-    scheme: Scheme,
+/// What one run produced. Borrows its sandbox, so a test may keep running
+/// against the same directory; the sandbox is removed when the `Tp` goes out of
+/// scope at the end of the test.
+pub struct Outcome<'a> {
+    tp: &'a Tp,
     status: Option<i32>,
     pub stdout: String,
     pub stderr: String,
 }
 
-impl Outcome {
-    /// Absolute path of a file inside the sandbox.
+impl<'a> Outcome<'a> {
+    /// Absolute path of a file inside the note directory.
     pub fn at(&self, name: &str) -> PathBuf {
-        self.root.join(name)
+        self.tp.root.join(name)
     }
 
-    /// Everything the sandbox holds, sorted, for failure reports.
+    /// Everything the note directory holds, sorted, for failure reports. The
+    /// document root marker is left out: it is scaffolding, present in every
+    /// sandbox, and listing it only adds noise.
     fn listing(&self) -> String {
-        let mut names: Vec<String> = fs::read_dir(&self.root)
+        let mut names: Vec<String> = fs::read_dir(&self.tp.root)
             .map(|entries| {
                 entries
                     .flatten()
                     .map(|e| e.file_name().to_string_lossy().into_owned())
+                    .filter(|n| n != "tpnote.toml")
                     .collect()
             })
             .unwrap_or_default();
@@ -405,7 +403,7 @@ impl Outcome {
     /// a rerun.
     fn report(&self) -> String {
         let mut s = String::new();
-        let _ = write!(s, "\n  scheme: {:?}", self.scheme);
+        let _ = write!(s, "\n  scheme: {:?}", self.tp.scheme);
         let _ = write!(s, "\n  exit status: {:?}", self.status);
         if !self.stdout.trim().is_empty() {
             let _ = write!(s, "\n  standard output:\n{}", indent(&self.stdout));
@@ -413,11 +411,10 @@ impl Outcome {
         if !self.stderr.trim().is_empty() {
             let _ = write!(s, "\n  standard error:\n{}", indent(&self.stderr));
         }
-        let _ = write!(s, "\n  sandbox holds:\n{}", self.listing());
+        let _ = write!(s, "\n  note directory holds:\n{}", self.listing());
         s
     }
 
-    /// Asserts the run reported success.
     pub fn success(self) -> Self {
         assert_eq!(
             self.status,
@@ -461,6 +458,36 @@ impl Outcome {
         self
     }
 
+    /// Asserts a sandbox file matches `expected` once every line containing
+    /// `drop` is removed, mirroring the shell scripts' `grep -v -e "..."`. Used
+    /// where one field of the header is not reproducible -- a sort tag derived
+    /// from today's date, say.
+    pub fn file_eq_without(self, name: &str, drop: &str, expected: &str) -> Self {
+        let path = self.at(name);
+        let actual = fs::read_to_string(&path).unwrap_or_else(|e| {
+            panic!(
+                "expected the note {}, but could not read it: {e}{}",
+                name,
+                self.report()
+            )
+        });
+        let filtered: String = actual
+            .lines()
+            .filter(|l| !l.contains(drop))
+            .map(|l| format!("{l}\n"))
+            .collect();
+        if filtered != expected {
+            panic!(
+                "{} does not match the reference once {:?} lines are dropped{}\n{}",
+                name,
+                drop,
+                self.report(),
+                line_diff(expected, &filtered)
+            );
+        }
+        self
+    }
+
     /// Asserts a sandbox file contains `needle`, the shell scripts' `grep -q`.
     pub fn file_contains(self, name: &str, needle: &str) -> Self {
         let path = self.at(name);
@@ -476,6 +503,33 @@ impl Outcome {
             "{} does not contain {:?}{}",
             name,
             needle,
+            self.report()
+        );
+        self
+    }
+
+    /// Asserts some single line of a sandbox file contains all of `needles`.
+    /// Models the shell scripts' patterned greps, e.g. `grep -q '<math
+    /// [^>]*MathML'`, without pulling in a regex engine: what those patterns
+    /// check is that the pieces occur together on one line, not merely
+    /// somewhere in the document.
+    pub fn file_line_contains_all(self, name: &str, needles: &[&str]) -> Self {
+        let path = self.at(name);
+        let actual = fs::read_to_string(&path).unwrap_or_else(|e| {
+            panic!(
+                "expected the file {}, but could not read it: {e}{}",
+                name,
+                self.report()
+            )
+        });
+        let found = actual
+            .lines()
+            .any(|l| needles.iter().all(|n| l.contains(n)));
+        assert!(
+            found,
+            "no single line of {} contains all of {:?}{}",
+            name,
+            needles,
             self.report()
         );
         self
@@ -555,8 +609,7 @@ fn line_diff(expected: &str, actual: &str) -> String {
     let expected: Vec<&str> = expected.lines().collect();
     let actual: Vec<&str> = actual.lines().collect();
     let mut out = String::new();
-    let first = (0..expected.len().max(actual.len()))
-        .find(|&i| expected.get(i) != actual.get(i));
+    let first = (0..expected.len().max(actual.len())).find(|&i| expected.get(i) != actual.get(i));
     match first {
         None => out.push_str("  (identical line by line; the difference is in the trailing bytes)"),
         Some(i) => {
@@ -567,8 +620,9 @@ fn line_diff(expected: &str, actual: &str) -> String {
                 expected.len(),
                 actual.len()
             );
-            for j in i.saturating_sub(2)..i {
-                let _ = write!(out, "\n     context {:>4}: {}", j + 1, expected[j]);
+            let from = i.saturating_sub(2);
+            for (offset, line) in expected[from..i].iter().enumerate() {
+                let _ = write!(out, "\n     context {:>4}: {}", from + offset + 1, line);
             }
             let _ = write!(
                 out,

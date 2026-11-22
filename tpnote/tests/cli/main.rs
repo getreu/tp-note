@@ -20,6 +20,13 @@ mod harness;
 
 mod smoke;
 
+mod add_header;
+mod annotate;
+mod export_html;
+mod heading_ids;
 mod inert_markup;
+mod latex;
 mod mermaid;
+mod new_note;
+mod stdin_input;
 mod sync_filename;
