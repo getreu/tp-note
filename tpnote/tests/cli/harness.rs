@@ -1,6 +1,6 @@
 //! Test harness for the `tests/cli` suite: spawns the real `tpnote` binary
-//! against a throw-away directory, the way `tests/functional/run-tests` and
-//! `run-tests2` do with `cargo run`.
+//! against a throw-away directory, the way the shell suite it replaces does
+//! with `cargo run` (kept on the `functional-tests-reference` branch).
 //!
 //! Why a subprocess and not an in-process call? The `tpnote` crate is a binary
 //! crate whose whole runtime hangs off process-global `LazyLock` singletons --
@@ -48,7 +48,7 @@ use tempfile::TempDir;
 const BIN: &str = env!("CARGO_BIN_EXE_tpnote");
 
 /// Filename scheme to exercise. `Zettel` corresponds to the `TPNOTE_SCHEME`
-/// export at the top of `tests/functional/run-tests2`.
+/// export at the top of the shell suite's `run-tests2`.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Scheme {
     Default,
@@ -56,9 +56,9 @@ pub enum Scheme {
 }
 
 /// Reads one of the reference files in `fixtures/`. These are the very files
-/// the shell suite of `tests/functional/` has always asserted against, moved
-/// here unchanged; both suites still read the same bytes, which is what makes
-/// the port verifiable rather than merely plausible.
+/// the shell suite this was ported from has always asserted against, moved here
+/// unchanged. That suite is kept on the `functional-tests-reference` branch and
+/// still reads these same files, so it can be run against this one at any time.
 macro_rules! fixture {
     ($name:literal) => {
         include_str!(concat!("fixtures/", $name, "-expected-output"))
@@ -105,7 +105,7 @@ fn test_config() -> &'static Path {
 }
 
 /// The three edits that turn the shipped defaults into a test configuration.
-/// The first two mirror `tests/functional/run-tests` line for line; the third
+/// The first two mirror the shell suite's `run-tests` line for line; the third
 /// closes a hole those scripts leave open.
 fn transform_config(generated: &str) -> String {
     let mut out = String::with_capacity(generated.len());

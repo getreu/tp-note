@@ -1,10 +1,15 @@
 //! Command line tests for the `tpnote` binary.
 //!
-//! These are the Rust port of `tests/functional/run-tests` and `run-tests2`.
-//! Until that port is complete both suites are kept in service and the shell
-//! scripts remain the reference: every expectation here is compared against the
-//! very same `tests/functional/test*-expected-output` files, unmodified, so a
-//! failure here always means the port is wrong rather than the expectation.
+//! These are the Rust port of the shell suite that used to live in
+//! `tests/functional/`. Every test here was ported by comparing against that
+//! suite's own reference files, unmodified -- they are the ones in `fixtures/`,
+//! moved rather than copied, so a green run has always meant agreement with the
+//! exact bytes the shell suite asserted.
+//!
+//! Those scripts are kept on the `functional-tests-reference` branch rather
+//! than deleted. To check this suite against them again, rebase that branch
+//! onto master and run `tests/functional/run-tests`; it reads the same
+//! `fixtures/` files from here.
 //!
 //! Everything lives in one test binary, with a module per theme. Cargo compiles
 //! each top level file under `tests/` into a separate executable, each linking

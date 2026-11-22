@@ -191,8 +191,8 @@
               cargo-edit
               cargo-binutils
               # `cargo hack check --each-feature` covers the compile matrix
-              # (tests 900-906 of tests/functional/run-tests, which it is
-              # scheduled to replace); cf. scripts/11-test.nu.
+              # (it replaced tests 900-906 of the shell suite that used to live
+              # in tests/functional); cf. scripts/11-test.nu.
               cargo-hack
               komac
               git
