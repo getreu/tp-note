@@ -868,7 +868,7 @@ mod tests {
         use std::sync::mpsc::SyncSender;
         use std::sync::{Arc, Condvar, Mutex};
         use std::thread;
-        use std::time::Duration;
+        use std::time::{Duration, Instant};
 
         /// A minimal but valid Tp-Note markdown document.
         const NOTE: &str = "---\ntitle: itest\n---\n\nHello integration test.\n";
@@ -934,18 +934,41 @@ mod tests {
             read_response(&stream)
         }
 
-        /// Drains an HTTP response: stops once headers + `Content-Length` bytes are
-        /// in, otherwise after the read timeout (covers responses whose connection
-        /// the server closes and any without a body).
+        /// Drains an HTTP response and returns it whole.
+        ///
+        /// Three different things can end a response here and they must not be
+        /// confused: the body reaching its `Content-Length`, the server closing
+        /// the connection, or the socket simply going idle. Only the first two
+        /// are ends. Idle is the documented end for a response that declares no
+        /// `Content-Length` -- the server keeps the connection open awaiting a
+        /// next request, so there is nothing further to wait for -- but it is
+        /// *not* an end while a declared body is still short, nor before the
+        /// header block has even arrived.
+        ///
+        /// Treating idle as an end in every case is what made these tests flaky
+        /// under load: a server that needed longer than the idle timeout left
+        /// the helper returning a truncated response, and the failure then
+        /// surfaced as a puzzling content assertion far from its cause. A slow
+        /// server now gets until `DEADLINE`, and a real stall panics saying what
+        /// was still outstanding.
         fn read_response(stream: &TcpStream) -> String {
-            stream
-                .set_read_timeout(Some(Duration::from_millis(800)))
-                .unwrap();
+            /// How long an idle socket means "the server has sent all it will".
+            /// Only ever the answer once the headers are in and declare no body.
+            const IDLE: Duration = Duration::from_millis(800);
+            /// How long a response with something still outstanding may take.
+            /// Generous on purpose: it is only reached when the test is about to
+            /// fail anyway, and being generous is what keeps a loaded machine
+            /// from turning into a false failure.
+            const DEADLINE: Duration = Duration::from_secs(10);
+
+            stream.set_read_timeout(Some(IDLE)).unwrap();
             let mut stream = stream;
             let mut out: Vec<u8> = Vec::new();
             let mut chunk = [0u8; 4096];
+            let give_up_at = Instant::now() + DEADLINE;
             loop {
                 match stream.read(&mut chunk) {
+                    // The server closed the connection: the response is whole.
                     Ok(0) => break,
                     Ok(n) => {
                         out.extend_from_slice(&chunk[..n]);
@@ -958,20 +981,50 @@ mod tests {
                     Err(e)
                         if e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::TimedOut =>
                     {
-                        break
+                        if head_complete(&out) && expected_len(&out).is_none() {
+                            // Headers in, no body announced: nothing is owed.
+                            break;
+                        }
+                        assert!(
+                            Instant::now() < give_up_at,
+                            "the server stalled: {} bytes in {DEADLINE:?}, {}\n\
+                             response so far:\n{}",
+                            out.len(),
+                            match expected_len(&out) {
+                                Some(total) => format!("but it announced {total} in total"),
+                                None => "and the header block never arrived".to_string(),
+                            },
+                            String::from_utf8_lossy(&out)
+                        );
                     }
-                    Err(_) => break,
+                    Err(e) => panic!(
+                        "reading the response failed after {} bytes: {e}\n\
+                         response so far:\n{}",
+                        out.len(),
+                        String::from_utf8_lossy(&out)
+                    ),
                 }
             }
             String::from_utf8_lossy(&out).into_owned()
         }
 
+        /// Whether the header block has arrived in full. Byte-wise, so that it
+        /// also holds for a response whose body is not text (the favicon).
+        fn head_complete(buf: &[u8]) -> bool {
+            buf.windows(4).any(|w| w == b"\r\n\r\n")
+        }
+
         /// Total expected length (headers + body) once the header block and a
         /// `Content-Length` are present, else `None`.
+        ///
+        /// Only the header block is read as text: a response body need not be
+        /// UTF-8, and parsing the whole buffer used to make `Content-Length`
+        /// undetectable for the binary ones, which left their length unchecked
+        /// and their read waiting out the idle timeout for nothing.
         fn expected_len(buf: &[u8]) -> Option<usize> {
-            let s = std::str::from_utf8(buf).ok()?;
-            let head_end = s.find("\r\n\r\n")? + 4;
-            let cl = s[..head_end]
+            let head_end = buf.windows(4).position(|w| w == b"\r\n\r\n")? + 4;
+            let head = std::str::from_utf8(&buf[..head_end]).ok()?;
+            let cl = head
                 .lines()
                 .find(|l| l.to_ascii_lowercase().starts_with("content-length:"))?;
             let n: usize = cl.split(':').nth(1)?.trim().parse().ok()?;

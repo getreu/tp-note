@@ -2,6 +2,14 @@
 [workspace]
 members = ["tpnote", "tpnote-lib", "tpnote-html2md"]
 default-members = ["tpnote"]
+# A virtual manifest has no `edition` of its own to infer the feature resolver
+# from -- `[workspace.package] edition` below is only a template the members
+# inherit -- so without this cargo falls back to resolver "1" and warns. "3" is
+# what edition 2024 implies: it keeps feature unification out of contexts that
+# are not being built (dependencies of other targets, build-dependencies,
+# dev-dependencies) and makes dependency version selection respect
+# `rust-version`.
+resolver = "3"
 
 [workspace.package]
 authors = ["Jens Getreu <getreu@web.de>"]
