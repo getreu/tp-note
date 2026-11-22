@@ -193,6 +193,21 @@ impl Tp {
         let root = dir.path().join("test_output");
         fs::create_dir_all(&root).expect("create note directory");
         let root = root.canonicalize().expect("canonicalize sandbox path");
+        // Mark the note directory as the document root. `--export-link-rewriting`
+        // resolves a rewritten link against the root, and the root is the nearest
+        // ancestor holding a `tpnote.toml` (`FILENAME_ROOT_PATH_MARKER`), falling
+        // back to the filesystem root when there is none -- which would turn every
+        // "short" link into an absolute path containing the sandbox's random name.
+        //
+        // The shell scripts get this by accident: `cargo run -- -C "$PWD/tpnote.toml"`
+        // writes the generated configuration into the note directory and nothing
+        // ever removes it, so that leftover marks the root for their whole run.
+        // (Their test 016 looks like it does this on purpose with `:> .tpnote.toml`,
+        // but the marker has no leading dot, so that line has no effect.) Here the
+        // marker is explicit and empty: it contributes no configuration of its own,
+        // only the root.
+        fs::write(root.join("tpnote.toml"), "").expect("write document root marker");
+
         // Hazard 3: an empty `HOME`, a sibling of the note directory rather than
         // a child of it. The `zettel` scheme derives a new note's sort tag from
         // what the note directory already holds, so nothing that is not part of

@@ -19,3 +19,7 @@
 mod harness;
 
 mod smoke;
+
+mod inert_markup;
+mod mermaid;
+mod sync_filename;
