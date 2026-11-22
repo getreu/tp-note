@@ -5,6 +5,9 @@
 cd $(dirname $(realpath "$0"))
 
 TESTOUTPUT="test_output"
+# The reference files live beside the Rust port that also reads them; both
+# suites compare against the same bytes.
+FIXTURES="../../tpnote/tests/cli/fixtures"
 PWD="$(pwd)/$TESTOUTPUT"
 unset TPNOTE_CONFIG
 unset TPNOTE_EXTENSION_DEFAULT
@@ -42,7 +45,7 @@ cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
 
 OUTPUT_FILENAME="$PWD/123-xxx--yyy.md"
 
-if diff "$OUTPUT_FILENAME"  "test001-synchronize-expected-output"
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test001-synchronize-expected-output"
 then
     echo Commandline test 001 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -61,7 +64,7 @@ cargo run -- --batch \
 
 OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note.md"
 
-if diff "$OUTPUT_FILENAME" "test002-new-expected-output"
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test002-new-expected-output"
 then
     echo Commandline test 002 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -88,7 +91,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 # the + is not considered to be a secure char, therefor ommitted
 OUTPUT_FILENAME="$PWD/test003-annotate+clipboard-input-dummy.pdf--Note.md"
 
-if diff "$OUTPUT_FILENAME" "test003-annotate+clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test003-annotate+clipboard-expected-output"
 then
 echo Commandline test 003 succeeded.
     rm "$INPUT_FILENAME"
@@ -114,7 +117,7 @@ TPNOTE_LANG_DETECTION="" \
 
 OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-ab_cd ef--Note.md"
 
-if diff "$OUTPUT_FILENAME" "test004-clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test004-clipboard-expected-output"
 then
     echo Commandline test 004 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -139,7 +142,7 @@ TPNOTE_LANG_DETECTION="en-US" \
 
 OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-Good morning--Note.md"
 
-if diff "$OUTPUT_FILENAME" "test005-clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test005-clipboard-expected-output"
 then
     echo Commandline test 005 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -160,7 +163,7 @@ TPNOTE_LANG_DETECTION="" \
 
 OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-'123456--Note.md"
 
-if diff "$OUTPUT_FILENAME" "test006-clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test006-clipboard-expected-output"
 then
     echo Commandline test 006 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -185,7 +188,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 
 OUTPUT_FILENAME="${INPUT_FILENAME}--Note.md"
 
-if diff "$OUTPUT_FILENAME" "test007-annotate-expected-output"
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test007-annotate-expected-output"
 then
 echo Commandline test 007 succeeded.
     rm "$INPUT_FILENAME"
@@ -214,7 +217,7 @@ cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
 
 OUTPUT_FILENAME="$PWD/111-xxx--yyy.md"
 
-if diff "$OUTPUT_FILENAME"  "test008-tag-expected-output"
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test008-tag-expected-output"
 then
     echo Commandline test 008 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -247,7 +250,7 @@ cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
 
 OUTPUT_FILENAME="$PWD/222-aaa--bbb.mdtxt"
 
-if diff "$OUTPUT_FILENAME"  "test009-stream-content-expected-output"
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test009-stream-content-expected-output"
 then
     echo Commandline test 009 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -270,7 +273,7 @@ cargo run -- --batch \
 
 OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note.md"
 OUTPUT_FILENAME2="$PWD/$(date +%Y%m%d)-$TESTOUTPUT--Note(1).md"
-if diff "$OUTPUT_FILENAME2" "test010-new-new-expected-output"
+if diff "$OUTPUT_FILENAME2" "$FIXTURES/test010-new-new-expected-output"
 then
     echo Commandline test 010 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -310,7 +313,7 @@ cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
 
 OUTPUT_FILENAME="$PWD/111-xxx--yyy.md.html"
 
-if diff "$OUTPUT_FILENAME"  "test011-html-expected-output"
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test011-html-expected-output"
 then
     echo Commandline test 011 succeeded.
     rm "$INPUT2_FILENAME"
@@ -337,7 +340,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 
 OUTPUT_FILENAME="$PWD/123-abc--edf.md"
 
-if diff "$OUTPUT_FILENAME"  "test001-synchronize-expected-output"
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test001-synchronize-expected-output"
 then
     echo Commandline test 012 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -360,7 +363,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 
 OUTPUT_FILENAME="$PWD/20220312-abc--edf.md"
 
-if diff "$OUTPUT_FILENAME"  "test013-add-header-expected-output"
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test013-add-header-expected-output"
 then
     echo Commandline test 013 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -438,7 +441,7 @@ cargo run -- --batch --config "$TP_NOTE_TEST_TOML" \
 
 OUTPUT_FILENAME="$PWD/01ac-Tulips--red, yellow.md.html"
 
-if diff "$OUTPUT_FILENAME"  "test016-html-expected-output"
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test016-html-expected-output"
 then
     echo Commandline test 016 succeeded.
     rm "$INPUT_FILENAME"
@@ -468,7 +471,7 @@ TPNOTE_LANG_DETECTION="en-US" \
 
 OUTPUT_FILENAME="$PWD/03c-Good news--Note.md"
 
-if diff "$OUTPUT_FILENAME" "test017-clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test017-clipboard-expected-output"
 then
     echo Commandline test 017 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -493,7 +496,7 @@ TPNOTE_EXTENSION_DEFAULT="rst" LANG="en_US.UTF-8" LOGNAME="myuser" \
 
 OUTPUT_FILENAME="${INPUT_FILENAME}--Note.rst"
 
-if diff "$OUTPUT_FILENAME" "test018-annotate-expected-output"
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test018-annotate-expected-output"
 then
 echo Commandline test 018 succeeded.
     rm "$INPUT_FILENAME"
@@ -520,7 +523,7 @@ TPNOTE_LANG_DETECTION="en-US,de-DE,fr" \
 
 OUTPUT_FILENAME="$PWD/$(date +%Y%m%d)-Parlez-vous français--Note.md"
 
-if diff "$OUTPUT_FILENAME" "test019-clipboard-expected-output"
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test019-clipboard-expected-output"
 then
     echo Commandline test 019 succeeded.
     rm "$OUTPUT_FILENAME"
@@ -551,7 +554,7 @@ LANG="en_US.UTF-8" LOGNAME="myuser" \
 # The title comes from the header, therefore the filename does too.
 OUTPUT_FILENAME="$PWD/Clipboard Title--Note.md"
 
-if diff "$OUTPUT_FILENAME" "test020-annotate-header-override-expected-output"
+if diff "$OUTPUT_FILENAME" "$FIXTURES/test020-annotate-header-override-expected-output"
 then
     echo Commandline test 020 succeeded.
     rm "$INPUT_FILENAME"
@@ -664,7 +667,7 @@ OUTPUT_FILENAME="$PWD/023-mermaid-bad--Note.md.html"
 # section below it lists machine-specific absolute paths.
 sed '/^Additional technical details:/,$d' "$STDERR_FILE" > "${STDERR_FILE}.trimmed"
 
-if diff "${STDERR_FILE}.trimmed" "test023-mermaid-hard-expected-output" \
+if diff "${STDERR_FILE}.trimmed" "$FIXTURES/test023-mermaid-hard-expected-output" \
    && [ ! -f "$OUTPUT_FILENAME" ]
 then
     echo Commandline test 023 succeeded.
@@ -774,7 +777,7 @@ OUTPUT_FILENAME="$PWD/026-latex-bad--Note.md.html"
 # section below it lists machine-specific absolute paths.
 sed '/^Additional technical details:/,$d' "$STDERR_FILE" > "${STDERR_FILE}.trimmed"
 
-if diff "${STDERR_FILE}.trimmed" "test026-latex-hard-expected-output" \
+if diff "${STDERR_FILE}.trimmed" "$FIXTURES/test026-latex-hard-expected-output" \
    && [ ! -f "$OUTPUT_FILENAME" ]
 then
     echo Commandline test 026 succeeded.
@@ -820,7 +823,7 @@ cargo run -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
 
 OUTPUT_FILENAME="$PWD/027-heading-ids--Note.md.html"
 
-if diff "$OUTPUT_FILENAME"  "test027-html-expected-output"
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test027-html-expected-output"
 then
     echo Commandline test 027 succeeded.
     rm "$INPUT_FILENAME"
@@ -863,7 +866,7 @@ cargo run -- --batch --no-filename-sync --config "$TP_NOTE_TEST_TOML" \
 
 OUTPUT_FILENAME="$PWD/028-inert--Note.md.html"
 
-if diff "$OUTPUT_FILENAME"  "test028-html-expected-output"
+if diff "$OUTPUT_FILENAME"  "$FIXTURES/test028-html-expected-output"
 then
     echo Commandline test 028 succeeded.
     rm "$INPUT_FILENAME"

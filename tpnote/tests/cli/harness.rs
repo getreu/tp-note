@@ -55,16 +55,13 @@ pub enum Scheme {
     Zettel,
 }
 
-/// Reads one of the reference files of `tests/functional/`, which stay the
-/// single source of truth while the shell scripts are still in service: the
-/// port is verified by comparing against them byte for byte, unmodified.
+/// Reads one of the reference files in `fixtures/`. These are the very files
+/// the shell suite of `tests/functional/` has always asserted against, moved
+/// here unchanged; both suites still read the same bytes, which is what makes
+/// the port verifiable rather than merely plausible.
 macro_rules! fixture {
     ($name:literal) => {
-        include_str!(concat!(
-            "../../../tests/functional/",
-            $name,
-            "-expected-output"
-        ))
+        include_str!(concat!("fixtures/", $name, "-expected-output"))
     };
 }
 
