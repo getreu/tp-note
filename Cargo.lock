@@ -3143,6 +3143,7 @@ dependencies = [
  "serde",
  "serde_yaml",
  "sysinfo",
+ "tempfile",
  "tera",
  "thiserror 2.0.21",
  "time",

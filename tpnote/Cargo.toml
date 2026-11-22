@@ -109,6 +109,16 @@ webbrowser = { version = "1.2.7", optional = true }
 clap = { version = "4.6.9", features = ["derive"] }
 
 
+
+# The `tests/cli` suite spawns the built binary (`CARGO_BIN_EXE_tpnote`) and
+# needs no assertion framework: the harness in `tests/cli/harness.rs` renders
+# its own failure reports. `time` only computes today's date for the filenames
+# the date-dependent tests expect; the harness pins `TZ=UTC` so it agrees with
+# the child process.
+[dev-dependencies]
+tempfile = "3.24"
+time = "0.3.55"
+
 [target.'cfg(windows)'.dependencies]
 win32job = "2.1.0"
 windows-sys = { version = "0.61.2", features = [
