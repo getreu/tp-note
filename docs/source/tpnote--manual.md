@@ -3,7 +3,7 @@ title:    "Tp-Note: File-Centric Markdown Note-Taking"
 subtitle: Rust note-taking tool that captures clipboard content or AI output
 author:   Jens Getreu
 date:     2026-11-07
-version:  1.27.5
+version:  1.27.6
 filename_sync: false
 lang:     en-GB
 ---
