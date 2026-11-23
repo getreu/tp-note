@@ -81,12 +81,19 @@ fn token_prefix(tok: &str) -> String {
     }
 }
 
-/// Extracts the value of the `tpnote` cookie from an HTTP `Cookie` header
-/// value like `a=1; tpnote=deadbeef; b=2`. Returns `None` if absent.
-fn parse_tpnote_cookie(header: &str) -> Option<String> {
+/// Extracts the value of the `tpnote-<port>` cookie from an HTTP `Cookie`
+/// header value like `a=1; tpnote-37321=deadbeef; b=2`. Returns `None` if
+/// absent. The cookie name is suffixed with `port`: HTTP cookies have no
+/// port dimension (RFC 6265) and are shared by every `tpnote-<port>` the
+/// browser talks to on `localhost`, so a plain `tpnote` cookie would let two
+/// concurrently open viewer tabs (two notes open at once) overwrite each
+/// other's session token, making one of them spuriously refuse its own,
+/// legitimate tab.
+fn parse_tpnote_cookie(header: &str, port: u16) -> Option<String> {
+    let name = format!("tpnote-{port}=");
     header
         .split(';')
-        .find_map(|pair| pair.trim().strip_prefix("tpnote="))
+        .find_map(|pair| pair.trim().strip_prefix(name.as_str()))
         .map(str::to_string)
 }
 
@@ -233,6 +240,11 @@ pub(crate) struct ServerThread {
     rx: Receiver<SseToken>,
     /// Byte stream coming from a TCP connection.
     pub(crate) stream: TcpStream,
+    /// The port the listener is bound to, captured once at construction.
+    /// Used to namespace the session cookie (`tpnote-<port>`) so that two
+    /// viewer instances running concurrently in the same browser do not
+    /// overwrite each other's session cookie (see `parse_tpnote_cookie`).
+    port: u16,
     /// A list of referenced relative URLs to images or other
     /// documents as they appear in the delivered Tp-Note documents.
     /// This list contains local links that may or may not have been displayed.
@@ -281,17 +293,19 @@ impl ServerThread {
         // socket is effectively impossible, but return an error (closing this
         // one connection) instead of panicking the thread, for consistency with
         // the rest of the pipeline.
+        let port = stream.local_addr()?.port();
         let live_update_js = format!(
             "{}{}:{}{}",
             SSE_CLIENT_CODE1,
             LOCALHOST,
-            stream.local_addr()?.port(),
+            port,
             SSE_CLIENT_CODE2
         );
 
         Ok(Self {
             rx,
             stream,
+            port,
             allowed_urls,
             delivered_tpnote_docs,
             session_cookie,
@@ -309,11 +323,19 @@ impl ServerThread {
     /// `fetch`/`<img>`/`<iframe>`) while keeping legitimate top-level
     /// navigation to `localhost` working. `Path=/`: covers `/events`,
     /// images and linked notes. Host-only session cookie: no `Domain`, no
-    /// `Expires`, no `Secure` (plain http on localhost).
+    /// `Expires`, no `Secure` (plain http on localhost). The cookie name is
+    /// suffixed with the port (`tpnote-<port>`), not just `tpnote`: cookies
+    /// have no port dimension, so a bare `tpnote` name would be shared by
+    /// every viewer instance the browser talks to on `localhost`, and
+    /// opening a second note while a first is still open would make the two
+    /// instances overwrite each other's token in the browser's cookie jar.
     pub(crate) fn set_cookie_header(&self) -> String {
         match self.set_cookie.as_deref() {
             Some(tok) => {
-                format!("Set-Cookie: tpnote={tok}; HttpOnly; SameSite=Lax; Path=/\r\n")
+                format!(
+                    "Set-Cookie: tpnote-{}={tok}; HttpOnly; SameSite=Lax; Path=/\r\n",
+                    self.port
+                )
             }
             None => String::new(),
         }
@@ -523,7 +545,7 @@ impl ServerThread {
                             .iter()
                             .find(|h| h.name.eq_ignore_ascii_case("Cookie"))
                             .and_then(|h| str::from_utf8(h.value).ok())
-                            .and_then(parse_tpnote_cookie);
+                            .and_then(|s| parse_tpnote_cookie(s, self.port));
                         let host: Option<String> = req
                             .headers
                             .iter()
@@ -810,14 +832,20 @@ mod tests {
     #[test]
     fn test_parse_tpnote_cookie() {
         assert_eq!(
-            parse_tpnote_cookie("a=1; tpnote=deadbeef; b=2").as_deref(),
+            parse_tpnote_cookie("a=1; tpnote-4444=deadbeef; b=2", 4444).as_deref(),
             Some("deadbeef")
         );
-        assert_eq!(parse_tpnote_cookie("tpnote=deadbeef").as_deref(), Some("deadbeef"));
-        assert_eq!(parse_tpnote_cookie(" tpnote=x ").as_deref(), Some("x"));
-        assert_eq!(parse_tpnote_cookie("nope=1"), None);
-        assert_eq!(parse_tpnote_cookie("xtpnote=1"), None);
-        assert_eq!(parse_tpnote_cookie(""), None);
+        assert_eq!(
+            parse_tpnote_cookie("tpnote-4444=deadbeef", 4444).as_deref(),
+            Some("deadbeef")
+        );
+        assert_eq!(parse_tpnote_cookie(" tpnote-4444=x ", 4444).as_deref(), Some("x"));
+        assert_eq!(parse_tpnote_cookie("nope=1", 4444), None);
+        assert_eq!(parse_tpnote_cookie("xtpnote-4444=1", 4444), None);
+        assert_eq!(parse_tpnote_cookie("", 4444), None);
+        // A session cookie bound to another port's instance is not confused
+        // with this instance's own cookie.
+        assert_eq!(parse_tpnote_cookie("tpnote-5555=deadbeef", 4444), None);
     }
 
     #[test]
@@ -873,7 +901,7 @@ mod tests {
         /// A minimal but valid Tp-Note markdown document.
         const NOTE: &str = "---\ntitle: itest\n---\n\nHello integration test.\n";
         /// A 32-hex token that is never the (random) bound token.
-        const WRONG_COOKIE: &str = "tpnote=00000000000000000000000000000000";
+        const WRONG_TOKEN: &str = "00000000000000000000000000000000";
 
         static SEQ: AtomicU32 = AtomicU32::new(0);
 
@@ -1039,14 +1067,18 @@ mod tests {
                 .unwrap_or(0)
         }
 
-        /// Extracts the `tpnote=` value from a `Set-Cookie` header, if present.
+        /// Extracts the token from a `Set-Cookie: tpnote-<port>=<token>;...`
+        /// header, if present. The port is not checked against any expected
+        /// value here: these tests only ever see the one instance they
+        /// booted, so any `tpnote-<digits>=` cookie is unambiguously theirs.
         fn cookie_token(resp: &str) -> Option<String> {
             resp.lines()
                 .filter(|l| l.to_ascii_lowercase().starts_with("set-cookie:"))
                 .find_map(|l| {
                     let v = l.split_once(':')?.1.trim();
-                    v.strip_prefix("tpnote=")
-                        .map(|rest| rest.split(';').next().unwrap_or("").to_string())
+                    let rest = v.strip_prefix("tpnote-")?;
+                    let (_port, rest) = rest.split_once('=')?;
+                    Some(rest.split(';').next().unwrap_or("").to_string())
                 })
         }
 
@@ -1065,7 +1097,7 @@ mod tests {
         fn bound_request_with_correct_cookie_is_served() {
             let port = boot(NOTE);
             let tok = cookie_token(&get(port, "/", &[])).expect("bind");
-            let cookie = format!("tpnote={tok}");
+            let cookie = format!("tpnote-{port}={tok}");
             let resp = get(port, "/", &[("Cookie", cookie.as_str())]);
             assert_eq!(status(&resp), 200, "correct cookie must be served:\n{resp}");
         }
@@ -1083,8 +1115,50 @@ mod tests {
         fn bound_request_with_wrong_cookie_is_refused() {
             let port = boot(NOTE);
             let _ = cookie_token(&get(port, "/", &[])).expect("bind");
-            let resp = get(port, "/", &[("Cookie", WRONG_COOKIE)]);
+            let wrong_cookie = format!("tpnote-{port}={WRONG_TOKEN}");
+            let resp = get(port, "/", &[("Cookie", wrong_cookie.as_str())]);
             assert_eq!(status(&resp), 403, "wrong cookie => 403:\n{resp}");
+        }
+
+        #[test]
+        fn concurrent_instances_do_not_share_session_cookie() {
+            // Two notes opened at once (two viewer instances, two ports) in
+            // the same browser must not collide: a browser's cookie jar has
+            // no port dimension, so a `tpnote` cookie set by one instance
+            // would otherwise overwrite the other's in the browser, making
+            // whichever instance "lost" the last write spuriously refuse its
+            // own, legitimate tab. The fix namespaces the cookie by port
+            // (`tpnote-<port>`); this test pins that down end-to-end.
+            let port_a = boot(NOTE);
+            let port_b = boot(NOTE);
+            assert_ne!(port_a, port_b, "the two instances must bind distinct ports");
+
+            let tok_a = cookie_token(&get(port_a, "/", &[])).expect("instance A must bind");
+            let tok_b = cookie_token(&get(port_b, "/", &[])).expect("instance B must bind");
+
+            // Each instance's own cookie still works.
+            let cookie_a = format!("tpnote-{port_a}={tok_a}");
+            let cookie_b = format!("tpnote-{port_b}={tok_b}");
+            assert_eq!(
+                status(&get(port_a, "/", &[("Cookie", cookie_a.as_str())])),
+                200,
+                "instance A must accept its own cookie"
+            );
+            assert_eq!(
+                status(&get(port_b, "/", &[("Cookie", cookie_b.as_str())])),
+                200,
+                "instance B must accept its own cookie"
+            );
+
+            // Simulate the browser presenting instance B's cookie to instance
+            // A's port, as would happen with a bare, non-port-namespaced
+            // `tpnote` cookie once both navigations had run: it must not be
+            // accepted as instance A's own.
+            assert_eq!(
+                status(&get(port_a, "/", &[("Cookie", cookie_b.as_str())])),
+                403,
+                "instance A must refuse instance B's cookie, not silently accept it"
+            );
         }
 
         #[test]
@@ -1241,7 +1315,7 @@ mod tests {
             let home = get(port, "/", &[]);
             assert_eq!(status(&home), 200, "first GET / should render:\n{home}");
             let tok = cookie_token(&home).expect("first GET / must bind and Set-Cookie");
-            let cookie = format!("tpnote={tok}");
+            let cookie = format!("tpnote-{port}={tok}");
 
             let href = home
                 .split("href=\"")
@@ -1305,7 +1379,7 @@ mod tests {
             let home = get(port, "/", &[]);
             assert_eq!(status(&home), 200, "first GET / should render:\n{home}");
             let tok = cookie_token(&home).expect("first GET / must bind and Set-Cookie");
-            let cookie = format!("tpnote={tok}");
+            let cookie = format!("tpnote-{port}={tok}");
 
             let href = home
                 .split("href=\"")
